@@ -12,6 +12,7 @@
 \#*.*\#
 .hg
 .hgignore
+lighttpd.**
 development.ini
 production.ini
 r2/r2/public/static/frame.js
