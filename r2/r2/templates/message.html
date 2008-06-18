@@ -1,0 +1,109 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.filters import edit_comment_filter, safemarkdown
+%>
+<%inherit file="comment_skeleton.html"/>
+
+## disable voting arrows
+<%def name="midcol()">
+</%def>
+
+
+<%def name="tagline(collapse=False)">
+  %if thing.new:
+    <span class="head new">
+  %else:
+    <span class="head">
+  %endif
+  <%
+   taglinetext = ''
+   if c.msg_location == "inbox":
+        taglinetext = _("from %(author)s sent %(when)s ago")
+   elif c.msg_location == "sent" or not c.msg_location:
+        taglinetext = _("to %(dest)s sent %(when)s ago")
+   elif c.msg_location == "admin" and c.user_is_admin:
+        taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
+
+   taglinetext = taglinetext.replace(' ', '&nbsp;')
+  %>
+  ${unsafe(taglinetext % dict(when = thing.timesince, 
+                              author= u"<b>%s</b>" % self.author(thing.friend),
+                              dest = u"<b>%s</b>" % thing.to.name))}
+  </span>
+  %if c.user_is_admin:
+    ${self.admintagline()}
+  %endif
+  </p>
+  <p class="subject">
+    ${thing.subject}
+</%def>
+
+<%def name="ParentDiv()">
+</%def>
+
+<%def name="commentBody()">
+${unsafe(safemarkdown(thing.body))}
+</%def>
+
+<%def name="commentText()">
+  ${edit_comment_filter(thing.body)}
+</%def>
+
+<%def name="buttons()">
+%if hasattr(thing, "was_comment"):
+    <li>
+    ${parent.comment_button("context", thing._fullname, _("context"), 0, 
+                            thing.permalink + "?context=3")}
+    </li>
+    ${parent.delete_or_report_buttons(delete=False)}
+%else:
+    ${parent.delete_or_report_buttons(delete=False)}
+    ${parent.buttons()}
+    %if c.user_is_loggedin:
+      <li>
+      ${parent.simple_button("reply", thing._fullname, _("reply {verb}"), "reply")}
+      </li>
+    %endif
+%endif
+</%def>
+
+<%def name="entry()">
+<% fullname = thing._fullname %>
+<div  id="display_${fullname}">
+  <p id="tagline_${fullname}" class="tagline">
+    ${self.tagline()}
+  </p>
+  <div id="body_${fullname}" \
+       class="body">${self.commentBody()}
+  </div>
+  %if thing.author == c.user:
+    <div style="display: none;" \
+       id="edit_body_${fullname}">${self.commentText()}\
+    </div>
+  %endif
+  <ul class="flat-list buttons" ${(collapse and "style='display:none'" or '')}>
+    ${self.buttons()}
+  </ul>
+</div>
+</%def>

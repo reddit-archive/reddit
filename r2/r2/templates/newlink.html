@@ -1,0 +1,107 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links"/>
+
+%if thing.subreddits:
+  <h1>${_("submit")}</h1>
+%else:
+  <h1>${_("submit to %(site)s") % dict(site=c.site.name)}</h1>
+%endif
+
+<%call expr="submit_form(onsubmit='return post_form(this, \'submit\', linkstatus)', 
+             action='/submit', _class='long-text content', _id='newlink')">
+  %if not thing.subreddits:
+    <input type="hidden" name="sr" value="${c.site.name}" />
+  %endif
+  <table>
+    <tr>
+      <th>
+        <label for="url">${_("url")}</label>
+      </th>
+      <td>
+        <input id="url" name="url" type="text" 
+               value="${thing.url}" onfocus="clearTitle(this);"/>
+        ${error_field("NO_URL", "span")}
+        ${error_field("BAD_URL", "span")}
+        ${error_field("ALREADY_SUB", "span")}
+      </td>
+    </tr>
+    <tr>
+      <th>
+        <label for="title">${_("title")}</label>
+      </th>
+      <td><input id="title" name="title" value="${thing.title}" 
+                 onfocus="clearTitle(this)" type="text" />
+        ${error_field("NO_TITLE", "span")}
+        ${error_field("TITLE_TOO_LONG", "span")}
+      </td>
+    </tr>
+    %if thing.subreddits:
+      <tr>
+        <th>
+          <label for="sr">${_("subreddit")}</label>
+        </th>
+        <td>
+          <select id="sr" name="sr">
+            %for sr in thing.subreddits:
+              <option value="${sr}">${sr}</option>
+            %endfor
+          </select>
+        </td>
+      </tr>
+    %endif
+    <tr>
+      <td></td>
+      <td>
+        <input id="save" name="save" type="checkbox" />
+        <label for="save">${_("add to my saved sites")}</label>
+      </td>
+    </tr>
+    %if thing.captcha:
+      ${thing.captcha.render()}
+    %endif
+    <tr>
+      <td></td>
+      <td>
+        <button class="btn" type="submit">${_("submit")}</button>
+        <span id="status" class="error"></span>
+        ${error_field("RATELIMIT", "span")}
+      </td>
+    </tr>
+  </table>
+
+  <script type="text/javascript">
+    var form = $('newlink');
+    if(form) {
+      setMessage(form.url,
+                 '${unsafe(_('type "self" here to make this post refer to itself.'))}');
+      setMessage(form.title, 
+                 "${_('enter a title, or click submit to find one automatically.')}")
+    }
+  </script>
+
+  <p>
+    ${text_with_links(_("use reddit from your toolbar with the %(bookmarklets)s"),
+                      bookmarklets = (_('reddit bookmarklets'), '/bookmarklets'))}
+  </p>
+</%call>

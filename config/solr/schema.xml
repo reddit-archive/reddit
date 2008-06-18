@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+"The contents of this file are subject to the Common Public Attribution
+License Version 1.0. (the "License"); you may not use this file except in
+compliance with the License. You may obtain a copy of the License at
+http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+License Version 1.1, but Sections 14 and 15 have been added to cover use of
+software over a computer network and provide for limited attribution for the
+Original Developer. In addition, Exhibit A has been modified to be consistent
+with Exhibit B.
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+the specific language governing rights and limitations under the License.
+
+The Original Code is Reddit.
+
+The Original Developer is the Initial Developer.  The Initial Developer of
+the Original Code is CondeNet, Inc.
+
+All portions of the code written by CondeNet are Copyright (c) 2006-2008
+CondeNet, Inc. All Rights Reserved.
+-->
+
+<schema name="reddit" version="1.1">
+  <types>
+    <!-- field type definitions. The "name" attribute is
+       just a label to be used by field definitions.  The "class"
+       attribute and any other attributes determine the real
+       behavior of the fieldType.
+         Class names starting with "solr" refer to java classes in the
+       org.apache.solr.analysis package.
+    -->
+
+    <!-- The StrField type is not analyzed, but indexed/stored verbatim.  
+       - StrField and TextField support an optional compressThreshold which
+       limits compression (if enabled in the derived fields) to values which
+       exceed a certain size (in characters).
+    -->
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
+
+    <!-- boolean type: "true" or "false" -->
+    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true" omitNorms="true"/>
+
+    <!-- The optional sortMissingLast and sortMissingFirst attributes are
+         currently supported on types that are sorted internally as strings.
+       - If sortMissingLast="true", then a sort on this field will cause documents
+         without the field to come after documents with the field,
+         regardless of the requested sort order (asc or desc).
+       - If sortMissingFirst="true", then a sort on this field will cause documents
+         without the field to come before documents with the field,
+         regardless of the requested sort order.
+       - If sortMissingLast="false" and sortMissingFirst="false" (the default),
+         then default lucene sorting will be used which places docs without the
+         field first in an ascending sort and last in a descending sort.
+    -->    
+
+
+    <!-- numeric field types that store and index the text
+         value verbatim (and hence don't support range queries, since the
+         lexicographic ordering isn't equal to the numeric ordering) -->
+    <fieldType name="integer" class="solr.IntField" omitNorms="true"/>
+    <fieldType name="long" class="solr.LongField" omitNorms="true"/>
+    <fieldType name="float" class="solr.FloatField" omitNorms="true"/>
+    <fieldType name="double" class="solr.DoubleField" omitNorms="true"/>
+
+
+    <!-- Numeric field types that manipulate the value into
+         a string value that isn't human-readable in its internal form,
+         but with a lexicographic ordering the same as the numeric ordering,
+         so that range queries work correctly. -->
+    <fieldType name="sint" class="solr.SortableIntField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="slong" class="solr.SortableLongField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="sfloat" class="solr.SortableFloatField" sortMissingLast="true" omitNorms="true"/>
+    <fieldType name="sdouble" class="solr.SortableDoubleField" sortMissingLast="true" omitNorms="true"/>
+
+    <fieldType name="hotness" class="solr.SortableDoubleField" sortMissingLast="true" omitNorms="false"/>
+
+    <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
+         is a more restricted form of the canonical representation of dateTime
+         http://www.w3.org/TR/xmlschema-2/#dateTime    
+         The trailing "Z" designates UTC time and is mandatory.
+         Optional fractional seconds are allowed: 1995-12-31T23:59:59.999Z
+         All other components are mandatory.
+
+         Expressions can also be used to denote calculations that should be
+         performed relative to "NOW" to determine the value, ie...
+
+               NOW/HOUR
+                  ... Round to the start of the current hour
+               NOW-1DAY
+                  ... Exactly 1 day prior to now
+               NOW/DAY+6MONTHS+3DAYS
+                  ... 6 months and 3 days in the future from the start of
+                      the current day
+                      
+         Consult the DateField javadocs for more information.
+      -->
+    <fieldType name="date" class="solr.DateField" sortMissingLast="true" omitNorms="true"/>
+
+    <!-- solr.TextField allows the specification of custom text analyzers
+         specified as a tokenizer and a list of token filters. Different
+         analyzers may be specified for indexing and querying.
+
+         The optional positionIncrementGap puts space between multiple fields of
+         this type on the same document, with the purpose of preventing false phrase
+         matching across fields.
+
+         For more info on customizing your analyzer chain, please see
+         http://wiki.apache.org/solr/AnalyzersTokenizersTokenFilters
+     -->
+
+    <!-- One can also specify an existing Analyzer class that has a
+         default constructor via the class attribute on the analyzer element -->
+
+    <!-- languages -->
+    <fieldtype name="text_dk" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Danish" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_nl" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Dutch" />
+      </analyzer>
+
+    </fieldtype>
+    <fieldtype name="text_en" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="English" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_fi" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Finnish" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_fr" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="French" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_de" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="German" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_it" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Italian" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_no" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Norwegian" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_nn" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Norwegian" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_pt" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Portuguese" />
+      </analyzer>
+    </fieldtype>
+    <fieldType name="text_ru" class="solr.TextField">
+      <analyzer class="org.apache.lucene.analysis.ru.RussianAnalyzer"/>
+      <filter class="solr.SnowballPorterFilterFactory" language="Russian" />
+    </fieldType>
+    <fieldtype name="text_es" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Spanish" />
+      </analyzer>
+    </fieldtype>
+    <fieldtype name="text_sv" class="solr.TextField">
+      <analyzer>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.StandardFilterFactory"/>
+        <filter class="solr.ISOLatin1AccentFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <filter class="solr.SnowballPorterFilterFactory" language="Swedish" />
+      </analyzer>
+    </fieldtype>
+
+    <fieldType name="text_zh" class="solr.TextField">
+      <tokenizer class="org.apache.lucene.analysis.cjk.CJKTokenizer" />
+      <analyzer class="org.apache.lucene.analysis.cjk.CJKAnalyzer"/>
+    </fieldType>
+    <fieldType name="text_ja" class="solr.TextField">
+      <tokenizer class="org.apache.lucene.analysis.cjk.CJKTokenizer" />
+      <analyzer class="org.apache.lucene.analysis.cjk.CJKAnalyzer"/>
+    </fieldType>
+    <fieldType name="text_ko" class="solr.TextField">
+      <tokenizer class="org.apache.lucene.analysis.cjk.CJKTokenizer" />
+      <analyzer class="org.apache.lucene.analysis.cjk.CJKAnalyzer"/>
+    </fieldType>
+    <fieldType name="text_cs" class="solr.TextField">
+      <analyzer class="org.apache.lucene.analysis.cz.CzechAnalyzer"/>
+    </fieldType>
+    <fieldType name="text_el" class="solr.TextField">
+      <analyzer class="org.apache.lucene.analysis.el.GreekAnalyzer"/>
+    </fieldType>
+    <fieldType name="text_th" class="solr.TextField">
+      <analyzer class="org.apache.lucene.analysis.th.ThaiAnalyzer"/>
+    </fieldType>
+
+    <!-- A text field that only splits on whitespace for exact matching of words -->
+    <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100">
+      <analyzer>
+        <filter class="solr.LowerCaseFilterFactory"/>
+
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      </analyzer>
+    </fieldType>
+
+    <!-- A text field that uses WordDelimiterFilter to enable splitting and matching of
+        words on case-change, alpha numeric boundaries, and non-alphanumeric chars,
+        so that a query of "wifi" or "wi fi" could match a document containing "Wi-Fi".
+        Synonyms and stopwords are customized by external files, and stemming is enabled.
+        Duplicate tokens at the same position (which may result from Stemmed Synonyms or
+        WordDelim parts) are removed.
+        -->
+    <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
+      <analyzer type="index">
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <!-- <tokenizer class="solr.WhitespaceTokenizerFactory"/> -->
+        <!-- in this example, we will only use synonyms at query time
+        <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
+        -->
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.EnglishPorterFilterFactory" protected="protwords.txt"/>
+        <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <!-- <tokenizer class="solr.WhitespaceTokenizerFactory"/> -->
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.EnglishPorterFilterFactory" protected="protwords.txt"/>
+        <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+
+    <!-- Less flexible matching, but less false matches.  Probably not ideal for product names,
+         but may be good for SKUs.  Can insert dashes in the wrong place and still match. -->
+    <fieldType name="textTight" class="solr.TextField" positionIncrementGap="100" >
+      <analyzer>
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="false"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="0" generateNumberParts="0" catenateWords="1" catenateNumbers="1" catenateAll="0"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.EnglishPorterFilterFactory" protected="protwords.txt"/>
+        <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+    <!-- This is an example of using the KeywordTokenizer along
+         With various TokenFilterFactories to produce a sortable field
+         that does not include some properties of the source text
+      -->
+    <fieldType name="alphaOnlySort" class="solr.TextField" sortMissingLast="true" omitNorms="true">
+      <analyzer>
+        <!-- KeywordTokenizer does no actual tokenizing, so the entire
+             input string is preserved as a single token
+          -->
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <!-- The LowerCase TokenFilter does what you expect, which can be
+             when you want your sorting to be case insensitive
+          -->
+        <filter class="solr.LowerCaseFilterFactory" />
+        <!-- The TrimFilter removes any leading or trailing whitespace -->
+        <filter class="solr.TrimFilterFactory" />
+        <!-- The PatternReplaceFilter gives you the flexibility to use
+             Java Regular expression to replace any sequence of characters
+             matching a pattern with an arbitrary replacement string, 
+             which may include back refrences to portions of the orriginal
+             string matched by the pattern.
+             
+             See the Java Regular Expression documentation for more
+             infomation on pattern and replacement string syntax.
+             
+             http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/package-summary.html
+          -->
+        <filter class="solr.PatternReplaceFilterFactory"
+                pattern="([^a-z])" replacement="" replace="all"
+        />
+      </analyzer>
+    </fieldType>
+
+    <!-- since fields of this type are by default not stored or indexed, any data added to 
+         them will be ignored outright 
+     --> 
+    <fieldtype name="ignored" stored="false" indexed="false" class="solr.StrField" /> 
+
+ </types>
+
+
+ <fields>
+   <!-- Valid attributes for fields:
+     name: mandatory - the name for the field
+     type: mandatory - the name of a previously defined type from the <types> section
+     indexed: true if this field should be indexed (searchable or sortable)
+     stored: true if this field should be retrievable
+     compressed: [false] if this field should be stored using gzip compression
+       (this will only apply if the field type is compressable; among
+       the standard field types, only TextField and StrField are)
+     multiValued: true if this field may contain multiple values per document
+     omitNorms: (expert) set to true to omit the norms associated with
+       this field (this disables length normalization and index-time
+       boosting for the field, and saves some memory).  Only full-text
+       fields or fields that need an index-time boost need norms.
+   -->
+
+   <!-- Thing -->
+   <field name="fullname"    type="string"  indexed="true" stored="true"  required="true" />
+   <field name="type"        type="string"  indexed="true" stored="false" required="true" multiValued="true" />
+   <field name="date"        type="date"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="lang"        type="string"  indexed="true" stored="false" required="false" />
+   <field name="ups"         type="sint"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="downs"       type="sint"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="hot"         type="hotness" indexed="true" stored="true"  required="true" reversed="true" />
+   <field name="points"      type="sint"    indexed="true" stored="false" required="true" reversed="true" />
+   <!-- subreddit,link,comment -->
+   <field name="author_id"   type="integer" indexed="true" stored="false" required="false" />
+   <field name="author"      type="string"  indexed="true" stored="false" required="false" />
+   <!-- subreddit -->
+   <field name="title"       type="text"    indexed="true" stored="false" required="false" />
+   <field name="description" type="text"    indexed="true" stored="false" required="false" />
+   <field name="firsttext"   type="text"    indexed="true" stored="false" required="false" />
+   <field name="name"        type="string"  indexed="true" stored="false" required="false" />
+   <field name="over_18"     type="boolean" indexed="true" stored="false" required="false" />
+   <field name="sr_type"     type="string"  indexed="true" stored="false" required="false" />
+   <!-- link -->
+   <field name="sr_id"       type="integer" indexed="true" stored="false" required="false" />
+   <field name="reddit"      type="string"  indexed="true" stored="false" required="false" />
+   <field name="subreddit"   type="string"  indexed="true" stored="false" required="false" />
+   <field name="url"         type="text"    indexed="true" stored="false" required="false" />
+   <field name="domain"      type="string"  indexed="true" stored="false" required="false" multiValued="true" />
+   <field name="site"        type="string"  indexed="true" stored="false" required="false" multiValued="true" />
+   <field name="is_self"     type="boolean" indexed="true" stored="false" required="false" />
+   <!-- comment (none) -->
+
+   <!-- all objects must have a 'contents' field, and most will also
+        have a field for their particular languages. Searches are then
+        done according to the fields in the languages that the user
+        has specified -->
+
+   <field name="contents"     type="text"    indexed="true" stored="false" required="true" />
+   <field name="contents_ws"  type="text_ws" indexed="true" stored="false" required="false" />
+   <field name="contents_en"  type="text_en" indexed="true" stored="false" required="false" />
+   <field name="contents_cs"  type="text_cs" indexed="true" stored="false" required="false" />
+   <field name="contents_pt"  type="text_pt" indexed="true" stored="false" required="false" />
+   <field name="contents_zh"  type="text_zh" indexed="true" stored="false" required="false" />
+   <field name="contents_ja"  type="text_ja" indexed="true" stored="false" required="false" />
+   <field name="contents_ko"  type="text_ko" indexed="true" stored="false" required="false" />
+   <field name="contents_de"  type="text_de" indexed="true" stored="false" required="false" />
+   <field name="contents_fr"  type="text_fr" indexed="true" stored="false" required="false" />
+   <field name="contents_el"  type="text_el" indexed="true" stored="false" required="false" />
+   <field name="contents_nl"  type="text_nl" indexed="true" stored="false" required="false" />
+   <field name="contents_no"  type="text_no" indexed="true" stored="false" required="false" />
+   <field name="contents_nn"  type="text_nn" indexed="true" stored="false" required="false" />
+   <field name="contents_ru"  type="text_ru" indexed="true" stored="false" required="false" />
+   <field name="contents_it"  type="text_it" indexed="true" stored="false" required="false" />
+   <field name="contents_es"  type="text_es" indexed="true" stored="false" required="false" />
+   <field name="contents_sv"  type="text_sv" indexed="true" stored="false" required="false" />
+   <field name="contents_fi"  type="text_fi" indexed="true" stored="false" required="false" />
+   <field name="contents_dk"  type="text_dk" indexed="true" stored="false" required="false" />
+   <field name="contents_th"  type="text_th" indexed="true" stored="false" required="false" />
+
+
+ </fields>
+
+ <!-- Field to use to determine and enforce document uniqueness. 
+      Unless this field is marked with required="false", it will be a required field
+ -->
+ <uniqueKey>fullname</uniqueKey>
+ 
+ <!-- field for the QueryParser to use when an explicit fieldname is absent -->
+ <defaultSearchField>contents</defaultSearchField>
+ 
+ <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
+ <solrQueryParser defaultOperator="OR"/>
+ 
+ <!-- Similarity is the scoring routine for each document vs. a query.
+      A custom similarity may be specified here, but the default is fine
+      for most applications.  -->
+ <!-- <similarity class="org.apache.lucene.search.DefaultSimilarity"/> -->
+
+</schema>

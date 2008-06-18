@@ -1,0 +1,80 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<html>
+  <head>
+    <title>Code Profile</title>
+    <style type="text/css">
+      a { text-decoration: none }
+      .proftable {}
+      .proftable th {text-align:center; padding: 0px 5px; }
+      .proftable td {text-align:right; padding: 0px 5px; font-size: small}
+      .proftable td.a {text-align:left;}
+      .proftable td.bltin {text-align:left; color: #666666;}
+      .proftable pre {padding: 0px 0px 0px 0px; margin: 0px 0px 0px 0px; font-size: small}
+    </style>
+  </head>
+  <body>
+    <pre>
+      ${thing.header}
+    </pre>
+    
+    %if thing.table:
+    ${proftable(thing.table)}
+    %endif
+    
+    %if thing.callee:
+    <h2>Called:</h2>
+    ${proftable(thing.callee)}
+    %endif
+    
+    %if thing.caller:
+    <h2>Called by:</h2>
+    ${proftable(thing.caller)}
+    %endif
+    
+
+  </body>
+</html>
+
+<%def name="proftable(table)">
+    <table class="proftable">
+      <tr>
+        %for t in table[0]:
+        <th>${t|h}</th>
+        %endfor
+      </tr>
+      %for t in table[1:]:
+      <tr>
+        %for s in t[:-1]:
+        <td><pre>${s}</pre></td>
+        %endfor
+        <% line = t[-1] %>
+        %if line.startswith('{'):
+        <td class="bltin">${line|h}</td>
+        %else:
+        <td class="a"><a href="${thing.path}?profile=${line|u}">${line|h}</a></td>
+        %endif
+      </tr>
+      %endfor
+    </table>
+</%def>

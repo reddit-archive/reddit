@@ -1,0 +1,64 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<div class="subredditbox">
+   <form method="post" action="/post/subscriptions" id="sr_subscriptions"
+        %if c.user_is_loggedin:
+          onsubmit="return post_form(this, 'subscriptions');"
+        %else:
+          onsubmit="return showcover(true, 'sr_change_');"
+        %endif
+        >
+    <h4>
+      ${thing.title} 
+      <input type="hidden" name="dest" value="${request.fullpath}"/>
+      <input type="submit" name="submit" 
+             value='${_("save edits")}' id="subscr_sub"
+             style="display: none" />
+    </h4>
+    <h5>${thing.subtitle}</h5>
+    %for col in thing.cols:
+      %if col:
+        <ul>
+          %for sr, sel in col:
+            <li ${"class='selected'" if sel else ''} 
+                id="sr_sel_${sr._fullname}">
+              %if thing.checkboxes:
+                <input type="checkbox" ${"checked='checked'" if sel else ''}
+                       autocomplete="off"
+                       onclick="this.blur();"
+                       name="sr_sel_chx_${sr._fullname}" 
+                       onchange="return change_sr('${sr._fullname}');" 
+                       id="sr_sel_chx_${sr._fullname}"/>
+              %endif
+              <a href="${sr.path or '/'}">${sr.name}</a>
+            </li>
+          %endfor
+        </ul>
+      %endif
+    %endfor
+    <div class="clear"></div>
+  </form>
+  <a class="morelink" href="/reddits/">
+    ${_("more")} &raquo;
+  </a>
+</div>

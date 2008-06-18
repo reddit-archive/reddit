@@ -1,0 +1,95 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%! 
+   from r2.models import FakeSubreddit 
+   from r2.lib.utils import timesince
+   from r2.lib.strings import strings
+   %>
+<%namespace file="printable.html" import="state_button"/>
+%if not isinstance(c.site, FakeSubreddit):
+  <div class="raisedbox subreddit-info">
+    <h3>${c.site.name}</h3>
+
+        %if c.user_is_loggedin:
+          <form action="/post/subcribe" method="post" id="subscribe">
+            <input type="hidden" name="sr"  value="${c.site._fullname}" />
+            %if c.user_is_loggedin and c.site.is_subscriber_defaults(c.user):
+              <input type="hidden" name="toggled_action" value="sub"/>
+              <input type="hidden" name="action" value="unsub"/>
+              <input type="hidden" name="toggled_label"  
+                     value='${_("subscribe")}'/>
+              <a onclick="return toggle(this, 'subscribe');" href="#">
+                ${_("unsubscribe")}
+              </a>
+            %else:
+              <input type="hidden" name="toggled_action" value="unsub"/>
+              <input type="hidden" name="action" value="sub"/>
+              <input type="hidden" name="toggled_label"  
+                     value='${_("unsubscribe")}'/>
+              <a onclick="return toggle(this, 'subscribe')" href="#">
+                ${_("subscribe")}</a>
+            %endif
+          </form>
+        %endif
+        <span class="label">
+          (${strings.person_label % dict(num = c.site._ups,
+          persons = ungettext('subscriber', 'subscribers', c.site._ups))})
+        </span>
+      <p>
+        ${_("a community for %(time)s") % dict(time=timesince(c.site._date))}
+      </p>
+
+      %if c.site.type in ("private", "restricted") and c.user_is_loggedin and \
+          c.site.is_contributor(c.user):
+          ${moderate_button("contributor",
+                            _("you are a %(contributor)s of this reddit."),
+                            _("stop being a contributor?"),
+                            _("you are no longer a contributor"))}
+     %endif
+
+     %if c.user_is_loggedin and c.site.is_moderator(c.user):
+          ${moderate_button("moderator",
+                            _("you are a %(moderator)s of this reddit."),
+                            _("stop being a moderator?"),
+                            _("you are no longer a moderator"))}
+                           
+     %endif
+
+    <div class="spacer">  
+    %for n in thing.nav():
+      ${n.render()}
+    %endfor
+    </div>
+  </div>
+%endif
+
+
+<%def name="moderate_button(location, fmt, question, left)">
+  ${state_button("leave" + location, c.site._fullname, _(location),
+                 "return deletetoggle(this, 'leave');", 
+                 left, location = location,
+                 yes = _("yes"), no = _("no"),
+                 question = question,
+                 fmt = fmt, fmt_param = location,
+                 a_class="moderate")}
+</%def>

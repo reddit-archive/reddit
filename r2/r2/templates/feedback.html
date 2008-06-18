@@ -1,0 +1,118 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+
+<p id="success" class="error">${thing.success or ''}
+</p>
+
+%if thing.title:
+<h1>${thing.title}</h1>
+%endif
+
+%if not thing.success:
+<form onsubmit="return post_form(this, 'feedback');"
+      class="pretty-form"
+      %if action:
+      action="/${thing.action}" \
+      %else:
+      action=''
+      %endif
+      method="post" class="content" id="feedback">
+  %if c.user_is_loggedin:
+  <input type="hidden" name="whodunnit" value="${c.user.name}" />
+  %endif
+  <input type="hidden" name="reason" value="${thing.action}" />
+  <div>
+    <table>
+      <tr>
+        <th><label for="name">${_("your name")}</label></th>
+        <td>
+          <input id="name" name="name" type="text"
+                 value="${thing.name or (c.user_is_loggedin and c.user.name or '')}"
+                 size="30"/>
+          ${error_field("NO_NAME", "span")}
+        </td>
+      </tr>
+      <tr>
+        <th><label for="email">${_("email")}</label></th>
+        <td>
+          %if c.user_is_loggedin and hasattr(c.user, "email"):
+          <input id="email" name="email" value="${c.user.email}" 
+                 type="text" disabled=disabled size="30"/>
+          </td>
+        </tr>
+      <tr>
+        <th>
+          <label for="replyto">${_("reply to")}</label>
+        </th>
+        <td>
+          %if thing.replyto:
+            <input id="replyto" name="Reply-to" type="text"
+                   value="${thing.email}" onfocus="clearTitle(this)" size="30"/>
+          %else:
+            <input id="replyto" name="email" style="color: gray" 
+                   value="${_('optional')}"  type="text"
+                   onfocus="clearTitle(this)" size="30"/>
+          %endif
+          %else:
+          %if thing.email:
+          <input id="email" name="email" type="text"
+                 value="${thing.email}" onfocus="clearTitle(this)" size="30"/>
+          %else:
+          <input id="email" type="text" name="email" onfocus="clearTitle(this)" size="30"/>
+          %endif
+          %endif
+          <span class="little gray">${_("(only used to reply)")}</span>
+        </td><td>
+          ${error_field("NO_EMAIL", "span")}
+        </td>
+      </tr><tr>
+        <th valign="top">
+          <label for="message">${_("message")}</label>
+        </th>
+        <td>
+          <textarea id="personal" name="message" rows="5" cols="60">${thing.message or ''}</textarea>
+          ${error_field("NO_MESSAGE", "span")}
+        </td>
+      </tr>
+      %if thing.captcha:
+      ${thing.captcha.render()}
+      %endif
+    </table>
+    <div style="margin: 10px 0 20px 0">
+      <button class="btn" type="submit">${_("send")}</button>
+      <span id="status" class="error"></span>
+    </div>
+  </div>
+</form>
+
+%if not thing.email:
+<script type="text/javascript">
+  var form = $('feedback');
+  if(form) {
+    setMessage(form.email,
+       "${ _('put your email here')}")
+  }
+</script>
+%endif
+%endif

@@ -1,0 +1,67 @@
+SWIG       = /opt/local/bin/swig
+SRCS  	   = 
+CXXSRCS    = recommend_memcache.cpp User.cpp main.cpp ModsTable.cpp articles.cpp Recommender.cpp Database.cpp
+TARGET     = recommendations
+INTERFACE  = recommendations.i
+LIB	   = -lm -lc -lmemcache -lcrypto
+HEADERS	   = User.h ModsTable.h Recommender.h
+OPT        = -O3
+DEBUG	   = -g #-pg
+
+CC	   = gcc $(DEBUG) $(OPT)
+CXX	   = g++ $(DEBUG) $(OPT)
+CXXSHARED  = g++ $(DEBUG) $(OPT) -bundle -undefined suppress  -flat_namespace
+CCSHARED   = 
+CFLAGS     = -Wno-long-double -I$(LPDIR) -flat_namespace
+
+POSTGRESINC= /usr/local/pgsql/bin/pg_config
+
+INCLUDES   = -I`$(POSTGRESINC) --includedir` -DHAVE_CONFIG_H 
+
+POSTGRESLIB=-L`$(POSTGRESINC) --libdir` -lpq
+
+CPP_DLLIBS = $(POSTGRESLIB)
+
+EXTOBJS    = #$(LPDIR)/tmglib_DARWIN.a $(LPDIR)/lapack_DARWIN.a $(LPDIR)/blas_DARWIN.a $(LPDIR)/F2CLIBS/libF77.a $(LPDIR)/F2CLIBS/libI77.a
+COBJS 	   = $(SRCS:.c=.o)
+CXXOBJS    = $(CXXSRCS:.cpp=.o)
+OBJS 	   = $(COBJS) $(CXXOBJS) $(EXTOBJS)
+
+#  The swig files generated -- replace .i with _wrap.? where
+IWRAP      = $(INTERFACE:.i=_wrap.i)
+ISRCS      = $(IWRAP:.i=.c)
+ICXXSRCS   = $(IWRAP:.i=.cxx)
+IOBJS      = $(IWRAP:.i=.o)
+
+
+PYTHON_DLINK = #-L$(LAPACKDIR) -L$(F2CDIR) $(F2CLIB) $(LAPACKLIB)
+
+all:	exe
+
+$(ICXXSRCS):	$(INTERFACE)
+	$(SWIG) -c++ -python $(SWIGOPT) $(INTERFACE)
+
+$(IOBJS):	$(ICXXSRCS) 
+	$(CXX) -c $(CCSHARED) $(CFLAGS) $(ICXXSRCS) $(INCLUDES)
+
+$(CXXOBJS): %.o: %.cpp
+	$(CXX) -c $< $(CFLAGS) $(INCLUDES)
+
+$(COBJS): %.o: %.c
+	$(CC) -c $< $(CFLAGS) $(INCLUDES)
+
+clean::
+	rm -f *.o *.bundle *_wrap* *~ .~* core  mypython *.pyc
+	rm -f $(TARGET).py
+
+exe::   $(OBJS)
+	$(CXX) -o $(TARGET) $(OBJS) $(LIB) $(POSTGRESLIB)
+
+check: all
+
+over: clean exe
+
+python_cpp: $(IOBJS) $(OBJS)
+	$(CXXSHARED) $(OBJS) $(IOBJS) $(PYTHON_DLNK) $(CPP_DLLIBS) $(LIB) -o _$(TARGET).so
+
+

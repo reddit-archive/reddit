@@ -1,0 +1,187 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%
+   from md5 import md5
+%>
+
+<script type="text/javascript">
+ function edit_trans(id) {
+   var string = $("string_" + id);
+   var str = string.innerHTML;
+   var input;
+   var s = string.innerHTML;
+   s = s.replace("&lt;", "<");
+   s = s.replace("&gt;", ">");
+   s = s.replace("&quot;", '"'); /* " */
+   s = s.replace("&amp;", "&");
+   if (str.length < 80) {
+     input = document.createElement('input');
+     input.value = s;
+     input.size = 40;                    
+   }
+   else {
+     input = document.createElement('textarea');
+     input.innerHTML = s;
+     input.cols = 50;
+     input.rows = 5;                    
+   }
+
+   var div = $("trans_div_" + id);
+   input.id = "trans_" + id;
+   input.name = "trans_" + id;
+   for(var i = 0; i < div.childNodes.length; i++ ) {
+      hide(div.childNodes[i]);
+   }
+   div.appendChild(input);
+   return false;
+ }
+
+</script>
+
+<h2>
+%if thing.locale:
+Translation: en to ${thing.locale}
+%if thing.is_valid():
+&nbsp;<a href="/admin/i18n/try/${thing.locale}" target="_blank"
+   style="color: green">
+  [try translation]
+</a>
+%endif
+%else:
+Base Translation Template
+%endif
+</h2>
+
+<p>
+<table>
+  <tr>
+    <td>Number complete: ${thing.num_completed}/${thing.num_total}</td>
+    <td>${statusbar(float(thing.num_completed)/max(thing.num_total,1))}</td>
+    <td class="little">${"%d%%" % int(100 * thing.num_completed/max(thing.num_total,1))}</td>
+  </tr>
+</table>
+</p>
+
+
+%if not thing.is_valid():
+<ul>
+%for hash, string in thing.get_invalid():
+<%
+   if len(string) > 50:
+       s = string[:50] + '...'
+   else:
+       s = string
+%>
+<li class="error">Error:&nbsp;<a href="#thing_${hash}">"${s}"</a></li>
+%endfor
+</ul>
+%endif
+
+%if c.user_is_admin:
+%if thing.locale:
+<p>
+<a href="/admin/i18n/edit/">
+  &laquo; Edit base translation template
+</a>
+<p>
+%endif
+<p>
+<a href="/admin/i18n/">
+   &laquo; Translation summary
+</a>
+<p>
+%endif
+
+<form method="post" action="/admin/i18n/edit/${thing.locale}" class="pretty-form">
+  %if c.user_is_admin:
+  <p>
+    Name of this language: <input type="text" name="langname" 
+                                  value="${thing.name}" />
+  <p>
+    English Name of this language: <input type="text" name="enlangname" 
+                                  value="${thing.en_name}" />
+  <p>
+    number of plural forms: <input type="text" name="nplurals" 
+                                   value="${thing.nplurals}" />
+    <table>
+    %for i in xrange(thing.nplurals):
+    <tr>
+      <td>
+        Plural #${i+1} is called:
+      </td>
+      <td>
+        <input type="text" name="pluralform_${i}"
+               value="${thing.plural_names[i] if len(thing.plural_names) > i else 'case #%d'%(i+1)}" />
+      </td>
+    </tr>
+    %endfor
+    </table>
+  </p>
+  %endif
+  <% source = None %>
+  <input type="hidden" id="lang" name="lang" value="${thing.locale}">
+    %for i, s in enumerate(thing.strings):
+    %if s.source != source:
+
+      %if source is not None:
+       </table>
+      %endif
+      <% 
+         source = s.source 
+         source_string = thing.source_trans.get(source, source)
+         digest = md5(source).hexdigest()
+         %>
+      %if source is not None and (source_string or c.user_is_admin):
+      <a name="bttn_num_${i}"></a>
+      <h2 id="trans_div_${digest}">
+        <span id="string_${digest}">${source_string}</span>
+        %if c.user_is_admin and not thing.locale:
+           <a style="padding-left: 1ex" href="javascript:void(0)" 
+              onclick="return edit_trans('${digest}')">
+             edit
+           </a>
+         %endif
+         <button type="submit" id="post" 
+                 name="bttn_num" value="${i}" class="btn">save</button>
+      </h2>
+      %endif
+    <table style="border-spacing: 5px">
+    %endif
+    ${s.render()}
+    %endfor
+  </table>
+<form>
+
+
+<%def name="statusbar(fraction, width = 100)">
+<% 
+   color = 'red' 
+   if fraction > .3: color = 'orangered'
+   if fraction > .6: color = 'yellow'
+   if fraction > .9: color = 'green'
+   if fraction == 1.: color = 'blue'
+ %>
+<div style="width:${width}px; height:10px; border: 1px solid black">
+<div style="width:${int(fraction*width)}px; height:10px; background-color:${color}"></div>
+</div> 
+</%def>

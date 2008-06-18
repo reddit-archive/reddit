@@ -1,0 +1,280 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%! 
+   from r2.lib.template_helpers import reddit_link 
+   from r2.lib.strings import strings
+%>
+
+${self.RenderPrintable()}
+
+<%def name="admintagline()">
+  %if thing.show_spam:
+      <li><b>[
+        %if c.user_is_admin:
+          ${"auto" if thing.autobanned else ""}banned by ${thing.banner}
+        %elif thing.moderator_banned and thing.banner:
+          ${strings.banned_by % thing.banner}
+        %else:
+          ${_("banned")}
+        %endif
+      ]</li></b>
+  %elif thing.show_reports:
+      <li><b>[
+        ${strings.reports % thing.reported}
+      ]</b></li>
+  %endif  
+</%def>
+
+<%def name="RenderPrintable()">
+<% fullname = thing._fullname %>
+<% cls = thing.lookups[0].__class__.__name__.lower() %>
+<%
+   if thing.show_spam:
+     rowclass = thing.rowstyle + " spam"
+   elif thing.show_reports:
+     rowclass = thing.rowstyle + " reported"
+   else:
+     rowclass = thing.rowstyle
+ %>
+<div id="thingrow_${fullname}" class="${rowclass} ${cls}" $display>
+  <p id="pre_${fullname}">
+    ${self.ParentDiv()}
+  </p>
+  ${self.numcol()}
+  ${self.midcol()}
+  <div id="entry_${fullname}" class="entry">
+    ${self.entry()}
+  </div>
+  ${self.Child()}
+  <div class="clearleft"><!--IE6sux--></div>
+</div>
+<div class="clearleft"><!--IE6sux--></div>
+</%def>
+
+<%def name="buttons()">
+<% fullname = thing._fullname %>
+%if thing.can_ban:
+  %if thing.show_spam:
+    <li>
+      ${state_button("unban", fullname, _("unban"), \
+      "return change_state(this, 'unban');", _("unbanned"))}
+    </li>
+  %else:
+    <li>
+      ${state_button("ban", fullname, _("ban"), \
+      "return change_state(this, 'ban');", _("banned"))}
+    </li>
+    %endif
+  %if thing.show_reports:
+    <li>
+    ${state_button("ignore", fullname, _("ignore"), \
+    "return change_state(this, 'ignore');", _("ignored"))}
+    </li>
+  %endif
+%endif
+</%def>
+
+<%def name="delete_or_report_buttons(delete=True, report=True)">
+<% fullname = thing._fullname %>
+%if c.user_is_loggedin:
+  %if (not thing.author or thing.author.name != c.user.name) and report:
+    <li>
+      ${yes_no_button("report", fullname, _("report"), \
+      "return deletetoggle(this, $ListClass.report);",\
+      _("reported"), clicked=thing.report_made)}
+    </li>
+  %endif
+  %if (not thing.author or thing.author.name == c.user.name) and delete:
+    <li>
+      ${yes_no_button("delete", fullname, _("delete"), \
+      "return deletetoggle(this, $ListClass.del);",\
+      _("deleted"))}
+    </li>
+  %endif
+%endif
+</%def>
+
+
+<%def name="ParentDiv()">
+</%def>
+
+<%def name="numcol()">
+</%def>
+
+<%def name="entry()">
+</%def>
+
+<%def name="Child(display=True, render_hook=True)">
+<div id="child_${thing._fullname}" class="child"
+     ${(not display and "style='display:none'" or "")}>
+  %if render_hook:
+    $child
+  %endif
+</div>
+</%def>
+
+<%def name="author(friend = False, gray = False)" buffered="True">
+  %if thing.deleted and not c.user_is_admin:
+    [deleted]
+  %else:
+  %if thing.author._deleted:
+    <span>[deleted]</span>
+  %else:
+    <%
+       author = thing.author
+       author_cls = "author"
+       if friend:
+          author_cls += " friend"
+       elif gray:
+          author_cls += " gray"
+       name = websafe(author.name)
+       href = unsafe('href="/user/%s/"' % name)
+       if c.user_is_admin: name += " (%d)" % (author.link_karma)
+    %>
+    <a class="${author_cls}" ${href}>${name}</a>
+ %endif
+%endif
+</%def>
+
+
+<%def name="arrow(this, dir, mod)">
+<% 
+   _type = "up" if dir > 0 else "down"
+   _class = _type + ("mod" if mod else "")
+   fullname = this._fullname
+%>
+  <div id="${_type}_${fullname}" class="arrow ${_class}" 
+       %if c.user_is_loggedin:
+         onclick="mod('${fullname}', ${dir}, '$votehash')"
+       %else:
+         onclick="showcover(true, 'vote_${fullname}')"
+       %endif
+       >
+  </div>
+</%def>
+
+
+
+<%def name="score(this, likes=None, inline=True, label = True, _id = True)">
+<%
+   tag = "span" if inline else "div"
+   _class = "" if likes is None else "likes" if likes else "dislikes"
+   _id = ("id='score_%s'" % this._fullname) if _id else ""
+
+   # figure out alterna-points
+   score = this.score
+   base_score = score - 1 if likes else score if likes is None else score + 1
+   base_score = [base_score + x for x in range(-1, 2)];
+   
+ %>
+  <${tag} class="score ${_class}" ${_id}>
+    ${thing.score_fmt(this.score)}
+  </${tag}>
+  <script type="text/javascript">
+    vl['${this._fullname}'] = ['${thing.score_fmt(base_score[0])}',
+                               '${thing.score_fmt(base_score[1])}', 
+                               '${thing.score_fmt(base_score[2])}' ];
+  </script>
+</%def>
+
+
+<%def name="midcol(display=True)">
+  <div id="arrows_${thing._fullname}" class="midcol" 
+       ${not display and "style='display:none'" or ''}>
+    ${self.arrow(thing, 1, thing.likes)}
+    ${self.arrow(thing, 0, thing.likes == False)}
+  </div>
+</%def>
+
+##
+##
+##
+### originally in statebuttons
+<%def name="state_button(name, fullname, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', **kw)">
+  <% 
+   tag = "%s_%s" % (name, fullname) 
+  %>
+  <%def name="_link()" buffered="True">
+    <a href="/" class="${a_class}" onclick="${onclick}" 
+       id="${tag.replace('/','_')}_a">${title}</a>
+  </%def>
+  <%
+     link = _link()
+     if fmt:
+         link = fmt % {fmt_param: link}
+         link = link.replace("\n", " ").replace(" <", "&#32;<").replace("> ", ">&#32;")
+   %>   
+
+  %if clicked:
+    ${executed}
+  %else:
+    <form action="/post/${name}" method="post" class="state-button">
+        <input type="hidden" name="executed" value="${executed}" />
+        <input type="hidden" name="id" value="${fullname}" />
+        %for key, value in kw.iteritems():
+          <input type="hidden" name="${key}" value="${value}" />
+        %endfor
+        <span>
+          ${unsafe(link)}
+        </span>
+    </form>
+  %endif
+</%def>
+
+
+<%def name="yes_no_button(name, fullname, title, onclick, executed, clicked=False, **kw)">
+${state_button(name, fullname, title, onclick, executed, 
+               yes=_('yes'), no=_('no'), question=_('are you sure?'), 
+               clicked=clicked, **kw)}
+</%def>
+
+<%def name="simple_button(name, fullname, title, nameFunc=None)">
+<a id="${nameFunc}_a_${fullname}" class="" \
+   href="javascript:${nameFunc}('${fullname}')">\
+  ${title}</a>
+</%def>
+
+<%def name="tags(**kw)">
+%for k, v in kw.iteritems():
+%if v is not None:
+${k.strip('_')}="${v}" \
+%endif
+%endfor
+</%def>
+
+
+### originally in commentbutton
+<%def name="comment_button(name, fullname, title, num, link,\
+            a_class='', newwindow = False)">
+  <% cls = "" if num == 0 else "comments" %>
+  <a href="${reddit_link(link, url = True)}" 
+     id="${name}_${fullname}" class="${a_class} ${cls}" 
+     target="${'_blank' if newwindow else '_parent'}" >
+    %if num > 0:
+      ${strings.number_label % (num,title)}\
+    %else:
+      ${title}\
+    %endif
+  </a>
+</%def>
+

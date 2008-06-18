@@ -1,0 +1,257 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.filters import keep_space
+%>
+<%namespace file="utils.html" import="error_field, language_tool"/>
+
+<script type="text/javascript">
+function update_title() {
+  var name_field = $("name");
+  var title_field = $("title");
+  if (title_field.value == "") {
+    title_field.value = name_field.value;
+  }
+}
+</script>
+
+<%def name="radio_type(name, text)">
+  <% full_name = "type_" + name %>
+  <tr>
+    <td class="nowrap nopadding">
+      <input name="type" id="${full_name}" type="radio"
+             value="${name}" class="nomargin"
+             %if thing.site and name == thing.site.type \
+                 or not thing.site and name == "public":
+             checked="checked"
+             %endif
+             />
+      <label for="${full_name}">${name}</label>
+    </td>
+    <td class="leftpad nopadding"><span class="gray">${text}</span></td>
+  </tr>
+</%def>
+ 
+  %if thing.site:
+    <h1>${_("manage your reddit")}</h1>
+  %else:
+    %if thing.name:
+      <p class="infobar">
+        ${_("that subreddit doesn't exist, but you can create it here.")}</p>
+    %endif
+    <h1>${_("create a reddit")}</h1>
+  %endif
+
+  <form class="pretty-form sr-form" action="/post/site_admin" method="post" 
+        onsubmit="return post_form(this, 'site_admin')">
+    %if thing.site:
+      <input type="hidden" name="sr" value="${thing.site._fullname}"/>
+    %endif
+    <table>
+      <tr>
+        <th>
+          <label for="name">${_("name")}</label>
+        </th>
+        <td>
+          %if thing.site:
+            <b id="name">${thing.site.name}</b>
+          %else:
+            <input type="text" name="name" id="name" class="text"
+                   value="${thing.name}"
+                   onchange="update_title()"/>
+          %endif
+        </td>
+        <td id="note_name">
+          %if not thing.site:
+            ${error_field("SUBREDDIT_EXISTS", "span")}
+            ${error_field("BAD_SR_NAME", "span")}
+            <span class="gray" id="example_name">
+              ${_("no spaces, e.g. slashdot")}
+            </span>
+          %endif
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="title">${_("title")}</label>
+        </th>
+        <td>
+          %if thing.site:
+            <input id="title" type="text" name="title" class="text"
+                   value="${thing.site.title}"/>
+          %else:
+            <input id="title" type="text" name="title" class="text" />
+          %endif
+        </td>
+        <td id="note_title">
+          ${error_field("NO_TITLE", "span")}
+          ${error_field("TITLE_TOO_LONG", "span")}
+          %if not thing.site:
+            <span class="gray" id="example_title">
+              ${_("e.g. slashdot: news for nerds, stuff that matters")}
+            </span>
+          %endif
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="description">${_("description")}</label>
+        </th>
+        <td>
+          <textarea id="description" name="description"
+                    rows="5" cols="30" class="text">
+            %if thing.site:
+              ${keep_space(thing.site.description or '')}
+            %endif
+          </textarea>
+        </td>
+        <td id="note_description">
+          ${error_field("DESC_TOO_LONG", "span")}
+        </td>
+      </tr>
+      %if c.user_is_admin:
+      <tr>
+        <th>
+          <label for="firsttext">${_("first text")}</label>
+        </th>
+        <td>
+          <textarea name="firsttext" rows="5" cols="30" class="text">
+          %if thing.site:
+          ${thing.site.firsttext or ''}
+          %endif
+          </textarea>
+        </td>
+        <td id="note_firsttext">
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="staticdir">${_("static directory")}</label>
+        </th>
+        <td>
+          %if thing.site:
+          <input type="text" name="staticdir" class="text" 
+                 value="${thing.site.static_path or ''}"/>
+          %else:
+          <input type="text" name="staticdir" class="text" />
+          %endif
+        </td>
+        <td id="note_staticdirfile"></td>
+      </tr>
+      <tr>
+        <th>
+          <label for="headerfile">${_("headerfile")}</label>
+        </th>
+        <td>
+          %if thing.site:
+          <input type="text" name="headerfile" class="text" 
+                 value="${thing.site.header or ''}"/>
+          %else:
+          <input type="text" name="headerfile" class="text" />
+          %endif
+        </td>
+        <td id="note_headerfile"></td>
+      </tr>
+      <tr>
+        <th>
+          <label for="stylesheet">${_("style sheet")}</label>
+        </th>
+        <td>
+          %if thing.site:
+          <input type="text" name="stylesheet" class="text" 
+                 value="${thing.site.stylesheet or ''}"/>
+          %else:
+          <input type="text" name="stylesheet" class="text" />
+          %endif
+        </td>
+        <td id="note_stylesheetfile"></td>
+      </tr>
+      <tr>
+        <th>
+          <label for="adfile">${_("ad file")}</label>
+        </th>
+        <td>
+          %if thing.site:
+          <input type="text" name="ad_file" class="text" 
+                 value="${thing.site.ad_file or ''}"/>
+          %else:
+          <input type="text" name="ad_file" class="text" />
+          %endif
+        </td>
+        <td id="note_ad_file"></td>
+      </tr>
+      %endif
+      <tr>
+        <th>
+          <label for="lang">${_("language")}</label>
+        </th>
+        <td>
+          <%
+             default_lang = thing.site and thing.site.lang or c.lang or ''
+             default_lang = default_lang.split('-')[0]
+             default_lang = 'en' if len(default_lang) != 2 else default_lang
+           %>
+          ${language_tool(all_langs = True, default_lang = default_lang)}
+        </td>
+      </tr>
+  
+      <tr>
+        <th>
+          <label>${_("type")}</label>
+        </th>
+        <td colspan="2">
+           <table>
+           ${radio_type(_("public"), _("anyone can view and submit"))}
+           ${radio_type(_("restricted"), _("anyone can view, but only contributors can submit"))}
+           ${radio_type(_("private"), _("only contributors can view and submit"))}
+           </table>
+        </td>
+        <td id="note_type">${error_field("INVALID_SUBREDDIT_TYPE", "span")}</td>
+      </tr>
+  
+      <tr>
+        <th><label>${_("age")}</label></th>
+        <td colspan="2">
+          <input class="nomargin" type="checkbox" name="over_18" id="over_18"
+                 ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
+          <label for="over_18">${_("viewers must be over eighteen years old")}</label>
+        </td>
+      </tr>
+  
+      <tr>
+        <th>
+        </th>
+        <td colspan="2">
+          %if thing.site:
+          <button name="edit" type="submit">${_("update")}</button>
+          %else:
+          <button name="create" type="submit">${_("create")}</button>
+          %endif
+          &#32;
+          <span id="status" class="error"></span>
+          ${error_field("RATELIMIT", "span")}
+        </td>
+        <td id="note_create"></td>
+      </tr>
+    </table>
+  </form>

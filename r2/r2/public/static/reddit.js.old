@@ -1,0 +1,833 @@
+// COPYRIGHT Redbrick Solutions Inc. 2005-2006 ALL RIGHT RESERVED
+window.onload = init;
+
+var upm = "arrow upmod";
+var upr = "arrow up";
+var downm = "arrow downmod";
+var downr = "arrow down";
+
+var HIGHROW;
+
+var style = 'reddit';
+
+function hide () {for (i = 0; i < arguments.length; i++) {var e = $(arguments[i]); if (e) e.style.display = "none";}}
+function show () {for (i = 0; i < arguments.length; i++) {var e = $(arguments[i]); if (e) e.style.display = "";}}
+
+function AuthenticatedAction(id, uh, action, more) {
+    if(more) { more = "&" + more; }
+    else { more = ''; }
+    new Ajax.Request('/ajax', {parameters: ("action=" + action + 
+                                            "&id=" + id + 
+                                            "&uh=" + uh 
+                                            + more)});
+}
+
+
+function init() {
+    //preload images
+    if (!logged) {
+        if (!readCookie("reddit_first")) show("infobar")
+        createCookie("reddit_first", "first", 999999)
+        return;   
+    }
+}
+
+function updateMods() {
+    var mods = readCookie("mod");
+    if (mods) {
+        mods = mods.split(':');
+        for (var i = 0; i < mods.length; i++) setMod(mods[i], mods[++i]);
+    }
+}
+
+function setMod(id, c) {
+    if (id && c) {
+        var up = document.getElementById("up_" + id);
+        var down = document.getElementById("down_" + id);
+        if (c == "u") {
+            if (down.className == downm) setPoints(id, 2);
+            else setPoints(id, 1);
+            up.className = upm;
+            down.className = downr;
+        }
+        else if (c == "d") {
+            if (up.className == upm) { setPoints(id, -2); }
+            else setPoints(id, -1);
+            up.className = upr;
+            down.className = downm;
+        }
+        else if (c == "r") {
+            if (up.className == upm) { setPoints(id, -1); }
+            else setPoints(id, 1);
+            up.className = upr;
+            down.className = downr;
+        }
+    }
+}
+
+function setPoints(id, c) {
+    if (logged) {
+        var points = $("score_" + id);
+        if (points) {
+            var score = parseInt(points.innerHTML);
+            var score = score + c;
+            var pointtext = " point";
+            if (score != 1 && score != -1) pointtext += "s";
+
+            if (style=='reddit') {
+                points.innerHTML = score + pointtext;
+                points.className = "little highlight";
+            }
+            else if (style == 'blog1') {
+                points.innerHTML = score + pointtext;
+            }
+            else if (style == 'blog2') {
+                points.innerHTML = score;
+                $('pointtext').innerHTML = pointtext
+            }
+            else if (style == 'blog3') {
+                points.innerHTML = score;
+            }
+        }
+    }
+}
+
+function setClick(id) {
+    if (id && logged) {
+        var title = $("title_" + id);
+        if (title) title.className = "title loggedin click";
+    }
+}
+
+function setModCookie(id, c) {
+    if (logged) createCookie("mod", readCookie("mod") + id + ":" + c + ":");
+}
+
+function setClickCookie(id) {
+    if (logged) createCookie("click", readCookie("click") + id + ":");
+}
+
+function setHideCookie(id) {
+    if (logged) createCookie("hide", readCookie("hide") + id + ":");
+}
+
+function vpass(pass) {
+    var passre = new RegExp(".{3,20}");
+    return passre.exec(pass);
+}
+
+function vuser(user) {
+    var nameRE = new RegExp("^[A-Za-z0-9-_]{3,20}$");
+    return nameRE.exec(user);
+}
+
+function login(f) {
+    op = f.op.value;
+    paras = f.getElementsByTagName("p");
+    for (x=0; x < paras.length; x++) {
+        if (paras[x].className == "error") {
+            e = paras[x];
+            break;
+        }
+    }
+ 
+    e.innerHTML = "";
+    if (!vuser(f.user.value)) {
+        e.innerHTML = "invalid username";
+        return false;
+    }
+    if (!vpass(f.passwd.value)) {
+        e.innerHTML = "invalid password";
+        return false;
+    }
+    if (op == "reg" && f.passwd.value != f.passwd2.value) {
+        e.innerHTML = "passwords don't match";
+        return false;
+    }
+    
+    if (Ajax.getTransport()) {
+        params = new Array("ajax=1&op=", op,
+                           "&user=", f.user.value,
+                           "&passwd=", encodeURIComponent(f.passwd.value),
+                           "&rem=", f.rem.value);
+        params = params.join("");
+        completefn = function(r) {
+            var errorcode = r.responseText;
+            if (errorcode && errorcode.length > 0) {
+                errorcode = parseInt(errorcode);
+                if (errorcode == 0) window.location.reload(true)
+                else if (errorcode == 1) e.innerHTML = "invalid login";
+                else if (errorcode == 2) e.innerHTML = "that username is not available";
+            }
+        }
+        new Ajax.Request('/login', {method: "post", parameters: params, onComplete: completefn}); 
+        return false;
+    }
+    else return true; 
+}
+
+function logout() {$("outform").submit()}
+
+// this is now broken :(
+function removeSiteDom(id) {
+    var row = $("site_" + id);
+    var pre = $("pre_" + id);
+    if (row) {
+        var rowNum = row.rowIndex;
+        var table = row.parentNode;
+        table.deleteRow(rowNum);
+    }
+    if (pre) {
+        var rowNum = pre.rowIndex;
+        var table = pre.parentNode;
+        table.deleteRow(rowNum);
+    }
+}
+
+function friend(action, name, link) {
+    if (action == 'delete') var text = document.createTextNode('removed');
+    else var text = document.createTextNode('added');
+    var parent = link.parentNode;
+    parent.replaceChild(text, link);
+    new Ajax.Request('/prefs/friends', {method: 'post', parameters: "ajax=1&action="+action+"&name="+name});
+    return false;
+}
+
+function hideSite(id, uh) {
+    setHideCookie(id);
+    removeSiteDom(id);
+    AuthenticatedAction(id, uh, 'hide');
+}
+
+function unhideSite(id, uh) {
+    setHideCookie(id);
+    removeSiteDom(id);
+    AuthenticatedAction(id, uh, 'unhide');
+}
+
+function deletetoggle(link, type) {
+    var parent = link.parentNode;
+    link.blur();
+
+    var areyousure = document.createElement('span');
+    areyousure.className = 'error';
+    areyousure.innerHTML = 'are you sure? ';
+    parent.insertBefore(areyousure, link);
+
+    var slash = document.createTextNode(' / ');
+    parent.appendChild(slash);
+
+    var no = document.createElement('a');
+    no.ays = areyousure;
+    no.className = 'bylink'
+    no.innerHTML = 'no';
+    no.href='#';
+    var oldtext = link.innerHTML
+    no.onclick = function() {return delete_no(areyousure, link, slash, no, oldtext)}
+    parent.appendChild(no);
+
+    if (type == 'delete') {
+        link.onclick = function() {return delete_yes(parent)}
+    }
+    else {
+        link.onclick = function() {return report_yes(areyousure, link, slash, no, oldtext)}
+    }
+
+    link.innerHTML = 'yes';
+
+    return false;
+}
+
+function delete_yes(form) {
+    var id = _id(form);
+    uh = form.uh.value;
+    params = new Array("id=", id, "&uh=" + uh);
+    params = params.join("");
+    new Ajax.Request('/delete', {method: "post", 
+                parameters: params, 
+                onComplete: commentUpdateWorker(id)});
+    return false;
+}
+
+function delete_no(areyousure, yeslink, slash, nolink, oldtext) {
+    areyousure.parentNode.removeChild(areyousure);
+    slash.parentNode.removeChild(slash);
+    nolink.parentNode.removeChild(nolink);
+    yeslink.innerHTML = oldtext;
+    yeslink.onclick = function() {return deletetoggle(yeslink)};
+    return false;
+};
+
+function report_yes(areyousure, yeslink, slash, nolink) {
+    var form = areyousure.parentNode
+    var id = _id(form);
+    areyousure.parentNode.removeChild(areyousure);
+    slash.parentNode.removeChild(slash);
+    nolink.parentNode.removeChild(nolink);
+
+    var reported = document.createElement('span');
+    reported.innerHTML = 'reported';
+    form.replaceChild(reported, yeslink);
+
+    new Ajax.Request('/report', {parameters: "id="+id});
+    return false;
+}
+
+function mod(id, uc, uh) {
+    if (!logged) {
+        offset = window.pageYOffset||document.body.scrollTop||document.documentElement.scrollTop;
+
+        $('cover').style.top = offset + 'px';
+        $('loginpopup').style.top = 100 + offset + 'px';
+        show("cover", "loginpopup");
+
+        return;
+    }
+
+    var up = document.getElementById("up_" + id);
+    var down = document.getElementById("down_" + id);
+    var dir;
+
+    if (uc && up.className == upm || !uc && down.className == downm) {
+        setMod(id, "r");
+        setModCookie(id, "r");
+        dir = 0;
+    }
+    else if (uc) {
+        setMod(id, "u");
+        setModCookie(id, "u");
+        dir = 1;
+    }
+    else if (!uc) {
+        setMod(id,"d");
+        setModCookie(id, "d");
+        dir = -1;
+    }
+
+    if (logged)  AuthenticatedAction(id, uh, 'mod', "dir=" + dir);
+}
+
+function save(id, uh) {
+    var save = document.getElementById("save_" + id);
+    save.innerHTML = " saved";
+    AuthenticatedAction(id, uh, 'save');
+}
+
+function unsave(id, uh) {
+    setHideCookie(id);
+    removeSiteDom(id);
+    AuthenticatedAction(id, uh, 'unsave');
+}
+
+function showcomment(id) {
+    show('up_'+id, 'down_'+id, 'reddit_commenttable_' + id);
+    hide('reddit_below_threshold_'+id);
+    return false;
+}
+
+function highlight (id) {
+    var last = document.getElementById("titlerow_" + HIGHROW);
+    if (last) last.className = "titleNorm";
+    var row = document.getElementById("titlerow_" + id);
+    if (row) {
+        HIGHROW = id;
+        row.className = "highRow";
+    }
+}
+
+function clearTitle(box) {
+    box.value = "";
+    box.style.color = "black";
+    box.onfocus = null;
+    box.rows = 7;
+}
+
+function chkfeedback() {
+    var name = $("name").value;
+    var nameerr = document.getElementById("nameerr");
+    if(name == "") {
+      nameerr.innerHTML = "please enter a name";
+      return false;
+    }
+}
+
+function chksub() {
+    $("status").innerHTML = ""
+    if ($("url")) {
+        var url = $("url")
+        var urlerr = $("urlerr");
+        var cap = $('captcha');
+        var caperr =$('caperr');
+
+        if (url.value == "" || url.style.color=="gray") {
+          urlerr.innerHTML = "please enter a url";
+          return false;
+        }
+        else {urlerr.innerHTML = ""};
+
+        if (cap && (cap.value=='' || cap.style.color=='gray')) {
+          caperr.innerHTML = 'type the letters';
+          return false;
+        }
+        else if (caperr) {caperr.innerHTML=''}
+        
+        function fixtitle(r) {
+          var t = r.responseText;
+          if (t && t.length > 0) {
+            var el = $("title");
+            el.focus();
+            el.value = t;
+            $("status").innerHTML = "";
+          }
+          else {
+            $("status").innerHTML = "";
+            $("titleerr").innerHTML = "no title could be found";
+          }
+        }
+
+        $("titleerr").innerHTML = "";
+        var title = $("title");
+        if ((title.value.length == 0 || title.style.color == "gray") && url.value != "self") {
+            $("status").innerHTML = "fetching title...";
+            new Ajax.Request('/ajax', {method: "get",
+                  parameters: "action=checkurl&url="+encodeURIComponent(url.value),
+                  oncomplete: fixtitle});
+            return false;
+        }
+    }
+
+    var to = $("to");
+    var from = $("from");
+    if (to.value.length > 0 && from.value.length == 0) {
+        $("status").innerHTML = "you must enter a from address to send recommendations";
+        return false;
+    }
+}
+
+function chksrbox() {
+    sr = $("sr");
+    if (sr.value != "none" && !sr.options[sr.selectedIndex].getAttribute("nocross")) {
+        $("cross").disabled="";
+        $("srlbl").style.color="black"
+    }
+    else {
+        $("cross").disabled="disabled";
+        $("srlbl").style.color="gray"
+    }
+}
+
+function focusother() {document.getElementById("radother").checked = true;}
+
+function rwt(el, name, prefix) {
+    if (!prefix) prefix="";
+    setClickCookie(name);
+    setClick(name);
+    el.href=prefix+"/goto?id=" + name;
+    el.onmousedown="";
+    return true;
+}
+
+
+function re_id_node(node, id) {
+    if(node.id) { node.id += id; }
+    var children = node.childNodes;
+    for(var i = 0; i < children.length; i++) {
+        re_id_node(children[i], id);
+    }
+}
+
+function viola(id, region_name) {
+    newNode = $(region_name + id);
+    if (newNode == null) {
+        var newNode = $(region_name).cloneNode(true);
+        re_id_node(newNode, id);
+        var cNode = $("child_" + id);
+        if (cNode.firstChild) {
+            cNode.insertBefore(newNode, cNode.firstChild);
+        } else {
+            cNode.appendChild(newNode);
+        }
+    }
+    return newNode;
+}    
+
+function rowoninline(el) {el.className = "collapseinline d";}
+function rowoffinline(el) {el.className = "collapseinline r";}
+
+function shareon(id) {
+    show(viola(id, 'share_'));
+    $('sharetoggle_' + id).className = 'collapseinline d';
+    $('sharelink_' + id).href= "javascript: shareoff('" + id + "');";
+    $('sharelink_' + id).blur();
+    $("to_" + id).focus();
+}
+
+function _id(obj) {
+    if(obj && obj.id) {
+        id = obj.id.split('_');
+        id = id[id.length-1];
+        if(id == null) {return '';}
+        return id;
+    }
+    return obj;
+}
+function shareoff(id) {
+    id = _id(id);
+    var box = $("share_" + id);
+    if(box == null) {return false;}
+    $('sharetoggle_' + id).className = 'collapseinline r';
+    $('sharelink_' + id).href= "javascript: shareon('" + id + "');";
+    hide(box);
+}
+
+function childrenoff(id) {
+    hide("child_" + id);
+    $('childrentoggle_' + id).className = 'collapseinline r';
+    var n = $("childrenlink_" + id);
+    n.href = "javascript:childrenon('" + id + "');";
+    n.blur();
+        
+}
+
+function childrenon(id) {
+    show("child_" + id);
+    $('childrentoggle_' + id).className = 'collapseinline d';
+    var n = $("childrenlink_" + id);
+    n.href = "javascript:childrenoff('" + id + "');";
+    n.blur();
+}
+
+function editcomment(id)  {
+    // hide the existing comment
+    var entry = $("entry_" + id);
+    var up = $("up_" + id);
+    var down = $("down_" + id);
+    hide(entry, up, down);
+
+    // copy a comment box into slot of the comment
+    var newNode = $("samplecomment_").cloneNode(true);
+    re_id_node(newNode, id);
+    entry.parentNode.insertBefore(newNode, $('child_' + id));
+
+    // make the active button "edit" not "submit"
+    hide($("comment_submit_" + id));
+    show($("comment_edit_" + id));
+    $("commentform_" + id).replace.value = "yes";
+
+    // show the new box and set focus
+    var box = $("comment_reply_" + id);
+    clearTitle(box);
+    box.value = $("edit_body_" + id).innerHTML;
+    show(newNode);
+    box.focus();
+}
+
+function reply(id) {
+    hide($('reply_' + id));
+    var newNode = viola(id, 'samplecomment_');
+
+    // make the active button "submit" not "edit"
+    show($("comment_submit_" + id));
+    hide($("comment_edit_" + id));
+
+    if($("commentform_" + id).replace.value != "") {
+        $("commentform_" + id).replace.value = "";
+        clearTitle($("comment_reply_" + id));
+    }
+
+    show(newNode);
+    $("comment_reply_" + id).focus();
+}
+
+function cancelReply(canceler) {
+    id = _id(canceler);
+    show($('reply_' + id));
+
+    var entry = $("entry_" + id);
+    var up = $("up_" + id);
+    var down = $("down_" + id);
+    show(entry, up, down);
+
+    var box = $("samplecomment_" + id);
+    if(box == null) {return false;}
+    hide(box);
+}
+
+
+
+function chkshare(form) {
+    return false;
+}
+
+
+function  XMLparse(text) {
+    if (typeof DOMParser != "undefined") {
+        // Mozilla, Firefox, and related browsers
+        return (new DOMParser()).parseFromString(text, "application/xml");
+    }
+    else if (typeof ActiveXObject != "undefined") {
+        var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+        xmlDoc.async="false";
+        xmlDoc.loadXML(text);
+        return xmlDoc;                   // Return it
+    }
+    else {
+        // As a last resort, try loading the document from a data: URL
+        // This is supposed to work in Safari. Thanks to Manos Batsis and
+        // his Sarissa library (sarissa.sourceforge.net) for this technique.
+        var url = "data:text/xml;charset=utf-8," + encodeURIComponent(text);
+        var request = new XMLHttpRequest();
+        request.open("GET", url, false);
+        request.send(null);
+        return request.responseXML;
+    }
+};
+
+function printTags(doc) {
+    text = '( ';
+    if(doc.nodeName == "#text") {
+        text += '"' + doc.textContent + '"';
+    } else {
+        text += doc.nodeName + ' ';
+    }
+    var children = doc.childNodes;
+    for(var i = 0; i < children.length; i++) {
+        text += printTags(children[i]);
+    }
+    text += ')';
+    return text;
+}
+
+
+function commentInsertWorker(id, isRoot) {
+    completefn = function(r) {
+        var siteTable=$("siteTable_" + id);
+        var child = $('child_' + id);
+        var ta = $("comment_reply_" + id);
+        var listing_err = $("listing_error_" + id);
+        if(isRoot != 'root') {
+            var childToggle = $("childrentoggle_" + id);
+            if(childToggle) { show(childToggle); }
+            var commentBox = $('samplecomment_' + id);
+            hide(commentBox);
+            child.removeChild(commentBox);
+        }
+        else {
+            ta.value = '';
+        }
+        ta.blur();
+        if(r.status == 500) return;
+        if (listing_err) { hide(listing_err); }
+        
+        if (siteTable == null) {
+            siteTable = document.createElement("Table");
+            siteTable.id = "siteTable_" + id;
+            if(child.firstNode) {
+                child.insertBefore(siteTable, child.firstChild);
+            }
+            else {
+                child.appendChild(siteTable);
+            }
+        }
+        insertThing(siteTable, r.responseText, 0);
+    }
+    return completefn;
+}
+
+function commentUpdateWorker(id) {
+    completefn = function(r) {
+        if(r.status == 500) return;
+
+        var childdiv = $('child_' + id);
+        var thingrow = $('thingrow_'+id);
+        var pre = $('pre_' + id);
+        var siteTable = thingrow.parentNode;
+        if (childdiv) {
+            childdiv.parentNode.removeChild(childdiv);
+        }
+        var preRowIndex = 0;
+        hide(pre, thingrow, childdiv);
+
+        if(pre) { siteTable.deleteRow(preRowIndex = pre.rowIndex); }
+        if(thingrow) { siteTable.deleteRow(thingrow.rowIndex); }
+
+        var newChildHome;
+        if(r.responseText != '') {
+            insertThing(siteTable, r.responseText, preRowIndex);
+            newChildHome = $('child_' + id);
+        }
+        if(newChildHome) {
+            newChildHome.appendChild(childdiv);
+            show(childdiv);
+        } else {
+            if(siteTable.rows.length == 0) {
+                parent_id = _id(siteTable.parentNode);
+                var childToggle = $("childrentoggle_" + parent_id);
+                if(childToggle) {
+                    hide(childToggle);
+                }
+            }
+        }
+        
+    }
+    return completefn;
+}
+
+
+
+function chkcomment(form, isRoot) {
+    var id = _id(form);
+    if (! id) return false;
+    var ta = $("comment_reply_" + id);
+    var err = $("err_comment_" + id);
+
+    if (err.innerHTML != "") { err.innerHTML = ""; }
+    if (ta == null) {  return false; }
+    if (ta.style.color == "gray" || ta.value == "") {
+        err.innerHTML = "enter a comment";
+        ta.focus();
+        return false;
+    }
+    else if (ta.value.length > 10000) {
+        err.innerHTML = "comment is too long";
+        ta.focus();
+        return false;
+    }
+    else {
+        if (err.innerHTML != "") err.innerHTML = ""
+    }
+
+    uh = $('commentform_' + id).uh.value;
+    params = new Array("uh=", uh || '',
+                       "&parent=", id,
+                       "&comment=", ta.value);
+
+    params = params.join("");
+    if(form.replace.value != '') {
+        sc = $('samplecomment_' + id);
+        hide(sc);
+        sc.parentNode.removeChild(sc);
+        params += "&replace=true";
+        new Ajax.Request('/comment', {method: "post", 
+                    parameters: params, 
+                    onComplete: commentUpdateWorker(id)});
+    }
+    else {
+        new Ajax.Request('/comment', {method: "post", 
+                    parameters: params, 
+                    onComplete: commentInsertWorker(id, isRoot)});
+    }
+
+    show($('reply_' + id));
+    return false;
+}
+
+function insertThing(table, piece, position) {
+    var plower = piece.toLowerCase();
+    var start = 0;
+    var end = 0;
+    var trs = position
+    while(plower != '' && start >=0 && end >= 0) {
+        var res = nextTableTagRange(plower, 'tr');
+        start = res[0];
+        end = res[1];
+        if(start >=0 && end >= 0) {
+            var tdstart = 0;
+            var tdend = 0;
+            var TDs = piece.substring(start,end);
+            var TDslower = plower.substring(start,end);
+            var newRow = table.insertRow(trs);
+            var contentStart = TDs.indexOf('>')+1;
+            var header = parseHeader(TDs.substring(0, contentStart));
+            for(var i=0; i < header._list.length; i++) {
+                newRow[header._list[i]] = header[header._list[i]];
+            }
+            trs += 1;
+            var tds = 0;
+            while(TDslower != '' && tdstart >= 0 && tdend >= 0) {
+                res = nextTableTagRange(TDslower, 'td');
+                tdstart = res[0];
+                tdend = res[1];
+                if(tdstart >=0 && tdend >= 0) {
+                    var content = TDs.substring(tdstart, tdend);
+                    var contentStart = content.indexOf('>')+1;
+                    var header = parseHeader(content.substring(0, contentStart));
+                    var newCell = newRow.insertCell(tds);
+                    for(var i=0; i < header._list.length; i++) {
+                        newCell[header._list[i]] = header[header._list[i]];
+                    } 
+                    tds += 1;
+                    content = content.substring(contentStart, content.length);
+                    newCell.innerHTML = content;
+                    TDs = TDs.substring(tdend, TDs.length);
+                    TDslower = TDslower.substring(tdend, TDslower.length);
+                }
+            }
+            piece = piece.substring(end, piece.length);
+            plower = plower.substring(end, plower.length);
+        }
+    }
+}
+
+function strip(text) {
+    return text.replace(/^\W+/,'').replace(/\W+$/, '');
+}
+
+function parseHeader(foo) {
+    if( foo[0] == '<') foo = foo.substring(1, foo.length);
+    if( foo[foo.length-1] == '>') foo = foo.substring(0, foo.length-1);
+    var bits = foo.split('=');
+    var o = new Object();
+    o._list = new Array();
+    for(var i = 0; i < bits.length; i++) {
+        bits[i] = bits[i].split(' ');
+    }
+    for(var i = 1; i < bits.length; i++) {
+        var s1 = bits[i-1];
+        var key = s1[s1.length-1];
+        if(key == 'class') key = 'className';
+        if(key == 'rowspan') key = 'rowSpan';
+        if(key == 'valign') key = 'vAlign';
+        var s2 = bits[i];
+        var val = '';
+        if(i+1 == bits.length) { val = s2.join(' '); }
+        else { val = s2.slice(0, s2.length-1).join(' '); }
+        val = strip(val);
+        val = val.replace(/^"/, '').replace(/"$/,'');
+        val = val.replace(/^'/, '').replace(/'$/,'');
+        val = strip(val);
+        o[key] = val;
+        o._list.push(key);
+    }
+    return o;
+}
+
+function endTableTagPos(piece, tag) {
+    var nextTable = piece.indexOf('<table');
+    var nextTableEnd = piece.indexOf('</table');
+    var end = piece.indexOf('</' + tag);
+    if (end > nextTable && end < nextTableEnd) {
+        return nextTableEnd + 7 + endTableTagPos(piece.substring(nextTableEnd+7,
+                                                                 piece.length),
+                                                 tag);
+    }
+    return end;
+}
+
+function nextTableTagRange(piece, tag) {
+    
+    var start = piece.indexOf('<' + tag);
+    var end = endTableTagPos(piece, tag);
+    if(end < start) {
+        end =  start + endTableTagPos(piece.substring(start,
+                                                      piece.length),
+                                      tag);
+    }
+    return new Array(start, end);
+}
+        
+
+//cookie setting junk
+function createCookie(name,value,days){if (days){var date = new Date();date.setTime(date.getTime()+(days*24*60*60*1000));var expires="; expires="+date.toGMTString();}else expires="";document.cookie=name+"="+value+expires+"; path=/; domain=reddit.com";} 
+
+function readCookie(name){var nameEQ=name+"=";var ca=document.cookie.split(';');for(var i=0;i< ca.length;i++){var c =ca[i];while(c.charAt(0)==' ')c=c.substring(1,c.length);if(c.indexOf(nameEQ)==0)return c.substring(nameEQ.length,c.length);}return null;}

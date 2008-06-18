@@ -1,0 +1,118 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="plain_link, text_with_links, img_link, separator"/>
+
+<%def name="dropdown()">
+  <% css_class = str(thing.css_class) if thing.css_class else "" %>
+  %if thing:
+    %if thing.title and thing.selected:
+      <span class="dropdown-title ${css_class}">${thing.title}:&#32;</span>
+    %endif
+
+    <div class="dropdown ${css_class}"
+         ${"id='%s'" % thing._id if thing._id else ""}
+         onclick="open_menu(this)"
+         onmouseover="hover_open_menu(this)">
+ 
+      %if thing.selected:
+          <span class="selected">${thing.selected.selected_title()}</span>
+      %elif thing.title:
+          <span class="selected title">${thing.title}</span>
+      %endif
+      <div class="drop-choices">
+        %for option in thing:
+          %if option != thing.selected:
+            ${plain_link(option.title, option.path, _sr_path = option.sr_path,
+                         _class = "choice")}
+          %endif
+        %endfor
+      </div>
+    </div>
+  %endif
+</%def>
+
+
+<%def name="flatlist()">
+  %if thing:
+    <ul class="flat-list hover"
+        ${"id='%s'" % thing._id if thing._id else ""}>
+      %for i, option in enumerate(thing):
+        <%
+           ##option.title isn't the title, option.render() is the entire link
+           if option == thing.selected:
+             class_name = "class='selected'"
+             content = option.render(selected=True)
+           else:
+             class_name = ""
+             content = option.render()
+        %>
+        <li ${class_name}>
+          %if i > 0:
+            ${separator()}
+          %endif
+          ${content}
+        </li>
+      %endfor
+    </ul>
+  %endif
+</%def>
+
+
+<%def name="multicolumn()">
+  <% 
+     buttons = thing.options
+     l = len(buttons)/2
+     l = max(l, len(buttons) - l)
+     buttons = (buttons[:l], buttons[l:])
+   %>
+  %for b in buttons:
+    <ul class="hover">
+      %for i, option in enumerate(b):
+        <%
+           cls = "first" if i == 0 else ""
+         %>
+        %if option == thing.selected:
+          <li class="selected ${cls}">${option.selected_title()}</li>
+        %else:
+          <li class="${cls}">${option.render()}</li>
+        %endif
+      %endfor
+    </ul>
+  %endfor
+</%def>
+
+<%def name="tabmenu()">
+  %if thing:
+    <ul class="tabmenu"
+        ${"id='%s'" % thing._id if thing._id else ""}>
+      %for i, option in enumerate(thing):
+        <%
+           selected = (option == thing.selected)
+        %>
+        <li ${"class='selected'" if selected else ""}>
+          ${option.render(selected = selected)}
+        </li>
+      %endfor
+    </ul>
+  %endif
+</%def>

@@ -1,0 +1,132 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%! 
+   from r2.lib.template_helpers import reddit_link, static, join_urls, class_dict, path_info
+   from r2.lib.pages import SearchForm
+   from pylons import request
+%>
+<%inherit file="base.html"/>
+
+<%def name="Title()">
+  %if thing.title:
+    ${thing.title}
+  %else:
+    ${parent.Title()}
+  %endif
+</%def>
+
+<%def name="stylesheet()">
+  <% from r2.lib.template_helpers import static %>
+
+  %if c.lang_rtl:
+    <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
+          type="text/css" />
+    %if g.translator and request.get.get('css'):
+      <link rel="stylesheet" href="${request.get.get('css')}"
+            type="text/css" />
+    %endif
+    %if c.site.stylesheet_rtl:
+      <link rel="stylesheet" href="${static(c.site.stylesheet_rtl)}"
+            type="text/css" />
+    %endif
+  %else:
+    <link rel="stylesheet" href="${static(g.stylesheet)}" 
+          type="text/css" />
+    %if c.site.stylesheet:
+    <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
+          type="text/css" />
+    %endif
+  %endif
+
+  <link rel='shortcut icon' href="${static('favicon.ico')}"
+        type="image/x-icon" />
+  %if thing.extension_handling:
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="${reddit_link(join_urls(request.path,'.rss'), url=True)}" />
+  %endif
+</%def>
+
+<%def name="javascript()">
+  <% from r2.lib.template_helpers import static %>
+  <script src="${static('json.js')}" type="text/javascript"></script>
+  %if g.uncompressedJS:
+    <script src="${static('psrs.js')}"  type="text/javascript"></script>
+    <script src="${static('utils.js')}"  type="text/javascript"></script>
+    <script src="${static('animate.js')}"  type="text/javascript"></script>
+    <script src="${static('link.js')}"  type="text/javascript"></script>
+    <script src="${static('comments.js')}"  type="text/javascript"></script>
+    <script src="${static('subreddit.js')}"  type="text/javascript"></script>
+    <script src="${static('vote_piece.js')}"  type="text/javascript"></script>
+    <script src="${static('reddit_piece.js')}"  type="text/javascript"></script>
+    <script src="${static('organic.js')}"  type="text/javascript"></script>
+  %else:
+    <script src="${static('reddit.js')}"  type="text/javascript"></script>
+  %endif
+</%def>
+
+<%def name="javascript_run()">
+  var class_dict = ${class_dict()};
+  var where = ${path_info()};
+  window.onload = init;
+  window.onpageshow = function(evt) {
+    if (evt.persisted) init()
+  };
+  var _global_fetching_tag = '${_("fetching title...")}';
+  var _global_submitting_tag = '${_("submitting...")}';
+  var _global_loading_tag = '${_("loading...")}';
+
+</%def>
+
+<body onclick="close_menus()">
+  <%include file="redditheader.html"/>
+
+  %if thing.show_sidebar:
+    <div class="side">
+      ${sidebar(content = thing.rightbox())}
+    </div>
+  %endif
+  
+  %if thing.content:
+    <div class="fixedwidth"><!--IE6sux--></div>
+    <div class="clearleft"><!--IE6sux--></div>
+    <div class="content">
+      ${thing.content().render()}
+    </div>
+  %endif
+  
+  <%include file="redditfooter.html"/>
+</body>
+
+<%def name="sidebar(content=None)">
+  %if content:
+    ${content.render()}
+  %endif
+
+  %if c.user_is_admin:
+    <%include file="admin_rightbox.html"/>
+  %else:
+    <%include file="ads.html"/>
+  %endif
+</%def>
+
+

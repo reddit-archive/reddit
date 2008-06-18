@@ -1,0 +1,154 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%inherit file="base.html"/>
+<%namespace file="utils.html" import="error_field, plain_link"/>
+<%namespace file="printable.html" import="state_button, comment_button" />
+<% from r2.lib.template_helpers import static %>
+
+<%def name="javascript()">
+<% from r2.lib.template_helpers import static %>
+<script src="${static('json.js')}" type="text/javascript"></script>
+%if g.uncompressedJS:
+<script src="${static('psrs.js')}"  type="text/javascript"></script>
+<script src="${static('utils.js')}"  type="text/javascript"></script>
+<script src="${static('vote_piece.js')}"  type="text/javascript"></script>
+<script src="${static('frame_piece.js')}"  type="text/javascript"></script>
+%else:
+<script src="${static('frame.js')}"  type="text/javascript"></script>
+%endif
+</%def>
+
+
+<%def name="stylesheet()">
+<% from r2.lib.template_helpers import static %>
+<link rel='stylesheet' href="${static(g.stylesheet)}" type="text/css" />
+%if c.site.stylesheet:
+  <link rel='stylesheet' href="${static(c.site.stylesheet)}" type="text/css" />
+%endif
+</%def>
+
+
+
+<% fullname = thing.link._fullname %>
+<% upstyle = "mod" if thing.link.likes else "" %>
+<% downstyle = "mod" if thing.link.likes is False else "" %>
+  <table style="height: 30px; border-bottom: 1px solid black" width="100%">
+    <tr id="killed" style="display: none" class="menu">
+      <td nowrap="nowrap"> after reloading, this frame will not be shown again. click <a href="javascript:unkill()"> here</a> to undo.</td>
+      <td width="100%" />
+    </tr>
+    <tr id="main">
+      <td>
+        <a target="_parent" href="/">
+          <img style="border: none" src="${static('littlehead.png')}" alt="reddit.com" title="reddit.com" />
+        </a>
+      </td>
+      <td>
+        <div id="up_${fullname}" class="arrow up${upstyle}" onclick="javascript:frame_mod('${fullname}', 1)" style="width: 15px"> </div>
+      </td>
+      <td style="cursor: pointer" onclick="javascript:frame_mod('${fullname}', 1)">${_("like")}</td>
+      <td nowrap="nowrap">
+        <div id="down_${fullname}" class="arrow down${downstyle}" 
+             onclick="javascript:frame_mod('${fullname}', 0)"  style="width: 15px"/>
+      </td>
+      <td style="cursor: pointer" 
+          onclick="javascript:frame_mod('${fullname}', 0)">${_("dislike")}</td>
+      <td id="frame_left" style="padding-left: 10px" class="menu" nowrap="nowrap">
+        %if c.user_is_loggedin:
+        %if thing.link.saved:
+        ${state_button("unsave", fullname, _("unsave"), \
+        "return change_state(this, 'unsave');", _("unsaved"), a_class='')}
+        %else:
+        ${state_button("save", fullname, _("save"), \
+        "return change_state(this, 'save');", _("saved"), a_class = '')}
+        %endif
+        %endif
+        |
+<% 
+   if not thing.link.num_comments:
+       # generates "comment" the imperative verb
+       com_label = _("comment {verb}")
+   else:
+       # generates "XX comments" as a noun
+       com_label = ungettext("comment", "comments", thing.link.num_comments)
+ %>
+        ${comment_button("comment", fullname, com_label,
+        thing.link.num_comments,
+        thing.link.permalink, a_class='')} 
+        </td>
+      <td id="logerr" style="text-align: right" class="error" width="50%">
+        ${error_field("WRONG_PASSWORD_login", "span")}
+      </td>
+      <td id="frame_middle" nowrap="nowrap" style="display: none">
+        <% op = 'frame' %>
+        <form id="logform" onsubmit="return post_form(this, 'login');" 
+              method="post" action="/login">
+        <input type="hidden" name="op" value="${op}" />
+        <input id="usrtxt" type="text" style="color: gray" 
+               class="txt" size="10"
+               value="user" autocomplete="off" 
+               onfocus="swapel('usrtxt', 'user')" />
+        <input id="user" name="user_login" 
+               type="text" class="txt" size="10" />
+        <input id="passtxt" type="text" style="color: gray" 
+               class="txt" size="10"
+               value="password" autocomplete="off" 
+               onfocus="swapel('passtxt', 'passwd')" />
+        <input id="passwd" name="passwd_login" 
+               type="password" class="txt" size="10" />
+        <input id="rem" name="rem" type="checkbox" />
+        <label id="remlbl" for="rem">
+          keep me logged in</label>
+        <button id="logbtn" class="btn" type="submit">login</button>
+        <button class="btn" onclick="return cancel();"> cancel</button>
+        </form>
+      </td>
+      %if c.user_is_loggedin:
+      <td id="logmenu" class="menu" nowrap="nowrap">
+        <a href="/user/${c.user.name}" target="_parent">${c.user.name}</a> 
+        (${c.user.safe_karma}) | <a href="/logout">${_("logout")}</a> 
+      </td>
+      %else:
+      <td id="menu" class="menu" nowrap="nowrap">
+        <a href="javascript:showlogin()">${_("login")}</a>|
+        <a href="/login">${_("register")}</a>
+      </td>
+      %endif
+      <td id="buttons" nowrap="nowrap">
+        <a target="_parent" href="/help/">
+          <img style="border: none" src="${static('help.png')}" 
+               alt="help" title="help" />
+        </a>&nbsp;
+        <a target="_parent" href="${thing.link.url}">
+          <img style="border: none" 
+               src="${static('breakout.png')}" 
+               alt="open without frame" title="open without frame" />
+        </a>&nbsp;
+        <img style="cursor: pointer" 
+             src="${static('kill.png')}" 
+             alt="permanently close this frame" 
+             title="permanently close this frame" 
+             onclick="kill()" />
+      </td>
+    </tr>
+  </table>

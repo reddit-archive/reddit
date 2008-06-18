@@ -1,0 +1,51 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="printable.html" import="state_button"/>
+
+<%def name="help_or_hide(name, help)">
+  <div class="corner-help">
+    <a href="javascript:void(0)" onclick="show('${name}-help'); return false;">
+      ${_("what's this?")}
+    </a>
+  </div>
+  <div id="${name}-help" style="display:none" class="helpcover" >
+    <p>
+      ${help}
+    </p>
+    ${state_button("leave" + name, name, _("here"),
+              "return deletetoggle(this, disable_ui);", "",
+              fmt = _("Click %(here)s to disable this feature."), 
+              fmt_param = "here",
+              question = _("are you sure?"),
+              yes = _("yes"), no = _("no"))}
+    ${state_button("nvm" + name, name, _("here"),
+              "hide('%s-help'); return false;" % name, "",
+              fmt = _("Click %(here)s to close help."),
+              fmt_param = "here")}
+  </div>
+  <div id="${name}-gone" style="display:none" >
+    <p style="margin-left:5px">
+      ${_("The new link area will no longer appear for you. To re-enable it, visit your preferences.")}
+    </p>
+  </div>
+</%def>

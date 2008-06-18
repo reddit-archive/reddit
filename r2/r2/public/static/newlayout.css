@@ -1,0 +1,524 @@
+body {
+    font: normal small verdana, arial, helvetica, sans-serif;
+    margin: 0px;
+    background-color: white;
+}
+
+html,body { height: 100% }
+
+
+/* html element defaults */
+
+h1 { font-size: 18px; font-weight: normal; }
+
+h2 { color: #336699; font-size: 13px; }
+h2 a { text-decoration: none }
+h2 a:visited { color: #336699 }
+h2 a:hover { text-decoration: underline }
+
+h3 { margin: 0px; }
+
+li { margin: 0px; }
+
+table { border-collapse: collapse; }
+a img { border:none }
+
+a { text-decoration: none }
+
+div.autosize { display: table; width: 1px}
+div.autosize > div { display: table-cell; }
+
+input.btn { background-color:#e9e9e9; border: 1px solid #336699;}
+input.txt {
+    background-color:#f7f7f7;
+    border: 1px solid #336699; 
+    margin: 0px;
+}
+input.check { padding: 0px; 
+              margin: 0px;}
+
+/* forms */
+
+.iform th { text-align: right; color: black; font-weight: normal; text-transform: lowercase; }
+.iform button {background-color:#e9e9e9; border: 1px solid #336699; vertical-align: bottom}
+.wrong {color: red; font-weight: normal}
+
+.subform input.text { width: 25em }
+.subform textarea.text { width: 25em }
+.subform label { margin: 0 5px 0 5px }
+.subform td { padding: 0px 5px 5px 0}
+.subform td.nopadding { padding: 0px}
+
+.nowrap { white-space: nowrap; }
+.leftpad { padding-left: 1em }
+.nomargin { margin: 0px }
+.nopadding { padding: 0px }
+
+
+
+/* */
+
+:-moz-any-link:focus { outline: none }
+
+a img { border: none; }
+a { color: #336699; text-decoration: none }
+.hover a:hover { text-decoration: underline }
+
+.flat-list {
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
+    display: inline;
+ }
+
+.flat-list li { display: inline; 
+                padding: 0px; 
+                padding-left: 5px;
+                }
+.flat-list .first { padding-left: 0px; }
+
+.flat-list a {padding-right: 5px; }
+.flat-list form {display: inline; padding: 0px; margin: 0px; }
+
+.flat-list .selected { color: orangered;
+                       font-weight: bold; 
+                       padding-right: 5px;
+                       }
+
+.pref-lang { font-weight: bold; }
+.pref { font-weight: bold; }
+
+#header { z-index: 2; 
+          width: 100%;
+          position: absolute;
+          top: 0px; 
+          }
+
+
+#header-img {
+    height: 40px;
+    width: 120px;
+    float: left;
+}
+
+#header-top {
+    height: 15px;
+    text-align: right;
+    font-size: smaller;
+}
+
+#header-top li {
+    border-left: 2px solid #D3D3D3;
+}
+#header-top .first {
+    border-left: none; 
+}
+
+#header-bottom { height: 25px;
+                 border-left: 3px solid gray;
+                 margin-left: 125px;
+                 }
+
+#mail { padding-right: 5px; 
+        vertical-align: middle; }
+
+#user { margin: 0px 5px 0px 5px; color: gray; 
+        border-right: 2px solid #D3D3D3;
+        padding-right: 5px; 
+        }
+
+#pagename,
+#reddit { float: left; 
+          margin-left: 0px;
+          border: 1px solid white;
+          padding-top: 0px; 
+          }
+#reddit .selected a { color: black; }
+#reddit .selected a:hover { color: black;
+                            text-decoration: underline; }
+
+#reddit:hover { border: 1px outset black }
+
+#pagename,
+#reddit .selected { font-weight: bold;
+                    font-variant: small-caps; 
+                    font-size: large;
+                    }
+
+.dropdown { 
+    margin-left: 10px;
+    float: left;
+    border: 1px solid gray;
+    padding: 3px 0px 5px 0px;
+    background: white url(/static/droparrow.png) no-repeat scroll top right;
+    height: 1em;
+    overflow: hidden;
+    cursor: default;
+    z-index: 2;
+    position: relative;
+}
+
+
+.dropdown:hover {
+                  border: 1px outset black; 
+                  overflow: auto;
+                  height: auto;
+                  padding-bottom: 0px;
+                  }
+
+.dropdown ul {
+    list-style-type: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+.dropdown li { padding: 0px 5px 0px 5px; 
+               cursor: pointer}
+
+.dropdown li:hover {
+    background-color: #c7def7;
+}
+
+.dropdown .selected {
+                      padding-left: 5px;
+                      font-weight: bold;
+                      margin-right: 25px; 
+}
+
+.cover {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    background-color: gray;
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+    z-index: 1000;
+}
+
+.popup {
+    position: absolute;
+    left: 10%;
+    float: center;
+    background-color: white;
+    top: 100px;
+    width: 80%;
+    text-align: left;
+    z-index: 1001;
+    padding: 10px;
+}
+
+#time { float: left; 
+        margin-left: 10px;
+        padding-top: 5px; }
+
+#time li {
+    color: #d3d3d3;
+    padding: 0;
+    font-size: smaller;
+}
+
+#time a {
+    padding: 0px 1ex 0px 0px;
+    text-decoration: underline;
+}
+
+#time a:hover { color: orangered }
+
+
+#search { float: right;
+          margin-top: 3px;
+          margin-bottom: 0px;
+          position: relative;
+          background: white url(/static/find.png) no-repeat scroll center right;
+          }
+
+#search input { height: 15px;
+                margin-right: 19px;
+                border: 1px solid #d3d3d3;
+                width: 25ex;
+                color: gray;
+                padding-left: 3px;
+                }
+
+.main { 
+        z-index: 1;
+        padding-top: 50px; 
+        margin-left: 7px;
+}
+
+.main .notoolbar { padding-top: 0px; }
+
+.side { border-top: 1px solid #d3d3d3;
+        width: 305px; 
+        float: right; 
+        background-color: white; }
+
+.sidebox {
+           border-left: 2px solid #d3d3d3;
+           margin-bottom: 10px;
+           padding-left: 5px;
+           clear: both;
+}
+
+.sidebox ul { padding-left: 10px;  
+              list-style-type: none;
+              float: left;
+              margin-top: 0px;
+              margin-bottom: 0px; 
+              }
+
+.sidebox a { font-size: small;
+             padding-right: 15px; 
+             color: #336699}
+
+.subredditbox { border-left: 1px solid #d3d3d3; 
+                padding-left: 0px;
+                }
+
+.subredditbox .morelink { padding-top: 10px; 
+                          clear: left;
+                          }
+
+.subredditbox .morelink a { background-color: lightgray; 
+                            color: #4d4d4d; 
+                            padding: 0 5px 1px 5px; 
+                            margin-top: 10px; 
+                            font-size: x-small; 
+                            }
+
+.sidebox .head { font-weight: bold;
+                 margin-left: 10px;
+                 padding-top: 10px; 
+                 margin-top: 0px; 
+                 margin-bottom: 10px; 
+                 }
+
+
+
+.arrow {
+    margin: 2px 0px 0px 0px;
+    width: 15px;
+    height: 14px;
+    display: block;
+    cursor: pointer;
+}
+
+.arrow.upmod { 
+  background: url(/static/aupmod.png); 
+  background-repeat: no-repeat }
+.arrow.downmod { 
+  background: url(/static/adownmod.png); 
+  background-repeat: no-repeat }
+.arrow.up { 
+  background: url(/static/aupgray.png); 
+  background-repeat: no-repeat }
+.arrow.down { 
+  background: url(/static/adowngray.png); 
+  background-repeat: no-repeat }
+
+.numbercol { font-size: medium; 
+             text-align: right; 
+             color: darkgray; 
+             padding-right: 2px; width: 0%;
+             float: left;
+             }
+
+.midcol { float: left; padding-right: 2px; }
+
+
+.titlerow { margin: 0px 10px 0px 0px; }
+
+.title { font-size: medium; color: blue; padding: 0px}
+.title:visited { color: #551a8b }
+.title.click { color: #551a8b } 
+
+.title.loggedin { color: blue }
+.title.loggedin:visited { color: #551a8b }
+.title.loggedin.click { color: #551a8b } 
+.title.loggedin.click:visited { color: #551a8b }
+
+
+.buttons { color: gray; 
+           padding-top: 5px
+           }
+
+.buttons a { text-decoration: underline; 
+             color: #336699;
+             padding-right: 5px}
+
+
+.sitetable { list-style-type: none;
+             padding: 0px;
+             margin: 0px;
+              }
+
+.toolbar { width: 100%; 
+           position: absolute; 
+           padding-top: 10px; }
+
+
+#profbar { border-bottom: 2px solid #336699; }
+
+#profbar .selected, 
+#profbar a          { padding-left: 5px;
+                      padding-right: 5px; }
+
+#profbar a:hover,
+#profbar .selected { background: #336699;
+                     color: white; 
+                     text-decoration: none; }
+#profbar li { padding: 0 }
+
+
+.infobar {
+    background-color: #f6e69f;
+    padding: 0px 10px 0px 10px;
+    margin: 5px;
+}
+.md { max-width: 60em; overflow: auto; }
+
+.link { margin-bottom: 10px; }
+.link p { margin-top: 0px;
+          margin-bottom: 1px; }
+
+.comment { margin-bottom: 10px; }
+.comment p { margin-top: 0px;
+             margin-bottom: 1px; }
+.comment .author { font-weight: bold; }
+
+.subreddit { margin-bottom: 10px; }
+.subreddit p { margin-top: 0px;
+               margin-bottom: 1px; }
+.subreddit .description {font-size: small; }
+.subreddit .key {display: block;}
+
+.commentbody { font-size: small }
+.commentbody blockquote { border-left: 2px solid #336699; padding-left: 4px; 
+                          margin-top: 5px; margin-left: 5px;
+                          margin-bottom:  5px; margin-right: 15px; }
+.commentbody p,
+.commentbody ul,
+.commentbody ol { margin-top: 5px; margin-bottom: 5px}
+.commentbody > * { margin-bottom: 0px }
+.commentbody img { display: none }
+.commentbody.border { background-color: #ffffcc; padding-left: 5px}
+
+
+
+
+.entry { overflow: hidden; 
+         font-size: x-small;
+         padding-left: 3px; 
+         margin-top: 0px; 
+         padding-top: 0px; 
+         }
+
+.clear {clear: left}
+
+.link-subreddit { color: gray; text-decoration: none; padding-left: 5px; }
+
+.domain  { color: gray; padding-left: 5px}
+
+.tagline {font-size: x-small; color: gray; }
+.tagline a {color: #336699; text-decoration: none; }
+.tagline a.friend {color: orangered }
+.tagline a:hover { text-decoration: underline }
+
+.buttons 
+
+
+
+.sponsored .entry  { margin-right: 20px; 
+                     }
+
+.sponsored .titlerow { background: #fcfcfc;
+                       padding: 10px; 
+                       border-top: #BCBCBC solid 1px;
+                       border-left: #BCBCBC solid 1px;
+                       border-bottom: #E0E0E0 solid 1px;
+                       border-right: #E0E0E0 solid 1px;
+                       }
+
+.sponsored .asterisk { 
+                       width: 15px; 
+                       background: url(/static/asterisk.png); 
+                       background-repeat: no-repeat }
+
+
+.footer { width: 100%; 
+          text-align: center; 
+          clear: both; 
+          padding-top: 1em; 
+          color: gray; 
+          }
+
+.footer p { font-size: smaller; }
+
+.wired a {text-decoration: underline; 
+           color: #336699;
+           font-size: smaller;
+           padding-left: 5px;
+           padding-right: 5px; }
+.wired img {vertical-align: middle;}
+
+
+
+.login-form-side { margin: 0px; 
+                   border:2px solid #73A1CA;
+                   border-collapse:collapse;                   
+                   }
+.login-form-side div { padding: 5px; }
+.login-form-side div.error { padding: 0px; }
+.login-form-side input { vertical-align: middle}
+.login-form-side input.logtxt { color:black; width: 135px}
+.login-form-side label { padding-right: 5px; 
+                         white-space: nowrap; }
+.login-form-side a {padding-right: 5px; }
+.login-form-side button { margin: 0px; 
+                          padding: 2px 3px 2px 3px;
+                          float: right; 
+                          } 
+
+.little {font-size: smaller}
+.btn { 
+       background-color:#e9e9e9; 
+       border: 1px solid #336699; 
+       margin: 0 5px 0 5px; 
+       }
+
+.error { color: red }
+
+
+
+#ad-frame { border: 0px; overflow: hidden; height: 300px; width: 300px}
+
+
+/* search */
+
+#searchmenu { margin: 10px 0 0px 0; padding: 2px 0 0 0; 
+              border-bottom: 2px solid #336699; 
+              background-color: whitesmoke}
+
+#searchmenu .searchlabel { background-color: white; 
+                           padding: 2px 15px 0px 0px; 
+                           font-weight: bold; color: #336699 }
+
+#searchmenu .searchtime { font-weight: bold; 
+                          display: inline; 
+                          width: 305px; }
+                            
+
+.searchparams { margin: 5px 20px 5px 20px
+                }
+.searchparams .labels {text-align: right;
+                        margin-left: 10px; }
+
+.searchpane { margin-left: 20px }
+.searchpane h2 { margin-bottom: 3px }
+.searchpane p { margin-bottom: 5px; margin-top:3px; }
+.searchpane a { color: #336699 }
+
+
+.advsearchtoggle { margin-bottom: 5px; margin-top:3px; }

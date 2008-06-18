@@ -1,0 +1,166 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%! from r2.models.subreddit import Default %>
+
+<%inherit  file="printable.html"/>
+ 
+<%def name="numcol()">
+  <% num = thing.num %>
+  <span class="rank" style="width:$numcolmargin;" 
+       id="num_${thing._fullname}">
+    %if thing.top_link:
+      <a class="star" href="/toplinks">
+    %endif
+      ##placeholder for the number
+      $num
+    %if thing.top_link:
+      </a>
+    %endif
+  </span>
+</%def>
+
+<%def name="entry()">
+<% fullname = thing._fullname %>
+<p class="title" id="titlerow_${fullname}">
+  <a id="title_${fullname}" 
+     onmousedown="setClick(this)"
+     class="title ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
+     %if c.user.pref_frame:
+       href="/goto?id=${thing._id36}"  
+     %else:
+       href="${thing.url}" 
+     %endif
+     %if thing.score <= 1:
+       rel="nofollow"
+     %endif
+     %if c.user.pref_newwindow:
+       target="_blank" 
+     %endif
+     >
+        ${thing.title} 
+     </a>
+    &#32;
+    ${unsafe(self.domain())}
+</p>
+<p class="tagline">
+  ${self.tagline()}
+</p>
+<ul class="flat-list buttons">
+  ${self.buttons()}
+  ${self.admintagline()}
+</ul>
+</%def>
+
+<%def name="subreddit()" buffered="True">
+  <a href="${thing.subreddit.path}" class="hover">
+    ${thing.subreddit.name}
+  </a>
+  <script type="text/javascript">
+    sr['${thing._fullname}'] = '${thing.subreddit._fullname}';
+  </script>
+</%def>
+
+<%def name="midcol(display=True)">
+  <div id="arrows_${thing._fullname}" class="midcol" style="width:$midcolmargin;" 
+       ${not display and "style='display:none'" or ''}>
+    ${self.arrow(thing, 1, thing.likes)}
+    <% from r2.lib.utils import timeago %>
+    %if thing._date < timeago("2 hours") or c.user == thing.author or c.user_is_admin:
+      ${self.score(thing, thing.likes, inline=False, label = False)}
+    %else:
+      <div class="score">&bull;</div> 
+    %endif                  
+    ${self.arrow(thing, 0, thing.likes == False)}
+  </div>
+</%def>
+
+
+<%def name="domain()" buffered="True">
+  <span class="domain">
+    %if c.user_is_admin:
+      (<a href="/admin/info?domain=${thing.domain}">${thing.domain}</a>)
+    %else:
+      (${thing.domain})
+    %endif
+  </span> 
+</%def>
+
+<%def name="tagline()">
+  <% 
+    from r2.lib.utils import timeago
+    from r2.models import FakeSubreddit
+ 
+    if isinstance(c.site, FakeSubreddit):
+      taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s") 
+    else:
+      taglinetext = _("submitted %(when)s ago by %(author)s") 
+    taglinetext = taglinetext.replace(" ", "&#32;")
+  %>
+  ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
+                              when = thing.timesince, 
+                              author= self.author(friend = thing.friend)))}
+</%def>
+
+<%def name="child()">
+</%def>
+
+
+<%def name="buttons()">
+  <% fullname = thing._fullname %>
+  <% 
+     if not thing.num_comments:
+       # generates "comment" the imperative verb
+       com_label = _("comment {verb}")
+     else:
+       # generates "XX comments" as a noun
+         com_label = ungettext("comment", "comments", thing.num_comments)
+     %>
+  <li class="first">
+  ${parent.comment_button("comment", fullname, com_label,
+                          thing.num_comments, thing.permalink,
+                          newwindow = c.user.pref_newwindow)}
+  </li>
+  %if c.user_is_loggedin:
+    <li>
+    %if thing.saved:
+       ${parent.state_button("unsave", fullname, _("unsave"), \
+          "return change_state(this, 'unsave');", _("unsaved"))}
+    %else:
+       ${parent.state_button("save", fullname, _("save"), \
+          "return change_state(this, 'save');", _("saved"))}
+    %endif
+    </li><li>
+    %if thing.hidden:
+      ${parent.state_button("unhide", fullname, _("unhide"), \
+        "return change_w_callback(this, $ListClass.unhide);", _("unhidden"))}
+    %else:
+      ${parent.state_button("hide", fullname, _("hide"), \
+        "return change_w_callback(this, $ListClass.hide);", _("hidden"))}
+    %endif
+    </li>
+  %endif
+  ${parent.delete_or_report_buttons()}
+  ${parent.buttons()}
+</%def>
+
+

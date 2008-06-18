@@ -1,0 +1,136 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.strings import strings
+ %>
+<%namespace file="captcha.html" import="captchagen"/>
+<%namespace file="utils.html" import="error_field, plain_link, text_with_links, img_link"/>
+
+## default content 
+%if c.user_is_loggedin:
+  <p class="error">${_("you are logged in. go use the site!")}</p>
+%else:
+  ${login_panel(user_reg = thing.user_reg, user_login = thing.user_login, 
+                dest=thing.dest)}
+  <script type="text/javascript">
+    new_captcha();
+  </script>
+%endif
+
+<%def name="login_form(register=False, user='', dest='')">
+  <% op = "reg" if register else "login" %>
+  <form id="login_${op}" method="post" action="/login" onsubmit="return chklogin(this);">
+    <input type="hidden" name="reason" value="" />
+    <input type="hidden" name="op" value="${op}" />
+    %if dest:
+      <input type="hidden" name="dest" value="${dest}" />
+    %endif
+    <div>
+      <ul>
+        <li>
+          <label for="user_${op}">${_('username')}:</label>
+          <input value="${user}" name="user_${op}" id="user_${op}" 
+                 type="text" maxlength="20"/>
+          %if register:
+            ${error_field("BAD_USERNAME_" + op, kind="span")}
+            ${error_field("USERNAME_TAKEN_" + op, kind="span")}
+          %endif
+        </li>
+      %if register:
+        <li>
+          <label for="email_${op}">${_('email')}: &nbsp;<i>(${_('optional')})</i></label>
+          <input value="" name="email_${op}" id="email_${op}" 
+                 type="text" maxlength="50"/>
+        </li>
+      %endif
+        <li>
+          <label for="passwd_${op}">${_('password')}:</label>
+          <input id="passwd_${op}" 
+                 name="passwd_${op}" type="password" maxlength="20"/>
+          %if register:
+            ${error_field("BAD_PASSWORD_" + op, kind="span")}
+          %else:
+            ${error_field("WRONG_PASSWORD_" + op, kind="span")}
+          %endif
+        </li>
+      %if register:
+        <li>
+          <label for="passwd2_${op}">${_('verify password')}:</label>
+          <input name="passwd2_${op}" id="passwd2_${op}" 
+                 type="password" maxlength="20" />
+          ${error_field("BAD_PASSWORD_MATCH_" + op, kind="span")}
+        </li>
+        <li>
+          ${captchagen('', tabulate=True, label=False, size=30)}
+          ${error_field("DRACONIAN_" + op, kind="span")}
+          ${error_field("RATELIMIT_" + op, kind="span")}
+        </li>
+      %endif
+      <li>
+        <input type="checkbox" name="rem" id="rem_${op}" />
+        <label for="rem_${op}" class="remember">${_('remember me')}</label>
+      </li>
+    </ul>
+    %if register:
+      <p class="legal">
+        ${text_with_links(strings.legal, 
+          user_agreement = (_("User Agreement"), "http://reddit.com/help/useragreement"),
+          privacy_policy = (_("Privacy Policy"), "http://reddit.com/help/privacypolicy"))}
+      </p>
+    %endif
+      <p>
+        <button type="submit">
+          ${register and _("create account") or _("login")}
+        </button>
+        <span id='status_${op}' class='error'></span>
+      </p>
+    </div>
+  </form>
+</%def>
+
+
+<%def name="login_panel(user_reg = '', user_login = '', dest='')">
+  <div class="loginform divide">
+    <h3>${_("create a new account")}</h3>
+    <p class="tagline">
+      ${_("all it takes is a username and password")}
+    </p>
+    ${login_form(register=True, user=user_reg, dest=dest)}
+    <p>
+      <span class="orangered">
+        ${_("is it really that easy? only one way to find out...")}
+      </span>
+    </p>
+  </div>
+  <div class="loginform">
+    <h3>${_("login")}</h3>
+    <p class="tagline">
+      ${_("already have an account and just want to login?")}
+    </p>
+    ${login_form(user = user_login, dest = dest)}
+    <p>
+      ${plain_link(_("forgot your password?"), "/password")}
+    </p>
+  </div>
+  <div class="clear"></div>
+</%def>

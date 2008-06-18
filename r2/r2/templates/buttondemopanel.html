@@ -1,0 +1,72 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<% domain = "www.reddit.com" if c.domain == "reddit.com" else c.domain %>
+
+<%def name="drawrequired(type)">
+<script type="text/javascript" \
+        src="http://${domain}/button.js?t=${type}"></script>
+</%def>
+
+<%def name="drawrequiredtext(type)" filter="h">
+<script type="text/javascript" src="http://${domain}/button.js?t=${type}"></script>
+</%def>
+
+<%def name="drawoptional(url, title)">
+${"<script>reddit_url='%s'</script>" % url}<br/>
+${"<script>reddit_title='%s'</script>" % title}
+</%def>
+
+<div class="instructions">
+  <h1>${_("put %(site)s buttons on your site") % dict(site=c.site.name)}</h1>
+    <p>${_("copy and paste the code for the style of button you would like\
+      into your site.  The green lines are\
+      optional.")}</p>
+    
+    <p>${_("if the site has not been submitted yet, clicking on the button\
+      will take the user to a reddit submit page, otherwise it takes\
+      them to the comments page.")}</p>
+    
+    <p>${_("if you want to specify the URL that should be submitted to\
+      reddit, include the reddit_url line.  if you don't include that\
+      line, then the current page's URL will be used.")}</p>
+    
+    <p>${_("if you want to specify the title that should be submitted to\
+      reddit, include the reddit_title line.  if you don't include that\
+      line, then the user will have to specify a title when they\
+      submit.")}</p>
+  
+  ${buttondemo(1)}
+  ${buttondemo(2)}
+  ${buttondemo(3)}
+</div>
+  
+<%def name="buttondemo(type)">
+  <h2>${_("style %(number)s") % dict(number=type)}</h2>
+  
+  ${drawrequired(type)}
+  <pre>
+  <span class="optional">${drawoptional('[URL]', '[TITLE]')}</span><br/>
+  ${drawrequiredtext(type)}
+  </pre>
+</%def>
+

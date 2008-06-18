@@ -1,0 +1,199 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.controllers.errors import errors
+   from r2.lib.filters import spaceCompress
+   from r2.lib.template_helpers import reddit_link
+   from r2.lib.utils import cols
+%>
+<%def name="tags(**kw)">
+%for k, v in kw.iteritems():
+  %if v:
+    ${k.strip('_')}="${v}" \
+  %endif
+%endfor
+</%def>
+
+## override the link _class so that we can globally update
+## the way links are handled (if need be)
+<%def name="_a(**kw)">
+<a ${tags(**kw)}>${caller.body()}</a>
+</%def>
+
+<%def name="_a_buffered(body, **kw)" buffered="True">
+<a ${tags(**kw)}>${body}</a>
+</%def>
+
+
+
+## thing should be global
+<%def name="_id(arg)">
+id="${arg}_${thing and thing._fullname or ''}"
+</%def>
+
+<%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
+<form class="pretty-form ${_class or ''}" onsubmit="${onsubmit or ''}" 
+      action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}">
+  %if c.user_is_loggedin:
+  <input type="hidden" name="uh" value="${c.user.modhash()}" />
+  %endif
+  %for key, value in params.iteritems():
+  <input type="hidden" name="${key}" value="${value}" />
+  %endfor
+  ${caller.body()}
+</form>
+</%def>
+
+<%def name="first_defined(*kw)">
+%if not kw or kw[0] == UNDEFINED or not kw[0]:
+${first_defined(kw[1:])}
+%endif
+</%def>
+
+<%def name="error_field(name, kind='p')">
+<${kind} id="${name}" class="error">
+%if errors.get(name) in c.errors:
+${errors.get(name).message}
+%endif
+</${kind}>
+</%def>
+
+<%def name="success_field(success_str, kind='p', successful=False, hide='')">
+<${kind} id="success" class="error">
+  %if successful:
+  ${success_str}
+  %endif
+</${kind}>
+<script type="text/javascript">
+  function fire_success() {
+  $('success').innerHTML = "${success_str}";
+  %if hide:
+  hide(document.getElementById('${hide}'));
+  %endif
+  }
+</script>
+</%def>
+
+<%def name="img_link(title, img, path, _id='', **kw)">
+  <%call expr="_a(href=path, _id=_id, **kw)">
+    <img src="${img}" alt="${title}"/>
+  </%call>
+</%def>
+
+<%def name="plain_link(title, path, _sr_path = True, fmt='', **kw)">
+  <% link = _a_buffered(title, href=reddit_link(path, url=_sr_path), **kw) %>
+  ${unsafe((fmt % link) if fmt else link)}
+</%def>
+
+
+<%def name="text_with_links(txt, _sr_path = False, **kw)">
+<%
+   from r2.lib.filters import _force_unicode
+   for key, (text, href) in kw.iteritems():
+      kw[key]=spaceCompress(capture(plain_link, text, href, _sr_path=_sr_path))
+   txt = _force_unicode(txt) % kw
+   txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")
+
+%>
+${unsafe(txt)}
+</%def>
+
+<%def name="text_with_js(txt, _sr_path = False, **kw)">
+<%
+   for key, (text, js) in kw.iteritems():
+      kw[key]=spaceCompress(capture(plain_link, text, "#", 
+                onclick = js, _sr_path=_sr_path))
+   txt = txt % kw
+   txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")
+
+%>
+${unsafe(txt)}
+</%def>
+
+
+<%def name="language_tool(name='lang', allow_blank = False, 
+                          default_lang = 'en',
+                          show_regions = False, 
+                          all_langs = False)">
+<% 
+   langs = g.all_languages if all_langs else g.languages 
+   if not show_regions:
+       langs = [x for x in langs if len(x) == 2]
+%>
+%if langs:
+<select id="${name}" name="${name}">
+  %if allow_blank:
+  <option ${(not default_lang) and "selected='selected'" or ""}>
+  </option>
+  %endif
+  %for x in langs:
+  <option ${x == default_lang  and "selected='selected'" or ""}>
+    ${g.lang_name[x]} [${x}]
+  </option>
+  %endfor
+</select>
+%endif
+</%def>
+
+<%def name="language_checkboxes(default = 'all')">
+<%
+   all_checked, some_checked = "checked='checked'", "" 
+   if default != "all":
+     all_checked, some_checked = some_checked, all_checked
+%>
+<input type="radio" name="all-langs" id="all-langs" value="all"
+       onclick="clear_all(this)" ${all_checked}/>
+<label for="all-langs">${_("all languages")}</label>
+<br/>
+<input type="radio" name="all-langs" id="some-langs" value="some"
+       ${some_checked}/>
+<label for="some-langs">${_("some languages")}</label>
+<hr/>
+<table>
+<%
+   all_langs = [x for x in g.all_languages if len(x) == 2]
+ %>
+%for col in cols(all_langs, 3):
+  <tr>
+  %for lang in col:
+    <td style="padding-right: 15px; white-space: nowrap;">
+    <%
+       idname = "lang-" + lang
+       if default != "all" and lang in default:
+         checked = "checked='checked'"
+       else:
+         checked = ""
+    %>
+    <input type="checkbox" name="${idname}" id="${idname}"
+           onclick="check_some()" ${checked}/>
+    <label for="${idname}">${g.lang_name[lang]}</label>
+    </td>
+  %endfor
+  </tr>
+%endfor
+</table>
+</%def>
+
+<%def name="separator()">
+  <span class="separator">|</span>
+</%def>

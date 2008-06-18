@@ -1,0 +1,146 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
+   from r2.lib.utils import to36
+%>
+<%inherit file="comment_skeleton.html"/>
+
+#####################
+### specific fill-in functions for comment
+##################
+
+<%def name="midcol(display=True)">
+${parent.midcol(not thing.collapsed)}
+</%def>
+
+<%def name="ParentDiv()">
+  ${parent.ParentDiv()}
+  <a name="${thing._id36}" ></a>
+  %if c.profilepage:
+    %if thing.link: 
+      %if thing.link.title:
+        <a href="${thing.link.url}" class="title">
+          ${thing.link.title}
+        </a>
+      %else:
+          ${thing.link.url}
+      %endif
+    %endif
+  %endif
+</%def>
+
+<%def name="collapsed()">
+${parent.collapsed()}
+</%def>
+
+<%def name="tagline(collapse=False)">
+<% fullname = thing._fullname %>
+  %if not thing.deleted:
+     ${unsafe(self.author(friend=thing.friend, gray = collapse))}&#32;
+  %else:
+     <em>${_("comment deleted")}</em>&#32;
+  %endif
+  %if collapse and thing.collapsed and not thing.deleted:
+    ${_("comment score below threshold")}
+  %else:
+    %if not thing.deleted:
+       ${unsafe(self.score(thing, likes = thing.likes, _id = not collapse))}&#32;
+    %endif
+    ${thing.timesince} ${_("ago")}
+    %if thing.editted:
+      <em>*</em>&nbsp;
+    %endif
+  %endif
+  <a href="#" class="expand"
+     %if collapse:
+       onclick="return showcomment('${fullname}')">
+     %else:
+       onclick="return hidecomment('${fullname}')">
+     %endif
+     [${_("+") if collapse else _("-")}]
+  %if collapse:
+     (${thing.num_children} 
+      ${ungettext("child", "children", thing.num_children)})
+  %endif
+</a>
+
+</%def>
+
+<%def name="Child()">
+${parent.Child(not thing.collapsed)}
+</%def>
+
+<%def name="commentBody()">
+%if not thing.deleted:
+${unsafe(safemarkdown(thing.body))}
+%endif
+</%def>
+
+<%def name="commentText()">
+%if c.user == thing.author:
+${edit_comment_filter(thing.body)}
+%endif
+</%def>
+
+<%def name="arrows()">
+${parent.midcol()}
+</%def>
+
+
+<%def name="buttons()">
+  %if not thing.deleted:
+    <% fullname = thing._fullname %>
+    <li class="first">
+      ${parent.comment_button("permalink", fullname, _("permalink"), 0, 
+      thing.permalink)}
+    </li>
+    %if not c.profilepage:
+      %if thing.parent_permalink:
+        <li>
+          ${bylink_button("parent", _("parent"), thing.parent_permalink)}
+        </li>
+      %endif
+      %if c.user_is_loggedin and thing.author.name == c.user.name:
+        <li>
+          ${parent.simple_button("edit", fullname, _("edit"), "editcomment")}
+        </li>
+      %endif
+    %endif
+    ${parent.delete_or_report_buttons()}
+    ${parent.buttons()}
+    %if not c.profilepage \
+        and thing.subreddit.can_submit(c.user if c.user_is_loggedin else None):
+      <li>
+        ${parent.simple_button("reply", fullname, _("reply {verb}"), "reply")}
+      </li>
+    %endif
+  %endif
+  ${self.admintagline()}
+</%def>
+
+
+<%def name="bylink_button(name, title, link)">
+ <a id="${name}_${thing._fullname}" href="${link}" class="bylink">${title}</a>
+</%def>
+

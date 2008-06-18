@@ -1,0 +1,149 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="language_tool, language_checkboxes"/>
+
+<%def name="checkbox(text, name)">
+    <input name="${name}" id="${name}" type="checkbox"\
+               %if getattr(c.user, "pref_" + name):
+               checked="checked"\
+               %endif
+               />
+    <label for="${name}">${text}</label>
+</%def>
+
+<%def name="link_options()">
+  <select name="numsites" style="margin: 0 .5em 0 .5em">
+        %for x in [10, 25, 50, 100]:
+        <option ${x == c.user.pref_numsites and "selected='selected'" or ""}>${x}</option>
+        %endfor
+  </select>
+</%def>
+
+
+<%def name="num_input(s, name)">
+  <input type="text" size="4" maxlength="4" 
+         name="${name}" style="margin:  0 .5em 0 .5em"
+         value="${s if s is not None else ''}" />
+</%def>
+
+%if c.user_is_loggedin and thing.done:
+  <p class="error">${_("your preferences have been updated")}</p>
+%endif
+
+<form action="/post/options" method="post" class="pretty-form short-text">
+<input type="hidden" name="uh" value="${c.modhash}" />
+
+<table class="content preftable">
+  <tr class="prefrow">
+    <td class="prefleft">${_("interface language")}</td>
+    <td class="prefright">
+      ${language_tool(allow_blank = False, show_regions = True,
+                      default_lang = c.user.pref_lang)}
+      &#32;<span class="little gray hover">(*) ${_("incomplete")}
+        &#32;<a href="/feedback">${_("volunteer to translate")}</a></span>
+    </td>
+  </tr>
+  <tr class="prefrow">
+    <td class="prefleft">${_("content language")}</td>
+    <td class="prefright">
+      ${language_checkboxes(default = c.user.pref_content_langs)}
+    </td>
+  </tr>
+  %if c.user_is_loggedin:
+  <tr class="prefrow">
+    <td class="prefleft">${_("clicking options")}</td>
+    <td class="prefright">
+      ${checkbox(_("display links with a reddit toolbar"), "frame")}
+      <br/>
+      ${checkbox(_("open links in a new window"), "newwindow")}
+    </td>
+  </tr>
+  <tr class="prefrow">
+    <td class="prefleft">${_("link options")}</td>
+    <td class="prefright">
+      ${checkbox(_("show me new links on the front page"), "organic")}
+      <br/>
+      ${checkbox(_("compress the link display"), "compress")}
+      <br/>
+      ${checkbox(_("don't show links after i've liked them"), "hide_ups")}
+      <br/>
+      ${checkbox(_("don't show links after i've disliked them"), "hide_downs")}
+      <br/>
+      <%
+         # stuff I can soon delete:
+         _("display")
+         _("links at once")
+         _("don't show me sites with a score less than")
+         _("don't show me comments with a score less than")
+         _("comments by default")
+         %>
+      ${unsafe(_("display %(num)s links at once") % \
+      dict(num=capture(link_options)))}
+      <br/>
+      <% 
+         input = capture(num_input, c.user.pref_min_link_score,
+         'min_link_score')
+         %>
+      ${unsafe(_("don't show me sites with a score less than %(num)s") % dict(num = input))}
+      &#32;<span class="little gray">${_("(blank for none)")}</span>
+    </td>
+  </tr>
+  <tr class="prefrow">
+    <td class="prefleft">${_("comment options")}</td>
+    <td class="prefright">
+    <% 
+       input = capture(num_input, c.user.pref_min_comment_score,
+                       'min_comment_score')
+       %>
+    ${unsafe(_("don't show me comments with a score less than %(num)s") % dict(num = input))}
+    &#32;<span class="little gray">${_("(blank for none)")}</span>
+    <br/>
+    <% 
+       input = capture(num_input, c.user.pref_num_comments,
+       'num_comments')
+       %>
+    <% s = c.user.pref_num_comments %>
+    ${unsafe(_("display %(num)s comments by default") % \
+    dict(num = input))}
+  &#32;<span class="little gray">(1 - ${g.max_comments})</span>
+    </td>
+  </tr>
+  
+  <tr class="prefrow">
+    <td class="prefleft">${_("privacy options")}</td>
+    <td class="prefright">
+      ${checkbox(_("make my votes public"), "public_votes")}
+      <br/>
+      ${checkbox(_("i am over eighteen years old and willing to view adult content"), "over_18")}
+      &#32;<span class="little gray">(${_("required to view some reddits")})</span>
+    </td>
+  </tr>
+  %endif
+  <tr>
+    <td>
+      <input type="submit" class="btn" value="${_('save options')}"/>
+    </td>
+  </tr>
+</table>
+
+</form>

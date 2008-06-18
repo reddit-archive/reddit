@@ -1,0 +1,140 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%inherit file="base.html"/>
+<%namespace module="r2.lib.template_helpers" import="generateurl"/>
+<%namespace file="printable.html" import="arrow, score" />
+
+
+
+<%def name="stylesheet()">
+  <% from r2.lib.template_helpers import static %>
+  <link rel='stylesheet' href="${static(g.stylesheet)}" type="text/css" />
+  %if c.site.stylesheet:
+    <link rel='stylesheet' href="${static(c.site.stylesheet)}" type="text/css" />
+  %endif
+
+  %if thing.css:
+    <link rel='stylesheet' href="${thing.css}" type="text/css" />
+  %endif
+</%def>
+
+<%def name="javascript()">
+  <% from r2.lib.template_helpers import static %>
+  <script src="${static('vote.js')}"  type="text/javascript"></script>
+  <script type="text/javascript">
+    function showcover() { show("cover"); }
+  </script>
+</%def>
+
+
+
+<%def name="body()">
+  <body>
+    <div class="button">
+    %if not c.user_is_loggedin:
+      <div id="cover" style="display: none">
+        <div class="cover"></div>
+        <div id="popup">
+          <a href="${submiturl(thing.url, thing.title)}" 
+             target="_parent">please login</a>
+        </div>
+      </div>
+    %endif
+    %if thing.button == 1:
+      ${button1(thing)}
+    %elif thing.button == 2:
+      ${button2(thing)}
+    %elif thing.button == 3:
+      ${button3(thing)}
+    %endif
+    </div>
+  </body>
+</%def>
+
+<%def name="submiturl(url, title='')">
+  ${generateurl("http://%s/submit" % c.domain, url=url, title=title)}
+</%def>
+
+<%def name="submitlink(url, title='', text='submit')">
+  <a href='${submiturl(url, title)}' target='_parent'>${text}</a>
+</%def>
+
+
+<%def name="button1(thing)">
+<div class="blog blog1">
+  <div class="headimgcell">
+    <a href="${submiturl(thing.url, thing.title)}" target="_parent">
+      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+    </a>
+  </div>
+  %if thing.link:
+    <% thing.link.score = thing.link._ups - thing.link._downs %>
+    ${arrow(thing.link, 1, thing.likes)}
+    ${arrow(thing.link, 0, thing.likes == False)}
+    ${score(thing.link, thing.likes, inline=False)}
+  %else:
+    ${submitlink(thing.url, thing.title)}
+  %endif
+  <div class="clear"></div>
+</div>
+</%def>
+
+<%def name="button2(thing)">
+  <div class="blog blog2">
+    %if thing.link:
+      ${arrow(thing.link, 1, thing.likes)}
+      <% thing.link.score = thing.link._ups - thing.link._downs %>
+      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${arrow(thing.link, 0, thing.likes == False)}
+    %else:
+      ${submitlink(thing.url, thing.title, 'submit to')}
+    %endif
+    <div class="bottomreddit">
+      <a href="${submiturl(thing.url, thing.title)}" target="_parent">reddit</a>
+    </div>
+  </div>
+</%def>
+
+
+<%def name="button3(thing)">
+<div class="blog blog3">
+  <div class="left">
+    %if thing.link:
+      ${arrow(thing.link, 1, thing.likes)}
+      <% thing.link.score = thing.link._ups - thing.link._downs %>
+      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${arrow(thing.link, 0, thing.likes == False)}
+    %else:
+      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow upmod"></div>'))}
+      ${submitlink(thing.url, thing.title, '?')}
+      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow downmod"></div>'))}
+    %endif
+  </div>
+  <div class="right">
+    ${submitlink(thing.url, thing.title, \
+          unsafe('<img src="http://www.reddit.com/static/blog_snoo.png" alt=""/>'))}
+  </div>
+  <div class="clear"></div>
+</div>
+</%def>
+

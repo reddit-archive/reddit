@@ -1,0 +1,111 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="translation.html" import="statusbar"/>
+<%namespace file="printable.html" import="yes_no_button, state_button" />
+<%
+   from r2.lib.translation import Translator
+%>
+<form method="post" action="/admin/i18n/new">
+  <p>
+    create new set:
+    <input style="margin-left: 5px" type="text" 
+           size="10" maxlength="40" name="name"/>
+    <button class="btn" type="submit">${_("create")}</button>
+  </p>
+</form>
+
+<p>
+<a href="/admin/i18n/edit/">
+  Edit base translation template
+</a>
+<p>
+
+<table style="margin-left: 10px" class="pretty-form infotable">
+  %for t in thing.translations:
+    <%
+       name = Translator.get_name(t)
+       en_name = Translator.get_en_name(t)
+       authors = Translator.get_author(t)
+       frac = Translator.get_complete_frac(t)
+      %>
+      <tr>
+        <td>
+          <a href="/admin/i18n/edit/${t}">${en_name}/${name}</a>
+        </td>
+        <td>
+          <a href="/admin/i18n/edit/${t}">[${t}]</a>
+        </td>
+        <td>
+          <span class="little">
+            %if Translator.in_use(t):
+              %if Translator.is_enabled(t):
+                ${state_button("disable_lang", t, _("disable"), \
+                  "return change_state(this, 'disable_lang');", _("disabled"))}
+              %else:
+                ${state_button("enable_lang", t, _("enable"), \
+                  "return change_state(this, 'enable_lang');", _("enabled"))}
+              %endif
+              %if t in g.languages:
+                <span class="orangered">[in use]</span>
+              %endif
+            %endif
+          </span>
+        </td>
+        <td>
+          %if Translator.in_use(t):
+          <a class="little" href="/admin/i18n/try/${t}">[try]</a>
+          %endif
+        </td>
+        <td>
+          ${statusbar(frac)}
+        </td>
+        <td class="little">
+          ${"%d%%" % int(100*frac)}
+        </td>
+        <td>
+          <span class="little oldbylink"><b>authors: </b>
+          %if authors:
+            %for a in authors:
+            ${yes_no_button(a, "%s_%s" % (t,a), a, \
+            "return deletetoggle(this, 'deltranslator');", \
+            "removed",)}
+            %endfor
+          %endif
+            <a class="bylink"
+               href="javascript:void(0)" 
+               onclick="hide(this); show('add_authors_${t}'); return false;">
+            [add author]</a>
+          </span>
+        </td>
+        <td>
+          <form id="add_authors_${t}" style="display:none"
+                method="post" action="/admin/i18n/adduser/${t}">
+            <input style="margin: 0px" type="text" name="name" 
+                   class="txt little"/>
+            <button class="btn little" type="submit">${_("add authors")}
+            </button>
+          </form>
+        </td>
+      </tr>
+  %endfor
+</table>

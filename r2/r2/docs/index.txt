@@ -1,0 +1,11 @@
+r2
+++
+
+This is the main index page of your documentation. It should be written in reStructuredText format.
+
+You can generate your documentation in HTML format by running this command::
+
+    setup.py pudge
+    
+For this to work you will need to download and install ``buildutils`` and ``pudge``.
+

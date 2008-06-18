@@ -1,0 +1,19 @@
+body {font: normal small verdana, arial, helvetica, sans-serif; margin: 0px; background-color: white;} 
+.arrow {margin: 0 0px 0px 0px; width: 15px; height: 14px; display: block; cursor: pointer;}
+.arrow.upmod {background: url(/static/aupmod.png); background-repeat: no-repeat }
+.arrow.downmod {background: url(/static/adownmod.png); background-repeat: no-repeat }
+.arrow.up {background: url(/static/aupgray.png); background-repeat: no-repeat }
+.arrow.down {background: url(/static/adowngray.png); background-repeat: no-repeat }
+.txt { border: 1px solid #336699; margin: 0 0 0 3px; vertical-align: bottom}
+.btn { background-color: #e9e9e9; border: 1px solid #336699; margin: 0 0 0 3px; vertical-align: bottom }
+label { margin-right: 3px }
+a.gray { text-decoration: none; background-color: #f0f0f0; color: #848484; margin: 0px 1px 0px 2px; padding: 0px 2px 0 2px;}
+a.gray:hover { text-decoration: underline }
+.error { color: red }
+
+.menu {text-align: right; color: gray }
+.menu a {text-decoration: none; color: #336699; margin: 0 3px 0 3px}
+.menu a:hover {text-decoration: underline; }
+
+#buttons a { margin-right: 4px; vertical-align: center }
+

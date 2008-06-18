@@ -1,0 +1,145 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<script type="text/javascript">
+
+function escapeHTML(text) {
+  var div = document.createElement('div');
+  var text = document.createTextNode(text);
+  div.appendChild(text);
+  return div.innerHTML;
+}
+
+function getrval(r) {
+    for (var i=0; i < r.length; i++) {
+        if (r[i].checked) return r[i].value;
+    }
+}
+
+function update() {
+    f = document.forms.widget;
+    which = getrval(f.which);
+    if (which == "all") {
+        url = "http://${c.domain}/" + f.what.value + "/.embed?limit=" +
+                      f.num.value + "&t=" + f.when.value;
+    } else if (which == "one") {
+        if (!f.who2.value) return;
+        url = "http://${c.domain}/user/"+f.who2.value+"/"+
+                      f.where2.value+".embed?limit=" + f.num.value + 
+                      "&sort="+f.what2.value;
+    } else {
+        alert("xxx");
+        alert(which);
+    }
+    script = '<script src="' + 
+                      escapeHTML(url).replace('&amp;', '&') + 
+                      '" type="text/javascript"><' + '/script>';
+    document.getElementById("codebox").innerHTML = escapeHTML(script);
+    new Ajax.Request(url+"&", {method:"get", onSuccess: function(t) {
+      s = eval(t.responseText.replace("document.write", ""));
+      document.getElementById("previewbox").innerHTML = s;
+    }});
+}
+
+</script>
+
+<div class="instructions">
+  
+  <div id="preview">
+    <span>preview</span>
+    <div id="previewbox">
+      <script src="http://${c.domain}/.embed?limit=5" type="text/javascript"></script>
+    </div>
+  </div>
+
+  <h1>${_("get live %(site)s headlines on your site") % dict(site=c.site.name)}</h1>
+  
+  <p>${_("just cut and paste the generated code into your site and your specified %(site)s feed will be displayed and updated as new stories bubble up") % dict(site=c.site.name)}</p>
+  <h2>${_("which links do you want to display?")}</h2>
+  
+  <form name="widget" action="" onsubmit="update(); return false">
+    <p>
+      ${_("number")}:
+      <select name="num" onchange="update()">
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+      </select>
+    </p>
+    <p>
+      <input type="radio" name="which" value="all" checked="checked" onclick="update()" /> 
+      ${unsafe(_("%(site)s %(what)s links from %(when)s") % dict(site = c.site.name, what = capture(what), when = capture(when)))}
+      <%def name="what()">
+        <select name="what" onchange="update()">
+          <option value="hot" selected="selected">${_("hottest")}</option>
+          <option value="new">${_("newest")}</option>
+          <option value="top">${_("top")}</option>
+        </select>
+      </%def>
+      <%def name="when()">
+        <select name="when" onchange="update()">
+          <option value="hour">${_("this hour")}</option>
+          <option value="day">${_("today")}</option>
+          <option value="week">${_("this week")}</option>
+          <option value="month">${_("this month")}</option>
+          <option value="all" selected="selected">${_("all-time")}</option>
+        </select>
+      </%def>
+    </p>
+    <p>
+      <input type="radio" name="which" value="one" onclick="update()" /> 
+      ${unsafe(_("%(what)s %(where)s %(who)s") % dict(what = capture(what2), where= capture(where2), who  = capture(who2)))}
+
+      <%def name="what2()">
+        <select name="what2" onchange="update()">
+          <option value="hot" selected="selected">${_("hottest")}</option>
+          <option value="new">${_("newest")}</option>
+          <option value="top">${_("top")}</option>
+        </select> 
+      </%def>
+    
+      <%def name="where2()">
+        <select name="where2" onchange="update()">
+          <option value="submitted">${_("submitted by")}</option>
+          <option value="saved">${_("saved by")}</option>
+          <option value="liked">${_("liked by")}</option>
+          <option value="disliked">${_("disliked by")}</option>
+        </select> 
+      </%def>
+    
+      <%def name="who2()">
+        <input type="text" name="who2" value="" 
+               onchange="update()" onblur="update()" />
+      </%def>
+    </p>
+  </form>
+
+  <h2>${_("the code")}</h2>
+
+  <p>${_("add this into your HTML where you want the %(site)s links displayed") %dict(site=c.site.name)}</p>
+
+  <p>
+    <textarea rows="5" cols="50" id="codebox">
+      &lt;script src="http://${c.domain}/.embed?limit=5" type="text/javascript">&lt;/script>
+    </textarea>
+  </p>
+</div>

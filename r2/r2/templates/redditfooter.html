@@ -1,0 +1,77 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.template_helpers import static 
+   from r2.lib.strings import strings
+   from r2.lib import tracking
+%>
+<%namespace file="login.html" import="login_panel"/>
+<%namespace file="utils.html" import="text_with_links, plain_link"/>
+
+<div class="footer">
+  ${thing.footer_nav().render()}
+
+  <p class="wired">
+    <a href="http://wired.com">
+      <img src="${static('wired_w.png')}" alt="wired" /></a>
+    <a href="http://wired.com">WIRED.com</a>-
+    <a href="http://howto.wired.com">WIRED How-To</a>
+  </p>
+  <p class="bottommenu">
+    ${text_with_links(_("Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"), user_agreement= (_("User Agreement {Genitive}"), "http://reddit.com/help/useragreement"), privacy_policy = (_("Privacy Policy {Genitive}"), "http://reddit.com/help/privacypolicy"))}.  
+    <% old = _("(c) 2008 CondeNet, Inc. All rights reserved.") %>
+    ${_("(c) %(year)d CondeNet, Inc. All rights reserved.") % \
+    dict(year=2008)}
+  </p>
+ %if g.tracker_url:
+  <img alt="innocuous" src="${tracking.gen_url()}"/>
+ %endif
+</div>
+
+%if not c.user_is_loggedin:
+<div id="cover" style="display:none" class="cover"
+       onclick="hidecover('cover', 'loginpopup')">
+  </div>
+  <div id="loginpopup" style="display: none" class="popup">
+    <h1 id="cover_msg">${strings.cover_msg}</h1>
+    <h2 id="cover_disclaim">${strings.cover_disclaim}</h2>
+    ${login_panel()}
+    <div style="text-align:center">
+      <a href="javascript:hidecover('cover','loginpopup')">
+        ${_("close this window")}
+      </a>
+    </div>
+  </div>
+
+  <div id="langcover" style="display:none" class="cover"
+       onclick="hidecover('langcover', 'langpopup')">
+  </div>
+  <div id="langpopup" style="display: none" class="popup">
+    <%include file="prefoptions.html" />
+    <div style="text-align:center">
+      <a href="javascript:hidecover('langcover','langpopup')">
+        ${_("close this window")}
+      </a>
+    </div>
+  </div>
+%endif

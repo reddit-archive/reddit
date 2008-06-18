@@ -1,0 +1,13 @@
+/* (c) 2005-2006 Not A Bug, Inc. */
+@import "styles.css";
+
+body { font-family: "Arial", "Helvetica", sans-serif; }
+.little { font-family: "Arial", "Helvetica", sans-serif; }
+
+#topbar {margin-left: 160px}
+#topstrip, .menu-item {color: white; background-color: #5B87B8;}
+#topstrip a:hover, .sel-menu-item { color: white; background-color: #0D3159; }
+
+
+a.title:link { color: #0c4790; }
+.title:visited, .title.loggedin:visited, .title.loggedin.click, .title.loggedin.click:visited {color: #666666; }

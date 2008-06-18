@@ -1,0 +1,108 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<% 
+ highlight = lambda x: ("<span class='orangered' style='padding: 0px 1ex 0px 1ex'>" + x + "</span>")
+ singular = thing._singular(highlight)
+ plural = thing._plural(highlight)
+ # downplay explanation strings
+ singular = singular.replace(" {", "&#32;<span class='gray little'><i>(").replace("}", ")</i></span>")
+ plural = plural.replace(" {", "&#32;<span class='gray little'><i>(").replace("}", ")</i></span>")
+ singular = unsafe(singular)
+ plural = unsafe(plural)
+
+ %>
+
+<%def name="midcol()">
+<td>
+<a name="thing_${thing.md5}"></a>
+%if c.user_is_admin and not thing.locale:
+    <input type="checkbox" name="enabled_${thing.md5}" 
+           ${thing.enabled and "checked='checked'" or ''}
+           />
+%endif
+</td>
+</%def>
+
+%if (singular and thing.enabled) or c.user_is_admin:
+<tr id="tr_${thing.md5}" style="vertical-align:top">
+  %if plural:
+  <td style="text-align: right; width: 25em; padding-right: 5px; padding-bottom: 5px">
+    <b>Singular:</b>&nbsp;${singular},&nbsp;
+    <b>Plural:</b>&nbsp;${plural}
+  </td>
+  ${midcol()}
+  <td style="padding-bottom: 5px">
+    %for i in xrange(thing.translator.nplurals):
+    ${text_input(thing.translation(i), thing.is_valid(i), 
+                 index=i)}
+    <span style="margin-left: 5px; color:gray">
+      (${thing.translator.plural_names[i] if len(thing.translator.plural_names) > i else "case #%d" % (i+1)})
+    </span><br/>
+    %endfor
+  %else:
+  <td style="text-align: right; width: 25em; padding-right: 5px">
+    ${singular}
+  </td>
+  
+  ${midcol()}
+  <td style="padding-bottom: 5px">
+    ${text_input(thing.translation(), thing.is_valid(), 
+                 len=len(thing.singular))}
+   %endif
+    %if thing.tip:
+      <span style="color: gray; margin-left: 5px;">${thing.tip}</span>
+    %endif
+  </td>
+</tr>
+%endif
+
+
+<%def name="text_input(text, valid, 
+            index = 0, len = 0)">
+<div id="trans_div_${thing.md5}_${index}" style="display:inline">
+  %if text and valid:
+  <b style="padding-right: 5px" id="string_${thing.md5}_${index}">
+    ${text}
+  </b>
+  <span class="little bylink">
+    <a href="javascript:void(0)" 
+       onclick="return edit_trans('${thing.md5}_${index}')">
+      edit</a>
+  </span>
+  %elif len < 80:
+  <input type="text" value="${text}" size="40"
+         name="trans_${thing.md5}_${index}" id="trans_${thing.md5}_${index}"/>
+  %else:
+    <textarea rows="4" cols="40"
+              name="trans_${thing.md5}_${index}" 
+              id="trans_${thing.md5}_${index}">
+      ${text}
+    </textarea>
+  %endif
+  %if not valid:
+  <span class="error">
+    Invalid Translation
+  </span>
+  %endif
+</div>
+</%def>

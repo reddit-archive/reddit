@@ -1,0 +1,118 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+        from r2.lib.utils import lstrips
+%>
+
+<%
+     cpu_col = 75.
+     mem_col = 40.
+ %>
+<table style="font-size:xx-small">
+  <tr> 
+    <th>process</th>
+    <th>
+      memory
+    </th>
+    <th>
+      <span style="color:green">1 min</span> / 
+      <span style="color:red">5 min</span>
+    </th>
+    <th>
+      CPU time
+    </th>
+  </tr>
+  <tr> 
+    <td></td>
+    <td style="padding-right:2px">
+      <div style="height:5px; width:${mem_col}px;background-color:blue;"></div>
+    </td>
+    <td style="padding-right:2px">
+      <div style="height:5px; width:${cpu_col}px;background-color:blue;"></div>
+    </td>
+    <td>
+    </td>
+  </tr> 
+  
+  %for s in thing.services:
+  <%
+     services = s.get_cache() or []
+     services.sort(lambda x, y: 1 if x['name'] > y['name'] else -1)
+     load = s.load
+     host = s._host
+     if not load:
+         color = 'white'
+     elif load < 1:  
+         color = '#E2ECFF'
+     elif load < 2:
+         color = '#CAFF98'
+     elif load < 3:
+         color = '#FFEA71'
+     else:
+         color = '#FF9191'
+  %>
+  <tr style="background-color: ${color}">
+    <td>
+      <b>${host} load: ${load}</b>
+    </td>
+    <td>
+     </td>
+    <td>
+     </td>
+    <td>
+     </td>
+  </tr>
+  %for service in services:
+  <%
+     pegged = all([service['cpu_' + str(x)] > 99 for x in (0, 5, 60, 300)]) or \
+           (service.get('mem', 0)  >= 20)
+   %>
+
+  <tr style="background-color: ${color}">
+    <td  style="${pegged and 'background-color:salmon; color:black' or ''}">
+      ${lstrips(service['name'], "/service/")}
+    </td>
+    <td>
+      <div style="height:10px; width:${int(mem_col/25*min(25, int(service.get('mem',0))))}px; background-color:#336699;"></div>
+    </td>
+    <td>
+      <div style="height:5px; width:${int(cpu_col/100*min(100,int(service['cpu_60'])))}px;background-color:green;"></div>
+      <div style="height:5px; width:${int(cpu_col/100*min(100,int(service['cpu_300'])))}px;background-color:red;"></div>
+    </td>
+    <td>
+      <%
+         age = service.get('age', 0)
+         if isinstance(age, str):
+            age = 0
+         if age > 60:
+            age = "%d hr" % int(age/60)
+         else:
+            age = "%d min" % age
+       %>
+      ${age}
+    </td>
+  </tr>
+      %endfor
+  %endfor
+</table>
+

@@ -1,0 +1,55 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+<% from r2.lib.template_helpers import static %>
+%if thing.editable or thing.users:
+<div class="${thing._class} usertable">
+  %if thing.editable:
+    <h1>${thing.form_title}</h1>
+
+    <script src="${static('tabular.js')}"  type="text/javascript"></script>
+
+    <form action="/post/friend" method="post" class="pretty-form medium-text"
+          onsubmit="return post_form(this, 'friend');">
+      <input type="hidden" name="action" value="add"/>
+      <input type="hidden" name="container" value="${thing.container_name}"/>
+      <input type="hidden" name="type" value="${thing.type}"/>
+      <input type="text" name="name" id="name"/>
+      <button class="btn" type="submit">${_("add")}</button>
+      ${error_field("USER_DOESNT_EXIST", "span")}
+    </form>
+    
+  %endif
+
+  <h1 style="${len(thing.users)==0 and 'display:none' or ''}">
+    ${thing.table_title}
+  </h1>
+
+  <table id="${thing.type}" >
+    <tr><td/></tr>
+    %for item in thing.users:
+      ${item.render()}
+    %endfor
+  </table>
+</div>
+%endif

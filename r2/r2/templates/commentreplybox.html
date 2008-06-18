@@ -1,0 +1,100 @@
+## "The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+%if not thing.link_name:
+<div id="samplecomment_" style="display:none">
+%endif
+  <form id="commentform_${thing.link_name}" 
+        onsubmit="return chkcomment(this);"
+        action="/post/${thing.action}" method="post" class="commentreply">
+    %if thing.link_name:
+    <input id="isroot_${thing.link_name}"
+           type="hidden" name="isroot" value="1" />
+    %endif
+    <input id="replace_${thing.link_name}"
+           type="hidden" name="replace" value="" />
+    ${error_field("BAD_COMMENT_" + thing.link_name)}
+    ${error_field("COMMENT_TOO_LONG_" + thing.link_name)}
+    ${error_field("RATELIMIT_" + thing.link_name)}
+    ## I know we don't need this div.  You know we don't need this div.  IE
+    ## begs to differ.
+    <div>
+      <textarea id="comment_reply_${thing.link_name}" name="comment" 
+                rows="2" onfocus="clearTitle(this);" >
+      </textarea>
+    </div>
+    <div class="buttons">
+      <button id="comment_submit_${thing.link_name}" 
+              type="submit" class="btn">${_("comment {verb}")}
+      </button>
+      <button id="comment_edit_${thing.link_name}" style="display:none;" 
+              type="submit" class="btn">${_( "edit")}</button>
+      %if not thing.link_name:
+      <button id="cancel_" class="btn" 
+              onclick="cancelReply(this);return false">
+        ${_("cancel")}</button>
+      %endif
+      <span id='status_${thing.link_name}' class='error'></span>
+    </div>
+    <div id="marktoggle_${thing.link_name}" 
+         class="help-toggle">
+      <a id="marklink_${thing.link_name}" href='#' 
+         onclick="return helpon(this, 'markhelp_', '${_('hide help')}');">
+        ${_("help")}
+      </a>
+    </div>
+    <div class="clearleft"></div>
+    <script type="text/javascript">
+      var form = $("commentform_${thing.link_name}");
+      if(form) {
+        setMessage(form.comment_reply_${thing.link_name},
+                     "${_('enter a comment here')}")
+      }
+    </script>
+
+    <div id="markhelp_${thing.link_name}" style="display: none">
+      <table class="help">
+        <tr style="background-color: #ffff99; text-align: center">
+          <td><em>${_( "you type:")}</em></td>
+          <td><em>${_( "you see:")}</em></td></tr>
+        <tr><td>*${_( "italics")}*</td>
+          <td><em>${_( "italics")}</em></td></tr>
+        <tr><td>**${_( "bold")}**</td>
+          <td><b>${_( "bold")}</b></td></tr>
+        <tr><td>[reddit!](http://reddit.com)</td>
+          <td><a href="http://reddit.com">reddit!</a></td></tr>
+        <tr><td>* ${_( "item")} 1<br/>
+            * ${_( "item")} 2<br/>
+            *  ${_( "item")} 3</td>
+          <td><ul><li>${_( "item")} 1</li>
+              <li>${_( "item")} 2</li>
+              <li>${_( "item")} 3</li></ul></td></tr>
+        <tr><td>&gt; ${_( "quoted text")}</td>
+          <td><blockquote>${_( "quoted text" )}</blockquote></td></tr>
+      </table>
+    </div>
+  </form>
+%if not thing.link_name:
+</div>
+%endif
+

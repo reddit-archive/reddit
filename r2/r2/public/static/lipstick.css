@@ -1,0 +1,109 @@
+/* (c) 2005-2006 Not A Bug, Inc. */
+@import "styles.css";
+
+#topbar {margin-left: 220px; margin-bottom: 10px;}
+#header { top: 7px}
+
+.menu {color: gray;}
+.menu a {color: #c15d64}
+
+#topstrip { margin-top: 7px; background-color: #ffe9eb;}
+#topstrip a:hover { color: white; background-color: red; }
+
+#searchform { margin: 7px 0 0 5px}
+
+.tempstrip { padding: 2px 0 2px 0; background-color: #c6def7;}
+.username { background-color: white; padding: 2px 15px 2px 0px; font-weight: bold; color: #c15d64}
+
+#usermenu { margin: 10px 0 5px 0; padding: 2px 0 2px 0; border-bottom: 2px solid #c15d64; background-color: whitesmoke}
+#usermenu a {
+    color: black;
+    padding: 2px 7px 2px 7px;
+    text-decoration: none;
+    border-bottom: 2px solid #c15d64;
+    /*border-right: 2px solid white;*/
+    background-color: whitesmoke;
+}
+
+#usermenu a:hover { color: white; background-color: #c15d64; }
+#usermenu .sel-user { color: white; background-color: #c15d64 }
+
+.menu-item { color: black; background-color: #d3d3d3}
+.sel-menu-item {color: white; background-color: red;}
+
+.oddRow {background-color: #ffe9eb;}
+.evenRow {background-color: white;}
+.highRow {background-color: #ffff99;}
+
+.spacing { height: 6px}
+.spacing.top { border-top: 1px solid #d3d3d3 }
+
+.title { font-family: monospace, courier, serif; font-size: medium; color: #0c0c0c;}
+.title:visited { color: #0c0c0c }
+
+.title.loggedin { color: #0c0c0c }
+.title.loggedin:visited { color: #0c0c0c}
+.title.loggedin.click { color: #0c0c0c }
+.title.loggedin.click:visited { color: #0c0c0c }
+
+.arrow.upmod { background: url(/static/aupmod.gif); background-repeat: no-repeat }
+.arrow.downmod { background: url(/static/adownmod.gif); background-repeat: no-repeat }
+.arrow.up { background: url(/static/aupgray.gif); background-repeat: no-repeat }
+.arrow.down { background: url(/static/adowngray.gif); background-repeat: no-repeat }
+
+h2 {color: #c15d64; font-size: 13px;}
+
+.pbox {border: 2px solid #c15d64;}
+
+.sortbox a {text-decoration: none; color: #c15d64}
+.sortbox a:visited { color: #c15d64 }
+
+
+.little a {color: #c15d64; text-decoration: none;}
+.little a.friend {color: #c15d64 }
+
+a.bylink {background-color: transparent; color: #848484; margin: 0px 1px 0px 2px; padding: 0px 2px 0 2px;}
+
+.numbercol {
+    font-family: monospace, courier, serif;
+    font-size: medium;
+    text-align: right;
+    color: #0c0c0c;
+    padding-right: 2px}
+
+.stats a {color: #c15d64}
+.stats th { text-align: left; background-color: whitesmoke; color: #c15d64; font-weight: bold;}
+
+input.btn {background-color:#e9e9e9; border: 1px solid #c15d64;}
+input.txt { background-color:#f7f7f7; border: 1px solid #c15d64; margin: 0px}
+
+.btn {background-color:#e9e9e9; border: 1px solid #c15d64; margin: 0 5px 0 5px; vertical-align: bottom}
+
+#infobar {
+    background-image: url(/static/gradient.png);
+    background-repeat: repeat-x;
+    background-position: bottom;
+    background-color: transparent;
+    margin: 0;
+    padding-top: 0px;
+    padding-left: 40px;
+    z-index: 10;
+}
+
+#infobar a{ color: #c15d64}
+
+.feed {border:1px solid;border-color:#FC9 #630 #330 #F96;padding:0 3px;font:bold 10px verdana,sans-serif;color:#FFF;background:#F60;;margin:4px;}
+
+.collapse.r { background: url(/static/pinkr.png); background-repeat: no-repeat }
+.collapse.d { background: url(/static/pinkd.png); background-repeat: no-repeat }
+
+#contactlst th { color: #c15d64; border-bottom: 1px solid #c15d64; text-align: left; padding-right: 10px }
+#contactlst a.add { color: #c15d64}
+
+.commenttable.border { border: 1px solid #c15d64; }
+
+.iform button {background-color:#e9e9e9; border: 1px solid #c15d64; vertical-align: bottom}
+ 
+.star a { text-decoration: none; color: black }
+
+#main {padding: 0px 7px 0 7px}
