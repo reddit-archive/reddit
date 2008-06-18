@@ -22,18 +22,18 @@
 from r2.models import Subreddit
 from r2.lib.db.operators import desc
 
-def pop_reddits():
-    from r2.lib import count
-    counts = count.get_counts()
-    num_views = {}
-    for num, sr in counts.values():
-        info = num_views.setdefault(sr, [0, 0, 0])
-        info[0] += num
-        info[1] += 1
-        info[2] = info[0] / info[1]
-    pop = num_views.items()
-    pop.sort(key = lambda x: x[1][2], reverse = True)
-    return [i[0] for i in pop[:30]]
+# def pop_reddits():
+#     from r2.lib import count
+#     counts = count.get_counts()
+#     num_views = {}
+#     for num, sr in counts.values():
+#         info = num_views.setdefault(sr, [0, 0, 0])
+#         info[0] += num
+#         info[1] += 1
+#         info[2] = info[0] / info[1]
+#     pop = num_views.items()
+#     pop.sort(key = lambda x: x[1][2], reverse = True)
+#     return [i[0] for i in pop[:30]]
     
 def all_srs():
     #can't use > 0 yet cause we'd have to cast, which requires some
