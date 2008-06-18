@@ -55,6 +55,16 @@ except ImportError:
     print "Installing the PyCaptcha Module"
     easy_install(["http://svn.navi.cx/misc/trunk/pycaptcha"])
     
+# unfortunately, we use an old version of sqlalchemy right now
+try:
+    import sqlalchemy
+    vers = sqlalchemy.__version__ 
+    assert vers == "0.3.11" or vers == "0.3.10", \
+           ("reddit is only compatible with SqlAlchemy 0.3.10 and 0.3.11 not '%s' " % vers)
+except ImportError:
+    print "Installing Sqlalchemy 0.3.11 from the cheese shop"
+    easy_install(["http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.3.11.tar.gz#md5=4b8c0921de350343814ed7ed50499578"])
+
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
@@ -71,7 +81,7 @@ setup(
                       "Babel>=0.9.1",
                       "flup",
                       "simplejson", 
-                      "SQLAlchemy>=0.3.10",
+                      "SQLAlchemy==0.3.11",
                       "chardet",
                       "psycopg2",
                       "py_interface"],
