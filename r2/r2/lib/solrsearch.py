@@ -32,7 +32,7 @@ from r2.models import *
 from r2.models import thing_changes
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago
+from r2.lib.utils import timeago, set_emptying_cache
 from r2.lib.utils import psave, pload, unicode_safe
 from r2.lib.cache import SelfEmptyingCache
 from Queue import Queue
@@ -365,7 +365,10 @@ def reindex_all(types = None, delete_all_first=False):
         types = indexed_types
 
     # We don't want the default thread-local cache (which is just a
-    # dict) to grow un-bounded
+    # dict) to grow un-bounded (normally, we'd use
+    # utils.set_emptying_cache, except that that preserves memcached,
+    # and we don't even want to get memcached for total indexing,
+    # because it would dump out more recent stuff)
     g.cache.caches = (SelfEmptyingCache(),) # + g.cache.caches[1:]
 
     count = 0
@@ -417,6 +420,8 @@ def changed(types=None,since=None,commit=True,optimize=False):
         to Solr
     """
     global indexed_types
+
+    set_emptying_cache()
 
     start_t = datetime.now()
 
