@@ -32,7 +32,7 @@ from r2.models import *
 from r2.models import thing_changes
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago, set_emptying_cache
+from r2.lib.utils import timeago, set_emptying_cache, IteratorChunker
 from r2.lib.utils import psave, pload, unicode_safe
 from r2.lib.cache import SelfEmptyingCache
 from Queue import Queue
@@ -432,26 +432,27 @@ def changed(types=None,since=None,commit=True,optimize=False):
 
     all_changed = []
 
-    for cls in types:
-        changed = set(x[0]
-                      for x in thing_changes.get_changed(cls,min_date = since))
-        # changed =:= [(Fullname,Date) | ...]
-        changed = cls._by_fullname(changed,
-                                   data=True, return_dict=False)
-        changed = [x for x in changed if not x._spam and not x._deleted]
-
-        # note: anything marked as spam or deleted is not updated in
-        # the search database. Since these are filtered out in the UI,
-        # that's probably fine.
-        if len(changed) > 0:
-            changed  = tokenize_things(changed)
-            print "Found %d %ss starting with %s" % (len(changed),cls.__name__,unicode_safe(changed[0]['contents']))
-            all_changed += changed
-        else:
-            print "No changed %ss detected" % (cls.__name__,)
-
     with SolrConnection(commit=commit,optimize=optimize) as s:
-        s.add(all_changed)
+        for cls in types:
+            changed = (x[0]
+                       for x
+                       in thing_changes.get_changed(cls,min_date = since))
+            changed = IteratorChunker(changed)
+
+            while not changed.done:
+                chunk = changed.next_chunk(200)
+
+                # chunk =:= [(Fullname,Date) | ...]
+                chunk = cls._by_fullname(chunk,
+                                         data=True, return_dict=False)
+                chunk = [x for x in chunk if not x._spam and not x._deleted]
+
+                # note: anything marked as spam or deleted is not
+                # updated in the search database. Since these are
+                # filtered out in the UI, that's probably fine.
+                if len(chunk) > 0:
+                    chunk  = tokenize_things(chunk)
+                    s.add(chunk)
 
     save_last_run(start_t)
 

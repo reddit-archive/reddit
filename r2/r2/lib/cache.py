@@ -225,8 +225,11 @@ def test_cache(cache):
 # a cache that occasionally dumps itself to be used for long-running
 # processes
 class SelfEmptyingCache(LocalCache):
+    def __init__(self,max_size=50*1000):
+        self.max_size = max_size
+
     def maybe_reset(self):
-        if len(self) > 500*1000:
+        if len(self) > self.max_size:
             print "SelfEmptyingCache clearing!"
             self.clear()
             print "Cleared (%d)" % len(self)
