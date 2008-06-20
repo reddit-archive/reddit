@@ -52,7 +52,7 @@ filters_uwebsafe(PyObject * self, PyObject *args)
   command = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
 
-  buffer = (Py_UNICODE*)malloc(5*len*sizeof(Py_UNICODE));
+  buffer = (Py_UNICODE*)malloc(6*len*sizeof(Py_UNICODE));
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
     c = command[ic];
     if (c == '&') {
