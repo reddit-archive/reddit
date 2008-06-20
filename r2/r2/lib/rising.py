@@ -29,7 +29,7 @@ from datetime import datetime
 cache = g.cache
 
 def calc_rising():
-    sr_count = count.get_counts()
+    sr_count = count.get_link_counts()
     link_count = dict((k, v[0]) for k,v in sr_count.iteritems())
     link_names = Link._by_fullname(sr_count.keys(), data=True)
 

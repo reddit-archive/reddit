@@ -53,6 +53,8 @@ class Vote(MultiRelation('vote',
     @classmethod
     def vote(cls, sub, obj, dir, ip, spam = False, organic = False):
         from admintools import valid_user, valid_thing, update_score
+        from r2.lib.count import incr_counts
+
         sr = obj.subreddit_slow
         kind = obj.__class__.__name__.lower()
         karma = sub.karma(kind, sr)
@@ -105,9 +107,9 @@ class Vote(MultiRelation('vote',
             author.incr_karma(kind, sr, up_change - down_change)
 
         #update the sr's valid vote count
-#         if is_new and v.valid_thing and kind == 'link':
-#             if sub._id != obj.author_id:
-#                 sr._incr('valid_votes', 1)
+        if is_new and v.valid_thing and kind == 'link':
+            if sub._id != obj.author_id:
+                incr_counts([sr])
 
         #expire the sr
         if kind == 'link' and v.valid_thing:

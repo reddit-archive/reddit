@@ -41,7 +41,7 @@ def keep_link(link):
 def cached_organic_links(username):
     user = Account._by_name(username)
 
-    sr_count = count.get_counts()
+    sr_count = count.get_link_counts()
     srs = Subreddit.user_subreddits(user)
     link_names = filter(lambda n: sr_count[n][1] in srs, sr_count.keys())
     link_names.sort(key = lambda n: sr_count[n][0])

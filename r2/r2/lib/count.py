@@ -19,16 +19,26 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.models import Link
+
+from r2.models import Link, Subreddit
 from r2.lib import utils
+
+#stubs
 
 def incr_counts(wrapped):
     pass
 
-def get_counts(period = '12 hours'):
+def get_link_counts(period = '12 hours'):
     links = Link._query(Link.c._date >= utils.timeago(period),
                         limit=50, data = True)
     return dict((l._fullname, (0, l.sr_id)) for l in links)
+
+def get_sr_counts(period = '12 hours'):
+    srs = Subreddit._query()
+    return dict((l._fullname, (0, l.sr_id)) for l in links)
+
+def clear_sr_counts(names):
+    pass
 
 try:
     from r2admin.lib.count import *

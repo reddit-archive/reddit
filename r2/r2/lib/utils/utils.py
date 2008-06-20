@@ -22,9 +22,10 @@
 from urllib import unquote_plus, quote_plus, urlopen, urlencode
 from urlparse import urlparse, urlunparse
 from threading import local
+from copy import deepcopy
 import cPickle as pickle
-import sha
-import re, datetime, math, random, string
+import re, datetime, math, random, string, sha
+
 
 from pylons.i18n import ungettext, _
         
@@ -579,7 +580,6 @@ def fetch_things(t_class,since,until,batch_fn=None,
     """
 
     from r2.lib.db.operators import asc
-    from copy import deepcopy
 
     if not batch_fn:
         batch_fn = lambda x: x
@@ -606,6 +606,30 @@ def fetch_things(t_class,since,until,batch_fn=None,
         q._rules = deepcopy(orig_rules)
         q._after(t)
         things = list(q)
+
+def fetch_things2(query, chunk_size = 100, batch_fn = None):
+    """Incrementally run query with a limit of chunk_size until there are
+    no results left. batch_fn transforms the results for each chunk
+    before returning."""
+    orig_rules = deepcopy(query._rules)
+    query._limit = chunk_size
+    items = list(query)
+    done = False
+    while items and not done:
+        #don't need to query again at the bottom if we didn't get enough
+        if len(items) < chunk_size:
+            done = True
+
+        if batch_fn:
+            items = batch_fn(items)
+
+        for i in items:
+            yield i
+
+        if not done:
+            query._rules = deepcopy(orig_rules)
+            query._after(i)
+            items = list(query)
 
 def set_emptying_cache():
     """

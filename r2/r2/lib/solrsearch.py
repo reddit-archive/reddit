@@ -383,7 +383,7 @@ def reindex_all(types = None, delete_all_first=False):
                                        timeago("50 years"),
                                        start_t):
                 r = tokenize_things(batch)
-                
+
                 count += len(r)
                 print ("Processing %s #%d(%s): %s"
                        % (cls.__name__, count, q.qsize(), r[0]['contents']))

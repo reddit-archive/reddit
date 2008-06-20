@@ -21,45 +21,15 @@
 ################################################################################
 from r2.models import Subreddit
 from r2.lib.db.operators import desc
-
-# def pop_reddits():
-#     from r2.lib import count
-#     counts = count.get_counts()
-#     num_views = {}
-#     for num, sr in counts.values():
-#         info = num_views.setdefault(sr, [0, 0, 0])
-#         info[0] += num
-#         info[1] += 1
-#         info[2] = info[0] / info[1]
-#     pop = num_views.items()
-#     pop.sort(key = lambda x: x[1][2], reverse = True)
-#     return [i[0] for i in pop[:30]]
+from r2.lib import count
     
-def all_srs():
-    #can't use > 0 yet cause we'd have to cast, which requires some
-    #changes to tdb_sql
-    limit = 100
-    q = Subreddit._query(Subreddit.c.valid_votes != 0,
-                         limit = limit,
-                         sort = desc('_date'),
-                         data = True)
-    srs = list(q)
-    while srs:
-        for sr in srs:
-            yield sr
-        srs = list(q._after(sr)) if len(srs) == limit else None
-
-def update_sr(sr):
-    count = sr.valid_votes
-    if count != sr._downs and count > 0:
-        sr._downs = count
-        sr._commit()
-        sr._incr('valid_votes', -count)
-    elif count < 0:
-        #just in case
-        sr.valid_votes = 0
-        sr._commit()
-
 def run():
-    for sr in all_srs():
-        update_sr(sr)
+    sr_counts = count.get_sr_counts()
+    names = [k for k, v in sr_counts.iteritems() if v != 0]
+    srs = Subreddit._by_fullname(names)
+    for name in names:
+        sr,c = srs[name], sr_counts[name]
+        if c != sr._downs and c > 0:
+            sr._downs = max(c, 0)
+            sr._commit()
+    count.clear_sr_counts(names)
