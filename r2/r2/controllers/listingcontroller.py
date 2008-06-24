@@ -35,6 +35,9 @@ from r2.lib import organic
 
 from pylons.i18n import _
 
+import random
+
+
 class ListingController(RedditController):
     """Generalized controller for pages with lists of links."""
 
@@ -133,7 +136,6 @@ class ListingController(RedditController):
 
     @staticmethod
     def builder_wrapper(thing):
-        """"""
         if c.user.pref_compress and isinstance(thing, Link):
             thing.__class__ = LinkCompressed
             thing.score_fmt = Score.points
@@ -332,6 +334,26 @@ class BrowseController(ListingController):
         self.time = time
         return ListingController.GET_listing(self, **env)
 
+
+class RandomrisingController(ListingController):
+    where = 'randomrising'
+    builder_cls = IDBuilder
+    title_text = _('you\'re really bored now, eh?')
+
+    def query(self):
+        links = get_rising(c.site)
+
+        if not links:
+            # just pull from the new page if the rising page isn't
+            # populated for some reason
+            q = Link._query(limit = 200,
+                            data  = True,
+                            sort  = desc('_date'))
+            links = [ x._fullname for x in q ]
+        
+        random.shuffle(links)
+
+        return links
 
 class RecommendedController(ListingController):
     where = 'recommended'
