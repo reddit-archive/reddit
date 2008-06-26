@@ -48,7 +48,7 @@ function update_title() {
              />
       <label for="${full_name}">${name}</label>
     </td>
-    <td class="leftpad nopadding"><span class="gray">${text}</span></td>
+    <td class="leftpad"><span class="gray">${text}</span></td>
   </tr>
 </%def>
  
@@ -222,7 +222,7 @@ function update_title() {
         <td colspan="2">
            <table>
            ${radio_type(_("public"), _("anyone can view and submit"))}
-           ${radio_type(_("restricted"), _("anyone can view, but only contributors can submit"))}
+           ${radio_type(_("restricted"), _("anyone can view, but only contributors can submit links"))}
            ${radio_type(_("private"), _("only contributors can view and submit"))}
            </table>
         </td>
