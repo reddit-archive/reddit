@@ -502,6 +502,10 @@ class ApiController(RedditController):
             sr = thing.subreddit_slow
             expire_hot(sr)
 
+        #comments have special delete tasks
+        elif isinstance(thing, Comment):
+            thing._delete()
+
 
     @Json
     @validate(VUser(), VModhash(),

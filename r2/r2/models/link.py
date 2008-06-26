@@ -258,7 +258,8 @@ class Comment(Thing, Printable):
         pass
 
     def _delete(self):
-        pass
+        link = Link._byID(self.link_id, data = True)
+        link._incr('num_comments', -1)
     
     @classmethod
     def _new(cls, author, link, parent, body, ip, spam = False):
