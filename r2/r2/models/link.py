@@ -347,7 +347,12 @@ class Comment(Thing, Printable):
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), True)
 
-        subreddits = Subreddit._byID(set(c.sr_id for c in wrapped),
+        #get srs for comments that don't have them (old comments)
+        for cm in wrapped:
+            if not hasattr(cm, 'sr_id'):
+                cm.sr_id = links[cm.link_id].sr_id
+        
+        subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user))
 
