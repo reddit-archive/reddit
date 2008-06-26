@@ -583,10 +583,17 @@ class VCacheKey(Validator):
         self.cache_prefix = cache_prefix
         Validator.__init__(self, param, *a, **kw)
 
-    def run(self, key):
+    def run(self, key, name):
         if key:
-            val = cache.get(str(self.cache_prefix + "_" + key))
-            if val: return val
+            uid = cache.get(str(self.cache_prefix + "_" + key))
+            try:
+                a = Account._byID(uid, data = True)
+            except NotFound:
+                return None
+            if name and a.name.lower() != name.lower():
+                c.errors.add(errors.BAD_USERNAME)
+            if a:
+                return a
         c.errors.add(errors.EXPIRED)
 
 class VOneOf(Validator):

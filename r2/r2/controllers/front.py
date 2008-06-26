@@ -63,9 +63,9 @@ class FrontController(RedditController):
         """The 'what is my password' page"""
         return BoringPage(_("password"), content=Password()).render()
 
-    @validate(uid = VCacheKey('reset', 'key'),
+    @validate(user = VCacheKey('reset', ('key', 'name')),
               key = nop('key'))
-    def GET_resetpassword(self, uid, key):
+    def GET_resetpassword(self, user, key):
         """page hit once a user has been sent a password reset email
         to verify their identity before allowing them to update their
         password."""
@@ -73,7 +73,7 @@ class FrontController(RedditController):
         if not key and request.referer:
             referer_path =  request.referer.split(c.domain)[-1]
             done = referer_path.startswith(request.fullpath)
-        elif not uid:
+        elif not user:
             return self.abort404()
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()

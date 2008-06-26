@@ -1,4 +1,4 @@
-# "The contents of this file are subject to the Common Public Attribution
+# The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
 # http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -21,7 +21,7 @@
 ################################################################################
 from email.MIMEText import MIMEText
 from pylons import c,g
-from pages import Password_Reset
+from pages import PasswordReset
 from r2.models.account import passhash
 from r2.config import cache
 import os, random
@@ -68,5 +68,5 @@ def password_email(user):
     cache.set("reset_%s" %key, user._id, time=1800)
     simple_email(user.email, 'reddit@reddit.com',
                  'reddit.com password reset',
-                 Password_Reset(user=user, passlink=passlink).render())
+                 PasswordReset(user=user, passlink=passlink).render(style='email'))
 

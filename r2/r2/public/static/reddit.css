@@ -1207,6 +1207,11 @@ a.star { text-decoration: none; color: #ff8b60 }
 .pretty-form.long-text textarea,
 .pretty-form.long-text input[type=password] {padding: 2px; width: 40em }
 
+/*forgot password*/
+#passform h1 { margin: 0px; }
+#passform p { font-size: smaller; color: orangered; margin-bottom: 7px}
+#passform.pretty-form button { padding: 0px 1px; }
+
 
 .prefleft { padding: 10px; font-weight: bold; vertical-align: top} 
 .prefright { padding: 10px }

@@ -247,13 +247,10 @@ def passhash(username, password, salt = ''):
     tohash = '%s%s %s' % (salt, username, password)
     return salt + sha.new(tohash).hexdigest()
 
-def change_password(user, password, newpassword):
-    if valid_password(user, password):
-        user.password = passhash(user.name, newpassword)
-        user._commit()
-        return True
-    return False
-    
+def change_password(user, newpassword):
+    user.password = passhash(user.name, newpassword, True)
+    user._commit()
+    return True
 
 #TODO reset the cache
 def register(name, password):

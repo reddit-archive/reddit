@@ -631,7 +631,7 @@ class Password(Wrapped):
     def __init__(self, success=False):
         Wrapped.__init__(self, success = success)
 
-class Password_Reset(Wrapped):
+class PasswordReset(Wrapped):
     """Template for generating an email to the user who wishes to
     reset their password (step 2 of password recovery, after they have
     entered their user name in Password.)"""
@@ -641,8 +641,7 @@ class ResetPassword(Wrapped):
     """Form for actually resetting a lost password, after the user has
     clicked on the link provided to them in the Password_Reset email
     (step 3 of password recovery.)"""
-    def __init__(self, key=''):
-        Wrapped.__init__(self, key = key)
+    pass
 
 
 class Captcha(Wrapped):

@@ -846,21 +846,22 @@ class ApiController(RedditController):
             emailer.password_email(user)
             res._success()
             
-
     @Json
-    @validate(uid = VCacheKey('reset', 'key'),
+    @validate(user = VCacheKey('reset', ('key', 'name')),
               key= nop('key'),
               password = VPassword(['passwd', 'passwd2']))
-    def POST_resetpassword(self, res, uid, key, password):
+    def POST_resetpassword(self, res, user, key, password):
         res._update('status', innerHTML = '')
         if res._chk_error(errors.BAD_PASSWORD):
             res._focus('passwd')
         elif res._chk_error(errors.BAD_PASSWORD_MATCH):
             res._focus('passwd2')
-        else:
-            user = Account._byID(uid, data=True)
-            change_password(user, user.password, password)
+        elif errors.BAD_USERNAME in c.errors:
             cache.delete(str('reset_%s' % key))
+            return res._redirect('/password')
+        elif user:
+            cache.delete(str('reset_%s' % key))
+            change_password(user, password)
             self._login(res, user, '/resetpassword')
 
 
