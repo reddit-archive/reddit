@@ -129,8 +129,7 @@ ${parent.midcol()}
     %endif
     ${parent.delete_or_report_buttons()}
     ${parent.buttons()}
-    %if not c.profilepage \
-        and thing.subreddit.can_submit(c.user if c.user_is_loggedin else None):
+    %if not c.profilepage and thing.can_reply:
       <li>
         ${parent.simple_button("reply", fullname, _("reply {verb}"), "reply")}
       </li>

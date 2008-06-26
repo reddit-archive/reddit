@@ -125,7 +125,7 @@ class FrontController(RedditController):
             displayPane.append(PermalinkMessage(article.permalink))
 
         # insert reply box only for logged in user
-        if c.user_is_loggedin and article.subreddit_slow.can_submit(c.user):
+        if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user):
             displayPane.append(CommentReplyBox())
             #no comment box for permalinks
             if not comment:

@@ -362,7 +362,7 @@ class VSubmitParent(Validator):
                 return parent
             else:
                 sr = parent.subreddit_slow
-                if c.user_is_loggedin and sr.can_submit(c.user):
+                if c.user_is_loggedin and sr.can_comment(c.user):
                     return parent
         #else
         abort(403, "forbidden")

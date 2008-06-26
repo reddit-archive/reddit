@@ -105,18 +105,31 @@ class Subreddit(Thing, Printable):
     def subscribers(self):
         return self.subscriber_ids()
 
+    def can_comment(self, user):
+        if c.user_is_admin:
+            return True
+        elif self.is_banned(user):
+            return False
+        elif self.type in ('public','restricted'):
+            return True
+        elif self.is_moderator(user) or self.is_contributor(user):
+            #private requires contributorship
+            return True
+        else:
+            return False
+
     def can_submit(self, user):
         if c.user_is_admin:
             return True
-
-        is_allowed = not self.is_banned(user)
-
-        if self.type == 'public':
-            return is_allowed
-        else:
+        elif self.is_banned(user):
+            return False
+        elif self.type == 'public':
+            return True
+        elif self.is_moderator(user) or self.is_contributor(user):
             #restricted/private require contributorship
-            return ( self.is_moderator(user) or 
-                     self.is_contributor(user) ) and is_allowed
+            return True
+        else:
+            return False
 
     def can_ban(self,user):
         return (user
@@ -312,6 +325,9 @@ class FakeSubreddit(Subreddit):
     def can_view(self, user):
         return True
 
+    def can_comment(self, user):
+        return False
+
     def can_submit(self, user):
         return False
 
@@ -385,6 +401,9 @@ class SubSR(FakeSubreddit):
 
     def can_view(self, user):
         return True
+
+    def can_comment(self, user):
+        return False
 
     def can_submit(self, user):
         return True

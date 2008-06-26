@@ -324,6 +324,7 @@ class Comment(Thing, Printable):
                               wrapped.show_reports,
                               wrapped.can_ban,
                               wrapped.moderator_banned,
+                              wrapped.can_reply,
                               wrapped.deleted))
         s = ''.join(s)
         return s
@@ -344,6 +345,11 @@ class Comment(Thing, Printable):
     def add_props(cls, user, wrapped):
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), True)
+
+        subreddits = Subreddit._byID(set(c.sr_id for c in wrapped),
+                                     data=True,return_dict=False)
+        can_reply_srs = set(s._id for s in subreddits if s.can_comment(user))
+
         min_score = c.user.pref_min_comment_score
 
         cids = dict((w._id, w) for w in wrapped)
@@ -357,6 +363,8 @@ class Comment(Thing, Printable):
                     item.parent_permalink = parent.permalink
             else:
                 item.parent_permalink = None
+
+            item.can_reply = (item.sr_id in can_reply_srs)
 
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
