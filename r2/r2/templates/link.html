@@ -72,7 +72,7 @@
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  <a href="${thing.subreddit.path}" class="hover">
+  <a id="subreddit_${thing._fullname}" href="${thing.subreddit.path}" class="hover">
     ${thing.subreddit.name}
   </a>
   <script type="text/javascript">

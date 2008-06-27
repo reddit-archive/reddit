@@ -151,7 +151,7 @@ ${self.RenderPrintable()}
        href = unsafe('href="/user/%s/"' % name)
        if c.user_is_admin: name += " (%d)" % (author.link_karma)
     %>
-    <a class="${author_cls}" ${href}>${name}</a>
+    <a id="author_${thing._fullname}" class="${author_cls}" ${href}>${name}</a>
  %endif
 %endif
 </%def>
