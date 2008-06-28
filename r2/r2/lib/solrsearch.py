@@ -29,7 +29,6 @@
 from __future__ import with_statement
 
 from r2.models import *
-from r2.models import thing_changes
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib.utils import timeago, set_emptying_cache, IteratorChunker
@@ -382,7 +381,8 @@ def reindex_all(types = None, delete_all_first=False):
             for batch in fetch_batches(cls,1000,
                                        timeago("50 years"),
                                        start_t):
-                r = tokenize_things(batch)
+                r = tokenize_things([x for x in batch
+                                     if not x._spam and not x._deleted ])
 
                 count += len(r)
                 print ("Processing %s #%d(%s): %s"
@@ -446,6 +446,7 @@ def changed(types=None,since=None,commit=True,optimize=False):
                 chunk = cls._by_fullname(chunk,
                                          data=True, return_dict=False)
                 chunk = [x for x in chunk if not x._spam and not x._deleted]
+                to_delete = [x for x in chunk if x._spam or x._deleted]
 
                 # note: anything marked as spam or deleted is not
                 # updated in the search database. Since these are
@@ -453,6 +454,9 @@ def changed(types=None,since=None,commit=True,optimize=False):
                 if len(chunk) > 0:
                     chunk  = tokenize_things(chunk)
                     s.add(chunk)
+
+                for i in to_delete:
+                    s.delete(id=i._fullname)
 
     save_last_run(start_t)
 

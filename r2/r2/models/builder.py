@@ -33,7 +33,6 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
-from r2.lib import solrsearch
 
 from copy import deepcopy, copy
 
@@ -361,7 +360,7 @@ class SearchBuilder(QueryBuilder):
         self.total_num = 0
         self.langs = langs
 
-        self.ignore = ignore
+        self.ignore = set(x for x in (ignore if ignore else []))
 
     def init_query(self):
         subreddits = None
@@ -381,7 +380,15 @@ class SearchBuilder(QueryBuilder):
         self.subreddits = subreddits
         self.authors = authors
 
+        self.skip = True
+
+    def keep_item(self,item):
+        skip_if = item._spam or item._deleted or item._fullname in self.ignore
+        return not skip_if
+
     def fetch_more(self, last_item, num_have):
+        from r2.lib import solrsearch
+
         start_t = time.time()
 
         done = False
@@ -412,15 +419,10 @@ class SearchBuilder(QueryBuilder):
                                              timerange = timerange, langs = langs,
                                              types = self.types)
 
-        things = [x
-                  for x in new_items
-                  if not x._fullname in
-                      (self.ignore if self.ignore else [])]
-
         self.total_num = new_items.hits
         self.timing = time.time() - start_t
 
-        return done, things
+        return done, new_items
 
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment = None, context = None):

@@ -19,6 +19,8 @@ r2/r2/public/static/frame.js
 r2/r2/public/static/reddit.js
 r2/r2/public/static/vote.js
 r2/r2/public/static/reddit_rtl.css
+r2/r2admin
+r2/reddit_i18n
 r2/data/*
 r2/count.pickle
 r2/srcount.pickle
