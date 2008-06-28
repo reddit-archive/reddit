@@ -57,9 +57,9 @@ class Account(Thing):
                      report_ignored = 0,
                      spammer = 0,
                      sort_options = {},
-                     has_subscribed = False
+                     has_subscribed = False,
                      )
-    
+
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
         

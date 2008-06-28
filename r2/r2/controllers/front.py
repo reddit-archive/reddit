@@ -97,6 +97,9 @@ class FrontController(RedditController):
         if not c.default_sr and c.site._id != article.sr_id: 
             return self.abort404()
 
+        #check for 304
+        self.check_modified(article, 'comments')
+
         # if there is a focal comment, communicate down to comment_skeleton.html who
         # that will be
         if comment:
@@ -185,6 +188,7 @@ class FrontController(RedditController):
 
         # overview page is a merge of comments and links
         if location == 'overview':
+            self.check_modified(vuser, 'overview')
             links = Link._query(Link.c.author_id == vuser._id,
                                 Link.c._spam == (True, False))
             comments = Comment._query(Comment.c.author_id == vuser._id,
@@ -192,11 +196,13 @@ class FrontController(RedditController):
             query = thing.Merge((links, comments), sort = db_sort, data = True)
 
         elif location == 'comments':
+            self.check_modified(vuser, 'commented')
             query = Comment._query(Comment.c.author_id == vuser._id,
                                    Comment.c._spam == (True, False),
                                    sort = db_sort)
 
         elif location == 'submitted':
+            self.check_modified(vuser, 'submitted')
             query = Link._query(Link.c.author_id == vuser._id,
                                 Link.c._spam == (True, False),
                                 sort = db_sort)
@@ -204,6 +210,7 @@ class FrontController(RedditController):
         # (dis)liked page: pull votes and extract thing2
         elif ((location == 'liked' or location == 'disliked') and
               votes_visible(vuser)):
+            self.check_modified(vuser, location)
             rel = Vote.rel(vuser, Link)
             query = rel._query(rel.c._thing1_id == vuser._id,
                                rel.c._t2_deleted == False)

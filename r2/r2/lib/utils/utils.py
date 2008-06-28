@@ -26,6 +26,7 @@ from copy import deepcopy
 import cPickle as pickle
 import re, datetime, math, random, string, sha
 
+from datetime import datetime, timedelta
 
 from pylons.i18n import ungettext, _
         
@@ -369,7 +370,7 @@ def timeago(interval):
              month  = 60 * 60 * 24 * 30,
              year   = 60 * 60 * 24 * 365)[period]
     delta = num * d
-    return datetime.datetime.now(g.tz) - datetime.timedelta(0, delta)
+    return datetime.now(g.tz) - timedelta(0, delta)
 
 def timetext(delta, resultion = 1, bare=True):
     """
@@ -386,7 +387,7 @@ def timetext(delta, resultion = 1, bare=True):
       (60, lambda n: ungettext('minute', 'minutes', n)),
       (1, lambda n: ungettext('second', 'seconds', n))
     )
-    delta = max(delta, datetime.timedelta(0))
+    delta = max(delta, timedelta(0))
     since = delta.days * 24 * 60 * 60 + delta.seconds
     for i, (seconds, name) in enumerate(chunks):
         count = math.floor(since / seconds)
@@ -394,7 +395,7 @@ def timetext(delta, resultion = 1, bare=True):
             break
 
     from r2.lib.strings import strings
-    if count == 0 and delta.seconds == 0 and delta != datetime.timedelta(0):
+    if count == 0 and delta.seconds == 0 and delta != timedelta(0):
         n = math.floor(delta.microseconds / 1000)
         s = strings.number_label % (n, ungettext("millisecond", 
                                                  "milliseconds", n))
@@ -412,11 +413,11 @@ def timetext(delta, resultion = 1, bare=True):
 
 def timesince(d, resultion = 1, bare = True):
     from pylons import g
-    return timetext(datetime.datetime.now(g.tz) - d)
+    return timetext(datetime.now(g.tz) - d)
 
 def timeuntil(d, resultion = 1, bare = True):
     from pylons import g
-    return timetext(d - datetime.datetime.now(g.tz))
+    return timetext(d - datetime.now(g.tz))
 
 
 def to_base(q, alphabet):
@@ -667,7 +668,7 @@ def find_broken_things(cls,attrs,time,delete = False):
         for Things of that class, missing those attributes, deleting
         them if requested
     """
-    for t in fetch_things(cls,time,datetime.datetime.now()):
+    for t in fetch_things(cls,time,datetime.now()):
         for a in attrs:
             try:
                 # try to retreive the attribute
@@ -694,7 +695,6 @@ def timeit(func):
 def lineno():
     "Returns the current line number in our program."
     import inspect
-    from datetime import datetime
     print "%s\t%s" % (datetime.now(),inspect.currentframe().f_back.f_lineno)
 
 class IteratorChunker(object):

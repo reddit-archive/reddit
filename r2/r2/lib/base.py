@@ -26,7 +26,7 @@ from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
 from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress
-from utils import storify, string2js
+from utils import storify, string2js, read_http_date
 
 import re, md5
 from urllib import quote 
@@ -65,6 +65,12 @@ class BaseController(WSGIController):
         request.path = environ.get('PATH_INFO')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)
+        
+        if_modified_since = environ.get('HTTP_IF_MODIFIED_SINCE')
+        if if_modified_since:
+            request.if_modified_since = read_http_date(if_modified_since)
+        else:
+            request.if_modified_since = None
 
         #set the function to be called
         action = request.environ['pylons.routes_dict'].get('action')

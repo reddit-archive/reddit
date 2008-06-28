@@ -392,7 +392,6 @@ class RedditController(BaseController):
                 c.used_cache = True
                 # response wrappers have already been applied before cache write
                 c.response_wrappers = []
-                
 
     def post(self):
         response = c.response
@@ -421,6 +420,16 @@ class RedditController(BaseController):
             config.cache.set(self.request_key(),
                              response,
                              g.page_cache_time)
+    
+    def check_modified(self, thing, action):
+        if c.user_is_loggedin:
+            return
+
+        date = utils.is_modified_since(thing, action, request.if_modified_since)
+        if date is True:
+            abort(304, 'not modified')
+        else:
+            c.response.headers['Last-Modified'] = utils.http_date_str(date)
 
     def abort404(self):
         abort(404, 'not found')

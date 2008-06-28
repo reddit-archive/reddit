@@ -128,21 +128,18 @@ class ErrorController(RedditController):
                                    content=pages.UnfoundPage(choice=ch))
             return res.render()
 
-    def send503(self):
-        c.response.status_code = 503
-        c.response.headers['Retry-After'] = 1
-        c.response.content = toofast
-        return c.response
-
     def GET_document(self):
         try:
             code =  request.GET.get('code', '')
-            if code == '500':
+            if code == '403':
+                return self.send403()
+            elif code == '500':
                 return redditbroke % rand_strings.sadmessages
             elif code == '503':
-                return self.send503()
-            elif code == '403':
-                return self.send403()
+                c.response.status_code = 503
+                c.response.headers['Retry-After'] = 1
+                c.response.content = toofast
+                return c.response
             elif c.site:
                 return self.send404()
             else:

@@ -29,7 +29,7 @@ from validator import *
 from r2.models import *
 import r2.models.thing_changes as tc
 
-from r2.lib.utils import get_title, sanitize_url, timeuntil
+from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink
@@ -278,6 +278,10 @@ class ApiController(RedditController):
         if should_ratelimit:
             VRatelimit.ratelimit(rate_user=True, rate_ip = True)
 
+        #update the modified flags
+        set_last_modified(c.user, 'overview')
+        set_last_modified(c.user, 'submitted')
+        
         # flag search indexer that something has changed
         tc.changed(l)
 
@@ -598,6 +602,12 @@ class ApiController(RedditController):
             # flag search indexer that something has changed
             tc.changed(item)
 
+            #update last modified
+            set_last_modified(c.user, 'overview')
+            set_last_modified(c.user, 'commented')
+            set_last_modified(link, 'comments')
+
+
         #set the ratelimiter
         if should_ratelimit:
             VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix = "rate_comment_")
@@ -622,6 +632,10 @@ class ApiController(RedditController):
                    else None)
             organic = vote_type == 'organic'
             Vote.vote(user, thing, dir, ip, spam, organic)
+
+            #update last modified
+            set_last_modified(c.user, 'liked')
+            set_last_modified(c.user, 'disliked')
 
             # flag search indexer that something has changed
             tc.changed(thing)
