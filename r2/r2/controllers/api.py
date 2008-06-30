@@ -465,7 +465,7 @@ class ApiController(RedditController):
                 res._focus('verpass')
                 res._update('verpass', value='')
             else:
-                change_password(c.user, curpass, password)
+                change_password(c.user, password)
                 if updated:
                     res._update('status', 
                                 innerHTML=_('your email and password have been updated'))
