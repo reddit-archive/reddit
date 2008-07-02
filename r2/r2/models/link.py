@@ -31,7 +31,7 @@ from r2.lib.db.operators import lower, base_url
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 
-from pylons import c, g
+from pylons import c, g, request
 from pylons.i18n import ungettext
 
 import random
@@ -191,6 +191,7 @@ class Link(Thing, Printable):
                               c.user.pref_newwindow,
                               c.user.pref_frame,
                               c.user.pref_compress,
+                              request.host,
                               wrapped.author == c.user,
                               wrapped.likes,
                               wrapped.saved,
@@ -316,6 +317,7 @@ class Comment(Thing, Printable):
                               self._fullname,
                               bool(c.user_is_loggedin),
                               c.focal_comment == self._id36,
+                              request.host,
                               wrapped.author == c.user,
                               wrapped.likes,
                               wrapped.friend,
