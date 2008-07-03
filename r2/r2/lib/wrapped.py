@@ -54,8 +54,7 @@ class Wrapped(object):
 
 
     def __repr__(self):
-        return '<%s %s %s>' % (self.__class__.__name__,
-                               self.lookups, self.context)
+        return '<%s %s>' % (self.__class__.__name__, self.lookups)
 
 
     def template(self, style = 'html'):

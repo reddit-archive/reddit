@@ -21,7 +21,7 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os
+import pytz, os, logging, sys
 from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, CacheChain
 from r2.lib.db.stats import QueryStats
@@ -146,9 +146,16 @@ class Globals(object):
                     full_name = os.path.join(log_path, fname)
                     os.remove(full_name)
 
+        #setup the logger
+        self.log = logging.getLogger('reddit')
+        if self.debug:
+            self.log.setLevel(logging.DEBUG)
+            self.log.addHandler(logging.StreamHandler())
+
     def __del__(self):
         """
         Put any cleanup code to be run when the application finally exits 
         here.
         """
         pass
+

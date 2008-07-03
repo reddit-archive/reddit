@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -20,7 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%! from r2.models.subreddit import Default %>
+<%!
+   from r2.models.subreddit import Default 
+ %>
 
 <%inherit  file="printable.html"/>
  
@@ -39,12 +41,10 @@
   </span>
 </%def>
 
-<%def name="entry()">
-<% fullname = thing._fullname %>
-<p class="title" id="titlerow_${fullname}">
-  <a id="title_${fullname}" 
-     onmousedown="setClick(this)"
-     class="title ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
+<%def name="make_link(name, css_class)">
+  <a id="${name}_${thing._fullname}" 
+     onmousedown="setClick(this, '${css_class}')"
+     class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
      %if c.user.pref_frame:
        href="/goto?id=${thing._id36}"  
      %else:
@@ -57,18 +57,26 @@
        target="_blank" 
      %endif
      >
-        ${thing.title} 
-     </a>
+     ${caller.body()}
+  </a>
+</%def>
+
+<%def name="entry()">
+  <p class="title" id="titlerow_${thing._fullname}">
+    <%call expr="make_link('title', 'title')">
+      ${thing.title} 
+    </%call>
     &#32;
     ${unsafe(self.domain())}
-</p>
-<p class="tagline">
-  ${self.tagline()}
-</p>
-<ul class="flat-list buttons">
-  ${self.buttons()}
-  ${self.admintagline()}
-</ul>
+  </p>
+  <p class="tagline">
+    ${self.tagline()}
+  </p>
+  <ul class="flat-list buttons">
+    ${self.buttons()}
+    ${self.admintagline()}
+  </ul>
+  ${self.mediadiv()}
 </%def>
 
 <%def name="subreddit()" buffered="True">
@@ -92,6 +100,7 @@
     %endif                  
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
+ ${self.thumbnail()}
 </%def>
 
 
@@ -161,6 +170,43 @@
   %endif
   ${parent.delete_or_report_buttons()}
   ${parent.buttons()}
+  ${self.media_embed()}
 </%def>
 
 
+<%def name="media_embed()">
+  %if thing.media_object:
+  <li>
+    <a id="view_embeded_media_a_${thing._fullname}" class="" \
+       href="javascript:view_embeded_media('${thing._fullname}', '${thing.media_object}')">\
+      <span id="view_embeded_media_span_watch_${thing._fullname}" 
+            class="watch-play"
+            style="display: inline">
+        ${_("watch")}
+      </span>
+      <span id="view_embeded_media_span_close_${thing._fullname}" 
+            class="watch-stop"
+            style="display: none">
+        ${_("close")}
+      </span>
+    </a>
+  </li>
+  %endif
+</%def>
+
+<%def name="thumbnail()">
+  %if thing.thumbnail:
+  <%call expr="make_link('thumbnail', 'thumbnail')">
+    <img src="${thing.thumbnail}" alt="thumbnail for ${thing._fullname}"/>
+  </%call>
+  %endif
+</%def>
+
+<%def name="mediadiv()">
+  %if thing.media_object:
+    <div id="embeded_media_${thing._fullname}" 
+         class="embededmedia" style="display: none;">
+      <p class="error">loading...</p>
+    </div>
+  %endif
+</%def>

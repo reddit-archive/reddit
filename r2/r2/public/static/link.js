@@ -131,9 +131,11 @@ Thing.prototype = {
     compute_height:function() {
         var arrows = this.$("arrows");
         var entry  = this.$("entry");
+        var thumb  = this.$("thumbnail");
         var num  = this.$("num");
         return Math.max(arrows ? arrows.offsetHeight : 0,
                         entry  ? entry.offsetHeight  : 0,
+                        thumb  ? thumb.offsetHeight  : 0,
                         num    ? num.offsetHeight    : 0);
     },
     
@@ -151,7 +153,8 @@ Thing.prototype = {
     
     set_height: function(h) {
         var entry = this.$('entry');
-        var arrows   = this.$('arrows');
+        var thumb = this.$('thumbnail');
+        var arrows = this.$('arrows');
         var num   = this.$('num');
         if(h == "fit" ||
            (this.max_height() && h >= this.max_height() *.90 )) {
@@ -190,6 +193,7 @@ Thing.prototype = {
         }
         entry.style.height = h;
         if(arrows) { arrows.style.height = h; }
+        if(thumb)  { thumb.style.height = h; }
         if(num) { 
             if (h) 
                 num.style.marginTop = 0;
@@ -457,14 +461,15 @@ function linkstatus(form) {
     return _global_fetching_tag;
 }
 
-function setClick(a) {
+function setClick(a, css_class) {
+    css_class = css_class || "title";
     var id = _id(a);
     if (id) {
         if(logged) {
-            a.className = "title loggedin click";
+            a.className = css_class + " loggedin click";
         }
         else {
-            a.className = "title click";
+            a.className = css_class + " click";
         }
         setClickCookie(id);
     }

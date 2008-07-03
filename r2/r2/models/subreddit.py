@@ -43,6 +43,7 @@ class Subreddit(Thing, Printable):
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
                      valid_votes = 0,
+                     show_media = False,
                      )
 
     @classmethod

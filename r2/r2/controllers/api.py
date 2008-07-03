@@ -657,6 +657,7 @@ class ApiController(RedditController):
               ad_file = nop("ad_file"),
               sr = VByName('sr'),
               over_18 = VBoolean('over_18'),
+              show_media = VBoolean('show_media'),
               type = VOneOf('type', ('public', 'private', 'restricted'))
               )
     def POST_site_admin(self, res, name ='', sr = None, **kw):
@@ -665,7 +666,7 @@ class ApiController(RedditController):
         kw = dict((k, v) for k, v in kw.iteritems()
                   if v is not None
                   and k in ('name', 'title', 'description', 'firsttext',
-                            'static_path', 'ad_file', 'over_18',
+                            'static_path', 'ad_file', 'over_18', 'show_media',
                             'type', 'header', 'lang', 'stylesheet'))
 
         #if a user is banned, return rate-limit errors

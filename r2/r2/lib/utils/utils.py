@@ -742,3 +742,6 @@ def vote_hash(user, thing, note='valid'):
 
 def valid_vote_hash(hash, user, thing):
     return True
+
+def safe_eval_str(unsafe_str):
+    return unsafe_str.replace('\\x3d', '=').replace('\\x26', '&')

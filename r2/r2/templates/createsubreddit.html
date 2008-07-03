@@ -17,7 +17,7 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%!
@@ -67,7 +67,7 @@ function update_title() {
     %if thing.site:
       <input type="hidden" name="sr" value="${thing.site._fullname}"/>
     %endif
-    <table>
+    <table class="content preftable">
       <tr>
         <th>
           <label for="name">${_("name")}</label>
@@ -220,7 +220,7 @@ function update_title() {
           <label>${_("type")}</label>
         </th>
         <td colspan="2">
-           <table>
+           <table class="spacer">
            ${radio_type(_("public"), _("anyone can view and submit"))}
            ${radio_type(_("restricted"), _("anyone can view, but only contributors can submit links"))}
            ${radio_type(_("private"), _("only contributors can view and submit"))}
@@ -235,6 +235,17 @@ function update_title() {
           <input class="nomargin" type="checkbox" name="over_18" id="over_18"
                  ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
           <label for="over_18">${_("viewers must be over eighteen years old")}</label>
+        </td>
+      </tr>
+      <tr>
+        <th><label>${_("media")}</label></th>
+        <td colspan="2">
+          <input class="nomargin" type="checkbox" 
+                 name="show_media" id="show_media"
+                 ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
+          <label for="show_media">
+            ${_("show thumbnail images of content")}
+          </label>
         </td>
       </tr>
   

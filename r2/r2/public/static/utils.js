@@ -222,7 +222,7 @@ function handleResponse(action) {
                     if(field) {
                         for(var i in u) {
                             if(typeof(u[i]) != "function" && u != 'name') {
-                                field[i] = u[i];
+                                field[i] = unsafe(u[i]);
                             }
                         } }});
         my_iter(r.hide,
@@ -342,4 +342,24 @@ function more(a_tag, new_label, div_on, div_off) {
 
 function new_captcha() {
     redditRequest("new_captcha"); 
+}
+
+function view_embeded_media(id, media_link) {
+    var eid = "embeded_media_" + id;
+    var watchid = "view_embeded_media_span_watch_" + id;    
+    var closeid = "view_embeded_media_span_close_" + id;
+    var watchspan = document.getElementById(watchid);
+    var closespan = document.getElementById(closeid);
+    var e = document.getElementById(eid);
+    if (e.style.display == "none") {
+	e.style.display = "block";
+	e.innerHTML = media_link;
+	watchspan.style.display = "none";
+	closespan.style.display = "inline";
+    } else {
+	e.style.display = "none";
+	watchspan.style.display = "inline";
+	closespan.style.display = "none";
+    }
+
 }

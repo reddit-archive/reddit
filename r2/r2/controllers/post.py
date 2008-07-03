@@ -59,6 +59,7 @@ class PostController(ApiController):
               pref_over_18 = VBoolean('over_18'),
               pref_numsites = VInt('numsites', 1, 100),
               pref_lang = VLang('lang'),
+              pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
               pref_compress = VBoolean('compress'),
               pref_min_link_score = VInt('min_link_score', -100, 100),
               pref_min_comment_score = VInt('min_comment_score', -100, 100),

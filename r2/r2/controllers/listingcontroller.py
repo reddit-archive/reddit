@@ -177,7 +177,8 @@ class HotController(FixListing, ListingController):
         o_links, pos = organic.organic_links(c.user)
         if o_links:
             # get links in proximity to pos
-            disp_links = [o_links[(i + pos) % len(o_links)] for i in xrange(-2, 8)]
+            l = min(len(o_links) - 3, 8)
+            disp_links = [o_links[(i + pos) % len(o_links)] for i in xrange(-2, l)]
 
             b = IDBuilder(disp_links,
                           wrap = self.builder_wrapper)

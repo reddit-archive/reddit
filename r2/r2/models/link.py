@@ -45,6 +45,8 @@ class Link(Thing, Printable):
                      reported = 0, num_comments = 0,
                      moderator_banned = False,
                      banned_before_moderator = False,
+                     media_object = None,
+                     has_thumbnail = False,
                      ip = '0.0.0.0')
 
     def __init__(self, *a, **kw):
@@ -201,6 +203,7 @@ class Link(Thing, Printable):
                               wrapped.show_spam,
                               wrapped.show_reports,
                               wrapped.can_ban,
+                              wrapped.thumbnail,
                               wrapped.moderator_banned))
         s = ''.join(s)
         return s
@@ -216,6 +219,8 @@ class Link(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.count import incr_counts
+        from r2.lib.media import thumbnail_url
+
         saved = Link._saved(user, wrapped) if user else {}
         hidden = Link._hidden(user, wrapped) if user else {}
         #clicked = Link._clicked(user, wrapped) if user else {}
@@ -223,6 +228,17 @@ class Link(Thing, Printable):
 
         for item in wrapped:
 
+            show_media = (c.user.pref_media == 'on' or
+                          (c.user.pref_media == 'subreddit' and
+                           item.subreddit.show_media))
+
+            if not show_media:
+                item.thumbnail = ""
+            elif item.has_thumbnail:
+                item.thumbnail = thumbnail_url(item)
+            else:
+                item.thumbnail = g.default_thumb
+            
             item.score = max(0, item.score)
 
             item.domain = (domain(item.url) if not item.is_self

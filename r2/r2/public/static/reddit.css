@@ -26,8 +26,13 @@ h2 a:visited { color: #369 }
 h2 a:hover { text-decoration: underline }
 h3 { font-size:110%; /*text-transform:uppercase;*/ }
 
-a img { border:none }
+a img { border: 0 none; }
 a { text-decoration: none; color: #369; }
+
+/*
+a:active { border: 0 none;}
+a:focus { -moz-outline-style: none; }
+*/
 
 div.autosize { display: table; width: 1px}
 div.autosize > div { display: table-cell; }
@@ -58,8 +63,6 @@ input.txt {
 
 
 /* header / menus */
-
-/*:-moz-any-link:focus { outline: none }*/
 
 .hover a:hover { text-decoration: underline }
 
@@ -497,6 +500,17 @@ before enabling */
 .tagline a {color: #369; text-decoration: none; }
 .tagline a.friend {color: orangered }
 .tagline a:hover { text-decoration: underline }
+
+.watch-play { 
+    background: transparent url(/static/reddit-button-play.gif) no-repeat scroll right center;
+    padding-right: 15px;
+    color: #336699;
+}
+.watch-stop {  
+    color: red;
+}
+
+.embededmedia { margin-top: 5px }
 
 .title { color: blue; padding: 0px; overflow: hidden; }
 .title:visited { color: #551a8b }
@@ -1213,8 +1227,14 @@ a.star { text-decoration: none; color: #ff8b60 }
 #passform.pretty-form button { padding: 0px 1px; }
 
 
-.prefleft { padding: 10px; font-weight: bold; vertical-align: top} 
-.prefright { padding: 10px }
+.preftable th { 
+    padding: 10px; 
+    font-weight: bold; 
+    vertical-align: top;
+    text-align: left;
+}
+.preftable td.prefright { padding: 10px }
+.preftable .spacer { margin-top: 5px; margin-bottom: 5px; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
@@ -1236,4 +1256,10 @@ a.star { text-decoration: none; color: #ff8b60 }
 .stats th { text-align: left; background-color: whitesmoke; 
             color: #369; font-weight: bold;}
 .stats td.ri { padding-left: 20px; text-align: right}
+
+.thumbnail { 
+    float: left; 
+    margin: 0px 5px; 
+    overflow: hidden;
+}
 

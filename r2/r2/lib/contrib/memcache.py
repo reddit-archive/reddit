@@ -525,6 +525,8 @@ class Client(local):
             try:
                 for key in server_keys[server]: # These are mangled keys
                     store_info = self._val_to_store_info(mapping[prefixed_to_orig_key[key]], min_compress_len)
+                    if not store_info:
+                        continue
                     write("set %s %d %d %d\r\n%s\r\n" % (key, store_info[0], time, store_info[1], store_info[2]))
                 server.send_cmds(''.join(bigcmd))
             except socket.error, msg:
@@ -568,10 +570,11 @@ class Client(local):
             min_compress_len = 0
         else:
             flags |= Client._FLAG_PICKLE
-            val = pickle.dumps(val, 0)  # Ack! JLR hacks it so that LinkedDict unpicling works w/o figuring out __reduce__.
+            val = pickle.dumps(val, -1)  # Ack! JLR hacks it so that LinkedDict unpicling works w/o figuring out __reduce__.
 
         #  silently do not store if value length exceeds maximum
-        if len(val) >= SERVER_MAX_VALUE_LENGTH: return(0)
+        if len(val) >= SERVER_MAX_VALUE_LENGTH:
+            return (0)
 
         lv = len(val)
         # We should try to compress if min_compress_len > 0 and we could import zlib and this string is longer than our min threshold.
@@ -593,6 +596,8 @@ class Client(local):
         self._statlog(cmd)
 
         store_info = self._val_to_store_info(val, min_compress_len)
+        if not store_info:
+            return 0
 
         fullcmd = "%s %s %d %d %d\r\n%s" % (cmd, key, store_info[0], time, store_info[1], store_info[2])
         try:

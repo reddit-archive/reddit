@@ -17,7 +17,7 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%! 
@@ -173,8 +173,6 @@ ${self.RenderPrintable()}
   </div>
 </%def>
 
-
-
 <%def name="score(this, likes=None, inline=True, label = True, _id = True)">
 <%
    tag = "span" if inline else "div"
@@ -251,6 +249,12 @@ ${state_button(name, fullname, title, onclick, executed,
 <%def name="simple_button(name, fullname, title, nameFunc=None)">
 <a id="${nameFunc}_a_${fullname}" class="" \
    href="javascript:${nameFunc}('${fullname}')">\
+  ${title}</a>
+</%def>
+
+<%def name="advanced_button(fullname, args, title, nameFunc=None)">
+<a id="${nameFunc}_a_${fullname}" class="" \
+   href="javascript:${nameFunc}(${args})">\
   ${title}</a>
 </%def>
 
