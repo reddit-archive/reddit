@@ -12,7 +12,10 @@ def read_http_date(date_str):
         try:
             date = datetime.strptime(date_str, DATE_RFC850)
         except ValueError:
-            date = datetime.strptime(date_str, DATE_ANSI)
+            try:
+                date = datetime.strptime(date_str, DATE_ANSI)
+            except ValueError:
+                return None
     date = date.replace(tzinfo = pytz.timezone('GMT'))
     return date
 

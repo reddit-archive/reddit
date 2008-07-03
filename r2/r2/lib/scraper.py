@@ -69,6 +69,9 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
                 content = open_req.read()
             content_type = open_req.headers.get('content-type')
 
+            if not content_type:
+                return nothing
+
             if 'image' in content_type:
                 p = ImageFile.Parser()
                 new_data = content

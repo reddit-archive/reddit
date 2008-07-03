@@ -148,10 +148,10 @@ class Globals(object):
 
         #setup the logger
         self.log = logging.getLogger('reddit')
+        self.log.addHandler(logging.StreamHandler())
         if self.debug:
             self.log.setLevel(logging.DEBUG)
-            self.log.addHandler(logging.StreamHandler())
-
+            
     def __del__(self):
         """
         Put any cleanup code to be run when the application finally exits 

@@ -57,15 +57,20 @@ def make_link_info_job(results, link, useragent):
     link's thumbnail and media object. Places the result in the results
     dict"""
     def job():
-        scraper = make_scraper(link.url)
+        try:
+            scraper = make_scraper(link.url)
 
-        thumbnail = scraper.thumbnail()
-        media_object = scraper.media_object()
+            thumbnail = scraper.thumbnail()
+            media_object = scraper.media_object()
 
-        if thumbnail:
-            upload_thumb(link, thumbnail)
+            if thumbnail:
+                upload_thumb(link, thumbnail)
 
-        results[link] = (thumbnail, media_object)
+            results[link] = (thumbnail, media_object)
+        except:
+            log.warning('error fetching %s %s' % (link._fullname, link.url))
+            raise
+
     return job
 
 def update_link(link, thumbnail, media_object):
