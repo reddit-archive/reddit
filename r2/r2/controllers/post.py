@@ -50,24 +50,7 @@ class PostController(ApiController):
 #         c.user._commit()
 #         return {}
 
-    @validate(pref_frame = VBoolean('frame'),
-              pref_organic = VBoolean('organic'),
-              pref_newwindow = VBoolean('newwindow'),
-              pref_public_votes = VBoolean('public_votes'),
-              pref_hide_ups = VBoolean('hide_ups'),
-              pref_hide_downs = VBoolean('hide_downs'),
-              pref_over_18 = VBoolean('over_18'),
-              pref_numsites = VInt('numsites', 1, 100),
-              pref_lang = VLang('lang'),
-              pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
-              pref_compress = VBoolean('compress'),
-              pref_min_link_score = VInt('min_link_score', -100, 100),
-              pref_min_comment_score = VInt('min_comment_score', -100, 100),
-              pref_num_comments = VInt('num_comments', 1, g.max_comments,
-                                       default = g.num_comments),
-              all_langs = nop('all-langs', default = 'all'))
-    def POST_options(self, all_langs, pref_lang, **kw):
-        #TODO
+    def set_options(self, all_langs, pref_lang, **kw):
         if c.errors.errors:
             print "fucker"
             raise "broken"
@@ -95,9 +78,32 @@ class PostController(ApiController):
         c.user.pref_lang = pref_lang
         c.user._commit()
 
-        if c.user_is_loggedin: 
-            return self.redirect("/prefs?done=true")
-        return self.redirect(request.referer)        
+
+    @validate(pref_lang = VLang('lang'),
+              all_langs = nop('all-langs', default = 'all'))
+    def POST_unlogged_options(self, all_langs, pref_lang):
+        self.set_options( all_langs, pref_lang)
+        return self.redirect(request.referer)
+
+    @validate(pref_frame = VBoolean('frame'),
+              pref_organic = VBoolean('organic'),
+              pref_newwindow = VBoolean('newwindow'),
+              pref_public_votes = VBoolean('public_votes'),
+              pref_hide_ups = VBoolean('hide_ups'),
+              pref_hide_downs = VBoolean('hide_downs'),
+              pref_over_18 = VBoolean('over_18'),
+              pref_numsites = VInt('numsites', 1, 100),
+              pref_lang = VLang('lang'),
+              pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
+              pref_compress = VBoolean('compress'),
+              pref_min_link_score = VInt('min_link_score', -100, 100),
+              pref_min_comment_score = VInt('min_comment_score', -100, 100),
+              pref_num_comments = VInt('num_comments', 1, g.max_comments,
+                                       default = g.num_comments),
+              all_langs = nop('all-langs', default = 'all'))
+    def POST_options(self, all_langs, pref_lang, **kw):
+        self.set_options(all_langs, pref_lang, **kw)
+        return self.redirect("/prefs?done=true")
             
     def GET_over18(self):
         return BoringPage(_("over 18?"),

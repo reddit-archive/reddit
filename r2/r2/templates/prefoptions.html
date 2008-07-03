@@ -59,7 +59,13 @@
   <p class="error">${_("your preferences have been updated")}</p>
 %endif
 
-<form action="/post/options" method="post" class="pretty-form short-text">
+<%
+   if c.user_is_loggedin:
+       action = "/post/options"
+   else:
+       action = "/post/unlogged_options"
+ %>
+<form action="${action}" method="post" class="pretty-form short-text">
 <input type="hidden" name="uh" value="${c.modhash}" />
 
 <table class="content preftable">
