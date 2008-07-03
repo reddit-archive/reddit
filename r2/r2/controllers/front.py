@@ -403,8 +403,20 @@ class FrontController(RedditController):
                                      reverse = reverse,
                                      count = count, types = [Link])
 
+        if not isinstance(c.site,FakeSubreddit):
+            my_reddits_link = "/search%s" % query_string({'q': query})
+            all_reddits_link = "%s/search%s" % (subreddit.All.path,
+                                                query_string({'q': query}))
+            infotext = strings.searching_a_reddit % {'reddit_name':      c.site.name,
+                                                     'reddit_link':      c.site.path,
+                                                     'my_reddits_link':  my_reddits_link,
+                                                     'all_reddits_link': all_reddits_link}
+        else:
+            infotext = None
+
         res = SearchPage(_('search results'), query, t, num, content=spane,
-                         nav_menus = [TimeMenu(default = time)]).render()
+                         nav_menus = [TimeMenu(default = time)],
+                         infotext = infotext).render()
         
         return res
         

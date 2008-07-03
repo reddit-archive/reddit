@@ -353,7 +353,8 @@ class SearchPage(BoringPage):
         BoringPage.__init__(self, pagename, *a, **kw)
 
     def content(self):
-        return self.content_stack(self.searchbar, self.nav_menu, self._content)
+        return self.content_stack(self.searchbar, self.infobar,
+                                  self.nav_menu, self._content)
 
 class LinkInfoPage(Reddit):
     """Renders the varied /info pages for a link.  The Link object is

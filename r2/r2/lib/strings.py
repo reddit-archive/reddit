@@ -89,7 +89,11 @@ string_dict = dict(
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
-    sr_subscribe =  _('click the checkbox next to a reddit to subscribe')
+    sr_subscribe =  _('click the checkbox next to a reddit to subscribe'),
+
+    searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
+                           'you can search within [your subscribed reddits](%(my_reddits_link)s) ' +
+                           'or [all reddits](%(all_reddits_link)s)')
 )
 
 class StringHandler(object):

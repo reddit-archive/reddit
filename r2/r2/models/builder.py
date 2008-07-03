@@ -367,16 +367,11 @@ class SearchBuilder(QueryBuilder):
         authors = None
         if c.site == subreddit.Default:
             subreddits = Subreddit.user_subreddits(c.user)
-        elif c.site == subreddit.Friends:
-            authors = Account._byID(c.user.friends, 
-                                    return_dict = False, data=True) \
-                                    if c.user.friends else []
-            if authors:
-                authors = [x.name for x in authors]
-            else:
-                subreddits = []
+        elif c.site == subreddit.Friends and c.user.friends:
+            authors = c.user.friends
         elif not isinstance(c.site,subreddit.FakeSubreddit):
             subreddits = c.site._id
+
         self.subreddits = subreddits
         self.authors = authors
 

@@ -562,7 +562,7 @@ def search_things(q, sort = 'hot desc',
         else:
             s_subreddits = (subreddit_to_searchstr(subreddits),)
 
-        boost.append("(%s)^2" % combine_searchterms(s_subreddits))
+        boost.append("+(%s)^2" % combine_searchterms(s_subreddits))
 
     if authors:
         def author_to_searchstr(a):
@@ -578,13 +578,14 @@ def search_things(q, sort = 'hot desc',
         else:
             s_authors = map(author_to_searchstr,(authors,))
 
-        boost.append('(%s)^2' % combine_searchterms(s_authors))
+        boost.append('+(%s)^2' % combine_searchterms(s_authors))
 
     # the set of languages is used to determine the fields to search,
     # named ('contents_%s' % lang), but 'contents' (which is split
     # only on whitespace) is always also searched. This means that
     # all_langs and schema.xml must be kept in synch
-    default_fields = ['contents^1.5','contents_ws^3','site^1','author^1', 'reddit^1', 'url^1']
+    default_fields = ['contents^1.5','contents_ws^3',
+                      'site^1','author^1', 'reddit^1', 'url^1']
     if langs == None:
         # only search 'contents'
         fields = default_fields
