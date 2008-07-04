@@ -25,8 +25,10 @@ from r2.lib import utils
 from r2.lib.memoize import memoize
 
 from urllib2 import Request, HTTPError, URLError, urlopen
+from httplib import InvalidURL
 import urlparse, re, urllib, logging, StringIO, logging
 import Image, ImageFile
+from BeautifulSoup import BeautifulSoup
 
 log = g.log
 useragent = g.useragent
@@ -46,11 +48,22 @@ def str_to_image(s):
     image = Image.open(s)
     return image
 
+def clean_url(url):
+    """url quotes unicode data out of urls"""
+    s = url
+    url = url.encode('utf8')
+    url = ''.join([urllib.quote(c) if ord(c) >= 127 else c for c in url])
+    return url
+
 @memoize('media.fetch_url')
 def fetch_url(url, referer = None, retries = 1, dimension = False):
     cur_try = 0
-    #log.debug('fetching: %s' % url)
+    log.debug('fetching: %s' % url)
     nothing = None if dimension else (None, None)
+    url = clean_url(url)
+    #just basic urls
+    if not url.startswith('http://'):
+        return nothing
     while True:
         try:
             req = Request(url)
@@ -62,7 +75,7 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
             open_req = urlopen(req)
 
             #if we only need the dimension of the image, we may not
-            #need the entire image
+            #need to download the entire thing
             if dimension:
                 content = open_req.read(chunk_size)
             else:
@@ -91,7 +104,7 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
 
             return content_type, content
 
-        except (URLError, HTTPError), e:
+        except (URLError, HTTPError, InvalidURL), e:
             cur_try += 1
             if cur_try >= retries:
                 log.debug('error while fetching: %s referer: %s' % (url, referer))
@@ -101,39 +114,40 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
             if 'open_req' in locals():
                 open_req.close()
 
-img_rx = re.compile(r'<\s*(?:img)[^>]*src\s*=\s*[\"\']?([^\"\'\s>]*)[^>]*', re.IGNORECASE | re.S) 
-def image_urls(base_url, html):
-    for match in img_rx.findall(html):
-        image_url = urlparse.urljoin(base_url, match)
-        yield image_url
-
 class Scraper:
     def __init__(self, url):
         self.url = url
         self.content = None
         self.content_type = None
+        self.soup = None
 
     def download(self):
         self.content_type, self.content = fetch_url(self.url)
+        if self.content_type and 'html' in self.content_type and self.content:
+            self.soup = BeautifulSoup(self.content)
+
+    def image_urls(self):
+        #if the original url was an image, use that
+        if 'image' in self.content_type:
+            yield self.url
+        elif self.soup:
+            images = self.soup.findAll('img', src = True)
+            for i in images:
+                image_url = urlparse.urljoin(self.url, i['src'])
+                yield image_url
 
     def largest_image_url(self):
         if not self.content:
             self.download()
 
         #if download didn't work
-        if not self.content:
+        if not self.content or not self.content_type:
             return None
 
         max_area = 0
         max_url = None
 
-        #if the original url was an image, use that
-        if 'image' in self.content_type:
-            urls = [self.url]
-        else:
-            urls = image_urls(self.url, self.content)
-
-        for image_url in urls:
+        for image_url in self.image_urls():
             size = fetch_url(image_url, referer = self.url, dimension = True)
             if not size:
                 continue
@@ -162,46 +176,98 @@ class Scraper:
             content_type, image_str = fetch_url(image_url, referer = self.url)
             if image_str:
                 image = str_to_image(image_str)
-                image.thumbnail(thumbnail_size, Image.ANTIALIAS)
+                try:
+                    image.thumbnail(thumbnail_size, Image.ANTIALIAS)
+                except IOError, e:
+                    #can't read interlaced PNGs, ignore
+                    if 'interlaced' in e.message:
+                        return
+                    raise
                 return image
 
     def media_object(self):
         return None
 
-youtube_rx = re.compile('.*v=([A-Za-z0-9-_]+).*')
-
-class YoutubeScraper(Scraper):
-    media_template = '<object width="425" height="350"><param name="movie" value="http://www.youtube.com/v/%s"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube.com/v/%s" type="application/x-shockwave-flash" wmode="transparent" width="425" height="350"></embed></object>'
-
+class MediaScraper(Scraper):
+    media_template = ""
+    thumbnail_template = ""
+    video_id_rx = None
+    
     def __init__(self, url):
-        m = youtube_rx.match(url)
+        m = self.video_id_rx.match(url)
         if m:
             self.video_id = m.groups()[0]
         else:
-            #if it's not a youtube video, just treat it like a normal page
-            log.debug('reverting youtube to regular scraper: %s' % url)
+            #if we can't find the id just treat it like a normal page
+            log.debug('reverting to regular scraper: %s' % url)
             self.__class__ = Scraper
-
         Scraper.__init__(self, url)
 
     def largest_image_url(self):
-         return 'http://img.youtube.com/vi/%s/default.jpg' % self.video_id
+        return self.thumbnail_template.replace('$video_id', self.video_id)
 
     def media_object(self):
-        return self.media_template % (self.video_id, self.video_id)
+        return self.media_template.replace('$video_id', self.video_id)
+    
+def youtube_in_google(google_url):
+    h = Scraper(google_url)
+    h.download()
+    try:
+        youtube_url = h.soup.find('div', 'original-text').findNext('a')['href']
+        log.debug('%s is really %s' % (google_url, youtube_url))
+        return youtube_url
+    except AttributeError, KeyError:
+        pass
 
-gootube_rx = re.compile('.*videoplay\?docid=([A-Za-z0-9-_]+).*')
+def make_scraper(url):
+    domain = utils.domain(url)
+    scraper = Scraper
+    for suffix, cls in scrapers.iteritems():
+        if domain.endswith(suffix):
+            scraper = cls
+            break
+    
+    #sometimes youtube scrapers masquerade as google scrapers
+    if scraper == GootubeScraper:
+        youtube_url = youtube_in_google(url)
+        if youtube_url:
+            return make_scraper(youtube_url)
+    return scraper(url)
+
+
+########## site-specific video scrapers ##########
+
+#Youtube
+class YoutubeScraper(MediaScraper):
+    media_template = '<object width="425" height="350"><param name="movie" value="http://www.youtube.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="425" height="350"></embed></object>'
+    thumbnail_template = 'http://img.youtube.com/vi/$video_id/default.jpg'
+    video_id_rx = re.compile('.*v=([A-Za-z0-9-_]+).*')
+
+#Metacage
+class MetacafeScraper(MediaScraper):
+    media_template = '<embed src="$video_id" width="400" height="345" wmode="transparent" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash"> </embed>'
+    video_id_rx = re.compile('.*/watch/([^/]+)/.*')
+
+    def media_object(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            video_url =  self.soup.find('link', rel = 'video_src')['href']
+            return self.media_template.replace('$video_id', video_url)
+
+    def largest_image_url(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            return self.soup.find('link', rel = 'image_src')['href']
+
+#Google Video
 gootube_thumb_rx = re.compile(".*thumbnail:\s*\'(http://[^/]+/ThumbnailServer2[^\']+)\'.*", re.IGNORECASE | re.S)
-
-class GootubeScraper(Scraper):
-    media_template = '<embed style="width:400px; height:326px;" id="VideoPlayback" type="application/x-shockwave-flash" src="http://video.google.com/googleplayer.swf?docId=%s&hl=en" flashvars=""> </embed>'
-    def __init__(self, url):
-        m = gootube_rx.match(url)
-        if m:
-            self.video_id = m.groups()[0]
-        else:
-            self.__class__ = Scraper
-        Scraper.__init__(self, url)
+class GootubeScraper(MediaScraper):
+    media_template = '<embed style="width:400px; height:326px;" id="VideoPlayback" type="application/x-shockwave-flash" src="http://video.google.com/googleplayer.swf?docId=$video_id&hl=en" flashvars=""> </embed>'
+    video_id_rx = re.compile('.*videoplay\?docid=([A-Za-z0-9-_]+).*')    
 
     def largest_image_url(self):
         if not self.content:
@@ -216,28 +282,9 @@ class GootubeScraper(Scraper):
             image_url = utils.safe_eval_str(image_url)
             return image_url
 
-    def media_object(self):
-        return self.media_template % self.video_id
-
 scrapers = {'youtube.com': YoutubeScraper,
-            'video.google.com': GootubeScraper}
-
-youtube_in_google_rx = re.compile('.*<div class="original-text">.*href="(http://[^"]*youtube.com/watch[^"]+).*', re.S)
-
-def make_scraper(url):
-    scraper = scrapers.get(utils.domain(url), Scraper)
-    
-    #sometimes youtube scrapers masquerade as google scrapers
-    if scraper == GootubeScraper:
-        h = Scraper(url)
-        h.download()
-        m = youtube_in_google_rx.match(h.content)
-        if m:
-            youtube_url = m.groups()[0]
-            log.debug('%s is really %s' % (url, youtube_url))
-            url = youtube_url
-            return make_scraper(url)
-    return scraper(url)
+            'video.google.com': GootubeScraper,
+            'metacafe.com': MetacafeScraper}
 
 def test():
     from r2.lib.pool2 import WorkQueue

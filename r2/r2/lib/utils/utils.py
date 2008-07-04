@@ -21,7 +21,8 @@
 ################################################################################
 from urllib import unquote_plus, quote_plus, urlopen, urlencode
 from urlparse import urlparse, urlunparse
-from threading import local
+from threading import local, Thread
+import Queue
 from copy import deepcopy
 import cPickle as pickle
 import re, datetime, math, random, string, sha
@@ -530,8 +531,6 @@ def decompose_fullname(fullname):
     return (type_class, type_id, id)
 
 
-import Queue
-from threading import Thread
 
 class Worker:
     def __init__(self):
