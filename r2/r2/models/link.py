@@ -409,7 +409,8 @@ class Comment(Thing, Printable):
                                   c.user_is_admin))
                 
             item.link = links.get(item.link_id)
-            item.editted = False
+            if not hasattr(item,'editted'):
+                item.editted = False
             #will get updated in builder
             item.num_children = 0
             item.score_fmt = Score.points
