@@ -28,6 +28,7 @@ rewrites = (#these first two rules prevent the .embed rewrite from
             #This next rewrite makes it so that all the embed stuff works.
             ("^(.*)(?<!button)(\.js)$", "$1.embed"),
             ("^/favicon.ico$", "/static/favicon.ico"),
+            ("^/robots.txt$", "/static/robots.txt"),
             ("^/akamai-sureroute-test-object.html$", "/static/sureroute.html"),
             ("^/apple-touch-icon.png$", "/static/apple-touch-icon.png"))
 

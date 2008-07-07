@@ -1,0 +1,5 @@
+User-Agent: *
+Disallow: /goto
+Disallow: /*after=*
+Disallow: /*before=*
+Allow: /
