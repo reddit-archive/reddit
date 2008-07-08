@@ -55,7 +55,6 @@ def clean_url(url):
     url = ''.join([urllib.quote(c) if ord(c) >= 127 else c for c in url])
     return url
 
-@memoize('media.fetch_url')
 def fetch_url(url, referer = None, retries = 1, dimension = False):
     cur_try = 0
     log.debug('fetching: %s' % url)
@@ -114,6 +113,10 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
             if 'open_req' in locals():
                 open_req.close()
 
+@memoize('media.fetch_size')
+def fetch_size(url, referer = None, retries = 1):
+    return fetch_url(url, referer, retries, dimension = True)
+
 class Scraper:
     def __init__(self, url):
         self.url = url
@@ -148,7 +151,7 @@ class Scraper:
         max_url = None
 
         for image_url in self.image_urls():
-            size = fetch_url(image_url, referer = self.url, dimension = True)
+            size = fetch_size(image_url, referer = self.url)
             if not size:
                 continue
 
