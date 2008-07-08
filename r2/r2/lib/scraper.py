@@ -27,7 +27,7 @@ from r2.lib.memoize import memoize
 from urllib2 import Request, HTTPError, URLError, urlopen
 from httplib import InvalidURL
 import urlparse, re, urllib, logging, StringIO, logging
-import Image, ImageFile
+import Image, ImageFile, math
 from BeautifulSoup import BeautifulSoup
 
 log = g.log
@@ -47,6 +47,35 @@ def str_to_image(s):
     s.seek(0)
     image = Image.open(s)
     return image
+
+def image_entropy(img):
+    """calculate the entropy of an image"""
+    hist = img.histogram()
+    hist_size = sum(hist)
+    hist = [float(h) / hist_size for h in hist]
+
+    return -sum([p * math.log(p, 2) for p in hist if p != 0])
+
+def square_image(img):
+    """if the image is taller than it is wide, square it off. determine
+    which pieces to cut off based on the entropy pieces."""
+    x,y = img.size
+    while y > x:
+        #slice 10px at a time until square
+        slice_height = min(y - x, 10)
+
+        bottom = img.crop((0, y - slice_height, x, y))
+        top = img.crop((0, 0, x, slice_height))
+
+        #remove the slice with the least entropy
+        if image_entropy(bottom) < image_entropy(top):
+            img = img.crop((0, 0, x, y - slice_height))
+        else:
+            img = img.crop((0, slice_height, x, y))
+
+        x,y = img.size
+
+    return img
 
 def clean_url(url):
     """url quotes unicode data out of urls"""
@@ -180,6 +209,7 @@ class Scraper:
             if image_str:
                 image = str_to_image(image_str)
                 try:
+                    image = square_image(image)
                     image.thumbnail(thumbnail_size, Image.ANTIALIAS)
                 except IOError, e:
                     #can't read interlaced PNGs, ignore
