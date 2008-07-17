@@ -26,6 +26,7 @@ from builder import *
 from vote import *
 from report import *
 from subreddit import *
+from mail_queue import Email
 from admintools import *
 import thing_changes
 

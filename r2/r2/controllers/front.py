@@ -27,6 +27,7 @@ from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
+from r2.lib.emailer import opt_out, opt_in
 from r2.lib.utils import  to36, sanitize_url, check_cheating
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
@@ -534,3 +535,25 @@ class FrontController(RedditController):
                                         title=title or '',
                                         subreddits = sr_names,
                                         captcha=captcha)).render()
+
+    @validate(msg_hash = nop('x'))
+    def GET_optout(self, msg_hash):
+        email, sent = opt_out(msg_hash)
+        if not email:
+            return self.abort404()
+        return BoringPage(_("opt out"),
+                          content = OptOut(email = email, leave = True, 
+                                           sent = sent, 
+                                           msg_hash = msg_hash)).render()
+
+
+    @validate(msg_hash = nop('x'))
+    def GET_optin(self, msg_hash):
+        email, sent = opt_in(msg_hash)
+        if not email:
+            return self.abort404()
+        return BoringPage(_("welcome back"),
+                          content = OptOut(email = email, leave = False,
+                                           sent = sent,
+                                           msg_hash = msg_hash)).render()
+

@@ -299,7 +299,9 @@ class Comment(Thing, Printable):
 
         if parent:
             to = Account._byID(parent.author_id)
-            i = Inbox._add(to, c, 'inbox')
+            # only global admins can be message spammed.
+            if not c._spam or to.name in g.admins:
+                i = Inbox._add(to, c, 'inbox')
 
         #clear that chache
         clear_memo('builder.link_comments2', link._id)
@@ -473,7 +475,9 @@ class Message(Thing, Printable):
         #author = Author(author, m, 'author')
         #author._commit()
 
-        i = Inbox._add(to, m, 'inbox')
+        # only global admins can be message spammed.
+        if not m._spam or to.name in g.admins:
+            i = Inbox._add(to, m, 'inbox')
 
         from admintools import admintools
         utils.worker.do(lambda: admintools.add_thing(m))

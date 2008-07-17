@@ -108,16 +108,18 @@ class JsonResponse():
             self._clear_error(error_name, err_on_thing)
             return False
 
-    def _chk_errors(self, errors):
+    def _chk_errors(self, errors, err_on_thing = ''):
         if errors:
            return reduce(lambda x, y: x or y,
-                          [self._chk_error(e) for e in errors])
+                          [self._chk_error(e, err_on_thing = err_on_thing) for e in errors])
         return False
 
-    def _chk_captcha(self, err):
-        if self._chk_error(err):
-            self.captcha = {'iden' : get_iden(), 'refresh' : True}
+    def _chk_captcha(self, err, err_on_thing = ''):
+        if self._chk_error(err, err_on_thing):
+            self.captcha = {'iden' : get_iden(), 'refresh' : True, 'id': err_on_thing}
             self._focus('captcha')
+            return True
+        return False
 
     @property
     def response(self): 

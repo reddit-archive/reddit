@@ -91,7 +91,12 @@ class Reddit(Wrapped):
             self.subreddit_sidebox = True
             self.subreddit_checkboxes = c.site == Default
 
-        self._content = content
+        if c.user_is_loggedin:
+            self._content = PaneStack([ShareLink(), content])
+        else:
+            self._content = content
+        
+        
         self.toolbars = self.build_toolbars()
 
     def rightbox(self):
@@ -738,6 +743,26 @@ class NewLink(Wrapped):
     def __init__(self, captcha = None, url = '', title= '', subreddits = ()):
         Wrapped.__init__(self, captcha = captcha, url = url,
                          title = title, subreddits = subreddits)
+
+class ShareLink(Wrapped):
+    def __init__(self, link_name = "", emails = None):
+        captcha = Captcha() if c.user.needs_captcha() else None
+        Wrapped.__init__(self, link_name = link_name,
+                         emails = c.user.recent_share_emails(),
+                         captcha = captcha)
+
+class Share(Wrapped):
+    pass
+
+class Mail_Opt(Wrapped):
+    pass
+
+class OptOut(Wrapped):
+    pass
+
+class OptIn(Wrapped):
+    pass
+
 
 class UserStats(Wrapped):
     """For drawing the stats page, which is fetched from the cache."""

@@ -450,6 +450,11 @@ function Link(id) {
 
 Link.prototype = new Thing();
 
+Link.prototype.share = function() {
+    var share = new ShareLink(this._id);
+    share.attach(this.$("child"));
+};
+
 // Commenting on a link is handled by the Comment API so defer to it
 Link.comment = Comment.comment;
 
@@ -479,4 +484,80 @@ function setClick(a, css_class) {
 function setClickCookie(id) {
     createCookie("click", readCookie("click") + id + ":");
 }
+
+
+function ThingForm(id) {
+    this.__init__(id);
+};
+
+ThingForm.prototype = {
+    __init__: function(id) {
+        this._id = id;
+        this.form = $(this.__name__ + "_" + id);
+        if (!this.form) {
+            var p = this.__prototype__();
+            if (p) {
+                this.form = re_id_node(p.cloneNode(true), id);
+            }
+        } else {
+            show(this.form);
+        }
+    },
+
+    __name__ : "", 
+
+    __prototype__: function() {
+        return $(this.__name__ + '_');
+    },
+
+    $: function(name) {
+        return $(name + '_' + this._id);
+    },
+
+    cancel: function() {
+        hide(this.form);
+        return false; 
+    },
+    
+    ok: function() {
+        return true;
+    },
+    
+    attach: function(where) {
+        if (this.form.parentNode) {
+            if(this.form.parentNode != where) {
+                // TODO
+            }
+        }
+        else {
+            where.insertBefore(this.form, where.firstChild);
+        }
+        show(this.form);
+    }
+    
+};
+
+function ShareLink(id) {
+    this.__init__(id);
+};
+
+ShareLink.prototype = new ThingForm();
+ShareLink.prototype.__name__ = "sharelink";
+
+ShareLink.prototype.ok = function() {
+    var p = this.__prototype__();
+    var v = this.$("share_to").value.replace(/[\s,;]+/g, "\r\n");
+    p.firstChild.share_to.value = v;
+    p.firstChild.share_to.innerHTML = v;
+    return true;
+};
+
+function share(id) {
+    if (logged) {
+        new Link(id).share();
+    }
+    else {
+        showcover(true, 'share_' + id);
+    }
+};
 

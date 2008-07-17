@@ -615,6 +615,44 @@ class ApiController(RedditController):
     @Json
     @validate(VUser(),
               VModhash(),
+              VCaptcha(),
+              VRatelimit(rate_user = True, rate_ip = True,
+                         prefix = "rate_share_"),
+              share_from = VLength('share_from', length = 60),
+              emails = ValidEmails("share_to"),
+              thing = VByName('id'))
+    def POST_share(self, res, emails, thing, share_from):
+
+        # remove the ratelimit error if the user's karma is high
+        sr = thing.subreddit_slow
+        should_ratelimit = sr.should_ratelimit(c.user, 'link')
+        if not should_ratelimit:
+            c.errors.remove(errors.RATELIMIT)
+
+        res._hide("status_" + thing._fullname)
+
+        if res._chk_captcha(errors.BAD_CAPTCHA, thing._fullname):
+            pass
+        elif not res._chk_errors((errors.BAD_EMAILS, errors.NO_EMAILS,
+                                  errors.RATELIMIT, errors.TOO_MANY_EMAILS),
+                                 thing._fullname):
+
+            c.user.add_share_emails(emails)
+            c.user._commit()
+
+            res._update("share_li_" + thing._fullname,
+                        innerHTML=_('shared'))
+            res._hide("sharelink_" + thing._fullname)
+
+            emailer.share(thing, emails, from_name = share_from or "")
+
+            #set the ratelimiter
+            if should_ratelimit:
+                VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix = "rate_share_")
+            
+    @Json
+    @validate(VUser(),
+              VModhash(),
               vote_type = VVotehash(('vh', 'id')),
               ip = ValidIP(),
               dir = VInt('dir', min=-1, max=1),

@@ -1,0 +1,69 @@
+<%namespace file="printable.html" import="yes_no_button"/>
+<%namespace file="utils.html" import="error_field"/>
+<%namespace file="captcha.html" import="captchagen"/>
+
+<div id="sharelink_${thing.link_name}"
+     ${"" if thing.link_name else "style='display:none'"}>
+  <form onsubmit="return post_form(this, 'share')" method="post"
+        id="shareform_${thing.link_name}" class="pretty-form"
+        action="/post/share">
+    ${error_field("RATELIMIT_"+ thing.link_name)}
+    <table class="preftable sharetable">
+      <tr>
+        <th>
+          <label class="big" for="share_to_${thing.link_name}">
+            ${_("send this link to")}
+          </label>
+        </th>
+        <td>
+          <textarea id="share_to_${thing.link_name}" name="share_to" rows="4">
+            ${unsafe('&#x0D;&#x0A;'.join(websafe(e) for e in thing.emails))}
+          </textarea>
+        </td>
+        <td>
+          ${error_field("BAD_EMAILS_" + thing.link_name)}
+          ${error_field("TOO_MANY_EMAILS_" + thing.link_name)}
+          ${error_field("NO_EMAILS_" + thing.link_name)}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label class="big" for="share_from_${thing.link_name}">
+            ${_("your name")}
+          </label>&nbsp;
+          <span class="little gray">
+            ${_("(optional)")}
+          </span>
+        </th>
+        <td>
+          <input class="real-name" value="${c.user.name}"
+                 type="text" id="share_from_${thing.link_name}" 
+                 name="share_from" />
+        </td>
+        <td>
+        </td>
+      </tr>
+      %if thing.captcha:
+        ${captchagen(thing.captcha.iden, thing.captcha.error, tabulate = False, size = 30)}
+      %endif
+      <tr>
+        <td>
+        </td>
+        <td>
+          <span id='status_${thing.link_name}' class='error'></span>
+          <button id="share_submit_${thing.link_name}" 
+                  onclick="return new ShareLink(_id(this)).ok();"
+                  type="submit" class="btn">
+            ${_("share")}
+          </button>
+          <button id="share_${thing.link_name}" class="btn" 
+                  onclick="return new ShareLink(_id(this)).cancel();">
+            ${_("cancel")}
+          </button>
+        </td>
+        <td>
+        </td>
+      </tr>
+    </table>
+ </form>
+</div>

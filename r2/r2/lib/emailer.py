@@ -20,28 +20,36 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from email.MIMEText import MIMEText
-from pylons import c,g
-from pages import PasswordReset
-from r2.models.account import passhash
+from pylons.i18n import _
+from pylons import c, g, request
+from r2.lib.pages import PasswordReset, Share, Mail_Opt
+from r2.lib.utils import timeago
+from r2.models import passhash, Email, Default
 from r2.config import cache
-import os, random
+import os, random, datetime
+import smtplib
 
 def email_address(name, address):
     return '"%s" <%s>' % (name, address) if name else address
-
 feedback = email_address('reddit feedback', g.feedback_email)
 
-def simple_email(to, fr, subj, body):
-    msg = MIMEText(body)
-    msg['Subject'] = subj
-    msg['From'] = fr
-    msg['To'] = to
-    assert not fr.startswith('-') and not to.startswith('-'), 'security'
-    i, o = os.popen2(["/usr/sbin/sendmail", '-f', fr, to])
-    i.write(msg.as_string())
-    i.close()
-    o.close()
-    del i, o
+def send_mail(msg, fr, to, test = False):
+    if not test:
+        session = smtplib.SMTP(g.smtp_server)
+        session.sendmail(fr, to, msg.as_string())
+        session.quit()
+    else:
+        g.log.debug(msg.as_string())
+
+def simple_email(to, fr, subj, body, test = False):
+    def utf8(s):
+        return s.encode('utf8') if isinstance(s, unicode) else s
+    msg = MIMEText(utf8(body))
+    msg.set_charset('utf8')
+    msg['To']      = utf8(to)
+    msg['From']    = utf8(fr)
+    msg['Subject'] = utf8(subj)
+    send_mail(msg, fr, to, test = test)
 
 def sys_email(email, body, name='', subj = lambda x: x):
     fr = (c.user.name if c.user else 'Anonymous user')
@@ -70,3 +78,74 @@ def password_email(user):
                  'reddit.com password reset',
                  PasswordReset(user=user, passlink=passlink).render(style='email'))
 
+def share(link, emails, from_name = ""):
+    now = datetime.datetime.now(g.tz)
+    ival = now - timeago(g.new_link_share_delay)
+    date = max(now,link._date + ival)
+    Email.handler.add_to_queue(c.user, link, emails, from_name, date,
+                               request.ip, Email.Kind.SHARE)
+                               
+def send_queued_mail():
+    now = datetime.datetime.now(g.tz)
+    if not c.site:
+        c.site = Default
+
+    clear = False
+    session = smtplib.SMTP(g.smtp_server)
+    try:
+        for email in Email.get_unsent(now):
+            clear = True
+            if not email.should_queue():
+                continue
+            elif email.kind == Email.Kind.SHARE:
+                email.fr_addr = g.share_reply
+                email.body = Share(username = email.from_name(),
+                                   msg_hash = email.msg_hash,
+                                   link = email.thing).render(style = "email")
+                email.subject = _("[reddit] %(user)s has shared a link with you") % \
+                                {"user": email.from_name()}
+                session.sendmail(email.fr_addr, email.to_addr,
+                                 email.to_MIMEText().as_string())
+            elif email.kind == Email.Kind.OPTOUT:
+                email.fr_addr = g.share_reply
+                email.body = Mail_Opt(msg_hash = email.msg_hash,
+                                      leave = True).render(style = "email")
+                email.subject = _("[reddit] email removal notice")
+                session.sendmail(email.fr_addr, email.to_addr,
+                                 email.to_MIMEText().as_string())
+                
+            elif email.kind == Email.Kind.OPTIN:
+                email.fr_addr = g.share_reply
+
+                email.body = Mail_Opt(msg_hash = email.msg_hash,
+                                      leave = False).render(style = "email")
+                email.subject = _("[reddit] email addition notice")
+                session.sendmail(email.fr_addr, email.to_addr,
+                                 email.to_MIMEText().as_string())
+
+            else:
+                # handle other types of emails here
+                pass
+            email.set_sent()
+    finally:
+        session.quit()
+    if clear:
+        Email.handler.clear_queue(now)
+            
+
+
+def opt_out(msg_hash):
+    email, added =  Email.handler.opt_out(msg_hash)
+    if email and added:
+        Email.handler.add_to_queue(None, None, [email], "reddit.com",
+                                   datetime.datetime.now(g.tz),
+                                   '127.0.0.1', Email.Kind.OPTOUT)
+    return email, added
+        
+def opt_in(msg_hash):
+    email, removed =  Email.handler.opt_in(msg_hash)
+    if email and removed:
+        Email.handler.add_to_queue(None, None, [email], "reddit.com",
+                                   datetime.datetime.now(g.tz),
+                                   '127.0.0.1', Email.Kind.OPTIN)
+    return email, removed

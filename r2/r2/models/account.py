@@ -59,6 +59,7 @@ class Account(Thing):
                      sort_options = {},
                      has_subscribed = False,
                      pref_media = 'off',
+                     share = {},
                      )
 
     def karma(self, kind, sr = None):
@@ -193,6 +194,30 @@ class Account(Thing):
     def subreddits(self):
         from subreddit import Subreddit
         return Subreddit.user_subreddits(self)
+
+    def recent_share_emails(self):
+        return self.share.get('recent', set([]))
+
+    def add_share_emails(self, emails):
+        if not emails:
+            return
+        
+        if not isinstance(emails, set):
+            emails = set(emails)
+
+        self.share.setdefault('emails', {})
+        share = self.share.copy()
+
+        share_emails = share['emails']
+        for e in emails:
+            share_emails[e] = share_emails.get(e, 0) +1
+            
+        share['recent'] = emails
+
+        self.share = share
+        
+            
+            
 
 
 class FakeAccount(Account):

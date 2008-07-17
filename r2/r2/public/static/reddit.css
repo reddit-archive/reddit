@@ -415,7 +415,7 @@ before enabling */
 .raisedbox #avatar a { padding: 0px; }
 */
 
-.infotable { margin-top: 5px;  }
+.infotable { margin-top: 5px; margin-bottom: 10px; }
 .infotable .small { font-size: smaller; }
 .infotable td { padding-right: 3px; }
 .infotable a:hover { text-decoration: underline }
@@ -825,6 +825,8 @@ a.star { text-decoration: none; color: #ff8b60 }
 .fixedwidth { float: left; width: 100px; height: 0px; }
 .clearleft { clear: left; height: 0px; }
 .clear { clear: both; }
+
+.sharetable {margin-left: 20px; }
 
 .sponsored .entry  { margin-right: 20px;}
 

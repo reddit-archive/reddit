@@ -125,6 +125,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      reports      = _("reports"),
                      reportedauth = _("reported authors"),
                      info         = _("info"),
+                     share        = _("share"),
 
                      overview     = _("overview"),
                      submitted    = _("submitted"),
@@ -488,6 +489,6 @@ class AdminKindMenu(KindMenu):
 class AdminTimeMenu(TimeMenu):
     get_param = 't'
     default   = 'day'
-    options   = ('hour', 'day', 'week', 'month', 'year')
+    options   = ('hour', 'day', 'week')
 
 

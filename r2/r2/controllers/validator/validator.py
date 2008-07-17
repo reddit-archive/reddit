@@ -632,6 +632,28 @@ class VReason(Validator):
             sr_onoff = dict((sr, fullnames[sr._fullname] == 1) for sr in srs)
             return ('subscribe', sr_onoff)
 
+
+class ValidEmails(Validator):
+    separator = re.compile(r'[^\s,;]+')
+    email_re  = re.compile(r'.+@.+\..+')
+
+    def __init__(self, param, num = 20, **kw):
+        self.num = num
+        Validator.__init__(self, param = param, **kw)
+        
+    def run(self, emails):
+        emails = set(self.separator.findall(emails) if emails else [])
+        failures = set(e for e in emails if not self.email_re.match(e))
+        emails = emails - failures
+        if failures:
+            c.errors.add(errors.BAD_EMAILS, {'emails': ', '.join(failures)})
+        elif not emails:
+            c.errors.add(errors.NO_EMAILS)
+        elif len(emails) > self.num:
+            c.errors.add(errors.TOO_MANY_EMAILS, {'num': self.num})
+        else:
+            return emails
+
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!
 class ValidIP(Validator):

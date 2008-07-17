@@ -53,6 +53,13 @@ change_engine = db_manager.get_engine(g.change_db_name,
                                       pool_size = 2,
                                       max_overflow = 2)
 
+email_engine = db_manager.get_engine(g.email_db_name,
+                                      db_host = g.email_db_host,
+                                      db_user = g.email_db_user,
+                                      db_pass = g.email_db_pass,
+                                      pool_size = 2,
+                                      max_overflow = 2)
+
 dbm.type_db = main_engine
 dbm.relation_type_db = main_engine
 

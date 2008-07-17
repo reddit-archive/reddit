@@ -233,6 +233,7 @@ def Alert(restart_list=['MEM','CPU']):
                         session = smtplib.SMTP(smtpserver)
                         smtpresult = session.sendmail(alert_sender, 
                                                       alert_recipients, mesg)
+                        session.quit()
                     #print mesg
                     #print "Email sent"
            

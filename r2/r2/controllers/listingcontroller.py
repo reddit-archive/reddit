@@ -409,7 +409,8 @@ class MessageController(ListingController):
                 c.user._commit()
 
         elif self.where == 'sent':
-            q = Message._query(Message.c.author_id == c.user._id)
+            q = Message._query(Message.c.author_id == c.user._id,
+                               Message.c._spam == (True, False))
 
         q._sort = desc('_date')
         return q

@@ -60,6 +60,9 @@ error_list = dict((
         ('INVALID_SUBREDDIT_TYPE', _('that option is not valid')),
         ('DESC_TOO_LONG', _('description is too long')),
         ('CHEATER', 'what do you think you\'re doing there?'),
+        ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
+        ('NO_EMAILS', _('please enter at least one email address')),
+        ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

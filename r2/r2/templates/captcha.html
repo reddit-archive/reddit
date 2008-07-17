@@ -17,7 +17,7 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%! from r2.lib.template_helpers import static %>
@@ -25,39 +25,58 @@
 <%namespace file="utils.html" import="error_field"/>
 ${captchagen(thing.iden, thing.error)}
 
-<%def name="captchagen(iden, error='', tabulate=False, size=60, label=True)">
+<%def name="captchagen(iden, error='', tabulate=False, tabular = True, size=60, label=True, show_error = True)">
 %if tabulate:
 <table>
 %endif
+  %if tabular:
   <tr>
     <td></td>
     <td>
+  %endif
       <img id="capimage" 
+           class="capimage"
            alt="i wonder if these things even work" 
            %if iden:
            src="/captcha/${iden}.png" 
            %else:
            src="${static('kill.png')}" 
            %endif
-           /></td>
+           />
+  %if tabular:
+  </td>
   </tr>
   <tr>
      <td align="right">
+  %else:
+     <span class="cap-reply">
+  %endif
        %if label:
-         <label>${_("human?")}</label>
+         <label for="captcha">${_("human?")}</label>
        %endif
+     %if tabular:
      </td>
      <td>
+     %endif
         <input id="capiden" name="iden" type="hidden" value="${iden}"></input>
         <input id="captcha" name="captcha" type="text" size="${size}" 
-               onfocus="clearTitle(this)"/>
+               class="cap-text" onfocus="clearTitle(this)"/>
         <script type="text/javascript">
           setMessage($('captcha'), '${_("type the letters from the image above")}');
         </script>
-     </td><td>
-      ${error_field("BAD_CAPTCHA", "span")}
-      </td>
+     %if tabulatar:
+     </td>
+     <td>
+     %else:
+     </span>
+     %endif
+     %if show_error:
+       ${error_field("BAD_CAPTCHA", "span")}
+     %endif
+  %if tabulatar:
+    </td>
   </tr>
+  %endif
 %if tabulate:
 </table>
 %endif

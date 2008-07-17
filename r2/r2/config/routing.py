@@ -90,10 +90,13 @@ def make_map(global_conf={}, app_conf={}):
     mc('/info/:article/details', controller='front',
        action = 'details')
     
+    mc('/mail/optout', controller='front', action = 'optout')
+    mc('/mail/optin',  controller='front', action = 'optin')
+
     mc('/', controller='hot', action='listing')
     
     listing_controllers = "hot|saved|toplinks|new|recommended|normalized|randomrising"
-    
+
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
 

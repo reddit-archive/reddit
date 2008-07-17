@@ -1,5 +1,5 @@
 function unsafe(text) {
-    text = text || "";
+    text = text.replace?text:"";
     return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
 }
 
@@ -206,8 +206,9 @@ function handleResponse(action) {
         }
         if (r.captcha) {
             if (r.captcha.refresh) {
-                var captcha = $("capimage");
-                var capiden = $("capiden");
+                var id = r.captcha.id;
+                var captcha = $("capimage" + (id?('_'+id):''));
+                var capiden = $("capiden" + (id?('_'+id):''));
                 capiden.value = r.captcha.iden;
                 captcha.src = ("/captcha/" + r.captcha.iden + ".png?" +
                                Math.random())
@@ -238,7 +239,15 @@ function handleResponse(action) {
 }
 
 function re_id_node(node, id) {
-    if(node.id && typeof(node.id) == "string") { node.id += id; }
+    function add_id(s) {
+        if(s && typeof(s) == "string") {
+            if(s[s.length-1] != '_') s += '_';
+            s += id;
+        }
+        return s;
+    }
+    node.id = add_id(node.id);
+    node.htmlFor = add_id(node.htmlFor);
     var children = node.childNodes;
     for(var i = 0; i < children.length; i++) {
         re_id_node(children[i], id);
