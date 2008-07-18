@@ -89,6 +89,13 @@ def make_map(global_conf={}, app_conf={}):
        action = 'related')
     mc('/info/:article/details', controller='front',
        action = 'details')
+
+    mc('/related/:article/:title', controller='front',
+       action = 'related', title=None)
+    mc('/details/:article/:title', controller='front',
+       action = 'details', title=None)
+    mc('/comments/:article/:title/:comment', controller='front', 
+       action= 'comments', title=None, comment = None)
     
     mc('/mail/optout', controller='front', action = 'optout')
     mc('/mail/optin',  controller='front', action = 'optin')
