@@ -240,14 +240,14 @@ function handleResponse(action) {
 
 function re_id_node(node, id) {
     function add_id(s) {
-        if(s && typeof(s) == "string") {
-            if(s[s.length-1] != '_') s += '_';
+        if(id && s && typeof(s) == "string") {
+            if(s.substr(s.length-1) != '_') s += '_';
             s += id;
         }
         return s;
     }
-    node.id = add_id(node.id);
-    node.htmlFor = add_id(node.htmlFor);
+    if(node.id) { node.id = add_id(node.id); }
+    if(node.htmlFor) { add_id(node.htmlFor); }
     var children = node.childNodes;
     for(var i = 0; i < children.length; i++) {
         re_id_node(children[i], id);
