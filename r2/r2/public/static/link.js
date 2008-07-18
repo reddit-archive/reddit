@@ -526,7 +526,8 @@ ThingForm.prototype = {
     attach: function(where) {
         if (this.form.parentNode) {
             if(this.form.parentNode != where) {
-                // TODO
+                this.form.parentNode.removeChild(this.form);
+                where.insertBefore(this.form, where.firstChild);
             }
         }
         else {
