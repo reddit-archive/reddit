@@ -24,7 +24,7 @@
 
 cd r2/public/static
 
-for n in programming science politics business gadgets sports games entertainment; do
+for n in programming science politics business gadgets sports games entertainment music; do
     sed s/homepage/$n/g ad_default.html > ad_$n.html
 done
 
