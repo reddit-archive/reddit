@@ -620,6 +620,10 @@ class VReason(Validator):
             fullname = reason[5:]
             t = Thing._by_fullname(fullname)
             return ('redirect', t.permalink)
+        elif reason.startswith('share_'):
+            fullname = reason[6:]
+            t = Thing._by_fullname(fullname)
+            return ('redirect', t.permalink)
         elif reason.startswith('reply_'):
             fullname = reason[6:]
             t = Thing._by_fullname(fullname)

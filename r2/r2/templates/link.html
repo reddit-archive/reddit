@@ -151,6 +151,9 @@
                           title = "comments on " + thing.title,
                           newwindow = c.user.pref_newwindow)}
   </li>
+  <li id="share_li_${fullname}">
+    ${parent.simple_button("share", fullname, _("share"), "share")}
+  </li>
   %if c.user_is_loggedin:
     <li>
     %if thing.saved:
@@ -173,11 +176,6 @@
   ${parent.delete_or_report_buttons()}
   ${parent.buttons()}
   ${self.media_embed()}
-  %if c.user_is_loggedin:
-    <li id="share_li_${fullname}">
-      ${parent.simple_button("share", fullname, _("share"), "share")}
-    </li>
-  %endif
 </%def>
 
 

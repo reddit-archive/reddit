@@ -68,8 +68,8 @@ class FrontController(RedditController):
 
             new_url = new_url + query_string(request.get)
 
-	    # redirect should be smarter and handle extentions, etc.
-            return self.redirect(new_url)
+            # redirect should be smarter and handle extensions, etc.
+            return self.redirect(new_url, code=301)
 
     def GET_random(self):
         """The Serendipity button"""
