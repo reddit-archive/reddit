@@ -113,7 +113,7 @@ ${parent.midcol()}
     <% fullname = thing._fullname %>
     <li class="first">
       ${parent.comment_button("permalink", fullname, _("permalink"), 0, 
-      thing.permalink)}
+      thing.permalink, title = thing.author.name + " comments on " + thing.link.title)}
     </li>
     %if not c.profilepage:
       %if thing.parent_permalink:

@@ -28,8 +28,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <title>${self.Title()}</title>
+
+<meta name="keywords" content="${self.keywords()}" />
+<meta name="title" content="${self.Title()}" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+${self.robots()}
 
 ##these are globals, so they should be run first
 <script type="text/javascript">
@@ -70,6 +74,15 @@ ${next.body()}
 ${title}
 </%def>
 
+<%def name="keywords()">
+reddit, reddit.com, vote, comment, submit
+</%def>
+
+<%def name="robots()">
+   %if hasattr(thing, 'robots') and thing.robots:
+     <meta name="robots" content="${thing.robots}" />
+   %endif
+</%def>
 
 <%def name="javascript_run()">
 </%def>

@@ -128,7 +128,7 @@ class ListingController(RedditController):
 
     def title(self):
         """Page <title>"""
-        return c.site.name + ': ' + _(self.title_text)
+        return _(self.title_text) + " : " + c.site.name
 
     def rightbox(self):
         """Contents of the right box when rendering"""

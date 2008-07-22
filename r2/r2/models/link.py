@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation
-from r2.lib.utils import base_url, tup, domain, worker
+from r2.lib.utils import base_url, tup, domain, worker, title_to_url
 from account import Account
 from subreddit import Subreddit
 from printable import Printable
@@ -208,13 +208,9 @@ class Link(Thing, Printable):
         s = ''.join(s)
         return s
 
-#     @property
-#     def permalink(self):
-#         return "%s/info/%s/comments/" % (self.sr.path, self._id36)
-
     @property
     def permalink(self):
-        return "/info/%s/comments/" % self._id36
+        return "/comments/%s/%s/" % (self._id36, title_to_url(self.title))
 
     @classmethod
     def add_props(cls, user, wrapped):

@@ -19,11 +19,7 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%!
-   from r2.lib.template_helpers import reddit_link
-%>
-
-A user from http://${g.domain}/ has shared a link with you.
+<%! from r2.lib.template_helpers import reddit_link %>A user from http://${g.domain}/ has shared a link with you.
 
 "${thing.link.title}"
 http://${g.domain}/goto?share=true&id=${thing.link._fullname}

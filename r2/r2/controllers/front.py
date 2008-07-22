@@ -27,8 +27,8 @@ from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
+from r2.lib.utils import  to36, sanitize_url, check_cheating, title_to_url, query_string
 from r2.lib.emailer import opt_out, opt_in
-from r2.lib.utils import  to36, sanitize_url, check_cheating
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
 import r2.lib.db.thing as thing
@@ -37,17 +37,39 @@ from pylons import c, request
 
 import random as rand
 import re
+from urllib import quote_plus
 
 from admin import admin_profile_query
 
 class FrontController(RedditController):
 
-    def GET_oldinfo(self, name, rest):
-        """Legacy: supporting permalink pages from '06"""
-        #this could go in config, but it should never change
-        max_link_id = 10000000
-        new_id = max_link_id - int(name)
-        return self.redirect('/info/' + to36(new_id) + '/' + rest)
+    @validate(article = VLink('article'),
+              comment = VCommentID('comment'))
+    def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
+        """Legacy: supporting permalink pages from '06,
+           and non-search-engine-friendly links"""
+        if not (dest in ('comments','related','details')):
+                dest = 'comments'
+        if type == 'ancient':
+            #this could go in config, but it should never change
+            max_link_id = 10000000
+            new_id = max_link_id - int(article._id)
+            return self.redirect('/info/' + to36(new_id) + '/' + rest)
+        if type == 'old':
+            new_url = "/%s/%s/%s" % \
+                      (dest, article._id36, 
+                       quote_plus(title_to_url(article.title).encode('utf-8')))
+            if not c.default_sr:
+                new_url = "/r/%s%s" % (c.site.name, new_url)
+            if comment:
+                new_url = new_url + "/%s" % comment._id36
+            if request.environ.get('extension'):
+                new_url = new_url + "/.%s" % request.environ.get('extension')
+
+            new_url = new_url + query_string(request.get)
+
+	    # redirect should be smarter and handle extentions, etc.
+            return self.redirect(new_url)
 
     def GET_random(self):
         """The Serendipity button"""
@@ -95,6 +117,9 @@ class FrontController(RedditController):
               num_comments = VMenu('controller', NumCommentsMenu))
     def GET_comments(self, article, comment, context, sort, num_comments):
         """Comment page for a given 'article'."""
+        if comment and comment.link_id != article._id:                                         
+            return self.abort404()    
+
         if not c.default_sr and c.site._id != article.sr_id: 
             return self.abort404()
 
@@ -140,7 +165,7 @@ class FrontController(RedditController):
 
         loc = None if c.focal_comment or context is not None else 'comments'
         
-        res = LinkInfoPage(link = article, 
+        res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane, 
                            nav_menus = [CommentSortMenu(default = sort), 
                                         NumCommentsMenu(article.num_comments,

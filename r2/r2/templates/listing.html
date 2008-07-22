@@ -37,13 +37,13 @@
 %if thing.nextprev and (thing.prev or thing.next):
   <p class="nextprev"> ${_("view more:")}&#32;
   %if thing.prev:
-    <a href="${reddit_link(thing.prev, url = True)}">${_("prev")}</a>
+    <a rel="nofollow,prev" href="${reddit_link(thing.prev, url = True)}">${_("prev")}</a>
   %endif
   %if thing.prev and thing.next:
     &#32;|&#32;
   %endif
   %if thing.next:
-    <a rel="nofollow" href="${reddit_link(thing.next, url = True)}">${_("next")}</a>
+    <a rel="nofollow,next" href="${reddit_link(thing.next, url = True)}">${_("next")}</a>
   %endif
   </p>
 %endif

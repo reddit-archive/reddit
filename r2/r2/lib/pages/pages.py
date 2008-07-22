@@ -28,9 +28,10 @@ from pylons.i18n import _
 from pylons import c, request, g
 
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress
+from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
+from r2.lib.utils import title_to_url
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
@@ -66,10 +67,11 @@ class Reddit(Wrapped):
     extension_handling = True
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
-                 infotext = '', content = None, title = '', show_sidebar = True,
-                 **context):
+                 infotext = '', content = None, title = '', robots = None, 
+                 show_sidebar = True, **context):
         Wrapped.__init__(self, **context)
         self.title          = title
+        self.robots         = robots
         self.infotext       = infotext
         self.loginbox       = True
         self.show_sidebar   = show_sidebar
@@ -172,6 +174,8 @@ class Reddit(Wrapped):
                    NamedButton("bookmarklets", False),
                    NamedButton("buttons",      False),
                    NamedButton("widget",       False),
+                   NamedButton("code",         False),
+                   NamedButton("mobile",       False),
                    NamedButton("store",        False),
                    NamedButton("ad_inq",       False),
                    ]
@@ -355,7 +359,7 @@ class SearchPage(BoringPage):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results)
-        BoringPage.__init__(self, pagename, *a, **kw)
+        BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
         return self.content_stack(self.searchbar, self.infobar,
@@ -374,7 +378,8 @@ class LinkInfoPage(Reddit):
     
     create_reddit_box = False
 
-    def __init__(self, link = None, title = '', *a, **kw):
+    def __init__(self, link = None, comment = None,
+                 link_title = '', *a, **kw):
         # TODO: temp hack until we find place for builder_wrapper
         from r2.controllers.listingcontroller import ListingController
         link_builder = IDBuilder(link._fullname, wrap = ListingController.builder_wrapper)
@@ -385,21 +390,29 @@ class LinkInfoPage(Reddit):
         # link is a wrapped Link object
         self.link = self.link_listing.things[0]
 
-        title = c.site.name + ((': ' + self.link.title) \
-                               if hasattr(self.link, 'title') else '')
-         
+        link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
+        if comment:
+            author = Account._byID(comment.author_id, data=True).name
+            title = _("%(author)s comments on %(title)s") % dict(author=author, title=_force_unicode(link_title))
+        else:
+            title = _("%(title)s : %(site)s") % dict(title=_force_unicode(link_title), site = c.site.name)
         Reddit.__init__(self, title = title, *a, **kw)
 
     def build_toolbars(self):
-        base_path = "/info/%s/" % self.link._id36
+        base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
+        if isinstance(base_path, unicode):
+            base_path = base_path.encode('utf-8')
+        def info_button(name):
+            return NamedButton(name, dest = '/%s%s' % (name, base_path),
+                               aliases = ['/%s/%s' % (name, self.link._id36)])
         
-        buttons = [NavButton(plurals.comments, 'comments'),
-                   NamedButton('related')]
+        buttons = [info_button('comments'),
+                   info_button('related')]
 
         if c.user_is_admin:
-            buttons += [NamedButton('details')]
+            buttons += [info_button('details')]
 
-        toolbar = [NavMenu(buttons, base_path = base_path, type="tabmenu")]
+        toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
         if c.site != Default:
             toolbar.insert(0, PageNameNav('subreddit'))

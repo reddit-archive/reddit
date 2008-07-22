@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-2<%!
+<%!
    from pylons.i18n import _, ungettext
 %>
 <%inherit file="printable.htmllite" />
@@ -39,6 +39,8 @@
   <link>\
   <a href="http://${c.domain}/goto?rss=true&amp;id=${thing._fullname}">
     ${thing.title}</a><br />
-  <small>${thing.score} ${ungettext("point", "points", thing.score)} |&nbsp;<a href="${thing.permalink}">${com_label}</a>
+  <small>
+    ${thing.score} ${ungettext("point", "points", thing.score)} |
+    &nbsp;<a href="http://${c.domain}${thing.permalink}">${com_label}</a>
   </small>
 </%def>

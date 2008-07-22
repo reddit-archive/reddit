@@ -195,7 +195,7 @@ def Alert(restart_list=['MEM','CPU']):
 
             # Check for out of memory situation
             output += "\nMEMORY: %6.2f%%" % service.get('mem', 0)
-            mem_pegged = (service.get('mem', 0) > 20)
+            mem_pegged = (service.get('mem', 0) > 10)
             if (mem_pegged):
                 if 'MEM' in restart_list:
                     need_restart = True

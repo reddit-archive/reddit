@@ -80,16 +80,11 @@ def make_map(global_conf={}, app_conf={}):
     mc('/prefs/:location', controller='front',
        action='prefs', location='options')
     
-    mc('/info/0:name/*rest', controller = 'front', action='oldinfo')
+    mc('/info/0:article/*rest', controller = 'front', 
+       action='oldinfo', dest='comments', type='ancient')
+    mc('/info/:article/:dest/:comment', controller='front',
+       action='oldinfo', type='old', dest='comments', comment=None)
     
-    mc('/info/:article/comments/:comment',
-       controller='front', action='comments',
-       comment = None)
-    mc('/info/:article/related', controller='front',
-       action = 'related')
-    mc('/info/:article/details', controller='front',
-       action = 'details')
-
     mc('/related/:article/:title', controller='front',
        action = 'related', title=None)
     mc('/details/:article/:title', controller='front',
@@ -137,6 +132,12 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/store', controller='redirect', action='redirect',
        dest='http://store.reddit.com/index.html')
+    
+    mc('/code', controller='redirect', action='redirect',
+       dest='http://code.reddit.com/')
+    
+    mc('/mobile', controller='redirect', action='redirect',
+       dest='http://m.reddit.com/')
     
     # This route handles displaying the error page and 
     # graphics used in the 404/500

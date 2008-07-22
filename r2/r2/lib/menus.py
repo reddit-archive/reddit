@@ -92,6 +92,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      bookmarklets = _("bookmarklets"),
                      buttons      = _("buttons"),
                      widget       = _("widget"), 
+                     code         = _("code"), 
+                     mobile       = _("mobile"), 
                      store        = _("store"),  
                      ad_inq       = _("advertise"),
                      

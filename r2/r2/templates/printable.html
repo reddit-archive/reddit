@@ -268,16 +268,17 @@ ${k.strip('_')}="${v}" \
 
 
 ### originally in commentbutton
-<%def name="comment_button(name, fullname, title, num, link,\
-            a_class='', newwindow = False)">
+<%def name="comment_button(name, fullname, link_text, num, link,\
+            a_class='', title='', newwindow = False)">
   <% cls = "" if num == 0 else "comments" %>
   <a href="${reddit_link(link, url = True)}" 
      id="${name}_${fullname}" class="${a_class} ${cls}" 
+     title="${title}"
      target="${'_blank' if newwindow else '_parent'}" >
     %if num > 0:
-      ${strings.number_label % (num,title)}\
+      ${strings.number_label % (num,link_text)}\
     %else:
-      ${title}\
+      ${link_text}\
     %endif
   </a>
 </%def>

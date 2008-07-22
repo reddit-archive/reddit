@@ -530,9 +530,7 @@ ThingForm.prototype = {
                 where.insertBefore(this.form, where.firstChild);
             }
         }
-        else {
-            where.insertBefore(this.form, where.firstChild);
-        }
+        where.insertBefore(this.form, where.firstChild);
         show(this.form);
     }
     

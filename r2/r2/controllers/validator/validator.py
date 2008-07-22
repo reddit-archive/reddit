@@ -153,7 +153,7 @@ class VCommentID(Validator):
                 cid = int(cid, 36)
                 return Comment._byID(cid, True)
             except (NotFound, ValueError):
-                abort(404, 'page not found')
+                pass
 
 class VCount(Validator):
     def run(self, count):

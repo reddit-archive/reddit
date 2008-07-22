@@ -28,8 +28,8 @@ import cPickle as pickle
 import re, datetime, math, random, string, sha
 
 from datetime import datetime, timedelta
-
 from pylons.i18n import ungettext, _
+from r2.lib.filters import _force_unicode
         
 iters = (list, tuple, set)
 
@@ -744,3 +744,22 @@ def valid_vote_hash(hash, user, thing):
 
 def safe_eval_str(unsafe_str):
     return unsafe_str.replace('\\x3d', '=').replace('\\x26', '&')
+
+rx_whitespace = re.compile('\s+', re.UNICODE)
+rx_notsafe = re.compile('\W+', re.UNICODE)
+rx_underscore = re.compile('_+', re.UNICODE)
+def title_to_url(title, max_length = 50):
+    """Takes a string and makes it suitable for use in URLs"""
+    title = _force_unicode(title)           #make sure the title is unicode
+    title = rx_whitespace.sub('_', title)   #remove whitespace
+    title = rx_notsafe.sub('', title)       #remove non-printables
+    title = rx_underscore.sub('_', title)   #remove double underscores
+    title = title.strip('_')                #remove trailing underscores
+
+    if len(title) > max_length:
+        #truncate to nearest word
+        title = title[:max_length]
+        last_word = title.rfind('_')
+        if (last_word > 0):
+            title = title[:last_word]
+    return title

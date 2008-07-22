@@ -27,21 +27,18 @@ from r2.lib.utils import timeago
 from r2.models import passhash, Email, Default
 from r2.config import cache
 import os, random, datetime
-import smtplib
+import smtplib, traceback, sys
 
 def email_address(name, address):
     return '"%s" <%s>' % (name, address) if name else address
 feedback = email_address('reddit feedback', g.feedback_email)
 
-def send_mail(msg, fr, to, test = False):
-    if not test:
-        session = smtplib.SMTP(g.smtp_server)
-        session.sendmail(fr, to, msg.as_string())
-        session.quit()
-    else:
-        g.log.debug(msg.as_string())
+def send_mail(msg, fr, to):
+    session = smtplib.SMTP(g.smtp_server)
+    session.sendmail(fr, to, msg.as_string())
+    session.quit()
 
-def simple_email(to, fr, subj, body, test = False):
+def simple_email(to, fr, subj, body):
     def utf8(s):
         return s.encode('utf8') if isinstance(s, unicode) else s
     msg = MIMEText(utf8(body))
@@ -49,7 +46,7 @@ def simple_email(to, fr, subj, body, test = False):
     msg['To']      = utf8(to)
     msg['From']    = utf8(fr)
     msg['Subject'] = utf8(subj)
-    send_mail(msg, fr, to, test = test)
+    send_mail(msg, fr, to)
 
 def sys_email(email, body, name='', subj = lambda x: x):
     fr = (c.user.name if c.user else 'Anonymous user')
@@ -104,8 +101,14 @@ def send_queued_mail():
                                    link = email.thing).render(style = "email")
                 email.subject = _("[reddit] %(user)s has shared a link with you") % \
                                 {"user": email.from_name()}
-                session.sendmail(email.fr_addr, email.to_addr,
-                                 email.to_MIMEText().as_string())
+                try:
+                    session.sendmail(email.fr_addr, email.to_addr,
+                                     email.to_MIMEText().as_string())
+	        except smtplib.SMTPRecipientsRefused:
+                    # handle error but don't stop the queue
+		    print "Handled error sending mail (traceback to follow)"
+		    traceback.print_exc(file = sys.stdout)
+
             elif email.kind == Email.Kind.OPTOUT:
                 email.fr_addr = g.share_reply
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
