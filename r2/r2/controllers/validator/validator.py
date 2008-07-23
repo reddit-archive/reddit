@@ -618,15 +618,15 @@ class VReason(Validator):
             return ('redirect', dest)
         if reason.startswith('vote_'):
             fullname = reason[5:]
-            t = Thing._by_fullname(fullname)
+            t = Thing._by_fullname(fullname, data=True)
             return ('redirect', t.permalink)
         elif reason.startswith('share_'):
             fullname = reason[6:]
-            t = Thing._by_fullname(fullname)
+            t = Thing._by_fullname(fullname, data=True)
             return ('redirect', t.permalink)
         elif reason.startswith('reply_'):
             fullname = reason[6:]
-            t = Thing._by_fullname(fullname)
+            t = Thing._by_fullname(fullname, data=True)
             return ('redirect', t.permalink)
         elif reason.startswith('sr_change_'):
             sr_list = reason[10:].split(',')
