@@ -47,7 +47,7 @@ class Wrapped(object):
                 pass
             
         if not found:
-            raise NoTemplateFound, attr
+            raise AttributeError, attr
 
         setattr(self, attr, res)
         return res
