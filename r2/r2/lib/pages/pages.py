@@ -19,19 +19,21 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.wrapped import Wrapped
+from r2.lib.wrapped import Wrapped, NoTemplateFound
 from r2.models import IDBuilder, LinkListing, Account, Default, FakeSubreddit, Subreddit
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
 from pylons.i18n import _
 from pylons import c, request, g
+from pylons.controllers.util import abort, redirect_to
 
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url
+import sys
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
@@ -135,12 +137,21 @@ class Reddit(Wrapped):
         In adition, unlike Wrapped.render, the result is in the form of a pylons
         Response object with it's content set.
         """
-        res = Wrapped.render(self, *a, **kw)
-        if is_api():
-            res = json_respond(res)
-        elif self.space_compress:
-            res = spaceCompress(res)
-        c.response.content = res
+        try:
+            res = Wrapped.render(self, *a, **kw)
+            if is_api():
+                res = json_respond(res)
+            elif self.space_compress:
+                res = spaceCompress(res)
+            c.response.content = res
+        except NoTemplateFound, e:
+            # re-raise the error -- development environment
+            if g.debug:
+                s = sys.exc_info()
+                raise s[1], None, s[2]
+            # die gracefully -- production environment
+            else:
+                abort(404, "not found")
         return c.response
     
     def corner_buttons(self):

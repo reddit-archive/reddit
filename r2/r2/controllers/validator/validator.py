@@ -296,7 +296,10 @@ class VUser(Validator):
         if not c.user_is_loggedin:
             #TODO return a real error page
             d = dict(dest=reddit_link(request.path, url = True) + utils.query_string(request.GET))
-            return redirect_to("/login" + utils.query_string(d))
+            path = "/login"
+            if request.environ.get('extension'):
+                path += ".%s" % request.environ['extension']
+            return redirect_to(path + utils.query_string(d))
         if (password is not None) and not valid_password(c.user, password):
             c.errors.add(errors.WRONG_PASSWORD)
             

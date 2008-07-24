@@ -47,7 +47,7 @@ class Wrapped(object):
                 pass
             
         if not found:
-            raise AttributeError, attr
+            raise NoTemplateFound, attr
 
         setattr(self, attr, res)
         return res
@@ -71,8 +71,8 @@ class Wrapped(object):
         else:
             try:
                 template = tpm.get(self, style, cache = not debug)
-            except KeyError:
-                raise NoTemplateFound, repr(self)
+            except AttributeError:
+                raise NoTemplateFound, (repr(self), style)
                 
         return template
 
