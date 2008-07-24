@@ -182,8 +182,13 @@ class CommentJsonTemplate(ThingJsonTemplate):
         return d
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
+    __data_attrs__ = dict(id           = "_id36",
+                          name         = "_fullname")
     def points(self, wrapped):
         return []
+
+    def kind(self, wrapped):
+        return "more"
 
 class MessageJsonTemplate(ThingJsonTemplate):
     __data_attrs__ = dict(id           = "_id36",
