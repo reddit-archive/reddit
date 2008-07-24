@@ -83,30 +83,23 @@ def get_hot(sr):
 
     return res
 
+def only_recent(items):
+    return filter(lambda l: l._date > utils.timeago('%d day' % g.HOT_PAGE_AGE),
+                  items)
+
 @memoize('normalize_hot', time = g.page_cache_time)
 def normalized_hot_cached(sr_ids):
     results = []
     srs = Subreddit._byID(sr_ids, data = True, return_dict = False)
     for sr in srs:
-        #items = get_hot(sr)
-        items = filter(lambda l: l._date > utils.timeago('%d day' % g.HOT_PAGE_AGE),
-                       get_hot(sr))
+        items = only_recent(get_hot(sr))
 
         if not items:
             continue
 
         top_score = max(items[0]._hot, 1)
-        
-        top, rest = items[:2], items[2:]
-
-        if top:
-            normals = [l._hot / top_score for l in top]
-            results.extend((l, random.choice(normals)) for l in top)
-            #random.shuffle(normals)
-            #results.extend((l, normals.pop()) for l in top)
-        
-        if rest:
-            results.extend((l, l._hot / top_score) for l in rest)
+        if items:
+            results.extend((l, l._hot / top_score) for l in items)
 
     results.sort(key = lambda x: (x[1], x[0]._hot), reverse = True)
     return [l[0]._fullname for l in results]

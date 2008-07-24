@@ -21,8 +21,10 @@
 ################################################################################
 from r2.models import *
 from r2.lib.memoize import memoize
-from r2.lib.normalized_hot import is_top_link
+from r2.lib.normalized_hot import is_top_link, get_hot, only_recent
 from r2.lib import count
+
+import random
 
 from pylons import g
 cache = g.cache
@@ -43,8 +45,21 @@ def cached_organic_links(username):
 
     sr_count = count.get_link_counts()
     srs = Subreddit.user_subreddits(user)
+
+    #only use links from reddits that you're subscribed to
     link_names = filter(lambda n: sr_count[n][1] in srs, sr_count.keys())
     link_names.sort(key = lambda n: sr_count[n][0])
+
+    #potentially add a up and coming link
+    if random.choice((True, False)):
+        sr = Subreddit._byID(random.choice(srs))
+        items = only_recent(get_hot(sr))
+        if items:
+            if len(items) == 1:
+                new_item = items[0]
+            else:
+                new_item = random.choice(items[1:4])
+            link_names.insert(0, new_item._fullname)
 
     builder = IDBuilder(link_names, num = 30, skip = True, keep_fn = keep_link)
     links = builder.get_items()[0]
