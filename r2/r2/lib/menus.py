@@ -24,6 +24,7 @@ from pylons import c, request, g
 from utils import  query_string, timeago
 from strings import StringHandler, plurals
 from r2.lib.db import operators
+from r2.lib.filters import _force_unicode
 from pylons.i18n import _
 #from r2.config import cache
 
@@ -259,7 +260,7 @@ class NavButton(Styled):
             p = {}
             base_path = ("%s/%s/" % (base_path, self.dest)).replace('//', '/')
 
-        self.bare_path = base_path.replace('//', '/')
+        self.bare_path = _force_unicode(base_path.replace('//', '/')).lower()
         
         # append the query string
         base_path += query_string(p)
@@ -273,7 +274,7 @@ class NavButton(Styled):
         if self.opt:
             return request.params.get(self.opt, '') in self.aliases
         else:
-            stripped_path = request.path.rstrip('/')
+            stripped_path = _force_unicode(request.path.rstrip('/')).lower()
             if stripped_path == self.bare_path.rstrip('/'):
                 return True
             if stripped_path in (a.rstrip('/') for a in self.aliases):

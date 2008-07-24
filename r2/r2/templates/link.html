@@ -45,7 +45,6 @@
   <a id="${name}_${thing._fullname}" 
      onmousedown="setClick(this, '${css_class}')"
      class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
-     title="${thing.title}" 
      %if c.user.pref_frame:
        href="/goto?id=${thing._id36}"  
      %else:
@@ -148,7 +147,6 @@
   <li class="first">
   ${parent.comment_button("comment", fullname, com_label,
                           thing.num_comments, thing.permalink,
-                          title = "comments on " + thing.title,
                           newwindow = c.user.pref_newwindow)}
   </li>
   <li id="share_li_${fullname}">

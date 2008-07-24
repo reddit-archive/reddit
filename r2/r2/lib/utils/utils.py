@@ -755,6 +755,7 @@ def title_to_url(title, max_length = 50):
     title = rx_notsafe.sub('', title)       #remove non-printables
     title = rx_underscore.sub('_', title)   #remove double underscores
     title = title.strip('_')                #remove trailing underscores
+    title = title.lower()                   #lowercase the title
 
     if len(title) > max_length:
         #truncate to nearest word
