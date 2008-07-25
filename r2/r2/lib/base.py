@@ -25,7 +25,7 @@ from pylons.controllers import WSGIController, Controller
 from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
 from r2.lib.utils import to_js
-from r2.lib.filters import spaceCompress
+from r2.lib.filters import spaceCompress, _force_unicode
 from utils import storify, string2js, read_http_date
 
 import re, md5
@@ -90,7 +90,7 @@ class BaseController(WSGIController):
 
     @staticmethod
     def redirect(dest, code = 302):
-        c.response.headers['Location'] = dest
+        c.response.headers['Location'] = _force_unicode(dest).encode('utf8')
         c.response.status_code = code
         return c.response
 

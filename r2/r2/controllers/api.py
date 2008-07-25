@@ -52,7 +52,7 @@ from r2.lib.organic import update_pos
 
 def link_listing_by_url(url, count = None):
     try:
-        links = tup(Link._by_url(url, sr = c.site))
+        links = list(tup(Link._by_url(url, sr = c.site)))
         links.sort(key = lambda x: -x._score)
         if count is not None:
             links = links[:count]
