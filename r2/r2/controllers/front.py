@@ -117,11 +117,14 @@ class FrontController(RedditController):
               num_comments = VMenu('controller', NumCommentsMenu))
     def GET_comments(self, article, comment, context, sort, num_comments):
         """Comment page for a given 'article'."""
-        if comment and comment.link_id != article._id:                                         
+        if comment and comment.link_id != article._id:
             return self.abort404()    
 
         if not c.default_sr and c.site._id != article.sr_id: 
             return self.abort404()
+        
+        if not article.subreddit_slow.can_view(c.user):
+            abort(403, 'forbidden')
 
         #check for 304
         self.check_modified(article, 'comments')
