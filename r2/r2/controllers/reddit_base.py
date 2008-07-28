@@ -291,7 +291,8 @@ class RedditController(BaseController):
         kw = {}
         argspec = inspect.getargspec(fn)
 
-        #if there is a **kw argument in the fn definition, just pass along the environment
+        # if there is a **kw argument in the fn definition,
+        # just pass along the environment
         if argspec[2]:
             kw = env
         #else for each entry in the arglist set the value from the environment

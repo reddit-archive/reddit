@@ -50,6 +50,12 @@ def mail_queue(metadata):
                     # the "To" address of the email
                     sa.Column('to_addr', sa.String),
 
+                    # the "From" address of the email
+                    sa.Column('fr_addr', sa.String),
+                    
+                    # the "Reply-To" address of the email
+                    sa.Column('reply_to', sa.String),
+
                     # fullname of the thing
                     sa.Column('fullname', sa.String),
                     
@@ -79,6 +85,12 @@ def sent_mail_table(metadata):
                     
                     # the "To" address of the email
                     sa.Column('to_addr', sa.String),
+
+                    # the "From" address of the email
+                    sa.Column('fr_addr', sa.String),
+                    
+                    # the "reply-to" address of the email
+                    sa.Column('reply_to', sa.String),
 
                     # IP of original request
                     sa.Column('ip', PGInet),
@@ -142,6 +154,7 @@ class EmailHandler(object):
         res = s.execute()
         return bool(res.fetchall())
 
+
     def opt_out(self, msg_hash):
         """Adds the recipient of the email to the opt-out list and returns
         that address."""
@@ -152,6 +165,7 @@ class EmailHandler(object):
                 o.insert().execute({o.c.email: email, o.c.msg_hash: msg_hash})
                 clear_memo('r2.models.mail_queue.has_opted_out', 
                            email)
+                clear_memo('r2.models.mail_queue.opt_count')
                 return (email, True)
             except sa.exceptions.SQLError:
                 return (email, False)
@@ -166,6 +180,7 @@ class EmailHandler(object):
                 sa.delete(o, o.c.email == email).execute()
                 clear_memo('r2.models.mail_queue.has_opted_out',
                            email)
+                clear_memo('r2.models.mail_queue.opt_count')
                 return (email, True)
             else:
                 return (email, False)
@@ -178,8 +193,8 @@ class EmailHandler(object):
         return res[0][0] if res and res[:1] else None
 
         
-    def add_to_queue(self, user, thing, emails, from_name, date, ip,
-                     kind, body = ""):
+    def add_to_queue(self, user, thing, emails, from_name, fr_addr, date, ip,
+                     kind, body = "", reply_to = ""):
         s = self.queue_table
         hashes = []
         for email in emails:
@@ -190,6 +205,8 @@ class EmailHandler(object):
             s.insert().execute({s.c.to_addr : email,
                                 s.c.account_id : uid,
                                 s.c.from_name : from_name,
+                                s.c.fr_addr : fr_addr,
+                                s.c.reply_to : reply_to, 
                                 s.c.fullname: tid, 
                                 s.c.ip : ip,
                                 s.c.kind: kind,
@@ -215,7 +232,7 @@ class EmailHandler(object):
             res = sa.select([s.c.to_addr, s.c.account_id,
                              s.c.from_name, s.c.fullname, s.c.body, 
                              s.c.kind, s.c.ip, s.c.date, s.c.uid,
-                             s.c.msg_hash],
+                             s.c.msg_hash, s.c.fr_addr, s.c.reply_to],
                             sa.and_(*where),
                             order_by = s.c.uid, limit = batch_limit).execute()
             res = res.fetchall()
@@ -242,10 +259,11 @@ class EmailHandler(object):
             # did we not fetch them all?
             keep_trying = (len(res) == batch_limit)
         
-            for addr, acct, fname, fulln, body, kind, ip, date, uid, msg_hash \
-                    in res:
+            for (addr, acct, fname, fulln, body, kind, ip, date, uid, 
+                 msg_hash, fr_addr, reply_to) in res:
                 yield (accts.get(acct), things.get(fulln), addr,
-                       fname, date, ip, ips[ip], kind, msg_hash, body)
+                       fname, date, ip, ips[ip], kind, msg_hash, body,
+                       fr_addr, reply_to)
                 
     def clear_queue(self, max_date, kind = None):
         s = self.queue_table
@@ -262,7 +280,8 @@ class Email(object):
     Kind = Storage((e, i) for i, e in enumerate(Kind))
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,
-                 kind, msg_hash, body = '', subject = "", from_addr = ''):
+                 kind, msg_hash, body = '', from_addr = '',
+                 reply_to = ''):
         self.user = user
         self.thing = thing
         self.to_addr = email
@@ -273,14 +292,20 @@ class Email(object):
         self.banned_ip = banned_ip
         self.kind = kind
         self.sent = False
-        self.body = ""
-        self.subject = subject
+        self.body = body
+        self.subject = ''
         self.msg_hash = msg_hash
+        self.reply_to = reply_to
 
     def from_name(self):
-        return ("%(name)s (%(uname)s)" if self._from_name != self.user.name
-                else "%(uname)s") % \
-                dict(name = self._from_name, uname = self.user.name)
+        if not self.user:
+            name = "%(name)s"
+        elif self._from_name != self.user.name:
+            name = "%(name)s (%(uname)s)"
+        else:
+            name = "%(uname)s"
+        return name % dict(name = self._from_name,
+                           uname = self.user.name if self.user else '')
 
     @classmethod
     def get_unsent(cls, max_date, batch_limit = 50, kind = None):
@@ -303,6 +328,8 @@ class Email(object):
             t.insert().execute({t.c.account_id:
                                 self.user._id if self.user else 0,
                                 t.c.to_addr :   self.to_addr,
+                                t.c.fr_addr :   self.fr_addr,
+                                t.c.reply_to :  self.reply_to,
                                 t.c.ip :        self.ip,
                                 t.c.fullname:
                                 self.thing._fullname if self.thing else "",
@@ -315,7 +342,7 @@ class Email(object):
     def to_MIMEText(self):
         def utf8(s):
             return s.encode('utf8') if isinstance(s, unicode) else s
-        fr = '"%s" <%s>' % (self._from_name, self.fr_addr) if self._from_name else self.fr_addr
+        fr = '"%s" <%s>' % (self.from_name(), self.fr_addr)
         if not fr.startswith('-') and not self.to_addr.startswith('-'): # security
             msg = MIMEText(utf8(self.body))
             msg.set_charset('utf8')
@@ -325,6 +352,8 @@ class Email(object):
             if self.user:
                 msg['X-Reddit-username'] = utf8(self.user.name)
             msg['X-Reddit-ID'] = self.msg_hash
+            if self.reply_to:
+                msg['Reply-To'] = utf8(self.reply_to)
             return msg
         return None
             
@@ -336,6 +365,12 @@ def has_opted_out(email):
     return bool(res.fetchall())
     
 
+@memoize('r2.models.mail_queue.opt_count')
+def opt_count():
+    o = Email.handler.opt_table
+    s = sa.select([sa.func.count(o.c.email)])
+    res = s.execute().fetchone()
+    return int(res[0])
 
         
         

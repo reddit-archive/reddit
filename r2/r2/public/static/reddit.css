@@ -826,7 +826,9 @@ a.star { text-decoration: none; color: #ff8b60 }
 .clearleft { clear: left; height: 0px; }
 .clear { clear: both; }
 
-.sharetable {margin-left: 20px; }
+.sharetable.preftable {margin-left: 20px; }
+.sharetable.preftable th { padding-bottom: 5px; padding-top: 5px;  }
+.sharetable.preftable button { margin-top: 10px }
 
 .sponsored .entry  { margin-right: 20px;}
 
@@ -1228,6 +1230,10 @@ a.star { text-decoration: none; color: #ff8b60 }
 #passform p { font-size: smaller; color: orangered; margin-bottom: 7px}
 #passform.pretty-form button { padding: 0px 1px; }
 
+
+/*opt-out/in form*/
+.opt-form { font-size: larger }
+.opt-form form { display: inline; }
 
 .preftable th { 
     padding: 10px; 

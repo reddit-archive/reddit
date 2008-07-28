@@ -2,16 +2,17 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace file="captcha.html" import="captchagen"/>
 
-<div id="sharelink_${thing.link_name}"
+<div id="sharelink_${thing.link_name}" 
      ${"" if thing.link_name else "style='display:none'"}>
+  <div class="clearleft"><!--IEsux--></div>
   <form onsubmit="return post_form(this, 'share')" method="post"
         id="shareform_${thing.link_name}" class="pretty-form"
         action="/post/share">
     ${error_field("RATELIMIT_"+ thing.link_name)}
-    <table class="preftable sharetable">
+    <table class="sharetable preftable">
       <tr>
         <th>
-          <label class="big" for="share_to_${thing.link_name}">
+          <label for="share_to_${thing.link_name}">
             ${_("send this link to")}
           </label>
         </th>
@@ -21,14 +22,14 @@
           </textarea>
         </td>
         <td>
-          ${error_field("BAD_EMAILS_" + thing.link_name)}
-          ${error_field("TOO_MANY_EMAILS_" + thing.link_name)}
-          ${error_field("NO_EMAILS_" + thing.link_name)}
+          ${error_field("BAD_EMAILS_emails_" + thing.link_name)}
+          ${error_field("TOO_MANY_EMAILS_emails_" + thing.link_name)}
+          ${error_field("NO_EMAILS_emails_" + thing.link_name)}
         </td>
       </tr>
       <tr>
         <th>
-          <label class="big" for="share_from_${thing.link_name}">
+          <label for="share_from_${thing.link_name}">
             ${_("your name")}
           </label>&nbsp;
           <span class="little gray">
@@ -41,6 +42,44 @@
                  name="share_from" />
         </td>
         <td>
+          ${error_field("COMMENT_TOO_LONG_share_from_" + thing.link_name)}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="replyto_${thing.link_name}">
+            ${_("your email")}
+          </label>&nbsp;
+          <span class="little gray">
+            ${_("(optional)")}
+          </span>
+        </th>
+        <td>
+          <input name="replyto" type="text" size="30"
+                 value="${c.user.email if hasattr(c.user, 'email') else ''}"/>
+        </td>
+        <td>
+          ${error_field("BAD_EMAILS_replyto_" + thing.link_name)}
+          ${error_field("TOO_MANY_EMAILS_replyto_" + thing.link_name)}
+          ${error_field("NO_EMAILS_replyto_" + thing.link_name)}
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="message_${thing.link_name}">
+            ${_("message")}
+          </label>&nbsp;
+          <span class="little gray">
+            ${_("(optional)")}
+          </span>
+        </th>
+        <td>
+          <textarea id="message_${thing.link_name}" name="message" rows="4">
+            ${c.user.name} from http://${g.domain}/ has shared a link with you.
+          </textarea>
+        </td>
+        <td>
+          ${error_field("COMMENT_TOO_LONG_message_" + thing.link_name)}
         </td>
       </tr>
       %if thing.captcha:

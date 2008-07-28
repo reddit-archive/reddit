@@ -124,18 +124,17 @@ class ApiController(RedditController):
 
         if not res.error:
             if reason != 'ad_inq':
-                emailer.feedback_email(email, message, name = name or '')
+                emailer.feedback_email(email, message, name = name or '',
+                                       reply_to = replyto or '')
             else:
-                emailer.ad_inq_email(email, message, name = name or '')
+                emailer.ad_inq_email(email, message, name = name or '',
+                                       reply_to = replyto or '')
             res._update('success',
                         innerHTML=_("thanks for your message! you should hear back from us shortly."))
             res._update("personal", value='')
             res._update("captcha", value='')
             res._hide("wtf")
-
-
     POST_ad_inq = POST_feedback
-
 
     @Json
     @validate(VUser(),
@@ -439,7 +438,7 @@ class ApiController(RedditController):
     @validate(VUser('curpass', default = ''),
               VModhash(),
               curpass = nop('curpass'),
-              email = nop("email"),
+              email = ValidEmails("email", num = 1),
               newpass = nop("newpass"),
               verpass = nop("verpass"),
               password = VPassword(['newpass', 'verpass']))
@@ -450,8 +449,10 @@ class ApiController(RedditController):
             res._update('curpass', value='')
             return 
         updated = False
-        if email and (not hasattr(c.user,'email')
-                      or c.user.email != email):
+        if res._chk_error(errors.BAD_EMAILS):
+            res._focus('email')
+        elif email and (not hasattr(c.user,'email')
+                        or c.user.email != email):
             c.user.email = email
             c.user._commit()
             res._update('status', 
@@ -612,16 +613,20 @@ class ApiController(RedditController):
         if should_ratelimit:
             VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix = "rate_comment_")
 
+
     @Json
     @validate(VUser(),
               VModhash(),
               VCaptcha(),
               VRatelimit(rate_user = True, rate_ip = True,
                          prefix = "rate_share_"),
-              share_from = VLength('share_from', length = 60),
+              share_from = VLength('share_from', length = 100),
               emails = ValidEmails("share_to"),
+              reply_to = ValidEmails("replyto", num = 1), 
+              message = VLength("message", length = 1000), 
               thing = VByName('id'))
-    def POST_share(self, res, emails, thing, share_from):
+    def POST_share(self, res, emails, thing, share_from, reply_to,
+                   message):
 
         # remove the ratelimit error if the user's karma is high
         sr = thing.subreddit_slow
@@ -633,18 +638,37 @@ class ApiController(RedditController):
 
         if res._chk_captcha(errors.BAD_CAPTCHA, thing._fullname):
             pass
-        elif not res._chk_errors((errors.BAD_EMAILS, errors.NO_EMAILS,
-                                  errors.RATELIMIT, errors.TOO_MANY_EMAILS),
-                                 thing._fullname):
-
+        elif res._chk_error(errors.RATELIMIT, thing._fullname):
+            pass
+        elif (share_from is None and
+              res._chk_error(errors.COMMENT_TOO_LONG,
+                             'share_from_' + thing._fullname)):
+            res._focus('share_from_' + thing._fullname)
+        elif (message is None and
+              res._chk_error(errors.COMMENT_TOO_LONG,
+                             'message_' + thing._fullname)):
+            res._focus('message_' + thing._fullname)
+        elif not emails and res._chk_errors((errors.BAD_EMAILS,
+                                             errors.NO_EMAILS,
+                                             errors.TOO_MANY_EMAILS),
+                                            "emails_" + thing._fullname):
+            res._focus("emails_" + thing._fullname)
+        elif not reply_to and res._chk_error(errors.BAD_EMAILS,
+                                             "replyto_" + thing._fullname):
+            res._focus("replyto_" + thing._fullname)
+        else:
             c.user.add_share_emails(emails)
             c.user._commit()
 
             res._update("share_li_" + thing._fullname,
                         innerHTML=_('shared'))
-            res._hide("sharelink_" + thing._fullname)
 
-            emailer.share(thing, emails, from_name = share_from or "")
+            res._update("sharelink_" + thing._fullname,
+                        innerHTML=("<div class='clearleft'></div><p class='error'>%s</p>" % 
+                                   _("your link has been shared.")))
+
+            emailer.share(thing, emails, from_name = share_from or "",
+                          body = message or "", reply_to = reply_to or "")
 
             #set the ratelimiter
             if should_ratelimit:

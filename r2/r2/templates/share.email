@@ -19,14 +19,18 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%! from r2.lib.template_helpers import reddit_link %>A user from http://${g.domain}/ has shared a link with you.
+%if not thing.body:
+${thing.username} from http://${g.domain}/ has shared a link with you.
+%else:
+${thing.body}
+%endif
 
 "${thing.link.title}"
 http://${g.domain}/goto?share=true&id=${thing.link._fullname}
 
-There are currently ${thing.link.num_comments} comments on this link.  You can view them here:
+<% from r2.lib.strings import strings, plurals %>${_("There are currently %(num_comments)s on this link.  You can view them here:") % dict(num_comments = strings.number_label % (thing.link.num_comments, plurals.N_comments(thing.link.num_comments)))}
 
-http://${g.domain}${reddit_link(thing.link.permalink, url=True)}
+<% from r2.lib.template_helpers import reddit_link %>http://${g.domain}${reddit_link(thing.link.permalink, url=True)}
 
 ___
 If you would not like to receive emails from reddit.com in the future, visit http://${g.domain}/mail/optout?x=${thing.msg_hash}

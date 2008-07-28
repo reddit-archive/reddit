@@ -641,6 +641,11 @@ class VReason(Validator):
 
 
 class ValidEmails(Validator):
+    """Validates a list of email addresses passed in as a string and
+    delineated by whitespace, ',' or ';'.  Also validates quantity of
+    provided emails.  Returns a list of valid email addresses on
+    success"""
+    
     separator = re.compile(r'[^\s,;]+')
     email_re  = re.compile(r'.+@.+\..+')
 
@@ -648,18 +653,32 @@ class ValidEmails(Validator):
         self.num = num
         Validator.__init__(self, param = param, **kw)
         
-    def run(self, emails):
-        emails = set(self.separator.findall(emails) if emails else [])
+    def run(self, emails0):
+        emails = set(self.separator.findall(emails0) if emails0 else [])
         failures = set(e for e in emails if not self.email_re.match(e))
         emails = emails - failures
-        if failures:
-            c.errors.add(errors.BAD_EMAILS, {'emails': ', '.join(failures)})
+
+        # make sure the number of addresses does not exceed the max
+        if self.num > 0 and len(emails) + len(failures) > self.num:
+            # special case for 1: there should be no delineators at all, so
+            # send back original string to the user
+            if self.num == 1:
+                c.errors.add(errors.BAD_EMAILS,
+                             {'emails': '"%s"' % emails0})
+            # else report the number expected
+            else:
+                c.errors.add(errors.TOO_MANY_EMAILS,
+                             {'num': self.num})
+        # correct number, but invalid formatting
+        elif failures:
+            c.errors.add(errors.BAD_EMAILS,
+                         {'emails': ', '.join(failures)})
+        # no emails
         elif not emails:
             c.errors.add(errors.NO_EMAILS)
-        elif len(emails) > self.num:
-            c.errors.add(errors.TOO_MANY_EMAILS, {'num': self.num})
         else:
-            return emails
+            # return single email if one is expected, list otherwise
+            return list(emails)[0] if self.num == 1 else emails
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!

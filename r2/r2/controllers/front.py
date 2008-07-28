@@ -28,7 +28,7 @@ from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
 from r2.lib.utils import  to36, sanitize_url, check_cheating, title_to_url, query_string
-from r2.lib.emailer import opt_out, opt_in
+from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
 import r2.lib.db.thing as thing
@@ -564,24 +564,30 @@ class FrontController(RedditController):
                                         subreddits = sr_names,
                                         captcha=captcha)).render()
 
-    @validate(msg_hash = nop('x'))
-    def GET_optout(self, msg_hash):
-        email, sent = opt_out(msg_hash)
+    def _render_opt_in_out(self, msg_hash, leave):
+        """Generates the form for an optin/optout page"""
+        email = Email.handler.get_recipient(msg_hash)
         if not email:
             return self.abort404()
-        return BoringPage(_("opt out"),
-                          content = OptOut(email = email, leave = True, 
+        sent = (has_opted_out(email) == leave)
+        return BoringPage(_("opt out") if leave else _("welcome back"),
+                          content = OptOut(email = email, leave = leave, 
                                            sent = sent, 
                                            msg_hash = msg_hash)).render()
 
+    @validate(msg_hash = nop('x'))
+    def GET_optout(self, msg_hash):
+        """handles /mail/optout to add an email to the optout mailing
+        list.  The actual email addition comes from the user posting
+        the subsequently rendered form and is handled in
+        ApiController.POST_optout."""
+        return self._render_opt_in_out(msg_hash, True)
 
     @validate(msg_hash = nop('x'))
     def GET_optin(self, msg_hash):
-        email, sent = opt_in(msg_hash)
-        if not email:
-            return self.abort404()
-        return BoringPage(_("welcome back"),
-                          content = OptOut(email = email, leave = False,
-                                           sent = sent,
-                                           msg_hash = msg_hash)).render()
-
+        """handles /mail/optin to remove an email address from the
+        optout list. The actual email removal comes from the user
+        posting the subsequently rendered form and is handled in
+        ApiController.POST_optin."""
+        return self._render_opt_in_out(msg_hash, False)
+    

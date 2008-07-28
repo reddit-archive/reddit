@@ -22,6 +22,7 @@
 from r2.lib.pages import *
 from api import ApiController
 from r2.lib.utils import Storage, query_string
+from r2.lib.emailer import opt_in, opt_out
 from pylons import request, c, g
 from validator import *
 from pylons.i18n import _
@@ -125,3 +126,26 @@ class PostController(ApiController):
             return self.redirect(dest)
         else:
             return self.redirect('/')
+
+
+    @validate(msg_hash = nop('x'))
+    def POST_optout(self, msg_hash):
+        email, sent = opt_out(msg_hash)
+        if not email:
+            return self.abort404()
+        return BoringPage(_("opt out"),
+                          content = OptOut(email = email, leave = True,
+                                           sent = True,
+                                           msg_hash = msg_hash)).render()
+
+    @validate(msg_hash = nop('x'))
+    def POST_optin(self, msg_hash):
+        email, sent = opt_in(msg_hash)
+        if not email:
+            return self.abort404()
+        return BoringPage(_("welcome back"),
+                          content = OptOut(email = email, leave = False,
+                                           sent = True,
+                                           msg_hash = msg_hash)).render()
+
+

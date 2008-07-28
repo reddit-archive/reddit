@@ -68,9 +68,10 @@
         <td>
           %if thing.replyto:
             <input id="replyto" name="Reply-to" type="text"
-                   value="${thing.email}" onfocus="clearTitle(this)" size="30"/>
+                   value="${thing.email}" onfocus="clearTitle(this)" 
+                   size="30"/>
           %else:
-            <input id="replyto" name="email" style="color: gray" 
+            <input id="replyto" name="replyto" style="color: gray" 
                    value="${_('optional')}"  type="text"
                    onfocus="clearTitle(this)" size="30"/>
           %endif

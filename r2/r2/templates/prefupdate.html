@@ -17,7 +17,7 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%namespace file="utils.html" import="error_field"/>
@@ -33,7 +33,9 @@
 <tr>
     <td align="right">${_("email")}:</td>
     <td><input name="email" type="text" value="${hasattr(c.user,'email') and c.user.email or ''}"/></td>
-    <td></td>
+    <td>
+      ${error_field("BAD_EMAILS")}
+    </td>
 </tr>
 <tr>
     <td align="right">${_("new password")}:</td>
