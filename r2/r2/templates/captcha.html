@@ -64,7 +64,7 @@ ${captchagen(thing.iden, thing.error)}
         <script type="text/javascript">
           setMessage($('captcha'), '${_("type the letters from the image above")}');
         </script>
-     %if tabulatar:
+     %if tabular:
      </td>
      <td>
      %else:
@@ -73,7 +73,7 @@ ${captchagen(thing.iden, thing.error)}
      %if show_error:
        ${error_field("BAD_CAPTCHA", "span")}
      %endif
-  %if tabulatar:
+  %if tabular:
     </td>
   </tr>
   %endif

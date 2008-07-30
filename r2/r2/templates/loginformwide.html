@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -28,17 +28,17 @@
   <input type="hidden" name="op" value="${op}" />
   <input name="user_login" 
          id="user-${op}" 
-         type="text" maxlength="20"/>
+         type="text" maxlength="20" tabindex="1"/>
   <input id="passwd-${op}" 
          name="passwd_login" 
-         type="password" maxlength="20"/>
+         type="password" maxlength="20" tabindex="2"/>
 
   ${error_field("WRONG_PASSWORD_" + op, "div")}
   <div id="status_${op}" class="error"></div>
 
   <div id="remember-me">
-    <button class="btn" type="submit">${_("login")}</button>
-    <input type="checkbox" name="rem" 
+    <button class="btn" type="submit" tabindex="4">${_("login")}</button>
+    <input type="checkbox" name="rem" tabindex="3"
            id="rem-${op}" />
     <label for="rem-${op}">
       ${_("remember me")}</label>

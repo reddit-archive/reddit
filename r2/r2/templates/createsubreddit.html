@@ -63,7 +63,7 @@ function update_title() {
   %endif
 
   <form class="pretty-form sr-form" action="/post/site_admin" method="post" 
-        onsubmit="return post_form(this, 'site_admin')">
+        onsubmit="return post_form(this, 'site_admin', null, null, true)">
     %if thing.site:
       <input type="hidden" name="sr" value="${thing.site._fullname}"/>
     %endif

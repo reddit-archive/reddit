@@ -72,9 +72,10 @@ class Report(MultiRelation('report',
         thing._incr(cls._field)
 
         # mark author as reported
-        aid = thing.author_id
-        author = Account._byID(aid)
-        author._incr(cls._field)
+        if hasattr(thing, 'author_id'):
+            aid = thing.author_id
+            author = Account._byID(aid)
+            author._incr(cls._field)
         
         # mark user as having made a report
         user._incr('report_made')
@@ -104,8 +105,9 @@ class Report(MultiRelation('report',
         for a in set((old_amount, amount, None)):
             # clear memoizing around this thing's author
             if not r._thing2._loaded: r._thing2._load()
-            clear_memo('report._by_author', cls, r._thing2.author_id,
-                       amount = a)
+            if hasattr(r._thing2, "author_id"):
+                clear_memo('report._by_author', cls, r._thing2.author_id,
+                           amount = a)
 
             for t in (r._thing1, r._thing2):
                 thing_key = cls._cache_prefix(rel, t.__class__,
@@ -144,10 +146,11 @@ class Report(MultiRelation('report',
             # update the author and thing field
             if getattr(r._thing2, Report._field) > 0:
                 r._thing2._incr(Report._field, -1)
-            aid = r._thing2.author_id
-            author = Account._byID(aid)
-            if getattr(author, Report._field) > 0:
-                author._incr(Report._field, -1)
+            if hasattr(r._thing2, "author_id"):
+                aid = r._thing2.author_id
+                author = Account._byID(aid)
+                if getattr(author, Report._field) > 0:
+                    author._incr(Report._field, -1)
 
             admintools.report(r._thing2, -1)
 

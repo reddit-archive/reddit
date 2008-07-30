@@ -470,7 +470,7 @@ class SubredditsPage(Reddit):
     takes the same arguments as SearchBar, which it uses to construct
     self.searchbar"""
     searchbox    = False
-
+    submit_box   = False
     def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
                  title = '', loginbox = True, infotext = None, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,

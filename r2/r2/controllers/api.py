@@ -527,7 +527,7 @@ class ApiController(RedditController):
     def POST_editcomment(self, res, comment, body):
         res._update('status_' + comment._fullname, innerHTML = '')
 
-        if res._chk_errors((errors.BAD_COMMENT, errors.COMMENT_TOO_LONG, errors.NOT_AUTHOR),
+        if not res._chk_errors((errors.BAD_COMMENT,errors.COMMENT_TOO_LONG,errors.NOT_AUTHOR),
                            comment._fullname):
             comment.body = body
             if not c.user_is_admin: comment.editted = True
