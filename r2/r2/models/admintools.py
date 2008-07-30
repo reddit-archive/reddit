@@ -19,12 +19,17 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from r2.lib.utils import tup
 
 class AdminTools(object):
-    def spam(self, thing):
-        pass
+    def spam(self, thing, amount = 1, mark_as_spam = True, **kw):
+        things = tup(thing)
+        for t in things:
+            if mark_as_spam:
+                t._spam = (amount > 0)
+                t._commit()
 
-    def report(self, thing):
+    def report(self, thing, amount = 1):
         pass
 
     def add_thing(self, thing):

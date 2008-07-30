@@ -103,7 +103,7 @@ function buildParams(parameters) {
 }
 
 var api_loc = '/api/';
-function redditRequest(op, parameters, worker_in) {
+function redditRequest(op, parameters, worker_in, block) {
     var action = op;
     var worker = worker_in;
     if (!parameters) {
@@ -118,11 +118,26 @@ function redditRequest(op, parameters, worker_in) {
     }
     else {
         worker = function(r) {
+            remove_ajax_work(action);
             return worker_in(r);
         }
     }
-    new Ajax.Request(op, {parameters: make_get_params(parameters), 
-                onComplete: worker});
+    if(block == null || add_ajax_work(action)) {
+        new Ajax.Request(op, {parameters: make_get_params(parameters), 
+                    onComplete: worker});
+    }
+}
+
+var _ajax_work_queue = {};
+function add_ajax_work(op) {
+    if(_ajax_work_queue[op]) {
+        return false;
+    }
+    _ajax_work_queue[op] = true;
+    return true;
+} 
+function remove_ajax_work(op) {
+    _ajax_work_queue[op] = false;
 }
 
 function redditRequest_no_response(op, parameters) {
@@ -156,6 +171,7 @@ function handleResponse(action) {
         }
     };
     var responseHandler = function(r) {
+        remove_ajax_work(action);
         var res_obj = parse_response(r);
         if(!res_obj) {
             if($('status')) 
@@ -293,7 +309,7 @@ function change_state(link, type) {
     return false;
 }
 
-function post_form(form, where, statusfunc, nametransformfunc) {
+function post_form(form, where, statusfunc, nametransformfunc, block) {
     var p = {uh: modhash};
     var id = _id(form);
     var status = $("status");
@@ -318,7 +334,7 @@ function post_form(form, where, statusfunc, nametransformfunc) {
             }
         }
     }
-    redditRequest(where, p); 
+    redditRequest(where, p, null, block); 
     return false;
 }
 

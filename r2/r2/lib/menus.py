@@ -242,7 +242,8 @@ class NavButton(Styled):
                  style = "plain", **kw):
         
         # keep original dest to check against c.location when rendering
-        self.aliases = set(aliases + [dest.strip('/')])
+        self.aliases = set(a.rstrip('/') for a in aliases)
+        self.aliases.add(dest.rstrip('/'))
         self.dest = dest
 
         Styled.__init__(self, style = style, sr_path = sr_path,
@@ -261,6 +262,7 @@ class NavButton(Styled):
             base_path = ("%s/%s/" % (base_path, self.dest)).replace('//', '/')
 
         self.bare_path = _force_unicode(base_path.replace('//', '/')).lower()
+        self.bare_path = self.bare_path.rstrip('/')
         
         # append the query string
         base_path += query_string(p)
@@ -274,10 +276,11 @@ class NavButton(Styled):
         if self.opt:
             return request.params.get(self.opt, '') in self.aliases
         else:
-            stripped_path = _force_unicode(request.path.rstrip('/')).lower()
-            if stripped_path == self.bare_path.rstrip('/'):
+            stripped_path = request.path.rstrip('/').lower()
+            ustripped_path = _force_unicode(stripped_path)
+            if stripped_path == self.bare_path:
                 return True
-            if stripped_path in (a.rstrip('/') for a in self.aliases):
+            if stripped_path in self.aliases:
                 return True
 
     def selected_title(self):

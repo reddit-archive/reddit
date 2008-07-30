@@ -204,11 +204,20 @@ class VLength(Validator):
             return title
         
 class VTitle(VLength):
+    only_whitespace = re.compile(r"^\s*$", re.UNICODE)
+    
     def __init__(self, item, length = 200, **kw):
         VLength.__init__(self, item, length = length,
                          empty_error = errors.NO_TITLE,
                          length_error = errors.TITLE_TOO_LONG, **kw)
 
+    def run(self, title):
+        title = VLength.run(self, title)
+        if title and self.only_whitespace.match(title):
+            c.errors.add(errors.NO_TITLE)
+        else:
+            return title
+    
 class VComment(VLength):
     def __init__(self, item, length = 10000, **kw):
         VLength.__init__(self, item, length = length, **kw)

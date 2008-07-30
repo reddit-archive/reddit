@@ -166,10 +166,10 @@ function reply(id) {
 
 function chkcomment(form) {
     if(form.replace.value) {
-        return post_form(form, 'editcomment');
+        return post_form(form, 'editcomment', null, null, true);
     }
     else {
-        return post_form(form, 'comment');
+        return post_form(form, 'comment', null, null, true);
     }
 };
 

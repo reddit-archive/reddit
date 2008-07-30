@@ -526,8 +526,9 @@ class ApiController(RedditController):
               body = VComment('comment'))
     def POST_editcomment(self, res, comment, body):
         res._update('status_' + comment._fullname, innerHTML = '')
-        if (not res._chk_error(errors.BAD_COMMENT, comment._fullname) and 
-            not res._chk_error(errors.NOT_AUTHOR, comment._fullname)):
+
+        if res._chk_errors((errors.BAD_COMMENT, errors.COMMENT_TOO_LONG, errors.NOT_AUTHOR),
+                           comment._fullname):
             comment.body = body
             if not c.user_is_admin: comment.editted = True
             comment._commit()
@@ -541,12 +542,13 @@ class ApiController(RedditController):
     @Json
     @validate(VUser(),
               VModhash(),
-              VRatelimit(rate_user = True, rate_ip = True, 
-                         prefix = "rate_comment_"),
+              VRatelimit(rate_user = True, rate_ip = True, prefix = "rate_comment_"),
               ip = ValidIP(),
               parent = VSubmitParent('id'),
               comment = VComment('comment'))
     def POST_comment(self, res, parent, comment, ip):
+
+        #wipe out the status message
         res._update('status_' + parent._fullname, innerHTML = '')
 
         should_ratelimit = True
@@ -572,9 +574,8 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove(errors.RATELIMIT)
 
-        if res._chk_error(errors.BAD_COMMENT, parent._fullname) or \
-           res._chk_error(errors.COMMENT_TOO_LONG, parent._fullname) or \
-           res._chk_error(errors.RATELIMIT, parent._fullname):
+        if res._chk_errors((errors.BAD_COMMENT,errors.COMMENT_TOO_LONG, errors.RATELIMIT),
+                          parent._fullname):
             res._focus("comment_reply_" + parent._fullname)
             return 
         res._show('reply_' + parent._fullname)
