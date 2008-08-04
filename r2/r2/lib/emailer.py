@@ -115,7 +115,6 @@ def send_queued_mail():
             clear = True
 
             should_queue = email.should_queue()
-
             # check only on sharing that the mail is invalid 
             if email.kind == Email.Kind.SHARE and should_queue:
                 email.body = Share(username = email.from_name(),
@@ -145,9 +144,10 @@ def send_queued_mail():
                     email.subject = "[ad_inq] feedback from '%s'" % \
                                     email.from_name()
                 sendmail(email)
-            # handle other types of emails here
+            # handle failure
             else:
-                pass
+                email.set_sent(rejected = True)
+
     finally:
         session.quit()
         

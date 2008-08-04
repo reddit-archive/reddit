@@ -75,8 +75,8 @@ def mail_queue(metadata):
                     
                     )
 
-def sent_mail_table(metadata):
-    return sa.Table(settings.DB_APP_NAME + '_sent_mail', metadata,
+def sent_mail_table(metadata, name = 'sent_mail'):
+    return sa.Table(settings.DB_APP_NAME + '_' + name, metadata,
                     # tracking hash of the email
                     sa.Column('msg_hash', sa.String, primary_key=True),
                     
@@ -135,15 +135,20 @@ class EmailHandler(object):
         create_table(self.opt_table, indices, force = force)
 
         self.track_table = sent_mail_table(self.metadata)
-        indices = [index_str(self.track_table, 'to_addr', 'to_addr'),
-                   index_str(self.track_table, 'date', 'date'),
-                   index_str(self.track_table, 'ip', 'ip'),
-                   index_str(self.track_table, 'kind', 'kind'),
-                   index_str(self.track_table, 'fullname', 'fullname'),
-                   index_str(self.track_table, 'account_id', 'account_id'),
-                   index_str(self.track_table, 'msg_hash', 'msg_hash'),
-                   ]
-        create_table(self.track_table, indices, force = force)
+        self.reject_table = sent_mail_table(self.metadata, name = "reject_mail")
+        
+        def sent_indices(tab):
+            indices = [index_str(tab, 'to_addr', 'to_addr'),
+                       index_str(tab, 'date', 'date'),
+                       index_str(tab, 'ip', 'ip'),
+                       index_str(tab, 'kind', 'kind'),
+                       index_str(tab, 'fullname', 'fullname'),
+                       index_str(tab, 'account_id', 'account_id'),
+                       index_str(tab, 'msg_hash', 'msg_hash'),
+                       ]
+        
+        create_table(self.track_table, sent_indices(self.track_table), force = force)
+        create_table(self.reject_table, sent_indices(self.reject_table), force = force)
 
     def __repr__(self):
         return "<email-handler>"
@@ -320,11 +325,11 @@ class Email(object):
                (self.kind == self.Kind.OPTOUT or
                 not has_opted_out(self.to_addr))
 
-    def set_sent(self, date = None):
+    def set_sent(self, date = None, rejected = False):
         if not self.sent:
             from pylons import g
             self.date = date or datetime.datetime.now(g.tz)
-            t = self.handler.track_table
+            t = self.handler.reject_table if rejected else self.handler.track_table
             t.insert().execute({t.c.account_id:
                                 self.user._id if self.user else 0,
                                 t.c.to_addr :   self.to_addr,

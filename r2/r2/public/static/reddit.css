@@ -830,6 +830,15 @@ a.star { text-decoration: none; color: #ff8b60 }
 .sharetable.preftable th { padding-bottom: 5px; padding-top: 5px;  }
 .sharetable.preftable button { margin-top: 10px }
 
+.share-summary { width: 95%; margin-top: 10px; }
+.share-summary .head td { width: 50%; font-size: large; text-align: center }
+.share-summary td { vertical-align: top;}
+.share-summary > tbody > tr > td  { 
+    padding-left: 10px; 
+    padding-bottom: 10px; 
+}
+.share-summary th { padding: 5px; border-bottom: 1px solid #000; }
+
 .sponsored .entry  { margin-right: 20px;}
 
 .sponsored .titlerow { background: #fcfcfc;
