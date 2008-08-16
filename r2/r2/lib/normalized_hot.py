@@ -30,7 +30,7 @@ from pylons import g
 from datetime import datetime, timedelta
 import random
 
-expire_delta = timedelta(seconds = g.page_cache_time)
+expire_delta = timedelta(minutes = 2)
 TOP_CACHE = 1800
 
 def access_key(sr):
