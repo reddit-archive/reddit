@@ -137,7 +137,8 @@ class ApiController(RedditController):
     POST_ad_inq = POST_feedback
 
     @Json
-    @validate(VUser(),
+    @validate(VCaptcha(),
+              VUser(),
               VModhash(),
               ip = ValidIP(),
               to = VExistingUname('to'),
@@ -153,6 +154,9 @@ class ApiController(RedditController):
         elif (res._chk_error(errors.NO_MSG_BODY) or
               res._chk_error(errors.COMMENT_TOO_LONG)):
             res._focus('message')
+        elif res._chk_captcha(errors.BAD_CAPTCHA):
+            pass
+
         if not res.error:
             spam = (c.user._spam or
                     errors.BANNED_IP in c.errors or

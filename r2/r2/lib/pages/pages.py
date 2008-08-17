@@ -95,7 +95,7 @@ class Reddit(Wrapped):
             self.subreddit_sidebox = True
             self.subreddit_checkboxes = c.site == Default
 
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and self.show_sidebar:
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
@@ -300,6 +300,8 @@ class PrefDelete(Wrapped):
 class MessagePage(Reddit):
     """Defines the content for /message/*"""
     def __init__(self, *a, **kw):
+        if not kw.has_key('show_sidebar'):
+            kw['show_sidebar'] = False
         Reddit.__init__(self, *a, **kw)
         self.replybox = CommentReplyBox()
 
@@ -316,9 +318,11 @@ class MessagePage(Reddit):
 
 class MessageCompose(Wrapped):
     """Compose message form."""
-    def __init__(self,to='', subject='', message='', success=''):
+    def __init__(self,to='', subject='', message='', success='', 
+                 captcha = None):
         Wrapped.__init__(self, to = to, subject = subject,
-                         message = message, success = success)
+                         message = message, success = success, 
+                         captcha = captcha)
 
     
 class BoringPage(Reddit):

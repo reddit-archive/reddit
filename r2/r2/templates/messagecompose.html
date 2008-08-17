@@ -60,6 +60,9 @@ ${success_field(_("your message has been delivered"),
       <td>${error_field("NO_MSG_BODY", "span")}
         ${error_field("COMMENT_TOO_LONG", "span")}</td>
     </tr>
+    %if thing.captcha:
+      ${thing.captcha.render()}
+    %endif
     <tr>
       <th>
         <label for="send"></label>

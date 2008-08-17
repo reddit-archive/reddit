@@ -425,12 +425,17 @@ class MessageController(ListingController):
         c.msg_location = where
         return ListingController.GET_listing(self, **env)
 
-    def GET_compose(self):
-        i = request.get
-        if not c.user_is_loggedin: return self.abort404()
-        content = MessageCompose(to = i.get('to'), subject = i.get('subject'),
-                                 message = i.get('message'),
-                                 success = i.get('success'))
+    @validate(VUser(),
+              to = nop('to'),
+              subject = nop('subject'),
+              message = nop('message'),
+              success = nop('success'))
+    def GET_compose(self, to, subject, message, success):
+        captcha = Captcha() if c.user.needs_captcha() else None
+        content = MessageCompose(to = to, subject = subject,
+                                 captcha = captcha, 
+                                 message = message,
+                                 success = success)
         return MessagePage(content = content).render()
 
     
