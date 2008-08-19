@@ -61,7 +61,7 @@ def make_change_tables(force = False):
     metadata = make_metadata(change_engine)
     table = change_table(metadata)
     indices = [
-        index_str(table, 'table', 'thing_type'),
+        index_str(table, 'fullname', 'fullname'),
         index_str(table, 'date', 'date')
         ]
     create_table(table, indices, force = force)
@@ -79,24 +79,29 @@ def changed(thing):
             t = _change_table
             t.update(t.c.fullname == thing._fullname,
                      values = {t.c.date: sa.func.now()}).execute()
-    worker.do(_changed)
+    from r2.lib.solrsearch import indexed_types
+    if isinstance(thing, indexed_types):
+        worker.do(_changed)
 
 
-def _where(cls, min_date = None, max_date = None):
+def _where(cls = None, min_date = None, max_date = None):
     t = _change_table
-    where = [t.c.thing_type == cls._type_id]
+    where = []
+    if cls:
+        where.append(t.c.thing_type == cls._type_id)
     if min_date:
         where.append(t.c.date > min_date)
     if max_date:
-        where.append(t.c.date < max_date)
-    return sa.and_(*where)
+        where.append(t.c.date <= max_date)
+    if where:
+        return sa.and_(*where)
 
-def get_changed(cls, min_date = None, limit = None):
+def get_changed(cls = None, min_date = None, limit = None):
     t = _change_table
     res = sa.select([t.c.fullname, t.c.date], _where(cls, min_date = min_date),
                     order_by = t.c.date, limit = limit).execute()
     return res.fetchall()
 
-def clear_changes(cls, min_date, max_date):
+def clear_changes(cls = None, min_date=None, max_date=None):
     t = _change_table
     t.delete(_where(cls, min_date = min_date, max_date = max_date)).execute()

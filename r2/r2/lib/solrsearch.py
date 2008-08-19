@@ -51,15 +51,10 @@ searchable_langs    = set(['dk','nl','en','fi','fr','de','it','no','nn','pt',
 ## those fields to Solr's configuration
 indexed_types       = (Subreddit, Link)
 
-## Where to store the timestamp for the last time we ran. Used by
-## `save_last_run` and `get_last_run`, which are used by `changed`
-root                = config.current_conf()['pylons.paths'].get('root')
-last_run_fname      = '%s/../data/solrsearch_changes.pickle' % root
-
 class Field(object):
     """
        Describes a field of a Thing that is searchable by Solr. Used
-       by `search_fields` below"
+       by `search_fields` below
     """
     def __init__(self, name, thing_attr_func = None, store = True,
                  tokenize=False, is_number=False, reverse=False,
@@ -395,7 +390,6 @@ def reindex_all(types = None, delete_all_first=False):
         q.put("done")
         indexer.join()
 
-        save_last_run(start_t)
     except object,e:
         if indexer.isAlive():
             q.put(e,timeout=30)
@@ -405,13 +399,7 @@ def reindex_all(types = None, delete_all_first=False):
             q.put(e,timeout=30)
         raise e
 
-def save_last_run(last_run=None):
-    if not last_run:
-        last_run=datetime.now()
-    psave(last_run_fname,last_run)
-def get_last_run():
-    return pload(last_run_fname)
-def changed(types=None,since=None,commit=True,optimize=False):
+def changed(commit=True,optimize=False):
     """
         Run by `cron` (through `paster run`) on a schedule to update
         all Things that have been created or have changed since the
@@ -419,46 +407,32 @@ def changed(types=None,since=None,commit=True,optimize=False):
         which we read, find the Things, tokenise, and re-submit them
         to Solr
     """
-    global indexed_types
-
     set_emptying_cache()
-
-    start_t = datetime.now()
-
-    if not types:
-        types = indexed_types
-    if not since:
-        since = get_last_run()
-
-    all_changed = []
-
     with SolrConnection(commit=commit,optimize=optimize) as s:
-        for cls in types:
-            changed = (x[0]
-                       for x
-                       in thing_changes.get_changed(cls,min_date = since))
-            changed = IteratorChunker(changed)
-
+        changes = thing_changes.get_changed()
+        if changes:
+            max_date = max(x[1] for x in changes) 
+            changed = IteratorChunker(x[0] for x in changes)
+            
             while not changed.done:
                 chunk = changed.next_chunk(200)
-
+    
                 # chunk =:= [(Fullname,Date) | ...]
-                chunk = cls._by_fullname(chunk,
-                                         data=True, return_dict=False)
+                chunk = Thing._by_fullname(chunk,
+                                           data=True, return_dict=False)
                 chunk = [x for x in chunk if not x._spam and not x._deleted]
                 to_delete = [x for x in chunk if x._spam or x._deleted]
-
+    
                 # note: anything marked as spam or deleted is not
                 # updated in the search database. Since these are
                 # filtered out in the UI, that's probably fine.
                 if len(chunk) > 0:
                     chunk  = tokenize_things(chunk)
                     s.add(chunk)
-
+    
                 for i in to_delete:
                     s.delete(id=i._fullname)
-
-    save_last_run(start_t)
+            thing_changes.clear_changes(max_date = max_date)
 
 def combine_searchterms(terms):
     """
