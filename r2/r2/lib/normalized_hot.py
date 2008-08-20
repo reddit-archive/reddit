@@ -24,6 +24,7 @@ from r2.lib.db.operators import desc, timeago
 from r2.lib import utils 
 from r2.config import cache
 from r2.lib.memoize import memoize
+from r2.lib.db.thing import Query
 
 from pylons import g
 
@@ -43,18 +44,19 @@ def top_key(sr):
     return sr.name + '_top'
 
 def expire_hot(sr):
+    """Called when a subreddit should be recomputed: after a vote (hence,
+    submit) or deletion."""
     cache.set(expire_key(sr), True)
 
-def is_top_link(sr, link):
-    return cache.get(top_key(sr)) == link._fullname
+#def is_top_link(sr, link):
+#    return cache.get(top_key(sr)) == link._fullname
 
-def get_hot(sr):
-    q = Link._query(Link.c.sr_id == sr._id,
-                    sort = desc('_hot'),
-                    write_cache = True,
-                    limit = 150)
-
-    iden = q._iden()
+def cached_query(query, sr):
+    """Returns the results from running query. The results are cached and
+    only recomputed after 'expire_delta'"""
+    query._limit = 150
+    query._write_cache = True
+    iden = query._iden()
 
     read_cache = True
     #if query is in the cache, the expire flag is true, and the access
@@ -70,18 +72,29 @@ def get_hot(sr):
     else:
         read_cache = False
 
+    #set access time to the last time the query was actually run (now)
     if not read_cache:
         cache.set(access_key(sr), datetime.now())
-    
-    q._read_cache = read_cache
-    res = list(q)
+
+    query._read_cache = read_cache
+    res = list(query)
     
     #set the #1 link so we can ignore it later. expire after TOP_CACHE
     #just in case something happens and that sr doesn't update
-    if res:
-        cache.set(top_key(sr), res[0]._fullname, TOP_CACHE)
+    #if res:
+    #    cache.set(top_key(sr), res[0]._fullname, TOP_CACHE)
 
     return res
+
+def get_hot(sr):
+    """Get the hottest links for a subreddit. If g.use_query_cache is
+    True, it'll use the query cache, otherwise it'll use cached_query()
+    from above."""
+    q = sr.get_links('hot', 'all')
+    if isinstance(q, Query):
+        return cached_query(q, sr)
+    else:
+        return Link._by_fullname(q[:150], return_dict = False)
 
 def only_recent(items):
     return filter(lambda l: l._date > utils.timeago('%d day' % g.HOT_PAGE_AGE),
@@ -89,6 +102,8 @@ def only_recent(items):
 
 @memoize('normalize_hot', time = g.page_cache_time)
 def normalized_hot_cached(sr_ids):
+    """Fetches the hot lists for each subreddit, normalizes the scores,
+    and interleaves the results."""
     results = []
     srs = Subreddit._byID(sr_ids, data = True, return_dict = False)
     for sr in srs:

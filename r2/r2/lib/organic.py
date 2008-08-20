@@ -21,7 +21,7 @@
 ################################################################################
 from r2.models import *
 from r2.lib.memoize import memoize
-from r2.lib.normalized_hot import is_top_link, get_hot, only_recent
+from r2.lib.normalized_hot import get_hot, only_recent
 from r2.lib import count
 
 import random

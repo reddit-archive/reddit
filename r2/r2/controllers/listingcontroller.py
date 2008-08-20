@@ -37,7 +37,6 @@ from pylons.i18n import _
 
 import random
 
-
 class ListingController(RedditController):
     """Generalized controller for pages with lists of links."""
 
@@ -54,14 +53,12 @@ class ListingController(RedditController):
     # any text that should be shown on the top of the page
     infotext = None
 
-    # builder class to use to generate the listing
-    builder_cls = QueryBuilder
+    # builder class to use to generate the listing. if none, we'll try
+    # to figure it out based on the query type
+    builder_cls = None
 
     # page title
     title_text = ''
-
-    # toggles the stat collector for keeping track of what queries are being run
-    collect_stats = False
 
     # login box, subreddit box, submit box, etc, visible
     show_sidebar = True
@@ -86,10 +83,6 @@ class ListingController(RedditController):
         self.reverse = reverse
 
         self.query_obj = self.query()
-
-        if self.collect_stats and g.REDDIT_MAIN:
-            self.query_obj._stats_collector = g.stats_collector
-
         self.builder_obj = self.builder()
         self.listing_obj = self.listing()
         content = self.content()
@@ -111,14 +104,21 @@ class ListingController(RedditController):
 
     def builder(self):
         #store the query itself so it can be used elsewhere
-        b = self.builder_cls(self.query_obj,
-                             num = self.num,
-                             skip = self.skip,
-                             after = self.after,
-                             count = self.count,
-                             reverse = self.reverse,
-                             prewrap_fn = self.prewrap_fn,
-                             wrap = self.builder_wrapper)
+        if self.builder_cls:
+            builder_cls = self.builder_cls
+        elif isinstance(self.query_obj, Query):
+            builder_cls = QueryBuilder
+        elif isinstance(self.query_obj, list):
+            builder_cls = IDBuilder
+
+        b = builder_cls(self.query_obj,
+                        num = self.num,
+                        skip = self.skip,
+                        after = self.after,
+                        count = self.count,
+                        reverse = self.reverse,
+                        prewrap_fn = self.prewrap_fn,
+                        wrap = self.builder_wrapper)
         return b
 
     def listing(self):
@@ -192,24 +192,24 @@ class HotController(FixListing, ListingController):
 
 
     def query(self):
+        #no need to worry when working from the cache
+        if g.use_query_cache or c.site == Default:
+            fix_listing = False
+
         if c.site == Default:
-            self.fix_listing = False
-            self.builder_cls = IDBuilder
             user = c.user if c.user_is_loggedin else None
             sr_ids = Subreddit.user_subreddits(user)
             links = normalized_hot(sr_ids)
             return links
-        elif (not isinstance(c.site, FakeSubreddit)
+        #if not using the query_cache we still want cached front pages
+        elif (not g.use_query_cache
+              and not isinstance(c.site, FakeSubreddit)
               and self.after is None
               and self.count == 0):
-            self.builder_cls = IDBuilder
             links = [l._fullname for l in get_hot(c.site)]
             return links
         else:
-            q = Link._query(sort = desc('_hot'), *c.site.query_rules())
-            q._read_cache = True
-            self.collect_stats = True
-            return q
+            return c.site.get_links('hot', 'all')
 
     def content(self):
         # only send an organic listing for HTML rendering
@@ -227,21 +227,6 @@ class HotController(FixListing, ListingController):
     def GET_listing(self, **env):
         self.infotext = request.get.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
-
-class NormalizedController(ListingController):
-    where = 'normalized'
-    builder_cls = IDBuilder
-
-    def query(self):
-        user = c.user if c.user_is_loggedin else None
-        srs = Subreddit._byID(Subreddit.user_subreddits(user),
-                              data = True,
-                              return_dict = False)
-        links = normalized_hot(srs)
-        return links
-
-    def title(self):
-        return c.site.title
 
 class SavedController(ListingController):
     prewrap_fn = lambda self, x: x._thing2
@@ -283,23 +268,15 @@ class NewController(ListingController):
         return [NewMenu(default = self.sort)]
 
     def query(self):
-        sort = NewMenu.operator(self.sort)
-
-        if not sort: # rising
-            names = get_rising(c.site)
-            return names
+        if self.sort == 'rising':
+            return get_rising(c.site)
         else:
-            q = Link._query(sort = sort, read_cache = True,
-                            *c.site.query_rules() )
-            self.collect_stats = True
-            return q
+            return c.site.get_links('new', 'all')
         
     @validate(VSrMask('srs'),
               sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):
         self.sort = sort
-        if self.sort == 'rising':
-            self.builder_cls = IDBuilder
         return ListingController.GET_listing(self, **env)
 
 class BrowseController(ListingController):
@@ -310,17 +287,7 @@ class BrowseController(ListingController):
         return [ControversyTimeMenu(default = self.time)]
     
     def query(self):
-        q = Link._query(sort = SortMenu.operator(self.sort),
-                        read_cache = True,
-                        *c.site.query_rules())
-
-        if g.REDDIT_MAIN:
-            q._stats_collector = g.stats_collector
-
-        t = TimeMenu.operator(self.time)
-        if t: q._filter(t)
-
-        return q
+        return c.site.get_links(self.sort, self.time)
 
     # TODO: this is a hack with sort.
     @validate(VSrMask('srs'),
@@ -338,7 +305,6 @@ class BrowseController(ListingController):
 
 class RandomrisingController(ListingController):
     where = 'randomrising'
-    builder_cls = IDBuilder
     title_text = _('you\'re really bored now, eh?')
 
     def query(self):
@@ -347,10 +313,10 @@ class RandomrisingController(ListingController):
         if not links:
             # just pull from the new page if the rising page isn't
             # populated for some reason
-            q = Link._query(limit = 200,
-                            data  = True,
-                            sort  = desc('_date'))
-            links = [ x._fullname for x in q ]
+            links = c.site.get_links('new', 'all')
+            if isinstance(links, Query):
+                links._limit = 200
+                links = [x._fullname for x in links]
         
         random.shuffle(links)
 
@@ -358,7 +324,6 @@ class RandomrisingController(ListingController):
 
 class RecommendedController(ListingController):
     where = 'recommended'
-    builder_cls = IDBuilder
     title_text = _('recommended for you')
     
     @property
@@ -437,9 +402,7 @@ class MessageController(ListingController):
                                  message = message,
                                  success = success)
         return MessagePage(content = content).render()
-
     
-
 class RedditsController(ListingController):
     render_cls = SubredditsPage
 

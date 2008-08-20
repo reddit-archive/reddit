@@ -792,7 +792,7 @@ class Query(object):
         lst = None
         if self._read_cache:
             names = cache.get(self._iden())
-            if names:
+            if names is not None:
                 lst = Thing._by_fullname(names, data = self._data, return_dict = False)
 
         if lst is None:

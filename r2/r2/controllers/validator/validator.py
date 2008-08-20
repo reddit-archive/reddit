@@ -31,7 +31,7 @@ from r2.lib.jsonresponse import json_respond
 
 from r2.models import *
 
-from r2.controllers.errors import errors
+from r2.controllers.errors import errors, UserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
@@ -66,14 +66,24 @@ class Validator(object):
 def validate(*simple_vals, **param_vals):
     def val(fn):
         def newfn(self, *a, **env):
-            for validator in simple_vals:
-                validator(env)
+            try:
+                for validator in simple_vals:
+                    validator(env)
+                
+                kw = self.build_arg_list(fn, env)
+                for var, validator in param_vals.iteritems():
+                    kw[var] = validator(env)
+                
+                return fn(self, *a, **kw)
 
-            kw = self.build_arg_list(fn, env)
-            for var, validator in param_vals.iteritems():
-                kw[var] = validator(env)
+            except UserRequiredException:
+                d = dict(dest=reddit_link(request.path, url = True)
+                         + utils.query_string(request.GET))
+                path = "/login"
+                if request.environ.get('extension'):
+                    path += ".%s" % request.environ['extension']
+                return redirect_to(path + utils.query_string(d))
 
-            return fn(self, *a, **kw)
         return newfn
     return val
 
@@ -303,12 +313,8 @@ class VCaptcha(Validator):
 class VUser(Validator):
     def run(self, password = None):
         if not c.user_is_loggedin:
-            #TODO return a real error page
-            d = dict(dest=reddit_link(request.path, url = True) + utils.query_string(request.GET))
-            path = "/login"
-            if request.environ.get('extension'):
-                path += ".%s" % request.environ['extension']
-            return redirect_to(path + utils.query_string(d))
+            raise UserRequiredException
+
         if (password is not None) and not valid_password(c.user, password):
             c.errors.add(errors.WRONG_PASSWORD)
             

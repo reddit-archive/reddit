@@ -36,10 +36,11 @@ from r2.lib.pages import FriendList, ContributorList, ModList, \
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.translation import Translator
-from r2.lib.normalized_hot import expire_hot, is_top_link
+from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib import emailer
 from r2.lib.strings import strings
+from r2.lib.db import queries
 from r2.config import cache
 
 from simplejson import dumps
@@ -280,6 +281,10 @@ class ApiController(RedditController):
         #set the ratelimiter
         if should_ratelimit:
             VRatelimit.ratelimit(rate_user=True, rate_ip = True)
+
+        #update the queries
+        if g.write_query_queue:
+            queries.new_link(l)
 
         #update the modified flags
         set_last_modified(c.user, 'overview')
@@ -698,14 +703,20 @@ class ApiController(RedditController):
                    else False if dir < 0
                    else None)
             organic = vote_type == 'organic'
-            Vote.vote(user, thing, dir, ip, spam, organic)
+            v = Vote.vote(user, thing, dir, ip, spam, organic)
 
             #update last modified
             set_last_modified(c.user, 'liked')
             set_last_modified(c.user, 'disliked')
 
+            #update the queries
+            if g.write_query_queue:
+                queries.new_vote(v)
+
             # flag search indexer that something has changed
             tc.changed(thing)
+
+
 
     @Json
     @validate(VUser(),

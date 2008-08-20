@@ -120,6 +120,8 @@ class Vote(MultiRelation('vote',
         if kind == 'link' and v.valid_thing:
             expire_hot(sr)
 
+        return v
+
     #TODO make this generic and put on multirelation?
     @classmethod
     def likes(cls, sub, obj):

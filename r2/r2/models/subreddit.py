@@ -30,6 +30,7 @@ from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize, clear_memo
 from r2.lib.utils import tup
 from r2.lib.strings import strings, Score
+
 import os.path
 
 class Subreddit(Thing, Printable):
@@ -199,6 +200,14 @@ class Subreddit(Thing, Printable):
         #really we mean Link.c.sr_id, but rules are type agnostic
         return (self.c.sr_id == self._id,)
 
+    def get_links(self, sort, time):
+        from r2.lib.db import queries
+        q = queries.get_links(self, sort, time)
+        if g.use_query_cache:
+            return q.fetch()
+        else:
+            return q.query
+
     @classmethod
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')
@@ -345,6 +354,20 @@ class FriendsSR(FakeSubreddit):
         else:
             return (self.c.sr_id == self.default_srs(c.content_langs, ids = True),)
 
+    def get_links(self, sort, time):
+        from r2.lib.db import queries
+        from r2.models import Link
+        from r2.controllers.errors import UserRequiredException
+
+        if not c.user_is_loggedin:
+            raise UserRequiredException
+
+        q = Link._query(self.c.author_id == c.user.friends,
+                        sort = queries.db_sorts[sort])
+        if time != 'all':
+            q._filter(queries.db_times[time])
+        return q
+            
 class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all'
@@ -354,6 +377,15 @@ class AllSR(FakeSubreddit):
             return (self.c.lang == c.content_langs,)
         else:
             return ()
+
+    def get_links(self, sort, time):
+        from r2.models import Link
+        from r2.lib.db import queries
+        q = Link._query(sort = queries.db_sorts[sort])
+        if time != 'all':
+            q._filter(queries.db_times[time])
+        return q
+
 
 class DefaultSR(FakeSubreddit):
     #notice the space before reddit.com
@@ -365,6 +397,26 @@ class DefaultSR(FakeSubreddit):
         user = c.user if c.user_is_loggedin else None
         subreddits = Subreddit.user_subreddits(user)
         return (self.c.sr_id == subreddits,)
+
+    def get_links_srs(self, srs, sort, time):
+        from r2.lib.db import queries
+        from r2.models import Link
+        if g.use_query_cache:
+            results = []
+            for sr in srs:
+                results.append(queries.get_links(sr, sort, time))
+
+            return queries.merge_results(*results)
+        else:
+            q = Link._query(sort = queries.db_sorts[sort])
+            if time != 'all':
+                q._filter(queries.db_times[time])
+            return q
+
+    def get_links(self, sort, time):
+        user = c.user if c.user_is_loggedin else None
+        srs = Subreddit._byID(Subreddit.user_subreddits(user), return_dict = False)
+        return self.get_links_srs(srs, sort, time)
 
     @property
     def title(self):
@@ -393,6 +445,13 @@ class MaskedSR(DefaultSR):
         subreddits = [s for s in subreddits if s not in self.hide_sr]
         subreddits.extend(self.show_sr)
         return (self.c.sr_id == subreddits,)
+
+    def get_links(self, sort, time):
+        user = c.user if c.user_is_loggedin else None
+        subreddits = Subreddit.user_subreddits(user)
+        subreddits = [s for s in subreddits if s not in self.hide_sr]
+        subreddits.extend(self.show_sr)
+        return self.get_links_srs(subreddits, sort, time)
 
 
 class SubSR(FakeSubreddit):

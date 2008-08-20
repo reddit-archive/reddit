@@ -41,18 +41,23 @@ class Globals(object):
                  'num_comments',
                  'max_comments',
                  'num_side_reddits',
+                 'num_precompute_workers',
                  ]
     
     bool_props = ['debug', 'translator', 
                   'template_debug',
-                  'uncompressedJS']
+                  'uncompressedJS',
+                  'enable_doquery',
+                  'use_query_cache',
+                  'write_query_queue']
 
     tuple_props = ['memcaches',
                    'rec_cache',
                    'admins',
                    'monitored_servers',
                    'default_srs',
-                   'agents']
+                   'agents',
+                   'query_caches']
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
@@ -103,6 +108,7 @@ class Globals(object):
         self.cache = CacheChain((LocalCache(), mc))
 
         self.rec_cache = Memcache(self.rec_cache)
+        self.query_cache = Memcache(self.query_caches)
         
         # set default time zone if one is not set
         self.tz = pytz.timezone(global_conf.get('timezone'))

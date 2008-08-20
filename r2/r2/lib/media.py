@@ -102,7 +102,7 @@ def process_new_links(period = media_period, force = False):
         jobs.append(make_link_info_job(results, link, g.useragent))
 
     #send links to a queue
-    wq = WorkQueue(jobs, num_workers = 20)
+    wq = WorkQueue(jobs, num_workers = 20, timeout = 30)
     wq.start()
     wq.jobs.join()
 

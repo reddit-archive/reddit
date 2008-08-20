@@ -32,39 +32,40 @@ class WorkQueue(object):
     """A WorkQueue is a queue that takes a number of functions and runs
     them in parallel"""
 
-    def __init__(self, jobs, num_workers = 5, timeout = 30):
+    def __init__(self, jobs = [], num_workers = 5, timeout = None):
         """Creates a WorkQueue that will process jobs with num_workers
         threads. If a job takes longer than timeout seconds to run, WorkQueue
         won't wait for it to finish before claiming to be finished."""
         self.jobs = Queue()
         self.work_count = Queue(num_workers)
         self.workers = {}
-        self.timeout = timedelta(seconds = timeout)
+        if timeout:
+            self.timeout = timedelta(seconds = timeout)
+        else:
+            self.timeout = None
 
         for j in jobs:
             self.jobs.put(j)
 
     def monitor(self):
-        done = False
-        while not done:
-            if self.jobs.empty() and not self.workers:
-                done = True
-
+        """The monitoring thread. Every second it checks for finished, dead,
+        or timed-out jobs and removes them from the queue."""
+        while True:
             for worker, start_time in self.workers.items():
                 if (not worker.isAlive() or
-                    datetime.now() - start_time > self.timeout): 
+                    self.timeout
+                    and datetime.now() - start_time > self.timeout): 
+
                     self.work_count.get_nowait()
                     self.jobs.task_done()
                     del self.workers[worker]
 
             time.sleep(1)
 
-    def start(self):
-        monitor_thread = Thread(target = self.monitor)
-        monitor_thread.setDaemon(True)
-        monitor_thread.start()
-
-        while not self.jobs.empty():
+    def run(self):
+        """The main thread for the queue. Pull a job off the job queue and
+        create a thread for it."""
+        while True:
             job = self.jobs.get()
 
             work_thread = Thread(target = job)
@@ -73,18 +74,47 @@ class WorkQueue(object):
             self.workers[work_thread] = datetime.now()
             work_thread.start()
 
-if __name__ == '__main__':
+    def start(self):
+        """Spawn a monitoring thread and the main thread for this queue. """
+        monitor_thread = Thread(target = self.monitor)
+        monitor_thread.setDaemon(True)
+        monitor_thread.start()
+
+        main_thread = Thread(target = self.run)
+        main_thread.setDaemon(True)
+        main_thread.start()
+
+    def add(self, job):
+        """Put a new job on the queue."""
+        self.jobs.put(job)
+
+    def wait(self):
+        """Blocks until every job that has been added to the queue is
+        finished."""
+        self.jobs.join()
+
+def test():
     def make_job(n):
         import random, time
         def job():
             print 'starting %s' % n
+            blah
             time.sleep(random.randint(1, 10))
             print 'ending %s' % n
         return job
 
     jobs = [make_job(n) for n in xrange(10)]
-    wq = WorkQueue(jobs, timeout = 2)
+    wq = WorkQueue(jobs, timeout = 5)
     wq.start()
-    wq.jobs.join()
+    wq.wait()
+
+    #wq = WorkQueue()
+    #wq.start()
+    #wq.add(make_job(10))
+    #print 'added job'
+    #wq.add(make_job(3))
+    #print 'added another'
+    #q.wait()
+
     print 'DONE'
 

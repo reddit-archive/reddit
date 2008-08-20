@@ -59,6 +59,10 @@ class BaseController(WSGIController):
         else:
             request.ip = environ['REMOTE_ADDR']
 
+        #if x-dont-decode is set, pylons won't unicode all the paramters
+        if environ.get('HTTP_X_DONT_DECODE'):
+            request.charset = None
+
         request.get = storify(request.GET)
         request.post = storify(request.POST)
         request.referer = environ.get('HTTP_REFERER')

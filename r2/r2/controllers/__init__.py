@@ -21,7 +21,6 @@
 ################################################################################
 from listingcontroller import ListingController
 from listingcontroller import HotController
-from listingcontroller import NormalizedController
 from listingcontroller import SavedController
 from listingcontroller import ToplinksController
 from listingcontroller import NewController
@@ -42,6 +41,8 @@ from error import ErrorController
 from post import PostController
 from toolbar import ToolbarController
 from i18n import I18nController
+
+from querycontroller import QueryController
 
 try:
     from r2admin.controllers.adminapi import ApiController

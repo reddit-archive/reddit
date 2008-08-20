@@ -97,7 +97,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/', controller='hot', action='listing')
     
-    listing_controllers = "hot|saved|toplinks|new|recommended|normalized|randomrising"
+    listing_controllers = "hot|saved|toplinks|new|recommended|randomrising"
 
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
@@ -130,6 +130,8 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
+    mc('/doquery', controller='query', action='doquery')
+
     mc('/store', controller='redirect', action='redirect',
        dest='http://store.reddit.com/index.html')
     
@@ -138,6 +140,7 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
+
     
     # This route handles displaying the error page and 
     # graphics used in the 404/500

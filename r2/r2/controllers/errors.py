@@ -102,3 +102,5 @@ class ErrorSet(object):
     def remove(self, error_name):
         if self.errors.has_key(error_name):
             del self.errors[error_name]
+
+class UserRequiredException(Exception): pass

@@ -60,47 +60,47 @@ def create_table(table, index_commands=None):
                 for i in index_commands:
                     t.engine.execute(i)
 
-def index_commands(table, type):
-    def index_str(name, on, where = None):
-        index_str = 'create index idx_%s_' % name
-        index_str += table.name
-        index_str += ' on '+ table.name + ' (%s)' % on
-        if where:
-            index_str += ' where %s' % where
-        return index_str
-    
+def index_str(table, name, on, where = None):
+    index_str = 'create index idx_%s_' % name
+    index_str += table.name
+    index_str += ' on '+ table.name + ' (%s)' % on
+    if where:
+        index_str += ' where %s' % where
+    return index_str
 
+
+def index_commands(table, type):
     commands = []
 
     if type == 'thing':
-        commands.append(index_str('id', 'thing_id'))
-        commands.append(index_str('date', 'date'))
-        commands.append(index_str('deleted_spam', 'deleted, spam'))
-        commands.append(index_str('hot', 'hot(ups, downs, date), date'))
-        commands.append(index_str('score', 'score(ups, downs), date'))
-        commands.append(index_str('controversy', 'controversy(ups, downs), date'))
+        commands.append(index_str(table, 'id', 'thing_id'))
+        commands.append(index_str(table, 'date', 'date'))
+        commands.append(index_str(table, 'deleted_spam', 'deleted, spam'))
+        commands.append(index_str(table, 'hot', 'hot(ups, downs, date), date'))
+        commands.append(index_str(table, 'score', 'score(ups, downs), date'))
+        commands.append(index_str(table, 'controversy', 'controversy(ups, downs), date'))
     elif type == 'data':
-        commands.append(index_str('id', 'thing_id'))
-        commands.append(index_str('thing_id', 'thing_id'))
-        commands.append(index_str('key_value', 'key, substring(value, 1, %s)' \
+        commands.append(index_str(table, 'id', 'thing_id'))
+        commands.append(index_str(table, 'thing_id', 'thing_id'))
+        commands.append(index_str(table, 'key_value', 'key, substring(value, 1, %s)' \
                                   % max_val_len))
                                   
         #lower name
-        commands.append(index_str('lower_key_value', 'key, lower(value)',
+        commands.append(index_str(table, 'lower_key_value', 'key, lower(value)',
                                   where = "key = 'name'"))
         #ip
-        commands.append(index_str('ip_network', 'ip_network(value)',
+        commands.append(index_str(table, 'ip_network', 'ip_network(value)',
                                   where = "key = 'ip'"))
         #base_url
-        commands.append(index_str('base_url', 'base_url(lower(value))',
+        commands.append(index_str(table, 'base_url', 'base_url(lower(value))',
                                   where = "key = 'url'"))
     elif type == 'rel':
-        commands.append(index_str('thing1_name_date', 'thing1_id, name, date'))
-        commands.append(index_str('thing2_name_date', 'thing2_id, name, date'))
-        commands.append(index_str('thing1_id', 'thing1_id'))
-        commands.append(index_str('thing2_id', 'thing2_id'))
-        commands.append(index_str('name', 'name'))
-        commands.append(index_str('date', 'date'))
+        commands.append(index_str(table, 'thing1_name_date', 'thing1_id, name, date'))
+        commands.append(index_str(table, 'thing2_name_date', 'thing2_id, name, date'))
+        commands.append(index_str(table, 'thing1_id', 'thing1_id'))
+        commands.append(index_str(table, 'thing2_id', 'thing2_id'))
+        commands.append(index_str(table, 'name', 'name'))
+        commands.append(index_str(table, 'date', 'date'))
     return commands
 
 def get_type_table(metadata):
