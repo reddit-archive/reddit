@@ -642,32 +642,34 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
-def find_recent_broken_things(time = None, delete = False):
+def find_recent_broken_things(from_time = None, delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
         be partially written out to the database. Things missing data
         attributes break the contract for these things, which often
         breaks various pages. This function hunts for and destroys
-        them as appropriate (*must* be run by hand, not automatically,
-        because deletion can ensue)
+        them as appropriate.
     """
     from r2.models import Link,Comment
 
-    if not time:
-        time = timeago("1 day")
+    if not from_time:
+        from_time = timeago("1 hour")
+
+    to_time = timeago("60 seconds")
 
     for (cls,attrs) in ((Link,('author_id','sr_id')),
                         (Comment,('author_id','sr_id','body','link_id'))):
         find_broken_things(cls,attrs,
-                           time, delete=delete)
+                           from_time, to_time,
+                           delete=delete)
 
-def find_broken_things(cls,attrs,time,delete = False):
+def find_broken_things(cls,attrs,from_time,to_time,delete = False):
     """
         Take a class and list of attributes, searching the database
-        for Things of that class, missing those attributes, deleting
-        them if requested
+        for Things of that class that are missing those attributes,
+        deleting them if requested
     """
-    for t in fetch_things(cls,time,datetime.now()):
+    for t in fetch_things(cls,from_time,to_time):
         for a in attrs:
             try:
                 # try to retreive the attribute
