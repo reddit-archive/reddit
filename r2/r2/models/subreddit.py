@@ -398,24 +398,31 @@ class DefaultSR(FakeSubreddit):
         subreddits = Subreddit.user_subreddits(user)
         return (self.c.sr_id == subreddits,)
 
-    def get_links_srs(self, srs, sort, time):
+    def get_links_sr_ids(self, sr_ids, sort, time):
         from r2.lib.db import queries
         from r2.models import Link
+
+        if not sr_ids:
+            return []
+        else:
+            srs = Subreddit._byID(sr_ids, return_dict = False)
+
         if g.use_query_cache:
             results = []
             for sr in srs:
                 results.append(queries.get_links(sr, sort, time))
             return queries.merge_results(*results)
         else:
-            q = Link._query(sort = queries.db_sort(sort))
+            q = Link._query(Link.c.sr_id == sr_ids,
+                            sort = queries.db_sort(sort))
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q
 
     def get_links(self, sort, time):
         user = c.user if c.user_is_loggedin else None
-        srs = Subreddit._byID(Subreddit.user_subreddits(user), return_dict = False)
-        return self.get_links_srs(srs, sort, time)
+        sr_ids = Subreddit.user_subreddits(user)
+        return self.get_links_sr_ids(sr_ids, sort, time)
 
     @property
     def title(self):
@@ -450,8 +457,7 @@ class MaskedSR(DefaultSR):
         sr_ids = Subreddit.user_subreddits(user)
         sr_ids = [s for s in sr_ids if s not in self.hide_sr]
         sr_ids.extend(self.show_sr)
-        srs = Subreddit._byID(sr_ids, return_dict = False)
-        return self.get_links_srs(srs, sort, time)
+        return self.get_links_sr_ids(sr_ids, sort, time)
 
 
 class SubSR(FakeSubreddit):

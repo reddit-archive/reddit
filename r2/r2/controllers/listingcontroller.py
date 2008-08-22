@@ -32,6 +32,7 @@ from r2.lib.recommendation import get_recommended
 from r2.lib.db.thing import Query
 from r2.lib.strings import Score
 from r2.lib import organic
+from r2.lib.utils import iters
 
 from pylons.i18n import _
 
@@ -108,7 +109,7 @@ class ListingController(RedditController):
             builder_cls = self.builder_cls
         elif isinstance(self.query_obj, Query):
             builder_cls = QueryBuilder
-        elif isinstance(self.query_obj, list):
+        elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
 
         b = builder_cls(self.query_obj,
