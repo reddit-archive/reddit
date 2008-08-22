@@ -12,11 +12,16 @@ from pylons import g
 query_cache = g.query_cache
 
 precompute_limit = 1000
-db_sorts = dict(hot = desc('_hot'),
-                new = desc('_date'),
-                top = desc('_score'),
-                controversial = desc('_controversy'),
-                old = asc('_date'))
+
+db_sorts = dict(hot = (desc, '_hot'),
+                new = (desc, '_date'),
+                top = (desc, '_score'),
+                controversial = (desc, '_controversy'),
+                old = (asc, '_date'))
+
+def db_sort(sort):
+    cls, col = db_sorts[sort]
+    return cls(col)
 
 db_times = dict(all = None,
                 hour = Thing.c._date >= timeago('1 hour'),
@@ -114,7 +119,7 @@ def merge_results(*results):
 def get_links(sr, sort, time):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
-                    sort = db_sorts[sort])
+                    sort = db_sort(sort))
     if time != 'all':
         q._filter(db_times[time])
     return CachedResults(q)
@@ -123,7 +128,7 @@ def user_query(kind, user, sort, time):
     """General profile-page query."""
     q = kind._query(kind.c.author_id == user._id,
                     kind.c._spam == (True, False),
-                    sort = db_sorts[sort])
+                    sort = db_sort(sort))
     if time != 'all':
         q._filter(db_times[time])
     return CachedResults(q)

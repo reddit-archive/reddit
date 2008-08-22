@@ -116,10 +116,6 @@ class Vote(MultiRelation('vote',
             if sub._id != obj.author_id:
                 incr_counts([sr])
 
-        #expire the sr
-        if kind == 'link' and v.valid_thing:
-            expire_hot(sr)
-
         return v
 
     #TODO make this generic and put on multirelation?

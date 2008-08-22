@@ -705,18 +705,19 @@ class ApiController(RedditController):
             organic = vote_type == 'organic'
             v = Vote.vote(user, thing, dir, ip, spam, organic)
 
-            #update last modified
-            set_last_modified(c.user, 'liked')
-            set_last_modified(c.user, 'disliked')
+            #update relevant caches
+            if isinstance(thing, Link):
+                sr = thing.subreddit_slow
+                set_last_modified(c.user, 'liked')
+                set_last_modified(c.user, 'disliked')
 
-            #update the queries
-            if g.write_query_queue:
-                queries.new_vote(v)
+                if v.valid_thing:
+                    expire_hot(sr)
+                    if g.write_query_queue:
+                        queries.new_vote(v)
 
             # flag search indexer that something has changed
             tc.changed(thing)
-
-
 
     @Json
     @validate(VUser(),

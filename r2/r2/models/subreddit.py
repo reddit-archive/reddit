@@ -363,7 +363,7 @@ class FriendsSR(FakeSubreddit):
             raise UserRequiredException
 
         q = Link._query(self.c.author_id == c.user.friends,
-                        sort = queries.db_sorts[sort])
+                        sort = queries.db_sort(sort))
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
@@ -381,7 +381,7 @@ class AllSR(FakeSubreddit):
     def get_links(self, sort, time):
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(sort = queries.db_sorts[sort])
+        q = Link._query(sort = queries.db_sort(sort))
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
@@ -408,7 +408,7 @@ class DefaultSR(FakeSubreddit):
 
             return queries.merge_results(*results)
         else:
-            q = Link._query(sort = queries.db_sorts[sort])
+            q = Link._query(sort = queries.db_sort(sort))
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q

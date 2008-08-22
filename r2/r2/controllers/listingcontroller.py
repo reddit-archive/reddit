@@ -194,7 +194,7 @@ class HotController(FixListing, ListingController):
     def query(self):
         #no need to worry when working from the cache
         if g.use_query_cache or c.site == Default:
-            fix_listing = False
+            self.fix_listing = False
 
         if c.site == Default:
             user = c.user if c.user_is_loggedin else None
