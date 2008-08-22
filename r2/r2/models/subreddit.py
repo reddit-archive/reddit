@@ -405,7 +405,6 @@ class DefaultSR(FakeSubreddit):
             results = []
             for sr in srs:
                 results.append(queries.get_links(sr, sort, time))
-
             return queries.merge_results(*results)
         else:
             q = Link._query(sort = queries.db_sort(sort))
@@ -448,10 +447,11 @@ class MaskedSR(DefaultSR):
 
     def get_links(self, sort, time):
         user = c.user if c.user_is_loggedin else None
-        subreddits = Subreddit.user_subreddits(user)
-        subreddits = [s for s in subreddits if s not in self.hide_sr]
-        subreddits.extend(self.show_sr)
-        return self.get_links_srs(subreddits, sort, time)
+        sr_ids = Subreddit.user_subreddits(user)
+        sr_ids = [s for s in sr_ids if s not in self.hide_sr]
+        sr_ids.extend(self.show_sr)
+        srs = Subreddit._byID(sr_ids, return_dict = False)
+        return self.get_links_srs(srs, sort, time)
 
 
 class SubSR(FakeSubreddit):

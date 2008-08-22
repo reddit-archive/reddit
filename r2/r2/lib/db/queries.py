@@ -92,7 +92,7 @@ def merge_results(*results):
     """Given two CachedResults, mergers their lists based on the sorts of
     their queries."""
     if len(results) == 1:
-        return results[0]
+        return list(results[0])
 
     #make sure the sorts match
     sort = results[0].query._sort
