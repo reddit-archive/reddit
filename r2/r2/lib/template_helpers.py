@@ -153,7 +153,7 @@ def replace_render(listing, item, style = None, display = True):
 
 def dockletStr(context, type, browser):
     domain = c.domain
-    if c.cname:
+    if c.cname and c.site.domain:
         domain = c.site.domain
 
     if type == "serendipity!":

@@ -177,7 +177,9 @@ class DomainMiddleware(object):
             sub_domains, request_port  = environ['HTTP_HOST'].split(':')
             environ['request_port'] = int(request_port)
         except ValueError:
-            sub_domains  = environ['HTTP_HOST'].split(':')[0]
+            sub_domains = environ['HTTP_HOST'].split(':')[0]
+        except KeyError:
+            sub_domains = "localhost"
             
         #If the domain doesn't end with base_domain, assume
         #this is a cname, and redirect to the frame controller.
