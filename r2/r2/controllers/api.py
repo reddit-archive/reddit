@@ -822,7 +822,7 @@ class ApiController(RedditController):
                 cleaned = cssfilter.clean_image(file,'PNG')
                 new_url = cssfilter.save_header_image(c.site, cleaned)
             except cssfilter.BadImage:
-                return UploadedImage(_('bad image'),c.site.header).render()
+                return UploadedImage(_('bad image'),c.site.header,'upload').render()
 
             c.site.header = new_url
             c.site._commit()
