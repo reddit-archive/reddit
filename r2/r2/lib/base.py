@@ -95,7 +95,7 @@ class BaseController(WSGIController):
     @staticmethod
     def redirect(dest, code = 302):
         dest = _force_unicode(dest).encode('utf8')
-        if c.cname and "?cnameframe=1" not in red:
+        if c.cname and "?cnameframe=1" not in dest:
             dest += "?cnameframe=1"
         c.response.headers['Location'] = dest
         c.response.status_code = code
