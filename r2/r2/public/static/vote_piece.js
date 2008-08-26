@@ -14,13 +14,14 @@ function cookieName(name) {
 }
 
 function createCookie(name,value,days) { 
+    var domain = "; domain=" + cur_domain;
     if (days) { 
         var date = new Date();
         date.setTime(date.getTime()+(days*24*60*60*1000));
         var expires="; expires="+date.toGMTString();
     }
     else expires="";
-    document.cookie=cookieName(name)+"="+value+expires+"; path=/";
+    document.cookie=cookieName(name)+"="+value+expires+domain+"; path=/";
 } 
 
 function readCookie(name) {

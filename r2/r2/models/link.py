@@ -19,7 +19,8 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation
+from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
+     CreationError
 from r2.lib.utils import base_url, tup, domain, worker, title_to_url
 from account import Account
 from subreddit import Subreddit
@@ -118,11 +119,12 @@ class Link(Thing, Printable):
         return rel._fast_query(tup(user), tup(link), name = name)
 
     def _something(self, rel, user, somethinged, name):
-        saved = somethinged(user, self)[(user, self, name)]
-        if not saved:
+        try:
             saved = rel(user, self, name=name)
             saved._commit()
-        return saved
+            return saved
+        except CreationError, e:
+            return somethinged(user, self)[(user, self, name)]
 
     def _unsomething(self, user, somethinged, name):
         saved = somethinged(user, self)[(user, self, name)]

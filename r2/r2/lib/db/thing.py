@@ -33,7 +33,9 @@ from r2.lib.cache import sgm
 import new, sys, sha
 from datetime import datetime
 from copy import copy, deepcopy
+
 class NotFound(Exception): pass
+CreationError = tdb.CreationError
 
 thing_types = {}
 rel_types = {}

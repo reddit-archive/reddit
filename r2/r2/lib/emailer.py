@@ -102,12 +102,13 @@ def send_queued_mail():
         try:
             session.sendmail(email.fr_addr, email.to_addr,
                              email.to_MIMEText().as_string())
-            email.set_sent()
+            email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
         except smtplib.SMTPRecipientsRefused:
             # handle error and print, but don't stall the rest of the queue
 	    print "Handled error sending mail (traceback to follow)"
 	    traceback.print_exc(file = sys.stdout)
+            email.set_sent(rejected = True)
         
 
     try:

@@ -316,12 +316,19 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         new_id = r.last_inserted_ids()[0]
         return new_id
 
-    id = do_insert(table)
-    params['thing_id'] = id
-    for t in extra_thing_tables.get(type_id, ()):
-        do_insert(t)
-
-    return id
+    try:
+        id = do_insert(table)
+        params['thing_id'] = id
+        for t in extra_thing_tables.get(type_id, ()):
+            do_insert(t)
+    
+        return id
+    except sa.exceptions.SQLError, e:
+        if not 'IntegrityError' in e.message:
+            raise
+        # wrap the error to prevent db layer bleeding out
+        raise CreationError, "Thing exists (%s)" % str(params)
+        
 
 def set_thing_props(type_id, thing_id, **props):
     table = types_id[type_id].thing_table
@@ -353,6 +360,8 @@ def incr_thing_prop(type_id, thing_id, prop, amount):
     for t in extra_thing_tables.get(type_id, ()):
         do_update(t)
 
+class CreationError(Exception): pass
+
 #TODO does the type exist?
 #TODO do the things actually exist?
 def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
@@ -360,11 +369,18 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
     transactions.add_engine(table.engine)
     
     if not date: date = datetime.now(tz)
-    r = table.insert().execute(thing1_id = thing1_id,
-                               thing2_id = thing2_id,
-                               name = name, 
-                               date = date)
-    return r.last_inserted_ids()[0]
+    try:
+        r = table.insert().execute(thing1_id = thing1_id,
+                                   thing2_id = thing2_id,
+                                   name = name, 
+                                   date = date)
+        return r.last_inserted_ids()[0]
+    except sa.exceptions.SQLError, e:
+        if not 'IntegrityError' in e.message:
+            raise
+        # wrap the error to prevent db layer bleeding out
+        raise CreationError, "Relation exists (%s, %s, %s)" % (name, thing1_id, thing2_id)
+        
 
 def set_rel_props(rel_type_id, rel_id, **props):
     t = rel_types_id[rel_type_id].rel_table[0]
