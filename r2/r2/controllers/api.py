@@ -908,10 +908,13 @@ class ApiController(RedditController):
 
         if not res.error:
             #assume sr existed, or was just built
-            clear_memo('subreddit._by_domain', Subreddit, _force_unicode(sr.domain))
+            clear_memo('subreddit._by_domain', 
+                       Subreddit, _force_unicode(sr.domain))
             for k, v in kw.iteritems():
                 setattr(sr, k, v)
             sr._commit()
+            clear_memo('subreddit._by_domain', 
+                       Subreddit, _force_unicode(sr.domain))
 
             # flag search indexer that something has changed
             tc.changed(sr)

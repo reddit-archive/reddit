@@ -347,6 +347,7 @@ class SimpleGetMenu(NavMenu):
     
     def __init__(self, **kw):
         kw['default'] = kw.get('default', self.default)
+        kw['base_path'] = kw.get('base_path') or request.path
         buttons = [NavButton(self.make_title(n), n, opt = self.get_param)
                    for n in self.options]
         NavMenu.__init__(self, buttons, type = self.type, **kw)
