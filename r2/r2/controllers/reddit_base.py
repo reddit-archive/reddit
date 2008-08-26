@@ -262,7 +262,7 @@ def set_content_lang():
 
 def set_cnameframe():
     if (bool(request.params.get('cnameframe')) 
-        or request.host.split(":")[0] != g.domain):
+        or not request.host.split(":")[0].endswith(g.domain)):
         c.cname = True
 
 def ratelimit_agents():
