@@ -26,7 +26,7 @@ from r2.lib import utils, captcha
 from r2.lib.filters import unkeep_space, websafe
 from r2.lib.db.operators import asc, desc
 from r2.config import cache
-from r2.lib.template_helpers import reddit_link
+from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond
 
 from r2.models import *
@@ -77,8 +77,10 @@ def validate(*simple_vals, **param_vals):
                 return fn(self, *a, **kw)
 
             except UserRequiredException:
-                d = dict(dest=reddit_link(request.path, url = True)
-                         + utils.query_string(request.GET))
+                d = dict(dest=add_sr(request.path) + 
+                         utils.query_string(request.GET))
+                if c.cname:
+                    d['cnameframe'] = 1
                 path = "/login"
                 if request.environ.get('extension'):
                     path += ".%s" % request.environ['extension']
@@ -633,19 +635,22 @@ class VReason(Validator):
 
         if reason.startswith('redirect_'):
             dest = reason[9:]
+            if (not dest.startswith(c.site.path) and 
+                not dest.startswith("http:")):
+                dest = (c.site.path + dest).replace('//', '/')
             return ('redirect', dest)
         if reason.startswith('vote_'):
             fullname = reason[5:]
             t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.permalink)
+            return ('redirect', t.make_permalink_slow())
         elif reason.startswith('share_'):
             fullname = reason[6:]
             t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.permalink)
+            return ('redirect', t.make_permalink_slow())
         elif reason.startswith('reply_'):
             fullname = reason[6:]
             t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.permalink)
+            return ('redirect', t.make_permalink_slow())
         elif reason.startswith('sr_change_'):
             sr_list = reason[10:].split(',')
             fullnames = dict(i.split(':') for i in sr_list)
@@ -694,6 +699,17 @@ class ValidEmails(Validator):
         else:
             # return single email if one is expected, list otherwise
             return list(emails)[0] if self.num == 1 else emails
+
+
+class VCnameDomain(Validator):
+    domain_re  = re.compile(r'.+\..+')
+
+    def run(self, domain):
+        if (domain
+            and (not self.domain_re.match(domain)
+                 or domain.endswith('.reddit.com'))):
+            c.errors.add(errors.BAD_CNAME)
+        return domain or ''
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!

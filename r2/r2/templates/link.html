@@ -56,6 +56,9 @@
      %if c.user.pref_newwindow:
        target="_blank" 
      %endif
+     %if c.cname:
+       target="_top"
+     %endif
      >
      ${caller.body()}
   </a>
@@ -142,7 +145,7 @@
        com_label = _("comment {verb}")
      else:
        # generates "XX comments" as a noun
-         com_label = ungettext("comment", "comments", thing.num_comments)
+       com_label = ungettext("comment", "comments", thing.num_comments)
      %>
   <li class="first">
   ${parent.comment_button("comment", fullname, com_label,

@@ -154,7 +154,7 @@ class FrontController(RedditController):
 
         # if permalink page, add that message first to the content
         if comment:
-            displayPane.append(PermalinkMessage(article.permalink))
+            displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
         # insert reply box only for logged in user
         if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user):
@@ -328,10 +328,21 @@ class FrontController(RedditController):
                        ).render()
         return res
 
+    def GET_stylesheet(self):
+        if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
+            self.check_modified(c.site,'stylesheet_contents')
+
+            c.response.content = c.site.stylesheet_contents
+            c.response_content_type = 'text/css'
+
+            return c.response
+        else:
+            return self.abort404()
+
     @base_listing
     @validate(location = nop('location'))
     def GET_editreddit(self, location, num, after, reverse, count):
-        """Edit reddit form. """
+        """Edit reddit form."""
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
 
@@ -346,6 +357,17 @@ class FrontController(RedditController):
             pane = BannedList(editable = is_moderator)
         elif location == 'contributors' and c.site.type != 'public':
             pane = ContributorList(editable = is_moderator)
+        elif (location == 'stylesheet'
+              and c.site.can_change_stylesheet(c.user)
+              and not g.css_killswitch):
+            if hasattr(c.site,'stylesheet_contents_user') and c.site.stylesheet_contents_user:
+                stylesheet_contents = c.site.stylesheet_contents_user
+            elif hasattr(c.site,'stylesheet_contents') and c.site.stylesheet_contents:
+                stylesheet_contents = c.site.stylesheet_contents
+            else:
+                stylesheet_contents = ''
+            pane = SubredditStylesheet(site = c.site,
+                                       stylesheet_contents = stylesheet_contents)
         elif is_moderator and location == 'spam':
             links = Link._query(Link.c._spam == True)
             comments = Comment._query(Comment.c._spam == True)
@@ -486,6 +508,10 @@ class FrontController(RedditController):
         """wipe login cookie and redirect to referer."""
         self.logout()
         dest = request.referer or '/'
+        if c.cname:
+            dest = '/?cnameframe=1'
+        if not dest.startswith("http://"):
+            return self.redirect(c.site.path + dest)
         return self.redirect(dest)
 
     
@@ -591,3 +617,14 @@ class FrontController(RedditController):
         ApiController.POST_optin."""
         return self._render_opt_in_out(msg_hash, False)
     
+    def GET_frame(self):
+        """used for cname support.  makes a frame and
+        puts the proper url as the frame source"""
+        sub_domain = request.environ.get('sub_domain')
+        original_path = request.environ.get('original_path')
+        sr = Subreddit._by_domain(sub_domain)
+        if sub_domain and sr and original_path:
+            return Cnameframe(original_path, sr.name, sr.title, sub_domain).render()
+        else:
+            return self.abort404()
+

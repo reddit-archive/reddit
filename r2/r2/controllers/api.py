@@ -27,12 +27,13 @@ from pylons import c, request
 from validator import *
 
 from r2.models import *
+from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
-    BannedList, BoringPage, FormPage, NewLink
+    BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.translation import Translator
@@ -40,15 +41,18 @@ from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib import emailer
 from r2.lib.strings import strings
+from r2.lib.memoize import clear_memo
+from r2.lib.filters import _force_unicode
 from r2.lib.db import queries
 from r2.config import cache
+from r2.lib.jsonresponse import JsonResponse, Json
+from r2.lib.jsontemplates import api_type
+from r2.lib import cssfilter
 
 from simplejson import dumps
 
-from r2.lib.jsonresponse import JsonResponse, Json
-from r2.lib.jsontemplates import api_type
-
 from datetime import datetime, timedelta
+from md5 import md5
 from r2.lib.organic import update_pos
 
 def link_listing_by_url(url, count = None):
@@ -64,7 +68,7 @@ def link_listing_by_url(url, count = None):
     builder = IDBuilder(names, num = 25)
     listing = LinkListing(builder).listing()
     return listing
-            
+
     
 class ApiController(RedditController):
     def response_func(self, **kw):
@@ -74,9 +78,9 @@ class ApiController(RedditController):
         try:    
             l = Link._by_url(url, sr)
             if message:
-                return l.permalink + '?already_submitted=true'
+                return l.already_submitted_link()
             else:
-                return l.permalink
+                return l.make_permalink_slow()
         except NotFound:
             pass
 
@@ -272,7 +276,7 @@ class ApiController(RedditController):
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url, c.user, sr, ip, spam)
         if url.lower() == 'self':
-            l.url = l.permalink
+            l.url = l.make_permalink_slow()
             l.is_self = True
             l._commit()
         Vote.vote(c.user, l, True, ip, spam)
@@ -292,8 +296,16 @@ class ApiController(RedditController):
         
         # flag search indexer that something has changed
         tc.changed(l)
+        
+        # make_permalink is designed for links that can be set to _top
+        # here, we need to generate an ajax redirect as if we were not on a
+        # cname.
+        cname = c.cname
+        c.cname = False
+        path = l.make_permalink_slow()
+        c.cname = cname
 
-        res._redirect(l.permalink)
+        res._redirect(path)
 
 
     def _login(self, res, user, dest='', rem = None):
@@ -722,11 +734,115 @@ class ApiController(RedditController):
     @Json
     @validate(VUser(),
               VModhash(),
+              stylesheet_contents = nop('stylesheet_contents'),
+              op = VOneOf('op',['save','preview']))
+    def POST_subreddit_stylesheet(self, res, stylesheet_contents = '', op='save'):
+        if not c.site.can_change_stylesheet(c.user):
+            return self.abort(403,'forbidden')
+
+        if g.css_killswitch:
+            return self.abort(403,'forbidden')
+
+        parsed, report = cssfilter.validate_css(stylesheet_contents)
+
+        if report.errors:
+            error_items = [ CssError(x).render(style='html')
+                            for x in sorted(report.errors) ]
+                                               
+            res._update('status', innerHTML = _('validation errors'))
+            res._update('validation-errors', innerHTML = ''.join(error_items))
+            res._show('error-header')
+        else:
+            res._hide('error-header')
+            res._update('status', innerHTML = '')
+            res._update('validation-errors', innerHTML = '')
+
+        if not report.errors and op == 'save':
+            stylesheet_contents_user   = stylesheet_contents
+            stylesheet_contents_parsed = parsed.cssText if parsed else ''
+
+            c.site.stylesheet_contents      = stylesheet_contents_parsed
+            c.site.stylesheet_contents_user = stylesheet_contents_user
+
+            c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
+
+            set_last_modified(c.site,'stylesheet_contents')
+            tc.changed(c.site)
+            c.site._commit()
+
+            res._update('status', innerHTML = 'saved')
+            res._call('applyStylesheetFromTextbox("stylesheet_contents");')
+            res._update('validation-errors', innerHTML = '')
+
+        elif op == 'preview':
+            # try to find a link to use, otherwise give up and
+            # return
+            links = cssfilter.find_preview_links(c.site)
+            if not links:
+                # we're probably not going to be able to find any
+                # comments, either; screw it
+                return
+
+            res._show('preview-table')
+
+            # do a regular link
+            cssfilter.rendered_link('preview_link_normal',
+                                    res, links,
+                                    media = 'off', compress=False)
+            # now do one with media
+            cssfilter.rendered_link('preview_link_media',
+                                    res, links,
+                                    media = 'on', compress=False)
+            # do a compressed link
+            cssfilter.rendered_link('preview_link_compressed',
+                                    res, links,
+                                    media = 'off', compress=True)
+            # and do a comment
+            comments = cssfilter.find_preview_comments(c.site)
+            if not comments:
+                return
+            cssfilter.rendered_comment('preview_comment',res,comments)
+
+    @validate(VUser(),
+              VModhash(),
+              VRatelimit(rate_user = True,
+                         rate_ip = True,
+                         prefix = 'upload_reddit_img_'),
+              file = VLength('file',length=1024*500),
+              op = VOneOf('op',['upload','delete']))
+    def POST_upload_header_img(self, file, op):
+        if not c.site.can_change_stylesheet(c.user):
+            return self.abort403()
+
+        if g.css_killswitch:
+            return self.abort(403,'forbidden')
+
+        if op == 'upload':
+            try:
+                cleaned = cssfilter.clean_image(file,'PNG')
+                new_url = cssfilter.save_header_image(c.site, cleaned)
+            except cssfilter.BadImage:
+                return UploadedImage(_('bad image'),c.site.header).render()
+
+            c.site.header = new_url
+            c.site._commit()
+
+            return UploadedImage(_('saved'),new_url,'upload').render()
+        elif op == 'delete':
+            c.site.header = None
+            c.site._commit()
+
+            return UploadedImage(_('deleted'),DefaultSR.header,'delete').render()
+
+    @Json
+    @validate(VUser(),
+              VModhash(),
               VRatelimit(rate_user = True,
                          rate_ip = True,
                          prefix = 'create_reddit_'),
               name = VSubredditName("name"),
               title = VSubredditTitle("title"),
+              domain = VCnameDomain("domain"),
               description = VSubredditDesc("description"),
               firsttext = nop("firsttext"),
               header = nop("headerfile"),
@@ -740,11 +856,10 @@ class ApiController(RedditController):
               type = VOneOf('type', ('public', 'private', 'restricted'))
               )
     def POST_site_admin(self, res, name ='', sr = None, **kw):
-        res._update('status', innerHTML = '')
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if v is not None
-                  and k in ('name', 'title', 'description', 'firsttext',
+                  and k in ('name', 'title', 'domain', 'description', 'firsttext',
                             'static_path', 'ad_file', 'over_18', 'show_media',
                             'type', 'header', 'lang', 'stylesheet'))
 
@@ -752,6 +867,12 @@ class ApiController(RedditController):
         if c.user._spam:
             time = timeuntil(datetime.now(g.tz) + timedelta(seconds=600))
             c.errors.add(errors.RATELIMIT, {'time': time})
+
+        domain = kw['domain']
+        cname_sr = domain and Subreddit._by_domain(domain)
+        if cname_sr and (not sr or sr != cname_sr):
+                kw['domain'] = None
+                c.errors.add(errors.USED_CNAME)
 
         if not sr and res._chk_error(errors.RATELIMIT):
             pass
@@ -764,6 +885,9 @@ class ApiController(RedditController):
             res._focus('title')
         elif res._chk_error(errors.INVALID_SUBREDDIT_TYPE):
             pass
+        elif res._chk_errors((errors.BAD_CNAME, errors.USED_CNAME)):
+            res._hide('example_domain')
+            res._focus('domain')
         elif res._chk_error(errors.DESC_TOO_LONG):
             res._focus('description')
 
@@ -784,12 +908,16 @@ class ApiController(RedditController):
 
         if not res.error:
             #assume sr existed, or was just built
+            clear_memo('subreddit._by_domain', Subreddit, _force_unicode(sr.domain))
             for k, v in kw.iteritems():
                 setattr(sr, k, v)
             sr._commit()
 
             # flag search indexer that something has changed
             tc.changed(sr)
+
+            res._update('status', innerHTML = _('saved'))
+
 
         if redir:
             res._redirect(redir)

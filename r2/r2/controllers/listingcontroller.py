@@ -350,7 +350,7 @@ class MessageController(ListingController):
     @staticmethod
     def builder_wrapper(thing):
         if isinstance(thing, Comment):
-            p = thing.permalink
+            p = thing.make_permalink_slow()
             f = thing._fullname
             thing.__class__ = Message
             w = Wrapped(thing)

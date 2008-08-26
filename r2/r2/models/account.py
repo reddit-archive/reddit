@@ -51,6 +51,7 @@ class Account(Thing):
                      pref_over_18 = False,
                      pref_compress = False,
                      pref_organic = True,
+                     pref_show_stylesheets = True,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,

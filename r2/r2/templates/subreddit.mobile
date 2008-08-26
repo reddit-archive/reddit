@@ -25,6 +25,8 @@
    %>
 <%inherit  file="printable.mobile"/>
 
+<%namespace file="utils.html" import="plain_link"/>
+
 <%def name="numcol()">
 </%def>
 
@@ -32,9 +34,7 @@
 <%def name="entry()">
 <% fullname = thing._fullname %>
 <p>
-  <a class="title" href="${thing.path}">
-    ${thing.title} 
-  </a>
+  ${plain_link(thing.title, thing.path, _class="title")}
   <span class="domain">(${thing.path})</span> 
 </p>
 %if thing.description:

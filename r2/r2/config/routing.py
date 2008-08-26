@@ -94,6 +94,8 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/mail/optout', controller='front', action = 'optout')
     mc('/mail/optin',  controller='front', action = 'optin')
+    mc('/stylesheet', controller = 'front', action = 'stylesheet')
+    mc('/frame', controller='front', action = 'frame')
 
     mc('/', controller='hot', action='listing')
     

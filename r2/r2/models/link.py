@@ -79,7 +79,7 @@ class Link(Thing, Printable):
 
     @property
     def already_submitted_link(self):
-        return self.permalink + '?already_submitted=true'
+        return self.make_permalink_slow() + '?already_submitted=true'
 
     def resubmit_link(self, sr_url = False):
         submit_url  = self.subreddit_slow.path if sr_url else '/'
@@ -193,7 +193,9 @@ class Link(Thing, Printable):
                               c.user.pref_newwindow,
                               c.user.pref_frame,
                               c.user.pref_compress,
+                              c.user.pref_media,
                               request.host,
+                              c.cname, 
                               wrapped.author == c.user,
                               wrapped.likes,
                               wrapped.saved,
@@ -208,10 +210,19 @@ class Link(Thing, Printable):
         s = ''.join(s)
         return s
 
-    @property
-    def permalink(self):
-        return "/comments/%s/%s/" % (self._id36, title_to_url(self.title))
+    def make_permalink(self, sr):
+        p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
+        if not c.cname:
+            res = "/r/%s/%s" % (sr.name, p)
+        elif sr != c.site:
+            res = "http://%s/r/%s/%s" % (g.domain, sr.name, p)
+        else:
+            res = "/%s" % p
+        return res
 
+    def make_permalink_slow(self):
+        return self.make_permalink(self.subreddit_slow)
+    
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.count import incr_counts
@@ -247,6 +258,7 @@ class Link(Thing, Printable):
             item.clicked = bool(clicked.get((user, item, 'click')))
             item.num = None
             item.score_fmt = Score.number_only
+            item.permalink = item.make_permalink(item.subreddit)
                 
         if c.user_is_loggedin:
             incr_counts(wrapped)
@@ -333,6 +345,7 @@ class Comment(Thing, Printable):
                               bool(c.user_is_loggedin),
                               c.focal_comment == self._id36,
                               request.host,
+                              c.cname, 
                               wrapped.author == c.user,
                               wrapped.likes,
                               wrapped.friend,
@@ -347,22 +360,18 @@ class Comment(Thing, Printable):
         s = ''.join(s)
         return s
 
-    @property
-    def permalink(self):
-        if not self._loaded:
-            self._load()
+    def make_permalink(self, link, sr=None):
+        return link.make_permalink(sr) + self._id36
 
-        try:
-            l = Link._byID(self.link_id, True)
-            return l.permalink + self._id36
-        except NotFound:
-            return ""
-
-
+    def make_permalink_slow(self):
+        l = Link._byID(self.link_id, data=True)
+        return self.make_permalink(l, l.subreddit_slow)
+    
     @classmethod
     def add_props(cls, user, wrapped):
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), True)
+        
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
@@ -378,19 +387,20 @@ class Comment(Thing, Printable):
         cids = dict((w._id, w) for w in wrapped)
 
         for item in wrapped:
+            item.link = links.get(item.link_id)
+            if not hasattr(item, 'subreddit'):
+                item.subreddit = item.subreddit_slow
             if hasattr(item, 'parent_id'):
                 if cids.has_key(item.parent_id):
                     item.parent_permalink = '#' + utils.to36(item.parent_id)
                 else:
                     parent = Comment._byID(item.parent_id)
-                    item.parent_permalink = parent.permalink
+                    item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
             else:
                 item.parent_permalink = None
 
             item.can_reply = (item.sr_id in can_reply_srs)
 
-            if not hasattr(item, 'subreddit'):
-                item.subreddit = item.subreddit_slow
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin
@@ -406,12 +416,12 @@ class Comment(Thing, Printable):
                                   item.deleted or
                                   c.user_is_admin))
                 
-            item.link = links.get(item.link_id)
             if not hasattr(item,'editted'):
                 item.editted = False
             #will get updated in builder
             item.num_children = 0
             item.score_fmt = Score.points
+            item.permalink = item.make_permalink(item.link, item.subreddit)
 
 class MoreComments(object):
     show_spam = False
@@ -432,7 +442,7 @@ class MoreComments(object):
         if parent:
             self.parent_id = parent._id
             self.parent_name = parent._fullname
-            self.parent_permalink = parent.permalink
+            self.parent_permalink = parent.make_permalink(link)
         self.link_name = link._fullname
         self.link_id = link._id
         self.depth = depth

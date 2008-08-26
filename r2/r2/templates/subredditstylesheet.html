@@ -1,0 +1,119 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+  from r2.lib.filters import keep_space
+  from r2.lib.template_helpers import add_sr
+
+%>
+<%namespace file="utils.html" import="error_field, language_tool"/>
+
+<div class="stylesheet-customize-container">
+
+  <form
+   onsubmit="return stylesheetSave(this, 'subreddit_stylesheet')"
+   name="subreddit_stylesheet" id="subreddit_stylesheet"
+   class="pretty-form sr-form"
+   action="/post/subreddit_stylesheet" method="post" >
+
+  <input type="hidden" name="r"  value="${thing.site.name}" />
+  <input type="hidden" name="op" value="save" />
+
+  <h2>${_("stylesheet")}</h2>
+  <div class="sheets">
+    <div style="width: 100%" class="col">
+      <div>
+        <textarea
+           rows="20"
+           cols="20"
+           id="stylesheet_contents"
+           name="stylesheet_contents"
+           >
+          ${keep_space(thing.stylesheet_contents) or ''}
+        </textarea>
+      </div>
+    </div>
+    <div style="display:none" class="col">
+      <div>
+        <textarea
+           rows="20"
+           cols="20"
+           id="default_stylesheet"
+           name="default_stylesheet"
+           readonly="readonly"
+           >
+          ${keep_space(g.default_stylesheet)}
+        </textarea>
+      </div>
+    </div>
+    <div class="clearleft"></div>
+    <div class="buttons">
+      <button class="btn right " id="show_default_stylesheet"
+                value="some_button"
+              onclick="return showDefaultStylesheet();">
+        ${_('show the default stylesheet')}
+      </button>
+      <button class="btn right" id="hide_default_stylesheet"
+                value="some_button"
+              style="display: none;"
+              onclick="return hideDefaultStylesheet();">
+        ${_('hide the default stylesheet')}
+      </button>
+      <button class="btn" name="save" type="submit">${_("save")}</button>
+      <button class="btn" name="preview" type="button"
+              onclick="stylesheetPreview('subreddit_stylesheet','stylesheet_contents');">${_("preview")}</button>
+      
+      <span id="status" class="error"></span>
+    </div>
+  </div>
+  <div class="errors">
+    <h2 id="error-header" style="display:none">${_("errors")}</h2>
+    <ul id="validation-errors"><li style="display:none"></li>
+      <!-- populated from AJAX requests to /api/subreddit_stylesheet -->
+    </ul>
+  </div>
+  <div class="clear"></div>
+  
+  </form>
+
+  <div id="preview-table" style="display:none">
+    <h2><a name="preview">${_("preview")}</a></h2>
+    <table>
+      <tr>
+        <th>${_("normal link")}</th>
+        <td id="preview_link_normal"></td>
+      </tr>
+      <tr>
+        <th>${_("compressed link")}</th>
+        <td id="preview_link_compressed"></td>
+      </tr>
+      <tr>
+        <th>${_("link with thumbnail")}</th>
+        <td id="preview_link_media"></td>
+      </tr>
+      <tr>
+        <th>${_("comment")}</th>
+        <td id="preview_comment"></td>
+      </tr>
+    </table>
+  </div>
+</div>
+

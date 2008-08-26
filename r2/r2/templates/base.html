@@ -46,7 +46,10 @@ ${self.robots()}
 
   var logged = ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"};
   var post_site = "${c.site.name}";
+  var cnameframe  = ${'true' if c.cname else 'false'}; 
   var modhash = ${"'%s'" % c.modhash or "false"};
+  
+
 </script> 
 
 ${self.javascript()}

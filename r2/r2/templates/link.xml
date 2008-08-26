@@ -22,7 +22,7 @@
 
 <%!
    from pylons.i18n import _, ungettext
-   from r2.lib.template_helpers import reddit_link
+   from r2.lib.template_helpers import add_sr
 %>
 
 <item>
@@ -32,7 +32,7 @@
   <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
     &lt;a href="${thing.url}"&gt;[link]&lt;/a&gt;
-    &lt;a href="http://${request.host}${reddit_link(thing.permalink, url=True)}"&gt;[comments]&lt;/a&gt;
+    &lt;a href="http://${request.host}${add_sr(thing.permalink, nocname=True)}"&gt;[comments]&lt;/a&gt;
   </description>
 </item>
 

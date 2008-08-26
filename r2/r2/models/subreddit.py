@@ -30,6 +30,7 @@ from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize, clear_memo
 from r2.lib.utils import tup
 from r2.lib.strings import strings, Score
+from r2.lib.filters import _force_unicode
 
 import os.path
 
@@ -37,6 +38,8 @@ class Subreddit(Thing, Printable):
     _defaults = dict(static_path = g.static_path,
                      stylesheet = None,
                      stylesheet_rtl = None,
+                     stylesheet_contents = '',
+                     stylesheet_hash     = '0',
                      description = None,
                      firsttext = strings.firsttext,
                      header = os.path.join(g.static_path,
@@ -45,6 +48,7 @@ class Subreddit(Thing, Printable):
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
+                     domain = None,
                      )
 
     @classmethod
@@ -90,6 +94,24 @@ class Subreddit(Thing, Printable):
                 return cls._byID(sr_id, True)
             else:
                 raise NotFound, 'Subreddit %s' % name
+
+    @classmethod
+    @memoize('subreddit._by_domain')
+    def _by_domain_cache(cls, name):
+        q = cls._query(cls.c.domain == name,
+                       cls.c.over_18 == (True, False),
+                       limit = 1)
+        l = list(q)
+        if l:
+            return l[0]._id
+
+    @classmethod
+    def _by_domain(cls, domain):
+        sr_id = cls._by_domain_cache(_force_unicode(domain))
+        if sr_id:
+            return cls._byID(sr_id, True)
+        else:
+            return None
 
     @property
     def moderators(self):
@@ -137,6 +159,12 @@ class Subreddit(Thing, Printable):
         return (user
                 and (c.user_is_admin
                      or self.is_moderator(user)))
+
+    def can_change_stylesheet(self, user):
+        if c.user_is_loggedin:
+            return c.user_is_admin or self.is_moderator(user)
+        else:
+            return False
 
     def is_special(self, user):
         return (user
@@ -339,6 +367,9 @@ class FakeSubreddit(Subreddit):
         return False
 
     def can_submit(self, user):
+        return False
+
+    def can_change_stylesheet(self, user):
         return False
 
     def is_banned(self, user):

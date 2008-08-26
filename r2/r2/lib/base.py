@@ -94,8 +94,12 @@ class BaseController(WSGIController):
 
     @staticmethod
     def redirect(dest, code = 302):
-        c.response.headers['Location'] = _force_unicode(dest).encode('utf8')
+        dest = _force_unicode(dest).encode('utf8')
+        if c.cname and "?cnameframe=1" not in red:
+            dest += "?cnameframe=1"
+        c.response.headers['Location'] = dest
         c.response.status_code = code
+        
         return c.response
 
     def sendjs(self,js, callback="document.write", escape=True):

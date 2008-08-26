@@ -238,15 +238,17 @@ class NavButton(Styled):
     must also have its build() method called with the current path to
     set self.path.  This step is done automatically if the button is
     passed to a NavMenu instance upon its construction."""
-    def __init__(self, title, dest, sr_path = True, opt = '', aliases = [],
-                 style = "plain", **kw):
+    def __init__(self, title, dest, sr_path = True, 
+                 nocname=False, opt = '', aliases = [],
+                 target = "", style = "plain", **kw):
         
         # keep original dest to check against c.location when rendering
         self.aliases = set(a.rstrip('/') for a in aliases)
         self.aliases.add(dest.rstrip('/'))
         self.dest = dest
 
-        Styled.__init__(self, style = style, sr_path = sr_path,
+        Styled.__init__(self, style = style, sr_path = sr_path, 
+                        nocname = nocname, target = target, 
                         title = title, opt = opt, **kw)
 
     def build(self, base_path = ''):
@@ -295,10 +297,10 @@ class NamedButton(NavButton):
     'dest' defaults to the 'name' as well (unless specified
     separately)."""
     
-    def __init__(self, name, sr_path = True, dest = None, **kw):
+    def __init__(self, name, sr_path = True, nocname=False, dest = None, **kw):
         self.name = name.strip('/')
         NavButton.__init__(self, menu[self.name], name if dest is None else dest,
-                           sr_path = sr_path, **kw)
+                           sr_path = sr_path, nocname=nocname, **kw)
 
     def selected_title(self):
         """Overrides selected_title to use menu_selected dictionary"""

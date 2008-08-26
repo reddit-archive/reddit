@@ -112,6 +112,9 @@ function redditRequest(op, parameters, worker_in, block) {
     if (post_site) {
         parameters.r = post_site;
     }
+    if (cnameframe) {
+        parameters.cnameframe = 1;
+    }
     op = api_loc + op;
     if(!worker) {
         worker = handleResponse(action);
@@ -161,6 +164,183 @@ function tup(x) {
     return x;
 }
 
+function stylesheetSave(form, formID) {
+  form.op.value = "save";
+  return post_form(form, formID);
+}
+
+function stylesheetPreview(formID, textboxID) {
+  var form = document.getElementById(formID);
+  form.op.value = "preview";
+  post_form(form, formID);
+
+  applyStylesheetFromTextbox(textboxID);
+}
+
+function applyStylesheetFromTextbox(textboxID) {
+  var textbox = document.getElementById(textboxID);
+  var cssText = textbox.value;
+  return applyStylesheet(cssText);
+}
+
+function applyStylesheet(cssText) {
+  /* also referred to in the reddit.html template, for the name of the
+     stylesheet set for this reddit. These must be in sync, because
+     I'm over-writing it here */
+  var sheet_title = 'applied_subreddit_stylesheet';
+
+  if(document.styleSheets[0].cssText) {
+    /* of course IE has to do this differently from everyone else. */
+    for(var x=0; x < document.styleSheets.length; x++) {
+      if(document.styleSheets[x].title == sheet_title) {
+        document.styleSheets[x].cssText = cssText;
+        break;
+      }
+    }
+  } else {
+    /* for everyone else, we walk <head> for the <link> or <style>
+       that has the old stylesheet, and delete it. Then we add a
+       <style> with the new one */
+    var headNode  = document.getElementsByTagName("head")[0];
+    var headNodes = headNode.childNodes;
+
+    for(var x=0; x < headNodes.length; x++) {
+      var node = headNodes[x];
+    
+      if(node.title == sheet_title) {
+        headNode.removeChild(node);
+        break;
+      }
+    }
+
+    var appliedCSSNode = document.createElement('style');
+    appliedCSSNode.type = 'text/css';
+    appliedCSSNode.rel = 'stylesheet';
+    appliedCSSNode.media = 'screen';
+    appliedCSSNode.title = sheet_title;
+    
+    appliedCSSNode.textContent = cssText;
+    
+    headNode.appendChild(appliedCSSNode);
+  }
+}
+
+function showDefaultStylesheet() {
+  return toggleDefaultStylesheet(true);
+}
+function hideDefaultStylesheet() {
+  return toggleDefaultStylesheet(false);
+}
+function toggleDefaultStylesheet(p_show) {
+  var stylesheet_contents = $('stylesheet_contents').parentNode.parentNode;
+  var default_stylesheet  = $('default_stylesheet').parentNode.parentNode;
+  
+  var show_button  = $('show_default_stylesheet');
+  var hide_button  = $('hide_default_stylesheet');
+
+  if(p_show) {
+      default_stylesheet.style.width = "50%";
+      stylesheet_contents.style.width = "50%";
+      show(default_stylesheet, hide_button);
+      hide(show_button);
+  } else {
+      stylesheet_contents.style.width = "100%";
+      default_stylesheet.style.width = "";
+      show(show_button);
+      hide(default_stylesheet, hide_button);
+  }
+
+  return false; // don't post the form
+}
+
+function gotoTextboxLine(textboxID, lineNo) {
+  var textbox = $(textboxID);
+  var text = textbox.value;
+
+  var newline = '\n';
+  var newline_length = 1;
+  var caret_pos = 0;
+
+  if ( text.indexOf('\r') > 0) {
+    /* IE hack */
+    newline = '\r';
+    newline_length = 0;
+    caret_pos = 1;
+  }
+
+  var lines = textbox.value.split(newline);
+
+  for(var x=0; x<lineNo-1; x++) {
+    caret_pos += lines[x].length + newline_length;
+  }
+  var end_pos = caret_pos;
+  if (lineNo < lines.length) {
+      end_pos += lines[lineNo-1].length + newline_length;
+  }
+ 
+
+  textbox.focus();
+  if(textbox.createTextRange) {   /* IE */
+      var start = textbox.createTextRange();
+      start.move('character', caret_pos);
+      var end = textbox.createTextRange();
+      end.move('character', end_pos);
+      start.setEndPoint("StartToEnd", end);
+      start.select();
+  } else if (textbox.selectionStart) {
+      textbox.setSelectionRange(caret_pos, end_pos);
+  }
+
+  if(textbox.scrollHeight) {
+      var avgLineHight = textbox.scrollHeight / lines.length;
+      textbox.scrollTop = (lineNo-2) * avgLineHight;
+  }
+}
+
+function uploadHeaderImage(status) {
+  var form = $('upload-header-image');
+  var iframe = $('upload-header-iframe');
+
+  form.op.value = 'upload';
+  $('img-status').innerHTML = status;
+  show('img-status');
+
+  form.submit();
+
+  return false;
+}
+
+function deleteHeaderImage(status) {
+  var form = $('upload-header-image');
+  var iframe = $('upload-header-iframe');
+
+  form.reset();
+  form.op.value = 'delete';
+  $('img-status').innerHTML = status;
+  show('img-status');
+
+  form.submit();
+
+  return false;
+}
+
+function completedUploadHeaderImage(status,img_src,op) {
+  show('img-status');
+  $('img-status').innerHTML = status;
+  $('upload-header-image').reset();
+
+  $('header-img').src = img_src;
+
+  if(op == 'delete') {
+    hide('delete-header-img');
+    hide('header-img-preview-container');
+  } else {
+    $('header-img-preview').src = img_src;
+    show('delete-header-img');
+    show('header-img-preview-container');
+  }
+}
+
 function handleResponse(action) {
     var my_iter = function(x, func) {
         if(x) {
@@ -208,6 +388,13 @@ function handleResponse(action) {
                             }
                         }
                     });
+        }
+        // handle applied CSS
+        if(r.call) {
+          var calls = r.call;
+          for(var i=0; i<calls.length; i++) {
+            eval(calls[i]);
+          }
         }
         // handle shifts of focus
         if (r.focus) {

@@ -21,9 +21,11 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import reddit_link 
+   from r2.lib.template_helpers import add_sr
    from r2.lib.strings import strings
 %>
+
+<%namespace file="utils.html" import="plain_link" />
 
 ${self.RenderPrintable()}
 
@@ -148,7 +150,7 @@ ${self.RenderPrintable()}
        elif gray:
           author_cls += " gray"
        name = websafe(author.name)
-       href = unsafe('href="/user/%s/"' % name)
+       href = unsafe('href="%s"' % add_sr("/user/%s/" % name, sr_path = False))
        if c.user_is_admin: name += " (%d)" % (author.link_karma)
     %>
     <a id="author_${thing._fullname}" class="${author_cls}" ${href}>${name}</a>
@@ -270,16 +272,15 @@ ${k.strip('_')}="${v}" \
 ### originally in commentbutton
 <%def name="comment_button(name, fullname, link_text, num, link,\
             a_class='', title='', newwindow = False)">
-  <% cls = "" if num == 0 else "comments" %>
-  <a href="${reddit_link(link, url = True)}" 
-     id="${name}_${fullname}" class="${a_class} ${cls}" 
-     title="${title}"
-     target="${'_blank' if newwindow else '_parent'}" >
-    %if num > 0:
-      ${strings.number_label % (num,link_text)}\
-    %else:
-      ${link_text}\
-    %endif
-  </a>
+  <% 
+     cls = "" if num == 0 else "comments"
+
+     if num > 0:
+         link_text = strings.number_label % (num, link_text)
+
+     target = '_blank' if newwindow else '_parent'
+  %>
+  ${plain_link(link_text, link, id="%s_%s" % (name, fullname), _class="%s %s" % (a_class, cls), title=title, target=target)}
+
 </%def>
 

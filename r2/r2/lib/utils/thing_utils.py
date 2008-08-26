@@ -11,7 +11,7 @@ def is_modified_since(thing, action, date):
     which means a 304 should be returned. Otherwise returns the date
     that should be sent as the last-modified header."""
     from pylons import g
-    
+
     prop = 'last_' + action
     if not hasattr(thing, prop):
         last_modified = make_last_modified()

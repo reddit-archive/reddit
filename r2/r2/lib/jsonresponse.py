@@ -46,7 +46,7 @@ class JsonListingStub(object):
 class JsonResponse():
     # handled entried in the response object
     __slots__ = ['update', 'blur', 'focus', 'object', 'hide', 'show',
-                 'captcha', 'success']
+                 'captcha', 'success', 'call']
 
     def __init__(self):
         self.update = []
@@ -59,6 +59,10 @@ class JsonResponse():
         self.error = None
         self.success = None
         self.redirect = None
+        self.call = []
+
+    def _call(self, fn):
+        self.call.append(fn)
 
     def _success(self):
         self.success = 1
@@ -77,7 +81,11 @@ class JsonResponse():
         self.blur = f
 
     def _redirect(self, red):
-        self.redirect = red
+        from pylons import c
+        if c.cname and "?cnameframe=1" not in red:
+            self.redirect = red + "?cnameframe=1"
+        else:
+            self.redirect = red
 
 
     def _update(self, name, **kw):

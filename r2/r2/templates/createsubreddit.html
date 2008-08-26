@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -17,13 +17,13 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved."
+## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
 <%!
    from r2.lib.filters import keep_space
 %>
-<%namespace file="utils.html" import="error_field, language_tool"/>
+<%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
 
 <script type="text/javascript">
 function update_title() {
@@ -113,6 +113,7 @@ function update_title() {
           %endif
         </td>
       </tr>
+
       <tr>
         <th>
           <label for="description">${_("description")}</label>
@@ -129,6 +130,7 @@ function update_title() {
           ${error_field("DESC_TOO_LONG", "span")}
         </td>
       </tr>
+
       %if c.user_is_admin:
       <tr>
         <th>
@@ -248,15 +250,36 @@ function update_title() {
           </label>
         </td>
       </tr>
-  
+      <tr>
+        <th>
+          <label for="domain">${_("domain")}</label>
+        </th>
+        <td>
+          %if thing.site:
+            <input id="domain" type="text" name="domain" class="text"
+                   value="${getattr(thing.site, 'domain', None) or ""}"/>
+          %else:
+            <input id="domain" type="text" name="domain" class="text" />
+          %endif
+        </td>
+        <td id="note_domain">
+          ${error_field("BAD_CNAME", "span")}
+          ${error_field("USED_CNAME", "span")}
+          %if not thing.site:
+            <span class="gray" id="example_domain">
+              ${_("e.g. reddit.slashdot.org (optional)")}
+            </span>
+          %endif
+        </td>
+      </tr>
       <tr>
         <th>
         </th>
         <td colspan="2">
           %if thing.site:
-          <button name="edit" type="submit">${_("update")}</button>
+          <button name="edit" class="btn" type="submit">${_("update")}</button>
           %else:
-          <button name="create" type="submit">${_("create")}</button>
+          <button name="create" class="btn" type="submit">${_("create")}</button>
           %endif
           &#32;
           <span id="status" class="error"></span>
@@ -266,3 +289,64 @@ function update_title() {
       </tr>
     </table>
   </form>
+
+%if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
+  <h1>${_('change the look')}</h1>
+
+  <table class="content preftable pretty-form sr-form">
+    <tr>
+      <th>
+        <label for="stylesheet_contents">${_("edit stylesheet")}</label>
+      </th>
+      <td class="nowrap nopadding">
+        <p>${plain_link(_('edit the stylesheet'),
+                        '/about/stylesheet',
+                        sr_path = True)}</p>
+      </td>
+      <td id="note_stylesheet_contents"></td>
+    </tr>
+    
+    <tr>
+      <th><label for="file">${_('upload header image')}</label></th>
+      <td>
+        <form
+         onsubmit="return uploadHeaderImage('${_('submitting')}');"
+         name="upload-header-image" id="upload-header-image"
+         enctype="multipart/form-data"
+         class="pretty-form sr-form"
+         target="upload-header-iframe"
+         action="/api/upload_header_img" method="post">
+          <input type="file" name="file"
+           onchange="return uploadHeaderImage('${_('submitting')}')" />
+          <button id="delete-header-img"
+           class="btn"
+           onclick="return deleteHeaderImage('${_('submitting')}')"
+           %if not thing.site.header:
+             style="display: none;"
+           %endif
+          >
+            ${_('restore default')}
+          </button>
+          <input type="hidden" name="uh" value="${c.modhash}" />
+          <input type="hidden" name="r"  value="${c.site.name}" />
+          <input type="hidden" name="op" value="upload" />
+
+          <span style="display: none;" class="error" id="img-status"></span>
+          <iframe src="about:blank"
+           width="600" height="200" style="display: none;"
+           name="upload-header-iframe" id="upload-header-iframe"></iframe>
+        </form>
+        <div id="header-img-preview-container" style="display: none;">
+          <img id="header-img-preview"
+           %if thing.site.header:
+             src="${thing.site.header}"
+           %else:
+             src="/static/kill.png"
+           %endif
+          / ><br />
+        </div>
+      </td>
+    </tr>
+  </table>
+%endif
+

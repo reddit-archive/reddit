@@ -21,10 +21,10 @@
 ################################################################################
 from r2.models import *
 
-def populate():
-    sr = Subreddit._new(name= 'reddit.com', title = "reddit.com: what's new online")
+def populate(sr_name = 'reddit.com', start_account = 1, sr_title = "reddit.com: what's new online"):
+    sr = Subreddit._new(name= sr_name, title = sr_title)
     sr._commit()
-    for i in range(1,5):
+    for i in range(start_account,(start_account + 4)):
         name = 'test' + str(i)
         password = name
         user = register(name, password)

@@ -93,7 +93,19 @@ string_dict = dict(
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
                            'you can search within [your subscribed reddits](%(my_reddits_link)s) ' +
-                           'or [all reddits](%(all_reddits_link)s)')
+                           'or [all reddits](%(all_reddits_link)s)'),
+
+    css_validator_messages = dict(
+        broken_url = _('"%(brokenurl)s" is not a valid URL'),
+        invalid_property = _('"%(cssprop)s" is not a valid CSS property'),
+        invalid_val_for_prop = _('"%(cssvalue)s" is not a valid value for CSS property "%(cssprop)s"'),
+        too_big = _('too big. keep it under %(max_size)dkb'),
+        syntax_error = _('syntax error: "%(syntaxerror)s"'),
+        no_imports = _('@imports are not allowed'),
+        invalid_property_list = _('invalid CSS property list "%(proplist)s"'),
+        unknown_rule_type = _('unknown CSS rule type "%(ruletype)s"')
+    )
+    
 )
 
 class StringHandler(object):

@@ -34,7 +34,7 @@ import r2.config as config
 from r2.models import *
 from errors import ErrorSet
 from validator import *
-from r2.lib.template_helpers import reddit_link
+from r2.lib.template_helpers import add_sr
 from r2.lib.jsontemplates import api_type
 
 from copy import copy
@@ -105,7 +105,7 @@ def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
     c.response.set_cookie(uname + '_' + name,
                           value = val,
-                          domain = c.domain)
+                          domain = g.domain)
 
 def read_click_cookie():
     if c.user_is_loggedin:
@@ -129,7 +129,7 @@ def firsttime():
         if not request.cookies.get("reddit_first"):
             c.response.set_cookie("reddit_first", "first",
                                   expires = NEVER,
-                                  domain = c.domain)
+                                  domain = g.domain)
             return True
     return False
 
@@ -146,7 +146,9 @@ def set_subreddit():
     sr_name=request.environ.get("subreddit", request.params.get('r'))
 
     if not sr_name or sr_name == Default.name:
-        c.site = Default
+        sub_domain = request.environ.get('sub_domain')
+        sr = Subreddit._by_domain(sub_domain) if sub_domain else None
+        c.site = sr or Default
     elif sr_name == 'r':
         c.site = Sub
     else:
@@ -191,6 +193,12 @@ def set_content_type():
         c.response_wrappers.append(utils.to_js)
     elif extension == 'mobile':
         c.render_style = 'mobile'
+    #Insert new extentions above this line
+    elif extension not in ('', 'html'):
+        dest = "http://%s%s" % (request.host, request.path)
+        if request.get:
+            dest += utils.query_string(request.get)
+        redirect_to(dest)
 
 def get_browser_langs():
     browser_langs = []
@@ -252,6 +260,11 @@ def set_content_lang():
     else:
         c.content_langs = c.user.pref_content_langs
 
+def set_cnameframe():
+    if (bool(request.params.get('cnameframe')) 
+        or request.host.split(":")[0] != g.domain):
+        c.cname = True
+
 def ratelimit_agents():
     user_agent = request.user_agent
     for s in g.agents:
@@ -308,6 +321,7 @@ class RedditController(BaseController):
         key = ''.join((str(c.lang),
                        str(c.content_langs),
                        request.host,
+                       c.cname, 
                        request.fullpath,
                        str(c.firsttime),
                        str(c.over18)))
@@ -367,14 +381,15 @@ class RedditController(BaseController):
         set_content_type()
         set_iface_lang()
         set_content_lang()
+        set_cnameframe()
 
         # check if the user has access to this subreddit
         if not c.site.can_view(c.user):
             abort(403, "forbidden")
  
         #check over 18
-        if c.site.over_18 and not c.over18:
-            d = dict(dest=reddit_link(request.path, url = True) + utils.query_string(request.GET))
+        if c.site.over_18 and not c.over18 and not request.path == "/frame":
+            d = dict(dest=add_sr(request.path) + utils.query_string(request.GET))
             return redirect_to("/over18" + utils.query_string(d))
 
         #check content cache
@@ -425,7 +440,7 @@ class RedditController(BaseController):
     def check_modified(self, thing, action):
         if c.user_is_loggedin:
             return
-
+        
         date = utils.is_modified_since(thing, action, request.if_modified_since)
         if date is True:
             abort(304, 'not modified')

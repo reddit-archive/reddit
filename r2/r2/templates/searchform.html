@@ -17,14 +17,14 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%!
-   from r2.lib.template_helpers import reddit_link, static
+   from r2.lib.template_helpers import add_sr, static
 %>
 
-<form action="${reddit_link('/search', url=True)}" id="search">
+<form action="${add_sr('/search')}" id="search">
   <input type="text" 
          %if thing.prev_search:
            value="${thing.prev_search}" style="color:black"

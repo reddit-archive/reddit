@@ -53,7 +53,6 @@ def static(file):
         return file + v
     return os.path.join(c.site.static_path, file) + v
 
-
 def generateurl(context, path, **kw):
     if kw:
         return path + '?' + '&'.join(["%s=%s"%(k, url_escape(v)) \
@@ -145,45 +144,56 @@ def replace_render(listing, item, style = None, display = True):
         rendered_item = replace_fn(u"$ListClass", listing._js_cls)
 
         #$votehash is only present when voting arrows are present
-        if u'$votehash' in rendered_item:
+        if c.user_is_loggedin and u'$votehash' in rendered_item:
             hash = vote_hash(c.user, item, listing.vote_hash_type)
             rendered_item = replace_fn(u'$votehash', hash)
             
     rendered_item = replace_fn(u"$display", "" if display else "style='display:none'")
     return rendered_item
 
-from pylons import c as cur
 def dockletStr(context, type, browser):
+    domain = c.domain
+    if c.cname:
+        domain = c.site.domain
+
     if type == "serendipity!":
-        return "http://"+cur.domain+"/random"
+        return "http://"+domain+"/random"
     elif type == "reddit":
-        return "javascript:location.href='http://"+cur.domain+"/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
+        return "javascript:location.href='http://"+domain+"/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
     else:
         f = "fixed"
         if browser == "ie": f = "absolute"
         return "javascript:function b(){var u=encodeURIComponent(location.href);var i=document.getElementById('redstat')||document.createElement('a');var s=i.style;s.position='%s';s.top='0';s.left='0';s.zIndex='10002';i.id='redstat';i.href='http://%s/submit?url='+u+'&title='+encodeURIComponent(document.title);var q=i.firstChild||document.createElement('img');q.src='http://%s/d/%s'+Math.random()+'?uh=%s&u='+u;i.appendChild(q);document.body.appendChild(i)};b()" % \
-            (f, cur.domain, cur.domain, type, 
-             c.modhash if cur.user else '')
+            (f, domain, domain, type, 
+             c.modhash if c.user else '')
 
 
 
-def reddit_link(path, url = False, get = False):
-    if url or get:
-        (scheme, netloc, path, params, query, fragment) = urlparse(path)
-        if url:
-            #noslash fixes /reddits/
-            noslash = c.site.path.rstrip('/')
-            #if it's a relative path, don't include the sitename
-            if path.startswith('/') and not path.startswith(noslash):
+def add_sr(path, sr_path = True, nocname=False):
+    """Given a link, returns that link with the subreddit added.
+       Also adds the domain for cname requests."""
+    (scheme, netloc, path, params, query, fragment) = urlparse(path)
+    if sr_path:
+        #noslash fixes /reddits/
+        noslash = c.site.path.rstrip('/')
+        #if it's a relative path, don't include the sitename
+        if (path.startswith('/') and not path.startswith(noslash)
+            and not path.startswith('/r/')):
+            if not c.cname:
                 path = c.site.path + path[1:]
-        else:
-            newparam = "r=" + url_escape(c.site.name)
-            if query:
-                query += "&" + newparam
-            else:
-                query = newparam
-        return urlunparse((scheme, netloc, path, params, query, fragment))
-    return path
+
+    if not netloc and c.cname and not nocname:
+        netloc = getattr(c.site, 'domain', None)
+
+    if netloc:
+        port = request.environ.get('request_port')
+        if port > 0:
+            netloc = "%s:%d" % (netloc, port)
+            
+    if c.render_style == 'mobile' and not path.endswith('.mobile'):
+        path += '.mobile'
+
+    return urlunparse((scheme, netloc, path, params, query, fragment))
 
 def join_urls(*urls):
     """joins a series of urls together without doubles slashes"""

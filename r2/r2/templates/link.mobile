@@ -25,6 +25,7 @@
     from pylons.i18n import _, ungettext
 %>
 
+<%namespace file="utils.html" import="plain_link" />
 <%inherit file="printable.mobile" />
 
 <%def name="entry()">
@@ -39,7 +40,8 @@
        com_label = _("comment") 
  %>
   <p class="link"><a href="${thing.url}" class="title">${thing.title}</a></p>
-  <p class="byline">${thing.score} ${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons"><a href="${thing.permalink}">${com_label}</a></span>&nbsp;|&nbsp;${tagline()}</p>
+  <p class="byline">${thing.score} ${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
+  ${plain_link(com_label, thing.permalink)}</span>&nbsp;|&nbsp;${tagline()}</p>
 </%def>
 
 <%def name="domain()" buffered="True">

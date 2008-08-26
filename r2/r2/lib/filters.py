@@ -114,7 +114,11 @@ def safemarkdown(text):
         #wipe malicious javascript
         text = jscript_url.sub('', text)
         def href_handler(m):
-            return '<a href="%s"' % m.group(1).replace('&amp;', '&')
+            x = m.group(1).replace('&amp;', '&')
+            if c.cname:
+                return '<a target="_top" href="%s"' % x
+            else:
+                return '<a href="%s"' % x
         def code_handler(m):
             l = m.group(1)
             return '<code>%s</code>' % l.replace('&amp;','&')
@@ -125,7 +129,10 @@ def safemarkdown(text):
 
 
 def keep_space(text):
-    return unsafe(websafe(text).replace(' ', '&#32;').replace('\n', '&#10;').replace('\t', '&#09;'))
+    text = websafe(text)
+    for i in " \n\r\t":
+        text=text.replace(i,'&#%02d;' % ord(i))
+    return unsafe(text)
 
 
 def unkeep_space(text):

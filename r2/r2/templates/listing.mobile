@@ -17,10 +17,11 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
-<% from r2.lib.template_helpers import replace_render, reddit_link %>
+<% from r2.lib.template_helpers import replace_render, add_sr %>
+<%namespace file="utils.html" import="plain_link" />
 
 <ul>
 %for a in thing.things:
@@ -31,13 +32,13 @@
 %if thing.nextprev and (thing.prev or thing.next):
   <p class="nextprev"> ${_("view more:")}&#32;
   %if thing.prev:
-    <a href="${reddit_link(thing.prev, url = True)}">${_("prev")}</a>
+    ${plain_link(_("prev"), thing.prev)}  
   %endif
   %if thing.prev and thing.next:
     &#32;|&#32;
   %endif
   %if thing.next:
-    <a rel="nofollow" href="${reddit_link(thing.next, url = True)}">${_("next")}</a>
+    ${plain_link(_("next"), thing.next)}  
   %endif
   </p>
 %endif

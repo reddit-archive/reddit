@@ -21,7 +21,7 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import reddit_link, static, join_urls, class_dict, path_info
+   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info
    from r2.lib.pages import SearchForm
    from pylons import request
 %>
@@ -52,9 +52,16 @@
   %else:
     <link rel="stylesheet" href="${static(g.stylesheet)}" 
           type="text/css" />
-    %if c.site.stylesheet:
-    <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
-          type="text/css" />
+    %if (not g.css_killswitch) and c.user.pref_show_stylesheets:
+      %if c.site.stylesheet:
+      <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
+            type="text/css" />
+      %endif
+      %if c.site.stylesheet_contents:
+      <link rel="stylesheet" href="${c.site.path}stylesheet?v=${c.site.stylesheet_hash}"
+            title="applied_subreddit_stylesheet"
+            type="text/css" />
+      %endif
     %endif
   %endif
 
@@ -62,7 +69,7 @@
         type="image/x-icon" />
   %if thing.extension_handling:
     <link rel="alternate" type="application/rss+xml" title="RSS"
-          href="${reddit_link(join_urls(request.path,'.rss'), url=True)}" />
+          href="${add_sr(join_urls(request.path,'.rss'))}" />
   %endif
 </%def>
 

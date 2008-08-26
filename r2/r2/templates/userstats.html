@@ -17,15 +17,17 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
+
+<%namespace file="utils.html" import="plain_link"/>
 
 ##<h1>awards</h1>
 ##<table class='stats'>
 ##<tr><td></td><th>today</th></tr>
 ###for a in $awards
 ##    #set u = $user_objs[a["uid"]]
-##    <tr><td class='ri' style="padding-right: 10px">$a['award']</td><td class='k'><a href="/user/$u.name/">$u.name</a> ($sanekarma($u.pop))</td></tr>
+##    <tr><td class='ri' style="padding-right: 10px">$a['award']</td><td class='k'>${plain_link(u.name, "/user/%s" % u.name)} ($sanekarma($u.pop))</td></tr>
 ###end for
 ##</table>
 ###end if
@@ -36,7 +38,7 @@
   <tr><th colspan="2">${_("today")}</th></tr>
   %for user, change in thing.top_day:
     <tr>
-      <td class="k"><a href="/user/${user.name}/">${user.name}</a> (${user.link_karma})</td>
+      <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
       <td class="ri">+${change}</td>
     </tr>
   %endfor
@@ -46,7 +48,7 @@
   <tr><th colspan="2">${_("this week")}</th></tr>
   %for user, change in thing.top_week:
   <tr>
-    <td class="k"><a href="/user/${user.name}/">${user.name}</a> (${user.link_karma})</td>
+    <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
     <td class="ri">+${change}</td>
   </tr>
   %endfor
@@ -56,7 +58,7 @@
   <tr><th colspan="2">${_("all-time")}</th></tr>
   %for user in thing.top_users:
     <tr>
-      <td class="k"><a href="/user/${user.name}/">${user.name}</a> (${user.link_karma})</td>
+      <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
     </tr>
   %endfor
 </table>

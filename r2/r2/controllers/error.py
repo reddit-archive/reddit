@@ -98,8 +98,13 @@ class ErrorController(RedditController):
         try:
             return RedditController.__call__(self, environ, start_response)
         except:
-            c.response.content = "something really awful just happened"
-            return c.response
+            if g.debug:
+                # if we're in debug mode, let this hit Pylons so we
+                # get a stack trace
+                raise
+            else:
+                c.response.content = "something really awful just happened"
+                return c.response
 
 
     def send403(self):

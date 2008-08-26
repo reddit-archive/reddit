@@ -21,6 +21,7 @@
 ################################################################################
 from pylons.controllers.util import redirect_to
 from r2.lib.base import BaseController
+from pylons import c
 
 class RedirectController(BaseController):
     def GET_redirect(self, dest):

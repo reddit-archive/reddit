@@ -1,0 +1,26 @@
+<%!
+   from r2.lib.template_helpers import join_urls
+%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
+      xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
+<head>
+<title>${thing.title}</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="alternate" type="application/rss+xml" title="RSS"
+      href="${join_urls(thing.original_path,'.rss')}" />
+
+</head>
+
+<frameset>
+  <frame src="${thing.frame_target}">
+</frameset>
+
+<body>
+
+<p class="error">Your browser does not support frames.  Go <a href="${thing.frame_target}">here</a>.
+
+</body>
+</html>

@@ -32,7 +32,8 @@ from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
-from r2.lib.utils import title_to_url
+from r2.lib.utils import title_to_url, query_string
+from r2.lib.template_helpers import add_sr
 import sys
 
 def get_captcha():
@@ -119,15 +120,15 @@ class Reddit(Wrapped):
 
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
-                              c.site.path + 'submit', 'submit',
+                              '/submit', 'submit',
                               subtitles = [_('to anything interesting: news article, blog entry, video, picture...')],
                               show_cover = True))
             
         if self.create_reddit_box:
-            ps.append(SideBox(_('Create your own reddit'),
+           ps.append(SideBox(_('Create your own reddit'),
                               '/reddits/create', 'create',
                               subtitles = rand_strings.get("create_reddit", 2),
-                              show_cover = True))
+                              show_cover = True, nocname=True))
         return ps
 
     def render(self, *a, **kw):
@@ -160,9 +161,11 @@ class Reddit(Wrapped):
         if c.user_is_loggedin:
             if c.user.name in g.admins:
                 if c.user_is_admin:
-                   buttons += [NamedButton("adminoff", False)]
+                   buttons += [NamedButton("adminoff", False, nocname=True,
+                                           target = "_self")]
                 else:
-                   buttons += [NamedButton("adminon",  False)]
+                   buttons += [NamedButton("adminon",  False, nocname=True,
+                                           target = "_self")]
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]
         else:
@@ -170,12 +173,13 @@ class Reddit(Wrapped):
             buttons += [JsButton(g.lang_name.get(lang, lang),  
                                   onclick = "return showlang();",
                                   css_class = "pref-lang")]
-        buttons += [NamedButton("stats", False)]
-        buttons += [NamedButton("help", False),
-                    NamedButton("blog", False)]                    
+        buttons += [NamedButton("stats", False, nocname=True)]
+        buttons += [NamedButton("help", False, nocname=True),
+                    NamedButton("blog", False, nocname=True)]                    
         
         if c.user_is_loggedin:
-            buttons += [NamedButton("logout", False)]
+            buttons += [NamedButton("logout", False, nocname=True,
+                                    target = "_self")]
         
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
@@ -185,10 +189,10 @@ class Reddit(Wrapped):
                    NamedButton("bookmarklets", False),
                    NamedButton("buttons",      False),
                    NamedButton("widget",       False),
-                   NamedButton("code",         False),
-                   NamedButton("mobile",       False),
-                   NamedButton("store",        False),
-                   NamedButton("ad_inq",       False),
+                   NamedButton("code",         False, nocname=True),
+                   NamedButton("mobile",       False, nocname=True),
+                   NamedButton("store",        False, nocname=True),
+                   NamedButton("ad_inq",       False, nocname=True),
                    ]
 
         return NavMenu(buttons, base_path = "/", type = "flatlist")
@@ -217,7 +221,7 @@ class Reddit(Wrapped):
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
-        if c.site != Default:
+        if c.site != Default and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -259,10 +263,10 @@ class SubredditInfoBar(Wrapped):
 class SideBox(Wrapped):
     """Generic sidebox used to generate the 'submit' and 'create a reddit' boxes."""
     def __init__(self, title, link, css_class='', subtitles = [],
-                 show_cover = False):
-        Wrapped.__init__(self, link = link, 
+                 show_cover = False, nocname=False):
+        Wrapped.__init__(self, link = link, target = '_top',
                          title = title, css_class = css_class,
-                         subtitles = subtitles, show_cover = show_cover)
+                         subtitles = subtitles, show_cover = show_cover, nocname=nocname)
 
 
 class PrefsPage(Reddit):
@@ -429,7 +433,7 @@ class LinkInfoPage(Reddit):
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
-        if c.site != Default:
+        if c.site != Default and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
         return toolbar
@@ -463,7 +467,10 @@ class EditReddit(Reddit):
         Reddit.__init__(self, title = title, *a, **kw)
     
     def build_toolbars(self):
-        return [PageNameNav('subreddit')]
+        if not c.cname:
+            return [PageNameNav('subreddit')]
+        else:
+            return []
 
 
 
@@ -659,6 +666,24 @@ class CreateSubreddit(Wrapped):
     def __init__(self, site = None, name = ''):
         Wrapped.__init__(self, site = site, name = name)
 
+class SubredditStylesheet(Wrapped):
+    """form for editing or creating subreddit stylesheets"""
+    def __init__(self, site = None,
+                 stylesheet_contents = ''):
+        Wrapped.__init__(self, site = site,
+                         stylesheet_contents = stylesheet_contents)
+
+class CssError(Wrapped):
+    """Rendered error returned to the stylesheet editing page via ajax"""
+    def __init__(self, error):
+        # error is an instance of cssutils.py:ValidationError
+        Wrapped.__init__(self, error = error)
+
+class UploadedImage(Wrapped):
+    "The page rendered in the iframe during an upload of a header image"
+    def __init__(self,status,img_src,op):
+        Wrapped.__init__(self,
+                         status=status, img_src=img_src, op=op)
 
 class Password(Wrapped):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
@@ -1042,3 +1067,15 @@ class DetailsPage(LinkInfoPage):
         from admin_pages import Details
         return self.content_stack(self.link_listing, Details(link = self.link))
         
+class Cnameframe(Wrapped):
+    """The frame page."""
+    def __init__(self, original_path, sr_name, sr_title, sub_domain):
+        Wrapped.__init__(self, original_path=original_path)
+        self.title = "%s - %s" % (sr_title, sub_domain)
+        port = request.environ.get('request_port')
+        request.get['cnameframe'] = 1
+        path = original_path + query_string(request.get)
+        if port > 0:
+            self.frame_target = "http://%s:%d/r/%s%s" % (c.domain, port, sr_name, path)
+        else:
+            self.frame_target = "http://%s/r/%s%s" % (c.domain, sr_name, path)

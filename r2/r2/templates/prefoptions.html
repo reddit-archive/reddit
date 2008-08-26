@@ -19,8 +19,7 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved."
 ################################################################################
-
-<%namespace file="utils.html" import="language_tool, language_checkboxes"/>
+<%namespace file="utils.html" import="language_tool, language_checkboxes, plain_link"/>
 
 <%def name="checkbox(text, name)">
     <input name="${name}" id="${name}" type="checkbox"\
@@ -60,10 +59,15 @@
 %endif
 
 <%
-   if c.user_is_loggedin:
-       action = "/post/options"
+   if c.cname:
+       param = "?cnameframe=1"
    else:
-       action = "/post/unlogged_options"
+       param = ""
+
+   if c.user_is_loggedin:
+       action = "/post/options" + param
+   else:
+       action = "/post/unlogged_options" + param
  %>
 <form action="${action}" method="post" class="pretty-form short-text">
 <input type="hidden" name="uh" value="${c.modhash}" />
@@ -75,7 +79,7 @@
       ${language_tool(allow_blank = False, show_regions = True,
                       default_lang = c.user.pref_lang)}
       &#32;<span class="little gray hover">(*) ${_("incomplete")}
-        &#32;<a href="/feedback">${_("volunteer to translate")}</a></span>
+      &#32;${plain_link(_("volunteer to translate"), "/feedback")}</span>
     </td>
   </tr>
   <tr>
@@ -156,7 +160,12 @@
   &#32;<span class="little gray">(1 - ${g.max_comments})</span>
     </td>
   </tr>
-  
+  <tr>
+    <th>${_("display options")}</th>
+    <td class="prefright">
+      ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
+    </td>
+  </tr>
   <tr>
     <th>${_("privacy options")}</th>
     <td class="prefright">

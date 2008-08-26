@@ -173,11 +173,24 @@ class DomainMiddleware(object):
     def __call__(self, environ, start_response):
         # get base domain as defined in INI file
         base_domain = config['global_conf']['domain']
-
-        sub_domains = environ['HTTP_HOST']
-        if not sub_domains.endswith(base_domain):
-            #if the domain doesn't end with base_domain, don't do anything
-            return self.app(environ, start_response)
+        try:
+            sub_domains, request_port  = environ['HTTP_HOST'].split(':')
+            environ['request_port'] = int(request_port)
+        except ValueError:
+            sub_domains  = environ['HTTP_HOST'].split(':')[0]
+            
+        #If the domain doesn't end with base_domain, assume
+        #this is a cname, and redirect to the frame controller.
+        #Ignore localhost so paster shell still works.
+        #If this is an error, don't redirect
+        if (not sub_domains.endswith(base_domain) 
+            and (not sub_domains == 'localhost')):
+            environ['sub_domain'] = sub_domains
+            if (not environ.get('extension') 
+                and (not environ['PATH_INFO'].startswith('/error'))):
+                environ['original_path'] = environ['PATH_INFO']
+                environ['PATH_INFO'] = '/frame'
+                return self.app(environ, start_response)
 
         sub_domains = sub_domains[:-len(base_domain)].strip('.')
         sub_domains = sub_domains.split('.')
@@ -294,6 +307,22 @@ class RequestLogMiddleware(object):
                 pass
         return r
 
+class LimitUploadSize(object):
+    def __init__(self, app, max_size=1024*500):
+        self.app = app
+        self.max_size = max_size
+
+    def __call__(self, environ, start_response):
+        cl_key = 'CONTENT_LENGTH'
+        if environ['REQUEST_METHOD'] == 'POST':
+            if ((cl_key not in environ)
+                or int(environ[cl_key]) > self.max_size):
+                r = Response()
+                r.status_code = 500
+                r.content = 'request too big'
+                return r(environ, start_response)
+                
+        return self.app(environ, start_response)
 
 #god this shit is disorganized and confusing
 class RedditApp(PylonsBaseWSGIApp):
@@ -335,12 +364,14 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)
 
+    app = LimitUploadSize(app)
     app = ProfilingMiddleware(app)
     app = SourceViewMiddleware(app)
 
-    app = DomainMiddleware(app)
     app = SubredditMiddleware(app)
+    app = DomainMiddleware(app)
     app = ExtensionMiddleware(app)
+
 
     log_path = global_conf.get('log_path')
     if log_path:

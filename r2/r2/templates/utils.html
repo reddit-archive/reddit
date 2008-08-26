@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution.
+## The contents of this file are subject to the Common Public Attribution.
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -17,13 +17,13 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved."
+## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
 <%!
    from r2.controllers.errors import errors
-   from r2.lib.filters import spaceCompress
-   from r2.lib.template_helpers import reddit_link
+   from r2.lib.filters import spaceCompress, unsafe
+   from r2.lib.template_helpers import add_sr
    from r2.lib.utils import cols
 %>
 <%def name="tags(**kw)">
@@ -94,23 +94,42 @@ ${errors.get(name).message}
 </script>
 </%def>
 
-<%def name="img_link(title, img, path, _id='', **kw)">
+<%def name="img_link(link_text, img, path, _id='', target='', img_id = None, **kw)">
+  <% 
+     if (not target or target == '_parent') and c.cname:
+         target = '_top'
+     if target:
+         kw['target'] = target
+
+     path = add_sr(path, sr_path = False)
+     kw['target'] = target
+  %>
   <%call expr="_a(href=path, _id=_id, **kw)">
-    <img src="${img}" alt="${title}"/>
+    <img ${("id='%s'" % img_id) if img_id else ''} src="${img}" alt="${link_text}"/>
   </%call>
 </%def>
 
-<%def name="plain_link(title, path, _sr_path = True, fmt='', **kw)">
-  <% link = _a_buffered(title, href=reddit_link(path, url=_sr_path), **kw) %>
+<%def name="plain_link(link_text, path, _sr_path = True, nocname=False, fmt='', target='', **kw)">
+  <% 
+     if (not target or target == '_parent') and c.cname:
+         target = '_top'
+     if c.cname and path.startswith('http://'):
+         target = '_top'
+     if target:
+         kw['target'] = target
+
+     link = _a_buffered(link_text, href=add_sr(path, sr_path=_sr_path, nocname=nocname), **kw) 
+  %>
+
   ${unsafe((fmt % link) if fmt else link)}
 </%def>
 
 
-<%def name="text_with_links(txt, _sr_path = False, **kw)">
+<%def name="text_with_links(txt, _sr_path = False, nocname=False, **kw)">
 <%
    from r2.lib.filters import _force_unicode
    for key, (text, href) in kw.iteritems():
-      kw[key]=spaceCompress(capture(plain_link, text, href, _sr_path=_sr_path))
+      kw[key]=spaceCompress(capture(plain_link, text, href, _sr_path=_sr_path, nocname=nocname))
    txt = _force_unicode(txt) % kw
    txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")
 

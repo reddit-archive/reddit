@@ -17,8 +17,9 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
+<%namespace file="utils.html" import="plain_link"/>
 
 <div class="subredditbox">
    <form method="post" action="/post/subscriptions" id="sr_subscriptions"
@@ -50,7 +51,13 @@
                        onchange="return change_sr('${sr._fullname}');" 
                        id="sr_sel_chx_${sr._fullname}"/>
               %endif
-              <a href="${sr.path or '/'}">${sr.name}</a>
+              <%
+                 if sr.path:
+                     path = sr.path
+                 else:
+                     path = '/'
+              %>
+              ${plain_link(sr.name, path, _sr_path=False, nocname=True)}   
             </li>
           %endfor
         </ul>
@@ -58,7 +65,6 @@
     %endfor
     <div class="clear"></div>
   </form>
-  <a class="morelink" href="/reddits/">
-    ${_("more")} &raquo;
-  </a>
+  ${plain_link(unsafe('%s &raquo;' % _("more")), "/reddits/", _class="morelink", 
+   fmt='%s', _sr_path=False, nocname=True)}
 </div>

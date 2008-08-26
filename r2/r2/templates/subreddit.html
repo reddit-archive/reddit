@@ -17,13 +17,15 @@
 ## the Original Code is CondeNet, Inc.
 ## 
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
-## CondeNet, Inc. All Rights Reserved.
+## CondeNet, Inc. All Rights Reserved."
 ################################################################################
 
 <%!
    from r2.lib.strings import strings
    %>
 <%inherit  file="printable.html"/>
+
+<%namespace file="utils.html" import="plain_link"/>
 
 <%def name="numcol()">
 </%def>
@@ -32,9 +34,7 @@
 <%def name="entry()">
 <% fullname = thing._fullname %>
 <p class="titlerow">
-  <a id="title_${fullname}" class="title" href="${thing.path}">
-    ${thing.title} 
-  </a>
+  ${plain_link(thing.title, thing.path, _class="title", _id="title_%s" % fullname)}
   <span class="domain">(${thing.path})</span> 
   %if c.user_is_admin:
   ${self.admintagline()}

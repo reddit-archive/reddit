@@ -49,7 +49,8 @@ class Globals(object):
                   'uncompressedJS',
                   'enable_doquery',
                   'use_query_cache',
-                  'write_query_queue']
+                  'write_query_queue',
+                  'css_killswitch']
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -57,6 +58,7 @@ class Globals(object):
                    'monitored_servers',
                    'default_srs',
                    'agents',
+                   'allowed_css_linked_domains',
                    'query_caches']
 
     def __init__(self, global_conf, app_conf, paths, **extra):
@@ -157,7 +159,15 @@ class Globals(object):
         self.log.addHandler(logging.StreamHandler())
         if self.debug:
             self.log.setLevel(logging.DEBUG)
-            
+
+        #read in our CSS so that it can become a default for subreddit
+        #stylesheets
+        stylesheet_path = os.path.join(paths.get('static_files'),
+                                       self.static_path.lstrip('/'),
+                                       self.stylesheet)
+        with open(stylesheet_path) as s:
+            self.default_stylesheet = s.read()
+
     def __del__(self):
         """
         Put any cleanup code to be run when the application finally exits 

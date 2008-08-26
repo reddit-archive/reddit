@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -21,7 +21,9 @@
 ################################################################################
 
 <script type="text/javascript">
-
+<%
+   domain = c.site.domain if c.cname else c.domain
+ %>
 function escapeHTML(text) {
   var div = document.createElement('div');
   var text = document.createTextNode(text);
@@ -39,11 +41,11 @@ function update() {
     f = document.forms.widget;
     which = getrval(f.which);
     if (which == "all") {
-        url = "http://${c.domain}/" + f.what.value + "/.embed?limit=" +
+        url = "http://${domain}/" + f.what.value + "/.embed?limit=" +
                       f.num.value + "&t=" + f.when.value;
     } else if (which == "one") {
         if (!f.who2.value) return;
-        url = "http://${c.domain}/user/"+f.who2.value+"/"+
+        url = "http://${domain}/user/"+f.who2.value+"/"+
                       f.where2.value+".embed?limit=" + f.num.value + 
                       "&sort="+f.what2.value;
     } else {
@@ -67,7 +69,7 @@ function update() {
   <div id="preview">
     <span>preview</span>
     <div id="previewbox">
-      <script src="http://${c.domain}/.embed?limit=5" type="text/javascript"></script>
+      <script src="http://${domain}/.embed?limit=5" type="text/javascript"></script>
     </div>
   </div>
 
@@ -139,7 +141,7 @@ function update() {
 
   <p>
     <textarea rows="5" cols="50" id="codebox">
-      &lt;script src="http://${c.domain}/.embed?limit=5" type="text/javascript">&lt;/script>
+      &lt;script src="http://${domain}/.embed?limit=5" type="text/javascript">&lt;/script>
     </textarea>
   </p>
 </div>

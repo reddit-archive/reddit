@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -23,6 +23,7 @@
 <%!
    from r2.lib.template_helpers import static
    from r2.models import Sub, FakeSubreddit
+   from r2.models.subreddit import DefaultSR
    from r2.lib.pages import SearchForm
 %>
 <%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator"/>
@@ -60,9 +61,13 @@
   </div>
 
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
-    <a href="/">
-      <img id="header-img" src="${c.site.header}" alt="${c.site.name}" />
-    </a>
+    <%
+        if g.css_killswitch or not c.site.header:
+            header_img = DefaultSR.header
+        else:
+            header_img = c.site.header
+    %>
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
 
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;

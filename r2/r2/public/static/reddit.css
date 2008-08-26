@@ -1,11 +1,17 @@
-body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td,iframe{ margin:0;padding:0;}
-table{ border-collapse:collapse;}
-fieldset,img{ border:0;}
-address,caption,cite,code,dfn,em,strong,th,var{ font-style:normal;font-weight:normal;}
-ol,ul { list-style:none;}
-caption,th { text-align:left;}
-h1,h2,h3,h4,h5,h6{ font-size:100%;}
-q:before,q:after{ content:'';}
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td,iframe {
+  margin:0;
+  padding:0;
+}
+
+table { border-collapse:collapse; }
+
+fieldset,img { border:0; }
+
+address,caption,cite,code,dfn,em,strong,th,var { font-style:normal; font-weight:normal; }
+ol,ul { list-style:none; }
+caption,th { text-align:left; }
+h1,h2,h3,h4,h5,h6 { font-size:100%; }
+q:before,q:after { content:''; }
 
 body {
     font: normal x-small verdana, arial, helvetica, sans-serif;
@@ -13,8 +19,12 @@ body {
     z-index: 1;
 }
 
-html,body { height: 100% }
+html,body { height: 100%; }
 
+/* IE dumbness patch. hidden input in a hidden block that is
+subsequently shown leads to the input to "show" and generate undesired
+padding.  This makes it go away. */ 
+input[type=hidden] { position: absolute; }
 
 /* html element defaults */
 
@@ -85,10 +95,7 @@ input.txt {
     background-color: #cee3f8;
 }
 
-#header-img {
-    height: 40px;
-    width: 120px;
-}
+#header-img {}
 
 #header-top {
     position: absolute;
@@ -460,25 +467,14 @@ before enabling */
     height: 14px;
     display: block;
     cursor: pointer;
-    background-position: center 0px;
+    background-position: center center;
+    background-repeat: no-repeat; 
 }
 
-.arrow.upmod { 
-    background: url(/static/aupmod.png); 
-    background-repeat: no-repeat;
-    background-position: center 0px; }
-.arrow.downmod { 
-    background: url(/static/adownmod.png); 
-    background-repeat: no-repeat;
-    background-position: center 0px; }
-.arrow.up { 
-    background: url(/static/aupgray.png); 
-    background-repeat: no-repeat; 
-    background-position: center 0px; }
-.arrow.down { 
-    background: url(/static/adowngray.png); 
-    background-repeat: no-repeat; 
-    background-position: center 0px;}
+.arrow.upmod { background-image: url(/static/aupmod.png); }
+.arrow.downmod { background-image: url(/static/adownmod.png); }
+.arrow.up { background-image: url(/static/aupgray.png); }
+.arrow.down { background-image: url(/static/adowngray.png); }
 
 .midcol { 
     float: left; 
@@ -1196,7 +1192,12 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 #preview { float: right; width: 20em; margin-right: 10px; }
 #preview span { color: lightgray;  }
-#preview #previewbox { border: .2em dashed lightgray; padding: 1em; }
+#preview #previewbox {
+  border-width: .2em;
+  border-style: dashed;
+  border-color: lightgray;
+  padding: 1em;
+}
 
 .pretty-form { 
     font-size: larger;
@@ -1204,6 +1205,7 @@ a.star { text-decoration: none; color: #ff8b60 }
  }
 
 .pretty-form input[type=checkbox] {margin: 3px .5em;}
+.pretty-form p {margin: 3px .5em;}
 .pretty-form input[type=radio] {margin: 3px .5em 0px .5em; vertical-align:top}
 .pretty-form img { margin: 3px .5em}
 .pretty-form input[type=text],
@@ -1279,4 +1281,64 @@ a.star { text-decoration: none; color: #ff8b60 }
     margin: 0px 5px; 
     overflow: hidden;
 }
+
+
+/* CSS customisation page */
+
+.stylesheet-customize-container { }
+.stylesheet-customize-container textarea { margin: 0; padding: 0px; }
+
+.sheets { margin-right: 315px; }
+.sheets .col { float: left;  }
+.sheets .col > div { margin: 0 5px; }
+.sheets .col textarea { width: 100% }
+.sheets .buttons { margin-left: 5px }
+.sheets .btn { margin-left: 0px; margin-right: 5px; }
+.sheets .btn.right { float: right; margin-right: 3px;}
+
+.stylesheet-customize-container h2 { margin-top: 15px; margin-bottom: 10px;  }
+
+#validation-errors { 
+    margin-left: 40px; 
+    margin-top: 10px; 
+    list-style-type: disc;
+}
+
+#validation-errors a,
+#validation-errors li,
+.errors h2 { color: red }
+
+#validation-errors a:hover { text-decoration: underline; }
+#validation-errors pre { padding: 10px; color: black; }
+
+#preview-table { 
+    padding-right: 15px;  
+}
+#preview-table > table {  
+    border-width: .2em;
+    border-style: dashed;
+    border-color: lightgray;
+    padding: 5px; 
+    margin: 5px; 
+    width: 100%;
+}
+
+#preview-table > table > tbody > tr { padding-bottom: 10px;  }
+#preview-table > table > tbody > tr > td { padding: 5px; padding-right: 15px;}
+#preview-table > table > tbody > tr > th { padding: 5px; padding-right: 15px;}
+#preview-table > table > tbody > tr > th { 
+    font-weight: bold; 
+    vertical-align: top;
+    font-size: larger;
+    text-align: right;
+}
+
+#header-img-preview-container {
+    border-width: .2em;
+    border-style: dashed;
+    border-color: lightgray;
+    padding: 5px; 
+    margin: 5px; 
+    float: left;
+}    
 

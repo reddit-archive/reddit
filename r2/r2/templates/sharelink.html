@@ -17,7 +17,8 @@
           </label>
         </th>
         <td>
-          <textarea id="share_to_${thing.link_name}" name="share_to" rows="4">
+          <textarea id="share_to_${thing.link_name}" 
+                    name="share_to" rows="4" cols="40">
             ${unsafe('&#x0D;&#x0A;'.join(websafe(e) for e in thing.emails))}
           </textarea>
         </td>
@@ -55,7 +56,7 @@
           </span>
         </th>
         <td>
-          <input name="replyto" type="text" size="30"
+          <input name="replyto_${thing.link_name}" type="text" size="30"
                  value="${c.user.email if hasattr(c.user, 'email') else ''}"/>
         </td>
         <td>
@@ -74,7 +75,7 @@
           </span>
         </th>
         <td>
-          <textarea id="message_${thing.link_name}" name="message" rows="4">
+          <textarea id="message_${thing.link_name}" name="message" rows="4" cols="40">
             ${c.user.name} from http://${g.domain}/ has shared a link with you.
           </textarea>
         </td>
