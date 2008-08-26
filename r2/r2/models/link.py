@@ -63,7 +63,7 @@ class Link(Thing, Printable):
 
     #TODO get the subreddit?
     @classmethod
-    def _by_url(cls, url, sr = None):
+    def _by_url(cls, url, sr):
         from subreddit import Default
         #force sr to be None for caching purposes
         if sr in (False, Default):
@@ -442,7 +442,8 @@ class MoreComments(object):
         if parent:
             self.parent_id = parent._id
             self.parent_name = parent._fullname
-            self.parent_permalink = parent.make_permalink(link)
+            self.parent_permalink = parent.make_permalink(link, 
+                                                          link.subreddit_slow)
         self.link_name = link._fullname
         self.link_id = link._id
         self.depth = depth
