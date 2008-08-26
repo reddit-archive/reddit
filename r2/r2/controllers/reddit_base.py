@@ -321,7 +321,7 @@ class RedditController(BaseController):
         key = ''.join((str(c.lang),
                        str(c.content_langs),
                        request.host,
-                       c.cname, 
+                       str(c.cname), 
                        request.fullpath,
                        str(c.firsttime),
                        str(c.over18)))
