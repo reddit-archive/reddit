@@ -1035,7 +1035,7 @@ class ApiController(RedditController):
         uh = request.get.get('uh', "")
 
         try:
-            links = Link._by_url(url)
+            links = Link._by_url(url,None)
         except:
             links = []
 

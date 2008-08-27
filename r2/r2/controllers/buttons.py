@@ -41,7 +41,7 @@ class ButtonsController(RedditController):
               css = nop('css'))
     def GET_button_content(self, url, title, css):
         try:
-            links = Link._by_url(url)
+            links = Link._by_url(url,None)
             #find the one with the highest score
             l = max(links, key = lambda x: x._score)
         
