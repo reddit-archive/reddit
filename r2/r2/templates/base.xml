@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -19,22 +19,32 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
-<?xml version="1.0" encoding="UTF-8"?>
 <%!
-   from pylons.i18n import _
+   from r2.models.subreddit import DefaultSR
 %>
-
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
+     xmlns:media="http://search.yahoo.com/mrss">
   <channel>
     <title>${self.Title()}</title>        
     <link>http://${c.domain}${c.site.path}</link>
     <description>${c.site.description or ''}</description>
+    <image>
+      <%
+        if g.css_killswitch or not c.site.header:
+            header_img = DefaultSR.header
+        else:
+            header_img = c.site.header
+      %>
+      <url>${header_img}</url>
+      <title>${self.Title()}</title>
+      <link>http://${c.domain}${c.site.path}</link>
+    </image>
     ${next.body()}
   </channel>
 </rss>  
 
 <%def name="Title()">
-${c.site.name}: ${_("what's new online")}
+  ${c.site.name}: ${_("what's new online")}
 </%def>
 

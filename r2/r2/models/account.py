@@ -59,7 +59,7 @@ class Account(Thing):
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
-                     pref_media = 'off',
+                     pref_media = 'subreddit',
                      share = {},
                      )
 
