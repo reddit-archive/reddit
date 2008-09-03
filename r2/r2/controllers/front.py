@@ -368,6 +368,22 @@ class FrontController(RedditController):
                 stylesheet_contents = ''
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
+        elif is_moderator and location == 'reports':
+            links = Link._query(Link.c.reported != 0,
+                                Link.c._spam == False)
+            comments = Comment._query(Comment.c.reported != 0,
+                                      Comment.c._spam == False)
+            query = thing.Merge((links, comments),
+                                sort = desc('_date'),
+                                data = True,
+                                *c.site.query_rules())
+            
+            builder = QueryBuilder(query, num = num, after = after, 
+                                   count = count, reverse = reverse,
+                                   wrap = ListingController.builder_wrapper)
+            listing = LinkListing(builder)
+            pane = listing.listing()
+
         elif is_moderator and location == 'spam':
             links = Link._query(Link.c._spam == True)
             comments = Comment._query(Comment.c._spam == True)

@@ -766,3 +766,4 @@ def title_to_url(title, max_length = 50):
         if (last_word > 0):
             title = title[:last_word]
     return title
+
