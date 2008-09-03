@@ -883,7 +883,7 @@ class ApiController(RedditController):
         elif res._chk_errors((errors.NO_TITLE, errors.TITLE_TOO_LONG)):
             res._hide('example_title')
             res._focus('title')
-        elif res._chk_error(errors.INVALID_SUBREDDIT_TYPE):
+        elif res._chk_error(errors.INVALID_OPTION):
             pass
         elif res._chk_errors((errors.BAD_CNAME, errors.USED_CNAME)):
             res._hide('example_domain')

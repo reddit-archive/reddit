@@ -299,7 +299,6 @@ function gotoTextboxLine(textboxID, lineNo) {
 
 function uploadHeaderImage(status) {
   var form = $('upload-header-image');
-  var iframe = $('upload-header-iframe');
 
   form.op.value = 'upload';
   $('img-status').innerHTML = status;
@@ -312,7 +311,6 @@ function uploadHeaderImage(status) {
 
 function deleteHeaderImage(status) {
   var form = $('upload-header-image');
-  var iframe = $('upload-header-iframe');
 
   form.reset();
   form.op.value = 'delete';
@@ -337,6 +335,7 @@ function completedUploadHeaderImage(status,img_src,op) {
   } else {
     $('header-img-preview').src = img_src;
     show('delete-header-img');
+    hide('submit-header-img');
     show('header-img-preview-container');
   }
 }

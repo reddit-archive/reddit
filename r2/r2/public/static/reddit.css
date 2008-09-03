@@ -47,17 +47,16 @@ a:focus { -moz-outline-style: none; }
 div.autosize { display: table; width: 1px}
 div.autosize > div { display: table-cell; }
 
-.btn { background-color:#e9e9e9; border: 1px solid #369; padding: 2px;}
-
 input.txt {
     background-color:#f7f7f7;
     border: 1px solid #369; 
 }
 
+input[type=checkbox], input[type=radio] { margin-top: .4em; }
+
 /* forms */
 
 .iform th { text-align: right; color: black; font-weight: normal; text-transform: lowercase; }
-.iform button {background-color:#e9e9e9; border: 1px solid #369; vertical-align: bottom}
 .wrong {color: red; font-weight: normal}
 
 .subform input.text { width: 25em }
@@ -586,8 +585,9 @@ before enabling */
 
 .infobar {
     background-color: #f6e69f;
-    padding: 0px 10px;
+    padding: 5px 10px;
     margin: 5px 310px 5px 5px;
+    border: 1px solid orange;
 }
 
 .menuarea {
@@ -756,9 +756,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     float: left; 
 }
 .commentreply .buttons button { 
-    margin: 0px; 
-    margin-right: 5px;
-    border-top: none;
+    margin: 5px; 
 }
 
 .commentreply table.help { 
@@ -914,9 +912,6 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .login-form-side button {
-    font-size: 12px;
-    padding: 2px 3px 2px 3px;
-    width: 4em;
     float: right;
 }
 
@@ -1028,13 +1023,6 @@ a.star { text-decoration: none; color: #ff8b60 }
     padding: 1px;
 }
 
-.loginform button { 
-    border: 1px solid #369; 
-    background-color:#e9e9e9; 
-    margin-left: 5px; 
-    margin-right: 10px;
-}
-
 .loginform #captcha { 
     width: 250px;
  }
@@ -1082,7 +1070,6 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .usertable { margin-left: 10px;} 
-.usertable .pretty-form button { padding: 0px 3px; } /*overwrite pretty-form*/
 .usertable { font-size: larger }
 .usertable td { padding: 0 .7em }
 .usertable { white-space: nowrap }
@@ -1204,21 +1191,30 @@ a.star { text-decoration: none; color: #ff8b60 }
     vertical-align: top; 
  }
 
-.pretty-form input[type=checkbox] {margin: 3px .5em;}
-.pretty-form p {margin: 3px .5em;}
-.pretty-form input[type=radio] {margin: 3px .5em 0px .5em; vertical-align:top}
+.pretty-form p {margin: 3px ;}
+.pretty-form input[type=checkbox],
+.pretty-form input[type=radio] {margin: 2px .5em 0px .5em; }
 .pretty-form img { margin: 3px .5em}
 .pretty-form input[type=text],
 .pretty-form textarea,
-.pretty-form input[type=password] { border: 1px solid gray; width: 25em}
+.pretty-form input[type=password] {
+    border: 1px solid gray;
+    width: 300px; 
+    padding: 2px;
+}
+
+.pretty-form .infobar { 
+    width: 285px; 
+    margin: 5px;
+ }
 
 .pretty-form input[type=text],
+.pretty-form input[type=file],
 .pretty-form input[type=password],
 .pretty-form select,
 .pretty-form b,
 .pretty-form textarea,
-.pretty-form button  { margin: 3px .5em; padding: 1px; }
-.pretty-form button  { padding: 2px}
+.pretty-form button  { margin: 3px .5em; }
 .pretty-form th { text-align: right }
 
 /*pref page boxes*/
@@ -1246,14 +1242,17 @@ a.star { text-decoration: none; color: #ff8b60 }
 .opt-form { font-size: larger }
 .opt-form form { display: inline; }
 
+/* pref table - used for preferences and edit subreddit pages */
 .preftable th { 
     padding: 10px; 
     font-weight: bold; 
     vertical-align: top;
-    text-align: left;
+    text-align: right;
 }
-.preftable td.prefright { padding: 10px }
-.preftable .spacer { margin-top: 5px; margin-bottom: 5px; }
+.preftable td.prefright { padding: 8px 0;}
+.preftable .spacer { margin-bottom: 5px; }
+.preftable .note { width: 100%; vertical-align: top; padding-top: 10px; }
+.save-button { margin-left: 5px; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 

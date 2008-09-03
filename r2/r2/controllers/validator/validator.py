@@ -623,7 +623,7 @@ class VOneOf(Validator):
 
     def run(self, val):
         if self.options and val not in self.options:
-            c.errors.add(errors.INVALID_SUBREDDIT_TYPE)
+            c.errors.add(errors.INVALID_OPTION)
             return self.default
         else:
             return val

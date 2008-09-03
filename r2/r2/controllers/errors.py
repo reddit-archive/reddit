@@ -59,7 +59,7 @@ error_list = dict((
         ('BANNED_DOMAIN', "Domain banned"),
         ('BAD_CNAME', "that domain isn't going to work"),
         ('USED_CNAME', "that cname is already in use"),
-        ('INVALID_SUBREDDIT_TYPE', _('that option is not valid')),
+        ('INVALID_OPTION', _('that option is not valid')),
         ('DESC_TOO_LONG', _('description is too long')),
         ('CHEATER', 'what do you think you\'re doing there?'),
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),

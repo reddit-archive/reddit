@@ -113,14 +113,10 @@
   <tr>
     <th>${_("link options")}</th>
     <td class="prefright">
-      ${checkbox(_("show me new links on the front page"), "organic")}
-      <br/>
-      ${checkbox(_("compress the link display"), "compress")}
-      <br/>
-      ${checkbox(_("don't show links after i've liked them"), "hide_ups")}
-      <br/>
-      ${checkbox(_("don't show links after i've disliked them"), "hide_downs")}
-      <br/>
+      <p>${checkbox(_("show me new links on the front page"), "organic")}</p>
+      <p>${checkbox(_("compress the link display"), "compress")}</p>
+      <p>${checkbox(_("don't show links after i've liked them"), "hide_ups")}</p>
+      <p>${checkbox(_("don't show links after i've disliked them"), "hide_downs")}</p>
       <%
          # stuff I can soon delete:
          _("display")
@@ -129,15 +125,18 @@
          _("don't show me comments with a score less than")
          _("comments by default")
          %>
-      ${unsafe(_("display %(num)s links at once") % \
-      dict(num=capture(link_options)))}
-      <br/>
+      <p>
+        ${unsafe(_("display %(num)s links at once") % \
+        dict(num=capture(link_options)))}
+      </p>
       <% 
          input = capture(num_input, c.user.pref_min_link_score,
          'min_link_score')
          %>
+      <p>
       ${unsafe(_("don't show me sites with a score less than %(num)s") % dict(num = input))}
       &#32;<span class="little gray">${_("(blank for none)")}</span>
+      </p>
     </td>
   </tr>
   <tr>
@@ -147,10 +146,12 @@
        input = capture(num_input, c.user.pref_min_comment_score,
                        'min_comment_score')
        %>
-    ${unsafe(_("don't show me comments with a score less than %(num)s") % dict(num = input))}
-    &#32;<span class="little gray">${_("(blank for none)")}</span>
-    <br/>
-    <% 
+    <p>
+      ${unsafe(_("don't show me comments with a score less than %(num)s") % dict(num = input))}
+      &#32;<span class="little gray">${_("(blank for none)")}</span>
+    </p>
+    <p>
+      <% 
        input = capture(num_input, c.user.pref_num_comments,
        'num_comments')
        %>
