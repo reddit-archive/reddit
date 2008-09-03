@@ -22,6 +22,7 @@
 from utils import *
 from http_utils import *
 from thing_utils import *
+from cmd_utils import *
 
 try:
     from r2admin.lib.admin_utils import *
