@@ -75,12 +75,12 @@
         %if thing.isFriend:
           <input type="hidden" name="action" value="remove"/>
           <input type="hidden" name="toggled_action" value="add"/>
-          <input type="hidden" name="toggled_label" value='${_("add to friends")}'/>
+          <input type="hidden" name="toggled_label" value="${_('add to friends')}"/>
           <a onclick="return toggle(this, 'friend');" href="#">${_("remove from friends")}</a>
         %else:
           <input type="hidden" name="toggled_action" value="remove"/>
           <input type="hidden" name="action" value="add"/>
-          <input type="hidden" name="toggled_label"  value='${_("remove from friends")}'/>
+          <input type="hidden" name="toggled_label"  value="${_('remove from friends')}"/>
           <a onclick="return toggle(this, 'friend')" href="#">${_("add to friends")}</a>
         %endif
       </form>
