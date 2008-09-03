@@ -286,7 +286,7 @@ class Report(MultiRelation('report',
         reports = {}
         for t_cls in (Link, Comment, Message):
             q = t_cls._query(t_cls.c._spam == False,
-                             t_cls.c.reported > 0,
+                             t_cls.c.reported != 0,
                              data = True)
             q._sort = desc("_date")
             if time:
