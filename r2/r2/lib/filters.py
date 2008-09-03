@@ -96,6 +96,7 @@ r_url = re.compile('(?<![\(\[])(http://[^\s\'\"\]\)]+)')
 jscript_url = re.compile('<a href="(?!http|ftp|mailto|/).*</a>', re.I | re.S)
 href_re = re.compile('<a href="([^"]+)"', re.I | re.S)
 code_re = re.compile('<code>([^<]+)</code>')
+a_re    = re.compile('>([^<]+)</a>')
 
 
 #TODO markdown should be looked up in batch?
@@ -122,9 +123,14 @@ def safemarkdown(text):
         def code_handler(m):
             l = m.group(1)
             return '<code>%s</code>' % l.replace('&amp;','&')
+        #unescape double escaping in links
+        def inner_a_handler(m):
+            l = m.group(1)
+            return '>%s</a>' % l.replace('&amp;','&')
         # remove the "&" escaping in urls
         text = href_re.sub(href_handler, text)
         text = code_re.sub(code_handler, text)
+        text = a_re.sub(inner_a_handler, text)
         return MD_START + text + MD_END
 
 
