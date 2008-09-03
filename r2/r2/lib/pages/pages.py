@@ -257,8 +257,7 @@ class SubredditInfoBar(Wrapped):
             if c.site.type != 'public':
                 buttons.append(NavButton(plurals.contributors, 'contributors'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
-                            NamedButton('spam'),
-                            NamedButton('reports')])
+                            NamedButton('spam')])
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
 
 class SideBox(Wrapped):
