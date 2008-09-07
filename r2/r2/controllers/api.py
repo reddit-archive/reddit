@@ -173,6 +173,9 @@ class ApiController(RedditController):
             res._update('to', value='')
             res._update('subject', value='')
             res._update('message', value='')
+
+            if g.write_query_queue:
+                queries.new_message(m)
         else:
             res._update('success', innerHTML='')
 
@@ -630,6 +633,12 @@ class ApiController(RedditController):
             set_last_modified(c.user, 'commented')
             set_last_modified(link, 'comments')
 
+        #update the queries
+        if g.write_query_queue:
+            if is_message:
+                queries.new_message(item)
+            else:
+                queries.new_comment(item)
 
         #set the ratelimiter
         if should_ratelimit:
@@ -957,18 +966,18 @@ class ApiController(RedditController):
               VModhash(),
               thing = VByName('id'))
     def POST_save(self, res, thing):
-        user = c.user
-        thing._save(user)
-
+        thing._save(c.user)
+        if g.write_query_queue:
+            queries.new_savehide(c.user, 'save')
 
     @Json
     @validate(VUser(),
               VModhash(),
               thing = VByName('id'))
     def POST_unsave(self, res, thing):
-        user = c.user
-        thing._unsave(user)
-
+        thing._unsave(c.user)
+        if g.write_query_queue:
+            queries.new_savehide(c.user, 'save')
 
     @Json
     @validate(VUser(),
@@ -976,7 +985,8 @@ class ApiController(RedditController):
               thing = VByName('id'))
     def POST_hide(self, res, thing):
         thing._hide(c.user)
-
+        if g.write_query_queue:
+            queries.new_savehide(c.user, 'hide')
 
     @Json
     @validate(VUser(),
@@ -984,6 +994,9 @@ class ApiController(RedditController):
               thing = VByName('id'))
     def POST_unhide(self, res, thing):
         thing._unhide(c.user)
+        if g.write_query_queue:
+            queries.new_savehide(c.user, 'hide')
+
 
     @Json
     @validate(link = VByName('link_id'),

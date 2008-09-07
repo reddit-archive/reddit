@@ -29,10 +29,13 @@ from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot, get_hot
 from r2.lib.recommendation import get_recommended
-from r2.lib.db.thing import Query
+from r2.lib.db.thing import Query, Merge, Relations
+from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
-from r2.lib.utils import iters
+from r2.lib.utils import iters, check_cheating
+
+from admin import admin_profile_query
 
 from pylons.i18n import _
 
@@ -67,6 +70,9 @@ class ListingController(RedditController):
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
 
+    #extra parameters to send to the render_cls constructor
+    render_params = {}
+
     @property
     def menus(self):
         """list of menus underneat the header (e.g., sort, time, kind,
@@ -91,7 +97,8 @@ class ListingController(RedditController):
                                show_sidebar = self.show_sidebar, 
                                nav_menus = self.menus, 
                                title = self.title(),
-                               infotext = self.infotext).render()
+                               infotext = self.infotext,
+                               **self.render_params).render()
         return res
 
 
@@ -230,16 +237,18 @@ class HotController(FixListing, ListingController):
         return ListingController.GET_listing(self, **env)
 
 class SavedController(ListingController):
-    prewrap_fn = lambda self, x: x._thing2
     where = 'saved'
     skip = False
     title_text = _('saved')
 
     def query(self):
-        q = SaveHide._query(SaveHide.c._thing1_id == c.user._id,
-                            SaveHide.c._name == 'save',
-                            sort = desc('_date'),
-                            eager_load = True, thing_data = True)
+        q = queries.get_saved(c.user)
+        if g.use_query_cache:
+            q = q.fetch()
+        else:
+            self.prewrap_fn = q.filter
+            q = q.query
+
         return q
 
     @validate(VUser())
@@ -340,6 +349,96 @@ class RecommendedController(ListingController):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
 
+class UserController(ListingController):
+    render_cls = ProfilePage
+    skip = False
+
+    def title(self):
+        titles = {'overview': _("overview for %(user)s"),
+                  'comments': _("comments by %(user)s"),
+                  'submitted': _("submitted by %(user)s"),
+                  'liked': _("liked by %(user)s"),
+                  'disliked': _("disliked by %(user)s"),
+                  'hidden': _("hidden by %(user)s")}
+        title = titles.get(self.where, _('profile for %(user)s')) \
+            % dict(user = self.vuser.name, site = c.site.name)
+        return title
+
+    def query(self):
+        q = None
+        if self.where == 'overview':
+            self.check_modified(self.vuser, 'overview')
+            if g.use_query_cache:
+                q = queries.get_overview(self.vuser, 'new', 'all')
+            else:
+                links = Link._query(Link.c.author_id == self.vuser._id,
+                                    Link.c._spam == (True, False))
+                comments = Comment._query(Comment.c.author_id == self.vuser._id,
+                                          Comment.c._spam == (True, False))
+                q = Merge((links, comments), sort = desc('_date'), data = True)
+        elif self.where == 'comments':
+            self.check_modified(self.vuser, 'commented')
+            q = queries.get_comments(self.vuser, 'new', 'all')
+        elif self.where == 'submitted':
+            self.check_modified(self.vuser, 'submitted')
+            q = queries.get_submitted(self.vuser, 'new', 'all')
+        elif self.where in ('liked', 'disliked'):
+            self.check_modified(self.vuser, self.where)
+            if self.where == 'liked':
+                q = queries.get_liked(self.vuser)
+            else:
+                q = queries.get_disliked(self.vuser)
+                
+        elif self.where == 'hidden':
+            q = queries.get_hidden(self.vuser)
+
+        elif c.user_is_admin:
+            q, self.prewrap_fn = admin_profile_query(self.vuser,
+                                                     self.where,
+                                                     desc('_date'))
+            
+        #QUERIES HACK
+        if isinstance(q, queries.CachedResults):
+            if g.use_query_cache:
+                q = q.fetch()
+            elif isinstance(q.query, Relations):
+                self.prewrap_fn = q.filter
+                q = q.query
+            else:
+                q = q.query
+
+        if q is None:
+            return self.abort404()
+
+        return q 
+
+    @validate(vuser = VExistingUname('username'))
+    def GET_listing(self, where, vuser, **env):
+        self.where = where
+
+        # the validator will ensure that vuser is a valid account
+        if not vuser:
+            return self.abort404()
+
+        # hide spammers profile pages
+        if (not c.user_is_loggedin or 
+            (c.user._id != vuser._id and not c.user_is_admin)) \
+               and vuser._spam:
+            return self.abort404()
+
+        if (where not in ('overview', 'submitted', 'comments')
+            and not votes_visible(vuser)):
+            return self.abort404()
+
+        check_cheating('user')
+            
+        self.vuser = vuser
+        self.render_params = {'user' : vuser}
+        c.profilepage = True
+
+        return ListingController.GET_listing(self, **env)
+
+
 class MessageController(ListingController):
     show_sidebar = False
     render_cls = MessagePage
@@ -364,10 +463,13 @@ class MessageController(ListingController):
 
     def query(self):
         if self.where == 'inbox':
-            q = Inbox._query(Inbox.c._thing1_id == c.user._id,
-                             eager_load = True,
-                             thing_data = True)
-            self.prewrap_fn = lambda x: x._thing2
+            if g.use_query_cache:
+                q = queries.get_inbox(c.user)
+            else:
+                q = Inbox._query(Inbox.c._thing1_id == c.user._id,
+                                 eager_load = True,
+                                 thing_data = True)
+                self.prewrap_fn = lambda x: x._thing2
 
             #reset the inbox
             if c.have_messages:
@@ -375,15 +477,13 @@ class MessageController(ListingController):
                 c.user._commit()
 
         elif self.where == 'sent':
-            q = Message._query(Message.c.author_id == c.user._id,
-                               Message.c._spam == (True, False))
+            q = queries.get_sent(c.user)
+            if g.use_query_cache:
+                q = q.fetch()
+            else:
+                q = q.query
 
-        q._sort = desc('_date')
         return q
-
-    def content(self):
-        self.page = self.listing_obj
-        return self.page
 
     @validate(VUser())
     def GET_listing(self, where, **env):

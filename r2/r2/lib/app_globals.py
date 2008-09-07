@@ -41,7 +41,7 @@ class Globals(object):
                  'num_comments',
                  'max_comments',
                  'num_side_reddits',
-                 'num_precompute_workers',
+                 'num_query_queue_workers',
                  ]
     
     bool_props = ['debug', 'translator', 

@@ -30,6 +30,7 @@ from listingcontroller import MessageController
 from listingcontroller import RedditsController
 from listingcontroller import MyredditsController
 from listingcontroller import RandomrisingController
+from listingcontroller import UserController
 
 from feedback import FeedbackController
 from front import FrontController

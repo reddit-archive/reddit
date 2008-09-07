@@ -102,7 +102,7 @@ def run():
         #limit the total number of jobs in the WorkQueue. we don't
         #need to load the entire db queue right away (the db queue can
         #get quite large).
-        if wq.jobs.qsize() < 2 * num_workers:
+        if len(running) < 2 * num_workers:
             with running_lock:
                 iden, pickled_cr = get_query()
                 if pickled_cr is not None:

@@ -74,8 +74,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
     
-    mc('/user/:username/:location', controller='front', action='user',
-       location='overview')
+    mc('/user/:username/:where', controller='user', action='listing',
+       where='overview')
     
     mc('/prefs/:location', controller='front',
        action='prefs', location='options')

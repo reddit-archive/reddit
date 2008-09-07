@@ -35,7 +35,7 @@ import logging
 log_format = logging.Formatter('sql: %(message)s')
 
 settings = storage()
-settings.DEBUG = False
+settings.DEBUG = g.debug
 settings.DB_CREATE_TABLES = True
 settings.DB_APP_NAME = 'reddit'
 

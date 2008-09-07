@@ -67,7 +67,8 @@ class CachedResults(object):
             item = self.filter(i)
             l = [item._fullname]
             for col in sort_cols:
-                attr = getattr(item, col)
+                #take the property of the original 
+                attr = getattr(i, col)
                 #convert dates to epochs to take less space
                 if isinstance(attr, datetime):
                     attr = epoch_seconds(attr)
@@ -149,7 +150,9 @@ def user_rel_query(rel, user, name):
                    rel.c._t2_deleted == False,
                    rel.c._name == name,
                    sort = desc('_date'),
-                   eager_load = True)
+                   eager_load = True,
+                   #thing_data = True
+                   )
        
     return CachedResults(q, filter_thing2)
 
@@ -219,20 +222,18 @@ def add_queries(queries):
 ## actions to update the correct listings.
 def new_link(link):
     sr = Subreddit._byID(link.sr_id)
-    #author = Account._byID(link.author_id)
+    author = Account._byID(link.author_id)
 
     results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-    #results.extend(all_queries(get_submitted, author,
-    #                           db_sorts.keys(),
-    #                           db_times.keys()))
+    results.append(get_submitted(author, 'new', 'all'))
 
     add_queries(results)
 
 def new_comment(comment):
     author = Account._byID(comment.author_id)
-    results = all_queries(get_comments, author, db_sorts.keys(), db_times.keys())
-
+    results = [get_comments(author, 'new', 'all')]
+    
     if hasattr(comment, 'parent_id'):
         parent = Comment._byID(comment.parent_id, data = True)
         parent_author = Account._byID(parent.author_id)
@@ -252,8 +253,8 @@ def new_vote(vote):
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
     
     #must update both because we don't know if it's a changed vote
-    #results.append(get_liked(user))
-    #results.append(get_disliked(user))
+    results.append(get_liked(user))
+    results.append(get_disliked(user))
 
     add_queries(results)
     
@@ -266,11 +267,10 @@ def new_message(message):
 
     add_queries(results)
 
-def new_savehide(savehide):
-    user = savehide._thing1
-    if savehide._name == 'save':
+def new_savehide(user, action):
+    if action == 'save':
         results = [get_saved(user)]
-    else:
+    elif action == 'hide':
         results = [get_hidden(user)]
         
     add_queries(results)
@@ -283,16 +283,40 @@ def add_all_srs():
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
 
 def add_all_users():
-    """Adds every profile-page query for every user to the queue"""
     q = Account._query(sort = asc('_date'))
     for user in fetch_things2(q):
-        queries = []
-        queries.extend(all_queries(get_submitted, user, db_sorts.keys(), db_times.keys()))
-        queries.extend(all_queries(get_comments, user, db_sorts.keys(), db_times.keys()))
-        queries.append(get_inbox_messages(user))
-        queries.append(get_inbox_comments(user))
-        queries.append(get_saved(user))
-        queries.append(get_hidden(user))
-        queries.append(get_liked(user))
-        queries.append(get_disliked(user))
-        add_queries(queries)
+        results = [get_inbox_messages(user),
+                   get_inbox_comments(user),
+                   get_sent(user),
+                   get_liked(user),
+                   get_disliked(user),
+                   get_saved(user),
+                   get_hidden(user),
+                   get_submitted(user, 'new', 'all'),
+                   get_comments(user, 'new', 'all')]
+        add_queries(results)
+
+def compute_all_inboxes():
+    q = Account._query(sort = asc('_date'))
+    for user in fetch_things2(q):
+        get_inbox_messages(user).update()
+        get_inbox_comments(user).update()
+        get_sent(user).update()
+
+def compute_all_liked():
+    q = Account._query(sort = asc('_date'))
+    for user in fetch_things2(q):
+        get_liked(user).update()
+        get_disliked(user).update()
+
+def compute_all_saved():
+    q = Account._query(sort = asc('_date'))
+    for user in fetch_things2(q):
+        get_saved(user).update()
+        get_hidden(user).update()
+
+def compute_all_user_pages():
+    q = Account._query(sort = asc('_date'))
+    for user in fetch_things2(q):
+        get_submitted(user, 'new', 'all').update()
+        get_comments(user, 'new', 'all').update()
