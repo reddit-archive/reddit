@@ -352,6 +352,7 @@ class RecommendedController(ListingController):
 class UserController(ListingController):
     render_cls = ProfilePage
     skip = False
+    show_nums = False
 
     def title(self):
         titles = {'overview': _("overview for %(user)s"),

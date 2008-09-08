@@ -47,6 +47,7 @@ class CachedResults(object):
         self.query._limit = precompute_limit
         self.filter = filter
         self.iden = self.query._iden()
+        self.sort_cols = [s.col for s in self.query._sort]
         self.data = []
         self._fetched = False
 
@@ -57,25 +58,61 @@ class CachedResults(object):
             self.data = query_cache.get(self.iden) or []
         return list(self)
 
+    def make_item_tuple(self, item):
+        """Given a single 'item' from the result of a query build the tuple
+        that will be stored in the query cache. It is effectively the
+        fullname of the item after passing through the filter plus the
+        columns of the unfiltered item to sort by."""
+        filtered_item = self.filter(item)
+        lst = [filtered_item._fullname]
+        for col in self.sort_cols:
+            #take the property of the original 
+            attr = getattr(item, col)
+            #convert dates to epochs to take less space
+            if isinstance(attr, datetime):
+                attr = epoch_seconds(attr)
+            lst.append(attr)
+        return tuple(lst)
+
+    def can_insert(self):
+        """True if a new item can just be inserted, which is when the
+        query is only sorted by date."""
+        return self.query._sort == [desc('_date')]
+
+    def can_delete(self):
+        """True if a item can be removed from the listing, always true for now."""
+        return True
+
+    def insert(self, item):
+        """Inserts the item at the front of the cached data. Assumes the query
+        is sorted by date descending"""
+        self.fetch()
+        t = self.make_item_tuple(item)
+        changed = False
+        if t not in self.data:
+            self.data.insert(0, t)
+            changed = True
+
+        if changed:
+            query_cache.set(self.iden, self.data)
+
+    def delete(self, item):
+        """Deletes an item from the cached data."""
+        self.fetch()
+        t = self.make_item_tuple(item)
+        changed = False
+        while t in self.data:
+            self.data.remove(t)
+            changed = True
+            
+        if changed:
+            query_cache.set(self.iden, self.data)
+        
     def update(self):
         """Runs the query and stores the result in the cache. It also stores
         the columns relevant to the sort to make merging with other
         results faster."""
-        self.data = []
-        sort_cols = [s.col for s in self.query._sort]
-        for i in self.query:
-            item = self.filter(i)
-            l = [item._fullname]
-            for col in sort_cols:
-                #take the property of the original 
-                attr = getattr(i, col)
-                #convert dates to epochs to take less space
-                if isinstance(attr, datetime):
-                    attr = epoch_seconds(attr)
-                l.append(attr)
-
-            self.data.append(tuple(l))
-        
+        self.data = [self.make_item_tuple(i) for i in self.query]
         self._fetched = True
         query_cache.set(self.iden, self.data)
 
@@ -188,6 +225,20 @@ def get_sent(user):
                        sort = desc('_date'))
     return CachedResults(q)
 
+def add_queries(queries, insert_item = None, delete_item = None):
+    """Adds multiple queries to the query queue. If insert_item or
+    delete_item is specified, the query may not need to be recomputed at
+    all."""
+    def _add_queries():
+        for q in queries:
+            if insert_item and q.can_insert():
+                q.insert(insert_item)
+            elif delete_item and q.can_delete():
+                q.delete(delete_item)
+            else:
+                query_queue.add_query(q)
+    worker.do(_add_queries)
+
 #can be rewritten to be more efficient
 def all_queries(fn, obj, *param_lists):
     """Given a fn and a first argument 'obj', calls the fn(obj, *params)
@@ -211,13 +262,6 @@ def display_jobs(jobs):
         print r
     print len(jobs)
 
-def add_queries(queries):
-    """Adds multiple queries to the query queue"""
-    def _add_queries():
-        for q in queries:
-            query_queue.add_query(q)
-    worker.do(_add_queries)
-
 ## The following functions should be called after their respective
 ## actions to update the correct listings.
 def new_link(link):
@@ -227,20 +271,25 @@ def new_link(link):
     results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
     results.append(get_submitted(author, 'new', 'all'))
+    
+    if link._deleted:
+        add_queries(results, delete_item = link)
+    else:
+        add_queries(results, insert_item = link)
 
-    add_queries(results)
-
-def new_comment(comment):
+def new_comment(comment, inbox_rel):
     author = Account._byID(comment.author_id)
-    results = [get_comments(author, 'new', 'all')]
-    
-    if hasattr(comment, 'parent_id'):
-        parent = Comment._byID(comment.parent_id, data = True)
-        parent_author = Account._byID(parent.author_id)
-        results.append(get_inbox_comments(parent_author))
+    job = [get_comments(author, 'new', 'all')]
+    if comment._deleted:
+        add_queries(job, delete_item = comment)
+    else:
+        add_queries(job, insert_item = comment)
 
-    add_queries(results)
-    
+    if inbox_rel:
+        inbox_owner = inbox_rel._thing1
+        add_queries([get_inbox_comments(inbox_owner)],
+                    insert_item = inbox_rel)
+
 def new_vote(vote):
     user = vote._thing1
     item = vote._thing2
@@ -248,32 +297,41 @@ def new_vote(vote):
     if not isinstance(item, Link):
         return
 
-    sr = item.subreddit_slow
-    results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
-    results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+    if vote.valid_thing:
+        sr = item.subreddit_slow
+        results = all_queries(get_links, sr, ('hot', 'new'), ['all'])
+        results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+        add_queries(results)
     
     #must update both because we don't know if it's a changed vote
-    results.append(get_liked(user))
-    results.append(get_disliked(user))
-
-    add_queries(results)
+    if vote._name == '1':
+        add_queries([get_liked(user)], insert_item = vote)
+        add_queries([get_disliked(user)], delete_item = vote)
+    elif vote._name == '-1':
+        add_queries([get_liked(user)], delete_item = vote)
+        add_queries([get_disliked(user)], insert_item = vote)
+    else:
+        add_queries([get_liked(user)], delete_item = vote)
+        add_queries([get_disliked(user)], delete_item = vote)
     
-def new_message(message):
+def new_message(message, inbox_rel):
     from_user = Account._byID(message.author_id)
     to_user = Account._byID(message.to_id)
 
-    results = [get_sent(from_user)]
-    results.append(get_inbox_messages(to_user))
+    add_queries([get_sent(from_user)], insert_item = message)
+    add_queries([get_inbox_messages(to_user)], insert_item = inbox_rel)
 
-    add_queries(results)
-
-def new_savehide(user, action):
-    if action == 'save':
-        results = [get_saved(user)]
-    elif action == 'hide':
-        results = [get_hidden(user)]
-        
-    add_queries(results)
+def new_savehide(rel):
+    user = rel._thing1
+    name = rel._name
+    if name == 'save':
+        add_queries([get_saved(user)], insert_item = rel)
+    elif name == 'unsave':
+        add_queries([get_saved(user)], delete_item = rel)
+    elif name == 'hide':
+        add_queries([get_hidden(user)], insert_item = rel)
+    elif name == 'unhide':
+        add_queries([get_hidden(user)], delete_item = rel)
 
 def add_all_srs():
     """Adds every listing query for every subreddit to the queue."""

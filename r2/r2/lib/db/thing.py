@@ -589,6 +589,9 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             cache.set(prefix + str((self._thing1_id,
                                     self._thing2_id,
                                     self._name)), None)
+            #temporarily set this property so the rest of this request
+            #know it's deleted. save -> unsave, hide -> unhide
+            self._name = 'un' + self._name
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True):

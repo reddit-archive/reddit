@@ -167,7 +167,7 @@ class ApiController(RedditController):
                     errors.BANNED_IP in c.errors or
                     errors.BANNED_DOMAIN in c.errors)
             
-            m = Message._new(c.user, to, subject, body, ip, spam)
+            m, inbox_rel = Message._new(c.user, to, subject, body, ip, spam)
             res._update('success',
                         innerHTML=_("your message has been delivered"))
             res._update('to', value='')
@@ -175,7 +175,7 @@ class ApiController(RedditController):
             res._update('message', value='')
 
             if g.write_query_queue:
-                queries.new_message(m)
+                queries.new_message(m, inbox_rel)
         else:
             res._update('success', innerHTML='')
 
@@ -282,7 +282,7 @@ class ApiController(RedditController):
             l.url = l.make_permalink_slow()
             l.is_self = True
             l._commit()
-        Vote.vote(c.user, l, True, ip, spam)
+        v = Vote.vote(c.user, l, True, ip, spam)
         if save == 'on':
             l._save(c.user)
         #set the ratelimiter
@@ -292,6 +292,7 @@ class ApiController(RedditController):
         #update the queries
         if g.write_query_queue:
             queries.new_link(l)
+            queries.new_vote(v)
 
         #update the modified flags
         set_last_modified(c.user, 'overview')
@@ -530,11 +531,14 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
             expire_hot(sr)
+            if g.use_query_cache:
+                queries.new_link(thing)
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
             thing._delete()
-
+            if g.use_query_cache:
+                queries.new_comment(thing, None)
 
     @Json
     @validate(VUser(), VModhash(),
@@ -614,12 +618,12 @@ class ApiController(RedditController):
             re = "re: "
             if not subject.startswith(re):
                 subject = re + subject
-            item = Message._new(c.user, to, subject, comment, ip, spam)
+            item, inbox_rel = Message._new(c.user, to, subject, comment, ip, spam)
             item.parent_id = parent._id
             res._send_things(item)
         else:
-            item =  Comment._new(c.user, link, parent_comment, comment,
-                                 ip, spam)
+            item, inbox_rel =  Comment._new(c.user, link, parent_comment, comment,
+                                            ip, spam)
             Vote.vote(c.user, item, True, ip)
             res._update("comment_reply_" + parent._fullname, 
                         innerHTML='', value='')
@@ -636,9 +640,9 @@ class ApiController(RedditController):
         #update the queries
         if g.write_query_queue:
             if is_message:
-                queries.new_message(item)
+                queries.new_message(item, inbox_rel)
             else:
-                queries.new_comment(item)
+                queries.new_comment(item, inbox_rel)
 
         #set the ratelimiter
         if should_ratelimit:
@@ -734,8 +738,9 @@ class ApiController(RedditController):
 
                 if v.valid_thing:
                     expire_hot(sr)
-                    if g.write_query_queue:
-                        queries.new_vote(v)
+
+                if g.write_query_queue:
+                    queries.new_vote(v)
 
             # flag search indexer that something has changed
             tc.changed(thing)
@@ -966,36 +971,36 @@ class ApiController(RedditController):
               VModhash(),
               thing = VByName('id'))
     def POST_save(self, res, thing):
-        thing._save(c.user)
+        r = thing._save(c.user)
         if g.write_query_queue:
-            queries.new_savehide(c.user, 'save')
+            queries.new_savehide(r)
 
     @Json
     @validate(VUser(),
               VModhash(),
               thing = VByName('id'))
     def POST_unsave(self, res, thing):
-        thing._unsave(c.user)
-        if g.write_query_queue:
-            queries.new_savehide(c.user, 'save')
+        r = thing._unsave(c.user)
+        if g.write_query_queue and r:
+            queries.new_savehide(r)
 
     @Json
     @validate(VUser(),
               VModhash(),
               thing = VByName('id'))
     def POST_hide(self, res, thing):
-        thing._hide(c.user)
+        r = thing._hide(c.user)
         if g.write_query_queue:
-            queries.new_savehide(c.user, 'hide')
+            queries.new_savehide(r)
 
     @Json
     @validate(VUser(),
               VModhash(),
               thing = VByName('id'))
     def POST_unhide(self, res, thing):
-        thing._unhide(c.user)
-        if g.write_query_queue:
-            queries.new_savehide(c.user, 'hide')
+        r = thing._unhide(c.user)
+        if g.write_query_queue and r:
+            queries.new_savehide(r)
 
 
     @Json

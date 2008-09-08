@@ -130,6 +130,7 @@ class Link(Thing, Printable):
         saved = somethinged(user, self)[(user, self, name)]
         if saved:
             saved._delete()
+            return saved
 
     @classmethod
     def _saved(cls, user, link):
@@ -307,18 +308,19 @@ class Comment(Thing, Printable):
 
         link._incr('num_comments', 1)
 
+        inbox_rel = None
         if parent:
             to = Account._byID(parent.author_id)
             # only global admins can be message spammed.
             if not c._spam or to.name in g.admins:
-                i = Inbox._add(to, c, 'inbox')
+                inbox_rel = Inbox._add(to, c, 'inbox')
 
         #clear that chache
         clear_memo('builder.link_comments2', link._id)
         from admintools import admintools
         utils.worker.do(lambda: admintools.add_thing(c))
 
-        return c
+        return (c, inbox_rel)
 
     @property
     def subreddit_slow(self):
@@ -485,13 +487,14 @@ class Message(Thing, Printable):
         #author._commit()
 
         # only global admins can be message spammed.
+        inbox_rel = None
         if not m._spam or to.name in g.admins:
-            i = Inbox._add(to, m, 'inbox')
+            inbox_rel = Inbox._add(to, m, 'inbox')
 
         from admintools import admintools
         utils.worker.do(lambda: admintools.add_thing(m))
 
-        return m
+        return (m, inbox_rel)
 
     @classmethod
     def add_props(cls, user, wrapped):
