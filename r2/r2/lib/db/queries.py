@@ -94,7 +94,7 @@ class CachedResults(object):
             changed = True
 
         if changed:
-            query_cache.set(self.iden, self.data)
+            query_cache.set(self.iden, self.data[:precompute_limit])
 
     def delete(self, item):
         """Deletes an item from the cached data."""
