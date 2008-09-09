@@ -340,41 +340,27 @@ def add_all_srs():
         add_queries(all_queries(get_links, sr, ('hot', 'new', 'old'), ['all']))
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
 
+def update_user(user):
+    if isinstance(user, str):
+        user = Account._by_name(user)
+    elif isinstance(user, int):
+        user = Account._byID(user)
+
+    results = [get_inbox_messages(user),
+               get_inbox_comments(user),
+               get_sent(user),
+               get_liked(user),
+               get_disliked(user),
+               get_saved(user),
+               get_hidden(user),
+               get_submitted(user, 'new', 'all'),
+               get_comments(user, 'new', 'all')]
+    add_queries(results)
+
 def add_all_users():
     q = Account._query(sort = asc('_date'))
     for user in fetch_things2(q):
-        results = [get_inbox_messages(user),
-                   get_inbox_comments(user),
-                   get_sent(user),
-                   get_liked(user),
-                   get_disliked(user),
-                   get_saved(user),
-                   get_hidden(user),
-                   get_submitted(user, 'new', 'all'),
-                   get_comments(user, 'new', 'all')]
-        add_queries(results)
+        update_user(user)
+        
 
-def compute_all_inboxes():
-    q = Account._query(sort = asc('_date'))
-    for user in fetch_things2(q):
-        get_inbox_messages(user).update()
-        get_inbox_comments(user).update()
-        get_sent(user).update()
 
-def compute_all_liked():
-    q = Account._query(sort = asc('_date'))
-    for user in fetch_things2(q):
-        get_liked(user).update()
-        get_disliked(user).update()
-
-def compute_all_saved():
-    q = Account._query(sort = asc('_date'))
-    for user in fetch_things2(q):
-        get_saved(user).update()
-        get_hidden(user).update()
-
-def compute_all_user_pages():
-    q = Account._query(sort = asc('_date'))
-    for user in fetch_things2(q):
-        get_submitted(user, 'new', 'all').update()
-        get_comments(user, 'new', 'all').update()
