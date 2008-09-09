@@ -5,22 +5,46 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
-<head>
-<title>${thing.title}</title>
+  <head>
+    <title>${thing.title}</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    %if thing.original_path:
+      <link rel="alternate" type="application/rss+xml" title="RSS"
+            href="${join_urls(thing.original_path,'.rss')}" />
+    %endif
+    
+  </head>
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="alternate" type="application/rss+xml" title="RSS"
-      href="${join_urls(thing.original_path,'.rss')}" />
-
-</head>
-
-<frameset>
-  <frame src="${thing.frame_target}">
-</frameset>
-
-<body>
-
-<p class="error">Your browser does not support frames.  Go <a href="${thing.frame_target}">here</a>.
-
-</body>
+  <script type="text/javascript">
+    function replace_self(url, child) {
+       if(child != window) {
+          window.location = url;
+       }
+    };
+    window.onload = function() {
+      try { 
+         document.cookie = "redditSession=true; domain=${c.site.domain}; path=/";
+         parent.replace_self(window.location, window);
+      } catch(e) {};
+    }
+  </script>
+  %if thing.frame_target:
+    <frameset>
+      <frame src="${thing.frame_target}" name="reddit-embed" id="reddit-embed">
+    <noframes>
+      <body>
+        <meta http-equiv="refresh" content="0;url=${thing.frame_target}">
+        <p class="error">
+          Your browser does not support frames.  
+          Go <a href="${thing.frame_target}">here</a>.
+        </p>
+      </body>
+    </noframes>
+    </frameset>
+  %else:
+    <body>
+      <p>That site does not exist</p>
+    </body>
+  %endif
 </html>

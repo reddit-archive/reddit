@@ -96,10 +96,20 @@ class ErrorSet(object):
 
     def __getitem__(self, name):
         return self.errors[name]
+
+    def __repr__(self):
+        return "<ErrorSet %s>" % list(self)
+
+    def __iter__(self):
+        for x in self.errors:
+            yield x
+        
+    def _add(self, error_name, msg, msg_params = {}):
+        self.errors[error_name] = Error(error_name, msg, msg_params)
         
     def add(self, error_name, msg_params = {}):
         msg = error_list[error_name]
-        self.errors[error_name] = Error(error_name, msg, msg_params)
+        self._add(error_name,  msg, msg_params = msg_params)
 
     def remove(self, error_name):
         if self.errors.has_key(error_name):

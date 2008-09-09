@@ -25,11 +25,12 @@ from threading import local, Thread
 import Queue
 from copy import deepcopy
 import cPickle as pickle
-import re, datetime, math, random, string, sha
+import re, datetime, math, random, string, sha, os
 
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
+from mako.filters import url_escape, url_unescape
         
 iters = (list, tuple, set)
 
@@ -92,19 +93,6 @@ class Storage(dict):
         return '<Storage ' + dict.__repr__(self) + '>'
 
 storage = Storage
-
-import inspect
-class cold_storage(Storage):
-    def __getattr__(self, key):
-        try:
-            res = self[key]
-            if inspect.isfunction(res) and \
-               inspect.getargspec(res)[:3] == ([], None, None):
-                res = res()
-                self[key] = res
-            return res
-        except KeyError, k:
-            raise AttributeError, k
 
 def storify(mapping, *requireds, **defaults):
     """
@@ -433,7 +421,6 @@ def to_base(q, alphabet):
 def to36(q):
     return to_base(q, '0123456789abcdefghijklmnopqrstuvwxyz')
 
-from mako.filters import url_escape
 def query_string(dict):
     pairs = []
     for k,v in dict.iteritems():
@@ -448,6 +435,239 @@ def query_string(dict):
         return '?' + '&'.join(pairs)
     else:
         return ''
+
+class UrlParser(object):
+    """
+    Wrapper for urlparse and urlunparse for making changes to urls.
+    All attributes present on the tuple-like object returned by
+    urlparse are present on this class, and are setable, with the
+    exception of netloc, which is instead treated via a getter method
+    as a concatenation of hostname and port.
+
+    Unlike urlparse, this class allows the query parameters to be
+    converted to a dictionary via the query_dict method (and
+    correspondingly updated vi update_query).  The extension of the
+    path can also be set and queried.
+
+    The class also contains reddit-specific functions for setting,
+    checking, and getting a path's subreddit.  It also can convert
+    paths between in-frame and out of frame cname'd forms.
+
+    """
+
+    __slots__ = ['scheme', 'path', 'params', 'query',
+                 'fragment', 'username', 'password', 'hostname',
+                 'port', '_url_updates', '_orig_url', '_query_dict']
+
+    valid_schemes = ('http', 'https', 'ftp', 'mailto')
+    cname_get = "cnameframe"
+
+    def __init__(self, url):
+        u = urlparse(url)
+        for s in self.__slots__:
+            if hasattr(u, s):
+                setattr(self, s, getattr(u, s))
+        self._url_updates = {}
+        self._orig_url    = url
+        self._query_dict  = None
+
+    def update_query(self, **updates):
+        """
+        Can be used instead of self.query_dict.update() to add/change
+        query params in situations where the original contents are not
+        required.
+        """
+        self._url_updates.update(updates)
+
+    @property
+    def query_dict(self):
+        """
+        Parses they params attribute of the original urlparse and
+        generates a dictionary where both the keys and values have
+        been url_unescape'd.  Any updates or changes to the resulting
+        dict will be reflected in the updated query params
+        """
+        if self._query_dict is None:
+            def _split(param):
+                p = param.split('=')
+                return (url_unescape(p[0]),
+                        url_unescape('='.join(p[1:])))
+            self._query_dict = dict(_split(p) for p in self.query.split('&')
+                                    if p)
+
+        return self._query_dict
+
+    def path_extension(self):
+        """
+        Fetches the current extension of the path.
+        """
+        return self.path.split('/')[-1].split('.')[-1]
+
+    def set_extension(self, extension):
+        """
+        Changes the extension of the path to the provided value (the
+        "." should not be included in the extension as a "." is
+        provided)
+        """
+        pieces = self.path.split('/')
+        dirs = pieces[:-1]
+        base = pieces[-1].split('.')
+        base = '.'.join(base[:-1] if len(base) > 1 else base)
+        if extension:
+            base += '.' + extension
+        dirs.append(base)
+        self.path =  '/'.join(dirs)
+        return self
+
+
+    def unparse(self):
+        """
+        Converts the url back to a string, applying all updates made
+        to the feilds thereof.
+
+        Note: if a host name has been added and none was present
+        before, will enforce scheme -> "http" unless otherwise
+        specified.  Double-slashes are removed from the resultant
+        path, and the query string is reconstructed only if the
+        query_dict has been modified/updated.
+        """
+        # only parse the query params if there is an update dict
+        q = self.query
+        if self._url_updates or self._query_dict is not None:
+            q = self._query_dict or self.query_dict
+            q.update(self._url_updates)
+            q = query_string(q).lstrip('?')
+
+        # make sure the port is not doubly specified 
+        if self.port and ":" in self.hostname:
+            self.hostname = self.hostname.split(':')[0]
+
+        # if there is a netloc, there had better be a scheme
+        if self.netloc and not self.scheme:
+            self.scheme = "http"
+            
+        return urlunparse((self.scheme, self.netloc,
+                           self.path.replace('//', '/'),
+                           self.params, q, self.fragment))
+
+    def path_has_subreddit(self):
+        """
+        utility method for checking if the path starts with a
+        subreddit specifier (namely /r/ or /reddits/).
+        """
+        return (self.path.startswith('/r/') or
+                self.path.startswith('/reddits/'))
+
+    def get_subreddit(self):
+        """checks if the current url refers to a subreddit and returns
+        that subreddit object.  The cases here are:
+        
+          * the hostname is unset or is g.domain, in which case it
+            looks for /r/XXXX or /reddits.  The default in this case
+            is Default.
+          * the hostname is a cname to a known subreddit.
+
+        On failure to find a subreddit, returns None.
+        """
+        from pylons import g
+        from r2.models import Subreddit, Sub, NotFound, Default
+        try:
+            if not self.hostname or self.hostname.startswith(g.domain):
+                if self.path.startswith('/r/'):
+                    return Subreddit._by_name(self.path.split('/')[2])
+                elif self.path.startswith('/reddits/'):
+                    return Sub
+                else:
+                    return Default
+            elif self.hostname:
+                return Subreddit._by_domain(self.hostname)
+        except NotFound:
+            pass
+        return None
+
+    def is_reddit_url(self, subreddit = None):
+        """utility method for seeing if the url is associated with
+        reddit as we don't necessarily want to mangle non-reddit
+        domains
+
+        returns true only if hostname is nonexistant, a subdomain of
+        g.domain, or a subdomain of the provided subreddit's cname.
+        """
+        from pylons import g
+        return (not self.hostname or 
+                self.hostname.endswith(g.domain) or
+                (subreddit and subreddit.domain and
+                 self.hostname.endswith(subreddit.domain)))
+
+    def path_add_subreddit(self, subreddit):
+        """ 
+        Adds the subreddit's path to the path if another subreddit's
+        prefix is not already present.
+        """
+        if not self.path_has_subreddit():
+            self.path = (subreddit.path + self.path)
+        return self
+
+    @property
+    def netloc(self):
+        """
+        Getter method which returns the hostname:port, or empty string
+        if no hostname is present.
+        """
+        if not self.hostname:
+            return ""
+        elif self.port:
+            return self.hostname + ":" + str(self.port)
+        return self.hostname
+    
+    def mk_cname(self, require_frame = True, subreddit = None, port = None):
+        """
+        Converts a ?cnameframe url into the corresponding cnamed
+        domain if applicable.  Useful for frame-busting on redirect.
+        """
+
+        # make sure the url is indeed in a frame
+        if require_frame and not self.query_dict.has_key(self.cname_get):
+            return self
+        
+        # fetch the subreddit and make sure it 
+        subreddit = subreddit or self.get_subreddit()
+        if subreddit and subreddit.domain:
+
+            # no guarantee there was a scheme
+            self.scheme = self.scheme or "http"
+
+            # update the domain (preserving the port)
+            self.hostname = subreddit.domain
+            self.port = self.port or port
+
+            # and remove any cnameframe GET parameters
+            if self.query_dict.has_key(self.cname_get):
+                del self._query_dict[self.cname_get]
+
+            # remove the subreddit reference
+            self.path = lstrips(self.path, subreddit.path)
+            if not self.path.startswith('/'):
+                self.path = '/' + self.path
+        
+        return self
+
+    def is_in_frame(self):
+        """
+        Checks if the url is in a frame by determining if
+        cls.cname_get is present.
+        """
+        return self.query_dict.has_key(self.cname_get)
+
+    def put_in_frame(self):
+        """
+        Adds the cls.cname_get get parameter to the query string.
+        """
+        self.update_query(**{self.cname_get:random.random()})
+
+    def __repr__(self):
+        return "<URL %s>" % repr(self.unparse())
+
 
 def to_js(content, callback="document.write", escape=True):
     before = after = ''

@@ -21,7 +21,10 @@
 ################################################################################
 
 <%!
+   from r2.lib.template_helpers import add_sr
    from r2.lib.strings import strings
+   from r2.lib.utils import UrlParser
+   import random
  %>
 <%namespace file="captcha.html" import="captchagen"/>
 <%namespace file="utils.html" import="error_field, plain_link, text_with_links, img_link"/>
@@ -39,7 +42,14 @@
 
 <%def name="login_form(register=False, user='', dest='')">
   <% op = "reg" if register else "login" %>
-  <form id="login_${op}" method="post" action="/login" onsubmit="return chklogin(this);">
+  <form id="login_${op}" method="post" 
+        action="${add_sr('/post/' + op, nocname = True)}" 
+        onsubmit="return chklogin(this);"
+        target="_top">
+    %if c.cname:
+       <input type="hidden" name="${UrlParser.cname_get}" 
+              value="${random.random()}" />
+    %endif
     <input type="hidden" name="reason" value="" />
     <input type="hidden" name="op" value="${op}" />
     %if dest:

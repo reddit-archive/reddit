@@ -57,6 +57,7 @@
         </th>
         <td>
           <input name="replyto_${thing.link_name}" type="text" size="30"
+                 id="replyto_${thing.link_name}"
                  value="${c.user.email if hasattr(c.user, 'email') else ''}"/>
         </td>
         <td>

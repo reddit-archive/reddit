@@ -21,13 +21,14 @@
 ################################################################################
 <%!
    from r2.models.subreddit import DefaultSR
+   from r2.lib.template_helpers import get_domain, add_sr
 %>
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
      xmlns:media="http://search.yahoo.com/mrss">
   <channel>
     <title>${self.Title()}</title>        
-    <link>http://${c.domain}${c.site.path}</link>
+    <link>${add_sr("/", force_hostname = True)}</link>
     <description>${c.site.description or ''}</description>
     <image>
       <%
@@ -36,9 +37,9 @@
         else:
             header_img = c.site.header
       %>
-      <url>${header_img}</url>
+      <url>http://${get_domain(subreddit = False, cname = c.cname)}${header_img}</url>
       <title>${self.Title()}</title>
-      <link>http://${c.domain}${c.site.path}</link>
+      <link>${add_sr("/", force_hostname = True)}</link>
     </image>
     ${next.body()}
   </channel>

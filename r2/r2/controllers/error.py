@@ -31,7 +31,7 @@ try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
     from reddit_base import RedditController
-    from r2.models.subreddit import Default
+    from r2.models.subreddit import Default, Subreddit
     from r2.lib import pages
     from r2.lib.strings import rand_strings
 except Exception, e:
@@ -110,14 +110,13 @@ class ErrorController(RedditController):
     def send403(self):
         c.response.status_code = 403
         c.site = Default
-        title = _("forbidden (%(domain)s)") % dict(domain=c.domain)
+        title = _("forbidden (%(domain)s)") % dict(domain=g.domain)
         return pages.BoringPage(title,  loginbox=False,
                                 show_sidebar = False, 
                                 content=pages.ErrorPage()).render()
 
     def send404(self):
         c.response.status_code = 404
-
         if c.site._spam and not c.user_is_admin:
             msg = _("this reddit has been banned.")
             res =  pages.BoringPage(msg, loginbox = False,
@@ -125,7 +124,6 @@ class ErrorController(RedditController):
                                     content = pages.ErrorPage(message = msg))
             return res.render()
         else:
-            c.site = Default
             ch=rand.choice(['a','b','c','d','e'])
             res = pages.BoringPage(_("page not found"),
                                    loginbox=False,
@@ -136,6 +134,9 @@ class ErrorController(RedditController):
     def GET_document(self):
         try:
             code =  request.GET.get('code', '')
+            srname = request.GET.get('srname', '')
+            if srname:
+                c.site = Subreddit._by_name(srname)
             if code == '403':
                 return self.send403()
             elif code == '500':

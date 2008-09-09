@@ -6,16 +6,16 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
+#
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
@@ -42,28 +42,33 @@ import sys, tempfile, urllib, re, os, sha
 
 
 #from pylons.middleware import error_mapper
-def error_mapper(code, message, environ, global_conf=None, **kw):                              
-    if environ.get('pylons.error_call'):                                                       
-        return None                                                                            
-    else:                                                                                      
-        environ['pylons.error_call'] = True                                                    
-                                                                                               
-    if global_conf is None:                                                                    
-        global_conf = {}                                                                       
-    codes = [401, 403, 404, 503]                                                                    
-    if not asbool(global_conf.get('debug')):                                                   
-        codes.append(500)                                                                      
-    if code in codes:                                                                          
-        # StatusBasedForward expects a relative URL (no SCRIPT_NAME)                           
-        url = '/error/document/?%s' % (urllib.urlencode({'message': message,                   
-                                                         'code': code}))                       
-        return url    
+def error_mapper(code, message, environ, global_conf=None, **kw):
+
+    if environ.get('pylons.error_call'):
+        return None
+    else:
+        environ['pylons.error_call'] = True
+
+    if global_conf is None:
+        global_conf = {}
+    codes = [401, 403, 404, 503]
+    if not asbool(global_conf.get('debug')):
+        codes.append(500)
+    if code in codes:
+        # StatusBasedForward expects a relative URL (no SCRIPT_NAME)
+        d = dict(code = code, message = message)
+        if environ.get('REDDIT_CNAME'):
+            d['cnameframe'] = 1
+        if environ.get('REDDIT_NAME'):
+            d['srname'] = environ.get('REDDIT_NAME')
+        url = '/error/document/?%s' % (urllib.urlencode(d))
+        return url
 
 class DebugMiddleware(object):
     def __init__(self, app, keyword):
         self.app = app
         self.keyword = keyword
-    
+
     def __call__(self, environ, start_response):
         def foo(*a, **kw):
             self.res = self.app(environ, start_response)
@@ -99,12 +104,12 @@ class ProfilingMiddleware(DebugMiddleware):
             file = line = func = None
 
         try:
-            profile.runctx('execution_func()', 
+            profile.runctx('execution_func()',
                            globals(), locals(), tmpfile.name)
             out = StringIO()
             stats = Stats(tmpfile.name, stream=out)
             stats.sort_stats('time', 'calls')
-            
+
             def parse_table(t, ncol):
                 table = []
                 for s in t:
@@ -112,7 +117,7 @@ class ProfilingMiddleware(DebugMiddleware):
                     if len(t) > 1:
                         table += [t[:ncol-1] + [' '.join(t[ncol-1:])]]
                 return table
-            
+
             def cmp(n):
                 def _cmp(x, y):
                     return 0 if x[n] == y[n] else 1 if x[n] < y[n] else -1
@@ -133,7 +138,7 @@ class ProfilingMiddleware(DebugMiddleware):
                 stats.print_callees(query)
                 stats.print_callers(query)
                 statdata = out.getvalue()
-            
+
                 data =  statdata.split(query)
                 callee = data[2].split('->')[1].split('Ordered by')[0]
                 callee = parse_table(callee.split('\n'), 4)
@@ -166,7 +171,7 @@ class SourceViewMiddleware(DebugMiddleware):
 
 class DomainMiddleware(object):
     lang_re = re.compile(r"^\w\w(-\w\w)?$")
-    
+
     def __init__(self, app):
         self.app = app
 
@@ -180,19 +185,26 @@ class DomainMiddleware(object):
             sub_domains = environ['HTTP_HOST'].split(':')[0]
         except KeyError:
             sub_domains = "localhost"
-            
+
         #If the domain doesn't end with base_domain, assume
         #this is a cname, and redirect to the frame controller.
         #Ignore localhost so paster shell still works.
         #If this is an error, don't redirect
-        if (not sub_domains.endswith(base_domain) 
+
+        if (not sub_domains.endswith(base_domain)
             and (not sub_domains == 'localhost')):
             environ['sub_domain'] = sub_domains
-            if (not environ.get('extension') 
-                and (not environ['PATH_INFO'].startswith('/error'))):
-                environ['original_path'] = environ['PATH_INFO']
-                environ['PATH_INFO'] = '/frame'
-                return self.app(environ, start_response)
+            if not environ.get('extension'):
+                if environ['PATH_INFO'].startswith('/frame'):
+                    return self.app(environ, start_response)
+                elif ("redditSession" in environ.get('HTTP_COOKIE', '')
+                      and environ['REQUEST_METHOD'] != 'POST'
+                      and not environ['PATH_INFO'].startswith('/error')):
+                    environ['original_path'] = environ['PATH_INFO']
+                    environ['PATH_INFO'] = '/frame'
+                    return self.app(environ, start_response)
+                else:
+                    environ['frameless_cname'] = True
 
         sub_domains = sub_domains[:-len(base_domain)].strip('.')
         sub_domains = sub_domains.split('.')
@@ -223,13 +235,13 @@ class DomainMiddleware(object):
             r.headers['location'] = redir
             r.content = ""
             return r(environ, start_response)
-        
+
         return self.app(environ, start_response)
 
 
 class SubredditMiddleware(object):
     sr_pattern = re.compile(r'^/r/([^/]+)')
-    
+
     def __init__(self, app):
         self.app = app
 
@@ -243,7 +255,7 @@ class SubredditMiddleware(object):
             environ['subreddit'] = 'r'
         return self.app(environ, start_response)
 
-class ExtensionMiddleware(object):  
+class ExtensionMiddleware(object):
     ext_pattern = re.compile(r'\.([^/]+)$')
 
     def __init__(self, app):
@@ -283,7 +295,7 @@ class RewriteMiddleware(object):
             environ['FULLPATH'] += '?' + qs
 
         return self.app(environ, start_response)
-        
+
 class RequestLogMiddleware(object):
     def __init__(self, log_path, process_iden, app):
         self.log_path = log_path
@@ -323,7 +335,7 @@ class LimitUploadSize(object):
                 r.status_code = 500
                 r.content = 'request too big'
                 return r(environ, start_response)
-                
+
         return self.app(environ, start_response)
 
 #god this shit is disorganized and confusing

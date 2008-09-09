@@ -21,28 +21,14 @@
 ################################################################################
 from r2.models import *
 from filters import unsafe, websafe
-from r2.lib.utils import vote_hash
+from r2.lib.utils import vote_hash, UrlParser
 
 from mako.filters import url_escape
 import simplejson
 import os.path
 from copy import copy
-from urlparse import urlparse, urlunparse
 
 from pylons import i18n, g, c
-
-def contextualize(func):
-    def _contextualize(context, *a, **kw):
-        return func(*a, **kw)
-    return _contextualize
-
-def print_context(context):
-    print context.keys()
-    return ''
-
-def print_me(context, t):
-    print t
-    return ''
 
 def static(file):
     # stip of "/static/" if already present
@@ -151,49 +137,93 @@ def replace_render(listing, item, style = None, display = True):
     rendered_item = replace_fn(u"$display", "" if display else "style='display:none'")
     return rendered_item
 
-def dockletStr(context, type, browser):
-    domain = c.domain
-    if c.cname and c.site.domain:
+def get_domain(cname = False, subreddit = True, no_www = False):
+    """
+    returns the domain on the current subreddit, possibly including
+    the subreddit part of the path, suitable for insertion after an
+    "http://" and before a fullpath (i.e., something including the
+    first '/') in a template.  The domain is updated to include the
+    current port (request.port).  The effect of the arguments is:
+
+     * no_www: if the domain ends up being g.domain, the default
+       behavior is to prepend "www." to the front of it (for akamai).
+       This flag will optionally disable it.
+
+     * cname: whether to respect the value of c.cname and return
+       c.site.domain rather than g.domain as the host name.
+
+     * subreddit: if a cname is not used in the resulting path, flags
+       whether or not to append to the domain the subreddit path (sans
+       the trailing path).
+
+    """
+    domain = g.domain
+    if not no_www:
+        domain = "www." + g.domain
+    if cname and c.cname and c.site.domain:
         domain = c.site.domain
+    if request.port:
+        domain += ":" + str(request.port)
+    if (not c.cname or not cname) and subreddit:
+        domain += c.site.path.rstrip('/')
+    return domain
+
+def dockletStr(context, type, browser):
+    domain      = get_domain()
+
+    # while site_domain will hold the (possibly) cnamed version
+    site_domain = get_domain(True)
 
     if type == "serendipity!":
-        return "http://"+domain+"/random"
+        return "http://"+site_domain+"/random"
     elif type == "reddit":
-        return "javascript:location.href='http://"+domain+"/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
+        return "javascript:location.href='http://"+site_domain+"/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
     else:
-        f = "fixed"
-        if browser == "ie": f = "absolute"
-        return "javascript:function b(){var u=encodeURIComponent(location.href);var i=document.getElementById('redstat')||document.createElement('a');var s=i.style;s.position='%s';s.top='0';s.left='0';s.zIndex='10002';i.id='redstat';i.href='http://%s/submit?url='+u+'&title='+encodeURIComponent(document.title);var q=i.firstChild||document.createElement('img');q.src='http://%s/d/%s'+Math.random()+'?uh=%s&u='+u;i.appendChild(q);document.body.appendChild(i)};b()" % \
-            (f, domain, domain, type, 
-             c.modhash if c.user else '')
+        return (("javascript:function b(){var u=encodeURIComponent(location.href);"
+                 "var i=document.getElementById('redstat')||document.createElement('a');"
+                 "var s=i.style;s.position='%(position)s';s.top='0';s.left='0';"
+                 "s.zIndex='10002';i.id='redstat';"
+                 "i.href='http://%(site_domain)s/submit?url='+u+'&title='+"
+                 "encodeURIComponent(document.title);"
+                 "var q=i.firstChild||document.createElement('img');"
+                 "q.src='http://%(domain)s/d/%(type)s.png?v='+Math.random()+'&uh=%(modhash)s&u='+u;"
+                 "i.appendChild(q);document.body.appendChild(i)};b()") %
+                dict(position = "absolute" if browser == "ie" else "fixed",
+                     domain = domain, site_domain = site_domain, type = type,
+                     modhash = c.modhash if c.user else ''))
 
 
 
-def add_sr(path, sr_path = True, nocname=False):
-    """Given a link, returns that link with the subreddit added.
-       Also adds the domain for cname requests."""
-    (scheme, netloc, path, params, query, fragment) = urlparse(path)
-    if sr_path:
-        #noslash fixes /reddits/
-        noslash = c.site.path.rstrip('/')
-        #if it's a relative path, don't include the sitename
-        if (path.startswith('/') and not path.startswith(noslash)
-            and not path.startswith('/r/')):
-            if not c.cname:
-                path = c.site.path + path[1:]
+def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
+    """
+    Given a path (which may be a full-fledged url or a relative path),
+    parses the path and updates it to include the subreddit path
+    according to the rules set by its arguments:
 
-    if not netloc and c.cname and not nocname:
-        netloc = getattr(c.site, 'domain', None)
+     * force_hostname: if True, force the url's hotname to be updated
+       even if it is already set in the path, and subject to the
+       c.cname/nocname combination.  If false, the path will still
+       have its domain updated if no hostname is specified in the url.
+    
+     * nocname: when updating the hostname, overrides the value of
+       c.cname to set the hotname to g.domain.  The default behavior
+       is to set the hostname consistent with c.cname.
 
-    if netloc:
-        port = request.environ.get('request_port')
-        if port > 0:
-            netloc = "%s:%d" % (netloc, port)
-            
-    if c.render_style == 'mobile' and not path.endswith('.mobile'):
-        path += '.mobile'
+     * sr_path: if a cname is not used for the domain, updates the
+       path to include c.site.path.
+    """
+    u = UrlParser(path)
+    if sr_path and (nocname or not c.cname):
+        u.path_add_subreddit(c.site)
 
-    return urlunparse((scheme, netloc, path, params, query, fragment))
+    if not u.hostname or force_hostname:
+        u.hostname = get_domain(cname = (c.cname and not nocname),
+                                subreddit = False)
+
+    if c.render_style == 'mobile':
+        u.set_extension('mobile')
+
+    return u.unparse()
 
 def join_urls(*urls):
     """joins a series of urls together without doubles slashes"""

@@ -36,7 +36,7 @@
 </%def>
 
 <%def name="stylesheet()">
-  <% from r2.lib.template_helpers import static %>
+  <% from r2.lib.template_helpers import static, get_domain %>
 
   %if c.lang_rtl:
     <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
@@ -58,7 +58,8 @@
             type="text/css" />
       %endif
       %if c.site.stylesheet_contents:
-      <link rel="stylesheet" href="${c.site.path}stylesheet?v=${c.site.stylesheet_hash}"
+      <link rel="stylesheet" 
+            href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
             title="applied_subreddit_stylesheet"
             type="text/css" />
       %endif
@@ -104,25 +105,27 @@
 
 </%def>
 
-<body onclick="close_menus()">
-  <%include file="redditheader.html"/>
-
-  %if thing.show_sidebar:
-    <div class="side">
-      ${sidebar(content = thing.rightbox())}
-    </div>
-  %endif
+<%def name="bodyHTML()">
+  <body onclick="close_menus()">
+    <%include file="redditheader.html"/>
   
-  %if thing.content:
-    <div class="fixedwidth"><!--IE6sux--></div>
-    <div class="clearleft"><!--IE6sux--></div>
-    <div class="content">
-      ${thing.content().render()}
-    </div>
-  %endif
-  
-  <%include file="redditfooter.html"/>
-</body>
+    %if thing.show_sidebar:
+      <div class="side">
+        ${sidebar(content = thing.rightbox())}
+      </div>
+    %endif
+    
+    %if thing.content:
+      <div class="fixedwidth"><!--IE6sux--></div>
+      <div class="clearleft"><!--IE6sux--></div>
+      <div class="content">
+        ${thing.content().render()}
+      </div>
+    %endif
+    
+    <%include file="redditfooter.html"/>
+  </body>
+</%def>
 
 <%def name="sidebar(content=None)">
   %if content:

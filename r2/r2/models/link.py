@@ -213,12 +213,14 @@ class Link(Thing, Printable):
         s = ''.join(s)
         return s
 
-    def make_permalink(self, sr):
+    def make_permalink(self, sr, force_domain = False):
+        from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
         if not c.cname:
             res = "/r/%s/%s" % (sr.name, p)
-        elif sr != c.site:
-            res = "http://%s/r/%s/%s" % (g.domain, sr.name, p)
+        elif sr != c.site or force_domain:
+            res = "http://%s/r/%s/%s" % (get_domain(cname = c.cname,
+                                                    subreddit = False), sr.name, p)
         else:
             res = "/%s" % p
         return res
@@ -262,6 +264,9 @@ class Link(Thing, Printable):
             item.num = None
             item.score_fmt = Score.number_only
             item.permalink = item.make_permalink(item.subreddit)
+            if item.is_self:
+                item.url = item.make_permalink(item.subreddit, force_domain = True)
+
                 
         if c.user_is_loggedin:
             incr_counts(wrapped)

@@ -26,14 +26,14 @@ from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
 from pylons.i18n import _
 from pylons import c, request, g
-from pylons.controllers.util import abort, redirect_to
+from pylons.controllers.util import abort
 
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
-from r2.lib.utils import title_to_url, query_string
-from r2.lib.template_helpers import add_sr
+from r2.lib.utils import title_to_url, query_string, UrlParser
+from r2.lib.template_helpers import add_sr, get_domain
 import sys
 
 def get_captcha():
@@ -121,6 +121,7 @@ class Reddit(Wrapped):
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
+                              sr_path = True,
                               subtitles = [_('to anything interesting: news article, blog entry, video, picture...')],
                               show_cover = True))
             
@@ -263,9 +264,9 @@ class SubredditInfoBar(Wrapped):
 class SideBox(Wrapped):
     """Generic sidebox used to generate the 'submit' and 'create a reddit' boxes."""
     def __init__(self, title, link, css_class='', subtitles = [],
-                 show_cover = False, nocname=False):
+                 show_cover = False, nocname=False, sr_path = False):
         Wrapped.__init__(self, link = link, target = '_top',
-                         title = title, css_class = css_class,
+                         title = title, css_class = css_class, sr_path = sr_path,
                          subtitles = subtitles, show_cover = show_cover, nocname=nocname)
 
 
@@ -361,8 +362,10 @@ class LoginPage(BoringPage):
         BoringPage.__init__(self,  _("login or register"), **context)
 
     def content(self):
-        return Login(dest = self.dest)
-
+        kw = {}
+        for x in ('user_login', 'user_reg'):
+            kw[x] = getattr(self, x) if hasattr(self, x) else ''
+        return Login(dest = self.dest, **kw)
 
 class Login(Wrapped):
     """The two-unit login and register form."""
@@ -788,7 +791,11 @@ class Frame(Wrapped):
 
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
-    pass
+    extension_handling = False
+    def __init__(self, link = None, **kw):
+        self.title = link.title
+        Wrapped.__init__(self, link = link, *kw)
+    
 
 
 class NewLink(Wrapped):
@@ -847,6 +854,7 @@ class ButtonEmbed(Wrapped):
 
 class Button(Wrapped):
     """the voting buttons, embedded with the ButtonEmbed wrapper, shown on /buttons"""
+    extension_handling = False
     def __init__(self, link = None, likes = None, 
                  button = None, css=None,
                  url = None, title = '', score_fmt = None):
@@ -1069,13 +1077,15 @@ class DetailsPage(LinkInfoPage):
         
 class Cnameframe(Wrapped):
     """The frame page."""
-    def __init__(self, original_path, sr_name, sr_title, sub_domain):
+    def __init__(self, original_path, subreddit, sub_domain):
         Wrapped.__init__(self, original_path=original_path)
-        self.title = "%s - %s" % (sr_title, sub_domain)
-        port = request.environ.get('request_port')
-        request.get['cnameframe'] = 1
-        path = original_path + query_string(request.get)
-        if port > 0:
-            self.frame_target = "http://%s:%d/r/%s%s" % (c.domain, port, sr_name, path)
+        if sub_domain and subreddit and original_path:
+            self.title = "%s - %s" % (subreddit.title, sub_domain)
+            u = UrlParser(subreddit.path + original_path)
+            u.hostname = get_domain(cname = False, subreddit = False)
+            u.update_query(**request.get.copy())
+            u.put_in_frame()
+            self.frame_target = u.unparse()
         else:
-            self.frame_target = "http://%s/r/%s%s" % (c.domain, sr_name, path)
+            self.title = ""
+            self.frame_target = None

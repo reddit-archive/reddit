@@ -21,9 +21,10 @@
 ################################################################################
 
 <%!
-   from r2.lib.template_helpers import static 
+   from r2.lib.template_helpers import get_domain, static, UrlParser
    from r2.lib.strings import strings
    from r2.lib import tracking
+   import random, datetime
 %>
 <%namespace file="login.html" import="login_panel"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
@@ -39,12 +40,32 @@
   </p>
   <p class="bottommenu">
     ${text_with_links(_("Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"), nocname=True, user_agreement= (_("User Agreement {Genitive}"), "http://reddit.com/help/useragreement"), privacy_policy = (_("Privacy Policy {Genitive}"), "http://reddit.com/help/privacypolicy"))}.  
-    <% old = _("(c) 2008 CondeNet, Inc. All rights reserved.") %>
     ${_("(c) %(year)d CondeNet, Inc. All rights reserved.") % \
-    dict(year=2008)}
+    dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
  %if g.tracker_url:
   <img alt="" src="${tracking.gen_url()}"/>
+ %endif
+ %if c.frameless_cname:
+ <%
+    u = UrlParser("http://%s/%s" % (get_domain(cname = True, subreddit = False), request.path))
+    u.update_query(**request.get)
+    u.update_query(login = random.random())
+  %>
+  <script type="text/javascript">
+    function replace_self(url, child) {
+       if(child != window) {
+          createCookie("redditSession", "true");
+          if(readCookie("redditSession")) {
+              window.location = "${u.unparse()}";
+          }
+       }
+    };
+  </script>
+  <iframe name="reddit-window" id="reddit-window"
+          src="http://${get_domain(False)}/framebuster?v=${random.random()}"
+          width="1" height="1" style="visibility: hidden">
+  </iframe>
  %endif
 </div>
 

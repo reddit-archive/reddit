@@ -33,6 +33,7 @@ from urllib import quote
 
 #TODO hack
 import logging
+from r2.lib.utils import UrlParser, query_string
 logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
 class BaseController(WSGIController):
@@ -69,6 +70,7 @@ class BaseController(WSGIController):
         request.path = environ.get('PATH_INFO')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)
+        request.port = environ.get('request_port')
         
         if_modified_since = environ.get('HTTP_IF_MODIFIED_SINCE')
         if if_modified_since:
@@ -92,14 +94,57 @@ class BaseController(WSGIController):
     def pre(self): pass
     def post(self): pass
 
-    @staticmethod
-    def redirect(dest, code = 302):
-        dest = _force_unicode(dest).encode('utf8')
-        if c.cname and "?cnameframe=1" not in dest:
-            dest += "?cnameframe=1"
+
+    @classmethod
+    def format_output_url(cls, url, **kw):
+        """
+        Helper method used during redirect to ensure that the redirect
+        url (assisted by frame busting code or javasctipt) will point
+        to the correct domain and not have any extra dangling get
+        parameters.  The extensions are also made to match and the
+        resulting url is utf8 encoded.
+
+        Node: for development purposes, also checks that the port
+        matches the request port
+        """
+        u = UrlParser(url)
+        
+        # make sure to pass the port along if not 80
+        if not kw.has_key('port'):
+            kw['port'] = request.port
+
+        # disentagle the cname (for urls that would have cnameframe=1 in them)
+        u.mk_cname(**kw)
+
+        # make sure the extensions agree with the current page
+        u.set_extension(c.extension)
+
+        # unparse and encode it un utf8
+        return _force_unicode(u.unparse()).encode('utf8')
+
+
+    @classmethod
+    def intermediate_redirect(cls, form_path):
+        """
+        Generates a /login or /over18 redirect from the current
+        fullpath, after having properly reformated the path via
+        format_output_url.  The reformatted original url is encoded
+        and added as the "dest" parameter of the new url.
+        """
+        from r2.lib.template_helpers import add_sr
+        dest = cls.format_output_url(request.fullpath)
+        path = add_sr(form_path + query_string({"dest": dest}))
+        return cls.redirect(path)
+    
+    @classmethod
+    def redirect(cls, dest, code = 302):
+        """
+        Reformats the new Location (dest) using format_output_url and
+        sends the user to that location with the provided HTTP code.
+        """
+        dest = cls.format_output_url(dest)
         c.response.headers['Location'] = dest
         c.response.status_code = code
-        
         return c.response
 
     def sendjs(self,js, callback="document.write", escape=True):
@@ -119,7 +164,7 @@ class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler,
     def http_redirect(self, req, fp, code, msg, hdrs):
         codes = [301, 302, 303, 307]
         map = dict((x, self.redirect(x)) for x in codes)
-        to = hdrs['Location'].replace('reddit.infogami.com', c.domain)
+        to = hdrs['Location'].replace('reddit.infogami.com', g.domain)
         map[code](to)
         raise StopIteration
 

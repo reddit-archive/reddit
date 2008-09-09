@@ -21,51 +21,57 @@
 ################################################################################
 
 <%!
-   from r2.lib.template_helpers import static 
+   from r2.lib.template_helpers import static, get_domain
    from r2.models import Link, Comment, Subreddit
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
-<head>
-<title>${self.Title()}</title>
+  <head>
+    <title>${self.Title()}</title>
+    
+    <meta name="keywords" content="${self.keywords()}" />
+    <meta name="title" content="${self.Title()}" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    ${self.robots()}
+    
+    ##these are globals, so they should be run first
+    <script type="text/javascript">
+      var a = new Image();
+      a.src = "${static('aupmod.png')}";
+      var b = new Image();
+      b.src = "${static('adownmod.png')}";
+      var vl = {};
+      var sr = {};
+      
+      var logged = ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"};
+      var post_site = "${c.site.name}";
+      var cnameframe  = ${'true' if c.cname else 'false'}; 
+      var modhash = ${"'%s'" % c.modhash or "false"};
+      var cur_domain = "${get_domain(cname = True, subreddit = False) if c.frameless_cname else g.domain}";
+      var ajax_domain = "${g.domain}";
+      
+    </script> 
+    
+    ${self.javascript()}
+    ${self.stylesheet()}
+    
+    ##things here may depend on globals, or included js, so we run them last
+    <script type="text/javascript">
+      ${self.javascript_run()}
+    </script>
+    
 
-<meta name="keywords" content="${self.keywords()}" />
-<meta name="title" content="${self.Title()}" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-${self.robots()}
-
-##these are globals, so they should be run first
-<script type="text/javascript">
-  var a = new Image();
-  a.src = "${static('aupmod.png')}";
-  var b = new Image();
-  b.src = "${static('adownmod.png')}";
-  var vl = {};
-  var sr = {};
-
-  var logged = ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"};
-  var post_site = "${c.site.name}";
-  var cnameframe  = ${'true' if c.cname else 'false'}; 
-  var modhash = ${"'%s'" % c.modhash or "false"};
-  var cur_domain = "${g.domain}";
-
-</script> 
-
-${self.javascript()}
-${self.stylesheet()}
-
-##things here may depend on globals, or included js, so we run them last
-<script type="text/javascript">
-  ${self.javascript_run()}
-</script>
-
-${self.head()}
-</head>
-
-${next.body()}
+    ${self.head()}
+  </head>
+  
+  ${self.bodyHTML()}
 </html>
 
+
+
+<%def name="bodyHTML()">
+</%def>
 
 <%def name="Title()">
 <% 

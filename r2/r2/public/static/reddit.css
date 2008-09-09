@@ -1187,6 +1187,21 @@ a.star { text-decoration: none; color: #ff8b60 }
   padding: 1em;
 }
 
+/* the toolbar */
+.toolbar { height: 30px; border-bottom: 1px solid black}
+.toolbar td { vertical-align: center; }
+.toolbar .arrow { 
+    background-position: center left; 
+    padding-left: 18px; 
+    display: inline;
+}
+.toolbar span { 
+    margin-left:  20px; 
+}
+.toolbar #frame-right { text-align: right }
+.toolbar #frame-right a { margin-left: 10px;  }
+
+/* default form styles */
 .pretty-form { 
     font-size: larger;
     vertical-align: top; 

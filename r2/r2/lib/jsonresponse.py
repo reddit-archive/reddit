@@ -25,6 +25,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib.filters import websafe_json
 from r2.lib.template_helpers import replace_render
 from r2.lib.jsontemplates import get_api_subtype
+from r2.lib.base import BaseController
 import simplejson
 
 def json_respond(x):
@@ -81,12 +82,11 @@ class JsonResponse():
         self.blur = f
 
     def _redirect(self, red):
-        from pylons import c
-        if c.cname and "?cnameframe=1" not in red:
-            self.redirect = red + "?cnameframe=1"
-        else:
-            self.redirect = red
-
+        from pylons import c, request
+        if c.cname:
+            red = BaseController.format_output_url(red, subreddit = c.site,
+                                                   require_frame = False)
+        self.redirect = red
 
     def _update(self, name, **kw):
         k = kw.copy()

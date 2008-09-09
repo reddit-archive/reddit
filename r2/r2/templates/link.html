@@ -22,6 +22,7 @@
 
 <%!
    from r2.models.subreddit import Default 
+   from r2.lib.template_helpers import get_domain
  %>
 
 <%inherit  file="printable.html"/>
@@ -46,7 +47,7 @@
      onmousedown="setClick(this, '${css_class}')"
      class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
      %if c.user.pref_frame:
-       href="/goto?id=${thing._id36}"  
+       href="http://${get_domain(cname = c.cname, subreddit = False)}/goto?id=${thing._id36}"
      %else:
        href="${thing.url}" 
      %endif

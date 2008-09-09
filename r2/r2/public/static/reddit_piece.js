@@ -50,9 +50,21 @@ function hover_open_menu(menu) {
     }
 }
 
+var global_cookies_allowed = true;
+
 function init() {
-    updateClicks();
-    /*updateMods();*/
+    if(cur_domain != ajax_domain) {
+        global_cookies_allowed = false;
+    }
+    else if(cnameframe && !logged) {
+        var m = Math.random() + '';
+        createCookie('test', m);
+        global_cookies_allowed = (readCookie('test') == m);
+    }
+    if (global_cookies_allowed) {
+        updateClicks();
+        /*updateMods();*/
+    }
     stc = $("siteTable_comments");
 }
 
@@ -120,18 +132,21 @@ function untoggle(execute, parent, oldtext, type) {
 
 
 function chklogin(form) {
-    var op = field(form.op);
-    var status = $("status_" + op);
-    if (status) {
-        status.innerHTML = _global_submitting_tag;
-    };
-    if (op == 'login' || op == 'login-main') {
-        post_form(form, 'login');
+    if(global_cookies_allowed) {
+        var op = field(form.op);
+        var status = $("status_" + op);
+        if (status) {
+            status.innerHTML = _global_submitting_tag;
+        };
+        if (op == 'login' || op == 'login-main') {
+            post_form(form, 'login');
+        }
+        else {
+            post_form(form, 'register');
+        }
+        return false;
     }
-    else {
-        post_form(form, 'register');
-    }
-    return false;
+    return true;
 }
 
 function toggle(a_tag, op) {

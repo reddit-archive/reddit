@@ -19,11 +19,13 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.template_helpers import get_domain
+ %>
+
+<% domain = get_domain(True) %>
 
 <script type="text/javascript">
-<%
-   domain = c.site.domain if c.cname else c.domain
- %>
 function escapeHTML(text) {
   var div = document.createElement('div');
   var text = document.createTextNode(text);

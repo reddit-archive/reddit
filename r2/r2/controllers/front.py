@@ -27,7 +27,8 @@ from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
-from r2.lib.utils import  to36, sanitize_url, check_cheating, title_to_url, query_string
+from r2.lib.utils import  to36, sanitize_url, check_cheating, title_to_url, query_string, UrlParser
+from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
@@ -63,8 +64,8 @@ class FrontController(RedditController):
                 new_url = "/r/%s%s" % (c.site.name, new_url)
             if comment:
                 new_url = new_url + "/%s" % comment._id36
-            if request.environ.get('extension'):
-                new_url = new_url + "/.%s" % request.environ.get('extension')
+            if c.extension:
+                new_url = new_url + "/.%s" % c.extension
 
             new_url = new_url + query_string(request.get)
 
@@ -94,7 +95,7 @@ class FrontController(RedditController):
         password."""
         done = False
         if not key and request.referer:
-            referer_path =  request.referer.split(c.domain)[-1]
+            referer_path =  request.referer.split(g.domain)[-1]
             done = referer_path.startswith(request.fullpath)
         elif not user:
             return self.abort404()
@@ -331,10 +332,8 @@ class FrontController(RedditController):
     def GET_stylesheet(self):
         if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
             self.check_modified(c.site,'stylesheet_contents')
-
-            c.response.content = c.site.stylesheet_contents
             c.response_content_type = 'text/css'
-
+            c.response.content =  c.site.stylesheet_contents
             return c.response
         else:
             return self.abort404()
@@ -474,10 +473,11 @@ class FrontController(RedditController):
             my_reddits_link = "/search%s" % query_string({'q': query})
             all_reddits_link = "%s/search%s" % (subreddit.All.path,
                                                 query_string({'q': query}))
-            infotext = strings.searching_a_reddit % {'reddit_name':      c.site.name,
-                                                     'reddit_link':      c.site.path,
-                                                     'my_reddits_link':  my_reddits_link,
-                                                     'all_reddits_link': all_reddits_link}
+            d =  {'reddit_name':      c.site.name,
+                  'reddit_link':      "http://%s/"%get_domain(cname = c.cname),
+                  'my_reddits_link':  my_reddits_link,
+                  'all_reddits_link': all_reddits_link}
+            infotext = strings.searching_a_reddit % d
         else:
             infotext = None
 
@@ -524,10 +524,6 @@ class FrontController(RedditController):
         """wipe login cookie and redirect to referer."""
         self.logout()
         dest = request.referer or '/'
-        if c.cname:
-            dest = '/?cnameframe=1'
-        if not dest.startswith("http://"):
-            return self.redirect(c.site.path + dest)
         return self.redirect(dest)
 
     
@@ -639,8 +635,17 @@ class FrontController(RedditController):
         sub_domain = request.environ.get('sub_domain')
         original_path = request.environ.get('original_path')
         sr = Subreddit._by_domain(sub_domain)
-        if sub_domain and sr and original_path:
-            return Cnameframe(original_path, sr.name, sr.title, sub_domain).render()
-        else:
-            return self.abort404()
+        return Cnameframe(original_path, sr, sub_domain).render()
 
+
+    def GET_framebuster(self):
+        if c.site.domain and c.user_is_loggedin:
+            u = UrlParser(c.site.path + "/frame")
+            u.put_in_frame()
+            c.cname = True
+            return self.redirect(u.unparse())
+            
+        return "fail"
+
+    def GET_catchall(self):
+        return self.abort404()

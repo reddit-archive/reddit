@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -19,21 +19,19 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.template_helpers import get_domain
+ %>
 
-<% domain = "www.reddit.com" if c.domain == "reddit.com" else c.domain %>
+<% domain = get_domain(True) %>
 
-<%def name="drawrequired(type)">
-<script type="text/javascript" \
-        src="http://${domain}/button.js?t=${type}"></script>
-</%def>
-
-<%def name="drawrequiredtext(type)" filter="h">
+<%def name="drawrequired(type)" buffered="True">
 <script type="text/javascript" src="http://${domain}/button.js?t=${type}"></script>
 </%def>
 
 <%def name="drawoptional(url, title)">
-${"<script>reddit_url='%s'</script>" % url}<br/>
-${"<script>reddit_title='%s'</script>" % title}
+${"<script type='text/javascript'>reddit_url='%s'</script>" % url}<br/>
+${"<script type='text/javascript'>reddit_title='%s'</script>" % title}
 </%def>
 
 <div class="instructions">
@@ -54,19 +52,20 @@ ${"<script>reddit_title='%s'</script>" % title}
       reddit, include the reddit_title line.  if you don't include that\
       line, then the user will have to specify a title when they\
       submit.")}</p>
-  
-  ${buttondemo(1)}
-  ${buttondemo(2)}
-  ${buttondemo(3)}
+    
+    <script type="text/javascript">reddit_url="${'http://%s/buttons' % domain}";</script>
+    ${buttondemo(1)}
+    ${buttondemo(2)}
+    ${buttondemo(3)}
 </div>
   
 <%def name="buttondemo(type)">
   <h2>${_("style %(number)s") % dict(number=type)}</h2>
   
-  ${drawrequired(type)}
+  ${unsafe(drawrequired(type))}
   <pre>
   <span class="optional">${drawoptional('[URL]', '[TITLE]')}</span><br/>
-  ${drawrequiredtext(type)}
+  ${drawrequired(type)}
   </pre>
 </%def>
 

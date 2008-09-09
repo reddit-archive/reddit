@@ -19,6 +19,11 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved."
 ################################################################################
+<%!
+   from r2.lib.template_helpers import add_sr
+   from r2.lib.utils import UrlParser
+   import random
+%>
 <%namespace file="utils.html" import="language_tool, language_checkboxes, plain_link"/>
 
 <%def name="checkbox(text, name)">
@@ -59,19 +64,18 @@
 %endif
 
 <%
-   if c.cname:
-       param = "?cnameframe=1"
-   else:
-       param = ""
-
    if c.user_is_loggedin:
-       action = "/post/options" + param
+       action = "/post/options" 
    else:
-       action = "/post/unlogged_options" + param
+       action = "/post/unlogged_options" 
+   if not c.frameless_cname:
+       action = add_sr(action, nocname=True)
  %>
 <form action="${action}" method="post" class="pretty-form short-text">
-<input type="hidden" name="uh" value="${c.modhash}" />
-
+  <input type="hidden" name="uh" value="${c.modhash}" />
+  %if c.cname:
+    <input type="hidden" name="${UrlParser.cname_get}" value="${random.random()}" />
+  %endif
 <table class="content preftable">
   <tr>
     <th>${_("interface language")}</th>

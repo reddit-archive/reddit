@@ -22,13 +22,12 @@
 
 <%!
    from pylons.i18n import _, ungettext
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_sr, get_domain
    from r2.models import FakeSubreddit
 %>
 <% 
    com_label = ungettext("comment", "comments", thing.num_comments)
-   url = "http://%s%s" % (request.host, add_sr(thing.permalink, nocname=True))
-   sr_path = "http://%s%s" % (request.host, thing.subreddit.path)
+   url = add_sr(thing.permalink, force_hostname = True)
  %>
 <item>
   <title>${thing.title}</title>
@@ -43,9 +42,11 @@
           &lt;a href="${url}"&gt;&lt;img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /&gt;&lt;/a&gt;
         &lt;/td&gt;&lt;td&gt;
     %endif
-    submitted by &lt;a href="http://${request.host}/user/${thing.author.name}"&gt;${thing.author.name}&lt;/a&gt;
+    <% domain = get_domain(cname = c.cname, subreddit = False) %>
+    submitted by &lt;a href="http://${domain}/user/${thing.author.name}"&gt;${thing.author.name}&lt;/a&gt;
      %if isinstance(c.site, FakeSubreddit):
-      to &lt;a href="${sr_path}"&gt;${thing.subreddit.name}&lt;/a&gt; 
+      to &lt;a href="http://${domain}${thing.subreddit.path}"&gt;
+       ${thing.subreddit.name}&lt;/a&gt; 
     %endif
     &lt;br/&gt;
     &lt;a href="${thing.url}"&gt;[link]&lt;/a&gt;

@@ -19,12 +19,23 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.template_helpers import add_sr
+   from r2.lib.utils import UrlParser
+   import random
+%>
 
 <%namespace file="utils.html" import="error_field"/>
 
-<form method="post" action="/login" onsubmit="return chklogin(this);" 
+<form method="post" 
+      action="${add_sr('/post/login', nocname = True)}" 
+      onsubmit="return chklogin(this);" 
       class="login-form-side">
   <% op = "login-main" %>
+  %if c.cname:
+    <input type="hidden" name="${UrlParser.cname_get}" 
+           value="${random.random()}" />
+  %endif
   <input type="hidden" name="op" value="${op}" />
   <input name="user_login" 
          id="user-${op}" 

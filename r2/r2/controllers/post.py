@@ -21,7 +21,7 @@
 ################################################################################
 from r2.lib.pages import *
 from api import ApiController
-from r2.lib.utils import Storage, query_string
+from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
 from pylons import request, c, g
 from validator import *
@@ -105,10 +105,11 @@ class PostController(ApiController):
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         self.set_options(all_langs, pref_lang, **kw)
-        q_string = {'done': 'true'}
+        u = UrlParser(c.site.path + "prefs")
+        u.update_query(done = 'true')
         if c.cname:
-            q_string['cnameframe'] = '1'
-        return self.redirect((request.referer or "/prefs") + query_string(q_string))
+            u.put_in_frame()
+        return self.redirect(u.unparse())
             
     def GET_over18(self):
         return BoringPage(_("over 18?"),
@@ -126,7 +127,7 @@ class PostController(ApiController):
                 ip_hash = sha.new(request.ip).hexdigest()
                 c.response.set_cookie('over18',
                                       value = ip_hash,
-                                      domain = c.domain)
+                                      domain = g.domain if not c.frameless_cname else None)
             return self.redirect(dest)
         else:
             return self.redirect('/')
@@ -153,3 +154,43 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
+    def POST_login(self, *a, **kw):
+        res = ApiController.POST_login(self, *a, **kw)
+        c.render_style = "html"
+        c.response_content_type = ""
+
+        errors = list(c.errors)
+        if errors:
+            for e in errors:
+                if not e.endswith("_login"):
+                    msg = c.errors[e].message
+                    c.errors.remove(e)
+                    c.errors._add(e + "_login", msg)
+
+            dest = request.post.get('dest', request.referer or '/')
+            return LoginPage(user_login = request.post.get('user_login'),
+                             dest = dest).render()
+
+        return self.redirect(res.redirect)
+
+    def POST_reg(self, *a, **kw):
+        res = ApiController.POST_register(self, *a, **kw)
+        c.render_style = "html"
+        c.response_content_type = ""
+
+        errors = list(c.errors)
+        if errors:
+            for e in errors:
+                if not e.endswith("_reg"):
+                    msg = c.errors[e].message
+                    c.errors.remove(e)
+                    c.errors._add(e + "_reg", msg)
+
+            dest = request.post.get('dest', request.referer or '/')
+            return LoginPage(user_reg = request.post.get('user_reg'),
+                             dest = dest).render()
+
+        return self.redirect(res.redirect)
+
+    def GET_login(self, *a, **kw):
+        return self.redirect('/login' + query_string(dict(dest="/")))

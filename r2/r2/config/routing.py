@@ -111,7 +111,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/message/:where', controller='message', action='listing')
     
     mc('/:action', controller='front',
-       requirements=dict(action="password|random"))
+       requirements=dict(action="password|random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
     mc('/help/:anything', controller='embed', action='help')
@@ -125,7 +125,7 @@ def make_map(global_conf={}, app_conf={}):
        action='resetpassword')
     
     mc('/post/:action', controller='post',
-       requirements=dict(action="options|over18|unlogged_options|optout|optin"))
+       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
     
     mc('/api/:action', controller='api')
     mc('/d/:what', controller='api', action='bookmarklet')
@@ -149,7 +149,9 @@ def make_map(global_conf={}, app_conf={}):
     # error pages. It should likely stay at the top 
     # to ensure that the error page is
     # displayed properly.
-    mc('error/:action/:id', controller='error')
-    
+    mc('/error/document/:id', controller='error', action="document")
+
+    mc("/*url", controller='front', action='catchall')
+   
     return map
 

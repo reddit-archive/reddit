@@ -21,7 +21,6 @@
 ################################################################################
 
 <%!
-   from r2.controllers.errors import errors
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr
    from r2.lib.utils import cols
@@ -71,11 +70,11 @@ ${first_defined(kw[1:])}
 </%def>
 
 <%def name="error_field(name, kind='p')">
-<${kind} id="${name}" class="error">
-%if errors.get(name) in c.errors:
-${errors.get(name).message}
-%endif
-</${kind}>
+  <${kind} id="${name}" class="error">
+   %if name in c.errors:
+     ${c.errors[name].message}
+   %endif
+  </${kind}>
 </%def>
 
 <%def name="success_field(success_str, kind='p', successful=False, hide='')">

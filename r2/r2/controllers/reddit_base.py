@@ -105,7 +105,7 @@ def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
     c.response.set_cookie(uname + '_' + name,
                           value = val,
-                          domain = g.domain)
+                          domain = g.domain if not c.frameless_cname else None)
 
 def read_click_cookie():
     if c.user_is_loggedin:
@@ -129,7 +129,7 @@ def firsttime():
         if not request.cookies.get("reddit_first"):
             c.response.set_cookie("reddit_first", "first",
                                   expires = NEVER,
-                                  domain = g.domain)
+                                  domain = g.domain if not c.frameless_cname else None)
             return True
     return False
 
@@ -166,39 +166,42 @@ def set_subreddit():
         abort(404, "not found")
 
 def set_content_type():
-    extension = request.environ.get('extension') or \
-                request.environ.get('reddit-domain-extension') or \
-                'html'
+    c.extension = request.environ.get('extension') or \
+                  request.environ.get('reddit-domain-extension') or ''
     c.render_style = 'html'
-    if extension in ('rss', 'xml'):
+    if c.extension in ('rss', 'xml'):
         c.render_style = 'xml'
         c.response_content_type = 'text/xml; charset=UTF-8'
-    elif extension == 'js':
+    elif c.extension == 'js':
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
-    elif extension.startswith('json') or extension == "api":
+    elif c.extension.startswith('json') or c.extension == "api":
         c.response_content_type = 'application/json; charset=UTF-8'
         c.response_access_control = 'allow <*>'
-        if extension == 'json-html':
+        if c.extension == 'json-html':
             c.render_style = api_type('html')
         else:
             c.render_style = api_type()
-    elif extension == 'wired':
+    elif c.extension == 'wired':
         c.render_style = 'wired'
         c.response_content_type = 'text/javascript; charset=UTF-8'
         c.response_wrappers.append(utils.to_js)
-    elif extension  == 'embed':
+    elif c.extension  == 'embed':
         c.render_style = 'htmllite'
         c.response_content_type = 'text/javascript; charset=UTF-8'
         c.response_wrappers.append(utils.to_js)
-    elif extension == 'mobile':
-        c.render_style = 'mobile'
-    #Insert new extentions above this line
-    elif extension not in ('', 'html'):
-        dest = "http://%s%s" % (request.host, request.path)
-        if request.get:
-            dest += utils.query_string(request.get)
-        redirect_to(dest)
+    elif c.extension == 'mobile':
+        c.render_style = 'mobile' 
+    elif c.extension == 'png':
+        c.response_content_type = 'image/png'
+        c.render_style = 'png'
+    elif c.extension == 'css':
+        c.response_content_type = 'text/css'
+        c.render_style = 'css'
+   #Insert new extentions above this line
+    elif c.extension not in ('', 'html'):
+        # request.path already has the extension stripped off of it
+        redirect_to(request.path + utils.query_string(request.get))
 
 def get_browser_langs():
     browser_langs = []
@@ -261,9 +264,15 @@ def set_content_lang():
         c.content_langs = c.user.pref_content_langs
 
 def set_cnameframe():
-    if (bool(request.params.get('cnameframe')) 
+    if (bool(request.params.get(utils.UrlParser.cname_get)) 
         or not request.host.split(":")[0].endswith(g.domain)):
         c.cname = True
+        request.environ['REDDIT_CNAME'] = 1
+        if request.params.has_key(utils.UrlParser.cname_get):
+            del request.params[utils.UrlParser.cname_get]
+        if request.get.has_key(utils.UrlParser.cname_get):
+            del request.get[utils.UrlParser.cname_get]
+    c.frameless_cname = request.environ.get('frameless_cname', False)
 
 def ratelimit_agents():
     user_agent = request.user_agent
@@ -322,7 +331,7 @@ class RedditController(BaseController):
                        str(c.content_langs),
                        request.host,
                        str(c.cname), 
-                       request.fullpath,
+                       str(request.fullpath),
                        str(c.firsttime),
                        str(c.over18)))
         return key
@@ -334,14 +343,13 @@ class RedditController(BaseController):
     def login(user, admin = False, rem = False):
         c.response.set_cookie(g.login_cookie,
                               value = user.make_cookie(admin = admin),
-                              domain = c.domain,
+                              domain = g.domain,
                               expires = NEVER if rem else None)
         
     @staticmethod
     def logout(admin = False):
-        c.response.set_cookie(g.login_cookie,
-                              value = '',
-                              domain = c.domain)
+        c.response.set_cookie(g.login_cookie, value = '',
+                              domain = g.domain)
 
     def pre(self):
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
@@ -349,10 +357,8 @@ class RedditController(BaseController):
         #check if user-agent needs a dose of rate-limiting
         ratelimit_agents()
 
-        c.domain = g.domain
         c.response_wrappers = []
         c.errors = ErrorSet()
-        c.firsttime = firsttime()
         (c.user, maybe_admin) = \
             valid_cookie(request.cookies.get(g.login_cookie))
 
@@ -382,15 +388,21 @@ class RedditController(BaseController):
         set_iface_lang()
         set_content_lang()
         set_cnameframe()
+        c.firsttime = firsttime()
+
+        # set some environmental variables in case we hit an abort
+        if not isinstance(c.site, FakeSubreddit):
+            request.environ['REDDIT_NAME'] = c.site.name
 
         # check if the user has access to this subreddit
         if not c.site.can_view(c.user):
             abort(403, "forbidden")
  
         #check over 18
-        if c.site.over_18 and not c.over18 and not request.path == "/frame":
-            d = dict(dest=add_sr(request.path) + utils.query_string(request.GET))
-            return redirect_to("/over18" + utils.query_string(d))
+        if (c.site.over_18 and not c.over18 and
+            request.path not in  ("/frame", "/over18")
+            and c.render_style == 'html'):
+            return self.intermediate_redirect("/over18")
 
         #check content cache
         if not c.user_is_loggedin:
@@ -440,7 +452,7 @@ class RedditController(BaseController):
     def check_modified(self, thing, action):
         if c.user_is_loggedin:
             return
-        
+
         date = utils.is_modified_since(thing, action, request.if_modified_since)
         if date is True:
             abort(304, 'not modified')
@@ -448,7 +460,7 @@ class RedditController(BaseController):
             c.response.headers['Last-Modified'] = utils.http_date_str(date)
 
     def abort404(self):
-        abort(404, 'not found')
+        abort(404, "not found")
 
     def sendpng(self, string):
         c.response_content_type = 'image/png'

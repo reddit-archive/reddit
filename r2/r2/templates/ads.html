@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -19,6 +19,15 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.template_helpers import get_domain, static
+   import random
+ %>
 
-<iframe id="ad-frame" frameborder="0" scrolling="no" src="${c.site.ad_file}"></iframe>
+<iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
+        src="${c.site.ad_file}">
+</iframe>
+##<script type="text/javascript">
+## $('ad-frame').src = $('ad-frame').src;
+##</script>
 

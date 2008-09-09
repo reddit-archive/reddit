@@ -21,9 +21,9 @@
 ################################################################################
 from pylons import c, request, g
 from pylons.i18n import _
-from pylons.controllers.util import abort, redirect_to
+from pylons.controllers.util import abort
 from r2.lib import utils, captcha
-from r2.lib.filters import unkeep_space, websafe
+from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.db.operators import asc, desc
 from r2.config import cache
 from r2.lib.template_helpers import add_sr
@@ -77,15 +77,10 @@ def validate(*simple_vals, **param_vals):
                 return fn(self, *a, **kw)
 
             except UserRequiredException:
-                d = dict(dest=add_sr(request.path) + 
-                         utils.query_string(request.GET))
-                if c.cname:
-                    d['cnameframe'] = 1
-                path = "/login"
-                if request.environ.get('extension'):
-                    path += ".%s" % request.environ['extension']
-                return redirect_to(path + utils.query_string(d))
-
+                if request.method == "POST" and hasattr(self, "ajax_login_redirect"):
+                    # ajax failure, so redirect accordingly
+                    return  self.ajax_login_redirect("/")
+                return self.intermediate_redirect('/login')
         return newfn
     return val
 
@@ -452,8 +447,11 @@ class VUrl(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
-    def run(self, url, sr):
-        sr =  Subreddit._by_name(sr)
+    def run(self, url, sr = None):
+        if sr is None and not isinstance(c.site, FakeSubreddit):
+            sr = c.site
+        else:
+            sr = Subreddit._by_name(sr) if sr else None
         
         if not url:
             return self.error(errors.NO_URL)
@@ -464,7 +462,7 @@ class VUrl(VRequired):
             try:
                 l = Link._by_url(url, sr)
                 self.error(errors.ALREADY_SUB)
-                return l.url
+                return utils.tup(l)
             except NotFound:
                 return url
         return self.error(errors.BAD_URL)

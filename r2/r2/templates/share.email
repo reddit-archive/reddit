@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 %if not thing.body:
-${thing.username} from http://${g.domain}/ has shared a link with you.
+<% from r2.lib.template_helpers import get_domain%>${thing.username} from http://${get_domain(cname = c.cname, subreddit = False)}/ has shared a link with you.
 %else:
 ${thing.body}
 %endif
@@ -28,7 +28,7 @@ ${thing.body}
 "${thing.link.title}"
 http://${g.domain}/goto?share=true&id=${thing.link._fullname}
 
-<% from r2.lib.strings import strings, plurals %>${_("There are currently %(num_comments)s on this link.  You can view them here:") % dict(num_comments = strings.number_label % (thing.link.num_comments, plurals.N_comments(thing.link.num_comments)))}
+<% from r2.lib.strings import strings, plurals %>${ungettext("There is currently %(num_comments)s on this link.  You can view it here:", "There are currently %(num_comments)s on this link.  You can view them here:", thing.link.num_comments) % dict(num_comments = strings.number_label % (thing.link.num_comments, plurals.N_comments(thing.link.num_comments)))}
 
 <% from r2.lib.template_helpers import add_sr %>http://${g.domain}${add_sr(thing.link.make_permalink_slow())}
 

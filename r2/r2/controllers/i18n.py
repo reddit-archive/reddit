@@ -103,7 +103,7 @@ class I18nController(RedditController):
                     del _translations[key]
 
             return self.redirect("http://%s.%s/" %
-                                 (lang, c.domain))
+                                 (lang, g.domain))
         return abort(404, 'page not found')
 
     @validate(VTranslationEnabled(),
@@ -165,7 +165,7 @@ class I18nController(RedditController):
                      del _translations[key]
 
             return self.redirect("http://%s/?lang=%s" %
-                                 (c.domain, lang))
+                                 (g.domain, lang))
         
         whereto = request.post.get('bttn_num', '')
         if whereto:

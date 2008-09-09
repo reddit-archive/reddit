@@ -359,7 +359,7 @@ function handleResponse(action) {
         }
         // first thing to check is if a redirect has been requested
         if(res_obj.redirect) {
-            window.location = res_obj.redirect;
+            window.location = unsafe(res_obj.redirect);
             return;
         }
         // next check for errors

@@ -1,4 +1,4 @@
-## "The contents of this file are subject to the Common Public Attribution
+## The contents of this file are subject to the Common Public Attribution
 ## License Version 1.0. (the "License"); you may not use this file except in
 ## compliance with the License. You may obtain a copy of the License at
 ## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
@@ -19,10 +19,16 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.template_helpers import get_domain
+ %>
 
-<% domain = "www.reddit.com" if c.domain == "reddit.com" else c.domain %>
+<% 
+   domain = get_domain()
+   arg = "cnameframe=1&" if c.cname else ""
+%>
 (function() {
-var write_string='<iframe src="http://${domain}/button_content?t=${thing.button}&url=';
+var write_string='<iframe src="http://${domain}/button_content?${arg}t=${thing.button}&url=';
 if (window.reddit_url)  { write_string += encodeURIComponent(reddit_url); }
 else { write_string += encodeURIComponent('${thing.referer}');}
 if (window.reddit_title) { write_string += '&title=' + encodeURIComponent(reddit_title); }

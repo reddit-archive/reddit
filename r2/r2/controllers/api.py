@@ -30,7 +30,7 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
-from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
+from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified, query_string
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
@@ -73,6 +73,10 @@ def link_listing_by_url(url, count = None):
 class ApiController(RedditController):
     def response_func(self, **kw):
         return self.sendstring(dumps(kw))
+
+    @Json
+    def ajax_login_redirect(self, res, dest):
+        res._redirect("/login" + query_string(dict(dest=dest)))
 
     def link_exists(self, url, sr, message = False):
         try:    
@@ -233,7 +237,7 @@ class ApiController(RedditController):
               )
     def POST_submit(self, res, url, title, save, sr, ip):
         res._update('status', innerHTML = '')
-        if url:
+        if isinstance(url, str):
             res._update('url', value=url)
             
         should_ratelimit = sr.should_ratelimit(c.user, 'link')
@@ -246,7 +250,7 @@ class ApiController(RedditController):
         if res._chk_errors((errors.NO_URL, errors.BAD_URL)):
             res._focus('url')
         elif res._chk_error(errors.ALREADY_SUB):
-            link = Link._by_url(url, sr)
+            link = url[0] 
             res._redirect(link.already_submitted_link)
         #ratelimiter
         elif res._chk_error(errors.RATELIMIT):
@@ -513,7 +517,6 @@ class ApiController(RedditController):
         else:
             res._update('status', 
                         innerHTML = _("see? you don't really want to leave"))
-
 
     @Json
     @validate(VUser(),
@@ -1041,39 +1044,39 @@ class ApiController(RedditController):
             res._send_things(a)
 
 
-    def GET_bookmarklet(self, what):
+    @validate(uh = nop('uh'),
+              action = VOneOf('what', ('like', 'dislike', 'save')),
+              links = VUrl(['u']))
+    def GET_bookmarklet(self, action, uh, links):
         '''Controller for the functionality of the bookmarklets (not the distribution page)'''
-        action = ''
-        for type in ['like', 'dislike', 'save']:
-            if what.startswith(type):
-                action = type
-                break
-            
-        url = sanitize_url(request.get.u)
-        uh = request.get.get('uh', "")
 
-        try:
-            links = Link._by_url(url,None)
-        except:
-            links = []
+        # the redirect handler will clobber the extension if not told otherwise
+        c.extension = "png"
 
-        Subreddit.load_subreddits(links, return_dict = False)
-        user = c.user if c.user_is_loggedin else None
-        links = [l for l in links if l.subreddit_slow.can_view(user)]
-
-        if links and not c.user_is_loggedin:
+        if not c.user_is_loggedin:
             return self.redirect("/static/css_login.png")
-        elif links and c.user_is_loggedin:
-            if not c.user.valid_hash(uh):
-                return self.redirect("/static/css_update.png")
-            elif action in ['like', 'dislike']:
-                #vote up all of the links
-                for link in links:
-                    Vote.vote(c.user, link, action == 'like', request.ip)
-            elif action == 'save':
-                link = max(links, key = lambda x: x._score)
-                link._save(c.user)
-            return self.redirect("/static/css_%sd.png" % action)
+        # check the modhash (or force them to get new bookmarlets)
+        elif not c.user.valid_hash(uh):
+            return self.redirect("/static/css_update.png")
+        # unlike most cases, if not already submitted, error.
+        elif errors.ALREADY_SUB in c.errors:
+            # preserve the subreddit if not Default
+            sr = c.site if not isinstance(c.site, FakeSubreddit) else None
+
+            # check permissions on those links to make sure votes will count
+            Subreddit.load_subreddits(links, return_dict = False)
+            user = c.user if c.user_is_loggedin else None
+            links = [l for l in links if l.subreddit_slow.can_view(user)]
+    
+            if links:
+                if action in ['like', 'dislike']:
+                    #vote up all of the links
+                    for link in links:
+                        Vote.vote(c.user, link, action == 'like', request.ip)
+                elif action == 'save':
+                    link = max(links, key = lambda x: x._score)
+                    link._save(c.user)
+                return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
 
@@ -1223,3 +1226,5 @@ class ApiController(RedditController):
             if getattr(c.user, pref):
                 setattr(c.user, "pref_" + ui_elem, False)
                 c.user._commit()
+
+        

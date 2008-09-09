@@ -31,7 +31,7 @@
 
      nocname = thing.nocname
   %>
-  ${plain_link(thing.title,thing.link, _sr_path = False, _class="morelink", onclick=onclick, nocname=nocname)}
+  ${plain_link(thing.title,thing.link, _sr_path = thing.sr_path, _class="morelink", onclick=onclick, nocname=nocname)}
   %if thing.subtitles:
     <div class="spacer">
       %for subtitle in thing.subtitles:
