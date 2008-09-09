@@ -158,8 +158,8 @@ def get_domain(cname = False, subreddit = True, no_www = False):
 
     """
     domain = g.domain
-    if not no_www:
-        domain = "www." + g.domain
+    if not no_www and g.domain_prefix:
+        domain = g.domain_prefix + "." + g.domain
     if cname and c.cname and c.site.domain:
         domain = c.site.domain
     if request.port:

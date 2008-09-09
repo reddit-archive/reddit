@@ -202,9 +202,9 @@ class DomainMiddleware(object):
                       and not environ['PATH_INFO'].startswith('/error')):
                     environ['original_path'] = environ['PATH_INFO']
                     environ['PATH_INFO'] = '/frame'
-                    return self.app(environ, start_response)
                 else:
                     environ['frameless_cname'] = True
+            return self.app(environ, start_response)
 
         sub_domains = sub_domains[:-len(base_domain)].strip('.')
         sub_domains = sub_domains.split('.')

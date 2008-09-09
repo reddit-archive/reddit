@@ -1076,6 +1076,8 @@ class ApiController(RedditController):
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     link._save(c.user)
+                else:
+                    action = "update"
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
