@@ -82,6 +82,7 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
+    allowed_render_styles = ('html', 'xml', 'js', 'embed', '')
     def __before__(self):
         try:
             RedditController.__before__(self)
@@ -137,7 +138,9 @@ class ErrorController(RedditController):
             srname = request.GET.get('srname', '')
             if srname:
                 c.site = Subreddit._by_name(srname)
-            if code == '403':
+            if c.render_style not in self.allowed_render_styles:
+                return str(code)
+            elif code == '403':
                 return self.send403()
             elif code == '500':
                 return redditbroke % rand_strings.sadmessages

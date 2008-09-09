@@ -1056,7 +1056,7 @@ class ApiController(RedditController):
         if not c.user_is_loggedin:
             return self.redirect("/static/css_login.png")
         # check the modhash (or force them to get new bookmarlets)
-        elif not c.user.valid_hash(uh):
+        elif not c.user.valid_hash(uh) or not action:
             return self.redirect("/static/css_update.png")
         # unlike most cases, if not already submitted, error.
         elif errors.ALREADY_SUB in c.errors:
@@ -1076,8 +1076,6 @@ class ApiController(RedditController):
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     link._save(c.user)
-                else:
-                    action = "update"
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 

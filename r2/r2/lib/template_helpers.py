@@ -162,7 +162,7 @@ def get_domain(cname = False, subreddit = True, no_www = False):
         domain = g.domain_prefix + "." + g.domain
     if cname and c.cname and c.site.domain:
         domain = c.site.domain
-    if request.port:
+    if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
     if (not c.cname or not cname) and subreddit:
         domain += c.site.path.rstrip('/')

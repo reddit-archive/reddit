@@ -44,7 +44,17 @@ custom_macros = {
     'num': r'[-]?\d+|[-]?\d*\.\d+',
     'percentage': r'{num}%',
     'length': r'0|{num}(em|ex|px|in|cm|mm|pt|pc)',
-    'color': r'orangered|dimgray|lightgray|whitesmoke|pink',
+    'int': r'[-]?\d+',
+    'w': r'\s*',
+    
+    # From: http://www.w3.org/TR/2008/WD-css3-color-20080721/#svg-color
+    'x11color': r'aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen',
+    'csscolor': r'(maroon|red|orange|yellow|olive|purple|fuchsia|white|lime|green|navy|blue|aqua|teal|black|silver|gray|ActiveBorder|ActiveCaption|AppWorkspace|Background|ButtonFace|ButtonHighlight|ButtonShadow|ButtonText|CaptionText|GrayText|Highlight|HighlightText|InactiveBorder|InactiveCaption|InactiveCaptionText|InfoBackground|InfoText|Menu|MenuText|Scrollbar|ThreeDDarkShadow|ThreeDFace|ThreeDHighlight|ThreeDLightShadow|ThreeDShadow|Window|WindowFrame|WindowText)|#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\({w}{int}{w},{w}{int}{w},{w}{int}{w}\)|rgb\({w}{num}%{w},{w}{num}%{w},{w}{num}%{w}\)',
+    'color': '{x11color}|{csscolor}',
+    
+    'single-text-shadow': r'({color}\s+)?{length}\s+{length}(\s+{length})?|{length}\s+{length}(\s+{length})?(\s+{color})?',
+
+    'box-shadow-pos': r'{length}\s+{length}(\s+{length})?',
 }
 
 custom_values = {
@@ -58,6 +68,28 @@ custom_values = {
     'opacity': r'{num}',
     'filter': r'alpha\(opacity={num}\)',
 }
+
+nonstandard_values = {
+    # http://www.w3.org/TR/css3-background/#border-top-right-radius
+    '-moz-border-radius': r'(({length}|{percentage}){w}){1,2}',
+    '-moz-border-radius-topleft': r'(({length}|{percentage}){w}){1,2}',
+    '-moz-border-radius-topright': r'(({length}|{percentage}){w}){1,2}',
+    '-moz-border-radius-bottomleft': r'(({length}|{percentage}){w}){1,2}',
+    '-moz-border-radius-bottomright': r'(({length}|{percentage}){w}){1,2}',
+    '-webkit-border-radius': r'(({length}|{percentage}){w}){1,2}',
+    '-webkit-border-top-left-radius': r'(({length}|{percentage}){w}){1,2}',
+    '-webkit-border-top-right-radius': r'(({length}|{percentage}){w}){1,2}',
+    '-webkit-border-bottom-left-radius': r'(({length}|{percentage}){w}){1,2}',
+    '-webkit-border-bottom-right-radius': r'(({length}|{percentage}){w}){1,2}',
+    
+    # http://www.w3.org/TR/css3-text/#text-shadow
+    'text-shadow': r'none|({single-text-shadow}{w},{w})*{single-text-shadow}',
+    
+    # http://www.w3.org/TR/css3-background/#the-box-shadow
+    # (This description doesn't support multiple shadows)
+    'box-shadow': 'none|(?:({box-shadow-pos}\s+)?{color}|({color}\s+?){box-shadow-pos})',
+}
+custom_values.update(nonstandard_values);
 
 def _expand_macros(tokdict,macrodict):
     """ Expand macros in token dictionary """
@@ -160,7 +192,7 @@ def valid_value(prop,value,report):
                         prop.cssValue.valid = False
                         prop.valid = False
                         break
-	elif not (prop.name in cssproperties.cssvalues or prop.name in custom_values):
+        elif not (prop.name in cssproperties.cssvalues or prop.name in custom_values):
             error = (msgs['invalid_property']
                      % dict(cssprop = prop.name))
             report.append(ValidationError(error,value))
