@@ -84,7 +84,16 @@
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  <a id="subreddit_${thing._fullname}" href="${thing.subreddit.path}" class="hover">
+  <%
+    if c.cname:
+       path = "http://" + get_domain(cname = (c.site == thing.subreddit), 
+                                     subreddit = (c.site != thing.subreddit))
+    else:
+       path = thing.subreddit.path
+    endif
+  %>
+  <a id="subreddit_${thing._fullname}" href="${path}" class="hover"
+     ${'target="_top"'  if c.cname else ''} >
     ${thing.subreddit.name}
   </a>
   <script type="text/javascript">
@@ -123,7 +132,7 @@
     from r2.lib.utils import timeago
     from r2.models import FakeSubreddit
  
-    if isinstance(c.site, FakeSubreddit):
+    if isinstance(c.site, FakeSubreddit) or c.site != thing.subreddit:
       taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s") 
     else:
       taglinetext = _("submitted %(when)s ago by %(author)s") 
