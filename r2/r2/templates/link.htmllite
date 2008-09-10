@@ -22,6 +22,7 @@
 
 <%!
    from pylons.i18n import _, ungettext
+   from r2.lib.template_helpers import get_domain
 %>
 <%inherit file="printable.htmllite" />
 
@@ -37,10 +38,10 @@
        com_label = _("comment") 
  %>
   <link>\
-  <a href="http://${c.domain}/goto?rss=true&amp;id=${thing._fullname}">
+  <a href="${thing.url}">
     ${thing.title}</a><br />
   <small>
     ${thing.score} ${ungettext("point", "points", thing.score)} |
-    &nbsp;<a href="http://${c.domain}${thing.permalink}">${com_label}</a>
+    &nbsp;<a href="http://${get_domain(subreddit=False)}${thing.permalink}">${com_label}</a>
   </small>
 </%def>

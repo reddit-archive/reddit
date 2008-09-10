@@ -22,14 +22,15 @@
 
 <%!
    from pylons.i18n import _
+   from r2.lib.template_helpers import get_domain
 %>
-<h3><a href="http://${c.domain}/">
+<h3><a href="http://${get_domain()}/">
     <img src="http://sp.reddit.com/reddithead4.gif" alt="" />
   </a>
   <%
-  link = '<a href="http://%s/">reddit</a></h3>' % c.domain
-  label = _("link from %(site)s")
-  label = label.replace(" ", "&nbsp;");
+    link = '<a href="http://%s/">reddit</a></h3>' % get_domain()
+    label = _("link from %(site)s")
+    label = label.replace(" ", "&nbsp;");
   %>
   ${unsafe(label % dict(site = link))}
 
