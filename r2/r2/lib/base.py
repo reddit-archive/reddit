@@ -108,16 +108,17 @@ class BaseController(WSGIController):
         matches the request port
         """
         u = UrlParser(url)
-        
-        # make sure to pass the port along if not 80
-        if not kw.has_key('port'):
-            kw['port'] = request.port
 
-        # disentagle the cname (for urls that would have cnameframe=1 in them)
-        u.mk_cname(**kw)
-
-        # make sure the extensions agree with the current page
-        u.set_extension(c.extension)
+        if u.is_reddit_url():
+            # make sure to pass the port along if not 80
+            if not kw.has_key('port'):
+                kw['port'] = request.port
+    
+            # disentagle the cname (for urls that would have cnameframe=1 in them)
+            u.mk_cname(**kw)
+    
+            # make sure the extensions agree with the current page
+            u.set_extension(c.extension)
 
         # unparse and encode it un utf8
         return _force_unicode(u.unparse()).encode('utf8')
