@@ -1,6 +1,6 @@
 from r2.models import Account, Link, Comment, Vote, SaveHide
 from r2.models import Message, Inbox, Subreddit
-from r2.lib.db.thing import Thing
+from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.db.sorts import epoch_seconds
@@ -42,7 +42,7 @@ def filter_thing2(x):
 class CachedResults(object):
     """Given a query returns a list-like object that will lazily look up
     the query from the persistent cache. """
-    def __init__(self, query, filter = filter_identity):
+    def __init__(self, query, filter):
         self.query = query
         self.query._limit = precompute_limit
         self.filter = filter
@@ -56,7 +56,6 @@ class CachedResults(object):
         if not self._fetched:
             self._fetched = True
             self.data = query_cache.get(self.iden) or []
-        return list(self)
 
     def make_item_tuple(self, item):
         """Given a single 'item' from the result of a query build the tuple
@@ -120,13 +119,12 @@ class CachedResults(object):
         return '<CachedResults %s %s>' % (self.query._rules, self.query._sort)
 
     def __iter__(self):
-        if not self._fetched:
-            self.fetch()
+        self.fetch()
 
         for x in self.data:
             yield x[0]
 
-def merge_results(*results):
+def merge_cached_results(*results):
     """Given two CachedResults, mergers their lists based on the sorts of
     their queries."""
     if len(results) == 1:
@@ -154,13 +152,29 @@ def merge_results(*results):
     #all_items = Thing._by_fullname(all_items, return_dict = False)
     return [i[0] for i in sorted(all_items, cmp = thing_cmp)]
 
+def make_results(query, filter = filter_identity):
+    if g.use_query_cache:
+        return CachedResults(query, filter)
+    else:
+        query.prewrap_fn = filter
+        return query
+
+def merge_results(*results):
+    if g.use_query_cache:
+        return merge_cached_results(*results)
+    else:
+        m = Merge(results, sort = results[0]._sort)
+        #assume the prewrap_fn's all match
+        m.prewrap_fn = results[0].prewrap_fn
+        return m
+
 def get_links(sr, sort, time):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
                     sort = db_sort(sort))
     if time != 'all':
         q._filter(db_times[time])
-    return CachedResults(q)
+    return make_results(q)
 
 def user_query(kind, user, sort, time):
     """General profile-page query."""
@@ -169,7 +183,7 @@ def user_query(kind, user, sort, time):
                     sort = db_sort(sort))
     if time != 'all':
         q._filter(db_times[time])
-    return CachedResults(q)
+    return make_results(q)
 
 def get_comments(user, sort, time):
     return user_query(Comment, user, sort, time)
@@ -180,7 +194,7 @@ def get_submitted(user, sort, time):
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))
-
+    
 def user_rel_query(rel, user, name):
     """General user relationship query."""
     q = rel._query(rel.c._thing1_id == user._id,
@@ -191,7 +205,7 @@ def user_rel_query(rel, user, name):
                    #thing_data = True
                    )
        
-    return CachedResults(q, filter_thing2)
+    return make_results(q, filter_thing2)
 
 vote_rel = Vote.rel(Account, Link)
 
@@ -223,7 +237,7 @@ def get_sent(user):
     q = Message._query(Message.c.author_id == user._id,
                        Message.c._spam == (True, False),
                        sort = desc('_date'))
-    return CachedResults(q)
+    return make_results(q)
 
 def add_queries(queries, insert_item = None, delete_item = None):
     """Adds multiple queries to the query queue. If insert_item or
@@ -231,6 +245,9 @@ def add_queries(queries, insert_item = None, delete_item = None):
     all."""
     def _add_queries():
         for q in queries:
+            if not isinstance(q, CachedResults):
+                continue
+
             if insert_item and q.can_insert():
                 q.insert(insert_item)
             elif delete_item and q.can_delete():
@@ -361,6 +378,3 @@ def add_all_users():
     q = Account._query(sort = asc('_date'))
     for user in fetch_things2(q):
         update_user(user)
-        
-
-

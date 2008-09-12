@@ -50,10 +50,6 @@ class ListingController(RedditController):
     # toggles showing numbers 
     show_nums = True
 
-    # for use with builder inm build_listing.  function applied to the
-    # elements of query() upon iteration
-    prewrap_fn = None
-
     # any text that should be shown on the top of the page
     infotext = None
 
@@ -118,6 +114,8 @@ class ListingController(RedditController):
             builder_cls = QueryBuilder
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
+        elif isinstance(self.query_obj, queries.CachedResults):
+            builder_cls = IDBuilder
 
         b = builder_cls(self.query_obj,
                         num = self.num,
@@ -125,8 +123,8 @@ class ListingController(RedditController):
                         after = self.after,
                         count = self.count,
                         reverse = self.reverse,
-                        prewrap_fn = self.prewrap_fn,
                         wrap = self.builder_wrapper)
+
         return b
 
     def listing(self):
@@ -207,15 +205,13 @@ class HotController(FixListing, ListingController):
         if c.site == Default:
             user = c.user if c.user_is_loggedin else None
             sr_ids = Subreddit.user_subreddits(user)
-            links = normalized_hot(sr_ids)
-            return links
+            return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
               and not isinstance(c.site, FakeSubreddit)
               and self.after is None
               and self.count == 0):
-            links = [l._fullname for l in get_hot(c.site)]
-            return links
+            return [l._fullname for l in get_hot(c.site)]
         else:
             return c.site.get_links('hot', 'all')
 
@@ -242,14 +238,7 @@ class SavedController(ListingController):
     title_text = _('saved')
 
     def query(self):
-        q = queries.get_saved(c.user)
-        if g.use_query_cache:
-            q = q.fetch()
-        else:
-            self.prewrap_fn = q.filter
-            q = q.query
-
-        return q
+        return queries.get_saved(c.user)
 
     @validate(VUser())
     def GET_listing(self, **env):
@@ -369,44 +358,28 @@ class UserController(ListingController):
         q = None
         if self.where == 'overview':
             self.check_modified(self.vuser, 'overview')
-            if g.use_query_cache:
-                q = queries.get_overview(self.vuser, 'new', 'all')
-            else:
-                links = Link._query(Link.c.author_id == self.vuser._id,
-                                    Link.c._spam == (True, False))
-                comments = Comment._query(Comment.c.author_id == self.vuser._id,
-                                          Comment.c._spam == (True, False))
-                q = Merge((links, comments), sort = desc('_date'), data = True)
+            q = queries.get_overview(self.vuser, 'new', 'all')
+
         elif self.where == 'comments':
             self.check_modified(self.vuser, 'commented')
             q = queries.get_comments(self.vuser, 'new', 'all')
+
         elif self.where == 'submitted':
             self.check_modified(self.vuser, 'submitted')
             q = queries.get_submitted(self.vuser, 'new', 'all')
+
         elif self.where in ('liked', 'disliked'):
             self.check_modified(self.vuser, self.where)
             if self.where == 'liked':
                 q = queries.get_liked(self.vuser)
             else:
                 q = queries.get_disliked(self.vuser)
-                
+
         elif self.where == 'hidden':
             q = queries.get_hidden(self.vuser)
 
         elif c.user_is_admin:
-            q, self.prewrap_fn = admin_profile_query(self.vuser,
-                                                     self.where,
-                                                     desc('_date'))
-            
-        #QUERIES HACK
-        if isinstance(q, queries.CachedResults):
-            if g.use_query_cache:
-                q = q.fetch()
-            elif isinstance(q.query, Relations):
-                self.prewrap_fn = q.filter
-                q = q.query
-            else:
-                q = q.query
+            q = admin_profile_query(self.vuser, self.where, desc('_date'))
 
         if q is None:
             return self.abort404()
@@ -464,13 +437,7 @@ class MessageController(ListingController):
 
     def query(self):
         if self.where == 'inbox':
-            if g.use_query_cache:
-                q = queries.get_inbox(c.user)
-            else:
-                q = Inbox._query(Inbox.c._thing1_id == c.user._id,
-                                 eager_load = True,
-                                 thing_data = True)
-                self.prewrap_fn = lambda x: x._thing2
+            q = queries.get_inbox(c.user)
 
             #reset the inbox
             if c.have_messages:
@@ -479,10 +446,6 @@ class MessageController(ListingController):
 
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
-            if g.use_query_cache:
-                q = q.fetch()
-            else:
-                q = q.query
 
         return q
 
@@ -532,7 +495,6 @@ class RedditsController(ListingController):
         return ListingController.GET_listing(self, **env)
 
 class MyredditsController(ListingController):
-    prewrap_fn = lambda self, x: x._thing1
     render_cls = MySubredditsPage
 
     @property
@@ -554,6 +516,7 @@ class MyredditsController(ListingController):
                                   sort = (desc('_t1_ups'), desc('_t1_date')),
                                   eager_load = True,
                                   thing_data = True)
+        reddits.prewrap_fn = lambda x: x._thing1
         return reddits
 
     def content(self):

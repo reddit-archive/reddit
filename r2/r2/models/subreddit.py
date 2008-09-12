@@ -230,11 +230,7 @@ class Subreddit(Thing, Printable):
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
-        q = queries.get_links(self, sort, time)
-        if g.use_query_cache:
-            return q.fetch()
-        else:
-            return q.query
+        return queries.get_links(self, sort, time)
 
     @classmethod
     def add_props(cls, user, wrapped):
@@ -442,7 +438,7 @@ class DefaultSR(FakeSubreddit):
             results = []
             for sr in srs:
                 results.append(queries.get_links(sr, sort, time))
-            return queries.merge_results(*results)
+            return queries.merge_cached_results(*results)
         else:
             q = Link._query(Link.c.sr_id == sr_ids,
                             sort = queries.db_sort(sort))

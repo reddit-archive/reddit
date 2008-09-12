@@ -40,16 +40,10 @@ def access_key(sr):
 def expire_key(sr):
     return sr.name + '_expire'
 
-def top_key(sr):
-    return sr.name + '_top'
-
 def expire_hot(sr):
     """Called when a subreddit should be recomputed: after a vote (hence,
     submit) or deletion."""
     cache.set(expire_key(sr), True)
-
-#def is_top_link(sr, link):
-#    return cache.get(top_key(sr)) == link._fullname
 
 def cached_query(query, sr):
     """Returns the results from running query. The results are cached and
@@ -79,11 +73,6 @@ def cached_query(query, sr):
     query._read_cache = read_cache
     res = list(query)
     
-    #set the #1 link so we can ignore it later. expire after TOP_CACHE
-    #just in case something happens and that sr doesn't update
-    #if res:
-    #    cache.set(top_key(sr), res[0]._fullname, TOP_CACHE)
-
     return res
 
 def get_hot(sr):
@@ -94,7 +83,7 @@ def get_hot(sr):
     if isinstance(q, Query):
         return cached_query(q, sr)
     else:
-        return Link._by_fullname(q[:150], return_dict = False)
+        return Link._by_fullname(list(q)[:150], return_dict = False)
 
 def only_recent(items):
     return filter(lambda l: l._date > utils.timeago('%d day' % g.HOT_PAGE_AGE),

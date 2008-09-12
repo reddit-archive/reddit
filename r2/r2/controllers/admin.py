@@ -22,7 +22,7 @@
 from r2.controllers.reddit_base import RedditController
 
 def admin_profile_query(vuser, location, db_sort):
-    return None, None
+    return None 
 
 class AdminController(RedditController):
     pass

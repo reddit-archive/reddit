@@ -37,7 +37,8 @@ iters = (list, tuple, set)
 def tup(item, ret_is_single=False):
     """Forces casting of item to a tuple (for a list) or generates a
     single element tuple (for anything else)"""
-    if isinstance(item, iters):
+    #return true for iterables, except for strings, which is what we want
+    if hasattr(item, '__iter__'):
         return (item, False) if ret_is_single else item
     else:
         return ((item,), True) if ret_is_single else (item,)

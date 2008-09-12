@@ -191,7 +191,11 @@ class QueryBuilder(Builder):
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
-        self.prewrap_fn = kw.get('prewrap_fn')
+        
+        self.prewrap_fn = None
+        if hasattr(query, 'prewrap_fn'):
+            self.prewrap_fn = query.prewrap_fn
+        #self.prewrap_fn = kw.get('prewrap_fn')
 
     def item_iter(self, a):
         """Iterates over the items returned by get_items"""
@@ -316,7 +320,7 @@ class QueryBuilder(Builder):
 
 class IDBuilder(QueryBuilder):
     def init_query(self):
-        names = self.names = copy(tup(self.query))
+        names = self.names = list(tup(self.query))
 
         if self.reverse:
             names.reverse()

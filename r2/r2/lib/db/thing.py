@@ -667,21 +667,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
     return RelationCls
 
-#TODO can this be more efficient?
-class QueryAttr(object):
-    __slots__ = ('cols',)
-    def __init__(self, *cols):
-        self.cols = cols
-
-    def __eq__(self, other):
-        return (self, other)
-
-    def lookup(self, obj):
-        return reduce(getattr, self.cols, obj)
-
-    def __getattr__(self, attr):
-        return QueryAttr(*list(self.cols) + [attr])
-
 class Query(object):
     def __init__(self, kind, *rules, **kw):
         self._rules = []
@@ -767,11 +752,6 @@ class Query(object):
     def _count(self):
         return self._cursor().rowcount()
 
-    def __getattr__(self, attr):
-        if attr.startswith('__'):
-            raise AttributeError
-        else:
-            return QueryAttr(attr)
 
     def _filter(*a, **kw):
         raise NotImplementedError
@@ -1142,3 +1122,28 @@ def MultiRelation(name, *relations):
 #     def __init__(self, query1, query2, rule):
 #         MultiQuery.__init__(self, query1, query2)
 #         self._a = (rule[0].lookup, rule, rule[1].lookup)
+
+
+##used to be in class Query
+#     def __getattr__(self, attr):
+#         if attr.startswith('__'):
+#             raise AttributeError
+#         else:
+#             return QueryAttr(attr)
+
+##user to be in class Query
+#TODO can this be more efficient?
+# class QueryAttr(object):
+#     __slots__ = ('cols',)
+#     def __init__(self, *cols):
+#         self.cols = cols
+
+#     def __eq__(self, other):
+#         return (self, other)
+
+#     def lookup(self, obj):
+#         return reduce(getattr, self.cols, obj)
+
+#     def __getattr__(self, attr):
+#         return QueryAttr(*list(self.cols) + [attr])
+
