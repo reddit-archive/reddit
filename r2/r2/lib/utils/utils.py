@@ -491,8 +491,8 @@ class UrlParser(object):
         if self._query_dict is None:
             def _split(param):
                 p = param.split('=')
-                return (url_unescape(p[0]),
-                        url_unescape('='.join(p[1:])))
+                return (unquote_plus(p[0]),
+                        unquote_plus('='.join(p[1:])))
             self._query_dict = dict(_split(p) for p in self.query.split('&')
                                     if p)
 
