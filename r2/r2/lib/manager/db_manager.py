@@ -21,7 +21,7 @@
 ################################################################################
 import sqlalchemy as sa
 
-def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 5, max_overflow = 10):
+def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 1, max_overflow = 9):
     host = db_host if db_host else '' 
     if db_user:
         if db_pass:
