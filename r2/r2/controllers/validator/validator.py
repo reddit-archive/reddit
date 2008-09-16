@@ -716,7 +716,11 @@ class VCnameDomain(Validator):
             and (not self.domain_re.match(domain)
                  or domain.endswith('.reddit.com'))):
             c.errors.add(errors.BAD_CNAME)
-        return domain or ''
+        try:
+            return str(domain) or ''
+        except UnicodeEncodeError:
+            c.errors.add(errors.BAD_CNAME)
+            return ""
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!

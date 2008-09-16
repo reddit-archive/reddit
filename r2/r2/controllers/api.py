@@ -288,7 +288,9 @@ class ApiController(RedditController):
             l._commit()
         v = Vote.vote(c.user, l, True, ip, spam)
         if save == 'on':
-            l._save(c.user)
+            r = l._save(c.user)
+            if g.write_query_queue:
+                queries.new_savehide(r)
         #set the ratelimiter
         if should_ratelimit:
             VRatelimit.ratelimit(rate_user=True, rate_ip = True)
@@ -1160,10 +1162,14 @@ class ApiController(RedditController):
                 if action in ['like', 'dislike']:
                     #vote up all of the links
                     for link in links:
-                        Vote.vote(c.user, link, action == 'like', request.ip)
+                        v = Vote.vote(c.user, link, action == 'like', request.ip)
+                        if g.write_query_queue:
+                            queries.new_vote(v)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
-                    link._save(c.user)
+                    r = link._save(c.user)
+                    if g.write_query_queue:
+                        queries.new_savehide(r)
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
