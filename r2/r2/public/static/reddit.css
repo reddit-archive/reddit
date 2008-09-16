@@ -1302,6 +1302,50 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .stylesheet-customize-container { }
 .stylesheet-customize-container textarea { margin: 0; padding: 0px; }
+.stylesheet-customize-container h2 { margin-top: 15px; margin-bottom: 10px;  }
+
+.image-upload .new-image { margin-left: 20px }
+.image-upload table { margin-left: 20px;  }
+.image-upload td,
+.image-upload th    { vertical-align: top; }
+.image-upload span  { padding-left: 5px; }
+
+
+ul#image-preview-list { 
+    margin: 20px 320px 20px 20px;
+    font-size:larger;
+}
+ul#image-preview-list li { 
+    padding-bottom: 10px; 
+    margin-bottom: 20px; 
+    vertical-align: top; 
+    width: 45%; 
+    height: 100px; 
+    float: left;
+    position: relative; 
+}
+
+ul#image-preview-list .preview { 
+    width: 100px;                                     
+    float: left;
+    display: block;
+    text-align: center;
+    max-height: 100px;
+    overflow: hidden;
+}
+ul#image-preview-list .preview img { 
+    max-width: 100px; 
+    padding: auto;
+}
+ul#image-preview-list .description { 
+    vertical-align: top;
+    margin-left: 105px; 
+}
+ul#image-preview-list .description pre { 
+    display: inline;
+    padding: 5px;
+}
+
 
 .sheets { margin-right: 315px; }
 .sheets .col { float: left;  }
@@ -1311,7 +1355,6 @@ a.star { text-decoration: none; color: #ff8b60 }
 .sheets .btn { margin-left: 0px; margin-right: 5px; }
 .sheets .btn.right { float: right; margin-right: 3px;}
 
-.stylesheet-customize-container h2 { margin-top: 15px; margin-bottom: 10px;  }
 
 #validation-errors { 
     margin-left: 40px; 
@@ -1348,7 +1391,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 
-#header-img-preview-container {
+#img-preview-container {
     border-width: .2em;
     border-style: dashed;
     border-color: lightgray;

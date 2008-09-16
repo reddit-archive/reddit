@@ -25,17 +25,19 @@
 
 %>
 <%namespace file="utils.html" import="error_field, language_tool"/>
+<%namespace file="printable.html" import="yes_no_button"/>
 
 <div class="stylesheet-customize-container">
-
   <form
-   onsubmit="return stylesheetSave(this, 'subreddit_stylesheet')"
-   name="subreddit_stylesheet" id="subreddit_stylesheet"
-   class="pretty-form sr-form"
-   action="/post/subreddit_stylesheet" method="post" >
-
+     onsubmit="return post_form(this, 'subreddit_stylesheet')"
+     name="subreddit_stylesheet" id="subreddit_stylesheet"
+     class="pretty-form sr-form"
+     action="/post/subreddit_stylesheet" method="post" >
+    
   <input type="hidden" name="r"  value="${thing.site.name}" />
-  <input type="hidden" name="op" value="save" />
+  <input type="hidden" name="op"  value="" />
+  <input type="hidden" name="thumbbucket" 
+         value="http:/${g.s3_thumb_bucket}${c.site._fullname}" />
 
   <h2>${_("stylesheet")}</h2>
   <div class="sheets">
@@ -77,10 +79,14 @@
               onclick="return hideDefaultStylesheet();">
         ${_('hide the default stylesheet')}
       </button>
-      <button class="btn" name="save" type="submit">${_("save")}</button>
-      <button class="btn" name="preview" type="button"
-              onclick="stylesheetPreview('subreddit_stylesheet','stylesheet_contents');">${_("preview")}</button>
-      
+      <button class="btn" name="save" type="submit" 
+             onclick="this.form.op.value='save'; return true;">
+        ${_('save')}
+      </button>
+      <button class="btn" name="preview" type="submit" 
+             onclick="this.form.op.value='preview'; return true;">
+        ${_('preview')}
+      </button>
       <span id="status" class="error"></span>
     </div>
   </div>
@@ -90,10 +96,157 @@
       <!-- populated from AJAX requests to /api/subreddit_stylesheet -->
     </ul>
   </div>
-  <div class="clear"></div>
   
   </form>
 
+  <div id="images">
+    <h2><a name="images">${_("images")}</a></h2>
+
+    <form class="pretty-form image-upload" enctype="multipart/form-data"
+          target="upload-iframe" id="upload-image"
+          action="/api/upload_sr_img" method="post"
+          onsubmit="return check_name(this)">
+      <input type="hidden" name="uh" value="${c.modhash}" />
+      <input type="hidden" name="r"  value="${c.site.name}" />
+      <table>
+        <tr>
+          <th>
+            <label for="srfile">${_("image file:")}</label>
+          </th>
+          <td>
+            <input type="file" name="file" id="srfile"
+                   onchange="return file_changed(this)"/>
+            <button id="submit-header-img" type="submit" name="upload" 
+                    onclick="return upload_image(this.form, '${_('uploading')}');"
+                    style="display: none;" >
+              ${_('Upload')}
+            </button>
+            <span style="display: none;" class="error" id="img-status"></span>
+            ${error_field("IMAGE_ERROR", "span")}
+          </td>
+        </tr>
+        <tr>
+          <th>
+            <label for="img-name">${_("new image name:")}</label>
+          </th>
+          <td>
+            <input id="img-name" name="name" value="" type="text"/>
+            ${error_field("BAD_CSS_NAME", "span")}
+            <br/>
+            <span class="little gray">
+              ${_("(image names should consist of alphanumeric characters and '-' only)")}
+            </span>
+          </td>
+        </tr>
+      </table>
+      <p class="error">
+          ${_("Note: any changes to images here will be reflected immediately on reload and cannot be undone.")}
+      </p>
+    </form>
+    <script type="text/javascript">
+      /* <![CDATA[ */
+        function too_big() {
+            $("IMAGE_ERROR").innerHTML = "image too big: there is a 500k cap";
+            $("img-status").innerHTML = "";
+        }
+        function get_name(source) {
+            if(source.id && source.id.split) {
+               var name = source.id.split('_');
+               return name[name.length - 1];
+            }
+        }
+        function paste_url(source) {
+            insertAtCursor("stylesheet_contents", 
+                           "url(%%" + get_name(source) + "%%)");
+            return false; 
+        }
+        function delete_img(button) {
+            var n=get_name(button); 
+            var form = button.parentNode.parentNode;
+            if (n && form && form.id && typeof(form.id) != "string") {
+              form.id.value = n;
+              form.img_name.value = n;
+            }
+            return deletetoggle(button, 'delete_sr_img');
+        }
+        function file_changed(file_input) {
+            show('submit-header-img');
+            $("img-status").innerHTML = "";
+            if(file_input.value) {
+                var f = file_input.value.replace(/.*[\/\\]/, "").split('.')[0];
+                f = f.replace(/[ _]/g, "-");
+                if(! $('img-name').value) 
+                    $('img-name').value = f;
+            }
+        }
+        function check_name(form) {
+           var name = form.name.value;
+           var r = new RegExp(/[^a-zA-Z0-9\-]/);
+           if (name == "" || name.match(r)) { 
+              $("img-status").innerHTML = "";
+              show("BAD_CSS_NAME");
+              $("BAD_CSS_NAME").innerHTML = "${_('bad image name')}";
+              return false; 
+           }
+           else if(form.srfile.value) {
+              $("BAD_CSS_NAME").innerHTML = "";
+              $("IMAGE_ERROR").innerHTML = "";
+              return true;
+           } else {
+              $("img-status").innerHTML = "";
+              show("IMAGE_ERROR");
+              $("IMAGE_ERROR").innerHTML = "${_('please select an image')}";
+              return false; 
+           }
+        }
+    /* ]]> */
+    </script>
+    <ul id="image-preview-list" class="image-list">
+      <%def name="make_li(name='', img = None, prototype=False)">
+        <li ${"style='display:none'" if img is None else ""}
+            id="${'img-prototype' if prototype else ('img-li_%s' % name) }">
+          <% 
+             if img is not None:
+                 img = "http:/%s%s_%d.png" % (g.s3_thumb_bucket, c.site._fullname, img)
+             else:
+                 img = "/static/kill.png"                  
+             %>
+          <a href="${img}" id="img-preview-a_${name}" class="preview">
+            <img id="img-preview_${name}" src="${img}" alt="Image ${name}"
+                 title="click to preview"/>
+          </a>
+          <div class="description">
+            <b id="img_name_${name}">
+              ${name}
+            </b>
+            <br/>
+            <span id="description_${name}">link:</span>
+            <pre id="img_url_${name}">url(%%${name}%%)</pre>
+            <br/>
+            <a id="paste_image_${name}" href="javascript:void(0)" 
+               onclick="return paste_url(this)">
+              ${_("paste into stylesheet")}
+            </a>
+            <br/>
+            ${yes_no_button("delete_sr_img", name,
+                            _("delete this image"),
+                            "return delete_img(this)",
+                            "", img_name = name)}
+          </div>
+        </li>
+        </%def>
+      ${make_li(prototype=True)}
+      %for name, img_num in c.site.get_images():
+         ${make_li(name = name, img = img_num)}
+      %endfor
+    </ul>
+
+    <iframe src="about:blank" width="600" height="200" style="display: none;"
+            name="upload-iframe" id="upload-iframe"></iframe>
+    
+  </div>
+
+  <div style="clear:left"><!--IEsux--></div>
   <div id="preview-table" style="display:none">
     <h2><a name="preview">${_("preview")}</a></h2>
     <table>

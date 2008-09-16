@@ -66,7 +66,7 @@ class Wrapped(object):
             for lookup in self.lookups:
                 try:
                     template = tpm.get(lookup, style, cache = not debug)
-                except KeyError:
+                except AttributeError:
                     continue
         else:
             try:

@@ -19,10 +19,16 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%! 
+   import simplejson
+ %>
 <html>
   <head>
     <script type="text/javascript">
-      parent.completedUploadHeaderImage('${thing.status}','${thing.img_src}', '${thing.op}');
+      <%
+         errors = simplejson.dumps(thing.errors)
+       %>
+      parent.completedUploadImage('${thing.status}','${thing.img_src or ""}', '${thing.name or ""}', ${unsafe(errors)});
     </script>
   </head>
   <body>

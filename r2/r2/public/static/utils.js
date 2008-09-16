@@ -164,25 +164,6 @@ function tup(x) {
     return x;
 }
 
-function stylesheetSave(form, formID) {
-  form.op.value = "save";
-  return post_form(form, formID);
-}
-
-function stylesheetPreview(formID, textboxID) {
-  var form = document.getElementById(formID);
-  form.op.value = "preview";
-  post_form(form, formID);
-
-  applyStylesheetFromTextbox(textboxID);
-}
-
-function applyStylesheetFromTextbox(textboxID) {
-  var textbox = document.getElementById(textboxID);
-  var cssText = textbox.value;
-  return applyStylesheet(cssText);
-}
-
 function applyStylesheet(cssText) {
   /* also referred to in the reddit.html template, for the name of the
      stylesheet set for this reddit. These must be in sync, because
@@ -297,46 +278,100 @@ function gotoTextboxLine(textboxID, lineNo) {
   }
 }
 
-function uploadHeaderImage(status) {
-  var form = $('upload-header-image');
 
-  form.op.value = 'upload';
-  $('img-status').innerHTML = status;
-  show('img-status');
+function insertAtCursor(textbox, value) {
+    textbox = $(textbox);
+    var orig_pos = textbox.scrollTop;
 
-  form.submit();
+    if (document.selection) { /* IE */
+        textbox.focus();
+        var sel = document.selection.createRange();
+        sel.text = value;
+    }
+    else if (textbox.selectionStart) {
+        var prev_start = textbox.selectionStart;
+        textbox.value = 
+            textbox.value.substring(0, textbox.selectionStart) + 
+            value + 
+            textbox.value.substring(textbox.selectionEnd, textbox.value.length);
+        prev_start += value.length;
+        textbox.setSelectionRange(prev_start, prev_start);
+    } else {
+        textbox.value += value;
+    }
 
-  return false;
+    if(textbox.scrollHeight) {
+        textbox.scrollTop = orig_pos;
+    }
+
+    textbox.focus();
 }
 
-function deleteHeaderImage(status) {
-  var form = $('upload-header-image');
 
-  form.reset();
-  form.op.value = 'delete';
+
+function upload_image(form, status) {
   $('img-status').innerHTML = status;
   show('img-status');
-
-  form.submit();
-
-  return false;
+  return true;
 }
 
-function completedUploadHeaderImage(status,img_src,op) {
+
+function completedUploadImage(status, img_src, name, errors) {
   show('img-status');
   $('img-status').innerHTML = status;
-  $('upload-header-image').reset();
+  for(var i = 0; i < errors.length; i++) {
+      var e = $(errors[i][0]);
+      if( errors[i][1]) {
+          show(e);
+          e.innerHTML = errors[i][1];
+      }
+      else {
+          hide(e);
+      }
+          
+  }
 
-  $('header-img').src = img_src;
+  if(img_src) {
+      $('upload-image').reset();
+      hide('submit-header-img');
+      if (!name) {
+          $('header-img').src = img_src;
+          $('img-preview').src = img_src;
+          show('delete-img');
+          hide('submit-img');
+          show('img-preview-container');
+      } else {
+          var img = $("img-preview_" + name);
+          if(img) { 
+              /* Because IE isn't smart enought to eval "!img" */
+          }
+          else {
+              var ul = $("image-preview-list");
+              var li = $("img-prototype").cloneNode(true);
+              li.id = "img-li_";
+              ul.appendChild(li);
+              re_id_node(li, ''+name);
+              var name_b = $("img_name_" + name);
+              if(name_b) {
+                  name_b.innerHTML = name;
+              }
+              var label = $("img_url_" + name);
+              if(label) {
+                  label.innerHTML = "url(%%" + name + "%%)";
+              }
+              img = $("img-preview_" + name);
 
-  if(op == 'delete') {
-    hide('delete-header-img');
-    hide('header-img-preview-container');
-  } else {
-    $('header-img-preview').src = img_src;
-    show('delete-header-img');
-    hide('submit-header-img');
-    show('header-img-preview-container');
+              var sel_list = $('old-names');
+              if (sel_list) {
+                  var opt = document.createElement('option');
+                  opt.innerHTML = name;
+                  sel_list.appendChild(opt);
+              }
+          } 
+          img.src = img_src;
+          $("img-preview-a_" + name).href = img_src;
+          show("img-li_" + name);
+      }
   }
 }
 
@@ -392,7 +427,7 @@ function handleResponse(action) {
         if(r.call) {
           var calls = r.call;
           for(var i=0; i<calls.length; i++) {
-            eval(calls[i]);
+              eval(calls[i]);
           }
         }
         // handle shifts of focus
@@ -448,7 +483,7 @@ function re_id_node(node, id) {
         }
         return s;
     }
-    if(node.id) { node.id = add_id(node.id); }
+    if(node.id && typeof(node.id) == "string") { node.id = add_id(node.id); }
     if(node.htmlFor) { add_id(node.htmlFor); }
     var children = node.childNodes;
     for(var i = 0; i < children.length; i++) {

@@ -511,7 +511,16 @@ class VInt(Validator):
         except ValueError:
             c.errors.add(errors.BAD_NUMBER)
 
-
+class VCssName(Validator):
+    """
+    returns a name iff it consists of alphanumeric characters and
+    possibly "-", and is below the length limit.
+    """
+    r_css_name = re.compile(r"^[a-zA-Z0-9\-]{1,100}$")
+    def run(self, name):
+        if name and self.r_css_name.match(name):
+            return name
+    
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):

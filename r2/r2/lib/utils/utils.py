@@ -495,7 +495,6 @@ class UrlParser(object):
                         unquote_plus('='.join(p[1:])))
             self._query_dict = dict(_split(p) for p in self.query.split('&')
                                     if p)
-
         return self._query_dict
 
     def path_extension(self):

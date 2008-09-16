@@ -774,9 +774,13 @@ class ApiController(RedditController):
             res._update('status', innerHTML = '')
             res._update('validation-errors', innerHTML = '')
 
+        stylesheet_contents_parsed = parsed.cssText if parsed else ''
+        # if the css parsed, we're going to apply it (both preview & save)
+        if not report.errors:
+            res._call('applyStylesheet("%s"); '  %
+                      stylesheet_contents_parsed.replace('"', r"\"").replace("\n", r"\n").replace("\r", r"\r"))
         if not report.errors and op == 'save':
             stylesheet_contents_user   = stylesheet_contents
-            stylesheet_contents_parsed = parsed.cssText if parsed else ''
 
             c.site.stylesheet_contents      = stylesheet_contents_parsed
             c.site.stylesheet_contents_user = stylesheet_contents_user
@@ -788,7 +792,6 @@ class ApiController(RedditController):
             c.site._commit()
 
             res._update('status', innerHTML = 'saved')
-            res._call('applyStylesheetFromTextbox("stylesheet_contents");')
             res._update('validation-errors', innerHTML = '')
 
         elif op == 'preview':
@@ -820,36 +823,121 @@ class ApiController(RedditController):
                 return
             cssfilter.rendered_comment('preview_comment',res,comments)
 
-    @validate(VUser(),
+    @Json
+    @validate(VSrModerator(),
               VModhash(),
-              VRatelimit(rate_user = True,
-                         rate_ip = True,
-                         prefix = 'upload_reddit_img_'),
-              file = VLength('file',length=1024*500),
-              op = VOneOf('op',['upload','delete']))
-    def POST_upload_header_img(self, file, op):
-        if not c.site.can_change_stylesheet(c.user):
-            return self.abort403()
-
+              name = VCssName('img_name'))
+    def POST_delete_sr_img(self, res, name):
+        """
+        Called called upon requested delete on /about/stylesheet.
+        Updates the site's image list, and causes the <li> which wraps
+        the image to be hidden.
+        """
+        # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return self.abort(403,'forbidden')
+        c.site.del_image(name)
+        c.site._commit()
+        # hide the image and it's container
+        res._hide("img-li_%s" % name)
+        # reset the status
+        res._update('img-status', innerHTML = _("deleted"))
+    
 
-        if op == 'upload':
-            try:
-                cleaned = cssfilter.clean_image(file,'PNG')
-                new_url = cssfilter.save_header_image(c.site, cleaned)
-            except cssfilter.BadImage:
-                return UploadedImage(_('bad image'),c.site.header,'upload').render()
-
-            c.site.header = new_url
-            c.site._commit()
-
-            return UploadedImage(_('saved'),new_url,'upload').render()
-        elif op == 'delete':
+    @Json
+    @validate(VSrModerator(),
+              VModhash())
+    def POST_delete_sr_header(self, res):
+        """
+        Called when the user request that the header on a sr be reset.
+        """
+        # just in case we need to kill this feature from XSS
+        if g.css_killswitch:
+            return self.abort(403,'forbidden')
+        if c.site.header:
             c.site.header = None
             c.site._commit()
+        # reset the header image on the page
+        res._update('header-img', src = DefaultSR.header)
+        # hide the button which started this
+        res._hide  ('delete-img')
+        # hide the preview box
+        res._hide  ('img-preview-container')
+        # reset the status boxes
+        res._update('img-status', innerHTML = _("deleted"))
+        res._update('status', innerHTML = "")
+        
 
-            return UploadedImage(_('deleted'),DefaultSR.header,'delete').render()
+    def GET_upload_sr_img(self, *a, **kw):
+        """
+        Completely unnecessary method which exists because safari can
+        be dumb too.  On page reload after an image has been posted in
+        safari, the iframe to which the request posted preserves the
+        URL of the POST, and safari attempts to execute a GET against
+        it.  The iframe is hidden, so what it returns is completely
+        irrelevant.
+        """
+        return "nothing to see here."
+
+    @validate(VSrModerator(),
+              VModhash(),
+              file = VLength('file', length=1024*500),
+              name = VCssName("name"),
+              header = nop('header'))
+    def POST_upload_sr_img(self, file, header, name):
+        """
+        Called on /about/stylesheet when an image needs to be replaced
+        or uploaded, as well as on /about/edit for updating the
+        header.  Unlike every other POST in this controller, this
+        method does not get called with Ajax but rather is from the
+        original form POSTing to a hidden iFrame.  Unfortunately, this
+        means the response needs to generate an page with a script tag
+        to fire the requisite updates to the parent document, and,
+        more importantly, that we can't use our normal toolkit for
+        passing those responses back.
+
+        The result of this function is a rendered UploadedImage()
+        object in charge of firing the completedUploadImage() call in
+        JS.
+        """
+
+        # default error list (default valuse will reset the errors in
+        # the response if no error is raised)
+        errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
+        try:
+            cleaned = cssfilter.clean_image(file,'PNG')
+            if header:
+                num = None # there is one and only header, and it is unnumbered
+            elif not name:
+                # error if the name wasn't specified or didn't satisfy
+                # the validator
+                errors['BAD_CSS_NAME'] = _("bad image name")
+            else:
+                num = c.site.add_image(name, max_num = g.max_sr_images)
+                c.site._commit()
+
+        except cssfilter.BadImage:
+            # if the image doesn't clean up nicely, abort
+            errors["IMAGE_ERROR"] = _("bad image")
+        except ValueError:
+            # the add_image method will raise only on too many images
+            errors['IMAGE_ERROR'] = (
+                _("too many imags (you only get %d)") % g.max_sr_images)
+
+        if any(errors.values()):
+            return  UploadedImage("", "", "", errors = errors).render()
+        else: 
+            # with the image num, save the image an upload to s3.  the
+            # header image will be of the form "${c.site._fullname}.png"
+            # while any other image will be ${c.site._fullname}_${num}.png
+            new_url = cssfilter.save_sr_image(c.site, cleaned, num = num)
+            if header:
+                c.site.header = new_url
+                c.site._commit()
+    
+            return UploadedImage(_('saved'), new_url, name, 
+                                 errors = errors).render()
+    
 
     @Json
     @validate(VUser(),

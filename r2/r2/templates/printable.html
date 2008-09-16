@@ -216,7 +216,7 @@ ${self.RenderPrintable()}
   %>
   <%def name="_link()" buffered="True">
     <a href="/" class="${a_class}" onclick="${onclick}" 
-       id="${tag.replace('/','_')}_a">${title}</a>
+       id="a_${tag.replace('/','_')}">${title}</a>
   </%def>
   <%
      link = _link()

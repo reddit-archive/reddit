@@ -28,6 +28,7 @@
 <% 
    com_label = ungettext("comment", "comments", thing.num_comments)
    url = add_sr(thing.permalink, force_hostname = True)
+   use_thumbs = thing.thumbnail and not request.GET.has_key("nothumbs")
  %>
 <item>
   <title>${thing.title}</title>
@@ -36,7 +37,7 @@
   <pubDate>${thing._date.isoformat()}</pubDate>
   <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
-    %if thing.thumbnail:
+    %if use_thumbs:
       &lt;table&gt;
         &lt;tr&gt;&lt;td&gt;
           &lt;a href="${url}"&gt;&lt;img src="${thing.thumbnail}" alt="${thing.title}" title="${thing.title}" /&gt;&lt;/a&gt;
@@ -51,11 +52,11 @@
     &lt;br/&gt;
     &lt;a href="${thing.url}"&gt;[link]&lt;/a&gt;
     &lt;a href="${url}"&gt;[${thing.num_comments} ${com_label}]&lt;/a&gt;
-    %if thing.thumbnail: 
+    %if use_thumbs:
       &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
     %endif
   </description>
-  %if thing.thumbnail:
+  %if use_thumbs:
     <media:title>${thing.title}</media:title>
     <media:thumbnail url="${thing.thumbnail}" />
   %endif

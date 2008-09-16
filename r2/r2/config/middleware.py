@@ -333,7 +333,7 @@ class LimitUploadSize(object):
                 or int(environ[cl_key]) > self.max_size):
                 r = Response()
                 r.status_code = 500
-                r.content = 'request too big'
+                r.content = '<html><head></head><body><script type="text/javascript">parent.too_big();</script>request too big</body></html>'
                 return r(environ, start_response)
 
         return self.app(environ, start_response)

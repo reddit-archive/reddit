@@ -275,13 +275,11 @@ function update_title() {
   </table>
 </form>
 
-<form
-   onsubmit="return uploadHeaderImage('${_('uploading')}');"
-   name="upload-header-image" id="upload-header-image"
-   enctype="multipart/form-data"
-   class="pretty-form"
-   target="upload-header-iframe"
-   action="/api/upload_header_img" method="post">
+<form id="upload-image"
+      enctype="multipart/form-data"
+      class="pretty-form"
+      target="upload-iframe"
+      action="/api/upload_sr_img" method="post">
   <table class="preftable">
     %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
     <tr>
@@ -299,33 +297,32 @@ function update_title() {
         <div class="spacer">
           <label for="headerfile">upload header image</label>
           <input type="file" name="file" id="headerfile"
-           onchange="show('submit-header-img')"/>
-          <button id="submit-header-img"
-                  type="button"
-                  onclick="return uploadHeaderImage('${_('uploading')}');"
-                  style="display: none;"
-          >${_("Upload")}
-          </button> 
-          <button id="delete-header-img"
-           class="btn"
-           onclick="return deleteHeaderImage('${_('deleting')}')"
-           %if not thing.site.header:
-             style="display: none;"
-           %endif
-          >
-            ${_('restore default')}
+                 onchange="show('submit-img')"/>
+          <button id="submit-img" type="submit" name="upload" 
+                  onclick="return upload_image(this.form, '${_('uploading')}');"
+                  style="display: none;" >
+            ${_('Upload')}
           </button>
+          
+          <button id="delete-img"
+                  %if not thing.site.header:
+                     style="display: none;"
+                  %endif
+                  onclick="return post_form(this.form, 'delete_sr_header');">
+            ${_('restore default header')}
+          </button>
+
           <input type="hidden" name="uh" value="${c.modhash}" />
           <input type="hidden" name="r"  value="${c.site.name}" />
-          <input type="hidden" name="op" value="upload" />
+          <input type="hidden" name="header" value="1" />
   
           <span style="display: none;" class="error" id="img-status"></span>
-          <iframe src="about:blank"
+          <iframe src="about:blank" 
            width="600" height="200" style="display: none;"
-           name="upload-header-iframe" id="upload-header-iframe"></iframe>
+           name="upload-iframe" id="upload-iframe"></iframe>
         </div>
-        <div id="header-img-preview-container" style="display: none;">
-          <img id="header-img-preview" alt="header preview"
+        <div id="img-preview-container" style="display: none;">
+          <img id="img-preview" alt="header preview"
            %if thing.site.header:
              src="${thing.site.header}"
            %else:

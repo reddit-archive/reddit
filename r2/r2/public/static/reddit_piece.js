@@ -111,7 +111,7 @@ function untoggle(execute, parent, oldtext, type) {
     if(execute) {
         var form = parent.parentNode;
         var uh = modhash; //global
-        parent.innerHTML = form.executed.value;
+        parent.innerHTML = form.executed.value || oldtext;
 
         if(type == 'del') {
             post_form(form, type, function() {return ""});

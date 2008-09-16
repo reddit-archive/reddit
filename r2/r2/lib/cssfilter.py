@@ -22,10 +22,10 @@
 from __future__ import with_statement
 
 from r2.models import *
-from r2.lib.utils import sanitize_url, domain
+from r2.lib.utils import sanitize_url, domain, randstr
 from r2.lib.strings import string_dict
 
-from pylons import g
+from pylons import g, c
 from pylons.i18n import _
 
 import re
@@ -152,11 +152,37 @@ class ValidationError(Exception):
         obj = str(self.obj) if hasattr(self,'obj') else ''
         return "ValidationError%s: %s (%s)" % (line, self.message, obj)
 
+# local urls should be in the static directory
 local_urls = re.compile(r'^/static/[a-z./-]+$')
+# substitutable urls will be css-valid labels surrounded by "%%"
+custom_img_urls = re.compile(r'%%([a-zA-Z0-9\-]+)%%')
 def valid_url(prop,value,report):
+    """
+    checks url(...) arguments in CSS, ensuring that the contents are
+    officially sanctioned.  Sanctioned urls include:
+     * anything in /static/
+     * image labels %%..%% for images uploaded on /about/stylesheet
+     * urls with domains in g.allowed_css_linked_domains
+    """
     url = value.getStringValue()
+    # local urls are allowed
     if local_urls.match(url):
         pass
+    # custom urls are allowed, but need to be transformed into a real path
+    elif custom_img_urls.match(url):
+        name = custom_img_urls.match(url).group(1)
+        # the label -> image number lookup is stored on the subreddit
+        if c.site.images.has_key(name):
+            num = c.site.images[name]
+            value._setCssText("url(http:/%s%s_%d.png?v=%s)"
+                              % (g.s3_thumb_bucket, c.site._fullname, num,
+                                 randstr(36)))
+        else:
+            # unknown image label -> error
+            report.append(ValidationError(msgs['broken_url']
+                                          % dict(brokenurl = value.cssText),
+                                          value))
+    # allowed domains are ok
     elif domain(url) in g.allowed_css_linked_domains:
         pass
     else:
@@ -367,7 +393,13 @@ def clean_image(data,format):
 
     return ret
     
-def save_header_image(sr, data):
+def save_sr_image(sr, data, num = None):
+    """
+    uploades image data to s3 as a PNG and returns its new url.  Urls
+    will be of the form:
+      http:/${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
+    [Note: g.s3_thumb_bucket begins with a "/" so the above url is valid.]
+    """
     import tempfile
     from r2.lib import s3cp
     from md5 import md5
@@ -379,12 +411,18 @@ def save_header_image(sr, data):
         f.write(data)
         f.flush()
 
-        resource = g.s3_thumb_bucket + sr._fullname + '.png'
-        s3cp.send_file(f.name, resource, 'image/png', 'public-read', None, False)
+        resource = g.s3_thumb_bucket + sr._fullname
+        if num is not None:
+            resource += '_' + str(num)
+        resource += '.png'
+        
+        s3cp.send_file(f.name, resource, 'image/png', 'public-read', 
+                       None, False)
     finally:
         f.close()
 
-    return 'http:/%s%s.png?v=%s' % (g.s3_thumb_bucket, sr._fullname, hash)
+    return 'http:/%s%s?v=%s' % (g.s3_thumb_bucket, 
+                                resource.split('/')[-1], hash)
 
  
 

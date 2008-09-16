@@ -684,9 +684,9 @@ class CssError(Wrapped):
 
 class UploadedImage(Wrapped):
     "The page rendered in the iframe during an upload of a header image"
-    def __init__(self,status,img_src,op):
-        Wrapped.__init__(self,
-                         status=status, img_src=img_src, op=op)
+    def __init__(self,status,img_src, name="", errors = {}):
+        self.errors = list(errors.iteritems())
+        Wrapped.__init__(self, status=status, img_src=img_src, name = name)
 
 class Password(Wrapped):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
