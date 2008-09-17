@@ -202,7 +202,7 @@ def user_rel_query(rel, user, name):
                    rel.c._name == name,
                    sort = desc('_date'),
                    eager_load = True,
-                   #thing_data = True
+                   thing_data = not g.use_query_cache
                    )
        
     return make_results(q, filter_thing2)
