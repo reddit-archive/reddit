@@ -47,11 +47,11 @@ from r2.lib.tracking import encrypt, decrypt
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
-cache_affecting_cookies = ('reddit_first',)
+cache_affecting_cookies = ('reddit_first','over18')
 
 class Cookies(dict):
-    def add(name, *k, **kw):
-        self[name] = Cookie(*k, **kw)
+    def add(self, name, value, *k, **kw):
+        self[name] = Cookie(value, *k, **kw)
 
 class Cookie(object):
     def __init__(self, value, expires = None, domain = None, dirty = True):
