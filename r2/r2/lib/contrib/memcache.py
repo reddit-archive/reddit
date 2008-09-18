@@ -570,7 +570,7 @@ class Client(local):
             min_compress_len = 0
         else:
             flags |= Client._FLAG_PICKLE
-            val = pickle.dumps(val, -1)  # Ack! JLR hacks it so that LinkedDict unpicling works w/o figuring out __reduce__.
+            val = pickle.dumps(val, 1)  # Ack! JLR hacks it so that LinkedDict unpicling works w/o figuring out __reduce__.
 
         #  silently do not store if value length exceeds maximum
         if len(val) >= SERVER_MAX_VALUE_LENGTH:
