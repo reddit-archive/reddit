@@ -141,12 +141,16 @@ def read_click_cookie():
     if c.user_is_loggedin:
         cook = [s for s in read_user_cookie('click').split(':') if s]
         if cook:
-            things = Thing._by_fullname(cook, return_dict = False)
-            for t in things:
-                def foo(t1, user):
-                    return lambda: t1._click(user)
-                utils.worker.do(foo(t, c.user))
-            set_user_cookie('click', '')
+            try:
+                things = Thing._by_fullname(cook, return_dict = False)
+                for t in things:
+                    def foo(t1, user):
+                        return lambda: t1._click(user)
+                    utils.worker.do(foo(t, c.user))
+            except:
+                pass
+            finally:
+                set_user_cookie('click', '')
 
             
 def read_mod_cookie():
