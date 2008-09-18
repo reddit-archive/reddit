@@ -122,7 +122,7 @@ def insert_promoted(link_names, subscribed_reddits):
         else:
             link_names.insert(pos, promoted_items[i]._fullname)
 
-@memoize('cached_organic_links', time = organic_lifetime)
+@memoize('cached_organic_links_user', time = organic_lifetime)
 def cached_organic_links(username):
     if username:
         user = Account._by_name(username)
