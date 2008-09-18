@@ -168,7 +168,7 @@ def organic_links(user):
 
     cookie_key, pos = organic_pos()
     # pos will be 0 if it wasn't specified
-    if links and (cookie_key == cached_key):
+    if links and pos != 0:
         # make sure that we're not running off the end of the list
         pos = pos % len(links)
 

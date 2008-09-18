@@ -193,9 +193,9 @@ organic_pos_key = 'organic_pos'
 def organic_pos():
     "organic_pos() -> (calc_date = str(), pos  = int())"
     try:
-        d,p = get_redditfirst(organic_pos_key, (None,0))
+        d,p = get_redditfirst(organic_pos_key, ('',0))
     except ValueError:
-        d,p = (None,0)
+        d,p = ('',0)
     return d,p
 
 def set_organic_pos(key,pos):
