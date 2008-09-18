@@ -40,10 +40,9 @@ class Subreddit(Thing, Printable):
                      stylesheet_rtl = None,
                      stylesheet_contents = '',
                      stylesheet_hash     = '0',
-                     description = None,
                      firsttext = strings.firsttext,
-                     header = os.path.join(g.static_path,
-                                           'base.reddit.com.header.png'),
+                     header = None,
+                     description = '',
                      images = {},
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
@@ -109,7 +108,7 @@ class Subreddit(Thing, Printable):
 
     @classmethod
     def _by_domain(cls, domain):
-        sr_id = cls._by_domain_cache(_force_unicode(domain))
+        sr_id = cls._by_domain_cache(_force_unicode(domain).lower())
         if sr_id:
             return cls._byID(sr_id, True)
         else:

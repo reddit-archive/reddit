@@ -947,17 +947,12 @@ class ApiController(RedditController):
               VRatelimit(rate_user = True,
                          rate_ip = True,
                          prefix = 'create_reddit_'),
+              sr = VByName('sr'),
               name = VSubredditName("name"),
               title = VSubredditTitle("title"),
               domain = VCnameDomain("domain"),
               description = VSubredditDesc("description"),
-              firsttext = nop("firsttext"),
-              header = nop("headerfile"),
               lang = VLang("lang"),
-              stylesheet = nop("stylesheet"),
-              static_path = nop("staticdir"),
-              ad_file = nop("ad_file"),
-              sr = VByName('sr'),
               over_18 = VBoolean('over_18'),
               show_media = VBoolean('show_media'),
               type = VOneOf('type', ('public', 'private', 'restricted'))
@@ -965,10 +960,8 @@ class ApiController(RedditController):
     def POST_site_admin(self, res, name ='', sr = None, **kw):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
-                  if v is not None
-                  and k in ('name', 'title', 'domain', 'description', 'firsttext',
-                            'static_path', 'ad_file', 'over_18', 'show_media',
-                            'type', 'header', 'lang', 'stylesheet'))
+                  if k in ('name', 'title', 'domain', 'description', 'over_18',
+                           'show_media', 'type', 'lang',))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -978,7 +971,6 @@ class ApiController(RedditController):
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)
         if cname_sr and (not sr or sr != cname_sr):
-                kw['domain'] = None
                 c.errors.add(errors.USED_CNAME)
 
         if not sr and res._chk_error(errors.RATELIMIT):
@@ -998,7 +990,13 @@ class ApiController(RedditController):
         elif res._chk_error(errors.DESC_TOO_LONG):
             res._focus('description')
 
-        if not sr and not res.error:
+        res._update('status', innerHTML = '')
+
+        if res.error:
+            pass
+
+        #creating a new reddit
+        elif not sr:
             #sending kw is ok because it was sanitized above
             sr = Subreddit._new(name = name, **kw)
             Subreddit.subscribe_defaults(c.user)
@@ -1013,7 +1011,8 @@ class ApiController(RedditController):
                                      rate_ip = True,
                                      prefix = "create_reddit_")
 
-        if not res.error:
+        #editting an existing reddit
+        elif sr.is_moderator(c.user) or c.user_is_admin:
             #assume sr existed, or was just built
             clear_memo('subreddit._by_domain', 
                        Subreddit, _force_unicode(sr.domain))

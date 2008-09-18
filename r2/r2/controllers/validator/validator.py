@@ -709,18 +709,19 @@ class ValidEmails(Validator):
 
 
 class VCnameDomain(Validator):
-    domain_re  = re.compile(r'.+\..+')
+    domain_re  = re.compile(r'^([\w]+\.)+[\w]+$')
 
     def run(self, domain):
         if (domain
             and (not self.domain_re.match(domain)
-                 or domain.endswith('.reddit.com'))):
+                 or domain.endswith('.reddit.com')
+                 or len(domain) > 300)):
             c.errors.add(errors.BAD_CNAME)
-        try:
-            return str(domain) or ''
-        except UnicodeEncodeError:
-            c.errors.add(errors.BAD_CNAME)
-            return ""
+        elif domain:
+            try:
+                return str(domain).lower()
+            except UnicodeEncodeError:
+                c.errors.add(errors.BAD_CNAME)
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!
