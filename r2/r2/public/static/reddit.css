@@ -586,7 +586,7 @@ before enabling */
 .infobar {
     background-color: #f6e69f;
     padding: 5px 10px;
-    margin: 5px 310px 5px 5px;
+    margin: 5px 310px 5px 0px;
     border: 1px solid orange;
 }
 

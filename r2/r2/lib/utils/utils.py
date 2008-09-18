@@ -330,7 +330,6 @@ def sanitize_url(url, require_scheme = False):
         and '%' not in u.netloc):
         return url
 
-
 def timeago(interval):
     """Returns a datetime object corresponding to time 'interval' in
     the past.  Interval is of the same form as is returned by
@@ -338,9 +337,17 @@ def timeago(interval):
     English (i.e., untranslated) and the format is
 
     [num] second|minute|hour|day|week|month|year(s)
-    
     """
     from pylons import g
+    return datetime.now(g.tz) - timeinterval_fromstr(interval)
+
+def timefromnow(interval):
+    "The opposite of timeago"
+    from pylons import g
+    return datetime.now(g.tz) + timeinterval_fromstr(interval)
+    
+def timeinterval_fromstr(interval):
+    "Used by timeago and timefromnow to generate timedeltas from friendly text"
     parts = interval.strip().split(' ')
     if len(parts) == 1:
         num = 1
@@ -360,7 +367,7 @@ def timeago(interval):
              month  = 60 * 60 * 24 * 30,
              year   = 60 * 60 * 24 * 365)[period]
     delta = num * d
-    return datetime.now(g.tz) - timedelta(0, delta)
+    return timedelta(0, delta)
 
 def timetext(delta, resultion = 1, bare=True):
     """
@@ -933,12 +940,16 @@ class IteratorChunker(object):
                 self.done=True
         return chunk
 
-def IteratorFilter(iterator, filter):
+def IteratorFilter(iterator, fn):
     for x in iterator:
-        if filter(x):
+        if fn(x):
             yield x
 
-def NoDupsIterator(iterator):
+def UniqueIterator(iterator):
+    """
+    Takes an iterator and returns an iterator that returns only the
+    first occurence of each entry
+    """
     so_far = set()
     def no_dups(x):
         if x in so_far:

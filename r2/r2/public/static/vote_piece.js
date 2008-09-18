@@ -13,7 +13,7 @@ function cookieName(name) {
     return (logged || '') + "_" + name;
 }
 
-function createCookie(name,value,days) { 
+function createLCookie(name,value,days) { 
     var domain = "; domain=" + cur_domain;
     if (days) { 
         var date = new Date();
@@ -21,20 +21,30 @@ function createCookie(name,value,days) {
         var expires="; expires="+date.toGMTString();
     }
     else expires="";
-    document.cookie=cookieName(name)+"="+value+expires+domain+"; path=/";
+    document.cookie=name+"="+escape(value)+expires+domain+"; path=/";
 } 
 
-function readCookie(name) {
-    var nameEQ=cookieName(name) + "=";
+function createCookie(name, value, days) {
+  return createLCookie(cookieName(name));
+}
+
+function readLCookie(nameEQ) {
+    nameEQ=nameEQ+'=';
     var ca=document.cookie.split(';');
     for(var i=0;i< ca.length;i++) { 
         var c =ca[i]; 
         while(c.charAt(0)==' ') c=c.substring(1,c.length);
-        if(c.indexOf(nameEQ)==0) return c.substring(nameEQ.length,c.length);
+        if(c.indexOf(nameEQ)==0) {
+            return unescape(c.substring(nameEQ.length,c.length));
+        }
     }
-    return '';
+    return '';  
 }
 
+function readCookie(name) {
+    var nameEQ=cookieName(name) + "=";
+    return readLCookie(nameEQ);
+}
 
 /*function setModCookie(id, c) {
     createCookie("mod", readCookie("mod") + id + "=" + c + ":");

@@ -125,9 +125,9 @@ class PostController(ApiController):
                 c.user._commit()
             else:
                 ip_hash = sha.new(request.ip).hexdigest()
-                c.response.set_cookie('over18',
-                                      value = ip_hash,
-                                      domain = g.domain if not c.frameless_cname else None)
+                domain = g.domain if not c.frameless_cname else None
+                c.cookies.add('over18', value = ip_hash,
+                              domain = domain)
             return self.redirect(dest)
         else:
             return self.redirect('/')

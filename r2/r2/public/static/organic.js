@@ -62,6 +62,29 @@ function _fire_and_shift(type) {
     };
 }
 
+function update_organic_pos(new_pos) {
+    var c = readLCookie('reddit_first');
+    if(c != '') {
+        try {
+          c = c.parseJSON();
+        } catch(e) {
+          c = '';
+        }
+    }
+
+    if(c == '') {
+      c = {};
+    }
+
+    if(c.organic_pos && c.organic_pos.length >= 2) {
+      c.organic_pos[1] = new_pos;
+    } else {
+      c.organic_pos = ['none', new_pos];
+    }
+
+    createLCookie('reddit_first', c.toJSONString());
+}
+
 OrganicListing.unhide = _fire_and_shift('unhide');
 OrganicListing.hide   = _fire_and_shift('hide');
 OrganicListing.report = _fire_and_shift('report');
@@ -95,7 +118,7 @@ OrganicListing.prototype.change = function(dir) {
             if(this.listing.max_pos == pos)
                 this.listing.update_pos = true;
             else if (this.listing.update_pos)  {
-                redditRequest('update_pos', {pos: (pos+1) % len});
+                update_organic_pos((pos+1)%len);
                 this.listing.max_pos = pos;
             }
         }
@@ -109,6 +132,14 @@ OrganicListing.prototype.change = function(dir) {
         c.fade("veryfast");
         add_to_aniframes(function() {
                 c.hide();
+                if(n.$('promoted')) {
+                  var i = new Image();
+                  i.src = n.$('promoted').tracking_url.value;
+                  // just setting i.src is enough to most browsers to
+                  // download, but in Opera it's not, we'd need to
+                  // uncomment this line to get the image in the DOM
+                  /* n.$('promoted').appendChild(i); */
+                }
                 n.show();
                 n.set_opacity(0);
             }, 1);
@@ -129,3 +160,4 @@ function get_organic(next) {
         l.change(-1);
     return false;
 }
+

@@ -19,35 +19,24 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%namespace file="utils.html" import="plain_link"/>
 <%namespace file="printable.html" import="state_button"/>
 
-<%def name="help_or_hide(name, help)">
-  <div class="corner-help">
-    <a href="javascript:void(0)" onclick="show('${name}-help'); return false;">
-      ${_("what's this?")}
-    </a>
-  </div>
-  <div id="${name}-help" style="display:none" class="helpcover" >
-    <p>
-      ${help}
-    </p>
-    %if c.user_is_loggedin:
-      ${state_button("leave" + name, name, _("here"),
-                "return deletetoggle(this, disable_ui);", "",
-                fmt = _("Click %(here)s to disable this feature."), 
-                fmt_param = "here",
-                question = _("are you sure?"),
-                yes = _("yes"), no = _("no"))}
-    %endif
-    ${state_button("nvm" + name, name, _("here"),
-              "hide('%s-help'); return false;" % name, "",
-              fmt = _("Click %(here)s to close help."),
-              fmt_param = "here")}
-  </div>
-  <div id="${name}-gone" style="display:none" >
-    <p style="margin-left:5px">
-      ${_("The new link area will no longer appear for you. To re-enable it, visit your preferences.")}
-    </p>
-  </div>
-</%def>
+
+<div>
+  <h1>${_('current promotions')}</h1>
+  
+  <ul>
+    %for t in thing.things:
+      <li class="entry">
+        ${plain_link(t.title,t.permalink)}&nbsp;
+        <ul class="buttons" style="display: inline;">
+          <li>
+            ${state_button("unpromote", t._fullname, _("unpromote"), \
+              "return change_state(this, 'unpromote');",_("unpromoted"))}
+          </li>
+        </ul>
+      </li>
+    %endfor
+  </ul>
+</div>

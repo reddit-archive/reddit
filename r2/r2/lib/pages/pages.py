@@ -1074,7 +1074,7 @@ class DetailsPage(LinkInfoPage):
         # TODO: a better way?
         from admin_pages import Details
         return self.content_stack(self.link_listing, Details(link = self.link))
-        
+
 class Cnameframe(Wrapped):
     """The frame page."""
     def __init__(self, original_path, subreddit, sub_domain):
@@ -1089,3 +1089,8 @@ class Cnameframe(Wrapped):
         else:
             self.title = ""
             self.frame_target = None
+
+class Promote(Wrapped):
+    def __init__(self, current_list, *k, **kw):
+        self.things = current_list
+        Wrapped.__init__(self, *k, **kw)

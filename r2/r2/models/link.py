@@ -48,6 +48,8 @@ class Link(Thing, Printable):
                      banned_before_moderator = False,
                      media_object = None,
                      has_thumbnail = False,
+                     promoted = False,
+                     promoted_subscribersonly = False,
                      ip = '0.0.0.0')
 
     def __init__(self, *a, **kw):

@@ -44,7 +44,7 @@
     dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
  %if g.tracker_url:
-  <img alt="" src="${tracking.gen_url()}"/>
+  <img alt="" src="${tracking.UserInfo.gen_url()}"/>
  %endif
  %if c.frameless_cname:
  <%

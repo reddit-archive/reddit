@@ -26,6 +26,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters
+from r2.lib.utils import http_utils
 from r2.lib.cache import LocalCache
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount
@@ -38,11 +39,36 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.jsontemplates import api_type
 
 from copy import copy
+from datetime import datetime
 import sha, inspect, simplejson
+from urllib import quote, unquote
 
 from r2.lib.tracking import encrypt, decrypt
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
+
+cache_affecting_cookies = ('reddit_first',)
+
+class Cookies(dict):
+    def add(name, *k, **kw):
+        self[name] = Cookie(*k, **kw)
+
+class Cookie(object):
+    def __init__(self, value, expires = None, domain = None, dirty = True):
+        self.value = value
+        self.expires = expires
+        self.dirty = dirty
+        if domain:
+            self.domain = domain
+        else:
+            self.domain = g.domain
+
+    def __repr__(self):
+        return ("Cookie(value=%s, expires=%s, domain=%s, dirty=%s)"
+                % (repr(self.value),
+                   repr(self.expires),
+                   repr(self.domain),
+                   repr(self.dirty)))
 
 class UnloggedUser(FakeAccount):
     _cookie = 'options'
@@ -99,13 +125,17 @@ class UnloggedUser(FakeAccount):
 
 def read_user_cookie(name):
     uname = c.user.name if c.user_is_loggedin else ""
-    return request.cookies.get(uname + '_' + name) or ''
+    cookie_name = uname + '_' + name
+    if cookie_name in c.cookies:
+        return c.cookies[cookie_name].value
+    else:
+        return ''
 
 def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
-    c.response.set_cookie(uname + '_' + name,
-                          value = val,
-                          domain = g.domain if not c.frameless_cname else None)
+    domain = g.domain if not c.frameless_cname else None
+    c.cookies[uname + '_' + name] = Cookie(value = val,
+                                           domain = domain)
 
 def read_click_cookie():
     if c.user_is_loggedin:
@@ -125,22 +155,59 @@ def read_mod_cookie():
         set_user_cookie('mod', '')
 
 def firsttime():
-    if not c.user_is_loggedin:
-        if not request.cookies.get("reddit_first"):
-            c.response.set_cookie("reddit_first", "first",
-                                  expires = NEVER,
-                                  domain = g.domain if not c.frameless_cname else None)
-            return True
-    return False
+    if get_redditfirst('firsttime'):
+        return False
+    else:
+        set_redditfirst('firsttime','first')
+        return True
+
+def get_redditfirst(key,default=None):
+    try:
+        cookie = simplejson.loads(c.cookies['reddit_first'].value)
+        return cookie[key]
+    except (ValueError,TypeError,KeyError),e:
+        # it's not a proper json dict, or the cookie isn't present, or
+        # the key isn't part of the cookie; we don't really want a
+        # broken cookie to propogate an exception up
+        return default
+
+def set_redditfirst(key,val):
+    try:
+        cookie = simplejson.loads(c.cookies['reddit_first'].value)
+        cookie[key] = val
+    except (ValueError,TypeError,KeyError),e:
+        # invalid JSON data; we'll just construct a new cookie
+        cookie = {key: val}
+
+    c.cookies['reddit_first'] = Cookie(simplejson.dumps(cookie),
+                                       expires = NEVER,
+                                       domain = g.domain)
+
+# this cookie is also accessed by organic.js, so changes to the format
+# will have to be made there as well
+organic_pos_key = 'organic_pos'
+def organic_pos():
+    "organic_pos() -> (calc_date = str(), pos  = int())"
+    try:
+        d,p = get_redditfirst(organic_pos_key, (None,0))
+    except ValueError:
+        d,p = (None,0)
+    return d,p
+
+def set_organic_pos(key,pos):
+    "set_organic_pos(str(), int()) -> None"
+    set_redditfirst(organic_pos_key,[key,pos])
+
 
 def over18():
     if c.user.pref_over_18 or c.user_is_admin:
         return True
 
     else:
-        cookie = request.cookies.get('over18')
-        if cookie == sha.new(request.ip).hexdigest():
-            return True
+        if 'over18' in c.cookies:
+            cookie = c.cookies['over18'].value
+            if cookie == sha.new(request.ip).hexdigest():
+                return True
 
 def set_subreddit():
     sr_name=request.environ.get("subreddit", request.params.get('r'))
@@ -327,13 +394,19 @@ class RedditController(BaseController):
         return kw
 
     def request_key(self):
+        # note that this references the cookie at request time, not
+        # the current value of it
+        cookie_keys = []
+        for x in cache_affecting_cookies:
+            cookie_keys.append(request.cookies.get(x,''))
+
         key = ''.join((str(c.lang),
                        str(c.content_langs),
                        request.host,
                        str(c.cname), 
                        str(request.fullpath),
-                       str(c.firsttime),
-                       str(c.over18)))
+                       str(c.over18),
+                       ''.join(cookie_keys)))
         return key
 
     def cached_response(self):
@@ -341,15 +414,12 @@ class RedditController(BaseController):
 
     @staticmethod
     def login(user, admin = False, rem = False):
-        c.response.set_cookie(g.login_cookie,
-                              value = user.make_cookie(admin = admin),
-                              domain = g.domain,
-                              expires = NEVER if rem else None)
+        c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(admin = admin),
+                                           expires = NEVER if rem else None)
         
     @staticmethod
     def logout(admin = False):
-        c.response.set_cookie(g.login_cookie, value = '',
-                              domain = g.domain)
+        c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
@@ -357,10 +427,18 @@ class RedditController(BaseController):
         #check if user-agent needs a dose of rate-limiting
         ratelimit_agents()
 
+        # populate c.cookies
+        c.cookies = Cookies()
+        for k,v in request.cookies.iteritems():
+            c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+
         c.response_wrappers = []
         c.errors = ErrorSet()
+        c.firsttime = firsttime()
         (c.user, maybe_admin) = \
-            valid_cookie(request.cookies.get(g.login_cookie))
+            valid_cookie(c.cookies[g.login_cookie].value
+                         if g.login_cookie in c.cookies
+                         else '')
 
         if c.user:
             c.user_is_loggedin = True
@@ -388,7 +466,6 @@ class RedditController(BaseController):
         set_iface_lang()
         set_content_lang()
         set_cnameframe()
-        c.firsttime = firsttime()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
@@ -411,6 +488,16 @@ class RedditController(BaseController):
                 response = c.response
                 response.headers = r.headers
                 response.content = r.content
+
+                for x in r.cookies.keys():
+                    if x in cache_affecting_cookies:
+                        cookie = r.cookies[x]
+                        response.set_cookie(key     = x,
+                                            value   = cookie.value,
+                                            domain  = cookie.get('domain',None),
+                                            expires = cookie.get('expires',None),
+                                            path    = cookie.get('path',None))
+
                 response.status_code = r.status_code
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
                 # make sure to carry over the content type
@@ -438,6 +525,17 @@ class RedditController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
+        # send cookies
+        if not c.used_cache:
+            # if we used the cache, these cookies should be set by the
+            # cached response object instead
+            for k,v in c.cookies.iteritems():
+                if v.dirty:
+                    response.set_cookie(key     = k,
+                                        value   = quote(v.value),
+                                        domain  = v.domain,
+                                        expires = v.expires)
+
         #return
         #set content cache
         if (g.page_cache_time
@@ -448,7 +546,7 @@ class RedditController(BaseController):
             config.cache.set(self.request_key(),
                              response,
                              g.page_cache_time)
-    
+
     def check_modified(self, thing, action):
         if c.user_is_loggedin:
             return
@@ -457,7 +555,7 @@ class RedditController(BaseController):
         if date is True:
             abort(304, 'not modified')
         else:
-            c.response.headers['Last-Modified'] = utils.http_date_str(date)
+            c.response.headers['Last-Modified'] = http_utils.http_date_str(date)
 
     def abort404(self):
         abort(404, "not found")

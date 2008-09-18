@@ -53,7 +53,7 @@ from simplejson import dumps
 
 from datetime import datetime, timedelta
 from md5 import md5
-from r2.lib.organic import update_pos
+from r2.lib.organic import promote, unpromote
 
 def link_listing_by_url(url, count = None):
     try:
@@ -1304,13 +1304,6 @@ class ApiController(RedditController):
         res.object = res._thing(l.listing(), action = 'populate')
 
     @Json
-    @validate(pos = VInt('pos', min = 0, max = 100))
-    def POST_update_pos(self, res, pos):
-        if pos is not None:
-            update_pos(c.user, pos)
-
-
-    @Json
     @validate(VUser(),
               ui_elem = VOneOf('id', ('organic',)))
     def POST_disable_ui(self, res, ui_elem):
@@ -1320,4 +1313,15 @@ class ApiController(RedditController):
                 setattr(c.user, "pref_" + ui_elem, False)
                 c.user._commit()
 
-        
+    @Json
+    @validate(VAdmin(),
+              thing = VByName('id'))
+    def POST_promote(self, res, thing):
+        promote(thing)
+
+    @Json
+    @validate(VAdmin(),
+              thing = VByName('id'))
+    def POST_unpromote(self, res, thing):
+        unpromote(thing)
+

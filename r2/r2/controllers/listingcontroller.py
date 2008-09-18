@@ -180,7 +180,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def organic(self):
-        o_links, pos = organic.organic_links(c.user)
+        o_links, pos, calculation_key = organic.organic_links(c.user)
         if o_links:
             # get links in proximity to pos
             l = min(len(o_links) - 3, 8)
@@ -192,9 +192,16 @@ class HotController(FixListing, ListingController):
                                org_links = o_links,
                                visible_link = o_links[pos],
                                max_num = self.listing_obj.max_num,
-                               max_score = self.listing_obj.max_score)
-            organic.update_pos(c.user, (pos + 1) % len(o_links))
-            return o.listing()
+                               max_score = self.listing_obj.max_score).listing()
+
+            if len(o.things) > 0:
+                # only pass through a listing if the link made it
+                # through the builder in organic_links *and* ours
+                organic.update_pos(pos+1, calculation_key)
+
+                return o
+
+        return None
 
 
     def query(self):
@@ -218,7 +225,8 @@ class HotController(FixListing, ListingController):
     def content(self):
         # only send an organic listing for HTML rendering
         if (c.site == Default and c.render_style == "html"
-            and c.user_is_loggedin and c.user.pref_organic):
+            and (not c.user_is_loggedin
+                 or (c.user_is_loggedin and c.user.pref_organic))):
             org = self.organic()
             if org:
                 return PaneStack([org, self.listing_obj], css_class='spacer')

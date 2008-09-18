@@ -70,6 +70,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
     
+    mc('/admin/promote', controller='admin', action='promote')
+    mc('/admin/unpromote', controller='admin', action='unpromote')
+
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')

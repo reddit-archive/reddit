@@ -53,3 +53,10 @@ except ImportError:
 from admin import AdminController
 
 from redirect import RedirectController
+
+try:
+    from r2admin.controllers.admin import *
+except ImportError:
+    pass
+
+

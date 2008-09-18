@@ -178,7 +178,7 @@ embedopen = urllib2.OpenerDirector()
 embedopen.add_handler(EmbedHandler())
 
 def proxyurl(url):
-    cstrs = ['%s="%s"' % (k, v) for k, v in request.cookies.iteritems()]
+    cstrs = ['%s="%s"' % (k, v.value) for k, v in c.cookies.iteritems()]
     cookiestr = "; ".join(cstrs)
     headers = {"Cookie":cookiestr}
 

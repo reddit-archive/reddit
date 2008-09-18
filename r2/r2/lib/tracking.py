@@ -47,7 +47,7 @@ def pkcs5unpad(text, padlen = 8):
 
 def cipher(lv):
     '''returns a pycrypto object used by encrypt and decrypt, with the key based on g.SECRET'''
-    key = g.SECRET
+    key = g.tracking_secret
     return AES.new(key[:key_len], AES.MODE_CBC, lv[:key_len])
 
 def encrypt(text):
@@ -85,11 +85,12 @@ def safe_str(text):
         return ''
     return text
 
-class UserInfo():
+class Info(object): 
     '''Class for generating and reading user tracker information.'''
-    __slots__ = ['name', 'site', 'lang']
-    
-    def __init__(self, text = ''):
+    __slots__ = []
+    tracker_url = ""
+
+    def __init__(self, text = '', **kw):
         for s in self.__slots__:
             setattr(self, s, '')
             
@@ -103,33 +104,49 @@ class UserInfo():
                 if i < len(self.__slots__):
                     setattr(self, self.__slots__[i], d)
         else:
-            self.name = safe_str(c.user.name if c.user_is_loggedin else '')
-            self.site = safe_str(c.site.name if c.site else '')
-            self.lang = safe_str(c.lang if c.lang else '')
+            self.init_defaults(**kw)
             
+    def init_defaults(self, **kw):
+        raise NotImplementedError
+    
     def tracking_url(self):
         data = '|'.join(getattr(self, s) for s in self.__slots__)
         data = encrypt(data)
-        return "%s?v=%s" % (g.tracker_url, data)
-        
+        return "%s?v=%s" % (self.tracker_url, data)
 
-def gen_url():
-    """function for safely creating a tracking url, trapping exceptions so as not to interfere with
-    the app"""
-    try:
-        return UserInfo().tracking_url()
-    except Exception, e:
-        print "error in gen_url!!!!!"
-        print e
+    @classmethod
+    def gen_url(cls, **kw):
         try:
-            randstr = ''.join(choice('1234567890abcdefghijklmnopqrstuvwxyz' +
-                                     'ABCDEFGHIJKLMNOPQRSTUVWXYZ+')
-                              for x in xrange(pad_len))
-            return "%s?v=%s" % (g.tracker_url, randstr)
-        except:
-            print "fallback rendering failed as well"
-            return ""
+            return cls(**kw).tracking_url()
 
+        except Exception,e:
+            print e
+            try:
+                randstr = ''.join(choice('1234567890abcdefghijklmnopqrstuvwxyz' +
+                                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ+')
+                                  for x in xrange(pad_len))
+                return "%s?v=%s" % (cls.tracker_url, randstr)
+            except:
+                print "fallback rendering failed as well"
+                return ""
+
+class UserInfo(Info):
+    '''Class for generating and reading user tracker information.'''
+    __slots__ = ['name', 'site', 'lang']
+    tracker_url = g.tracker_url
+
+    def init_defaults(self):
+        self.name = safe_str(c.user.name if c.user_is_loggedin else '')
+        self.site = safe_str(c.site.name if c.site else '')
+        self.lang = safe_str(c.lang if c.lang else '')
+            
+class PromotedLinkInfo(Info): 
+    __slots__ = ['fullname']
+    tracker_url = g.adtracker_url
+
+    def init_defaults(self, fullname = None):
+        self.fullname = fullname
+        
 
 def benchmark(n = 10000):
     """on my humble desktop machine, this gives ~150 microseconds per gen_url"""

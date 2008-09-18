@@ -20,14 +20,31 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.controllers.reddit_base import RedditController
+from r2.controllers.reddit_base import base_listing
+
+from r2.controllers.validator import *
+from r2.lib.pages import *
+from r2.models import *
+
+from r2.lib import organic
+
+from pylons.i18n import _
 
 def admin_profile_query(vuser, location, db_sort):
     return None 
 
 class AdminController(RedditController):
-    pass
+    @validate(VAdmin(),
+              thing = VByName('fullname'))
+    @validate(VAdmin())
+    def GET_promote(self):
+        current_list = organic.get_promoted()
 
-try:
-    from r2admin.controllers.admin import *
-except ImportError:
-    pass
+        b = IDBuilder([ x._fullname for x in current_list])
+
+        render_list = b.get_items()[0]
+
+        return AdminPage(content = Promote(render_list),
+                         title = _('promote'),
+                         nav_menus = []).render()
+
