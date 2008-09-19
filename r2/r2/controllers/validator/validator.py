@@ -96,8 +96,8 @@ class VLang(Validator):
             lang = str(lang.split('[')[1].strip(']'))
             if lang in g.all_languages:
                 return lang
-        return None
-
+        #else
+        return 'en'
 
 class VRequired(Validator):
     def __init__(self, param, error, *a, **kw):
