@@ -157,9 +157,9 @@ def run(period=None, date=None, show_all_time=True,
         sender=None, recipients=None, smtpserver=None):
     if not date and not period:
         date = yesterday()
-    session = smtplib.SMTP(smtpserver)
     report = TextReport(period, date).build(show_all_time=show_all_time)
     if sender:
+        session = smtplib.SMTP(smtpserver)
         report = "To: %s\n" % ', '.join(recipients) + report
         smtpresult = session.sendmail(sender, recipients, report)
     else:
