@@ -25,14 +25,16 @@ function createLCookie(name,value,days) {
 } 
 
 function createCookie(name, value, days) {
-  return createLCookie(cookieName(name));
+  return createLCookie(cookieName(name), value, days);
 }
 
 function readLCookie(nameEQ) {
     nameEQ=nameEQ+'=';
     var ca=document.cookie.split(';');
-    for(var i=0;i< ca.length;i++) { 
-        var c =ca[i]; 
+    /* walk the list backwards so we always get the last cookie in the
+       list */
+    for(var i = ca.length-1; i >= 0; i--) { 
+        var c = ca[i]; 
         while(c.charAt(0)==' ') c=c.substring(1,c.length);
         if(c.indexOf(nameEQ)==0) {
             return unescape(c.substring(nameEQ.length,c.length));
@@ -42,7 +44,7 @@ function readLCookie(nameEQ) {
 }
 
 function readCookie(name) {
-    var nameEQ=cookieName(name) + "=";
+    var nameEQ=cookieName(name);
     return readLCookie(nameEQ);
 }
 

@@ -137,20 +137,18 @@ def set_user_cookie(name, val):
     c.cookies[uname + '_' + name] = Cookie(value = val,
                                            domain = domain)
 
+valid_click_cookie = re.compile(r'(t[0-9]_[a-zA-Z0-9]+:)+').match
 def read_click_cookie():
     if c.user_is_loggedin:
-        cook = [s for s in read_user_cookie('click').split(':') if s]
-        if cook:
-            try:
-                things = Thing._by_fullname(cook, return_dict = False)
-                for t in things:
-                    def foo(t1, user):
-                        return lambda: t1._click(user)
-                    utils.worker.do(foo(t, c.user))
-            except:
-                pass
-            finally:
-                set_user_cookie('click', '')
+        click_cookie = read_user_cookie('click')
+        if click_cookie and valid_click_cookie(click_cookie):
+            ids = [s for s in click_cookie.split(':') if s]
+            things = Thing._by_fullname(ids, return_dict = False)
+            for t in things:
+                def foo(t1, user):
+                    return lambda: t1._click(user)
+                utils.worker.do(foo(t, c.user))
+        set_user_cookie('click', '')
 
             
 def read_mod_cookie():

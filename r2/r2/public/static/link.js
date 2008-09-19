@@ -482,7 +482,8 @@ function setClick(a, css_class) {
 }
 
 function setClickCookie(id) {
-    createCookie("click", readCookie("click") + id + ":");
+    var newcookie = readCookie("click") + id + ":";
+    createCookie("click", newcookie); 	
 }
 
 
