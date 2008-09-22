@@ -258,7 +258,7 @@ class QueryBuilder(Builder):
             #log loop
             self.loopcount += 1
             if self.loopcount == 20:
-                print 'BREAKING', self
+                g.log.debug('BREAKING: %s' % self)
                 done = True
 
             #no results, we're done
@@ -410,8 +410,8 @@ class SearchBuilder(QueryBuilder):
         else:
             timerange = None
 
-        new_items = solrsearch.search_things(self.query or '', sort = self.sort,
-                                             after = self.after,
+        new_items = solrsearch.search_things(q = self.query or '', sort = self.sort,
+                                             after = last_item,
                                              subreddits = self.subreddits,
                                              authors = self.authors,
                                              num = limit, reverse = self.reverse,

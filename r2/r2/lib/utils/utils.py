@@ -998,3 +998,10 @@ def title_to_url(title, max_length = 50):
             title = title[:last_word]
     return title
 
+def debug_print(fn):
+    def new_fn(*k,**kw):
+        ret = fn(*k,**kw)
+        g.log.debug("Fn: %s; k=%s; kw=%s\nRet: %s"
+                    % (fn,k,kw,ret))
+        return ret
+    return new_fn

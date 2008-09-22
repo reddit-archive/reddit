@@ -125,10 +125,9 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            Field('lang'),
                            Field('ups',   '_ups',   is_number=True, reverse=True),
                            Field('downs', '_downs', is_number=True, reverse=True),
-                           Field('hot', lambda t: int(t._hot*1000),
-                                 is_number=True, reverse=True),
-                           Field('points', lambda t: str(t._ups - t._downs),
-                                 is_number=True, reverse=True)),
+                           Field('hot', lambda t: t._hot*1000, is_number=True, reverse=True),
+                           Field('controversy', '_controversy', is_number=True, reverse=True),
+                           Field('points', lambda t: (t._ups - t._downs), is_number=True, reverse=True)),
                Subreddit: (Field('contents',
                                  lambda s: ' '.join([unicode_safe(s.name),
                                                      unicode_safe(s.title),
@@ -399,7 +398,7 @@ def reindex_all(types = None, delete_all_first=False):
             q.put(e,timeout=30)
         raise e
 
-def changed(commit=True,optimize=False):
+def changed(commit=True,optimize=False,delete_old=True):
     """
         Run by `cron` (through `paster run`) on a schedule to update
         all Things that have been created or have changed since the
@@ -432,7 +431,9 @@ def changed(commit=True,optimize=False):
     
                 for i in to_delete:
                     s.delete(id=i._fullname)
-            thing_changes.clear_changes(max_date = max_date)
+
+    if delete_old:
+        thing_changes.clear_changes(max_date = max_date)
 
 def combine_searchterms(terms):
     """
@@ -487,9 +488,6 @@ def search_things(q, sort = 'hot desc',
         `num`. Queries on params are OR queries, except `timerange`
         and `types`
     """
-    global searchable_langs
-    global indexed_types
-
     if not q or not g.solr_url:
         return pysolr.Results([],0)
 
@@ -587,7 +585,7 @@ def search_things(q, sort = 'hot desc',
                        # qb = '3',
                        bq = ' '.join(boost),
                        qf = ' '.join(fields),
-                       mm = '50%')      # minimum number of clauses that should match
+                       mm = '75%')      # minimum number of clauses that should match
 
     with SolrConnection() as s:
         if after:
@@ -620,13 +618,12 @@ def search_things(q, sort = 'hot desc',
                                         pre_search.hits)
 
             fullname = after._fullname
-            found_it = False
             for i, item in enumerate(search.docs):
                 if item['fullname'] == fullname:
-                    found_it = True
                     search.docs = search.docs[i+1:i+1+num]
                     break
-            if not found_it:
+            else:
+                g.log.debug("I got an after query, but the fullname was not present in the results")
                 search.docs = search.docs[0:num]
         else:
             search = s.search(q,sort,rows=num,

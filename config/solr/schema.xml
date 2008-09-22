@@ -378,12 +378,13 @@ CondeNet, Inc. All Rights Reserved.
    <!-- Thing -->
    <field name="fullname"    type="string"  indexed="true" stored="true"  required="true" />
    <field name="type"        type="string"  indexed="true" stored="false" required="true" multiValued="true" />
-   <field name="date"        type="date"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="date"        type="date"    indexed="true" stored="true"  required="true" reversed="true" />
    <field name="lang"        type="string"  indexed="true" stored="false" required="false" />
-   <field name="ups"         type="sint"    indexed="true" stored="false" required="true" reversed="true" />
-   <field name="downs"       type="sint"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="ups"         type="sint"    indexed="true" stored="true"  required="true" reversed="true" />
+   <field name="downs"       type="sint"    indexed="true" stored="true"  required="true" reversed="true" />
    <field name="hot"         type="hotness" indexed="true" stored="true"  required="true" reversed="true" />
-   <field name="points"      type="sint"    indexed="true" stored="false" required="true" reversed="true" />
+   <field name="controversy" type="sfloat"  indexed="true" stored="true"  required="true" reversed="true" />
+   <field name="points"      type="sint"    indexed="true" stored="true"  required="true" reversed="true" />
    <!-- subreddit,link,comment -->
    <field name="author_id"   type="integer" indexed="true" stored="false" required="false" />
    <field name="author"      type="string"  indexed="true" stored="false" required="false" />
