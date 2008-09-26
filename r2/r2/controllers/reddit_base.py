@@ -148,7 +148,7 @@ def read_click_cookie():
                 def foo(t1, user):
                     return lambda: t1._click(user)
                 utils.worker.do(foo(t, c.user))
-        set_user_cookie('click', '')
+    set_user_cookie('click', '')
 
             
 def read_mod_cookie():
