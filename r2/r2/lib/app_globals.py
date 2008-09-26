@@ -55,12 +55,12 @@ class Globals(object):
 
     tuple_props = ['memcaches',
                    'rec_cache',
+                   'permacaches',
                    'admins',
                    'monitored_servers',
                    'default_srs',
                    'agents',
-                   'allowed_css_linked_domains',
-                   'query_caches']
+                   'allowed_css_linked_domains']
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
@@ -109,9 +109,9 @@ class Globals(object):
         # initialize caches
         mc = Memcache(self.memcaches)
         self.cache = CacheChain((LocalCache(), mc))
+        self.permacache = Memcache(self.permacaches)
 
         self.rec_cache = Memcache(self.rec_cache)
-        self.query_cache = Memcache(self.query_caches)
         
         # set default time zone if one is not set
         self.tz = pytz.timezone(global_conf.get('timezone'))

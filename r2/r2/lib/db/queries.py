@@ -9,7 +9,7 @@ from r2.lib.utils import fetch_things2, worker
 from datetime import datetime
 
 from pylons import g
-query_cache = g.query_cache
+query_cache = g.permacache
 
 precompute_limit = 1000
 

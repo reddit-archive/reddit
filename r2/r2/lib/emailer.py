@@ -104,7 +104,7 @@ def send_queued_mail():
                              email.to_MIMEText().as_string())
             email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
-        except smtplib.SMTPRecipientsRefused:
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused):
             # handle error and print, but don't stall the rest of the queue
 	    print "Handled error sending mail (traceback to follow)"
 	    traceback.print_exc(file = sys.stdout)
