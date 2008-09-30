@@ -247,10 +247,10 @@ def set_subreddit():
 
 def set_content_type():
     e = request.environ
-    if e.has_key('extension'):
-        c.render_style = e['render_style']
-        c.response_content_type = e['content_type']
+    c.render_style = e['render_style']
+    c.response_content_type = e['content_type']
 
+    if e.has_key('extension'):
         ext = e['extension']
         if ext == 'api' or ext.startswith('json'):
             c.response_access_control = 'allow <*>'

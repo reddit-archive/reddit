@@ -300,6 +300,10 @@ class ExtensionMiddleware(object):
                 #strip off the extension
                 environ['PATH_INFO'] = path[:-(len(ext) + 1)]
                 break
+        else:
+            environ['render_style'] = 'html'
+            environ['content_type'] = 'text/html; charset=UTF-8'
+
         return self.app(environ, start_response)
 
 class RewriteMiddleware(object):
