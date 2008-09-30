@@ -32,7 +32,7 @@ from r2.models import *
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib.utils import timeago, set_emptying_cache, IteratorChunker
-from r2.lib.utils import psave, pload, unicode_safe
+from r2.lib.utils import psave, pload, unicode_safe, tup
 from r2.lib.cache import SelfEmptyingCache
 from Queue import Queue
 from threading import Thread
@@ -125,6 +125,8 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            Field('lang'),
                            Field('ups',   '_ups',   is_number=True, reverse=True),
                            Field('downs', '_downs', is_number=True, reverse=True),
+                           Field('spam','_spam'),
+                           Field('deleted','_deleted'),
                            Field('hot', lambda t: t._hot*1000, is_number=True, reverse=True),
                            Field('controversy', '_controversy', is_number=True, reverse=True),
                            Field('points', lambda t: (t._ups - t._downs), is_number=True, reverse=True)),
@@ -162,8 +164,8 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                                  # yes, it's a copy of 'hot'
                                  is_number=True, reverse=True),
                            ThingField('author',Account,'author_id','name'),
-                           #ThingField('subreddit',Subreddit,'sr_id','name'),
-                           ThingField('reddit',Subreddit,'sr_id','name'))}
+                           ThingField('subreddit',Subreddit,'sr_id','name'))}
+                           #ThingField('reddit',Subreddit,'sr_id','name'))}
 
 def tokenize_things(things,return_dict=False):
     """
@@ -276,6 +278,8 @@ def fetch_batches(t_class,size,since,until):
         of `fetch_things`
     """
     q=t_class._query(t_class.c._date >= since,
+                     t_class.c._spam == (True,False),
+                     t_class.c._deleted == (True,False),
                      t_class.c._date <  until,
                      sort  = desc('_date'),
                      limit = size,
@@ -375,8 +379,8 @@ def reindex_all(types = None, delete_all_first=False):
             for batch in fetch_batches(cls,1000,
                                        timeago("50 years"),
                                        start_t):
-                r = tokenize_things([x for x in batch
-                                     if not x._spam and not x._deleted ])
+                r = tokenize_things([ x for x in batch
+                                      if not x._spam and not x._deleted ])
 
                 count += len(r)
                 print ("Processing %s #%d(%s): %s"
@@ -465,173 +469,241 @@ def combine_searchterms(terms):
 def swap_strings(s,this,that):
     """
         Just swaps substrings, like:
-            s = "sort(asc)"
-            swap_strings(s,'asc','desc')
-            s -> "sort desc"
+            s = "hot asc"
+            s = swap_strings(s,'asc','desc')
+            s == "hot desc"
 
          uses 'tmp' as a replacment string, so don't use for anything
          very complicated
     """
     return s.replace(this,'tmp').replace(that,this).replace('tmp',that)
 
-def search_things(q, sort = 'hot desc',
-                  after = None,
-                  subreddits = None,
-                  authors = None,
-                  num = 100, reverse = False,
-                  timerange = None, langs = None,
-                  types = None,
-                  boost = []):
-    """
-        Takes a given query and returns a list of Things that match
-        that query. See Builder for the use of `after`, `reverse`, and
-        `num`. Queries on params are OR queries, except `timerange`
-        and `types`
-    """
-    if not q or not g.solr_url:
-        return pysolr.Results([],0)
+class SearchQuery(object):
+    def __init__(self, q, sort, fields = [], subreddits = [], authors = [], 
+                 types = [], timerange = None, spam = False, deleted = False):
 
-    # there are two parts to our query: what the user typed (parsed
-    # with Solr's DisMax parser), and what we are adding to it. The
-    # latter is called the "boost" (and is parsed using full Lucene
-    # syntax), and it can be added to via the `boost` parameter (which
-    # we have to copy since we append to it)
-    boost = list(boost)
+        self.q = q
+        self.fields = fields
+        self.sort = sort
+        self.subreddits = subreddits
+        self.authors = authors
+        self.types = types
+        self.spam = spam
+        self.deleted = deleted
 
-    # `score` refers to Solr's score (relevency to the search given),
-    # not our score (sums of ups and downs).
-    sort = "score desc, %s, date desc, fullname asc" % (sort,)
-    if reverse:
-        sort = swap_strings(sort,'asc','desc')
-
-    if timerange:
-        def time_to_searchstr(t):
-            if isinstance(t, datetime):
-                t = t.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-            elif isinstance(t, date):
-                t = t.strftime('%Y-%m-%dT00:00:00.000Z')
-            elif isinstance(t,str):
-                t = t
-            return t
-
-        (fromtime, totime) = timerange
-        fromtime = time_to_searchstr(fromtime)
-        totime   = time_to_searchstr(totime)
-        boost.append("+date:[%s TO %s]"
-                     % (fromtime,totime))
-
-    if subreddits:
-        def subreddit_to_searchstr(sr):
-            if isinstance(sr,Subreddit):
-                return ('sr_id','%d' % sr.id)
-            elif isinstance(sr,str) or isinstance(sr,unicode):
-                return ('reddit',sr)
-            else:
-                return ('sr_id','%d' % sr)
-
-        if isinstance(subreddits,list) or isinstance(subreddits,tuple):
-            s_subreddits = map(subreddit_to_searchstr, subreddits)
+        if timerange in ['hour','week','day','month','year']:
+            self.timerange = (timeago("1 %s" % timerange),"NOW")
+        elif timerange == 'all' or timerange is None:
+            self.timerange = None
         else:
-            s_subreddits = (subreddit_to_searchstr(subreddits),)
+            self.timerange = timerange
 
-        boost.append("+(%s)^2" % combine_searchterms(s_subreddits))
+    def run(self, after = None, num = 100, reverse = False):
+        if not self.q or not g.solr_url:
+            return pysolr.Results([],0)
 
-    if authors:
-        def author_to_searchstr(a):
-            if isinstance(a,Account):
-                return ('author_id','%d' % a.id)
-            elif isinstance(a,str) or isinstance(a,unicode):
-                return ('author',a)
+        # there are two parts to our query: what the user typed
+        # (parsed with Solr's DisMax parser), and what we are adding
+        # to it. The latter is called the "boost" (and is parsed using
+        # full Lucene syntax), and it can be added to via the `boost`
+        # parameter
+        boost = []
+
+        if not self.spam:
+            boost.append("-spam:true")
+        if not self.deleted:
+            boost.append("-deleted:true")
+
+        if self.timerange:
+            def time_to_searchstr(t):
+                if isinstance(t, datetime):
+                    t = t.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+                elif isinstance(t, date):
+                    t = t.strftime('%Y-%m-%dT00:00:00.000Z')
+                elif isinstance(t,str):
+                    t = t
+                return t
+
+            (fromtime, totime) = self.timerange
+            fromtime = time_to_searchstr(fromtime)
+            totime   = time_to_searchstr(totime)
+            boost.append("+date:[%s TO %s]"
+                         % (fromtime,totime))
+
+        if self.subreddits:
+            def subreddit_to_searchstr(sr):
+                if isinstance(sr,Subreddit):
+                    return ('sr_id','%d' % sr.id)
+                elif isinstance(sr,str) or isinstance(sr,unicode):
+                    return ('subreddit',sr)
+                else:
+                    return ('sr_id','%d' % sr)
+
+            s_subreddits = map(subreddit_to_searchstr, tup(self.subreddits))
+
+            boost.append("+(%s)" % combine_searchterms(s_subreddits))
+
+        if self.authors:
+            def author_to_searchstr(a):
+                if isinstance(a,Account):
+                    return ('author_id','%d' % a.id)
+                elif isinstance(a,str) or isinstance(a,unicode):
+                    return ('author',a)
+                else:
+                    return ('author_id','%d' % a)
+
+            s_authors = map(author_to_searchstr,tup(self.authors))
+
+            boost.append('+(%s)^2' % combine_searchterms(s_authors))
+
+
+        def type_to_searchstr(t):
+            if isinstance(t,str):
+                return ('type',t)
             else:
-                return ('author_id','%d' % a)
-
-        if isinstance(authors,list) or isinstance(authors,tuple):
-            s_authors = map(author_to_searchstr,authors)
-        else:
-            s_authors = map(author_to_searchstr,(authors,))
-
-        boost.append('+(%s)^2' % combine_searchterms(s_authors))
-
-    # the set of languages is used to determine the fields to search,
-    # named ('contents_%s' % lang), but 'contents' (which is split
-    # only on whitespace) is always also searched. This means that
-    # all_langs and schema.xml must be kept in synch
-    default_fields = ['contents^1.5','contents_ws^3',
-                      'site^1','author^1', 'reddit^1', 'url^1']
-    if langs == None:
-        # only search 'contents'
-        fields = default_fields
-    else:
-        if langs == 'all':
-            langs = searchable_langs
-        fields = set([("%s^2" % lang_to_fieldname(lang)) for lang in langs]
-                     + default_fields)
-
-    if not types:
-        types = indexed_types
-        
-    def type_to_searchstr(t):
-         if isinstance(t,str):
-            return ('type',t)
-         else:
-             return ('type',t.__name__.lower())
+                return ('type',t.__name__.lower())
          
-    s_types = map(type_to_searchstr,types)
-    boost.append("+%s" % combine_searchterms(s_types))
+        s_types = map(type_to_searchstr,self.types)
+        boost.append("+%s" % combine_searchterms(s_types))
 
-    # everything else that solr needs to know
-    solr_params = dict(fl = 'fullname', # the field(s) to return
-                       qt = 'dismax',   # the query-handler (dismax supports 'bq' and 'qf')
-                       # qb = '3',
-                       bq = ' '.join(boost),
-                       qf = ' '.join(fields),
-                       mm = '75%')      # minimum number of clauses that should match
+        q,solr_params = self.solr_params(self.q,boost)
 
-    with SolrConnection() as s:
-        if after:
-            # size of the pre-search to run in the case that we need
-            # to search more than once. A bigger one can reduce the
-            # number of searches that need to be run twice, but if
-            # it's bigger than the default display size, it could
-            # waste some
-            PRESEARCH_SIZE = num
+        try:
+            search = self.run_search(q, self.sort, solr_params,
+                                     reverse, after, num)
+            return search
 
-            # run a search and get back the number of hits, so that we
-            # can re-run the search with that max_count.
-            pre_search = s.search(q,sort,rows=PRESEARCH_SIZE,
+        except SolrError,e:
+            g.log.error(str(e))
+            return pysolr.Results([],0)
+
+    @classmethod
+    def run_search(cls, q, sort, solr_params, reverse, after, num):
+        "returns pysolr.Results(docs=[fullname()],hits=int())"
+
+        if reverse:
+            sort = swap_strings(sort,'asc','desc')
+
+        g.log.debug("Searching q=%s" % q)
+
+        with SolrConnection() as s:
+            if after:
+                # size of the pre-search to run in the case that we
+                # need to search more than once. A bigger one can
+                # reduce the number of searches that need to be run
+                # twice, but if it's bigger than the default display
+                # size, it could waste some
+                PRESEARCH_SIZE = num
+
+                # run a search and get back the number of hits, so
+                # that we can re-run the search with that max_count.
+                pre_search = s.search(q,sort,rows=PRESEARCH_SIZE,
+                                      other_params = solr_params)
+
+                if (PRESEARCH_SIZE >= pre_search.hits
+                    or pre_search.hits == len(pre_search.docs)):
+                    # don't run a second search if our pre-search
+                    # found all of the elements anyway
+                    search = pre_search
+                else:
+                    # we have to run a second search, but we can limit
+                    # the duplicated transfer of the first few records
+                    # since we already have those from the pre_search
+                    second_search = s.search(q,sort,
+                                             start=len(pre_search.docs),
+                                             rows=pre_search.hits - len(pre_search.docs),
+                                             other_params = solr_params)
+                    search = pysolr.Results(pre_search.docs + second_search.docs,
+                                            pre_search.hits)
+
+                search.docs = [ i['fullname'] for i in search.docs ]
+                search.docs = get_after(search.docs, after._fullname, num)
+            else:
+                search = s.search(q,sort,rows=num,
                                   other_params = solr_params)
+                search.docs = [ i['fullname'] for i in search.docs ]
 
-            if (PRESEARCH_SIZE >= pre_search.hits
-                or pre_search.hits == len(pre_search.docs)):
-                # don't run a second search if our pre-search found
-                # all of the elements anyway
-                search = pre_search
-            else:
-                # we have to run a second search, but we can limit the
-                # duplicated transfer of the first few records since
-                # we already have those from the pre_search
-                second_search = s.search(q,sort,
-                                         start=len(pre_search.docs),
-                                         rows=pre_search.hits - len(pre_search.docs),
-                                         other_params = solr_params)
-                search = pysolr.Results(pre_search.docs + second_search.docs,
-                                        pre_search.hits)
+            return search
 
-            fullname = after._fullname
-            for i, item in enumerate(search.docs):
-                if item['fullname'] == fullname:
-                    search.docs = search.docs[i+1:i+1+num]
-                    break
-            else:
-                g.log.debug("I got an after query, but the fullname was not present in the results")
-                search.docs = search.docs[0:num]
+    def solr_params(self,*k,**kw):
+        raise NotImplementedError
+
+class UserSearchQuery(SearchQuery):
+    "Base class for queries that use the dismax parser; requires self.mm"
+    def __init__(self, q, sort=None, fields=[], langs=None, **kw):
+        default_fields = ['contents^1.5','contents_ws^3'] + fields
+
+        if sort is None:
+            sort = 'score desc, hot desc, date desc'
+
+        if langs is None:
+            fields = default_fields
         else:
-            search = s.search(q,sort,rows=num,
-                              other_params = solr_params)
+            if langs == 'all':
+                langs = searchable_langs
+            fields = set([("%s^2" % lang_to_fieldname(lang)) for lang in langs]
+                         + default_fields)
 
-    hits = search.hits
-    things = Thing._by_fullname([i['fullname'] for i in search.docs],
-                                data = True, return_dict = False)
+        # default minimum match
+        self.mm = '75%'
 
-    return pysolr.Results(things,hits)
+        SearchQuery.__init__(self, q, sort, fields = fields, **kw)
 
+    def solr_params(self, q, boost):
+        return q, dict(fl = 'fullname',
+                       qt = 'dismax',
+                       bq = ' '.join(boost),
+                       qf = ' '.join(self.fields),
+                       mm = self.mm)
+
+class LinkSearchQuery(UserSearchQuery):
+    def __init__(self, q, **kw):
+        additional_fields = ['site^1','author^1', 'subreddit^1', 'url^1']
+
+        subreddits = None
+        authors = None
+        if c.site == subreddit.Default:
+            subreddits = Subreddit.user_subreddits(c.user)
+        elif c.site == subreddit.Friends and c.user.friends:
+            authors = c.user.friends
+        elif not isinstance(c.site,subreddit.FakeSubreddit):
+            subreddits = [c.site._id]
+
+        UserSearchQuery.__init__(self, q, fields = additional_fields,
+                                 subreddits = subreddits, authors = authors,
+                                 types=[Link], **kw)
+
+class RelatedSearchQuery(LinkSearchQuery):
+    def __init__(self, q, ignore = [], **kw):
+        self.ignore = set(ignore) if ignore else set()
+
+        LinkSearchQuery.__init__(self, q, sort = 'score desc', **kw)
+
+        self.mm = '25%'
+
+    def run(self, *k, **kw):
+        search = LinkSearchQuery.run(self, *k, **kw)
+        search.docs = [ x for x in search.docs if x not in self.ignore ]
+        return search
+
+class SubredditSearchQuery(UserSearchQuery):
+    def __init__(self, q, **kw):
+        UserSearchQuery.__init__(self, q, types=[Subreddit], **kw)
+
+class DomainSearchQuery(SearchQuery):
+    def __init__(self, domain, **kw):
+        q = '+site:%s' % domain
+
+        SearchQuery.__init__(self, q=q, fields=['site'],types=[Link], **kw)
+
+    def solr_params(self, q, boost):
+        q = q + ' ' + ' '.join(boost)
+        return q, dict(fl='fullname',
+                       qt='standard')
+
+def get_after(fullnames, fullname, num):
+    for i, item in enumerate(fullnames):
+        if item == fullname:
+            return fullnames[i+1:i+num+1]
+    else:
+        return fullnames[:num]

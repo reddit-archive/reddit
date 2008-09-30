@@ -45,7 +45,7 @@
       var sr = {};
       
       var logged = ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"};
-      var post_site = "${c.site.name}";
+      var post_site = "${c.site.name if not c.default_sr else ''}";
       var cnameframe  = ${'true' if c.cname else 'false'}; 
       var modhash = ${"'%s'" % c.modhash or "false"};
       var cur_domain = "${get_domain(cname = True, subreddit = False) if c.frameless_cname else g.domain}";

@@ -5,6 +5,7 @@ from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, worker
+from r2.lib.solrsearch import DomainSearchQuery
 
 from datetime import datetime
 
@@ -22,6 +23,12 @@ db_sorts = dict(hot = (desc, '_hot'),
 def db_sort(sort):
     cls, col = db_sorts[sort]
     return cls(col)
+
+search_sort = dict(hot = 'hot desc',
+                   new = 'date desc',
+                   top = 'points desc',
+                   controversial = 'controversy desc',
+                   old = 'date asc')
 
 db_times = dict(all = None,
                 hour = Thing.c._date >= timeago('1 hour'),
@@ -175,6 +182,9 @@ def get_links(sr, sort, time):
     if time != 'all':
         q._filter(db_times[time])
     return make_results(q)
+
+def get_domain_links(domain, sort, time):
+    return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
 
 def user_query(kind, user, sort, time):
     """General profile-page query."""

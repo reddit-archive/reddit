@@ -118,7 +118,8 @@ class BaseController(WSGIController):
             u.mk_cname(**kw)
     
             # make sure the extensions agree with the current page
-            u.set_extension(c.extension)
+            if c.extension:
+                u.set_extension(c.extension)
 
         # unparse and encode it un utf8
         return _force_unicode(u.unparse()).encode('utf8')

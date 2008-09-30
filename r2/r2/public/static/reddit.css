@@ -222,7 +222,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     padding: 2px 6px 1px 6px;
     background-color: white;
     border: 1px solid #5f99cf;
-    border-bottom: none;
+    border-bottom: 1px solid white;
 }
 
 #search {
@@ -588,6 +588,7 @@ before enabling */
     padding: 5px 10px;
     margin: 5px 310px 5px 0px;
     border: 1px solid orange;
+    font-size: small;
 }
 
 .menuarea {
@@ -958,8 +959,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .searchpane a { color: #369 }*/
 
 .searchpane { 
-    margin: 5px;
-    margin-right: 310px;
+    margin: 5px 310px 5px 0px;
 } 
 
 .searchpane #search input[type=text] { }

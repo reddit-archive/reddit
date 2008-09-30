@@ -225,7 +225,7 @@ def test_cache(cache):
 # a cache that occasionally dumps itself to be used for long-running
 # processes
 class SelfEmptyingCache(LocalCache):
-    def __init__(self,max_size=50*1000):
+    def __init__(self,max_size=100*1000):
         self.max_size = max_size
 
     def maybe_reset(self):

@@ -385,6 +385,8 @@ CondeNet, Inc. All Rights Reserved.
    <field name="hot"         type="hotness" indexed="true" stored="true"  required="true" reversed="true" />
    <field name="controversy" type="sfloat"  indexed="true" stored="true"  required="true" reversed="true" />
    <field name="points"      type="sint"    indexed="true" stored="true"  required="true" reversed="true" />
+   <field name="spam"        type="boolean" indexed="true" stored="true"  required="false" />
+   <field name="deleted"     type="boolean" indexed="true" stored="true"  required="false" />
    <!-- subreddit,link,comment -->
    <field name="author_id"   type="integer" indexed="true" stored="false" required="false" />
    <field name="author"      type="string"  indexed="true" stored="false" required="false" />

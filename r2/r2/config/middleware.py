@@ -34,6 +34,7 @@ from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
 from r2.lib.utils import rstrips
+from r2.lib.jsontemplates import api_type
 
 #middleware stuff
 from r2.lib.html_source import HTMLValidationParser
@@ -240,7 +241,7 @@ class DomainMiddleware(object):
 
 
 class SubredditMiddleware(object):
-    sr_pattern = re.compile(r'^/r/([^/]+)')
+    sr_pattern = re.compile(r'^/r/([^/]{3,20})')
 
     def __init__(self, app):
         self.app = app
@@ -255,18 +256,50 @@ class SubredditMiddleware(object):
             environ['subreddit'] = 'r'
         return self.app(environ, start_response)
 
+class DomainListingMiddleware(object):
+    domain_pattern = re.compile(r'^/domain/(([\w]+\.)+[\w]+)')
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        if not environ.has_key('subreddit'):
+            path = environ['PATH_INFO']
+            domain = self.domain_pattern.match(path)
+            if domain:
+                environ['domain'] = domain.groups()[0]
+                environ['PATH_INFO'] = self.domain_pattern.sub('', path) or '/'
+        return self.app(environ, start_response)
+
 class ExtensionMiddleware(object):
     ext_pattern = re.compile(r'\.([^/]+)$')
+
+    extensions = {'rss' : ('xml', 'text/xml; charset=UTF-8'),
+                  'xml' : ('xml', 'text/xml; charset=UTF-8'),
+                  'js' : ('js', 'text/javascript; charset=UTF-8'),
+                  'wired' : ('wired', 'text/javascript; charset=UTF-8'),
+                  'embed' : ('htmllite', 'text/javascript; charset=UTF-8'),
+                  'mobile' : ('mobile', 'text/html'),
+                  'png' : ('png', 'image/png'),
+                  'css' : ('css', 'text/css'),
+                  'api' : (api_type(), 'application/json; charset=UTF-8'),
+                  'json' : (api_type(), 'application/json; charset=UTF-8'),
+                  'json-html' : (api_type('html'), 'application/json; charset=UTF-8')}
 
     def __init__(self, app):
         self.app = app
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
-        ext = self.ext_pattern.findall(path)
-        if ext:
-            environ['extension'] = ext[0]
-            environ['PATH_INFO'] = self.ext_pattern.sub('', path) or '/'
+        domain_ext = environ.get('reddit-domain-extension')
+        for ext, val in self.extensions.iteritems():
+            if ext == domain_ext or path.endswith(ext):
+                environ['extension'] = ext
+                environ['render_style'] = val[0]
+                environ['content_type'] = val[1]
+                #strip off the extension
+                environ['PATH_INFO'] = path[:-(len(ext) + 1)]
+                break
         return self.app(environ, start_response)
 
 class RewriteMiddleware(object):
@@ -382,10 +415,10 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = ProfilingMiddleware(app)
     app = SourceViewMiddleware(app)
 
-    app = SubredditMiddleware(app)
     app = DomainMiddleware(app)
+    app = DomainListingMiddleware(app)
+    app = SubredditMiddleware(app)
     app = ExtensionMiddleware(app)
-
 
     log_path = global_conf.get('log_path')
     if log_path:

@@ -354,41 +354,25 @@ class IDBuilder(QueryBuilder):
         return done, new_items
 
 class SearchBuilder(QueryBuilder):
-    def __init__(self, query, wrap = Wrapped, sort = None, ignore = [],
-                 time = time, types = None, langs = None, **kw):
-        QueryBuilder.__init__(self, query, wrap=wrap, **kw)
-        self.sort = sort
-        self.time = time
-        self.types = types
-        self.timing = 0
-        self.total_num = 0
-        self.langs = langs
-
-        self.ignore = set(x for x in (ignore if ignore else []))
-
     def init_query(self):
-        subreddits = None
-        authors = None
-        if c.site == subreddit.Default:
-            subreddits = Subreddit.user_subreddits(c.user)
-        elif c.site == subreddit.Friends and c.user.friends:
-            authors = c.user.friends
-        elif not isinstance(c.site,subreddit.FakeSubreddit):
-            subreddits = c.site._id
-
-        self.subreddits = subreddits
-        self.authors = authors
-
         self.skip = True
+        self.total_num = 0
+        self.start_time = time.time()
+
+        self.start_time = time.time()
 
     def keep_item(self,item):
-        skip_if = item._spam or item._deleted or item._fullname in self.ignore
-        return not skip_if
+        # doesn't use the default keep_item because we want to keep
+        # things that were voted on, even if they've chosen to hide
+        # them in normal listings
+        if item._spam or item._deleted:
+            return False
+        else:
+            return True
+
 
     def fetch_more(self, last_item, num_have):
         from r2.lib import solrsearch
-
-        start_t = time.time()
 
         done = False
         limit = None
@@ -401,25 +385,13 @@ class SearchBuilder(QueryBuilder):
         else:
             done = True
 
-        langs = c.content_langs
-        if self.langs:
-            langs += self.langs
+        search = self.query.run(after = last_item or self.after,
+                                reverse = self.reverse,
+                                num = limit)
 
-        if self.time in ['hour','week','day','month']:
-            timerange = (timeago("1 %s" % self.time),"NOW")
-        else:
-            timerange = None
+        new_items = Thing._by_fullname(search.docs, data = True, return_dict=False)
 
-        new_items = solrsearch.search_things(q = self.query or '', sort = self.sort,
-                                             after = last_item,
-                                             subreddits = self.subreddits,
-                                             authors = self.authors,
-                                             num = limit, reverse = self.reverse,
-                                             timerange = timerange, langs = langs,
-                                             types = self.types)
-
-        self.total_num = new_items.hits
-        self.timing = time.time() - start_t
+        self.total_num = search.hits
 
         return done, new_items
 

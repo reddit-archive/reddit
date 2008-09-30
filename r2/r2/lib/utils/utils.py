@@ -999,6 +999,7 @@ def title_to_url(title, max_length = 50):
     return title
 
 def debug_print(fn):
+    from pylons import g
     def new_fn(*k,**kw):
         ret = fn(*k,**kw)
         g.log.debug("Fn: %s; k=%s; kw=%s\nRet: %s"

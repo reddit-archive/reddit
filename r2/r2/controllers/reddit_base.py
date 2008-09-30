@@ -212,13 +212,18 @@ def over18():
                 return True
 
 def set_subreddit():
-    sr_name=request.environ.get("subreddit", request.params.get('r'))
+    #the r parameter gets added by javascript for POST requests so we
+    #can reference c.site in api.py
+    sr_name = request.environ.get("subreddit", request.POST.get('r'))
+    domain = request.environ.get("domain")
 
-    if not sr_name or sr_name == Default.name:
+    if not sr_name:
+        #check for cnames
         sub_domain = request.environ.get('sub_domain')
         sr = Subreddit._by_domain(sub_domain) if sub_domain else None
         c.site = sr or Default
     elif sr_name == 'r':
+        #reddits
         c.site = Sub
     else:
         try:
@@ -226,6 +231,10 @@ def set_subreddit():
         except NotFound:
             c.site = Default
             redirect_to("/reddits/create?name=%s" % sr_name)
+
+    #if we didn't find a subreddit, check for a domain listing
+    if not sr_name and c.site == Default and domain:
+        c.site = DomainSR(domain)
 
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
@@ -235,42 +244,16 @@ def set_subreddit():
         abort(404, "not found")
 
 def set_content_type():
-    c.extension = request.environ.get('extension') or \
-                  request.environ.get('reddit-domain-extension') or ''
-    c.render_style = 'html'
-    if c.extension in ('rss', 'xml'):
-        c.render_style = 'xml'
-        c.response_content_type = 'text/xml; charset=UTF-8'
-    elif c.extension == 'js':
-        c.render_style = 'js'
-        c.response_content_type = 'text/javascript; charset=UTF-8'
-    elif c.extension.startswith('json') or c.extension == "api":
-        c.response_content_type = 'application/json; charset=UTF-8'
-        c.response_access_control = 'allow <*>'
-        if c.extension == 'json-html':
-            c.render_style = api_type('html')
-        else:
-            c.render_style = api_type()
-    elif c.extension == 'wired':
-        c.render_style = 'wired'
-        c.response_content_type = 'text/javascript; charset=UTF-8'
-        c.response_wrappers.append(utils.to_js)
-    elif c.extension  == 'embed':
-        c.render_style = 'htmllite'
-        c.response_content_type = 'text/javascript; charset=UTF-8'
-        c.response_wrappers.append(utils.to_js)
-    elif c.extension == 'mobile':
-        c.render_style = 'mobile' 
-    elif c.extension == 'png':
-        c.response_content_type = 'image/png'
-        c.render_style = 'png'
-    elif c.extension == 'css':
-        c.response_content_type = 'text/css'
-        c.render_style = 'css'
-   #Insert new extentions above this line
-    elif c.extension not in ('', 'html'):
-        # request.path already has the extension stripped off of it
-        redirect_to(request.path + utils.query_string(request.get))
+    e = request.environ
+    if e.has_key('extension'):
+        c.render_style = e['render_style']
+        c.response_content_type = e['content_type']
+
+        ext = e['extension']
+        if ext == 'api' or ext.startswith('json'):
+            c.response_access_control = 'allow <*>'
+        if ext in ('embed', 'wired'):
+            c.response_wrappers.append(utils.to_js)
 
 def get_browser_langs():
     browser_langs = []

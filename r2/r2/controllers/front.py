@@ -32,12 +32,14 @@ from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
+from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
 import r2.lib.db.thing as thing
 from listingcontroller import ListingController
 from pylons import c, request
 
 import random as rand
 import re
+import time as time_module
 from urllib import quote_plus
 
 from admin import admin_profile_query
@@ -292,6 +294,7 @@ class FrontController(RedditController):
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query."""
+
         title = c.site.name + ((': ' + article.title) if hasattr(article, 'title') else '')
 
         query = self.related_replace_regex.sub(self.related_replace_with,
@@ -301,24 +304,25 @@ class FrontController(RedditController):
             # longer than this are typically ascii art anyway
             query = query[0:1023]
 
-        num, t, pane = self._search(query, time = 'all',
-                                    count = count,
-                                    after = after, reverse = reverse, num = num,
-                                    ignore = [article._fullname],
-                                    types = [Link])
-        res = LinkInfoPage(link = article, content = pane).render()
-        return res
+        q = RelatedSearchQuery(query, ignore = [article._fullname])
+        num, t, pane = self._search(q,
+                                    num = num, after = after, reverse = reverse,
+                                    count = count)
+
+        return LinkInfoPage(link = article, content = pane).render()
 
     @base_listing
     @validate(query = nop('q'))
     def GET_search_reddits(self, query, reverse, after,  count, num):
         """Search reddits by title and description."""
-        num, t, spane = self._search(query, num = num, types = [Subreddit],
-                                     sort='points desc', time='all',
-                                     after = after, reverse = reverse, 
+        # note that 'downs' is a measure of activity on subreddits
+        q = SubredditSearchQuery(query, sort = 'downs desc',
+                                 timerange = 'all')
+
+        num, t, spane = self._search(q, num = num, reverse = reverse, after = after,
                                      count = count)
         
-        res = SubredditsPage(content=spane, 
+        res = SubredditsPage(content=spane,
                              prev_search = query,
                              elapsed_time = t,
                              num_results = num,
@@ -327,7 +331,7 @@ class FrontController(RedditController):
 
     verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
     @base_listing
-    @validate(query=nop('q'),
+    @validate(query = nop('q'),
               time = VMenu('action', TimeMenu, remember = False),
               langs = nop('langs'))
     def GET_search(self, query, num, time, reverse, after, count, langs):
@@ -340,12 +344,12 @@ class FrontController(RedditController):
         if langs and self.verify_langs_regex.match(langs):
             langs = langs.split(',')
         else:
-            langs = None
+            langs = c.content_langs
 
-        num, t, spane = self._search(query, time=time,
-                                     num = num, after = after, 
-                                     reverse = reverse,
-                                     count = count, types = [Link])
+        q = LinkSearchQuery(q = query, timerange = time, langs = langs)
+
+        num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
+                                     count = count)
 
         if not isinstance(c.site,FakeSubreddit):
             my_reddits_link = "/search%s" % query_string({'q': query})
@@ -365,26 +369,22 @@ class FrontController(RedditController):
         
         return res
         
-    def _search(self, query = '', time=None,
-                sort = 'hot desc',
-                after = None, reverse = False, num = 25, 
-                ignore = None, count=0, types = None,
-                langs = None):
+    def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
         thin wrapper for SearchBuilder."""
-        builder = SearchBuilder(query, num = num,
-                                sort = sort,
-                                after = after, reverse = reverse,
-                                count = count, types = types, 
-                                time = time, ignore = ignore,
-                                langs = langs,
+        builder = SearchBuilder(query_obj,
+                                after = after, num = num, reverse = reverse,
+                                count = count,
                                 wrap = ListingController.builder_wrapper)
+
         listing = LinkListing(builder, show_nums=True)
 
         # have to do it in two steps since total_num and timing are only
         # computed after fetch_more
         res = listing.listing()
-        return builder.total_num, builder.timing, res
+        timing = time_module.time() - builder.start_time
+
+        return builder.total_num, timing, res
 
 
 

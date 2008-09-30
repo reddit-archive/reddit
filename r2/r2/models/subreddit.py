@@ -414,8 +414,11 @@ class Subreddit(Thing, Printable):
 
 class FakeSubreddit(Subreddit):
     over_18 = False
-    title = ''
     _nodb = True
+
+    def __init__(self):
+        Subreddit.__init__(self)
+        self.title = ''
 
     def is_moderator(self, user):
         return c.user_is_loggedin and c.user_is_admin
@@ -568,6 +571,21 @@ class SubSR(FakeSubreddit):
     @property
     def path(self):
         return "/reddits/"
+
+class DomainSR(FakeSubreddit):
+    @property
+    def path(self):
+        return '/domain/' + self.domain
+
+    def __init__(self, domain):
+        FakeSubreddit.__init__(self)
+        self.domain = domain
+        self.name = domain 
+        self.title = domain + ' ' + _('on reddit.com')
+
+    def get_links(self, sort, time):
+        from r2.lib.db import queries
+        return queries.get_domain_links(self.domain, sort, time)
         
 Sub = SubSR()
 Friends = FriendsSR()
