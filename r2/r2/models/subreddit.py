@@ -509,6 +509,8 @@ class DefaultSR(FakeSubreddit):
         else:
             q = Link._query(Link.c.sr_id == sr_ids,
                             sort = queries.db_sort(sort))
+            if sort == 'toplinks':
+                q._filter(Link.c.top_link == True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q

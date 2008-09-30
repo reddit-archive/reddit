@@ -260,10 +260,7 @@ class ToplinksController(ListingController):
     title_text = _('top scoring links')
 
     def query(self):
-        q = Link._query(Link.c.top_link == True,
-                        sort = desc('_hot'),
-                        *c.site.query_rules())
-        return q
+        return c.site.get_links('toplinks', 'all')
 
     @validate(VSrMask('srs'))
     def GET_listing(self, **env):

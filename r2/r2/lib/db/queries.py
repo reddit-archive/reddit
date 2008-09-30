@@ -18,7 +18,8 @@ db_sorts = dict(hot = (desc, '_hot'),
                 new = (desc, '_date'),
                 top = (desc, '_score'),
                 controversial = (desc, '_controversy'),
-                old = (asc, '_date'))
+                old = (asc, '_date'),
+                toplinks = (desc, '_hot'))
 
 def db_sort(sort):
     cls, col = db_sorts[sort]
@@ -179,6 +180,10 @@ def get_links(sr, sort, time):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
                     sort = db_sort(sort))
+
+    if sort == 'toplinks':
+        q._filter(Link.c.top_link == True)
+
     if time != 'all':
         q._filter(db_times[time])
     return make_results(q)
@@ -298,6 +303,7 @@ def new_link(link):
     results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
     results.append(get_submitted(author, 'new', 'all'))
+    results.append(get_links(sr, 'toplinks', 'all'))
     
     if link._deleted:
         add_queries(results, delete_item = link)
@@ -328,6 +334,7 @@ def new_vote(vote):
         sr = item.subreddit_slow
         results = all_queries(get_links, sr, ('hot', 'new'), ['all'])
         results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+        results.append(get_links(sr, 'toplinks', 'all'))
         add_queries(results)
     
     #must update both because we don't know if it's a changed vote
@@ -366,6 +373,8 @@ def add_all_srs():
     for sr in fetch_things2(q):
         add_queries(all_queries(get_links, sr, ('hot', 'new', 'old'), ['all']))
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+        add_queries([get_links(sr, 'toplinks', 'all')])
+
 
 def update_user(user):
     if isinstance(user, str):
