@@ -217,7 +217,9 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
-    if not sr_name:
+    #we can get rid of the sr_name == Default.name constraint if
+    #you're reading this. it was there to fix a stale html issue.
+    if not sr_name or sr_name == Default.name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         sr = Subreddit._by_domain(sub_domain) if sub_domain else None
