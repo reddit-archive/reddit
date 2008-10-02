@@ -279,7 +279,7 @@ class ExtensionMiddleware(object):
                   'js' : ('js', 'text/javascript; charset=UTF-8'),
                   'wired' : ('wired', 'text/javascript; charset=UTF-8'),
                   'embed' : ('htmllite', 'text/javascript; charset=UTF-8'),
-                  'mobile' : ('mobile', 'text/html'),
+                  'mobile' : ('mobile', 'text/html; charset=UTF-8'),
                   'png' : ('png', 'image/png'),
                   'css' : ('css', 'text/css'),
                   'api' : (api_type(), 'application/json; charset=UTF-8'),
