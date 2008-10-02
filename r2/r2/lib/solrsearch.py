@@ -666,6 +666,8 @@ class LinkSearchQuery(UserSearchQuery):
             subreddits = Subreddit.user_subreddits(c.user)
         elif c.site == subreddit.Friends and c.user.friends:
             authors = c.user.friends
+        elif isinstance(c.site, MultiReddit):
+            subreddits = c.site.sr_ids
         elif not isinstance(c.site,subreddit.FakeSubreddit):
             subreddits = [c.site._id]
 
