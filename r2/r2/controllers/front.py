@@ -77,13 +77,19 @@ class FrontController(RedditController):
     def GET_random(self):
         """The Serendipity button"""
         n = rand.randint(0, 9)
-        links = Link._query(*c.site.query_rules())
-        links._sort = desc('_date') if n > 5 else desc('_hot')
-        links._limit = 50
-        links = list(links)
-        l = links[rand.randint(0, len(links)-1)]
-        l._load()
-        return self.redirect(l.url)
+        sort = 'new' if n > 5 else 'hot'
+        links = c.site.get_links(sort, 'all')
+        if isinstance(links, thing.Query):
+                links._limit = 25
+                links = [x._fullname for x in links]
+        else:
+            links = links[:25]
+        if links:
+            name = links[rand.randint(0, min(24, len(links)-1))]
+            link = Link._by_fullname(name, data = True)
+            return self.redirect(link.url)
+        else:
+            return self.redirect('/')
 
     def GET_password(self):
         """The 'what is my password' page"""
@@ -253,9 +259,9 @@ class FrontController(RedditController):
             comments = Comment._query(Comment.c.reported != 0,
                                       Comment.c._spam == False)
             query = thing.Merge((links, comments),
+                                Link.c.sr_id == c.site._id,
                                 sort = desc('_date'),
-                                data = True,
-                                *c.site.query_rules())
+                                data = True)
             
             builder = QueryBuilder(query, num = num, after = after, 
                                    count = count, reverse = reverse,
@@ -267,9 +273,9 @@ class FrontController(RedditController):
             links = Link._query(Link.c._spam == True)
             comments = Comment._query(Comment.c._spam == True)
             query = thing.Merge((links, comments),
+                                Link.c.sr_id == c.site._id,
                                 sort = desc('_date'),
-                                data = True,
-                                *c.site.query_rules())
+                                data = True)
             
             builder = QueryBuilder(query, num = num, after = after, 
                                    count = count, reverse = reverse,

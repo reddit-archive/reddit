@@ -225,10 +225,6 @@ class Subreddit(Thing, Printable):
             sr_ids = (self._id,)
         return sr_ids
 
-    def query_rules(self):
-        #really we mean Link.c.sr_id, but rules are type agnostic
-        return (self.c.sr_id == self._id,)
-
     def get_links(self, sort, time):
         from r2.lib.db import queries
         return queries.get_links(self, sort, time)
@@ -442,12 +438,6 @@ class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
 
-    def query_rules(self):
-        if c.user_is_loggedin:
-            return (self.c.author_id == c.user.friends,)
-        else:
-            return (self.c.sr_id == self.default_srs(c.content_langs, ids = True),)
-
     def get_links(self, sort, time):
         from r2.lib.db import queries
         from r2.models import Link
@@ -466,12 +456,6 @@ class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all'
 
-    def query_rules(self):
-        if c.content_langs != 'all':
-            return (self.c.lang == c.content_langs,)
-        else:
-            return ()
-
     def get_links(self, sort, time):
         from r2.models import Link
         from r2.lib.db import queries
@@ -486,11 +470,6 @@ class DefaultSR(FakeSubreddit):
     name = ' reddit.com'
     path = '/'
     header = 'http://static.reddit.com/reddit.com.header.png'
-
-    def query_rules(self):
-        user = c.user if c.user_is_loggedin else None
-        subreddits = Subreddit.user_subreddits(user)
-        return (self.c.sr_id == subreddits,)
 
     def get_links_sr_ids(self, sr_ids, sort, time):
         from r2.lib.db import queries
@@ -524,7 +503,6 @@ class DefaultSR(FakeSubreddit):
     def title(self):
         return _("reddit.com: what's new online!")
 
-#TODO: I'm not sure this is the best way to do this
 class MaskedSR(DefaultSR):
     def set_mask(self, mask):
         self.show_sr = []
@@ -541,13 +519,6 @@ class MaskedSR(DefaultSR):
                                               return_dict = False)
         self.hide_sr = [s._id for s in self.hide_sr]
         
-    def query_rules(self):
-        user = c.user if c.user_is_loggedin else None
-        subreddits = Subreddit.user_subreddits(user)
-        subreddits = [s for s in subreddits if s not in self.hide_sr]
-        subreddits.extend(self.show_sr)
-        return (self.c.sr_id == subreddits,)
-
     def get_links(self, sort, time):
         user = c.user if c.user_is_loggedin else None
         sr_ids = Subreddit.user_subreddits(user)
@@ -555,6 +526,20 @@ class MaskedSR(DefaultSR):
         sr_ids.extend(self.show_sr)
         return self.get_links_sr_ids(sr_ids, sort, time)
 
+class MultiReddit(DefaultSR):
+    name = 'multi'
+
+    def __init__(self, sr_ids, path):
+        DefaultSR.__init__(self)
+        self.real_path = path
+        self.sr_ids = sr_ids
+
+    @property
+    def path(self):
+        return '/r/' + self.real_path
+
+    def get_links(self, sort, time):
+        return self.get_links_sr_ids(self.sr_ids, sort, time)
 
 class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'

@@ -217,9 +217,7 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
-    #we can get rid of the sr_name == Default.name constraint if
-    #you're reading this. it was there to fix a stale html issue.
-    if not sr_name or sr_name == Default.name:
+    if not sr_name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         sr = Subreddit._by_domain(sub_domain) if sub_domain else None
@@ -229,7 +227,16 @@ def set_subreddit():
         c.site = Sub
     else:
         try:
-            c.site = Subreddit._by_name(sr_name)
+            if '+' in sr_name:
+                srs = set()
+                sr_names = sr_name.split('+')
+                real_path = sr_name
+                for sr_name in sr_names:
+                    srs.add(Subreddit._by_name(sr_name))
+                sr_ids = [sr._id for sr in srs]
+                c.site = MultiReddit(sr_ids, real_path)
+            else:
+                c.site = Subreddit._by_name(sr_name)
         except NotFound:
             c.site = Default
             redirect_to("/reddits/create?name=%s" % sr_name)
