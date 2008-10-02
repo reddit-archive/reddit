@@ -298,7 +298,8 @@ class ExtensionMiddleware(object):
                 environ['render_style'] = val[0]
                 environ['content_type'] = val[1]
                 #strip off the extension
-                environ['PATH_INFO'] = path[:-(len(ext) + 1)]
+                if path.endswith('.' + ext):
+                    environ['PATH_INFO'] = path[:-(len(ext) + 1)]
                 break
         else:
             environ['render_style'] = 'html'
@@ -419,10 +420,10 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = ProfilingMiddleware(app)
     app = SourceViewMiddleware(app)
 
-    app = DomainMiddleware(app)
     app = DomainListingMiddleware(app)
     app = SubredditMiddleware(app)
     app = ExtensionMiddleware(app)
+    app = DomainMiddleware(app)
 
     log_path = global_conf.get('log_path')
     if log_path:
