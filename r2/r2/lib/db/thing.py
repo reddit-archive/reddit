@@ -265,8 +265,10 @@ class DataThing(object):
 
         bases = sgm(cache, ids, items_db, prefix)
 
-        if not bases:
-            raise NotFound, '%s %s' % (cls.__name__, ids)
+        #check to see if we found everything we asked for
+        if any(i not in bases for i in ids):
+            missing = [i for i in ids if i not in bases]
+            raise NotFound, '%s %s' % (cls.__name__, missing)
 
         if data:
             need = [v for v in bases.itervalues() if not v._loaded]
@@ -314,12 +316,9 @@ class DataThing(object):
         # lookup ids for each type
         identified = {}
         for real_type, thing_ids in table.iteritems():
-            try:
-                i = real_type._byID(thing_ids, data = data,
-                                               extra_props = extra_props)
-                identified[real_type] = i
-            except NotFound:
-                continue
+            i = real_type._byID(thing_ids, data = data,
+                                extra_props = extra_props)
+            identified[real_type] = i
 
         # interleave types in original order of the name
         res = []
@@ -782,10 +781,7 @@ class Query(object):
 
         if lst is None:
             #hit the db
-            try:
-                lst = self._cursor().fetchall()
-            except NotFound:
-                lst = ()
+            lst = self._cursor().fetchall()
         else:
             used_cache = True
 
@@ -876,7 +872,7 @@ class Relations(Query):
 
     def _make_rel(self, rows):
         rels = self._kind._byID(rows, self._data, False)
-        if self._eager_load:
+        if rels and self._eager_load:
             load_things(rels, self._thing_data)
         return rels
 
