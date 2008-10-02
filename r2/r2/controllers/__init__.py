@@ -29,6 +29,7 @@ from listingcontroller import RecommendedController
 from listingcontroller import MessageController
 from listingcontroller import RedditsController
 from listingcontroller import MyredditsController
+from listingcontroller import ByIDController as ByidController
 from listingcontroller import RandomrisingController
 from listingcontroller import UserController
 

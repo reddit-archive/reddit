@@ -329,6 +329,19 @@ class RandomrisingController(ListingController):
 
         return links
 
+class ByIDController(ListingController):
+    title_text = _('API')
+
+    def query(self):
+        return self.names
+
+    link_prefix = Link._type_prefix + str(Link._type_id)
+    @validate(VRegex('names', r'^('+link_prefix+'_[0-9a-z]+ ?)+$'))
+    def GET_listing(self, names, **env):
+        self.names = names.split(' ')
+        return ListingController.GET_listing(self, **env)
+
+
 class RecommendedController(ListingController):
     where = 'recommended'
     title_text = _('recommended for you')

@@ -97,7 +97,7 @@ class ApiController(RedditController):
         res = BoringPage(_("API"),
                          content = listing).render()
         return res
-    
+
     @Json
     @validate(dest = nop('dest'))
     def POST_subscriptions(self, res, dest):

@@ -107,6 +107,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
 
+    mc('/by_id/:names', controller='byId', action='listing')
+
     mc('/:sort', controller='browse', sort='top', action = 'listing',
        requirements = dict(sort = 'top|controversial'))
     
@@ -126,7 +128,7 @@ def make_map(global_conf={}, app_conf={}):
        action='resetpassword')
     mc('/resetpassword', controller='front',
        action='resetpassword')
-    
+
     mc('/post/:action', controller='post',
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
     

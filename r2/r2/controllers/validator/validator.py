@@ -192,6 +192,18 @@ def chksrname(x):
     except UnicodeEncodeError:
         return None
 
+class VRegex(Validator):
+    def __init__(self, item, rg, *a, **kw):
+        self.item = item
+        self.valid = re.compile(rg).match
+
+        Validator.__init__(self, item, *a, **kw)
+    
+    def run(self, val):
+        if val is None or not self.valid(val):
+            abort('400','bad request')
+        else:
+            return val
 
 class VLength(Validator):
     def __init__(self, item, length = 10000,
