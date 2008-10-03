@@ -286,6 +286,7 @@ class ApiController(RedditController):
             l.url = l.make_permalink_slow()
             l.is_self = True
             l._commit()
+            l.set_url_cache()
         v = Vote.vote(c.user, l, True, ip, spam)
         if save == 'on':
             r = l._save(c.user)

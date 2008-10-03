@@ -28,7 +28,6 @@ from printable import Printable
 from r2.config import cache
 from r2.lib.memoize import memoize, clear_memo
 from r2.lib import utils
-from r2.lib.db.operators import lower, base_url
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 
@@ -56,29 +55,37 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @classmethod
-    @memoize('link._by_url')
-    def _by_url_cache(cls, url, sr):
-        q = cls._query(base_url(lower(cls.c.url)) == utils.base_url(url.lower()))
-        if sr:
-            q._filter(cls.c.sr_id == sr._id)
-        q = list(q)
-        return [l._id for l in q]
+    def by_url_key(cls, url):
+        return str(base_url(url.lower()))
 
-    #TODO get the subreddit?
     @classmethod
     def _by_url(cls, url, sr):
         from subreddit import Default
-        #force sr to be None for caching purposes
-        if sr in (False, Default):
+        if sr == Default:
             sr = None
+            
+        url = cls.by_url_key(url)
+        link_ids = g.permacache.get(url)
+        if link_ids:
+            links = Link._byID(link_ids, data = True, return_dict = False)
+            links = [l for l in links if not l._deleted]
 
-        lid = cls._by_url_cache(url, sr)
-        if lid and sr:
-            return cls._byID(lid[0], True)
-        elif lid:
-            return cls._byID(lid, True, return_dict = False)
-        else:
-            raise NotFound, 'Link "%s"' % url
+            if links and sr:
+                for link in links:
+                    if sr._id == link.sr_id:
+                        return link
+            elif links:
+                return links
+
+        raise NotFound, 'Link "%s"' % url
+
+    def set_url_cache(self):
+        if self.url != 'self':
+            key = self.by_url_key(self.url)
+            link_ids = g.permacache.get(key) or []
+            if self._id not in link_ids:
+                link_ids.append(self._id)
+            g.permacache.set(key, link_ids)
 
     @property
     def already_submitted_link(self):
@@ -92,12 +99,6 @@ class Link(Thing, Printable):
     @classmethod
     def _submit(cls, title, url, author, sr, ip, spam = False):
         from admintools import admintools
-        if url != u'self':
-            try:
-                l = Link._by_url(url, sr)
-                raise LinkExists
-            except NotFound:
-                pass
 
         l = cls(title = title,
                 url = url,
@@ -107,11 +108,7 @@ class Link(Thing, Printable):
                 lang = sr.lang,
                 ip = ip)
         l._commit()
-
-        clear_memo('link._by_url', Link, url, sr)
-        # clear cache for lookups without sr
-        clear_memo('link._by_url', Link, url, None)
-
+        l.set_url_cache()
         utils.worker.do(lambda: admintools.add_thing(l))
 
         return l
