@@ -293,7 +293,7 @@ class ExtensionMiddleware(object):
         path = environ['PATH_INFO']
         domain_ext = environ.get('reddit-domain-extension')
         for ext, val in self.extensions.iteritems():
-            if ext == domain_ext or path.endswith(ext):
+            if ext == domain_ext or path.endswith('.' + ext):
                 environ['extension'] = ext
                 environ['render_style'] = val[0]
                 environ['content_type'] = val[1]
