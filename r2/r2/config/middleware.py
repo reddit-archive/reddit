@@ -241,7 +241,7 @@ class DomainMiddleware(object):
 
 
 class SubredditMiddleware(object):
-    sr_pattern = re.compile(r'^/r/([^/]{3,})')
+    sr_pattern = re.compile(r'^/r/([^/]{2,})')
 
     def __init__(self, app):
         self.app = app
