@@ -25,11 +25,13 @@ Contains utilities intended to be run from a command line
 
 from time import sleep
 import sys
+
     
 def bench_cache_lifetime(minutes):
     "Attempts to find how long a given memcached key can be expected to live"
 
     from pylons import g
+    from r2.lib.cache import Memcache
 
     # we'll create an independent connection to memcached for this
     # test
@@ -46,6 +48,7 @@ def bench_cache_lifetime(minutes):
         if mc.get('bench_cache_%d' % x, None) is not None:
             sleep(60)
         else:
+            # we found one missing
             return x-1
     else:
         # we're out of numbers, and we didn't find any missing

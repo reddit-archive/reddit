@@ -57,7 +57,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      ups          = _('ups'),
                      downs        = _('downs'),
                      top          = _('top'),
-                     rank         = _('rank'),
+                     relevence    = _('relevence'),
                      more         = _('more'),
                      relevance    = _('relevance'),
                      controversial  = _('controversial'),
@@ -392,8 +392,17 @@ class CommentSortMenu(SortMenu):
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
-    default   = 'rank'
-    options   = ('hot', 'new', 'top', 'ups', 'downs', 'rank')
+    default   = 'relevence'
+    mapping   = dict(relevence = None,
+                     hot = 'hot desc',
+                     new = 'date desc',
+                     old = 'date asc',
+                     top = 'points desc')
+    options   = mapping.keys()
+
+    @classmethod
+    def operator(cls, sort):
+        return cls.mapping.get(sort, cls.mapping[cls.default])
 
 class RecSortMenu(SortMenu):
     """Sort menu for recommendation page"""

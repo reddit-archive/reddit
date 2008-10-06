@@ -584,7 +584,7 @@ class SearchQuery(object):
         if reverse:
             sort = swap_strings(sort,'asc','desc')
 
-        g.log.debug("Searching q=%s" % q)
+        g.log.debug("Searching q = %s; params = %s" % (q,repr(solr_params)))
 
         with SolrConnection() as s:
             if after:
@@ -629,8 +629,8 @@ class SearchQuery(object):
         raise NotImplementedError
 
 class UserSearchQuery(SearchQuery):
-    "Base class for queries that use the dismax parser; requires self.mm"
-    def __init__(self, q, sort=None, fields=[], langs=None, **kw):
+    "Base class for queries that use the dismax parser"
+    def __init__(self, q, mm, sort=None, fields=[], langs=None, **kw):
         default_fields = ['contents^1.5','contents_ws^3'] + fields
 
         if sort is None:
@@ -644,8 +644,8 @@ class UserSearchQuery(SearchQuery):
             fields = set([("%s^2" % lang_to_fieldname(lang)) for lang in langs]
                          + default_fields)
 
-        # default minimum match
-        self.mm = '75%'
+        # minimum match. See http://lucene.apache.org/solr/api/org/apache/solr/util/doc-files/min-should-match.html
+        self.mm = mm
 
         SearchQuery.__init__(self, q, sort, fields = fields, **kw)
 
@@ -657,31 +657,21 @@ class UserSearchQuery(SearchQuery):
                        mm = self.mm)
 
 class LinkSearchQuery(UserSearchQuery):
-    def __init__(self, q, **kw):
+    def __init__(self, q, mm = None, **kw):
         additional_fields = ['site^1','author^1', 'subreddit^1', 'url^1']
 
-        subreddits = None
-        authors = None
-        if c.site == subreddit.Default:
-            subreddits = Subreddit.user_subreddits(c.user)
-        elif c.site == subreddit.Friends and c.user.friends:
-            authors = c.user.friends
-        elif isinstance(c.site, MultiReddit):
-            subreddits = c.site.sr_ids
-        elif not isinstance(c.site,subreddit.FakeSubreddit):
-            subreddits = [c.site._id]
+        if mm is None:
+            mm = '4<75%'
 
-        UserSearchQuery.__init__(self, q, fields = additional_fields,
-                                 subreddits = subreddits, authors = authors,
+        UserSearchQuery.__init__(self, q, mm = mm, fields = additional_fields,
                                  types=[Link], **kw)
 
 class RelatedSearchQuery(LinkSearchQuery):
     def __init__(self, q, ignore = [], **kw):
         self.ignore = set(ignore) if ignore else set()
 
-        LinkSearchQuery.__init__(self, q, sort = 'score desc', **kw)
-
-        self.mm = '25%'
+        LinkSearchQuery.__init__(self, q, mm = '3<100% 5<60% 8<50%',
+                                 sort = 'score desc', **kw)
 
     def run(self, *k, **kw):
         search = LinkSearchQuery.run(self, *k, **kw)
@@ -690,13 +680,15 @@ class RelatedSearchQuery(LinkSearchQuery):
 
 class SubredditSearchQuery(UserSearchQuery):
     def __init__(self, q, **kw):
-        UserSearchQuery.__init__(self, q, types=[Subreddit], **kw)
+        # note that 'downs' is a measure of activity on subreddits
+        UserSearchQuery.__init__(self, q, mm = '75%', sort = 'downs desc',
+                                 types=[Subreddit], **kw)
 
 class DomainSearchQuery(SearchQuery):
     def __init__(self, domain, **kw):
         q = '+site:%s' % domain
 
-        SearchQuery.__init__(self, q=q, fields=['site'],types=[Link], **kw)
+        SearchQuery.__init__(self, q = q, fields=['site'],types=[Link], **kw)
 
     def solr_params(self, q, boost):
         q = q + ' ' + ' '.join(boost)

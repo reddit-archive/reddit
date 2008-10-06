@@ -92,8 +92,7 @@ string_dict = dict(
     sr_subscribe =  _('click the checkbox next to a reddit to subscribe'),
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
-                           'you can search within [your subscribed reddits](%(my_reddits_link)s) ' +
-                           'or [all reddits](%(all_reddits_link)s)'),
+                           'you can also search within [all reddits](%(all_reddits_link)s)'),
 
     css_validator_messages = dict(
         broken_url = _('"%(brokenurl)s" is not a valid URL'),

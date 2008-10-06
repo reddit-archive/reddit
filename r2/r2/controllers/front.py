@@ -27,7 +27,7 @@ from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
-from r2.lib.utils import  to36, sanitize_url, check_cheating, title_to_url, query_string, UrlParser
+from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url, query_string, UrlParser
 from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
@@ -321,12 +321,10 @@ class FrontController(RedditController):
     @validate(query = nop('q'))
     def GET_search_reddits(self, query, reverse, after,  count, num):
         """Search reddits by title and description."""
-        # note that 'downs' is a measure of activity on subreddits
-        q = SubredditSearchQuery(query, sort = 'downs desc',
-                                 timerange = 'all')
+        q = SubredditSearchQuery(query)
 
-        num, t, spane = self._search(q, num = num, reverse = reverse, after = after,
-                                     count = count)
+        num, t, spane = self._search(q, num = num, reverse = reverse,
+                                     after = after, count = count)
         
         res = SubredditsPage(content=spane,
                              prev_search = query,
@@ -339,8 +337,9 @@ class FrontController(RedditController):
     @base_listing
     @validate(query = nop('q'),
               time = VMenu('action', TimeMenu, remember = False),
+              sort = VMenu('sort', SearchSortMenu, remember = False),
               langs = nop('langs'))
-    def GET_search(self, query, num, time, reverse, after, count, langs):
+    def GET_search(self, query, num, time, reverse, after, count, langs, sort):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
@@ -352,25 +351,35 @@ class FrontController(RedditController):
         else:
             langs = c.content_langs
 
-        q = LinkSearchQuery(q = query, timerange = time, langs = langs)
+        subreddits = None
+        authors = None
+        if c.site == subreddit.Friends and c.user_is_loggedin and c.user.friends:
+            authors = c.user.friends
+        elif isinstance(c.site, MultiReddit):
+            subreddits = c.site.sr_ids
+        elif not isinstance(c.site, FakeSubreddit):
+            subreddits = [c.site._id]
+
+        q = LinkSearchQuery(q = query, timerange = time, langs = langs,
+                            subreddits = subreddits, authors = authors,
+                            sort = SearchSortMenu.operator(sort))
 
         num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
                                      count = count)
 
         if not isinstance(c.site,FakeSubreddit):
-            my_reddits_link = "/search%s" % query_string({'q': query})
             all_reddits_link = "%s/search%s" % (subreddit.All.path,
                                                 query_string({'q': query}))
             d =  {'reddit_name':      c.site.name,
                   'reddit_link':      "http://%s/"%get_domain(cname = c.cname),
-                  'my_reddits_link':  my_reddits_link,
                   'all_reddits_link': all_reddits_link}
             infotext = strings.searching_a_reddit % d
         else:
             infotext = None
 
         res = SearchPage(_('search results'), query, t, num, content=spane,
-                         nav_menus = [TimeMenu(default = time)],
+                         nav_menus = [TimeMenu(default = time),
+                                      SearchSortMenu(default=sort)],
                          infotext = infotext).render()
         
         return res
