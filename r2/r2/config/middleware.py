@@ -257,7 +257,7 @@ class SubredditMiddleware(object):
         return self.app(environ, start_response)
 
 class DomainListingMiddleware(object):
-    domain_pattern = re.compile(r'^/domain/(([\w]+\.)+[\w]+)')
+    domain_pattern = re.compile(r'^/domain/(([-\w]+\.)+[\w]+)')
 
     def __init__(self, app):
         self.app = app
