@@ -92,7 +92,8 @@ class Reddit(Wrapped):
 
         #c.subredditbox is set by VSRMask
         self.subreddit_sidebox = False
-        if c.subreddit_sidebox:
+        #don't show the sidebox on cnames
+        if c.subreddit_sidebox and not c.cname:
             self.subreddit_sidebox = True
             self.subreddit_checkboxes = c.site == Default
 
@@ -100,7 +101,6 @@ class Reddit(Wrapped):
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
-        
         
         self.toolbars = self.build_toolbars()
 
@@ -112,7 +112,8 @@ class Reddit(Wrapped):
         if not c.user_is_loggedin and self.loginbox:
             ps.append(LoginFormWide())
 
-        if not isinstance(c.site, FakeSubreddit):
+        #don't show the subreddit info bar on cnames
+        if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
 
         if self.subreddit_sidebox:
@@ -179,7 +180,8 @@ class Reddit(Wrapped):
                     NamedButton("blog", False, nocname=True)]                    
         
         if c.user_is_loggedin:
-            buttons += [NamedButton("logout", False, nocname=True,
+            buttons += [NamedButton("logout", False,
+                                    nocname=not c.authorized_cname,
                                     target = "_self")]
         
         return NavMenu(buttons, base_path = "/", type = "flatlist")

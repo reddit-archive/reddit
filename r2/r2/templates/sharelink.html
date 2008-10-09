@@ -77,7 +77,7 @@
         </th>
         <td>
           <textarea id="message_${thing.link_name}" name="message" rows="4" cols="40">
-            ${c.user.name} from http://${g.domain}/ has shared a link with you.
+            ${c.user.name} from http://${c.site.domain if c.cname and hasattr(c.site, 'domain') else g.domain}/ has shared a link with you.
           </textarea>
         </td>
         <td>

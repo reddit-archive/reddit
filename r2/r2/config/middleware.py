@@ -175,6 +175,15 @@ class DomainMiddleware(object):
 
     def __init__(self, app):
         self.app = app
+        auth_cnames = config['global_conf'].get('authorized_cnames', '')
+        auth_cnames = [x.strip() for x in auth_cnames.split(',')]
+        # we are going to be matching with endswith, so make sure there
+        # are no empty strings that have snuck in
+        self.auth_cnames = [x for x in auth_cnames if x]
+
+    def is_auth_cname(self, domain):
+        return any((domain == cname or domain.endswith('.' + cname))
+                   for cname in self.auth_cnames)
 
     def __call__(self, environ, start_response):
         # get base domain as defined in INI file
@@ -198,6 +207,9 @@ class DomainMiddleware(object):
             if not environ.get('extension'):
                 if environ['PATH_INFO'].startswith('/frame'):
                     return self.app(environ, start_response)
+                elif self.is_auth_cname(sub_domains):
+                    environ['frameless_cname'] = True
+                    environ['authorized_cname'] = True
                 elif ("redditSession" in environ.get('HTTP_COOKIE', '')
                       and environ['REQUEST_METHOD'] != 'POST'
                       and not environ['PATH_INFO'].startswith('/error')):

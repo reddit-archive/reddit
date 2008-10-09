@@ -49,7 +49,7 @@
       var cnameframe  = ${'true' if c.cname else 'false'}; 
       var modhash = ${"'%s'" % c.modhash or "false"};
       var cur_domain = "${get_domain(cname = True, subreddit = False) if c.frameless_cname else g.domain}";
-      var ajax_domain = "${g.domain}";
+      var ajax_domain = "${get_domain(cname = True, subreddit = False) if c.authorized_cname else g.domain}";
       
     </script> 
     

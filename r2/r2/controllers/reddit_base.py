@@ -60,6 +60,8 @@ class Cookie(object):
         self.dirty = dirty
         if domain:
             self.domain = domain
+        elif c.authorized_cname:
+            self.domain = c.site.domain
         else:
             self.domain = g.domain
 
@@ -133,10 +135,8 @@ def read_user_cookie(name):
 
 def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
-    domain = g.domain if not c.frameless_cname else None
-    c.cookies[uname + '_' + name] = Cookie(value = val,
-                                           domain = domain)
-
+    c.cookies[uname + '_' + name] = Cookie(value = val)
+    
 valid_click_cookie = re.compile(r'(t[0-9]_[a-zA-Z0-9]+:)+').match
 def read_click_cookie():
     if c.user_is_loggedin:
@@ -182,8 +182,7 @@ def set_redditfirst(key,val):
         cookie = {key: val}
 
     c.cookies['reddit_first'] = Cookie(simplejson.dumps(cookie),
-                                       expires = NEVER,
-                                       domain = g.domain)
+                                       expires = NEVER)
 
 # this cookie is also accessed by organic.js, so changes to the format
 # will have to be made there as well
@@ -336,7 +335,9 @@ def set_cnameframe():
             del request.params[utils.UrlParser.cname_get]
         if request.get.has_key(utils.UrlParser.cname_get):
             del request.get[utils.UrlParser.cname_get]
-    c.frameless_cname = request.environ.get('frameless_cname', False)
+    c.frameless_cname  = request.environ.get('frameless_cname',  False)
+    if hasattr(c.site, 'domain'):
+        c.authorized_cname = request.environ.get('authorized_cname', False)
 
 def ratelimit_agents():
     user_agent = request.user_agent
@@ -424,6 +425,10 @@ class RedditController(BaseController):
         #check if user-agent needs a dose of rate-limiting
         ratelimit_agents()
 
+        # the domain has to be set before Cookies get initialized
+        set_subreddit()
+        set_cnameframe()
+
         # populate c.cookies
         c.cookies = Cookies()
         for k,v in request.cookies.iteritems():
@@ -458,11 +463,9 @@ class RedditController(BaseController):
 
         #set_browser_langs()
         set_host_lang()
-        set_subreddit()
         set_content_type()
         set_iface_lang()
         set_content_lang()
-        set_cnameframe()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
