@@ -163,10 +163,12 @@ class Reddit(Wrapped):
         if c.user_is_loggedin:
             if c.user.name in g.admins:
                 if c.user_is_admin:
-                   buttons += [NamedButton("adminoff", False, nocname=True,
+                   buttons += [NamedButton("adminoff", False,
+                                           nocname=not c.authorized_cname,
                                            target = "_self")]
                 else:
-                   buttons += [NamedButton("adminon",  False, nocname=True,
+                   buttons += [NamedButton("adminon",  False,
+                                           nocname=not c.authorized_cname,
                                            target = "_self")]
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]
