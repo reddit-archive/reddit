@@ -367,7 +367,7 @@ class FrontController(RedditController):
         num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
                                      count = count)
 
-        if not isinstance(c.site,FakeSubreddit):
+        if not isinstance(c.site,FakeSubreddit) and not c.cname:
             all_reddits_link = "%s/search%s" % (subreddit.All.path,
                                                 query_string({'q': query}))
             d =  {'reddit_name':      c.site.name,

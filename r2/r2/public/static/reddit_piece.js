@@ -53,7 +53,15 @@ function hover_open_menu(menu) {
 var global_cookies_allowed = true;
 
 function init() {
-    if(cur_domain != ajax_domain) {
+    /* temp strip off port for the ajax domain (which will need it to
+     * make a request) */
+    var i = ajax_domain.indexOf(':');
+    var a = (i < 0) ? ajax_domain : ajax_domain.slice(0, i);
+    /* permanently strip it off for the cur_domain which only sets cookies */
+    i = cur_domain.indexOf(':');
+    cur_domain = (i < 0) ? cur_domain : cur_domain.slice(0, i);
+
+    if(cur_domain != a) {
         global_cookies_allowed = false;
     }
     else if(cnameframe && !logged) {
