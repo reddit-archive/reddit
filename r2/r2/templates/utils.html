@@ -215,3 +215,9 @@ ${unsafe(txt)}
 <%def name="separator()">
   <span class="separator">|</span>
 </%def>
+
+<%def name="optionalstyle(style)">
+  %if request.get.get('style') != "off":
+    style="${style}"
+  %endif
+</%def>

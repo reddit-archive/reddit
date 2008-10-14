@@ -20,8 +20,8 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController
-from r2.lib.pages import Button, ButtonEmbed, ButtonDemoPanel, WidgetDemoPanel, \
-    Bookmarklets, BoringPage
+from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
+    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage
 from r2.models import *
 from r2.lib.strings import Score
 from pylons import c, request
@@ -38,8 +38,11 @@ class ButtonsController(RedditController):
 
     @validate(url = nop('url'),
               title = nop('title'),
-              css = nop('css'))
-    def GET_button_content(self, url, title, css):
+              css = nop('css'),
+              vote = VBoolean('vote', default=True),
+              newwindow = VBoolean('newwindow'),
+              width = VInt('width', 0, 300))
+    def GET_button_content(self, url, title, css, vote, newwindow, width):
         try:
             links = Link._by_url(url,None)
             #find the one with the highest score
@@ -63,13 +66,24 @@ class ButtonsController(RedditController):
 
         bt = self.buttontype()
         if bt == 1:
-            score_fmt = Score.points
+            score_fmt = Score.safepoints
         else:
             score_fmt = Score.number_only
             
-        c.response.content = Button(button=self.buttontype(), css=css,
-                                    score_fmt = score_fmt, link = l, likes = likes,
-                                    url=url, title=title).render()
+        page_handler = Button
+        if not vote:
+            page_handler = ButtonNoBody
+
+        if newwindow:
+            target = "_new"
+        else:
+            target = "_parent"
+            
+        c.response.content = page_handler(button=self.buttontype(), css=css,
+                                    score_fmt = score_fmt, link = l, 
+                                    likes = likes, url=url, title=title,
+                                    vote = vote, target = target,
+                                    bgcolor=c.bgcolor, width=width).render()
         return c.response
 
     
@@ -81,7 +95,7 @@ class ButtonsController(RedditController):
         c.response_content_type = 'text/javascript; charset=UTF-8'
 
         buttontype = buttontype or 1
-        width, height = ((130, 22), (52, 80), (70, 60))[buttontype - 1]
+        width, height = ((120, 22), (51, 69), (69, 52))[buttontype - 1]
         if _width: width = _width
         if _height: height = _height
 
@@ -92,6 +106,34 @@ class ButtonsController(RedditController):
         # we doing want the JS to be cached!
         c.used_cache = True
         return self.sendjs(bjs, callback='', escape=False)
+
+    @validate(buttonimage = VInt('i', 0, 14),
+              url = nop('url'),
+              styled = VBoolean('styled', default=True))
+    def GET_button_lite(self, buttonimage, url, styled):
+        c.render_style = 'js'
+        c.response_content_type = 'text/javascript; charset=UTF-8'
+        if not url:
+            url = request.referer
+        try:
+            links = Link._by_url(url,None)
+            #find the one with the highest score
+            l = max(links, key = lambda x: x._score)
+        except:
+            #we don't want to return 500s in other people's pages.
+            l = None
+
+        if buttonimage == None:
+            image = 1
+        else:
+            image = buttonimage
+
+        bjs = ButtonLite(image = image, link = l, url = url, styled = styled).render()
+        # we don't want the JS to be cached!
+        c.used_cache = True
+        return self.sendjs(bjs, callback='', escape=False)
+
+
 
     def GET_button_demo_page(self):
         return BoringPage(_("reddit buttons"),

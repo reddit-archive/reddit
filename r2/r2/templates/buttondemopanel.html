@@ -25,47 +25,158 @@
 
 <% domain = get_domain(True) %>
 
-<%def name="drawrequired(type)" buffered="True">
-<script type="text/javascript" src="http://${domain}/button.js?t=${type}"></script>
-</%def>
-
-<%def name="drawoptional(url, title)">
-${"<script type='text/javascript'>reddit_url='%s'</script>" % url}<br/>
-${"<script type='text/javascript'>reddit_title='%s'</script>" % title}
-</%def>
-
 <div class="instructions">
   <h1>${_("put %(site)s buttons on your site") % dict(site=c.site.name)}</h1>
-    <p>${_("copy and paste the code for the style of button you would like\
-      into your site.  The green lines are\
-      optional.")}</p>
-    
-    <p>${_("if the site has not been submitted yet, clicking on the button\
-      will take the user to a reddit submit page, otherwise it takes\
-      them to the comments page.")}</p>
-    
-    <p>${_("if you want to specify the URL that should be submitted to\
-      reddit, include the reddit_url line.  if you don't include that\
-      line, then the current page's URL will be used.")}</p>
-    
-    <p>${_("if you want to specify the title that should be submitted to\
-      reddit, include the reddit_title line.  if you don't include that\
-      line, then the user will have to specify a title when they\
-      submit.")}</p>
-    
-    <script type="text/javascript">reddit_url="${'http://%s/buttons' % domain}";</script>
-    ${buttondemo(1)}
-    ${buttondemo(2)}
-    ${buttondemo(3)}
+    <p>${_('the reddit button is the smart way to get your content submitted to\
+      and discussed on reddit.  pick the button you like from below, and then\
+      copy/paste the code into your HTML editor.')}</p>
+
+    <h2>${_("commonly used buttons")}</h2>
+    <p>${_('use one of these buttons to quickly add reddit links to your site, or \
+      see below for more options.')}</p>
+    <ul class="buttons">
+      <li>${badgedemo(1)}</li>
+      <li>${badgedemo(7)}</li>
+      <li>${point_button_demo(0)}</li>
+      <li>${point_button_demo(1)}</li>
+      <li>${interactive_button_demo(1)}</li>
+    </ul>
+      
+
+    <h2>${_("buttons with points")}</h2>
+    <ul class="buttons">
+    %for x in xrange(0,6):
+      <li>${point_button_demo(x)}</li>
+    %endfor
+    </ul>
+    <h2>${_("customizing the look of your buttons")}</h2>
+    <p>${_('the buttons with points have two additional options.')}</p>
+    <ul class="buttons" >
+      <li><strong>styled=off</strong><br />
+        ${_('no styles will be added, so you can style it yourself')}</li>
+      <li><strong>url=[URL]</strong><br />
+        ${_('specify a url to use instead of the current url')}</li>
+    </ul>
+    <p>${_('Example:')}</p>
+    <code>
+    ${capture(point_option_example)}
+    </code>
+
+
+    <h2>${_('simple interactive button')}</h2>
+    <p>${_('put this code on your page:')}</p>
+    <code>${draw_interactive(False)}</code>
+      <p>${_("and you'll get something like this:")}</p>
+        <span style="margin-left: 10px;">${unsafe(draw_interactive(False))}</span>
+
+    <h2>${_("more interactive buttons")}</h2>
+    <ul class="buttons">
+      %for x in xrange(1,4):
+      <li>${interactive_button_demo(x)}</li>
+    %endfor
+    </ul>
+
+    <h2>${_('interactive button advanced settings')}</h2>
+    <div class="box buttonsettings">
+      <ul>
+        <li>
+          <p><strong>${_("specify a url")}</strong><br />
+            ${_("useful in places like blogs, where you want to link to the post's permalink")}</p>
+          <code>${drawoption('url','[URL]')}</code>
+        </li>
+        <li>
+          <p><strong>${_("specify a title")}</strong></p>
+          <code>${drawoption('title','[TITLE]')}</code>
+        </li>
+        <li>
+          <p><strong>${_("specify the color")}</strong></p>
+          <code>${drawoption('bgcolor','[COLOR]')}</code>
+        </li>
+        <li>
+          <p><strong>${_("specify a border color")}</strong></p>
+          <code>${drawoption('bordercolor','[COLOR]')}</code>
+        </li>
+      </ul>
+      <p style="font-weight: bold">${_('Example:')}</p>
+      <p>${_('to make this button:')}</p>
+      <span style="margin-left: 10px;">${draw_interactive_example()}</span>
+      <p>${_('use this code:')}</p>
+      <code>
+      ${capture(draw_interactive_example)}
+      </code>
+    </div>
+
+    <h2>${_("more badges and buttons")}</h2>
+    <ul class="buttons">
+    %for x in xrange(1,15):
+      <li>${badgedemo(x)}</li>
+    %endfor
+    </ul>
+
+
 </div>
-  
-<%def name="buttondemo(type)">
-  <h2>${_("style %(number)s") % dict(number=type)}</h2>
-  
-  ${unsafe(drawrequired(type))}
-  <pre>
-  <span class="optional">${drawoptional('[URL]', '[TITLE]')}</span><br/>
-  ${drawrequired(type)}
-  </pre>
+
+<%def name="drawbadge(image)">
+<a href="http://${domain}/submit" 
+onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
+<img src="http://${domain}/static/spreddit${image}.gif" alt="submit to reddit" border="0" />
+</a>
+</%def>
+
+<%def name="badgedemo(image)">
+  <a class="view-code" href="" 
+     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
+  ${unsafe(drawbadge(image))}<br />
+  <code style="display: none">
+  ${capture(drawbadge, image)}
+  </code>
+</%def>
+
+<%def name="draw_point_button(image)" buffered="True">
+<script type="text/javascript" src="http://${domain}/buttonlite.js?i=${image}"></script>
+</%def>
+
+<%def name="point_option_example()">
+<script type="text/javascript" src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com"></script>
+</%def>
+
+<%def name="point_button_demo(image)">
+  <a class="view-code" href="" 
+     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
+  ${unsafe(draw_point_button(image))}<br />
+  <code style="display: none">
+  ${draw_point_button(image)}
+  </code>
+</%def>
+
+<%def name="draw_interactive(type)" buffered="True">
+%if type:
+<script type="text/javascript" src="http://${domain}/button.js?t=${type}"></script>
+%else:
+<script type="text/javascript" src="http://${domain}/button.js"></script>
+%endif
+</%def>
+
+<%def name="interactive_button_demo(number)">
+  <a class="view-code" href="" 
+     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
+  ${unsafe(draw_interactive(number))}<br />
+  <code style="display: none">
+  ${draw_interactive(number)}
+  </code>
+</%def>
+
+<%def name="drawoption(option, val)">
+${"<script type='text/javascript'>reddit_%s='%s'</script>" % (option, val)}
+</%def>
+
+<%def name="draw_interactive_example()">
+<script type="text/javascript">
+  reddit_url = "http://${domain}/buttons";
+  reddit_title = "Buttons!";
+  reddit_bgcolor = "FF3";
+  reddit_bordercolor = "00F";
+</script>
+<script type="text/javascript" src="http://${domain}/button.js?t=3"></script>
 </%def>
 

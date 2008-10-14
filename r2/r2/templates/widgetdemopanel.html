@@ -23,7 +23,10 @@
    from r2.lib.template_helpers import get_domain
  %>
 
-<% domain = get_domain(True) %>
+<% 
+   domain = get_domain(cname = c.cname, subreddit = False) 
+   sr_domain = get_domain(cname = c.cname, subreddit = True)
+ %>
 
 <script type="text/javascript">
 function escapeHTML(text) {
@@ -36,34 +39,56 @@ function escapeHTML(text) {
 function getrval(r) {
     for (var i=0; i < r.length; i++) {
         if (r[i].checked) return r[i].value;
-    }
+    } 
 }
 
 function update() {
     f = document.forms.widget;
     which = getrval(f.which);
     if (which == "all") {
-        url = "http://${domain}/" + f.what.value + "/.embed?limit=" +
+        url = "http://${sr_domain}/" + f.what.value + "/.embed?limit=" +
                       f.num.value + "&t=" + f.when.value;
     } else if (which == "one") {
-        if (!f.who2.value) return;
-        url = "http://${domain}/user/"+f.who2.value+"/"+
+        if (!f.who.value) return;
+        url = "http://${domain}/user/"+f.who.value+"/"+
                       f.where2.value+".embed?limit=" + f.num.value + 
-                      "&sort="+f.what2.value;
+                      "&sort="+f.what.value;
+
+    } else if (which == "two") {
+        if(!f.domain.value) return;
+         url = "http://${domain}/domain/" + f.domain.value + "/.embed?limit=" 
+                      + f.num.value + "&sort="+f.what.value;
     } else {
-        alert("xxx");
         alert(which);
     }
+    $("preview").style.width = "";
+    if(f.nostyle.checked) {
+      url += "&style=off";
+      hide("css-options");
+    }
+    else {
+      show("css-options");
+      if(f.border.checked && f.bord_color.value) {
+        url += "&bordercolor=" + f.bord_color.value;
+      }
+      if(f.background.checked && f.bg_color.value) {
+        url += "&bgcolor=" + f.bg_color.value;
+      }
+      if(f.twocol.checked) {
+        url += "&twocolumn=true";
+        $("preview").style.width = "40em";
+      }
+    }
+
     script = '<script src="' + 
-                      escapeHTML(url).replace('&amp;', '&') + 
-                      '" type="text/javascript"><' + '/script>';
+                      escapeHTML(url).replace(/&amp;/g, '&') + 
+                      '" type="text/javascript"><'+'/script>';
     document.getElementById("codebox").innerHTML = escapeHTML(script);
     new Ajax.Request(url+"&", {method:"get", onSuccess: function(t) {
       s = eval(t.responseText.replace("document.write", ""));
       document.getElementById("previewbox").innerHTML = s;
     }});
 }
-
 </script>
 
 <div class="instructions">
@@ -78,63 +103,133 @@ function update() {
   <h1>${_("get live %(site)s headlines on your site") % dict(site=c.site.name)}</h1>
   
   <p>${_("just cut and paste the generated code into your site and your specified %(site)s feed will be displayed and updated as new stories bubble up") % dict(site=c.site.name)}</p>
+
   <h2>${_("which links do you want to display?")}</h2>
   
-  <form name="widget" action="" onsubmit="update(); return false">
-    <p>
-      ${_("number")}:
-      <select name="num" onchange="update()">
-        <option value="5" selected="selected">5</option>
-        <option value="10">10</option>
-        <option value="20">20</option>
+  <form name="widget" action="" onsubmit="update(); return false" id="widget"
+        class="pretty-form">
+    <%def name="when()" buffered="True">
+      <select name="when" onchange="update()" onfocus="update()">
+        <option value="hour">${_("this hour")}</option>
+        <option value="day">${_("today")}</option>
+        <option value="week">${_("this week")}</option>
+        <option value="month">${_("this month")}</option>
+        <option value="all" selected="selected">${_("all-time")}</option>
       </select>
-    </p>
-    <p>
-      <input type="radio" name="which" value="all" checked="checked" onclick="update()" /> 
-      ${unsafe(_("%(site)s %(what)s links from %(when)s") % dict(site = c.site.name, what = capture(what), when = capture(when)))}
-      <%def name="what()">
-        <select name="what" onchange="update()">
-          <option value="hot" selected="selected">${_("hottest")}</option>
-          <option value="new">${_("newest")}</option>
-          <option value="top">${_("top")}</option>
-        </select>
-      </%def>
-      <%def name="when()">
-        <select name="when" onchange="update()">
-          <option value="hour">${_("this hour")}</option>
-          <option value="day">${_("today")}</option>
-          <option value="week">${_("this week")}</option>
-          <option value="month">${_("this month")}</option>
-          <option value="all" selected="selected">${_("all-time")}</option>
-        </select>
-      </%def>
-    </p>
-    <p>
-      <input type="radio" name="which" value="one" onclick="update()" /> 
-      ${unsafe(_("%(what)s %(where)s %(who)s") % dict(what = capture(what2), where= capture(where2), who  = capture(who2)))}
-
-      <%def name="what2()">
-        <select name="what2" onchange="update()">
-          <option value="hot" selected="selected">${_("hottest")}</option>
-          <option value="new">${_("newest")}</option>
-          <option value="top">${_("top")}</option>
-        </select> 
-      </%def>
-    
-      <%def name="where2()">
-        <select name="where2" onchange="update()">
-          <option value="submitted">${_("submitted by")}</option>
-          <option value="saved">${_("saved by")}</option>
-          <option value="liked">${_("liked by")}</option>
-          <option value="disliked">${_("disliked by")}</option>
-        </select> 
-      </%def>
-    
-      <%def name="who2()">
-        <input type="text" name="who2" value="" 
-               onchange="update()" onblur="update()" />
-      </%def>
-    </p>
+    </%def>
+    <%def name="where2()" buffered="True">
+      <select name="where2" onchange="update()"
+              onfocus="this.parentNode.firstChild.checked='checked'">
+        <option value="submitted">${_("submitted by")}</option>
+        <option value="saved">${_("saved by")}</option>
+        <option value="liked">${_("liked by")}</option>
+        <option value="disliked">${_("disliked by")}</option>
+      </select> 
+    </%def>
+    <%def name="text_input(name)" buffered="True">
+      <input type="text" name="${name}" value="" 
+             onfocus="this.parentNode.firstChild.checked='checked'"
+             onchange="update()" onblur="update()" />
+    </%def>
+   <table class="widget-preview preftable">
+     <tr>
+       <th>
+         ${_("listing options")}
+       </th>
+       <td class="prefright">
+         <p>
+           <input type="radio" name="which" value="all" checked="checked" 
+                  onclick="update()" /> 
+           ${_("links from %(domain)s") % dict(domain = get_domain())}
+         </p>
+         <p>
+          <input type="radio" name="which" value="one" onclick="update()" /> 
+           ${unsafe(_("links %(submitted_by)s the user %(who)s") % dict(submitted_by = where2(), who = text_input("who")))}
+         </p>
+         <p>
+           <input type="radio" name="which" value="two" onclick="update()" /> 
+          ${unsafe(_("links from the domain %(domain)s") % dict(domain = text_input("domain")))}
+         </p>
+       </td>
+     </tr>
+     <tr>
+       <th>
+         ${_("sorting options")}
+       </th>
+       <td class="prefright">
+         <p>
+           <%def name="what()" buffered="True">
+           <select name="what" onchange="update()">
+             <option value="hot" selected="selected">${_("hottest")}</option>
+             <option value="new">${_("newest")}</option>
+             <option value="top">${_("top")}</option>
+           </select>
+           </%def>
+           ${unsafe(_("sort links by %(what)s") % dict(what = what()))}
+         </p>
+         <p>
+           ${unsafe(_("date range includes %(when)s") % dict(when = when()))}
+         </p>
+         <p>
+           ${_("number of links to show")}:
+           <select name="num" onchange="update()">
+             <option value="5" selected="selected">5</option>
+             <option value="10">10</option>
+             <option value="20">20</option>
+           </select>
+         </p>
+       </td>
+     </tr>
+     <tr>
+       <th>
+         ${_("display options")}
+       </th>
+       <td class="prefright">
+         <p>
+           <input name="nostyle" id="nostyle" type="checkbox"
+                  onfocus="update()"
+                  onchange="update()"/>
+           <label for="nostyle">
+             ${_("remove css styling")}  
+             &#32;<span class="little gray">
+               ${_("(the widget will inherit all styles from the page)")}
+             </span>
+           </label>
+         </p>
+         <div id="css-options">
+         <p>
+           <input name="twocol" id="twocol" type="checkbox"
+                  onfocus="update()"
+                  onchange="update()"/>
+           <label for="twocol">
+             ${_("two columns")}
+           </label>
+         </p>
+         <p>
+           <input name="background" id="background" type="checkbox"
+                  onfocus="update()"
+                  onchange="update()"/>
+           <label for="background">
+             ${_("background color")}
+           </label>
+           &nbsp;#${unsafe(text_input("bg_color"))}
+           &#32;<span class="little gray">
+             ${_("(e.g., FF0000 = red)")}
+           </span>
+         </p>
+         <p>
+           <input name="border" id="border" type="checkbox" 
+                  onfocus="update()"
+                  onchange="update()"/>
+           <label for="border"> 
+             ${_("border color")}
+           </label>
+           &nbsp;#${unsafe(text_input("bord_color"))}
+         </p>
+         </div>
+       </td>
+     </tr>
+  </table>
   </form>
 
   <h2>${_("the code")}</h2>

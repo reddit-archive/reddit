@@ -59,8 +59,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/buttons', controller='buttons', action='button_demo_page')
     #the frame
     mc('/button_content', controller='buttons', action='button_content')
-    #/button.js - the embed
+    #/button.js and buttonlite.js - the embeds
     mc('/button', controller='buttons', action='button_embed')
+    mc('/buttonlite', controller='buttons', action='button_lite')
     
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')

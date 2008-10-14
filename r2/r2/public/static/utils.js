@@ -609,3 +609,15 @@ function view_embeded_media(id, media_link) {
     }
 
 }
+
+function show_hide_child(el, tagName, label) {
+    code_block = el.parentNode.getElementsByTagName(tagName)[0];
+    if (code_block.style.display == "none") {
+            show(code_block);
+            el.innerHTML = 'hide ' + label;
+    } else if (code_block.style.display == "") {
+            hide(code_block);
+            el.innerHTML = 'view ' + label;
+        }
+}
+    

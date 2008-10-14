@@ -19,40 +19,13 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%namespace file="utils.html" import="optionalstyle"/>
-<div class="reddit-listing" 
-       ${optionalstyle("margin-left:5px;margin-top:7px;")}>
-  <% 
-     t = thing.things
-     l = len(t)
-   %>
-  %for i, a in enumerate(t):
-   <% 
-      cls = "reddit-link "
-      cls += "odd " if i % 2 else "even "
-      cls += "first-half" if i < (l+1)/2 else "second-half"
 
-      two_col = request.get.has_key("twocolumn")
-    %>
-   %if two_col:
-     %if i == 0:
-       <div class="reddit-listing-left" 
-            ${optionalstyle("float:left;width:43%")}>
-     %elif i - 1 < (l+1)/2 and i >= (l+1)/2:
-       </div>
-       <div class="reddit-listing-right" 
-            ${optionalstyle("float:right; width:43%;")}>
-     %endif
-   %endif
+<%namespace file="buttontypes.html" import="button1, button2, button3, submiturl, submitlink" />
 
-     <div class="${cls}">
-      ${a.render()}
-     </div>
-   %if two_col and i == l - 1:
-   </div>
-   %endif
-  %endfor:
-  %if two_col:
-    <div ${optionalstyle("clear:both")}><!--IE6sux--></div>
-  %endif
-</div>
+%if thing.button == 1:
+  ${button1(thing)}
+%elif thing.button == 2:
+  ${button2(thing)}
+%elif thing.button == 3:
+  ${button3(thing)}
+%endif

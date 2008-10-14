@@ -470,16 +470,16 @@ before enabling */
     background-repeat: no-repeat; 
 }
 
-.arrow.upmod { background-image: url(/static/aupmod.png); }
-.arrow.downmod { background-image: url(/static/adownmod.png); }
-.arrow.up { background-image: url(/static/aupgray.png); }
-.arrow.down { background-image: url(/static/adowngray.png); }
+.arrow.upmod { background-image: url(/static/aupmod.gif); }
+.arrow.downmod { background-image: url(/static/adownmod.gif); }
+.arrow.up { background-image: url(/static/aupgray.gif); }
+.arrow.down { background-image: url(/static/adowngray.gif); }
 
 .midcol { 
     float: left; 
     margin-right: 2px; 
     margin-left: 7px; 
-    background: white; 
+    background: transparent; 
     overflow: hidden;
 }
 
@@ -826,6 +826,10 @@ a.star { text-decoration: none; color: #ff8b60 }
 .sharetable.preftable th { padding-bottom: 5px; padding-top: 5px;  }
 .sharetable.preftable button { margin-top: 10px }
 
+.preftable.widget-preview { font-size:smaller; }
+.preftable.widget-preview input[type="text"] { width: 150px; }
+.preftable #css-options input[type="text"] { margin-left: 0px; width: 6em; }
+
 .share-summary { width: 95%; margin-top: 10px; }
 .share-summary .head td { width: 50%; font-size: large; text-align: center }
 .share-summary td { vertical-align: top;}
@@ -1143,7 +1147,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     margin: 1px;
 }
 
-.button {color: #369; width: 98%; height: 96%}
+.button {color: #369;}
 .button a:hover { text-decoration: underline }
 
 
@@ -1156,7 +1160,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     float: left; 
 }
 .button .blog1 .score { 
-    float: right;
+    float: center;
     margin-top: 2px;
     margin-right: 5px; 
 }
@@ -1172,13 +1176,27 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .optional {color: green}
 .instructions { font-size: larger;  }
-.instructions h1, .instructions h2 { margin-top: 20px; margin-bottom: 20px;  }
+.instructions h1, .instructions h2, .instructions h3 { margin-top: 20px; margin-bottom: 20px;  }
 .instructions p { margin: 10px; max-width: 60em}
-.instructions pre, .instructions iframe { margin: 5px;  margin-right: 10px; }
+.instructions pre { margin: 5px;  margin-right: 10px; }
+.instructions iframe { margin: 5px 10px 5px 0px; }
 .instructions input, .instructions select { margin: 0 .5em }
+.instructions a.view-code { float: right; margin-bottom: 1em; }
+.instructions a:focus { -moz-outline-style: none; }
+.instructions strong { font-weight: bold; }
+.instructions .buttons { margin-left: 1em; max-width: 50em; }
+.instructions .buttons li { margin-top: 1em; 
+                            border-bottom: 1px solid #e0e0e0;  
+                            padding-bottom: 1em;}      
+.instructions code { display: block;
+                     font-family: monospace; 
+                     font-size: small;
+                     margin: 5px; 
+                     background-color: #FF9; 
+                     padding: 10px; 
+                     max-width: 50em;}
 
-
-#preview { float: right; width: 20em; margin-right: 10px; }
+#preview { float: right; width: 30em; margin-right: 10px; }
 #preview span { color: lightgray;  }
 #preview #previewbox {
   border-width: .2em;

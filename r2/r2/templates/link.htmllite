@@ -19,6 +19,7 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%namespace file="utils.html" import="optionalstyle"/>
 
 <%!
    from pylons.i18n import _, ungettext
@@ -36,12 +37,33 @@
    else:
        # generates "comment" the imperative verb
        com_label = _("comment") 
+
+   domain = get_domain(subreddit=False)
+   permalink = "http://%s%s" % (domain, thing.permalink)
+   if thing.likes == False:
+      arrow = "http://%s/static/widget_arrows_down.png"
+   elif thing.likes:
+      arrow = "http://%s/static/widget_arrows_up.png"
+   else:
+      arrow = "http://%s/static/widget_arrows.png"
+   arrow = arrow % domain
  %>
-  <link>\
-  <a href="${thing.url}">
-    ${thing.title}</a><br />
-  <small>
-    ${thing.score} ${ungettext("point", "points", thing.score)} |
-    &nbsp;<a href="http://${get_domain(subreddit=False)}${thing.permalink}">${com_label}</a>
-  </small>
+  <a href="${permalink}" class="reddit-voting-arrows" target="_blank"
+     ${optionalstyle("float:left; display:block;")}>
+    <img src="${arrow}" alt="vote" ${optionalstyle("border:none;")}/>
+  </a>
+  <div class="reddit-entry" ${optionalstyle("margin-left: 20px; min-height:32px;padding-bottom:5px;")}>
+    <a href="${thing.url}" class="reddit-link-title"
+       ${optionalstyle("text-decoration:none;color:#336699;")}>
+      ${thing.title}
+    </a>
+    <br />
+    <small ${optionalstyle("color:gray;")}>
+      ${thing.score} ${ungettext("point", "points", thing.score)} 
+      |&#32;
+      <a class="reddit-comment-link"
+         ${optionalstyle("color:gray")}
+         href="${permalink}">${com_label}</a>
+    </small>
+  </div>
 </%def>

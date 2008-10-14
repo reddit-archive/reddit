@@ -21,21 +21,47 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import get_domain
+   from r2.lib.strings import Score
  %>
+
+<%namespace file="buttontypes.html" import="submiturl" />
 
 <% 
    domain = get_domain()
-   arg = "cnameframe=1&" if c.cname else ""
+   if thing.link:
+       thing.link.score = thing.link._ups - thing.link._downs
 %>
 (function() {
-var write_string='<iframe src="http://${domain}/button_content?${arg}t=${thing.button}&url=';
-if (window.reddit_url)  { write_string += encodeURIComponent(reddit_url); }
-else { write_string += encodeURIComponent('${thing.referer}');}
-if (window.reddit_title) { write_string += '&title=' + encodeURIComponent(reddit_title); }
-if (window.reddit_css) { write_string += '&css=' + encodeURIComponent(reddit_css); }
-if (window.reddit_bgcolor) { write_string += '&bgcolor=' + encodeURIComponent(reddit_bgcolor); }
-if (window.reddit_bordercolor) { write_string += '&bordercolor=' + encodeURIComponent(reddit_bordercolor); }
-write_string += '&width=${thing.width}';
-write_string += '" height="${thing.height}" width="${thing.width}" scrolling="no" frameborder="0"></iframe>';
+    var styled_submit = '<a style="color: #369; text-decoration: none;" href="${submiturl(thing.url)}">';
+    var unstyled_submit = '<a href="${submiturl(thing.url)}">';
+    var write_string='<span class="reddit_button" style="';
+%if thing.styled:    
+    write_string += 'color: grey;';
+%endif
+    write_string += '">';
+%if thing.image > 0:
+    write_string += '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="http://${domain}/static/spreddit${thing.image}.gif">';
+%endif
+%if thing.link:
+    write_string += '${Score.safepoints(thing.link.score)}';
+    %if thing.styled:  
+        write_string += ' on ' + styled_submit + 'reddit</a>';
+    %else:
+        write_string += ' on ' + unstyled_submit + 'reddit</a>';
+    %endif
+%else:
+    %if thing.styled:
+    write_string += styled_submit + 'submit';
+    %else:
+    write_string += unstyled_submit + 'submit';
+    %endif
+    %if thing.image > 0:
+    write_string += '</a>';
+    %else:
+    write_string += ' to reddit</a>';
+    %endif
+%endif
+    write_string += '</span>';
+
 document.write(write_string);
 })()

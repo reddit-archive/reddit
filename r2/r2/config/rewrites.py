@@ -26,6 +26,6 @@ rewrites = (#these first two rules prevent the .embed rewrite from
             ("^/_(.*)", "/_$1"),
             ("^/static/(.*\.js)", "/static/$1"),
             #This next rewrite makes it so that all the embed stuff works.
-            ("^(.*)(?<!button)(\.js)$", "$1.embed"))
+            ("^(.*)(?<!button)(?<!buttonlite)(\.js)$", "$1.embed"))
 
 rewrites = tuple((re.compile(r[0]), r[1]) for r in rewrites)

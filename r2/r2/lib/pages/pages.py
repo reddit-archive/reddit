@@ -856,15 +856,24 @@ class ButtonEmbed(Wrapped):
         Wrapped.__init__(self, button = button, width = width, height = height,
                          referer=referer)
 
+class ButtonLite(Wrapped):
+    """Generates the JS wrapper around the buttons for embedding."""
+    def __init__(self, image = None, link = None, url = "", styled = True):
+        Wrapped.__init__(self, image = image, link = link, url = url, styled = styled)
+
 class Button(Wrapped):
     """the voting buttons, embedded with the ButtonEmbed wrapper, shown on /buttons"""
     extension_handling = False
-    def __init__(self, link = None, likes = None, 
-                 button = None, css=None,
-                 url = None, title = '', score_fmt = None):
+    def __init__(self, link = None, likes = None, button = None, css=None, 
+                 url = None, title = '', score_fmt = None, vote = True, target = "_parent", 
+                 bgcolor = None, width = 100):
         Wrapped.__init__(self, link = link, likes = likes, score_fmt = score_fmt,
-                         button = button, css = css, url = url, title = title)
+                         button = button, css = css, url = url, title = title, 
+                         vote = vote, target = target, bgcolor=bgcolor, width=width)
 
+class ButtonNoBody(Button):
+    """A button page that just returns the raw button for direct embeding"""
+    pass
 
 class ButtonDemoPanel(Wrapped):
     """The page for showing the different styles of embedable voting buttons"""

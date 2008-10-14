@@ -201,6 +201,10 @@ class Score(object):
         return  strings.number_label % (x, plurals.N_points(x))
 
     @staticmethod
+    def safepoints(x):
+        return  strings.number_label % (max(x,0), plurals.N_points(x))
+
+    @staticmethod
     def subscribers(x):
         return  strings.person_label % \
             dict(num = x, persons = plurals.N_subscribers(x))

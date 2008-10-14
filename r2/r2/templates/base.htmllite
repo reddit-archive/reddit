@@ -19,19 +19,41 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%namespace file="utils.html" import="optionalstyle"/>
 
 <%!
    from pylons.i18n import _
-   from r2.lib.template_helpers import get_domain
+   from r2.lib.template_helpers import get_domain, style_line
+   from r2.models.subreddit import FakeSubreddit, Default
 %>
-<h3><a href="http://${get_domain()}/">
-    <img src="http://sp.reddit.com/reddithead4.gif" alt="" />
-  </a>
-  <%
-    link = '<a href="http://%s/">reddit</a></h3>' % get_domain()
-    label = _("link from %(site)s")
-    label = label.replace(" ", "&nbsp;");
-  %>
-  ${unsafe(label % dict(site = link))}
 
-${next.body()}
+<div class="rembeddit"
+     ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;padding:5px;" + style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
+
+  <h3 class="reddit-title" ${optionalstyle("margin:0;")}>
+    <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}>
+      <img src="http://sp.reddit.com/reddithead4.gif" alt="" 
+           ${optionalstyle("border:none")} />
+    </a>
+    <%
+       style = capture(optionalstyle, "text-decoration:none;color:#336699")
+       link = '<a %s href="http://%s/">%s</a></h3>' % (style, get_domain(), c.site.name)
+       label = _("links from %(site)s").replace(" ", "&#32;");
+       %>
+    ${unsafe(label % dict(site = link))}
+  </h3>
+  %if not isinstance(c.site, FakeSubreddit) or c.site != Default:
+  <p ${optionalstyle("margin: 0px 30px 10px 30px; color: gray;")}
+     class="powered-by-reddit">
+    <small>
+      powered by&#32; 
+      <a href="http://${g.domain}" 
+         ${optionalstyle("text-decoration:none;color:#336699")}>
+        ${Default.name}
+      </a>
+    </small>
+  </p>
+  %endif
+
+  ${next.body()}
+</div>

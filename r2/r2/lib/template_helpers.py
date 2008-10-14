@@ -238,3 +238,24 @@ def join_urls(*urls):
             u = utils.lstrips(u, '/')
         url += u
     return url
+
+def style_line(button_width = None, bgcolor = "", bordercolor = ""):
+    style_line = ''
+    bordercolor = c.bordercolor or bordercolor
+    bgcolor     = c.bgcolor or bgcolor
+    if bgcolor:
+        style_line += "background-color: #%s;" % bgcolor
+    if bordercolor:
+        style_line += "border: 1px solid #%s;" % bordercolor
+    if button_width:
+        style_line += "width: %spx;" % button_width
+    return style_line
+
+def choose_width(thing, width):
+    if width:
+        return width - 5
+    else:
+        if thing:
+            return 100 + (10 * (len(str(thing.link.score))))
+        else:
+            return 110

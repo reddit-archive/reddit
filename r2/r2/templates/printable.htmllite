@@ -20,20 +20,16 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<p id="entry_${thing._fullname}">
-  ${self.parent()}
-  ${self.entry()}
-</p>
+${self.parent()}
+${self.entry()}
+${self.Child()}
 
-<div id="child_${thing._fullname}">
-  ${self.Child()}
-</div>
 
 <%def name="parent()">
 </%def>
 
 <%def name="Child()">
-${hasattr(thing, "child") and thing.child.render() or ''}
+  ${hasattr(thing, "child") and thing.child.render() or ''}
 </%def>
 
 <%def name="entry()">

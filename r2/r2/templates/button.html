@@ -25,7 +25,7 @@
  %>
 <%inherit file="reddit.html"/>
 <%namespace module="r2.lib.template_helpers" import="generateurl"/>
-<%namespace file="printable.html" import="arrow, score" />
+<%namespace file="buttontypes.html" import="button1, button2, button3, submiturl, submitlink" />
 
 
 
@@ -63,70 +63,4 @@
   </body>
 </%def>
 
-<%def name="submiturl(url, title='')">
-  ${("http://%s/submit" % get_domain(True)) + query_string(dict(url=url, title=title))}
-</%def>
-
-<%def name="submitlink(url, title='', text='submit')">
-  <a href='${submiturl(url, title)}' target='_parent'>${text}</a>
-</%def>
-
-
-<%def name="button1(thing)">
-<div class="blog blog1">
-  <div class="headimgcell">
-    <a href="${submiturl(thing.url, thing.title)}" target="_parent">
-      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
-    </a>
-  </div>
-  %if thing.link:
-    <% thing.link.score = thing.link._ups - thing.link._downs %>
-    ${arrow(thing.link, 1, thing.likes)}
-    ${arrow(thing.link, 0, thing.likes == False)}
-    ${score(thing.link, thing.likes, inline=False)}
-  %else:
-    ${submitlink(thing.url, thing.title)}
-  %endif
-  <div class="clear"></div>
-</div>
-</%def>
-
-<%def name="button2(thing)">
-  <div class="blog blog2">
-    %if thing.link:
-      ${arrow(thing.link, 1, thing.likes)}
-      <% thing.link.score = thing.link._ups - thing.link._downs %>
-      ${score(thing.link, thing.likes, inline=False, label = False)}
-      ${arrow(thing.link, 0, thing.likes == False)}
-    %else:
-      ${submitlink(thing.url, thing.title, 'submit to')}
-    %endif
-    <div class="bottomreddit">
-      <a href="${submiturl(thing.url, thing.title)}" target="_parent">reddit</a>
-    </div>
-  </div>
-</%def>
-
-
-<%def name="button3(thing)">
-<div class="blog blog3">
-  <div class="left">
-    %if thing.link:
-      ${arrow(thing.link, 1, thing.likes)}
-      <% thing.link.score = thing.link._ups - thing.link._downs %>
-      ${score(thing.link, thing.likes, inline=False, label = False)}
-      ${arrow(thing.link, 0, thing.likes == False)}
-    %else:
-      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow upmod"></div>'))}
-      ${submitlink(thing.url, thing.title, '?')}
-      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow downmod"></div>'))}
-    %endif
-  </div>
-  <div class="right">
-    ${submitlink(thing.url, thing.title, \
-          unsafe('<img src="http://www.reddit.com/static/blog_snoo.png" alt=""/>'))}
-  </div>
-  <div class="clear"></div>
-</div>
-</%def>
 

@@ -339,6 +339,15 @@ def set_cnameframe():
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
 
+def set_colors():
+    theme_rx = re.compile(r'')
+    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
+    c.theme = None
+    if color_rx.match(request.get.get('bgcolor') or ''):
+        c.bgcolor = request.get.get('bgcolor')
+    if color_rx.match(request.get.get('bordercolor') or ''):
+        c.bordercolor = request.get.get('bordercolor')
+
 def ratelimit_agents():
     user_agent = request.user_agent
     for s in g.agents:
@@ -466,6 +475,7 @@ class RedditController(BaseController):
         set_content_type()
         set_iface_lang()
         set_content_lang()
+        set_colors()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):

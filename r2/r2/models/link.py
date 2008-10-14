@@ -209,7 +209,10 @@ class Link(Thing, Printable):
                               wrapped.can_ban,
                               wrapped.thumbnail,
                               wrapped.moderator_banned))
+        # htmllite depends on other get params
         s = ''.join(s)
+        if c.render_style == "htmllite":
+            s += str(request.get.has_key('style'))
         return s
 
     def make_permalink(self, sr, force_domain = False):

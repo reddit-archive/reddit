@@ -1,0 +1,120 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   from r2.lib.template_helpers import get_domain, static, style_line, choose_width
+   from r2.lib.utils import query_string
+ %>
+
+<%namespace file="printable.html" import="arrow, score" />
+<%namespace file="utils.html" import="img_link" />
+
+<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(True)) + query_string(dict(url=url, title=title))}</%def>
+
+<%def name="submitlink(url, title='', text='submit')">
+  <a href='${submiturl(url, title)}' target='${thing.target}'>${text}</a>
+</%def>
+
+<%def name="class_def(class_number, width=None)">
+  %if style_line(width):
+  <div class="blog blog${class_number}" style="${style_line(width)}">
+  %else:
+  <div class="blog blog${class_number}">
+  %endif
+</%def>
+
+<%def name="button1(thing)">
+${class_def(1, width=choose_width(thing, thing.width))}
+  <div class="headimgcell">
+    <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">
+      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+    </a>
+  </div>
+  %if thing.link:
+    <% thing.link.score = thing.link._ups - thing.link._downs %>
+    %if thing.vote:
+    ${arrow(thing.link, 1, thing.likes)}
+    ${arrow(thing.link, 0, thing.likes == False)}
+    ${score(thing.link, thing.likes, inline=False)}
+    %else:
+    ${thing.link.score}
+    %endif
+  %else:
+    ${submitlink(thing.url, thing.title)}
+  %endif
+  <div class="clear"></div>
+</div>
+</%def>
+
+<%def name="button2(thing)">
+  ${class_def(2)}
+    %if thing.link:
+      <% thing.link.score = thing.link._ups - thing.link._downs %>
+      %if thing.vote:
+      ${arrow(thing.link, 1, thing.likes)}
+      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${arrow(thing.link, 0, thing.likes == False)}
+      %else:
+      &nbsp;<br />
+      ${thing.link.score}
+      &nbsp;<br />
+      %endif
+    %else:
+      <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
+      ${submitlink(thing.url, thing.title, 'submit to')}
+    %endif
+      %if thing.bgcolor:
+      <div class="bottomreddit" style="background-color: #${thing.bgcolor}">
+      %else:
+      <div class="bottomreddit">
+      %endif
+      <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">reddit</a>
+    </div>
+  </div>
+</%def>
+
+
+<%def name="button3(thing)">
+${class_def(3)}
+  <div class="left">
+    %if thing.link:
+      <% thing.link.score = thing.link._ups - thing.link._downs %>
+      %if thing.vote:
+      ${arrow(thing.link, 1, thing.likes)}
+      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${arrow(thing.link, 0, thing.likes == False)}
+      %else:
+      &nbsp;<br />
+      ${thing.link.score}
+      &nbsp;<br />
+      %endif
+    %else:
+      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow upmod"></div>'))}
+      ${submitlink(thing.url, thing.title, '?')}
+      ${submitlink(thing.url, thing.title,  unsafe('<div class="arrow downmod"></div>'))}
+    %endif
+  </div>
+  <div class="right">
+    ${img_link('submit', '/static/blog_snoo.gif', '/submit' + query_string(dict(url=thing.url, title=thing.title)))}
+  </div>
+  <div class="clear"></div>
+</div>
+</%def>
