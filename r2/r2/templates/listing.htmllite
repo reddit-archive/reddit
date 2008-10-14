@@ -25,14 +25,13 @@
   <% 
      t = thing.things
      l = len(t)
+     two_col = request.get.has_key("twocolumn") if l else False
    %>
   %for i, a in enumerate(t):
    <% 
       cls = "reddit-link "
       cls += "odd " if i % 2 else "even "
       cls += "first-half" if i < (l+1)/2 else "second-half"
-
-      two_col = request.get.has_key("twocolumn")
     %>
    %if two_col:
      %if i == 0:

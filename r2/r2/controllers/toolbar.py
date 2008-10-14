@@ -29,6 +29,7 @@ class ToolbarController(RedditController):
 
     @validate(link = VByName('id'))
     def GET_toolbar(self, link):
+        if not link: return self.abort404()
         link_builder = IDBuilder((link._fullname,))
         link_listing = LinkListing(link_builder, nextprev=False).listing()
         res = FrameToolbar(link = link_listing.things[0]).render()
