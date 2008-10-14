@@ -42,7 +42,7 @@
 </%def>
 
 <%def name="button1(thing)">
-${class_def(1, width=choose_width(thing, thing.width))}
+${class_def(1, width=choose_width(thing.link, thing.width))}
   <div class="headimgcell">
     <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">
       <img src="http://www.reddit.com/static/blog_head.png" alt=""/>

@@ -251,11 +251,11 @@ def style_line(button_width = None, bgcolor = "", bordercolor = ""):
         style_line += "width: %spx;" % button_width
     return style_line
 
-def choose_width(thing, width):
+def choose_width(link, width):
     if width:
         return width - 5
     else:
-        if thing:
-            return 100 + (10 * (len(str(thing.link.score))))
+        if link:
+            return 100 + (10 * (len(str(link._ups - link._downs))))
         else:
             return 110
