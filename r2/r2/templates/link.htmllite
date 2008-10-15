@@ -41,11 +41,11 @@
    domain = get_domain(subreddit=False)
    permalink = "http://%s%s" % (domain, thing.permalink)
    if thing.likes == False:
-      arrow = "http://%s/static/widget_arrows_down.png"
+      arrow = "http://%s/static/widget_arrows_down.gif"
    elif thing.likes:
-      arrow = "http://%s/static/widget_arrows_up.png"
+      arrow = "http://%s/static/widget_arrows_up.gif"
    else:
-      arrow = "http://%s/static/widget_arrows.png"
+      arrow = "http://%s/static/widget_arrows.gif"
    arrow = arrow % domain
  %>
   <a href="${permalink}" class="reddit-voting-arrows" target="_blank"

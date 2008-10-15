@@ -32,7 +32,7 @@
 
   <h3 class="reddit-title" ${optionalstyle("margin:0;")}>
     <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}>
-      <img src="http://sp.reddit.com/reddithead4.gif" alt="" 
+      <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" alt="" 
            ${optionalstyle("border:none")} />
     </a>
     <%
