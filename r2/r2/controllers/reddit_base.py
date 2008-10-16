@@ -147,7 +147,8 @@ def read_click_cookie():
             for t in things:
                 def foo(t1, user):
                     return lambda: t1._click(user)
-                utils.worker.do(foo(t, c.user))
+                #don't record clicks for the time being
+                #utils.worker.do(foo(t, c.user))
     set_user_cookie('click', '')
 
             
