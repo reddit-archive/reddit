@@ -22,9 +22,9 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-cd r2/public/static
+cd ../r2/r2/public/static
 
-for n in programming science politics business gadgets sports games entertainment music; do
+for n in programming science politics business gadgets sports games entertainment music technology; do
     sed s/homepage/$n/g ad_default.html > ad_$n.html
 done
 
