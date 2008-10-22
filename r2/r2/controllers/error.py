@@ -163,8 +163,8 @@ def handle_awful_failure(fail_text):
     try:
         # log the traceback, and flag the "path" as the error location
         import traceback
-        g.log.debug("FULLPATH: %s" % fail_text)
-        g.log.debug(traceback.format_exc())
+        g.log.error("FULLPATH: %s" % fail_text)
+        g.log.error(traceback.format_exc())
         return redditbroke % fail_text
     except:
         # we are doomed.  Admit defeat

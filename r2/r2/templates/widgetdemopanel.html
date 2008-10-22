@@ -59,8 +59,12 @@ function update() {
 
     } else if (which == "two") {
         if(!f.domain.value) return;
-         url = "http://${domain}/domain/" + f.domain.value + "/.embed?limit=" 
-                      + f.num.value + "&sort="+f.what.value;
+         url = "http://${domain}/domain/" + f.domain.value + "/" + 
+                      f.what.value + "/.embed?limit=" 
+                      + f.num.value  + "&t=" + f.when.value;
+        if(f.what.value == "new") {
+           url += "&sort=new";
+        }
     } else {
         alert(which);
     }

@@ -41,7 +41,8 @@
 </%def>
 
 <%def name="bodyHTML()">
-  <body style="background-color: ${'#%s' % (c.bgcolor or 'FFFFFF')}">
+  <body style="background-color: ${'#%s' % (c.bgcolor or 'FFFFFF')}"
+        class="button-body">
     <div class="button">
     %if not c.user_is_loggedin:
       <div id="cover" style="display: none">
