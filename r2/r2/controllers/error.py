@@ -87,13 +87,13 @@ class ErrorController(RedditController):
         try:
             RedditController.__before__(self)
         except:
-            pass
+            handle_awful_failure("Error occurred in ErrorController.__before__")
 
     def __after__(self): 
         try:
             RedditController.__after__(self)
         except:
-            pass
+            handle_awful_failure("Error occurred in ErrorController.__after__")
 
     def __call__(self, environ, start_response):
         try:
