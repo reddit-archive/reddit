@@ -1174,6 +1174,52 @@ a.star { text-decoration: none; color: #ff8b60 }
 .button .blog3 .arrow { width: 100% }
 .button .blog3 .right { float: right; margin-top: 5px; }
 
+
+.blog5 .right { float: right; }
+.blog5 .left  { float: left; display:block; margin-top: 10px; }
+.blog5 .clearleft { clear: left; }
+.button .blog.blog5 { border: none; text-align: left; font-size: small; }
+.blog5 .container { margin-left: 35px; margin-top: 2px; height: 50px;}
+.blog5 ul { display: inline; }
+.blog5 ul a { color: #515481; font-weight: bold; text-decoration: underline;  }
+.blog5 li { display: inline; padding: 1px 10px 1px 10px; }
+.blog5 li.selected {  
+    background-color: #F8F8F1; 
+    color: #000; 
+    border-color: #CCC; 
+    border-style: solid solid none solid;
+    border-width: 1px;
+
+}
+.blog5 .votes { 
+    height: 25px; 
+    background-color: #F8F8F1; 
+    border: 1px solid #CCC;
+    padding-top: 5px; 
+}
+.blog5 .arrow { 
+    margin-right: 15px; 
+    margin-left: 5px; 
+    color: black; 
+    cursor: pointer;
+    display: inline; 
+    background-position: left center;
+    background-repeat: no-repeat; 
+    padding-left: 20px; 
+}
+.blog5 .votes.disabled .arrow { color: #888; }
+.blog5 .arrow:hover { text-decoration: none; }
+.blog5 .arrow b { font-size: larger; }
+.blog5 .arrow.upmod b   { color: #FF8B60; }
+.blog5 .arrow.downmod b { color: #9494FF; }
+
+.blog5 .right { margin-right: 5px; font-size: medium; font-style: italic;  }
+.blog5 .controversy3 { color: #BB2222;}
+.blog5 .controversy2 { color: #AB4242;}
+.blog5 .controversy1 { color: #976B6B;}
+.blog5 .controversy0 { color: #A8A8A8;}
+
+
 .optional {color: green}
 .instructions { font-size: larger;  }
 .instructions h1, .instructions h2, .instructions h3 { margin-top: 20px; margin-bottom: 20px;  }
@@ -1196,13 +1242,14 @@ a.star { text-decoration: none; color: #ff8b60 }
                      padding: 10px; 
                      max-width: 50em;}
 
-#preview { float: right; width: 30em; margin-right: 10px; }
+#preview { float: right; width: 30em; margin: 10px; }
 #preview span { color: lightgray;  }
 #preview #previewbox {
   border-width: .2em;
   border-style: dashed;
   border-color: lightgray;
   padding: 1em;
+  font-size: larger;
 }
 
 /* the toolbar */
@@ -1417,4 +1464,82 @@ ul#image-preview-list .description pre {
     margin: 5px; 
     float: left;
 }    
+
+
+/* Socialite */
+.socialite.instructions ul {
+    margin: 10px;
+    max-width: 60em;
+}
+
+.socialite.instructions ul > li {
+    list-style-type: disc;
+    list-style-position: inside;
+}
+
+.socialite.instructions hr {
+    color: #C6C6C6;
+    border: none;
+    border-top: 1px solid #C6C6C6;
+    margin: 20px 0px 20px 0px;
+    max-width: 60em;
+}
+
+.socialite.instructions p.screenshot {
+    text-align: center;
+}
+  
+.socialite.instructions .logotext {
+    line-height: 32px;
+}
+
+.socialite.instructions .logotext .logo {
+    float: left;
+    margin-right: 10px;
+}
+  
+.socialite.instructions .logoclear {
+    clear: left;
+}
+
+.socialite.instructions .features { 
+    padding-left: 15px;
+    max-width: 60em;
+}
+
+/* From http://www.oscaralexander.com/tutorials/how-to-make-sexy-buttons-with-css.html */
+.socialite .buttonclear {
+    overflow: hidden;
+    float: right;
+    margin-right: 20px;
+    
+}
+
+.socialite a.installbutton {
+    background: transparent url(/static/socialite/installbutton-end.png) no-repeat scroll top right;
+    color: #FFF;
+    display: block;
+    float: left;
+    font: bold 18px "Trebuchet MS",Helvetica,"Helvetica Neue",Arial,sans-serif;
+    height: 50px;
+    margin-right: 6px;
+    padding-right: 48px; /* sliding doors padding */
+    text-decoration: none;
+}
+
+.socialite a.installbutton span {
+    background: transparent url(/static/socialite/installbutton.png) no-repeat;
+    display: block;
+    line-height: 30px;
+    padding: 10px 0 10px 17px;
+}
+
+.socialite a.installbutton:hover {
+    background-position: bottom right;
+}
+
+.socialite a.installbutton:hover span {
+    background-position: bottom left;
+} 
+
 

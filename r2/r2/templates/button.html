@@ -25,7 +25,7 @@
  %>
 <%inherit file="reddit.html"/>
 <%namespace module="r2.lib.template_helpers" import="generateurl"/>
-<%namespace file="buttontypes.html" import="button1, button2, button3, submiturl, submitlink" />
+<%namespace file="buttontypes.html" import="*" />
 
 
 
@@ -41,7 +41,7 @@
 </%def>
 
 <%def name="bodyHTML()">
-  <body>
+  <body style="background-color: ${'#%s' % (c.bgcolor or 'FFFFFF')}">
     <div class="button">
     %if not c.user_is_loggedin:
       <div id="cover" style="display: none">
@@ -58,6 +58,10 @@
       ${button2(thing)}
     %elif thing.button == 3:
       ${button3(thing)}
+    %elif thing.button == 4:
+      ${button4(thing)}
+    %elif thing.button == 5:
+      ${button5(thing)}
     %endif
     </div>
   </body>

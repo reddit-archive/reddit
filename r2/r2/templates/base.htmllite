@@ -28,22 +28,29 @@
 %>
 
 <div class="rembeddit"
-     ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;padding:5px;" + style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
+     ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;" + style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
 
-  <h3 class="reddit-title" ${optionalstyle("margin:0;")}>
+  <div class="reddit-header" 
+       ${optionalstyle("padding: 5px; padding-bottom:1px;" + ("background-color:#CEE3F8" if not c.bgcolor else ""))}>
+  <h4 class="reddit-title" 
+      ${optionalstyle("margin:0;" + ("padding-bottom:3px" if not c.cname else ""))}
+      >
     <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}>
       <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" alt="" 
            ${optionalstyle("border:none")} />
     </a>
     <%
        style = capture(optionalstyle, "text-decoration:none;color:#336699")
-       link = '<a %s href="http://%s/">%s</a></h3>' % (style, get_domain(), c.site.name)
+       name = c.site.name
+       if not isinstance(c.site, FakeSubreddit):
+           name += ".%s" % g.domain
+       link = '<a %s href="http://%s/">%s</a></h3>' % (style, get_domain(), name)
        label = _("links from %(site)s").replace(" ", "&#32;");
-       %>
+     %>
     ${unsafe(label % dict(site = link))}
-  </h3>
-  %if not isinstance(c.site, FakeSubreddit) or c.site != Default:
-  <p ${optionalstyle("margin: 0px 30px 10px 30px; color: gray;")}
+  </h4>
+  %if c.cname:
+  <p ${optionalstyle("margin: 0px 30px 5px 30px; color: gray;")}
      class="powered-by-reddit">
     <small>
       powered by&#32; 
@@ -54,6 +61,8 @@
     </small>
   </p>
   %endif
-
-  ${next.body()}
+  </div>
+  <div class="rembeddit-content" ${optionalstyle("padding:5px;")}>
+    ${next.body()}
+  </div>
 </div>

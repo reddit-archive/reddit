@@ -32,7 +32,10 @@
   <p>${_("once added to your toolbar, these buttons will let you \"reddit this\" (submit the link, or if it's already been submitted, share it and/or comment on it), like, dislike, and save links while you surf.")}</p>
   <h2>${_("in Firefox")}</h2>
   <p>
-    ${_("click and drag")}&nbsp;
+    Try out our new firefox add-on, &#32;<a href="/socialite">Socialite</a>.
+  </p>
+  <p>
+    or ${_("click and drag")}&nbsp;
     %for type in thing.buttons:
     <a style="padding: 0 3px 0 3px" href="${dockletStr(type, 'firefox')}" onclick="dragme(); return false">
       <img alt="${type}" src="/static/${type}_firefox.png" />

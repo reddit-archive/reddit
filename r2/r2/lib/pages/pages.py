@@ -192,8 +192,9 @@ class Reddit(Wrapped):
         """navigation buttons in the footer."""
         buttons = [NamedButton("feedback",     False),
                    NamedButton("bookmarklets", False),
-                   NamedButton("buttons",      False),
-                   NamedButton("widget",       False),
+                   NamedButton("socialite",    False),
+                   NamedButton("buttons",      True),
+                   NamedButton("widget",       True),
                    NamedButton("code",         False, nocname=True),
                    NamedButton("mobile",       False, nocname=True),
                    NamedButton("store",        False, nocname=True),
@@ -852,22 +853,23 @@ class UserStats(Wrapped):
 
 class ButtonEmbed(Wrapped):
     """Generates the JS wrapper around the buttons for embedding."""
-    def __init__(self, button = None, width = 100, height=100, referer = ""):
+    def __init__(self, button = None, width = 100, height=100, referer = "", url = ""):
         Wrapped.__init__(self, button = button, width = width, height = height,
-                         referer=referer)
-
+                         referer=referer, url = url)
+        
 class ButtonLite(Wrapped):
     """Generates the JS wrapper around the buttons for embedding."""
-    def __init__(self, image = None, link = None, url = "", styled = True):
-        Wrapped.__init__(self, image = image, link = link, url = url, styled = styled)
+    def __init__(self, image = None, link = None, url = "", styled = True, target = '_top'):
+        Wrapped.__init__(self, image = image, link = link, url = url, styled = styled, target = target)
 
 class Button(Wrapped):
     """the voting buttons, embedded with the ButtonEmbed wrapper, shown on /buttons"""
     extension_handling = False
-    def __init__(self, link = None, likes = None, button = None, css=None, 
+    def __init__(self, link = None, button = None, css=None, 
                  url = None, title = '', score_fmt = None, vote = True, target = "_parent", 
                  bgcolor = None, width = 100):
-        Wrapped.__init__(self, link = link, likes = likes, score_fmt = score_fmt,
+        Wrapped.__init__(self, link = link, score_fmt = score_fmt,
+                         likes = link.likes if link else None, 
                          button = button, css = css, url = url, title = title, 
                          vote = vote, target = target, bgcolor=bgcolor, width=width)
 
@@ -891,6 +893,10 @@ class Feedback(Wrapped):
 
 class WidgetDemoPanel(Wrapped):
     """Demo page for the .embed widget."""
+    pass
+
+class Socialite(Wrapped):
+    """Demo page for the socialite Firefox extension"""
     pass
 
 class Bookmarklets(Wrapped):

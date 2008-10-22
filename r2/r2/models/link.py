@@ -212,7 +212,11 @@ class Link(Thing, Printable):
         # htmllite depends on other get params
         s = ''.join(s)
         if c.render_style == "htmllite":
-            s += str(request.get.has_key('style'))
+            s += ''.join(map(str, [request.get.has_key('style'),
+                                   request.get.has_key('expanded'),
+                                   request.get.has_key('twocolumn'),
+                                   c.bgcolor,
+                                   c.bordercolor]))
         return s
 
     def make_permalink(self, sr, force_domain = False):

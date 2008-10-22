@@ -91,6 +91,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      #reddit footer strings
                      feedback     = _("feedback"),
                      bookmarklets = _("bookmarklets"),
+                     socialite    = _("socialite"),
                      buttons      = _("buttons"),
                      widget       = _("widget"), 
                      code         = _("code"), 

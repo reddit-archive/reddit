@@ -48,6 +48,9 @@ function update() {
     if (which == "all") {
         url = "http://${sr_domain}/" + f.what.value + "/.embed?limit=" +
                       f.num.value + "&t=" + f.when.value;
+        if(f.what.value == "new") {
+           url += "&sort=new";
+        }
     } else if (which == "one") {
         if (!f.who.value) return;
         url = "http://${domain}/user/"+f.who.value+"/"+
@@ -62,6 +65,9 @@ function update() {
         alert(which);
     }
     $("preview").style.width = "";
+    if(f.expanded.checked) {
+      url += "&expanded=1";
+    }
     if(f.nostyle.checked) {
       url += "&style=off";
       hide("css-options");
@@ -76,7 +82,7 @@ function update() {
       }
       if(f.twocol.checked) {
         url += "&twocolumn=true";
-        $("preview").style.width = "40em";
+        $("preview").style.width = "550px";
       }
     }
 
@@ -96,7 +102,7 @@ function update() {
   <div id="preview">
     <span>preview</span>
     <div id="previewbox">
-      <script src="http://${domain}/.embed?limit=5" type="text/javascript"></script>
+      <script src="http://${sr_domain}/.embed?limit=5" type="text/javascript"></script>
     </div>
   </div>
 
@@ -193,6 +199,17 @@ function update() {
              ${_("remove css styling")}  
              &#32;<span class="little gray">
                ${_("(the widget will inherit all styles from the page)")}
+             </span>
+           </label>
+         </p>
+         <p>
+           <input name="expanded" id="expanded" type="checkbox"
+                  onfocus="update()"
+                  onchange="update()"/>
+           <label for="expanded">
+             ${_("enable in-widget voting")}  
+             &#32;<span class="little gray">
+               ${_("(will slow down the rendering)")}
              </span>
            </label>
          </p>

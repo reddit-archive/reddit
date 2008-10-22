@@ -28,14 +28,16 @@
    arg = "cnameframe=1&" if c.cname else ""
 %>
 (function() {
-var write_string='<iframe src="http://${domain}/button_content?${arg}t=${thing.button}&url=';
+var write_string="<iframe src=\"http://${domain}/button_content?${arg}t=${thing.button}&width=${thing.width}&url=${thing.url or ""}";
+%if not thing.url:
 if (window.reddit_url)  { write_string += encodeURIComponent(reddit_url); }
 else { write_string += encodeURIComponent('${thing.referer}');}
-if (window.reddit_title) { write_string += '&title=' + encodeURIComponent(reddit_title); }
-if (window.reddit_css) { write_string += '&css=' + encodeURIComponent(reddit_css); }
-if (window.reddit_bgcolor) { write_string += '&bgcolor=' + encodeURIComponent(reddit_bgcolor); }
-if (window.reddit_bordercolor) { write_string += '&bordercolor=' + encodeURIComponent(reddit_bordercolor); }
-write_string += '&width=${thing.width}';
-write_string += '" height="${thing.height}" width="${thing.width}" scrolling="no" frameborder="0"></iframe>';
+%endif
+if (window.reddit_title) { write_string += '&title=' + encodeURIComponent(window.reddit_title); }
+if (window.reddit_css) { write_string += '&css=' + encodeURIComponent(window.reddit_css); }
+if (window.reddit_bgcolor) { write_string += '&bgcolor=' + encodeURIComponent(window.reddit_bgcolor); }
+if (window.reddit_bordercolor) { write_string += '&bordercolor=' + encodeURIComponent(window.reddit_bordercolor); }
+if (window.reddit_newwindow) { write_string += '&newwindow=' + encodeURIComponent(window.reddit_newwindow);}
+write_string += "\" height=\"${thing.height}\" width=\"${thing.width}\" scrolling='no' frameborder='0'></iframe>";
 document.write(write_string);
 })()

@@ -192,19 +192,19 @@ def chksrname(x):
     except UnicodeEncodeError:
         return None
 
-class VRegex(Validator):
-    def __init__(self, item, rg, *a, **kw):
-        self.item = item
-        self.valid = re.compile(rg).match
 
+class VLinkFullnames(Validator):
+    valid_re = re.compile(r'^(' + Link._type_prefix + str(Link._type_id) +
+                          '_[0-9a-z]+ ?)+$')
+    
+    def __init__(self, item, *a, **kw):
+        self.item = item
         Validator.__init__(self, item, *a, **kw)
     
     def run(self, val):
-        if val is None or not self.valid(val):
-            abort('400','bad request')
-        else:
+        if val and self.valid_re.match(val):
             return val
-
+    
 class VLength(Validator):
     def __init__(self, item, length = 10000,
                  empty_error = errors.BAD_COMMENT,
@@ -454,6 +454,10 @@ class VLogin(VRequired):
             return self.error()
         return user
 
+
+class VSanitizedUrl(Validator):
+    def run(self, url):
+        return utils.sanitize_url(url)
 
 class VUrl(VRequired):
     def __init__(self, item, *a, **kw):
@@ -734,6 +738,9 @@ class VCnameDomain(Validator):
                 return str(domain).lower()
             except UnicodeEncodeError:
                 c.errors.add(errors.BAD_CNAME)
+
+
+
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!

@@ -50,12 +50,14 @@
     %endfor
     </ul>
     <h2>${_("customizing the look of your buttons")}</h2>
-    <p>${_('the buttons with points have two additional options.')}</p>
+    <p>${_('the buttons with points have three additional options.')}</p>
     <ul class="buttons" >
       <li><strong>styled=off</strong><br />
         ${_('no styles will be added, so you can style it yourself')}</li>
       <li><strong>url=[URL]</strong><br />
         ${_('specify a url to use instead of the current url')}</li>
+      <li><strong>newwindow=1</strong><br />
+        ${_('opens links in a new window')}</li>
     </ul>
     <p>${_('Example:')}</p>
     <code>
@@ -89,6 +91,10 @@
           <code>${drawoption('title','[TITLE]')}</code>
         </li>
         <li>
+          <p><strong>${_("open links in a new window")}</strong></p>
+          <code>${drawoption('newwindow','1')}</code>
+        </li>
+        <li>
           <p><strong>${_("specify the color")}</strong></p>
           <code>${drawoption('bgcolor','[COLOR]')}</code>
         </li>
@@ -119,7 +125,7 @@
 <%def name="drawbadge(image)">
 <a href="http://${domain}/submit" 
 onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-<img src="http://${domain}/static/spreddit${image}.gif" alt="submit to reddit" border="0" />
+<img src="http://${get_domain(subreddit=False)}/static/spreddit${image}.gif" alt="submit to reddit" border="0" />
 </a>
 </%def>
 
@@ -137,7 +143,7 @@ onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(w
 </%def>
 
 <%def name="point_option_example()">
-<script type="text/javascript" src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com"></script>
+<script type="text/javascript" src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com&newwindow=1"></script>
 </%def>
 
 <%def name="point_button_demo(image)">

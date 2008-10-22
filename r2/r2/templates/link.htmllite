@@ -47,23 +47,63 @@
    else:
       arrow = "http://%s/static/widget_arrows.gif"
    arrow = arrow % domain
+   expanded = request.get.get("expanded")
+   two_col = request.get.has_key("twocolumn") if l else False
  %>
+  %if expanded:
+  <div class="reddit-voting-arrows" 
+     ${optionalstyle("float:left; margin: 1px;")}>
+    <script type="text/javascript">
+      var reddit_bordercolor="FFFFFF";
+    </script>
+    <%
+       url = "http://%s/button_content?t=4&id=%s" % (get_domain(cname = c.cname, subreddit = True), thing._fullname)
+       if c.bgcolor:
+          url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)
+       else:
+          url += "&bgcolor=FFFFFF&bordercolor=FFFFFF"
+     %>
+    <iframe src="${url}" height="55" width="51" scrolling="no" frameborder="0"
+            ${optionalstyle("margin:0px;")}>
+    </iframe>
+  </div>
+  %else:
   <a href="${permalink}" class="reddit-voting-arrows" target="_blank"
      ${optionalstyle("float:left; display:block;")}>
-    <img src="${arrow}" alt="vote" ${optionalstyle("border:none;")}/>
+    <img src="${arrow}" alt="vote" ${optionalstyle("border:none;margin-top:3px;")}/>
   </a>
-  <div class="reddit-entry" ${optionalstyle("margin-left: 20px; min-height:32px;padding-bottom:5px;")}>
+  %endif
+  <div class="reddit-entry" 
+       %if expanded:
+         ${optionalstyle("margin-left: 58px;")}
+       %else:
+         ${optionalstyle("margin-left: 20px; min-height:32px;")}
+       %endif
+       >
     <a href="${thing.url}" class="reddit-link-title"
-       ${optionalstyle("text-decoration:none;color:#336699;")}>
+      ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}>
       ${thing.title}
     </a>
-    <br />
-    <small ${optionalstyle("color:gray;")}>
+    %if not expanded:
+      <br />
+    %endif
+    <small 
+       %if expanded:
+         ${optionalstyle("color:gray;margin-left:5px;")}
+       %else:
+         ${optionalstyle("color:gray;")}
+       %endif
+       >
+      %if not expanded:
       ${thing.score} ${ungettext("point", "points", thing.score)} 
       |&#32;
+      %endif
       <a class="reddit-comment-link"
          ${optionalstyle("color:gray")}
          href="${permalink}">${com_label}</a>
     </small>
+  </div>
+  <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}>
+    <!--IE6sux-->
   </div>
 </%def>

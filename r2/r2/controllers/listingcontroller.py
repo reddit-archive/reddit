@@ -335,9 +335,10 @@ class ByIDController(ListingController):
     def query(self):
         return self.names
 
-    link_prefix = Link._type_prefix + str(Link._type_id)
-    @validate(VRegex('names', r'^('+link_prefix+'_[0-9a-z]+ ?)+$'))
+    @validate(names = VLinkFullnames("names"))
     def GET_listing(self, names, **env):
+        if not names:
+            return self.abort404()
         self.names = names.split(' ')
         return ListingController.GET_listing(self, **env)
 

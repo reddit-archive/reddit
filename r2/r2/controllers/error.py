@@ -99,13 +99,7 @@ class ErrorController(RedditController):
         try:
             return RedditController.__call__(self, environ, start_response)
         except:
-            if g.debug:
-                # if we're in debug mode, let this hit Pylons so we
-                # get a stack trace
-                raise
-            else:
-                c.response.content = "something really awful just happened"
-                return c.response
+            return handle_awful_failure("something really awful just happened.")
 
 
     def send403(self):
@@ -154,5 +148,24 @@ class ErrorController(RedditController):
             else:
                 return "page not found"
         except:
-            return "something really bad just happened"
+            return handle_awful_failure("something really bad just happened.")
 
+def handle_awful_failure(fail_text):
+    """
+    Makes sure that no errors generated in the error handler percolate
+    up to the user unless debug is enabled.
+    """
+    if g.debug:
+        import sys
+        s = sys.exc_info()
+        # reraise the original error with the original stack trace
+        raise s[1], None, s[2]        
+    try:
+        # log the traceback, and flag the "path" as the error location
+        import traceback
+        g.log.debug("FULLPATH: %s" % fail_text)
+        g.log.debug(traceback.format_exc())
+        return redditbroke % fail_text
+    except:
+        # we are doomed.  Admit defeat
+        return "This is an error that should never occur.  You win."

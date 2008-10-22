@@ -21,9 +21,10 @@
 ################################################################################
 from reddit_base import RedditController
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
-    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage
+    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, Socialite
 from r2.models import *
 from r2.lib.strings import Score
+from r2.lib.utils import tup
 from pylons import c, request
 from validator import *
 from pylons.i18n import _
@@ -36,29 +37,43 @@ class ButtonsController(RedditController):
         except ValueError:
             return 1
 
-    @validate(url = nop('url'),
+    def get_link(self, url):
+        try:
+            sr = None if isinstance(c.site, FakeSubreddit) else c.site
+            links = tup(Link._by_url(url, sr))
+            #find the one with the highest score
+            return max(links, key = lambda x: x._score)
+        except:
+            #we don't want to return 500s in other people's pages.
+            import traceback
+            g.log.debug("FULLPATH: get_link error in buttons code")
+            g.log.debug(traceback.format_exc())
+        
+    def wrap_link(self, link):
+        if link and hasattr(link, "_fullname"):
+            rs = c.render_style
+            c.render_style = 'html'
+            from r2.controllers.listingcontroller import ListingController
+            link_builder = IDBuilder(link._fullname, wrap = ListingController.builder_wrapper)
+            
+            # link_listing will be the one-element listing at the top
+            link_listing = LinkListing(link_builder, nextprev=False).listing()
+            
+            # link is a wrapped Link object
+            c.render_style = rs
+            return link_listing.things[0]
+
+    @validate(url = VSanitizedUrl('url'),
               title = nop('title'),
               css = nop('css'),
               vote = VBoolean('vote', default=True),
               newwindow = VBoolean('newwindow'),
-              width = VInt('width', 0, 300))
-    def GET_button_content(self, url, title, css, vote, newwindow, width):
-        try:
-            links = Link._by_url(url,None)
-            #find the one with the highest score
-            l = max(links, key = lambda x: x._score)
-        
-            likes = Vote.likes(c.user, l) if c.user_is_loggedin else {}
-            likes = likes.get((c.user, l))
-            if likes:
-                likes = (True if likes._name == '1'
-                         else False if likes._name == '-1'
-                         else None)
-        except:
-            #the only time we're gonna have an empty except. we don't
-            #want to return 500s in other people's pages.
-            l = likes = None
-            
+              width = VInt('width', 0, 800),
+              link = VByName('id'))
+    def GET_button_content(self, url, title, css, vote, newwindow, width, link):
+        l = self.wrap_link(link or self.get_link(url))
+        if l: url = l.url
+
         #disable css hack 
         if (css != 'http://blog.wired.com/css/redditsocial.css' and
             css != 'http://www.wired.com/css/redditsocial.css'): 
@@ -78,57 +93,56 @@ class ButtonsController(RedditController):
             target = "_new"
         else:
             target = "_parent"
-            
-        c.response.content = page_handler(button=self.buttontype(), css=css,
+
+        c.response.content = page_handler(button=bt, css=css,
                                     score_fmt = score_fmt, link = l, 
-                                    likes = likes, url=url, title=title,
+                                    url=url, title=title,
                                     vote = vote, target = target,
                                     bgcolor=c.bgcolor, width=width).render()
         return c.response
 
     
-    @validate(buttontype = VInt('t', 1, 3),
+    @validate(buttontype = VInt('t', 1, 5),
+              url = VSanitizedUrl("url"),
               _height = VInt('height', 0, 300),
               _width = VInt('width', 0, 300))
-    def GET_button_embed(self, buttontype, _height, _width):
+    def GET_button_embed(self, buttontype, _height, _width, url):
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
 
         buttontype = buttontype or 1
-        width, height = ((120, 22), (51, 69), (69, 52))[buttontype - 1]
+        width, height = ((120, 22), (51, 69), (69, 52), (51, 52), (600, 52))[min(buttontype - 1, 4)]
         if _width: width = _width
         if _height: height = _height
 
         bjs = ButtonEmbed(button=buttontype,
                           width=width,
                           height=height,
+                          url = url,
                           referer = request.referer).render()
         # we doing want the JS to be cached!
         c.used_cache = True
         return self.sendjs(bjs, callback='', escape=False)
 
     @validate(buttonimage = VInt('i', 0, 14),
-              url = nop('url'),
+              url = VSanitizedUrl('url'),
+              newwindow = VBoolean('newwindow', default = False),
               styled = VBoolean('styled', default=True))
-    def GET_button_lite(self, buttonimage, url, styled):
+    def GET_button_lite(self, buttonimage, url, styled, newwindow):
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
         if not url:
             url = request.referer
-        try:
-            links = Link._by_url(url,None)
-            #find the one with the highest score
-            l = max(links, key = lambda x: x._score)
-        except:
-            #we don't want to return 500s in other people's pages.
-            l = None
-
-        if buttonimage == None:
-            image = 1
+        if newwindow:
+            target = "_new"
         else:
-            image = buttonimage
+            target = "_parent"
 
-        bjs = ButtonLite(image = image, link = l, url = url, styled = styled).render()
+        l = self.wrap_link(self.get_link(url))
+        image = 1 if buttonimage is None else buttonimage
+
+        bjs = ButtonLite(image = image, link = l, url = l.url if l else url,
+                         target = target, styled = styled).render()
         # we don't want the JS to be cached!
         c.used_cache = True
         return self.sendjs(bjs, callback='', escape=False)
@@ -145,6 +159,11 @@ class ButtonsController(RedditController):
         return BoringPage(_("reddit widget"),
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()
+
+    def GET_socialite_demo_page(self):
+        return BoringPage(_("socialite toolbar"),
+                          show_sidebar = False, 
+                          content=Socialite()).render()
 
     
     def GET_bookmarklets(self):
