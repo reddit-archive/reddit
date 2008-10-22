@@ -252,7 +252,7 @@ def set_subreddit():
         c.default_sr = True
 
     # check that the site is available:
-    if c.site._spam and not c.user_is_admin:
+    if c.site._spam and not c.user_is_admin and not c.error_page:
         abort(404, "not found")
 
 def set_content_type():
