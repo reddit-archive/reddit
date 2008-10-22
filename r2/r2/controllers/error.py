@@ -85,6 +85,7 @@ class ErrorController(RedditController):
     allowed_render_styles = ('html', 'xml', 'js', 'embed', '')
     def __before__(self):
         try:
+            c.error_page = True
             RedditController.__before__(self)
         except:
             handle_awful_failure("Error occurred in ErrorController.__before__")

@@ -433,7 +433,8 @@ class RedditController(BaseController):
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
 
         #check if user-agent needs a dose of rate-limiting
-        ratelimit_agents()
+        if not c.error_page:
+            ratelimit_agents()
 
         # the domain has to be set before Cookies get initialized
         set_subreddit()
