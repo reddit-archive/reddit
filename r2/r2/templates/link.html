@@ -72,7 +72,7 @@
       ${thing.title} 
     </%call>
     &#32;
-    ${self.domain()}
+    ${unsafe(self.domain())}
   </p>
   <p class="tagline">
     ${self.tagline()}
