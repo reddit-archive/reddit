@@ -488,7 +488,9 @@ before enabling */
     margin-left: 3px;
     opacity: 1;
 }
-.domain, .domain a  { color: #888; font-size:x-small; }
+.domain { color: #888; font-size:x-small; }
+.domain a { color: #336699 }
+.domain a:hover { text-decoration: underline }
 
 .tagline { color:#888; font-size:x-small; 
 }
@@ -873,6 +875,41 @@ a.star { text-decoration: none; color: #ff8b60 }
     padding-left: 5px;
     padding-right: 5px; }
 .wired img {vertical-align: middle;}
+
+.server-status { width: 300px; }
+.server-status table { font-size: xx-small; margin-left: 5px; }
+.server-status td { padding-right: 2px; }
+.server-status .bar { height: 5px; background-color: blue; }
+.server-status .load0 { background-color: #FFFFFF; }
+.server-status .load1 { background-color: #E2ECFF; }
+.server-status .load2 { background-color: #CAFF98; }
+.server-status .load3 { background-color: #FFEA71; }
+.server-status .load4 { background-color: #FF9191; }
+.server-status .load5 { background-color: #FF0000; color: #FFFFFF }
+
+.server-status .pegged { 
+    background-color: red;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.server-status .membar { 
+    height:10px; 
+    border:1px solid white;
+    background-color:#336699; 
+}
+.server-status .cpu50  { 
+    height: 5px; 
+    background-color:green; 
+    border:1px solid white;
+    border-bottom: none;
+}
+.server-status .cpu300 { 
+    height: 5px; 
+    background-color:red; 
+    border:1px solid white;
+}
+
 
 /* login form */
 

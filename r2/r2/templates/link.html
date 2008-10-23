@@ -72,7 +72,7 @@
       ${thing.title} 
     </%call>
     &#32;
-    ${unsafe(self.domain())}
+    ${self.domain()}
   </p>
   <p class="tagline">
     ${self.tagline()}
@@ -136,13 +136,9 @@
 </%def>
 
 
-<%def name="domain()" buffered="True">
+<%def name="domain()">
   <span class="domain">
-    %if c.user_is_admin:
-      (<a href="/admin/info?domain=${thing.domain}">${thing.domain}</a>)
-    %else:
-      (${thing.domain})
-    %endif
+    (${thing.domain})
   </span> 
 </%def>
 

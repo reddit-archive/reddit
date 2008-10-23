@@ -35,7 +35,6 @@ from listingcontroller import UserController
 
 from feedback import FeedbackController
 from front import FrontController
-from api import ApiController
 from buttons import ButtonsController
 from captcha import CaptchaController
 from embed import EmbedController
@@ -49,15 +48,8 @@ from querycontroller import QueryController
 try:
     from r2admin.controllers.adminapi import ApiController
 except ImportError:
-    pass
+    from api import ApiController
 
 from admin import AdminController
-
 from redirect import RedirectController
-
-try:
-    from r2admin.controllers.admin import *
-except ImportError:
-    pass
-
 

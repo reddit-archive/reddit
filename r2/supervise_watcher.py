@@ -25,15 +25,8 @@ import os, re, sys
 from datetime import datetime, timedelta
 
 cache = g.cache
+host  = g.reddit_host
 
-try:
-    handle = open('/etc/hostname', 'r')
-    host = handle.read().strip('\n')
-    handle.close()
-except:
-    host = "UNDEFINED"
-
- 
 default_services = ['newreddit']
 default_servers = g.monitored_servers 
 
@@ -300,6 +293,18 @@ def Run(srvname=None, loop = True, loop_time = 2):
             sleep(loop_time)
         else:
             break
+
+def Test(num, load = 1., pid = 0):
+    services = Services()
+    for i in xrange(num):
+        name = 'testproc' + str(i)
+        p = i or pid
+        services.add(name, p, "10")
+        
+        services.track(p, 100. * (i+1) / (num),
+                       20. * (i+1) / num, 1.)
+    services.load = load
+    services.set_cache()
 
 if __name__ == '__main__':
     Run(sys.argv[1:] if sys.argv[1:] else default_services)

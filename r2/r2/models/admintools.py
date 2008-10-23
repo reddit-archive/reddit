@@ -32,9 +32,6 @@ class AdminTools(object):
     def report(self, thing, amount = 1):
         pass
 
-    def add_thing(self, thing):
-        pass
-
     def ban_info(self, thing):
         return {}
 

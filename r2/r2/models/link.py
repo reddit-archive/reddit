@@ -98,8 +98,6 @@ class Link(Thing, Printable):
 
     @classmethod
     def _submit(cls, title, url, author, sr, ip, spam = False):
-        from admintools import admintools
-
         l = cls(title = title,
                 url = url,
                 _spam = spam,
@@ -109,8 +107,6 @@ class Link(Thing, Printable):
                 ip = ip)
         l._commit()
         l.set_url_cache()
-        utils.worker.do(lambda: admintools.add_thing(l))
-
         return l
 
     @classmethod
@@ -328,8 +324,6 @@ class Comment(Thing, Printable):
 
         #clear that chache
         clear_memo('builder.link_comments2', link._id)
-        from admintools import admintools
-        utils.worker.do(lambda: admintools.add_thing(c))
 
         return (c, inbox_rel)
 
@@ -501,9 +495,6 @@ class Message(Thing, Printable):
         inbox_rel = None
         if not m._spam or to.name in g.admins:
             inbox_rel = Inbox._add(to, m, 'inbox')
-
-        from admintools import admintools
-        utils.worker.do(lambda: admintools.add_thing(m))
 
         return (m, inbox_rel)
 

@@ -42,8 +42,6 @@ import re
 import time as time_module
 from urllib import quote_plus
 
-from admin import admin_profile_query
-
 class FrontController(RedditController):
 
     @validate(article = VLink('article'),

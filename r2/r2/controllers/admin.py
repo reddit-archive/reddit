@@ -48,3 +48,8 @@ class AdminController(RedditController):
                          title = _('promote'),
                          nav_menus = []).render()
 
+
+try:
+    from r2admin.controllers.admin import *
+except ImportError:
+    pass

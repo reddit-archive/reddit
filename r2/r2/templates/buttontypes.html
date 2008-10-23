@@ -27,7 +27,7 @@
 <%namespace file="printable.html" import="arrow, score" />
 <%namespace file="utils.html" import="img_link" />
 
-<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(cname = c.cname)) + query_string(dict(url=url, title=title))}</%def>
+<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(cname = c.cname, subreddit = not c.cname)) + query_string(dict(url=url, title=title))}</%def>
 
 <%def name="submitlink(url, title='', text='submit')">
   <a href='${submiturl(url, title)}' target='${thing.target}'>${text}</a>
@@ -138,15 +138,15 @@ ${class_def(3)}
 <%def name="button5(thing)">
   ${class_def(5, width=choose_width(thing.link, thing.width))}
   ${img_link('submit', '/static/blog_snoo.gif', capture(submiturl, thing.url, thing.title), _class="left")}
-  <%
+<%
+     # this button style submits to the cname as a default
+     c.cname = hasattr(c.site, "domain") and bool(c.site.domain)
      submitlink = capture(submiturl, thing.url, thing.title)
      if thing.link:
         fullname = thing.link._fullname
         ups = thing.link.upvotes
         downs = thing.link.downvotes
-        if hasattr(c.site, "domain"):
-            c.cname = True
-        link = "http://%s%s" % (get_domain(cname = True, subreddit = False),
+        link = "http://%s%s" % (get_domain(cname = c.cname, subreddit = not c.cname),
                                 thing.link.make_permalink_slow())
      else:
         fullname = ""

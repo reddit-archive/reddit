@@ -21,7 +21,7 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys
+import pytz, os, logging, sys, socket
 from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, CacheChain
 from r2.lib.db.stats import QueryStats
@@ -168,6 +168,9 @@ class Globals(object):
                                        self.stylesheet)
         with open(stylesheet_path) as s:
             self.default_stylesheet = s.read()
+
+        self.reddit_host = socket.gethostname()
+        self.reddit_pid  = os.getpid()
 
     def __del__(self):
         """

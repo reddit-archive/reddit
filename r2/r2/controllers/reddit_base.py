@@ -241,7 +241,7 @@ def set_subreddit():
             c.site = Default
             if chksrname(sr_name):
                 redirect_to("/reddits/create?name=%s" % sr_name)
-            else:
+            elif not c.error_page:
                 abort(404, "not found")
 
     #if we didn't find a subreddit, check for a domain listing
@@ -484,7 +484,7 @@ class RedditController(BaseController):
             request.environ['REDDIT_NAME'] = c.site.name
 
         # check if the user has access to this subreddit
-        if not c.site.can_view(c.user):
+        if not c.site.can_view(c.user) and not c.error_page:
             abort(403, "forbidden")
  
         #check over 18

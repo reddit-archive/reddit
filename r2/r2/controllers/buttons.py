@@ -105,7 +105,7 @@ class ButtonsController(RedditController):
     @validate(buttontype = VInt('t', 1, 5),
               url = VSanitizedUrl("url"),
               _height = VInt('height', 0, 300),
-              _width = VInt('width', 0, 300))
+              _width = VInt('width', 0, 800))
     def GET_button_embed(self, buttontype, _height, _width, url):
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
