@@ -160,7 +160,21 @@ class CommentJsonTemplate(ThingJsonTemplate):
                           body         = "body",
                           likes        = "likes",
                           author       = "author", 
-                          created      = "created")
+                          created      = "created",
+                          link_id      = "link_id",
+                          parent_id    = "parent_id",
+                          )
+
+    def thing_attr(self, thing, attr):
+        from r2.models import Comment, Link
+        if attr == 'link_id':
+            return make_fullname(Link, thing.link_id)
+        elif attr == "parent_id":
+            try:
+                return make_fullname(Comment, thing.parent_id)
+            except AttributeError:
+                return make_fullname(Link, thing.link_id)
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):
         from r2.models import Comment

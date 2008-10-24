@@ -24,19 +24,14 @@
 
 <%inherit  file="link.html"/>
 
-<%def name="domain()" buffered="True">
+<%def name="domain()">
   <span class="domain">
     <% from r2.models import FakeSubreddit, Default %>
     %if isinstance(c.site, FakeSubreddit) and thing.subreddit.name != "reddit.com":
     [${unsafe(self.subreddit())}]
     %endif
     &#32;
-    %if c.user_is_admin:
-      (<a href="/admin/info?domain=${thing.domain}">${thing.domain}</a>)
-    %else:
-      (${thing.domain})
-    %endif
-
+    (<a href="/domain/${thing.domain}">${thing.domain}</a>)
   </span> 
 </%def>
 

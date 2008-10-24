@@ -489,7 +489,7 @@ before enabling */
     opacity: 1;
 }
 .domain { color: #888; font-size:x-small; }
-.domain a { color: #336699 }
+.domain a { color: #888 }
 .domain a:hover { text-decoration: underline }
 
 .tagline { color:#888; font-size:x-small; 
