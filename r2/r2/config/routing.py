@@ -89,7 +89,7 @@ def make_map(global_conf={}, app_conf={}):
        action='oldinfo', dest='comments', type='ancient')
     mc('/info/:article/:dest/:comment', controller='front',
        action='oldinfo', type='old', dest='comments', comment=None)
-    
+
     mc('/related/:article/:title', controller='front',
        action = 'related', title=None)
     mc('/details/:article/:title', controller='front',
@@ -104,7 +104,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/', controller='hot', action='listing')
     
-    listing_controllers = "hot|saved|toplinks|new|recommended|randomrising"
+    listing_controllers = "hot|saved|toplinks|new|recommended|randomrising|comments"
 
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))

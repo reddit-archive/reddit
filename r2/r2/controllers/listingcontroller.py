@@ -562,3 +562,9 @@ class MyredditsController(ListingController):
     def GET_listing(self, where, **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
+
+class CommentsController(ListingController):
+    title_text = _('comments')
+
+    def query(self):
+        return Comment._query(sort = desc('_date'))

@@ -146,7 +146,7 @@ ${class_def(3)}
         fullname = thing.link._fullname
         ups = thing.link.upvotes
         downs = thing.link.downvotes
-        link = "http://%s%s" % (get_domain(cname = c.cname, subreddit = not c.cname),
+        link = "http://%s%s" % (get_domain(cname = c.cname, subreddit = False),
                                 thing.link.make_permalink_slow())
      else:
         fullname = ""
