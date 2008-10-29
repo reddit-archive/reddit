@@ -39,6 +39,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.jsontemplates import api_type
 
 from copy import copy
+from Cookie import CookieError
 from datetime import datetime
 import sha, inspect, simplejson
 from urllib import quote, unquote
@@ -442,8 +443,13 @@ class RedditController(BaseController):
 
         # populate c.cookies
         c.cookies = Cookies()
-        for k,v in request.cookies.iteritems():
-            c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+        try:
+            for k,v in request.cookies.iteritems():
+                c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+        except CookieError:
+            #pylons or one of the associated retarded libraries can't
+            #handle broken cookies
+            request.environ['HTTP_COOKIE'] = ''
 
         c.response_wrappers = []
         c.errors = ErrorSet()
