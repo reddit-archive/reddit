@@ -280,7 +280,7 @@ class Link(Thing, Printable):
                 item.hide_score = True
             elif c.user == item.author:
                 item.hide_score = False
-            elif item._date < timeago("2 hours"):
+            elif item._date > timeago("2 hours"):
                 item.hide_score = True
             else:
                 item.hide_score = False
