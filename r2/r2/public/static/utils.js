@@ -332,7 +332,7 @@ function completedUploadImage(status, img_src, name, errors) {
   }
 
   if(img_src) {
-      $('upload-image').reset();
+      $('image-upload').reset();
       hide('submit-header-img');
       if (!name) {
           $('header-img').src = img_src;

@@ -1,0 +1,156 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+  from r2.lib.utils import to36
+  from r2.lib.media import thumbnail_url
+%>
+<%namespace file="utils.html" import="error_field, checkbox, plain_link, image_upload" />
+<%namespace file="printable.html" import="state_button, yes_no_button" />
+
+<form class="content pretty-form" method="POST" action="/post/new_promo"
+ id="promo_form" onsubmit="return post_form(this, 'edit_promo', null, null, true)">
+
+  %if thing.link:
+    <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
+  %endif
+
+  <table class="content preftable">
+    %if thing.link:
+      <tr>
+        <th></th>
+        <td>
+          ${plain_link("go to the comments page", thing.link.make_permalink_slow())}
+        </td>
+      </tr>
+      <tr>
+        <th></th>
+        <td>
+          ${yes_no_button("unpromote", thing.link._fullname, _("unpromote"), \
+          "return deletetoggle(this,'unpromote');", _("unpromoted"))}
+        </td>
+      </tr>
+    %endif
+    <tr>
+      <th><label for="title">${_("title")}</label></th>
+      <td>
+        <input name="title" type="text" value="${thing.link.title if thing.link else ""}" />
+      </td>
+      <td class="error">
+        ${error_field("NO_TITLE", "span")}
+      </td>
+    </tr>
+    <tr>
+      <th><label for="url">${_("url")}</label></th>
+      <td>
+        <input name="url" type="text" value="${thing.link.url if thing.link else ""}"/>
+      </td>
+      <td class="error">
+        ${error_field("NO_URL", "span")}
+        ${error_field("BAD_URL", "span")}
+      </td>
+    </tr>
+    <tr>
+      <th><label for="sr">${_("reddit")}</label></th>
+      <td>
+        %if thing.link:
+          <b>${thing.sr.name}</b>
+          <input name="sr" type="hidden" value="${thing.sr.name}"/>
+        %else:
+          <input name="sr" type="text" value="${g.default_sr}"/>
+        %endif
+        <br />
+        ${checkbox("subscribers_only",
+                   _("show only to subscribers of this reddit"),
+                   thing.link.promoted_subscribersonly if thing.link else False)}
+      </td>
+      <td class="error">
+        ${error_field("SUBREDDIT_NOEXIST")}
+      </td>
+    </tr>
+    <tr>
+      <th>${_("site options")}</th>
+      <td>
+        ${checkbox("disable_comments",
+                   _("disable comments"),
+                   thing.link.disable_comments if thing.link else False)} <br />
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <th><label for="timelimit">${_("duration")}</label></th>
+      <td>
+        %if thing.link and thing.link.promote_until:
+          ${(_("will expire on %(expires_on)s")
+             % dict(expires_on = thing.link.promote_until.strftime(thing.datefmt)))}
+          ${checkbox("disable_expire",
+                     _("disable automatic expiration"),
+                     False)}
+        %else:
+          ${checkbox("timelimit",
+                     _("automatically disable in"),
+                     False)}
+          &nbsp;
+          <input name="timelimitlength" size="3" />
+          <select name="timelimittype">
+            
+            <option value="hours">${_("hours")}</option>
+            <option value="days" selected="selected">${_("days")}</option>
+            <option value="weeks">${_("weeks")}</option>
+          </select>
+        %endif
+      </td>
+      <td class="error">${error_field("BAD_NUMBER", "span")}</td>
+    </tr>
+  </table>
+</form>
+
+%if thing.link:
+  <% thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link) %>
+  <table class="content preftable pretty-form">
+    <tr>
+      <th><label for="file">${_("thumbnail")}</label></th>
+      <td>
+        <%call expr="image_upload('/api/link_thumb', thumb)">
+          <input type="hidden" name="link_id" value="${thing.link._fullname}" />
+        </%call>
+      </td>
+      <td id="img-status"></td>
+    </tr>
+  </table>
+%endif
+
+<div class="save-button">
+  <%
+      if thing.link:
+          name = "edit"
+          text = _("save options")
+      else:
+          name = "create"
+          text = _("create")
+  %>
+  <button name="${name}" class="btn" type="button"
+         onclick="$('promo_form').onsubmit()"
+  >${text}</button>
+  &#32;
+  <span id="status" class="error"></span>
+  ${error_field("RATELIMIT", "span")}
+</div>

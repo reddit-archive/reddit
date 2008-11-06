@@ -27,7 +27,7 @@ from r2.lib.workqueue import WorkQueue
 from r2.lib import s3cp
 from r2.lib.utils import timeago, fetch_things2
 from r2.lib.db.operators import desc
-from r2.lib.scraper import make_scraper
+from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_image
 
 import tempfile
 from Queue import Queue
@@ -115,3 +115,10 @@ def set_media(link):
     results = {}
     make_link_info_job(results, link, g.useragent)()
     update_link(link, *results[link])
+
+def force_thumbnail(link, image_data):
+    image = str_to_image(image_data)
+    image = prepare_image(image)
+    upload_thumb(link, image)
+    update_link(link, thumbnail = True, media_object = None)
+    

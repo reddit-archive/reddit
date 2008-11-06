@@ -160,7 +160,7 @@ def handle_awful_failure(fail_text):
         import sys
         s = sys.exc_info()
         # reraise the original error with the original stack trace
-        raise s[1], None, s[2]        
+        raise s[1], None, s[2]
     try:
         # log the traceback, and flag the "path" as the error location
         import traceback

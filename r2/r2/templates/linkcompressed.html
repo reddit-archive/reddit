@@ -44,14 +44,12 @@
 </%def>
 
 <%def name="tagline()">
-  <% from r2.lib.utils import timeago %>
-  %if thing._date < timeago("2 hours") or c.user == thing.author or c.user_is_admin:
-    <% taglinetext = _("%(points)s posted %(when)s ago by %(author)s") %>
-  %else:
-    <% taglinetext = _("posted %(when)s ago by %(author)s")%>
-  %endif
   <%
-     taglinetext = taglinetext.replace(" ", "&#32;")
+    if thing.hide_score:
+        taglinetext = _("posted %(when)s ago by %(author)s")
+    else:
+        taglinetext = _("%(points)s posted %(when)s ago by %(author)s")
+    taglinetext = taglinetext.replace(" ", "&#32;")
   %>
   ${unsafe(taglinetext % dict(points = capture(self.score, thing, likes=thing.likes),
                               when = thing.timesince, 

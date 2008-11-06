@@ -70,6 +70,9 @@ def _force_unicode(text):
         text = unicode(text)
     return text
 
+def _force_utf8(text):
+    return str(_force_unicode(text).encode('utf8'))
+
 def unsafe(text=''):
     return _Unsafe(_force_unicode(text))
 

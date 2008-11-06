@@ -67,11 +67,8 @@ class Cookie(object):
             self.domain = g.domain
 
     def __repr__(self):
-        return ("Cookie(value=%s, expires=%s, domain=%s, dirty=%s)"
-                % (repr(self.value),
-                   repr(self.expires),
-                   repr(self.domain),
-                   repr(self.dirty)))
+        return ("Cookie(value=%r, expires=%r, domain=%r, dirty=%r)"
+                % (self.value, self.expires, self.domain, self.dirty))
 
 class UnloggedUser(FakeAccount):
     _cookie = 'options'
@@ -445,6 +442,7 @@ class RedditController(BaseController):
         c.cookies = Cookies()
         try:
             for k,v in request.cookies.iteritems():
+                # we can unquote even if it's not quoted
                 c.cookies[k] = Cookie(value=unquote(v), dirty=False)
         except CookieError:
             #pylons or one of the associated retarded libraries can't
@@ -475,6 +473,8 @@ class RedditController(BaseController):
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
             c.user_is_admin = maybe_admin and c.user.name in g.admins
+
+            c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
 
         c.over18 = over18()
 

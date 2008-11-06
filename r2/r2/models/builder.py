@@ -129,8 +129,10 @@ class Builder(object):
             compute_votes(w, item)
             
             w.score = w.upvotes - w.downvotes
-            w.rowstyle= 'even' if (count % 2) else "odd"
             w.deleted = item._deleted
+
+            w.rowstyle = w.rowstyle if hasattr(w,'rowstyle') else ''
+            w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
 
             count += 1
 

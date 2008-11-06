@@ -19,23 +19,47 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.controllers.reddit_base import RedditController
-from r2.controllers.reddit_base import base_listing
-
-from r2.controllers.validator import *
-from r2.lib.pages import *
-from r2.models import *
-
+from validator import *
 from pylons.i18n import _
+from r2.models import *
+from r2.lib.pages import *
+from r2.lib.menus import *
 
-def admin_profile_query(vuser, location, db_sort):
-    return None 
+from r2.controllers.reddit_base import RedditController
 
-class AdminController(RedditController): pass
+from r2.lib import promote
 
-try:
-    from r2admin.controllers.admin import *
-except ImportError:
-    pass
+class PromoteController(RedditController):
+    @validate(VSponsor())
+    def GET_index(self):
+        return self.GET_current_promos()
 
+    @validate(VSponsor())
+    def GET_current_promos(self):
+        current_list = promote.get_promoted()
+
+        b = IDBuilder([ x._fullname for x in current_list])
+
+        render_list = b.get_items()[0]
+
+        page = PromotePage('current_promos',
+                           content = PromotedLinks(render_list))
+    
+        return page.render()
+
+    @validate(VSponsor())
+    def GET_new_promo(self):
+        page = PromotePage('new_promo',
+                           content = PromoteLinkForm())
+        return page.render()
+
+    @validate(VSponsor(),
+              link = VLink('link'))
+    def GET_edit_promo(self, link):
+        sr = Subreddit._byID(link.sr_id)
+
+        form = PromoteLinkForm(sr = sr, link = link)
+        page = PromotePage('new_promo', content = form)
+
+        return page.render()
 

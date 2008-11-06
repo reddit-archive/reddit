@@ -30,7 +30,8 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
-from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified, query_string
+from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
+from r2.lib.utils import query_string, to36, timefromnow
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
@@ -48,12 +49,15 @@ from r2.config import cache
 from r2.lib.jsonresponse import JsonResponse, Json
 from r2.lib.jsontemplates import api_type
 from r2.lib import cssfilter
+from r2.lib.media import force_thumbnail, thumbnail_url
 
 from simplejson import dumps
 
 from datetime import datetime, timedelta
 from md5 import md5
-from r2.lib.organic import promote, unpromote
+
+from r2.lib.promote import promote, unpromote
+from r2.controllers import promotecontroller
 
 def link_listing_by_url(url, count = None):
     try:
@@ -904,7 +908,7 @@ class ApiController(RedditController):
         JS.
         """
 
-        # default error list (default valuse will reset the errors in
+        # default error list (default values will reset the errors in
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
         try:
@@ -925,7 +929,7 @@ class ApiController(RedditController):
         except ValueError:
             # the add_image method will raise only on too many images
             errors['IMAGE_ERROR'] = (
-                _("too many imags (you only get %d)") % g.max_sr_images)
+                _("too many images (you only get %d)") % g.max_sr_images)
 
         if any(errors.values()):
             return  UploadedImage("", "", "", errors = errors).render()
@@ -1315,14 +1319,97 @@ class ApiController(RedditController):
                 c.user._commit()
 
     @Json
-    @validate(VAdmin(),
+    @validate(VSponsor(),
               thing = VByName('id'))
     def POST_promote(self, res, thing):
         promote(thing)
 
     @Json
-    @validate(VAdmin(),
+    @validate(VSponsor(),
               thing = VByName('id'))
     def POST_unpromote(self, res, thing):
         unpromote(thing)
 
+    @Json
+    @validate(VSponsor(),
+              link             = VLink('link_id'),
+              title            = VTitle('title'),
+              url              = nop('url'),
+              sr               = VSubmitSR('sr'),
+              subscribers_only = VBoolean('subscribers_only'),
+              disable_comments = VBoolean('disable_comments'),
+              disable_expire   = VBoolean('disable_expire'),
+              timelimit        = VBoolean('timelimit'),
+              timelimitlength  = VInt('timelimitlength',1,1000),
+              timelimittype    = VOneOf('timelimittype',['hours','days','weeks']))
+    def POST_edit_promo(self, res, title, url, sr, subscribers_only,
+                        disable_comments,
+                        timelimit = None, timelimitlength = None, timelimittype = None,
+                        disable_expire = None,
+                        link = None):
+        if res._chk_error(errors.NO_TITLE):
+            res._focus('title')
+        elif res._chk_errors((errors.NO_URL,errors.BAD_URL)):
+            res._focus('url')
+        elif res._chk_error(errors.SUBREDDIT_NOEXIST):
+            res._focus('sr')
+        elif timelimit and res._chk_error(errors.BAD_NUMBER):
+            res._focus('timelimitlength')
+        elif link:
+            link.title = title
+            link.url = url
+
+            link.promoted_subscribersonly = subscribers_only
+            link.disable_comments = disable_comments
+
+            if disable_expire:
+                link.promote_until = None
+            elif timelimit and timelimitlength and timelimittype:
+                link.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
+            
+            link._commit()
+
+            res._redirect('/promote/edit_promo/%s' % to36(link._id))
+        else:
+            link = Link(title = title,
+                        url = url,
+                        author_id = c.user._id,
+                        sr_id = sr._id)
+
+            if timelimit and timelimitlength and timelimittype:
+                promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
+            else:
+                promote_until = None
+
+            link._commit()
+
+            promote(link, subscribers_only = subscribers_only,
+                    promote_until = promote_until,
+                    disable_comments = disable_comments)
+            
+            res._redirect('/promote/edit_promo/%s' % to36(link._id))
+
+    def GET_link_thumb(self, *a, **kw):
+        """
+        See GET_upload_sr_image for rationale
+        """
+        return "nothing to see here."
+
+    @validate(VSponsor(),
+              link = VByName('link_id'),
+              file = VLength('file',500*1024))
+    def POST_link_thumb(self, link=None, file=None):
+        errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
+
+        try:
+            force_thumbnail(link, file)
+        except cssfilter.BadImage:
+            # if the image doesn't clean up nicely, abort
+            errors["IMAGE_ERROR"] = _("bad image")
+
+        if any(errors.values()):
+            return  UploadedImage("", "", "upload", errors = errors).render()
+        else:
+            return UploadedImage(_('saved'), thumbnail_url(link), "upload",
+                                 errors = errors).render()
+    

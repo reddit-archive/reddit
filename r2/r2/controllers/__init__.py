@@ -43,6 +43,7 @@ from error import ErrorController
 from post import PostController
 from toolbar import ToolbarController
 from i18n import I18nController
+from promotecontroller import PromoteController
 
 from querycontroller import QueryController
 

@@ -22,7 +22,7 @@
 from pylons         import c, g
 from r2.lib.wrapped import Wrapped
 from pages   import Reddit
-from r2.lib.menus   import NavButton, NavMenu, menu
+from r2.lib.menus   import NamedButton, NavButton, menu, NavMenu
 
 class AdminSidebar(Wrapped):
     def __init__(self, user):
@@ -43,8 +43,11 @@ class AdminPage(Reddit):
     def __init__(self, nav_menus = None, *a, **kw):
         #add admin options to the nav_menus
         if c.user_is_admin:
-            buttons  = [NavButton(menu.i18n, "")] \
-                if g.translator else []
+            buttons = []
+
+            if g.translator:
+                buttons.append(NavButton(menu.i18n, ""))
+
             admin_menu = NavMenu(buttons, title='show', base_path = '/admin',
                                  type="lightdrop")
             if nav_menus:

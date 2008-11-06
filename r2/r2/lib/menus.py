@@ -48,6 +48,7 @@ menu_selected=StringHandler(hot          = _("what's hot"),
                             controversial= _("most controversial"),
                             saved        = _("saved"),
                             recommended  = _("recommended"),
+                            promote      = _('promote'),
                             )
 
 # translation strings for every menu on the site
@@ -57,7 +58,6 @@ menu =   MenuHandler(hot          = _('hot'),
                      ups          = _('ups'),
                      downs        = _('downs'),
                      top          = _('top'),
-                     relevence    = _('relevence'),
                      more         = _('more'),
                      relevance    = _('relevance'),
                      controversial  = _('controversial'),
@@ -125,7 +125,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      mine         = _("my reddits"),
 
                      i18n         = _("translate site"),
-                     promote      = _("promote"),
+                     promoted     = _("promoted"),
                      reporters    = _("reporters"),
                      reports      = _("reports"),
                      reportedauth = _("reported authors"),
@@ -140,6 +140,9 @@ menu =   MenuHandler(hot          = _('hot'),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
 
+                     promote      = _('promote'),
+                     new_promo    = _('new promoted link'),
+                     current_promos = _('promoted links'),
                      )
 
 class Styled(Wrapped):
@@ -393,8 +396,8 @@ class CommentSortMenu(SortMenu):
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
-    default   = 'relevence'
-    mapping   = dict(relevence = None,
+    default   = 'relevance'
+    mapping   = dict(relevance = None,
                      hot = 'hot desc',
                      new = 'date desc',
                      old = 'date asc',

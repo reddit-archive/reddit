@@ -20,20 +20,21 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 from r2.lib.normalized_hot import get_hot, only_recent
 from r2.lib import count
-from r2.lib.utils import UniqueIterator, timeago, timefromnow
-from r2.lib.db.operators import desc
+from r2.lib.utils import UniqueIterator, timeago
+from r2.lib.promote import get_promoted
+
+from pylons import c
 
 import random
-from datetime import datetime
+from time import time
 
-from pylons import g
-
-# lifetime in seconds of organic listing in memcached
 organic_lifetime = 5*60
-promoted_memo_key = 'cached_promoted_links'
+
+# how many regular organic links should show between promoted ones
+promoted_every_n = 5
 
 def keep_link(link):
     return not any((link.likes != None,
@@ -41,43 +42,10 @@ def keep_link(link):
                     link.clicked,
                     link.hidden))
 
-def promote(thing, subscribers_only = False):
-    thing.promoted = True
-    thing.promoted_on = datetime.now(g.tz)
-    thing.promote_until = timefromnow("1 day")
-    if subscribers_only:
-        thing.promoted_subscribersonly = True
-    thing._commit()
-    clear_memo(promoted_memo_key)
-
-def unpromote(thing):
-    thing.promoted = False
-    thing.unpromoted_on = datetime.now(g.tz)
-    thing._commit()
-    clear_memo(promoted_memo_key)
-
-def clean_promoted():
+def insert_promoted(link_names, sr_ids, logged_in):
     """
-    Remove any stale promoted entries (should be run periodically to
-    keep the list small)
-    """
-    p = get_promoted()
-    for x in p:
-        if datetime.now(g.tz) > x.promote_until:
-            unpromote(x)
-    clear_memo(promoted_memo_key)
-
-@memoize(promoted_memo_key, time = organic_lifetime)
-def get_promoted():
-    return [ x for x in Link._query(Link.c.promoted == True,
-                                    sort = desc('_date'),
-                                    data = True)
-             if  x.promote_until > datetime.now(g.tz) ]
-
-def insert_promoted(link_names, subscribed_reddits):
-    """
-    The oldest promoted link that c.user hasn't seen yet, and sets the
-    timestamp for their seen promotions in their cookie
+    Inserts promoted links into an existing organic list. Destructive
+    on `link_names'
     """
     promoted_items = get_promoted()
 
@@ -85,7 +53,7 @@ def insert_promoted(link_names, subscribed_reddits):
         return
 
     def my_keepfn(l):
-        if l.promoted_subscribersonly and l.sr_id not in subscribed_reddits:
+        if l.promoted_subscribersonly and l.sr_id not in sr_ids:
             return False
         else:
             return keep_link(l)
@@ -101,11 +69,10 @@ def insert_promoted(link_names, subscribed_reddits):
     if not promoted_items:
         return
 
-    every_n = 5
-
     # don't insert one at the head of the list 50% of the time for
     # logged in users, and 50% of the time for logged-off users when
-    # the pool of promoted links is less than 3
+    # the pool of promoted links is less than 3 (to avoid showing the
+    # same promoted link to the same person too often)
     if c.user_is_loggedin or len(promoted_items) < 3:
         skip_first = random.choice((True,False))
     else:
@@ -113,32 +80,25 @@ def insert_promoted(link_names, subscribed_reddits):
 
     # insert one promoted item for every N items
     for i, item in enumerate(promoted_items):
-        pos = i * every_n
+        pos = i * promoted_every_n
         if pos > len(link_names):
             break
         elif pos == 0 and skip_first:
-            # don't always show one for logged-in users
             continue
         else:
             link_names.insert(pos, promoted_items[i]._fullname)
 
-@memoize('cached_organic_links_user', time = organic_lifetime)
-def cached_organic_links(username):
-    if username:
-        user = Account._by_name(username)
-    else:
-        user = FakeAccount()
-
+@memoize('cached_organic_links', time = organic_lifetime)
+def cached_organic_links(sr_ids, logged_in):
     sr_count = count.get_link_counts()
-    srs = Subreddit.user_subreddits(user)
 
     #only use links from reddits that you're subscribed to
-    link_names = filter(lambda n: sr_count[n][1] in srs, sr_count.keys())
+    link_names = filter(lambda n: sr_count[n][1] in sr_ids, sr_count.keys())
     link_names.sort(key = lambda n: sr_count[n][0])
 
     #potentially add a up and coming link
     if random.choice((True, False)):
-        sr = Subreddit._byID(random.choice(srs))
+        sr = Subreddit._byID(random.choice(sr_ids))
         items = only_recent(get_hot(sr))
         if items:
             if len(items) == 1:
@@ -147,15 +107,17 @@ def cached_organic_links(username):
                 new_item = random.choice(items[1:4])
             link_names.insert(0, new_item._fullname)
 
-    insert_promoted(link_names, srs)
+    insert_promoted(link_names, sr_ids, logged_in)
 
     builder = IDBuilder(link_names, num = 30, skip = True, keep_fn = keep_link)
     links = builder.get_items()[0]
 
-    calculation_key = str(datetime.now(g.tz))
+    calculation_key = str(time())
 
     update_pos(0, calculation_key)
 
+    # in case of duplicates (inserted by the random up-and-coming link
+    # or a promoted link), return only the first
     ret = [l._fullname for l in UniqueIterator(links)]
 
     return (calculation_key, ret)
@@ -163,8 +125,8 @@ def cached_organic_links(username):
 def organic_links(user):
     from r2.controllers.reddit_base import organic_pos
 
-    username = user.name if c.user_is_loggedin else None
-    cached_key, links = cached_organic_links(username)
+    sr_ids = Subreddit.user_subreddits(user)
+    cached_key, links = cached_organic_links(sr_ids, c.user_is_loggedin)
 
     cookie_key, pos = organic_pos()
     # pos will be 0 if it wasn't specified

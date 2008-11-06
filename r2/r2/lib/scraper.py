@@ -48,6 +48,11 @@ def str_to_image(s):
     image = Image.open(s)
     return image
 
+def prepare_image(image):
+    image = square_image(image)
+    image.thumbnail(thumbnail_size, Image.ANTIALIAS)
+    return image
+
 def image_entropy(img):
     """calculate the entropy of an image"""
     hist = img.histogram()
@@ -209,8 +214,7 @@ class Scraper:
             if image_str:
                 image = str_to_image(image_str)
                 try:
-                    image = square_image(image)
-                    image.thumbnail(thumbnail_size, Image.ANTIALIAS)
+                    image = prepare_image(image)
                 except IOError, e:
                     #can't read interlaced PNGs, ignore
                     if 'interlaced' in e.message:

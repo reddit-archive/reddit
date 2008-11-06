@@ -57,6 +57,7 @@ class Globals(object):
                    'rec_cache',
                    'permacaches',
                    'admins',
+                   'sponsors',
                    'monitored_servers',
                    'default_srs',
                    'agents',

@@ -52,13 +52,12 @@
      %else:
        href="${thing.url}" 
      %endif
-     %if thing.score <= 1:
+     %if thing.nofollow:
        rel="nofollow"
      %endif
      %if c.user.pref_newwindow:
        target="_blank" 
-     %endif
-     %if c.cname:
+     %elif c.cname:
        target="_top"
      %endif
      >
@@ -92,8 +91,7 @@
     </form>
     <script type="text/javascript">
       /* see also OrganicListing.prototype.change()
-         dirty, dirty hack. But some people are into that
-       */
+         dirty, dirty hack. But some people are into that */
       if(!"$display") {
         var i = new Image();
         i.src = "${tracking_url}";
@@ -124,12 +122,11 @@
   <div id="arrows_${thing._fullname}" class="midcol" style="width:$midcolmargin;" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
-    <% from r2.lib.utils import timeago %>
-    %if thing._date < timeago("2 hours") or c.user == thing.author or c.user_is_admin:
-      ${self.score(thing, thing.likes, inline=False, label = False)}
-    %else:
+    %if thing.hide_score:
       <div class="score">&bull;</div> 
-    %endif                  
+    %else:
+      ${self.score(thing, thing.likes, inline=False, label = False)}
+    %endif                
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
  ${self.thumbnail()}
@@ -161,22 +158,23 @@
 <%def name="child()">
 </%def>
 
-
-<%def name="buttons()">
+<%def name="buttons(comments=True,delete=True,report=True,ban=True)">
   <% fullname = thing._fullname %>
-  <% 
-     if not thing.num_comments:
-       # generates "comment" the imperative verb
-       com_label = _("comment {verb}")
-     else:
-       # generates "XX comments" as a noun
-       com_label = ungettext("comment", "comments", thing.num_comments)
-     %>
-  <li class="first">
-  ${parent.comment_button("comment", fullname, com_label,
-                          thing.num_comments, thing.permalink,
-                          newwindow = c.user.pref_newwindow)}
-  </li>
+  %if comments:
+    <% 
+       if not thing.num_comments:
+         # generates "comment" the imperative verb
+         com_label = _("comment {verb}")
+       else:
+         # generates "XX comments" as a noun
+         com_label = ungettext("comment", "comments", thing.num_comments)
+       %>
+    <li class="first">
+    ${parent.comment_button("comment", fullname, com_label,
+                            thing.num_comments, thing.permalink,
+                            newwindow = c.user.pref_newwindow)}
+    </li>
+  %endif
   <li id="share_li_${fullname}">
     ${parent.simple_button("share", fullname, _("share"), "share")}
   </li>
@@ -199,8 +197,8 @@
     %endif
     </li>
   %endif
-  ${parent.delete_or_report_buttons()}
-  ${parent.buttons()}
+  ${parent.delete_or_report_buttons(delete=delete,report=report)}
+  ${parent.buttons(ban=ban)}
   ${self.media_embed()}
 </%def>
 

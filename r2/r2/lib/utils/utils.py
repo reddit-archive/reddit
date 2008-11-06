@@ -490,7 +490,7 @@ class UrlParser(object):
     @property
     def query_dict(self):
         """
-        Parses they params attribute of the original urlparse and
+        Parses the `params' attribute of the original urlparse and
         generates a dictionary where both the keys and values have
         been url_unescape'd.  Any updates or changes to the resulting
         dict will be reflected in the updated query params
@@ -998,11 +998,11 @@ def title_to_url(title, max_length = 50):
             title = title[:last_word]
     return title
 
-def debug_print(fn):
+def trace(fn):
     from pylons import g
-    def new_fn(*k,**kw):
-        ret = fn(*k,**kw)
-        g.log.debug("Fn: %s; k=%s; kw=%s\nRet: %s"
-                    % (fn,k,kw,ret))
+    def new_fn(*a,**kw):
+        ret = fn(*a,**kw)
+        g.log.debug("Fn: %s; a=%s; kw=%s\nRet: %s"
+                    % (fn,a,kw,ret))
         return ret
     return new_fn

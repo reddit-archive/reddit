@@ -73,9 +73,9 @@ ${self.RenderPrintable()}
 <div class="clearleft"><!--IE6sux--></div>
 </%def>
 
-<%def name="buttons()">
+<%def name="buttons(ban=True)">
 <% fullname = thing._fullname %>
-%if thing.can_ban:
+%if thing.can_ban and ban:
   %if thing.show_spam:
     <li>
       ${state_button("unban", fullname, _("unban"), \

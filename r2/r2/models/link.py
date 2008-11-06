@@ -49,6 +49,9 @@ class Link(Thing, Printable):
                      has_thumbnail = False,
                      promoted = False,
                      promoted_subscribersonly = False,
+                     promote_until = None,
+                     promoted_by = None,
+                     disable_comments = False,
                      ip = '0.0.0.0')
 
     def __init__(self, *a, **kw):
@@ -234,6 +237,8 @@ class Link(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.count import incr_counts
         from r2.lib.media import thumbnail_url
+        from r2.lib.utils import timeago
+        from r2.lib.tracking import PromotedLinkClickInfo
 
         saved = Link._saved(user, wrapped) if user else {}
         hidden = Link._hidden(user, wrapped) if user else {}
@@ -241,8 +246,8 @@ class Link(Thing, Printable):
         clicked = {}
 
         for item in wrapped:
-
             show_media = (c.user.pref_media == 'on' or
+                          (item.promoted and item.has_thumbnail) or
                           (c.user.pref_media == 'subreddit' and
                            item.subreddit.show_media))
 
@@ -269,7 +274,34 @@ class Link(Thing, Printable):
             if item.is_self:
                 item.url = item.make_permalink(item.subreddit, force_domain = True)
 
-                
+            if c.user_is_admin:
+                item.hide_score = False
+            elif item.promoted:
+                item.hide_score = True
+            elif c.user == item.author:
+                item.hide_score = False
+            elif item._date < timeago("2 hours"):
+                item.hide_score = True
+            else:
+                item.hide_score = False
+
+            if c.user_is_loggedin and item.author._id == c.user._id:
+                item.nofollow = False
+            elif item.score <= 1 or item._spam or item.author._spam:
+                item.nofollow = True
+            else:
+                item.nofollow = False
+
+            if item.promoted and g.clicktracker_url:
+                # promoted links' clicks are tracked, so here we are
+                # changing its URL to be the tracking/redirecting URL.
+                # This can't be done in PromotedLink.add_props because
+                # we still want to track clicks for links that haven't
+                # been wrapped as PromotedLinks, as in regular
+                # listings
+                item.url = PromotedLinkClickInfo.gen_url(fullname = item._fullname,
+                                                         dest = item.url)
+
         if c.user_is_loggedin:
             incr_counts(wrapped)
 
@@ -280,6 +312,40 @@ class Link(Thing, Printable):
         on the wrapped link (as .subreddit), and that should be used
         when possible. """
         return Subreddit._byID(self.sr_id, True, return_dict = False)
+
+class PromotedLink(Link):
+    _nodb = True
+
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Link.add_props(user, wrapped)
+
+        try:
+            if c.user_is_sponsor:
+                promoted_by_ids = set(x.promoted_by
+                                      for x in wrapped
+                                      if hasattr(x,'promoted_by'))
+                promoted_by_accounts = Account._byID(promoted_by_ids,
+                                                     data=True)
+            else:
+                promoted_by_accounts = {}
+
+        except NotFound:
+            # since this is just cosmetic, we can skip it altogether
+            # if one isn't found or is broken
+            promoted_by_accounts = {}
+
+        for item in wrapped:
+            # these are potentially paid for placement
+            item.nofollow = True
+
+            if item.promoted_by in promoted_by_accounts:
+                item.promoted_by_name = promoted_by_accounts[item.promoted_by].name
+            else:
+                # keep the template from trying to read it
+                item.promoted_by = None
+
+
 
 class LinkCompressed(Link):
     _nodb = True

@@ -553,23 +553,24 @@ before enabling */
 
 /* organic listing */
 .organic-listing { 
-    background-color: #F8F8F8;
     border: solid 1px #666666;
-    padding: 5px 0;
+    padding: 0;
     overflow: hidden; 
     position: relative;
     _height: 60px;
-    _overflow: auto;
+    _overflow: hidden;
 }
 
 .organic-listing .link { 
+    background-color: #F8F8F8;
+    padding: 5px 7em 10px 0;
     margin-bottom: 0px; 
-    margin-right: 7em;
- }
+}
 
 .organic-listing .linkcompressed { 
+    background-color: #F8F8F8;
+    padding: 5px 7em 10px 0;
     margin-bottom: 0px; 
-    margin-right: 7em;
  }
 
 .organic-listing .nextprev { 
@@ -584,6 +585,25 @@ before enabling */
 .organic-listing .nextprev img:hover  { cursor: pointer;  border: solid 1px #336699; }
 .organic-listing .nextprev img:active { margin: 6px 4px 1px 1px;}
 
+.promoted {
+    background-color: #EFF7FF;
+    border: solid 1px;
+    padding: 5px 0 5px 0;
+    overflow: hidden;
+}
+
+.organic-listing .promoted {
+    background-color: #EFF7FF;
+    border: none;
+}
+
+.sponsored-tagline {
+    color: #808080;
+    bottom: 0;
+    margin: 0 5px 5px 0;
+    position: absolute;
+    right: 6.2em;
+}
 
 .infobar {
     background-color: #f6e69f;
@@ -1133,7 +1153,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .details span { margin: 0 5px 0 5px; }
-.details .profline { 
+.details th { 
     text-align: right; 
     padding-right: 5px;
     font-weight: bold;
@@ -1411,6 +1431,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .image-upload td,
 .image-upload th    { vertical-align: top; }
 .image-upload span  { padding-left: 5px; }
+.image-upload { display: inline; }
 
 
 ul#image-preview-list { 

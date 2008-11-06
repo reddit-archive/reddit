@@ -46,7 +46,7 @@ def pkcs5unpad(text, padlen = 8):
     return text
 
 def cipher(lv):
-    '''returns a pycrypto object used by encrypt and decrypt, with the key based on g.SECRET'''
+    '''returns a pycrypto object used by encrypt and decrypt, with the key based on g.tracking_secret'''
     key = g.tracking_secret
     return AES.new(key[:key_len], AES.MODE_CBC, lv[:key_len])
 
@@ -60,7 +60,6 @@ def encrypt(text):
     cip = cipher(randstr)
     text = b64enc(cip.encrypt(pkcs5pad(text, key_len)))
     return quote_plus(randstr + text, safe='')
-
 
 def decrypt(text):
     '''Inverts encrypt'''
@@ -81,7 +80,7 @@ def safe_str(text):
         if isinstance(text, unicode):
             return text.encode('utf8')
     except:
-        print "unicode encoding exception in safe_str"
+        g.log.error("unicode encoding exception in safe_str")
         return ''
     return text
 
@@ -98,7 +97,7 @@ class Info(object):
             try:
                 data = decrypt(text).split('|')
             except:
-                print "decryption failure on '%s'" % text
+                g.log.error("decryption failure on '%s'" % text)
                 data = []
             for i, d in enumerate(data):
                 if i < len(self.__slots__):
@@ -120,14 +119,14 @@ class Info(object):
             return cls(**kw).tracking_url()
 
         except Exception,e:
-            print e
+            g.log.error(e)
             try:
                 randstr = ''.join(choice('1234567890abcdefghijklmnopqrstuvwxyz' +
                                          'ABCDEFGHIJKLMNOPQRSTUVWXYZ+')
                                   for x in xrange(pad_len))
                 return "%s?v=%s" % (cls.tracker_url, randstr)
             except:
-                print "fallback rendering failed as well"
+                g.log.error("fallback rendering failed as well")
                 return ""
 
 class UserInfo(Info):
@@ -140,14 +139,26 @@ class UserInfo(Info):
         self.site = safe_str(c.site.name if c.site else '')
         self.lang = safe_str(c.lang if c.lang else '')
             
-class PromotedLinkInfo(Info): 
+class PromotedLinkInfo(Info):
     __slots__ = ['fullname']
     tracker_url = g.adtracker_url
 
-    def init_defaults(self, fullname = None):
+    def init_defaults(self, fullname):
         self.fullname = fullname
-        
 
+class PromotedLinkClickInfo(PromotedLinkInfo):
+    tracker_url = g.clicktracker_url
+
+    def init_defaults(self, dest, **kw):
+        self.dest = dest
+
+        return PromotedLinkInfo.init_defaults(self, **kw)
+
+    def tracking_url(self):
+        s = PromotedLinkInfo.tracking_url(self) + '&url=' + self.dest
+        g.log.debug("generated %s" % s)
+        return s
+        
 def benchmark(n = 10000):
     """on my humble desktop machine, this gives ~150 microseconds per gen_url"""
     import time

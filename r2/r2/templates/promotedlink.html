@@ -19,24 +19,19 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%namespace file="utils.html" import="plain_link"/>
-<%namespace file="printable.html" import="state_button"/>
+<%inherit file="link.html"/>
 
+<%def name="tagline()">
+</%def>
 
-<div>
-  <h1>${_('current promotions')}</h1>
-  
-  <ul>
-    %for t in thing.things:
-      <li class="entry">
-        ${plain_link(t.title,t.permalink)}&nbsp;
-        <ul class="buttons" style="display: inline;">
-          <li>
-            ${state_button("unpromote", t._fullname, _("unpromote"), \
-              "return change_state(this, 'unpromote');",_("unpromoted"))}
-          </li>
-        </ul>
-      </li>
-    %endfor
-  </ul>
-</div>
+<%def name="buttons()">
+  ${parent.buttons(comments=not thing.disable_comments,
+                   report=False,ban=False)}
+</%def>
+
+<%def name="entry()">
+  ${parent.entry()}
+  <p class="sponsored-tagline">
+    ${_('sponsored link')} |
+  </p>
+</%def>

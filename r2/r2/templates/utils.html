@@ -221,3 +221,44 @@ ${unsafe(txt)}
     style="${style}"
   %endif
 </%def>
+
+<%def name="checkbox(name, text, val)">
+  <input type="checkbox" ${'checked="checked"' if val else ''}
+    name="${name}">
+    ${text}
+  </input>
+</%def>
+
+<%def name="image_upload(post_target, current_image = None)">
+  <form id="image-upload"
+   enctype="multipart/form-data"
+   class="pretty-form image-upload"
+   target="upload-iframe"
+   action="${post_target}" method="post">
+     <input type="file" name="file" id="file"
+      onchange="show('submit-img')"/>
+     <button id="submit-img" type="submit" name="upload" 
+            onclick="return upload_image(this.form, '${_('uploading')}');"
+            style="display: none;" >
+       ${_('upload')}
+     </button>
+
+     <span style="display: none;" class="error" id="img-status"></span>
+     <iframe src="about:blank" 
+     width="600" height="200" style="display: none;"
+     name="upload-iframe" id="upload-iframe"></iframe>
+
+    <div id="img-preview-container" style="${"" if current_image else "display:none;"}">
+      <img id="img-preview_upload" alt="header preview"
+      %if current_image:
+        src="${current_image}"
+      %else:
+        src="/static/kill.png"
+      %endif
+     /><br />
+    </div>
+    %if caller:
+      ${caller.body()}
+    %endif
+  </form>
+</%def>

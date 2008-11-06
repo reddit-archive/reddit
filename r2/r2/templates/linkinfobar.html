@@ -19,24 +19,26 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%namespace file="printable.html" import="state_button" />
 
 <div class="raisedbox linkinfo">
   <table class="details">
-    <% 
-       # this extra work is to handle translations that require unicode (see JA)
-       datefmt = str(unicode(_('%d %b %Y')).encode('utf8'))
-       %>
-    <tr><td class='profline'>${_("submitted on")}</td>
-      <td>${thing.a._date.strftime(datefmt)}</td></tr>
-      <tr><td class='profline'>${ungettext('point', 'points', 5)}</td>
+    <tr><th>${_("submitted on")}</th>
+      <td>${thing.a._date.strftime(thing.datefmt)}</td></tr>
+    %if not thing.a.hide_score:
+      <tr><th>${ungettext('point', 'points', 5)}</th>
         <td>${thing.a.score}</td></tr>
-      <tr><td class='profline'>${_("up votes")}</td>
+      <tr><th>${_("up votes")}</th>
         <td>${thing.a.upvotes}</td></tr>
-      <tr><td class='profline'>${_("down votes")}</td>
+      <tr><th>${_("down votes")}</th>
         <td>${thing.a.downvotes}</td></tr>
-      %if c.user_is_admin:
-        <%include file="adminlinkinfo.html"/>
-      %endif  
+    %endif
+    %if c.user_is_admin:
+      <%include file="adminlinkinfo.html"/>
+    %endif
+    %if c.user_is_sponsor:
+      <%include file="linkpromoteinfobar.html"/>
+    %endif
   </table>
 </div>
 

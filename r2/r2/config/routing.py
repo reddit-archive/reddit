@@ -72,8 +72,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
     
-    mc('/admin/promote', controller='admin', action='promote')
-    mc('/admin/unpromote', controller='admin', action='unpromote')
+    mc('/admin/:action', controller='admin')
 
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
@@ -101,6 +100,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/mail/optin',  controller='front', action = 'optin')
     mc('/stylesheet', controller = 'front', action = 'stylesheet')
     mc('/frame', controller='front', action = 'frame')
+
+    mc('/promote/edit_promo/:link', controller='promote', action = 'edit_promo')
+    mc('/promote/:action', controller='promote')
 
     mc('/', controller='hot', action='listing')
     

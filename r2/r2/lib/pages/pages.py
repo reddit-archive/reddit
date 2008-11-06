@@ -29,12 +29,15 @@ from pylons import c, request, g
 from pylons.controllers.util import abort
 
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode
+from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser
 from r2.lib.template_helpers import add_sr, get_domain
+from r2.lib.promote import promote_builder_wrapper
 import sys
+
+datefmt = _force_utf8(_('%d %b %Y'))
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
@@ -219,10 +222,13 @@ class Reddit(Wrapped):
             more_buttons.append(NamedButton('saved', False))
             more_buttons.append(NamedButton('recommended', False))
 
-        if c.user_is_loggedin and c.user_is_admin:
-            more_buttons.append(NamedButton('admin'))
-        elif c.user_is_loggedin and c.site.is_moderator(c.user):
-            more_buttons.append(NavButton(menu.admin, 'about/edit'))
+            if c.user_is_admin:
+                more_buttons.append(NamedButton('admin'))
+            elif c.site.is_moderator(c.user):
+                more_buttons.append(NavButton(menu.admin, 'about/edit'))
+
+            if c.user_is_sponsor:
+                more_buttons.append(NamedButton('promote'))
 
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
@@ -409,7 +415,8 @@ class LinkInfoPage(Reddit):
                  link_title = '', *a, **kw):
         # TODO: temp hack until we find place for builder_wrapper
         from r2.controllers.listingcontroller import ListingController
-        link_builder = IDBuilder(link._fullname, wrap = ListingController.builder_wrapper)
+        link_builder = IDBuilder(link._fullname,
+                                 wrap = promote_builder_wrapper(ListingController.builder_wrapper))
 
         # link_listing will be the one-element listing at the top
         self.link_listing = LinkListing(link_builder, nextprev=False).listing()
@@ -452,13 +459,17 @@ class LinkInfoPage(Reddit):
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
-        rb.insert(1, LinkInfoBar(a = self.link))
+        if not (self.link.promoted and not c.user_is_sponsor):
+            rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
 class LinkInfoBar(Wrapped):
     """Right box for providing info about a link."""
     def __init__(self, a = None):
-        Wrapped.__init__(self, a = a)
+        if a:
+            a = Wrapped(a)
+
+        Wrapped.__init__(self, a = a, datefmt = datefmt)
 
 
 class EditReddit(Reddit):
@@ -1109,7 +1120,34 @@ class Cnameframe(Wrapped):
             self.title = ""
             self.frame_target = None
 
-class Promote(Wrapped):
-    def __init__(self, current_list, *k, **kw):
+class PromotePage(Reddit):
+    create_reddit_box  = False
+    submit_box         = False
+    extension_handling = False
+
+    def __init__(self, title, nav_menus = None, *a, **kw):
+        buttons = [NamedButton('current_promos'),
+                   NamedButton('new_promo')]
+
+        menu  = NavMenu(buttons, title='show', base_path = '/promote',
+                        type='flatlist', default = 'current_promos')
+
+        if nav_menus:
+            nav_menus.insert(0, menu)
+        else:
+            nav_menus = [menu]
+
+        Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
+
+
+class PromotedLinks(Wrapped):
+    def __init__(self, current_list, *a, **kw):
         self.things = current_list
-        Wrapped.__init__(self, *k, **kw)
+
+        Wrapped.__init__(self, *a, **kw)
+
+class PromoteLinkForm(Wrapped):
+    def __init__(self, sr = None, link = None, *a, **kw):
+        Wrapped.__init__(self, sr = sr, link = link,
+                         datefmt = datefmt, *a, **kw)
+

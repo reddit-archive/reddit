@@ -24,6 +24,7 @@
    from r2.lib.filters import keep_space
 %>
 <%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
+<%namespace file="utils.html" import="image_upload"/>
 
 <script type="text/javascript">
 function update_title() {
@@ -202,35 +203,23 @@ function update_title() {
   </table>
 </form>
 
-<form id="upload-image"
-      enctype="multipart/form-data"
-      class="pretty-form"
-      target="upload-iframe"
-      action="/api/upload_sr_img" method="post">
-  <table class="preftable">
-    %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
-    <tr>
-      <th>
-        ${_("look and feel")}
-      </th>
-      <td class="prefright">
-        <div class="spacer">
-          ${plain_link(_("edit the stylesheet"),
-                        "/about/stylesheet",
-                        _sr_path = True)}
-          &#32;
-          <span class="gray">(${_("leaves this page")})</span>
-        </div>
-        <div class="spacer">
-          <label for="headerfile">upload header image</label>
-          <input type="file" name="file" id="headerfile"
-                 onchange="show('submit-img')"/>
-          <button id="submit-img" type="submit" name="upload" 
-                  onclick="return upload_image(this.form, '${_('uploading')}');"
-                  style="display: none;" >
-            ${_('Upload')}
-          </button>
-          
+<table class="preftable pretty-form">
+  %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
+  <tr>
+    <th>
+      ${_("look and feel")}
+    </th>
+    <td class="prefright">
+      <div class="spacer">
+        ${plain_link(_("edit the stylesheet"),
+                      "/about/stylesheet",
+                      _sr_path = True)}
+        &#32;
+        <span class="gray">(${_("leaves this page")})</span>
+      </div>
+      <div class="spacer">
+        <label for="headerfile">${_("upload header image")}</label>
+        <%call expr="image_upload('/api/upload_sr_img', thing.site.header)">
           <button id="delete-img"
                   %if not thing.site.header:
                      style="display: none;"
@@ -242,26 +231,12 @@ function update_title() {
           <input type="hidden" name="uh" value="${c.modhash}" />
           <input type="hidden" name="r"  value="${c.site.name}" />
           <input type="hidden" name="header" value="1" />
-  
-          <span style="display: none;" class="error" id="img-status"></span>
-          <iframe src="about:blank" 
-           width="600" height="200" style="display: none;"
-           name="upload-iframe" id="upload-iframe"></iframe>
-        </div>
-        <div id="img-preview-container" style="display: none;">
-          <img id="img-preview" alt="header preview"
-           %if thing.site.header:
-             src="${thing.site.header}"
-           %else:
-             src="/static/kill.png"
-           %endif
-          /><br />
-        </div>
-      </td>
-    </tr>
-    %endif
-  </table>
-</form>
+        </%call>
+      </div>
+    </td>
+  </tr>
+  %endif
+</table>
 
 <div class="save-button">
   <%

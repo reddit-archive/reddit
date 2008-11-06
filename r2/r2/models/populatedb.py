@@ -20,17 +20,39 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
+from r2.lib import promote
 
-def populate(sr_name = 'reddit.com', start_account = 1, sr_title = "reddit.com: what's new online"):
+import random
+
+def populate(sr_name = 'reddit.com', sr_title = "reddit.com: what's new online",
+             num = 100):
     sr = Subreddit._new(name= sr_name, title = sr_title)
     sr._commit()
-    for i in range(start_account,(start_account + 4)):
-        name = 'test' + str(i)
-        password = name
-        user = register(name, password)
-        for j in range(1, 30):
-            link_id = str(i) + '_' + str(j)
-            url = 'http://google.com/?q=' + link_id
-            title = user.name + ' ' + link_id
-            Link._submit(title, url, user, sr, '127.0.0.1')
+    create_accounts(num)
+    create_links(num)
+    
+def create_accounts(num):
+    chars = 'abcdefghijklmnopqrztuvwxyz'
+    for i in range(num):
+        name_ext = ''.join([ random.choice(chars)
+                             for x
+                             in range(int(random.uniform(1, 10))) ])
+        name = 'test_' + name_ext
+        try:
+            register(name, name)
+        except AccountExists:
+            pass
+
+def create_links(num):
+    accounts = list(Account._query(limit = num, data = True))
+    subreddits = list(Subreddit._query(limit = num, data = True))
+    for i in range(num):
+        id = random.uniform(1,100)
+        title = url = 'http://google.com/?q=' + str(id)
+        user = random.choice(accounts)
+        sr = random.choice(subreddits)
+        l = Link._submit(title, url, user, sr, '127.0.0.1')
+
+        if random.choice(([False] * 50) + [True]):
+            promote.promote(l)
             

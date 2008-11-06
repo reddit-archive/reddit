@@ -341,6 +341,11 @@ class VAdmin(Validator):
         if not c.user_is_admin:
             abort(404, "page not found")
 
+class VSponsor(Validator):
+    def run(self):
+        if not c.user_is_sponsor:
+            abort(403, 'forbidden')
+
 class VSrModerator(Validator):
     def run(self):
         if not (c.user_is_loggedin and c.site.is_moderator(c.user) 
@@ -396,10 +401,16 @@ class VSubmitParent(Validator):
 
 class VSubmitSR(Validator):
     def run(self, sr_name):
-        sr = Subreddit._by_name(sr_name)
-        if not (c.user_is_loggedin and sr.can_submit(c.user)):
+        try:
+            sr = Subreddit._by_name(sr_name)
+        except NotFound:
+            c.errors.add(errors.SUBREDDIT_NOEXIST)
+            sr = None
+
+        if sr and not (c.user_is_loggedin and sr.can_submit(c.user)):
             abort(403, "forbidden")
-        return sr
+        else:
+            return sr
         
 pass_rx = re.compile(r".{3,20}")
 
@@ -466,8 +477,14 @@ class VUrl(VRequired):
     def run(self, url, sr = None):
         if sr is None and not isinstance(c.site, FakeSubreddit):
             sr = c.site
+        elif sr:
+            try:
+                sr = Subreddit._by_name(sr)
+            except NotFound:
+                c.errors.add(errors.SUBREDDIT_NOEXIST)
+                sr = None
         else:
-            sr = Subreddit._by_name(sr) if sr else None
+            sr = None
         
         if not url:
             return self.error(errors.NO_URL)

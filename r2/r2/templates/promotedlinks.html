@@ -19,20 +19,27 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%! 
-   import simplejson
- %>
-<html>
-  <head>
-    <script type="text/javascript">
-      <%
-         errors = simplejson.dumps(thing.errors)
-       %>
-      parent.completedUploadImage('${thing.status}','${thing.img_src or ""}',
-                                  '${thing.name or ""}', ${unsafe(errors)});
-    </script>
-  </head>
-  <body>
-    you shouldn't be here
-  </body>
-</html>
+<%!
+  from r2.lib.utils import to36
+%>
+<%namespace file="utils.html" import="plain_link"/>
+<%namespace file="printable.html" import="yes_no_button"/>
+
+
+<div>
+  <h1>${_('current promotions')}</h1>
+  
+  <ul>
+    %for t in thing.things:
+      <li class="entry">
+        ${plain_link(t.title,'/promote/edit_promo/%s' % to36(t._id))}&nbsp;
+        <ul class="buttons" style="display: inline;">
+          <li>
+            ${yes_no_button("unpromote", t._fullname, _("unpromote"), \
+            "return deletetoggle(this,'unpromote');", _("unpromoted"))}
+          </li>
+        </ul>
+      </li>
+    %endfor
+  </ul>
+</div>

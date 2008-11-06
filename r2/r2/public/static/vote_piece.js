@@ -37,7 +37,8 @@ function readLCookie(nameEQ) {
         var c = ca[i]; 
         while(c.charAt(0)==' ') c=c.substring(1,c.length);
         if(c.indexOf(nameEQ)==0) {
-            return unescape(c.substring(nameEQ.length,c.length));
+          /* we can unescape even if it's not escaped */
+          return unescape(c.substring(nameEQ.length,c.length));
         }
     }
     return '';  
