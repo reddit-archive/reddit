@@ -25,14 +25,12 @@
   <table class="details">
     <tr><th>${_("submitted on")}</th>
       <td>${thing.a._date.strftime(thing.datefmt)}</td></tr>
-    %if not thing.a.hide_score:
-      <tr><th>${ungettext('point', 'points', 5)}</th>
-        <td>${thing.a.score}</td></tr>
-      <tr><th>${_("up votes")}</th>
-        <td>${thing.a.upvotes}</td></tr>
-      <tr><th>${_("down votes")}</th>
-        <td>${thing.a.downvotes}</td></tr>
-    %endif
+    <tr><th>${ungettext('point', 'points', 5)}</th>
+      <td>${thing.a.score}</td></tr>
+    <tr><th>${_("up votes")}</th>
+      <td>${thing.a.upvotes}</td></tr>
+    <tr><th>${_("down votes")}</th>
+      <td>${thing.a.downvotes}</td></tr>
     %if c.user_is_admin:
       <%include file="adminlinkinfo.html"/>
     %endif
