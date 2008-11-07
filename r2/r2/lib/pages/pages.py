@@ -651,10 +651,10 @@ class SubredditTopBar(Wrapped):
             drop_down_buttons.append(SubredditButton(sr))
 
         #leaving the 'home' option out for now
-        #drop_down_buttons.insert(0, NamedButton(_('home'), sr_path = False,
+        #drop_down_buttons.insert(0, NamedButton('home', sr_path = False,
         #                                        css_class = 'top-option',
         #                                        dest = '/'))
-        drop_down_buttons.append(NamedButton(_('edit'), sr_path = False,
+        drop_down_buttons.append(NamedButton('edit', sr_path = False,
                                              css_class = 'bottom-option',
                                              dest = '/reddits/'))
         self.sr_dropdown = SubredditMenu(drop_down_buttons,
