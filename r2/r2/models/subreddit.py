@@ -290,13 +290,13 @@ class Subreddit(Thing, Printable):
         return [s._id for s in pop_reddits] if ids else list(pop_reddits)
 
     @classmethod
-    def user_subreddits(cls, user):
+    def user_subreddits(cls, user, limit = 25):
         """subreddits that appear in a user's listings. returns the default
         srs if there are no subscriptions."""
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
-            if len(sr_ids) > 25:
-                return random.sample(sr_ids, 25)
+            if limit and len(sr_ids) > limit:
+                return random.sample(sr_ids, limit)
             else:
                 return sr_ids
         else:
@@ -321,7 +321,7 @@ class Subreddit(Thing, Printable):
     def submit_sr_names(cls, user):
         """subreddit names that appear in a user's submit page. basically a
         sorted/rearranged version of user_subreddits()."""
-        sub_ids = cls.user_subreddits(user)
+        sub_ids = cls.user_subreddits(user, False)
         srs = Subreddit._byID(sub_ids, True,
                               return_dict = False)
         names = [s.name for s in srs if s.can_submit(user)]
