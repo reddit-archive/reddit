@@ -103,21 +103,6 @@ class ApiController(RedditController):
         return res
 
     @Json
-    @validate(dest = nop('dest'))
-    def POST_subscriptions(self, res, dest):
-        """Updates a user's subscriptions after fiddling with them in the sr
-        sidebar"""
-        subs = {}
-        for k, v in request.post.iteritems():
-            if k.startswith('sr_sel_chx_'):
-                subs[k[11:]] = (v == 'on')
-
-        for sr in Subreddit._by_fullname(subs.keys(), data = True, 
-                                         return_dict = False):
-            self._subscribe(sr, subs[sr._fullname])
-        res._redirect(dest)
-
-    @Json
     @validate(VCaptcha(),
               name=VRequired('name', errors.NO_NAME),
               email=VRequired('email', errors.NO_EMAIL),
@@ -406,12 +391,11 @@ class ApiController(RedditController):
         self._login(res, user, dest, rem)
     
 
-
+    @Json
     @validate(VUser(),
               VModhash(),
               container = VByName('id'),
               type = VOneOf('location', ('moderator',  'contributor')))
-    @Json
     def POST_leave(self, res, container, type):
         if container and c.user:
             res._hide("pre_" + container._fullname)

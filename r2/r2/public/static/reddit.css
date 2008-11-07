@@ -94,7 +94,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     background-color: #cee3f8;
 }
 
-#header-img {}
+#header-img {margin-top: 2px;}
 
 #header-top {
     position: absolute;
@@ -138,7 +138,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .dropdown-title {
 }
 
-.dropdown .drop-choices {
+.drop-choices {
     position: absolute;
     left: 0px; /* top gets set in js */
     visibility: hidden;
@@ -148,15 +148,16 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     white-space: nowrap;
     line-height: normal;
     margin-top: 1px;
+    display: inline;
 }
 
-.dropdown a.choice {
+.drop-choices a.choice {
     cursor: pointer;
     padding: 0px 3px 0px 3px;
     display: block;
  }
 
-.dropdown a.choice:hover {
+.drop-choices a.choice:hover {
     background-color: #c7def7;
 }
 
@@ -177,7 +178,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     color: gray; 
  }
 
-.dropdown.lightdrop .drop-choices { 
+.drop-choices.lightdrop { 
     margin-top: 2px;
  }
 
@@ -198,9 +199,8 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     padding-bottom: 0;
     border:none;
 }
-.dropdown.tabdrop .drop-choices {margin-top: 2px;}
+.drop-choices.tabdrop {margin-top: 2px;}
 .dropdown-title.tabdrop { display: none }
-
 
 .tabmenu {
     list-style-type: none;
@@ -223,6 +223,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     background-color: white;
     border: 1px solid #5f99cf;
     border-bottom: 1px solid white;
+    z-index: 100;
 }
 
 #search {
@@ -265,7 +266,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
  }
 
 .subredditbox {
-    border: 1px dotted gray;
+    border: 1px solid gray;
 }
 
 .subredditbox h4 {
@@ -333,9 +334,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 }
 
 .sidebox {
-    border: gray solid 1px;
-    border-bottom: black solid 1px;
-    border-right: black solid 1px;
+    border: 1px solid gray;
     padding-left: 44px;
 }
 .sidebox .spacer { margin-bottom: 5px }
@@ -356,9 +355,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .raisedbox {
     padding: 5px; 
     background: #E0E0E0;
-    border: gray solid 1px;
-    border-bottom: black solid 1px;
-    border-right: black solid 1px;
+    border: 1px solid gray;
 }
 
 .raisedbox h3 {    
@@ -642,6 +639,29 @@ before enabling */
     margin-right: 15px;
 }
 
+.infobar {
+    background-color: #f6e69f;
+    padding: 5px 10px;
+    margin: 5px 310px 5px 0px;
+    border: 1px solid orange;
+    font-size: small;
+}
+
+.infobar img {
+    display: inline;
+    vertical-align: middle;
+}
+
+.menuarea {
+    border-bottom: 1px dotted gray;
+    padding: 5px 10px;
+    margin: 5px 310px 5px 5px;
+    font-size: larger;
+}
+
+.menuarea .spacer {display: inline; margin-right: 15px}
+
+
 /*top link*/
 a.star { text-decoration: none; color: #ff8b60 }
 
@@ -832,9 +852,23 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .subreddit { margin-bottom: 10px; }
 .subreddit p { margin-top: 0px; margin-bottom: 1px; }
-.subreddit .description {font-size: small; }
+.subreddit .description {font-size: small; max-width: 60em;}
 .subreddit .key {display: block;}
 .subreddit .title { font-size: medium; margin-right: 5px; }
+.subreddit .midcol { margin-right: 5px }
+
+.sr-toggle-button {
+    width: 54px;
+    height: 18px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+.sr-toggle-button.add { background-image: url(/static/sr-add-button.png) }
+.sr-toggle-button.remove { background-image: url(/static/sr-remove-button.png)}
+
+.sr-type-img { 
+    margin-right: 2px;
+}
 
 .commentbody { }
 
@@ -1523,7 +1557,6 @@ ul#image-preview-list .description pre {
     float: left;
 }    
 
-
 /* Socialite */
 .socialite.instructions ul {
     margin: 10px;
@@ -1600,4 +1633,67 @@ ul#image-preview-list .description pre {
     background-position: bottom left;
 } 
 
+#sr-header-area { 
+    padding: 3px 0;
+    background-color: #369;
+    white-space: nowrap;
+    overflow: hidden;
+    text-transform: uppercase;
+ }
 
+.dropdown.srdrop .selected { 
+    background: transparent url(/static/droparrowwhite.gif) no-repeat scroll center right;
+    padding-right: 21px;
+    margin: 0 5px;
+    color: white;
+    font-weight: normal;
+ }
+
+.srdrop .choice.top-option {
+    font-style: italic;
+    border-bottom: 1px dotted #369;
+}
+
+.srdrop .choice.bottom-option {
+    font-style: italic;
+    border-top: 1px dotted #369;
+}
+
+
+#sr-bar .separator {color: white}
+#sr-bar a {color: white;} 
+
+#sr-more-link {
+    color: white;
+    background-color: #369;
+    position: absolute;
+    right: 0px;
+    padding: 0 5px 0 15px;
+    font-weight: bold;
+    margin: 0 1px;
+}
+
+#sr-more-link:hover {text-decoration: underline;}
+
+.subscription-box { 
+    border: 1px solid gray;
+    padding: 0 10px;
+ }
+
+.subscription-box li { 
+    clear: left;
+    margin-bottom: 10px;
+}
+
+.subscription-box .sr-toggle-button {
+    margin-right: 5px;
+    float: left;
+}
+
+.subscription-box .title { 
+    font-size: medium;
+    color: blue;
+    margin-right: 5px;
+}
+
+.subscription-box h1{ text-align: center; }

@@ -56,22 +56,6 @@ function relative_path(updates) {
     return path;
 }
 
-function close_menus() {
-    uls = document.getElementsByTagName('DIV');
-    for (var i=0; i<uls.length; i++) {
-        var ul = uls[i];
-        var menu = ul.parentNode;
-        if (menu != cur_menu && ul.className == 'drop-choices') {
-            ul.style.visibility = 'hidden';
-            menu.onclick = function() {
-                return open_menu(this);
-            }
-        }
-    }
-    cur_menu = null;
-}
-
-
 function _id(obj) {
     if(obj && obj.id) {
         var id = obj.id;

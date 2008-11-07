@@ -1,13 +1,17 @@
-function subscribe(checkbox, id) {
-    if (!logged) {
-        return showcover();
-    }
-    if (checkbox.checked) {
+function subscribe(button, id) {
+    if (!logged) return showcover();
+
+    var add_class = "sr-toggle-button add";
+    var remove_class = "sr-toggle-button remove";
+
+    if (button.className == add_class) {
         action = 'sub';
+        button.className = remove_class;
         set_score(id, 1);
     }
     else {
         action = 'unsub';
+        button.className = add_class;
         set_score(id, 0);
     }
     redditRequest_no_response('subscribe', 

@@ -36,6 +36,10 @@ class Wrapped(object):
 
     def __getattr__(self, attr):
         #print "GETATTR: " + str(attr)
+        #one would think this would never happen
+        if attr == 'lookups':
+            raise AttributeError, attr
+
         res = None
         found = False
         for lookup in self.lookups:

@@ -29,6 +29,10 @@
 <%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator"/>
 
 <div id="header">
+  %if thing.srtopbar:
+    ${thing.srtopbar.render()}
+  %endif
+
   <div id="header-top" class="hover">
     %if not c.user_is_loggedin:
       <span class="user">
@@ -41,7 +45,7 @@
          &nbsp;(<b>${c.user.safe_karma}</b>)
       </span>
 
-      ${separator()}
+      ${separator("|")}
 
       <%
          mail_img ="mail"
@@ -55,7 +59,7 @@
                  _id = "mail" )}
     %endif
       
-    ${separator()}
+    ${separator("|")}
     ${thing.corner_buttons().render()}
     
   </div>

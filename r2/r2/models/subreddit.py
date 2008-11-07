@@ -33,6 +33,7 @@ from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 
 import os.path
+import random
 
 class Subreddit(Thing, Printable):
     _defaults = dict(static_path = g.static_path,
@@ -235,7 +236,7 @@ class Subreddit(Thing, Printable):
         rels = (SRMember._fast_query(wrapped, [user], names) if user else {})
         defaults = Subreddit.default_srs(c.content_langs, ids = True)
         for item in wrapped:
-            if user and not user.has_subscribed:
+            if not user or not user.has_subscribed:
                 item.subscriber = item._id in defaults
             else:
                 item.subscriber = rels.get((item, user, 'subscriber'))
@@ -293,7 +294,11 @@ class Subreddit(Thing, Printable):
         """subreddits that appear in a user's listings. returns the default
         srs if there are no subscriptions."""
         if user and user.has_subscribed:
-            return Subreddit.reverse_subscriber_ids(user)
+            sr_ids = Subreddit.reverse_subscriber_ids(user)
+            if len(sr_ids) > 25:
+                return random.sample(sr_ids, 25)
+            else:
+                return sr_ids
         else:
             return cls.default_srs(c.content_langs, ids = True)
 
@@ -502,29 +507,6 @@ class DefaultSR(FakeSubreddit):
     @property
     def title(self):
         return _("reddit.com: what's new online!")
-
-class MaskedSR(DefaultSR):
-    def set_mask(self, mask):
-        self.show_sr = []
-        self.hide_sr = []
-        for k, v in mask.iteritems():
-            if v:
-                self.show_sr.append(k)
-            else:
-                self.hide_sr.append(k)
-        self.show_sr = Subreddit._by_fullname(self.show_sr, 
-                                              return_dict = False)
-        self.show_sr = [s._id for s in self.show_sr]
-        self.hide_sr = Subreddit._by_fullname(self.hide_sr, 
-                                              return_dict = False)
-        self.hide_sr = [s._id for s in self.hide_sr]
-        
-    def get_links(self, sort, time):
-        user = c.user if c.user_is_loggedin else None
-        sr_ids = Subreddit.user_subreddits(user)
-        sr_ids = [s for s in sr_ids if s not in self.hide_sr]
-        sr_ids.extend(self.show_sr)
-        return self.get_links_sr_ids(sr_ids, sort, time)
 
 class MultiReddit(DefaultSR):
     name = 'multi'

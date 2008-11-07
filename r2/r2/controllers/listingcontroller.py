@@ -238,7 +238,6 @@ class HotController(FixListing, ListingController):
     def title(self):
         return c.site.title
 
-    @validate(VSrMask('srs'))
     def GET_listing(self, **env):
         self.infotext = request.get.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
@@ -262,7 +261,6 @@ class ToplinksController(ListingController):
     def query(self):
         return c.site.get_links('toplinks', 'all')
 
-    @validate(VSrMask('srs'))
     def GET_listing(self, **env):
         return ListingController.GET_listing(self, **env)
 
@@ -280,8 +278,7 @@ class NewController(ListingController):
         else:
             return c.site.get_links('new', 'all')
         
-    @validate(VSrMask('srs'),
-              sort = VMenu('controller', NewMenu))
+    @validate(sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
@@ -297,8 +294,7 @@ class BrowseController(ListingController):
         return c.site.get_links(self.sort, self.time)
 
     # TODO: this is a hack with sort.
-    @validate(VSrMask('srs'),
-              sort = VOneOf('sort', ('top', 'controversial')),
+    @validate(sort = VOneOf('sort', ('top', 'controversial')),
               time = VMenu('where', ControversyTimeMenu))
     def GET_listing(self, sort, time, **env):
         self.sort = sort

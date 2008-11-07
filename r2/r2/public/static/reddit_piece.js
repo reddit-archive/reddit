@@ -3,20 +3,13 @@ var cur_menu = null; //track the current open menu
 var have_open = false;
 
 function open_menu(menu) {
-    for (var i=0; i< menu.childNodes.length; i++) {
-        child = menu.childNodes[i];
-        if (child.className == "drop-choices") {
-            child.style.visibility = 'visible';
-            child.style.top = menu.offsetHeight + 'px';
+    var child = menu.nextSibling;
+    if (child.className.indexOf("drop-choices") == -1) return;
 
-            //expand the choices to width of the menu. fixes a
-            //highlighting issue in FF2
-            if (menu.offsetWidth > child.offsetWidth) {
-                child.style.width = menu.offsetWidth + 'px';
-            }
-            break;
-        }
-    }
+    child.style.visibility = 'visible';
+    child.style.top = (menu.offsetTop + menu.offsetHeight) + 'px';
+    child.style.left = menu.offsetLeft + 'px';
+
     menu.onclick = null;
     cur_menu = menu;
     have_open = true;
@@ -26,8 +19,8 @@ function close_menus() {
     uls = document.getElementsByTagName('DIV');
     for (var i=0; i<uls.length; i++) {
         var ul = uls[i];
-        var menu = ul.parentNode;
-        if (menu != cur_menu && ul.className == 'drop-choices') {
+        var menu = ul.previousSibling;
+        if (menu != cur_menu && ul.className.indexOf('drop-choices') > -1) {
             ul.style.visibility = 'hidden';
             menu.onclick = function() {
                 return open_menu(this);
@@ -74,6 +67,8 @@ function init() {
         /*updateMods();*/
     }
     stc = $("siteTable_comments");
+
+    update_reddit_count();
 }
 
 function deletetoggle(link, type) {
@@ -286,11 +281,77 @@ function set_sort(where, sort) {
     return true;
 }
 
-
-
 function disable_ui(name) {
     var help = $(name + "-help");
     var gone = $(name + "-gone");
     help.parentNode.innerHTML = gone.innerHTML;
     redditRequest('disable_ui', {id: name});
+}
+
+function update_reddit_count() {
+    if (!cur_site || !logged) return;
+
+    var decay_factor = .9; //precentage to keep
+    var decay_period = 86400; //num of seconds between updates
+    var num_recent = 10; //num of recent reddits to report
+    var num_count = 100; //num of reddits to actually count
+
+    var date_key = '_date';
+    var cur_date = new Date();
+    var count_cookie = 'reddit_counts';
+    var recent_cookie = 'recent_reddits';
+    var reddit_counts = readCookie(count_cookie);
+
+    //init the reddit_counts dict
+    if (reddit_counts) reddit_counts = reddit_counts.parseJSON();
+    else {
+        reddit_counts = {};
+        reddit_counts[date_key] = cur_date.toString();
+    }
+
+    var last_reset = new Date(reddit_counts[date_key]);
+    var decay = cur_date - last_reset > decay_period * 1000;
+    var names = [];
+
+    //incrmenet the count on the current reddit
+    reddit_counts[cur_site] = (reddit_counts[cur_site] || 0) + 1;
+
+    //collect the reddit names (for sorting) and decay the view counts
+    //if necessary
+    for (var sr_name in reddit_counts) {
+        if (sr_name == date_key || Object.prototype[sr_name]) continue;
+
+        if (decay && sr_name != cur_site) {
+            //compute the new count val
+            var val = Math.floor(decay_factor * reddit_counts[sr_name]);
+            if (val > 0) reddit_counts[sr_name] = val;
+            else delete reddit_counts[sr_name];
+        }
+        
+        if (reddit_counts[sr_name]) names.push(sr_name);
+    }
+
+    //sort the names by the view counts
+    names.sort(function(n1, n2) {return reddit_counts[n2] - reddit_counts[n1];});
+
+    //update the last decay date
+    if (decay) reddit_counts[date_key] = cur_date.toString();
+
+    //build the list of names to report as "recent"
+    var recent_reddits = "";
+    for (var i = 0; i < names.length; i++) {
+        var sr_name = names[i];
+        if (i < num_recent) {
+            recent_reddits += names[i] + ',';
+        } else if (i >= num_count && sr_name != cur_site) {
+            delete reddit_counts[sr_name];
+        }
+    }
+
+    //set the two cookies: one for the counts, one for the final
+    //recent list
+    createCookie(count_cookie, reddit_counts.toJSONString());
+    if (recent_reddits) {
+        createCookie(recent_cookie, recent_reddits);
+    }
 }

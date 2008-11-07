@@ -115,18 +115,6 @@ class VRequired(Validator):
         else:
             return item
 
-class VSrMask(Validator):
-    def run(self, masks):
-        # only work for main reddit
-        if c.site == Default and masks:
-            mask_sr = MaskedSR()
-            masks = [m.split(":")[:2] for m in masks.split(',')]
-            masks = dict((k, int(v)) for k, v in masks)
-            mask_sr.set_mask(masks)
-            c.site = mask_sr
-        c.subreddit_sidebox = True
-        c.subreddit_checkboxes = True
-
 class VLink(Validator):
     def __init__(self, param, redirect = True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)

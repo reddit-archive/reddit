@@ -115,6 +115,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      details      = _("details"),
 
                      # reddits
+                     home         = _("home"),
                      about        = _("about"),
                      edit         = _("edit"),
                      banned       = _("banned"),
@@ -177,6 +178,7 @@ def menu_style(type):
     d = dict(heavydrop = ('dropdown', 'heavydrop'),
              lightdrop = ('dropdown', 'lightdrop'),
              tabdrop = ('dropdown', 'tabdrop'),
+             srdrop = ('dropdown', 'srdrop'),
              flatlist =  ('flatlist', ''),
              tabmenu = ('tabmenu', ''),
              )
@@ -191,10 +193,13 @@ class NavMenu(Styled):
     can be used to set individualized CSS."""
     
     def __init__(self, options, default = None, title = '', type = "dropdown",
-                 base_path = '', **kw):
+                 base_path = '', separator = '|', **kw):
         self.options = options
         self.base_path = base_path
         kw['style'], kw['css_class'] = menu_style(type)
+
+        #used by flatlist to delimit menu items
+        self.separator = separator
 
         # since the menu contains the path info, it's buttons need a
         # configuration pass to get them pointing to the proper urls
@@ -204,32 +209,23 @@ class NavMenu(Styled):
         # selected holds the currently selected button defined as the
         # one whose path most specifically matches the current URL
         # (possibly None)
-        self.selected = None
+        self.default = default
+        self.selected = self.find_selected()
+
+        Styled.__init__(self, title = title, **kw)
+
+    def find_selected(self):
         maybe_selected = [o for o in self.options if o.is_selected()]
         if maybe_selected:
             # pick the button with the most restrictive pathing
             maybe_selected.sort(lambda x, y:
                                 len(y.bare_path) - len(x.bare_path))
-            self.selected = maybe_selected[0]
-        elif default:
+            return maybe_selected[0]
+        elif self.default:
             #lookup the menu with the 'dest' that matches 'default'
             for opt in self.options:
-                if opt.dest == default:
-                    self.selected = opt
-                    break
-
-        Styled.__init__(self, title = title, **kw)
-
-#     def render(self, **kw):
-#         prefix = unicode((c.lang, kw.get('style'), self.base_path, c.site.name,
-#                           self.selected and self.selected.title)).encode('utf8')
-#         key = unicode([(opt.title, opt.path) for opt in self]).encode('utf8')
-#         r = cache.get(prefix + key)
-#         if not r:
-#             r = Styled.render(self, **kw)
-#             cache.set(prefix + key, r, g.page_cache_time)
-#         return r
-        
+                if opt.dest == self.default:
+                    return opt
 
     def __repr__(self):
         return "<NavMenu>"
@@ -294,6 +290,17 @@ class NavButton(Styled):
         """returns the title of the button when selected (for cases
         when it is different from self.title)"""
         return self.title
+
+class SubredditButton(NavButton):
+    def __init__(self, sr):
+        self.sr = sr
+        NavButton.__init__(self, sr.name, sr.path, False)
+
+    def build(self, base_path = ''):
+        self.path = self.sr.path
+
+    def is_selected(self):
+        return c.site == self.sr
 
 
 class NamedButton(NavButton):
@@ -498,6 +505,11 @@ class NumCommentsMenu(SimpleGetMenu):
         if user_num > self.num_comments:
             return ""
         return SimpleGetMenu.render(self, **kw)
+
+class SubredditMenu(NavMenu):
+    def find_selected(self):
+        """Always return False so the title is always displayed"""
+        return None
 
 # --------------------
 # TODO: move to admin area

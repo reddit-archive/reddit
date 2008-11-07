@@ -62,14 +62,14 @@
       %if c.site.type in ("private", "restricted") and c.user_is_loggedin and \
           c.site.is_contributor(c.user):
           ${moderate_button("contributor",
-                            _("you are a %(contributor)s of this reddit."),
+                            _("you are a contributor of this reddit. (%(leave)s)"),
                             _("stop being a contributor?"),
                             _("you are no longer a contributor"))}
      %endif
 
      %if c.user_is_loggedin and c.site.is_moderator(c.user):
           ${moderate_button("moderator",
-                            _("you are a %(moderator)s of this reddit."),
+                            _("you are a moderator of this reddit. (%(leave)s)"),
                             _("stop being a moderator?"),
                             _("you are no longer a moderator"))}
                            
@@ -85,11 +85,11 @@
 
 
 <%def name="moderate_button(location, fmt, question, left)">
-  ${state_button("leave" + location, c.site._fullname, _(location),
+  ${state_button("leave" + location, c.site._fullname, "leave",
                  "return deletetoggle(this, 'leave');", 
                  left, location = location,
                  yes = _("yes"), no = _("no"),
                  question = question,
-                 fmt = fmt, fmt_param = location,
+                 fmt = fmt, fmt_param = "leave",
                  a_class="moderate")}
 </%def>

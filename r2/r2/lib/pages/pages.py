@@ -30,7 +30,8 @@ from pylons.controllers.util import abort
 
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
-from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton, menu
+from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
+from r2.lib.menus import SubredditButton, SubredditMenu, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser
 from r2.lib.template_helpers import add_sr, get_domain
@@ -93,12 +94,9 @@ class Reddit(Wrapped):
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
-        #c.subredditbox is set by VSRMask
-        self.subreddit_sidebox = False
-        #don't show the sidebox on cnames
-        if c.subreddit_sidebox and not c.cname:
-            self.subreddit_sidebox = True
-            self.subreddit_checkboxes = c.site == Default
+        self.srtopbar = None
+        if not c.cname:
+            self.srtopbar = SubredditTopBar()
 
         if c.user_is_loggedin and self.show_sidebar:
             self._content = PaneStack([ShareLink(), content])
@@ -118,9 +116,6 @@ class Reddit(Wrapped):
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
-
-        if self.subreddit_sidebox:
-            ps.append(SubredditBox(self.subreddit_checkboxes))
 
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
@@ -264,10 +259,11 @@ class SubredditInfoBar(Wrapped):
             c.site.is_moderator(c.user) or c.user_is_admin
 
         buttons = [NavButton(plurals.moderators, 'moderators')]
+        if c.site.type != 'public':
+            buttons.append(NavButton(plurals.contributors, 'contributors'))
+
         if is_moderator:
             buttons.append(NamedButton('edit'))
-            if c.site.type != 'public':
-                buttons.append(NavButton(plurals.contributors, 'contributors'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
                             NamedButton('spam')])
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
@@ -517,11 +513,13 @@ class SubredditsPage(Reddit):
                     NamedButton("new")]
         if c.user_is_admin:
             buttons.append(NamedButton("banned"))
-        if c.user_is_loggedin:
-            #add the aliases to "my reddits" stays highlighted
-            buttons.append(NamedButton("mine", aliases=['/reddits/mine/subscriber',
-                                                        '/reddits/mine/contributor',
-                                                        '/reddits/mine/moderator']))
+
+        #removing the 'my reddits' listing for now
+        #if c.user_is_loggedin:
+        #    #add the aliases to "my reddits" stays highlighted
+        #    buttons.append(NamedButton("mine", aliases=['/reddits/mine/subscriber',
+        #                                                '/reddits/mine/contributor',
+        #                                                '/reddits/mine/moderator']))
                
 
         return [PageNameNav('reddits'),
@@ -530,6 +528,11 @@ class SubredditsPage(Reddit):
     def content(self):
         return self.content_stack(self.searchbar, self.nav_menu,
                                   self.sr_infobar, self._content)
+
+    def rightbox(self):
+        ps = Reddit.rightbox(self)
+        ps.append(SubscriptionBox())
+        return ps
 
 class MySubredditsPage(SubredditsPage):
     """Same functionality as SubredditsPage, without the search box."""
@@ -630,19 +633,52 @@ class Over18(Wrapped):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
+class SubredditTopBar(Wrapped):
+    """The horizontal strip at the top of most pages for navigating
+    user-created reddits."""
+    def __init__(self):
+        Wrapped.__init__(self)
+
+        my_reddits = []
+        sr_ids = Subreddit.user_subreddits(c.user if c.user_is_loggedin else None)
+        if sr_ids:
+            my_reddits = Subreddit._byID(sr_ids, True,
+                                         return_dict = False)
+            my_reddits.sort(key = lambda sr: sr.name.lower())
+
+        drop_down_buttons = []    
+        for sr in my_reddits:
+            drop_down_buttons.append(SubredditButton(sr))
+
+        #leaving the 'home' option out for now
+        #drop_down_buttons.insert(0, NamedButton(_('home'), sr_path = False,
+        #                                        css_class = 'top-option',
+        #                                        dest = '/'))
+        drop_down_buttons.append(NamedButton(_('edit'), sr_path = False,
+                                             css_class = 'bottom-option',
+                                             dest = '/reddits/'))
+        self.sr_dropdown = SubredditMenu(drop_down_buttons,
+                                         title = _('my reddits'),
+                                         type = 'srdrop')
+
+    
+        pop_reddits = Subreddit.default_srs(c.content_langs, limit = 30)        
+        buttons = [SubredditButton(sr) for sr in c.recent_reddits]
+        for sr in pop_reddits:
+            if sr not in c.recent_reddits:
+                buttons.append(SubredditButton(sr))
+    
+        self.sr_bar = NavMenu(buttons, type='flatlist', separator = '-',
+                                        _id = 'sr-bar')
+    
 class SubredditBox(Wrapped):
     """A content pane that has the lists of subreddits that go in the
     right pane by default"""
-    def __init__(self, checkboxes = True):
+    def __init__(self):
         Wrapped.__init__(self)
-
-        self.checkboxes = checkboxes
-        if checkboxes:
-            self.title = _('Customize your reddit')
-            self.subtitle = _('Select which communities you want to see')
-        else:
-            self.title = _('Other reddit communities')
-            self.subtitle = 'Visit your subscribed reddits (in bold) or explore new ones'
+        
+        self.title = _('Other reddit communities')
+        self.subtitle = 'Visit your subscribed reddits (in bold) or explore new ones'
         self.create_link = ('/reddits/', menu.more)
         self.more_link   = ('/reddits/create', _('create'))
 
@@ -679,6 +715,16 @@ class SubredditBox(Wrapped):
 
         self.cols = ((col1, col2))
         self.mine = my_reddits
+
+class SubscriptionBox(Wrapped):
+    """The list of reddits a user is currently subscribed to to go in
+    the right pane."""
+    def __init__(self):
+        sr_ids = Subreddit.user_subreddits(c.user if c.user_is_loggedin else None)
+        srs = Subreddit._byID(sr_ids, True, return_dict = False)
+        srs.sort(key = lambda sr: sr.name.lower())
+        b = IDBuilder([sr._fullname for sr in srs])
+        self.reddits = LinkListing(b).listing().things
 
 class CreateSubreddit(Wrapped):
     """reddit creation form."""
@@ -1061,7 +1107,7 @@ class ContributorList(UserList):
 
     @property
     def table_title(self):
-        return  plurals.contributors
+        return _("contributors to %(reddit)s") % dict(reddit = c.site.name)
 
     def user_ids(self):
         return c.site.contributors
@@ -1076,7 +1122,7 @@ class ModList(UserList):
 
     @property
     def table_title(self):
-        return plurals.moderators
+        return _("moderators to %(reddit)s") % dict(reddit = c.site.name)
 
     def user_ids(self):
         return c.site.moderators

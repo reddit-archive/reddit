@@ -51,7 +51,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/reddits/:where', controller='reddits', action='listing',
        where = 'popular',
        requirements=dict(where="popular|new|banned"))
-    
+
     mc('/reddits/mine/:where', controller='myreddits', action='listing',
        where='subscriber',
        requirements=dict(where='subscriber|contributor|moderator'))

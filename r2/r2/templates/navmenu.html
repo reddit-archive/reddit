@@ -39,15 +39,17 @@
       %elif thing.title:
           <span class="selected title">${thing.title}</span>
       %endif
-      <div class="drop-choices">
-        %for option in thing:
-          %if option != thing.selected:
-            ${plain_link(option.title, option.path, _sr_path = option.sr_path,
-                         _class = "choice")}
-          %endif
-        %endfor
-      </div>
     </div>
+
+    <div class="drop-choices ${css_class}">
+      %for option in thing:
+        %if option != thing.selected:
+          ${plain_link(option.title, option.path, _sr_path = option.sr_path,
+                       _class = "choice" + " " + option.css_class)}
+        %endif
+      %endfor
+    </div>
+
   %endif
 </%def>
 
@@ -68,7 +70,7 @@
         %>
         <li ${class_name}>
           %if i > 0:
-            ${separator()}
+            ${separator(thing.separator)}
           %endif
           ${content}
         </li>

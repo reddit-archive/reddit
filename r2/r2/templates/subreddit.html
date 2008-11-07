@@ -30,7 +30,6 @@
 <%def name="numcol()">
 </%def>
 
-
 <%def name="entry()">
 <% fullname = thing._fullname %>
 <p class="titlerow">
@@ -57,19 +56,47 @@
   ${self.score(thing, thing.subscriber)}
 </%def>
 
+##this function is used by subscriptionbox.html
+<%def name="addremove_button(sr)">
+  <div class="sr-toggle-button ${'remove' if sr.subscriber else 'add'}"
+       onclick="subscribe(this, '${sr._fullname}');">
+  </div>
+</%def>
+
+##this function is used by subscriptionbox.html
+<%def name="permission_icons(sr)">
+  %if sr.moderator:
+    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="/static/star.png" />
+  %endif
+
+  %if sr.type in ("restricted", "private") and not sr.moderator:
+    <img class="sr-type-img"
+       %if sr.contributor:
+         alt="${_('contributor')}"
+         title="${_('contributor')}"
+         src="/static/pencil.png"
+       %else:
+         alt="${_('not contributor')}"
+         title="${_('not contributor')}"
+         src="/static/pencil-gray.png"
+       %endif
+    />
+  %endif 
+
+  %if sr.type == "private":
+    <img class="sr-type-img" title="${_('private')}" alt="${_('private')}" src="/static/eye.png" />
+  %endif
+
+  %if sr.over_18:
+    <img class="sr-type-img" title="${_('over18')}" alt="${_('over18')}" src="/static/over18_icon.png" />
+  %endif
+
+</%def>
+
 <%def name="midcol(display=True)">
   <div class="midcol">
-    <input type="checkbox" 
-           autocomplete="off"
-           onchange="subscribe(this, '${thing._fullname}');" 
-           onclick="this.blur();"
-           ${thing.subscriber and unsafe("checked='checked'") or ''}/>
-    %if thing.type in ("restricted", "private"):
-      <% key_path = "green" if thing.contributor else "red" %>
-      <% alt_txt = "permitted" if thing.contributor else "not permitted" %>
-      <% key_path = "/static/key_%s.png" % key_path %>
-      <img class="key" src="${key_path}" alt="${alt_txt}" />
-    %endif
+    ${addremove_button(thing)}
+    ${permission_icons(thing)}
   </div>
 </%def>
 

@@ -347,6 +347,14 @@ def set_colors():
     if color_rx.match(request.get.get('bordercolor') or ''):
         c.bordercolor = request.get.get('bordercolor')
 
+def set_recent_reddits():
+    names = read_user_cookie('recent_reddits')
+    c.recent_reddits = []
+    if names:
+        names = filter(None, names.split(','))
+        c.recent_reddits = Subreddit._by_fullname(names, data = True,
+                                                  return_dict = False)
+
 def ratelimit_agents():
     user_agent = request.user_agent
     for s in g.agents:
@@ -484,6 +492,7 @@ class RedditController(BaseController):
         set_iface_lang()
         set_content_lang()
         set_colors()
+        set_recent_reddits()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
