@@ -101,6 +101,9 @@ Comment.comment = function(r) {
     vl[id] = r.vl;
 };
 
+// Commenting on a link is handled by the Comment API so defer to it
+Link.comment = Comment.comment;
+
 Comment.morechildren = function(r) {
     var c = new Thing(r.id);
     if(c.row) c.del();

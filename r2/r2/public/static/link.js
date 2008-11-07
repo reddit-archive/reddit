@@ -455,9 +455,6 @@ Link.prototype.share = function() {
     share.attach(this.$("child"));
 };
 
-// Commenting on a link is handled by the Comment API so defer to it
-Link.comment = Comment.comment;
-
 function linkstatus(form) {
     var title = field(form.title);
     if(title) {
