@@ -38,12 +38,14 @@
                 fmt = _("Click %(here)s to disable this feature."), 
                 fmt_param = "here",
                 question = _("are you sure?"),
-                yes = _("yes"), no = _("no"))}
+                yes = _("yes"), no = _("no"),
+                a_class="organic-help-button")}
     %endif
     ${state_button("nvm" + name, name, _("here"),
               "hide('%s-help'); return false;" % name, "",
               fmt = _("Click %(here)s to close help."),
-              fmt_param = "here")}
+              fmt_param = "here",
+              a_class="organic-help-button")}
   </div>
   <div id="${name}-gone" style="display:none" >
     <p style="margin-left:5px">

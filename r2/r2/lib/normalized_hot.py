@@ -72,7 +72,7 @@ def cached_query(query, sr):
 
     query._read_cache = read_cache
     res = list(query)
-    
+
     return res
 
 def get_hot(sr):

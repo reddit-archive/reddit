@@ -92,6 +92,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     position: relative;
     _height: 0px; /*ie6 hack*/
     background-color: #cee3f8;
+    z-index: 99;
 }
 
 #header-img {margin-top: 2px;}
@@ -593,6 +594,8 @@ before enabling */
     background-color: #EFF7FF;
     border: none;
 }
+
+.organic-help-button { padding: 0 .5ex; }
 
 .sponsored-tagline {
     color: #808080;
