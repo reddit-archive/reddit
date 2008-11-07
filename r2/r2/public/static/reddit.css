@@ -1646,8 +1646,10 @@ ul#image-preview-list .description pre {
 
 .dropdown.srdrop .selected { 
     background: transparent url(/static/droparrowwhite.gif) no-repeat scroll center right;
+    display: inline-block;
+    vertical-align: text-bottom;
     padding-right: 21px;
-    margin: 0 5px;
+    padding-left: 5px; /* have to use padding instead of margin cause of ie */
     color: white;
     font-weight: normal;
  }
@@ -1661,7 +1663,6 @@ ul#image-preview-list .description pre {
     font-style: italic;
     border-top: 1px dotted #369;
 }
-
 
 #sr-bar .separator {color: white}
 #sr-bar a {color: white;} 
