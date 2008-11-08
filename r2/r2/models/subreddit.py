@@ -290,7 +290,7 @@ class Subreddit(Thing, Printable):
         return [s._id for s in pop_reddits] if ids else list(pop_reddits)
 
     @classmethod
-    def user_subreddits(cls, user, limit = 25):
+    def user_subreddits(cls, user, limit = 50):
         """subreddits that appear in a user's listings. returns the default
         srs if there are no subscriptions."""
         if user and user.has_subscribed:
