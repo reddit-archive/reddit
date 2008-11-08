@@ -41,7 +41,7 @@
       %endif
     </div>
 
-    <div class="drop-choices ${css_class}">
+    <div class="drop-choices ${css_class}" style="display:none">
       %for option in thing:
         %if option != thing.selected:
           ${plain_link(option.title, option.path, _sr_path = option.sr_path,

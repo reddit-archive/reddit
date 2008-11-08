@@ -131,9 +131,9 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 }
 
 .dropdown { 
-    position: relative;
     cursor: default;
     display: inline;
+    position: relative;
 }
 
 .dropdown-title {
@@ -142,14 +142,12 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .drop-choices {
     position: absolute;
     left: 0px; /* top gets set in js */
-    visibility: hidden;
     border: 1px solid gray;
     z-index: 100;
     background-color: white;
     white-space: nowrap;
     line-height: normal;
     margin-top: 1px;
-    display: inline;
 }
 
 .drop-choices a.choice {
@@ -1637,7 +1635,7 @@ ul#image-preview-list .description pre {
 } 
 
 #sr-header-area { 
-    padding: 3px 0;
+    padding: 3px 0px;
     background-color: #369;
     white-space: nowrap;
     overflow: hidden;
@@ -1673,6 +1671,7 @@ ul#image-preview-list .description pre {
     background-color: #369;
     position: absolute;
     right: 0px;
+    top: 3px;
     padding: 0 5px 0 15px;
     font-weight: bold;
     margin: 0 1px;

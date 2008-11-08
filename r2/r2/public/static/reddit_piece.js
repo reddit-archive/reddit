@@ -6,7 +6,7 @@ function open_menu(menu) {
     var child = menu.nextSibling;
     if (child.className.indexOf("drop-choices") == -1) return;
 
-    child.style.visibility = 'visible';
+    show(child);
     child.style.top = (menu.offsetTop + menu.offsetHeight) + 'px';
     child.style.left = menu.offsetLeft + 'px';
 
@@ -21,7 +21,7 @@ function close_menus() {
         var ul = uls[i];
         var menu = ul.previousSibling;
         if (menu != cur_menu && ul.className.indexOf('drop-choices') > -1) {
-            ul.style.visibility = 'hidden';
+            hide(ul);
             menu.onclick = function() {
                 return open_menu(this);
             }
