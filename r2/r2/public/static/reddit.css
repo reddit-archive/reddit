@@ -1664,6 +1664,7 @@ ul#image-preview-list .description pre {
     border-top: 1px dotted #369;
 }
 
+#sr-bar { margin-left: 10px; }
 #sr-bar .separator {color: white}
 #sr-bar a {color: white;} 
 
