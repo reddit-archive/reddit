@@ -110,6 +110,9 @@ class Reddit(Wrapped):
         
         ps = PaneStack(css_class='spacer')
 
+        if self.searchbox:
+            ps.append(SearchForm())
+
         if not c.user_is_loggedin and self.loginbox:
             ps.append(LoginFormWide())
 
@@ -175,9 +178,9 @@ class Reddit(Wrapped):
             buttons += [JsButton(g.lang_name.get(lang, lang),  
                                   onclick = "return showlang();",
                                   css_class = "pref-lang")]
-        buttons += [NamedButton("stats", False, nocname=True)]
-        buttons += [NamedButton("help", False, nocname=True),
-                    NamedButton("blog", False, nocname=True)]                    
+        #buttons += [NamedButton("stats", False, nocname=True)]
+        #buttons += [NamedButton("help", False, nocname=True),
+                    #NamedButton("blog", False, nocname=True)]                    
         
         if c.user_is_loggedin:
             buttons += [NamedButton("logout", False,
@@ -188,7 +191,10 @@ class Reddit(Wrapped):
 
     def footer_nav(self):
         """navigation buttons in the footer."""
-        buttons = [NamedButton("feedback",     False),
+        buttons = [NamedButton("help", False, nocname=True),
+                   NamedButton("blog", False, nocname=True),
+                   NamedButton("stats", False, nocname=True),
+                   NamedButton("feedback",     False),
                    NamedButton("bookmarklets", False),
                    NamedButton("socialite",    False),
                    NamedButton("buttons",      True),

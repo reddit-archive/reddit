@@ -108,8 +108,12 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 #header-bottom-right { 
     position: absolute;
-    right: 5px;
-    bottom: 5px;
+    right: 0px;
+    bottom: 0px;
+    background-color: #EFF7FF;
+    padding: 4px;
+    -moz-border-radius-topleft: 7px;
+    -webkit-border-top-left-radius: 7px;
  }
 
 #mail img {position: relative; top: 2px}
@@ -225,26 +229,19 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     z-index: 100;
 }
 
-#search {
-    margin-top: 0px;
-}
-
-#search input { 
-    vertical-align: middle;
-    height: 19px;
- }
 
 #search input[type=text] {
     border: 1px solid gray;
-    height: 17px;
-    width: 274px;
+    height: 22px;
+    font-size: 18px;
+    width: 295px;
     color: gray;
-    padding-left: 5px;
+    padding: 2px;
 }
 
 .content {
     z-index: 1;
-    margin: 5px 0px 0px 5px;
+    margin: 7px 0px 0px 5px;
 }
 
 .content .spacer { margin-bottom: 5px }
@@ -256,12 +253,12 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .side { 
     float: right; 
     background-color: white; 
-    margin: 5px 5px 0 5px;
+    margin: 0px 5px 0 5px;
     width: 300px;
 }
 
 .side .spacer { 
-    margin-bottom: 10px;
+    margin: 7px 0;
  }
 
 .subredditbox {
@@ -336,7 +333,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     border: 1px solid gray;
     padding-left: 44px;
 }
-.sidebox .spacer { margin-bottom: 5px }
+.sidebox .spacer { margin: 0 0 5px 0 }
 
 .sidebox.create {
     background: url(/static/create-a-reddit.png) no-repeat scroll center left;
@@ -1636,21 +1633,25 @@ ul#image-preview-list .description pre {
 
 #sr-header-area { 
     padding: 3px 0px;
-    background-color: #369;
+    background-color: #e0e0e0;
     white-space: nowrap;
     overflow: hidden;
     text-transform: uppercase;
+    border-bottom: 1px solid gray;
+    font-size: 90%;
  }
 
 .dropdown.srdrop .selected { 
-    background: transparent url(/static/droparrowwhite.gif) no-repeat scroll center right;
+    background: transparent url(/static/droparrowgray.gif) no-repeat scroll center right;
     display: inline-block;
     vertical-align: bottom;
     padding-right: 21px;
     padding-left: 5px; /* have to use padding instead of margin cause of ie */
-    color: white;
+    color: black;
     font-weight: normal;
  }
+
+.srdrop .choice {margin-top: 3px;}
 
 .srdrop .choice.top-option {
     font-style: italic;
@@ -1663,12 +1664,12 @@ ul#image-preview-list .description pre {
 }
 
 #sr-bar { margin-left: 10px; }
-#sr-bar .separator {color: white}
-#sr-bar a {color: white;} 
+#sr-bar .separator {color: gray; }
+#sr-bar a {color: black;} 
 
 #sr-more-link {
-    color: white;
-    background-color: #369;
+    color: black;
+    background-color: #e0e0e0;
     position: absolute;
     right: 0px;
     top: 3px;

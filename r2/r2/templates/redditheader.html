@@ -33,7 +33,30 @@
     ${thing.srtopbar.render()}
   %endif
 
-  <div id="header-top" class="hover">
+  ##<div id="header-top" class="hover">
+  ##</div>
+
+  <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
+    <%
+        if g.css_killswitch or not c.site.header:
+            header_img = DefaultSR.header
+        else:
+            header_img = c.site.header
+    %>
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
+
+    ##keeps the height of the header from varying when there isnt any content
+    &nbsp;
+
+    %for toolbar in thing.toolbars:
+      ${toolbar.render()}
+    %endfor
+  </div>
+
+  <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
+  ##  %if thing.searchbox:
+  ##    ${SearchForm().render()}
+  ##  %endif
     %if not c.user_is_loggedin:
       <span class="user">
         ${text_with_js(_("want to join? %(register)s in seconds"),
@@ -62,28 +85,6 @@
     ${separator("|")}
     ${thing.corner_buttons().render()}
     
-  </div>
 
-  <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
-    <%
-        if g.css_killswitch or not c.site.header:
-            header_img = DefaultSR.header
-        else:
-            header_img = c.site.header
-    %>
-    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
-
-    ##keeps the height of the header from varying when there isnt any content
-    &nbsp;
-
-    %for toolbar in thing.toolbars:
-      ${toolbar.render()}
-    %endfor
-  </div>
-
-  <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
-    %if thing.searchbox:
-      ${SearchForm().render()}
-    %endif
   </div>
 </div>
