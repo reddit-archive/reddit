@@ -52,7 +52,7 @@
   %else:
     <link rel="stylesheet" href="${static(g.stylesheet)}" 
           type="text/css" />
-    %if (not g.css_killswitch) and c.user.pref_show_stylesheets:
+    %if c.allow_styles:
       %if c.site.stylesheet:
       <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
             type="text/css" />

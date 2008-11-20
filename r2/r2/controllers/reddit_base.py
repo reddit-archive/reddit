@@ -508,6 +508,17 @@ class RedditController(BaseController):
             and c.render_style == 'html'):
             return self.intermediate_redirect("/over18")
 
+        #check whether to allow custom styles
+        c.allow_styles = True
+        if g.css_killswitch:
+            c.allow_styles = False
+        #if the preference is set and we're not at a cname
+        elif not c.user.pref_show_stylesheets and not c.cname:
+            c.allow_styles = False
+        #if the site has a cname, but we're not using it
+        elif c.site.domain and not c.cname:
+            c.allow_styles = False
+
         #check content cache
         if not c.user_is_loggedin:
             r = cache.get(self.request_key())
