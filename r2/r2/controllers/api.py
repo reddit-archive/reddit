@@ -217,7 +217,7 @@ class ApiController(RedditController):
     @validate(VUser(),
               VCaptcha(),
               ValidDomain('url'),
-              VRatelimit(rate_user = True, rate_ip = True),
+              VRatelimit(rate_user = True, rate_ip = True, prefix='rate_submit_'),
               ip = ValidIP(),
               sr = VSubmitSR('sr'),
               url = VUrl(['url', 'sr']),
@@ -283,7 +283,7 @@ class ApiController(RedditController):
                 queries.new_savehide(r)
         #set the ratelimiter
         if should_ratelimit:
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True)
+            VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix='rate_submit_')
 
         #update the queries
         if g.write_query_queue:
@@ -333,7 +333,7 @@ class ApiController(RedditController):
 
     @Json
     @validate(VCaptcha(),
-              VRatelimit(rate_ip = True),
+              VRatelimit(rate_ip = True, prefix='rate_register_'),
               name = VUname(['user_reg']),
               email = nop('email_reg'),
               password = VPassword(['passwd_reg', 'passwd2_reg']),
@@ -363,7 +363,7 @@ class ApiController(RedditController):
             return
 
         user = register(name, password)
-        VRatelimit.ratelimit(rate_ip = True)
+        VRatelimit.ratelimit(rate_ip = True, prefix='rate_register_')
 
         #anything else we know (email, languages)?
         if email:
