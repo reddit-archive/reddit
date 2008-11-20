@@ -38,10 +38,11 @@
 
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
-        if g.css_killswitch or not c.site.header:
-            header_img = DefaultSR.header
-        else:
+        if c.site.header and c.allow_styles:
             header_img = c.site.header
+        else:
+            header_img = DefaultSR.header
+
     %>
     ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
 
