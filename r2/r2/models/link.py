@@ -350,6 +350,14 @@ class PromotedLink(Link):
 class LinkCompressed(Link):
     _nodb = True
 
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Link.add_props(user, wrapped)
+
+        for item in wrapped:
+            item.score_fmt = Score.points
+
+
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported',)
     _defaults = dict(reported = 0, 
