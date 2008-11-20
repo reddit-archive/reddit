@@ -563,4 +563,9 @@ class CommentsController(ListingController):
     title_text = _('comments')
 
     def query(self):
-        return Comment._query(sort = desc('_date'))
+        q = Comment._query(Comment.c._spam == (True,False),
+                           sort = desc('_date'))
+        if not c.user_is_admin:
+            q._filter(Comment.c._spam == False)
+
+        return q
