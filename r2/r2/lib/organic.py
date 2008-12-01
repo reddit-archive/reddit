@@ -32,6 +32,7 @@ import random
 from time import time
 
 organic_lifetime = 5*60
+organic_length   = 30
 
 # how many regular organic links should show between promoted ones
 promoted_every_n = 5
@@ -40,7 +41,9 @@ def keep_link(link):
     return not any((link.likes != None,
                     link.saved,
                     link.clicked,
-                    link.hidden))
+                    link.hidden,
+                    link._deleted,
+                    link._spam))
 
 def insert_promoted(link_names, sr_ids, logged_in):
     """
@@ -58,38 +61,46 @@ def insert_promoted(link_names, sr_ids, logged_in):
         else:
             return keep_link(l)
 
-    # remove any that the user has acted on
-    builder = IDBuilder([ x._fullname for x in promoted_items ],
-                        skip = True, keep_fn = my_keepfn)
-    promoted_items = builder.get_items()[0]
+    # no point in running the builder over more promoted links than
+    # we'll even use
+    max_promoted = max(1,len(link_names)/promoted_every_n)
 
     # in the future, we may want to weight this sorting somehow
     random.shuffle(promoted_items)
 
+    # remove any that the user has acted on
+    builder = IDBuilder(promoted_items,
+                        skip = True, keep_fn = my_keepfn,
+                        num = max_promoted)
+    promoted_items = builder.get_items()[0]
+
     if not promoted_items:
         return
-
     # don't insert one at the head of the list 50% of the time for
     # logged in users, and 50% of the time for logged-off users when
     # the pool of promoted links is less than 3 (to avoid showing the
     # same promoted link to the same person too often)
-    if c.user_is_loggedin or len(promoted_items) < 3:
-        skip_first = random.choice((True,False))
-    else:
-        skip_first = False
+    if logged_in or len(promoted_items) < 3:
+        promoted_items.insert(0, None)
 
     # insert one promoted item for every N items
     for i, item in enumerate(promoted_items):
         pos = i * promoted_every_n
         if pos > len(link_names):
             break
-        elif pos == 0 and skip_first:
+        elif item is None:
             continue
         else:
             link_names.insert(pos, promoted_items[i]._fullname)
 
 @memoize('cached_organic_links', time = organic_lifetime)
-def cached_organic_links(sr_ids, logged_in):
+def cached_organic_links(user_id, langs):
+    if user_id is None:
+        sr_ids = Subreddit.default_srs(langs, ids = True)
+    else:
+        user = Account._byID(user_id, data=True)
+        sr_ids = Subreddit.user_subreddits(user)
+
     sr_count = count.get_link_counts()
 
     #only use links from reddits that you're subscribed to
@@ -107,26 +118,33 @@ def cached_organic_links(sr_ids, logged_in):
                 new_item = random.choice(items[1:4])
             link_names.insert(0, new_item._fullname)
 
-    insert_promoted(link_names, sr_ids, logged_in)
-
-    builder = IDBuilder(link_names, num = 30, skip = True, keep_fn = keep_link)
-    links = builder.get_items()[0]
+    # remove any that the user has acted on
+    builder = IDBuilder(link_names,
+                        skip = True, keep_fn = keep_link,
+                        num = organic_length)
+    link_names = [ x._fullname for x in builder.get_items()[0] ]
 
     calculation_key = str(time())
-
     update_pos(0, calculation_key)
 
-    # in case of duplicates (inserted by the random up-and-coming link
-    # or a promoted link), return only the first
-    ret = [l._fullname for l in UniqueIterator(links)]
+    insert_promoted(link_names, sr_ids, user_id is not None)
+
+    # remove any duplicates caused by insert_promoted
+    ret = [ l for l in UniqueIterator(link_names) ]
 
     return (calculation_key, ret)
 
 def organic_links(user):
     from r2.controllers.reddit_base import organic_pos
+    
+    sr_ids = Subreddit.user_subreddits(user, limit = None)
+    # make sure that these are sorted so the cache keys are constant
+    sr_ids.sort()
 
-    sr_ids = Subreddit.user_subreddits(user)
-    cached_key, links = cached_organic_links(sr_ids, c.user_is_loggedin)
+    if c.user_is_loggedin:
+        cached_key, links = cached_organic_links(user._id, None)
+    else:
+        cached_key, links = cached_organic_links(None, c.content_langs)
 
     cookie_key, pos = organic_pos()
     # pos will be 0 if it wasn't specified

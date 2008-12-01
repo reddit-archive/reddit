@@ -590,15 +590,26 @@ before enabling */
     border: none;
 }
 
-.organic-help-button { padding: 0 .5ex; }
-
-.sponsored-tagline {
+.organic-listing .sponsored-tagline {
     color: #808080;
     bottom: 0;
     margin: 0 5px 5px 0;
     position: absolute;
-    right: 6.2em;
+    right: 6.3em;
+    display: block;
 }
+
+.sponsored-tagline {
+    display: none;
+}
+
+.promote-pixel {
+    position: absolute;
+    top: -1000px;
+    right: -1000px;
+}
+
+.organic-help-button { padding: 0 .5ex; }
 
 .infobar {
     background-color: #f6e69f;

@@ -201,7 +201,7 @@ class HotController(FixListing, ListingController):
 
             if len(o.things) > 0:
                 # only pass through a listing if the links made it
-                # through the builder in organic_links *and* ours
+                # through our builder
                 organic.update_pos(pos+1, calculation_key)
 
                 return o

@@ -25,6 +25,7 @@ from Crypto.Cipher import AES
 from random import choice
 from pylons import g, c
 from urllib import quote_plus, unquote_plus
+import sha
 
 key_len = 16
 pad_len = 32
@@ -86,11 +87,11 @@ def safe_str(text):
 
 class Info(object): 
     '''Class for generating and reading user tracker information.'''
-    __slots__ = []
+    _tracked = []
     tracker_url = ""
 
     def __init__(self, text = '', **kw):
-        for s in self.__slots__:
+        for s in self._tracked:
             setattr(self, s, '')
             
         if text:
@@ -100,8 +101,8 @@ class Info(object):
                 g.log.error("decryption failure on '%s'" % text)
                 data = []
             for i, d in enumerate(data):
-                if i < len(self.__slots__):
-                    setattr(self, self.__slots__[i], d)
+                if i < len(self._tracked):
+                    setattr(self, self._tracked[i], d)
         else:
             self.init_defaults(**kw)
             
@@ -109,7 +110,7 @@ class Info(object):
         raise NotImplementedError
     
     def tracking_url(self):
-        data = '|'.join(getattr(self, s) for s in self.__slots__)
+        data = '|'.join(getattr(self, s) for s in self._tracked)
         data = encrypt(data)
         return "%s?v=%s" % (self.tracker_url, data)
 
@@ -131,7 +132,7 @@ class Info(object):
 
 class UserInfo(Info):
     '''Class for generating and reading user tracker information.'''
-    __slots__ = ['name', 'site', 'lang']
+    _tracked = ['name', 'site', 'lang']
     tracker_url = g.tracker_url
 
     def init_defaults(self):
@@ -140,13 +141,28 @@ class UserInfo(Info):
         self.lang = safe_str(c.lang if c.lang else '')
             
 class PromotedLinkInfo(Info):
-    __slots__ = ['fullname']
+    _tracked = []
     tracker_url = g.adtracker_url
+
+    def __init__(self, text = "", ip = "0.0.0.0", **kw):
+        self.ip = ip
+        Info.__init__(self, text = text, **kw)
 
     def init_defaults(self, fullname):
         self.fullname = fullname
 
+    @classmethod
+    def make_hash(cls, ip, fullname):
+        return sha.new("%s%s%s" % (ip, fullname,
+                                   g.tracking_secret)).hexdigest()
+
+    def tracking_url(self):
+        return (self.tracker_url + "?hash=" +
+                self.make_hash(self.ip, self.fullname)
+                + "&id=" + self.fullname)
+
 class PromotedLinkClickInfo(PromotedLinkInfo):
+    _tracked = []
     tracker_url = g.clicktracker_url
 
     def init_defaults(self, dest, **kw):
@@ -155,8 +171,7 @@ class PromotedLinkClickInfo(PromotedLinkInfo):
         return PromotedLinkInfo.init_defaults(self, **kw)
 
     def tracking_url(self):
-        s = PromotedLinkInfo.tracking_url(self) + '&url=' + self.dest
-        g.log.debug("generated %s" % s)
+        s = (PromotedLinkInfo.tracking_url(self) + '&url=' + self.dest)
         return s
         
 def benchmark(n = 10000):

@@ -23,16 +23,23 @@
 <%namespace file="help.html" import="help_or_hide"/>
 <% 
    from r2.lib.template_helpers import replace_render, static 
+   from r2.lib.promote import get_promoted
 %>
 
 <div id="siteTable_organic" class="organic-listing">
+  <%
+     promoted = set(get_promoted())
+     promoted = [o for o in thing.org_links if o in promoted]
+   %>
   <div id="ajaxHook_organic" class="ajaxhook">  </div>
   <script type="text/javascript">
     ## fortunately, python arrays print in JS-compatible form.
     var organic_links = ${thing.org_links};
+    reddit_thing_info.fetch = ${promoted};
   </script>
   %for a in thing.things:
-    ${unsafe(replace_render(thing, a, display = (thing.visible_link == a._fullname)))}
+    ${unsafe(replace_render(thing, a, 
+                            display = (thing.visible_link == a._fullname)))}
   %endfor
 
   <div class="nextprev">

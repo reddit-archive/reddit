@@ -132,14 +132,6 @@ OrganicListing.prototype.change = function(dir) {
         c.fade("veryfast");
         add_to_aniframes(function() {
                 c.hide();
-                if(n.$('promoted')) {
-                  var i = new Image();
-                  i.src = n.$('promoted').tracking_url.value;
-                  // just setting i.src is enough to most browsers to
-                  // download, but in Opera it's not, we'd need to
-                  // uncomment this line to get the image in the DOM
-                  /* n.$('promoted').appendChild(i); */
-                }
                 n.show();
                 n.set_opacity(0);
             }, 1);

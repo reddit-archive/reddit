@@ -38,7 +38,7 @@ class PromoteController(RedditController):
     def GET_current_promos(self):
         current_list = promote.get_promoted()
 
-        b = IDBuilder([ x._fullname for x in current_list])
+        b = IDBuilder(current_list)
 
         render_list = b.get_items()[0]
 

@@ -238,7 +238,6 @@ class Link(Thing, Printable):
         from r2.lib.count import incr_counts
         from r2.lib.media import thumbnail_url
         from r2.lib.utils import timeago
-        from r2.lib.tracking import PromotedLinkClickInfo
 
         saved = Link._saved(user, wrapped) if user else {}
         hidden = Link._hidden(user, wrapped) if user else {}
@@ -291,17 +290,6 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
-
-            if item.promoted and g.clicktracker_url:
-                # promoted links' clicks are tracked, so here we are
-                # changing its URL to be the tracking/redirecting URL.
-                # This can't be done in PromotedLink.add_props because
-                # we still want to track clicks for links that haven't
-                # been wrapped as PromotedLinks, as in regular
-                # listings
-                item.url = PromotedLinkClickInfo.gen_url(fullname = item._fullname,
-                                                         dest = item.url)
-
         if c.user_is_loggedin:
             incr_counts(wrapped)
 

@@ -230,9 +230,7 @@ class SelfEmptyingCache(LocalCache):
 
     def maybe_reset(self):
         if len(self) > self.max_size:
-            print "SelfEmptyingCache clearing!"
             self.clear()
-            print "Cleared (%d)" % len(self)
 
     def set(self,key,val,time = 0):
         self.maybe_reset()

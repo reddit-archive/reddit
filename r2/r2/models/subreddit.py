@@ -51,6 +51,7 @@ class Subreddit(Thing, Printable):
                      show_media = False,
                      domain = None,
                      )
+    sr_limit = 50
 
     @classmethod
     def _new(self, name, title, lang = 'en', type = 'public',
@@ -290,7 +291,7 @@ class Subreddit(Thing, Printable):
         return [s._id for s in pop_reddits] if ids else list(pop_reddits)
 
     @classmethod
-    def user_subreddits(cls, user, limit = 50):
+    def user_subreddits(cls, user, limit = sr_limit):
         """subreddits that appear in a user's listings. returns the default
         srs if there are no subscriptions."""
         if user and user.has_subscribed:

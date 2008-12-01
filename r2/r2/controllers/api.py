@@ -49,6 +49,7 @@ from r2.config import cache
 from r2.lib.jsonresponse import JsonResponse, Json
 from r2.lib.jsontemplates import api_type
 from r2.lib import cssfilter
+from r2.lib import tracking
 from r2.lib.media import force_thumbnail, thumbnail_url
 
 from simplejson import dumps
@@ -56,8 +57,7 @@ from simplejson import dumps
 from datetime import datetime, timedelta
 from md5 import md5
 
-from r2.lib.promote import promote, unpromote
-from r2.controllers import promotecontroller
+from r2.lib.promote import promote, unpromote, get_promoted
 
 def link_listing_by_url(url, count = None):
     try:
@@ -1316,9 +1316,10 @@ class ApiController(RedditController):
 
     @Json
     @validate(VSponsor(),
-              link             = VLink('link_id'),
+              ValidDomain('url'),
+              l                = VLink('link_id'),
               title            = VTitle('title'),
-              url              = nop('url'),
+              url              = VUrl(['url', 'sr']),
               sr               = VSubmitSR('sr'),
               subscribers_only = VBoolean('subscribers_only'),
               disable_comments = VBoolean('disable_comments'),
@@ -1330,7 +1331,18 @@ class ApiController(RedditController):
                         disable_comments,
                         timelimit = None, timelimitlength = None, timelimittype = None,
                         disable_expire = None,
-                        link = None):
+                        l = None):
+        res._update('status', innerHTML = '')
+        if isinstance(url, str):
+            # VUrl may have modified the URL to make it valid, like
+            # adding http://
+            res._update('url', value=url)
+        elif isinstance(url, tuple) and isinstance(url[0], Link):
+            # there's already one or more links with this URL, but
+            # we're allowing mutliple submissions, so we really just
+            # want the URL
+            url = url[0].url
+
         if res._chk_error(errors.NO_TITLE):
             res._focus('title')
         elif res._chk_errors((errors.NO_URL,errors.BAD_URL)):
@@ -1339,39 +1351,39 @@ class ApiController(RedditController):
             res._focus('sr')
         elif timelimit and res._chk_error(errors.BAD_NUMBER):
             res._focus('timelimitlength')
-        elif link:
-            link.title = title
-            link.url = url
+        elif l:
+            l.title = title
+            l.url = url
 
-            link.promoted_subscribersonly = subscribers_only
-            link.disable_comments = disable_comments
+            l.promoted_subscribersonly = subscribers_only
+            l.disable_comments = disable_comments
 
             if disable_expire:
-                link.promote_until = None
+                l.promote_until = None
             elif timelimit and timelimitlength and timelimittype:
-                link.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
+                l.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
             
-            link._commit()
+            l._commit()
 
-            res._redirect('/promote/edit_promo/%s' % to36(link._id))
+            res._redirect('/promote/edit_promo/%s' % to36(l._id))
         else:
-            link = Link(title = title,
-                        url = url,
-                        author_id = c.user._id,
-                        sr_id = sr._id)
+            l = Link(title = title,
+                     url = url,
+                     author_id = c.user._id,
+                     sr_id = sr._id)
 
             if timelimit and timelimitlength and timelimittype:
                 promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
             else:
                 promote_until = None
 
-            link._commit()
+            l._commit()
 
-            promote(link, subscribers_only = subscribers_only,
+            promote(l, subscribers_only = subscribers_only,
                     promote_until = promote_until,
                     disable_comments = disable_comments)
             
-            res._redirect('/promote/edit_promo/%s' % to36(link._id))
+            res._redirect('/promote/edit_promo/%s' % to36(l._id))
 
     def GET_link_thumb(self, *a, **kw):
         """
@@ -1397,3 +1409,29 @@ class ApiController(RedditController):
             return UploadedImage(_('saved'), thumbnail_url(link), "upload",
                                  errors = errors).render()
     
+
+    @Json
+    @validate(ids = nop("ids"))
+    def POST_onload(self, res, ids, *a, **kw):
+        ids = set(ids.split(','))
+
+        promoted = set(get_promoted())
+        promoted = ids.intersection(promoted)
+
+        if promoted:
+            links = {}
+            
+            promoted = Link._by_fullname(promoted, data = True, return_dict = False)
+            for l in promoted:
+                links[l._fullname] = [
+                    tracking.PromotedLinkInfo.gen_url(fullname=l._fullname,
+                                                      ip = request.ip),
+                    tracking.PromotedLinkClickInfo.gen_url(fullname = l._fullname,
+                                                           dest = l.url,
+                                                           ip = request.ip)
+                    ]
+            res.object = links
+
+        else:
+            res.object = {}
+

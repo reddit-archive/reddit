@@ -2,6 +2,7 @@ function Thing(id) {
     this.__init__(id);
 };
 
+var reddit_thing_info = {fetch: []};
 Thing.prototype = {
     __init__: function(id) {
         this._id = id;
@@ -101,6 +102,18 @@ Thing.prototype = {
         }
         else {
             show(this.row);
+        }
+        /* promoted magic */
+        if(reddit_thing_info && reddit_thing_info[this._id]) {
+            var img = this.$("promote_img");
+            var img_src = unsafe(reddit_thing_info[this._id][0]);
+            var new_url = unsafe(reddit_thing_info[this._id][1]);
+            if (img && img.src != img_src) {
+                img.src = img_src;
+                this.$("title").href = new_url;
+                if(this.$("thumbnail"))
+                    this.$("thumbnail").href = new_url;
+            }
         }
     },
 

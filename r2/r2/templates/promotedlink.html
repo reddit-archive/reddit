@@ -34,4 +34,11 @@
   <p class="sponsored-tagline">
     ${_('sponsored link')} |
   </p>
+  <img class="promote-pixel"
+   id="promote_img_${thing._fullname}" 
+   src="/static/pixel.png" alt=" " />
+  <script type="text/javascript">
+    reddit_thing_info.fetch.push("${thing._fullname}");
+  </script>
 </%def>
+

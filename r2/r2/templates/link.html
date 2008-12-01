@@ -23,7 +23,6 @@
 <%!
    from r2.models.subreddit import Default 
    from r2.lib.template_helpers import get_domain
-   from r2.lib import tracking
  %>
 
 <%inherit  file="printable.html"/>
@@ -81,23 +80,6 @@
     ${self.admintagline()}
   </ul>
   ${self.mediadiv()}
-  %if thing.promoted:
-    <%
-      tracking_url = tracking.PromotedLinkInfo.gen_url(fullname=thing._fullname)
-    %>
-    <form id="promoted_${thing._fullname}" method="GET"
-          action="about:blank" style="display: none;">
-      <input type="hidden" name="tracking_url" value="${tracking_url}" />
-    </form>
-    <script type="text/javascript">
-      /* see also OrganicListing.prototype.change()
-         dirty, dirty hack. But some people are into that */
-      if(!"$display") {
-        var i = new Image();
-        i.src = "${tracking_url}";
-      }
-    </script>
-  %endif
 </%def>
 
 <%def name="subreddit()" buffered="True">
