@@ -83,6 +83,7 @@ def get_promoted_cached():
     return [ x._fullname for x in links if x not in expired_links ]
 
 def get_promoted():
+    return ()
     return get_promoted_cached()
 
 def promote_builder_wrapper(alternative_wrapper):

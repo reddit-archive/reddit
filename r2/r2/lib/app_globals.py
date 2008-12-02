@@ -26,6 +26,7 @@ from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, CacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import _get_languages
+from r2.lib.lock import make_lock_factory
 
 class Globals(object):
 
@@ -111,6 +112,7 @@ class Globals(object):
         mc = Memcache(self.memcaches)
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches)
+        self.make_lock = make_lock_factory(mc)
 
         self.rec_cache = Memcache(self.rec_cache)
         

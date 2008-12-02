@@ -33,6 +33,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
+from r2.lib.comment_tree import link_comments
 
 from copy import deepcopy, copy
 
@@ -416,51 +417,9 @@ class CommentBuilder(Builder):
             if hasattr(i, 'child'):
                 for j in self.item_iter(i.child.things):
                     yield j
-            
-
-    @staticmethod
-    @memoize('builder.link_comments2')
-    def link_comments(link_id):
-        q = Comment._query(Comment.c.link_id == link_id,
-                           Comment.c._deleted == (True, False),
-                           Comment.c._spam == (True, False),
-                           data = True)
-        comments = list(q)
-        cids = [c._id for c in comments]
-
-        #make a tree
-        comment_tree = {}
-        for cm in comments:
-            p_id = cm.parent_id if hasattr(cm, 'parent_id') else None
-            comment_tree.setdefault(p_id, []).append(cm._id)
-
-        #calculate the depths
-        depth = {}
-        level = 0
-        cur_level = comment_tree.get(None, ())
-        while cur_level:
-            next_level = []
-            for cm_id in cur_level:
-                depth[cm_id] = level
-                next_level.extend(comment_tree.get(cm_id, ()))
-            cur_level = next_level
-            level += 1
-
-        #calc the number of children
-        num_children = {}
-        for cm_id in cids:
-            num = 0
-            todo = [cm_id]
-            while todo:
-                more = comment_tree.get(todo.pop(0), ())
-                num += len(more)
-                todo.extend(more)
-            num_children[cm_id] = num
-
-        return cids, comment_tree, depth, num_children
 
     def get_items(self, num, nested = True, starting_depth = 0):
-        r = self.link_comments(self.link._id)
+        r = link_comments(self.link._id)
         cids, comment_tree, depth, num_children = r
         if cids:
             comments = set(Comment._byID(cids, data = True, 

@@ -51,6 +51,7 @@ from r2.lib.jsontemplates import api_type
 from r2.lib import cssfilter
 from r2.lib import tracking
 from r2.lib.media import force_thumbnail, thumbnail_url
+from r2.lib.comment_tree import add_comment, delete_comment
 
 from simplejson import dumps
 
@@ -531,6 +532,7 @@ class ApiController(RedditController):
         #comments have special delete tasks
         elif isinstance(thing, Comment):
             thing._delete()
+            delete_comment(thing)
             if g.use_query_cache:
                 queries.new_comment(thing, None)
 
@@ -630,6 +632,9 @@ class ApiController(RedditController):
             set_last_modified(c.user, 'overview')
             set_last_modified(c.user, 'commented')
             set_last_modified(link, 'comments')
+
+            #update the comment cache
+            add_comment(item)
 
         #update the queries
         if g.write_query_queue:
