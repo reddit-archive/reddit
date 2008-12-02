@@ -19,19 +19,16 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.models import *
+from __future__ import with_statement
 
-from r2.lib.utils import timefromnow
-from r2.lib.memoize import clear_memo, memoize
-from r2.lib.db.operators import desc
+from r2.models import *
+from r2.lib.memoize import memoize, clear_memo
 
 from datetime import datetime
-import random
 
-# time in seconds to retain cached list of promoted links; note that
-# expired promotions are cleaned only this often
-promoted_memo_lifetime = 60*60
+promoted_memo_lifetime = 30
 promoted_memo_key = 'cached_promoted_links'
+promoted_lock_key = 'cached_promoted_links_lock'
 
 def promote(thing, subscribers_only = False, promote_until = None,
             disable_comments = False):
@@ -52,39 +49,74 @@ def promote(thing, subscribers_only = False, promote_until = None,
         thing.promoted_subscribersonly = True
 
     thing._commit()
-    clear_memo(promoted_memo_key)
+
+    with g.make_lock(promoted_lock_key):
+        promoted = get_promoted_direct()
+        promoted.append(thing._fullname)
+        set_promoted(promoted)
 
 def unpromote(thing):
     thing.promoted = False
     thing.unpromoted_on = datetime.now(g.tz)
     thing.promote_until = None
     thing._commit()
+
+    with g.make_lock(promoted_lock_key):
+        promoted = [ x for x in get_promoted_direct()
+                     if x != thing._fullname ]
+
+        set_promoted(promoted)
+
+def set_promoted(link_names):
+    # caller is assumed to execute me inside a lock if necessary
+    g.permacache.set(promoted_memo_key, link_names)
+
     clear_memo(promoted_memo_key)
 
 @memoize(promoted_memo_key, time = promoted_memo_lifetime)
-def get_promoted_cached():
-    """
-       Returns all links that are promoted, and cleans up any that are
-       ready for automatic unpromotion
-    """
-    links = Link._query(Link.c.promoted == True,
-                        sort = desc('_date'),
-                        data = True)
-
-    # figure out which links have expired
-    expired_links = set(x for x in links
-                        if x.promote_until
-                        and x.promote_until < datetime.now(g.tz))
-    
-    for x in expired_links:
-        g.log.debug('Unpromoting "%s"' % x.title)
-        unpromote(x)
-
-    return [ x._fullname for x in links if x not in expired_links ]
-
 def get_promoted():
-    return ()
-    return get_promoted_cached()
+    # does not lock the list to return it, so (slightly) stale data
+    # will be returned if called during an update rather than blocking
+    return get_promoted_direct()
+
+def get_promoted_direct():
+    return g.permacache.get(promoted_memo_key, [])
+
+def expire_promoted():
+    """
+        To be called periodically (e.g. by `cron') to clean up
+        promoted links past their expiration date
+    """
+    with g.make_lock(promoted_lock_key):
+        link_names = set(get_promoted_direct())
+        links = Link._by_fullname(link_names, data=True, return_dict = False)
+
+        link_names = []
+        expired_names = []
+
+        for x in links:
+            if (not x.promoted
+                or x.promote_until and x.promote_until < datetime.now(g.tz)):
+                g.log.info('Unpromoting %s' % x._fullname)
+                unpromote(x)
+                expired_names.append(x._fullname)
+            else:
+                link_names.append(x._fullname)
+
+        set_promoted(link_names)
+
+    return expired_names
+
+def get_promoted_slow():
+    # to be used only by a human at a terminal
+    with g.make_lock(promoted_lock_key):
+        links = Link._query(Link.c.promoted == True,
+                            data = True)
+        link_names = [ x._fullname for x in links ]
+
+        set_promoted(link_names)
+
+    return link_names
 
 def promote_builder_wrapper(alternative_wrapper):
     def wrapper(thing):

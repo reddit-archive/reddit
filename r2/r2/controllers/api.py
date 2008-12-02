@@ -1420,23 +1420,23 @@ class ApiController(RedditController):
     def POST_onload(self, res, ids, *a, **kw):
         ids = set(ids.split(','))
 
-        promoted = set(get_promoted())
-        promoted = ids.intersection(promoted)
-
-        if promoted:
-            links = {}
-            
-            promoted = Link._by_fullname(promoted, data = True, return_dict = False)
-            for l in promoted:
-                links[l._fullname] = [
-                    tracking.PromotedLinkInfo.gen_url(fullname=l._fullname,
-                                                      ip = request.ip),
-                    tracking.PromotedLinkClickInfo.gen_url(fullname = l._fullname,
-                                                           dest = l.url,
-                                                           ip = request.ip)
-                    ]
-            res.object = links
-
-        else:
+        if not ids:
             res.object = {}
+            return
+
+        links = {}
+
+        # make sure that they are really promoted
+        promoted = Link._by_fullname(ids, data = True, return_dict = False)
+        promoted = [ l for l in promoted if l.promoted ]
+
+        for l in promoted:
+            links[l._fullname] = [
+                tracking.PromotedLinkInfo.gen_url(fullname=l._fullname,
+                                                  ip = request.ip),
+                tracking.PromotedLinkClickInfo.gen_url(fullname = l._fullname,
+                                                       dest = l.url,
+                                                       ip = request.ip)
+                ]
+        res.object = links
 

@@ -22,14 +22,14 @@
 
 <%namespace file="help.html" import="help_or_hide"/>
 <% 
-   from r2.lib.template_helpers import replace_render, static 
+   from r2.lib.template_helpers import replace_render, static
    from r2.lib.promote import get_promoted
 %>
 
 <div id="siteTable_organic" class="organic-listing">
   <%
      promoted = set(get_promoted())
-     promoted = [o for o in thing.org_links if o in promoted]
+     promoted = [o for o in thing.org_links if o in promoted ]
    %>
   <div id="ajaxHook_organic" class="ajaxhook">  </div>
   <script type="text/javascript">
