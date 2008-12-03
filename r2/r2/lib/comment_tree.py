@@ -55,16 +55,19 @@ def add_comment_nolock(comment):
     num_children[cm_id] = 0
 
     #dfs to find the list of parents for the new comment
-    def find_parents(top = None):
-        children = comment_tree.get(top, ())
-        if cm_id in children:
-            return []
-        else:
-            for c in children:
-                parents = find_parents(c)
-                if parents is not None:
-                    parents.append(c)
-                    return parents
+    def find_parents():
+        stack = [cid for cid in comment_tree[None]]
+        parents = []
+        while stack:
+            cur_cm = stack.pop()
+            if cur_cm == cm_id:
+                return parents
+            elif comment_tree.has_key(cur_cm):
+                #make cur_cm the end of the parents list
+                parents = parents[:depth[cur_cm]] + [cur_cm]
+                for child in comment_tree[cur_cm]:
+                    stack.append(child)
+
 
     #if this comment had a parent, find the parent's parents
     if p_id:
