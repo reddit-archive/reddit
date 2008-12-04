@@ -29,7 +29,7 @@
 <div>
   <h1>${_('current promotions')}</h1>
   
-  <ul>
+  <ul class="promoted-list">
     %for t in thing.things:
       <li class="entry">
         ${plain_link(t.title,'/promote/edit_promo/%s' % to36(t._id))}&nbsp;

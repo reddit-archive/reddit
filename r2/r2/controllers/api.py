@@ -30,6 +30,8 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
+from r2.controllers import ListingController
+
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, to36, timefromnow
 from r2.lib.wrapped import Wrapped
@@ -59,6 +61,7 @@ from datetime import datetime, timedelta
 from md5 import md5
 
 from r2.lib.promote import promote, unpromote, get_promoted
+from r2.lib.promote import promote_builder_wrapper
 
 def link_listing_by_url(url, count = None):
     try:
@@ -1283,15 +1286,8 @@ class ApiController(RedditController):
               mid_margin = VCssMeasure('mid_margin'),
               links = VFullNames('links'))
     def POST_fetch_links(self, res, num_margin, mid_margin, links):
-        # TODO: redundant with listingcontroller.  Perhaps part of reddit_base or utils
-        def builder_wrapper(thing):
-            if c.user.pref_compress and isinstance(thing, Link):
-                thing.__class__ = LinkCompressed
-                thing.score_fmt = Score.points
-            return Wrapped(thing)
-
         b = IDBuilder([l._fullname for l in links], 
-                      wrap = builder_wrapper)
+                      wrap = promote_builder_wrapper(ListingController.builder_wrapper))
         l = OrganicListing(b)
         l.num_margin = num_margin
         l.mid_margin = mid_margin
@@ -1322,6 +1318,7 @@ class ApiController(RedditController):
     @Json
     @validate(VSponsor(),
               ValidDomain('url'),
+              ip               = ValidIP(),
               l                = VLink('link_id'),
               title            = VTitle('title'),
               url              = VUrl(['url', 'sr']),
@@ -1332,7 +1329,8 @@ class ApiController(RedditController):
               timelimit        = VBoolean('timelimit'),
               timelimitlength  = VInt('timelimitlength',1,1000),
               timelimittype    = VOneOf('timelimittype',['hours','days','weeks']))
-    def POST_edit_promo(self, res, title, url, sr, subscribers_only,
+    def POST_edit_promo(self, res, ip,
+                        title, url, sr, subscribers_only,
                         disable_comments,
                         timelimit = None, timelimitlength = None, timelimittype = None,
                         disable_expire = None,
@@ -1375,7 +1373,9 @@ class ApiController(RedditController):
             l = Link(title = title,
                      url = url,
                      author_id = c.user._id,
-                     sr_id = sr._id)
+                     sr_id = sr._id,
+                     lang = sr.lang,
+                     ip = ip)
 
             if timelimit and timelimitlength and timelimittype:
                 promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
@@ -1416,10 +1416,8 @@ class ApiController(RedditController):
     
 
     @Json
-    @validate(ids = nop("ids"))
+    @validate(ids = VLinkFullnames('ids'))
     def POST_onload(self, res, ids, *a, **kw):
-        ids = set(ids.split(','))
-
         if not ids:
             res.object = {}
             return

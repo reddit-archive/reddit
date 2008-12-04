@@ -1178,11 +1178,11 @@ class PromotePage(Reddit):
     extension_handling = False
 
     def __init__(self, title, nav_menus = None, *a, **kw):
-        buttons = [NamedButton('current_promos'),
+        buttons = [NamedButton('current_promos', dest = ''),
                    NamedButton('new_promo')]
 
         menu  = NavMenu(buttons, title='show', base_path = '/promote',
-                        type='flatlist', default = 'current_promos')
+                        type='flatlist')
 
         if nav_menus:
             nav_menus.insert(0, menu)

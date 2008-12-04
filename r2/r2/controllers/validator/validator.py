@@ -182,16 +182,18 @@ def chksrname(x):
 
 
 class VLinkFullnames(Validator):
+    "A space- or comma-separated list of fullnames for Links"
     valid_re = re.compile(r'^(' + Link._type_prefix + str(Link._type_id) +
-                          '_[0-9a-z]+ ?)+$')
-    
+                          r'_[0-9a-z]+[ ,]?)+$')
+    splitter = re.compile('[ ,]+')
+
     def __init__(self, item, *a, **kw):
         self.item = item
         Validator.__init__(self, item, *a, **kw)
     
     def run(self, val):
         if val and self.valid_re.match(val):
-            return val
+            return self.splitter.split(val)
     
 class VLength(Validator):
     def __init__(self, item, length = 10000,

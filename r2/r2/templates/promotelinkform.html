@@ -24,7 +24,7 @@
   from r2.lib.media import thumbnail_url
 %>
 <%namespace file="utils.html" import="error_field, checkbox, plain_link, image_upload" />
-<%namespace file="printable.html" import="state_button, yes_no_button" />
+<%namespace file="printable.html" import="yes_no_button" />
 
 <form class="content pretty-form" method="POST" action="/post/new_promo"
  id="promo_form" onsubmit="return post_form(this, 'edit_promo', null, null, true)">
@@ -34,21 +34,6 @@
   %endif
 
   <table class="content preftable">
-    %if thing.link:
-      <tr>
-        <th></th>
-        <td>
-          ${plain_link("go to the comments page", thing.link.make_permalink_slow())}
-        </td>
-      </tr>
-      <tr>
-        <th></th>
-        <td>
-          ${yes_no_button("unpromote", thing.link._fullname, _("unpromote"), \
-          "return deletetoggle(this,'unpromote');", _("unpromoted"))}
-        </td>
-      </tr>
-    %endif
     <tr>
       <th><label for="title">${_("title")}</label></th>
       <td>
@@ -134,6 +119,22 @@
         </%call>
       </td>
       <td id="img-status"></td>
+    </tr>
+  </table>
+
+  <table class="content preftable pretty-form">
+    <tr>
+      <th></th>
+      <td>
+        ${plain_link("go to the comments page", thing.link.make_permalink_slow())}
+      </td>
+    </tr>
+    <tr>
+      <th></th>
+      <td>
+        ${yes_no_button("unpromote", thing.link._fullname, _("unpromote"), \
+        "return deletetoggle(this,'unpromote');", _("unpromoted"))}
+      </td>
     </tr>
   </table>
 %endif

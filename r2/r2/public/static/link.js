@@ -104,6 +104,16 @@ Thing.prototype = {
             show(this.row);
         }
         /* promoted magic */
+        if(reddit_thing_info.fetch && reddit_thing_info.fetch.length != 0) {
+            var f = reddit_thing_info.fetch;
+            for(var i = 0; i < f.length; i++) {
+                if (f[i] == this._id) {
+                    redditRequest("onload", {ids: f.join(",")}, 
+                                  handleOnLoad, true);
+                    break;
+                }
+            }
+        }
         if(reddit_thing_info && reddit_thing_info[this._id]) {
             var img = this.$("promote_img");
             var img_src = unsafe(reddit_thing_info[this._id][0]);

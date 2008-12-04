@@ -93,10 +93,9 @@ def process_new_links(period = media_period, force = False):
     results = {}
     jobs = []
     for link in fetch_things2(links):
-        if link.is_self:
+        if link.is_self or link.promoted:
             continue
-
-        if not force and (link.has_thumbnail or link.media_object):
+        elif not force and (link.has_thumbnail or link.media_object):
             continue
 
         jobs.append(make_link_info_job(results, link, g.useragent))

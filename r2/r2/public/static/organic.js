@@ -95,7 +95,7 @@ OrganicListing.populate = function(links) {
     var o = new OrganicListing();
     for(var i = 0; i < links.length; i++) {
         d = links[i].data;
-        var t = o.append(unsafe(d.content));
+        var t = o.insert(unsafe(d.content), o.listing.firstChild);
         if(t && t[0]) {
             vl[d.id] = d.vl;
             o.listing._loaded[d.id] = t[0];

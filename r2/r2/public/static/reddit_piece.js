@@ -70,24 +70,25 @@ function init() {
     /* onload populates reddit_link_info, so checking its contents
      * ensures it doesn't get called on reload/refresh */
     if ( reddit_thing_info.fetch && reddit_thing_info.fetch.length != 0 )
-        redditRequest("onload", {ids: reddit_thing_info.fetch.join(",")}, 
-                      handleOnLoad);
+        updateLinks(reddit_thing_info.fetch);
     update_reddit_count();
 }
 
-function handleOnLoad(r) {
-    r = parse_response(r);
-    
-    var f = reddit_thing_info.fetch;
-
-    reddit_thing_info = (r && r.response) ? r.response.object : {};
-
+function updateLinks(f) {
     for (var i = 0; i < f.length; i++) {
         var l = new Link(f[i]);
         if (l.row && l.row.style.display != "none")
             l.show();
     }
+}
+
+function handleOnLoad(r) {
+    r = parse_response(r);
+    var f = reddit_thing_info.fetch;
     reddit_thing_info.fetch = [];
+
+    reddit_thing_info = (r && r.response) ? r.response.object : {};
+    updateLinks(f);
 }
 
 function deletetoggle(link, type) {

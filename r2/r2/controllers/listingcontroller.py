@@ -335,7 +335,7 @@ class ByIDController(ListingController):
     def GET_listing(self, names, **env):
         if not names:
             return self.abort404()
-        self.names = names.split(' ')
+        self.names = names
         return ListingController.GET_listing(self, **env)
 
 

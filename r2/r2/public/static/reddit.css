@@ -583,6 +583,11 @@ before enabling */
     border: solid 1px;
     padding: 5px 0 5px 0;
     overflow: hidden;
+    position: relative;
+}
+
+.promoted-list {
+    font-size: larger;
 }
 
 .organic-listing .promoted {
