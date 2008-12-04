@@ -5,7 +5,7 @@ var _duration = 750; /* ms */
 var _ani_speeds = {slow: 2* _duration,
                    medium: _duration,
                    fast: _duration/2,
-                   veryfast: _duration/4};
+                   veryfast: _duration/8};
 
 function __animate() {
     var a = aniqueue ? aniqueue[0] : [];

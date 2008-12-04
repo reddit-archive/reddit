@@ -51,7 +51,7 @@ OrganicListing.prototype.check_ahead = function(dir, num) {
         var cur = this.current();                       
         redditRequest('fetch_links', {num_margin: cur.$("num")   .style.width,
                     mid_margin: cur.$("arrows").style.width,
-                    links: to_load});
+                    links: to_load}, null, true);
     }
 };
 
