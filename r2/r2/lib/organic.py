@@ -80,7 +80,7 @@ def insert_promoted(link_names, sr_ids, logged_in):
     # logged in users, and 50% of the time for logged-off users when
     # the pool of promoted links is less than 3 (to avoid showing the
     # same promoted link to the same person too often)
-    if logged_in or len(promoted_items) < 3:
+    if (logged_in or len(promoted_items) < 3) and random.choice((True,False)):
         promoted_items.insert(0, None)
 
     # insert one promoted item for every N items
