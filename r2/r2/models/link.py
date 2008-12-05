@@ -246,7 +246,8 @@ class Link(Thing, Printable):
 
         for item in wrapped:
             show_media = (c.user.pref_media == 'on' or
-                          (item.promoted and item.has_thumbnail) or
+                          (item.promoted and item.has_thumbnail
+                           and c.user.pref_media != 'off') or
                           (c.user.pref_media == 'subreddit' and
                            item.subreddit.show_media))
 

@@ -546,7 +546,7 @@ before enabling */
 
 /* organic listing */
 .organic-listing { 
-    border: solid 1px #666666;
+    border: solid 1px gray;
     padding: 0;
     overflow: hidden; 
     position: relative;
@@ -580,7 +580,7 @@ before enabling */
 
 .promoted {
     background-color: #EFF7FF;
-    border: solid 1px;
+    border: 1px solid gray;
     padding: 5px 0 5px 0;
     overflow: hidden;
     position: relative;
@@ -596,16 +596,16 @@ before enabling */
 }
 
 .organic-listing .sponsored-tagline {
+    right: 6.4em;
+}
+
+.sponsored-tagline { 
     color: #808080;
     bottom: 0;
     margin: 0 5px 5px 0;
     position: absolute;
-    right: 6.3em;
-    display: block;
-}
-
-.sponsored-tagline {
-    display: none;
+    font-weight: bold;
+    right: 0;
 }
 
 .promote-pixel {
@@ -985,9 +985,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 
 .login-form-side { 
-    border: gray solid 1px;
-    border-bottom: black solid 1px;
-    border-right: black solid 1px;
+    border: 1px solid gray;
 }
 
 .login-form-side input { 
