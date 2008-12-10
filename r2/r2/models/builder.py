@@ -101,7 +101,8 @@ class Builder(object):
         for item in items:
             w = self.wrap(item)
             wrapped.append(w)
-            types.setdefault(item.__class__, []).append(w)
+
+            types.setdefault(w.render_class, []).append(w)
 
             #TODO pull the author stuff into add_props for links and
             #comments and messages?

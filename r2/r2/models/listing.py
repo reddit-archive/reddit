@@ -61,7 +61,7 @@ class Listing(object):
         fullnames = {}
         for i in self.builder.item_iter(builder_items):
             rs = c.render_style
-            key = i.cache_key(i)
+            key = i.render_class.cache_key(i)
             if key:
                 fullnames[key + rs + c.lang] = i
 

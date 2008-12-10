@@ -306,12 +306,6 @@ def validate_css(string):
 
     return parsed,report
 
-def builder_wrapper(thing):
-    if c.user.pref_compress and isinstance(thing, Link):
-        thing.__class__ = LinkCompressed
-        thing.score_fmt = Score.points
-    return Wrapped(thing)
-
 def find_preview_comments(sr):
     comments = Comment._query(Comment.c.sr_id == c.site._id,
                               limit=25, data=True)
@@ -336,6 +330,7 @@ def find_preview_links(sr):
 
 def rendered_link(id, res, links, media, compress):
     from pylons.controllers.util import abort
+    from r2.controllers import ListingController
 
     try:
         render_style    = c.render_style
@@ -347,7 +342,7 @@ def rendered_link(id, res, links, media, compress):
             c.user.pref_media    = media
 
             b = IDBuilder([l._fullname for l in links],
-                          num = 1, wrap = builder_wrapper)
+                          num = 1, wrap = ListingController.builder_wrapper)
             l = LinkListing(b, nextprev=False,
                             show_nums=True).listing().render(style='html')
             res._update(id, innerHTML=l)

@@ -184,11 +184,12 @@ class Link(Thing, Printable):
 
         return True
 
-    def cache_key(self, wrapped):
+    @staticmethod
+    def cache_key(wrapped):
         if c.user_is_admin:
             return False
 
-        s = (str(i) for i in (self._fullname,
+        s = (str(i) for i in (wrapped._fullname,
                               bool(c.user_is_loggedin),
                               wrapped.subreddit == c.site,
                               c.user.pref_newwindow,
@@ -302,6 +303,11 @@ class Link(Thing, Printable):
         when possible. """
         return Subreddit._byID(self.sr_id, True, return_dict = False)
 
+# Note that there are no instances of PromotedLink or LinkCompressed,
+# so overriding their methods here will not change their behaviour
+# (except for add_props). These classes are used to override the
+# render_class on a Wrapped to change the template used for rendering
+
 class PromotedLink(Link):
     _nodb = True
 
@@ -333,8 +339,6 @@ class PromotedLink(Link):
             else:
                 # keep the template from trying to read it
                 item.promoted_by = None
-
-
 
 class LinkCompressed(Link):
     _nodb = True
@@ -408,14 +412,15 @@ class Comment(Thing, Printable):
     def keep_item(self, wrapped):
         return True
 
-    def cache_key(self, wrapped):
+    @staticmethod
+    def cache_key(wrapped):
         if c.user_is_admin:
             return False
 
         s = (str(i) for i in (c.profilepage,
-                              self._fullname,
+                              wrapped._fullname,
                               bool(c.user_is_loggedin),
-                              c.focal_comment == self._id36,
+                              c.focal_comment == wrapped._id36,
                               request.host,
                               c.cname, 
                               wrapped.author == c.user,
@@ -507,7 +512,8 @@ class MoreComments(object):
     author = None
     margin = 0
 
-    def cache_key(self, item):
+    @staticmethod
+    def cache_key(item):
         return False
     
     def __init__(self, link, depth, parent=None):
@@ -578,9 +584,10 @@ class Message(Thing, Printable):
             else:
                 item.new = False
             item.score_fmt = Score.none
-               
+
  
-    def cache_key(self, wrapped):
+    @staticmethod
+    def cache_key(wrapped):
         #warning: inbox/sent messages
         #comments as messages
         return False

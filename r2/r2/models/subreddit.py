@@ -248,11 +248,12 @@ class Subreddit(Thing, Printable):
             item.score_fmt = Score.subscribers
 
     #TODO: make this work
-    def cache_key(self, wrapped):
+    @staticmethod
+    def cache_key(wrapped):
         if c.user_is_admin:
             return False
 
-        s = (str(i) for i in (self._fullname,
+        s = (str(i) for i in (wrapped._fullname,
                               bool(c.user_is_loggedin),
                               wrapped.subscriber,
                               wrapped.moderator,

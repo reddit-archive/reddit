@@ -34,6 +34,9 @@ class Wrapped(object):
         for k, v in context.iteritems():
             setattr(self, k, v)
 
+        if self.__class__ == Wrapped and lookups:
+            self.render_class = lookups[0].__class__
+
     def __getattr__(self, attr):
         #print "GETATTR: " + str(attr)
         #one would think this would never happen
@@ -60,14 +63,13 @@ class Wrapped(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.lookups)
 
-
     def template(self, style = 'html'):
         from r2.config.templates import tpm
         from pylons import g
         debug = g.template_debug
         template = None
         if self.__class__ == Wrapped:
-            for lookup in self.lookups:
+            for lookup in self.lookups + (self.render_class,):
                 try:
                     template = tpm.get(lookup, style, cache = not debug)
                 except AttributeError:

@@ -48,16 +48,21 @@ ${self.RenderPrintable()}
 </%def>
 
 <%def name="RenderPrintable()">
-<% fullname = thing._fullname %>
-<% cls = thing.lookups[0].__class__.__name__.lower() %>
-<%
-   if thing.show_spam:
-     rowclass = thing.rowstyle + " spam"
-   elif thing.show_reports:
-     rowclass = thing.rowstyle + " reported"
-   else:
-     rowclass = thing.rowstyle
- %>
+  <%
+      fullname = thing._fullname
+      if hasattr(thing, 'render_class'):
+        cls = thing.render_class
+      else:
+        cls = thing.lookups[0].__class__
+      cls = cls.__name__.lower()
+
+      if thing.show_spam:
+        rowclass = thing.rowstyle + " spam"
+      elif thing.show_reports:
+        rowclass = thing.rowstyle + " reported"
+      else:
+        rowclass = thing.rowstyle
+  %>
 <div id="thingrow_${fullname}" class="${rowclass} ${cls}" $display>
   <p id="pre_${fullname}">
     ${self.ParentDiv()}

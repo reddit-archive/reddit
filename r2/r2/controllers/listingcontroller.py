@@ -146,11 +146,13 @@ class ListingController(RedditController):
 
     @staticmethod
     def builder_wrapper(thing):
-        if c.user.pref_compress and isinstance(thing, Link):
-            thing.__class__ = LinkCompressed
-            thing.score_fmt = Score.points
+        w = Wrapped(thing)
 
-        return Wrapped(thing)
+        if c.user.pref_compress and isinstance(thing, Link):
+            w.render_class = LinkCompressed
+            w.score_fmt = Score.points
+
+        return w
 
     def GET_listing(self, **env):
         return self.build_listing(**env)
@@ -443,8 +445,8 @@ class MessageController(ListingController):
         if isinstance(thing, Comment):
             p = thing.make_permalink_slow()
             f = thing._fullname
-            thing.__class__ = Message
             w = Wrapped(thing)
+            w.render_class = Message
             w.to_id = c.user._id
             w.subject = 'comment reply'
             w.was_comment = True

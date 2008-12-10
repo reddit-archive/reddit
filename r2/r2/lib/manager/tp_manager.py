@@ -47,11 +47,14 @@ class tp_manager:
         self.templates[key] = handler
 
     def get(self, thing, style, cache = True):
+        if not isinstance(thing, type(object)):
+            thing = thing.__class__
+
         style = style.lower()
-        top_key = (thing.__class__.__name__.lower(), style)
+        top_key = (thing.__name__.lower(), style)
 
         template = None
-        for cls in inspect.getmro(thing.__class__):
+        for cls in inspect.getmro(thing):
             name = cls.__name__.lower()
             key = (name, style)
             if not self.templates.has_key(key):
