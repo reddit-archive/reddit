@@ -72,7 +72,7 @@ class Listing(object):
                 r[i] = item.render()
             return r
 
-        rendered_items = sgm(cache, fullnames, render_items, 'render_',
+        rendered_items = sgm(g.rendercache, fullnames, render_items, 'render_',
                              time = g.page_cache_time)
 
         #replace the render function

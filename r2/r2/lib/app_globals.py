@@ -57,6 +57,7 @@ class Globals(object):
     tuple_props = ['memcaches',
                    'rec_cache',
                    'permacaches',
+                   'rendercaches',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -112,6 +113,7 @@ class Globals(object):
         mc = Memcache(self.memcaches)
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches)
+        self.rendercache = Memcache(self.rendercaches)
         self.make_lock = make_lock_factory(mc)
 
         self.rec_cache = Memcache(self.rec_cache)
