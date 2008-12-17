@@ -140,7 +140,7 @@
 <%def name="child()">
 </%def>
 
-<%def name="buttons(comments=True,delete=True,report=True,ban=True)">
+<%def name="buttons(comments=True,delete=True,report=True,ban=True,additional='')">
   <% fullname = thing._fullname %>
   %if comments:
     <% 
@@ -181,6 +181,7 @@
   %endif
   ${parent.delete_or_report_buttons(delete=delete,report=report)}
   ${parent.buttons(ban=ban)}
+  ${additional}
   ${self.media_embed()}
 </%def>
 

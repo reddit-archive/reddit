@@ -24,10 +24,14 @@ from pylons.i18n import _
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
+from r2.controllers import ListingController
 
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib import promote
+from r2.lib.promote import get_promoted, promote_builder_wrapper
+from r2.lib.utils import timetext
+
+from datetime import datetime
 
 class PromoteController(RedditController):
     @validate(VSponsor())
@@ -36,11 +40,15 @@ class PromoteController(RedditController):
 
     @validate(VSponsor())
     def GET_current_promos(self):
-        current_list = promote.get_promoted()
+        current_list = get_promoted()
 
         b = IDBuilder(current_list)
 
         render_list = b.get_items()[0]
+
+        for x in render_list:
+            if x.promote_until:
+                x.promote_expires = timetext(datetime.now(g.tz) - x.promote_until)
 
         page = PromotePage('current_promos',
                            content = PromotedLinks(render_list))
@@ -58,7 +66,21 @@ class PromoteController(RedditController):
     def GET_edit_promo(self, link):
         sr = Subreddit._byID(link.sr_id)
 
-        form = PromoteLinkForm(sr = sr, link = link)
+        names = [link._fullname]
+        builder = IDBuilder(names,
+                            wrap = promote_builder_wrapper(ListingController.builder_wrapper))
+        listing = LinkListing(builder,
+                              show_nums = False, nextprev = False)
+        rendered = listing.listing().render()
+
+        timedeltatext = ''
+        if link.promote_until:
+            timedeltatext = timetext(link.promote_until - datetime.now(g.tz),
+                                     resultion=2)
+
+        form = PromoteLinkForm(sr = sr, link = link,
+                               listing = rendered,
+                               timedeltatext = timedeltatext)
         page = PromotePage('new_promo', content = form)
 
         return page.render()

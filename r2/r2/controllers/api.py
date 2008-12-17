@@ -1325,15 +1325,13 @@ class ApiController(RedditController):
               sr               = VSubmitSR('sr'),
               subscribers_only = VBoolean('subscribers_only'),
               disable_comments = VBoolean('disable_comments'),
-              disable_expire   = VBoolean('disable_expire'),
-              timelimit        = VBoolean('timelimit'),
+              expire           = VOneOf('expire', ['nomodify', 'expirein', 'cancel']),
               timelimitlength  = VInt('timelimitlength',1,1000),
               timelimittype    = VOneOf('timelimittype',['hours','days','weeks']))
     def POST_edit_promo(self, res, ip,
                         title, url, sr, subscribers_only,
                         disable_comments,
-                        timelimit = None, timelimitlength = None, timelimittype = None,
-                        disable_expire = None,
+                        expire = None, timelimitlength = None, timelimittype = None,
                         l = None):
         res._update('status', innerHTML = '')
         if isinstance(url, str):
@@ -1352,7 +1350,7 @@ class ApiController(RedditController):
             res._focus('url')
         elif res._chk_error(errors.SUBREDDIT_NOEXIST):
             res._focus('sr')
-        elif timelimit and res._chk_error(errors.BAD_NUMBER):
+        elif expire == 'expirein' and res._chk_error(errors.BAD_NUMBER):
             res._focus('timelimitlength')
         elif l:
             l.title = title
@@ -1361,9 +1359,9 @@ class ApiController(RedditController):
             l.promoted_subscribersonly = subscribers_only
             l.disable_comments = disable_comments
 
-            if disable_expire:
+            if expire == 'cancel':
                 l.promote_until = None
-            elif timelimit and timelimitlength and timelimittype:
+            elif expire == 'expirein' and timelimitlength and timelimittype:
                 l.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
             
             l._commit()
@@ -1377,7 +1375,7 @@ class ApiController(RedditController):
                      lang = sr.lang,
                      ip = ip)
 
-            if timelimit and timelimitlength and timelimittype:
+            if expire == 'expirein' and timelimitlength and timelimittype:
                 promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
             else:
                 promote_until = None

@@ -1196,10 +1196,14 @@ class PromotedLinks(Wrapped):
     def __init__(self, current_list, *a, **kw):
         self.things = current_list
 
-        Wrapped.__init__(self, *a, **kw)
+        Wrapped.__init__(self, datefmt = datefmt, *a, **kw)
 
 class PromoteLinkForm(Wrapped):
-    def __init__(self, sr = None, link = None, *a, **kw):
+    def __init__(self, sr = None, link = None, listing = '',
+                 timedeltatext = '', *a, **kw):
         Wrapped.__init__(self, sr = sr, link = link,
-                         datefmt = datefmt, *a, **kw)
+                         datefmt = datefmt,
+                         timedeltatext = timedeltatext,
+                         listing = listing,
+                         *a, **kw)
 

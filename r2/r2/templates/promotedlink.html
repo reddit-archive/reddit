@@ -19,14 +19,34 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.utils import to36
+%>
+
 <%inherit file="link.html"/>
+
+<%namespace file="printable.html" import="yes_no_button" />
+<%namespace file="utils.html" import="plain_link" />
 
 <%def name="tagline()">
 </%def>
 
+<%def name="unpromote_button()" buffered="True" filter="unsafe">
+  <li>
+    ${plain_link(_('edit'),'/promote/edit_promo/%s' % to36(thing._id),
+                 _sr_path = False)}
+  </li>
+  <li>
+    ${yes_no_button("unpromote", thing._fullname, _("unpromote"), \
+      "return deletetoggle(this,'unpromote');", _("unpromoted"))}
+  </li>
+</%def>
+
 <%def name="buttons()">
   ${parent.buttons(comments=not thing.disable_comments,
-                   report=False,ban=False)}
+                   report=False,
+                   ban=False,
+                   additional=unpromote_button())}
 </%def>
 
 <%def name="entry()">

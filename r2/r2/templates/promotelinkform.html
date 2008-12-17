@@ -23,8 +23,11 @@
   from r2.lib.utils import to36
   from r2.lib.media import thumbnail_url
 %>
-<%namespace file="utils.html" import="error_field, checkbox, plain_link, image_upload" />
-<%namespace file="printable.html" import="yes_no_button" />
+<%namespace file="utils.html" import="error_field, checkbox, image_upload" />
+
+%if thing.link:
+  ${thing.listing}
+%endif
 
 <form class="content pretty-form" method="POST" action="/post/new_promo"
  id="promo_form" onsubmit="return post_form(this, 'edit_promo', null, null, true)">
@@ -57,15 +60,17 @@
       <th><label for="sr">${_("reddit")}</label></th>
       <td>
         %if thing.link:
-          <b>${thing.sr.name}</b>
-          <input name="sr" type="hidden" value="${thing.sr.name}"/>
+          ${checkbox("subscribers_only",
+                     (_("show only to subscribers of %(reddit)s")
+                      % dict(reddit = thing.sr.name)),
+                     thing.link.promoted_subscribersonly)}
+          <input type="hidden" name="sr" value="${thing.sr.name}" />
         %else:
-          <input name="sr" type="text" value="${g.default_sr}"/>
+          <input type="text" name="sr" value="${g.default_sr}" /> <br />
+          ${checkbox("subscribers_only",
+                     _("show only to subscribers of this reddit"),
+                     False)}
         %endif
-        <br />
-        ${checkbox("subscribers_only",
-                   _("show only to subscribers of this reddit"),
-                   thing.link.promoted_subscribersonly if thing.link else False)}
       </td>
       <td class="error">
         ${error_field("SUBREDDIT_NOEXIST")}
@@ -84,23 +89,31 @@
       <th><label for="timelimit">${_("duration")}</label></th>
       <td>
         %if thing.link and thing.link.promote_until:
-          ${(_("will expire on %(expires_on)s")
-             % dict(expires_on = thing.link.promote_until.strftime(thing.datefmt)))}
-          ${checkbox("disable_expire",
-                     _("disable automatic expiration"),
-                     False)}
+          <input type="radio" name="expire" value="nomodify" checked="checked" />
+            ${(_('expire in %(timedelta)s (%(expires_at)s)')
+               % dict(timedelta = thing.timedeltatext,
+                      expires_at = thing.link.promote_until.strftime(thing.datefmt)))} <br />
+          <input type="radio" name="expire" value="expirein" />
+            ${_("expire in")} &nbsp;
+            <input name="timelimitlength" size="3" />
+            <select name="timelimittype">
+              <option value="hours">${_("hours")}</option>
+              <option value="days" selected="selected">${_("days")}</option>
+              <option value="weeks">${_("weeks")}</option>
+            </select><br />
+          <input type="radio" name="expire" value="cancel" />
+            ${_("don't expire")} <br />
         %else:
-          ${checkbox("timelimit",
-                     _("automatically disable in"),
-                     False)}
-          &nbsp;
-          <input name="timelimitlength" size="3" />
-          <select name="timelimittype">
-            
-            <option value="hours">${_("hours")}</option>
-            <option value="days" selected="selected">${_("days")}</option>
-            <option value="weeks">${_("weeks")}</option>
-          </select>
+          <input type="radio" name="expire" value="nomodify" checked="checked" />
+            ${_("don't expire")} <br />
+          <input type="radio" name="expire" value="expirein" />
+            ${_("expire in")} &nbsp;
+            <input name="timelimitlength" size="3" />
+            <select name="timelimittype">
+              <option value="hours">${_("hours")}</option>
+              <option value="days" selected="selected">${_("days")}</option>
+              <option value="weeks">${_("weeks")}</option>
+            </select>
         %endif
       </td>
       <td class="error">${error_field("BAD_NUMBER", "span")}</td>
@@ -119,22 +132,6 @@
         </%call>
       </td>
       <td id="img-status"></td>
-    </tr>
-  </table>
-
-  <table class="content preftable pretty-form">
-    <tr>
-      <th></th>
-      <td>
-        ${plain_link("go to the comments page", thing.link.make_permalink_slow())}
-      </td>
-    </tr>
-    <tr>
-      <th></th>
-      <td>
-        ${yes_no_button("unpromote", thing.link._fullname, _("unpromote"), \
-        "return deletetoggle(this,'unpromote');", _("unpromoted"))}
-      </td>
     </tr>
   </table>
 %endif

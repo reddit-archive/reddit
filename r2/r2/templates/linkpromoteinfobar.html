@@ -20,12 +20,10 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.utils import to36
    from datetime import datetime
 %>
 
 <%namespace file="printable.html" import="yes_no_button" />
-<%namespace file="utils.html" import="plain_link" />
 
 %if thing.a.promoted:
   <tr>
@@ -60,20 +58,6 @@
              %  dict(subreddit = c.site.name))}</td>
     </tr>
   %endif
-  <tr>
-    <th></th>
-    <td>
-      ${yes_no_button("unpromote", thing.a._fullname, _("unpromote"), \
-        "return deletetoggle(this,'unpromote');", _("unpromoted"))}
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>
-      ${plain_link(_('edit promotion'),'/promote/edit_promo/%s' % to36(thing.a._id),
-                   _sr_path = False)}
-    </td>
-  </tr>
 %else:
   <tr>
     <th></th>
