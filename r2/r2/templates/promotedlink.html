@@ -32,6 +32,7 @@
 </%def>
 
 <%def name="unpromote_button()" buffered="True" filter="unsafe">
+  %if c.user_is_sponsor:
   <li>
     ${plain_link(_('edit'),'/promote/edit_promo/%s' % to36(thing._id),
                  _sr_path = False)}
@@ -40,6 +41,7 @@
     ${yes_no_button("unpromote", thing._fullname, _("unpromote"), \
       "return deletetoggle(this,'unpromote');", _("unpromoted"))}
   </li>
+  %endif
 </%def>
 
 <%def name="buttons()">

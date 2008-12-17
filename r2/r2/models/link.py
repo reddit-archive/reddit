@@ -190,6 +190,7 @@ class Link(Thing, Printable):
             return False
 
         s = (str(i) for i in (wrapped._fullname,
+                              bool(c.user_is_sponsor),
                               bool(c.user_is_loggedin),
                               wrapped.subreddit == c.site,
                               c.user.pref_newwindow,
