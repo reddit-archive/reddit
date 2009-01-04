@@ -22,6 +22,7 @@
 from filters import unsafe
 from utils import storage
 
+from itertools import chain
 import sys
 sys.setrecursionlimit(500)
 
@@ -69,7 +70,7 @@ class Wrapped(object):
         debug = g.template_debug
         template = None
         if self.__class__ == Wrapped:
-            for lookup in self.lookups + (self.render_class,):
+            for lookup in chain(self.lookups, (self.render_class,)):
                 try:
                     template = tpm.get(lookup, style, cache = not debug)
                 except AttributeError:

@@ -90,6 +90,17 @@ class Link(Thing, Printable):
                 link_ids.append(self._id)
             g.permacache.set(key, link_ids)
 
+    def update_url_cache(self, old_url):
+        """Remove the old url from the by_url cache then update the
+        cache with the new url."""
+        if old_url != 'self':
+            key = self.by_url_key(old_url)
+            link_ids = g.permacache.get(key) or []
+            while self._id in link_ids:
+                link_ids.remove(self._id)
+            g.permacache.set(key, link_ids)
+        self.set_url_cache()
+
     @property
     def already_submitted_link(self):
         return self.make_permalink_slow() + '?already_submitted=true'
@@ -247,11 +258,16 @@ class Link(Thing, Printable):
         clicked = {}
 
         for item in wrapped:
-            show_media = (c.user.pref_media == 'on' or
-                          (item.promoted and item.has_thumbnail
-                           and c.user.pref_media != 'off') or
-                          (c.user.pref_media == 'subreddit' and
-                           item.subreddit.show_media))
+            show_media = False
+            if c.user.pref_media == 'on':
+                show_media = True
+            elif c.user.pref_media == 'subreddit' and item.subreddit.show_media:
+                show_media = True
+            elif (item.promoted
+                  and item.has_thumbnail
+                  and c.user.pref_media != 'off'
+                  and not c.user.pref_compress):
+                show_media = True
 
             if not show_media:
                 item.thumbnail = ""
@@ -293,6 +309,7 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
+
         if c.user_is_loggedin:
             incr_counts(wrapped)
 
@@ -334,7 +351,6 @@ class PromotedLink(Link):
         for item in wrapped:
             # these are potentially paid for placement
             item.nofollow = True
-
             if item.promoted_by in promoted_by_accounts:
                 item.promoted_by_name = promoted_by_accounts[item.promoted_by].name
             else:

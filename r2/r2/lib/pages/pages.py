@@ -35,7 +35,6 @@ from r2.lib.menus import SubredditButton, SubredditMenu, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser
 from r2.lib.template_helpers import add_sr, get_domain
-from r2.lib.promote import promote_builder_wrapper
 import sys
 
 datefmt = _force_utf8(_('%d %b %Y'))
@@ -124,7 +123,7 @@ class Reddit(Wrapped):
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
                               sr_path = True,
-                              subtitles = [_('to anything interesting: news article, blog entry, video, picture...')],
+                              subtitles = [strings.submit_box_text],
                               show_cover = True))
             
         if self.create_reddit_box:
@@ -363,7 +362,8 @@ class BoringPage(Reddit):
 class FormPage(BoringPage):
     """intended for rendering forms with no rightbox needed or wanted"""
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
-        BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar, *a, **kw)
+        BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
+                            *a, **kw)
         
 
 class LoginPage(BoringPage):
@@ -383,7 +383,8 @@ class LoginPage(BoringPage):
 class Login(Wrapped):
     """The two-unit login and register form."""
     def __init__(self, user_reg = '', user_login = '', dest=''):
-        Wrapped.__init__(self, user_reg = user_reg, user_login = user_login, dest = dest)
+        Wrapped.__init__(self, user_reg = user_reg, user_login = user_login,
+                         dest = dest)
 
     
 class SearchPage(BoringPage):
@@ -418,7 +419,7 @@ class LinkInfoPage(Reddit):
         # TODO: temp hack until we find place for builder_wrapper
         from r2.controllers.listingcontroller import ListingController
         link_builder = IDBuilder(link._fullname,
-                                 wrap = promote_builder_wrapper(ListingController.builder_wrapper))
+                                 wrap = ListingController.builder_wrapper)
 
         # link_listing will be the one-element listing at the top
         self.link_listing = LinkListing(link_builder, nextprev=False).listing()
@@ -429,15 +430,16 @@ class LinkInfoPage(Reddit):
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
         if comment:
             author = Account._byID(comment.author_id, data=True).name
-            title = _("%(author)s comments on %(title)s") % dict(author=author, title=_force_unicode(link_title))
+            params = {'author' : author, 'title' : _force_unicode(link_title)}
+            title = strings.permalink_title % params
         else:
-            title = _("%(title)s : %(site)s") % dict(title=_force_unicode(link_title), site = c.site.name)
+            params = {'title':_force_unicode(link_title), 'site' : c.site.name}
+            title = strings.link_info_title % params
         Reddit.__init__(self, title = title, *a, **kw)
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
-        if isinstance(base_path, unicode):
-            base_path = base_path.encode('utf-8')
+        base_path = _force_utf8(base_path)
         def info_button(name):
             return NamedButton(name, dest = '/%s%s' % (name, base_path),
                                aliases = ['/%s/%s' % (name, self.link._id36)])
@@ -1206,4 +1208,3 @@ class PromoteLinkForm(Wrapped):
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
-

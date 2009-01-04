@@ -118,6 +118,7 @@ def get_promoted_slow():
 
     return link_names
 
+#deprecated
 def promote_builder_wrapper(alternative_wrapper):
     def wrapper(thing):
         if isinstance(thing, Link) and thing.promoted:

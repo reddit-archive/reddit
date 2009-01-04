@@ -61,7 +61,6 @@ from datetime import datetime, timedelta
 from md5 import md5
 
 from r2.lib.promote import promote, unpromote, get_promoted
-from r2.lib.promote import promote_builder_wrapper
 
 def link_listing_by_url(url, count = None):
     try:
@@ -1286,8 +1285,8 @@ class ApiController(RedditController):
               mid_margin = VCssMeasure('mid_margin'),
               links = VFullNames('links'))
     def POST_fetch_links(self, res, num_margin, mid_margin, links):
-        b = IDBuilder([l._fullname for l in links], 
-                      wrap = promote_builder_wrapper(ListingController.builder_wrapper))
+        b = IDBuilder([l._fullname for l in links],
+                      wrap = ListingController.builder_wrapper)
         l = OrganicListing(b)
         l.num_margin = num_margin
         l.mid_margin = mid_margin
@@ -1348,12 +1347,16 @@ class ApiController(RedditController):
             res._focus('title')
         elif res._chk_errors((errors.NO_URL,errors.BAD_URL)):
             res._focus('url')
+        elif res._chk_error(errors.ALREADY_SUB) and (not l or url != l.url):
+            #if url == l.url, we're just editting something else
+            res._focus('url')
         elif res._chk_error(errors.SUBREDDIT_NOEXIST):
             res._focus('sr')
         elif expire == 'expirein' and res._chk_error(errors.BAD_NUMBER):
             res._focus('timelimitlength')
         elif l:
             l.title = title
+            old_url = l.url
             l.url = url
 
             l.promoted_subscribersonly = subscribers_only
@@ -1363,24 +1366,18 @@ class ApiController(RedditController):
                 l.promote_until = None
             elif expire == 'expirein' and timelimitlength and timelimittype:
                 l.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
-            
+
             l._commit()
+            l.update_url_cache(old_url)
 
             res._redirect('/promote/edit_promo/%s' % to36(l._id))
         else:
-            l = Link(title = title,
-                     url = url,
-                     author_id = c.user._id,
-                     sr_id = sr._id,
-                     lang = sr.lang,
-                     ip = ip)
+            l = Link._submit(title, url, c.user, sr, ip, False)
 
             if expire == 'expirein' and timelimitlength and timelimittype:
                 promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
             else:
                 promote_until = None
-
-            l._commit()
 
             promote(l, subscribers_only = subscribers_only,
                     promote_until = promote_until,

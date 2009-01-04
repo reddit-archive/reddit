@@ -241,7 +241,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 .content {
     z-index: 1;
-    margin: 7px 0px 0px 5px;
+    margin: 7px 5px 0px 5px;
 }
 
 .content .spacer { margin-bottom: 5px }
@@ -700,7 +700,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* links */
 
-.link { margin: 0; margin-bottom: 8px; }
+.link { margin: 0; margin-bottom: 8px; padding-left: 3px; }
 .link .score {text-align: center; color: #c6c6c6;}
 .link .title {font-size:medium; font-weight: normal; margin-bottom: 1px;}
 

@@ -35,7 +35,6 @@ from r2.lib.strings import Score
 from r2.lib import organic
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating
-from r2.lib.promote import promote_builder_wrapper
 
 from admin import admin_profile_query
 
@@ -148,9 +147,15 @@ class ListingController(RedditController):
     def builder_wrapper(thing):
         w = Wrapped(thing)
 
-        if c.user.pref_compress and isinstance(thing, Link):
-            w.render_class = LinkCompressed
-            w.score_fmt = Score.points
+        if isinstance(thing, Link):
+            if thing.promoted:
+                w = Wrapped(thing)
+                w.render_class = PromotedLink
+                w.rowstyle = 'promoted link'
+
+            elif c.user.pref_compress:
+                w.render_class = LinkCompressed
+                w.score_fmt = Score.points
 
         return w
 
@@ -193,8 +198,7 @@ class HotController(FixListing, ListingController):
             l = min(len(o_links) - 3, 8)
             disp_links = [o_links[(i + pos) % len(o_links)] for i in xrange(-2, l)]
 
-            b = IDBuilder(disp_links,
-                          wrap = promote_builder_wrapper(self.builder_wrapper))
+            b = IDBuilder(disp_links, wrap = self.builder_wrapper)
             o = OrganicListing(b,
                                org_links = o_links,
                                visible_link = o_links[pos],

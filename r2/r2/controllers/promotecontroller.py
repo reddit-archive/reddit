@@ -28,7 +28,7 @@ from r2.controllers import ListingController
 
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib.promote import get_promoted, promote_builder_wrapper
+from r2.lib.promote import get_promoted
 from r2.lib.utils import timetext
 
 from datetime import datetime
@@ -67,8 +67,7 @@ class PromoteController(RedditController):
         sr = Subreddit._byID(link.sr_id)
 
         names = [link._fullname]
-        builder = IDBuilder(names,
-                            wrap = promote_builder_wrapper(ListingController.builder_wrapper))
+        builder = IDBuilder(names, wrap = ListingController.builder_wrapper)
         listing = LinkListing(builder,
                               show_nums = False, nextprev = False)
         rendered = listing.listing().render()
