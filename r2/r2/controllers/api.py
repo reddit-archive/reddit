@@ -1347,7 +1347,7 @@ class ApiController(RedditController):
             res._focus('title')
         elif res._chk_errors((errors.NO_URL,errors.BAD_URL)):
             res._focus('url')
-        elif res._chk_error(errors.ALREADY_SUB) and (not l or url != l.url):
+        elif (not l or url != l.url) and res._chk_error(errors.ALREADY_SUB):
             #if url == l.url, we're just editting something else
             res._focus('url')
         elif res._chk_error(errors.SUBREDDIT_NOEXIST):
