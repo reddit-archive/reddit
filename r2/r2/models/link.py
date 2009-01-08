@@ -259,14 +259,15 @@ class Link(Thing, Printable):
 
         for item in wrapped:
             show_media = False
-            if c.user.pref_media == 'on':
+            if c.user.pref_compress:
+                pass
+            elif c.user.pref_media == 'on':
                 show_media = True
             elif c.user.pref_media == 'subreddit' and item.subreddit.show_media:
                 show_media = True
             elif (item.promoted
                   and item.has_thumbnail
-                  and c.user.pref_media != 'off'
-                  and not c.user.pref_compress):
+                  and c.user.pref_media != 'off'):
                 show_media = True
 
             if not show_media:
