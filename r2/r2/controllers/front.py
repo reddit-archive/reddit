@@ -268,18 +268,19 @@ class FrontController(RedditController):
             pane = listing.listing()
 
         elif is_moderator and location == 'spam':
-            links = Link._query(Link.c._spam == True)
-            comments = Comment._query(Comment.c._spam == True)
-            query = thing.Merge((links, comments),
-                                Link.c.sr_id == c.site._id,
-                                sort = desc('_date'),
-                                data = True)
-            
-            builder = QueryBuilder(query, num = num, after = after, 
-                                   count = count, reverse = reverse,
-                                   wrap = ListingController.builder_wrapper)
-            listing = LinkListing(builder)
-            pane = listing.listing()
+#            links = Link._query(Link.c._spam == True)
+#            comments = Comment._query(Comment.c._spam == True)
+#            query = thing.Merge((links, comments),
+#                                Link.c.sr_id == c.site._id,
+#                                sort = desc('_date'),
+#                                data = True)
+#            
+#            builder = QueryBuilder(query, num = num, after = after, 
+#                                   count = count, reverse = reverse,
+#                                   wrap = ListingController.builder_wrapper)
+#            listing = LinkListing(builder)
+#            pane = listing.listing()
+            pane = InfoBar(message = "There doesn't seem to be anything here.")
         else:
             return self.abort404()
 
