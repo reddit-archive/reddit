@@ -289,7 +289,7 @@ class ApiController(RedditController):
                    reason = VReason('reason'))
     def POST_register(self, form, jquery, name, email,
                       password, dest, rem, reason):
-        if not (form.has_errors("name", errors.BAD_USERNAME,
+        if not (form.has_errors("user", errors.BAD_USERNAME,
                                 errors.USERNAME_TAKEN) or
                 form.has_errors("email", errors.BAD_EMAILS) or
                 form.has_errors("passwd", errors.BAD_PASSWORD) or
@@ -1132,7 +1132,7 @@ class ApiController(RedditController):
             
     @validatedForm(user = VCacheKey('reset', ('key', 'name')),
                    password = VPassword(['passwd', 'passwd2']))
-    def POST_resetpassword(self, form, jquery, user, key, password):
+    def POST_resetpassword(self, form, jquery, user, password):
         if errors.BAD_USERNAME in c.errors:
             return jquery.redirect('/password')
         elif (not form.has_errors('passwd',  errors.BAD_PASSWORD) and

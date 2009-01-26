@@ -519,7 +519,7 @@ class VUname(VRequired):
     def run(self, user_name):
         user_name = chkuser(user_name)
         if not user_name:
-            return self.error()
+            return self.error(errors.BAD_USERNAME)
         else:
             try:
                 a = Account._by_name(user_name, True)
