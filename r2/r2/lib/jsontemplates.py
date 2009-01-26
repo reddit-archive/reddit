@@ -302,7 +302,7 @@ class RedditJsonTemplate(JsonTemplate):
 
 class PanestackJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
-        res = [t.render() for t in thing.stack] if thing else []
+        res = [t.render() for t in thing.stack if t] if thing else []
         res = [x for x in res if x]
         if not res:
             return {}

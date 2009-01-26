@@ -298,15 +298,6 @@ def run_top(proc_ids = [], name = '', exe = "/usr/bin/top"):
 
     handle = subprocess.Popen(cmd, stdout = subprocess.PIPE,
                               stderr = subprocess.PIPE)
-    if handle.wait():
-        cmd = [exe, '-l', '1', '-p',
-               "^aaaaa ^nnnnnnnnn X X X X X X ^ccccc 0.0" +
-               " ^wwwwwwwwwww ^bbbbbbbbbbbbbbb"]
-        handle = subprocess.Popen(cmd, stdout = subprocess.PIPE,
-                                  stderr = subprocess.PIPE)
-        if handle.wait():
-            raise ValueError, "failed to run top"
-
     proc_ids = set(map(int, proc_ids))
     res = {}
     for line in handle.communicate()[0].split('\n'):
