@@ -35,18 +35,18 @@
     <p>${_('use one of these buttons to quickly add reddit links to your site, or \
       see below for more options.')}</p>
     <ul class="buttons">
-      <li>${badgedemo(1)}</li>
-      <li>${badgedemo(7)}</li>
-      <li>${point_button_demo(0)}</li>
-      <li>${point_button_demo(1)}</li>
-      <li>${interactive_button_demo(1)}</li>
+      ${demo(capture(drawbadge, 1))}
+      ${demo(capture(drawbadge, 7))}
+      ${demo(capture(draw_point_button, 0))}
+      ${demo(capture(draw_point_button, 1))}
+      ${demo(capture(draw_interactive, 1))}
     </ul>
       
 
     <h2>${_("buttons with points")}</h2>
     <ul class="buttons">
     %for x in xrange(0,6):
-      <li>${point_button_demo(x)}</li>
+       ${demo(capture(draw_point_button, x))}
     %endfor
     </ul>
     <h2>${_("customizing the look of your buttons")}</h2>
@@ -61,21 +61,25 @@
     </ul>
     <p>${_('Example:')}</p>
     <code>
-    ${capture(point_option_example)}
+      ${point_option_example()}
     </code>
 
 
     <h2>${_('simple interactive button')}</h2>
     <p>${_('put this code on your page:')}</p>
-    <code>${draw_interactive(False)}</code>
+    <code>
+      ${capture(draw_interactive,False)}
+    </code>
       <p>${_("and you'll get something like this:")}</p>
-        <span style="margin-left: 10px;">${unsafe(draw_interactive(False))}</span>
+        <span style="margin-left: 10px;">
+          ${draw_interactive(False)}
+        </span>
 
     <h2>${_("more interactive buttons")}</h2>
     <ul class="buttons">
       %for x in xrange(1,4):
-      <li>${interactive_button_demo(x)}</li>
-    %endfor
+        ${demo(capture(draw_interactive, x))}
+      %endfor
     </ul>
 
     <h2>${_('interactive button advanced settings')}</h2>
@@ -108,76 +112,79 @@
       <span style="margin-left: 10px;">${draw_interactive_example()}</span>
       <p>${_('use this code:')}</p>
       <code>
-      ${capture(draw_interactive_example)}
+        <%
+           ex = websafe(capture(draw_interactive_example))
+           ex = ex.replace("\n", "<br/>").replace(" ", "&nbsp;")
+         %>
+      ${unsafe(ex)}
       </code>
     </div>
 
     <h2>${_("more badges and buttons")}</h2>
     <ul class="buttons">
-    %for x in xrange(1,15):
-      <li>${badgedemo(x)}</li>
-    %endfor
+      %for x in xrange(1,15):
+        ${demo(capture(drawbadge, x))}
+      %endfor
     </ul>
 
 
 </div>
 
+<script type="text/javascript">
+$(function() {
+ $(".view-code").click(function(evt) { 
+    $(this).parent().addClass("show-demo"); 
+ });
+ $(".hide-code").click(function(evt) { 
+    $(this).parent().removeClass("show-demo"); 
+ });
+});
+</script>
+
 <%def name="drawbadge(image)">
-<a href="http://${domain}/submit" 
-onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-<img src="http://${get_domain(subreddit=False)}/static/spreddit${image}.gif" alt="submit to reddit" border="0" />
-</a>
+  <a href="http://${domain}/submit" 
+    onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
+   <img src="http://${get_domain(subreddit=False)}/static/spreddit${image}.gif" 
+        alt="submit to reddit" border="0" />
+   </a>
 </%def>
 
-<%def name="badgedemo(image)">
-  <a class="view-code" href="" 
-     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
-  ${unsafe(drawbadge(image))}<br />
-  <code style="display: none">
-  ${capture(drawbadge, image)}
+<%def name="demo(content)">
+<li class="button-demo">
+  <a class="view-code" href="javascript:void(0)">${_("view code")}</a>
+  <a class="hide-code" href="javascript:void(0)">${_("hide code")}</a>
+  ${unsafe(content)}
+  <br />
+  <code>
+    ${content}
   </code>
+</li>
 </%def>
 
-<%def name="draw_point_button(image)" buffered="True">
-<script type="text/javascript" src="http://${domain}/buttonlite.js?i=${image}"></script>
+<%def name="draw_point_button(image)">
+  <script type="text/javascript" 
+          src="http://${domain}/buttonlite.js?i=${image}"></script>
 </%def>
 
-<%def name="point_option_example()">
-<script type="text/javascript" src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com&newwindow=1"></script>
+<%def name="point_option_example()" buffered="True">
+   <script type="text/javascript" 
+        src="http://${domain}/buttonlite.js?i=1&styled=off&url=foo.com&newwindow=1"></script>
 </%def>
 
-<%def name="point_button_demo(image)">
-  <a class="view-code" href="" 
-     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
-  ${unsafe(draw_point_button(image))}<br />
-  <code style="display: none">
-  ${draw_point_button(image)}
-  </code>
-</%def>
-
-<%def name="draw_interactive(type)" buffered="True">
+<%def name="draw_interactive(type)">
 %if type:
-<script type="text/javascript" src="http://${domain}/button.js?t=${type}"></script>
+  <script type="text/javascript" 
+          src="http://${domain}/button.js?t=${type}"></script>
 %else:
-<script type="text/javascript" src="http://${domain}/button.js"></script>
+  <script type="text/javascript" src="http://${domain}/button.js"></script>
 %endif
 </%def>
 
-<%def name="interactive_button_demo(number)">
-  <a class="view-code" href="" 
-     onclick='show_hide_child(this, "code", "code"); return false'>view code</a>
-  ${unsafe(draw_interactive(number))}<br />
-  <code style="display: none">
-  ${draw_interactive(number)}
-  </code>
+<%def name="drawoption(option, val)" buffered="True">
+  <script type="text/javascript">reddit_${option}='${val}'</script>
 </%def>
 
-<%def name="drawoption(option, val)">
-${"<script type='text/javascript'>reddit_%s='%s'</script>" % (option, val)}
-</%def>
-
-<%def name="draw_interactive_example()">
-<script type="text/javascript">
+<%def name="draw_interactive_example()"><script type="text/javascript">
   reddit_url = "http://${domain}/buttons";
   reddit_title = "Buttons!";
   reddit_bgcolor = "FF3";

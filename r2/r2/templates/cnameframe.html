@@ -38,19 +38,6 @@
     
   </head>
 
-  <script type="text/javascript">
-    function replace_self(url, child) {
-       if(child != window) {
-          window.location = url;
-       }
-    };
-    window.onload = function() {
-      try { 
-         document.cookie = "redditSession=true; domain=${c.site.domain}; path=/";
-         parent.replace_self(window.location, window);
-      } catch(e) {};
-    }
-  </script>
   %if thing.frame_target:
     <frameset>
       <frame src="${thing.frame_target}" name="reddit-embed" id="reddit-embed">

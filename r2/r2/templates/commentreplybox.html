@@ -21,58 +21,51 @@
 ################################################################################
 
 <%namespace file="utils.html" import="error_field"/>
-%if not thing.link_name:
-<div id="samplecomment_" style="display:none">
-%endif
-  <form id="commentform_${thing.link_name}" 
-        onsubmit="return chkcomment(this);"
-        action="/post/${thing.action}" method="post" class="commentreply">
+  <form id="commentreply_${thing.link_name}"
+        ${'' if thing.link_name else "style='display:none'"}
+        onsubmit="return chkcomment(this);" action="#"
+        method="get" class="commentreply">
     %if thing.link_name:
-    <input id="isroot_${thing.link_name}"
-           type="hidden" name="isroot" value="1" />
+      <input type="hidden" name="isroot" value="1" />
     %endif
-    <input id="replace_${thing.link_name}"
-           type="hidden" name="replace" value="" />
-    ${error_field("BAD_COMMENT_" + thing.link_name)}
-    ${error_field("COMMENT_TOO_LONG_" + thing.link_name)}
-    ${error_field("RATELIMIT_" + thing.link_name)}
+    <input type="hidden" name="replace" value="" />
+    <input type="hidden" name="parent" value="${thing.link_name}" />
+    
+    ${error_field("BAD_COMMENT")}
+    ${error_field("DELETED_COMMENT")}
+    ${error_field("COMMENT_TOO_LONG")}
+    ${error_field("RATELIMIT")}
     ## I know we don't need this div.  You know we don't need this div.  IE
     ## begs to differ.
     <div>
-      <textarea id="comment_reply_${thing.link_name}" name="comment" 
-                rows="2" onfocus="clearTitle(this);" >
+      <textarea name="comment" rows="7">
       </textarea>
     </div>
     <div class="buttons">
-      <button id="comment_submit_${thing.link_name}" 
-              type="submit" class="btn">${_("comment {verb}")}
+      <button type="submit" class="btn"
+              name="comment">${_("comment {verb}")}
       </button>
-      <button id="comment_edit_${thing.link_name}" style="display:none;" 
+      <button style="display:none;" name="edit"
               type="submit" class="btn">${_( "edit")}</button>
-      %if not thing.link_name:
-      <button id="cancel_" class="btn" 
+      <button class="btn"  name="cancel" style="display:none;"
               onclick="cancelReply(this);return false">
         ${_("cancel")}</button>
-      %endif
-      <span id='status_${thing.link_name}' class='error'></span>
+      <span class="status error"></span>
     </div>
-    <div id="marktoggle_${thing.link_name}" 
-         class="help-toggle">
-      <a id="marklink_${thing.link_name}" href='#' 
-         onclick='return helpon(this, "markhelp_", "${_('hide help')}");'>
+    <div class="help-toggle toggle">
+      <a href="#"  class="option active" 
+         onclick='return toggle(this, helpon, helpoff)'>
         ${_("help")}
       </a>
+      <a href="#" class="option">${_("hide help")}</a>
     </div>
     <div class="clearleft"></div>
     <script type="text/javascript">
-      var form = $("commentform_${thing.link_name}");
-      if(form) {
-        setMessage(form.comment_reply_${thing.link_name},
-                     "${_('enter a comment here')}")
-      }
+      var form = $("#commentreply_${thing.link_name}").find("textarea");
+      emptyInput(form, "${_('enter a comment here')}");
     </script>
 
-    <div id="markhelp_${thing.link_name}" style="display: none">
+    <div class="markhelp" style="display: none">
       <table class="help">
         <tr style="background-color: #ffff99; text-align: center">
           <td><em>${_( "you type:")}</em></td>
@@ -94,7 +87,4 @@
       </table>
     </div>
   </form>
-%if not thing.link_name:
-</div>
-%endif
 

@@ -165,11 +165,13 @@ class FrontController(RedditController):
 
         # insert reply box only for logged in user
         if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user):
-            displayPane.append(CommentReplyBox())
             #no comment box for permalinks
             if not comment:
                 displayPane.append(CommentReplyBox(link_name = 
                                                    article._fullname))
+            else:
+                displayPane.append(CommentReplyBox())
+                
         # finally add the comment listing
         displayPane.append(listing.listing())
 
@@ -410,9 +412,18 @@ class FrontController(RedditController):
 
         # dest is the location to redirect to upon completion
         dest = request.get.get('dest','') or request.referer or '/'
+        if (c.user_is_loggedin and
+            not request.environ.get('extension') == 'embed'):
+            return self.redirect(dest)
         return LoginPage(dest = dest).render()
 
     def GET_logout(self):
+        dest = request.referer or '/'
+        return self.redirect(dest)
+
+    @validate(VUser(),
+              VModhash())
+    def POST_logout(self):
         """wipe login cookie and redirect to referer."""
         self.logout()
         dest = request.referer or '/'
@@ -450,7 +461,7 @@ class FrontController(RedditController):
             return ''
 
 
-    @validate(VUser(),
+    @validate(VUser(), 
               VSRSubmitPage(),
               url = VRequired('url', None),
               title = VRequired('title', None))
@@ -466,20 +477,12 @@ class FrontController(RedditController):
                     redirect_link = listing.things[0]
                 # if there is more than one, check the users' subscriptions
                 else:
-                    subscribed = [l for l in listing.things
-                                  if c.user_is_loggedin 
-                                  and l.subreddit.is_subscriber_defaults(c.user)]
-                    
-                    #if there is only 1 link to be displayed, just go there
-                    if len(subscribed) == 1:
-                        redirect_link = subscribed[0]
-                    else:
-                        infotext = strings.multiple_submitted % \
-                                   listing.things[0].resubmit_link()
-                        res = BoringPage(_("seen it"),
-                                         content = listing,
-                                         infotext = infotext).render()
-                        return res
+                    infotext = strings.multiple_submitted % \
+                               listing.things[0].resubmit_link()
+                    res = BoringPage(_("seen it"),
+                                     content = listing,
+                                     infotext = infotext).render()
+                    return res
 
             # we've found a link already.  Redirect to its permalink page
             if redirect_link:
@@ -530,14 +533,35 @@ class FrontController(RedditController):
         return Cnameframe(original_path, sr, sub_domain).render()
 
 
-    def GET_framebuster(self):
-        if c.site.domain and c.user_is_loggedin:
-            u = UrlParser(c.site.path + "/frame")
-            u.put_in_frame()
-            c.cname = True
+    def GET_framebuster(self, what = None, blah = None):
+        """
+        renders the contents of the iframe which, on a cname, checks
+        if the user is currently logged into reddit.
+        
+        if this page is hit from the primary domain, redirects to the
+        cnamed domain version of the site.  If the user is logged in,
+        this cnamed version will drop a boolean session cookie on that
+        domain so that subsequent page reloads will be caught in
+        middleware and a frame will be inserted around the content.
+
+        If the user is not logged in, previous session cookies will be
+        emptied so that subsequent refreshes will not be rendered in
+        that pesky frame.
+        """
+        if not c.site.domain:
+            return ""
+        elif c.cname:
+            return FrameBuster(login = (what == "login")).render()
+        else:
+            path = "/framebuster/"
+            if c.user_is_loggedin:
+                path += "login/"
+            u = UrlParser(path + str(random.random()))
+            u.mk_cname(require_frame = False, subreddit = c.site,
+                       port = request.port)
             return self.redirect(u.unparse())
-            
-        return "fail"
+        # the user is not logged in or there is no cname.
+        return FrameBuster(login = False).render()
 
     def GET_catchall(self):
         return self.abort404()

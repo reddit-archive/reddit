@@ -35,6 +35,15 @@
 </%def>
 
 <%def name="entry()">
+
+%if thing.deleted:
+
+<small>
+    <b>${_("[deleted]")}</b> ${thing.timesince} ${_("ago")}
+</small>
+
+%else:
+
 <small>
   <a href="http://${get_domain()}/user/${thing.author.name}">
     <b>${thing.author.name}</b></a>
@@ -42,4 +51,7 @@
 ${thing.timesince}
 </small><br/>
 ${unsafe(safemarkdown(thing.body))}
+
+%endif
+
 </%def>

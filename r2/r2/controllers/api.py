@@ -39,17 +39,13 @@ from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
 
 from r2.lib.menus import CommentSortMenu
-from r2.lib.translation import Translator
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib import emailer
 from r2.lib.strings import strings
 from r2.lib.memoize import clear_memo
-from r2.lib.filters import _force_unicode
+from r2.lib.filters import _force_unicode, websafe_json
 from r2.lib.db import queries
-from r2.config import cache
-from r2.lib.jsonresponse import JsonResponse, Json
-from r2.lib.jsontemplates import api_type
 from r2.lib import cssfilter
 from r2.lib import tracking
 from r2.lib.media import force_thumbnail, thumbnail_url
@@ -63,6 +59,11 @@ from md5 import md5
 from r2.lib.promote import promote, unpromote, get_promoted
 
 def link_listing_by_url(url, count = None):
+    """
+    Generates a listing of links which share a common url, filtered by
+    the subreddit the current user is subscribed to (or the default
+    list of the user is not logged in.)
+    """
     try:
         links = list(tup(Link._by_url(url, sr = c.site)))
         links.sort(key = lambda x: -x._score)
@@ -71,166 +72,115 @@ def link_listing_by_url(url, count = None):
     except NotFound:
         links = ()
         
-    names = [l._fullname for l in links]
+    user = c.user if c.user_is_loggedin else None
+    names = [l._fullname for l in links
+             if l.sr_id in Subreddit.user_subreddits(user, limit = None)]
+
     builder = IDBuilder(names, num = 25)
-    listing = LinkListing(builder).listing()
-    return listing
+    return LinkListing(builder).listing()
+
 
     
 class ApiController(RedditController):
+    """
+    Controller which deals with almost all AJAX site interaction.  
+    """
+
     def response_func(self, **kw):
-        return self.sendstring(dumps(kw))
-
-    @Json
-    def ajax_login_redirect(self, res, dest):
-        res._redirect("/login" + query_string(dict(dest=dest)))
-
-    def link_exists(self, url, sr, message = False):
-        try:    
-            l = Link._by_url(url, sr)
-            if message:
-                return l.already_submitted_link()
-            else:
-                return l.make_permalink_slow()
-        except NotFound:
-            pass
+        data = dumps(kw)
+        if request.method == "GET" and request.GET.get("callback"):
+            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
+                               websafe_json(data))
+        return self.sendstring(data)
 
 
-    @validate(url = nop("url"),
-              sr = VSubredditName,
+    @validatedForm()
+    def ajax_login_redirect(self, form, jquery, dest):
+        jquery.redirect("/login" + query_string(dict(dest=dest)))
+
+    @validate(link = VUrl(['url']),
               count = VLimit('limit'))
-    def GET_info(self, url, sr, count):
-        listing = link_listing_by_url(url, count = count)
-        res = BoringPage(_("API"),
-                         content = listing).render()
-        return res
+    def GET_info(self, link, count):
+        """
+        Get's a listing of links which have the provided url.  
+        """
+        listing = None
+        if link and errors.ALREADY_SUB in c.errors:
+            listing = link_listing_by_url(request.params.get('url'),
+                                          count = count)
+        return BoringPage(_("API"), content = listing).render()
 
-    @Json
-    @validate(VCaptcha(),
-              name=VRequired('name', errors.NO_NAME),
-              email=VRequired('email', errors.NO_EMAIL),
-              replyto = nop('replyto'),
-              reason = nop('reason'),
-              message=VRequired('message', errors.NO_MESSAGE))
-    def POST_feedback(self, res, name, email, replyto, reason, message):
-        res._update('status', innerHTML = '')
-        if res._chk_error(errors.NO_NAME):
-            res._focus("name")
-        elif res._chk_error(errors.NO_EMAIL):
-            res._focus("email")
-        elif res._chk_error(errors.NO_MESSAGE):
-            res._focus("personal")
-        elif res._chk_captcha(errors.BAD_CAPTCHA):
-            pass
-
-        if not res.error:
+    @validatedForm(VCaptcha(),
+                   name=VRequired('name', errors.NO_NAME),
+                   email=VRequired('email', errors.NO_EMAIL),
+                   replyto = ValidEmails("replyto", num = 1), 
+                   reason = VOneOf('reason', ('ad_inq', 'feedback')),
+                   message=VRequired('message', errors.NO_MESSAGE),
+                   )
+    def POST_feedback(self, form, jquery, name, email,
+                      replyto, reason, message):
+        if not (form.has_errors('name',     errors.NO_NAME) or
+                form.has_errors('email',    errors.NO_EMAIL) or
+                (request.POST.get("replyto") and replyto is None and 
+                 form.has_errors("replyto",  errors.BAD_EMAILS)) or
+                form.has_errors('personal', errors.NO_MESSAGE) or
+                form.chk_captcha(errors.BAD_CAPTCHA)):
             if reason != 'ad_inq':
                 emailer.feedback_email(email, message, name = name or '',
                                        reply_to = replyto or '')
             else:
                 emailer.ad_inq_email(email, message, name = name or '',
                                        reply_to = replyto or '')
-            res._update('success',
-                        innerHTML=_("thanks for your message! you should hear back from us shortly."))
-            res._update("personal", value='')
-            res._update("captcha", value='')
-            res._hide("wtf")
+            form.set_html(".success", _("thanks for your message! "
+                            "you should hear back from us shortly."))
+            form.set_inputs(personal = "", captcha = "")
+
     POST_ad_inq = POST_feedback
 
-    @Json
-    @validate(VCaptcha(),
-              VUser(),
-              VModhash(),
-              ip = ValidIP(),
-              to = VExistingUname('to'),
-              subject = VRequired('subject', errors.NO_SUBJECT),
-              body = VMessage('message'))
-    def POST_compose(self, res, to, subject, body, ip):
-        res._update('status', innerHTML='')
-        if (res._chk_error(errors.NO_USER) or
-            res._chk_error(errors.USER_DOESNT_EXIST)):
-            res._focus('to')
-        elif res._chk_error(errors.NO_SUBJECT):
-            res._focus('subject')
-        elif (res._chk_error(errors.NO_MSG_BODY) or
-              res._chk_error(errors.COMMENT_TOO_LONG)):
-            res._focus('message')
-        elif res._chk_captcha(errors.BAD_CAPTCHA):
-            pass
 
-        if not res.error:
+    @validatedForm(VCaptcha(),
+                   VUser(),
+                   VModhash(),
+                   ip = ValidIP(),
+                   to = VExistingUname('to'),
+                   subject = VRequired('subject', errors.NO_SUBJECT),
+                   body = VMessage('message'))
+    def POST_compose(self, form, jquery, to, subject, body, ip):
+        """
+        handles message composition under /message/compose.  
+        """
+        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
+                                errors.NO_USER) or
+                form.has_errors("subject", errors.NO_SUBJECT) or
+                form.has_errors("message", errors.NO_MSG_BODY) or
+                form.chk_captcha(errors.BAD_CAPTCHA)):
             spam = (c.user._spam or
                     errors.BANNED_IP in c.errors or
                     errors.BANNED_DOMAIN in c.errors)
             
             m, inbox_rel = Message._new(c.user, to, subject, body, ip, spam)
-            res._update('success',
-                        innerHTML=_("your message has been delivered"))
-            res._update('to', value='')
-            res._update('subject', value='')
-            res._update('message', value='')
+            form.set_html(".success", _("your message has been delivered"))
+            form.set_inputs(to = "", subject = "", message = "")
 
             if g.write_query_queue:
                 queries.new_message(m, inbox_rel)
-        else:
-            res._update('success', innerHTML='')
 
 
-    @validate(VUser(),
-              VSRSubmitPage(),
-              url = VRequired('url', None),
-              title = VRequired('title', None))
-    def GET_submit(self, url, title):
-        if url and not request.get.get('resubmit'):
-            listing = link_listing_by_url(url)
-            redirect_link = None
-            if listing.things:
-                if len(listing.things) == 1:
-                    redirect_link = listing.things[0]
-                else:
-                    subscribed = [l for l in listing.things
-                                  if c.user_is_loggedin 
-                                  and l.subreddit.is_subscriber_defaults(c.user)]
-                    
-                    #if there is only 1 link to be displayed, just go there
-                    if len(subscribed) == 1:
-                        redirect_link = subscribed[0]
-                    else:
-                        infotext = strings.multiple_submitted % \
-                                   listing.things[0].resubmit_link()
-                        res = BoringPage(_("seen it"),
-                                         content = listing,
-                                         infotext = infotext).render()
-                        return res
-                        
-            if redirect_link:
-                return self.redirect(redirect_link.already_submitted_link)
-            
-        captcha = Captcha() if c.user.needs_captcha() else None
-        sr_names = Subreddit.submit_sr_names(c.user) if c.default_sr else ()
 
-        return FormPage(_("submit"), 
-                        content=NewLink(url=url or '',
-                                        title=title or '',
-                                        subreddits = sr_names,
-                                        captcha=captcha)).render()
-
-
-    @Json
-    @validate(VUser(),
-              VCaptcha(),
-              ValidDomain('url'),
-              VRatelimit(rate_user = True, rate_ip = True, prefix='rate_submit_'),
-              ip = ValidIP(),
-              sr = VSubmitSR('sr'),
-              url = VUrl(['url', 'sr']),
-              title = VTitle('title'),
-              save = nop('save'),
-              )
-    def POST_submit(self, res, url, title, save, sr, ip):
-        res._update('status', innerHTML = '')
-        if isinstance(url, str):
-            res._update('url', value=url)
+    @validatedForm(VUser(),
+                   VCaptcha(),
+                   ValidDomain('url'),
+                   VRatelimit(rate_user = True, rate_ip = True,
+                              prefix = "rate_submit_"),
+                   ip = ValidIP(),
+                   sr = VSubmitSR('sr'),
+                   url = VUrl(['url', 'sr']),
+                   title = VTitle('title'),
+                   save = VBoolean('save'),
+                   )
+    def POST_submit(self, form, jquery, url, title, save, sr, ip):
+        if isinstance(url, (unicode, str)):
+            form.set_inputs(url = url)
             
         should_ratelimit = sr.should_ratelimit(c.user, 'link')
 
@@ -239,33 +189,26 @@ class ApiController(RedditController):
             c.errors.remove(errors.RATELIMIT)
 
         # check for no url, or clear that error field on return
-        if res._chk_errors((errors.NO_URL, errors.BAD_URL)):
-            res._focus('url')
-        elif res._chk_error(errors.ALREADY_SUB):
-            link = url[0] 
-            res._redirect(link.already_submitted_link)
-        #ratelimiter
-        elif res._chk_error(errors.RATELIMIT):
+        if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
             pass
+        elif form.has_errors("url", errors.ALREADY_SUB):
+            jquery.redirect(url[0].already_submitted_link)
         # check for title, otherwise look it up and return it
-        elif res._chk_error(errors.NO_TITLE):
-            # clear out this error
-            res._chk_error(errors.TITLE_TOO_LONG)
+        elif form.has_errors("title", errors.NO_TITLE):
             # try to fetch the title
             title = get_title(url)
             if title:
-                res._update('title', value = title)
-                res._focus('title')
-                res._clear_error(errors.NO_TITLE)
-                c.errors.remove(errors.NO_TITLE)
+                # note: focus first, since it clears the form
+                form.set_inputs(title = title)
+                # wipe out the no title error
+                form.clear_errors(errors.NO_TITLE)
                 return 
-            res._focus('title')
-        elif res._chk_error(errors.TITLE_TOO_LONG):
-            res._focus('title')
-        elif res._chk_captcha(errors.BAD_CAPTCHA):
+
+        elif (form.has_errors("title", errors.TITLE_TOO_LONG) or
+              form.chk_captcha(errors.BAD_CAPTCHA, errors.RATELIMIT)):
             pass
 
-        if res.error or not title: return
+        if form.has_error() or not title: return
 
         # check whether this is spam:
         spam = (c.user._spam or
@@ -280,13 +223,19 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
         v = Vote.vote(c.user, l, True, ip, spam)
-        if save == 'on':
+        if save:
             r = l._save(c.user)
             if g.write_query_queue:
                 queries.new_savehide(r)
+
+        #reset the hot page
+        if v.valid_thing:
+            expire_hot(sr)
+
         #set the ratelimiter
         if should_ratelimit:
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix='rate_submit_')
+            VRatelimit.ratelimit(rate_user=True, rate_ip = True, 
+                                 prefix = "rate_submit_")
 
         #update the queries
         if g.write_query_queue:
@@ -307,216 +256,240 @@ class ApiController(RedditController):
         c.cname = False
         path = l.make_permalink_slow()
         c.cname = cname
+        jquery.redirect(path)
 
-        res._redirect(path)
-
-
-    def _login(self, res, user, dest='', rem = None):
+    def _login(self, jquery, user, dest='', rem = None):
+        """
+        AJAX login handler, used by both login and register to set the
+        user cookie and send back a redirect.
+        """
         self.login(user, rem = rem)
         dest = dest or request.referer or '/'
-        res._redirect(dest)
+        jquery.redirect(dest)
 
-    @Json
-    @validate(user = VLogin(['user_login', 'passwd_login']),
-              op = VOneOf('op', options = ("login-main", "reg", "login"),
-                          default = 'login'),
-              dest = nop('dest'),
-              rem = nop('rem'),
-              reason = VReason('reason'))
-    def POST_login(self, res, user, op, dest, rem, reason):
+
+    @validatedForm(user = VLogin(['user', 'passwd']),
+                   dest   = nop('dest'),
+                   rem    = VBoolean('rem'),
+                   reason = VReason('reason'))
+    def POST_login(self, form, jquery, user, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
-
-        res._update('status_' + op, innerHTML='')
-        if res._chk_error(errors.WRONG_PASSWORD, op):
-            res._focus('passwd_' + op)
-        else:
-            self._login(res, user, dest, rem == 'on')
+        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
+            self._login(jquery, user, dest, rem)
 
 
-    @Json
-    @validate(VCaptcha(),
-              VRatelimit(rate_ip = True, prefix='rate_register_'),
-              name = VUname(['user_reg']),
-              email = nop('email_reg'),
-              password = VPassword(['passwd_reg', 'passwd2_reg']),
-              op = VOneOf('op', options = ("login-main", "reg", "login"),
-                          default = 'login'),
-              dest = nop('dest'),
-              rem = nop('rem'),
-              reason = VReason('reason'))
-    def POST_register(self, res, name, email, password, op, dest, rem, reason):
-        res._update('status_' + op, innerHTML='')
-        if res._chk_error(errors.BAD_USERNAME, op):
-            res._focus('user_reg')
-        elif res._chk_error(errors.USERNAME_TAKEN, op):
-            res._focus('user_reg')
-        elif res._chk_error(errors.BAD_PASSWORD, op):
-            res._focus('passwd_reg')
-        elif res._chk_error(errors.BAD_PASSWORD_MATCH, op):
-            res._focus('passwd2_reg')
-        elif res._chk_error(errors.DRACONIAN, op):
-            res._focus('legal_reg')
-        elif res._chk_captcha(errors.BAD_CAPTCHA):
-            pass
-        elif res._chk_error(errors.RATELIMIT, op):
-            pass
-
-        if res.error:
-            return
-
-        user = register(name, password)
-        VRatelimit.ratelimit(rate_ip = True, prefix='rate_register_')
-
-        #anything else we know (email, languages)?
-        if email:
-            user.email = email
-
-        user.pref_lang = c.lang
-        if c.content_langs == 'all':
-            user.pref_content_langs = 'all'
-        else:
-            langs = list(c.content_langs)
-            langs.sort()
-            user.pref_content_langs = tuple(langs)
-
-        d = c.user._dirties.copy()
-        user._commit()
-            
-        c.user = user
-        if reason:
-            if reason[0] == 'redirect':
-                dest = reason[1]
-            elif reason[0] == 'subscribe':
-                for sr, sub in reason[1].iteritems():
-                    self._subscribe(sr, sub)
-
-        self._login(res, user, dest, rem)
+    @validatedForm(VCaptcha(),
+                   VRatelimit(rate_ip = True, prefix = "rate_register_"),
+                   name = VUname(['user']),
+                   email = ValidEmails("email", num = 1),
+                   password = VPassword(['passwd', 'passwd2']),
+                   dest = nop('dest'),
+                   rem = VBoolean('rem'),
+                   reason = VReason('reason'))
+    def POST_register(self, form, jquery, name, email,
+                      password, dest, rem, reason):
+        if not (form.has_errors("name", errors.BAD_USERNAME,
+                                errors.USERNAME_TAKEN) or
+                form.has_errors("email", errors.BAD_EMAILS) or
+                form.has_errors("passwd", errors.BAD_PASSWORD) or
+                form.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
+                form.chk_captcha(errors.BAD_CAPTCHA,errors.RATELIMIT)):
+            user = register(name, password)
+            VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
+    
+            #anything else we know (email, languages)?
+            if email:
+                user.email = email
+    
+            user.pref_lang = c.lang
+            if c.content_langs == 'all':
+                user.pref_content_langs = 'all'
+            else:
+                langs = list(c.content_langs)
+                langs.sort()
+                user.pref_content_langs = tuple(langs)
+    
+            d = c.user._dirties.copy()
+            user._commit()
+                
+            c.user = user
+            if reason:
+                if reason[0] == 'redirect':
+                    dest = reason[1]
+                elif reason[0] == 'subscribe':
+                    for sr, sub in reason[1].iteritems():
+                        self._subscribe(sr, sub)
+    
+            self._login(jquery, user, dest, rem)
     
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              container = VByName('id'),
-              type = VOneOf('location', ('moderator',  'contributor')))
-    def POST_leave(self, res, container, type):
-        if container and c.user:
-            res._hide("pre_" + container._fullname)
-            res._hide("thingrow_" + container._fullname)
-            fn = getattr(container, 'remove_' + type)
-            fn(c.user)
+    @noresponse(VUser(),
+                VModhash(),
+                container = VByName('id'))
+    def POST_leave_moderator(self, container):
+        """
+        Handles self-removal as moderator from a subreddit as rendered
+        in the subreddit sidebox on any of that subreddit's pages.
+        """
+        if container and container.is_moderator(c.user):
+            container.remove_moderator(c.user)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              ip = ValidIP(),
-              action = VOneOf('action', ('add', 'remove')),
-              redirect = nop('redirect'),
-              friend = VExistingUname('name'),
-              container = VByName('container'),
-              type = VOneOf('type', ('friend', 'moderator', 'contributor', 'banned')))
-    def POST_friend(self, res, ip, friend, action, redirect, container, type):
-        res._update('status', innerHTML='')
+    @noresponse(VUser(),
+                VModhash(),
+                container = VByName('id'))
+    def POST_leave_contributor(self, container):
+        """
+        same comment as for POST_leave_moderator.
+        """
+        if container and container.is_contributor(c.user):
+            container.remove_contributor(c.user)
 
-        fn = getattr(container, action + '_' + type)
+    
+    @noresponse(VUser(),
+                VModhash(),
+                nuser = VExistingUname('name'),
+                iuser = VByName('id'),
+                container = VByName('container'),
+                type = VOneOf('type', ('friend', 'moderator',
+                                       'contributor', 'banned')))
+    def POST_unfriend(self, nuser, iuser, container, type):
+        """
+        Handles removal of a friend (a user-user relation) or removal
+        of a user's priviledges from a subreddit (a user-subreddit
+        relation).  The user can either be passed in by name (nuser)
+        or buy fullname (iuser).  'container' will either be the
+        current user or the subreddit.
 
+        """
+        # The user who made the request must be an admin or a moderator
+        # for the privilege change to succeed.
         if (not c.user_is_admin
             and (type in ('moderator','contributer','banned')
                  and not c.site.is_moderator(c.user))):
+            abort(403, 'forbidden')
+        # if we are (strictly) unfriending, the container had better
+        # be the current user.
+        if type == "friend" and container != c.user:
+            abort(403, 'forbidden')
+        fn = getattr(container, 'remove_' + type)
+        fn(iuser or nuser)
 
+
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   ip = ValidIP(),
+                   friend = VExistingUname('name'),
+                   container = VByName('container'),
+                   type = VOneOf('type', ('friend', 'moderator',
+                                          'contributor', 'banned')))
+    def POST_friend(self, form, jquery, ip, friend, 
+                    container, type):
+        """
+        Complement to POST_unfriend: handles friending as well as
+        privilege changes on subreddits.
+        """
+        fn = getattr(container, 'add_' + type)
+
+        # The user who made the request must be an admin or a moderator
+        # for the privilege change to succeed.
+        if (not c.user_is_admin
+            and (type in ('moderator','contributer','banned')
+                 and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
-        elif action == 'add':
-            if res._chk_errors((errors.USER_DOESNT_EXIST,
-                                errors.NO_USER)):
-                res._focus('name')
-            else:
-                new = fn(friend)
-                cls = dict(friend=FriendList,
-                           moderator=ModList,
-                           contributor=ContributorList,
-                           banned=BannedList).get(type)
-                res._update('name', value = '')
+
+        # if we are (strictly) friending, the container had better
+        # be the current user.
+        if type == "friend" and container != c.user:
+            abort(403,'forbidden')
+
+        elif not form.has_errors("name",
+                                 errors.USER_DOESNT_EXIST, errors.NO_USER):
+            new = fn(friend)
+            cls = dict(friend=FriendList,
+                       moderator=ModList,
+                       contributor=ContributorList,
+                       banned=BannedList).get(type)
+            form.set_inputs(name = "")
+            form.set_html(".status:first", _("added"))
+            if new and cls:
+                user_row = cls().user_row(friend)
+                jquery("table").insert_table_rows(user_row)
                 
-                #subscribing doesn't need a response
-                if new and cls:
-                    res.object = cls().ajax_user(friend).for_ajax('add')
-
-                    if type != 'friend':
-                        msg = strings.msg_add_friend.get(type)
-                        subj = strings.subj_add_friend.get(type)
-                        if msg and subj and friend.name != c.user.name:
-                            # fullpath with domain needed or the markdown link
-                            # will break
-                            d = dict(url = container.path, 
-                                     title = container.title)
-                            msg = msg % d
-                            subj = subj % d
-                            Message._new(c.user, friend, subj, msg, ip,
-                                         c.user._spam)
-        elif action == 'remove' and friend:
-            fn(friend)
+                if type != 'friend':
+                    msg = strings.msg_add_friend.get(type)
+                    subj = strings.subj_add_friend.get(type)
+                    if msg and subj and friend.name != c.user.name:
+                        # fullpath with domain needed or the markdown link
+                        # will break
+                        d = dict(url = container.path, 
+                                 title = container.title)
+                        msg = msg % d
+                        subj = subj % d
+                        Message._new(c.user, friend, subj, msg, ip,
+                                     c.user._spam)
 
 
-    @Json
-    @validate(VUser('curpass', default = ''),
-              VModhash(),
-              curpass = nop('curpass'),
-              email = ValidEmails("email", num = 1),
-              newpass = nop("newpass"),
-              verpass = nop("verpass"),
-              password = VPassword(['newpass', 'verpass']))
-    def POST_update(self, res, email, curpass, password, newpass, verpass):
-        res._update('status', innerHTML='')
-        if res._chk_error(errors.WRONG_PASSWORD):
-            res._focus('curpass')
-            res._update('curpass', value='')
-            return 
+    @validatedForm(VUser('curpass', default = ''),
+                   VModhash(), 
+                   email = ValidEmails("email", num = 1),
+                   password = VPassword(['newpass', 'verpass']))
+    def POST_update(self, form, jquery, email, password):
+        """
+        handles /prefs/update for updating email address and password.
+        """
+        # password is required to proceed
+        if form.has_errors("curpass", errors.WRONG_PASSWORD):
+            form.set_input(curpass = "")
+            return
+        
+        # check if the email is valid.  If one is given and it is
+        # different from the current address (or there is not one
+        # currently) apply it
         updated = False
-        if res._chk_error(errors.BAD_EMAILS):
-            res._focus('email')
-        elif email and (not hasattr(c.user,'email')
-                        or c.user.email != email):
+        if (not form.has_errors("email", errors.BAD_EMAILS) and
+            email and (not hasattr(c.user,'email') or c.user.email != email)):
             c.user.email = email
             c.user._commit()
-            res._update('status', 
-                        innerHTML=_('your email has been updated'))
+            form.set_html('.status', _('your email has been updated'))
             updated = True
             
-        if newpass or verpass:
-            if res._chk_error(errors.BAD_PASSWORD):
-                res._focus('newpass')
-            elif res._chk_error(errors.BAD_PASSWORD_MATCH):
-                res._focus('verpass')
-                res._update('verpass', value='')
+        # change password
+        if (password and 
+            not (form.has_errors("newpass", errors.BAD_PASSWORD) or
+                 form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
+            change_password(c.user, password)
+            if updated:
+                form.set_html(".status",
+                              _('your email and password have been updated'))
             else:
-                change_password(c.user, password)
-                if updated:
-                    res._update('status', 
-                                innerHTML=_('your email and password have been updated'))
-                else:
-                    res._update('status', 
-                                innerHTML=_('your password has been updated'))
-                self.login(c.user)
+                form.set_html('.status', 
+                              _('your password has been updated'))
+            # the password has changed, so the user's cookie has been
+            # invalidated.  drop a new cookie.
+            self.login(c.user)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              areyousure1 = nop('areyousure1'),
-              areyousure2 = nop('areyousure2'),
-              areyousure3 = nop('areyousure3'))
-    def POST_delete_user(self, res, areyousure1, areyousure2, areyousure3):
+    @validatedForm(VUser(),
+                   VModhash(),
+                   areyousure1 = VOneOf('areyousure1', ('yes', 'no')),
+                   areyousure2 = VOneOf('areyousure2', ('yes', 'no')),
+                   areyousure3 = VOneOf('areyousure3', ('yes', 'no')))
+    def POST_delete_user(self, form, jquery,
+                         areyousure1, areyousure2, areyousure3):
+        """
+        /prefs/delete.  Make sure there are three yes's.
+        """
         if areyousure1 == areyousure2 == areyousure3 == 'yes':
             c.user.delete()
-            res._redirect('/?deleted=true')
+            jquery.redirect('/?deleted=true')
         else:
-            res._update('status', 
-                        innerHTML = _("see? you don't really want to leave"))
+            form.set_html('.status', _("see? you don't really want to leave"))
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              thing = VByNameIfAuthor('id'))
-    def POST_del(self, res, thing):
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByNameIfAuthor('id'))
+    def POST_del(self, thing):
         '''for deleting all sorts of things'''
         thing._deleted = True
         thing._commit()
@@ -538,45 +511,42 @@ class ApiController(RedditController):
             if g.use_query_cache:
                 queries.new_comment(thing, None)
 
-    @Json
-    @validate(VUser(), VModhash(),
-              thing = VByName('id'))
-    def POST_report(self, res, thing):
+    @noresponse(VUser(), VModhash(),
+                thing = VByName('id'))
+    def POST_report(self, thing):
         '''for reporting...'''
-        Report.new(c.user, thing)
+        if (thing and not thing._deleted and
+            not (hasattr(thing, "promoted") and thing.promoted)):
+            Report.new(c.user, thing)
 
 
-    @Json
-    @validate(VUser(), VModhash(),
-              comment = VByNameIfAuthor('id'),
+    @validatedForm(VUser(), VModhash(),
+              comment = VByNameIfAuthor('parent'),
               body = VComment('comment'))
-    def POST_editcomment(self, res, comment, body):
-        res._update('status_' + comment._fullname, innerHTML = '')
+    def POST_editcomment(self, form, jquery, comment, body):
 
-        if not res._chk_errors((errors.BAD_COMMENT,errors.COMMENT_TOO_LONG,errors.NOT_AUTHOR),
-                           comment._fullname):
+        if not form.has_errors("comment",
+                               errors.BAD_COMMENT, errors.COMMENT_TOO_LONG,
+                               errors.NOT_AUTHOR):
             comment.body = body
             if not c.user_is_admin: comment.editted = True
             comment._commit()
-            res._send_things(comment)
+
+            jquery.replace_things(comment, True, True)
 
             # flag search indexer that something has changed
             tc.changed(comment)
 
 
 
-    @Json
-    @validate(VUser(),
+    @validatedForm(VUser(),
               VModhash(),
-              VRatelimit(rate_user = True, rate_ip = True, prefix = "rate_comment_"),
+              VRatelimit(rate_user = True, rate_ip = True,
+                         prefix = "rate_comment_"),
               ip = ValidIP(),
-              parent = VSubmitParent('id'),
+              parent = VSubmitParent('parent'),
               comment = VComment('comment'))
-    def POST_comment(self, res, parent, comment, ip):
-
-        #wipe out the status message
-        res._update('status_' + parent._fullname, innerHTML = '')
-
+    def POST_comment(self, commentform, jquery, parent, comment, ip):
         should_ratelimit = True
         #check the parent type here cause we need that for the
         #ratelimit checks
@@ -600,68 +570,77 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove(errors.RATELIMIT)
 
-        if res._chk_errors((errors.BAD_COMMENT,errors.COMMENT_TOO_LONG, errors.RATELIMIT),
-                          parent._fullname):
-            res._focus("comment_reply_" + parent._fullname)
-            return 
-        res._show('reply_' + parent._fullname)
-        res._update("comment_reply_" + parent._fullname, rows = 2)
-
-        spam = (c.user._spam or
-                errors.BANNED_IP in c.errors)
-        
-        if is_message:
-            to = Account._byID(parent.author_id)
-            subject = parent.subject
-            re = "re: "
-            if not subject.startswith(re):
-                subject = re + subject
-            item, inbox_rel = Message._new(c.user, to, subject, comment, ip, spam)
-            item.parent_id = parent._id
-            res._send_things(item)
-        else:
-            item, inbox_rel =  Comment._new(c.user, link, parent_comment, comment,
-                                            ip, spam)
-            Vote.vote(c.user, item, True, ip)
-            res._update("comment_reply_" + parent._fullname, 
-                        innerHTML='', value='')
-            res._send_things(item)
-            res._hide('noresults')
-            # flag search indexer that something has changed
-            tc.changed(item)
-
-            #update last modified
-            set_last_modified(c.user, 'overview')
-            set_last_modified(c.user, 'commented')
-            set_last_modified(link, 'comments')
-
-            #update the comment cache
-            add_comment(item)
-
-        #update the queries
-        if g.write_query_queue:
+        if (not commentform.has_errors("comment",
+                                       errors.BAD_COMMENT,
+                                       errors.COMMENT_TOO_LONG,
+                                       errors.RATELIMIT) and
+            not commentform.has_errors("parent",
+                                       errors.DELETED_COMMENT)):
+            spam = (c.user._spam or errors.BANNED_IP in c.errors)
+            
             if is_message:
-                queries.new_message(item, inbox_rel)
+                to = Account._byID(parent.author_id)
+                subject = parent.subject
+                re = "re: "
+                if not subject.startswith(re):
+                    subject = re + subject
+                item, inbox_rel = Message._new(c.user, to, subject,
+                                               comment, ip, spam)
+                item.parent_id = parent._id
             else:
-                queries.new_comment(item, inbox_rel)
+                item, inbox_rel =  Comment._new(c.user, link, parent_comment,
+                                                comment, ip, spam)
+                Vote.vote(c.user, item, True, ip)
+                # flag search indexer that something has changed
+                tc.changed(item)
+    
+                #update last modified
+                set_last_modified(c.user, 'overview')
+                set_last_modified(c.user, 'commented')
+                set_last_modified(link, 'comments')
+    
+                #update the comment cache
+                add_comment(item)
+    
+            # clean up the submission form and remove it from the DOM (if reply)
+            t = commentform.find("textarea")
+            t.attr('rows', 3).html("").attr("value", "")
+            if isinstance(parent, (Comment, Message)):
+                commentform.remove()
+                jquery.things(parent._fullname).set_html(".reply-button:first",
+                                                         _("replied"))
+    
+            # insert the new comment
+            jquery.insert_things(item)
+            # remove any null listings that may be present
+            jquery("#noresults").hide()
+    
+    
+            #update the queries
+            if g.write_query_queue:
+                if is_message:
+                    queries.new_message(item, inbox_rel)
+                else:
+                    queries.new_comment(item, inbox_rel)
+    
+            #set the ratelimiter
+            if should_ratelimit:
+                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
+                                     prefix = "rate_comment_")
+            
 
-        #set the ratelimiter
-        if should_ratelimit:
-            VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix = "rate_comment_")
 
-
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              VCaptcha(),
-              VRatelimit(rate_user = True, rate_ip = True,
-                         prefix = "rate_share_"),
-              share_from = VLength('share_from', length = 100),
-              emails = ValidEmails("share_to"),
-              reply_to = ValidEmails("replyto", num = 1), 
-              message = VLength("message", length = 1000), 
-              thing = VByName('id'))
-    def POST_share(self, res, emails, thing, share_from, reply_to,
+    @validatedForm(VUser(),
+                   VModhash(),
+                   VCaptcha(),
+                   VRatelimit(rate_user = True, rate_ip = True,
+                              prefix = "rate_share_"),
+                   share_from = VLength('share_from', length = 100),
+                   emails = ValidEmails("share_to"),
+                   reply_to = ValidEmails("replyto", num = 1), 
+                   message = VLength("message", length = 1000), 
+                   thing = VByName('parent'))
+    def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
                    message):
 
         # remove the ratelimit error if the user's karma is high
@@ -670,54 +649,51 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove(errors.RATELIMIT)
 
-        res._hide("status_" + thing._fullname)
+        if emails and (errors.NO_EMAILS in c.errors):
+            c.errors.remove(errors.NO_EMAILS)
 
-        if res._chk_captcha(errors.BAD_CAPTCHA, thing._fullname):
+        # share_from and messages share a comment_too_long error.
+        # finding an error on one necessitates hiding the other error
+        if shareform.has_errors("share_from", errors.COMMENT_TOO_LONG):
+            shareform.find(".message-errors").children().hide()
+        elif shareform.has_errors("message", errors.COMMENT_TOO_LONG):
+            shareform.find(".share-form-errors").children().hide()
+        # reply_to and share_to also share errors...
+        elif shareform.has_errors("share_to", errors.BAD_EMAILS,
+                                  errors.NO_EMAILS,
+                                  errors.TOO_MANY_EMAILS):
+            shareform.find(".reply-to-errors").children().hide()
+        elif shareform.has_errors("replyto", errors.BAD_EMAILS,
+                                  errors.NO_EMAILS,
+                                  errors.TOO_MANY_EMAILS):
+            shareform.find(".share-to-errors").children().hide()
+        # lastly, check the captcha.
+        elif shareform.chk_captcha(errors.BAD_CAPTCHA, errors.RATELIMIT):
             pass
-        elif res._chk_error(errors.RATELIMIT, thing._fullname):
-            pass
-        elif (share_from is None and
-              res._chk_error(errors.COMMENT_TOO_LONG,
-                             'share_from_' + thing._fullname)):
-            res._focus('share_from_' + thing._fullname)
-        elif (message is None and
-              res._chk_error(errors.COMMENT_TOO_LONG,
-                             'message_' + thing._fullname)):
-            res._focus('message_' + thing._fullname)
-        elif not emails and res._chk_errors((errors.BAD_EMAILS,
-                                             errors.NO_EMAILS,
-                                             errors.TOO_MANY_EMAILS),
-                                            "emails_" + thing._fullname):
-            res._focus("emails_" + thing._fullname)
-        elif not reply_to and res._chk_error(errors.BAD_EMAILS,
-                                             "replyto_" + thing._fullname):
-            res._focus("replyto_" + thing._fullname)
         else:
             c.user.add_share_emails(emails)
             c.user._commit()
-
-            res._update("share_li_" + thing._fullname,
-                        innerHTML=_('shared'))
-
-            res._update("sharelink_" + thing._fullname,
-                        innerHTML=("<div class='clearleft'></div><p class='error'>%s</p>" % 
-                                   _("your link has been shared.")))
+            link = jquery.things(thing._fullname)
+            link.set_html(".share", _("shared"))
+            shareform.html("<div class='clearleft'></div>"
+                           "<p class='error'>%s</p>" % 
+                           _("your link has been shared."))
 
             emailer.share(thing, emails, from_name = share_from or "",
                           body = message or "", reply_to = reply_to or "")
 
             #set the ratelimiter
             if should_ratelimit:
-                VRatelimit.ratelimit(rate_user=True, rate_ip = True, prefix = "rate_share_")
+                VRatelimit.ratelimit(rate_user=True, rate_ip = True,
+                                     prefix = "rate_share_")
             
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              vote_type = VVotehash(('vh', 'id')),
-              ip = ValidIP(),
-              dir = VInt('dir', min=-1, max=1),
-              thing = VByName('id'))
-    def POST_vote(self, res, dir, thing, ip, vote_type):
+    @noresponse(VUser(),
+                VModhash(),
+                vote_type = VVotehash(('vh', 'id')),
+                ip = ValidIP(),
+                dir = VInt('dir', min=-1, max=1),
+                thing = VByName('id'))
+    def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
         spam = (c.user._spam or
@@ -746,42 +722,40 @@ class ApiController(RedditController):
             # flag search indexer that something has changed
             tc.changed(thing)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              stylesheet_contents = nop('stylesheet_contents'),
-              op = VOneOf('op',['save','preview']))
-    def POST_subreddit_stylesheet(self, res, stylesheet_contents = '', op='save'):
+    @validatedForm(VUser(),
+                   VModhash(),
+                   # nop is safe: handled after auth checks below
+                   stylesheet_contents = nop('stylesheet_contents'),
+                   op = VOneOf('op',['save','preview']))
+    def POST_subreddit_stylesheet(self, form, jquery,
+                                  stylesheet_contents = '', op='save'):
         if not c.site.can_change_stylesheet(c.user):
             return self.abort(403,'forbidden')
 
         if g.css_killswitch:
             return self.abort(403,'forbidden')
 
+        # validation is expensive.  Validate after we've confirmed
+        # that the changes will be allowed
         parsed, report = cssfilter.validate_css(stylesheet_contents)
 
         if report.errors:
             error_items = [ CssError(x).render(style='html')
                             for x in sorted(report.errors) ]
-                                               
-            res._update('status', innerHTML = _('validation errors'))
-            res._update('validation-errors', innerHTML = ''.join(error_items))
-            res._show('error-header')
+            form.set_html(".status", _('validation errors'))
+            form.set_html(".errors ul", ''.join(error_items))
+            form.find('.errors').show()
         else:
-            res._hide('error-header')
-            res._update('status', innerHTML = '')
-            res._update('validation-errors', innerHTML = '')
+            form.find('.errors').hide()
+            form.set_html(".errors ul", '')
 
         stylesheet_contents_parsed = parsed.cssText if parsed else ''
         # if the css parsed, we're going to apply it (both preview & save)
         if not report.errors:
-            res._call('applyStylesheet("%s"); '  %
-                      stylesheet_contents_parsed.replace('"', r"\"").replace("\n", r"\n").replace("\r", r"\r"))
+            jquery.apply_stylesheet(stylesheet_contents_parsed)
         if not report.errors and op == 'save':
-            stylesheet_contents_user   = stylesheet_contents
-
             c.site.stylesheet_contents      = stylesheet_contents_parsed
-            c.site.stylesheet_contents_user = stylesheet_contents_user
+            c.site.stylesheet_contents_user = stylesheet_contents
 
             c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
 
@@ -789,43 +763,41 @@ class ApiController(RedditController):
             tc.changed(c.site)
             c.site._commit()
 
-            res._update('status', innerHTML = 'saved')
-            res._update('validation-errors', innerHTML = '')
+            form.set_html(".status", _('saved'))
+            form.set_html(".errors ul", "")
 
         elif op == 'preview':
             # try to find a link to use, otherwise give up and
             # return
             links = cssfilter.find_preview_links(c.site)
-            if not links:
-                # we're probably not going to be able to find any
-                # comments, either; screw it
-                return
+            if links:
 
-            res._show('preview-table')
-
-            # do a regular link
-            cssfilter.rendered_link('preview_link_normal',
-                                    res, links,
-                                    media = 'off', compress=False)
-            # now do one with media
-            cssfilter.rendered_link('preview_link_media',
-                                    res, links,
-                                    media = 'on', compress=False)
-            # do a compressed link
-            cssfilter.rendered_link('preview_link_compressed',
-                                    res, links,
-                                    media = 'off', compress=True)
+                jquery('#preview-table').show()
+    
+                # do a regular link
+                jquery('#preview_link_normal').html(
+                    cssfilter.rendered_link(links, media = 'off',
+                                            compress=False))
+                # now do one with media
+                jquery('#preview_link_media').html(
+                    cssfilter.rendered_link(links, media = 'on',
+                                            compress=False))
+                # do a compressed link
+                jquery('#preview_link_compressed').html(
+                    cssfilter.rendered_link(links, media = 'off',
+                                            compress=True))
+    
             # and do a comment
             comments = cssfilter.find_preview_comments(c.site)
-            if not comments:
-                return
-            cssfilter.rendered_comment('preview_comment',res,comments)
+            if comments:
+                jquery('#preview_comment').html(
+                    cssfilter.rendered_comment(comments))
 
-    @Json
-    @validate(VSrModerator(),
-              VModhash(),
-              name = VCssName('img_name'))
-    def POST_delete_sr_img(self, res, name):
+
+    @validatedForm(VSrModerator(),
+                   VModhash(),
+                   name = VCssName('img_name'))
+    def POST_delete_sr_img(self, form, jquery, name):
         """
         Called called upon requested delete on /about/stylesheet.
         Updates the site's image list, and causes the <li> which wraps
@@ -836,16 +808,11 @@ class ApiController(RedditController):
             return self.abort(403,'forbidden')
         c.site.del_image(name)
         c.site._commit()
-        # hide the image and it's container
-        res._hide("img-li_%s" % name)
-        # reset the status
-        res._update('img-status', innerHTML = _("deleted"))
     
 
-    @Json
-    @validate(VSrModerator(),
-              VModhash())
-    def POST_delete_sr_header(self, res):
+    @validatedForm(VSrModerator(),
+                   VModhash())
+    def POST_delete_sr_header(self, form, jquery):
         """
         Called when the user request that the header on a sr be reset.
         """
@@ -856,14 +823,13 @@ class ApiController(RedditController):
             c.site.header = None
             c.site._commit()
         # reset the header image on the page
-        res._update('header-img', src = DefaultSR.header)
+        form.find('#header-img').attr("src", DefaultSR.header)
         # hide the button which started this
-        res._hide  ('delete-img')
+        form.find('#delete-img').hide()
         # hide the preview box
-        res._hide  ('img-preview-container')
+        form.find('#img-preview-container').hide()
         # reset the status boxes
-        res._update('img-status', innerHTML = _("deleted"))
-        res._update('status', innerHTML = "")
+        form.set_html('.img-status', _("deleted"))
         
 
     def GET_upload_sr_img(self, *a, **kw):
@@ -931,29 +897,31 @@ class ApiController(RedditController):
             new_url = cssfilter.save_sr_image(c.site, cleaned, num = num)
             if header:
                 c.site.header = new_url
-                c.site._commit()
+            c.site._commit()
     
             return UploadedImage(_('saved'), new_url, name, 
                                  errors = errors).render()
     
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              VRatelimit(rate_user = True,
-                         rate_ip = True,
-                         prefix = 'create_reddit_'),
-              sr = VByName('sr'),
-              name = VSubredditName("name"),
-              title = VSubredditTitle("title"),
-              domain = VCnameDomain("domain"),
-              description = VSubredditDesc("description"),
-              lang = VLang("lang"),
-              over_18 = VBoolean('over_18'),
-              show_media = VBoolean('show_media'),
-              type = VOneOf('type', ('public', 'private', 'restricted'))
-              )
-    def POST_site_admin(self, res, name ='', sr = None, **kw):
+    @validatedForm(VUser(),
+                   VModhash(),
+                   VRatelimit(rate_user = True,
+                              rate_ip = True,
+                              prefix = 'create_reddit_'),
+                   sr = VByName('sr'),
+                   name = VSubredditName("name"),
+                   title = VSubredditTitle("title"),
+                   domain = VCnameDomain("domain"),
+                   description = VSubredditDesc("description"),
+                   lang = VLang("lang"),
+                   over_18 = VBoolean('over_18'),
+                   show_media = VBoolean('show_media'),
+                   type = VOneOf('type', ('public', 'private', 'restricted'))
+                   )
+    def POST_site_admin(self, form, jquery, name ='', sr = None, **kw):
+        # the status button is outside the form -- have to reset by hand
+        form.parent().set_html('.status', "")
+
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
@@ -967,30 +935,20 @@ class ApiController(RedditController):
         domain = kw['domain']
         cname_sr = domain and Subreddit._by_domain(domain)
         if cname_sr and (not sr or sr != cname_sr):
-                c.errors.add(errors.USED_CNAME)
+            c.errors.add(errors.USED_CNAME)
 
-        if not sr and res._chk_error(errors.RATELIMIT):
+        if not sr and form.has_errors(None, errors.RATELIMIT):
             pass
-        elif not sr and res._chk_errors((errors.SUBREDDIT_EXISTS,
-                                         errors.BAD_SR_NAME)):
-            res._hide('example_name')
-            res._focus('name')
-        elif res._chk_errors((errors.NO_TITLE, errors.TITLE_TOO_LONG)):
-            res._hide('example_title')
-            res._focus('title')
-        elif res._chk_error(errors.INVALID_OPTION):
+        elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
+                                        errors.BAD_SR_NAME):
+            form.find('#example_name').hide()
+        elif form.has_errors('title', errors.NO_TITLE, errors.TITLE_TOO_LONG):
+            form.find('#example_title').hide()
+        elif form.has_errors('domain', errors.BAD_CNAME, errors.USED_CNAME):
+            form.find('#example_domain').hide()
+        elif (form.has_errors(None, errors.INVALID_OPTION) or
+              form.has_errors('description', errors.DESC_TOO_LONG)):
             pass
-        elif res._chk_errors((errors.BAD_CNAME, errors.USED_CNAME)):
-            res._hide('example_domain')
-            res._focus('domain')
-        elif res._chk_error(errors.DESC_TOO_LONG):
-            res._focus('description')
-
-        res._update('status', innerHTML = '')
-
-        if res.error:
-            pass
-
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -1020,86 +978,82 @@ class ApiController(RedditController):
 
             # flag search indexer that something has changed
             tc.changed(sr)
-
-            res._update('status', innerHTML = _('saved'))
-
+            form.parent().set_html('.status', _("saved"))
 
         if redir:
-            res._redirect(redir)
+            jquery.redirect(redir)
 
-    @Json
-    @validate(VModhash(),
-              VSrCanBan('id'),
-              thing = VByName('id'))
-    def POST_ban(self, res, thing):
+    @noresponse(VModhash(),
+                VSrCanBan('id'),
+                thing = VByName('id'))
+    def POST_ban(self, thing):
         thing.moderator_banned = not c.user_is_admin
         thing.banner = c.user.name
         thing._commit()
         # NB: change table updated by reporting
         unreport(thing, correct=True, auto=False)
 
-    @Json
-    @validate(VModhash(),
-              VSrCanBan('id'),
-              thing = VByName('id'))
-    def POST_unban(self, res, thing):
+    @noresponse(VModhash(),
+                VSrCanBan('id'),
+                thing = VByName('id'))
+    def POST_unban(self, thing):
         # NB: change table updated by reporting
         unreport(thing, correct=False)
 
-    @Json
-    @validate(VModhash(),
-              VSrCanBan('id'),
-              thing = VByName('id'))
-    def POST_ignore(self, res, thing):
+    @noresponse(VModhash(),
+                VSrCanBan('id'),
+                thing = VByName('id'))
+    def POST_ignore(self, thing):
         # NB: change table updated by reporting
         unreport(thing, correct=False)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              thing = VByName('id'))
-    def POST_save(self, res, thing):
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_save(self, thing):
         r = thing._save(c.user)
         if g.write_query_queue:
             queries.new_savehide(r)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              thing = VByName('id'))
-    def POST_unsave(self, res, thing):
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_unsave(self, thing):
         r = thing._unsave(c.user)
         if g.write_query_queue and r:
             queries.new_savehide(r)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              thing = VByName('id'))
-    def POST_hide(self, res, thing):
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_hide(self, thing):
         r = thing._hide(c.user)
         if g.write_query_queue:
             queries.new_savehide(r)
 
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              thing = VByName('id'))
-    def POST_unhide(self, res, thing):
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_unhide(self, thing):
         r = thing._unhide(c.user)
         if g.write_query_queue and r:
             queries.new_savehide(r)
 
 
-    @Json
-    @validate(link = VByName('link_id'),
-              sort = VMenu('where', CommentSortMenu),
-              children = VCommentIDs('children'),
-              depth = VInt('depth', min = 0, max = 8),
-              mc_id = nop('id'))
-    def POST_morechildren(self, res, link, sort, children, depth, mc_id):
+    @validatedForm(link = VByName('link_id'),
+                   sort = VMenu('where', CommentSortMenu),
+                   children = VCommentIDs('children'),
+                   depth = VInt('depth', min = 0, max = 8),
+                   mc_id = nop('id'))
+    def POST_morechildren(self, form, jquery,
+                          link, sort, children, depth, mc_id):
+        user = c.user if c.user_is_loggedin else None
+        if not link or not link.subreddit_slow.can_view(user):
+            return self.abort(403,'forbidden')
+            
         if children:
-            builder = CommentBuilder(link, CommentSortMenu.operator(sort), children)
+            builder = CommentBuilder(link, CommentSortMenu.operator(sort),
+                                     children)
             items = builder.get_items(starting_depth = depth, num = 20)
             def _children(cur_items):
                 items = []
@@ -1114,7 +1068,7 @@ class ApiController(RedditController):
                         
                 return items
             # assumes there is at least one child
-#            a = _children(items[0].child.things)
+            # a = _children(items[0].child.things)
             a = []
             for item in items:
                 a.append(item)
@@ -1124,16 +1078,16 @@ class ApiController(RedditController):
 
             # the result is not always sufficient to replace the 
             # morechildren link
-            if mc_id not in [x._fullname for x in a]:
-                res._hide('thingrow_' + str(mc_id))
-            res._send_things(a)
+            jquery.things(str(mc_id)).remove()
+            jquery.insert_things(a, append = True)
 
 
-    @validate(uh = nop('uh'),
+    @validate(uh = nop('uh'), # VModHash() will raise, check manually
               action = VOneOf('what', ('like', 'dislike', 'save')),
               links = VUrl(['u']))
     def GET_bookmarklet(self, action, uh, links):
-        '''Controller for the functionality of the bookmarklets (not the distribution page)'''
+        '''Controller for the functionality of the bookmarklets (not
+        the distribution page)'''
 
         # the redirect handler will clobber the extension if not told otherwise
         c.extension = "png"
@@ -1157,7 +1111,8 @@ class ApiController(RedditController):
                 if action in ['like', 'dislike']:
                     #vote up all of the links
                     for link in links:
-                        v = Vote.vote(c.user, link, action == 'like', request.ip)
+                        v = Vote.vote(c.user, link, action == 'like',
+                                      request.ip)
                         if g.write_query_queue:
                             queries.new_vote(v)
                 elif action == 'save':
@@ -1169,81 +1124,60 @@ class ApiController(RedditController):
         return self.redirect("/static/css_submit.png")
 
 
-    @Json
-    @validate(user = VUserWithEmail('name'))
-    def POST_password(self, res, user):
-        res._update('status', innerHTML = '')
-        if res._chk_error(errors.USER_DOESNT_EXIST):
-            res._focus('name')
-        elif res._chk_error(errors.NO_EMAIL_FOR_USER):
-            res._focus('name')
-        else:
+    @validatedForm(user = VUserWithEmail('name'))
+    def POST_password(self, form, jquery, user):
+        if not form.has_errors('name', errors.USER_DOESNT_EXIST,
+                               errors.NO_EMAIL_FOR_USER):
             emailer.password_email(user)
-            res._success()
             
-    @Json
-    @validate(user = VCacheKey('reset', ('key', 'name')),
-              key= nop('key'),
-              password = VPassword(['passwd', 'passwd2']))
-    def POST_resetpassword(self, res, user, key, password):
-        res._update('status', innerHTML = '')
-        if res._chk_error(errors.BAD_PASSWORD):
-            res._focus('passwd')
-        elif res._chk_error(errors.BAD_PASSWORD_MATCH):
-            res._focus('passwd2')
-        elif errors.BAD_USERNAME in c.errors:
-            cache.delete(str('reset_%s' % key))
-            return res._redirect('/password')
-        elif user:
-            cache.delete(str('reset_%s' % key))
+    @validatedForm(user = VCacheKey('reset', ('key', 'name')),
+                   password = VPassword(['passwd', 'passwd2']))
+    def POST_resetpassword(self, form, jquery, user, key, password):
+        if errors.BAD_USERNAME in c.errors:
+            return jquery.redirect('/password')
+        elif (not form.has_errors('passwd',  errors.BAD_PASSWORD) and
+              not form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH) and
+              user):
             change_password(user, password)
-            self._login(res, user, '/resetpassword')
+            self._login(jquery, user, '/resetpassword')
 
 
-    @Json
-    @validate(VUser())
-    def POST_frame(self, res):
-        c.user.pref_frame = True
-        c.user._commit()
-
-
-    @Json
-    @validate(VUser())
-    def POST_noframe(self, res):
+    @noresponse(VUser())
+    def POST_noframe(self):
+        """
+        removes the reddit toolbar if that currently the user's preference
+        """
         c.user.pref_frame = False
         c.user._commit()
 
 
-    @Json
-    @validate(VUser(),
-              where=nop('where'),
-              sort = nop('sort'))
-    def POST_sort(self, res, where, sort):
-        if where.startswith('sort_'):
-            setattr(c.user, where, sort)
+    @noresponse(VUser())
+    def POST_frame(self):
+        """
+        undoes POST_noframe
+        """
+        c.user.pref_frame = True
         c.user._commit()
 
-    @Json
-    def POST_new_captcha(self, res, *a, **kw):
-        res.captcha = dict(iden = get_iden(), refresh = True)
 
-    @Json
-    @validate(VAdmin(),
-              l = nop('id'))
-    def POST_deltranslator(self, res, l):
-        lang, a = l.split('_')
-        if a and Translator.exists(lang):
-            tr = Translator(locale = lang)
-            tr.author.remove(a)
+
+    @validatedForm()
+    def POST_new_captcha(self, form, jquery, *a, **kw):
+        jquery("body").captcha(get_iden())
+
+    @noresponse(VAdmin(),
+                tr = VTranslation("id"), 
+                user = nop('user'))
+    def POST_deltranslator(self, tr, user):
+        if tr:
+            tr.author.remove(user)
             tr.save()
 
-
-    @Json
-    @validate(VUser(),
-              VModhash(),
-              action = VOneOf('action', ('sub', 'unsub')),
-              sr = VByName('sr'))
-    def POST_subscribe(self, res, action, sr):
+    @noresponse(VUser(),
+                VModhash(),
+                action = VOneOf('action', ('sub', 'unsub')),
+                sr = VByName('sr'))
+    def POST_subscribe(self, action, sr):
         self._subscribe(sr, action == 'sub')
     
     def _subscribe(self, sr, sub):
@@ -1258,106 +1192,90 @@ class ApiController(RedditController):
         tc.changed(sr)
 
 
-    @Json
-    @validate(VAdmin(),
-              lang = nop("id"))
-    def POST_disable_lang(self, res, lang):
-        if lang and Translator.exists(lang):
-            tr = Translator(locale = lang)
+    @noresponse(VAdmin(),
+                tr = VTranslation("id"))
+    def POST_disable_lang(self, tr):
+        if tr:
             tr._is_enabled = False
         
 
-    @Json
-    @validate(VAdmin(),
-              lang = nop("id"))
-    def POST_enable_lang(self, res, lang):
-        if lang and Translator.exists(lang):
-            tr = Translator(locale = lang)
+    @noresponse(VAdmin(),
+                tr = VTranslation("id"))
+    def POST_enable_lang(self, lang):
+        if tr:
             tr._is_enabled = True
 
-    def action_cookie(action):
-        s = action + request.ip + request.user_agent
-        return sha.new(s).hexdigest()
 
-
-    @Json
-    @validate(num_margin = VCssMeasure('num_margin'),
-              mid_margin = VCssMeasure('mid_margin'),
-              links = VFullNames('links'))
-    def POST_fetch_links(self, res, num_margin, mid_margin, links):
-        b = IDBuilder([l._fullname for l in links],
+    @validatedForm(links = VFullNames('links'))
+    def POST_fetch_links(self, form, jquery, links):
+        b = IDBuilder([l._fullname for l in links], 
                       wrap = ListingController.builder_wrapper)
         l = OrganicListing(b)
-        l.num_margin = num_margin
-        l.mid_margin = mid_margin
-        res.object = res._thing(l.listing(), action = 'populate')
+        l.num_margin = 0
+        l.mid_margin = 0
+        jquery.replace_things(l, stubs = True)
 
-    @Json
-    @validate(VUser(),
+    @noresponse(VUser(),
               ui_elem = VOneOf('id', ('organic',)))
-    def POST_disable_ui(self, res, ui_elem):
+    def POST_disable_ui(self, ui_elem):
         if ui_elem:
             pref = "pref_%s" % ui_elem
             if getattr(c.user, pref):
                 setattr(c.user, "pref_" + ui_elem, False)
                 c.user._commit()
 
-    @Json
-    @validate(VSponsor(),
-              thing = VByName('id'))
-    def POST_promote(self, res, thing):
-        promote(thing)
-
-    @Json
-    @validate(VSponsor(),
-              thing = VByName('id'))
-    def POST_unpromote(self, res, thing):
+    @noresponse(VSponsor(),
+                thing = VByName('id'))
+    def POST_unpromote(self, thing):
         unpromote(thing)
 
-    @Json
-    @validate(VSponsor(),
-              ValidDomain('url'),
-              ip               = ValidIP(),
-              l                = VLink('link_id'),
-              title            = VTitle('title'),
-              url              = VUrl(['url', 'sr']),
-              sr               = VSubmitSR('sr'),
-              subscribers_only = VBoolean('subscribers_only'),
-              disable_comments = VBoolean('disable_comments'),
-              expire           = VOneOf('expire', ['nomodify', 'expirein', 'cancel']),
-              timelimitlength  = VInt('timelimitlength',1,1000),
-              timelimittype    = VOneOf('timelimittype',['hours','days','weeks']))
-    def POST_edit_promo(self, res, ip,
+    @validatedForm(VSponsor(),
+                   ValidDomain('url'),
+                   ip               = ValidIP(),
+                   l                = VLink('link_id'),
+                   title            = VTitle('title'),
+                   url              = VUrl(['url', 'sr'], allow_self = False),
+                   sr               = VSubmitSR('sr'),
+                   subscribers_only = VBoolean('subscribers_only'),
+                   disable_comments = VBoolean('disable_comments'),
+                   expire           = VOneOf('expire', ['nomodify', 
+                                                        'expirein', 'cancel']),
+                   timelimitlength  = VInt('timelimitlength',1,1000),
+                   timelimittype    = VOneOf('timelimittype',
+                                             ['hours','days','weeks']))
+    def POST_edit_promo(self, form, jquery, ip,
                         title, url, sr, subscribers_only,
                         disable_comments,
-                        expire = None, timelimitlength = None, timelimittype = None,
+                        expire = None,
+                        timelimitlength = None, timelimittype = None,
                         l = None):
-        res._update('status', innerHTML = '')
         if isinstance(url, str):
             # VUrl may have modified the URL to make it valid, like
             # adding http://
-            res._update('url', value=url)
+            form.set_input('url', url)
         elif isinstance(url, tuple) and isinstance(url[0], Link):
             # there's already one or more links with this URL, but
             # we're allowing mutliple submissions, so we really just
             # want the URL
             url = url[0].url
-
-        if res._chk_error(errors.NO_TITLE):
-            res._focus('title')
-        elif res._chk_errors((errors.NO_URL,errors.BAD_URL)):
-            res._focus('url')
-        elif (not l or url != l.url) and res._chk_error(errors.ALREADY_SUB):
+        if form.has_errors('title', errors.NO_TITLE):
+            pass
+        elif form.has_errors('url', errors.NO_URL, errors.BAD_URL):
+            pass
+        elif ( (not l or url != l.url) and 
+               form.has_errors('url', errors.NO_URL, errors.ALREADY_SUB) ):
             #if url == l.url, we're just editting something else
-            res._focus('url')
-        elif res._chk_error(errors.SUBREDDIT_NOEXIST):
-            res._focus('sr')
-        elif expire == 'expirein' and res._chk_error(errors.BAD_NUMBER):
-            res._focus('timelimitlength')
+            pass
+        elif form.has_errors('sr', errors.SUBREDDIT_NOEXIST):
+            pass
+        elif (expire == 'expirein' and 
+              form.has_errors('timelimitlength', errors.BAD_NUMBER)):
+            pass
         elif l:
             l.title = title
             old_url = l.url
             l.url = url
+            l.is_self = False
 
             l.promoted_subscribersonly = subscribers_only
             l.disable_comments = disable_comments
@@ -1365,25 +1283,28 @@ class ApiController(RedditController):
             if expire == 'cancel':
                 l.promote_until = None
             elif expire == 'expirein' and timelimitlength and timelimittype:
-                l.promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
-
+                l.promote_until = timefromnow("%d %s" % (timelimitlength,
+                                                         timelimittype))
             l._commit()
             l.update_url_cache(old_url)
 
-            res._redirect('/promote/edit_promo/%s' % to36(l._id))
+            jquery.redirect('/promote/edit_promo/%s' % to36(l._id))
         else:
             l = Link._submit(title, url, c.user, sr, ip, False)
 
             if expire == 'expirein' and timelimitlength and timelimittype:
-                promote_until = timefromnow("%d %s" % (timelimitlength, timelimittype))
+                promote_until = timefromnow("%d %s" % (timelimitlength,
+                                                       timelimittype))
             else:
                 promote_until = None
+                
+            l._commit()
 
             promote(l, subscribers_only = subscribers_only,
                     promote_until = promote_until,
                     disable_comments = disable_comments)
-            
-            res._redirect('/promote/edit_promo/%s' % to36(l._id))
+
+            jquery.redirect('/promote/edit_promo/%s' % to36(l._id))
 
     def GET_link_thumb(self, *a, **kw):
         """
@@ -1396,7 +1317,6 @@ class ApiController(RedditController):
               file = VLength('file',500*1024))
     def POST_link_thumb(self, link=None, file=None):
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-
         try:
             force_thumbnail(link, file)
         except cssfilter.BadImage:
@@ -1404,32 +1324,26 @@ class ApiController(RedditController):
             errors["IMAGE_ERROR"] = _("bad image")
 
         if any(errors.values()):
-            return  UploadedImage("", "", "upload", errors = errors).render()
+            return UploadedImage("", "", "upload", errors = errors).render()
         else:
-            return UploadedImage(_('saved'), thumbnail_url(link), "upload",
+            return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
-    
 
-    @Json
-    @validate(ids = VLinkFullnames('ids'))
-    def POST_onload(self, res, ids, *a, **kw):
-        if not ids:
-            res.object = {}
-            return
-
-        links = {}
-
+    @validatedForm(ids = VLinkFullnames('ids'))
+    def POST_onload(self, form, jquery, ids, *a, **kw):
         # make sure that they are really promoted
         promoted = Link._by_fullname(ids, data = True, return_dict = False)
         promoted = [ l for l in promoted if l.promoted ]
 
         for l in promoted:
-            links[l._fullname] = [
+            dest = l.url
+            
+            jquery.set_tracker(
+                l._fullname,
                 tracking.PromotedLinkInfo.gen_url(fullname=l._fullname,
                                                   ip = request.ip),
                 tracking.PromotedLinkClickInfo.gen_url(fullname = l._fullname,
-                                                       dest = l.url,
+                                                       dest = dest,
                                                        ip = request.ip)
-                ]
-        res.object = links
+                )
 

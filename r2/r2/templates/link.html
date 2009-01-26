@@ -29,8 +29,7 @@
  
 <%def name="numcol()">
   <% num = thing.num %>
-  <span class="rank" style="width:$numcolmargin;" 
-       id="num_${thing._fullname}">
+  <span class="rank" style="width:$numcolmargin;">
     %if thing.top_link:
       <a class="star" href="/toplinks">
     %endif
@@ -43,11 +42,11 @@
 </%def>
 
 <%def name="make_link(name, css_class)">
-  <a id="${name}_${thing._fullname}" 
-     onmousedown="setClick(this, '${css_class}')"
-     class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
+  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
      %if c.user.pref_frame:
        href="http://${get_domain(cname = c.cname, subreddit = False)}/goto?id=${thing._id36}"
+     %elif thing.is_self:
+       href="${thing.permalink}"
      %else:
        href="${thing.url}" 
      %endif
@@ -65,7 +64,7 @@
 </%def>
 
 <%def name="entry()">
-  <p class="title" id="titlerow_${thing._fullname}">
+  <p class="title">
     <%call expr="make_link('title', 'title')">
       ${thing.title} 
     </%call>
@@ -79,7 +78,6 @@
     ${self.buttons()}
     ${self.admintagline()}
   </ul>
-  ${self.mediadiv()}
 </%def>
 
 <%def name="subreddit()" buffered="True">
@@ -91,23 +89,23 @@
        path = thing.subreddit.path
     endif
   %>
-  <a id="subreddit_${thing._fullname}" href="${path}" class="hover"
+  <a href="${path}" class="subreddit hover" 
      ${'target="_top"'  if c.cname else ''} >
     ${thing.subreddit.name}
   </a>
   <script type="text/javascript">
-    sr['${thing._fullname}'] = '${thing.subreddit._fullname}';
+    reddit.sr['${thing._fullname}'] = '${thing.subreddit._fullname}';
   </script>
 </%def>
 
 <%def name="midcol(display=True)">
-  <div id="arrows_${thing._fullname}" class="midcol" style="width:$midcolmargin;" 
+  <div class="midcol" style="width:$midcolmargin;" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.hide_score:
       <div class="score">&bull;</div> 
     %else:
-      ${self.score(thing, thing.likes, inline=False, label = False)}
+      ${self.score(thing, thing.likes, inline=False)}
     %endif                
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
@@ -152,30 +150,31 @@
          com_label = ungettext("comment", "comments", thing.num_comments)
        %>
     <li class="first">
-    ${parent.comment_button("comment", fullname, com_label,
+    ${parent.comment_button("comment", com_label,
                             thing.num_comments, thing.permalink,
                             newwindow = c.user.pref_newwindow)}
     </li>
   %endif
-  <li id="share_li_${fullname}">
-    ${parent.simple_button("share", fullname, _("share"), "share")}
+  <li class="share">
+    ${parent.toggle_button("share-button", _("share"), _("cancel"),
+                           "share", "cancelShare", login_required = True)}
   </li>
   %if c.user_is_loggedin:
     <li>
     %if thing.saved:
-       ${parent.state_button("unsave", fullname, _("unsave"), \
-          "return change_state(this, 'unsave');", _("unsaved"))}
+       ${parent.state_button("unsave", _("unsave"), \
+          "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
     %else:
-       ${parent.state_button("save", fullname, _("save"), \
-          "return change_state(this, 'save');", _("saved"))}
+       ${parent.state_button("save", _("save"), \
+          "return change_state(this, 'save', save_thing);", _("saved"))}
     %endif
     </li><li>
     %if thing.hidden:
-      ${parent.state_button("unhide", fullname, _("unhide"), \
-        "return change_w_callback(this, $ListClass.unhide);", _("unhidden"))}
+      ${parent.state_button("unhide", _("unhide"), \
+        "change_state(this, 'unhide', hide_thing);", _("unhidden"))}
     %else:
-      ${parent.state_button("hide", fullname, _("hide"), \
-        "return change_w_callback(this, $ListClass.hide);", _("hidden"))}
+      ${parent.state_button("hide", _("hide"), \
+         "change_state(this, 'hide', hide_thing);", _("hidden"))}
     %endif
     </li>
   %endif
@@ -189,19 +188,9 @@
 <%def name="media_embed()">
   %if thing.media_object:
   <li>
-    <a id="view_embeded_media_a_${thing._fullname}" class="" \
-       href="javascript:view_embeded_media('${thing._fullname}', '${thing.media_object}')">\
-      <span id="view_embeded_media_span_watch_${thing._fullname}" 
-            class="watch-play"
-            style="display: inline">
-        ${_("watch")}
-      </span>
-      <span id="view_embeded_media_span_close_${thing._fullname}" 
-            class="watch-stop"
-            style="display: none">
-        ${_("close")}
-      </span>
-    </a>
+    ${parent.toggle_button("media-button", _("watch"), _("cancel"),
+                           'show_media("%s")' % websafe(thing.media_object), 
+                           "cancelMedia")}
   </li>
   %endif
 </%def>
@@ -214,11 +203,3 @@
   %endif
 </%def>
 
-<%def name="mediadiv()">
-  %if thing.media_object:
-    <div id="embeded_media_${thing._fullname}" 
-         class="embededmedia" style="display: none;">
-      <p class="error">loading...</p>
-    </div>
-  %endif
-</%def>

@@ -1,3 +1,4 @@
+
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -26,7 +27,6 @@ from strings import StringHandler, plurals
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from pylons.i18n import _
-#from r2.config import cache
 
 
 class MenuHandler(StringHandler):
@@ -427,7 +427,7 @@ class NewMenu(SimpleGetMenu):
     type = 'flatlist'
 
     def __init__(self, **kw):
-        kw['title'] = _("sort by")
+        kw['title'] = ""
         SimpleGetMenu.__init__(self, **kw)
 
     @classmethod

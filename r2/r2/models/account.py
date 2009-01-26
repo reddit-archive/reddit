@@ -42,7 +42,7 @@ class Account(Thing):
                      pref_newwindow = False,
                      pref_public_votes = False,
                      pref_hide_ups = False,
-                     pref_hide_downs = True,
+                     pref_hide_downs = False,
                      pref_min_link_score = -4,
                      pref_min_comment_score = -4,
                      pref_num_comments = g.num_comments,
@@ -294,3 +294,14 @@ def register(name, password):
 
 class Friend(Relation(Account, Account)): pass
 Account.__bases__ += (UserRel('friend', Friend),)
+
+class DeletedUser(FakeAccount):
+    @property
+    def name(self):
+        return '[deleted]'
+
+    def _fullname(self):
+        raise NotImplementedError
+
+    def _id(self):
+        raise NotImplementedError

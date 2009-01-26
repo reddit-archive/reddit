@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="help.html" import="help_or_hide"/>
+<%namespace file="printable.html" import="ynbutton"/>
 <% 
    from r2.lib.template_helpers import replace_render, static
    from r2.lib.promote import get_promoted
@@ -28,29 +28,83 @@
 
 <div id="siteTable_organic" class="organic-listing">
   <%
+     lookup = dict((t._fullname, t) for t in thing.things)
+     seen = set([])
      promoted = set(get_promoted())
      promoted = [o for o in thing.org_links if o in promoted ]
    %>
-  <div id="ajaxHook_organic" class="ajaxhook">  </div>
   <script type="text/javascript">
     ## fortunately, python arrays print in JS-compatible form.
     var organic_links = ${thing.org_links};
-    reddit_thing_info.fetch = ${promoted};
+    /*reddit_thing_info.fetch = ${promoted};*/
   </script>
-  %for a in thing.things:
-    ${unsafe(replace_render(thing, a, 
-                            display = (thing.visible_link == a._fullname)))}
+  %for name in thing.org_links:
+    %if name in seen:
+      <% pass %>
+    %elif lookup.has_key(name):
+      <% seen.add(name) %>
+      ${unsafe(replace_render(thing, lookup[name], 
+                               display = (thing.visible_link == name)))} 
+    %else:
+      <div class="thing id-${name} stub" style="display:none"></div>
+    %endif
   %endfor
 
   <div class="nextprev">
     <img src="${static('prev_organic.png')}" alt="prev"
-         onclick="return get_organic(false)"/>
+         onclick="return get_organic(this, false)"/>
     <img src="${static('next_organic.png')}" alt="next" 
-         onclick="return get_organic(true)" />
+         onclick="return get_organic(this, true)" />
   </div>
-
-  ${help_or_hide("organic", _("This area shows new and upcoming links. Vote on links here to help them become popular, and click the forwards and backwards buttons to view more. "))}
-
+  
+  <div class="help">
+    <a class="open" href="javascript:void(0)">${_("what's this?")}</a>
+  </div>
 </div>
+
+<div class="help help-cover">
+    <p>
+      ${_("This area shows new and upcoming links. Vote on" +
+            " links here to help them become popular, and click" +
+            " the forwards and backwards buttons to view more. ")}
+    </p>
+        %if c.user_is_loggedin:
+          ${ynbutton(_("here"), _("This element has been disabled."),
+                     "disable_ui", callback = "disappear_help",
+                     format = _("Click %(here)s to disable this feature."),
+                     format_arg = "here",
+                     hidden_data = dict(id="organic"))}
+        %else:
+         <p>
+        %endif
+        <%
+           fmt = _("Click %(here)s to close help.")
+           title = _("here")
+           link = '<a class="close" href="javascript:void(0)">%s</a>' % title
+           link = (fmt % dict(here = link))
+           link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
+         %>
+        ${link}
+        %if not c.user_is_loggedin:
+         </p>
+        %endif
+</div>
+<script type="text/javascript">
+    function disappear_help(elem) {
+       $(elem).parents(".help:first").parent().html(
+                 "${_('The new link area will no longer appear for you.' +
+                      ' To re-enable it, visit your preferences.')}");
+    }
+    $(function() {
+        $(".help")
+            .find("a.open").click(function() {
+              $(this).parents(".organic-listing").hide()
+                     .siblings(".help").show();
+            }).end()
+            .find("a.close").click(function() {
+              $(this).parent().hide().siblings(".organic-listing").show();
+            });
+      });
+</script>
 
 

@@ -40,7 +40,10 @@ class ButtonsController(RedditController):
     def get_link(self, url):
         try:
             sr = None if isinstance(c.site, FakeSubreddit) else c.site
-            links = tup(Link._by_url(url, sr))
+            try:
+                links = tup(Link._by_url(url, sr))
+            except NotFound:
+                return None
             #find the one with the highest score
             return max(links, key = lambda x: x._score)
         except:
@@ -71,6 +74,11 @@ class ButtonsController(RedditController):
               width = VInt('width', 0, 800),
               link = VByName('id'))
     def GET_button_content(self, url, title, css, vote, newwindow, width, link):
+
+        # no buttons on domain listings
+        if isinstance(c.site, DomainSR):
+            return self.abort404()
+
         l = self.wrap_link(link or self.get_link(url))
         if l: url = l.url
 
@@ -107,6 +115,10 @@ class ButtonsController(RedditController):
               _height = VInt('height', 0, 300),
               _width = VInt('width', 0, 800))
     def GET_button_embed(self, buttontype, _height, _width, url):
+        # no buttons on domain listings
+        if isinstance(c.site, DomainSR):
+            return self.abort404()
+            
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
 
@@ -150,6 +162,9 @@ class ButtonsController(RedditController):
 
 
     def GET_button_demo_page(self):
+        # no buttons for domain listings -> redirect to top level
+        if isinstance(c.site, DomainSR):
+            return self.redirect('/buttons')
         return BoringPage(_("reddit buttons"),
                           show_sidebar = False, 
                           content=ButtonDemoPanel()).render()

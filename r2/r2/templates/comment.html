@@ -55,17 +55,26 @@ ${parent.collapsed()}
 </%def>
 
 <%def name="tagline(collapse=False)">
-<% fullname = thing._fullname %>
-  %if not thing.deleted:
+  <%
+     if c.user_is_admin:
+       show = True
+     else:
+       show = not thing.deleted
+  %>
+  %if show:
+     %if thing.deleted:
+       <em>${_("deleted comment from")}</em>&#32;
+     %endif
      ${unsafe(self.author(friend=thing.friend, gray = collapse))}&#32;
   %else:
-     <em>${_("comment deleted")}</em>&#32;
+     <em>${_("[deleted]")}</em>&#32;
   %endif
-  %if collapse and thing.collapsed and not thing.deleted:
+
+  %if collapse and thing.collapsed and show:
     ${_("comment score below threshold")}
   %else:
-    %if not thing.deleted:
-       ${unsafe(self.score(thing, likes = thing.likes, _id = not collapse))}&#32;
+    %if show:
+       ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
     ${thing.timesince} ${_("ago")}
     %if thing.editted:
@@ -74,9 +83,9 @@ ${parent.collapsed()}
   %endif
   <a href="#" class="expand"
      %if collapse:
-       onclick="return showcomment('${fullname}')">
+       onclick="return showcomment(this)">
      %else:
-       onclick="return hidecomment('${fullname}')">
+       onclick="return hidecomment(this)">
      %endif
      [${_("+") if collapse else _("-")}]
   %if collapse:
@@ -92,8 +101,12 @@ ${parent.Child(not thing.collapsed)}
 </%def>
 
 <%def name="commentBody()">
-%if not thing.deleted:
+%if c.user_is_admin or not thing.deleted:
 ${unsafe(safemarkdown(thing.body))}
+%else:
+<div class="gray md">
+  ${_("[deleted]")}
+</div>
 %endif
 </%def>
 
@@ -109,12 +122,18 @@ ${parent.midcol()}
 
 
 <%def name="buttons()">
-  %if not thing.deleted:
-    <% fullname = thing._fullname %>
-    <li class="first">
-      ${parent.comment_button("permalink", fullname, _("permalink"), 0, 
-      thing.permalink)}
-    </li>
+  <li class="first">
+    ${parent.comment_button("permalink", _("permalink"), 0, 
+    thing.permalink)}
+  </li>
+
+  %if thing.deleted:
+    %if thing.parent_permalink and not c.profilepage:
+      <li>
+        ${bylink_button("parent", _("parent"), thing.parent_permalink)}
+      </li>
+    %endif
+  %else:
     %if not c.profilepage:
       %if thing.parent_permalink:
         <li>
@@ -123,7 +142,7 @@ ${parent.midcol()}
       %endif
       %if c.user_is_loggedin and thing.author.name == c.user.name:
         <li>
-          ${parent.simple_button("edit", fullname, _("edit"), "editcomment")}
+          ${parent.simple_button("edit", _("edit"), "editcomment")}
         </li>
       %endif
     %endif
@@ -131,7 +150,9 @@ ${parent.midcol()}
     ${parent.buttons()}
     %if not c.profilepage and thing.can_reply:
       <li>
-        ${parent.simple_button("reply", fullname, _("reply {verb}"), "reply")}
+        ${parent.toggle_button("reply-button", _("reply {verb}"), 
+                                _("cancel"), "reply", "cancelReply",
+                               login_required = True)}
       </li>
     %endif
   %endif
@@ -140,6 +161,6 @@ ${parent.midcol()}
 
 
 <%def name="bylink_button(name, title, link)">
- <a id="${name}_${thing._fullname}" href="${link}" class="bylink">${title}</a>
+ <a href="${link}" class="bylink">${title}</a>
 </%def>
 

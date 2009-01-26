@@ -20,6 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%namespace file="utils.html" import="optionalstyle"/>
+<%namespace file="printable.html" import="thing_css_class"/>
 <div class="reddit-listing" 
        ${optionalstyle("margin-left:5px;margin-top:7px;")}>
   <% 
@@ -44,7 +45,7 @@
      %endif
    %endif
 
-     <div class="${cls}">
+     <div class="${cls} ${thing_css_class(a)}">
       ${a.render()}
      </div>
    %if two_col and i == l - 1:

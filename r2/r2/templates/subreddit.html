@@ -26,6 +26,7 @@
 <%inherit  file="printable.html"/>
 
 <%namespace file="utils.html" import="plain_link"/>
+<%namespace file="printable.html" import="toggle_button"/>
 
 <%def name="numcol()">
 </%def>
@@ -33,7 +34,7 @@
 <%def name="entry()">
 <% fullname = thing._fullname %>
 <p class="titlerow">
-  ${plain_link(thing.title, thing.path, _class="title", _id="title_%s" % fullname)}
+  ${plain_link(thing.title, thing.path, _class="title")}
   <span class="domain">(${thing.path})</span> 
   %if c.user_is_admin:
   ${self.admintagline()}
@@ -58,9 +59,11 @@
 
 ##this function is used by subscriptionbox.html
 <%def name="addremove_button(sr)">
-  <div class="sr-toggle-button ${'remove' if sr.subscriber else 'add'}"
-       onclick="subscribe(this, '${sr._fullname}');">
-  </div>
+  ${toggle_button("sr-toggle-button", "", "", 
+                  "subscribe('%s')" % sr._fullname, 
+                  "unsubscribe('%s')" % sr._fullname, 
+                  css_class = "add", alt_css_class = "remove",
+                  reverse = sr.subscriber)}
 </%def>
 
 ##this function is used by subscriptionbox.html
@@ -108,9 +111,3 @@
   ${parent.buttons()}
 </%def>
 
-
-<%def name="leave_button(name, where)">
-${self.yes_no_button("leave", name, _("leave"), 
-  "return deletetoggle(this, 'leave');", _("left"),
-  location = where)}
-</%def>

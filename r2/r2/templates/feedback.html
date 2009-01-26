@@ -67,20 +67,22 @@
         </th>
         <td>
           %if thing.replyto:
-            <input id="replyto" name="Reply-to" type="text"
-                   value="${thing.email}" onfocus="clearTitle(this)" 
+            <input id="replyto" name="replyto" type="text"
+                   value="${thing.email}" 
                    size="30"/>
           %else:
-            <input id="replyto" name="replyto" style="color: gray" 
+            <input id="replyto" name="replyto" class="gray"
                    value="${_('optional')}"  type="text"
-                   onfocus="clearTitle(this)" size="30"/>
+                   size="30"/>
           %endif
+            ${error_field("BAD_EMAILS", "span")}
           %else:
           %if thing.email:
-          <input id="email" name="email" type="text"
-                 value="${thing.email}" onfocus="clearTitle(this)" size="30"/>
+            <input id="email" name="email" type="text"
+                   value="${thing.email}" size="30"/>
           %else:
-          <input id="email" type="text" name="email" onfocus="clearTitle(this)" size="30"/>
+            <input id="email" type="text" name="email" size="30"
+                   value="${ _('put your email here')}" class="gray"/>
           %endif
           %endif
           <span class="little gray">${_("(only used to reply)")}</span>
@@ -102,18 +104,9 @@
     </table>
     <div style="margin: 10px 0 20px 0">
       <button class="btn" type="submit">${_("send")}</button>
-      <span id="status" class="error"></span>
+      <span class="status"></span>
     </div>
   </div>
 </form>
 
-%if not thing.email:
-<script type="text/javascript">
-  var form = $('feedback');
-  if(form) {
-    setMessage(form.email,
-       "${ _('put your email here')}")
-  }
-</script>
-%endif
 %endif

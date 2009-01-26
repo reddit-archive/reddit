@@ -41,7 +41,7 @@
       %endif
     </div>
 
-    <div class="drop-choices ${css_class}" style="display:none">
+    <div class="drop-choices ${css_class}">
       %for option in thing:
         %if option != thing.selected:
           ${plain_link(option.title, option.path, _sr_path = option.sr_path,
@@ -55,7 +55,12 @@
 
 
 <%def name="flatlist()">
+  <% css_class = str(thing.css_class) if thing.css_class else "" %>
   %if thing:
+    %if thing.title:
+      <span class="flat-list title">${thing.title}:&#32;</span>
+    %endif
+
     <ul class="flat-list hover"
         ${"id='%s'" % thing._id if thing._id else ""}>
       %for i, option in enumerate(thing):

@@ -25,11 +25,9 @@
 
 <%
    _id = ("_%s" % thing.parent_name) if hasattr(thing, 'parent_name') else ''
+   cls = thing.lookups[0].__class__.__name__.lower()
  %>
-<div id="siteTable${_id}" class="sitetable">
-  <div id="ajaxHook${_id}" class="ajaxhook">
-  </div>
-
+<div id="siteTable${_id}" class="sitetable ${cls}">
   %for a in thing.things:
      ${unsafe(replace_render(thing, a))}
   %endfor

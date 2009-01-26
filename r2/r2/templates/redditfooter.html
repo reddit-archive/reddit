@@ -26,7 +26,7 @@
    from r2.lib import tracking
    import random, datetime
 %>
-<%namespace file="login.html" import="login_panel"/>
+<%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
 
 <div class="footer">
@@ -46,53 +46,39 @@
  %if g.tracker_url:
   <img alt="" src="${tracking.UserInfo.gen_url()}"/>
  %endif
- %if c.frameless_cname and not c.authorized_cname:
- <%
-    u = UrlParser("http://%s/%s" % (get_domain(cname = True, subreddit = False), request.path))
-    u.update_query(**request.get)
-    u.update_query(login = random.random())
-  %>
-  <script type="text/javascript">
-    function replace_self(url, child) {
-       if(child != window) {
-          createCookie("redditSession", "true");
-          if(readCookie("redditSession")) {
-              window.location = "${u.unparse()}";
-          }
-       }
-    };
-  </script>
-  <iframe name="reddit-window" id="reddit-window"
-          src="http://${get_domain(False)}/framebuster?v=${random.random()}"
-          width="1" height="1" style="visibility: hidden">
-  </iframe>
- %endif
 </div>
 
 %if not c.user_is_loggedin:
-<div id="cover" style="display:none" class="cover"
-       onclick="hidecover('cover', 'loginpopup')">
-  </div>
-  <div id="loginpopup" style="display: none" class="popup">
-    <h1 id="cover_msg">${strings.cover_msg}</h1>
-    <h2 id="cover_disclaim">${strings.cover_disclaim}</h2>
-    ${login_panel()}
-    <div style="text-align:center">
-      <a href="javascript:hidecover('cover','loginpopup')">
-        ${_("close this window")}
-      </a>
-    </div>
-  </div>
-
-  <div id="langcover" style="display:none" class="cover"
-       onclick="hidecover('langcover', 'langpopup')">
-  </div>
-  <div id="langpopup" style="display: none" class="popup">
-    <%include file="prefoptions.html" />
-    <div style="text-align:center">
-      <a href="javascript:hidecover('langcover','langpopup')">
-        ${_("close this window")}
-      </a>
-    </div>
-  </div>
+  ${self.loginpopup(login_panel, login_form)}
+  ${self.langpopup()}
 %endif
+
+<%def name="loginpopup(lp, lf)">
+  <div class="login-popup cover-overlay" style="display: none">
+    <div class="cover" onclick="return hidecover(this)"></div>
+    <div class="popup">
+      <h1 class="cover-msg">${strings.cover_msg}</h1>
+      ${lp(lf)}
+      <div style="text-align:center; clear: both">
+        <a href="#" onclick="return hidecover(this)">
+          ${_("close this window")}
+        </a>
+      </div>
+    </div>
+  </div>
+</%def>
+
+
+<%def name="langpopup()">
+  <div class="lang-popup cover-overlay" style="display: none">
+    <div class="cover" onclick="return hidecover(this)"></div>
+    <div class="popup">
+      <%include file="prefoptions.html" />
+      <div style="text-align:center; clear:both;">
+        <a href="#" onclick="return hidecover('langcover','langpopup')">
+          ${_("close this window")}
+        </a>
+      </div>
+    </div>
+  </div>
+</%def>

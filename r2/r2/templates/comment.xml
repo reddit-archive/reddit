@@ -24,11 +24,21 @@
    from r2.lib.filters import safemarkdown
 %>
 
+
+<%
+  if thing.deleted:
+    author = _('[deleted]')
+    body = _('[deleted]')
+  else:
+    author = thing.author.name
+    body = thing.body
+%>
+
 <item>
-  <title>${thing.author.name} ${_("on")} ${thing.link.title}</title>
+  <title>${author} ${_("on")} ${thing.link.title}</title>
   <link>${thing.permalink}</link>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>
-  <description>${thing.body|h}</description>
+  <description>${body|h}</description>
 </item>
 
 ${hasattr(thing, "child") and thing.child.render() or ''}

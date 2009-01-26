@@ -31,7 +31,6 @@ from r2.lib.cache import LocalCache
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount
 from r2.models.subreddit import Subreddit
-import r2.config as config
 from r2.models import *
 from errors import ErrorSet
 from validator import *
@@ -41,7 +40,7 @@ from r2.lib.jsontemplates import api_type
 from copy import copy
 from Cookie import CookieError
 from datetime import datetime
-import sha, inspect, simplejson
+import sha, simplejson
 from urllib import quote, unquote
 
 from r2.lib.tracking import encrypt, decrypt
@@ -61,8 +60,8 @@ class Cookie(object):
         self.dirty = dirty
         if domain:
             self.domain = domain
-        elif c.authorized_cname:
-            self.domain = c.site.domain
+        elif c.authorized_cname and not c.default_sr:
+            self.domain = utils.common_subdomain(request.host, c.site.domain)
         else:
             self.domain = g.domain
 
@@ -259,11 +258,14 @@ def set_content_type():
     c.response_content_type = e['content_type']
 
     if e.has_key('extension'):
-        ext = e['extension']
+        c.extension = ext = e['extension']
         if ext == 'api' or ext.startswith('json'):
             c.response_access_control = 'allow <*>'
-        if ext in ('embed', 'wired'):
-            c.response_wrappers.append(utils.to_js)
+        if ext in ('embed', 'wired', 'widget'):
+            def to_js(content):
+                return utils.to_js(content,callback = request.params.get(
+                    "callback", "document.write"))
+            c.response_wrappers.append(to_js)
 
 def get_browser_langs():
     browser_langs = []
@@ -351,19 +353,22 @@ def set_recent_reddits():
     names = read_user_cookie('recent_reddits')
     c.recent_reddits = []
     if names:
-        names = filter(None, names.split(','))
-        c.recent_reddits = Subreddit._by_fullname(names, data = True,
-                                                  return_dict = False)
+        names = filter(None, names.strip('[]').split(','))
+        try:
+            c.recent_reddits = Subreddit._by_fullname(names, data = True,
+                                                      return_dict = False)
+        except NotFound:
+            pass
 
 def ratelimit_agents():
     user_agent = request.user_agent
     for s in g.agents:
         if s and user_agent and s in user_agent.lower():
             key = 'rate_agent_' + s
-            if cache.get(s):
+            if g.cache.get(s):
                 abort(503, 'service temporarily unavailable')
             else:
-                cache.set(s, 't', time = 1)
+                g.cache.set(s, 't', time = 1)
 
 #TODO i want to get rid of this function. once the listings in front.py are
 #moved into listingcontroller, we shouldn't have a need for this
@@ -374,7 +379,7 @@ def base_listing(fn):
               before = VByName('before'),
               count  = VCount('count'))
     def new_fn(self, before, **env):
-        kw = self.build_arg_list(fn, env)
+        kw = build_arg_list(fn, env)
         
         #turn before into after/reverse
         kw['reverse'] = False
@@ -386,26 +391,6 @@ def base_listing(fn):
     return new_fn
 
 class RedditController(BaseController):
-
-    @staticmethod
-    def build_arg_list(fn, env):
-        """given a fn and and environment the builds a keyword argument list
-        for fn"""
-        kw = {}
-        argspec = inspect.getargspec(fn)
-
-        # if there is a **kw argument in the fn definition,
-        # just pass along the environment
-        if argspec[2]:
-            kw = env
-        #else for each entry in the arglist set the value from the environment
-        else:
-            #skip self
-            argnames = argspec[0][1:]
-            for name in argnames:
-                if name in env:
-                    kw[name] = env[name]
-        return kw
 
     def request_key(self):
         # note that this references the cookie at request time, not
@@ -481,7 +466,6 @@ class RedditController(BaseController):
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
             c.user_is_admin = maybe_admin and c.user.name in g.admins
-
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
 
         c.over18 = over18()
@@ -521,7 +505,7 @@ class RedditController(BaseController):
 
         #check content cache
         if not c.user_is_loggedin:
-            r = cache.get(self.request_key())
+            r = g.rendercache.get(self.request_key())
             if r and request.method == 'GET':
                 response = c.response
                 response.headers = r.headers
@@ -545,7 +529,7 @@ class RedditController(BaseController):
                 c.used_cache = True
                 # response wrappers have already been applied before cache write
                 c.response_wrappers = []
-
+                
     def post(self):
         response = c.response
         content = response.content
@@ -564,7 +548,7 @@ class RedditController(BaseController):
             response.headers['Pragma'] = 'no-cache'
 
         # send cookies
-        if not c.used_cache:
+        if not c.used_cache and c.cookies:
             # if we used the cache, these cookies should be set by the
             # cached response object instead
             for k,v in c.cookies.iteritems():
@@ -581,9 +565,9 @@ class RedditController(BaseController):
             and not c.user_is_loggedin
             and not c.used_cache
             and response.content and response.content[0]):
-            config.cache.set(self.request_key(),
-                             response,
-                             g.page_cache_time)
+            g.rendercache.set(self.request_key(),
+                              response,
+                              g.page_cache_time)
 
     def check_modified(self, thing, action):
         if c.user_is_loggedin:
@@ -615,3 +599,4 @@ class RedditController(BaseController):
         return request.path + utils.query_string(merged)
 
 
+    

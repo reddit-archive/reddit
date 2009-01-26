@@ -22,8 +22,8 @@
 <%!
    from datetime import datetime
 %>
-
-<%namespace file="printable.html" import="yes_no_button" />
+<%namespace file="printable.html" import="ynbutton" />
+<%namespace file="utils.html" import="plain_link" />
 
 %if thing.a.promoted:
   <tr>
@@ -58,12 +58,4 @@
              %  dict(subreddit = c.site.name))}</td>
     </tr>
   %endif
-%else:
-  <tr>
-    <th></th>
-    <td>
-      ${yes_no_button("promote", thing.a._fullname, _("promote"), \
-        "return deletetoggle(this,'promote');", _("promoted"))}
-    </td>
-  </tr>
 %endif

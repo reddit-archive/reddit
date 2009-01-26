@@ -23,35 +23,39 @@
   from r2.lib.utils import to36
   from r2.lib.media import thumbnail_url
 %>
+<%namespace file="utils.html" import="error_field, checkbox, plain_link, image_upload" />
+<%namespace file="printable.html" import="ynbutton"/>
 <%namespace file="utils.html" import="error_field, checkbox, image_upload" />
 
 %if thing.link:
   ${thing.listing}
 %endif
 
-<form class="content pretty-form" method="POST" action="/post/new_promo"
- id="promo_form" onsubmit="return post_form(this, 'edit_promo', null, null, true)">
+<form class="pretty-form" method="POST" action="/post/new_promo"
+      id="promo_form" 
+      onsubmit="return post_form(this, 'edit_promo', null, null, true)">
 
   %if thing.link:
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
 
-  <table class="content preftable">
+  <table class="preftable">
     <tr>
       <th><label for="title">${_("title")}</label></th>
       <td>
         <input name="title" type="text" value="${thing.link.title if thing.link else ""}" />
       </td>
-      <td class="error">
+      <td>
         ${error_field("NO_TITLE", "span")}
       </td>
     </tr>
     <tr>
       <th><label for="url">${_("url")}</label></th>
       <td>
-        <input name="url" type="text" value="${thing.link.url if thing.link else ""}"/>
+        <input name="url" type="text" 
+               value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
       </td>
-      <td class="error">
+      <td>
         ${error_field("NO_URL", "span")}
         ${error_field("BAD_URL", "span")}
         ${error_field("ALREADY_SUB", "span")}
@@ -59,7 +63,7 @@
     </tr>
     <tr>
       <th><label for="sr">${_("reddit")}</label></th>
-      <td>
+      <td style="white-space: nowrap">
         %if thing.link:
           ${checkbox("subscribers_only",
                      (_("show only to subscribers of %(reddit)s")
@@ -73,7 +77,7 @@
                      False)}
         %endif
       </td>
-      <td class="error">
+      <td>
         ${error_field("SUBREDDIT_NOEXIST")}
       </td>
     </tr>
@@ -117,24 +121,17 @@
             </select>
         %endif
       </td>
-      <td class="error">${error_field("BAD_NUMBER", "span")}</td>
+      <td>${error_field("BAD_NUMBER", "span")}</td>
     </tr>
   </table>
 </form>
 
 %if thing.link:
   <% thumb = None if not thing.link.has_thumbnail else thumbnail_url(thing.link) %>
-  <table class="content preftable pretty-form">
-    <tr>
-      <th><label for="file">${_("thumbnail")}</label></th>
-      <td>
-        <%call expr="image_upload('/api/link_thumb', thumb)">
-          <input type="hidden" name="link_id" value="${thing.link._fullname}" />
-        </%call>
-      </td>
-      <td id="img-status"></td>
-    </tr>
-  </table>
+<%call expr="image_upload('/api/link_thumb', thumb, tabular=True, label=_('thumbnail'))">
+   <input type="hidden" name="link_id" value="${thing.link._fullname}" />
+</%call>
+
 %endif
 
 <div class="save-button">
@@ -147,9 +144,9 @@
           text = _("create")
   %>
   <button name="${name}" class="btn" type="button"
-         onclick="$('promo_form').onsubmit()"
+         onclick="$('#promo_form').get(0).onsubmit()"
   >${text}</button>
   &#32;
-  <span id="status" class="error"></span>
+  <span class="status error"></span>
   ${error_field("RATELIMIT", "span")}
 </div>

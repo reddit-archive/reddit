@@ -20,11 +20,10 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="printable.html" import="yes_no_button" />
-<%namespace file="utils.html" import="plain_link, text_with_js"/>
+<%namespace file="printable.html" import="ynbutton" />
+<%namespace file="utils.html" import="plain_link"/>
 
-##TODO - need to prepend this id with thing.action as well
-<tr id="${thing.name}">
+<tr>
   %for cell in thing.cells:
     <td>
       ${cell_type(cell)}
@@ -35,15 +34,20 @@
 <%def name="cell_type(name)">
   %if name == "user":
       <span class="user">
-         ${plain_link(thing.user.name, "/user/%s/" % thing.user.name, _sr_path=False)}
+         ${plain_link(thing.user.name, "/user/%s/" % thing.user.name, 
+                      _sr_path=False)}
          &nbsp;(<b>${thing.user.safe_karma}</b>)
-      </span>&nbsp;
+      </span>
+      &nbsp;
   %elif c.user_is_loggedin and name == "sendmessage" and c.user != thing.user:
-    ${plain_link(_("send message"), "/message/compose?to=%s" % (thing.user.name))}&nbsp;
+    ${plain_link(_("send message"), 
+                 "/message/compose?to=%s" % (thing.user.name))}
+      &nbsp;
   %elif name == "remove" and thing.editable:
-    ${yes_no_button("remove", thing.name, _("remove"),
-    "return deletetoggle(this, UserTable.del('%s', '%s'));"
-    % (thing.type, thing.container_name),
-    _("removed"))}
+    ${ynbutton(_("remove"), "removed", "unfriend", 
+               callback="deleteRow",
+               hidden_data = dict(type = thing.type, 
+                                  id = thing.user._fullname, 
+                                  container = thing.container_name))}
   %endif
 </%def>

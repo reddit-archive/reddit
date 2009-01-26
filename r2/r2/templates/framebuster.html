@@ -1,0 +1,50 @@
+<%namespace file="reddit.html" import="javascript"/>
+<%namespace file="utils.html" import="js_preamble"/>
+
+<html>
+  <head>
+    <title>escappit</title>
+    <% from r2.lib.template_helpers import static %>
+    <script src="${static('jquery.js')}"  type="text/javascript"></script>
+    <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
+    <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      $.cookie_write({name: "reddit_first", data: {firsttime: true},
+                      domain: "${c.site.domain}" });
+      %if thing.login:
+        $.cookie_write({name: "redditSession", data: "cname",
+                        domain: "${c.site.domain}" });
+        if(parent.$ && parent.$.framebuster) 
+           parent.$.framebuster();
+      %else:
+        $.cookie_write({name: "redditSession", data: "",
+                        domain: "${c.site.domain}"});
+      %endif
+    </script>
+  </body>
+</html>
+
+
+<%def name="framebuster()">
+  %if c.cname and (c.frameless_cname or not c.user_is_loggedin) and not c.authorized_cname:
+    <% 
+       import random 
+       from r2.lib.template_helpers import get_domain
+       %>
+    <script type="text/javascript">
+      (function($) {
+         $.framebuster = function() {
+            $(function() {
+                $.refresh();
+             });
+         }
+      })(jQuery);
+      document.write('<iframe name="reddit-window" id="reddit-window"' +
+       'src="http://${get_domain(cname=False, subreddit=True)}/framebuster/'
+       + Math.random() + 
+       '" width="1" height="1" style="visibility: hidden"></iframe>');
+    </script>
+  %endif
+</%def>

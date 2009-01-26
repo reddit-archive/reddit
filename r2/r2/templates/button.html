@@ -26,13 +26,15 @@
 <%inherit file="reddit.html"/>
 <%namespace module="r2.lib.template_helpers" import="generateurl"/>
 <%namespace file="buttontypes.html" import="*" />
+<%namespace file="printable.html" import="thing_css_class" />
 
 
 
 <%def name="javascript()">
-  <script src="${static('vote.js')}"  type="text/javascript"></script>
+  <script src="${static('jquery.js')}"  type="text/javascript"></script>
+  <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
   <script type="text/javascript">
-    function showcover() { show("cover"); }
+    function showcover() { $("#cover").show(); }
   </script>
 </%def>
 
@@ -43,7 +45,7 @@
 <%def name="bodyHTML()">
   <body style="background-color: ${'#%s' % (c.bgcolor or 'FFFFFF')}"
         class="button-body">
-    <div class="button">
+    <div class="button ${thing_css_class(thing.link) if thing.link else ''}">
     %if not c.user_is_loggedin:
       <div id="cover" style="display: none">
         <div class="cover"></div>
@@ -52,18 +54,18 @@
              target="_parent">please login</a>
         </div>
       </div>
-    %endif
-    %if thing.button == 1:
-      ${button1(thing)}
-    %elif thing.button == 2:
-      ${button2(thing)}
-    %elif thing.button == 3:
-      ${button3(thing)}
-    %elif thing.button == 4:
-      ${button4(thing)}
-    %elif thing.button == 5:
-      ${button5(thing)}
-    %endif
+      %endif
+      %if thing.button == 1:
+        ${button1(thing)}
+      %elif thing.button == 2:
+        ${button2(thing)}
+      %elif thing.button == 3:
+        ${button3(thing)}
+      %elif thing.button == 4:
+        ${button4(thing)}
+      %elif thing.button == 5:
+        ${button5(thing)}
+      %endif
     </div>
   </body>
 </%def>

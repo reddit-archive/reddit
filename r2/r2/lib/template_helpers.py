@@ -27,16 +27,36 @@ from mako.filters import url_escape
 import simplejson
 import os.path
 from copy import copy
-
+import random
 from pylons import i18n, g, c
 
 def static(file):
+    """
+    Simple static file maintainer which automatically paths and
+    versions files being served out of static.
+
+    In the case of JS and CSS where g.uncompressedJS is set, the
+    version of the file is set to be random to prevent caching and it
+    mangles the path to point to the uncompressed versions.
+    """
+    
     # stip of "/static/" if already present
     fname = os.path.basename(file).split('?')[0]
-    v = g.static_md5.get(fname, '')
+    # if uncompressed, we are in devel mode so randomize the hash
+    if g.uncompressedJS:
+        v = str(random.random()).split(".")[-1]
+    else:
+        v = g.static_md5.get(fname, '')
     if v: v = "?v=" + v
+    # don't mangle paths
     if os.path.dirname(file):
         return file + v
+
+    if g.uncompressedJS:
+        extension = file.split(".")[1:]
+        if extension and extension[-1] in ("js", "css"):
+            return os.path.join(c.site.static_path, extension[-1], file) + v
+        
     return os.path.join(c.site.static_path, file) + v
 
 def generateurl(context, path, **kw):
@@ -106,7 +126,7 @@ def replace_render(listing, item, style = None, display = True):
                 if hasattr(listing, "num_margin"):
                     num_margin = listing.num_margin
                 else:
-                    num_margin = "%5.2fex" % (len(str(listing.max_num))*1.1)
+                    num_margin = "%.2fex" % (len(str(listing.max_num))*1.1)
             else:
                 num_str = ''
                 num_margin = "0px"

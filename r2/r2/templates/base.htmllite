@@ -28,15 +28,19 @@
 %>
 
 <div class="rembeddit"
-     ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;" + style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
-
+     ${optionalstyle("font-family:verdana,arial,helvetica,sans-serif;" + 
+                     style_line(bgcolor="FFFFFF", bordercolor="336699"))}>
+  %if not request.GET.get("nobranding"):
   <div class="reddit-header" 
-       ${optionalstyle("padding: 5px; padding-bottom:1px;" + ("background-color:#CEE3F8" if not c.bgcolor else ""))}>
+       ${optionalstyle("padding: 5px; padding-bottom:1px;" + 
+                    ("background-color:#CEE3F8" if not c.bgcolor else ""))}>
   <h4 class="reddit-title" 
-      ${optionalstyle("margin:0;" + ("padding-bottom:3px" if not c.cname else ""))}
+      ${optionalstyle("margin:0;" + 
+                      ("padding-bottom:3px" if not c.cname else ""))}
       >
     <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}>
-      <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" alt="" 
+      <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" 
+           alt="" 
            ${optionalstyle("border:none")} />
     </a>
     <%
@@ -44,7 +48,8 @@
        name = c.site.name
        if not isinstance(c.site, FakeSubreddit):
            name += ".%s" % g.domain
-       link = '<a %s href="http://%s/">%s</a></h3>' % (style, get_domain(), name)
+       link = ('<a %s href="http://%s/">%s</a></h3>' % 
+                 (style, get_domain(), name))
        label = _("links from %(site)s").replace(" ", "&#32;");
      %>
     ${unsafe(label % dict(site = link))}
@@ -62,6 +67,7 @@
   </p>
   %endif
   </div>
+  %endif
   <div class="rembeddit-content" ${optionalstyle("padding:5px;")}>
     ${next.body()}
   </div>

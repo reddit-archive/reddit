@@ -27,12 +27,12 @@
 <%namespace file="utils.html" import="image_upload"/>
 
 <script type="text/javascript">
-function update_title() {
-  var name_field = $("name");
-  var title_field = $("title");
-  if (title_field.value == "") {
-    title_field.value = name_field.value;
-  }
+function update_title(elem) {
+  var form = $(elem).parents("form");
+  var title = $(form).find("input[name=title]");
+  var name  = $(form).find("input[name=name]");
+  if (title.attr("value") == "")
+    title.attr("value", name.attr("value"));
 }
 </script>
 
@@ -40,7 +40,7 @@ function update_title() {
   <% full_name = "type_" + name %>
   <tr>
     <td class="nowrap nopadding">
-      <input name="type" id="${full_name}" type="radio"
+      <input name="type" type="radio" id="${full_name}"
              value="${name}" class="nomargin"
              %if thing.site and name == thing.site.type \
                  or not thing.site and name == "public":
@@ -80,7 +80,7 @@ function update_title() {
         %else:
           <input type="text" name="name" id="name" class="text"
                  value="${thing.name}"
-                 onchange="update_title()"/>
+                 onchange="update_title(this)"/>
         %endif
       </td>
       <td class="note" id="note_name">
@@ -153,7 +153,8 @@ function update_title() {
       <td colspan="2" class="prefright">
          <table >
          ${radio_type(_("public"), _("anyone can view and submit"))}
-         ${radio_type(_("restricted"), _("anyone can view, but only contributors can submit links"))}
+         ${radio_type(_("restricted"), 
+                _("anyone can view, but only contributors can submit links"))}
          ${radio_type(_("private"), _("only contributors can view and submit"))}
          </table>
       </td>
@@ -163,8 +164,10 @@ function update_title() {
       <th><label>${_("age")}</label></th>
       <td colspan="2" class="prefright">
         <input class="nomargin" type="checkbox" name="over_18" id="over_18"
-               ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
-        <label for="over_18">${_("viewers must be over eighteen years old")}</label>
+           ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
+        <label for="over_18">
+          ${_("viewers must be over eighteen years old")}
+        </label>
       </td>
     </tr>
     <tr>
@@ -194,32 +197,33 @@ function update_title() {
       </div>
       </td>
       <td class="note" id="note_domain">
-        <a id="example_domain" href="javascript:show('domainhelp'); hide('example_domain')">what's this?</a>
+        <a id="example_domain" href="#" 
+           onclick="$('#domainhelp').slideDown(); $('#example_domain').fadeOut(); return false;">what's this?</a>
         ${error_field("BAD_CNAME", "span")}
         ${error_field("USED_CNAME", "span")}
       </td>
     </tr>
-
-  </table>
-</form>
-
-<table class="preftable pretty-form">
-  %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
-  <tr>
-    <th>
-      ${_("look and feel")}
-    </th>
-    <td class="prefright">
-      <div class="spacer">
+    %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
+    <tr>
+      <th>
+        ${_("look and feel")}
+      </th>
+      <td class="prefright">
+        <div class="spacer">
         ${plain_link(_("edit the stylesheet"),
                       "/about/stylesheet",
                       _sr_path = True)}
         &#32;
         <span class="gray">(${_("leaves this page")})</span>
       </div>
-      <div class="spacer">
-        <label for="headerfile">${_("upload header image")}</label>
-        <%call expr="image_upload('/api/upload_sr_img', thing.site.header)">
+    </td>
+  </table>
+</form>
+
+<%call expr="image_upload('/api/upload_sr_img', thing.site.header, 
+             tabular=True, 
+             label = _('upload header image'))">
+     <tr><td></td><td>
           <button id="delete-img"
                   %if not thing.site.header:
                      style="display: none;"
@@ -231,12 +235,21 @@ function update_title() {
           <input type="hidden" name="uh" value="${c.modhash}" />
           <input type="hidden" name="r"  value="${c.site.name}" />
           <input type="hidden" name="header" value="1" />
-        </%call>
-      </div>
-    </td>
-  </tr>
+
+          <script type="text/javascript">
+            function on_image_success(img) {
+               $("#header-img").attr("src", img.attr("src"));
+               $('#delete-img').show();
+               $('#submit-img').hide();
+            }
+          </script>
+       </td>
+      </tr>
+   </%call>
+%else:
+  </table>
+</form>
   %endif
-</table>
 
 <div class="save-button">
   <%
@@ -248,9 +261,9 @@ function update_title() {
          text = _("create")
   %>
   <button name="${name}" class="btn" type="button"
-          onclick="$('sr_form').onsubmit()"
+          onclick="$('#sr_form').get(0).onsubmit()"
   >${text}</button>
   &#32;
-  <span id="status" class="error"></span>
+  <span class="status error"></span>
   ${error_field("RATELIMIT", "span")}
 </div>

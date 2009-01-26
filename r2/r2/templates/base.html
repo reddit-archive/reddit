@@ -19,11 +19,12 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
 <%!
-   from r2.lib.template_helpers import static, get_domain
+
+   from r2.lib.template_helpers import static
    from r2.models import Link, Comment, Subreddit
 %>
+<%namespace file="utils.html" import="js_preamble"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
@@ -39,21 +40,7 @@
     ##things that need are referenced by the reddit, the buttons, and
     ##the frame should go here
     <script type="text/javascript">
-      var a = new Image();
-      a.src = "${static('aupmod.png')}";
-      var b = new Image();
-      b.src = "${static('adownmod.png')}";
-      var vl = {};
-      var sr = {};
-      
-      var logged = ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"};
-      var post_site = "${c.site.name if not c.default_sr else ''}";
-      var cnameframe  = ${"true" if (c.cname and not c.authorized_cname) else "false"};
-      var modhash = ${"'%s'" % c.modhash or "false"};
-      var cur_domain = "${get_domain(cname = True, subreddit = False) if c.frameless_cname else g.domain}";
-      var ajax_domain = "${get_domain(cname = True, subreddit = False) if c.authorized_cname else g.domain}";
-
-      
+      ${js_preamble()}
     </script> 
     
     ${self.javascript()}

@@ -385,22 +385,6 @@ class Report(MultiRelation('report',
         return accts
 
 
-# def karma_whack(author, cls, dir):
-#     try:
-#         field = 'comment_karma' if cls == Comment else 'link_karma'
-#         # get karma scale (ignore negative) -> user karma times 10%
-#         karma = max(getattr(author, field) * .1, 1)
-        
-#         # set the scale by the number of times this guy has been marked as a spammer
-#         scale = max(author.spammer+1, 1)
-        
-#         # the actual hit is the min of the two
-#         hit = min(karma, scale) * ( 1 if dir > 0 else -1 )
-        
-#         author._incr(field, int(hit))
-#     except AttributeError:
-#         pass
-    
 
 def unreport(things, correct=False, auto = False, banned_by = ''):
     things = tup(things)
@@ -435,9 +419,6 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
         if t._spam != correct and hasattr(t, 'author_id'):
             # tally the spamminess of the author
             spammer[t.author_id] = spammer.get(t.author_id,0) + amount
-            #author = authors.get(t.author_id)
-            #if author:
-            #    karma_whack(author, t.__class__, -amount)
 
     #will be empty if the items didn't have authors
     for s, v in spammer.iteritems():
@@ -466,9 +447,6 @@ def unreport_account(user, correct = True, types = (Link, Comment, Message),
         if user.spammer + count >= 0:
             user._incr('spammer', count)
             
-        #for i in xrange(count if count > 0 else -count):
-        #    karma_whack(user, typ, -count)
-
         things= list(typ._query(typ.c.author_id == user._id,
                                 typ.c._spam == (not correct),
                                 data = False, limit=300))
@@ -498,9 +476,3 @@ def unreport_account(user, correct = True, types = (Link, Comment, Message),
     reports = Report._by_author(user, amount = 0)
     for r in reports: Report.accept(r, correct)
     
-def whack(user, correct = True, auto = False, ban_user = False, banned_by = ''):
-    unreport_account(user, correct = correct,
-                     auto = auto, banned_by = banned_by)
-    if ban_user:
-        user._spam = True
-        user._commit()

@@ -68,16 +68,16 @@ function update() {
     } else {
         alert(which);
     }
-    $("preview").style.width = "";
+    $("#preview").css("width", "");
     if(f.expanded.checked) {
       url += "&expanded=1";
     }
     if(f.nostyle.checked) {
       url += "&style=off";
-      hide("css-options");
+      $("#css-options").hide();
     }
     else {
-      show("css-options");
+      $("#css-options").show();
       if(f.border.checked && f.bord_color.value) {
         url += "&bordercolor=" + f.bord_color.value;
       }
@@ -86,19 +86,17 @@ function update() {
       }
       if(f.twocol.checked) {
         url += "&twocolumn=true";
-        $("preview").style.width = "550px";
+        $("#preview").css("width", "550px");
       }
     }
 
     script = '<script src="' + 
                       escapeHTML(url).replace(/&amp;/g, '&') + 
                       '" type="text/javascript"><'+'/script>';
-    document.getElementById("codebox").innerHTML = escapeHTML(script);
-    new Ajax.Request(url+"&", {method:"get", onSuccess: function(t) {
-      s = eval(t.responseText.replace("document.write", ""));
-      document.getElementById("previewbox").innerHTML = s;
-    }});
-}
+    $("#codebox").html(escapeHTML(script));
+    $.getScript(url+'&callback=' + encodeURIComponent('$("#previewbox").html'));
+                      
+    }
 </script>
 
 <div class="instructions">
@@ -197,7 +195,6 @@ function update() {
        <td class="prefright">
          <p>
            <input name="nostyle" id="nostyle" type="checkbox"
-                  onfocus="update()"
                   onchange="update()"/>
            <label for="nostyle">
              ${_("remove css styling")}  
@@ -208,7 +205,6 @@ function update() {
          </p>
          <p>
            <input name="expanded" id="expanded" type="checkbox"
-                  onfocus="update()"
                   onchange="update()"/>
            <label for="expanded">
              ${_("enable in-widget voting")}  
@@ -220,7 +216,6 @@ function update() {
          <div id="css-options">
          <p>
            <input name="twocol" id="twocol" type="checkbox"
-                  onfocus="update()"
                   onchange="update()"/>
            <label for="twocol">
              ${_("two columns")}
@@ -228,7 +223,6 @@ function update() {
          </p>
          <p>
            <input name="background" id="background" type="checkbox"
-                  onfocus="update()"
                   onchange="update()"/>
            <label for="background">
              ${_("background color")}
@@ -240,7 +234,6 @@ function update() {
          </p>
          <p>
            <input name="border" id="border" type="checkbox" 
-                  onfocus="update()"
                   onchange="update()"/>
            <label for="border"> 
              ${_("border color")}

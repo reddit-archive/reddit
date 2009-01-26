@@ -73,7 +73,7 @@ ${unsafe(safemarkdown(thing.body))}
 <%def name="buttons()">
 %if hasattr(thing, "was_comment"):
     <li>
-    ${parent.comment_button("context", thing._fullname, _("context"), 0, 
+    ${parent.comment_button("context", _("context"), 0, 
                             thing.permalink + "?context=3")}
     </li>
     ${parent.delete_or_report_buttons(delete=False)}
@@ -82,24 +82,21 @@ ${unsafe(safemarkdown(thing.body))}
     ${parent.buttons()}
     %if c.user_is_loggedin:
       <li>
-      ${parent.simple_button("reply", thing._fullname, _("reply {verb}"), "reply")}
+      ${parent.simple_button("reply", _("reply {verb}"), "reply")}
       </li>
     %endif
 %endif
 </%def>
 
 <%def name="entry()">
-<% fullname = thing._fullname %>
-<div  id="display_${fullname}">
-  <p id="tagline_${fullname}" class="tagline">
+<div class="uncollapsed">
+  <p class="tagline">
     ${self.tagline()}
   </p>
-  <div id="body_${fullname}" \
-       class="body">${self.commentBody()}
+  <div class="body">${self.commentBody()}
   </div>
   %if thing.author == c.user:
-    <div style="display: none;" \
-       id="edit_body_${fullname}">${self.commentText()}\
+    <div style="display: none;">${self.commentText()}\
     </div>
   %endif
   <ul class="flat-list buttons" ${(collapse and "style='display:none'" or '')}>

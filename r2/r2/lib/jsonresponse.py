@@ -38,139 +38,147 @@ def json_respond(x):
         res = x or ''
     return websafe_json(simplejson.dumps(res))
 
-
-class JsonListingStub(object):
-    """used in JsonResponse._thing to set default listing behavior on
-    things that are pre-wrapped"""
-    _js_cls = "Listing"
-
-class JsonResponse():
-    # handled entried in the response object
-    __slots__ = ['update', 'blur', 'focus', 'object', 'hide', 'show',
-                 'captcha', 'success', 'call']
-
-    def __init__(self):
-        self.update = []
-        self.hide = []
-        self.show = []
-        self.focus = None
-        self.blur = None
-        self.object = {}
-        self.captcha = None
-        self.error = None
-        self.success = None
-        self.redirect = None
-        self.call = []
-
-    def _call(self, fn):
-        self.call.append(fn)
-
-    def _success(self):
-        self.success = 1
-
-    def _hide(self, name):
-        self.hide.append(dict(name=name))
-
-    def _show(self, name):
-        self.show.append(dict(name=name))
-
-
-    def _focus(self, f): 
-        self.focus = f
-
-    def _blur(self, f): 
-        self.blur = f
-
-    def _redirect(self, red):
-        from pylons import c, request
-        if c.cname:
-            red = BaseController.format_output_url(red, subreddit = c.site,
-                                                   require_frame = False)
-        self.redirect = red
-
-    def _update(self, name, **kw):
-        k = kw.copy()
-        k['id'] = name
-        self.update.append(k)
-
-    def _clear_error(self, error_name, err_on_thing = ''):
-        errid = error_name + (('_' + err_on_thing) if err_on_thing else '')
-        self._update(errid, innerHTML='')
-        self._hide(errid)
-        if self.error and self.error.name == error_name:
-            self.error_thing_id = '';
-            self.error = None
-
-    def _set_error(self, error, err_on_thing = ''):
-        if not self.error:
-            self.error = error
-            self.error_thing_id = err_on_thing;
-
-    def _chk_error(self, error_name, err_on_thing = ''):
-        from pylons import c
-        if error_name in c.errors:
-            error = c.errors[error_name]
-            self._set_error(error, err_on_thing)
-            return True
+class JQueryResponse(object):
+    """
+    class which mimics the jQuery in javascript for allowing Dom
+    manipulations on the client side.
+    
+    An instantiated JQueryResponse acts just like the "$" function on
+    the JS layer with the exception of the ability to run arbitrary
+    code on the client.  Selectors and method functions evaluate to
+    new JQueryResponse objects, and the transformations are cataloged
+    by the original object which can be iterated and sent across the
+    wire.
+    """
+    def __init__(self, factory = None):
+        self._has_errors = set([])
+        self._new_captcha = False
+        if factory:
+            self.factory = factory
+            self.ops = None
+            self.objs = None
         else:
-            self._clear_error(error_name, err_on_thing)
-            return False
+            self.factory = self
+            self.objs = {self: 0}
+            self.ops = []
+        
+    def __call__(self, *a):
+        return self.factory.transform(self, "call", a)
 
-    def _chk_errors(self, errors, err_on_thing = ''):
-        if errors:
-           return reduce(lambda x, y: x or y,
-                          [self._chk_error(e, err_on_thing = err_on_thing) for e in errors])
-        return False
+    def __getattr__(self, key):
+        if not key.startswith("__"):
+            return self.factory.transform(self, "attr", key)
 
-    def _chk_captcha(self, err, err_on_thing = ''):
-        if self._chk_error(err, err_on_thing):
-            self.captcha = {'iden' : get_iden(), 'refresh' : True, 'id': err_on_thing}
-            self._focus('captcha')
-            return True
-        return False
+    def transform(self, obj, op, args):
+        new = self.__class__(self)
+        newi = self.objs[new] = len(self.objs)
+        self.ops.append([self.objs[obj], newi, op, args])
+        return new
 
-    @property
-    def response(self): 
-        res = {}
-        for k in self.__slots__:
-            v = getattr(self, k)
-            if v: res[k] = v
-        return res
+    def __iter__(self):
+        yield ("jquery", self.ops)
 
-    def _thing(self, thing, action = None):
-        d = replace_render(JsonListingStub(), thing)
-        if action:
-            d['action'] = action
-        return d
+    def has_error(self):
+        return bool(self._has_errors)
 
-    def _send_things(self, things, action=None):
-        from r2.models import IDBuilder
+    # thing methods
+    #--------------
+    
+    def _things(self, things, action, *a, **kw):
+        """
+        function for inserting/replacing things in listings.
+        """
+        from r2.models import IDBuilder, Listing
+        listing = None
+        if isinstance(things, Listing):
+            listing = things.listing()
+            things = listing.things
         things = tup(things)
         if not all(isinstance(t, Wrapped) for t in things):
             b = IDBuilder([t._fullname for t in things])
             things = b.get_items()[0]
-        self.object = [self._thing(thing, action=action) for thing in things]
+        data = [replace_render(listing, t) for t in things]
 
-    def __iter__(self):
-        if self.error:
-            e = dict(self.error)
-            if self.error_thing_id:
-                e['id'] = self.error_thing_id
-            yield 'error', e
-        if self.response:
-            yield 'response', self.response
-        if self.redirect:
-            yield 'redirect', self.redirect
-        
-def Json(func):
-    def _Json(self, *a, **kw):
+        if kw:
+            for d in data:
+                if d.has_key('data'):
+                    d['data'].update(kw)
+
+        new = self.__getattr__(action)
+        return new(data, *a)
+
+    def insert_things(self, things, append = False, **kw):
+        return self._things(things, "insert_things", append, **kw)
+
+    def replace_things(self, things, keep_children = False,
+                       reveal = False, stubs = False, **kw):
+        return self._things(things, "replace_things",
+                            keep_children, reveal, stubs, **kw)
+
+    def insert_table_rows(self, rows, index = -1):
+        new = self.__getattr__("insert_table_rows")
+        return new([row.render() for row in tup(rows)], index)
+
+
+    # convenience methods:
+    # --------------------
+    def has_errors(self, input, *errors, **kw):
         from pylons import c
-        from jsontemplates import api_type
-        c.render_style = api_type('html')
-        c.response_content_type = 'application/json; charset=UTF-8'
-        res = JsonResponse()
-        val = func(self, res, *a, **kw)
-        if val: return val
-        return self.response_func(**dict(res))
-    return _Json
+        rval = False
+        for e in errors:
+            if e in c.errors:
+                # get list of params checked to generate this error
+                # if they exist, make sure they match input checked
+                fields = c.errors[e].fields
+                if input and fields and input not in fields:
+                    continue
+                self._has_errors.add(e)
+                rval = True
+                self.find("." + e).show().html(c.errors[e].message).end()
+            else:
+                self.find("." + e).html("").end()
+        if rval and input:
+            self.focus_input(input)
+        return rval
+
+    def clear_errors(self, *errors):
+        from pylons import c
+        for e in errors:
+            if e in self._has_errors:
+                self._has_errors.remove(e)
+                self.find("." + e).hide().html("").end()
+
+    def new_captcha(self):
+        if not self._new_captcha:
+            self.captcha(get_iden())
+            self._new_captcha = True
+        
+    def chk_captcha(self, *errors):
+        if self.has_errors(None, *errors):
+            self.new_captcha()
+            return True
+
+    def get_input(self, name):
+        return self.find("*[name=%s]" % name)
+
+    def set_inputs(self, **kw):
+        for k, v in kw.iteritems():
+            self.get_input(k).set(value = v).end()
+        return self
+
+    def focus_input(self, name):
+        return self.get_input(name).focus().end()
+
+    def set_html(self, selector, value):
+        if value:
+            return self.find(selector).show().html(value).end()
+        return self.find(selector).hide().html("").end()
+
+
+    def set(self, **kw):
+        obj = self
+        for k, v in kw.iteritems():
+            obj = obj.attr(k, v)
+        return obj
+
 

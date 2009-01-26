@@ -25,50 +25,35 @@
 %>
 
 <script type="text/javascript">
- function edit_trans(id) {
-   var string = $("string_" + id);
-   var str = string.innerHTML;
-   var input;
-   var s = string.innerHTML;
-   s = s.replace("&lt;", "<");
-   s = s.replace("&gt;", ">");
-   s = s.replace("&quot;", '"'); /* " */
-   s = s.replace("&amp;", "&");
-   if (str.length < 80) {
-     input = document.createElement('input');
-     input.value = s;
-     input.size = 40;                    
-   }
-   else {
-     input = document.createElement('textarea');
-     input.innerHTML = s;
-     input.cols = 50;
-     input.rows = 5;                    
-   }
-
-   var div = $("trans_div_" + id);
-   input.id = "trans_" + id;
-   input.name = "trans_" + id;
-   for(var i = 0; i < div.childNodes.length; i++ ) {
-      hide(div.childNodes[i]);
-   }
-   div.appendChild(input);
-   return false;
- }
+$(function() {
+    $("a.edit-trans").click(function() {
+        var p = $(this).prev();
+        var s = p.html();
+        var id = $(this).attr("id");
+        if (s.length < 80) {
+           p.replaceWith("<input type='text' width='40'/>");
+           $(this).prev().attr("value", s);
+        }
+        else
+           p.replaceWith("<textarea rows='4' cols='40'>" + s + "</textarea>");
+        $(this).prev().attr("name", "trans_" + id);
+        $(this).remove();
+      });
+ });
 
 </script>
 
 <h2>
 %if thing.locale:
-Translation: en to ${thing.locale}
-%if thing.is_valid():
-&nbsp;<a href="/admin/i18n/try/${thing.locale}" target="_blank"
-   style="color: green">
-  [try translation]
-</a>
-%endif
+  Translation: en to ${thing.locale}
+  %if thing.is_valid():
+   &nbsp;<a href="/admin/i18n/try/${thing.locale}" target="_blank"
+      style="color: green">
+    [try translation]
+   </a>
+  %endif
 %else:
-Base Translation Template
+  Base Translation Template
 %endif
 </h2>
 
@@ -153,11 +138,10 @@ Base Translation Template
          %>
       %if source is not None and (source_string or c.user_is_admin):
       <a name="bttn_num_${i}"></a>
-      <h2 id="trans_div_${digest}">
-        <span id="string_${digest}">${source_string}</span>
+      <h2>
+        <span>${source_string}</span>
         %if c.user_is_admin and not thing.locale:
-           <a style="padding-left: 1ex" href="javascript:void(0)" 
-              onclick="return edit_trans('${digest}')">
+           <a class="edit-trans" id="${digest}">
              edit
            </a>
          %endif

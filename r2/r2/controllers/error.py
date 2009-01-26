@@ -151,6 +151,8 @@ class ErrorController(RedditController):
         except:
             return handle_awful_failure("something really bad just happened.")
 
+    POST_document = GET_document
+
 def handle_awful_failure(fail_text):
     """
     Makes sure that no errors generated in the error handler percolate

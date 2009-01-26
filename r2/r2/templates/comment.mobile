@@ -34,11 +34,22 @@
 </%def>
 
 <%def name="entry()">
+%if thing.deleted:
+
+<p>
+  ${_("[deleted]")} ${thing.timesince} ${_("ago")}
+</p>
+
+%else:
+
 <p>
 <a href="/user/${thing.author.name}">
     <b>${thing.author.name}</b></a>
 &nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
-written ${thing.timesince} ago
+${_("written")} ${thing.timesince} ${_("ago")}
 </p>
 ${unsafe(safemarkdown(thing.body))}
+
+%endif
+
 </%def>

@@ -21,9 +21,9 @@
 ################################################################################
 
 <%
-   from supervise_watcher import Service_Page
+   from supervise_watcher import AppServiceMonitor
 %>
 
 %if c.user_is_admin:
-  ${Service_Page().render()}
+  ${AppServiceMonitor().render()}
 %endif

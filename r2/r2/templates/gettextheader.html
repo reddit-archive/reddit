@@ -20,6 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace file="translatedstring.html" import="text_input"/>
+
 <% 
  highlight = lambda x: ("<span class='orangered' style='padding: 0px 1ex 0px 1ex'>" + x + "</span>")
  singular = unsafe(thing._singular(highlight))
@@ -43,34 +45,3 @@
 %endif
 %endfor
 %endif
-
-
-<%def name="text_input(text, valid, 
-            index = 0, len = 0)">
-<div id="trans_div_${thing.md5}_${index}">
-  %if text and valid:
-  <b style="padding-right: 5px" id="string_${thing.md5}_${index}">
-    ${text}
-  </b>
-  <span class="little bylink">
-    <a href="javascript:void(0)" 
-       onclick="return edit_trans('${thing.md5}_${index}')">
-      edit</a>
-  </span>
-  %elif len < 80:
-  <input type="text" value="${text}" size="40"
-         name="trans_${thing.md5}_${index}" id="trans_${thing.md5}_${index}"/>
-  %else:
-    <textarea rows="4" cols="40"
-              name="trans_${thing.md5}_${index}" 
-              id="trans_${thing.md5}_${index}">
-      ${text}
-    </textarea>
-  %endif
-  %if not valid:
-  <span class="error">
-    Invalid Translation
-  </span>
-  %endif
-</div>
-</%def>

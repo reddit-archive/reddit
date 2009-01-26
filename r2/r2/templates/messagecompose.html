@@ -24,12 +24,12 @@
 
 <h1>${_("send a message")}</h1>
 
-${success_field(_("your message has been delivered"), 
-                successful=thing.success)}
 
-<%call expr="submit_form(onsubmit='return post_form(this, \'compose\', null, null, true)',
-             method='post',
+<%call expr="submit_form(
+             onsubmit='return post_form(this, \'compose\', null, null, true)',
+             method='post', _id = 'compose-message',
              action='/message/compose', _class='iform')">
+${success_field(_("your message has been delivered"), successful=thing.success)}
   <table>
     <tr>
       <th>

@@ -328,7 +328,7 @@ def find_preview_links(sr):
 
     return links
 
-def rendered_link(id, res, links, media, compress):
+def rendered_link(links, media, compress):
     from pylons.controllers.util import abort
     from r2.controllers import ListingController
 
@@ -343,14 +343,12 @@ def rendered_link(id, res, links, media, compress):
 
             b = IDBuilder([l._fullname for l in links],
                           num = 1, wrap = ListingController.builder_wrapper)
-            l = LinkListing(b, nextprev=False,
-                            show_nums=True).listing().render(style='html')
-            res._update(id, innerHTML=l)
-
+            return LinkListing(b, nextprev=False,
+                               show_nums=True).listing().render(style='html')
     finally:
         c.render_style = render_style
 
-def rendered_comment(id, res, comments):
+def rendered_comment(comments):
     try:
         render_style    = c.render_style
 
@@ -358,10 +356,9 @@ def rendered_comment(id, res, comments):
 
         b = IDBuilder([x._fullname for x in comments],
                       num = 1)
-        l = LinkListing(b, nextprev=False,
+        return LinkListing(b, nextprev=False,
                         show_nums=False).listing().render(style='html')
-        res._update('preview_comment', innerHTML=l)
-
+        
     finally:
         c.render_style = render_style
 

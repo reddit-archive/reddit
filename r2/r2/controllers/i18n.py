@@ -21,7 +21,6 @@
 ################################################################################
 from pylons import request, g
 from reddit_base import RedditController
-from api import Json
 from r2.lib.pages import UnfoundPage, AdminTranslations, AdminPage
 
 from r2.lib.translation import Translator, TranslatorTemplate, get_translator

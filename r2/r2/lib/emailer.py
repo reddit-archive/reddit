@@ -104,7 +104,8 @@ def send_queued_mail():
                              email.to_MIMEText().as_string())
             email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
-        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused):
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
+                UnicodeDecodeError):
             # handle error and print, but don't stall the rest of the queue
 	    print "Handled error sending mail (traceback to follow)"
 	    traceback.print_exc(file = sys.stdout)
@@ -122,8 +123,11 @@ def send_queued_mail():
                                    msg_hash = email.msg_hash,
                                    link = email.thing,
                                    body = email.body).render(style = "email")
-                email.subject = _("[reddit] %(user)s has shared a link with you") % \
-                                {"user": email.from_name()}
+                try:
+                    email.subject = _("[reddit] %(user)s has shared a link with you") % \
+                        {"user": email.from_name()}
+                except UnicodeDecodeError:
+                    email.subject = _("[reddit] a user has shared a link with you")
                 sendmail(email)
             elif email.kind == Email.Kind.OPTOUT:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,

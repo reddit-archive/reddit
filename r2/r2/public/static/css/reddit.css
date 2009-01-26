@@ -22,8 +22,8 @@ body {
 html,body { height: 100%; }
 
 /* IE dumbness patch. hidden input in a hidden block that is
-subsequently shown leads to the input to "show" and generate undesired
-padding.  This makes it go away. */ 
+ * subsequently shown leads to the input to "show" and generate undesired
+ * )padding.  This makes it go away. */ 
 input[type=hidden] { position: absolute; }
 
 /* html element defaults */
@@ -43,6 +43,22 @@ a { text-decoration: none; color: #369; }
 a:active { border: 0 none;}
 a:focus { -moz-outline-style: none; }
 */
+
+.rounded {  
+    -moz-border-radius-topleft: 7px;
+    -moz-border-radius-topright: 7px;
+    -moz-border-radius-bottomleft: 7px;
+    -moz-border-radius-bottomright: 7px;
+    -webkit-border-top-left-radius: 7px;
+    -webkit-border-top-right-radius: 7px;
+    -webkit-border-bottom-left-radius: 7px;
+    -webkit-border-bottom-right-radius: 7px;
+}
+.rounded .morelink { 
+    -webkit-border-top-right-radius: 6px;
+    -moz-border-radius-topright: 6px;
+}
+
 
 div.autosize { display: table; width: 1px}
 div.autosize > div { display: table-cell; }
@@ -90,7 +106,6 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 #header {
     border-bottom: 1px solid #5f99cf;
     position: relative;
-    _height: 0px; /*ie6 hack*/
     background-color: #cee3f8;
     z-index: 99;
 }
@@ -140,8 +155,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     position: relative;
 }
 
-.dropdown-title {
-}
+.drop-choices.inuse { display: block; }
 
 .drop-choices {
     position: absolute;
@@ -152,7 +166,9 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
     white-space: nowrap;
     line-height: normal;
     margin-top: 1px;
+    display: none;
 }
+
 
 .drop-choices a.choice {
     cursor: pointer;
@@ -232,10 +248,8 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 #search input[type=text] {
     border: 1px solid gray;
-    height: 22px;
     font-size: 18px;
     width: 295px;
-    color: gray;
     padding: 2px;
 }
 
@@ -366,8 +380,7 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .subreddit-info {padding-bottom: 3px }
 .subreddit-info .moderate { color: orangered; }
 
-.subreddit-info #subscribe { 
-    display: inline;
+.subreddit-info .subscribe-button { 
     margin-right: 5px;
     font-size: larger;
 }
@@ -453,6 +466,12 @@ before enabling */
 
 /* thing rendering */
 
+.preload { 
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+}
+
 .arrow {
     margin: 2px 0px 0px 0px;
     width: 100%;
@@ -491,57 +510,57 @@ before enabling */
 .tagline a.friend {color: orangered }
 .tagline a:hover { text-decoration: underline }
 
-.watch-play { 
+.media-button .option { color: red; }
+.media-button .option.active { 
     background: transparent url(/static/reddit-button-play.gif) no-repeat scroll right center;
     padding-right: 15px;
     color: #336699;
 }
-.watch-stop {  
-    color: red;
+
+.linkcompressed .media-button .option.active { 
+    padding-right: 15px;
 }
 
-.embededmedia { margin-top: 5px }
+.embededmedia { margin-top: 5px; margin-left: 60px; }
 
-.title { color: blue; padding: 0px; overflow: hidden; }
-.title:visited { color: #551a8b }
-.title.click { color: #551a8b } 
-
-.title.loggedin { color: blue }
-.title.loggedin:visited { color: #551a8b }
-.title.loggedin.click { color: #551a8b } 
-.title.loggedin.click:visited { color: #551a8b }
+.thing .title { color: blue; padding: 0px; overflow: hidden; }
+.thing .title:visited { color: #551a8b }
+.thing .title.click { color: #551a8b } 
+       
+.thing .title.loggedin { color: blue }
+.thing .title.loggedin:visited { color: #551a8b }
+.thing .title.loggedin.click { color: #551a8b } 
+.thing .title.loggedin.click:visited { color: #551a8b }
 
 .sitetable { list-style-type: none; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }
 .nextprev { color: gray; font-size: larger; margin-top: 10px;}
 
 /* corner help */
-.corner-help { 
-    margin: 0px 5px 5px 0;
-    position: absolute;
-    right: 0px;
-    bottom: 0px;
- }
-
-.corner-help a { 
+.help a { 
     color: #808080;
     text-decoration: underline;
 }
 
-.helpcover { 
-    z-index: 1000;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
+.help a.open { 
+    margin: 0px 5px 5px 0;
     position: absolute;
+    right: 0px;
+    bottom: 0px;
+}
+
+
+.help.help-cover { 
     background-color: #F8F8F8;
+    border: 1px solid gray;
     font-size: 110%;
-    _width: 100%;
-    _height: 70px;
+    display:none;
+    padding: 5px 10px 10px 10px;
+    overflow:hidden;
  }
 
-.helpcover p, .helpcover form { margin: 5px; }
+.help p, .help form { margin: 5px; } 
+.help form { display: inline; }
 
 
 /* organic listing */
@@ -550,14 +569,13 @@ before enabling */
     padding: 0;
     overflow: hidden; 
     position: relative;
-    _height: 60px;
-    _overflow: hidden;
+    min-height: 50px; 
 }
 
 .organic-listing .link { 
-    background-color: #F8F8F8;
+    background-color: #F8F8F8; 
     padding: 5px 7em 10px 0;
-    margin-bottom: 0px; 
+    margin-bottom: 0px;  
 }
 
 .organic-listing .linkcompressed { 
@@ -586,9 +604,12 @@ before enabling */
     position: relative;
 }
 
-.promoted-list {
-    font-size: larger;
-}
+
+.promoted-list { font-size: larger; }
+.promoted-list .unpromote-button { display: inline }
+.promoted-list .unpromote-button a { color: gray; }
+
+
 
 .organic-listing .promoted {
     background-color: #EFF7FF;
@@ -700,6 +721,13 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* links */
 
+.toggle .error { font-size: x-small; }
+.toggle .option { display: none; }
+.toggle .option.active { display: inline; }
+
+.thing .stub { display: none; }
+.link.last-clicked { border: 1px dashed gray; }
+
 .link { margin: 0; margin-bottom: 8px; padding-left: 3px; }
 .link .score {text-align: center; color: #c6c6c6;}
 .link .title {font-size:medium; font-weight: normal; margin-bottom: 1px;}
@@ -768,6 +796,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 /* comments */
 
 .comment { margin-left: 10px; }
+.comment .edit-body { display: none; visibility: hidden; }
 .comment .midcol { margin-left: 0px; }
 .comment .title { font-size: small; margin-top: 10px;}
 
@@ -802,6 +831,8 @@ a.star { text-decoration: none; color: #ff8b60 }
     margin-left: 15px; 
     width: 40em; 
 }
+
+textarea.gray { color: gray; }
 
 .commentreply textarea { 
     border: 1px solid #369;
@@ -872,13 +903,18 @@ a.star { text-decoration: none; color: #ff8b60 }
 .subreddit .midcol { margin-right: 5px }
 
 .sr-toggle-button {
-    width: 54px;
-    height: 18px;
+    display: block;
     margin-bottom: 5px;
     cursor: pointer;
 }
-.sr-toggle-button.add { background-image: url(/static/sr-add-button.png) }
-.sr-toggle-button.remove { background-image: url(/static/sr-remove-button.png)}
+.sr-toggle-button a.option.active { 
+    display: block; 
+    width: 54px;
+    height: 18px;
+}
+
+.sr-toggle-button .remove { background-image: url(/static/sr-remove-button.png)}
+.sr-toggle-button .add { background-image: url(/static/sr-add-button.png) }
 
 .sr-type-img { 
     margin-right: 2px;
@@ -887,6 +923,11 @@ a.star { text-decoration: none; color: #ff8b60 }
 .commentbody { }
 
 .commentbody.border { background-color: #ffc; padding-left: 5px}
+.commentbody.grayed {
+    color: gray;
+    background-color: #E0E0E0;
+    padding-left: 5px;
+}
 
 .fixedwidth { float: left; width: 100px; height: 0px; }
 .clearleft { clear: left; height: 0px; }
@@ -946,7 +987,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .server-status { width: 300px; }
 .server-status table { font-size: xx-small; margin-left: 5px; }
-.server-status td { padding-right: 2px; }
+.server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
 .server-status .load0 { background-color: #FFFFFF; }
 .server-status .load1 { background-color: #E2ECFF; }
@@ -954,6 +995,11 @@ a.star { text-decoration: none; color: #ff8b60 }
 .server-status .load3 { background-color: #FFEA71; }
 .server-status .load4 { background-color: #FF9191; }
 .server-status .load5 { background-color: #FF0000; color: #FFFFFF }
+
+.server-status th { font-weight: bold; padding-right: 2px; }
+.server-status tr.title-region { cursor: pointer; }
+.server-status tr.title-region:hover > td,
+.server-status tr.title-region:hover > th { text-decoration: underline; }
 
 .server-status .pegged { 
     background-color: red;
@@ -983,7 +1029,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .orangered { color: orangered; }
 
-
+.logout { display: inline; }
 .login-form-side { 
     border: 1px solid gray;
 }
@@ -1025,6 +1071,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 
+.status { color: red; }
 .error { color: red; font-size: small; margin: 5px; }
 
 #noresults { margin-right: 310px;  }
@@ -1149,10 +1196,10 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .popup {
-    position: absolute;
+    position: fixed;
     left: 10%;
     background-color: white;
-    top: 100px;
+    top: 40px;
     width: 80%;
     text-align: left;
     z-index: 1001;
@@ -1330,20 +1377,30 @@ a.star { text-decoration: none; color: #ff8b60 }
 .instructions pre { margin: 5px;  margin-right: 10px; }
 .instructions iframe { margin: 5px 10px 5px 0px; }
 .instructions input, .instructions select { margin: 0 .5em }
-.instructions a.view-code { float: right; margin-bottom: 1em; }
 .instructions a:focus { -moz-outline-style: none; }
 .instructions strong { font-weight: bold; }
 .instructions .buttons { margin-left: 1em; max-width: 50em; }
 .instructions .buttons li { margin-top: 1em; 
                             border-bottom: 1px solid #e0e0e0;  
                             padding-bottom: 1em;}      
-.instructions code { display: block;
-                     font-family: monospace; 
-                     font-size: small;
-                     margin: 5px; 
-                     background-color: #FF9; 
-                     padding: 10px; 
-                     max-width: 50em;}
+.instructions code { 
+    display: block; 
+    font-family: monospace; 
+    font-size: small;
+    margin: 5px; 
+    background-color: #FF9; 
+    padding: 10px; 
+    max-width: 50em;}
+
+
+.button-demo a.view-code,
+.button-demo a.hide-code { float: right; margin-bottom: 1em; }
+.button-demo a.hide-code { display: none; }
+.instructions .button-demo code { display: none; }
+
+.button-demo.show-demo a.view-code { display: none; }
+.button-demo.show-demo a.hide-code { display: inline; }
+.button-demo.show-demo code { display: block; }
 
 #preview { float: right; width: 30em; margin: 10px; }
 #preview span { color: lightgray;  }
@@ -1356,18 +1413,18 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 /* the toolbar */
-.toolbar { height: 30px; border-bottom: 1px solid black}
+.toolbar { height: 30px; border-bottom: 1px solid black;}
 .toolbar td { vertical-align: center; }
+.toolbar td#frame-left > a,
+.toolbar td#frame-left > form { margin-right: 20px; }
+.toolbar td#frame-right { text-align: right; }
+.toolbar td#frame-right > a,
+.toolbar td#frame-right > form { margin: 0 5px; }
 .toolbar .arrow { 
     background-position: center left; 
     padding-left: 18px; 
     display: inline;
 }
-.toolbar span { 
-    margin-left:  20px; 
-}
-.toolbar #frame-right { text-align: right }
-.toolbar #frame-right a { margin-left: 10px;  }
 
 /* default form styles */
 .pretty-form { 
@@ -1432,11 +1489,16 @@ a.star { text-decoration: none; color: #ff8b60 }
     font-weight: bold; 
     vertical-align: top;
     text-align: right;
+    white-space: nowrap;
 }
+.preftable th label { display: block; }
+.sharetable.preftable th label { display: inline; }
+.preftable th span { display: block; }
+
 .preftable td.prefright { padding: 8px 0;}
+
 .preftable .spacer { margin-bottom: 5px; }
 .preftable .note { width: 100%; vertical-align: top; padding-top: 10px; }
-.save-button { margin-left: 5px; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
@@ -1473,11 +1535,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .stylesheet-customize-container h2 { margin-top: 15px; margin-bottom: 10px;  }
 
 .image-upload .new-image { margin-left: 20px }
-.image-upload table { margin-left: 20px;  }
-.image-upload td,
-.image-upload th    { vertical-align: top; }
 .image-upload span  { padding-left: 5px; }
-.image-upload { display: inline; }
 
 
 ul#image-preview-list { 
@@ -1672,6 +1730,8 @@ ul#image-preview-list .description pre {
     border-bottom: 1px dotted #369;
 }
 
+
+
 .srdrop .choice.bottom-option {
     font-style: italic;
     border-top: 1px dotted #369;
@@ -1716,3 +1776,5 @@ ul#image-preview-list .description pre {
 }
 
 .subscription-box h1{ text-align: center; }
+ 
+.toggle.deltranslator-button { display: inline; }

@@ -26,15 +26,12 @@
    from r2.models.subreddit import DefaultSR
    from r2.lib.pages import SearchForm
 %>
-<%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator"/>
+<%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
 
 <div id="header">
   %if thing.srtopbar:
     ${thing.srtopbar.render()}
   %endif
-
-  ##<div id="header-top" class="hover">
-  ##</div>
 
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
@@ -85,7 +82,17 @@
       
     ${separator("|")}
     ${thing.corner_buttons().render()}
-    
-
+    %if c.user_is_loggedin:
+      ${separator("|")}
+      ${logout()}
+    %endif
   </div>
+</div>
+
+<div class="preload">
+## everything in here will get rendered off screen for pre-fetching purposes.
+  <div class="arrow up"></div>
+  <div class="arrow upmod"></div>
+  <div class="arrow down"></div>
+  <div class="arrow downmod"></div>
 </div>

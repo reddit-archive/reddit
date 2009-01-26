@@ -34,11 +34,11 @@
 </%def>
 
 <%def name="class_def(class_number, width=None)">
-  %if style_line(width):
-  <div class="blog blog${class_number}" style="${style_line(width)}">
-  %else:
-  <div class="blog blog${class_number}">
-  %endif
+  <div class="blog blog${class_number}" 
+    %if style_line(width):
+       style="${style_line(width)}"
+    %endif
+    >
 </%def>
 
 <%def name="button1(thing)">
@@ -68,7 +68,7 @@ ${class_def(1, width=choose_width(thing.link, thing.width))}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${score(thing.link, thing.likes, inline=False)}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
@@ -96,7 +96,7 @@ ${class_def(3)}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${score(thing.link, thing.likes, inline=False)}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
@@ -121,7 +121,7 @@ ${class_def(3)}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False, label = False)}
+      ${score(thing.link, thing.likes, inline=False)}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
@@ -166,7 +166,6 @@ ${class_def(3)}
      votes = [other_votes + 1, other_votes, other_votes + 1]
      up_pct = [int( 100 * ups[i] / votes[i]) if votes[i] else "--" for i in range(len(votes))]
      down_pct = [int( 100 * downs[i] / votes[i]) if votes[i] else "--" for i in range(len(votes))]
-                                    
      def controversy_text(_up_pct):
         if isinstance(_up_pct, str):
            return ""
@@ -184,11 +183,12 @@ ${class_def(3)}
    %>
   <script type="text/javascript">
     function set_score(id, dir) {
+      id = $(id).filter(":first").thing_id();
       for(var i = 0; i < 3; i++) {
-         var fn =  (i == dir + 1) ? show: hide;
-         fn("down" + i + "_" + id);
-         fn("up" + i + "_" + id);
-         fn("controversy" + i + "_" + id);
+         var fn =  (i == dir + 1) ? 'show': 'hide';
+         $("#down" + i + "_" + id)[fn]();
+         $("#up" + i + "_" + id)[fn]();
+         $("#controversy" + i + "_" + id)[fn]();
       }
     }
   </script>
@@ -217,7 +217,7 @@ ${class_def(3)}
       <a class="arrow up${'mod' if dir==1 else ''}" 
          id="up_${fullname}"
          %if c.user_is_loggedin and thing.link:
-            href="#" onclick="mod('${fullname}', 1); return false; "
+            href="#" onclick="$(this).vote('', set_score); return false; "
          %else:
            href="${submitlink}" target="_new"
          %endif
@@ -230,7 +230,7 @@ ${class_def(3)}
       </a>
       <a class="arrow down${'mod' if dir==-1 else ''}" id="down_${fullname}"
          %if c.user_is_loggedin and thing.link:
-           href="#" onclick="mod('${fullname}', 0); return false;"
+           href="#" onclick="$(this).vote('', set_score); return false;"
          %else:
            href="${submitlink}" target="_new"
          %endif

@@ -20,6 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%!
+   from r2.lib.strings import strings
+%>
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links"/>
 
 %if thing.subreddits:
@@ -39,8 +42,7 @@
         <label for="url">${_("url")}</label>
       </th>
       <td>
-        <input id="url" name="url" type="text" 
-               value="${thing.url}" onfocus="clearTitle(this);"/>
+        <input id="url" name="url" type="text" value="${thing.url}"/>
         ${error_field("NO_URL", "span")}
         ${error_field("BAD_URL", "span")}
         ${error_field("ALREADY_SUB", "span")}
@@ -50,8 +52,7 @@
       <th>
         <label for="title">${_("title")}</label>
       </th>
-      <td><input id="title" name="title" value="${thing.title}" 
-                 onfocus="clearTitle(this)" type="text" />
+      <td><input id="title" name="title" value="${thing.title}" type="text" />
         ${error_field("NO_TITLE", "span")}
         ${error_field("TITLE_TOO_LONG", "span")}
       </td>
@@ -84,18 +85,18 @@
       <td></td>
       <td>
         <button class="btn" type="submit">${_("submit")}</button>
-        <span id="status" class="error"></span>
+        <span class="status"></span>
         ${error_field("RATELIMIT", "span")}
       </td>
     </tr>
   </table>
 
   <script type="text/javascript">
-    var form = $('newlink');
-    if(form) {
-      setMessage(form.url,
+    var form = $("#newlink");
+    if(form.length) {
+      emptyInput(form.find("#url"),
                  '${unsafe(_('type "self" here to make this post refer to itself.'))}');
-      setMessage(form.title, 
+    emptyInput(form.find("#title"), 
                  "${_('enter a title, or click submit to find one automatically.')}")
     }
   </script>
@@ -105,3 +106,4 @@
                       bookmarklets = (_('reddit bookmarklets'), '/bookmarklets'))}
   </p>
 </%call>
+

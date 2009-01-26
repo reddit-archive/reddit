@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.utils import Storage
+from r2.lib.utils import Storage, tup
 from pylons.i18n import _
 from copy import copy
 
@@ -35,6 +35,8 @@ error_list = dict((
         ('NO_THING_ID', _('id not specified')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('BAD_COMMENT', _('please enter a comment')),
+        ('DELETED_COMMENT', _('that comment has been deleted')),
+        ('DELETED_THING', _('that element has been deleted.')),
         ('BAD_PASSWORD', _('invalid password')),
         ('WRONG_PASSWORD', _('invalid password')),
         ('BAD_PASSWORD_MATCH', _('passwords do not match')),
@@ -70,11 +72,13 @@ error_list = dict((
 errors = Storage([(e, e) for e in error_list.keys()])
 
 class Error(object):
-    #__slots__ = ('name', 'message')
-    def __init__(self, name, i18n_message, msg_params):
+
+    def __init__(self, name, i18n_message, msg_params, field = None):
         self.name = name
         self.i18n_message = i18n_message
         self.msg_params = msg_params
+        # list of fields in the original form that caused the error
+        self.fields = tup(field) if field else []
         
     @property
     def message(self):
@@ -105,12 +109,13 @@ class ErrorSet(object):
         for x in self.errors:
             yield x
         
-    def _add(self, error_name, msg, msg_params = {}):
-        self.errors[error_name] = Error(error_name, msg, msg_params)
+    def _add(self, error_name, msg, msg_params = {}, field = None):
+        self.errors[error_name] = Error(error_name, msg, msg_params,
+                                        field = field)
         
-    def add(self, error_name, msg_params = {}):
+    def add(self, error_name, msg_params = {}, field = None):
         msg = error_list[error_name]
-        self._add(error_name,  msg, msg_params = msg_params)
+        self._add(error_name,  msg, msg_params = msg_params, field = field)
 
     def remove(self, error_name):
         if self.errors.has_key(error_name):

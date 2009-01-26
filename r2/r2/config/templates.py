@@ -41,5 +41,6 @@ api('morechildren',  MoreCommentJsonTemplate)
 api('reddit',        RedditJsonTemplate)
 api('panestack',     PanestackJsonTemplate)
 api('listing',       ListingJsonTemplate)
+api('usertableitem', UserItemJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)

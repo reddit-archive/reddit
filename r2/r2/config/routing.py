@@ -72,11 +72,12 @@ def make_map(global_conf={}, app_conf={}):
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
     
-    mc('/admin/:action', controller='admin')
 
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
+
+    mc('/admin/:action', controller='admin')
     
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
@@ -100,6 +101,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/mail/optin',  controller='front', action = 'optin')
     mc('/stylesheet', controller = 'front', action = 'stylesheet')
     mc('/frame', controller='front', action = 'frame')
+    mc('/framebuster/:blah', controller='front', action = 'framebuster')
+    mc('/framebuster/:what/:blah',
+       controller='front', action = 'framebuster')
 
     mc('/promote/edit_promo/:link', controller='promote', action = 'edit_promo')
     mc('/promote/:action', controller='promote')
@@ -152,6 +156,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
 
+    mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
     
     # This route handles displaying the error page and 
     # graphics used in the 404/500
@@ -161,6 +166,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/error/document/:id', controller='error', action="document")
 
     mc("/*url", controller='front', action='catchall')
-   
+
     return map
 

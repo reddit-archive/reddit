@@ -21,278 +21,365 @@
 ################################################################################
 #!/usr/bin/env python
 from pylons import g
-import os, re, sys
+import os, re, sys, socket, time, smtplib
+import subprocess
 from datetime import datetime, timedelta
+from r2.lib.wrapped import Wrapped
 
-cache = g.cache
 host  = g.reddit_host
-
 default_services = ['newreddit']
-default_servers = g.monitored_servers 
 
-class Service:
-    maxlen = 300
-    __slots__ = ['host', 'name', 'pid', 'load']
+def is_db_machine(host):
+    """
+    Given a host name, checks the list of known DB machines to
+    determine if the host is one of them.
+    """
+    ips = set(v for k,v in g._current_obj().__dict__.iteritems() 
+              if k.endswith("db_host"))
+
+    for ip in ips:
+        name = socket.gethostbyaddr(ip)[0]
+        if (name == host or ("." in host and name.endswith("." + host)) or
+            name.endswith(host + ".")):
+            return True
+
+    return False
 
 
-    def __init__(self, name, pid, age, time):
-        self.host = host
+class DataLogger(object):
+    """
+    simple stat tracker class.  Elements are added to a list of length
+    maxlen along with their timestamp.  __call__ generates the average
+    of the interval provided or returns the last element if no
+    interval is provided
+    """
+    
+    def __init__(self, maxlen = 300):
+        self._list = []
+        self.maxlen = maxlen
+
+    def add(self, value):
+        self._list.append((value, datetime.now()))
+        if len(self._list) > self.maxlen:
+            self._list = self._list[-self.maxlen:]
+                          
+
+    def __call__(self, average = None):
+        time = datetime.now()
+        if average > 0 and self._list:
+            lst = filter(lambda x: time - x[1] <= timedelta(0, average),
+                         self._list)
+            return sum(x[0] for x in lst)/max(len(lst), 1)
+        elif self._list:
+            return self._list[-1][0]
+        else:
+            return 0
+
+    def most_recent(self):
+        if self._list:
+            return self._list[-1]
+        else:
+            return [0, None]
+
+        
+class Service(object):
+    def __init__(self, name, pid, age):
         self.name = name
         self.pid = pid
         self.age = age
-        self.time = time
-        self._cpu = []
-        self.load = 0
-        self.mem = 0
-        self.age = 0
 
-    def __iter__(self):
-        for x in self.__slots__:
-            yield (x, getattr(self, x))
+        self.mem  = DataLogger()
+        self.cpu  = DataLogger()
 
-        yield ('last_seen', (datetime.now() - self.time).seconds)
-        for t in (0, 5, 60, 300):
-            yield ('cpu_%d' % t, self.cpu(t))
-        yield ('mem', self.mem)
-        yield ('age', self.age)
-        
+    def last_update(self):
+        return max(x.most_recent()[1] for x in [self.mem, self.cpu])
 
-    def __str__(self):
-        return ("%(host)s\t%(cpu_0)5.2f%%\t%(cpu_5)5.2f%%\t%(cpu_60)5.2f%%\t%(cpu_300)5.2f%%" + 
-                "\t%(pid)s\t%(name)s\t(%(last_seen)s seconds)") % dict(self)
 
-    def track_cpu(self, usage):
-        self.time = datetime.now()
-        self._cpu.append((usage, self.time))
-        if len(self._cpu) > self.maxlen:
-            self._cpu = self._cpu[-self.maxlen:]
+class Database(object):
 
-    def track_mem(self, usage):
-        self.mem = usage
-
-    def track_age(self, usage):
-        self.age = usage
-
-    def cpu(self, interval = 60):
-        time = datetime.now()
-        if interval > 0:
-            cpu = filter(lambda x: time - x[1] <= timedelta(0, interval), self._cpu)
-        elif self._cpu:
-            cpu = [self._cpu[-1]]
-        else:
-            cpu = []
-        return sum(c[0] for c in cpu)/max(len(cpu), 1)
-
-class Services:
-    cache_key = "supervise_services_"
-
-    def __init__(self, _host = host):
-        self.last_update = None
-        self._services = {}
-        self._host = _host
-        self.load = 0.
-        
+    def __init__(self):
+        self.vacuuming = []
+        self.connections = DataLogger()
+        self.ip_conn = {}
+        self.db_conn = {}
     
-    def track(self, pid, cpu, mem, age):
-        try:
-            if isinstance(pid, str):
-                pid = int(pid)
-            if self._services.has_key(pid):
-                self._services[pid].track_cpu(cpu)
-                self._services[pid].track_mem(mem)
-                self._services[pid].track_age(age)
-        except ValueError:
-            pass    
+
+    def track(self, conn = 0, ip_conn = {}, db_conn = {}, vacuums = {}):
+
+        #log the number of connections
+        self.connections.add(conn)
+
+        # log usage by ip
+        for ip, num in ip_conn.iteritems():
+            self.ip_conn.setdefault(ip, DataLogger())
+            self.ip_conn[ip].add(num)
+
+        # log usage by db
+        for db, num in db_conn.iteritems():
+            self.db_conn.setdefault(db, DataLogger())
+            self.db_conn[db].add(num)
+
+        # log vacuuming
+        self.vacuuming = [k for k, v in vacuums.iteritems() if v]
         
-    def add(self, name, pid, age):
-        self.last_update = datetime.now()
-        if not self._services.has_key(pid):
-            self._services[pid] = Service(name, pid, age, self.last_update)
+        
+class HostLogger(object):
+    cache_key = "machine_datalog_data_"
+
+    def __init__(self, host):
+        self.host = host
+        self.load = DataLogger()
+        self.services = {}
+        self.database = Database() if is_db_machine(host) else None
+
+    def service_pids(self):
+        return self.services.keys()
+
+    def track(self, pid, cpu = 0, mem = 0, **kw):
+        pid = int(pid)
+        if self.services.has_key(pid):
+            s = self.services[pid]
+            s.cpu.add(cpu)
+            s.mem.add(mem)
+
+    def add_service(self, name, pid, age):
+        pid = int(pid)
+        if not self.services.has_key(pid):
+            self.services[pid] = Service(name, pid, int(age / 60))
         else:
-            self._services[pid].time = self.last_update
-            self._services[pid].age = age
-   
-    def __iter__(self):
-        return self._services.itervalues()
-
-    def get_cache(self):
-        key = self.cache_key + str(self._host)
-        res = cache.get(key)
-        if isinstance(res, dict):
-            services = res.get("services", [])
-            self.load = res.get("load", 0)
-        else:
-            services = res
-            self.load = services[0].get("load", 0) if services else 0
-
-        return services
-
+            self.services[pid].age = int(age / 60)
+        
     def set_cache(self):
-        key = self.cache_key + str(self._host)
-        svs = [dict(s) for s in self]
-        cache.set(key, dict(load = self.load, 
-                            services = svs,
-                            host = self._host))
-    
-    def clean_dead(self, age = 30):
+        key = self.cache_key + str(self.host)
+        g.rendercache.set(key, self)
+
+    @classmethod
+    def from_cache(cls, host):
+        key = cls.cache_key + str(host)
+        return g.rendercache.get(key)
+
+    def clean_dead(self, age = 10):
         time = datetime.now()
-        active = filter(lambda s: time - self._services[s].time <= timedelta(0, age), 
-                        self._services.keys())
-        existing = self._services.keys()
-        for pid in existing:
-            if pid not in active:
-                del self._services[pid]
+        for pid, s in list(self.services.iteritems()):
+            t = s.last_update()
+            if not t or t < time - timedelta(0, age):
+                del self.services[pid]
 
-from r2.config.templates import tpm
-from r2.lib.wrapped import Wrapped
-tpm.add('service_page', 'html', file = "server_status_page.html")
-tpm.add('service_page', 'htmllite', file = "server_status_page.htmllite")
 
-class Service_Page(Wrapped):
-    def __init__(self, machines = default_servers):
-        self.services = [Services(m) for m in machines]
-    def __repr__(self):
-        return "service page"
+    def monitor(self, srvname = None, loop = True, loop_time = 2,
+                srv_params = {}, top_params = {}, db_params = {}):
+        while True:
+            # (re)populate the service listing
+            for name, status, pid, t in supervise_list(**srv_params):
+                if not srvname or any(s in name for s in srvname):
+                    self.add_service(name, pid, t)
 
-def Alert(restart_list=['MEM','CPU']):
-    import time
-    import smtplib
-    import re
-    p=re.compile("/service/newreddit(\d+)\:")
+            # check process usage
+            proc_info = run_top(proc_ids = self.service_pids(), **top_params)
+            for pid, info in proc_info.iteritems():
+                self.track(pid, **info)
+
+            #check db usage:
+            if self.database:
+                self.database.track(**check_database(**db_params))
+
+            handle = os.popen('/usr/bin/uptime')
+            foo = handle.read()
+            foo = foo.split("load average")[1].split(':')[1].strip(' ')
+            self.load.add(float(foo.split(' ')[1].strip(',')))
+            handle.close()
+
+
+
+            self.clean_dead()
+            self.set_cache()
+            
+            if loop:
+                time.sleep(loop_time)
+            else:
+                break
+
+    def __iter__(self):
+        s = self.services
+        pids = s.keys()
+        pids.sort(lambda x, y: 1 if s[x].name > s[y].name else -1)
+        for pid in pids:
+            yield s[pid]
+        
+
+class AppServiceMonitor(Wrapped):
+    def __init__(self, hosts = None):
+        hosts = hosts or g.monitored_servers 
+        self.hostlogs = [HostLogger.from_cache(host) for host in hosts]
+        self.hostlogs = filter(lambda x: x, self.hostlogs)
+
+    def __iter__(self):
+        return iter(self.hostlogs)
+
+
+def Alert(restart_list = ['MEM','CPU'],
+          alert_recipients = ['nerds@reddit.com'],
+          alert_sender = 'nerds@reddit.com',
+          cpu_limit = 99, mem_limit = 10,
+          smtpserver = 'nt03.wireddit.com', test = False):
+
+    p = re.compile("newreddit(\d+)")
     cache_key = 'already_alerted_'
-    alert_recipients = ['nerds@reddit.com']
-    alert_sender = 'nerds@reddit.com'
-    smtpserver = 'nt03.wireddit.com'
     
-    for m in default_servers:
-        s = Services(m)
-        services = s.get_cache() or []
-        services.sort(lambda x, y: 1 if x['name'] > y['name'] else -1)
-        for service in services:
-            output = "\nCPU:   "
-            #output += (str(service['host']) + " " + str(service['name']))
-            pegged_count = 0
-            need_restart = False
+    for host in AppServiceMonitor(g.monitored_servers):
+        for service in host:
+            # cpu values
+            cpu = [service.cpu(x) for x in (0, 5, 60, 300)]
 
-            # Check for pegged procs
-            for x in (0, 5, 60, 300):
-                val = service['cpu_' + str(x)]
-                if val > 99:
-                    pegged_count += 1
-                output += " %6.2f%%" % val
-            service_name = str(service['host']) + " " + str(service['name'])
+            output =  "\nCPU:   " + ' '.join("%6.2f%%" % x for x in cpu)
+            output += "\nMEMORY: %6.2f%%" % service.mem()
 
-            if (pegged_count > 3):
-                if 'CPU' in restart_list:
-                    need_restart = True
+            service_name = "%s %s" % (host.host, service.name)
 
-            # Check for out of memory situation
-            output += "\nMEMORY: %6.2f%%" % service.get('mem', 0)
-            mem_pegged = (service.get('mem', 0) > 10)
-            if (mem_pegged):
-                if 'MEM' in restart_list:
-                    need_restart = True
+            # is this service pegged?
+            mem_pegged = ('MEM' in restart_list and service.mem() > mem_limit)
+            need_restart = (('CPU' in restart_list and
+                             all(x >= cpu_limit for x in cpu)) or mem_pegged)
+                            
 
             if (need_restart):
-                mesg = ("To: nerds@gmail.com\n" + 
-                        "Subject: " + service_name.replace("/service/","") 
-                          +" needs attention\n\n" 
-                        + service_name.replace("/service/","") 
+                mesg = ("To: " + ', '.join(alert_recipients) + 
+                        "\nSubject: " + service_name +" needs attention\n\n" 
+                        + service_name
                         + (" is out of mem: " if mem_pegged else " is pegged:" )
                         + output)
-                m = p.match(service['name'])
+                m = p.match(service.name)
                 # If we can restart this process, we do it here
                 if m:
                     proc_number = str(m.groups()[0])
                     cmd = "/usr/local/bin/push -h " + \
-                        service['host'] + " -r " + proc_number
-                    result = ""
-                    result = os.popen3(cmd)[2].read()
-                    # We override the other message to show we restarted it
-                    mesg = "To: nerds@gmail.com\n" + "Subject: " + "Process " + \
-                           proc_number + " on " + service['host'] + \
-                           " was automatically restarted due to the following:\n\n" + \
-                           output + "\n\n" + \
-                           "Here was the output:\n" + result
+                        host.host + " -r " + proc_number
+                    if test:
+                        print ("would have restarted the app with command '%s'"
+                               % cmd)
+                    else:
+                        result = os.popen3(cmd)[2].read()
+                        # We override the other message to show we restarted it
+                        mesg = ("To: nerds@gmail.com\n" + 
+                                "Subject: " + "Process " + 
+                                proc_number + " on " + host.host + 
+                                " was automatically restarted " +
+                                "due to the following:\n\n" + 
+                                output + "\n\n" + 
+                                "Here was the output:\n" + result)
                     # Uncomment this to disable restart messages
                     #mesg = ""
-                last_alerted = cache.get(cache_key + service_name) or 0
+                last_alerted = g.rendercache.get(cache_key + service_name) or 0
                 #last_alerted = 0
-                if (time.time() - last_alerted < 300):
-                    pass
-                else:
-                    cache.set(cache_key + service_name, time.time())
-                    if mesg is not "":
+                if mesg is not "":
+                    if test:
+                        print "would have sent email\n '%s'" % mesg
+                    elif (time.time() - last_alerted > 300):
+                        g.rendercache.set(cache_key + service_name, time.time())
                         session = smtplib.SMTP(smtpserver)
                         smtpresult = session.sendmail(alert_sender, 
-                                                      alert_recipients, mesg)
+                                                    alert_recipients,
+                                                      mesg)
                         session.quit()
-                    #print mesg
-                    #print "Email sent"
            
-def Write(file = None, servers = default_servers):
-    if file:
-        handle = open(file, "w")
-    else:
-        handle = sys.stdout
-    handle.write(Service_Page(servers).render())
-    if file:
-        handle.close()
-        
 
-def Run(srvname=None, loop = True, loop_time = 2):
-    services = Services()        
+re_text = re.compile('\S+')
+def run_top(proc_ids = [], name = '', exe = "/usr/bin/top"):
     pidi = 0
     cpuid = 8
     memid = 9
     ageid = 10
     procid = 11
-    text = re.compile('\S+')
+
+    if not os.path.exists(exe):
+        raise ValueError, "bad executable specified for top"
+
+    cmd = [exe, '-b', '-n1'] + ["-p%d" % x for x in proc_ids]
+
+    handle = subprocess.Popen(cmd, stdout = subprocess.PIPE,
+                              stderr = subprocess.PIPE)
+    if handle.wait():
+        cmd = [exe, '-l', '1', '-p',
+               "^aaaaa ^nnnnnnnnn X X X X X X ^ccccc 0.0" +
+               " ^wwwwwwwwwww ^bbbbbbbbbbbbbbb"]
+        handle = subprocess.Popen(cmd, stdout = subprocess.PIPE,
+                                  stderr = subprocess.PIPE)
+        if handle.wait():
+            raise ValueError, "failed to run top"
+
+    proc_ids = set(map(int, proc_ids))
+    res = {}
+    for line in handle.communicate()[0].split('\n'):
+        line = re_text.findall(line)
+        try:
+            pid = int(line[pidi])
+            n = line[-1]
+            if (n.startswith(name) and
+                (not proc_ids or int(pid) in proc_ids)):
+                res[pid] =  dict(cpu = float(line[cpuid]),
+                                 mem = float(line[memid]),
+                                 age = float(line[ageid].split(':')[0]),
+                                 name = n)
+        except (ValueError, IndexError):
+            pass
+    return res
 
 
-    from time import sleep
-    counter = 0
-    while True:
-        # reload the processes
-        if counter % 10 == 0:
-            handle = os.popen("/usr/local/bin/svstat /service/*")
-            for line in handle:
-                try:
-                    name, status, blah, pid, time, label = line.split(' ')
-                    pid = int(pid.strip(')'))
-                    if not srvname or any(s in name for s in srvname):
-                        services.add(name, pid, time)
-                except ValueError:
-                    pass
-            services.clean_dead()
-            handle.close()
+def supervise_list(exe = "/usr/local/bin/svstat", path = '/service/'):
+    handle = os.popen("%s %s*" % (exe, path))
+    for line in handle:
+        try:
+            name, status, blah, pid, time, label = line.split(' ')[:6]
+            name = name[len(path):].strip(':')
+            if status == 'up':
+                pid = int(pid.strip(')'))
+                time = int(time)
+            else:
+                pid = -1
+                time = 0
+            yield (name, status, pid, time)
+        except ValueError:
+            pass
+    handle.close()
 
-        counter +=1
-        cmd = ('/usr/bin/top -b -n 1 ' +
-               ' '.join("-p%d"%x.pid for x in services))
-        handle = os.popen(cmd)
-        for line in handle:
-            line = text.findall(line)
+def check_database(proc = "postgres", check_vacuum = True, user='ri'):
+    handle = os.popen("ps auxwww | grep ' %s'" %proc)
+    lines = [l.strip() for l in handle]
+    handle.close()
+
+    by_ip = {}
+    by_db = {}
+    total = 0
+    for line in lines:
+        line = re_text.findall(line)[10:]
+        if line[0].startswith(proc) and len(line) > 4:
+            db = line[2]
             try:
-                services.track(line[pidi], float(line[cpuid]),
-                               float(line[memid]), 
-                               float(line[ageid].split(':')[0]))
-            except (ValueError, IndexError):
-                pass
-        handle.close()
+                ip, port = line[3].strip(')').split('(')
+            except ValueError:
+                ip = '127.0.0.1'
 
-        handle = os.popen('/usr/bin/uptime')
-        foo = handle.read()
-        services.load=float(foo.split("average:")[1].strip(' ').split(',')[0])
-        handle.close()
+            by_ip[ip] = by_ip.get(ip, 0) + 1
+            by_db[db] = by_db.get(db, 0) + 1
+            total += 1
 
-        res = ''
-        services.set_cache()
+    vacuums = {}
+    if check_vacuum:
+        vac = ("(echo '\t'; echo 'select * from active;') " +
+               "| psql -U %(user)s %(db)s | grep -i '| vacuum'")
+        for db in by_db:
+            handle = os.popen(vac % dict(user=user, db=db))
+            vacuums[db] = bool(handle.read())
+            handle.close()
+                            
+    return dict(conn = total,
+                ip_conn = by_ip,
+                db_conn = by_db,
+                vacuums = vacuums)
 
-        if loop: 
-            sleep(loop_time)
-        else:
-            break
+
+def Run(*a, **kw):
+    HostLogger(g.reddit_host).monitor(*a, **kw)
 
 def Test(num, load = 1., pid = 0):
     services = Services()

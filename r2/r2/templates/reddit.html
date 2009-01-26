@@ -25,6 +25,7 @@
    from r2.lib.pages import SearchForm
    from pylons import request
 %>
+<%namespace file="framebuster.html" import="framebuster"/>
 <%inherit file="base.html"/>
 
 <%def name="Title()">
@@ -76,34 +77,19 @@
 
 <%def name="javascript()">
   <% from r2.lib.template_helpers import static %>
-  <script src="${static('json.js')}" type="text/javascript"></script>
-  %if g.uncompressedJS:
-    <script src="${static('psrs.js')}"  type="text/javascript"></script>
-    <script src="${static('utils.js')}"  type="text/javascript"></script>
-    <script src="${static('animate.js')}"  type="text/javascript"></script>
-    <script src="${static('link.js')}"  type="text/javascript"></script>
-    <script src="${static('comments.js')}"  type="text/javascript"></script>
-    <script src="${static('subreddit.js')}"  type="text/javascript"></script>
-    <script src="${static('vote_piece.js')}"  type="text/javascript"></script>
-    <script src="${static('reddit_piece.js')}"  type="text/javascript"></script>
-    <script src="${static('organic.js')}"  type="text/javascript"></script>
-  %else:
-    <script src="${static('reddit.js')}"  type="text/javascript"></script>
-  %endif
+  <script src="${static('jquery.js')}"  type="text/javascript"></script>
+  <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
+  <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
+  <script src="${static('reddit.js')}" type="text/javascript"></script>
+  <!--[if lt IE 7]>
+    <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"" 
+          type="text/css" />
+  <![endif]-->
 </%def>
 
 <%def name="javascript_run()">
-  var class_dict = ${class_dict()};
-  var where = ${path_info()};
-  var cur_site = "${c.site._fullname if not c.default_sr else ''}";
-  window.onload = init;
-  window.onpageshow = function(evt) {
-    if (evt.persisted) init()
-  };
-  var _global_fetching_tag = "${_('fetching title...')}";
-  var _global_submitting_tag = "${_('submitting...')}";
-  var _global_loading_tag = "${_('loading...')}";
-
+   reddit.where = ${path_info()};
+   reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
 </%def>
 
 <%def name="bodyHTML()">
@@ -125,13 +111,13 @@
     %endif
     
     <%include file="redditfooter.html"/>
+    ${framebuster()}
+    
   </body>
 </%def>
 
 <%def name="sidebar(content=None)">
-  %if content:
-    ${content.render()}
-  %endif
+  ${content.render() if content else ''}
 
   %if c.user_is_admin:
     <%include file="admin_rightbox.html"/>

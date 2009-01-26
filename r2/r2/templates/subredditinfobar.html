@@ -25,31 +25,16 @@
    from r2.lib.utils import timesince
    from r2.lib.strings import strings
    %>
-<%namespace file="printable.html" import="state_button"/>
+<%namespace file="printable.html" import="ynbutton, toggle_button"/>
 %if not isinstance(c.site, FakeSubreddit):
   <div class="raisedbox subreddit-info">
     <h3>${c.site.name}</h3>
-
         %if c.user_is_loggedin:
-          <form action="/post/subcribe" method="post" id="subscribe">
-            <input type="hidden" name="sr"  value="${c.site._fullname}" />
-            %if c.user_is_loggedin and c.site.is_subscriber_defaults(c.user):
-              <input type="hidden" name="toggled_action" value="sub"/>
-              <input type="hidden" name="action" value="unsub"/>
-              <input type="hidden" name="toggled_label"  
-                     value="${_('subscribe')}"/>
-              <a onclick="return toggle(this, 'subscribe');" href="#">
-                ${_("unsubscribe")}
-              </a>
-            %else:
-              <input type="hidden" name="toggled_action" value="unsub"/>
-              <input type="hidden" name="action" value="sub"/>
-              <input type="hidden" name="toggled_label"  
-                     value="${_('unsubscribe')}"/>
-              <a onclick="return toggle(this, 'subscribe')" href="#">
-                ${_("subscribe")}</a>
-            %endif
-          </form>
+           ${toggle_button("subscribe-button", 
+                           _("subscribe"), _("unsubscribe"),
+                           'subscribe("%s")' % c.site._fullname,
+                           'unsubscribe("%s")' % c.site._fullname,
+                           reverse = c.site.is_subscriber_defaults(c.user))}
         %endif
         <span class="label">
           (${strings.person_label % dict(num = c.site._ups,
@@ -59,22 +44,23 @@
         ${_("a community for %(time)s") % dict(time=timesince(c.site._date))}
       </p>
 
-      %if c.site.type in ("private", "restricted") and c.user_is_loggedin and \
+      <div id="${c.site._fullname}" class="thing">
+        %if c.site.type in ("private", "restricted") and c.user_is_loggedin and \
           c.site.is_contributor(c.user):
-          ${moderate_button("contributor",
+          ${moderate_button("leave_contributor",
                             _("you are a contributor of this reddit. (%(leave)s)"),
                             _("stop being a contributor?"),
                             _("you are no longer a contributor"))}
      %endif
 
      %if c.user_is_loggedin and c.site.is_moderator(c.user):
-          ${moderate_button("moderator",
+          ${moderate_button("leave_moderator",
                             _("you are a moderator of this reddit. (%(leave)s)"),
                             _("stop being a moderator?"),
                             _("you are no longer a moderator"))}
                            
      %endif
-
+      </div>
     <div class="spacer">  
     %for n in thing.nav():
       ${n.render()}
@@ -85,11 +71,6 @@
 
 
 <%def name="moderate_button(location, fmt, question, left)">
-  ${state_button("leave" + location, c.site._fullname, "leave",
-                 "return deletetoggle(this, 'leave');", 
-                 left, location = location,
-                 yes = _("yes"), no = _("no"),
-                 question = question,
-                 fmt = fmt, fmt_param = "leave",
-                 a_class="moderate")}
+  ${ynbutton(_("leave"), left, location,
+             question = question, format = fmt, format_arg = "leave")}
 </%def>

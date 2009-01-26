@@ -47,29 +47,37 @@ ${self.RenderPrintable()}
   %endif  
 </%def>
 
-<%def name="RenderPrintable()">
-  <%
-      fullname = thing._fullname
-      if hasattr(thing, 'render_class'):
-        cls = thing.render_class
-      else:
-        cls = thing.lookups[0].__class__
-      cls = cls.__name__.lower()
+<%def name="thing_css_class(what)" buffered="True">
+thing id-${what._fullname}
+</%def>
 
-      if thing.show_spam:
-        rowclass = thing.rowstyle + " spam"
-      elif thing.show_reports:
-        rowclass = thing.rowstyle + " reported"
-      else:
-        rowclass = thing.rowstyle
-  %>
-<div id="thingrow_${fullname}" class="${rowclass} ${cls}" $display>
-  <p id="pre_${fullname}">
+<%def name="RenderPrintable()">
+<% cls = thing.lookups[0].__class__.__name__.lower() %>
+<%
+   if hasattr(thing, 'render_class'):
+      cls = thing.render_class
+   else:
+      cls = thing.lookups[0].__class__
+   cls = cls.__name__.lower()
+
+   if thing.show_spam:
+     rowclass = thing.rowstyle + " spam"
+   elif thing.show_reports:
+     rowclass = thing.rowstyle + " reported"
+   else:
+     rowclass = thing.rowstyle
+   if hasattr(thing, "saved") and thing.saved:
+     rowclass += " saved"
+   if hasattr(thing, "hidden") and thing.hidden:
+     rowclass += " hidden"
+ %>
+<div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" $display>
+  <p class="parent">
     ${self.ParentDiv()}
   </p>
   ${self.numcol()}
   ${self.midcol()}
-  <div id="entry_${fullname}" class="entry">
+  <div class="entry">
     ${self.entry()}
   </div>
   ${self.Child()}
@@ -79,43 +87,35 @@ ${self.RenderPrintable()}
 </%def>
 
 <%def name="buttons(ban=True)">
-<% fullname = thing._fullname %>
 %if thing.can_ban and ban:
   %if thing.show_spam:
     <li>
-      ${state_button("unban", fullname, _("unban"), \
-      "return change_state(this, 'unban');", _("unbanned"))}
+      ${ynbutton(_("unban"), _("unbanned"), "unban")}
     </li>
-  %else:
+   %else:
     <li>
-      ${state_button("ban", fullname, _("ban"), \
-      "return change_state(this, 'ban');", _("banned"))}
+      ${ynbutton(_("ban"), _("banned"), "ban")}
     </li>
-    %endif
+   %endif
   %if thing.show_reports:
     <li>
-    ${state_button("ignore", fullname, _("ignore"), \
-    "return change_state(this, 'ignore');", _("ignored"))}
+      ${state_button("ignore", _("ignore"), \
+       "change_state(this, 'ignore');", _("ignored"))}
     </li>
   %endif
 %endif
 </%def>
 
 <%def name="delete_or_report_buttons(delete=True, report=True)">
-<% fullname = thing._fullname %>
 %if c.user_is_loggedin:
   %if (not thing.author or thing.author.name != c.user.name) and report:
     <li>
-      ${yes_no_button("report", fullname, _("report"), \
-      "return deletetoggle(this, $ListClass.report);",\
-      _("reported"), clicked=thing.report_made)}
+      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
     </li>
   %endif
-  %if (not thing.author or thing.author.name == c.user.name) and delete:
+  %if (not thing.author or thing.author.name == c.user.name) and delete and not thing._deleted:
     <li>
-      ${yes_no_button("delete", fullname, _("delete"), \
-      "return deletetoggle(this, $ListClass.del);",\
-      _("deleted"))}
+      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
     </li>
   %endif
 %endif
@@ -132,8 +132,7 @@ ${self.RenderPrintable()}
 </%def>
 
 <%def name="Child(display=True, render_hook=True)">
-<div id="child_${thing._fullname}" class="child"
-     ${(not display and "style='display:none'" or "")}>
+<div class="child" ${(not display and "style='display:none'" or "")}>
   %if render_hook:
     $child
   %endif
@@ -158,9 +157,12 @@ ${self.RenderPrintable()}
        href = unsafe('href="%s"' % add_sr("/user/%s/" % name, sr_path = False))
        if c.user_is_admin: name += " (%d)" % (author.link_karma)
     %>
-    <a id="author_${thing._fullname}" class="${author_cls}" ${href}>${name}</a>
- %endif
-%endif
+    <a class="${author_cls}" ${href}>${name}</a>
+   %endif
+  %endif
+  %if c.user_is_admin and hasattr(thing, 'ip') and thing.ip:
+    <span class="ip" style="display: none;">${thing.ip}</span>
+  %endif
 </%def>
 
 
@@ -170,9 +172,9 @@ ${self.RenderPrintable()}
    _class = _type + ("mod" if mod else "")
    fullname = this._fullname
 %>
-  <div id="${_type}_${fullname}" class="arrow ${_class}" 
+  <div class="arrow ${_class}" 
        %if c.user_is_loggedin:
-         onclick="mod('${fullname}', ${dir}, '$votehash')"
+         onclick="$(this).vote('$votehash')"
        %else:
          onclick="showcover(true, 'vote_${fullname}')"
        %endif
@@ -180,11 +182,10 @@ ${self.RenderPrintable()}
   </div>
 </%def>
 
-<%def name="score(this, likes=None, inline=True, label = True, _id = True)">
+<%def name="score(this, likes=None, inline=True)">
 <%
    tag = "span" if inline else "div"
    _class = "" if likes is None else "likes" if likes else "dislikes"
-   _id = ("id='score_%s'" % this._fullname) if _id else ""
 
    # figure out alterna-points
    score = this.score
@@ -192,19 +193,20 @@ ${self.RenderPrintable()}
    base_score = [base_score + x for x in range(-1, 2)];
    
  %>
-  <${tag} class="score ${_class}" ${_id}>
+  <${tag} class="score ${_class}">
     ${thing.score_fmt(this.score)}
   </${tag}>
   <script type="text/javascript">
-    vl['${this._fullname}'] = ['${thing.score_fmt(base_score[0])}',
-                               '${thing.score_fmt(base_score[1])}', 
-                               '${thing.score_fmt(base_score[2])}' ];
+    if(reddit)
+      reddit.vl['${this._fullname}'] = ['${thing.score_fmt(base_score[0])}',
+                                        '${thing.score_fmt(base_score[1])}', 
+                                        '${thing.score_fmt(base_score[2])}' ];
   </script>
 </%def>
 
 
 <%def name="midcol(display=True)">
-  <div id="arrows_${thing._fullname}" class="midcol" 
+  <div class="midcol" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     ${self.arrow(thing, 0, thing.likes == False)}
@@ -215,29 +217,29 @@ ${self.RenderPrintable()}
 ##
 ##
 ### originally in statebuttons
-<%def name="state_button(name, fullname, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', **kw)">
-  <% 
-   tag = "%s_%s" % (name, fullname) 
-  %>
+<%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
   <%def name="_link()" buffered="True">
-    <a href="/" class="${a_class}" onclick="${onclick}" 
-       id="a_${tag.replace('/','_')}">${title}</a>
+    <a href="javascript:void()" 
+       %if a_class:
+         class="${a_class}" 
+       %endif
+       onclick="${onclick}">${title}</a>
   </%def>
   <%
      link = _link()
      if fmt:
          link = fmt % {fmt_param: link}
-         ##who knows?
-         ##link = link.replace("\n", " ").replace(" <", "&#32;<").replace("> ", ">&#32;")
+         ## preserve spaces before and after < & > for space compression
+         link = link.replace(" <", "&#32;<").replace("> ", ">&#32;")
    %>   
 
   %if clicked:
     ${executed}
   %else:
-    <form action="/post/${name}" method="post" class="state-button">
+    <form action="/post/${name}" method="post" 
+          class="state-button ${name}-button">
         <input type="hidden" name="executed" value="${executed}" />
-        <input type="hidden" name="id" value="${fullname}" />
-        %for key, value in kw.iteritems():
+        %for key, value in hidden_data.iteritems():
           <input type="hidden" name="${key}" value="${value}" />
         %endfor
         <span>
@@ -248,45 +250,91 @@ ${self.RenderPrintable()}
 </%def>
 
 
-<%def name="yes_no_button(name, fullname, title, onclick, executed, clicked=False, **kw)">
-${state_button(name, fullname, title, onclick, executed, 
-               yes=_('yes'), no=_('no'), question=_('are you sure?'), 
-               clicked=clicked, **kw)}
+<%def name="ynbutton(title, executed, op, callback = 'null', 
+                     question = None,
+                     format = '%(link)s',
+                     format_arg = 'link',
+                     hidden_data = {})">
+  <%
+     if question is None:
+         question = _("are you sure?")
+     link = ('<a href="#" onclick="return toggle(this)">'
+             + title + '</a>')
+     link = format % {format_arg : link}
+     link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
+   %>
+  <form class="toggle ${op}-button" action="#" method="get">
+    <input type="hidden" name="executed" value="${executed}"/>
+    %for k, v in hidden_data.iteritems():
+      <input type="hidden" name="${k}" value="${v}"/>
+    %endfor
+    <span class="option active">
+      ${link}
+    </span>
+    <span class="option error">
+      ${question}
+      &#32;<a href="javascript:void(0)" class="yes"
+         onclick='change_state(this, "${op}", ${callback})'>
+        ${_("yes")}
+      </a>&#32;/&#32;
+      <a href="javascript:void(0)" class="no"
+         onclick="return toggle(this)">${_("no")}</a>
+    </span>
+  </form>
 </%def>
 
-<%def name="simple_button(name, fullname, title, nameFunc=None)">
-<a id="${nameFunc}_a_${fullname}" class="" \
-   href="javascript:${nameFunc}('${fullname}')">\
-  ${title}</a>
+<%def name="simple_button(name, title, nameFunc)">
+ <a class="" href="javascript:void(0)" 
+    onclick="return ${nameFunc}(this)">${title}</a>
 </%def>
 
-<%def name="advanced_button(fullname, args, title, nameFunc=None)">
-<a id="${nameFunc}_a_${fullname}" class="" \
-   href="javascript:${nameFunc}(${args})">\
-  ${title}</a>
+<%def name="toggle_button(class_name, title, alt_title, 
+                    callback, cancelback, 
+                    css_class = '', alt_css_class = '',
+                    reverse = False,
+                    login_required = False)">
+<%
+   if reverse:
+       callback, cancelback = cancelback, callback
+       title, alt_title = alt_title, title
+       css_class, alt_css_class = alt_css_class, css_class
+ %>
+<span class="${class_name} toggle">
+ <a class="option active ${css_class}" href="#" 
+    %if login_required and not c.user_is_loggedin:
+      onclick="return showcover('', '${callback}_' + $(this).thing_id());"
+    %else:
+      onclick="return toggle(this, ${callback}, ${cancelback})"
+    %endif
+    >
+   ${title}
+ </a>
+ <a class="option ${alt_css_class}" href="#">${alt_title}</a>
+</span>
 </%def>
 
 <%def name="tags(**kw)">
-%for k, v in kw.iteritems():
-%if v is not None:
-${k.strip('_')}="${v}" \
-%endif
-%endfor
+  %for k, v in kw.iteritems():
+    %if v is not None:
+      ${k.strip('_')}="${v}" \
+    %endif
+  %endfor
 </%def>
 
 
 ### originally in commentbutton
-<%def name="comment_button(name, fullname, link_text, num, link,\
+<%def name="comment_button(name, link_text, num, link,\
             a_class='', title='', newwindow = False)">
   <% 
-     cls = "" if num == 0 else "comments"
+     cls = "comments empty" if num == 0 else "comments"
 
      if num > 0:
          link_text = strings.number_label % (num, link_text)
 
      target = '_blank' if newwindow else '_parent'
   %>
-  ${plain_link(link_text, link, id="%s_%s" % (name, fullname), _class="%s %s" % (a_class, cls), title=title, target=target)}
+  ${plain_link(link_text, link, 
+               _class="%s %s" % (a_class, cls), title=title, target=target)}
 
 </%def>
 

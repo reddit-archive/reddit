@@ -1006,3 +1006,19 @@ def trace(fn):
                     % (fn,a,kw,ret))
         return ret
     return new_fn
+
+def common_subdomain(domain1, domain2):
+    domain1 = domain1.split(":")[0]
+    domain2 = domain2.split(":")[0]
+    if len(domain1) > len(domain2):
+        domain1, domain2 = domain2, domain1
+
+    if domain1 == domain2:
+        return domain1
+    else:
+        dom = domain1.split(".")
+        for i in range(len(dom), 1, -1):
+            d = '.'.join(dom[-i:])
+            if domain2.endswith(d):
+                return d
+    return ""

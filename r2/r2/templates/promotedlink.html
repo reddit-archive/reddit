@@ -24,8 +24,6 @@
 %>
 
 <%inherit file="link.html"/>
-
-<%namespace file="printable.html" import="yes_no_button" />
 <%namespace file="utils.html" import="plain_link" />
 
 <%def name="tagline()">
@@ -38,8 +36,7 @@
                  _sr_path = False)}
   </li>
   <li>
-    ${yes_no_button("unpromote", thing._fullname, _("unpromote"), \
-      "return deletetoggle(this,'unpromote');", _("unpromoted"))}
+    ${self.ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
   </li>
   %endif
 </%def>
@@ -54,13 +51,13 @@
 <%def name="entry()">
   ${parent.entry()}
   <p class="sponsored-tagline">
-    ${_('sponsored link')}
+    ${_('sponsored link')} 
   </p>
   <img class="promote-pixel"
    id="promote_img_${thing._fullname}" 
    src="/static/pixel.png" alt=" " />
   <script type="text/javascript">
-    reddit_thing_info.fetch.push("${thing._fullname}");
+    reddit.tofetch.push("${thing._fullname}");
   </script>
 </%def>
 

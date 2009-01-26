@@ -34,8 +34,7 @@ ${captchagen(thing.iden, thing.error)}
     <td></td>
     <td>
   %endif
-      <img id="capimage" 
-           class="capimage"
+      <img class="capimage"
            alt="i wonder if these things even work" 
            %if iden:
            src="/captcha/${iden}.png" 
@@ -58,11 +57,11 @@ ${captchagen(thing.iden, thing.error)}
      </td>
      <td>
      %endif
-        <input id="capiden" name="iden" type="hidden" value="${iden}"/>
-        <input id="captcha" name="captcha" type="text" size="${size}" 
-               class="cap-text" onfocus="clearTitle(this)"/>
+        <input name="iden" type="hidden" value="${iden}"/>
+        <input class="captcha cap-text" 
+               name="captcha" type="text" size="${size}" />
         <script type="text/javascript">
-          setMessage($('captcha'), "${_('type the letters from the image above')}");
+          emptyInput($('input.captcha'), "${_('type the letters from the image above')}");
         </script>
      %if tabular:
      </td>

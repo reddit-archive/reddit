@@ -20,8 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import random, string
-#TODO find a better way to cache the captchas
-from r2.config import cache
+from pylons import g
 from Captcha.Base import randomIdentifier
 from Captcha.Visual import Text, Backgrounds, Distortions, ImageCaptcha
 
@@ -48,22 +47,21 @@ def make_solution():
     return randomIdentifier(alphabet=string.ascii_letters, length = SOL_LENGTH).upper()
 
 def get_image(iden):
-    solution = cache.get(str(iden))
+    solution = g.rendercache.get(str(iden))
     if not solution:
         solution = make_solution()
-        cache.set(str(iden), solution, time = 300)
-    g = RandCaptcha(solution=solution)
-    return g.render()
+        g.rendercache.set(str(iden), solution, time = 300)
+    return RandCaptcha(solution=solution).render()
 
 def valid_solution(iden, solution):
     if (not iden
         or not solution
         or len(iden) != IDEN_LENGTH
         or len(solution) != SOL_LENGTH
-        or solution.upper() != cache.get(str(iden))): 
+        or solution.upper() != g.rendercache.get(str(iden))): 
         solution = make_solution()
-        cache.set(str(iden), solution, time = 300)
+        g.rendercache.set(str(iden), solution, time = 300)
         return False
     else:
-        cache.delete(str(iden))
+        g.rendercache.delete(str(iden))
         return True

@@ -23,31 +23,31 @@
 <%namespace file="utils.html" import="error_field"/>
 <% from r2.lib.template_helpers import static %>
 <div class="${thing._class} usertable">
-%if thing.editable:
-    <h1>${thing.form_title}</h1>
-
-    <script src="${static('tabular.js')}"  type="text/javascript"></script>
-
+  %if thing.editable:
     <form action="/post/friend" method="post" class="pretty-form medium-text"
-          onsubmit="return post_form(this, 'friend');">
+          onsubmit="return post_form(this, 'friend');" id="${thing.type}">
+      <h1>${thing.form_title}</h1>
+
       <input type="hidden" name="action" value="add"/>
       <input type="hidden" name="container" value="${thing.container_name}"/>
       <input type="hidden" name="type" value="${thing.type}"/>
       <input type="text" name="name" id="name"/>
       <button class="btn" type="submit">${_("add")}</button>
+      <span class="status"></span>
       ${error_field("USER_DOESNT_EXIST", "span")}
     </form>
-%endif
+  %endif
 
-  <h1>
-    ${thing.table_title}
-  </h1>
+  <h1>${thing.table_title}</h1>
 
-  <table id="${thing.type}" >
-    <tr><td/></tr>
-    %for item in thing.users:
-      ${item.render()}
-    %endfor
+  <table>
+    %if thing.users:
+      %for item in thing.users:
+        ${item.render()}
+      %endfor
+    %else:
+      <tr><td></td></tr>
+    %endif
   </table>
 </div>
 

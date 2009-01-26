@@ -23,7 +23,7 @@
 <%namespace file="utils.html" import="error_field"/>
 
 <form action="/post/update" method="post" class="pretty-form medium-text"
-      onsubmit="return post_form(this, 'update')">
+      onsubmit="return post_form(this, 'update')" id="pref-update">
 <table>
 <tr>
     <td align="right">${_("current password (required)")}:</td>
@@ -49,6 +49,6 @@
     </td>
 </tr>
 </table>
-<input type="submit" class="btn" value="${_('save')}"/>
-<span id='status' class='error'></span>
+<button type="submit" class="btn">${_('save')}</button>
+<span class="status error"></span>
 </form>

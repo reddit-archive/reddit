@@ -155,10 +155,11 @@ class PostController(ApiController):
 
 
     def POST_login(self, *a, **kw):
-        res = ApiController.POST_login(self, *a, **kw)
+        ApiController.POST_login(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
+        dest = request.post.get('dest', request.referer or '/')
         errors = list(c.errors)
         if errors:
             for e in errors:
@@ -168,16 +169,17 @@ class PostController(ApiController):
                     c.errors._add(e + "_login", msg)
 
             dest = request.post.get('dest', request.referer or '/')
-            return LoginPage(user_login = request.post.get('user_login'),
+            return LoginPage(user_login = request.post.get('user'),
                              dest = dest).render()
 
-        return self.redirect(res.redirect)
+        return self.redirect(dest)
 
     def POST_reg(self, *a, **kw):
-        res = ApiController.POST_register(self, *a, **kw)
+        ApiController.POST_register(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
+        dest = request.post.get('dest', request.referer or '/')
         errors = list(c.errors)
         if errors:
             for e in errors:
@@ -185,12 +187,10 @@ class PostController(ApiController):
                     msg = c.errors[e].message
                     c.errors.remove(e)
                     c.errors._add(e + "_reg", msg)
-
-            dest = request.post.get('dest', request.referer or '/')
-            return LoginPage(user_reg = request.post.get('user_reg'),
+            return LoginPage(user_reg = request.post.get('user'),
                              dest = dest).render()
 
-        return self.redirect(res.redirect)
+        return self.redirect(dest)
 
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))

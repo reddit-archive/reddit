@@ -24,8 +24,8 @@
   from r2.lib.template_helpers import add_sr
 
 %>
-<%namespace file="utils.html" import="error_field, language_tool"/>
-<%namespace file="printable.html" import="yes_no_button"/>
+<%namespace file="utils.html" import="error_field, image_upload"/>
+<%namespace file="printable.html" import="ynbutton, toggle_button"/>
 
 <div class="stylesheet-customize-container">
   <form
@@ -67,18 +67,13 @@
       </div>
     </div>
     <div class="clearleft"></div>
-    <div class="buttons">
-      <button class="btn right " id="show_default_stylesheet"
-                value="some_button"
-              onclick="return showDefaultStylesheet();">
-        ${_('show the default stylesheet')}
-      </button>
-      <button class="btn right" id="hide_default_stylesheet"
-                value="some_button"
-              style="display: none;"
-              onclick="return hideDefaultStylesheet();">
-        ${_('hide the default stylesheet')}
-      </button>
+    <div class="buttons"><span class="btn right">
+       ${toggle_button("default-css", 
+                       _("show the default stylesheet"), 
+                       _("hide the default stylesheet"),
+                       "showDefaultStylesheet",
+                       "hideDefaultStylesheet")}
+      </span>
       <button class="btn" name="save" type="submit" 
              onclick="this.form.op.value='save'; return true;">
         ${_('save')}
@@ -87,12 +82,12 @@
              onclick="this.form.op.value='preview'; return true;">
         ${_('preview')}
       </button>
-      <span id="status" class="error"></span>
+      <span class="status error"></span>
     </div>
   </div>
-  <div class="errors">
-    <h2 id="error-header" style="display:none">${_("errors")}</h2>
-    <ul id="validation-errors"><li style="display:none"></li>
+  <div class="errors" style="display:none">
+    <h2>${_("errors")}</h2>
+    <ul><li></li>
       <!-- populated from AJAX requests to /api/subreddit_stylesheet -->
     </ul>
   </div>
@@ -102,100 +97,111 @@
   <div id="images">
     <h2><a name="images">${_("images")}</a></h2>
 
-    <form class="pretty-form image-upload" enctype="multipart/form-data"
-          target="upload-iframe" id="image-upload"
-          action="/api/upload_sr_img" method="post"
-          onsubmit="return check_name(this)">
-      <input type="hidden" name="uh" value="${c.modhash}" />
-      <input type="hidden" name="r"  value="${c.site.name}" />
-      <table>
-        <tr>
-          <th>
-            <label for="srfile">${_("image file:")}</label>
-          </th>
-          <td>
-            <input type="file" name="file" id="srfile"
-                   onchange="return file_changed(this)"/>
-            <button id="submit-header-img" type="submit" name="upload" 
-                    onclick="return upload_image(this.form, '${_('uploading')}');"
-                    style="display: none;" >
-              ${_('Upload')}
-            </button>
-            <span style="display: none;" class="error" id="img-status"></span>
-            ${error_field("IMAGE_ERROR", "span")}
-          </td>
-        </tr>
-        <tr>
-          <th>
-            <label for="img-name">${_("new image name:")}</label>
-          </th>
-          <td>
-            <input id="img-name" name="name" value="" type="text"/>
-            ${error_field("BAD_CSS_NAME", "span")}
-            <br/>
-            <span class="little gray">
-              ${_("(image names should consist of alphanumeric characters and '-' only)")}
-            </span>
-          </td>
-        </tr>
-      </table>
-      <p class="error">
-          ${_("Note: any changes to images here will be reflected immediately on reload and cannot be undone.")}
-      </p>
-    </form>
+  <%call expr="image_upload('/api/upload_sr_img', thing.site.header, 
+                              tabular=True, 
+                              onchange='return file_changed(this)',
+                              label = _('image file'))">
+    
+    <tr>
+      <th>
+        <label for="img-name">${_("new image name:")}</label>
+      </th>
+      <td class="prefright">
+        <input id="img-name" name="name" value="" type="text"/>
+        ${error_field("BAD_CSS_NAME", "span")}
+        <br/>
+        <span class="little gray">
+          ${_("(image names should consist of alphanumeric characters and '-' only)")}
+        </span>
+      </td>
+    </tr>
+  </%call>
+<p class="error">
+  ${_("Note: any changes to images here will be reflected immediately on reload and cannot be undone.")}
+</p>
     <script type="text/javascript">
       /* <![CDATA[ */
+        function create_new_image(name) {
+              var list = $(".image-list:first");
+              var new_li = list.children("li:first")
+                  .clone(true).attr("id", "")
+                  .find(".img-name").html(name).end()
+                  .find(".img-url").html("url(%%" + name + "%%)").end()
+                  .find("form input[name=img_name]").attr("value", name).end()
+                  .find("img").attr("id", "img-preview-" + name).end();
+              
+              list.append(new_li);
+              img = new_li.find("img");
+              
+              $("#old-names").append("<option>" + name + "</option>");
+              return img;           
+        }
+
+        function on_image_success(img) {
+           $(img).parents("li:first").fadeIn();
+           $(img).parent("a").attr("href", $(img).attr("src"));
+        }
+
+
         function too_big() {
-            $("IMAGE_ERROR").innerHTML = "image too big: there is a 500k cap";
-            $("img-status").innerHTML = "";
+            $(".IMAGE_ERROR").innerHTML = "image too big: there is a 500k cap";
+            $(".img-status").innerHTML = "";
         }
-        function get_name(source) {
-            if(source.id && source.id.split) {
-               var name = source.id.split('_');
-               return name[name.length - 1];
-            }
+        function showDefaultStylesheet(btn) {
+            $("#stylesheet_contents").parents(".col")
+                .animate( { width: "50%" }, function() { 
+                        $("#default_stylesheet").parents(".col")
+                            .css("width", "50%")
+                            .fadeIn();
+                    } );
+            
         }
+        function hideDefaultStylesheet(btn) {
+            $("#default_stylesheet").parents(".col")
+                .fadeOut(function() {
+                        $(this).css("width", "50%");
+                        $("#stylesheet_contents").parents(".col")
+                            .animate( { width: "100%" });
+                    });
+        }
+
         function paste_url(source) {
-            insertAtCursor("stylesheet_contents", 
-                           "url(%%" + get_name(source) + "%%)");
+            var txt = $(source).siblings("pre:first").html();
+            $("#stylesheet_contents").insertAtCursor(txt);
             return false; 
         }
         function delete_img(button) {
-            var n=get_name(button); 
-            var form = button.parentNode.parentNode;
-            if (n && form && form.id && typeof(form.id) != "string") {
-              form.id.value = n;
-              form.img_name.value = n;
-            }
-            return deletetoggle(button, 'delete_sr_img');
+            $(button).parents("li:first").fadeOut(function() {
+                $(this).remove();
+            })
         }
         function file_changed(file_input) {
-            show('submit-header-img');
-            $("img-status").innerHTML = "";
+            $("#submit-header-img").show();
+            $(".img-status").html("");
             if(file_input.value) {
-                var f = file_input.value.replace(/.*[\/\\]/, "").split('.')[0];
-                f = f.replace(/[ _]/g, "-");
-                if(! $('img-name').value) 
-                    $('img-name').value = f;
+                if(! $('#img-name').attr("value")) {
+                   var f = file_input.value
+                        .replace(/.*[\/\\]/, "").split('.')[0]
+                        .replace(/[ _]/g, "-");
+                    $('#img-name').attr("value", f);
+                }
             }
         }
         function check_name(form) {
            var name = form.name.value;
            var r = new RegExp(/[^a-zA-Z0-9\-]/);
            if (name == "" || name.match(r)) { 
-              $("img-status").innerHTML = "";
-              show("BAD_CSS_NAME");
-              $("BAD_CSS_NAME").innerHTML = "${_('bad image name')}";
+              $(".img-status").html("").hide();
+              $(".BAD_CSS_NAME").show().html("${_('bad image name')}");
               return false; 
            }
            else if(form.srfile.value) {
-              $("BAD_CSS_NAME").innerHTML = "";
-              $("IMAGE_ERROR").innerHTML = "";
+              $(".BAD_CSS_NAME").html("").hide();
+              $(".IMAGE_ERROR").html("").hide();
               return true;
            } else {
-              $("img-status").innerHTML = "";
-              show("IMAGE_ERROR");
-              $("IMAGE_ERROR").innerHTML = "${_('please select an image')}";
+              $(".img-status").html("").hide();
+              $(".IMAGE_ERROR").show().html("${_('please select an image')}");
               return false; 
            }
         }
@@ -203,35 +209,33 @@
     </script>
     <ul id="image-preview-list" class="image-list">
       <%def name="make_li(name='', img = None, prototype=False)">
-        <li ${"style='display:none'" if img is None else ""}
-            id="${'img-prototype' if prototype else ('img-li_%s' % name) }">
+        <li ${"style='display:none'" if img is None else ""}>
           <% 
              if img is not None:
-                 img = "http:/%s%s_%d.png" % (g.s3_thumb_bucket, c.site._fullname, img)
+                 img = "http:/%s%s_%d.png" % \
+                      (g.s3_thumb_bucket, c.site._fullname, img)
              else:
                  img = "/static/kill.png"                  
              %>
-          <a href="${img}" id="img-preview-a_${name}" class="preview">
-            <img id="img-preview_${name}" src="${img}" alt="Image ${name}"
-                 title="click to preview"/>
+          <a href="${img}" class="preview">
+            <img id="img-preview-${name}" src="${img}" 
+                 alt="Image ${name}" title="click to preview"/>
           </a>
           <div class="description">
-            <b id="img_name_${name}">
+            <b class="img-name">
               ${name}
             </b>
             <br/>
-            <span id="description_${name}">link:</span>
-            <pre id="img_url_${name}">url(%%${name}%%)</pre>
+            <span>link:</span>
+            <pre class="img-url">url(%%${name}%%)</pre>
             <br/>
-            <a id="paste_image_${name}" href="javascript:void(0)" 
-               onclick="return paste_url(this)">
+            <a href="javascript:void(0)" onclick="return paste_url(this)">
               ${_("paste into stylesheet")}
             </a>
             <br/>
-            ${yes_no_button("delete_sr_img", name,
-                            _("delete this image"),
-                            "return delete_img(this)",
-                            "", img_name = name)}
+            ${ynbutton(_("delete this image"), _("deleted"),
+                       "delete_sr_img", callback = "delete_img",
+                        hidden_data = dict(img_name = name))}
           </div>
         </li>
         </%def>

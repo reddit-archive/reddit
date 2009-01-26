@@ -25,9 +25,9 @@ from pylons.controllers.util import abort
 from r2.lib import utils, captcha
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.db.operators import asc, desc
-from r2.config import cache
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsonresponse import json_respond
+from r2.lib.jsonresponse import json_respond, JQueryResponse
+from r2.lib.jsontemplates import api_type
 
 from r2.models import *
 
@@ -35,7 +35,7 @@ from r2.controllers.errors import errors, UserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
-import re
+import re, inspect
 
 class Validator(object):
     default_param = None
@@ -47,6 +47,13 @@ class Validator(object):
 
         self.default = default
         self.post, self.get, self.url = post, get, url
+
+    def set_error(self, error, msg_params = {}):
+        """
+        Adds the provided error to c.errors and flags that it is come
+        from the validator's param
+        """
+        c.errors.add(error, msg_params = msg_params, field = self.param)
 
     def __call__(self, url):
         a = []
@@ -63,26 +70,102 @@ class Validator(object):
                 a.append(val)
         return self.run(*a)
 
+
+def build_arg_list(fn, env):
+    """given a fn and and environment the builds a keyword argument list
+    for fn"""
+    kw = {}
+    argspec = inspect.getargspec(fn)
+
+    # if there is a **kw argument in the fn definition,
+    # just pass along the environment
+    if argspec[2]:
+        kw = env
+    #else for each entry in the arglist set the value from the environment
+    else:
+        #skip self
+        argnames = argspec[0][1:]
+        for name in argnames:
+            if name in env:
+                kw[name] = env[name]
+    return kw
+
+def _make_validated_kw(fn, simple_vals, param_vals, env):
+    for validator in simple_vals:
+        validator(env)
+    kw = build_arg_list(fn, env)
+    for var, validator in param_vals.iteritems():
+        kw[var] = validator(env)
+    return kw
+    
+
 def validate(*simple_vals, **param_vals):
     def val(fn):
         def newfn(self, *a, **env):
             try:
-                for validator in simple_vals:
-                    validator(env)
-                
-                kw = self.build_arg_list(fn, env)
-                for var, validator in param_vals.iteritems():
-                    kw[var] = validator(env)
-                
+                kw = _make_validated_kw(fn, simple_vals, param_vals, env)
                 return fn(self, *a, **kw)
-
             except UserRequiredException:
-                if request.method == "POST" and hasattr(self, "ajax_login_redirect"):
-                    # ajax failure, so redirect accordingly
-                    return  self.ajax_login_redirect("/")
                 return self.intermediate_redirect('/login')
         return newfn
     return val
+
+def noresponse(*simple_vals, **param_vals):
+    """
+    AJAXy decorator which takes the place of validate when no response
+    is expected from the controller method.
+    """
+    def val(fn):
+        def newfn(self, *a, **env):
+            c.render_style = api_type('html')
+            c.response_content_type = 'application/json; charset=UTF-8'
+            jquery = JQueryResponse()
+
+            validate(*simple_vals, **param_vals)(fn)(self, *a, **env)
+
+            return self.response_func()
+        return newfn
+    return val
+
+
+def validatedForm(*simple_vals, **param_vals):
+    """
+    AJAX response validator for general form handling. In addition to
+    validating simple_vals and param_vals in the same way as validate,
+    a jquery object and a jquery form object are allocated and passed
+    into the method which is decorated.
+    """
+    def val(fn):
+        def newfn(self, *a, **env):
+            # set the content type for the response
+            c.render_style = api_type('html')
+            c.response_content_type = 'application/json; charset=UTF-8'
+
+            # generate a response object
+            jquery = JQueryResponse()
+            # generate a form object
+            form = jquery(request.POST.get('id', "body"))
+            # clear out the status line as a courtesy
+            form.set_html(".status", "")
+
+            try:
+
+                kw = _make_validated_kw(fn, simple_vals, param_vals, env)
+                val = fn(self, form, jquery, *a, **kw)
+
+                # auto-refresh the captcha if there are errors.
+                if (c.errors.errors and
+                    any(isinstance(v, VCaptcha) for v in simple_vals)):
+                    form.new_captcha()
+                
+                if val: return val
+                return self.response_func(**dict(list(jquery)))
+
+            except UserRequiredException:
+                return  self.ajax_login_redirect("/")
+        return newfn
+    return val
+
 
 
 #### validators ####
@@ -107,7 +190,7 @@ class VRequired(Validator):
     def error(self, e = None):
         if not e: e = self._error
         if e:
-            c.errors.add(e)
+            self.set_error(e)
         
     def run(self, item):
         if not item:
@@ -206,16 +289,16 @@ class VLength(Validator):
 
     def run(self, title):
         if not title:
-            c.errors.add(self.emp_error)
+            self.set_error(self.emp_error)
         elif len(title) > self.length:
-            c.errors.add(self.len_error)
+            self.set_error(self.len_error)
         else:
             return title
         
 class VTitle(VLength):
     only_whitespace = re.compile(r"^\s*$", re.UNICODE)
     
-    def __init__(self, item, length = 200, **kw):
+    def __init__(self, item, length = 300, **kw):
         VLength.__init__(self, item, length = length,
                          empty_error = errors.NO_TITLE,
                          length_error = errors.TITLE_TOO_LONG, **kw)
@@ -223,7 +306,7 @@ class VTitle(VLength):
     def run(self, title):
         title = VLength.run(self, title)
         if title and self.only_whitespace.match(title):
-            c.errors.add(errors.NO_TITLE)
+            self.set_error(errors.NO_TITLE)
         else:
             return title
     
@@ -256,16 +339,16 @@ class VSubredditName(VRequired):
 class VSubredditTitle(Validator):
     def run(self, title):
         if not title:
-            c.errors.add(errors.NO_TITLE)
+            self.set_error(errors.NO_TITLE)
         elif len(title) > 100:
-            c.errors.add(errors.TITLE_TOO_LONG)
+            self.set_error(errors.TITLE_TOO_LONG)
         else:
             return title
 
 class VSubredditDesc(Validator):
     def run(self, description):
         if description and len(description) > 500:
-            c.errors.add(errors.DESC_TOO_LONG)
+            self.set_error(errors.DESC_TOO_LONG)
         return unkeep_space(description or '')
 
 class VAccountByName(VRequired):
@@ -307,7 +390,7 @@ class VCaptcha(Validator):
     def run(self, iden, solution):
         if (not c.user_is_loggedin or c.user.needs_captcha()):
             if not captcha.valid_solution(iden, solution):
-                c.errors.add(errors.BAD_CAPTCHA)
+                self.set_error(errors.BAD_CAPTCHA)
 
 class VUser(Validator):
     def run(self, password = None):
@@ -315,7 +398,7 @@ class VUser(Validator):
             raise UserRequiredException
 
         if (password is not None) and not valid_password(c.user, password):
-            c.errors.add(errors.WRONG_PASSWORD)
+            self.set_error(errors.WRONG_PASSWORD)
             
 class VModhash(Validator):
     default_param = 'uh'
@@ -380,6 +463,8 @@ class VSubmitParent(Validator):
     def run(self, fullname):
         if fullname:
             parent = Thing._by_fullname(fullname, False, data=True)
+            if parent and parent._deleted:
+                self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
                 return parent
             else:
@@ -393,8 +478,8 @@ class VSubmitSR(Validator):
     def run(self, sr_name):
         try:
             sr = Subreddit._by_name(sr_name)
-        except NotFound:
-            c.errors.add(errors.SUBREDDIT_NOEXIST)
+        except (NotFound, AttributeError):
+            self.set_error(errors.SUBREDDIT_NOEXIST)
             sr = None
 
         if sr and not (c.user_is_loggedin and sr.can_submit(c.user)):
@@ -461,7 +546,8 @@ class VSanitizedUrl(Validator):
         return utils.sanitize_url(url)
 
 class VUrl(VRequired):
-    def __init__(self, item, *a, **kw):
+    def __init__(self, item, allow_self = True, *a, **kw):
+        self.allow_self = allow_self
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
     def run(self, url, sr = None):
@@ -471,7 +557,7 @@ class VUrl(VRequired):
             try:
                 sr = Subreddit._by_name(sr)
             except NotFound:
-                c.errors.add(errors.SUBREDDIT_NOEXIST)
+                self.set_error(errors.SUBREDDIT_NOEXIST)
                 sr = None
         else:
             sr = None
@@ -480,7 +566,8 @@ class VUrl(VRequired):
             return self.error(errors.NO_URL)
         url = utils.sanitize_url(url)
         if url == 'self':
-            return url
+            if self.allow_self:
+                return url
         elif url:
             try:
                 l = Link._by_url(url, sr)
@@ -532,7 +619,7 @@ class VInt(Validator):
                 val = self.max
             return val
         except ValueError:
-            c.errors.add(errors.BAD_NUMBER)
+            self.set_error(errors.BAD_NUMBER)
 
 class VCssName(Validator):
     """
@@ -591,11 +678,11 @@ class VRatelimit(Validator):
         if self.rate_ip:
             to_check.append('ip' + str(request.ip))
 
-        r = cache.get_multi(to_check, self.prefix)
+        r = g.cache.get_multi(to_check, self.prefix)
         if r:
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
-            c.errors.add(errors.RATELIMIT, {'time': time})
+            self.set_error(errors.RATELIMIT, {'time': time})
 
     @classmethod
     def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_"):
@@ -607,7 +694,7 @@ class VRatelimit(Validator):
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
 
-        cache.set_multi(to_set, prefix, time = seconds)
+        g.cache.set_multi(to_set, prefix, time = seconds)
 
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's
@@ -635,16 +722,18 @@ class VCacheKey(Validator):
 
     def run(self, key, name):
         if key:
-            uid = cache.get(str(self.cache_prefix + "_" + key))
+            uid = g.cache.get(str(self.cache_prefix + "_" + key))
             try:
                 a = Account._byID(uid, data = True)
+                g.cache.delete(str(self.cache_prefix + "_" + key))
             except NotFound:
                 return None
             if name and a.name.lower() != name.lower():
-                c.errors.add(errors.BAD_USERNAME)
+                self.set_error(errors.BAD_USERNAME)
             if a:
                 return a
-        c.errors.add(errors.EXPIRED)
+            
+        self.set_error(errors.EXPIRED)
 
 class VOneOf(Validator):
     def __init__(self, param, options = (), *a, **kw):
@@ -653,7 +742,7 @@ class VOneOf(Validator):
 
     def run(self, val):
         if self.options and val not in self.options:
-            c.errors.add(errors.INVALID_OPTION)
+            self.set_error(errors.INVALID_OPTION)
             return self.default
         else:
             return val
@@ -713,51 +802,55 @@ class ValidEmails(Validator):
             # special case for 1: there should be no delineators at all, so
             # send back original string to the user
             if self.num == 1:
-                c.errors.add(errors.BAD_EMAILS,
+                self.set_error(errors.BAD_EMAILS,
                              {'emails': '"%s"' % emails0})
             # else report the number expected
             else:
-                c.errors.add(errors.TOO_MANY_EMAILS,
+                self.set_error(errors.TOO_MANY_EMAILS,
                              {'num': self.num})
         # correct number, but invalid formatting
         elif failures:
-            c.errors.add(errors.BAD_EMAILS,
+            self.set_error(errors.BAD_EMAILS,
                          {'emails': ', '.join(failures)})
         # no emails
         elif not emails:
-            c.errors.add(errors.NO_EMAILS)
+            self.set_error(errors.NO_EMAILS)
         else:
             # return single email if one is expected, list otherwise
             return list(emails)[0] if self.num == 1 else emails
 
 
 class VCnameDomain(Validator):
-    domain_re  = re.compile(r'^([\w]+\.)+[\w]+$')
+    domain_re  = re.compile(r'^([\w\-_]+\.)+[\w]+$')
 
     def run(self, domain):
         if (domain
             and (not self.domain_re.match(domain)
                  or domain.endswith('.reddit.com')
                  or len(domain) > 300)):
-            c.errors.add(errors.BAD_CNAME)
+            self.set_error(errors.BAD_CNAME)
         elif domain:
             try:
                 return str(domain).lower()
             except UnicodeEncodeError:
-                c.errors.add(errors.BAD_CNAME)
+                self.set_error(errors.BAD_CNAME)
 
-
-
+class VTranslation(Validator):
+    def run(self):
+        from r2.lib.translation import Translator
+        if Translator.exists(self.param):
+            return Translator(locale = self.param)
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!
 class ValidIP(Validator):
     def run(self):
         if is_banned_IP(request.ip):
-            c.errors.add(errors.BANNED_IP)
+            self.set_error(errors.BANNED_IP)
         return request.ip
 
 class ValidDomain(Validator):
     def run(self, url):
         if url and is_banned_domain(url):
-            c.errors.add(errors.BANNED_DOMAIN)
+            self.set_error(errors.BANNED_DOMAIN)
+

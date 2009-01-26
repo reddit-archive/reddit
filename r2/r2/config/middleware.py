@@ -200,7 +200,6 @@ class DomainMiddleware(object):
         #this is a cname, and redirect to the frame controller.
         #Ignore localhost so paster shell still works.
         #If this is an error, don't redirect
-
         if (not sub_domains.endswith(base_domain)
             and (not sub_domains == 'localhost')):
             environ['sub_domain'] = sub_domains
@@ -210,11 +209,11 @@ class DomainMiddleware(object):
                 elif self.is_auth_cname(sub_domains):
                     environ['frameless_cname'] = True
                     environ['authorized_cname'] = True
-                elif ("redditSession" in environ.get('HTTP_COOKIE', '')
+                elif ("redditSession=cname" in environ.get('HTTP_COOKIE', '')
                       and environ['REQUEST_METHOD'] != 'POST'
                       and not environ['PATH_INFO'].startswith('/error')):
                     environ['original_path'] = environ['PATH_INFO']
-                    environ['PATH_INFO'] = '/frame'
+                    environ['FULLPATH'] = environ['PATH_INFO'] = '/frame'
                 else:
                     environ['frameless_cname'] = True
             return self.app(environ, start_response)

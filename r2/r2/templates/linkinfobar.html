@@ -19,9 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2008
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%namespace file="printable.html" import="state_button" />
+<%namespace file="printable.html" import="state_button, thing_css_class" />
 
-<div class="raisedbox linkinfo">
+<div class="raisedbox linkinfo ${thing_css_class(thing.a)}">
   <table class="details">
     <tr><th>${_("submitted on")}</th>
       <td>${thing.a._date.strftime(thing.datefmt)}</td></tr>

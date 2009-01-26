@@ -52,10 +52,45 @@ class JsonTemplate(Template):
     def render(self, thing = None, *a, **kw):
         return {}
 
+class TableRowTemplate(JsonTemplate):
+    def cells(self, thing):
+        raise NotImplementedError
+    
+    def css_id(self, thing):
+        return ""
+
+    def css_class(self, thing):
+        return ""
+
+    def render(self, thing = None, *a, **kw):
+        return {"id": self.css_id(thing),
+                "css_class": self.css_class(thing),
+                "cells": self.cells(thing)}
+
+class UserItemJsonTemplate(TableRowTemplate):
+    def cells(self, thing):
+        from r2.lib.filters import spaceCompress
+        cells = []
+        for cell in thing.cells:
+            r = Wrapped.part_render(thing, 'cell_type', cell)
+            cells.append(spaceCompress(r))
+        return cells
+
+    def css_id(self, thing):
+        return thing.user._fullname
+
+    def css_class(self, thing):
+        return "thing"
+
+
 class ThingJsonTemplate(JsonTemplate):
     __data_attrs__ = dict()
     
     def points(self, wrapped):
+        """
+        Generates the JS-style point triplet for votable elements
+        (stored on the vl var on the JS side).
+        """
         score = wrapped.score
         likes = wrapped.likes
         base_score = score-1 if likes else score if likes is None else score+1
@@ -64,20 +99,43 @@ class ThingJsonTemplate(JsonTemplate):
         
     
     def kind(self, wrapped):
+        """
+        Returns a string literal which identifies the type of this
+        thing.  For subclasses of Thing, it will be 't's + kind_id.
+        """
         _thing = wrapped.lookups[0] if isinstance(wrapped, Wrapped) else wrapped
         return make_typename(_thing.__class__)
 
     def rendered_data(self, thing):
+        """
+        Called only when get_api_type is non-None (i.e., a JSON
+        request has been made with partial rendering of the object to
+        be returned)
+
+        Canonical Thing data representation for JS, which is currently
+        a dictionary of three elements (translated into a JS Object
+        when sent out).  The elements are:
+
+         * id : Thing _fullname of thing.
+         * vl : triplet of scores (up, none, down) from self.score
+         * content : rendered  representation of the thing by
+           calling replace_render on it using the style of get_api_subtype().
+        """
         from r2.lib.filters import spaceCompress
         from r2.lib.template_helpers import replace_render
         from pylons import c
         listing = thing.listing if hasattr(thing, "listing") else None
         return dict(id = thing._fullname,
-                    vl = self.points(thing),
-                    content = spaceCompress(replace_render(listing, thing,
-                                                           style=get_api_subtype())))
+                    #vl = self.points(thing),
+                    content = spaceCompress(
+                        replace_render(listing, thing,
+                                       style=get_api_subtype())))
 
     def raw_data(self, thing):
+        """
+        Complement to rendered_data.  Called when a dictionary of
+        thing data attributes is to be sent across the wire.
+        """
         def strip_data(x):
             if isinstance(x, dict):
                 return dict((k, strip_data(v)) for k, v in x.iteritems())
@@ -92,6 +150,12 @@ class ThingJsonTemplate(JsonTemplate):
                     for k, v in self.__data_attrs__.iteritems())
             
     def thing_attr(self, thing, attr):
+        """
+        For the benefit of subclasses, to lookup attributes which may
+        require more work than a simple getattr (for example, 'author'
+        which has to be gotten from the author_id attribute on most
+        things).
+        """
         import time
         if attr == "author":
             return thing.author.name

@@ -104,11 +104,9 @@ string_dict = dict(
         invalid_property_list = _('invalid CSS property list "%(proplist)s"'),
         unknown_rule_type = _('unknown CSS rule type "%(ruletype)s"')
     ),
-    
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    
 )
 
 class StringHandler(object):

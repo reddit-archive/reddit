@@ -74,7 +74,6 @@ class Listing(object):
 
         rendered_items = sgm(g.rendercache, fullnames, render_items, 'render_',
                              time = g.page_cache_time)
-
         #replace the render function
         for k, v in rendered_items.iteritems():
             def make_fn(v):

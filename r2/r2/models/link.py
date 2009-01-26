@@ -22,7 +22,7 @@
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
 from r2.lib.utils import base_url, tup, domain, worker, title_to_url
-from account import Account
+from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
@@ -59,7 +59,11 @@ class Link(Thing, Printable):
 
     @classmethod
     def by_url_key(cls, url):
-        return str(base_url(url.lower()))
+        b = base_url(url.lower())
+        try:
+            return b.encode('utf8')
+        except UnicodeDecodeError:
+            return str(b)
 
     @classmethod
     def _by_url(cls, url, sr):
@@ -234,17 +238,19 @@ class Link(Thing, Printable):
     def make_permalink(self, sr, force_domain = False):
         from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
-        if not c.cname:
+        if not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
-            res = "http://%s/%s" % (get_domain(cname = (c.cname and sr == c.site),
+            res = "http://%s/%s" % (get_domain(cname = (c.cname and
+                                                        sr == c.site),
                                                subreddit = not c.cname), p)
         else:
             res = "/%s" % p
         return res
 
-    def make_permalink_slow(self):
-        return self.make_permalink(self.subreddit_slow)
+    def make_permalink_slow(self, force_domain = False):
+        return self.make_permalink(self.subreddit_slow,
+                                   force_domain = force_domain)
     
     @classmethod
     def add_props(cls, user, wrapped):
@@ -442,6 +448,7 @@ class Comment(Thing, Printable):
                               request.host,
                               c.cname, 
                               wrapped.author == c.user,
+                              wrapped.editted, 
                               wrapped.likes,
                               wrapped.friend,
                               wrapped.collapsed,
@@ -505,12 +512,16 @@ class Comment(Thing, Printable):
                              item.author != c.user and
                              not item.show_spam)))
 
+            if item._deleted and not c.user_is_admin:
+                item.author = DeletedUser()
+                item.body = '[deleted]'
+
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = ((item.score < min_score) and
                              not (c.profilepage or
                                   item.deleted or
                                   c.user_is_admin))
-                
+
             if not hasattr(item,'editted'):
                 item.editted = False
             #will get updated in builder

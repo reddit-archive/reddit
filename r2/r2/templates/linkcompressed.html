@@ -36,7 +36,7 @@
 </%def>
 
 <%def name="midcol(display=True)">
-  <div id="arrows_${thing._fullname}" class="midcol" style="width:&midcolmargin;" 
+  <div class="midcol" style="width:&midcolmargin;" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     ${self.arrow(thing, 0, thing.likes == False)}

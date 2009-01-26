@@ -25,6 +25,7 @@
    from r2.lib.utils import timesince
  %>
 <%namespace file="utils.html" import="submit_form, plain_link"/>
+<%namespace file="printable.html" import="toggle_button"/>
 <% user = thing.user %>
 %if thing.user:
 <div class="raisedbox">
@@ -68,22 +69,10 @@
       ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}
     </li>
     <li>
-      <form action="/post/friend" method="post">
-        <input type="hidden" name="type" value="friend"/>
-        <input type="hidden" name="name" value="${thing.user.name}"/>
-        <input type="hidden" name="container" value="${c.user._fullname}" />
-        %if thing.isFriend:
-          <input type="hidden" name="action" value="remove"/>
-          <input type="hidden" name="toggled_action" value="add"/>
-          <input type="hidden" name="toggled_label" value="${_('add to friends')}"/>
-          <a onclick="return toggle(this, 'friend');" href="#">${_("remove from friends")}</a>
-        %else:
-          <input type="hidden" name="toggled_action" value="remove"/>
-          <input type="hidden" name="action" value="add"/>
-          <input type="hidden" name="toggled_label"  value="${_('remove from friends')}"/>
-          <a onclick="return toggle(this, 'friend')" href="#">${_("add to friends")}</a>
-        %endif
-      </form>
+      ${toggle_button("", _("add to friends"), _("remove from friends"),
+         "friend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
+         "unfriend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
+         reverse = thing.isFriend)}
     </li>
   %endif
   </ul>

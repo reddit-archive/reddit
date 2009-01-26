@@ -22,7 +22,8 @@
 <% error = thing.error %>
 <li>
   %if hasattr(error,'line'):
-    <a href="javascript:gotoTextboxLine('stylesheet_contents',${error.line})">
+    <a href="javascript:void(0)"
+       onclick="$('#stylesheet_contents').select_line(${error.line}); return false;">
       [line ${error.line}]
   %endif
 

@@ -24,20 +24,29 @@
 %>
 
 <%inherit file="reddit.html"/>
-<%namespace file="utils.html" import="error_field, plain_link"/>
-<%namespace file="printable.html" import="state_button, comment_button" />
-
-<%def name="javascript()">
-  ${parent.javascript()}
-  <script src="${static('frame.js')}" type="text/javascript"></script>
-</%def>
+<%namespace file="utils.html" import="plain_link, logout"/>
+<%namespace file="printable.html" import="state_button, comment_button, thing_css_class" />
 
 <%def name="bodyHTML()">
 <body>
-<% fullname = thing.link._fullname %>
-<% upstyle = "mod" if thing.link.likes else "" %>
-<% downstyle = "mod" if thing.link.likes is False else "" %>
-  <table class="toolbar" width="100%">
+  <% fullname = thing.link._fullname %>
+  <% upstyle = "mod" if thing.link.likes else "" %>
+  <% downstyle = "mod" if thing.link.likes is False else "" %>
+  <table class="${thing_css_class(thing.link)} toolbar" width="100%">
+    <script type="text/javascript">
+      function kill(uh) {
+          $("#main").hide();
+          $("#killed").show();
+          $.request('noframe');
+      }
+      
+      function unkill() {
+          $("#killed").hide();
+          $("#main").show();
+          $.request('frame');
+      }
+      
+    </script>
     <tr id="killed" style="display: none" class="menu">
       <td nowrap="nowrap"> 
         after reloading, this frame will not be shown again. click 
@@ -45,26 +54,40 @@
       <td width="100%" />
     </tr>
     <tr id="main">
-      <td id="frame_left">
+      <td id="frame-left">
         <a target="_top" href="http://${get_domain(cname = c.cname)}/">
           <img style="border: none" src="${static('littlehead.png')}" 
                alt="reddit.com" title="reddit.com" />
         </a>
-        <span id="up_${fullname}" class="arrow up${upstyle}" 
-             onclick="javascript:frame_mod('${fullname}', 1)"> 
+        <a id="up_${fullname}" class="arrow up${upstyle}" 
+           %if c.user_is_loggedin:
+              href="javascript:void(0);"
+              onclick="$(this).vote()"
+           %else:
+              href="/login"
+              target="_top"
+           %endif
+           >
           ${_("like")}
-        </span>
-        <span id="down_${fullname}" class="arrow down${downstyle}" 
-              onclick="javascript:frame_mod('${fullname}', 0)">
+        </a>
+        <a id="down_${fullname}" class="arrow down${downstyle}" 
+           %if c.user_is_loggedin:
+              href="javascript:void(0);"
+              onclick="$(this).vote()"
+           %else:
+              href="/login"
+              target="_top"
+           %endif
+           >
           ${_("dislike")}
-        </span>
+        </a>
         %if c.user_is_loggedin:
           %if thing.link.saved:
-            ${state_button("unsave", fullname, _("unsave"), \
-              "return change_state(this, 'unsave');", _("unsaved"), a_class='')}
+            ${state_button("unsave", _("unsave"), 
+              "return change_state(this, 'unsave');", _("unsaved"))}
           %else:
-            ${state_button("save", fullname, _("save"), \
-              "return change_state(this, 'save');", _("saved"), a_class = '')}
+            ${state_button("save", _("save"), 
+              "return change_state(this, 'save');", _("saved"))}
           %endif
         %endif
         <% 
@@ -76,21 +99,18 @@
                com_label = ungettext("comment", "comments", thing.link.num_comments)
          %>
         <span>
-        ${comment_button("comment", fullname, com_label,
-           thing.link.num_comments,
-           thing.link.permalink, a_class='')} 
+        ${comment_button("comment", com_label,
+                         thing.link.num_comments,
+                         thing.link.permalink)} 
         </span>
         </td>
-      <td id="logerr" style="text-align: right" class="error" width="50%">
-        ${error_field("WRONG_PASSWORD_login", "span")}
-      </td>
-      <td id="frame_middle" nowrap="nowrap" style="display: none">
+      <td id="frame-middle" nowrap="nowrap" style="display: none">
       </td>
       <td id="frame-right" class="menu" nowrap="nowrap">
       %if c.user_is_loggedin:
         <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}" 
            target="_parent">${c.user.name}</a> (${c.user.safe_karma}) 
-        <a href="http://${get_domain(cname = c.cname)}/logout">${_("logout")}</a> 
+        ${logout()}
       %else:
         <a href="/login">${_("login")}</a>
         <a href="/login">${_("register")}</a>

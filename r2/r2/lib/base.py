@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-from pylons import Response, c, g, cache, request, session, config
+from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
 from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
@@ -114,7 +114,8 @@ class BaseController(WSGIController):
             if not kw.has_key('port'):
                 kw['port'] = request.port
     
-            # disentagle the cname (for urls that would have cnameframe=1 in them)
+            # disentagle the cname (for urls that would have
+            # cnameframe=1 in them)
             u.mk_cname(**kw)
     
             # make sure the extensions agree with the current page
@@ -134,8 +135,12 @@ class BaseController(WSGIController):
         and added as the "dest" parameter of the new url.
         """
         from r2.lib.template_helpers import add_sr
-        dest = cls.format_output_url(request.fullpath)
-        path = add_sr(form_path + query_string({"dest": dest}))
+        params = dict(dest = cls.format_output_url(request.fullpath))
+        if c.extension == "widget" and request.GET.get("callback"):
+            params['callback'] = request.GET.get("callback")
+        
+        path = add_sr(cls.format_output_url(form_path) +
+                      query_string(params))
         return cls.redirect(path)
     
     @classmethod

@@ -1,0 +1,182 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2008
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%
+     cpu_col = 75.
+     mem_col = 40.
+     hide_data = "style='display:none'" if len(thing.hostlogs) > 4 else ''
+ %>
+
+<div class="server-status">
+  <h3>Rendered by PID ${g.reddit_pid} on ${g.reddit_host}</h3>
+  %if any(h.database for h in thing.hostlogs):
+  <table class="monitor-database"> 
+    <tr class="title-region"> 
+      <th>database</th>
+      <th>connections</th>
+      <th>
+        <span style="color:green">1 min</span> / 
+        <span style="color:red">5 min</span>
+      </th>
+      <th></th>
+    </tr>
+    %for host in thing.hostlogs:
+      %if host.database:
+        <%
+           host_id = host.host.replace('.', '-')
+           load = host.load()
+           load_level = min(max(int(load+0.5), 0),5)
+         %>
+        <tr class="load${load_level} title-region" id="${host_id}">
+          <th>
+            ${host.host} load: ${load}
+          </th>
+          <th>
+            %if host.database.vacuuming:
+              <blink style="color:red">VACUUMING!</blink>
+            %endif
+          </th>
+          <td>
+            <span style="color:green">${host.database.connections()}</span> 
+            &nbsp;/&nbsp;
+            <span style="color:red">${host.database.connections(300)}</span>
+          </td>
+        </tr>
+        <tr ${hide_data} class="data load${load_level} machine-${host_id}">
+          <th>by ip:</th>
+          <td></td><td></td>
+        </tr>
+        %for ip, nconn in host.database.ip_conn.iteritems():
+        <tr ${hide_data} 
+	   class="data load${load_level} machine-${host_id} by-ip">
+          <td>
+            ${ip}
+          </td>
+          <td></td>
+          <td>
+            ${nconn()}
+          </td>
+        </tr>
+        %endfor
+        <tr ${hide_data} class="data load${load_level} machine-${host_id} by-ip">
+          <th>by database:</th>
+          <td></td><td></td>
+        </tr>
+        %for db, nconn in host.database.db_conn.iteritems():
+        <tr ${hide_data} class="data load${load_level} machine-${host_id} by-db">
+          <td>
+            ${db}
+          </td>
+          <td>
+            %if db in host.database.vacuuming:
+              <blink style="color:red">VACUUMING!</blink>
+            %endif
+          </td>
+          <td>
+            ${nconn()}
+          </td>
+        </tr>
+        %endfor
+      %endif
+    %endfor
+  </table>
+  %endif
+
+
+  <table class="process-monitor">
+    <tr> 
+      <th>process</th>
+      <th>memory</th>
+      <th>
+        <span style="color:green">1 min</span> / 
+        <span style="color:red">5 min</span>
+      </th>
+      <th></th>
+    </tr>
+    %for host in thing.hostlogs:
+     <%
+        host_id = host.host.replace('.', '-')
+        s = host.services
+        load = host.load()
+        load_level = min(max(int(load+0.5), 0),5)
+     %>
+    <tr class="load${load_level} title-region" id="${host_id}">
+      <th>
+          ${host.host} load: ${load}
+      </th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+     %for service in host:
+      <%
+         pegged = all([service.cpu(x) > 99 \
+                       for x in (0, 5, 60, 300)]) or \
+                      (service.mem() >= 20)
+         pegged = "pegged" if pegged else ""
+
+         mem_wid = int(mem_col/25*min(25, int(service.mem())))
+         cpu_60_wid  = int(cpu_col/100*min(100,int(service.cpu(60))))
+         cpu_300_wid = int(cpu_col/100*min(100,int(service.cpu(300))))
+     %>
+  
+        <tr  ${hide_data} class="data load${load_level} ${pegged} machine-${host_id}">
+          <td>
+            %if g.reddit_host == host.host and g.reddit_pid == service.pid:
+              <b style="color:orangered; font-size:larger">&raquo;</b>
+            %else:
+              &nbsp;
+            %endif
+            ${service.name}
+          </td>
+          <td>
+            <div class="membar" style="width:${mem_wid}px;"></div>
+          </td>
+          <td>
+            <div class="cpu50" style="width:${cpu_60_wid}px;"></div>
+            <div class="cpu300" style="width:${cpu_300_wid}px;"></div>
+          </td>
+          <td>
+            <%
+               age = service.age
+               if isinstance(age, str):
+                  age = 0
+               if age > 60:
+                  age = "%d hr" % int(age/60)
+               else:
+                  age = "%d min" % age
+             %>
+            ${age}
+          </td>
+        </tr>
+     %endfor
+    %endfor
+  </table>
+</div>
+    
+<script type="text/javascript">
+  $(".server-status tr").click(function() {
+       if(!$(this).hasClass("data")) {
+          $(this).siblings(".machine-"+ $(this).attr("id")).toggle();
+       }
+  });
+</script>

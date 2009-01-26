@@ -1,0 +1,38 @@
+.link { line-height: 1.1; }
+
+div.dropdown.tabdrop { display: inline; }
+
+div.drop-choices { 
+    position: absolute; top: 0px; display: none; 
+}
+
+div.drop-choices.inuse { 
+    display: block; 
+}
+
+/*.tabdrop { display: none;  }*/
+
+.promoted {  height: 70px; }
+.organic-listing {  height: 70px; }
+
+.help .help-cover { 
+    width: 100%;
+    height: 70px;
+}
+
+#header { height: 0px; }
+
+.md { overflow: show; }
+
+#sr-header-area { width: 100%; }
+
+div.cover { 
+    position: absolute;
+    top: expression( ( ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );
+
+}
+
+div.popup {
+    position: absolute; 
+    top: expression( ( 40 + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );
+}

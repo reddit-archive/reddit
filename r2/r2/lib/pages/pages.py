@@ -33,7 +33,7 @@ from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, menu
 from r2.lib.strings import plurals, rand_strings, strings
-from r2.lib.utils import title_to_url, query_string, UrlParser
+from r2.lib.utils import title_to_url, query_string, UrlParser, to_js
 from r2.lib.template_helpers import add_sr, get_domain
 import sys
 
@@ -177,15 +177,6 @@ class Reddit(Wrapped):
             buttons += [JsButton(g.lang_name.get(lang, lang),  
                                   onclick = "return showlang();",
                                   css_class = "pref-lang")]
-        #buttons += [NamedButton("stats", False, nocname=True)]
-        #buttons += [NamedButton("help", False, nocname=True),
-                    #NamedButton("blog", False, nocname=True)]                    
-        
-        if c.user_is_loggedin:
-            buttons += [NamedButton("logout", False,
-                                    nocname=not c.authorized_cname,
-                                    target = "_self")]
-        
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def footer_nav(self):
@@ -221,18 +212,19 @@ class Reddit(Wrapped):
         if c.user_is_loggedin:
             more_buttons.append(NamedButton('saved', False))
             more_buttons.append(NamedButton('recommended', False))
-
+        
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin'))
             elif c.site.is_moderator(c.user):
                 more_buttons.append(NavButton(menu.admin, 'about/edit'))
-
+        
             if c.user_is_sponsor:
                 more_buttons.append(NamedButton('promote'))
-
+        
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
+        
         if c.site != Default and not c.cname:
             toolbar.insert(0, PageNameNav('subreddit'))
 
@@ -352,7 +344,8 @@ class BoringPage(Reddit):
     
     def __init__(self, pagename, **context):
         self.pagename = pagename
-        Reddit.__init__(self, title = "%s: %s" % (c.site.name, pagename),
+        name = c.site.name or g.default_sr
+        Reddit.__init__(self, title = "%s: %s" % (name, pagename),
                         **context)
 
     def build_toolbars(self):
@@ -429,7 +422,11 @@ class LinkInfoPage(Reddit):
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
         if comment:
-            author = Account._byID(comment.author_id, data=True).name
+            if comment._deleted and not c.user_is_admin:
+                author = _("[deleted]")
+            else:
+                author = Account._byID(comment.author_id, data=True).name
+
             params = {'author' : author, 'title' : _force_unicode(link_title)}
             title = strings.permalink_title % params
         else:
@@ -796,8 +793,7 @@ class PermalinkMessage(Wrapped):
     """renders the box on comment pages that state 'you are viewing a
     single comment's thread'"""
     def __init__(self, comments_url):
-        self.comments_url = comments_url
-
+        Wrapped.__init__(self, comments_url = comments_url)
 
 class PaneStack(Wrapped):
     """Utility class for storing and rendering a list of block elements."""
@@ -995,31 +991,8 @@ class Page_down(Wrapped):
 
 # Classes for dealing with friend/moderator/contributor/banned lists
 
-# TODO: if there is time, we could roll these Ajaxed classes into the
-# JsonTemplates framework...
-class Ajaxed():
-    """Base class for allowing simple interaction of UserTableItem and
-    UserItem classes to be edited via JS and AJax requests.  In
-    analogy with Wrapped, this class provides an interface for
-    'rendering' dictionary representations of the data which can be
-    passed to the client via JSON over AJAX"""
-    __slots__ = ['kind', 'action', 'data']
-    
-    def __init__(self, kind, action):
-        self._ajax = dict(kind=kind,
-                          action = None,
-                          data = {})
 
-    def for_ajax(self, action = None):
-        self._ajax['action'] = action
-        self._ajax['data'] = self.ajax_render()
-        return self._ajax
-
-    def ajax_render(self, style="html"):
-        return {}
-
-
-class UserTableItem(Wrapped, Ajaxed):
+class UserTableItem(Wrapped):
     """A single row in a UserList of type 'type' and of name
     'container_name' for a given user.  The provided list of 'cells'
     will determine what order the different columns are rendered in.
@@ -1028,20 +1001,8 @@ class UserTableItem(Wrapped, Ajaxed):
     def __init__(self, user, type, cellnames, container_name, editable):
         self.user, self.type, self.cells = user, type, cellnames
         self.container_name = container_name
-        self.name           = "tr_%s_%s" % (user.name, type)
         self.editable       = editable
         Wrapped.__init__(self)
-        Ajaxed.__init__(self, 'UserTable', 'add')
-
-    def ajax_render(self, style="html"):
-        """Generates a 'rendering' of this item suitable for
-        processing by JS for insert or removal from an existing
-        UserList"""
-        cells = []
-        for cell in self.cells:
-            r = Wrapped.part_render(self, 'cell_type', cell)
-            cells.append(spaceCompress(r))
-        return dict(cells=cells, id=self.type, name=self.name)
 
     def __repr__(self):
         return '<UserTableItem "%s">' % self.user.name
@@ -1059,7 +1020,7 @@ class UserList(Wrapped):
         self.editable = editable
         Wrapped.__init__(self)
 
-    def ajax_user(self, user):
+    def user_row(self, user):
         """Convenience method for constructing a UserTableItem
         instance of the user with type, container_name, etc. of this
         UserList instance"""
@@ -1073,9 +1034,9 @@ class UserList(Wrapped):
         uids = self.user_ids()
         if uids:
             users = Account._byID(uids, True, return_dict = False) 
-            return [self.ajax_user(u) for u in users]
+            return [self.user_row(u) for u in users]
         else:
-            return ()
+            return []
 
     def user_ids(self):
         """virtual method for fetching the list of ids of the Accounts
@@ -1174,6 +1135,9 @@ class Cnameframe(Wrapped):
             self.title = ""
             self.frame_target = None
 
+class FrameBuster(Wrapped):
+    pass
+
 class PromotePage(Reddit):
     create_reddit_box  = False
     submit_box         = False
@@ -1208,3 +1172,4 @@ class PromoteLinkForm(Wrapped):
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
+
