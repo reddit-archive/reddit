@@ -532,7 +532,7 @@ class RedditController(BaseController):
                 
     def post(self):
         response = c.response
-        content = response.content
+        content = filter(None, response.content)
         if isinstance(content, (list, tuple)):
             content = ''.join(content)
         for w in c.response_wrappers:

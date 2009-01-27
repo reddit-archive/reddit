@@ -1008,6 +1008,8 @@ def trace(fn):
     return new_fn
 
 def common_subdomain(domain1, domain2):
+    if not domain1 or not domain2:
+        return ""
     domain1 = domain1.split(":")[0]
     domain2 = domain2.split(":")[0]
     if len(domain1) > len(domain2):

@@ -265,7 +265,7 @@ def chksrname(x):
 
 
 class VLinkFullnames(Validator):
-    "A space- or comma-separated list of fullnames for Links"
+    "A space- or comma-separated list of fullnames for Links" 
     valid_re = re.compile(r'^(' + Link._type_prefix + str(Link._type_id) +
                           r'_[0-9a-z]+[ ,]?)+$')
     splitter = re.compile('[ ,]+')
@@ -363,12 +363,15 @@ class VAccountByName(VRequired):
         return self.error()
 
 class VByName(VRequired):
+    fullname_re = re.compile(r'^' + Thing._type_prefix +
+                             r'[0-9a-z]+_[0-9a-z]+$')
+    
     def __init__(self, param, 
                  error = errors.NO_THING_ID, *a, **kw):
         VRequired.__init__(self, param, error, *a, **kw)
 
     def run(self, fullname):
-        if fullname:
+        if fullname and self.fullname_re.match(fullname):
             try:
                 return Thing._by_fullname(fullname, False, data=True)
             except NotFound:
