@@ -264,20 +264,6 @@ def chksrname(x):
         return None
 
 
-class VLinkFullnames(Validator):
-    "A space- or comma-separated list of fullnames for Links" 
-    valid_re = re.compile(r'^(' + Link._type_prefix + str(Link._type_id) +
-                          r'_[0-9a-z]+[ ,]?)+$')
-    splitter = re.compile('[ ,]+')
-
-    def __init__(self, item, *a, **kw):
-        self.item = item
-        Validator.__init__(self, item, *a, **kw)
-    
-    def run(self, val):
-        if val and self.valid_re.match(val):
-            return self.splitter.split(val)
-    
 class VLength(Validator):
     def __init__(self, item, length = 10000,
                  empty_error = errors.BAD_COMMENT,
@@ -362,21 +348,36 @@ class VAccountByName(VRequired):
             except NotFound: pass
         return self.error()
 
-class VByName(VRequired):
-    fullname_re = re.compile(r'^' + Thing._type_prefix +
-                             r'[0-9a-z]+_[0-9a-z]+$')
+class VByName(Validator):
+    splitter = re.compile('[ ,]+')
+    def __init__(self, param, thing_cls = None, multiple = False,
+                 error = errors.NO_THING_ID, **kw):
+        pattern = Thing._type_prefix
+        if thing_cls:
+            pattern += utils.to36(thing_cls._type_id)
+        else:
+            pattern += r"[0-9a-z]+"
+        pattern += r"_[0-9a-z]+"
+        if multiple:
+            pattern = r"(%s *,? *)+" % pattern
+        self.re = re.compile(r"^" + pattern + r"$")
+        self.multiple = multiple
+        self._error = error
+        
+        Validator.__init__(self, param, **kw)
     
-    def __init__(self, param, 
-                 error = errors.NO_THING_ID, *a, **kw):
-        VRequired.__init__(self, param, error, *a, **kw)
-
-    def run(self, fullname):
-        if fullname and self.fullname_re.match(fullname):
+    def run(self, items):
+        if items and self.re.match(items):
+            if self.multiple:
+                items = self.splitter.split(items)
             try:
-                return Thing._by_fullname(fullname, False, data=True)
+                return Thing._by_fullname(items, return_dict = False,
+                                          data=True)
             except NotFound:
                 pass
-        return self.error()
+        return self.set_error(self._error)
+        
+
 
 class VByNameIfAuthor(VByName):
     def run(self, fullname):
@@ -428,12 +429,12 @@ class VSrModerator(Validator):
                 or c.user_is_admin):
             abort(403, "forbidden")
 
-class VSrCanBan(Validator):
+class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
         elif c.user_is_loggedin:
-            item = Thing._by_fullname(thing_name,data=True)
+            item = VByName.run(self, thing_name)
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
@@ -442,12 +443,12 @@ class VSrCanBan(Validator):
                 return True
         abort(403,'forbidden')
 
-class VSrSpecial(Validator):
+class VSrSpecial(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
             return True
         elif c.user_is_loggedin:
-            item = Thing._by_fullname(thing_name,data=True)
+            item = VByName.run(self, thing_name)
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
@@ -462,10 +463,10 @@ class VSRSubmitPage(Validator):
                 c.site.can_submit(c.user)):
             abort(403, "forbidden")
 
-class VSubmitParent(Validator):
+class VSubmitParent(VByName):
     def run(self, fullname):
         if fullname:
-            parent = Thing._by_fullname(fullname, False, data=True)
+            parent = VByName.run(self, fullname)
             if parent and parent._deleted:
                 self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
@@ -705,18 +706,6 @@ class VCommentIDs(Validator):
         cids = [int(i, 36) for i in id_str.split(',')]
         comments = Comment._byID(cids, data=True, return_dict = False)
         return comments
-
-class VFullNames(Validator):
-    #id_str is a comma separated list of id36's
-    def run(self, id_str):
-        tids = id_str.split(',')
-        return Thing._by_fullname(tids, data=True, return_dict = False)
-
-class VSubreddits(Validator):
-    #the subreddits are just in the post, this is for the my.reddit pref page
-    def run(self):
-        subreddits = Subreddit._by_fullname(request.post.keys())
-        return subreddits.values()
 
 class VCacheKey(Validator):
     def __init__(self, cache_prefix, param, *a, **kw):

@@ -699,7 +699,6 @@ class ApiController(RedditController):
         spam = (c.user._spam or
                 errors.BANNED_IP in c.errors or
                 errors.CHEATER in c.errors)
-
         if thing:
             dir = (True if dir > 0
                    else False if dir < 0
@@ -1206,7 +1205,7 @@ class ApiController(RedditController):
             tr._is_enabled = True
 
 
-    @validatedForm(links = VFullNames('links'))
+    @validatedForm(links = VByName('links', thing_cls = Link, multiple = True))
     def POST_fetch_links(self, form, jquery, links):
         b = IDBuilder([l._fullname for l in links], 
                       wrap = ListingController.builder_wrapper)
@@ -1329,10 +1328,9 @@ class ApiController(RedditController):
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
 
-    @validatedForm(ids = VLinkFullnames('ids'))
-    def POST_onload(self, form, jquery, ids, *a, **kw):
+    @validatedForm(promoted = VByName('ids', thing_cls = Link, multiple = True))
+    def POST_onload(self, form, jquery, promoted, *a, **kw):
         # make sure that they are really promoted
-        promoted = Link._by_fullname(ids, data = True, return_dict = False)
         promoted = [ l for l in promoted if l.promoted ]
 
         for l in promoted:

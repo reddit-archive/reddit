@@ -337,11 +337,11 @@ class ByIDController(ListingController):
     def query(self):
         return self.names
 
-    @validate(names = VLinkFullnames("names"))
-    def GET_listing(self, names, **env):
-        if not names:
+    @validate(links = VByName("names", thing_cls = Link, multiple = True))
+    def GET_listing(self, links, **env):
+        if not links:
             return self.abort404()
-        self.names = names
+        self.names = [l._fullname for l in links]
         return ListingController.GET_listing(self, **env)
 
 
