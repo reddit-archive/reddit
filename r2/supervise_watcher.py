@@ -40,7 +40,7 @@ def is_db_machine(host):
     for ip in ips:
         name = socket.gethostbyaddr(ip)[0]
         if (name == host or ("." in host and name.endswith("." + host)) or
-            name.endswith(host + ".")):
+            name.startswith(host + ".")):
             return True
 
     return False
