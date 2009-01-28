@@ -184,14 +184,14 @@ class Globals(object):
         return (x.strip() for x in v.split(delim))
 
     def load_db_params(self, gc):
-        databases = self.to_iter(gc['databases'])
-        if not databases:
+        self.databases = tuple(self.to_iter(gc['databases']))
+        if not self.databases:
             return
 
         dbm = db_manager.db_manager()
         db_params = ('name', 'db_host', 'db_user', 'db_pass',
                      'pool_size', 'max_overflow')
-        for db_name in databases:
+        for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
             params = dict(zip(db_params, conf_params))
             dbm.engines[db_name] = db_manager.get_engine(**params)

@@ -490,6 +490,7 @@ class ApiController(RedditController):
                 VModhash(),
                 thing = VByNameIfAuthor('id'))
     def POST_del(self, thing):
+        if not thing: return
         '''for deleting all sorts of things'''
         thing._deleted = True
         thing._commit()
@@ -986,6 +987,7 @@ class ApiController(RedditController):
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ban(self, thing):
+        if not thing: return
         thing.moderator_banned = not c.user_is_admin
         thing.banner = c.user.name
         thing._commit()
@@ -997,12 +999,14 @@ class ApiController(RedditController):
                 thing = VByName('id'))
     def POST_unban(self, thing):
         # NB: change table updated by reporting
+        if not thing: return
         unreport(thing, correct=False)
 
     @noresponse(VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ignore(self, thing):
+        if not thing: return
         # NB: change table updated by reporting
         unreport(thing, correct=False)
 
@@ -1010,6 +1014,7 @@ class ApiController(RedditController):
                 VModhash(),
                 thing = VByName('id'))
     def POST_save(self, thing):
+        if not thing: return
         r = thing._save(c.user)
         if g.write_query_queue:
             queries.new_savehide(r)
@@ -1018,6 +1023,7 @@ class ApiController(RedditController):
                 VModhash(),
                 thing = VByName('id'))
     def POST_unsave(self, thing):
+        if not thing: return
         r = thing._unsave(c.user)
         if g.write_query_queue and r:
             queries.new_savehide(r)
@@ -1026,6 +1032,7 @@ class ApiController(RedditController):
                 VModhash(),
                 thing = VByName('id'))
     def POST_hide(self, thing):
+        if not thing: return
         r = thing._hide(c.user)
         if g.write_query_queue:
             queries.new_savehide(r)
@@ -1034,6 +1041,7 @@ class ApiController(RedditController):
                 VModhash(),
                 thing = VByName('id'))
     def POST_unhide(self, thing):
+        if not thing: return
         r = thing._unhide(c.user)
         if g.write_query_queue and r:
             queries.new_savehide(r)
@@ -1226,6 +1234,7 @@ class ApiController(RedditController):
     @noresponse(VSponsor(),
                 thing = VByName('id'))
     def POST_unpromote(self, thing):
+        if not thing: return
         unpromote(thing)
 
     @validatedForm(VSponsor(),

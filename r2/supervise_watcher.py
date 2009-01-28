@@ -34,10 +34,8 @@ def is_db_machine(host):
     Given a host name, checks the list of known DB machines to
     determine if the host is one of them.
     """
-    ips = set(v for k,v in g._current_obj().__dict__.iteritems() 
-              if k.endswith("db_host"))
-
-    for ip in ips:
+    for db in g.databases:
+        ip = list(g.to_iter(getattr(g, db + "_db")))[1]
         name = socket.gethostbyaddr(ip)[0]
         if (name == host or ("." in host and name.endswith("." + host)) or
             name.startswith(host + ".")):
