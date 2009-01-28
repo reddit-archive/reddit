@@ -22,17 +22,18 @@
 #TODO byID use Things?
 from __future__ import with_statement
 
+import new, sys, sha
+from datetime import datetime
+from copy import copy, deepcopy
+
 import operators
 import tdb_sql as tdb
 import sorts
 from .. utils import iters, Results, tup, to36, Storage
 from r2.config import cache
-from r2.config.databases import tz
 from r2.lib.cache import sgm
+from pylons import g
 
-import new, sys, sha
-from datetime import datetime
-from copy import copy, deepcopy
 
 class NotFound(Exception): pass
 CreationError = tdb.CreationError
@@ -406,7 +407,7 @@ class Thing(DataThing):
                 self._created = True
                 self._loaded = False
 
-            if not date: date = datetime.now(tz)
+            if not date: date = datetime.now(g.tz)
             
             self._ups = ups
             self._downs = downs
@@ -526,7 +527,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     self._created = True
                     self._loaded = False
 
-                if not date: date = datetime.now(tz)
+                if not date: date = datetime.now(g.tz)
 
 
                 #store the id, and temporarily store the actual object

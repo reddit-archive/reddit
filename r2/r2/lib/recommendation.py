@@ -37,13 +37,14 @@ def get_recommended(userid, age = 2, sort='relevance', num_users=10):
 
     voter = Vote.rels[(Account, Link)]
 
-    votertable = tdb.rel_types_id[voter._type_id].rel_table[0]
+    tables = tdb.get_rel_type_table(voter._type_id)
+    votertable = tables[0]
     acct_col = votertable.c.thing1_id
     link_col = votertable.c.thing2_id
     date_col = votertable.c.date
     count = sa.func.count(acct_col)
 
-    linktable = tdb.rel_types_id[voter._type_id].rel_table[2]
+    linktable = tables[2]
 #    dlinktable, linktable = tdb.types_id[Link._type_id].data_table
     link_id_col = linktable.c.thing_id
 

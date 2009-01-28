@@ -30,7 +30,7 @@ from datetime import datetime
 def find_tz():
     q = Link._query(sort = desc('_hot'), limit = 1)
     link = list(q)[0]
-    t = tdb_sql.types_id[Link._type_id].thing_table
+    t = tdb_sql.get_thing_read_table(Link._type_id)[0]
 
     s = sa.select([sa.func.hot(t.c.ups, t.c.downs, t.c.date),
                    t.c.thing_id],

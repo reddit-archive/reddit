@@ -1,7 +1,6 @@
 from __future__ import with_statement
 from r2.lib.workqueue import WorkQueue
-from r2.config.databases import query_queue_engine, tz
-from r2.lib.db.tdb_sql import make_metadata, settings, create_table, index_str
+from r2.lib.db.tdb_sql import make_metadata, create_table, index_str
 
 import cPickle as pickle
 from datetime import datetime
@@ -14,14 +13,16 @@ import sqlalchemy as sa
 from sqlalchemy.exceptions import SQLError
 
 from pylons import g
+tz = g.tz
 
 #the current 
 running = set()
 running_lock = Lock()
 
 def make_query_queue_table():
-    metadata = make_metadata(query_queue_engine)
-    table =  sa.Table(settings.DB_APP_NAME + '_query_queue', metadata,
+    engine = g.dbm.engines['query_queue']
+    metadata = make_metadata(engine)
+    table =  sa.Table(g.db_app_name + '_query_queue', metadata,
                       sa.Column('iden', sa.String, primary_key = True),
                       sa.Column('query', sa.Binary),
                       sa.Column('date', sa.DateTime(timezone = True)))

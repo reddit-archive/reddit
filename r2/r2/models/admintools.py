@@ -65,5 +65,3 @@ try:
     from r2admin.models.admintools import *
 except:
     pass
-
-

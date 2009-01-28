@@ -19,22 +19,22 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ##############################################################################
-from r2.config.databases import email_engine
-from r2.lib.db.tdb_sql import make_metadata, settings
-from sqlalchemy.databases.postgres import PGInet, PGBigInteger
-from r2.models.thing_changes import changed, index_str, create_table
+import sha, datetime
+from email.MIMEText import MIMEText
+
 import sqlalchemy as sa
-import datetime
+from sqlalchemy.databases.postgres import PGInet, PGBigInteger
+
+from r2.lib.db.tdb_sql import make_metadata
+from r2.models.thing_changes import changed, index_str, create_table
 from r2.lib.utils import Storage, timeago
 from account import Account
 from r2.lib.db.thing import Thing
-from email.MIMEText import MIMEText
-import sha
 from r2.lib.memoize import memoize, clear_memo
-
+from pylons import g
 
 def mail_queue(metadata):
-    return sa.Table(settings.DB_APP_NAME + '_mail_queue', metadata,
+    return sa.Table(g.db_app_name + '_mail_queue', metadata,
                     sa.Column("uid", sa.Integer,
                               sa.Sequence('queue_id_seq'), primary_key=True),
 
@@ -76,7 +76,7 @@ def mail_queue(metadata):
                     )
 
 def sent_mail_table(metadata, name = 'sent_mail'):
-    return sa.Table(settings.DB_APP_NAME + '_' + name, metadata,
+    return sa.Table(g.db_app_name + '_' + name, metadata,
                     # tracking hash of the email
                     sa.Column('msg_hash', sa.String, primary_key=True),
                     
@@ -111,7 +111,7 @@ def sent_mail_table(metadata, name = 'sent_mail'):
                     
 
 def opt_out(metadata):
-    return sa.Table(settings.DB_APP_NAME + '_opt_out', metadata,
+    return sa.Table(g.db_app_name + '_opt_out', metadata,
                     sa.Column('email', sa.String, primary_key = True),
                     # when added to the list
                     sa.Column('date',
@@ -124,7 +124,8 @@ def opt_out(metadata):
 
 class EmailHandler(object):
     def __init__(self, force = False):
-        self.metadata = make_metadata(email_engine)
+        engine = g.dbm.engines['email']
+        self.metadata = make_metadata(engine)
         self.queue_table = mail_queue(self.metadata)
         indices = [index_str(self.queue_table, "date", "date"),
                    index_str(self.queue_table, 'kind', 'kind')]

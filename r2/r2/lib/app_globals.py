@@ -27,6 +27,7 @@ from r2.lib.cache import LocalCache, Memcache, CacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import _get_languages
 from r2.lib.lock import make_lock_factory
+from r2.lib.manager import db_manager
 
 class Globals(object):
 
@@ -52,7 +53,8 @@ class Globals(object):
                   'enable_doquery',
                   'use_query_cache',
                   'write_query_queue',
-                  'css_killswitch']
+                  'css_killswitch',
+                  'db_create_tables']
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -91,22 +93,15 @@ class Globals(object):
             
         """
 
-        def to_bool(x):
-            return (x.lower() == 'true') if x else None
-        
-        def to_iter(name, delim = ','):
-            return (x.strip() for x in global_conf.get(name, '').split(delim))
-
-
         # slop over all variables to start with
         for k, v in  global_conf.iteritems():
             if not k.startswith("_") and not hasattr(self, k):
                 if k in self.int_props:
                     v = int(v)
                 elif k in self.bool_props:
-                    v = to_bool(v)
+                    v = self.to_bool(v)
                 elif k in self.tuple_props:
-                    v = tuple(to_iter(k))
+                    v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
         # initialize caches
@@ -120,6 +115,9 @@ class Globals(object):
         
         # set default time zone if one is not set
         self.tz = pytz.timezone(global_conf.get('timezone'))
+
+        #load the database info
+        self.dbm = self.load_db_params(global_conf)
 
         #make a query cache
         self.stats_collector = QueryStats()
@@ -176,6 +174,43 @@ class Globals(object):
 
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
+
+    @staticmethod
+    def to_bool(x):
+        return (x.lower() == 'true') if x else None
+
+    @staticmethod
+    def to_iter(v, delim = ','):
+        return (x.strip() for x in v.split(delim))
+
+    def load_db_params(self, gc):
+        databases = self.to_iter(gc['databases'])
+        if not databases:
+            return
+
+        dbm = db_manager.db_manager()
+        db_params = ('name', 'db_host', 'db_user', 'db_pass',
+                     'pool_size', 'max_overflow')
+        for db_name in databases:
+            conf_params = self.to_iter(gc[db_name + '_db'])
+            params = dict(zip(db_params, conf_params))
+            dbm.engines[db_name] = db_manager.get_engine(**params)
+
+        dbm.type_db = dbm.engines[gc['type_db']]
+        dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
+
+        prefix = 'db_table_'
+        for k, v in gc.iteritems():
+            if k.startswith(prefix):
+                params = list(self.to_iter(v))
+                name = k[len(prefix):]
+                kind = params[0]
+                if kind == 'thing':
+                    dbm.add_thing(name, [dbm.engines[n] for n in params[1:]])
+                elif kind == 'relation':
+                    dbm.add_relation(name, params[1], params[2],
+                                     [dbm.engines[n] for n in params[3:]])
+        return dbm
 
     def __del__(self):
         """

@@ -19,11 +19,12 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.config.databases import change_engine
 import sqlalchemy as sa
-from r2.lib.db.tdb_sql import make_metadata, settings
+
+from r2.lib.db.tdb_sql import make_metadata
 from r2.lib.utils import worker
 
+from pylons import g
 
 def index_str(table, name, on, where = None):
     index_str = 'create index idx_%s_' % name
@@ -35,7 +36,7 @@ def index_str(table, name, on, where = None):
     
 def create_table(table, index_commands=None, force = False):
     t = table
-    if settings.DB_CREATE_TABLES:
+    if g.db_create_tables:
         if not t.engine.has_table(t.name) or force:
             try:
                 t.create(checkfirst = False)
@@ -47,7 +48,7 @@ def create_table(table, index_commands=None, force = False):
                     except: pass
 
 def change_table(metadata):
-    return sa.Table(settings.DB_APP_NAME + '_changes', metadata,
+    return sa.Table(g.db_app_name + '_changes', metadata,
                     sa.Column('fullname', sa.String, nullable=False,
                               primary_key = True),
                     sa.Column('thing_type', sa.Integer, nullable=False),
@@ -58,7 +59,8 @@ def change_table(metadata):
                     )
 
 def make_change_tables(force = False):
-    metadata = make_metadata(change_engine)
+    engine = g.dbm.engines['change']
+    metadata = make_metadata(engine)
     table = change_table(metadata)
     indices = [
         index_str(table, 'fullname', 'fullname'),

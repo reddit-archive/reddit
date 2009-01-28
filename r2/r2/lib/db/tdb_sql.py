@@ -19,25 +19,21 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
-from r2.config.databases import dbm, tz
-from pylons import g
-
-import operators
-import sqlalchemy as sa
-from sqlalchemy.databases import postgres
 from datetime import datetime
 import cPickle as pickle
-
 from copy import deepcopy
+import random
+
+import sqlalchemy as sa
+from sqlalchemy.databases import postgres
+
+from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
+import operators
+from pylons import g
+dbm = g.dbm
 
 import logging
 log_format = logging.Formatter('sql: %(message)s')
-
-settings = storage()
-settings.DEBUG = g.debug
-settings.DB_CREATE_TABLES = True
-settings.DB_APP_NAME = 'reddit'
 
 max_val_len = 1000
 
@@ -47,12 +43,12 @@ BigInteger = postgres.PGBigInteger
 
 def make_metadata(engine):
     metadata = sa.BoundMetaData(engine)
-    metadata.engine.echo = settings.DEBUG
+    metadata.engine.echo = g.debug
     return metadata
 
 def create_table(table, index_commands=None):
     t = table
-    if settings.DB_CREATE_TABLES:
+    if g.db_create_tables:
         #@@hackish?
         if not t.engine.has_table(t.name):
             t.create(checkfirst = False)
@@ -104,13 +100,13 @@ def index_commands(table, type):
     return commands
 
 def get_type_table(metadata):
-    table = sa.Table(settings.DB_APP_NAME + '_type', metadata,
+    table = sa.Table(g.db_app_name + '_type', metadata,
                      sa.Column('id', sa.Integer, primary_key = True),
                      sa.Column('name', sa.String, nullable = False))
     return table
 
 def get_rel_type_table(metadata):
-    table = sa.Table(settings.DB_APP_NAME + '_type_rel', metadata,
+    table = sa.Table(g.db_app_name + '_type_rel', metadata,
                      sa.Column('id', sa.Integer, primary_key = True),
                      sa.Column('type1_id', sa.Integer, nullable = False),
                      sa.Column('type2_id', sa.Integer, nullable = False),
@@ -119,7 +115,7 @@ def get_rel_type_table(metadata):
 
 
 def get_thing_table(metadata, name):
-    table = sa.Table(settings.DB_APP_NAME + '_thing_' + name, metadata,
+    table = sa.Table(g.db_app_name + '_thing_' + name, metadata,
                      sa.Column('thing_id', BigInteger, primary_key = True),
                      sa.Column('ups', sa.Integer, default = 0, nullable = False),
                      sa.Column('downs',
@@ -141,7 +137,7 @@ def get_thing_table(metadata, name):
     return table
 
 def get_data_table(metadata, name):
-    data_table = sa.Table(settings.DB_APP_NAME + '_data_' + name, metadata,
+    data_table = sa.Table(g.db_app_name + '_data_' + name, metadata,
                           sa.Column('thing_id', BigInteger, nullable = False,
                                     primary_key = True),
                           sa.Column('key', sa.String, nullable = False,
@@ -151,7 +147,7 @@ def get_data_table(metadata, name):
     return data_table
 
 def get_rel_table(metadata, name):
-    rel_table = sa.Table(settings.DB_APP_NAME + '_rel_' + name, metadata,
+    rel_table = sa.Table(g.db_app_name + '_rel_' + name, metadata,
                          sa.Column('rel_id', BigInteger, primary_key = True),
                          sa.Column('thing1_id', BigInteger, nullable = False),
                          sa.Column('thing2_id', BigInteger, nullable = False),
@@ -181,8 +177,6 @@ types_id = {}
 types_name = {}
 rel_types_id = {}
 rel_types_name = {}
-extra_thing_tables = {}
-thing_engines = {}
 
 def check_type(table, selector, insert_vals):
     #check for type in type table, create if not existent
@@ -196,41 +190,30 @@ def check_type(table, selector, insert_vals):
 
 #make the thing tables
 def build_thing_tables():
-    for name, thing_engine, data_engine in dbm.things():
+    for name, engines in dbm.things.iteritems():
         type_id = check_type(type_table,
                              type_table.c.name == name,
                              dict(name = name))
 
-        thing_engines[name] = thing_engine
+        tables = []
+        for engine in engines:
+            metadata = make_metadata(engine)
 
-        #make thing table
-        thing_table = get_thing_table(make_metadata(thing_engine), name)
-        create_table(thing_table,
-                     index_commands(thing_table, 'thing'))
+            #make thing table
+            thing_table = get_thing_table(metadata, name)
+            create_table(thing_table,
+                         index_commands(thing_table, 'thing'))
 
-        #make data tables
-        data_metadata = make_metadata(data_engine)
-        data_table = get_data_table(data_metadata, name)
-        create_table(data_table,
-                     index_commands(data_table, 'data'))
+            #make data tables
+            data_table = get_data_table(metadata, name)
+            create_table(data_table,
+                         index_commands(data_table, 'data'))
 
-        #do we need another table?
-        if thing_engine == data_engine:
-            data_thing_table = thing_table
-        else:
-            #we're in a different engine, but do we need to maintain the extra table?
-            if dbm.extra_data.get(data_engine):
-                data_thing_table = get_thing_table(data_metadata, 'data_' + name)
-                extra_thing_tables.setdefault(type_id, set()).add(data_thing_table)
-                create_table(data_thing_table,
-                             index_commands(data_thing_table, 'thing'))
-            else:
-                data_thing_table = get_thing_table(data_metadata, name)
-        
+            tables.append((thing_table, data_table))
+
         thing = storage(type_id = type_id,
                         name = name,
-                        thing_table = thing_table,
-                        data_table = (data_table, data_thing_table))
+                        tables = tables)
 
         types_id[type_id] = thing
         types_name[name] = thing
@@ -238,7 +221,7 @@ build_thing_tables()
 
 #make relation tables
 def build_rel_tables():
-    for name, type1_name, type2_name, engine in dbm.relations():
+    for name, (type1_name, type2_name, engines) in dbm.relations.iteritems():
         type1_id = types_name[type1_name].type_id
         type2_id = types_name[type2_name].type_id
         type_id = check_type(rel_type_table,
@@ -247,48 +230,36 @@ def build_rel_tables():
                                   type1_id = type1_id,
                                   type2_id = type2_id))
 
-        metadata = make_metadata(engine)
-        
-        #relation table
-        rel_table = get_rel_table(metadata, name)
-        create_table(rel_table,
-                     index_commands(rel_table, 'rel'))
+        tables = []
+        for engine in engines:
+            metadata = make_metadata(engine)
 
-        #make thing1 table if required
-        if engine == thing_engines[type1_name]:
-            rel_t1_table = types_name[type1_name].thing_table
-        else:
-            #need to maintain an extra thing table?
-            if dbm.extra_thing1.get(engine):
-                rel_t1_table = get_thing_table(metadata, 'rel_' + name + '_type1')
-                create_table(rel_t1_table, index_commands(rel_t1_table, 'thing'))
-                extra_thing_tables.setdefault(type_id, set()).add(rel_t1_table)
-            else:
-                rel_t1_table = get_thing_table(metadata, type1_name)
+            #relation table
+            rel_table = get_rel_table(metadata, name)
+            create_table(rel_table, index_commands(rel_table, 'rel'))
 
-        #make thing2 table if required
-        if type1_id == type2_id:
-            rel_t2_table = rel_t1_table
-        elif engine == thing_engines[type2_name]:
-            rel_t2_table = types_name[type2_name].thing_table
-        else:
-            if dbm.extra_thing2.get(engine):
-                rel_t2_table = get_thing_table(metadata, 'rel_' + name + '_type2')
-                create_table(rel_t2_table, index_commands(rel_t2_table, 'thing'))
-                extra_thing_tables.setdefault(type_id, set()).add(rel_t2_table)
+            #make thing tables
+            rel_t1_table = get_thing_table(metadata, type1_name)
+            if type1_name == type2_name:
+                rel_t2_table = rel_t1_table
             else:
                 rel_t2_table = get_thing_table(metadata, type2_name)
 
-        #build the data
-        rel_data_table = get_data_table(metadata, 'rel_' + name)
-        create_table(rel_data_table,
-                     index_commands(rel_data_table, 'data'))
+            #build the data
+            rel_data_table = get_data_table(metadata, 'rel_' + name)
+            create_table(rel_data_table,
+                         index_commands(rel_data_table, 'data'))
+
+            tables.append((rel_table,
+                           rel_t1_table,
+                           rel_t2_table,
+                           rel_data_table))
 
         rel = storage(type_id = type_id,
                       type1_id = type1_id,
                       type2_id = type2_id,
                       name = name,
-                      rel_table = (rel_table, rel_t1_table, rel_t2_table, rel_data_table))
+                      tables = tables)
 
         rel_types_id[type_id] = rel
         rel_types_name[name] = rel
@@ -300,9 +271,27 @@ def get_type_id(name):
 def get_rel_type_id(name):
     return rel_types_name[name][0]
 
+def get_write_table(tables):
+    return tables[0]
+
+def get_read_table(tables):
+    return random.choice(tables)
+
+def get_thing_write_table(type_id):
+    return get_write_table(types_id[type_id].tables)
+
+def get_thing_read_table(type_id):
+    return get_read_table(types_id[type_id].tables)
+
+def get_rel_write_table(rel_type_id):
+    return get_write_table(rel_types_id[rel_type_id].tables)
+
+def get_rel_read_table(rel_type_id):
+    return get_read_table(rel_types_id[rel_type_id].tables)
+
 #TODO does the type actually exist?
 def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
-    table = types_id[type_id].thing_table
+    table = get_thing_write_table(type_id)[0]
 
     params = dict(ups = ups, downs = downs,
                   date = date, deleted = deleted, spam = spam)
@@ -319,9 +308,6 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
     try:
         id = do_insert(table)
         params['thing_id'] = id
-        for t in extra_thing_tables.get(type_id, ()):
-            do_insert(t)
-    
         return id
     except sa.exceptions.SQLError, e:
         if not 'IntegrityError' in e.message:
@@ -331,7 +317,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         
 
 def set_thing_props(type_id, thing_id, **props):
-    table = types_id[type_id].thing_table
+    table = get_thing_write_table(type_id)[0]
 
     if not props:
         return
@@ -344,11 +330,9 @@ def set_thing_props(type_id, thing_id, **props):
         u.execute()
 
     do_update(table)
-    for t in extra_thing_tables.get(type_id, ()):
-        do_update(t)
 
 def incr_thing_prop(type_id, thing_id, prop, amount):
-    table = types_id[type_id].thing_table
+    table = get_thing_write_table(type_id)[0]
     
     def do_update(t):
         transactions.add_engine(t.engine)
@@ -357,18 +341,16 @@ def incr_thing_prop(type_id, thing_id, prop, amount):
         u.execute()
 
     do_update(table)
-    for t in extra_thing_tables.get(type_id, ()):
-        do_update(t)
 
 class CreationError(Exception): pass
 
 #TODO does the type exist?
 #TODO do the things actually exist?
 def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
-    table = rel_types_id[rel_type_id].rel_table[0]
+    table = get_rel_write_table(rel_type_id)[0]
     transactions.add_engine(table.engine)
     
-    if not date: date = datetime.now(tz)
+    if not date: date = datetime.now(g.tz)
     try:
         r = table.insert().execute(thing1_id = thing1_id,
                                    thing2_id = thing2_id,
@@ -383,7 +365,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
         
 
 def set_rel_props(rel_type_id, rel_id, **props):
-    t = rel_types_id[rel_type_id].rel_table[0]
+    t = get_rel_write_table(rel_type_id)[0]
 
     if not props:
         return
@@ -489,19 +471,19 @@ def get_data(table, thing_id):
     return res
 
 def set_thing_data(type_id, thing_id, **vals):
-    table = types_id[type_id].data_table[0]
+    table = get_thing_write_table(type_id)[1]
     return set_data(table, type_id, thing_id, **vals)
 
 def incr_thing_data(type_id, thing_id, prop, amount):
-    table = types_id[type_id].data_table[0]
+    table = get_thing_write_table(type_id)[1]
     return incr_data_prop(table, type_id, thing_id, prop, amount)    
 
 def get_thing_data(type_id, thing_id):
-    table = types_id[type_id].data_table[0]
+    table = get_thing_read_table(type_id)[1]
     return get_data(table, thing_id)
 
 def get_thing(type_id, thing_id):
-    table = types_id[type_id].thing_table
+    table = get_thing_read_table(type_id)[0]
     r, single = fetch_query(table, table.c.thing_id, thing_id)
 
     #if single, only return one storage, otherwise make a dict
@@ -519,19 +501,19 @@ def get_thing(type_id, thing_id):
     return res
 
 def set_rel_data(rel_type_id, thing_id, **vals):
-    table = rel_types_id[rel_type_id].rel_table[3]
+    table = get_rel_write_table(rel_type_id)[3]
     return set_data(table, rel_type_id, thing_id, **vals)
 
 def incr_rel_data(rel_type_id, thing_id, prop, amount):
-    table = rel_types_id[rel_type_id].rel_table[3]
+    table = get_rel_write_table(rel_type_id)[3]
     return incr_data_prop(table, rel_type_id, thing_id, prop, amount)
 
 def get_rel_data(rel_type_id, rel_id):
-    table = rel_types_id[rel_type_id].rel_table[3]
+    table = get_rel_read_table(rel_type_id)[3]
     return get_data(table, rel_id)
 
 def get_rel(rel_type_id, rel_id):
-    r_table = rel_types_id[rel_type_id].rel_table[0]
+    r_table = get_rel_read_table(rel_type_id)[0]
     r, single = fetch_query(r_table, r_table.c.rel_id, rel_id)
     
     res = {} if not single else None
@@ -547,7 +529,7 @@ def get_rel(rel_type_id, rel_id):
     return res
 
 def del_rel(rel_type_id, rel_id):
-    tables = rel_types_id[rel_type_id].rel_table
+    tables = get_rel_write_table(rel_type_id)
     table = tables[0]
     data_table = tables[3]
 
@@ -664,7 +646,7 @@ def translate_thing_value(rval):
 
 #will assume parameters start with a _ for consistency
 def find_things(type_id, get_cols, sort, limit, constraints):
-    table = types_id[type_id].thing_table
+    table = get_thing_read_table(type_id)[0]
     constraints = deepcopy(constraints)
 
     s = sa.select([table.c.thing_id.label('thing_id')])
@@ -705,7 +687,7 @@ def translate_data_value(alias, op):
 #TODO sort by data fields
 #TODO sort by id wants thing_id
 def find_data(type_id, get_cols, sort, limit, constraints):
-    d_table, t_table = types_id[type_id].data_table
+    t_table, d_table = get_thing_read_table(type_id)
     constraints = deepcopy(constraints)
 
     used_first = False
@@ -767,7 +749,8 @@ def find_data(type_id, get_cols, sort, limit, constraints):
 
 
 def find_rels(rel_type_id, get_cols, sort, limit, constraints):
-    r_table, t1_table, t2_table, d_table = rel_types_id[rel_type_id].rel_table
+    tables = get_rel_read_table(rel_type_id)
+    r_table, t1_table, t2_table, d_table = tables
     constraints = deepcopy(constraints)
 
     t1_table, t2_table = t1_table.alias(), t2_table.alias()
@@ -837,3 +820,13 @@ def find_rels(rel_type_id, get_cols, sort, limit, constraints):
 
 if logging.getLogger('sqlalchemy').handlers:
     logging.getLogger('sqlalchemy').handlers[0].formatter = log_format
+
+#inconsitencies:
+
+#relationships assume their thing and data tables are in the same
+#database. things don't make that assumption. in practice thing/data
+#tables always go together.
+#
+#we create thing tables for a relationship's things that aren't on the
+#same database as the relationship, although they're never used in
+#practice. we could remove a healthy chunk of code if we removed that.

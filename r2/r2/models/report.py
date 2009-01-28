@@ -161,13 +161,12 @@ class Report(MultiRelation('report',
         res = {}
         for types, rel in cls.rels.iteritems():
             # grab the proper thing table
-            thing_type = types[1]
-            thing_dict = tdb.types_id[thing_type._type_id]
-            dtable, table = thing_dict.data_table
+            thing_type = types[0]
+            table, dtable = tdb.get_thing_read_table(thing_type._type_id)
 
             # and the proper relationship table
-            rel_table = tdb.rel_types_id[rel._type_id].rel_table[0]
-            rel_dtable = tdb.rel_types_id[rel._type_id].rel_table[-1]
+            tables = tdb.get_rel_read_table(rel._type_id)
+            rel_table, rel_dtable = tables[0], tables[3]
 
             where = [dtable.c.key == 'author_id',
                      sa.func.substring(dtable.c.value, 1, 1000) == author_id,
@@ -431,8 +430,7 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
 def unreport_account(user, correct = True, types = (Link, Comment, Message),
                      auto = False, banned_by = ''):
     for typ in types:
-        thing_dict = tdb.types_id[typ._type_id]
-        dtable, table = thing_dict.data_table
+        table, dtable = tdb.get_thing_read_table(typ._type_id)
         
         by_user_query = sa.and_(table.c.thing_id == dtable.c.thing_id,
                                 dtable.c.key == 'author_id',

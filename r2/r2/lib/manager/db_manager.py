@@ -21,7 +21,7 @@
 ################################################################################
 import sqlalchemy as sa
 
-def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 1, max_overflow = 9):
+def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 5, max_overflow = 5):
     host = db_host if db_host else '' 
     if db_user:
         if db_pass:
@@ -30,37 +30,21 @@ def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 1, max_over
             host = "%s@%s" % (db_user, db_host)
     return sa.create_engine('postgres://%s/%s' % (host, name),
                             strategy='threadlocal',
-                            pool_size = pool_size,
-                            max_overflow = max_overflow)
+                            pool_size = int(pool_size),
+                            max_overflow = int(max_overflow))
 
 class db_manager:
     def __init__(self):
         self.type_db = None
         self.relation_type_db = None
-        self.thing_dbs = {}
-        self.relation_dbs = {}
+        self.things = {}
+        self.relations = {}
+        self.engines = {}
 
-        self.extra_data = {}
-        self.extra_thing1 = {}
-        self.extra_thing2 = {}
+    def add_thing(self, name, thing_dbs):
+        """thing_dbs is a list of database engines. the first in the
+        list is assumed to be the master, the rest are slaves."""
+        self.things[name] = thing_dbs
 
-    def thing(self, name, thing_db, data_db, need_extra = False):
-        self.thing_dbs[name] = (thing_db, data_db)
-        if need_extra:
-            self.extra_data[data_db] = True
-
-    def relation(self, name, type1, type2, relation_db,
-                 need_extra1 = False, need_extra2 = False):
-        self.relation_dbs[name] = (type1, type2, relation_db)
-        if need_extra1:
-            self.extra_thing1[relation_db] = True
-        if need_extra2:
-            self.extra_thing2[relation_db] = True
-
-    #unused i guess
-    def things(self):
-        return [(name, d[0], d[1]) for name, d in self.thing_dbs.items()]
-
-    def relations(self):
-        return [(name, d[0], d[1], d[2])
-                for name, d in self.relation_dbs.items()]
+    def add_relation(self, name, type1, type2, relation_dbs):
+        self.relations[name] = (type1, type2, relation_dbs)

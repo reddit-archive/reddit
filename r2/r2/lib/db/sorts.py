@@ -21,9 +21,9 @@
 ################################################################################
 from math import log
 from datetime import datetime, timedelta
-from r2.config.databases import tz
+from pylons import g
 
-epoch = datetime(1970, 1, 1, tzinfo = tz)
+epoch = datetime(1970, 1, 1, tzinfo = g.tz)
 
 def epoch_seconds(date):
     """Returns the number of seconds from the epoch to date. Should match
