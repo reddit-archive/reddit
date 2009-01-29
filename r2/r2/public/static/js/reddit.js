@@ -2,9 +2,9 @@ function open_menu(menu) {
     $(menu).siblings(".drop-choices").not(".inuse")
         .css("top", menu.offsetHeight + 'px')
                 .each(function(){
-                        $(this).css("left", $(menu).offset().left + "px")
+                        $(this).css("left", $(menu).position().left + "px")
                             .css("top", ($(menu).height()+
-                                         $(menu).offset().top) + "px");
+                                         $(menu).position().top) + "px");
                     })
         .addClass("active inuse");
 };
