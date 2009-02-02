@@ -985,8 +985,16 @@ textarea.gray { color: gray; }
     padding-right: 5px; }
 .wired img {vertical-align: middle;}
 
-.server-status { width: 300px; }
-.server-status table { font-size: xx-small; margin-left: 5px; }
+.server-status { width: 300px;  }
+.server-status table { 
+    font-size: xx-small; 
+    margin-left: 5px; 
+    border-top: #BCBCBC solid 1px;
+    border-left: #BCBCBC solid 1px;
+    border-bottom: #E0E0E0 solid 1px;
+    border-right: #E0E0E0 solid 1px;
+    margin-bottom: 5px; 
+}
 .server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
 .server-status .load0 { background-color: #FFFFFF; }
@@ -995,11 +1003,20 @@ textarea.gray { color: gray; }
 .server-status .load3 { background-color: #FFEA71; }
 .server-status .load4 { background-color: #FF9191; }
 .server-status .load5 { background-color: #FF0000; color: #FFFFFF }
+.server-status tr.down > * { 
+    background-color: #C0C0C0; 
+    text-decoration: line-through; 
+}
 
 .server-status th { font-weight: bold; padding-right: 2px; }
 .server-status tr.title-region { cursor: pointer; }
 .server-status tr.title-region:hover > td,
 .server-status tr.title-region:hover > th { text-decoration: underline; }
+
+.server-status tr.title-region.empty { cursor: default; opacity: 0.7; }
+.server-status tr.title-region.empty:hover > td,
+.server-status tr.title-region.empty:hover > th { text-decoration: none; }
+
 
 .server-status .pegged { 
     background-color: red;

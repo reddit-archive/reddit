@@ -61,6 +61,24 @@
             <span style="color:red">${host.database.connections(300)}</span>
           </td>
         </tr>
+        <% 
+           qcount = host.database.query_count \
+              if hasattr(host.database, "query_count") else None
+           %>
+        %if qcount:
+        <tr class="load${load_level} title-region" id="${host_id}">
+          <th>
+          </th>
+          <th>
+            query count:
+          </th>
+          <td>
+            <span style="color:green">${qcount()}</span> 
+            &nbsp;/&nbsp;
+            <span style="color:red">${qcount(300)}</span>
+          </td>
+        </tr>
+        %endif
         <tr ${hide_data} class="data load${load_level} machine-${host_id}">
           <th>by ip:</th>
           <td></td><td></td>
@@ -115,11 +133,11 @@
     %for host in thing.hostlogs:
      <%
         host_id = host.host.replace('.', '-')
-        s = host.services
         load = host.load()
         load_level = min(max(int(load+0.5), 0),5)
+        empty_cls = '' if len(host.services) else 'empty'
      %>
-    <tr class="load${load_level} title-region" id="${host_id}">
+    <tr class="load${load_level} title-region ${empty_cls}" id="${host_id}">
       <th>
           ${host.host} load: ${load}
       </th>
@@ -137,9 +155,11 @@
          mem_wid = int(mem_col/25*min(25, int(service.mem())))
          cpu_60_wid  = int(cpu_col/100*min(100,int(service.cpu(60))))
          cpu_300_wid = int(cpu_col/100*min(100,int(service.cpu(300))))
+         is_down = 'down' if service.pid < 0 else ''
      %>
   
-        <tr  ${hide_data} class="data load${load_level} ${pegged} machine-${host_id}">
+        <tr ${hide_data} 
+            class="data load${load_level} ${pegged} ${is_down} machine-${host_id}">
           <td>
             %if g.reddit_host == host.host and g.reddit_pid == service.pid:
               <b style="color:orangered; font-size:larger">&raquo;</b>
@@ -165,7 +185,7 @@
                else:
                   age = "%d min" % age
              %>
-            ${age}
+            ${age if service.pid > 0 else 'down'}
           </td>
         </tr>
      %endfor

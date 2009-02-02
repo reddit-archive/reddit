@@ -96,7 +96,7 @@ class ApiController(RedditController):
 
     @validatedForm()
     def ajax_login_redirect(self, form, jquery, dest):
-        jquery.redirect("/login" + query_string(dict(dest=dest)))
+        form.redirect("/login" + query_string(dict(dest=dest)))
 
     @validate(link = VUrl(['url']),
               count = VLimit('limit'))
@@ -192,7 +192,7 @@ class ApiController(RedditController):
         if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
             pass
         elif form.has_errors("url", errors.ALREADY_SUB):
-            jquery.redirect(url[0].already_submitted_link)
+            form.redirect(url[0].already_submitted_link)
         # check for title, otherwise look it up and return it
         elif form.has_errors("title", errors.NO_TITLE):
             # try to fetch the title
@@ -256,16 +256,16 @@ class ApiController(RedditController):
         c.cname = False
         path = l.make_permalink_slow()
         c.cname = cname
-        jquery.redirect(path)
+        form.redirect(path)
 
-    def _login(self, jquery, user, dest='', rem = None):
+    def _login(self, form, user, dest='', rem = None):
         """
         AJAX login handler, used by both login and register to set the
         user cookie and send back a redirect.
         """
         self.login(user, rem = rem)
         dest = dest or request.referer or '/'
-        jquery.redirect(dest)
+        form.redirect(dest)
 
 
     @validatedForm(user = VLogin(['user', 'passwd']),
@@ -276,7 +276,7 @@ class ApiController(RedditController):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
         if not form.has_errors("passwd", errors.WRONG_PASSWORD):
-            self._login(jquery, user, dest, rem)
+            self._login(form, user, dest, rem)
 
 
     @validatedForm(VCaptcha(),
@@ -321,7 +321,7 @@ class ApiController(RedditController):
                     for sr, sub in reason[1].iteritems():
                         self._subscribe(sr, sub)
     
-            self._login(jquery, user, dest, rem)
+            self._login(form, user, dest, rem)
     
 
     @noresponse(VUser(),
@@ -482,7 +482,7 @@ class ApiController(RedditController):
         """
         if areyousure1 == areyousure2 == areyousure3 == 'yes':
             c.user.delete()
-            jquery.redirect('/?deleted=true')
+            form.redirect('/?deleted=true')
         else:
             form.set_html('.status', _("see? you don't really want to leave"))
 
@@ -981,7 +981,7 @@ class ApiController(RedditController):
             form.parent().set_html('.status', _("saved"))
 
         if redir:
-            jquery.redirect(redir)
+            form.redirect(redir)
 
     @noresponse(VModhash(),
                 VSrCanBan('id'),
@@ -1141,7 +1141,7 @@ class ApiController(RedditController):
                    password = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, user, password):
         if errors.BAD_USERNAME in c.errors:
-            return jquery.redirect('/password')
+            return form.redirect('/password')
         elif (not form.has_errors('passwd',  errors.BAD_PASSWORD) and
               not form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH) and
               user):
@@ -1296,7 +1296,7 @@ class ApiController(RedditController):
             l._commit()
             l.update_url_cache(old_url)
 
-            jquery.redirect('/promote/edit_promo/%s' % to36(l._id))
+            form.redirect('/promote/edit_promo/%s' % to36(l._id))
         else:
             l = Link._submit(title, url, c.user, sr, ip, False)
 
@@ -1312,7 +1312,7 @@ class ApiController(RedditController):
                     promote_until = promote_until,
                     disable_comments = disable_comments)
 
-            jquery.redirect('/promote/edit_promo/%s' % to36(l._id))
+            form.redirect('/promote/edit_promo/%s' % to36(l._id))
 
     def GET_link_thumb(self, *a, **kw):
         """

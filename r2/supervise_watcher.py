@@ -20,28 +20,87 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 #!/usr/bin/env python
-from pylons import g
 import os, re, sys, socket, time, smtplib
 import subprocess
 from datetime import datetime, timedelta
 from r2.lib.wrapped import Wrapped
 
-host  = g.reddit_host
-default_services = ['newreddit']
 
-def is_db_machine(host):
+class AppServiceMonitor(Wrapped):
     """
-    Given a host name, checks the list of known DB machines to
-    determine if the host is one of them.
-    """
-    for db in g.databases:
-        ip = list(g.to_iter(getattr(g, db + "_db")))[1]
-        name = socket.gethostbyaddr(ip)[0]
-        if (name == host or ("." in host and name.endswith("." + host)) or
-            name.startswith(host + ".")):
-            return True
+    Master controller class for service monitoring.  Can be
+    initialized at the same time as pylons.g provided g is passed in
+    as the global_config argument.  This class has three purposes:
 
-    return False
+      * Fetches Hostlogger instances from the cache for generating
+        reports (by calling render() as it is a subclass of wrapped).
+
+      * keeping track of which machines are DB machines, allowing db
+        load to be checked and improving load balancing.
+
+      * monitoring the local host's load and storing it in the cache.
+
+    """
+
+    def __init__(self, hosts = None, global_conf = None):
+        """
+        hosts is a list of machine hostnames to be tracked (will
+        default to global_conf.monitored_servers if not provided).
+        Note the ability to pass in the global_conf (aka pylons.g)
+        to allow for initializing before the app has finished loading.
+        """
+        if not global_conf:
+            from pylons import g
+            global_conf = g
+        self.global_conf = global_conf
+        self._hosts = hosts or global_conf.monitored_servers 
+
+        db_info = {}
+        for db in global_conf.databases:
+            dbase, ip = list(global_conf.to_iter(
+                 getattr(global_conf, db + "_db")))[:2]
+            name = socket.gethostbyaddr(ip)[0]
+    
+            for host in global_conf.monitored_servers:
+                if (name == host or
+                    ("." in host and name.endswith("." + host)) or
+                    name.startswith(host + ".")):
+                    db_info[db] = (dbase, ip, host)
+
+        self._db_info = db_info
+        self.hostlogs = []
+        Wrapped.__init__(self)
+
+    def database_load(self, db_name):
+        if self._db_info.has_key(db_name):
+            return self.server_load(self._db_info[db_name][-1])
+
+    @staticmethod
+    def server_load(mach_name):
+        h = HostLogger.from_cache(host, self.global_conf) 
+        return h.load.most_recent()
+        
+    def __iter__(self):
+        return iter(self.hostlogs)
+
+    def render(self, *a, **kw):
+        self.hostlogs = [HostLogger.from_cache(host, self.global_conf)
+                         for host in self._hosts]
+        self.hostlogs = filter(None, self.hostlogs)
+        return Wrapped.render(self, *a, **kw)
+
+    def monitor(self, *a, **kw):
+        host = self.global_conf.reddit_host
+        h = (HostLogger.from_cache(host, self.global_conf) or
+             HostLogger(host, self))
+        return h.monitor(self, *a, **kw)
+
+    def is_db_machine(self, host):
+        """
+        Given a host name, checks the list of known DB machines to
+        determine if the host is one of them.
+        """
+        return any(host == name for d2,ip,name in self._db_info.values())
 
 
 class DataLogger(object):
@@ -100,9 +159,11 @@ class Database(object):
         self.connections = DataLogger()
         self.ip_conn = {}
         self.db_conn = {}
+        self.query_count = DataLogger()
     
 
-    def track(self, conn = 0, ip_conn = {}, db_conn = {}, vacuums = {}):
+    def track(self, conn = 0, ip_conn = {}, db_conn = {}, vacuums = {},
+              query_count = None):
 
         #log the number of connections
         self.connections.add(conn)
@@ -119,16 +180,23 @@ class Database(object):
 
         # log vacuuming
         self.vacuuming = [k for k, v in vacuums.iteritems() if v]
-        
+
+        # has a query count
+        if query_count is not None:
+            self.query_count.add(query_count)
         
 class HostLogger(object):
     cache_key = "machine_datalog_data_"
 
-    def __init__(self, host):
+    @classmethod
+    def cache(self, global_conf):
+        return global_conf.rendercache
+        
+    def __init__(self, host, master):
         self.host = host
         self.load = DataLogger()
         self.services = {}
-        self.database = Database() if is_db_machine(host) else None
+        self.database = Database() if master.is_db_machine(host) else None
 
     def service_pids(self):
         return self.services.keys()
@@ -147,24 +215,25 @@ class HostLogger(object):
         else:
             self.services[pid].age = int(age / 60)
         
-    def set_cache(self):
+    def set_cache(self, global_conf):
         key = self.cache_key + str(self.host)
-        g.rendercache.set(key, self)
+        self.cache(global_conf).set(key, self)
 
     @classmethod
-    def from_cache(cls, host):
+    def from_cache(cls, host, global_conf):
         key = cls.cache_key + str(host)
-        return g.rendercache.get(key)
+        return cls.cache(global_conf).get(key)
 
     def clean_dead(self, age = 10):
         time = datetime.now()
         for pid, s in list(self.services.iteritems()):
             t = s.last_update()
-            if not t or t < time - timedelta(0, age):
+            if not t or t < time - timedelta(0, age) or pid < 0:
                 del self.services[pid]
 
 
-    def monitor(self, srvname = None, loop = True, loop_time = 2,
+    def monitor(self, service_monitor, 
+                srvname = None, loop = True, loop_time = 2,
                 srv_params = {}, top_params = {}, db_params = {}):
         while True:
             # (re)populate the service listing
@@ -187,10 +256,8 @@ class HostLogger(object):
             self.load.add(float(foo.split(' ')[1].strip(',')))
             handle.close()
 
-
-
             self.clean_dead()
-            self.set_cache()
+            self.set_cache(service_monitor.global_conf)
             
             if loop:
                 time.sleep(loop_time)
@@ -205,15 +272,6 @@ class HostLogger(object):
             yield s[pid]
         
 
-class AppServiceMonitor(Wrapped):
-    def __init__(self, hosts = None):
-        hosts = hosts or g.monitored_servers 
-        self.hostlogs = [HostLogger.from_cache(host) for host in hosts]
-        self.hostlogs = filter(lambda x: x, self.hostlogs)
-
-    def __iter__(self):
-        return iter(self.hostlogs)
-
 
 def Alert(restart_list = ['MEM','CPU'],
           alert_recipients = ['nerds@reddit.com'],
@@ -223,7 +281,7 @@ def Alert(restart_list = ['MEM','CPU'],
 
     p = re.compile("newreddit(\d+)")
     cache_key = 'already_alerted_'
-    
+    from pylons import g
     for host in AppServiceMonitor(g.monitored_servers):
         for service in host:
             # cpu values
@@ -292,7 +350,7 @@ def run_top(proc_ids = [], name = '', exe = "/usr/bin/top"):
     if not os.path.exists(exe):
         raise ValueError, "bad executable specified for top"
 
-    cmd = [exe, '-b', '-n1'] + ["-p%d" % x for x in proc_ids]
+    cmd = [exe, '-b', '-n1'] + ["-p%d" % x for x in proc_ids if x > 0]
 
     handle = subprocess.Popen(cmd, stdout = subprocess.PIPE,
                               stderr = subprocess.PIPE)
@@ -316,19 +374,23 @@ def run_top(proc_ids = [], name = '', exe = "/usr/bin/top"):
 
 def supervise_list(exe = "/usr/local/bin/svstat", path = '/service/'):
     handle = os.popen("%s %s*" % (exe, path))
+    defunct = 0
     for line in handle:
+        line = line.split(' ')
+        name = line[0]
         try:
-            name, status, blah, pid, time, label = line.split(' ')[:6]
+            status, blah, pid, time = line[1:5]
             name = name[len(path):].strip(':')
             if status == 'up':
                 pid = int(pid.strip(')'))
                 time = int(time)
             else:
-                pid = -1
-                time = 0
-            yield (name, status, pid, time)
+                raise ValueError, "down process"
         except ValueError:
-            pass
+            defunct += 1
+            pid = -defunct
+            time = 0
+        yield (name, "down", pid, time)
     handle.close()
 
 def check_database(proc = "postgres", check_vacuum = True, user='ri'):
@@ -354,21 +416,33 @@ def check_database(proc = "postgres", check_vacuum = True, user='ri'):
 
     vacuums = {}
     if check_vacuum:
-        vac = ("(echo '\t'; echo 'select * from active;') " +
+        vac = ("(echo '\\t'; echo 'select * from active;') " +
                "| psql -U %(user)s %(db)s | grep -i '| vacuum'")
         for db in by_db:
             handle = os.popen(vac % dict(user=user, db=db))
             vacuums[db] = bool(handle.read())
             handle.close()
-                            
-    return dict(conn = total,
-                ip_conn = by_ip,
-                db_conn = by_db,
-                vacuums = vacuums)
+
+    res = dict(conn = total, ip_conn = by_ip, db_conn = by_db,
+               vacuums = vacuums)
+    
+    if 'query_queue' in by_db:
+        cmd = ("(echo '\t'; echo 'select count(*) from reddit_query_queue;') "
+               "| psql -U %(user)s query_queue ")
+        handle = os.popen(cmd % dict(user = user))
+        for line in handle:
+            try:
+                res['query_count'] = int(line.strip('\n '))
+                break
+            except ValueError:
+                continue
+        handle.close()
+    return res    
 
 
 def Run(*a, **kw):
-    HostLogger(g.reddit_host).monitor(*a, **kw)
+    from pylons import g
+    AppServiceMonitor(global_conf = g).monitor(*a, **kw)
 
 def Test(num, load = 1., pid = 0):
     services = Services()
@@ -383,4 +457,4 @@ def Test(num, load = 1., pid = 0):
     services.set_cache()
 
 if __name__ == '__main__':
-    Run(sys.argv[1:] if sys.argv[1:] else default_services)
+    Run(sys.argv[1:] if sys.argv[1:] else ['newreddit'])

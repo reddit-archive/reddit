@@ -17,10 +17,22 @@ $.log = function(message) {
 };
 
 $.debug = $.log;
+$.fn.debug = function() { 
+    $.debug($(this));
+    return $(this);
+}
 
 $.redirect = function(dest) {
     window.location = dest;
 };
+
+$.fn.redirect = function(dest) {
+    /* for forms which are "posting" by ajax leading to a redirect */
+    $(this).filter("form").find(".status").show().html("redirecting...");
+    $.redirect(dest);
+    /* this should never happen, but for the sake of internal consistency */
+    return $(this)
+}
 
 $.refresh = function() {
     window.location.reload(true);
