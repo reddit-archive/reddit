@@ -10,8 +10,12 @@
 /* utility functions */
 
 $.log = function(message) {
-    if (window.console) 
-        console.debug(message);
+    if (window.console) {
+        if (window.console.debug)
+            window.console.debug(message);
+        else if (window.console.log)
+            window.console.log(message);
+    }
     else
         alert(message);
 };
@@ -169,7 +173,7 @@ $.fn.vote = function(vh, callback) {
         var things = $(this).all_things_by_id();
         /* find all arrows of things on the page */
         var arrows = things.children().not(".child").find('.arrow');
-    
+
         /* set the new arrow states */
         var u_before = (dir == 1) ? up_cls : upmod_cls;
         var u_after  = (dir == 1) ? upmod_cls : up_cls;

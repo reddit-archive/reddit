@@ -28,6 +28,7 @@ from r2.lib.utils import tup
 from pylons import c, request
 from validator import *
 from pylons.i18n import _
+from r2.lib.filters import spaceCompress
 
 class ButtonsController(RedditController):
     def buttontype(self):
@@ -102,11 +103,12 @@ class ButtonsController(RedditController):
         else:
             target = "_parent"
 
-        c.response.content = page_handler(button=bt, css=css,
-                                    score_fmt = score_fmt, link = l, 
-                                    url=url, title=title,
-                                    vote = vote, target = target,
-                                    bgcolor=c.bgcolor, width=width).render()
+        res = page_handler(button=bt, css=css,
+                           score_fmt = score_fmt, link = l, 
+                           url=url, title=title,
+                           vote = vote, target = target,
+                           bgcolor=c.bgcolor, width=width).render()
+        c.response.content = spaceCompress(res)
         return c.response
 
     
