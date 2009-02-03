@@ -49,7 +49,9 @@
 </div>
 
 %if not c.user_is_loggedin:
-  ${self.loginpopup(login_panel, login_form)}
+  %if thing.enable_login_cover:
+    ${self.loginpopup(login_panel, login_form)}
+  %endif
   ${self.langpopup()}
 %endif
 

@@ -135,9 +135,9 @@
         host_id = host.host.replace('.', '-')
         load = host.load()
         load_level = min(max(int(load+0.5), 0),5)
-        empty_cls = '' if len(host.services) else 'empty'
      %>
-    <tr class="load${load_level} title-region ${empty_cls}" id="${host_id}">
+    %if len(host.services):
+    <tr class="load${load_level} title-region" id="${host_id}">
       <th>
           ${host.host} load: ${load}
       </th>
@@ -188,7 +188,8 @@
             ${age if service.pid > 0 else 'down'}
           </td>
         </tr>
-     %endfor
+      %endfor
+     %endif
     %endfor
   </table>
 </div>

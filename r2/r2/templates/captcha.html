@@ -51,14 +51,14 @@ ${captchagen(thing.iden, thing.error)}
      <span class="cap-reply">
   %endif
        %if label:
-         <label for="captcha">${_("human?")}</label>
+         <label for="captcha_">${_("human?")}</label>
        %endif
      %if tabular:
      </td>
      <td>
      %endif
         <input name="iden" type="hidden" value="${iden}"/>
-        <input class="captcha cap-text" 
+        <input class="captcha cap-text" id="captcha_"
                name="captcha" type="text" size="${size}" />
         <script type="text/javascript">
           emptyInput($('input.captcha'), "${_('type the letters from the image above')}");

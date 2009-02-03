@@ -90,16 +90,18 @@ thing id-${what._fullname}
 %if thing.can_ban and ban:
   %if thing.show_spam:
     <li>
-      ${ynbutton(_("unban"), _("unbanned"), "unban")}
+       ${self.state_button("unban", _("unban"), 
+          "return change_state(this, 'unban');", _("unbanned"))}
     </li>
    %else:
     <li>
-      ${ynbutton(_("ban"), _("banned"), "ban")}
+       ${self.state_button("ban", _("ban"), 
+          "return change_state(this, 'ban');", _("banned"))}
     </li>
    %endif
   %if thing.show_reports:
     <li>
-      ${state_button("ignore", _("ignore"), \
+      ${self.state_button("ignore", _("ignore"), \
        "change_state(this, 'ignore');", _("ignored"))}
     </li>
   %endif

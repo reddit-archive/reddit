@@ -300,16 +300,28 @@ $.fn.new_thing_child = function(what, use_listing) {
     var where = (use_listing) ? $.listing(id) :
         this.thing().find(".child:first");
     
+    var new_form;
     if (typeof(what) == "string") 
-        return where.prepend(what).children(":first");
+        new_form = where.prepend(what).children(":first");
     else 
-        return what.hide()
+        new_form = what.hide()
             .prependTo(where)
             .show()
             .find('input[name=parent]').attr('value', id).end();
     
+    return (new_form).randomize_ids();
 };
 
+$.fn.randomize_ids = function() {
+    var new_id = (Math.random() + "").split('.')[1]
+    $(this).find("*[id]").each(function() {
+            $(this).attr('id', $(this).attr("id") + new_id);
+        }).end()
+    .find("label").each(function() {
+            $(this).attr('for', $(this).attr("for") + new_id);
+        });
+    return $(this);
+}
 
 $.replace_things = function(things, keep_children, reveal, stubs) {
     /* Given the api-html structured things, insert them into the DOM

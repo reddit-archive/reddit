@@ -52,14 +52,14 @@
   </div>
 
   <div id="header-bottom-${'left' if c.lang_rtl else 'right'}">
-  ##  %if thing.searchbox:
-  ##    ${SearchForm().render()}
-  ##  %endif
     %if not c.user_is_loggedin:
+      %if thing.enable_login_cover:
       <span class="user">
         ${text_with_js(_("want to join? %(register)s in seconds"),
                           register=(_("register"), "return showcover(false);"))}
       </span>
+      ${separator("|")}
+      %endif
     %else:
       <span class="user">
          ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
@@ -78,9 +78,9 @@
        %>
       ${img_link(_("messages"), mail_img, path="/message/inbox/",
                  _id = "mail" )}
+      ${separator("|")}
     %endif
       
-    ${separator("|")}
     ${thing.corner_buttons().render()}
     %if c.user_is_loggedin:
       ${separator("|")}

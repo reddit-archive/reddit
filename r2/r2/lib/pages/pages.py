@@ -71,6 +71,7 @@ class Reddit(Wrapped):
     submit_box         = True
     searchbox          = True
     extension_handling = True
+    enable_login_cover = True
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
@@ -360,6 +361,8 @@ class FormPage(BoringPage):
         
 
 class LoginPage(BoringPage):
+    enable_login_cover = False
+
     """a boring page which provides the Login/register form"""
     def __init__(self, **context):
         context['loginbox'] = False
