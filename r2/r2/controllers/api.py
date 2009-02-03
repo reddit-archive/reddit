@@ -60,9 +60,7 @@ from r2.lib.promote import promote, unpromote, get_promoted
 
 def link_listing_by_url(url, count = None):
     """
-    Generates a listing of links which share a common url, filtered by
-    the subreddit the current user is subscribed to (or the default
-    list of the user is not logged in.)
+    Generates a listing of links which share a common url
     """
     try:
         links = list(tup(Link._by_url(url, sr = c.site)))
@@ -72,10 +70,8 @@ def link_listing_by_url(url, count = None):
     except NotFound:
         links = ()
         
-    user = c.user if c.user_is_loggedin else None
-    names = [l._fullname for l in links
-             if l.sr_id in Subreddit.user_subreddits(user, limit = None)]
 
+    names = [l._fullname for l in links]
     builder = IDBuilder(names, num = 25)
     return LinkListing(builder).listing()
 

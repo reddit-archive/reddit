@@ -477,12 +477,20 @@ class FrontController(RedditController):
                     redirect_link = listing.things[0]
                 # if there is more than one, check the users' subscriptions
                 else:
-                    infotext = strings.multiple_submitted % \
-                               listing.things[0].resubmit_link()
-                    res = BoringPage(_("seen it"),
-                                     content = listing,
-                                     infotext = infotext).render()
-                    return res
+                    subscribed = [l for l in listing.things
+                                  if c.user_is_loggedin
+                                  and l.subreddit.is_subscriber_defaults(c.user)]
+
+                    #if there is only 1 link to be displayed, just go there
+                    if len(subscribed) == 1:
+                        redirect_link = subscribed[0]
+                    else:
+                        infotext = strings.multiple_submitted % \
+                            listing.things[0].resubmit_link()
+                        res = BoringPage(_("seen it"),
+                                         content = listing,
+                                         infotext = infotext).render()
+                        return res
 
             # we've found a link already.  Redirect to its permalink page
             if redirect_link:
