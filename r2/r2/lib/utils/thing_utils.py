@@ -7,7 +7,7 @@ def make_last_modified():
     return last_modified
 
 def last_modified_key(thing, action):
-    return 'last_' + action + '_' + thing._fullname
+    return 'last_%s_%s' % (str(action), thing._fullname)
 
 def is_modified_since(thing, action, date):
     """Returns true if the date is older than the last_[action] date,
