@@ -241,6 +241,7 @@ class ApiController(RedditController):
         #update the modified flags
         set_last_modified(c.user, 'overview')
         set_last_modified(c.user, 'submitted')
+        set_last_modified(c.user, 'liked')
         
         # flag search indexer that something has changed
         tc.changed(l)

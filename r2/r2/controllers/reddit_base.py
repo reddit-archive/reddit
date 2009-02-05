@@ -574,7 +574,7 @@ class RedditController(BaseController):
             return
 
         date = utils.is_modified_since(thing, action, request.if_modified_since)
-        if date is True:
+        if date is False:
             abort(304, 'not modified')
         else:
             c.response.headers['Last-Modified'] = http_utils.http_date_str(date)
