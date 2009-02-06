@@ -97,6 +97,7 @@ def edit_comment_filter(text = ''):
 #TODO is this fast?
 r_url = re.compile('(?<![\(\[])(http://[^\s\'\"\]\)]+)')
 jscript_url = re.compile('<a href="(?!http|ftp|mailto|/).*</a>', re.I | re.S)
+img = re.compile('<img.*?>', re.I | re.S)
 href_re = re.compile('<a href="([^"]+)"', re.I | re.S)
 code_re = re.compile('<code>([^<]+)</code>')
 a_re    = re.compile('>([^<]+)</a>')
@@ -115,6 +116,8 @@ def safemarkdown(text):
             text = markdown(text)
         except RuntimeError:
             text = "<p><em>Comment Broken</em></p>"
+        #remove images
+        text = img.sub('', text)
         #wipe malicious javascript
         text = jscript_url.sub('', text)
         def href_handler(m):
