@@ -104,7 +104,7 @@ class LocalCache(dict, CacheUtils):
         for k,v in keys.iteritems():
             self.set(prefix+str(k), v)
 
-    def add(self, key, val):
+    def add(self, key, val, time = 0):
         self._check_key(key)
         self.setdefault(key, val)
 

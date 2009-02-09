@@ -33,6 +33,8 @@ from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
+from r2.lib import jsontemplates
+from r2.lib import sup
 import r2.lib.db.thing as thing
 from listingcontroller import ListingController
 from pylons import c, request
@@ -456,10 +458,10 @@ class FrontController(RedditController):
         returns their user name"""
         c.response_content_type = 'text/plain'
         if c.user_is_loggedin:
-            return c.user.name
+            c.response.content = c.user.name
         else:
-            return ''
-
+            c.response.content = ''
+        return c.response
 
     @validate(VUser(), 
               VSRSubmitPage(),
@@ -573,3 +575,14 @@ class FrontController(RedditController):
 
     def GET_catchall(self):
         return self.abort404()
+
+    def GET_sup(self):
+        #dont cache this, it's memoized elsewhere
+        c.used_cache = True
+        sup.set_expires_header()
+
+        if c.extension == 'json':
+            c.response.content = sup.sup_json()
+            return c.response
+        else:
+            return self.abort404()

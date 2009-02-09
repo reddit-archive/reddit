@@ -42,6 +42,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/over18',   controller='post', action='over18')
     
     mc('/search', controller='front', action='search')
+
+    mc('/sup', controller='front', action='sup')
     
     mc('/about/:location', controller='front', 
        action='editreddit', location = 'about')
