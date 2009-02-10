@@ -21,22 +21,35 @@
 ################################################################################
 
 from datetime import datetime
+from itertools import ifilter
 import time, md5
 
 import simplejson
 
 from r2.lib.utils import rfc3339_date_str, http_date_str, to36
 from r2.lib.memoize import memoize
+from r2.lib.template_helpers import get_domain
 from pylons import g, c
 
-SUP_PERIOD = 60
+PERIODS = [600, 300, 60]
+MIN_PERIOD = min(PERIODS)
+MAX_PERIOD = max(PERIODS)
 
-def cur_time(period):
+def sup_url():
+    return 'http://%s/sup.json' % get_domain(subreddit = False)
+
+def period_urls():
+    return dict((p, sup_url() + "?seconds=" + str(p)) for p in PERIODS)
+
+def cache_key(ts):
+    return 'sup_' + str(ts)
+
+def make_cur_time(period):
     t = int(time.time())
     return t - t % period
 
-def last_time(period):
-    return cur_time(period) - period
+def make_last_time(period):
+    return make_cur_time(period) - period
 
 def make_sup_id(user, action):
     sup_id = md5.new(user.name + action).hexdigest()
@@ -44,44 +57,55 @@ def make_sup_id(user, action):
     return sup_id[:10]
 
 def add_update(user, action):
-    update_time = to36(int(time.time()))
+    update_time = int(time.time())
     sup_id = make_sup_id(user, action)
-    sup_update = ',%s:%s' % (sup_id, update_time)
+    supdate = ',%s:%s' % (sup_id, update_time)
 
-    key = str(cur_time(SUP_PERIOD))
-    g.cache.add(key, '', time = SUP_PERIOD * 3)
-    g.cache.append(key, sup_update)
+    key = cache_key(make_cur_time(MIN_PERIOD))
+    g.cache.add(key, '')
+    g.cache.append(key, supdate)
 
-@memoize('set_sup_header', time = SUP_PERIOD)
-def sup_json_cached(lt):
-    update_time = datetime.utcnow()
-    since_time = datetime.utcfromtimestamp(lt)
+@memoize('set_json', time = MAX_PERIOD)
+def sup_json_cached(period, last_time):
+    #we need to re-add MIN_PERIOD because we moved back that far with
+    #the call to make_last_time
+    target_time = last_time + MIN_PERIOD - period
 
-    updates = g.cache.get(str(lt))
-    sup_updates = []
+    updates = ''
+    #loop backwards adding MIN_PERIOD chunks until last_time is as old
+    #as target time
+    while last_time >= target_time:
+        updates += g.cache.get(cache_key(last_time)) or ''
+        last_time -= MIN_PERIOD
+
+    supdates = []
     if updates:
-        sup_updates = [u.split(':') for u in updates.split(',') if u]
+        for u in ifilter(None, updates.split(',')):
+            sup_id, time = u.split(':')
+            time = int(time)
+            if time >= target_time:
+                supdates.append([sup_id, to36(time)])
 
+    update_time = datetime.utcnow()
+    since_time = datetime.utcfromtimestamp(target_time)
     json = simplejson.dumps({'updated_time' : rfc3339_date_str(update_time),
                              'since_time' : rfc3339_date_str(since_time),
-                             'period' : SUP_PERIOD,
-                             'updates' : sup_updates})
+                             'period' : period,
+                             'available_periods' : period_urls(),
+                             'updates' : supdates})
+
+    #undo json escaping
+    json = json.replace('\/', '/')
     return json
 
-def sup_json():
-    return sup_json_cached(last_time(SUP_PERIOD))
+def sup_json(period):
+    return sup_json_cached(period, make_last_time(MIN_PERIOD))
 
 def set_sup_header(user, action):
     sup_id = make_sup_id(user, action)
-
-    if g.domain_prefix:
-        domain = g.domain_prefix + '.' + g.domain
-    else:
-        domain = g.domain
-
-    c.response.headers['x-sup-id'] = 'http://%s/sup.json#%s' % (domain, sup_id)
+    c.response.headers['x-sup-id'] = sup_url() + '#' + sup_id
 
 def set_expires_header():
-    seconds = cur_time(SUP_PERIOD) + SUP_PERIOD
+    seconds = make_cur_time(MIN_PERIOD) + MIN_PERIOD
     expire_time = datetime.fromtimestamp(seconds, g.tz)
     c.response.headers['expires'] = http_date_str(expire_time)

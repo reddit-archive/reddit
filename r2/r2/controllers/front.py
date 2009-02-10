@@ -576,13 +576,17 @@ class FrontController(RedditController):
     def GET_catchall(self):
         return self.abort404()
 
-    def GET_sup(self):
+    @validate(period = VInt('seconds',
+                            min = sup.MIN_PERIOD,
+                            max = sup.MAX_PERIOD,
+                            default = sup.MIN_PERIOD))
+    def GET_sup(self, period):
         #dont cache this, it's memoized elsewhere
         c.used_cache = True
         sup.set_expires_header()
 
         if c.extension == 'json':
-            c.response.content = sup.sup_json()
+            c.response.content = sup.sup_json(period)
             return c.response
         else:
             return self.abort404()
