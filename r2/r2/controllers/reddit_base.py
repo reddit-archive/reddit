@@ -597,6 +597,3 @@ class RedditController(BaseController):
         merged = copy(request.get)
         merged.update(dict)
         return request.path + utils.query_string(merged)
-
-
-    

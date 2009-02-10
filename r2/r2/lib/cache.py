@@ -72,7 +72,7 @@ class Memcache(CacheUtils, memcache.Client):
         memcache.Client.delete(self, key, time=time)
 
     def delete_multi(self, keys, prefix='', time=0):
-        memcache.Client.delete_multi(self, keys, seconds = time,
+        memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
 
 class LocalCache(dict, CacheUtils):
@@ -104,7 +104,7 @@ class LocalCache(dict, CacheUtils):
         for k,v in keys.iteritems():
             self.set(prefix+str(k), v)
 
-    def add(self, key, val):
+    def add(self, key, val, time = 0):
         self._check_key(key)
         self.setdefault(key, val)
 
@@ -119,11 +119,23 @@ class LocalCache(dict, CacheUtils):
 
     def incr(self, key, amt=1):
         if self.has_key(key):
-            self[key] += amt
+            self[key] = int(self[key]) + amt
 
     def decr(self, key, amt=1): 
         if self.has_key(key):
-            self[key] -= amt
+            self[key] = int(self[key]) - amt
+
+    def append(self, key, val, time = 0):
+        if self.has_key(key):
+            self[key] = str(self[key]) + val
+
+    def prepend(self, key, val, time = 0):
+        if self.has_key(key):
+            self[key] = val + str(self[key])
+
+    def replace(self, key, val, time = 0):
+        if self.has_key(key):
+            self[key] = val
 
     def flush_all(self):
         self.clear()
@@ -139,6 +151,9 @@ class CacheChain(CacheUtils, local):
         return fn
 
     set = make_set_fn('set')
+    append = make_set_fn('append')
+    prepend = make_set_fn('prepend')
+    replace = make_set_fn('replace')
     set_multi = make_set_fn('set_multi')
     add = make_set_fn('add')
     incr = make_set_fn('incr')

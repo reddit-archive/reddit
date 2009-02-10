@@ -35,6 +35,7 @@ from r2.lib.strings import Score
 from r2.lib import organic
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating
+from r2.lib import sup
 
 from admin import admin_profile_query
 
@@ -386,14 +387,17 @@ class UserController(ListingController):
 
         elif self.where == 'comments':
             self.check_modified(self.vuser, 'commented')
+            sup.set_sup_header(self.vuser, 'commented')
             q = queries.get_comments(self.vuser, 'new', 'all')
 
         elif self.where == 'submitted':
             self.check_modified(self.vuser, 'submitted')
+            sup.set_sup_header(self.vuser, 'submitted')
             q = queries.get_submitted(self.vuser, 'new', 'all')
 
         elif self.where in ('liked', 'disliked'):
             self.check_modified(self.vuser, self.where)
+            sup.set_sup_header(self.vuser, self.where)
             if self.where == 'liked':
                 q = queries.get_liked(self.vuser)
             else:

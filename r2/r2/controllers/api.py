@@ -41,15 +41,13 @@ from r2.lib.pages import FriendList, ContributorList, ModList, \
 from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
-from r2.lib import emailer
 from r2.lib.strings import strings
 from r2.lib.memoize import clear_memo
 from r2.lib.filters import _force_unicode, websafe_json
 from r2.lib.db import queries
-from r2.lib import cssfilter
-from r2.lib import tracking
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
+from r2.lib import tracking, sup, cssfilter, emailer
 
 from simplejson import dumps
 
@@ -242,6 +240,9 @@ class ApiController(RedditController):
         set_last_modified(c.user, 'overview')
         set_last_modified(c.user, 'submitted')
         set_last_modified(c.user, 'liked')
+
+        #update sup listings
+        sup.add_update(c.user, 'submitted')
         
         # flag search indexer that something has changed
         tc.changed(l)
@@ -596,6 +597,9 @@ class ApiController(RedditController):
                 set_last_modified(c.user, 'overview')
                 set_last_modified(c.user, 'commented')
                 set_last_modified(link, 'comments')
+
+                #update sup listings
+                sup.add_update(c.user, 'commented')
     
                 #update the comment cache
                 add_comment(item)
@@ -709,6 +713,12 @@ class ApiController(RedditController):
                 sr = thing.subreddit_slow
                 set_last_modified(c.user, 'liked')
                 set_last_modified(c.user, 'disliked')
+
+                #update sup listings
+                if dir:
+                    sup.add_update(c.user, 'liked')
+                elif dir is False:
+                    sup.add_update(c.user, 'disliked')
 
                 if v.valid_thing:
                     expire_hot(sr)

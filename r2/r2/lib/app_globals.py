@@ -105,13 +105,13 @@ class Globals(object):
                 setattr(self, k, v)
 
         # initialize caches
-        mc = Memcache(self.memcaches)
+        mc = Memcache(self.memcaches, pickleProtocol = 1)
         self.cache = CacheChain((LocalCache(), mc))
-        self.permacache = Memcache(self.permacaches)
-        self.rendercache = Memcache(self.rendercaches)
+        self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
+        self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
         self.make_lock = make_lock_factory(mc)
 
-        self.rec_cache = Memcache(self.rec_cache)
+        self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
         
         # set default time zone if one is not set
         self.tz = pytz.timezone(global_conf.get('timezone'))
