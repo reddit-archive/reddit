@@ -108,4 +108,6 @@ def set_sup_header(user, action):
 def set_expires_header():
     seconds = make_cur_time(MIN_PERIOD) + MIN_PERIOD
     expire_time = datetime.fromtimestamp(seconds, g.tz)
-    c.response.headers['expires'] = http_date_str(expire_time)
+    #c.response.headers['expires'] = http_date_str(expire_time)
+    c.response.headers['Cache-Control'] = 'no-cache'
+    c.response.headers['Pragma'] = 'no-cache'
