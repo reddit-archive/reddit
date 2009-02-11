@@ -16,7 +16,7 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
 # 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2008
+# All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController
@@ -528,7 +528,7 @@ class ApiController(RedditController):
                                errors.BAD_COMMENT, errors.COMMENT_TOO_LONG,
                                errors.NOT_AUTHOR):
             comment.body = body
-            if not c.user_is_admin: comment.editted = True
+            comment.editted = True
             comment._commit()
 
             jquery.replace_things(comment, True, True)

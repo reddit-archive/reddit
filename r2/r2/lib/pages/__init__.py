@@ -16,7 +16,7 @@
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
 # 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2008
+# All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from pages import *
