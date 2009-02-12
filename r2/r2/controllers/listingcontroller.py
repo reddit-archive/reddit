@@ -386,18 +386,18 @@ class UserController(ListingController):
             q = queries.get_overview(self.vuser, 'new', 'all')
 
         elif self.where == 'comments':
-            self.check_modified(self.vuser, 'commented')
             sup.set_sup_header(self.vuser, 'commented')
+            self.check_modified(self.vuser, 'commented')
             q = queries.get_comments(self.vuser, 'new', 'all')
 
         elif self.where == 'submitted':
-            self.check_modified(self.vuser, 'submitted')
             sup.set_sup_header(self.vuser, 'submitted')
+            self.check_modified(self.vuser, 'submitted')
             q = queries.get_submitted(self.vuser, 'new', 'all')
 
         elif self.where in ('liked', 'disliked'):
-            self.check_modified(self.vuser, self.where)
             sup.set_sup_header(self.vuser, self.where)
+            self.check_modified(self.vuser, self.where)
             if self.where == 'liked':
                 q = queries.get_liked(self.vuser)
             else:

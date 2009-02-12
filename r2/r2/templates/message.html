@@ -73,8 +73,7 @@ ${unsafe(safemarkdown(thing.body))}
 <%def name="buttons()">
 %if hasattr(thing, "was_comment"):
     <li>
-    ${parent.comment_button("context", _("context"), 0, 
-                            thing.permalink + "?context=3")}
+    ${parent.bylink_button(_("context"), thing.permalink + "?context=3")}
     </li>
     ${parent.delete_or_report_buttons(delete=False)}
 %else:

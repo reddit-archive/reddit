@@ -35,6 +35,8 @@ from r2.lib.filters import _force_unicode
 import os.path
 import random
 
+class SubredditExists(Exception): pass
+
 class Subreddit(Thing, Printable):
     _defaults = dict(static_path = g.static_path,
                      stylesheet = None,

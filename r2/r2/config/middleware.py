@@ -44,7 +44,6 @@ import sys, tempfile, urllib, re, os, sha
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
-
     if environ.get('pylons.error_call'):
         return None
     else:
@@ -52,7 +51,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
     if global_conf is None:
         global_conf = {}
-    codes = [401, 403, 404, 503]
+    codes = [304, 401, 403, 404, 503]
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:
@@ -62,6 +61,19 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):
             d['srname'] = environ.get('REDDIT_NAME')
+
+        #preserve x-sup-id when 304ing
+        if code == 304:
+            from pylons import c
+            #check to see if c is useable
+            try:
+                c.test
+            except TypeError:
+                pass
+            else:
+                if c.response.headers.has_key('x-sup-id'):
+                    d['x-sup-id'] = c.response.headers['x-sup-id']
+
         url = '/error/document/?%s' % (urllib.urlencode(d))
         return url
 

@@ -123,21 +123,20 @@ ${parent.midcol()}
 
 <%def name="buttons()">
   <li class="first">
-    ${parent.comment_button("permalink", _("permalink"), 0, 
-    thing.permalink)}
+    ${parent.bylink_button(_("permalink"), thing.permalink)}
   </li>
 
   %if thing.deleted:
     %if thing.parent_permalink and not c.profilepage:
       <li>
-        ${bylink_button("parent", _("parent"), thing.parent_permalink)}
+        ${parent.bylink_button(_("parent"), thing.parent_permalink)}
       </li>
     %endif
   %else:
     %if not c.profilepage:
       %if thing.parent_permalink:
         <li>
-          ${bylink_button("parent", _("parent"), thing.parent_permalink)}
+          ${parent.bylink_button(_("parent"), thing.parent_permalink)}
         </li>
       %endif
       %if c.user_is_loggedin and thing.author.name == c.user.name:
@@ -158,9 +157,3 @@ ${parent.midcol()}
   %endif
   ${self.admintagline()}
 </%def>
-
-
-<%def name="bylink_button(name, title, link)">
- <a href="${link}" class="bylink">${title}</a>
-</%def>
-

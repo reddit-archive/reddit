@@ -129,6 +129,9 @@ class ErrorController(RedditController):
 
     def GET_document(self):
         try:
+            #no cookies on errors
+            c.cookies.clear()
+
             code =  request.GET.get('code', '')
             srname = request.GET.get('srname', '')
             if srname:
@@ -143,6 +146,9 @@ class ErrorController(RedditController):
                 c.response.status_code = 503
                 c.response.headers['Retry-After'] = 1
                 c.response.content = toofast
+                return c.response
+            elif code == '304':
+                c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
                 return c.response
             elif c.site:
                 return self.send404()

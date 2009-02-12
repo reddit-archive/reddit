@@ -21,8 +21,7 @@
 ################################################################################
 
 <%inherit file="printable.html"/>
-
-
+<%namespace file="utils.html" import="plain_link" />
 
 <%def name="midcol(display=True)">
 %if c.profilepage or (not thing._deleted and  (not thing._spam or c.user == thing.author or c.user_is_admin)):
@@ -71,3 +70,6 @@ ${self.tagline(True)}
 </div>
 </%def>
 
+<%def name="bylink_button(title, link)">
+ ${plain_link(title, link, _class="bylink", rel="nofollow")}
+</%def>
