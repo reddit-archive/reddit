@@ -65,7 +65,7 @@
            qcount = host.database.query_count \
               if hasattr(host.database, "query_count") else None
            %>
-        %if qcount:
+        %if qcount and qcount():
         <tr class="load${load_level} title-region" id="${host_id}">
           <th>
           </th>

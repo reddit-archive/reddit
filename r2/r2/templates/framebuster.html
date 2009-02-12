@@ -37,7 +37,13 @@
       (function($) {
          $.framebuster = function() {
             $(function() {
-                $.refresh();
+                if($.browser.mozilla) {
+                   var url = window.location.href;
+                   $.redirect(url + ((url.indexOf('?') == -1)?'?':'&') +
+                         'v=' + Math.random());
+                }
+                else
+                   $.refresh();
              });
          }
       })(jQuery);
