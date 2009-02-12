@@ -90,8 +90,8 @@ def Alert(restart_list = ['MEM','CPU'],
 
 
 
-def Run(*a, **kw):
-    AppServiceMonitor().monitor(*a, **kw)
+def Run(srvname, *a, **kw):
+    AppServiceMonitor().monitor(srvname, *a, **kw)
 
 def Test(num, load = 1., pid = 0):
     services = Services()

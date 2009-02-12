@@ -97,20 +97,21 @@ class AppServiceMonitor(Wrapped):
         return h.load.most_recent()
         
     def __iter__(self):
+        if not self.hostlogs:
+            self.hostlogs = [self.from_cache(host) for host in self._hosts]
+            self.hostlogs = filter(None, self.hostlogs)
         return iter(self.hostlogs)
 
     def render(self, *a, **kw):
-        self.hostlogs = [self.from_cache(host)
-                         for host in self._hosts]
-        self.hostlogs = filter(None, self.hostlogs)
+        self.hostlogs = list(self)
         return Wrapped.render(self, *a, **kw)
 
-    def monitor(self, loop = True, loop_time = 2, *a, **kw):
+    def monitor(self, srvname, loop = True, loop_time = 2, *a, **kw):
 
         host = g.reddit_host
         h = HostLogger(host, self)
         while True:
-            h.monitor(*a, **kw)
+            h.monitor(srvname, *a, **kw)
             
             self.set_cache(h)
             if loop:
@@ -256,7 +257,7 @@ class HostLogger(object):
                 del self.services[pid]
 
 
-    def monitor(self, srvname = None, 
+    def monitor(self, srvname, 
                 srv_params = {}, top_params = {}, db_params = {}):
         # (re)populate the service listing
         for name, status, pid, t in supervise_list(**srv_params):
