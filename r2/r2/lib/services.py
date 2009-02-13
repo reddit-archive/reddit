@@ -97,12 +97,8 @@ class AppServiceMonitor(Wrapped):
         cache.set_multi(res)
 
     @classmethod
-    def get_db_load(cls, *names):
+    def get_db_load(cls, names):
         return g.rendercache.get_multi(names, prefix = cls.cache_key_small)
-
-    def database_load(self, db_name):
-        if self._db_info.has_key(db_name):
-            return self.server_load(self._db_info[db_name][-1])
 
     def server_load(self, mach_name):
         h = self.from_cache(host) 
@@ -272,9 +268,10 @@ class HostLogger(object):
     def monitor(self, srvname, 
                 srv_params = {}, top_params = {}, db_params = {}):
         # (re)populate the service listing
-        for name, status, pid, t in supervise_list(**srv_params):
-            if not srvname or any(s in name for s in srvname):
-                self.add_service(name, pid, t)
+        if srvname:
+            for name, status, pid, t in supervise_list(**srv_params):
+                if any(s in name for s in srvname):
+                    self.add_service(name, pid, t)
         
         # check process usage
         proc_info = process_info(proc_ids = self.service_pids(),

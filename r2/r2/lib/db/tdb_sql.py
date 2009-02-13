@@ -28,6 +28,7 @@ import sqlalchemy as sa
 from sqlalchemy.databases import postgres
 
 from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
+from r2.lib.services import AppServiceMonitor
 import operators
 from pylons import g
 dbm = g.dbm
@@ -275,7 +276,35 @@ def get_write_table(tables):
     return tables[0]
 
 def get_read_table(tables):
-    return random.choice(tables)
+    #shortcut with 1 entry
+    if len(tables) == 1:
+        return tables[0]
+
+    #'t' is a list of engines itself. since we assume those engines
+    #are on the same machine, just take the first one. len(ips) may be
+    #< len(tables) if some tables are on the same host.
+    ips = dict((t[0].engine.url.host, t) for t in tables)
+    ip_loads = AppServiceMonitor.get_db_load(ips.keys())
+
+    candidates = []
+    all_ips = []
+    for ip in ips:
+        if ip not in ip_loads:
+            print 'no load info for %s' % ip
+            all_ips.append(ip)
+        else:
+            load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
+
+            #prune high-connection machines
+            if conns < .9 * max_conns:
+                candidates.append((ip, max(load, avg_load)))
+
+    #add the least loaded machine to all_ips
+    if candidates:
+        all_ips.append(min(candidates, key = lambda x: x[1])[0])
+
+    best_ip = random.choice(all_ips)
+    return ips[best_ip]
 
 def get_thing_write_table(type_id):
     return get_write_table(types_id[type_id].tables)
