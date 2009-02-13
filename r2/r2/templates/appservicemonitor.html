@@ -21,21 +21,28 @@
 ################################################################################
 
 <%
-     cpu_col = 75.
-     mem_col = 40.
-     hide_data = "style='display:none'" if len(thing.hostlogs) > 4 else ''
+   import datetime  
+   cpu_col = 75.
+   mem_col = 40.
+   hide_data = "style='display:none'" if len(thing.hostlogs) > 4 else ''
  %>
 
 <div class="server-status">
   <h3>Rendered by PID ${g.reddit_pid} on ${g.reddit_host}</h3>
+  <% 
+     cache_lifetime = thing.get_cache_lifetime()
+     if cache_lifetime > 0:
+        cache_lifetime = '%s' % datetime.timedelta(0, max(cache_lifetime, 0))
+     else:
+        cache_lifetime = "--:--.--"
+     %>
+  <h4>Cache lifetime: ${'%s' % cache_lifetime}</h4>
   %if any(h.database for h in thing.hostlogs):
   <table class="monitor-database"> 
     <tr class="title-region"> 
       <th>database</th>
       <th>connections</th>
       <th>
-        <span style="color:green">1 min</span> / 
-        <span style="color:red">5 min</span>
       </th>
       <th></th>
     </tr>
@@ -45,6 +52,14 @@
            host_id = host.host.replace('.', '-')
            load = host.load()
            load_level = min(max(int(load+0.4), 0),4)
+           if host.database.max_connections > 0:
+               max_conn = host.database.max_connections
+               conn = float(host.database.connections()) / max_conn
+               conn_wid = int(cpu_col*min(1, conn))
+           else:
+               max_conn = conn = 0
+               conn_wid = 0
+
          %>
         <tr class="load${load_level} title-region" id="${host_id}">
           <th>
@@ -53,12 +68,18 @@
           <th>
             %if host.database.vacuuming:
               <blink style="color:red">VACUUMING!</blink>
+            %else:
+              <div class="membar" style="width:${conn_wid}px;">
+                <span>
+                  ${"%3.0f%%" % (100* conn) }
+                </span>
+              </div>
             %endif
           </th>
           <td>
-            <span style="color:green">${host.database.connections()}</span> 
+            <span style="color:green">${int(conn * max_conn)}</span> 
             &nbsp;/&nbsp;
-            <span style="color:red">${host.database.connections(300)}</span>
+            <span>${max_conn}</span>
           </td>
         </tr>
         <% 

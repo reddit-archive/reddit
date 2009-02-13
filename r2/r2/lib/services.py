@@ -19,16 +19,19 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-import os, re, sys, socket, time
+import os, re, sys, socket, time, random, time
+from itertools import chain
+
 from wrapped import Wrapped
 from datetime import datetime, timedelta
 from pylons import g
 from r2.lib.utils import tup
-from itertools import chain
+from r2.lib.cache import Memcache
 
 class AppServiceMonitor(Wrapped):
     cache_key       = "machine_datalogger_data_"
     cache_key_small = "machine_datalogger_db_summary_"
+    cache_lifetime  = "memcached_lifetime"
 
     """
     Master controller class for service monitoring.
@@ -64,6 +67,15 @@ class AppServiceMonitor(Wrapped):
         self._db_info = db_info
         self.hostlogs = []
         Wrapped.__init__(self)
+
+    @classmethod
+    def set_cache_lifetime(cls, data):
+        g.rendercache.set(cls.cache_lifetime, data)
+
+    @classmethod
+    def get_cache_lifetime(cls, average = None):
+        d =  g.rendercache.get(cls.cache_lifetime, DataLogger())
+        return d(average)
 
     @classmethod
     def from_cache(cls, host):
@@ -401,3 +413,54 @@ def check_database(db_names, proc = "postgres", check_vacuum = True, user='ri'):
                 continue
 
     return res    
+
+def monitor_cache_lifetime(minutes, retest = 10, ntest = -1,
+                           cache_key = "cache_life_", verbose = False):
+
+    # list of list of active memcache test keys
+    keys = []
+    period = 60  # 1 minute cycle time
+    data = DataLogger()
+    
+    
+    # we'll create an independent connection to memcached for this test
+    mc = Memcache(g.memcaches)
+
+    counter = 0
+    while ntest:
+
+        if counter == 0 or (retest and counter % retest == 0):
+            randstr = random.random()
+            newkeys = [("%s_%s_%d" % (cache_key, randstr, x), x+1)
+                       for x in xrange(minutes)]
+
+            # set N keys, and tell them not to live for longer than this test
+            mc.set_multi(dict(newkeys),
+                         #time = minutes * period)
+                         time = (minutes+1) * period)
+
+            # add the list in reverse order since we'll be poping.
+            newkeys.reverse()
+            keys.append(newkeys)
+
+        # wait for the next key to (potentially) expire
+        counter += 1
+        time.sleep(period)
+
+        for k in keys:
+            key, age = k.pop()
+            if mc.get(key) is None or k == []:
+                if verbose:
+                    print "cache expiration: %d seconds" % (period * age)
+                data.add(period * age)
+                AppServiceMonitor.set_cache_lifetime(data)
+                # wipe out the list for removal by the subsequent filter
+                while k: k.pop()
+
+        # clear out any empty key lists
+        if [] in keys:
+            keys = filter(None, keys)
+            ntest -= 1
+                
+        
+        

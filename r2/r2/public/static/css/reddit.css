@@ -1025,9 +1025,14 @@ textarea.gray { color: gray; }
 }
 
 .server-status .membar { 
-    height:10px; 
+    height:11px; 
     border:1px solid white;
-    background-color:#336699; 
+    background-color:#6699FF; 
+    position: relative;
+}
+.server-status .membar span { 
+    position: absolute;
+    font-size: smaller;
 }
 .server-status .cpu50  { 
     height: 5px; 
