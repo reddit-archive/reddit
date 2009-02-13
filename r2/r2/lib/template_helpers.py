@@ -232,6 +232,10 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
      * sr_path: if a cname is not used for the domain, updates the
        path to include c.site.path.
     """
+    # don't do anything if it is just an anchor
+    if path.startswith('#'):
+        return path
+    
     u = UrlParser(path)
     if sr_path and (nocname or not c.cname):
         u.path_add_subreddit(c.site)
