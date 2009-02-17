@@ -41,9 +41,8 @@
   <table class="monitor-database"> 
     <tr class="title-region"> 
       <th>database</th>
-      <th>connections</th>
-      <th>
-      </th>
+      <th>disk</th>
+      <th>conn</th>
       <th></th>
     </tr>
     %for host in thing.hostlogs:
@@ -52,26 +51,30 @@
            host_id = host.host.replace('.', '-')
            load = host.load()
            load_level = min(max(int(load+0.4), 0),4)
+           if hasattr(host.database, "disk_usage"):
+               du = host.database.disk_usage
+           else:
+               du = 0;
+           du_wid = int(cpu_col*min(1, du))
+
            if host.database.max_connections > 0:
                max_conn = host.database.max_connections
                conn = float(host.database.connections()) / max_conn
-               conn_wid = int(cpu_col*min(1, conn))
            else:
                max_conn = conn = 0
-               conn_wid = 0
 
          %>
         <tr class="load${load_level} title-region" id="${host_id}">
           <th>
             ${host.host} load: ${load}
           </th>
-          <th>
+          <th width="${cpu_col}px">
             %if host.database.vacuuming:
               <blink style="color:red">VACUUMING!</blink>
             %else:
-              <div class="membar" style="width:${conn_wid}px;">
+              <div class="membar" style="width:${du_wid}px;">
                 <span>
-                  ${"%3.0f%%" % (100* conn) }
+                  ${"%3.0f%%" % (100 * du) }
                 </span>
               </div>
             %endif
@@ -80,6 +83,14 @@
             <span style="color:green">${int(conn * max_conn)}</span> 
             &nbsp;/&nbsp;
             <span>${max_conn}</span>
+            %if hasattr(host.database, "last_update"):
+               <% update = host.database.last_update() %> 
+               %if not update or update > datetime.timedelta(0, 60):
+                  <b style="color:orangered; font-size:smaller">
+                    (${str(update).split('.')[0]} old)
+                  </b>
+               %endif
+            %endif
           </td>
         </tr>
         <% 
