@@ -180,13 +180,13 @@ class DataLogger(object):
         self.maxlen = maxlen
 
     def add(self, value):
-        self._list.append((value, datetime.now()))
+        self._list.append((value, datetime.utcnow()))
         if len(self._list) > self.maxlen:
             self._list = self._list[-self.maxlen:]
                           
 
     def __call__(self, average = None):
-        time = datetime.now()
+        time = datetime.utcnow()
         if average > 0 and self._list:
             lst = filter(lambda x: time - x[1] <= timedelta(0, average),
                          self._list)
@@ -233,7 +233,7 @@ class Database(object):
 
     def last_update(self):
         update = self.connections.most_recent()[1]
-        return datetime.now() - update if update else None
+        return datetime.utcnow() - update if update else None
 
     def track(self, conn = 0, ip_conn = {}, db_conn = {}, vacuums = {},
               query_count = None, max_connections = None,
@@ -298,7 +298,7 @@ class HostLogger(object):
             self.services[pid].age = int(age / 60)
         
     def clean_dead(self, age = 10):
-        time = datetime.now()
+        time = datetime.utcnow()
         for pid, s in list(self.services.iteritems()):
             t = s.last_update()
             if not t or t < time - timedelta(0, age) or pid < 0:
@@ -470,7 +470,7 @@ def check_database(db_names, check_vacuum = True, user='ri'):
             if len(line) > 4 and line[4].endswith('%'):
                 try:
                     res['disk_usage'] = float(line[4].strip('%'))/100
-                except TypeError:
+                except ValueError:
                     pass
                     
     res['failures'] = conn_failure
