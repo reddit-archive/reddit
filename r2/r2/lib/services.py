@@ -175,7 +175,7 @@ class DataLogger(object):
     interval is provided
     """
     
-    def __init__(self, maxlen = 300):
+    def __init__(self, maxlen = 30):
         self._list = []
         self.maxlen = maxlen
 
