@@ -35,7 +35,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js
 from r2.lib.template_helpers import add_sr, get_domain
-import sys
+import sys, random
 
 datefmt = _force_utf8(_('%d %b %Y'))
 
@@ -72,6 +72,7 @@ class Reddit(Wrapped):
     searchbox          = True
     extension_handling = True
     enable_login_cover = True
+    site_tracking      = True
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
@@ -620,11 +621,27 @@ class InfoBar(Wrapped):
     def __init__(self, message = ''):
         Wrapped.__init__(self, message = message)
 
+
+class RedditError(BoringPage):
+    site_tracking = False
+    def __init__(self, msg):
+        BoringPage.__init__(self, msg, loginbox=False,
+                            show_sidebar = False, 
+                            content=ErrorPage(msg))
+
+class Reddit404(BoringPage):
+    site_tracking = False
+    def __init__(self):
+        ch=random.choice(['a','b','c','d','e'])
+        BoringPage.__init__(self, _("page not found"), loginbox=False,
+                            show_sidebar = False, 
+                            content=UnfoundPage(ch))
+        
 class UnfoundPage(Wrapped):
     """Wrapper for the 404 page"""
-    def __init__(self, choice='a'):
-        Wrapped.__init__(self, choice=choice)
-
+    def __init__(self, choice):
+        Wrapped.__init__(self, choice = choice)
+    
 class ErrorPage(Wrapped):
     """Wrapper for an error message"""
     def __init__(self, message = _("you aren't allowed to do that.")):

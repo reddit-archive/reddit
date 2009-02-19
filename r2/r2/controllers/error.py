@@ -106,26 +106,17 @@ class ErrorController(RedditController):
     def send403(self):
         c.response.status_code = 403
         c.site = Default
-        title = _("forbidden (%(domain)s)") % dict(domain=g.domain)
-        return pages.BoringPage(title,  loginbox=False,
-                                show_sidebar = False, 
-                                content=pages.ErrorPage()).render()
+        res = pages.RedditError(_("forbidden (%(domain)s)") %
+                                dict(domain=g.domain))
+        return res.render()
 
     def send404(self):
         c.response.status_code = 404
         if c.site._spam and not c.user_is_admin:
-            msg = _("this reddit has been banned.")
-            res =  pages.BoringPage(msg, loginbox = False,
-                                    show_sidebar = False, 
-                                    content = pages.ErrorPage(message = msg))
+            res = pages.RedditError(_("this reddit has been banned."))
             return res.render()
         else:
-            ch=rand.choice(['a','b','c','d','e'])
-            res = pages.BoringPage(_("page not found"),
-                                   loginbox=False,
-                                   show_sidebar = False, 
-                                   content=pages.UnfoundPage(choice=ch))
-            return res.render()
+            return pages.Reddit404().render()
 
     def GET_document(self):
         try:

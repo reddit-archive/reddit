@@ -43,7 +43,7 @@
     ${_("(c) %(year)d CondeNet, Inc. All rights reserved.") % \
     dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
- %if g.tracker_url:
+ %if g.tracker_url and thing.site_tracking:
   <img alt="" src="${tracking.UserInfo.gen_url()}"/>
  %endif
 </div>

@@ -24,7 +24,7 @@ from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
     ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, Socialite
 from r2.models import *
 from r2.lib.strings import Score
-from r2.lib.utils import tup
+from r2.lib.utils import tup, query_string
 from pylons import c, request
 from validator import *
 from pylons.i18n import _
@@ -78,7 +78,8 @@ class ButtonsController(RedditController):
 
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
-            return self.abort404()
+            c.site = Default
+            return self.redirect(request.path + query_string(request.GET))
 
         l = self.wrap_link(link or self.get_link(url))
         if l: url = l.url
