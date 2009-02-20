@@ -65,6 +65,16 @@ except ImportError:
     print "Installing Sqlalchemy 0.3.10 from the cheese shop"
     easy_install(["http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.3.10.tar.gz"])
 
+# ditto for pylons
+try:
+    import pylons
+    vers = pylons.__version__
+    assert vers.startswith('0.9.6.') or vers == '0.9.6', \
+           ("reddit is only compatible with pylons 0.9.6, not '%s'" % vers)
+except ImportError:
+    print "Installing Pylons 0.9.6.2 from the cheese shop"
+    easy_install(["http://pypi.python.org/packages/source/P/Pylons/Pylons-0.9.6.2.tar.gz"])
+
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
@@ -75,7 +85,7 @@ setup(
     #author="",
     #author_email="",
     #url="",
-    install_requires=["Pylons>=0.9.6",
+    install_requires=["Pylons==0.9.6.2",
                       "pytz",
                       "pycrypto",
                       "Babel>=0.9.1",
