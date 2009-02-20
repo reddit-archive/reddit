@@ -56,7 +56,7 @@ class Subreddit(Thing, Printable):
     sr_limit = 50
 
     @classmethod
-    def _new(self, name, title, lang = 'en', type = 'public',
+    def _new(self, name, title, author_id, ip, lang = 'en', type = 'public',
              over_18 = False, **kw):
         try:
             sr = Subreddit._by_name(name)
@@ -67,6 +67,8 @@ class Subreddit(Thing, Printable):
                            lang = lang,
                            type = type,
                            over_18 = over_18,
+                           author_id = author_id,
+                           ip = ip,
                            **kw)
             sr._commit()
             clear_memo('subreddit._by_name', Subreddit, name.lower())

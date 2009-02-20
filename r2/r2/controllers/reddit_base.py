@@ -248,10 +248,6 @@ def set_subreddit():
     if isinstance(c.site, FakeSubreddit):
         c.default_sr = True
 
-    # check that the site is available:
-    if c.site._spam and not c.user_is_admin and not c.error_page:
-        abort(404, "not found")
-
 def set_content_type():
     e = request.environ
     c.render_style = e['render_style']
@@ -481,6 +477,10 @@ class RedditController(BaseController):
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
             request.environ['REDDIT_NAME'] = c.site.name
+
+        # check that the site is available:
+        if c.site._spam and not c.user_is_admin and not c.error_page:
+            abort(404, "not found")
 
         # check if the user has access to this subreddit
         if not c.site.can_view(c.user) and not c.error_page:

@@ -26,9 +26,13 @@ import random
 
 def populate(sr_name = 'reddit.com', sr_title = "reddit.com: what's new online",
              num = 100):
-    sr = Subreddit._new(name= sr_name, title = sr_title)
-    sr._commit()
     create_accounts(num)
+
+    a = Author._query(limit = 1)
+
+    sr = Subreddit._new(name = sr_name, title = sr_title,
+                        ip = '0.0.0.0', author_id = a._id)
+    sr._commit()
     create_links(num)
     
 def create_accounts(num):

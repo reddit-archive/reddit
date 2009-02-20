@@ -923,9 +923,10 @@ class ApiController(RedditController):
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    show_media = VBoolean('show_media'),
-                   type = VOneOf('type', ('public', 'private', 'restricted'))
+                   type = VOneOf('type', ('public', 'private', 'restricted')),
+                   ip = ValidIP(),
                    )
-    def POST_site_admin(self, form, jquery, name ='', sr = None, **kw):
+    def POST_site_admin(self, form, jquery, name ='', ip = None, sr = None, **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -959,7 +960,8 @@ class ApiController(RedditController):
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
-            sr = Subreddit._new(name = name, **kw)
+            sr = Subreddit._new(name = name, author_id = c.user._id, ip = ip,
+                                **kw)
             Subreddit.subscribe_defaults(c.user)
             # make sure this user is on the admin list of that site!
             if sr.add_subscriber(c.user):

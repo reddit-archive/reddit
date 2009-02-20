@@ -389,13 +389,10 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
     things = tup(things)
 
     # load authors (to set the spammer flag)
-    try:
-        aids = set(t.author_id for t in things)
-    except AttributeError:
-        aids = None
+    aids = set(t.author_id for t in things
+               if hasattr(t, 'author_id'))
 
     authors = Account._byID(tuple(aids), data=True) if aids else {}
-
 
     # load all reports (to set their amount to be +/-1)
     reports = Report.reported(things=things, amount = 0)

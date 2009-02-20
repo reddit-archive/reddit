@@ -25,9 +25,11 @@
    from r2.lib.utils import timesince
    from r2.lib.strings import strings
    %>
-<%namespace file="printable.html" import="ynbutton, toggle_button"/>
+<%namespace file="printable.html" import="ynbutton, toggle_button, state_button"/>
+<%namespace file="printable.html" import="thing_css_class" />
+
 %if not isinstance(c.site, FakeSubreddit):
-  <div class="raisedbox subreddit-info">
+  <div class="raisedbox subreddit-info ${thing_css_class(c.site)}">
     <h3>${c.site.name}</h3>
         %if c.user_is_loggedin:
            ${toggle_button("subscribe-button", 
@@ -51,16 +53,28 @@
                             _("you are a contributor of this reddit. (%(leave)s)"),
                             _("stop being a contributor?"),
                             _("you are no longer a contributor"))}
-     %endif
+        %endif
 
-     %if c.user_is_loggedin and c.site.is_moderator(c.user):
+        %if c.user_is_loggedin and c.site.is_moderator(c.user):
           ${moderate_button("leave_moderator",
                             _("you are a moderator of this reddit. (%(leave)s)"),
                             _("stop being a moderator?"),
                             _("you are no longer a moderator"))}
                            
-     %endif
+        %endif
       </div>
+    %if c.user_is_admin:
+      %if c.site._spam:
+        ${state_button("unban", _("unban"),
+          "return change_state(this, 'unban');", _("unbanned"))}
+        %if hasattr(c.site, 'banner'):
+          <div>${strings.banned_by % c.site.banner}</div>
+        %endif
+      %else:
+        ${state_button("ban", _("ban"),
+          "return change_state(this, 'ban');", _("banned"))}
+      %endif
+    %endif
     <div class="spacer">  
     %for n in thing.nav():
       ${n.render()}
