@@ -468,7 +468,7 @@ class MessageController(ListingController):
             q = queries.get_inbox(c.user)
 
             #reset the inbox
-            if c.have_messages:
+            if c.have_messages and self.mark != 'false':
                 c.user.msgtime = False
                 c.user._commit()
 
@@ -477,9 +477,11 @@ class MessageController(ListingController):
 
         return q
 
-    @validate(VUser())
-    def GET_listing(self, where, **env):
+    @validate(VUser(),
+              mark = VOneOf('mark',('true','false'), default = 'true'))
+    def GET_listing(self, where, mark, **env):
         self.where = where
+        self.mark = mark
         c.msg_location = where
         return ListingController.GET_listing(self, **env)
 
