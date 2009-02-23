@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
+   from r2.lib.utils import timesince
    %>
 <%inherit  file="printable.html"/>
 
@@ -54,7 +55,8 @@
 </%def>
 
 <%def name="tagline()">
-  ${self.score(thing, thing.subscriber)}
+  ${self.score(thing, thing.subscriber)},
+  ${_("a community for %(time)s") % dict(time=timesince(thing._date))}
 </%def>
 
 ##this function is used by subscriptionbox.html

@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.config import cache
-import sha
+from r2.lib.filters import _force_utf8
 
 class NoneResult(object): pass
 
@@ -28,7 +28,7 @@ def memoize(iden, time = 0):
     def memoize_fn(fn):
         from r2.lib.memoize import NoneResult
         def new_fn(*a, **kw):
-            key = iden + str(a) + str(kw)
+            key = _make_key(iden, a, kw)
             #print 'CHECKING', key
             res = cache.get(key)
             if res is None:
@@ -43,9 +43,27 @@ def memoize(iden, time = 0):
     return memoize_fn
 
 def clear_memo(iden, *a, **kw):
-    key = iden + str(a) + str(kw)
+    key = _make_key(iden, a, kw)
     #print 'CLEARING', key
     cache.delete(key)
+
+def _make_key(iden, a, kw):
+    """
+    Make the cache key. We have to descend into *a and **kw to make
+    sure that only regular strings are used in the key to keep 'foo'
+    and u'foo' in an args list from resulting in differing keys
+    """
+    def _conv(s):
+        if isinstance(s, str):
+            return s
+        elif isinstance(s, unicode):
+            return _force_utf8(s)
+        else:
+            return str(s)
+
+    return (_conv(iden)
+            + str([_conv(x) for x in a])
+            + str(dict((_conv(x),_conv(y)) for (x,y) in kw)))
 
 @memoize('test')
 def test(x, y):
