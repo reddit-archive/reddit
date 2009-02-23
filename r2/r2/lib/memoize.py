@@ -63,7 +63,7 @@ def _make_key(iden, a, kw):
 
     return (_conv(iden)
             + str([_conv(x) for x in a])
-            + str(dict((_conv(x),_conv(y)) for (x,y) in kw)))
+            + str(dict((_conv(x),_conv(y)) for (x,y) in kw.iteritems())))
 
 @memoize('test')
 def test(x, y):
