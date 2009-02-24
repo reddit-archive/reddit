@@ -139,10 +139,15 @@ def make_map(global_conf={}, app_conf={}):
     mc('/resetpassword', controller='front',
        action='resetpassword')
 
+    mc('/post/:action/:url_user', controller='post',
+       requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
     
+    mc('/api/:action/:url_user', controller='api',
+       requirements=dict(action="login|register"))
     mc('/api/:action', controller='api')
+
     mc('/d/:what', controller='api', action='bookmarklet')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

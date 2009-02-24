@@ -17,6 +17,27 @@ function close_menus() {
 
 function hover_open_menu(menu) { };
 
+function update_user(form) {
+  try {
+    var user = $(form).find("input[name=user]").val();
+    form.action += "/" + user;
+  } catch (e) {
+    // ignore
+  }
+
+  return true;
+}
+
+function post_user(form, where) {
+  var user = $(form).find("input[name=user]").val();
+
+  if (user == null) {
+    return post_form (form, where);
+  } else {
+    return post_form (form, where + '/' + user);
+  }
+}
+
 function post_form(form, where, statusfunc, nametransformfunc, block) {
     try {
         if(statusfunc == null)
@@ -526,13 +547,14 @@ function last_click(thing) {
 function login(elem) {
     if(cnameframe)
         return true;
-    return post_form(this, "login");
+
+    return post_user(this, "login");
 };
 
 function register(elem) {
     if(cnameframe)
         return true;
-    return post_form(this, "register");
+    return post_user(this, "register");
 };
 
 /* The ready method */

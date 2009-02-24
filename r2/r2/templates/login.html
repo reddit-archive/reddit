@@ -46,7 +46,9 @@
   <form id="login_${op}" method="post" 
         action="${add_sr('/post/' + op, nocname = True)}" 
         %if not c.frameless_cname or c.authorized_cname:
-          onsubmit="return post_form(this, '${"register" if register else "login"}');"
+          onsubmit="return post_user(this, '${"register" if register else "login"}');"
+        %else:
+          onsubmit="return update_user(this);"
         %endif
         target="_top">
     %if c.cname:
