@@ -22,9 +22,6 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
-<p id="success" class="error">${thing.success or ''}
-</p>
-
 %if thing.title:
 <h1>${thing.title}</h1>
 %endif
@@ -38,8 +35,11 @@
       action=''
       %endif
       method="post" class="content" id="feedback">
+  <p class="success" class="error">${thing.success or ''}
+  </p>
+
   %if c.user_is_loggedin:
-  <input type="hidden" name="whodunnit" value="${c.user.name}" />
+    <input type="hidden" name="whodunnit" value="${c.user.name}" />
   %endif
   <input type="hidden" name="reason" value="${thing.action}" />
   <div>

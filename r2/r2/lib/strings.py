@@ -89,7 +89,7 @@ string_dict = dict(
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
-    sr_subscribe =  _('click the ![add](/static/sr-add-button.png) or ![remove](/static/sr-remove-button.png) buttons to choose which reddits appear on your front page.'),
+    sr_subscribe =  _('click the `add` or `remove` buttons to choose which reddits appear on your front page.'),
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
                            'you can also search within [all reddits](%(all_reddits_link)s)'),
@@ -107,6 +107,11 @@ string_dict = dict(
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
+    banned_subreddit = _("""this reddit has been banned. please inform [feedback](%(link)s)
+                            if you feel that this is in error, or that you are the target
+                            of a well-coordinated international conspiracy to silence you
+                            and your kind. but if it's the latter, it's probably already
+                            too late.  who can you trust?"""),
 )
 
 class StringHandler(object):

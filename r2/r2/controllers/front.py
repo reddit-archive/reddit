@@ -227,8 +227,10 @@ class FrontController(RedditController):
             return self.abort404()
 
     @base_listing
-    @validate(location = nop('location'))
-    def GET_editreddit(self, location, num, after, reverse, count):
+    @validate(location = nop('location'),
+              created = VOneOf('created', ('true','false'),
+                               default = 'false'))
+    def GET_editreddit(self, location, num, after, reverse, count, created):
         """Edit reddit form."""
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
@@ -237,7 +239,10 @@ class FrontController(RedditController):
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
 
         if is_moderator and location == 'edit':
-            pane = CreateSubreddit(site = c.site)
+            pane = PaneStack()
+            if created == 'true':
+                pane.append(InfoBar(message = _('your reddit has been created')))
+            pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable = is_moderator)
         elif is_moderator and location == 'banned':

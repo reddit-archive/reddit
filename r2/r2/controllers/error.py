@@ -26,6 +26,7 @@ from pylons.middleware import error_document_template, media_path
 from pylons import c, request, g
 from pylons.i18n import _
 import random as rand
+from r2.lib.filters import safemarkdown, unsafe
 
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
@@ -33,7 +34,7 @@ try:
     from reddit_base import RedditController
     from r2.models.subreddit import Default, Subreddit
     from r2.lib import pages
-    from r2.lib.strings import rand_strings
+    from r2.lib.strings import strings, rand_strings
 except Exception, e:
     if g.debug:
         # if debug mode, let the error filter up to pylons to be handled
@@ -113,7 +114,10 @@ class ErrorController(RedditController):
     def send404(self):
         c.response.status_code = 404
         if c.site._spam and not c.user_is_admin:
-            res = pages.RedditError(_("this reddit has been banned."))
+            message = (strings.banned_subreddit % dict(link = '/feedback'))
+
+            res = pages.RedditError(_('this reddit has been banned'),
+                                    unsafe(safemarkdown(message)))
             return res.render()
         else:
             return pages.Reddit404().render()

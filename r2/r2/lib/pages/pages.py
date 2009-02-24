@@ -624,10 +624,12 @@ class InfoBar(Wrapped):
 
 class RedditError(BoringPage):
     site_tracking = False
-    def __init__(self, msg):
-        BoringPage.__init__(self, msg, loginbox=False,
+    def __init__(self, title, message = None):
+        if not message:
+            message = title
+        BoringPage.__init__(self, title, loginbox=False,
                             show_sidebar = False, 
-                            content=ErrorPage(msg))
+                            content=ErrorPage(message))
 
 class Reddit404(BoringPage):
     site_tracking = False
@@ -1192,4 +1194,3 @@ class PromoteLinkForm(Wrapped):
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
-

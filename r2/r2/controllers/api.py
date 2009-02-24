@@ -125,7 +125,7 @@ class ApiController(RedditController):
             else:
                 emailer.ad_inq_email(email, message, name = name or '',
                                        reply_to = replyto or '')
-            form.set_html(".success", _("thanks for your message! "
+            form.set_html(".status", _("thanks for your message! "
                             "you should hear back from us shortly."))
             form.set_inputs(personal = "", captcha = "")
 
@@ -946,7 +946,10 @@ class ApiController(RedditController):
             c.errors.add(errors.USED_CNAME)
 
         if not sr and form.has_errors(None, errors.RATELIMIT):
-            pass
+            # this form is a little odd in that the error field
+            # doesn't occur within the form, so we need to manually
+            # set this text
+            form.parent().find('.RATELIMIT').html(c.errors[errors.RATELIMIT].message).show()
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
@@ -968,7 +971,7 @@ class ApiController(RedditController):
                 sr._incr('_ups', 1)
             sr.add_moderator(c.user)
             sr.add_contributor(c.user)
-            redir =  sr.path + "about/edit/"
+            redir =  sr.path + "about/edit/?created=true"
             if not c.user_is_admin:
                 VRatelimit.ratelimit(rate_user=True,
                                      rate_ip = True,
