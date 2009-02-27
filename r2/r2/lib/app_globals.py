@@ -32,6 +32,7 @@ from r2.lib.manager import db_manager
 class Globals(object):
 
     int_props = ['page_cache_time',
+                 'solr_cache_time',
                  'MIN_DOWN_LINK',
                  'MIN_UP_KARMA',
                  'MIN_DOWN_KARMA',

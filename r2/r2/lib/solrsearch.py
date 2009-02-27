@@ -584,46 +584,77 @@ class SearchQuery(object):
         if reverse:
             sort = swap_strings(sort,'asc','desc')
 
-        g.log.debug("Searching q = %s; params = %s" % (q,repr(solr_params)))
+        if after:
+            # size of the pre-search to run in the case that we need
+            # to search more than once. A bigger one can reduce the
+            # number of searches that need to be run twice, but if
+            # it's bigger than the default display size, it could
+            # waste some
+            PRESEARCH_SIZE = num
 
-        with SolrConnection() as s:
-            if after:
-                # size of the pre-search to run in the case that we
-                # need to search more than once. A bigger one can
-                # reduce the number of searches that need to be run
-                # twice, but if it's bigger than the default display
-                # size, it could waste some
-                PRESEARCH_SIZE = num
+            # run a search and get back the number of hits, so that we
+            # can re-run the search with that max_count.
+            pre_search = cls.run_search_cached(q, sort, 0, PRESEARCH_SIZE,
+                                               solr_params)
 
-                # run a search and get back the number of hits, so
-                # that we can re-run the search with that max_count.
-                pre_search = s.search(q,sort,rows=PRESEARCH_SIZE,
-                                      other_params = solr_params)
-
-                if (PRESEARCH_SIZE >= pre_search.hits
-                    or pre_search.hits == len(pre_search.docs)):
-                    # don't run a second search if our pre-search
-                    # found all of the elements anyway
-                    search = pre_search
-                else:
-                    # we have to run a second search, but we can limit
-                    # the duplicated transfer of the first few records
-                    # since we already have those from the pre_search
-                    second_search = s.search(q,sort,
-                                             start=len(pre_search.docs),
-                                             rows=pre_search.hits - len(pre_search.docs),
-                                             other_params = solr_params)
-                    search = pysolr.Results(pre_search.docs + second_search.docs,
-                                            pre_search.hits)
-
-                search.docs = [ i['fullname'] for i in search.docs ]
-                search.docs = get_after(search.docs, after._fullname, num)
+            if (PRESEARCH_SIZE >= pre_search.hits
+                or pre_search.hits == len(pre_search.docs)):
+                # don't run a second search if our pre-search found
+                # all of the elements anyway
+                search = pre_search
             else:
-                search = s.search(q,sort,rows=num,
-                                  other_params = solr_params)
-                search.docs = [ i['fullname'] for i in search.docs ]
+                # now that we know how many to request, we can request
+                # the whole lot
+                search = cls.run_search_cached(q, sort, 0,
+                                               pre_search.hits,
+                                               solr_params, max=True)
 
-            return search
+            search.docs = get_after(search.docs, after._fullname, num)
+        else:
+            search = cls.run_search_cached(q, sort, 0, num, solr_params)
+
+        return search
+
+    @staticmethod
+    def run_search_cached(q, sort, start, rows, other_params, max=False):
+        "Run the search, first trying the best available cache"
+
+        # first, try to see if we've cached the result for the entire
+        # dataset for that query, returning the requested slice of it
+        # if so. If that's not available, try the cache for the
+        # partial result requested (passing the actual search along to
+        # solr if both of those fail)
+        full_key = 'solrsearch_%s' % ','.join(('%r' % r)
+                                              for r in (q,sort,other_params))
+        part_key = "%s,%d,%d" % (full_key, start, rows)
+
+        full_cached = g.cache.get(full_key)
+        if full_cached:
+            res = pysolr.Results(hits = full_cached.hits,
+                                 docs = full_cached.docs[start:start+rows])
+        else:
+            part_cached = g.cache.get(part_key)
+            if part_cached:
+                res = part_cached
+            else:
+                with SolrConnection() as s:
+                    g.log.debug(("Searching q = %r; sort = %r,"
+                                 + " start = %r, rows = %r,"
+                                 + " params = %r, max = %r")
+                                % (q,sort,start,rows,other_params,max))
+
+                    res = s.search(q, sort, start = start, rows = rows,
+                                   other_params = other_params)
+
+                g.cache.set(full_key if max else part_key,
+                            res, time = g.solr_cache_time)
+
+        # extract out the fullname in the 'docs' field, since that's
+        # all we care about
+        res = pysolr.Results(docs = [ i['fullname'] for i in res.docs ],
+                             hits = res.hits)
+
+        return res
 
     def solr_params(self,*k,**kw):
         raise NotImplementedError
@@ -632,9 +663,6 @@ class UserSearchQuery(SearchQuery):
     "Base class for queries that use the dismax parser"
     def __init__(self, q, mm, sort=None, fields=[], langs=None, **kw):
         default_fields = ['contents^1.5','contents_ws^3'] + fields
-
-        if sort is None:
-            sort = 'score desc, hot desc, date desc'
 
         if langs is None:
             fields = default_fields
@@ -670,8 +698,7 @@ class RelatedSearchQuery(LinkSearchQuery):
     def __init__(self, q, ignore = [], **kw):
         self.ignore = set(ignore) if ignore else set()
 
-        LinkSearchQuery.__init__(self, q, mm = '3<100% 5<60% 8<50%',
-                                 sort = 'score desc', **kw)
+        LinkSearchQuery.__init__(self, q, mm = '3<100% 5<60% 8<50%', **kw)
 
     def run(self, *k, **kw):
         search = LinkSearchQuery.run(self, *k, **kw)
