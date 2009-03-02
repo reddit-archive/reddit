@@ -47,13 +47,13 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
         /* set the submitted state */
         $(form).find(".error").not(".status").hide();
         $(form).find(".status").html(statusfunc(form)).show();
-        return simple_post_form(form, where, {});
+        return simple_post_form(form, where, {}, block);
     } catch(e) {
         return false;
     }
 };
 
-function simple_post_form(form, where, fields) {
+function simple_post_form(form, where, fields, block) {
     fields = fields || {};
     /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray").each(function() {
@@ -66,7 +66,7 @@ function simple_post_form(form, where, fields) {
         fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
     }
 
-    $.request(where, fields);
+    $.request(where, fields, null, block);
     return false;
 };
 

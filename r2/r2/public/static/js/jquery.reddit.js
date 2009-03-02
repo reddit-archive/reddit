@@ -130,6 +130,8 @@ $.request = function(op, parameters, worker_in, block) {
 
     parameters = $.with_default(parameters, {});
     worker_in  = $.with_default(worker_in, handleResponse(action));
+    if (typeof(worker_in) != 'function')
+        worker_in  = handleResponse(action);
     var worker = function(r) {
         release_ajax_lock(action);
         return worker_in(r);
