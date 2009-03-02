@@ -404,7 +404,7 @@ class CommentSortMenu(SortMenu):
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
     default   = 'relevance'
-    mapping   = dict(relevance = None,
+    mapping   = dict(relevance = 'score desc',
                      hot = 'hot desc',
                      new = 'date desc',
                      old = 'date asc',
