@@ -19,6 +19,8 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from __future__ import with_statement
+
 from pylons import c, g
 from pylons.i18n import _
 
@@ -58,23 +60,23 @@ class Subreddit(Thing, Printable):
     @classmethod
     def _new(self, name, title, author_id, ip, lang = 'en', type = 'public',
              over_18 = False, **kw):
-        try:
-            sr = Subreddit._by_name(name)
-            raise SubredditExists
-        except NotFound:
-            sr = Subreddit(name = name,
-                           title = title,
-                           lang = lang,
-                           type = type,
-                           over_18 = over_18,
-                           author_id = author_id,
-                           ip = ip,
-                           **kw)
-            sr._commit()
-            clear_memo('subreddit._by_name', Subreddit, name.lower())
-            clear_memo('subreddit.subreddits', Subreddit)
-            return sr
-
+        with g.make_lock('create_sr_' + name.lower()):
+            try:
+                sr = Subreddit._by_name(name)
+                raise SubredditExists
+            except NotFound:
+                sr = Subreddit(name = name,
+                               title = title,
+                               lang = lang,
+                               type = type,
+                               over_18 = over_18,
+                               author_id = author_id,
+                               ip = ip,
+                               **kw)
+                sr._commit()
+                clear_memo('subreddit._by_name', Subreddit, name.lower())
+                clear_memo('subreddit.subreddits', Subreddit)
+                return sr
 
     @classmethod
     @memoize('subreddit._by_name')
