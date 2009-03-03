@@ -121,9 +121,14 @@ def noresponse(*simple_vals, **param_vals):
             c.response_content_type = 'application/json; charset=UTF-8'
             jquery = JQueryResponse()
 
-            validate(*simple_vals, **param_vals)(fn)(self, *a, **env)
-
-            return self.response_func()
+            try:
+                kw = _make_validated_kw(fn, simple_vals, param_vals, env)
+                fn(self, *a, **kw)
+                return ''
+            except UserRequiredException:
+                jquery = JQueryResponse()
+                jquery.refresh()
+                return self.response_func(**dict(list(jquery)))
         return newfn
     return val
 
@@ -162,11 +167,11 @@ def validatedForm(*simple_vals, **param_vals):
                 return self.response_func(**dict(list(jquery)))
 
             except UserRequiredException:
-                return  self.ajax_login_redirect("/")
+                jquery = JQueryResponse()
+                jquery.refresh()
+                return self.response_func(**dict(list(jquery)))
         return newfn
     return val
-
-
 
 #### validators ####
 class nop(Validator):

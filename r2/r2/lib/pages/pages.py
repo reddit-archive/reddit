@@ -984,8 +984,7 @@ class Socialite(Wrapped):
 
 class Bookmarklets(Wrapped):
     """The bookmarklets page."""
-    def __init__(self, buttons=["reddit", "like", "dislike",
-                             "save", "serendipity!"]):
+    def __init__(self, buttons=["reddit", "serendipity!"]):
         Wrapped.__init__(self, buttons = buttons)
 
 
