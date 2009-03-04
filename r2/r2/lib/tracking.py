@@ -83,7 +83,7 @@ def safe_str(text):
     except:
         g.log.error("unicode encoding exception in safe_str")
         return ''
-    return text
+    return str(text)
 
 class Info(object): 
     '''Class for generating and reading user tracker information.'''
