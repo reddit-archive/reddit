@@ -132,13 +132,14 @@ class Info(object):
 
 class UserInfo(Info):
     '''Class for generating and reading user tracker information.'''
-    _tracked = ['name', 'site', 'lang']
+    _tracked = ['name', 'site', 'lang', 'cname']
     tracker_url = g.tracker_url
 
     def init_defaults(self):
         self.name = safe_str(c.user.name if c.user_is_loggedin else '')
         self.site = safe_str(c.site.name if c.site else '')
         self.lang = safe_str(c.lang if c.lang else '')
+        self.cname = safe_str(c.cname)
             
 class PromotedLinkInfo(Info):
     _tracked = []
