@@ -22,7 +22,7 @@
 from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
-from r2.lib.memoize      import memoize, clear_memo
+from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr 
 
 from pylons import g
@@ -167,9 +167,9 @@ class Account(Thing):
             return l[0]._id
 
     @classmethod
-    def _by_name(cls, name, allow_deleted = False):
+    def _by_name(cls, name, allow_deleted = False, _update = False):
         #lower name here so there is only one cache
-        uid = cls._by_name_cache(name.lower(), allow_deleted)
+        uid = cls._by_name_cache(name.lower(), allow_deleted, _update = _update)
         if uid:
             return cls._byID(uid, True)
         else:
@@ -182,7 +182,15 @@ class Account(Thing):
     def delete(self):
         self._deleted = True
         self._commit()
-        clear_memo('account._by_name', Account, self.name.lower(), False)
+
+        #update caches
+        Account._by_name(self.name, allow_deleted = True, _update = True)
+        #we need to catch an exception here since it will have been
+        #recently deleted
+        try:
+            Account._by_name(self.name, _update = True)
+        except NotFound:
+            pass
         
         #remove from friends lists
         q = Friend._query(Friend.c._thing2_id == self._id,
@@ -289,7 +297,10 @@ def register(name, password):
                     password = passhash(name, password, True))
 
         a._commit()
-        clear_memo('account._by_name', Account, name.lower(), False)
+
+        #clear the caches
+        Account._by_name(name, _update = True)
+        Account._by_name(name, allow_deleted = True, _update = True)
         return a
 
 class Friend(Relation(Account, Account)): pass

@@ -19,13 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 
 def UserRel(name, relation):
-    all_memo_str = name + '.all_ids'
-    reverse_memo_str = name + 'reverse'
-    exists_name = 'is_' + name
 
+    exists_fn_name = 'is_' + name
     def userrel_exists(self, user):
         if not user:
             return False
@@ -35,33 +33,41 @@ def UserRel(name, relation):
         if r:
             return r
 
+    add_fn_name =  'add_' + name
     def userrel_add(self, user):
-        fn = getattr(self, exists_name)
+        fn = getattr(self, exists_fn_name)
         if not fn(user):
             s = relation(self, user, name)
             s._commit()
-            clear_memo(all_memo_str, self)
-            clear_memo(reverse_memo_str, user)
+
+            #update caches
+            getattr(self, ids_fn_name)(_update = True)
+            getattr(self, reverse_ids_fn_name)(user, _update = True)
             return s
     
+    remove_fn_name = 'remove_' + name
     def userrel_remove(self, user):
-        fn = getattr(self, exists_name)
+        fn = getattr(self, exists_fn_name)
         s = fn(user)
         if s:
             s._delete()
-            clear_memo(all_memo_str, self)
-            clear_memo(reverse_memo_str, user)
+
+            #update caches
+            getattr(self, ids_fn_name)(_update = True)
+            getattr(self, reverse_ids_fn_name)(user, _update = True)
             return True
 
-    @memoize(all_memo_str)
+    ids_fn_name = name + '_ids'
+    @memoize(ids_fn_name)
     def userrel_ids(self):
         q = relation._query(relation.c._thing1_id == self._id,
                             relation.c._name == name)
         #removed set() here, shouldn't be required
         return [r._thing2_id for r in q]
 
+    reverse_ids_fn_name = 'reverse_' + name + '_ids'
     @staticmethod
-    @memoize(reverse_memo_str)
+    @memoize(reverse_ids_fn_name)
     def reverse_ids(user):
         q = relation._query(relation.c._thing2_id == user._id,
                             relation.c._name == name)
@@ -69,11 +75,11 @@ def UserRel(name, relation):
 
     class UR: pass
 
-    setattr(UR, 'is_' + name, userrel_exists)
-    setattr(UR, 'add_' + name, userrel_add)
-    setattr(UR, 'remove_' + name, userrel_remove)
-    setattr(UR, name + '_ids', userrel_ids)
-    setattr(UR, 'reverse_' + name + '_ids', reverse_ids)
+    setattr(UR, exists_fn_name, userrel_exists)
+    setattr(UR, add_fn_name, userrel_add)
+    setattr(UR, remove_fn_name, userrel_remove)
+    setattr(UR, ids_fn_name, userrel_ids)
+    setattr(UR, reverse_ids_fn_name, reverse_ids)
 
     return UR
         

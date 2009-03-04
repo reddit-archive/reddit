@@ -28,9 +28,19 @@ def memoize(iden, time = 0):
     def memoize_fn(fn):
         from r2.lib.memoize import NoneResult
         def new_fn(*a, **kw):
+
+            #if the keyword param _update == True, the cache will be
+            #overwritten no matter what
+            update = False
+            if kw.has_key('_update'):
+                update = kw['_update']
+                del kw['_update']
+
             key = _make_key(iden, a, kw)
             #print 'CHECKING', key
-            res = cache.get(key)
+
+            res = None if update else cache.get(key)
+
             if res is None:
                 res = fn(*a, **kw)
                 if res is None:
@@ -63,7 +73,7 @@ def _make_key(iden, a, kw):
 
     return (_conv(iden)
             + str([_conv(x) for x in a])
-            + str(dict((_conv(x),_conv(y)) for (x,y) in kw.iteritems())))
+            + str([(_conv(x),_conv(y)) for (x,y) in sorted(kw.iteritems())]))
 
 @memoize('test')
 def test(x, y):

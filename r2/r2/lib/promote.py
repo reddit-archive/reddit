@@ -22,7 +22,7 @@
 from __future__ import with_statement
 
 from r2.models import *
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 
 from datetime import datetime
 
@@ -71,7 +71,8 @@ def set_promoted(link_names):
     # caller is assumed to execute me inside a lock if necessary
     g.permacache.set(promoted_memo_key, link_names)
 
-    clear_memo(promoted_memo_key)
+    #update cache
+    get_promoted(_update = True)
 
 @memoize(promoted_memo_key, time = promoted_memo_lifetime)
 def get_promoted():

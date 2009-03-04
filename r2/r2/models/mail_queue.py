@@ -30,7 +30,7 @@ from r2.models.thing_changes import changed, index_str, create_table
 from r2.lib.utils import Storage, timeago
 from account import Account
 from r2.lib.db.thing import Thing
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 from pylons import g
 
 def mail_queue(metadata):
@@ -169,9 +169,10 @@ class EmailHandler(object):
             o = self.opt_table
             try:
                 o.insert().execute({o.c.email: email, o.c.msg_hash: msg_hash})
-                clear_memo('r2.models.mail_queue.has_opted_out', 
-                           email)
-                clear_memo('r2.models.mail_queue.opt_count')
+
+                #clear caches
+                has_opted_out(email, _update = True)
+                opt_count(_update = True)
                 return (email, True)
             except sa.exceptions.SQLError:
                 return (email, False)
@@ -184,9 +185,10 @@ class EmailHandler(object):
             o = self.opt_table
             if self.has_opted_out(email):
                 sa.delete(o, o.c.email == email).execute()
-                clear_memo('r2.models.mail_queue.has_opted_out',
-                           email)
-                clear_memo('r2.models.mail_queue.opt_count')
+
+                #clear caches
+                has_opted_out(email, _update = True)
+                opt_count(_update = True)
                 return (email, True)
             else:
                 return (email, False)
@@ -377,7 +379,3 @@ def opt_count():
     s = sa.select([sa.func.count(o.c.email)])
     res = s.execute().fetchone()
     return int(res[0])
-
-        
-        
-    

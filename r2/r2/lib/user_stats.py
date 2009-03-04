@@ -28,7 +28,7 @@ from pylons import g
 cache = g.cache
 
 def top_users():
-    tt, dt = tdb.get_thing_read_table(Account._type_id)
+    tt, dt = tdb.get_thing_table(Account._type_id)
 
     karma = dt.alias()
 
@@ -44,7 +44,7 @@ def top_users():
 
 def top_user_change(period = '1 day'):
     rel = Vote.rel(Account, Link)
-    rt, account, link, dt = tdb.get_rel_read_table(rel._type_id)
+    rt, account, link, dt = tdb.get_rel_table(rel._type_id)
 
     author = dt.alias()
 

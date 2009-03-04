@@ -667,7 +667,7 @@ class VMenu(Validator):
             user_prefs[pref] = sort
             c.user.sort_options = user_prefs
             user = c.user
-            utils.worker.do(lambda: user._commit())
+            user._commit()
 
         return sort
             

@@ -26,7 +26,7 @@ from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 from r2.lib import utils
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
@@ -412,9 +412,6 @@ class Comment(Thing, Printable):
             # only global admins can be message spammed.
             if not c._spam or to.name in g.admins:
                 inbox_rel = Inbox._add(to, c, 'inbox')
-
-        #clear that chache
-        clear_memo('builder.link_comments2', link._id)
 
         return (c, inbox_rel)
 

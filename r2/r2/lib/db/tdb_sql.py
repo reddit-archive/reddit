@@ -30,7 +30,7 @@ from sqlalchemy.databases import postgres
 from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
 from r2.lib.services import AppServiceMonitor
 import operators
-from pylons import g
+from pylons import g, c
 dbm = g.dbm
 
 import logging
@@ -306,21 +306,33 @@ def get_read_table(tables):
     best_ip = random.choice(all_ips)
     return ips[best_ip]
 
-def get_thing_write_table(type_id):
-    return get_write_table(types_id[type_id].tables)
+def get_table(kind, action, tables):
+    if action == 'write':
+        #if this is a write, store the kind in the c.use_write_db dict
+        #so that all future requests use the write db
+        if not isinstance(c.use_write_db, dict):
+            c.use_write_db = {}
+        c.use_write_db[kind] = True
 
-def get_thing_read_table(type_id):
-    return get_read_table(types_id[type_id].tables)
+        return get_write_table(tables)
+    elif action == 'read':
+        #check to see if we're supposed to use the write db again
+        if c.use_write_db and c.use_write_db.has_key(kind):
+            return get_write_table(tables)
+        else:
+            return get_read_table(tables)
 
-def get_rel_write_table(rel_type_id):
-    return get_write_table(rel_types_id[rel_type_id].tables)
+def get_thing_table(type_id, action = 'read' ):
+    return get_table('t' + str(type_id), action,
+                     types_id[type_id].tables)
 
-def get_rel_read_table(rel_type_id):
-    return get_read_table(rel_types_id[rel_type_id].tables)
+def get_rel_table(rel_type_id, action = 'read'):
+    return get_table('r' + str(rel_type_id), action,
+                     rel_types_id[rel_type_id].tables)
 
 #TODO does the type actually exist?
 def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
-    table = get_thing_write_table(type_id)[0]
+    table = get_thing_table(type_id, action = 'write')[0]
 
     params = dict(ups = ups, downs = downs,
                   date = date, deleted = deleted, spam = spam)
@@ -346,7 +358,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         
 
 def set_thing_props(type_id, thing_id, **props):
-    table = get_thing_write_table(type_id)[0]
+    table = get_thing_table(type_id, action = 'write')[0]
 
     if not props:
         return
@@ -361,7 +373,7 @@ def set_thing_props(type_id, thing_id, **props):
     do_update(table)
 
 def incr_thing_prop(type_id, thing_id, prop, amount):
-    table = get_thing_write_table(type_id)[0]
+    table = get_thing_table(type_id, action = 'write')[0]
     
     def do_update(t):
         transactions.add_engine(t.engine)
@@ -376,7 +388,7 @@ class CreationError(Exception): pass
 #TODO does the type exist?
 #TODO do the things actually exist?
 def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
-    table = get_rel_write_table(rel_type_id)[0]
+    table = get_rel_table(rel_type_id, action = 'write')[0]
     transactions.add_engine(table.engine)
     
     if not date: date = datetime.now(g.tz)
@@ -394,7 +406,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
         
 
 def set_rel_props(rel_type_id, rel_id, **props):
-    t = get_rel_write_table(rel_type_id)[0]
+    t = get_rel_table(rel_type_id, action = 'write')[0]
 
     if not props:
         return
@@ -500,19 +512,19 @@ def get_data(table, thing_id):
     return res
 
 def set_thing_data(type_id, thing_id, **vals):
-    table = get_thing_write_table(type_id)[1]
+    table = get_thing_table(type_id, action = 'write')[1]
     return set_data(table, type_id, thing_id, **vals)
 
 def incr_thing_data(type_id, thing_id, prop, amount):
-    table = get_thing_write_table(type_id)[1]
+    table = get_thing_table(type_id, action = 'write')[1]
     return incr_data_prop(table, type_id, thing_id, prop, amount)    
 
 def get_thing_data(type_id, thing_id):
-    table = get_thing_read_table(type_id)[1]
+    table = get_thing_table(type_id)[1]
     return get_data(table, thing_id)
 
 def get_thing(type_id, thing_id):
-    table = get_thing_read_table(type_id)[0]
+    table = get_thing_table(type_id)[0]
     r, single = fetch_query(table, table.c.thing_id, thing_id)
 
     #if single, only return one storage, otherwise make a dict
@@ -530,19 +542,19 @@ def get_thing(type_id, thing_id):
     return res
 
 def set_rel_data(rel_type_id, thing_id, **vals):
-    table = get_rel_write_table(rel_type_id)[3]
+    table = get_rel_table(rel_type_id, action = 'write')[3]
     return set_data(table, rel_type_id, thing_id, **vals)
 
 def incr_rel_data(rel_type_id, thing_id, prop, amount):
-    table = get_rel_write_table(rel_type_id)[3]
+    table = get_rel_table(rel_type_id, action = 'write')[3]
     return incr_data_prop(table, rel_type_id, thing_id, prop, amount)
 
 def get_rel_data(rel_type_id, rel_id):
-    table = get_rel_read_table(rel_type_id)[3]
+    table = get_rel_table(rel_type_id)[3]
     return get_data(table, rel_id)
 
 def get_rel(rel_type_id, rel_id):
-    r_table = get_rel_read_table(rel_type_id)[0]
+    r_table = get_rel_table(rel_type_id)[0]
     r, single = fetch_query(r_table, r_table.c.rel_id, rel_id)
     
     res = {} if not single else None
@@ -558,7 +570,7 @@ def get_rel(rel_type_id, rel_id):
     return res
 
 def del_rel(rel_type_id, rel_id):
-    tables = get_rel_write_table(rel_type_id)
+    tables = get_rel_table(rel_type_id, action = 'write')
     table = tables[0]
     data_table = tables[3]
 
@@ -675,7 +687,7 @@ def translate_thing_value(rval):
 
 #will assume parameters start with a _ for consistency
 def find_things(type_id, get_cols, sort, limit, constraints):
-    table = get_thing_read_table(type_id)[0]
+    table = get_thing_table(type_id)[0]
     constraints = deepcopy(constraints)
 
     s = sa.select([table.c.thing_id.label('thing_id')])
@@ -716,7 +728,7 @@ def translate_data_value(alias, op):
 #TODO sort by data fields
 #TODO sort by id wants thing_id
 def find_data(type_id, get_cols, sort, limit, constraints):
-    t_table, d_table = get_thing_read_table(type_id)
+    t_table, d_table = get_thing_table(type_id)
     constraints = deepcopy(constraints)
 
     used_first = False
@@ -778,7 +790,7 @@ def find_data(type_id, get_cols, sort, limit, constraints):
 
 
 def find_rels(rel_type_id, get_cols, sort, limit, constraints):
-    tables = get_rel_read_table(rel_type_id)
+    tables = get_rel_table(rel_type_id)
     r_table, t1_table, t2_table, d_table = tables
     constraints = deepcopy(constraints)
 

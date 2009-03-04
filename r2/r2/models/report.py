@@ -30,7 +30,7 @@ from r2.lib.utils import tup, Storage
 from link import Link, Comment, Message, Subreddit
 from account import Account
 from vote import score_changes
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 
 from r2.config import cache
 from r2.lib.cache import sgm
@@ -106,8 +106,7 @@ class Report(MultiRelation('report',
             # clear memoizing around this thing's author
             if not r._thing2._loaded: r._thing2._load()
             if hasattr(r._thing2, "author_id"):
-                clear_memo('report._by_author', cls, r._thing2.author_id,
-                           amount = a)
+                cls._by_author(r._thing2, amount = a, _update = True)
 
             for t in (r._thing1, r._thing2):
                 thing_key = cls._cache_prefix(rel, t.__class__,
@@ -162,10 +161,10 @@ class Report(MultiRelation('report',
         for types, rel in cls.rels.iteritems():
             # grab the proper thing table
             thing_type = types[0]
-            table, dtable = tdb.get_thing_read_table(thing_type._type_id)
+            table, dtable = tdb.get_thing_table(thing_type._type_id)
 
             # and the proper relationship table
-            tables = tdb.get_rel_read_table(rel._type_id)
+            tables = tdb.get_rel_table(rel._type_id)
             rel_table, rel_dtable = tables[0], tables[3]
 
             where = [dtable.c.key == 'author_id',
@@ -182,9 +181,10 @@ class Report(MultiRelation('report',
         return res
 
     @classmethod
-    def _by_author(cls, author, amount = None):
+    def _by_author(cls, author, amount = None, _update = False):
         res = []
-        rdict = cls._by_author_cache(author._id, amount = amount)
+        rdict = cls._by_author_cache(author._id, amount = amount,
+                                     _update = _update)
         for types, rids in rdict.iteritems():
             res.extend(cls.rels[types]._byID(rids, data=True,
                                              return_dict = False))
@@ -427,7 +427,7 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
 def unreport_account(user, correct = True, types = (Link, Comment, Message),
                      auto = False, banned_by = ''):
     for typ in types:
-        table, dtable = tdb.get_thing_read_table(typ._type_id)
+        table, dtable = tdb.get_thing_table(typ._type_id)
         
         by_user_query = sa.and_(table.c.thing_id == dtable.c.thing_id,
                                 dtable.c.key == 'author_id',

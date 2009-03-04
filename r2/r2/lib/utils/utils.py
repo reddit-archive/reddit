@@ -781,12 +781,6 @@ class Worker:
 
 worker = Worker()
 
-def asynchronous(func):
-    def _asynchronous(*a, **kw):
-        f = lambda: func(*a, **kw)
-        worker.do(f)
-    return _asynchronous
-    
 def cols(lst, ncols):
     """divides a list into columns, and returns the
     rows. e.g. cols('abcdef', 2) returns (('a', 'd'), ('b', 'e'), ('c',

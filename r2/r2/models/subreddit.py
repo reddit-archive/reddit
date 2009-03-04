@@ -29,7 +29,7 @@ from account import Account
 from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 from r2.lib.utils import tup
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
@@ -74,8 +74,9 @@ class Subreddit(Thing, Printable):
                                ip = ip,
                                **kw)
                 sr._commit()
-                clear_memo('subreddit._by_name', Subreddit, name.lower())
-                clear_memo('subreddit.subreddits', Subreddit)
+
+                #clear cache
+                Subreddit._by_name(name, _update = True)
                 return sr
 
     @classmethod
@@ -89,7 +90,7 @@ class Subreddit(Thing, Printable):
             return l[0]._id
 
     @classmethod
-    def _by_name(cls, name):
+    def _by_name(cls, name, _update = False):
         #lower name here so there is only one cache
         name = name.lower()
 
@@ -98,7 +99,7 @@ class Subreddit(Thing, Printable):
         elif name == 'all':
             return All
         else:
-            sr_id = cls._by_name_cache(name)
+            sr_id = cls._by_name_cache(name, _update = _update)
             if sr_id:
                 return cls._byID(sr_id, True)
             else:
@@ -115,8 +116,9 @@ class Subreddit(Thing, Printable):
             return l[0]._id
 
     @classmethod
-    def _by_domain(cls, domain):
-        sr_id = cls._by_domain_cache(_force_unicode(domain).lower())
+    def _by_domain(cls, domain, _update = False):
+        sr_id = cls._by_domain_cache(_force_unicode(domain).lower(),
+                                     _update = _update)
         if sr_id:
             return cls._byID(sr_id, True)
         else:

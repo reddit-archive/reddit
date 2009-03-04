@@ -42,7 +42,6 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
-from r2.lib.memoize import clear_memo
 from r2.lib.filters import _force_unicode, websafe_json
 from r2.lib.db import queries
 from r2.lib.media import force_thumbnail, thumbnail_url
@@ -980,13 +979,16 @@ class ApiController(RedditController):
         #editting an existing reddit
         elif sr.is_moderator(c.user) or c.user_is_admin:
             #assume sr existed, or was just built
-            clear_memo('subreddit._by_domain', 
-                       Subreddit, _force_unicode(sr.domain))
+            old_domain = sr.domain
+
             for k, v in kw.iteritems():
                 setattr(sr, k, v)
             sr._commit()
-            clear_memo('subreddit._by_domain', 
-                       Subreddit, _force_unicode(sr.domain))
+
+            #update the domain cache if the domain changed
+            if sr.domain != old_domain:
+                Subreddit._by_domain(old_domain, _update = True)
+                Subreddit._by_domain(sr.domain, _update = True)
 
             # flag search indexer that something has changed
             tc.changed(sr)

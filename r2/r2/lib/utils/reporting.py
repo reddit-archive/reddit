@@ -31,7 +31,7 @@ class Report(object):
 
     def total_things(self, table_name, spam=None, all_time=None):
         """Return totals based on items in the thing tables."""
-        t = tdb_sql.get_thing_read_table(table_name)[0]
+        t = tdb_sql.get_thing_table(table_name)[0]
         s = sa.select([sa.func.count(t.c.thing_id)])
         if spam:
             s.append_whereclause(t.c.spam==spam)
@@ -42,7 +42,7 @@ class Report(object):
 
     def total_relation(self, table_name, key, value=None, all_time=None):
         """Return totals based on relationship data."""
-        tables = tdb_sql.get_rel_read_table('%s_account_link' % table_name)
+        tables = tdb_sql.get_rel_table('%s_account_link' % table_name)
         t1, t2 = tables[0], tables[3]
 
         s = sa.select([sa.func.count(t1.c.date)], 
@@ -61,7 +61,7 @@ class Report(object):
                       
     def css_stats(self, val, all_time=None):
         """Create stats related to custom css and headers."""
-        t = tdb_sql.get_thing_read_table('subreddit')[1]
+        t = tdb_sql.get_thing_table('subreddit')[1]
         s = sa.select([sa.func.count(t.c.key)], t.c.key == val)
         return s.execute().fetchone()[0]
    
