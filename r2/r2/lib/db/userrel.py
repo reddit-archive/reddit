@@ -21,7 +21,7 @@
 ################################################################################
 from r2.lib.memoize import memoize, clear_memo
 
-def UserRel(name, relation):
+def UserRel(name, relation, disable_ids_fn = False, disable_reverse_ids_fn = False):
 
     exists_fn_name = 'is_' + name
     def userrel_exists(self, user):
@@ -33,6 +33,14 @@ def UserRel(name, relation):
         if r:
             return r
 
+    update_caches_fn_name = name + 'update_' + name + '_caches'
+    def update_caches(self, user):
+        if not disable_ids_fn:
+            getattr(self, ids_fn_name)(_update = True)
+
+        if not disable_reverse_ids_fn:
+            getattr(self, reverse_ids_fn_name)(user, _update = True)
+
     add_fn_name =  'add_' + name
     def userrel_add(self, user):
         fn = getattr(self, exists_fn_name)
@@ -41,11 +49,7 @@ def UserRel(name, relation):
             s._commit()
 
             #update caches
-            clear_memo(ids_fn_name, self)
-            clear_memo(reverse_ids_fn_name, user)
-
-            #getattr(self, ids_fn_name)(_update = True)
-            #getattr(self, reverse_ids_fn_name)(user, _update = True)
+            getattr(self, update_caches_fn_name)(user)
             return s
     
     remove_fn_name = 'remove_' + name
@@ -56,11 +60,7 @@ def UserRel(name, relation):
             s._delete()
 
             #update caches
-            clear_memo(ids_fn_name, self)
-            clear_memo(reverse_ids_fn_name, user)
-
-            #getattr(self, ids_fn_name)(_update = True)
-            #getattr(self, reverse_ids_fn_name)(user, _update = True)
+            getattr(self, update_caches_fn_name)(user)
             return True
 
     ids_fn_name = name + '_ids'
@@ -81,11 +81,14 @@ def UserRel(name, relation):
 
     class UR: pass
 
+    setattr(UR, update_caches_fn_name, update_caches)
     setattr(UR, exists_fn_name, userrel_exists)
     setattr(UR, add_fn_name, userrel_add)
     setattr(UR, remove_fn_name, userrel_remove)
-    setattr(UR, ids_fn_name, userrel_ids)
-    setattr(UR, reverse_ids_fn_name, reverse_ids)
+    if not disable_ids_fn:
+        setattr(UR, ids_fn_name, userrel_ids)
+    if not disable_reverse_ids_fn:
+        setattr(UR, reverse_ids_fn_name, reverse_ids)
 
     return UR
         

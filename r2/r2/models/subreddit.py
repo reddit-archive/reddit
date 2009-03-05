@@ -322,6 +322,9 @@ class Subreddit(Thing, Printable):
     def subscribe_defaults(cls, user):
         if not user.has_subscribed:
             for sr in Subreddit.default_srs(c.content_langs):
+                #this will call reverse_subscriber_ids after every
+                #addition. if it becomes a problem we should make an
+                #add_multiple_subscriber fn
                 if sr.add_subscriber(c.user):
                     sr._incr('_ups', 1)
             user.has_subscribed = True
@@ -574,5 +577,5 @@ Default = DefaultSR()
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (UserRel('moderator', SRMember),
                         UserRel('contributor', SRMember),
-                        UserRel('subscriber', SRMember),
+                        UserRel('subscriber', SRMember, disable_ids_fn = True),
                         UserRel('banned', SRMember))
