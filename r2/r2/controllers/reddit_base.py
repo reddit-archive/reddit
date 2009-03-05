@@ -49,6 +49,8 @@ NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 cache_affecting_cookies = ('reddit_first','over18')
 
+r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
+
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
         self[name] = Cookie(value, *k, **kw)
@@ -366,6 +368,20 @@ def ratelimit_agents():
             else:
                 g.cache.set(s, 't', time = 1)
 
+def throttled(key):
+    return g.cache.get("throttle_" + key)
+
+def ratelimit_throttled():
+    ip = request.ip
+
+    m = r_subnet.match(ip)
+    if m is None:
+        g.log.error("ratelimit_throttled: couldn't parse IP %s" % ip)
+    else:
+        subnet = m.group(1) + '.x.x'
+        if throttled(ip) or throttled(subnet):
+            abort(503, 'service temporarily unavailable')
+
 #TODO i want to get rid of this function. once the listings in front.py are
 #moved into listingcontroller, we shouldn't have a need for this
 #anymore
@@ -422,6 +438,7 @@ class RedditController(BaseController):
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
             ratelimit_agents()
+            ratelimit_throttled()
 
         # the domain has to be set before Cookies get initialized
         set_subreddit()
@@ -564,6 +581,7 @@ class RedditController(BaseController):
             and request.method == 'GET'
             and not c.user_is_loggedin
             and not c.used_cache
+            and response.status_code != 503
             and response.content and response.content[0]):
             g.rendercache.set(self.request_key(),
                               response,
