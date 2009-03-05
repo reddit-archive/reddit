@@ -1227,14 +1227,20 @@ class ApiController(RedditController):
             tr._is_enabled = True
 
 
-    @validatedForm(links = VByName('links', thing_cls = Link, multiple = True))
-    def POST_fetch_links(self, form, jquery, links):
+    @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
+                   show = VByName('show', thing_cls = Link, multiple = False))
+    def POST_fetch_links(self, form, jquery, links, show):
         b = IDBuilder([l._fullname for l in links], 
                       wrap = ListingController.builder_wrapper)
         l = OrganicListing(b)
         l.num_margin = 0
         l.mid_margin = 0
+        
         jquery.replace_things(l, stubs = True)
+
+        if show:
+            jquery('.organic-listing .link:visible').hide()
+            jquery('.organic-listing .id-%s' % show._fullname).show()
 
     @noresponse(VUser(),
               ui_elem = VOneOf('id', ('organic',)))

@@ -496,7 +496,8 @@ function updateEventHandlers(thing) {
             /* set the click cookie. */
             add_thing_to_cookie(this, "click");
             /* remember this as the last thing clicked */
-            last_click(thing);
+            var wasorganic = $(this).parents('.organic-listing').length > 0;
+            last_click(thing, wasorganic);
         });
 
     if (listing.filter(".organic-listing").length) {
@@ -528,20 +529,80 @@ function updateEventHandlers(thing) {
     }
 };
 
-function last_click(thing) {
-    var cookie = "last_thing";
-    if(thing) {
-        var data = {href: window.location.href, 
-                    what: $(thing).thing_id()};
-        $.cookie_write({name: cookie, data: data});
-    }
-    else {
-        var current = $.cookie_read(cookie).data;
-        if(current && current.href == window.location.href) {
-                $.cookie_write({name: cookie, data: ""});
-                return current.what;
+function last_click(thing, organic) {
+  /* called with zero arguments, marks the last-clicked item on this
+     page (to which the user probably clicked the 'back' button in
+     their browser). Otherwise sets the last-clicked item to the
+     arguments passed */
+  var cookie = "last_thing";
+  if(thing) {
+    var data = {href: window.location.href, 
+                what: $(thing).thing_id(),
+                organic: organic};
+    $.cookie_write({name: cookie, data: data});
+  } else {
+    var current = $.cookie_read(cookie).data;
+    if(current && current.href == window.location.href) {
+      /* if they got there organically, make sure that it's in the
+         organic box */
+      var olisting = $('.organic-listing');
+      if(current.organic && olisting.length == 1) {
+        if(olisting.find('.thing:visible').thing_id() == current.what) {
+          /* if it's available in the organic box, *and* it's the one
+             that's already shown, do nothing */
+
+        } else {
+          var thing = olisting.things(current.what);
+
+          if(thing.length > 0 && !thing.hasClass('stub')) {
+            /* if it's available in the organic box and not a stub,
+               switch index to it */
+            olisting.find('.thing:visible').hide();
+            thing.show();
+          } else {
+            /* we're going to have to put it into the organic box
+               somehow */
+            var thingelsewhere = $.things(current.what).filter(':not(.stub):first');
+
+            if(thingelsewhere.length > 0) {
+              /* if it's available on the page somewhere else, we can
+                 clone it up into the organic box rather than go to
+                 the server for it */
+
+              /* if there was a stub before, remove it */
+              thing.remove();
+
+              var othercopy = thingelsewhere.clone();
+              olisting.find('.thing:visible').before(othercopy).hide();
+              othercopy.show();
+            } else {
+              /* either it's available in the organic box, but the
+                 data there is a stub, or it's not available at
+                 all. either way, we need a server round-trip */
+              thing.remove();
+
+              /* and add a new stub */
+            
+              olisting.find('.thing:visible')
+                .before('<div class="thing id-'+current.what+' stub" style="display: none"></div');
+              
+              /* and ask the server to fill in that stub */
+              $.request('fetch_links',
+                        {links: [current.what],
+                            show: current.what,
+                            listing: olisting.attr('id')});
+            }
+          }
         }
+      }
+      
+      /* mark it in the list */
+      $.things(current.what).addClass("last-clicked");
+
+      /* and wipe the cookie */
+      $.cookie_write({name: cookie, data: ""});
     }
+  }
 };
 
 function login(elem) {
@@ -580,9 +641,8 @@ $(function() {
         if(reddit.cur_site)  
            update_reddit_count(reddit.cur_site);
 
-        var last = last_click();
-        if(last) 
-            $.things(last).addClass("last-clicked");
+        /* visually mark the last-clicked entry */
+        last_click();
     });
 
 

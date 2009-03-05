@@ -22,23 +22,27 @@
 from r2.models import *
 from r2.lib import promote
 
+import string
 import random
 
 def populate(sr_name = 'reddit.com', sr_title = "reddit.com: what's new online",
              num = 100):
     create_accounts(num)
 
-    a = Author._query(limit = 1)
+    a = list(Account._query(limit = 1))[0]
 
-    sr = Subreddit._new(name = sr_name, title = sr_title,
-                        ip = '0.0.0.0', author_id = a._id)
-    sr._commit()
+    try:
+        sr = Subreddit._new(name = sr_name, title = sr_title,
+                            ip = '0.0.0.0', author_id = a._id)
+        sr._commit()
+    except SubredditExists:
+        pass
+
     create_links(num)
     
 def create_accounts(num):
-    chars = 'abcdefghijklmnopqrztuvwxyz'
     for i in range(num):
-        name_ext = ''.join([ random.choice(chars)
+        name_ext = ''.join([ random.choice(string.letters)
                              for x
                              in range(int(random.uniform(1, 10))) ])
         name = 'test_' + name_ext

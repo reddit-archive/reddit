@@ -248,6 +248,16 @@ $.things = function() {
     return $(sel);
 };
 
+$.fn.things = function() {
+    /* 
+     * try to find all things that occur below a given selector, like:
+     * $('.organic-listing').things('t3_12345')
+     */
+    var sel = $.map(arguments, function(x) { return ".thing.id-" + x; })
+       .join(", ");
+    return this.find(sel);
+};
+
 $.listing = function(name) {
     /* 
      * Given an element name (a sitetable ID or a thing ID, with
