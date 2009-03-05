@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.memoize import memoize
+from r2.lib.memoize import memoize, clear_memo
 
 def UserRel(name, relation):
 
@@ -41,8 +41,11 @@ def UserRel(name, relation):
             s._commit()
 
             #update caches
-            getattr(self, ids_fn_name)(_update = True)
-            getattr(self, reverse_ids_fn_name)(user, _update = True)
+            clear_memo(ids_fn_name, self)
+            clear_memo(reverse_ids_fn_name, user)
+
+            #getattr(self, ids_fn_name)(_update = True)
+            #getattr(self, reverse_ids_fn_name)(user, _update = True)
             return s
     
     remove_fn_name = 'remove_' + name
@@ -53,8 +56,11 @@ def UserRel(name, relation):
             s._delete()
 
             #update caches
-            getattr(self, ids_fn_name)(_update = True)
-            getattr(self, reverse_ids_fn_name)(user, _update = True)
+            clear_memo(ids_fn_name, self)
+            clear_memo(reverse_ids_fn_name, user)
+
+            #getattr(self, ids_fn_name)(_update = True)
+            #getattr(self, reverse_ids_fn_name)(user, _update = True)
             return True
 
     ids_fn_name = name + '_ids'
