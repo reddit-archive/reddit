@@ -334,6 +334,7 @@ class RandomrisingController(ListingController):
 
 class ByIDController(ListingController):
     title_text = _('API')
+    skip = False
 
     def query(self):
         return self.names
