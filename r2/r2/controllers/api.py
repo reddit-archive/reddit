@@ -1150,17 +1150,23 @@ class ApiController(RedditController):
         if not form.has_errors('name', errors.USER_DOESNT_EXIST,
                                errors.NO_EMAIL_FOR_USER):
             emailer.password_email(user)
+            form.set_html(".status", _("an email will be sent to that account's address shortly"))
+
             
-    @validatedForm(user = VCacheKey('reset', ('key', 'name')),
-                   password = VPassword(['passwd', 'passwd2']))
-    def POST_resetpassword(self, form, jquery, user, password):
+    @validatedForm(cache_evt = VCacheKey('reset', ('key', 'name')),
+                   password  = VPassword(['passwd', 'passwd2']))
+    def POST_resetpassword(self, form, jquery, cache_evt, password):
         if errors.BAD_USERNAME in c.errors:
+            # clear reset event -- the user failed to know their user name
+            cache_evt.clear()
             return form.redirect('/password')
         elif (not form.has_errors('passwd',  errors.BAD_PASSWORD) and
               not form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH) and
-              user):
-            change_password(user, password)
-            self._login(jquery, user, '/resetpassword')
+              cache_evt.user):
+            # successfully entered user name and valid new password
+            change_password(cache_evt.user, password)
+            self._login(jquery, cache_evt.user, '/resetpassword')
+            cache_evt.clear()
 
 
     @noresponse(VUser())

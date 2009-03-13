@@ -715,20 +715,27 @@ class VCommentIDs(Validator):
 class VCacheKey(Validator):
     def __init__(self, cache_prefix, param, *a, **kw):
         self.cache_prefix = cache_prefix
+        self.user = None
+        self.key = None
         Validator.__init__(self, param, *a, **kw)
 
+    def clear(self):
+        if self.key and self.cache_prefix:
+            g.cache.delete(str(self.cache_prefix + "_" + self.key))
+
     def run(self, key, name):
+        self.key = key
         if key:
-            uid = g.cache.get(str(self.cache_prefix + "_" + key))
+            uid = g.cache.get(str(self.cache_prefix + "_" + self.key))
             try:
                 a = Account._byID(uid, data = True)
-                g.cache.delete(str(self.cache_prefix + "_" + key))
+                if name and a.name.lower() != name.lower():
+                    self.set_error(errors.BAD_USERNAME)
+                else:
+                    self.user = a
             except NotFound:
-                return None
-            if name and a.name.lower() != name.lower():
                 self.set_error(errors.BAD_USERNAME)
-            if a:
-                return a
+            return self
             
         self.set_error(errors.EXPIRED)
 
