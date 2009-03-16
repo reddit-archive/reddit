@@ -59,15 +59,15 @@ def link_listing_by_url(url, count = None):
     """
     Generates a listing of links which share a common url
     """
+    links = ()
     try:
-        links = list(tup(Link._by_url(url, sr = c.site)))
-        links.sort(key = lambda x: -x._score)
-        if count is not None:
-            links = links[:count]
+        if url:
+            links = list(tup(Link._by_url(url, sr = c.site)))
+            links.sort(key = lambda x: -x._score)
+            if count is not None:
+                links = links[:count]
     except NotFound:
-        links = ()
-        
-
+        pass
     names = [l._fullname for l in links]
     builder = IDBuilder(names, num = 25)
     return LinkListing(builder).listing()
