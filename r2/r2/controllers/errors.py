@@ -24,6 +24,7 @@ from pylons.i18n import _
 from copy import copy
 
 error_list = dict((
+        ('USER_REQUIRED', _("please login to do that")), 
         ('NO_URL', _('url required')),
         ('BAD_URL', _('you should check that url')),
         ('NO_TITLE', _('title required')),

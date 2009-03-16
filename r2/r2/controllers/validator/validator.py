@@ -26,7 +26,7 @@ from r2.lib import utils, captcha
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsonresponse import json_respond, JQueryResponse
+from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
 
 from r2.models import *
@@ -110,68 +110,64 @@ def validate(*simple_vals, **param_vals):
         return newfn
     return val
 
-def noresponse(*simple_vals, **param_vals):
+
+def api_validate(response_function):
     """
-    AJAXy decorator which takes the place of validate when no response
-    is expected from the controller method.
+    Factory for making validators for API calls, since API calls come
+    in two flavors: responsive and unresponsive.  The machinary
+    associated with both is similar, and the error handling identical,
+    so this function abstracts away the kw validation and creation of
+    a Json-y responder object.
     """
-    def val(fn):
-        def newfn(self, *a, **env):
-            c.render_style = api_type('html')
-            c.response_content_type = 'application/json; charset=UTF-8'
-            jquery = JQueryResponse()
+    def _api_validate(*simple_vals, **param_vals):
+        def val(fn):
+            def newfn(self, *a, **env):
+                c.render_style = api_type('html')
+                c.response_content_type = 'application/json; charset=UTF-8'
+                # generate a response object
+                if request.params.get('api_type') == "json":
+                    responder = JsonResponse()
+                else:
+                    responder = JQueryResponse()
+                try:
+                    kw = _make_validated_kw(fn, simple_vals, param_vals, env)
+                    return response_function(self, fn, responder,
+                                             simple_vals, param_vals, *a, **kw)
+                except UserRequiredException:
+                    responder.send_failure(errors.USER_REQUIRED)
+                    return self.response_func(dict(iter(responder)))
+            return newfn
+        return val
+    return _api_validate
+    
 
-            try:
-                kw = _make_validated_kw(fn, simple_vals, param_vals, env)
-                fn(self, *a, **kw)
-                return ''
-            except UserRequiredException:
-                jquery = JQueryResponse()
-                jquery.refresh()
-                return self.response_func(**dict(list(jquery)))
-        return newfn
-    return val
+@api_validate
+def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
+    self_method(self, *a, **kw)
+    return self.response_func({})
 
 
-def validatedForm(*simple_vals, **param_vals):
-    """
-    AJAX response validator for general form handling. In addition to
-    validating simple_vals and param_vals in the same way as validate,
-    a jquery object and a jquery form object are allocated and passed
-    into the method which is decorated.
-    """
-    def val(fn):
-        def newfn(self, *a, **env):
-            # set the content type for the response
-            c.render_style = api_type('html')
-            c.response_content_type = 'application/json; charset=UTF-8'
+@api_validate
+def validatedForm(self, self_method, responder, simple_vals, param_vals,
+                  *a, **kw):
+    # generate a form object
+    form = responder(request.POST.get('id', "body"))
 
-            # generate a response object
-            jquery = JQueryResponse()
-            # generate a form object
-            form = jquery(request.POST.get('id', "body"))
-            # clear out the status line as a courtesy
-            form.set_html(".status", "")
+    # clear out the status line as a courtesy
+    form.set_html(".status", "")
 
-            try:
+    # do the actual work
+    val = self_method(self, form, responder, *a, **kw)
 
-                kw = _make_validated_kw(fn, simple_vals, param_vals, env)
-                val = fn(self, form, jquery, *a, **kw)
+    # auto-refresh the captcha if there are errors.
+    if (c.errors.errors and
+        any(isinstance(v, VCaptcha) for v in simple_vals)):
+        form.new_captcha()
+    
+    if val: return val
+    return self.response_func(dict(iter(responder)))
 
-                # auto-refresh the captcha if there are errors.
-                if (c.errors.errors and
-                    any(isinstance(v, VCaptcha) for v in simple_vals)):
-                    form.new_captcha()
-                
-                if val: return val
-                return self.response_func(**dict(list(jquery)))
 
-            except UserRequiredException:
-                jquery = JQueryResponse()
-                jquery.refresh()
-                return self.response_func(**dict(list(jquery)))
-        return newfn
-    return val
 
 #### validators ####
 class nop(Validator):

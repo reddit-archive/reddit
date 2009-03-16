@@ -27,63 +27,76 @@ from r2.lib.template_helpers import replace_render
 from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
 import simplejson
+from pylons import c
 
 def json_respond(x):
-    from pylons import c
-    if get_api_subtype():
-        res = JsonResponse()
-        res.object = tup(x)
-        res = dict(res)
-    else:
-        res = x or ''
-    return websafe_json(simplejson.dumps(res))
+    return websafe_json(simplejson.dumps(x or ''))
 
-class JQueryResponse(object):
+class JsonResponse(object):
     """
-    class which mimics the jQuery in javascript for allowing Dom
-    manipulations on the client side.
-    
-    An instantiated JQueryResponse acts just like the "$" function on
-    the JS layer with the exception of the ability to run arbitrary
-    code on the client.  Selectors and method functions evaluate to
-    new JQueryResponse objects, and the transformations are cataloged
-    by the original object which can be iterated and sent across the
-    wire.
+    Simple Api response handler, returning a list of errors generated
+    in the api func's validators, as well as blobs of data set by the
+    api func.
     """
-    def __init__(self, factory = None):
+    def __init__(self):
+        self._clear()
+
+    def _clear(self):
         self._has_errors = set([])
         self._new_captcha = False
-        if factory:
-            self.factory = factory
-            self.ops = None
-            self.objs = None
-        else:
-            self.factory = self
-            self.objs = {self: 0}
-            self.ops = []
+        self._data = {}
         
+    def send_failure(self, error):
+        c.errors.add(error)
+        self._clear()
+        self._has_errors.add(error)
+
     def __call__(self, *a):
-        return self.factory.transform(self, "call", a)
+        return self
 
     def __getattr__(self, key):
-        if not key.startswith("__"):
-            return self.factory.transform(self, "attr", key)
-
-    def transform(self, obj, op, args):
-        new = self.__class__(self)
-        newi = self.objs[new] = len(self.objs)
-        self.ops.append([self.objs[obj], newi, op, args])
-        return new
+        return self
 
     def __iter__(self):
-        yield ("jquery", self.ops)
+        res = {}
+        if self._data:
+            res['data'] = self._data
+        res['errors'] = [(e, c.errors[e].message) for e in self._has_errors]
+        yield ("json", res)
+
+    def _mark_error(self, e):
+        pass
+
+    def _unmark_error(self, e):
+        pass
 
     def has_error(self):
         return bool(self._has_errors)
 
-    # thing methods
-    #--------------
-    
+    def has_errors(self, input, *errors, **kw):
+        rval = False
+        for e in errors:
+            if e in c.errors:
+                # get list of params checked to generate this error
+                # if they exist, make sure they match input checked
+                fields = c.errors[e].fields
+                if not input or not fields or input in fields:
+                    self._has_errors.add(e)
+                    rval = True
+                    self._mark_error(e)
+            else:
+                self._unmark_error(e)
+
+        if rval and input:
+            self.focus_input(input)
+        return rval
+
+    def clear_errors(self, *errors):
+        for e in errors:
+            if e in self._has_errors:
+                self._has_errors.remove(e)
+                self._unmark_error(e)
+
     def _things(self, things, action, *a, **kw):
         """
         function for inserting/replacing things in listings.
@@ -104,8 +117,8 @@ class JQueryResponse(object):
                 if d.has_key('data'):
                     d['data'].update(kw)
 
-        new = self.__getattr__(action)
-        return new(data, *a)
+        self._data['things'] = data
+        return data
 
     def insert_things(self, things, append = False, **kw):
         return self._things(things, "insert_things", append, **kw)
@@ -115,6 +128,67 @@ class JQueryResponse(object):
         return self._things(things, "replace_things",
                             keep_children, reveal, stubs, **kw)
 
+    def _send_data(self, **kw):
+        self._data.update(kw)
+            
+
+class JQueryResponse(JsonResponse):
+    """
+    class which mimics the jQuery in javascript for allowing Dom
+    manipulations on the client side.
+    
+    An instantiated JQueryResponse acts just like the "$" function on
+    the JS layer with the exception of the ability to run arbitrary
+    code on the client.  Selectors and method functions evaluate to
+    new JQueryResponse objects, and the transformations are cataloged
+    by the original object which can be iterated and sent across the
+    wire.
+    """
+    def __init__(self, top_node = None):
+        if top_node:
+            self.top_node = top_node
+        else:
+            self.top_node = self
+        JsonResponse.__init__(self)
+        self._clear()
+
+    def _clear(self):
+        if self.top_node == self:
+            self.objs = {self: 0}
+            self.ops  = []
+        else:
+            self.objs = None
+            self.ops  = None
+        JsonResponse._clear(self)
+        
+    def send_failure(self, error):
+        JsonResponse.send_failure(self, error)
+        self.refresh()
+
+    def __call__(self, *a):
+        return self.top_node.transform(self, "call", a)
+
+    def __getattr__(self, key):
+        if not key.startswith("__"):
+            return self.top_node.transform(self, "attr", key)
+
+    def transform(self, obj, op, args):
+        new = self.__class__(self)
+        newi = self.objs[new] = len(self.objs)
+        self.ops.append([self.objs[obj], newi, op, args])
+        return new
+
+    def __iter__(self):
+        yield ("jquery", self.ops)
+
+    # thing methods
+    #--------------
+    
+    def _things(self, things, action, *a, **kw):
+        data = JsonResponse._things(self, things, action, *a, **kw)
+        new = self.__getattr__(action)
+        return new(data, *a)
+
     def insert_table_rows(self, rows, index = -1):
         new = self.__getattr__("insert_table_rows")
         return new([row.render() for row in tup(rows)], index)
@@ -122,31 +196,11 @@ class JQueryResponse(object):
 
     # convenience methods:
     # --------------------
-    def has_errors(self, input, *errors, **kw):
-        from pylons import c
-        rval = False
-        for e in errors:
-            if e in c.errors:
-                # get list of params checked to generate this error
-                # if they exist, make sure they match input checked
-                fields = c.errors[e].fields
-                if input and fields and input not in fields:
-                    continue
-                self._has_errors.add(e)
-                rval = True
-                self.find("." + e).show().html(c.errors[e].message).end()
-            else:
-                self.find("." + e).html("").end()
-        if rval and input:
-            self.focus_input(input)
-        return rval
+    def _mark_error(self, e):
+        self.find("." + e).show().html(c.errors[e].message).end()
 
-    def clear_errors(self, *errors):
-        from pylons import c
-        for e in errors:
-            if e in self._has_errors:
-                self._has_errors.remove(e)
-                self.find("." + e).hide().html("").end()
+    def _unmark_error(self, e):
+        self.find("." + e).html("").end()
 
     def new_captcha(self):
         if not self._new_captcha:

@@ -37,7 +37,7 @@ def to_referer(func, **params):
 
 
 class PostController(ApiController):
-    def response_func(self, **kw):
+    def response_func(self, kw):
         return Storage(**kw)
 
 #TODO: feature disabled for now

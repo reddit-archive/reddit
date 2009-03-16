@@ -79,7 +79,7 @@ class ApiController(RedditController):
     Controller which deals with almost all AJAX site interaction.  
     """
 
-    def response_func(self, **kw):
+    def response_func(self, kw):
         data = dumps(kw)
         if request.method == "GET" and request.GET.get("callback"):
             return "%s(%s)" % (websafe_json(request.GET.get("callback")),
@@ -97,10 +97,8 @@ class ApiController(RedditController):
         """
         Get's a listing of links which have the provided url.  
         """
-        listing = None
-        if link and errors.ALREADY_SUB in c.errors:
-            listing = link_listing_by_url(request.params.get('url'),
-                                          count = count)
+        listing = link_listing_by_url(request.params.get('url'),
+                                      count = count)
         return BoringPage(_("API"), content = listing).render()
 
     @validatedForm(VCaptcha(),
@@ -261,6 +259,8 @@ class ApiController(RedditController):
         user cookie and send back a redirect.
         """
         self.login(user, rem = rem)
+        form._send_data(modhash = user.modhash())
+        form._send_data(cookie  = user.make_cookie())
         dest = dest or request.referer or '/'
         form.redirect(dest)
 

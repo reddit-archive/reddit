@@ -22,16 +22,17 @@
 from utils import to36, tup, iters
 from wrapped import Wrapped
 from mako.template import Template
+from r2.lib.filters import spaceCompress, safemarkdown
+import time, pytz
+from pylons import c
 
 def api_type(subtype = ''):
     return 'api-' + subtype if subtype else 'api'
 
 def is_api(subtype = ''):
-    from pylons import c
     return c.render_style and c.render_style.startswith(api_type(subtype))
     
 def get_api_subtype():
-    from pylons import c
     if is_api() and c.render_style.startswith('api-'):
         return c.render_style[4:]
 
@@ -42,7 +43,6 @@ def make_fullname(typ, _id):
     return '%s_%s' % (make_typename(typ), to36(_id))
 
 def mass_part_render(thing, **kw):
-    from r2.lib.filters import spaceCompress
     return dict([(k, spaceCompress(thing.part_render(v)).strip(' ')) \
                  for k, v in kw.iteritems()])
 
@@ -69,7 +69,6 @@ class TableRowTemplate(JsonTemplate):
 
 class UserItemJsonTemplate(TableRowTemplate):
     def cells(self, thing):
-        from r2.lib.filters import spaceCompress
         cells = []
         for cell in thing.cells:
             r = Wrapped.part_render(thing, 'cell_type', cell)
@@ -84,7 +83,16 @@ class UserItemJsonTemplate(TableRowTemplate):
 
 
 class ThingJsonTemplate(JsonTemplate):
-    __data_attrs__ = dict()
+    _data_attrs_ = dict(id           = "_id36",
+                        name         = "_fullname",
+                        created      = "created",
+                        created_utc  = "created_utc")
+
+    @classmethod
+    def data_attrs(cls, **kw):
+        d = cls._data_attrs_.copy()
+        d.update(kw)
+        return d
     
     def points(self, wrapped):
         """
@@ -121,9 +129,7 @@ class ThingJsonTemplate(JsonTemplate):
          * content : rendered  representation of the thing by
            calling replace_render on it using the style of get_api_subtype().
         """
-        from r2.lib.filters import spaceCompress
         from r2.lib.template_helpers import replace_render
-        from pylons import c
         listing = thing.listing if hasattr(thing, "listing") else None
         return dict(id = thing._fullname,
                     #vl = self.points(thing),
@@ -147,7 +153,7 @@ class ThingJsonTemplate(JsonTemplate):
                 return x
         
         return dict((k, strip_data(self.thing_attr(thing, v)))
-                    for k, v in self.__data_attrs__.iteritems())
+                    for k, v in self._data_attrs_.iteritems())
             
     def thing_attr(self, thing, attr):
         """
@@ -156,15 +162,15 @@ class ThingJsonTemplate(JsonTemplate):
         which has to be gotten from the author_id attribute on most
         things).
         """
-        import time
         if attr == "author":
             return thing.author.name
         elif attr == "created":
             return time.mktime(thing._date.timetuple())
+        elif attr == "created_utc":
+            return time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
         return getattr(thing, attr) if hasattr(thing, attr) else None
 
     def data(self, thing):
-        from pylons import c
         if get_api_subtype():
             return self.rendered_data(thing)
         else:
@@ -174,33 +180,27 @@ class ThingJsonTemplate(JsonTemplate):
         return dict(kind = self.kind(thing), data = self.data(thing))
         
 class SubredditJsonTemplate(ThingJsonTemplate):
-    __data_attrs__ = dict(id           = "_id36",
-                          name         = "_fullname",
-                          subscribers  = "score",
-                          title        = "title",
-                          url          = "path",
-                          description  = "description",
-                          created      = "created")
+    _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "score",
+                                                title        = "title",
+                                                url          = "path",
+                                                description  = "description")
 
 class LinkJsonTemplate(ThingJsonTemplate):
-    __data_attrs__ = dict(id           = "_id36",
-                          name         = "_fullname",
-                          ups          = "upvotes",
-                          downs        = "downvotes",
-                          score        = "score",
-                          saved        = "saved",
-                          clicked      = "clicked",
-                          hidden       = "hidden",
-                          likes        = "likes",
-                          domain       = "domain",
-                          title        = "title",
-                          url          = "url",
-                          author       = "author", 
-                          num_comments = "num_comments",
-                          created      = "created",
-                          subreddit    = "subreddit",
-                          subreddit_id = "subreddit_id")
-
+    _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
+                                                downs        = "downvotes",
+                                                score        = "score",
+                                                saved        = "saved",
+                                                clicked      = "clicked",
+                                                hidden       = "hidden",
+                                                likes        = "likes",
+                                                domain       = "domain",
+                                                title        = "title",
+                                                url          = "url",
+                                                author       = "author", 
+                                                num_comments = "num_comments",
+                                                subreddit    = "subreddit",
+                                                subreddit_id = "subreddit_id")
+    
     def thing_attr(self, thing, attr):
         if attr == 'subreddit':
             return thing.subreddit.name
@@ -216,18 +216,16 @@ class LinkJsonTemplate(ThingJsonTemplate):
 
 
 class CommentJsonTemplate(ThingJsonTemplate):
-    __data_attrs__ = dict(id           = "_id36",
-                          name         = "_fullname",
-                          ups          = "upvotes",
-                          downs        = "downvotes",
-                          replies      = "child",
-                          body         = "body",
-                          likes        = "likes",
-                          author       = "author", 
-                          created      = "created",
-                          link_id      = "link_id",
-                          parent_id    = "parent_id",
-                          )
+    _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
+                                                downs        = "downvotes",
+                                                replies      = "child",
+                                                body         = "body",
+                                                body_html    = "body_html",
+                                                likes        = "likes",
+                                                author       = "author", 
+                                                link_id      = "link_id",
+                                                parent_id    = "parent_id",
+                                                )
 
     def thing_attr(self, thing, attr):
         from r2.models import Comment, Link
@@ -238,6 +236,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
                 return make_fullname(Comment, thing.parent_id)
             except AttributeError:
                 return make_fullname(Link, thing.link_id)
+        elif attr == "body_html":
+            return safemarkdown(thing.body)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):
@@ -260,8 +260,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
         return d
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
-    __data_attrs__ = dict(id           = "_id36",
-                          name         = "_fullname")
+    _data_attrs_ = dict(id           = "_id36",
+                        name         = "_fullname")
     def points(self, wrapped):
         return []
 
@@ -269,18 +269,25 @@ class MoreCommentJsonTemplate(CommentJsonTemplate):
         return "more"
 
 class MessageJsonTemplate(ThingJsonTemplate):
-    __data_attrs__ = dict(id           = "_id36",
-                          name         = "_fullname",
-                          new          = "new",
-                          subject      = "subject",
-                          body         = "body",
-                          author       = "author",
-                          dest         = "dest",
-                          created      = "created")
+    _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",
+                                                subject      = "subject",
+                                                body         = "body",
+                                                body_html    = "body_html",
+                                                author       = "author",
+                                                dest         = "dest",
+                                                was_comment  = "was_comment",
+                                                created      = "created")
 
     def thing_attr(self, thing, attr):
-        if attr == "dest":
+        if attr == "was_comment":
+            return hasattr(thing, "was_comment")
+        elif attr == "context":
+            return ("" if not hasattr(thing, "was_comment")
+                    else thing.permalink + "?context=3")
+        elif attr == "dest":
             return thing.to.name
+        elif attr == "body_html":
+            return safemarkdown(thing.body)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def rendered_data(self, wrapped):
@@ -313,15 +320,13 @@ class NullJsonTemplate(JsonTemplate):
         return None
 
 class ListingJsonTemplate(ThingJsonTemplate):
-    __data_attrs__ = dict(children = "things")
+    _data_attrs_ = dict(children = "things")
     
     def points(self, w):
         return []
 
     def rendered_data(self, thing):
-        from r2.lib.filters import spaceCompress
         from r2.lib.template_helpers import replace_render
-
         res = []
         for a in thing.things:
             a.listing = thing
