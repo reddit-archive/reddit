@@ -40,7 +40,7 @@ from r2.lib.jsontemplates import api_type
 from copy import copy
 from Cookie import CookieError
 from datetime import datetime
-import sha, simplejson
+import sha, simplejson, locale
 from urllib import quote, unquote
 
 from r2.lib.tracking import encrypt, decrypt
@@ -293,6 +293,10 @@ def set_host_lang():
         c.host_lang = host_lang
 
 def set_iface_lang():
+    # TODO: internationalize.  This seems the best place to put this
+    # (used for formatting of large numbers to break them up with ",").
+    # unfortunately, not directly compatible with gettext
+    locale.setlocale(locale.LC_ALL, "en_US")
     lang = ['en']
     # GET param wins
     if c.host_lang:

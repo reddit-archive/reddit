@@ -1800,3 +1800,25 @@ ul#image-preview-list .description pre {
 .subscription-box h1{ text-align: center; }
  
 .toggle.deltranslator-button { display: inline; }
+
+.traffic-table {margin: 10px 20px; }
+.traffic-table a:hover { text-decoration: underline; }
+.traffic-table th { font-weight: bold; text-align: center;}
+.traffic-table th,
+.traffic-table td { padding: 0 5px; }
+.traffic-table td { text-align: right; }
+
+.traffic-table td.up   { color: #FF8B60; }
+.traffic-table td.down { color: #336699; }
+.traffic-table td.gray { color: gray; font-style: italic; }
+
+.traffic-table tr.max  { border: 2px solid #FF8B60; }
+.traffic-table tr.min  { border: 2px solid #336699; }
+.traffic-table tr.odd { background-color: #E0E0E0; }
+.traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
+
+.traffic-graph {
+    padding: 10px; 
+    border: 1px solid #B0B0B0; 
+    margin-left: 10px;
+    margin-bottom: 10px; }

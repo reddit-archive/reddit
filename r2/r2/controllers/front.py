@@ -290,6 +290,8 @@ class FrontController(RedditController):
 #            listing = LinkListing(builder)
 #            pane = listing.listing()
             pane = InfoBar(message = "There doesn't seem to be anything here.")
+        elif c.user_is_admin and location == 'traffic':
+            pane = RedditTraffic()
         else:
             return self.abort404()
 
@@ -595,3 +597,17 @@ class FrontController(RedditController):
             return c.response
         else:
             return self.abort404()
+
+
+    @validate(VAdmin(),
+              article = VLink('article'))
+    def GET_traffic(self, article):
+        res = LinkInfoPage(link = article,
+                           comment = None,
+                           content = PromotedTraffic(article)).render()
+        return res
+        
+    @validate(VAdmin())
+    def GET_site_traffic(self):
+        return BoringPage("traffic",
+                          content = RedditTraffic()).render()

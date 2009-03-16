@@ -44,6 +44,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/search', controller='front', action='search')
 
     mc('/sup', controller='front', action='sup')
+    mc('/traffic', controller='front', action='site_traffic')
     
     mc('/about/:location', controller='front', 
        action='editreddit', location = 'about')
@@ -96,6 +97,8 @@ def make_map(global_conf={}, app_conf={}):
        action = 'related', title=None)
     mc('/details/:article/:title', controller='front',
        action = 'details', title=None)
+    mc('/traffic/:article/:title', controller='front',
+       action = 'traffic', title=None)
     mc('/comments/:article/:title/:comment', controller='front', 
        action= 'comments', title=None, comment = None)
     

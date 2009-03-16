@@ -836,10 +836,10 @@ class VCnameDomain(Validator):
                 self.set_error(errors.BAD_CNAME)
 
 class VTranslation(Validator):
-    def run(self):
+    def run(self, param):
         from r2.lib.translation import Translator
-        if Translator.exists(self.param):
-            return Translator(locale = self.param)
+        if Translator.exists(param):
+            return Translator(locale = param)
 
 # NOTE: make sure *never* to have res check these are present
 # otherwise, the response could contain reference to these errors...!

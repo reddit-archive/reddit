@@ -1,0 +1,204 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   import locale
+   from r2.models.subreddit import DomainSR, FakeSubreddit
+   def num(x):
+      return locale.format('%d', x, True)
+ %>
+
+<h1>Traffic for ${c.site.name}</h1>
+
+
+
+%if not thing.has_data:
+  <p class="error">
+   ${_("There doesn't seem to be any traffic data at the moment.  Please check back later.")}
+  </p>
+%else:
+
+  <img class="traffic-graph" alt='hourly uniques' 
+       src="${thing.uniques_hour}"/>
+  <img class="traffic-graph" alt='hourly impressions' 
+       src="${thing.impressions_hour}"/>
+  <br/>
+  <img class="traffic-graph" alt='daily uniques' 
+       src="${thing.uniques_day}"/>
+  <img class="traffic-graph" alt='daily impressions' 
+       src="${thing.impressions_day}"/>
+  
+  <br/>
+  
+  %if c.default_sr:
+    <img class="traffic-graph" alt='monthly uniques' 
+         style="clear:left"
+         src="${thing.uniques_month}"/>
+    <img class="traffic-graph" alt='monthly impressions' 
+         src="${thing.impressions_month}"/>
+  %endif
+  
+  <% 
+     umin = min(data[0] for date, data in filter(None, thing.day_data))
+     umax = max(data[0] for date, data in filter(None, thing.day_data))
+   %>
+    
+  <div style="float:left">
+    <table class="traffic-table">
+      <tr>
+        <th colspan="3">Weekly summary</th>
+      </tr>
+      <tr>
+        <th>${_("date")}</th>
+        <th>${_("uniques")}</th>
+        <th>${_("impressions")}</th>
+      </tr>
+      <%
+         dow = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
+         "Saturday", "Sunday"]
+       %>
+      %for i, (uni, imp) in enumerate(zip(thing.uniques_by_dow, thing.impressions_by_dow)):
+        <tr class="${'odd' if i % 2 else 'even'}">
+          <td>${dow[i]}</td>
+          <td>${num(int(uni))}</td>
+          <td>${num(int(imp))}</td>
+          ${bars(uni, imp)}
+        </tr>
+      %endfor
+      <tr class="mean">
+        <td>${_("Daily Mean")}</td>
+        <td>${num(int(thing.uniques_mean))}</td>
+        <td>${num(int(thing.impressions_mean))}</td>
+      </tr>
+    </table>
+  
+    <table class="traffic-table">
+      <tr>
+        %if c.site.domain:
+          <th></th>
+          <th colspan="2">total</th>
+          <th colspan="2">${c.site.domain}</th>
+        </tr><tr>
+          <th>${_("date")}</th>
+          <th>${_("uniques")}</th>
+          <th>${_("impressions")}</th>
+          <th>${_("uniques")}</th>
+          <th>${_("impressions")}</th>
+        %else:
+          <th>${_("date")}</th>
+          <th>${_("uniques")}</th>
+          <th>${_("impressions")}</th>
+        %endif
+      </tr>
+      %for x, (date, data) in enumerate(reversed(thing.day_data)):
+        <tr class="${'odd' if x % 2 else 'even'} ${'max' if data[0] == umax else 'min' if data[0] == umin else ''}"
+          <td>${date.strftime("%Y-%m-%d")}</td>
+          %for i in xrange(4 if c.site.domain else 2):
+            <td>${num(data[i]) if data[i] else "-"}</td>
+          %endfor
+          ${bars(data[0], data[1])}
+        </tr>
+      %endfor
+    </table>
+  </div>
+    
+  %if c.default_sr:
+    <% data = thing.monthly_summary() %>
+    <table class="traffic-table">
+      <tr>
+        <th colspan="3">Monthly data</th>
+      </tr>
+      <tr>
+          <th>${_("date")}</th>
+          <th>${_("uniques")}</th>
+          <th>${_("impressions")}</th>
+      </tr>
+      %for i, d in enumerate(reversed(data)):
+        <tr class="${'odd' if i % 2 else 'even'}">
+          %for cls, x in d:
+            <td class="${cls}">${x}</td>
+          %endfor
+        </tr>
+      %endfor
+    </table>
+ 
+    <table class="traffic-table">
+      <tr>
+        <th></th>
+        <th colspan="2">total</th>
+        <th colspan="2">${_("cnamed")}</th>
+      </tr>
+      <tr>
+        <th>${_("date")}</th>
+        <th>${_("uniques")}</th>
+        <th>${_("impressions")}</th>
+        <th>${_("uniques")}</th>
+        <th>${_("impressions")}</th>
+        <th>${_("cname")}</th>
+      </tr>
+      %for i, (sr, d) in enumerate(thing.reddits_summary()):
+        <tr class="${'odd' if i % 2 else 'even'}">
+          
+          <td 
+             %if isinstance(sr, FakeSubreddit):
+               style="font-style: left; text-align: left"
+             %else:
+               style="font-weight:bold; text-align: left"
+             %endif
+             >
+            %if isinstance(sr, DomainSR):
+              <a href="${sr.path}">[domain:${sr.name}]</a>
+            %elif isinstance(sr, FakeSubreddit):
+              <a href="${sr.path}">[meta:${sr.name}]</a>
+            %else:
+              <a href="${sr.path}about/traffic">${sr.name}</a>
+            %endif
+            </a>
+          </td>
+          %for x in d:
+            <td>${num(x) if x else "--"}</td>
+          %endfor
+          <td>
+          %if not isinstance(sr, FakeSubreddit) and sr.domain:
+            <a href="http://${sr.domain}/">${sr.domain}</a>
+          %endif
+          </td>
+        </tr>
+      %endfor
+    </table>
+  %endif
+%endif
+
+
+
+<%def name="bars(uni, imp)">
+  <%
+     wid_uni = int(50 * min(2, float(uni)/thing.uniques_mean))
+     wid_imp = int(50 * min(2, float(imp)/thing.impressions_mean))
+   %>
+  <td>
+    <div style="height:4px; width:${wid_imp}px; background-color:#336699; margin-bottom:1px">
+    </div>
+    <div style="height:4px; width:${wid_uni}px; background-color:#FF4500">
+    </div>
+  </td>
+</%def>
+

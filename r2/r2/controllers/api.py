@@ -1228,7 +1228,7 @@ class ApiController(RedditController):
 
     @noresponse(VAdmin(),
                 tr = VTranslation("id"))
-    def POST_enable_lang(self, lang):
+    def POST_enable_lang(self, tr):
         if tr:
             tr._is_enabled = True
 

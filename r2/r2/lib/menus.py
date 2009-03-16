@@ -113,6 +113,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      # comments
                      related      = _("related"),
                      details      = _("details"),
+                     traffic      = _("traffic"),
 
                      # reddits
                      home         = _("home"),

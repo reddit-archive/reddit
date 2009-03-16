@@ -47,7 +47,7 @@ class Link(Thing, Printable):
                      banned_before_moderator = False,
                      media_object = None,
                      has_thumbnail = False,
-                     promoted = False,
+                     promoted = None,
                      promoted_subscribersonly = False,
                      promote_until = None,
                      promoted_by = None,

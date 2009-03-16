@@ -19,65 +19,37 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%!
-  from r2.lib.utils import to36
-%>
-<%namespace file="utils.html" import="plain_link"/>
-<%namespace file="printable.html" import="ynbutton"/>
 
-
-<div>
-  <h1>${_('current promotions')}</h1>
-  
-  <ul class="promoted-list">
-    %for t in thing.things:
-      <li class="entry">
-        ${plain_link(t.title,'/promote/edit_promo/%s' % to36(t._id))}&nbsp;
-        %if t.promote_until:
-            ${(_("(until %(until)s)")
-              % dict(until = t.promote_until.strftime(thing.datefmt)))}
-            &nbsp;
-        %endif
-        <ul class="buttons" style="display: inline;">
-          <li>
-            ${ynbutton(_("unpromote"), _("unpromoted"),
-                "unpromote", hidden_data = dict(id=t._fullname))}
-          </li>
-        </ul>
-      </li>
-    %endfor
-  </ul>
-
-  %if thing.recent:
-  <h1>${_('promotions this month')}</h1>
-  
+%if thing.traffic:
+  %if thing.imp_graph:
+    <img class="traffic-graph" src="${thing.imp_graph}"
+         alt="impressions graph"/>
+  %endif
+  %if thing.cli_graph:
+    <img class="traffic-graph" src="${thing.cli_graph}" 
+         alt="click graph"/>
+  %endif
   <table class="traffic-table">
     <tr>
+      <th>date</th>
       <th colspan="2">Impresions</th>
       <th colspan="2">Clicks</th>
-      <th></th>
-      <th></th>
     </tr>
     <tr>
+      <th></th>
       <th>unique</th>
       <th>total</th>
       <th>unique</th>
       <th>total</th>
-      <th>points</th>
-      <th>title</th>
     </tr>
-    %for link, uimp, nimp, ucli, ncli in thing.recent:
-    <tr>
-      <td>${uimp}</td>
-      <td>${nimp}</td>
-      <td>${ucli}</td>
-      <td>${ncli}</td>
-      <td>${link._ups - link._downs}</td>
-      <td>
-        <a class="title" href="${link.permalink}">${link.title}</a>
-      </td>
-    </tr>
+    %for date, (uimp, nimp, ucli, ncli) in thing.traffic:
+      <tr>
+        <td>${date.strftime("%Y-%m-%d %H:%M")}</td>
+        <td>${uimp}</td>
+        <td>${nimp}</td>
+        <td>${ucli}</td>
+        <td>${ncli}</td>
+      </tr>
     %endfor
   </table>
-  %endif
-</div>
+%endif

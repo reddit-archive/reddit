@@ -108,7 +108,7 @@ def cached_organic_links(user_id, langs):
     link_names.sort(key = lambda n: sr_count[n][0])
 
     #potentially add a up and coming link
-    if random.choice((True, False)):
+    if random.choice((True, False)) and sr_ids:
         sr = Subreddit._byID(random.choice(sr_ids))
         items = only_recent(get_hot(sr))
         if items:

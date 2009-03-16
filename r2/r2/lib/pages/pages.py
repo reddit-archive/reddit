@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, NoTemplateFound
-from r2.models import IDBuilder, LinkListing, Account, Default, FakeSubreddit, Subreddit
+from r2.models import IDBuilder, LinkListing, Account, Default, FakeSubreddit, Subreddit, Friends, All, Sub, NotFound, DomainSR
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -28,6 +28,7 @@ from pylons.i18n import _
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
+from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
@@ -35,7 +36,8 @@ from r2.lib.menus import SubredditButton, SubredditMenu, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js
 from r2.lib.template_helpers import add_sr, get_domain
-import sys, random
+import sys, random, datetime, locale, calendar
+import graph
 
 datefmt = _force_utf8(_('%d %b %Y'))
 
@@ -222,7 +224,10 @@ class Reddit(Wrapped):
         
             if c.user_is_sponsor:
                 more_buttons.append(NamedButton('promote'))
-        
+
+            if c.user_is_admin:
+                more_buttons.append(NamedButton('traffic'))
+
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
             toolbar.append(NavMenu(more_buttons, title=menu.more, type='tabdrop'))
@@ -265,6 +270,8 @@ class SubredditInfoBar(Wrapped):
             buttons.append(NamedButton('edit'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
                             NamedButton('spam')])
+        if c.user_is_admin:
+            buttons.append(NamedButton('traffic'))
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
 
 class SideBox(Wrapped):
@@ -450,6 +457,8 @@ class LinkInfoPage(Reddit):
 
         if c.user_is_admin:
             buttons += [info_button('details')]
+            if self.link.promoted is not None:
+                buttons += [info_button('traffic')]
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 
@@ -1182,7 +1191,22 @@ class PromotePage(Reddit):
 class PromotedLinks(Wrapped):
     def __init__(self, current_list, *a, **kw):
         self.things = current_list
+        
+        self.recent =  dict(load_summary("thing"))
 
+        if self.recent:
+            from r2.models import Link
+            # TODO: temp hack until we find place for builder_wrapper
+            from r2.controllers.listingcontroller import ListingController
+            builder = IDBuilder(self.recent.keys(),
+                                wrap = ListingController.builder_wrapper)
+            link_listing = LinkListing(builder, nextprev=False).listing()
+
+            for t in link_listing.things:
+                self.recent[t._fullname].insert(0, t)
+
+            self.recent = self.recent.values()
+            self.recent.sort(key = lambda x: x[0]._date)
         Wrapped.__init__(self, datefmt = datefmt, *a, **kw)
 
 class PromoteLinkForm(Wrapped):
@@ -1193,3 +1217,156 @@ class PromoteLinkForm(Wrapped):
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
+
+class Traffic(Wrapped):
+    @staticmethod
+    def slice_traffic(traffic, *indices):
+        return [[a] + [b[i] for i in indices] for a, b in traffic]
+
+
+class PromotedTraffic(Traffic):
+    """
+    Traffic page for a promoted link, including 2 graphs (one for
+    impressions and one for clicks with uniques on each plotted in
+    multiy format) and a table of the data.
+    """
+    def __init__(self, thing):
+        self.thing = thing
+        d = thing._date.astimezone(g.tz) 
+        d = d.replace(minute = 0, second = 0, microsecond = 0)
+        
+        until = thing.promote_until
+        now = datetime.datetime.now(g.tz)
+        if not until:
+            until = d + datetime.timedelta(1)
+        if until > now:
+            until - now
+            
+        self.traffic = load_traffic('hour', "thing", thing._fullname,
+                                    start_time = d, stop_time = until)
+
+        imp = self.slice_traffic(self.traffic, 0, 1)
+
+        if len(imp) > 2:
+            imp_total = locale.format('%d', sum(x[2] for x in imp), True)
+            chart = graph.LineGraph(imp)
+            self.imp_graph = chart.google_chart(ylabels = ['uniques', 'total'],
+                                                title = ("impressions (%s)" %
+                                                         imp_total))
+            
+            cli = self.slice_traffic(self.traffic, 2, 3)
+            cli_total = locale.format('%d', sum(x[2] for x in cli), True)
+            chart = graph.LineGraph(cli)
+            self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
+                                                multiy = False,
+                                                title = ("clicks (%s)" %
+                                                         cli_total))
+        else:
+            self.imp_graph = self.cli_graph = None
+        Wrapped.__init__(self)
+
+class RedditTraffic(Traffic):
+    """
+    fetches hourly and daily traffic for the current reddit.  If the
+    current reddit is a default subreddit, fetches the site-wide
+    uniques and includes monthly totals.  In this latter case, getter
+    methods are available for computing breakdown of site trafffic by
+    reddit.
+    """
+    def __init__(self):
+        self.has_data = False
+        ivals = ["hour", "day"]
+        if c.default_sr:
+            ivals.append("month")
+
+        for ival in ivals:
+            if c.default_sr:
+                data = load_traffic(ival, "total", "")
+            else:
+                data = load_traffic(ival, "reddit", c.site.name)
+            if not data:
+                break
+            slices = [("uniques",     (0, 2) if c.site.domain else (0,),
+                       "FF4500"),
+                      ("impressions", (1, 3) if c.site.domain else (1,),
+                       "336699")]
+            setattr(self, ival + "_data", data)
+            for name, indx, color in slices:
+                data2 = self.slice_traffic(data, *indx)
+                chart = graph.LineGraph(data2, colors = [color, "B0B0B0"])
+                setattr(self, name + "_" + ival + "_chart", chart)
+                title = "%s by %s" % (name, ival)
+                res = chart.google_chart(ylabels = [name],
+                                         multiy = False, 
+                                         title = title)
+                setattr(self, name + "_" + ival, res)
+        else:
+            self.has_data = True
+        if self.has_data:
+            imp_by_day = [[] for i in range(7)]
+            uni_by_day = [[] for i in range(7)]
+            dates  = self.uniques_day_chart.xdata
+            uniques = self.uniques_day_chart.ydata[0]
+            imps    = self.impressions_day_chart.ydata[0]
+            self.uniques_mean     = sum(map(float, uniques))/len(uniques)
+            self.impressions_mean = sum(map(float, imps))/len(imps)
+            for i, d in enumerate(dates):
+                imp_by_day[d.weekday()].append(float(imps[i]))
+                uni_by_day[d.weekday()].append(float(uniques[i]))
+            self.uniques_by_dow     = [sum(x)/len(x) for x in uni_by_day]
+            self.impressions_by_dow = [sum(x)/len(x) for x in imp_by_day]
+        Wrapped.__init__(self)
+
+    def reddits_summary(self):
+        if c.default_sr:
+            data = map(list, load_summary("reddit"))
+            data.sort(key = lambda x: x[1][1], reverse = True)
+            for d in data:
+                name = d[0]
+                for sr in (Default, Friends, All, Sub):
+                    if name == sr.name:
+                        name = sr
+                        break
+                else:
+                    try:
+                        name = Subreddit._by_name(name)
+                    except NotFound:
+                        name = DomainSR(name)
+                d[0] = name
+            return data
+        return res
+        
+    def monthly_summary(self):
+        """
+        Convenience method b/c it is bad form to do this much math
+        inside of a template.b
+        """
+        res = []
+        if c.default_sr:
+            data = self.month_data
+            for x, (date, d) in enumerate(data):
+                res.append([("date", date.strftime("%Y-%m")),
+                            ("", locale.format("%d", d[0], True)),
+                            ("", locale.format("%d", d[1], True))])
+                last_d = data[x-1][1] if x else None
+                for i in range(2):
+                    if x == 0:
+                        res[-1].append(("",""))
+                    elif x == len(data) - 1:
+                        # project based on traffic so far
+                        # totals are going to be up to yesterday
+                        month_len = calendar.monthrange(date.year,
+                                                        date.month)[1]
+                        yday = (datetime.datetime.utcnow()
+                                -datetime.timedelta(1)).day
+                        scaled = float(d[i] * month_len) / yday
+                        res[-1].append(("gray",
+                                        locale.format("%d", scaled, True)))
+                    elif last_d and d[i] and last_d[i]:
+                        f = 100 * (float(d[i])/last_d[i] - 1)
+                        
+                        res[-1].append(("up" if f > 0 else "down", 
+                                        "%5.2f%%" % f))
+        return res
+
+    
