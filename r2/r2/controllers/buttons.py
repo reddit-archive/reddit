@@ -29,6 +29,7 @@ from pylons import c, request
 from validator import *
 from pylons.i18n import _
 from r2.lib.filters import spaceCompress
+from r2.controllers.listingcontroller import ListingController
 
 class ButtonsController(RedditController):
     def buttontype(self):
@@ -38,34 +39,42 @@ class ButtonsController(RedditController):
         except ValueError:
             return 1
 
-    def get_link(self, url):
+    def get_wrapped_link(self, url, link = None):
         try:
-            sr = None if isinstance(c.site, FakeSubreddit) else c.site
-            try:
-                links = tup(Link._by_url(url, sr))
-            except NotFound:
-                return None
-            #find the one with the highest score
-            return max(links, key = lambda x: x._score)
+            if link:
+                links = [link]
+            else:
+                sr = None if isinstance(c.site, FakeSubreddit) else c.site
+                try:
+                    links = tup(Link._by_url(url, sr))
+                except NotFound:
+                    links = []
+
+            if links:
+                # cache the render style and reset it to html
+                rs = c.render_style
+                c.render_style = 'html'
+                link_builder = IDBuilder([l._fullname for l in links],
+                                         wrap=ListingController.builder_wrapper)
+                
+                # link_listing will be the one-element listing at the top
+                link_listing = LinkListing(link_builder, 
+                                           nextprev=False).listing()
+                
+                # reset the render style
+                c.render_style = rs
+                links = link_listing.things
+            # note: even if _by_url successed or a link was passed in,
+            # it is possible link_listing.things is empty if the
+            # link(s) is/are members of a private reddit
+            # return the link with the highest score (if more than 1)
+            return max(links, key = lambda x: x._score) if links else None
         except:
             #we don't want to return 500s in other people's pages.
             import traceback
             g.log.debug("FULLPATH: get_link error in buttons code")
             g.log.debug(traceback.format_exc())
-        
-    def wrap_link(self, link):
-        if link and hasattr(link, "_fullname"):
-            rs = c.render_style
-            c.render_style = 'html'
-            from r2.controllers.listingcontroller import ListingController
-            link_builder = IDBuilder(link._fullname, wrap = ListingController.builder_wrapper)
-            
-            # link_listing will be the one-element listing at the top
-            link_listing = LinkListing(link_builder, nextprev=False).listing()
-            
-            # link is a wrapped Link object
-            c.render_style = rs
-            return link_listing.things[0]
+
 
     @validate(url = VSanitizedUrl('url'),
               title = nop('title'),
@@ -81,7 +90,7 @@ class ButtonsController(RedditController):
             c.site = Default
             return self.redirect(request.path + query_string(request.GET))
 
-        l = self.wrap_link(link or self.get_link(url))
+        l = self.get_wrapped_link(url, link)
         if l: url = l.url
 
         #disable css hack 
@@ -153,7 +162,7 @@ class ButtonsController(RedditController):
         else:
             target = "_parent"
 
-        l = self.wrap_link(self.get_link(url))
+        l = self.get_wrapped_link(url)
         image = 1 if buttonimage is None else buttonimage
 
         bjs = ButtonLite(image = image, link = l, url = l.url if l else url,
