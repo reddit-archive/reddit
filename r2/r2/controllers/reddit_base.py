@@ -296,7 +296,7 @@ def set_iface_lang():
     # TODO: internationalize.  This seems the best place to put this
     # (used for formatting of large numbers to break them up with ",").
     # unfortunately, not directly compatible with gettext
-    locale.setlocale(locale.LC_ALL, "en_US")
+    locale.setlocale(locale.LC_ALL, g.locale)
     lang = ['en']
     # GET param wins
     if c.host_lang:
