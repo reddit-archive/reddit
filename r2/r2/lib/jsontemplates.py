@@ -276,6 +276,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
                                                 author       = "author",
                                                 dest         = "dest",
                                                 was_comment  = "was_comment",
+                                                context      = "context", 
                                                 created      = "created")
 
     def thing_attr(self, thing, attr):
