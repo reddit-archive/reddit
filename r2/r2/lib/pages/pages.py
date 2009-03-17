@@ -1290,6 +1290,8 @@ class RedditTraffic(Traffic):
                        "FF4500"),
                       ("impressions", (1, 3) if c.site.domain else (1,),
                        "336699")]
+            if not c.default_sr and ival == 'day':
+                slices.append(("subscriptions", (4,), "00FF00"))
             setattr(self, ival + "_data", data)
             for name, indx, color in slices:
                 data2 = self.slice_traffic(data, *indx)

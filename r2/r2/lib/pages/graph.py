@@ -134,7 +134,7 @@ class LineGraph(object):
     google_api = "http://chart.apis.google.com/chart"
 
     def __init__(self, xydata, colors = ("FF4500", "336699"),
-                 width = 350, height = 200):
+                 width = 300, height = 175):
         
         series = zip(*xydata)
         
