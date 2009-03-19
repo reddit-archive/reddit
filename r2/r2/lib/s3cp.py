@@ -53,7 +53,7 @@ def make_header(verb, date, amz_headers, resource, content_type):
     return base64.encodestring(h.digest()).strip()
                    
 def send_file(filename, resource, content_type, acl, rate, meter):
-    date = datetime.utcnow().strftime("%a, %d %b %Y %X GMT")
+    date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
     amz_headers = {'x-amz-acl': acl}
 
     auth_header = make_header('PUT', date, amz_headers, resource, content_type)
