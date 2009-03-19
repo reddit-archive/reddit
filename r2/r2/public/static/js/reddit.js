@@ -53,7 +53,7 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
     }
 };
 
-function simple_post_form(form, where, fields, block) {
+function get_form_fields(form, fields) {
     fields = fields || {};
     /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray").each(function() {
@@ -65,8 +65,11 @@ function simple_post_form(form, where, fields, block) {
     if (fields.id == null) {
         fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
     }
+    return fields;
+};
 
-    $.request(where, fields, null, block);
+function simple_post_form(form, where, fields, block) {
+    $.request(where, get_form_fields(form, fields), null, block);
     return false;
 };
 
