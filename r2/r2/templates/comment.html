@@ -102,7 +102,7 @@ ${parent.Child(not thing.collapsed)}
 
 <%def name="commentBody()">
 %if c.user_is_admin or not thing.deleted:
-${unsafe(safemarkdown(thing.body))}
+${unsafe(safemarkdown(thing.body, thing.nofollow))}
 %else:
 <div class="gray md">
   ${_("[deleted]")}

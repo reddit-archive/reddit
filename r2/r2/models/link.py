@@ -521,6 +521,10 @@ class Comment(Thing, Printable):
 
             if not hasattr(item,'editted'):
                 item.editted = False
+
+            #score less than 3, nofollow the links
+            item.nofollow = item._score < 3
+
             #will get updated in builder
             item.num_children = 0
             item.score_fmt = Score.points
