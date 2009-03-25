@@ -33,6 +33,7 @@
     
     <meta name="keywords" content="${self.keywords()}" />
     <meta name="title" content="${self.Title()}" />
+    ${self.Description()}
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     
@@ -71,6 +72,9 @@
      title = c.site.title
  %>
 ${title}
+</%def>
+
+<%def name="Description()">
 </%def>
 
 <%def name="keywords()">

@@ -95,6 +95,7 @@ class ListingController(RedditController):
                                show_sidebar = self.show_sidebar, 
                                nav_menus = self.menus, 
                                title = self.title(),
+                               description = c.site.description,
                                infotext = self.infotext,
                                **self.render_params).render()
         return res

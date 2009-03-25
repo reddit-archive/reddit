@@ -36,6 +36,12 @@
   %endif
 </%def>
 
+<%def name="Description()">
+  %if thing.description:
+    <meta name="description" content="${thing.description}" />
+  %endif
+</%def>
+
 <%def name="stylesheet()">
   <% from r2.lib.template_helpers import static, get_domain %>
 
@@ -72,6 +78,9 @@
   %if thing.extension_handling:
     <link rel="alternate" type="application/rss+xml" title="RSS"
           href="${add_sr(join_urls(request.path,'.rss'))}" />
+  %endif
+  %if thing.canonical:
+    <link rel="canonical" href="${thing.canonical}" />
   %endif
 </%def>
 
