@@ -78,12 +78,9 @@ class Reddit(Wrapped):
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
-                 canonical = None, description = None, show_sidebar = True,
-                 **context):
+                 show_sidebar = True, **context):
         Wrapped.__init__(self, **context)
         self.title          = title
-        self.description    = description
-        self.canonical      = canonical
         self.robots         = robots
         self.infotext       = infotext
         self.loginbox       = True
@@ -435,9 +432,7 @@ class LinkInfoPage(Reddit):
         self.link = self.link_listing.things[0]
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
-        canonical = "%s%s" % (add_sr(self.link.permalink), "?sort=top")
         if comment:
-            canonical = "%s%s" % (add_sr(comment.make_permalink_slow()), "?sort=top")
             if comment._deleted and not c.user_is_admin:
                 author = _("[deleted]")
             else:
@@ -448,7 +443,7 @@ class LinkInfoPage(Reddit):
         else:
             params = {'title':_force_unicode(link_title), 'site' : c.site.name}
             title = strings.link_info_title % params
-        Reddit.__init__(self, title = title, canonical=canonical, *a, **kw)
+        Reddit.__init__(self, title = title, *a, **kw)
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
