@@ -43,19 +43,19 @@ transactions = TransSet()
 BigInteger = postgres.PGBigInteger
 
 def make_metadata(engine):
-    metadata = sa.BoundMetaData(engine)
-    metadata.engine.echo = g.debug
+    metadata = sa.MetaData(engine)
+    metadata.bind.echo = g.debug
     return metadata
 
 def create_table(table, index_commands=None):
     t = table
     if g.db_create_tables:
         #@@hackish?
-        if not t.engine.has_table(t.name):
+        if not t.bind.has_table(t.name):
             t.create(checkfirst = False)
             if index_commands:
                 for i in index_commands:
-                    t.engine.execute(i)
+                    t.bind.execute(i)
 
 def index_str(table, name, on, where = None):
     index_str = 'create index idx_%s_' % name
@@ -283,7 +283,7 @@ def get_read_table(tables):
     #'t' is a list of engines itself. since we assume those engines
     #are on the same machine, just take the first one. len(ips) may be
     #< len(tables) if some tables are on the same host.
-    ips = dict((t[0].engine.url.host, t) for t in tables)
+    ips = dict((t[0].bind.url.host, t) for t in tables)
     ip_loads = AppServiceMonitor.get_db_load(ips.keys())
 
     candidates = []
@@ -341,7 +341,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         params['thing_id'] = id
 
     def do_insert(t):
-        transactions.add_engine(t.engine)
+        transactions.add_engine(t.bind)
         r = t.insert().execute(**params)
         new_id = r.last_inserted_ids()[0]
         return new_id
@@ -365,7 +365,7 @@ def set_thing_props(type_id, thing_id, **props):
 
     #use real columns
     def do_update(t):
-        transactions.add_engine(t.engine)
+        transactions.add_engine(t.bind)
         new_props = dict((t.c[prop], val) for prop, val in props.iteritems())
         u = t.update(t.c.thing_id == thing_id, values = new_props)
         u.execute()
@@ -376,7 +376,7 @@ def incr_thing_prop(type_id, thing_id, prop, amount):
     table = get_thing_table(type_id, action = 'write')[0]
     
     def do_update(t):
-        transactions.add_engine(t.engine)
+        transactions.add_engine(t.bind)
         u = t.update(t.c.thing_id == thing_id,
                      values={t.c[prop] : t.c[prop] + amount})
         u.execute()
@@ -389,7 +389,7 @@ class CreationError(Exception): pass
 #TODO do the things actually exist?
 def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
     table = get_rel_table(rel_type_id, action = 'write')[0]
-    transactions.add_engine(table.engine)
+    transactions.add_engine(table.bind)
     
     if not date: date = datetime.now(g.tz)
     try:
@@ -412,7 +412,7 @@ def set_rel_props(rel_type_id, rel_id, **props):
         return
 
     #use real columns
-    transactions.add_engine(t.engine)
+    transactions.add_engine(t.bind)
     new_props = dict((t.c[prop], val) for prop, val in props.iteritems())
     u = t.update(t.c.rel_id == rel_id, values = new_props)
     u.execute()
@@ -456,7 +456,7 @@ def db2py(val, kind):
 def set_data(table, type_id, thing_id, **vals):
     s = sa.select([table.c.key], sa.and_(table.c.thing_id == thing_id))
 
-    transactions.add_engine(table.engine)
+    transactions.add_engine(table.bind)
     keys = [x.key for x in s.execute().fetchall()]
 
     i = table.insert(values = dict(thing_id = thing_id))
@@ -479,7 +479,7 @@ def set_data(table, type_id, thing_id, **vals):
 
 def incr_data_prop(table, type_id, thing_id, prop, amount):
     t = table
-    transactions.add_engine(t.engine)
+    transactions.add_engine(t.bind)
     u = t.update(sa.and_(t.c.thing_id == thing_id,
                          t.c.key == prop),
                  values={t.c.value : sa.cast(t.c.value, sa.Float) + amount})
@@ -574,8 +574,8 @@ def del_rel(rel_type_id, rel_id):
     table = tables[0]
     data_table = tables[3]
 
-    transactions.add_engine(table.engine)
-    transactions.add_engine(data_table.engine)
+    transactions.add_engine(table.bind)
+    transactions.add_engine(data_table.bind)
 
     table.delete(table.c.rel_id == rel_id).execute()
     data_table.delete(data_table.c.thing_id == rel_id).execute()
@@ -676,8 +676,10 @@ def add_sort(sort, t_table, select):
                 else sa.asc(real_col))
         
     sa_sort = [make_sa_sort(s) for s in sort]
-    select.order_by(*sa_sort)
-    return cols
+
+    s = select.order_by(*sa_sort)
+
+    return s, cols
 
 def translate_thing_value(rval):
     if isinstance(rval, operators.timeago):
@@ -703,10 +705,10 @@ def find_things(type_id, get_cols, sort, limit, constraints):
         s.append_whereclause(sa_op(op))
 
     if sort:
-        add_sort(sort, {'_': table}, s)
+        s, cols = add_sort(sort, {'_': table}, s)
 
     if limit:
-        s.limit = limit
+        s = s.limit(limit)
 
     r = s.execute()
     return Results(r, lambda(row): row if get_cols else row.thing_id)
@@ -776,13 +778,13 @@ def find_data(type_id, get_cols, sort, limit, constraints):
     #TODO in order to sort by data columns, this is going to need to be smarter
     if sort:
         need_join = True
-        add_sort(sort, {'_':t_table}, s)
+        s, cols = add_sort(sort, {'_':t_table}, s)
             
     if need_join:
         s.append_whereclause(first_alias.c.thing_id == t_table.c.thing_id)
 
     if limit:
-        s.limit = limit
+        s = s.limit(limit)
 
     r = s.execute()
 
@@ -838,9 +840,9 @@ def find_rels(rel_type_id, get_cols, sort, limit, constraints):
         s.append_whereclause(sa_op(op))
 
     if sort:
-        cols = add_sort(sort,
-                        {'_':r_table, '_t1_':t1_table, '_t2_':t2_table},
-                        s)
+        s, cols = add_sort(sort,
+                           {'_':r_table, '_t1_':t1_table, '_t2_':t2_table},
+                           s)
         
         #do we need more joins?
         for (col, table) in cols:
@@ -854,8 +856,8 @@ def find_rels(rel_type_id, get_cols, sort, limit, constraints):
         s.append_whereclause(r_table.c[col] == table.c.thing_id)    
 
     if limit:
-        s.limit = limit
-        
+        s = s.limit(limit)
+
     r = s.execute()
     return Results(r, lambda (row): (row if get_cols else row.rel_id))
 

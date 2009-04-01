@@ -50,7 +50,7 @@ def exec_all(command, data=False, rel = False, print_only = False):
 
     for tt in tables:
         #print tt
-        engine = tt.engine
+        engine = tt.bind
         if print_only:
             print command % dict(type=tt.name)
         else:

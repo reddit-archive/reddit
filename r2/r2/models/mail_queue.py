@@ -168,7 +168,8 @@ class EmailHandler(object):
         if email:
             o = self.opt_table
             try:
-                o.insert().execute({o.c.email: email, o.c.msg_hash: msg_hash})
+                o.insert().values({o.c.email: email,
+                                   o.c.msg_hash: msg_hash}).execute()
 
                 #clear caches
                 has_opted_out(email, _update = True)
@@ -210,17 +211,17 @@ class EmailHandler(object):
             tid = thing._fullname if thing else ""
             key = sha.new(str((email, from_name, uid, tid, ip, kind, body,
                                datetime.datetime.now()))).hexdigest()
-            s.insert().execute({s.c.to_addr : email,
-                                s.c.account_id : uid,
-                                s.c.from_name : from_name,
-                                s.c.fr_addr : fr_addr,
-                                s.c.reply_to : reply_to, 
-                                s.c.fullname: tid, 
-                                s.c.ip : ip,
-                                s.c.kind: kind,
-                                s.c.body: body,
-                                s.c.date : date,
-                                s.c.msg_hash : key})
+            s.insert().values({s.c.to_addr : email,
+                               s.c.account_id : uid,
+                               s.c.from_name : from_name,
+                               s.c.fr_addr : fr_addr,
+                               s.c.reply_to : reply_to,
+                               s.c.fullname: tid,
+                               s.c.ip : ip,
+                               s.c.kind: kind,
+                               s.c.body: body,
+                               s.c.date : date,
+                               s.c.msg_hash : key}).execute()
             hashes.append(key)
         return hashes
 
@@ -333,18 +334,18 @@ class Email(object):
             from pylons import g
             self.date = date or datetime.datetime.now(g.tz)
             t = self.handler.reject_table if rejected else self.handler.track_table
-            t.insert().execute({t.c.account_id:
-                                self.user._id if self.user else 0,
-                                t.c.to_addr :   self.to_addr,
-                                t.c.fr_addr :   self.fr_addr,
-                                t.c.reply_to :  self.reply_to,
-                                t.c.ip :        self.ip,
-                                t.c.fullname:
-                                self.thing._fullname if self.thing else "",
-                                t.c.date:       self.date,
-                                t.c.kind :      self.kind,
-                                t.c.msg_hash :  self.msg_hash,
-                                })
+            t.insert().values({t.c.account_id:
+                               self.user._id if self.user else 0,
+                               t.c.to_addr :   self.to_addr,
+                               t.c.fr_addr :   self.fr_addr,
+                               t.c.reply_to :  self.reply_to,
+                               t.c.ip :        self.ip,
+                               t.c.fullname:
+                               self.thing._fullname if self.thing else "",
+                               t.c.date:       self.date,
+                               t.c.kind :      self.kind,
+                               t.c.msg_hash :  self.msg_hash,
+                               }).execute()
             self.sent = True
 
     def to_MIMEText(self):

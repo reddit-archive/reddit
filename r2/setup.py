@@ -55,16 +55,6 @@ except ImportError:
     print "Installing the PyCaptcha Module"
     easy_install(["http://svn.navi.cx/misc/trunk/pycaptcha"])
     
-# unfortunately, we use an old version of sqlalchemy right now
-try:
-    import sqlalchemy
-    vers = sqlalchemy.__version__ 
-    assert vers == "0.3.10", \
-           ("reddit is only compatible with SqlAlchemy 0.3.10 not '%s' " % vers)
-except ImportError:
-    print "Installing Sqlalchemy 0.3.10 from the cheese shop"
-    easy_install(["http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.3.10.tar.gz"])
-
 # ditto for pylons
 try:
     import pylons
@@ -85,14 +75,15 @@ setup(
     #author="",
     #author_email="",
     #url="",
-    install_requires=["Pylons==0.9.6.2",
+    install_requires=["Routes<=1.7.3",
+                      "Pylons<=0.9.6.2",
                       "pytz",
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
                       "simplejson", 
-                      "SQLAlchemy==0.3.10",
-                      "BeautifulSoup >= 3",  
+                      "SQLAlchemy==0.5.3",
+                      "BeautifulSoup >= 3",
                       "cssutils",
                       "chardet",
                       "psycopg2",

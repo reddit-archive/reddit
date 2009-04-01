@@ -781,7 +781,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
     background-color: #f0f0f0;
-    font-weight: normal
+    font-weight: bold
 }
 
 .linkcompressed .midcol { width: 15px; }

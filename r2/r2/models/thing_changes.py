@@ -37,14 +37,14 @@ def index_str(table, name, on, where = None):
 def create_table(table, index_commands=None, force = False):
     t = table
     if g.db_create_tables:
-        if not t.engine.has_table(t.name) or force:
+        if not t.bind.has_table(t.name) or force:
             try:
                 t.create(checkfirst = False)
             except: pass
             if index_commands:
                 for i in index_commands:
                     try:
-                        t.engine.execute(i)
+                        t.bind.execute(i)
                     except: pass
 
 def change_table(metadata):

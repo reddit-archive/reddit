@@ -458,7 +458,7 @@ def unreport_account(user, correct = True, types = (Link, Comment, Message),
                      table = table.name,
                      dtable = dtable.name,
                      author_id = user._id)
-        table.engine.execute(u)
+        table.bind.execute(u)
         
         # grab a list of all the things we just blew away and update the cache
         s = sa.select([table.c.thing_id], by_user_query)
