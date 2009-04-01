@@ -75,7 +75,7 @@ setup(
     #author="",
     #author_email="",
     #url="",
-    install_requires=["Routes<=1.7.3",
+    install_requires=["Routes<=1.8",
                       "Pylons<=0.9.6.2",
                       "pytz",
                       "pycrypto",
