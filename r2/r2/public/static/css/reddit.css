@@ -780,7 +780,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f0f0f0;
+    background-color: #f1f1f1;
     font-weight: bold
 }
 

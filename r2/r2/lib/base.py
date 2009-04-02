@@ -56,7 +56,7 @@ class BaseController(WSGIController):
             == ip_hash.lower()):
             request.ip = true_client_ip
         elif remote_addr == g.proxy_addr and forwarded_for:
-            request.ip = forwarded_for.split(',')[0]
+            request.ip = forwarded_for.split(',')[-1]
         else:
             request.ip = environ['REMOTE_ADDR']
 
