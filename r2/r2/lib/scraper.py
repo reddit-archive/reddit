@@ -201,6 +201,11 @@ class Scraper:
                 log.debug('ignore dimensions %s' % image_url)
                 continue
 
+            #penalize images with "sprite" in their name
+            if 'sprite' in image_url.lower():
+                log.debug('penalizing sprite %s' % image_url)
+                area /= 10
+
             if area > max_area:
                 max_area = area
                 max_url = image_url
@@ -324,7 +329,7 @@ scrapers = {'youtube.com': YoutubeScraper,
             'metacafe.com': MetacafeScraper}
 
 def test():
-    from r2.lib.pool2 import WorkQueue
+    #from r2.lib.pool2 import WorkQueue
     jobs = []
     f = open('/tmp/testurls.txt')
     for url in f:
