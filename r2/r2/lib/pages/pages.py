@@ -270,7 +270,6 @@ class SubredditInfoBar(Wrapped):
             buttons.append(NamedButton('edit'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
                             NamedButton('spam')])
-        if c.user_is_admin:
             buttons.append(NamedButton('traffic'))
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
 
@@ -457,6 +456,7 @@ class LinkInfoPage(Reddit):
 
         if c.user_is_admin:
             buttons += [info_button('details')]
+        if c.user_is_sponsor:
             if self.link.promoted is not None:
                 buttons += [info_button('traffic')]
 
@@ -1245,6 +1245,12 @@ class PromotedTraffic(Traffic):
         self.traffic = load_traffic('hour', "thing", thing._fullname,
                                     start_time = d, stop_time = until)
 
+        self.totals =  load_traffic('month', "thing", thing._fullname)
+        if not self.totals:
+            self.totals = load_traffic('day', "thing", thing._fullname)
+        if self.totals:
+            self.totals = map(sum, zip(*zip(*self.totals)[1]))
+               
         imp = self.slice_traffic(self.traffic, 0, 1)
 
         if len(imp) > 2:

@@ -19,6 +19,12 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   import locale
+   from r2.models.subreddit import DomainSR, FakeSubreddit
+   def num(x):
+      return locale.format('%d', x, True)
+ %>
 
 %if thing.traffic:
   %if thing.imp_graph:
@@ -34,9 +40,12 @@
       <th>date</th>
       <th colspan="2">Impresions</th>
       <th colspan="2">Clicks</th>
+      <th colspan="2">click-thru (%)</th>
     </tr>
     <tr>
       <th></th>
+      <th>unique</th>
+      <th>total</th>
       <th>unique</th>
       <th>total</th>
       <th>unique</th>
@@ -45,11 +54,28 @@
     %for date, (uimp, nimp, ucli, ncli) in thing.traffic:
       <tr>
         <td>${date.strftime("%Y-%m-%d %H:%M")}</td>
-        <td>${uimp}</td>
-        <td>${nimp}</td>
-        <td>${ucli}</td>
-        <td>${ncli}</td>
+        <td>${num(uimp)}</td>
+        <td>${num(nimp)}</td>
+        <td>${num(ucli)}</td>
+        <td>${num(ncli)}</td>
+        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
+        <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
       </tr>
     %endfor
+    %if thing.totals:
+      <% 
+         uimp, nimp, ucli, ncli = thing.totals
+       %>
+     <tr style="font-weight:bold">
+        <td>total (users approx)</td>
+        <td>${num(uimp)}</td>
+        <td>${num(nimp)}</td>
+        <td>${num(ucli)}</td>
+        <td>${num(ncli)}</td>
+        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
+        <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
+      </tr>
+      
+    %endif
   </table>
 %endif

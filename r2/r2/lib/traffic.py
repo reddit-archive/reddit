@@ -23,7 +23,7 @@ from httplib import HTTPConnection
 from urlparse import urlparse
 from cPickle import loads
 from utils import query_string
-import os, socket
+import os, socket, time, datetime
 from pylons import g
 from r2.lib.memoize import memoize, clear_memo
 
@@ -64,9 +64,17 @@ def load_traffic_uncached(interval, what, iden,
 def load_traffic(interval, what, iden, 
                  start_time = None, stop_time = None,
                  npoints = None):
-    return load_traffic_uncached(interval, what, iden, 
-                 start_time = start_time, stop_time = stop_time,
-                 npoints = npoints)
+    res = load_traffic_uncached(interval, what, iden, 
+                                start_time = start_time, stop_time = stop_time,
+                                npoints = npoints)
+
+    if res and isinstance(res[0][0], datetime.datetime):
+        res = zip(*res)
+        res[0] = [x.replace(tzinfo=None) - datetime.timedelta(0, time.timezone)
+                  for x in res[0]]
+        res = zip(*res)
+    return res
+    
 
 def load_summary(what, interval = "month", npoints = 50):
     return load_traffic(interval, "summary", what, npoints = npoints)
