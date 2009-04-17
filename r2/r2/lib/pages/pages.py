@@ -1264,7 +1264,6 @@ class PromotedTraffic(Traffic):
             cli_total = locale.format('%d', sum(x[2] for x in cli), True)
             chart = graph.LineGraph(cli)
             self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                multiy = False,
                                                 title = ("clicks (%s)" %
                                                          cli_total))
         else:

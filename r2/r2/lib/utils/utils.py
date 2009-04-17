@@ -303,6 +303,7 @@ def get_title(url):
     except: return None
        
 valid_schemes = ('http', 'https', 'ftp', 'mailto')         
+valid_dns = re.compile('^[-a-zA-Z0-9]+$')
 def sanitize_url(url, require_scheme = False):
     """Validates that the url is of the form
 
@@ -312,8 +313,6 @@ def sanitize_url(url, require_scheme = False):
     returns None.  If no scheme is provided and 'require_scheme =
     False' is set, the url is returned with scheme 'http', provided it
     otherwise validates"""
-    if not url or ' ' in url:
-        return
 
     url = url.strip()
     if url.lower() == 'self':
@@ -325,9 +324,19 @@ def sanitize_url(url, require_scheme = False):
         url = 'http://' + url
         u = urlparse(url)
 
-    if (u.scheme and u.scheme in valid_schemes
-        and u.hostname and len(u.hostname) < 255
-        and '%' not in u.netloc):
+    if u.scheme and u.scheme in valid_schemes:
+        labels = u.hostname.split('.')
+        for label in labels:
+            try:
+                #if this succeeds, this portion of the dns is almost
+                #valid and converted to ascii
+                label = label.encode('idna')
+            except UnicodeError:
+                return
+            else:
+                #then if this success, this portion of the dns is really valid
+                if not re.match(valid_dns, label):
+                    return
         return url
 
 def timeago(interval):
