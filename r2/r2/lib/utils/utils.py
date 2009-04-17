@@ -314,6 +314,9 @@ def sanitize_url(url, require_scheme = False):
     False' is set, the url is returned with scheme 'http', provided it
     otherwise validates"""
 
+    if not url:
+        return
+
     url = url.strip()
     if url.lower() == 'self':
         return url
