@@ -347,3 +347,12 @@ class ListingJsonTemplate(ThingJsonTemplate):
 class OrganicListingJsonTemplate(ListingJsonTemplate):
     def kind(self, wrapped):
         return "OrganicListing"
+
+class TrafficJsonTemplate(JsonTemplate):
+    def render(self, thing, *a, **kw):
+        res = {}
+        for ival in ("hour", "day", "month"):
+            if hasattr(thing, ival + "_data"):
+                res[ival] = [[time.mktime(date.timetuple())] + list(data)
+                             for date, data in getattr(thing, ival+"_data")]
+        return res

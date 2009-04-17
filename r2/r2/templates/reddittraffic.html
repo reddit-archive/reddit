@@ -28,7 +28,10 @@
 
 <%def name="daily_summary()">
   <% 
-     umin = min(data[0] for date, data in filter(None, thing.day_data))
+     thing.day_data = filter(None, thing.day_data)
+     umin = min(data[0] for date, data in thing.day_data)
+     if len(filter(lambda x: x[1][0] == umin, thing.day_data)) > 1:
+         umin = -1
      umax = max(data[0] for date, data in filter(None, thing.day_data))
    %>
     <table class="traffic-table">

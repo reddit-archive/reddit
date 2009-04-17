@@ -28,7 +28,7 @@ def google_extended(n):
                 "0123456789-.")
     base = len(numerals)
     assert(0 <= n <= base ** 2)
-    q, r = divmod(n, base)
+    q, r = divmod(int(n), base)
     return numerals[q] + numerals[r]
 
 def make_date_axis_labels(series):
@@ -101,7 +101,10 @@ class DataSeries(list):
         return DataSeries(data)
 
     def toBarX(self):
-        delta = self[-1] - self[-2]
+        if len(self) > 1:
+            delta = self[-1] - self[-2]
+        else:
+            delta = 0
         data = self.toBarY()
         return DataSeries(data[1:] + [data[-1] + delta])
 

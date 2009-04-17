@@ -359,10 +359,16 @@ def process_info(proc_ids = [], name = '', exe = "/usr/bin/env ps"):
             n = ' '.join(line[ageid+1:])
             if (n.startswith(name) and
                 (not proc_ids or int(pid) in proc_ids)):
+                age = line[ageid].split(':')[0]
+                # patch for > 24 hour old processes
+                if '-' in age:
+                    days, hours = age.split('-')
+                    age = float(days) * 24 + float(hours)
+                else:
+                    age = float(age)
                 res[pid] =  dict(cpu = float(line[cpuid]),
                                  mem = float(line[memid]),
-                                 age = float(line[ageid].split(':')[0]),
-                                 name = n)
+                                 age = age, name = n)
         except (ValueError, IndexError):
             pass
     return res

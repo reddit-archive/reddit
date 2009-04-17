@@ -69,10 +69,15 @@ def load_traffic(interval, what, iden,
                                 npoints = npoints)
 
     if res and isinstance(res[0][0], datetime.datetime):
-        res = zip(*res)
-        res[0] = [x.replace(tzinfo=None) - datetime.timedelta(0, time.timezone)
-                  for x in res[0]]
-        res = zip(*res)
+        dates, data = zip(*res)
+        if interval == 'hour':
+            # shift hourly totals into local time zone.
+            dates = [x.replace(tzinfo=None) -
+                     datetime.timedelta(0, time.timezone) for x in dates]
+        else:
+            # we don't care about the hours
+            dates = [x.date() for x in dates]
+        res = zip(dates, data)
     return res
     
 

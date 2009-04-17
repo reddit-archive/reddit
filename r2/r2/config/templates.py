@@ -44,3 +44,4 @@ api('listing',       ListingJsonTemplate)
 api('usertableitem', UserItemJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
+api('reddittraffic', TrafficJsonTemplate)
