@@ -25,7 +25,7 @@ from r2.lib.services import AppServiceMonitor
 def Alert(restart_list = ['MEM','CPU'],
           alert_recipients = ['nerds@reddit.com'],
           alert_sender = 'nerds@reddit.com',
-          cpu_limit = 99, mem_limit = 10,
+          cpu_limit = 99, mem_limit = 8,
           smtpserver = 'nt03.wireddit.com', test = False):
 
     p = re.compile("newreddit(\d+)")
