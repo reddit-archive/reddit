@@ -240,13 +240,16 @@ def validate_css(string):
         return ('',ValidationReport())
 
     report = ValidationReport(string)
-    
+
     # avoid a very expensive parse
     max_size_kb = 100;
     if len(string) > max_size_kb * 1024:
         report.append(ValidationError((msgs['too_big']
                                        % dict (max_size = max_size_kb))))
         return (string, report)
+
+    if '\\' in string:
+        report.append(ValidationError(_("if you need backslashes, you're doing it wrong")))
 
     try:
         parsed = p.parseString(string)
