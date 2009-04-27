@@ -298,6 +298,8 @@ def get_read_table(tables):
             #prune high-connection machines
             if conns < .9 * max_conns:
                 candidates.append((ip, max(load, avg_load)))
+            else:
+                all_ips.append(ip)
 
     #add the least loaded machine to all_ips
     if candidates:

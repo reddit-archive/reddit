@@ -236,12 +236,12 @@ class Database(object):
         return datetime.utcnow() - update if update else None
 
     def track(self, conn = 0, ip_conn = {}, db_conn = {}, vacuums = {},
-              query_count = None, max_connections = None,
+              query_count = None, max_connections = -1,
               failures = [], disk_usage = 0):
 
         #log the number of connections
         self.connections.add(conn)
-        if self.max_connections:
+        if max_connections and max_connections > 0:
             self.max_connections = max_connections
 
         # log usage by ip
