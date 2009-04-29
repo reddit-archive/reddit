@@ -49,6 +49,7 @@ class Globals(object):
                  ]
     
     bool_props = ['debug', 'translator', 
+                  'sqlprinting',
                   'template_debug',
                   'uncompressedJS',
                   'enable_doquery',

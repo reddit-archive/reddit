@@ -235,16 +235,15 @@ filters_uspace_compress(PyObject * self, PyObject *args) {
     c = command[ic];
     if(gobble) {
       if(Py_UNICODE_ISSPACE(c)) {
-        while(Py_UNICODE_ISSPACE(command[++ic]));
-        c = command[ic];
+        while(Py_UNICODE_ISSPACE(c)) { c = command[++ic]; }
         if(c != (Py_UNICODE)('<')) {
           buffer[ib++] = (Py_UNICODE)(' ');
         }
       }
       if(c == (Py_UNICODE)('>')) {
         buffer[ib++] = c;
-        while(Py_UNICODE_ISSPACE(command[++ic]));
-        c = command[ic];
+	c = command[++ic];
+        while(Py_UNICODE_ISSPACE(c)) { c = command[++ic]; }
       }
       if (len - ic >= MD_START_LEN &&
           memcmp(&command[ic], MD_START_U, 

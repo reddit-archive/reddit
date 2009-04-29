@@ -44,7 +44,7 @@ BigInteger = postgres.PGBigInteger
 
 def make_metadata(engine):
     metadata = sa.MetaData(engine)
-    metadata.bind.echo = g.debug
+    metadata.bind.echo = g.sqlprinting
     return metadata
 
 def create_table(table, index_commands=None):
@@ -582,12 +582,6 @@ def del_rel(rel_type_id, rel_id):
     table.delete(table.c.rel_id == rel_id).execute()
     data_table.delete(data_table.c.thing_id == rel_id).execute()
 
-def sa_rval_op(rval):
-    if isinstance(rval, operators.rval_op):
-        return getattr(sa.func, rval.__class__.__name__)(rval.rval)
-    else:
-        return rval
-
 def sa_op(op):
     #if BooleanOp
     if isinstance(op, operators.or_):
@@ -727,7 +721,8 @@ def translate_data_value(alias, op):
     op.lval = lval
         
     #convert the rval to db types
-    op.rval = tuple(py2db(v) for v in tup(op.rval))
+    #convert everything to strings for pg8.3
+    op.rval = tuple(str(py2db(v)) for v in tup(op.rval))
 
 #TODO sort by data fields
 #TODO sort by id wants thing_id
