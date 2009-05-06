@@ -42,19 +42,19 @@ static PyObject *
 filters_uwebsafe(PyObject * self, PyObject *args) 
 {
   PyObject * com;
-  Py_UNICODE * command;
+  Py_UNICODE * input_buffer;
   Py_UNICODE *buffer;
   PyObject * res;
   int ic=0, ib=0;
   int len;
   Py_UNICODE c;
   if (!(com = unicode_arg(args))) return NULL;
-  command = PyUnicode_AS_UNICODE(com);
+  input_buffer = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
 
   buffer = (Py_UNICODE*)malloc(6*len*sizeof(Py_UNICODE));
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
-    c = command[ic];
+    c = input_buffer[ic];
     if (c == '&') {
       buffer[ib++] = (Py_UNICODE)'&';
       buffer[ib++] = (Py_UNICODE)'a';
@@ -83,7 +83,7 @@ filters_uwebsafe(PyObject * self, PyObject *args)
       buffer[ib]   = (Py_UNICODE)';';      
     }
     else {
-      buffer[ib] = command[ic];
+      buffer[ib] = input_buffer[ic];
     }
   }
   res = PyUnicode_FromUnicode(buffer, ib);
@@ -96,19 +96,19 @@ static PyObject *
 filters_uwebsafe_json(PyObject * self, PyObject *args) 
 {
   PyObject * com;
-  Py_UNICODE * command;
+  Py_UNICODE * input_buffer;
   Py_UNICODE *buffer;
   PyObject * res;
   int ic=0, ib=0;
   int len;
   Py_UNICODE c;
   if (!(com = unicode_arg(args))) return NULL;
-  command = PyUnicode_AS_UNICODE(com);
+  input_buffer = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
 
   buffer = (Py_UNICODE*)malloc(5*len*sizeof(Py_UNICODE));
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
-    c = command[ic];
+    c = input_buffer[ic];
     if (c == '&') {
       buffer[ib++] = (Py_UNICODE)'&';
       buffer[ib++] = (Py_UNICODE)'a';
@@ -129,7 +129,7 @@ filters_uwebsafe_json(PyObject * self, PyObject *args)
       buffer[ib]   = (Py_UNICODE)';';
     }
     else {
-      buffer[ib] = command[ic];
+      buffer[ib] = input_buffer[ic];
     }
   }
   res = PyUnicode_FromUnicode(buffer, ib);
@@ -142,18 +142,18 @@ filters_uwebsafe_json(PyObject * self, PyObject *args)
 static PyObject *
 filters_websafe(PyObject * self, PyObject *args) 
 {
-  const char * command;
+  const char * input_buffer;
   char *buffer;
   PyObject * res;
   int ic=0, ib=0;
   int len;
   char c;
-  if (!PyArg_ParseTuple(args, "s", &command))
+  if (!PyArg_ParseTuple(args, "s", &input_buffer))
     return NULL;
-  len = strlen(command);
+  len = strlen(input_buffer);
   buffer = (char*)malloc(5*len);
   for(ic = 0, ib = 0; ic <= len; ic++, ib++) {
-    c = command[ic];
+    c = input_buffer[ic];
     if (c == '&') {
       buffer[ib++] = '&';
       buffer[ib++] = 'a';
@@ -182,7 +182,7 @@ filters_websafe(PyObject * self, PyObject *args)
       buffer[ib]   = ';';      
     }
     else {
-      buffer[ib] = command[ic];
+      buffer[ib] = input_buffer[ic];
     }
   }
   res =  Py_BuildValue("s", buffer);
@@ -199,12 +199,12 @@ void print_unicode(Py_UNICODE *c, int len) {
   printf("\n");
 }
 
-const char *MD_START = "<div class=\"md\">";
-const char *MD_END = "</div>";
-const Py_UNICODE *MD_START_U;
-const Py_UNICODE *MD_END_U;
-int MD_START_LEN = 0;
-int MD_END_LEN = 0;
+const char *SC_OFF = "<!-- SC_OFF -->";
+const char *SC_ON  = "<!-- SC_ON -->";
+const Py_UNICODE *SC_OFF_U;
+const Py_UNICODE *SC_ON_U;
+int SC_OFF_LEN = 0;
+int SC_ON_LEN = 0;
 
 
 
@@ -218,7 +218,7 @@ filters_uspace_compress(PyObject * self, PyObject *args) {
   PyObject * com;
   PyObject * res;
   Py_ssize_t len;
-  Py_UNICODE *command;
+  Py_UNICODE *input_buffer;
   Py_UNICODE *buffer;
   Py_UNICODE c;
   int ic, ib;
@@ -227,36 +227,48 @@ filters_uspace_compress(PyObject * self, PyObject *args) {
   if(!com) {
     return NULL;
   }
-  command = PyUnicode_AS_UNICODE(com);
+  input_buffer = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
   buffer = (Py_UNICODE*)malloc(len * sizeof(Py_UNICODE));
 
+  /* ic -> input buffer index, ib -> output buffer */
   for(ic = 0, ib = 0; ic <= len; ic++) {
-    c = command[ic];
+    c = input_buffer[ic];
+    /* gobble -> we are space compressing */
     if(gobble) {
+      /* remove spaces if encountered */
       if(Py_UNICODE_ISSPACE(c)) {
-        while(Py_UNICODE_ISSPACE(c)) { c = command[++ic]; }
+        /* after this loop, c will be a non-space */
+        while(Py_UNICODE_ISSPACE(c)) { c = input_buffer[++ic]; }
+        /* unless next char is a <, add a single space to account for
+           the multiple spaces that have been removed */
         if(c != (Py_UNICODE)('<')) {
           buffer[ib++] = (Py_UNICODE)(' ');
         }
       }
+      /* gobble all space after '>' */
       if(c == (Py_UNICODE)('>')) {
         buffer[ib++] = c;
-	c = command[++ic];
-        while(Py_UNICODE_ISSPACE(c)) { c = command[++ic]; }
+	c = input_buffer[++ic];
+        while(Py_UNICODE_ISSPACE(c)) { c = input_buffer[++ic]; }
       }
-      if (len - ic >= MD_START_LEN &&
-          memcmp(&command[ic], MD_START_U, 
-                 sizeof(Py_UNICODE)*MD_START_LEN) == 0) {
+      /* does the next part of the string match the SC_OFF label */
+      if (len - ic >= SC_OFF_LEN &&
+          memcmp(&input_buffer[ic], SC_OFF_U, 
+                 sizeof(Py_UNICODE)*SC_OFF_LEN) == 0) {
+        /* disable gobbling, and bypass that part of the string */
         gobble = 0;
+        ic += SC_OFF_LEN;
+        c = input_buffer[ic];
       }
     }
-    else {
-      if (len - ic > MD_END_LEN &&
-          memcmp(&command[ic], MD_END_U, 
-                 sizeof(Py_UNICODE)*MD_END_LEN) == 0) {
+    /* not gobbling, but find the SC_ON tag */
+    else if (len - ic >= SC_ON_LEN &&
+          memcmp(&input_buffer[ic], SC_ON_U, 
+                 sizeof(Py_UNICODE)*SC_ON_LEN) == 0) {
         gobble = 1;
-      }
+        ic += SC_ON_LEN;
+        c = input_buffer[ic];
     }
     if(c) {
       buffer[ib++] = c;
@@ -268,57 +280,6 @@ filters_uspace_compress(PyObject * self, PyObject *args) {
   return res;
 }
 
-
-static PyObject *
-filters_space_compress(PyObject * self, PyObject *args) 
-{
-  PyObject * res;
-
-  const char * command;
-  int len, ic, ib;
-  char c;
-  char * buffer;
-  int gobble = 1;
-  if (!PyArg_ParseTuple(args, "s", &command))
-    return NULL;
-
-  len = strlen(command);
-  buffer = (char*)malloc(len);
-
-  for(ic = 0, ib = 0; ic <= len; ic++) {
-    c = command[ic];
-    if(gobble) {
-      if(c == '>') {
-        buffer[ib++] = c;
-        while(whitespace(command[++ic]));
-        c = command[ic];
-      }
-      else if(whitespace(c)) {
-        while(whitespace(command[++ic]));
-        c = command[ic];
-        if(c != '<') {
-          buffer[ib++] = ' ';
-        }
-      }
-      if (len - ic >= MD_START_LEN &&
-               strncmp(&command[ic], MD_START, MD_START_LEN) == 0) {
-        gobble = 0;
-      }
-    }
-    else {
-      if (len - ic > MD_END_LEN &&
-          strncmp(&command[ic], MD_END, MD_END_LEN) == 0) {
-        gobble = 1;
-      }
-    }
-    buffer[ib++] = c;
-  }  
-
-  res =  Py_BuildValue("s", buffer);
-  free(buffer);
-  return res;
-}
-
 static PyMethodDef FilterMethods[] = {
   {"websafe",  filters_websafe, METH_VARARGS,
    "make string web safe."},
@@ -326,10 +287,8 @@ static PyMethodDef FilterMethods[] = {
    "make string web safe."},
   {"uwebsafe_json",  filters_uwebsafe_json, METH_VARARGS,
    "make string web safe, no &quot;."},
-  {"space_compress",  filters_space_compress, METH_VARARGS,
-   "returns meep"},
   {"uspace_compress",  filters_uspace_compress, METH_VARARGS,
-   "returns meep"},
+   "removes spaces around angle brackets. Can be disabled with the use of SC_OFF and SC_ON comments from r2.lib.filters."},
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -347,10 +306,10 @@ Py_UNICODE *to_unicode(const char *c, int len) {
 PyMODINIT_FUNC
 initCfilters(void)
 {
-  MD_START_LEN = strlen(MD_START);
-  MD_START_U = to_unicode(MD_START, MD_START_LEN);
-  MD_END_LEN = strlen(MD_END);
-  MD_END_U = to_unicode(MD_END, MD_END_LEN);
+  SC_OFF_LEN = strlen(SC_OFF);
+  SC_OFF_U = to_unicode(SC_OFF, SC_OFF_LEN);
+  SC_ON_LEN = strlen(SC_ON);
+  SC_ON_U = to_unicode(SC_ON, SC_ON_LEN);
 
   (void) Py_InitModule("Cfilters", FilterMethods);
 }

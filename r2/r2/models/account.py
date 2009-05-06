@@ -61,6 +61,7 @@ class Account(Thing):
                      has_subscribed = False,
                      pref_media = 'subreddit',
                      share = {},
+                     wiki_override = None,
                      )
 
     def karma(self, kind, sr = None):
@@ -104,6 +105,13 @@ class Account(Thing):
     def safe_karma(self):
         karma = self.link_karma
         return max(karma, 1) if karma > -1000 else karma
+
+    def can_wiki(self):
+        if self.wiki_override is not None:
+            return self.wiki_override
+        else:
+            return (self.link_karma >= g.WIKI_KARMA and
+                    self.comment_karma >= g.WIKI_KARMA)
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,

@@ -465,7 +465,8 @@ class FrontController(RedditController):
         returns their user name"""
         c.response_content_type = 'text/plain'
         if c.user_is_loggedin:
-            c.response.content = c.user.name
+            perm = str(c.user.can_wiki())
+            c.response.content = c.user.name + "," + perm
         else:
             c.response.content = ''
         return c.response

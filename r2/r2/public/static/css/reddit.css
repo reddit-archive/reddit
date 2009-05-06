@@ -19,7 +19,7 @@ body {
     z-index: 1;
 }
 
-html,body { height: 100%; }
+/*html,body { height: 100%; }*/
 
 /* IE dumbness patch. hidden input in a hidden block that is
  * subsequently shown leads to the input to "show" and generate undesired
@@ -45,15 +45,10 @@ a:focus { -moz-outline-style: none; }
 */
 
 .rounded {  
-    -moz-border-radius-topleft: 7px;
-    -moz-border-radius-topright: 7px;
-    -moz-border-radius-bottomleft: 7px;
-    -moz-border-radius-bottomright: 7px;
-    -webkit-border-top-left-radius: 7px;
-    -webkit-border-top-right-radius: 7px;
-    -webkit-border-bottom-left-radius: 7px;
-    -webkit-border-bottom-right-radius: 7px;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
 }
+
 .rounded .morelink { 
     -webkit-border-top-right-radius: 6px;
     -moz-border-radius-topright: 6px;
@@ -97,6 +92,17 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 .flat-list li {display: inline;}
 .flat-list form {display: inline; }
 .flat-list .selected a { color: orangered; }
+
+ul.flat-vert {text-align: left;}
+.flat-vert .separator { margin: 0 }
+
+.flat-vert.title {
+    font-family:helvetica,arial,verdana,sans-serif;
+    color: #777;
+    font-size: 18px;
+    font-weight: normal;
+    margin-bottom: 5px;
+ }
 
 .separator { color: gray; margin: 0px .7ex 0px .7ex}
 
@@ -562,6 +568,9 @@ before enabling */
 .help p, .help form { margin: 5px; } 
 .help form { display: inline; }
 
+.wikipage {
+    margin: 15px;
+}
 
 /* organic listing */
 .organic-listing { 
@@ -640,7 +649,7 @@ before enabling */
 .infobar {
     background-color: #f6e69f;
     padding: 5px 10px;
-    margin: 5px 310px 5px 0px;
+    margin: 5px 305px 5px 0px;
     border: 1px solid orange;
     font-size: small;
 }
@@ -754,7 +763,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 /* compressed links */
-.linkcompressed { margin: 4px 0; overflow: hidden; }
+.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 5px; }
 .linkcompressed .title {margin-bottom: 1px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
@@ -765,7 +774,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .score.likes   { color: #FF8B60; }
 .linkcompressed .score.dislikes { color: #9494FF; }
 .linkcompressed .rank { 
-    margin-top: 4px;
+    margin-top: 5px;
     float:left;
     color: #c6c6c6;
     font-family: arial;
@@ -780,7 +789,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f3f3f3;
+    background-color: #f4f4f4;
     font-weight: bold
 }
 
@@ -967,23 +976,29 @@ textarea.gray { color: gray; }
 
 
 /* footer */
-.footer {
-    width: 100%; 
-    text-align: center; 
-    clear: both; 
-    padding-top: 1em; 
-    color: gray; 
-    font-size: larger;
+.footer-parent {
+    text-align: center;
 }
 
-.footer p { margin: 10px }
+.footer {
+    clear: both;
+    color: gray;
+    font-size: larger;
+    padding: 5px;
+    margin: 15px;
+    border:1px solid #F0F0F0;
+    display: inline-block;
+}
 
-.wired a {text-decoration: underline; 
-    color: #369;
-    font-size: smaller;
-    padding-left: 5px;
-    padding-right: 5px; }
-.wired img {vertical-align: middle;}
+.footer .col {
+    float: left;
+    margin: 10px;
+    padding-left: 10px;
+    border-left: 1px solid #E0E0E0;
+    height: 150px;
+ }
+
+.footer .col:first-child {border: none;}
 
 .server-status { width: 300px;  }
 .server-status table { 
@@ -1095,6 +1110,7 @@ textarea.gray { color: gray; }
 
 .status { color: red; }
 .error { color: red; font-size: small; margin: 5px; }
+.line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
 
@@ -1274,7 +1290,7 @@ textarea.gray { color: gray; }
     font-weight: bold;
 }
 
-.bottommenu { color: gray; font-size: smaller; }
+.bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
 
 

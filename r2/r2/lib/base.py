@@ -26,10 +26,13 @@ from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
 from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
+from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
 
 import re, md5
 from urllib import quote 
+import urllib2
+
 
 #TODO hack
 import logging
@@ -159,21 +162,14 @@ class BaseController(WSGIController):
         c.response.content = to_js(js, callback, escape)
         return c.response
 
-import urllib2
-class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler, 
+class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler,
                    urllib2.HTTPErrorProcessor, urllib2.HTTPDefaultErrorHandler):
-    @staticmethod
-    def redirect(_status):
-        def _redirect(url, status = None):
-            MethodController.redirect(url, code = _status)
-        return _redirect
-    
+
     def http_redirect(self, req, fp, code, msg, hdrs):
-        codes = [301, 302, 303, 307]
-        map = dict((x, self.redirect(x)) for x in codes)
-        to = hdrs['Location'].replace('reddit.infogami.com', g.domain)
-        map[code](to)
-        raise StopIteration
+        to = hdrs['Location']
+        h = urllib2.HTTPRedirectHandler()
+        r = h.redirect_request(req, fp, code, msg, hdrs, to)
+        return embedopen.open(r)
 
     http_error_301 = http_redirect
     http_error_302 = http_redirect
@@ -184,17 +180,7 @@ embedopen = urllib2.OpenerDirector()
 embedopen.add_handler(EmbedHandler())
 
 def proxyurl(url):
-    cstrs = ['%s="%s"' % (k, v.value) for k, v in c.cookies.iteritems()]
-    cookiestr = "; ".join(cstrs)
-    headers = {"Cookie":cookiestr}
-
-    # TODO make this work on POST
-    data = None
-    r = urllib2.Request(url, data, headers)
+    r = urllib2.Request(url, None, {})
     content = embedopen.open(r).read()
     return content
-    
-__all__ = [__name for __name in locals().keys() if not __name.startswith('_') \
-           or __name == '_']
-
 

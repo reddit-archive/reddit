@@ -25,8 +25,9 @@ import cgi
 import urllib
 import re
 
-MD_START = '<div class="md">'
-MD_END = '</div>'
+SC_OFF = "<!-- SC_OFF -->"
+SC_ON = "<!-- SC_ON -->"
+
 
 
 def python_websafe(text):
@@ -50,15 +51,23 @@ except ImportError:
     _between_tags1 = re.compile('> +')
     _between_tags2 = re.compile(' +<')
     _spaces = re.compile('[\s]+')
-    _ignore = re.compile('(' + MD_START + '.*?' + MD_END + ')', re.S | re.I)
+    _ignore = re.compile('(' + SC_OFF + '|' + SC_ON + ')', re.S | re.I)
     def spaceCompress(content):
         res = ''
+        sc = True
         for p in _ignore.split(content):
-            if not p.startswith(MD_START) and not p.endswith(MD_END):
+            if p == SC_ON:
+                sc = True
+            elif p == SC_OFF:
+                sc = False
+            elif sc:
                 p = _spaces.sub(' ', p)
                 p = _between_tags1.sub('>', p)
                 p = _between_tags2.sub('<', p)
-            res += p
+                res += p
+            else:
+                res += p
+
         return res
 
 class _Unsafe(unicode): pass
@@ -141,7 +150,7 @@ def safemarkdown(text, nofollow = False):
         text = code_re.sub(code_handler, text)
         text = a_re.sub(inner_a_handler, text)
         text = fix_url.sub(r'\1', text)
-        return MD_START + text + MD_END
+        return SC_OFF + '<div class="md">' + text + '</div>' + SC_ON
 
 
 def keep_space(text):

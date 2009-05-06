@@ -57,12 +57,13 @@
 <%def name="flatlist()">
   <% css_class = str(thing.css_class) if thing.css_class else "" %>
   %if thing:
-    %if thing.title:
-      <span class="flat-list title">${thing.title}:&#32;</span>
-    %endif
-
-    <ul class="flat-list hover"
+    <ul class="${css_class} hover"
         ${"id='%s'" % thing._id if thing._id else ""}>
+
+      %if thing.title:
+        <li class="${css_class} title">${thing.title}</li>
+      %endif
+
       %for i, option in enumerate(thing):
         <%
            ##option.title isn't the title, option.render() is the entire link

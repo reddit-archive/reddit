@@ -20,12 +20,15 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, proxyurl
-from pylons import request
-from r2.lib.pages import Embed, BoringPage
+from r2.lib.pages import Embed, BoringPage, HelpPage
+from r2.lib.filters import websafe, SC_OFF, SC_ON
 from pylons.i18n import _
-from urllib2 import HTTPError
+from pylons import request
 from pylons import c
 
+from BeautifulSoup import BeautifulSoup, Tag
+
+from urllib2 import HTTPError
 
 def force_redirect(dest):
     def _force_redirect(self, *a, **kw):
@@ -33,27 +36,51 @@ def force_redirect(dest):
     return _force_redirect
 
 class EmbedController(RedditController):
+    def rendercontent(self, input, fp):
+        soup = BeautifulSoup(input)
 
-    def rendercontent(self, content):
-        if content.startswith("<!--TEMPLATE-->"):
-            return BoringPage(_("help"),
-                              content = Embed(content=content),
-                              show_sidebar = None,
-                              space_compress = False).render()
-        else:
-            return content
+        output = soup.find("div", { 'class':'wiki', 'id':'content'} )
+
+        # Replace all links to "/wiki/help/..." with "/help/..."
+        for link in output.findAll('a'):
+            if link.has_key('href') and link['href'].startswith("/wiki/help"):
+                link['href'] = link['href'][5:]
+
+        # Add "edit this page" link if the user is allowed to edit the wiki
+        if c.user_is_loggedin and c.user.can_wiki():
+            edit_text = _('edit this page')
+            read_first = _('read this first')
+            url = "http://code.reddit.com/wiki" + websafe(fp) + "?action=edit"
+
+            edittag = """
+            <div class="editlink">
+             <hr/>
+             <a href="%s">%s</a>&#32;
+             (<a href="/help/editing_help">%s</a>)
+            </div>
+            """ % (url, edit_text, read_first)
+
+            output.append(edittag)
+
+            output = SC_OFF + unicode(output) + SC_ON
+
+        return HelpPage(_("help"),
+                        content = Embed(content=output),
+                        show_sidebar = None).render()
 
     def renderurl(self):
+
+        # Needed so http://reddit.com/help/ works
+        fp = request.path.rstrip("/")
+        u = "http://code.reddit.com/wiki" + fp + '?stripped=1'
+
         try:
-            content = proxyurl("http://reddit.infogami.com"+request.fullpath)
-            return self.rendercontent(content)
+            content = proxyurl(u)
+            return self.rendercontent(content, fp)
         except HTTPError, e:
-            if e.code == 404:
-                return self.abort404()
-            else:
+            if e.code != 404:
                 print "error %s" % e.code
                 print e.fp.read()
+            return self.abort404()
 
     GET_help = POST_help = renderurl
-
-    GET_blog = force_redirect("http://blog.reddit.com/")

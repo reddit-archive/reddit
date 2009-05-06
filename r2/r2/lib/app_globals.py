@@ -38,6 +38,7 @@ class Globals(object):
                  'MIN_DOWN_KARMA',
                  'MIN_RATE_LIMIT_KARMA',
                  'MIN_RATE_LIMIT_COMMENT_KARMA',
+                 'WIKI_KARMA',
                  'HOT_PAGE_AGE',
                  'MODWINDOW',
                  'RATELIMIT',

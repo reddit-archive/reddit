@@ -32,7 +32,7 @@ from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
-from r2.lib.menus import SubredditButton, SubredditMenu, menu
+from r2.lib.menus import SubredditButton, SubredditMenu, OffsiteButton, menu
 from r2.lib.strings import plurals, rand_strings, strings
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js
 from r2.lib.template_helpers import add_sr, get_domain
@@ -185,21 +185,69 @@ class Reddit(Wrapped):
 
     def footer_nav(self):
         """navigation buttons in the footer."""
-        buttons = [NamedButton("help", False, nocname=True),
-                   NamedButton("blog", False, nocname=True),
-                   NamedButton("stats", False, nocname=True),
-                   NamedButton("feedback",     False),
-                   NamedButton("bookmarklets", False),
-                   NamedButton("socialite",    False),
-                   NamedButton("buttons",      True),
-                   NamedButton("widget",       True),
-                   NamedButton("code",         False, nocname=True),
-                   NamedButton("mobile",       False, nocname=True),
-                   NamedButton("store",        False, nocname=True),
-                   NamedButton("ad_inq",       False, nocname=True),
-                   ]
+        return [NavMenu([NamedButton("toplinks", False),
+                         NamedButton("mobile", False, nocname=True),
+                         OffsiteButton("rss", dest = '/.rss'),
+                         NamedButton("store", False, nocname=True),
+                         NamedButton("stats", False, nocname=True),
+                         NamedButton("feedback", False),],
+                        title = 'site links', type = 'flat_vert',
+                        separator = ''),
 
-        return NavMenu(buttons, base_path = "/", type = "flatlist")
+                NavMenu([NamedButton("help", False, nocname=True),
+                         OffsiteButton("FAQ", dest = '/help/faq',
+                                       nocname=True),
+                         OffsiteButton("reddiquette", nocname=True,
+                                       dest = '/help/reddiquette')],
+                        title = 'help', type = 'flat_vert',
+                        separator = ''),
+
+                NavMenu([NamedButton("bookmarklets", False),
+                         NamedButton("buttons", True),
+                         NamedButton("code", False, nocname=True),
+                         NamedButton("socialite", False),
+                         NamedButton("widget", True)],
+                        title = 'reddit tools', type = 'flat_vert',
+                        separator = ''),
+
+                NavMenu([NamedButton("blog", False, nocname=True),
+                         OffsiteButton("our pet fish",
+                                       dest="http://justin.tv/reddit"),
+                         NamedButton("ad_inq", False, nocname=True),
+                         OffsiteButton('reddit.tv', "http://www.reddit.tv"),
+                         OffsiteButton('redditall', "http://www.redditall.com"),],
+                        title = 'about us', type = 'flat_vert',
+                        separator = ''),
+                NavMenu([OffsiteButton('BaconBuzz',
+                                       "http://www.baconbuzz.com"),
+                         OffsiteButton('Destructoid reddit',
+                                       "http://reddit.destructoid.com"),
+                         OffsiteButton('TheCuteList',
+                                       "http://www.thecutelist.com"),
+                         OffsiteButton('The Independent reddit',
+                                       "http://reddit.independent.co.uk"),
+                         OffsiteButton('redditGadgetGuide',
+                                       "http://www.redditgadgetguide.com"),
+                         OffsiteButton('WeHeartGossip',
+                                       "http://www.weheartgossip.com")],
+                        title = 'brothers', type = 'flat_vert',
+                        separator = ''),
+                NavMenu([OffsiteButton('Wired.com',
+                                       "http://www.wired.com"),
+                         OffsiteButton('Ars Technica',
+                                       "http://www.arstechnica.com"),
+                         OffsiteButton('Style.com',
+                                       "http://www.style.com"),
+                         OffsiteButton('Portfolio.com',
+                                       "http://www.portfolio.com",
+                                       css_class="line-through"),
+                         OffsiteButton('Epicurious.com',
+                                       "http://www.epicurious.com"),
+                         OffsiteButton('Concierge.com',
+                                       "http://www.concierge.com")],
+                        title = 'sisters', type = 'flat_vert',
+                        separator = '')
+                ]
 
     def build_toolbars(self):
         """Sets the layout of the navigation topbar on a Reddit.  The result
@@ -359,6 +407,9 @@ class BoringPage(Reddit):
     def build_toolbars(self):
         return [PageNameNav('nomenu', title = self.pagename)]
 
+class HelpPage(BoringPage):
+    def build_toolbars(self):
+        return [PageNameNav('help', title = self.pagename)]
 
 class FormPage(BoringPage):
     """intended for rendering forms with no rightbox needed or wanted"""

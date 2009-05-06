@@ -29,25 +29,24 @@
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="utils.html" import="text_with_links, plain_link"/>
 
-<div class="footer">
-  ${thing.footer_nav().render()}
+<div class="footer-parent">
+  <div class="footer rounded">
+      %for toolbar in thing.footer_nav():
+      <div class="col">
+        ${toolbar.render()}
+      </div>
+      %endfor
 
-  <p class="wired">
-    <a rel="nofollow" target="_top" href="http://wired.com">
-      <img src="${static('wired_w.png')}" alt="wired" /></a>
-    <a rel="nofollow" target="_top" href="http://wired.com">WIRED.com</a>-
-    <a rel="nofollow" target="_top" href="http://howto.wired.com">WIRED How-To</a>
-  </p>
-  <p class="bottommenu">
-    ${text_with_links(_("Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"), nocname=True, user_agreement= (_("User Agreement {Genitive}"), "http://reddit.com/help/useragreement"), privacy_policy = (_("Privacy Policy {Genitive}"), "http://reddit.com/help/privacypolicy"))}.  
-    ${_("(c) %(year)d CondeNet, Inc. All rights reserved.") % \
-    dict(year=datetime.datetime.now().timetuple()[0])}
-  </p>
- %if g.tracker_url and thing.site_tracking:
-  <img alt="" src="${tracking.UserInfo.gen_url()}"/>
- %endif
+    <p class="bottommenu">
+      ${text_with_links(_("Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"), nocname=True, user_agreement= (_("User Agreement {Genitive}"), "http://reddit.com/help/useragreement"), privacy_policy = (_("Privacy Policy {Genitive}"), "http://reddit.com/help/privacypolicy"))}.  
+      ${_("(c) %(year)d CondeNet, Inc. All rights reserved.") % \
+      dict(year=datetime.datetime.now().timetuple()[0])}
+    </p>
+   %if g.tracker_url and thing.site_tracking:
+    <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+   %endif
+  </div>
 </div>
-
 %if not c.user_is_loggedin:
   %if thing.enable_login_cover:
     ${self.loginpopup(login_panel, login_form)}

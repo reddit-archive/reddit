@@ -85,20 +85,21 @@ menu =   MenuHandler(hot          = _('hot'),
                      stats        = _("stats"), 
                      submit       = _("submit"),
                      help         = _("help"),
-                     blog         = _("blog"),
+                     blog         = _("the reddit blog"),
                      logout       = _("logout"),
                      
                      #reddit footer strings
                      feedback     = _("feedback"),
                      bookmarklets = _("bookmarklets"),
-                     socialite    = _("socialite"),
+                     socialite    = _("socialite firefox extension"),
                      buttons      = _("buttons"),
                      widget       = _("widget"), 
-                     code         = _("code"), 
+                     code         = _("source code"),
                      mobile       = _("mobile"), 
                      store        = _("store"),  
-                     ad_inq       = _("advertise"),
-                     
+                     ad_inq       = _("advertise on reddit"),
+                     toplinks     = _("top links"),
+
                      #preferences
                      options      = _('options'),
                      friends      = _("friends"),
@@ -180,8 +181,9 @@ def menu_style(type):
              lightdrop = ('dropdown', 'lightdrop'),
              tabdrop = ('dropdown', 'tabdrop'),
              srdrop = ('dropdown', 'srdrop'),
-             flatlist =  ('flatlist', ''),
+             flatlist =  ('flatlist', 'flat-list'),
              tabmenu = ('tabmenu', ''),
+             flat_vert = ('flatlist', 'flat-vert'),
              )
     return d.get(type, default)
 
@@ -291,6 +293,10 @@ class NavButton(Styled):
         """returns the title of the button when selected (for cases
         when it is different from self.title)"""
         return self.title
+
+class OffsiteButton(NavButton):
+    def build(self, base_path = ''):
+        self.path = self.bare_path = self.dest
 
 class SubredditButton(NavButton):
     def __init__(self, sr):

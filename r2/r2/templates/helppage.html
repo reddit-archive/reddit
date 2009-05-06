@@ -20,30 +20,11 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="plain_link"/>
+<%inherit file="reddit.html"/>
 
-<%def name="subreddit()">
-  <span class="hover pagename redditname">
-    ${plain_link(c.site.name, c.site.path, _sr_path=False)}
-  </span>
-</%def>
-
-<%def name="reddits()">
-  <span class="hover pagename redditname">
-    ${plain_link(_("reddits"), "/reddits/", _sr_path=False)}
-  </span>
-</%def>
-
-<%def name="nomenu()">
-<span class="pagename selected">${thing.title}</span>
-</%def>
-
-<%def name="help()">
-  <span class="hover pagename redditname">
-    ${plain_link(thing.title, "/help", _sr_path=False)}
-  </span>
-</%def>
-
-<%def name="newpagelink()">
-<span class="newpagelink">reddit all?&#32;${plain_link("click here to find new links.", "/new/", _sr_path=False)}</span>
+<%def name="stylesheet()">
+  ${parent.stylesheet()}
+  <link rel="stylesheet"
+        type="text/css"
+        href="http://code.reddit.com/chrome/reddit/style.css" />
 </%def>
