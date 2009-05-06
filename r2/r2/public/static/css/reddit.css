@@ -977,11 +977,11 @@ textarea.gray { color: gray; }
 
 /* footer */
 .footer-parent {
+    clear: both;
     text-align: center;
 }
 
 .footer {
-    clear: both;
     color: gray;
     font-size: larger;
     padding: 5px;
