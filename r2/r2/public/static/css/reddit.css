@@ -774,7 +774,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .score.likes   { color: #FF8B60; }
 .linkcompressed .score.dislikes { color: #9494FF; }
 .linkcompressed .rank { 
-    margin-top: 5px;
+    margin-top: 6px;
     float:left;
     color: #c6c6c6;
     font-family: arial;
@@ -789,7 +789,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f4f4f4;
+    background-color: #f5f5f5;
     font-weight: bold
 }
 

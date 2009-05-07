@@ -57,7 +57,7 @@ class EmbedController(RedditController):
 
             output.append(edittag)
 
-            output = SC_OFF + unicode(output) + SC_ON
+        output = SC_OFF + unicode(output) + SC_ON
 
         return HelpPage(_("help"),
                         content = Embed(content=output),
