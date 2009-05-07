@@ -296,6 +296,7 @@ class NavButton(Styled):
 
 class OffsiteButton(NavButton):
     def build(self, base_path = ''):
+        self.sr_path = False
         self.path = self.bare_path = self.dest
 
 class SubredditButton(NavButton):
