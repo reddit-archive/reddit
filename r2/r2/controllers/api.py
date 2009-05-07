@@ -1205,7 +1205,10 @@ class ApiController(RedditController):
                 action = VOneOf('action', ('sub', 'unsub')),
                 sr = VByName('sr'))
     def POST_subscribe(self, action, sr):
-        self._subscribe(sr, action == 'sub')
+        # only users who can make edits are allowed to subscribe.
+        # Anyone can leave.
+        if action != 'sub' or sr.can_comment(c.user):
+            self._subscribe(sr, action == 'sub')
     
     def _subscribe(self, sr, sub):
         Subreddit.subscribe_defaults(c.user)

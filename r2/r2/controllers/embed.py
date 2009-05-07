@@ -20,20 +20,15 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, proxyurl
+from r2.lib.template_helpers import get_domain
 from r2.lib.pages import Embed, BoringPage, HelpPage
 from r2.lib.filters import websafe, SC_OFF, SC_ON
 from pylons.i18n import _
-from pylons import request
-from pylons import c
+from pylons import c, g, request
 
 from BeautifulSoup import BeautifulSoup, Tag
 
 from urllib2 import HTTPError
-
-def force_redirect(dest):
-    def _force_redirect(self, *a, **kw):
-        return self.redirect(dest)
-    return _force_redirect
 
 class EmbedController(RedditController):
     def rendercontent(self, input, fp):
@@ -84,3 +79,8 @@ class EmbedController(RedditController):
             return self.abort404()
 
     GET_help = POST_help = renderurl
+
+    def GET_blog(self):
+        return self.redirect("http://blog.%s/" %
+                             get_domain(cname = False, subreddit = False,
+                                        no_www = True))

@@ -977,6 +977,7 @@ textarea.gray { color: gray; }
 
 /* footer */
 .footer-parent {
+    padding-top: 40px; 
     clear: both;
     text-align: center;
 }
