@@ -99,6 +99,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      store        = _("store"),  
                      ad_inq       = _("advertise on reddit"),
                      toplinks     = _("top links"),
+                     iphone       = _("iPhone app"),
 
                      #preferences
                      options      = _('options'),
