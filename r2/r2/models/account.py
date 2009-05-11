@@ -129,7 +129,8 @@ class Account(Thing):
             karmas.append((sr_name,
                            self._t.get(sr_name + link_suffix, 0),
                            self._t.get(sr_name + comment_suffix, 0)))
-        karmas.sort(key = lambda x: x[1] + x[2])
+
+        karmas.sort(key = lambda x: abs(x[1] + x[2]), reverse=True)
 
         karmas.insert(0, ('total',
                           self.karma('link'),

@@ -38,12 +38,18 @@
       %endif
         <li>
           <table>
-        <%
+         <%
            karmas = thing.user.all_karmas()
-           ##karmas.sort(lambda x,y: x[2] - y[2])
          %>
-        %for label, lc, cc in karmas:
-          <tr style="text-align:right">
+        %for i, (label, lc, cc) in enumerate(karmas):
+          <tr
+          %if i < 5:
+              style="text-align:right"
+          %else:
+              class="more-karmas"
+              style="text-align:right; display: none"
+          %endif
+            >
             <th>${label}:</th>
             <td><b>${lc}</b></td>
             <td>/</td>
@@ -51,6 +57,12 @@
           </tr>
         %endfor
           </table>
+          %if i >= 5:
+            <a href="javascript:void(0)"
+               onclick="$('.more-karmas').show();$(this).hide();return false">
+               show karma for all ${len(karmas)} reddits
+            </a>
+          %endif
         </li>
     %else:
       <li>

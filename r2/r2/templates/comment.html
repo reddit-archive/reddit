@@ -141,7 +141,7 @@ ${parent.midcol()}
       %endif
       %if c.user_is_loggedin and thing.author.name == c.user.name:
         <li>
-          ${parent.simple_button("edit", _("edit"), "editcomment")}
+          ${parent.simple_button(_("edit"), "editcomment")}
         </li>
       %endif
     %endif

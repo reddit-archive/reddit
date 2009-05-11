@@ -654,14 +654,10 @@ before enabling */
     font-size: small;
 }
 
-.menuarea {
-    border-bottom: 1px dotted gray;
-    padding: 5px 10px;
-    margin: 5px 310px 5px 5px;
-    font-size: larger;
+.infobar img {
+    display: inline;
+    vertical-align: middle;
 }
-
-.menuarea .spacer {display: inline; margin-right: 15px}
 
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
@@ -681,19 +677,6 @@ before enabling */
     padding-left: 4px; 
     margin: 5px;
     margin-right: 15px;
-}
-
-.infobar {
-    background-color: #f6e69f;
-    padding: 5px 10px;
-    margin: 5px 310px 5px 0px;
-    border: 1px solid orange;
-    font-size: small;
-}
-
-.infobar img {
-    display: inline;
-    vertical-align: middle;
 }
 
 .menuarea {
@@ -763,7 +746,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 /* compressed links */
-.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 5px; }
+.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 6px; }
 .linkcompressed .title {margin-bottom: 1px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
@@ -773,8 +756,8 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .linkcompressed .score.likes   { color: #FF8B60; }
 .linkcompressed .score.dislikes { color: #9494FF; }
-.linkcompressed .rank { 
-    margin-top: 6px;
+.linkcompressed .rank {
+    margin-top: 7px;
     float:left;
     color: #c6c6c6;
     font-family: arial;
@@ -789,7 +772,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f5f5f5;
+    background-color: #f6f6f6;
     font-weight: bold
 }
 
@@ -1000,6 +983,14 @@ textarea.gray { color: gray; }
  }
 
 .footer .col:first-child {border: none;}
+
+.notes-button {
+    margin-top: 3px;
+}
+
+.notes-status {
+    font-size: larger;
+}
 
 .server-status { width: 300px;  }
 .server-status table { 

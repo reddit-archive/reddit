@@ -81,7 +81,7 @@ ${unsafe(safemarkdown(thing.body))}
     ${parent.buttons()}
     %if c.user_is_loggedin:
       <li>
-      ${parent.simple_button("reply", _("reply {verb}"), "reply")}
+      ${parent.simple_button(_("reply {verb}"), "reply")}
       </li>
     %endif
 %endif
