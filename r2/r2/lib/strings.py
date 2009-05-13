@@ -107,7 +107,7 @@ string_dict = dict(
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    banned_subreddit = _("""**this reddit has been banned**.\n\nplease send a message to [feedback](%(link)s) if you feel that this is an error, but your mileage may vary if you are the target of a well-coordinated international conspiracy to silence you and your kind."""),
+    banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [feedback](%(link)s) and be sure to include the exact name of the reddit."""),
 )
 
 class StringHandler(object):
