@@ -243,8 +243,7 @@ class Subreddit(Thing, Printable):
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')
         rels = (SRMember._fast_query(wrapped, [user], names) if user else {})
-        defaults = Subreddit.user_subreddits(None,
-                                             limit = g.num_default_reddits)
+        defaults = Subreddit.default_subreddits()
         for item in wrapped:
             if not user or not user.has_subscribed:
                 item.subscriber = item._id in defaults
@@ -277,7 +276,7 @@ class Subreddit(Thing, Printable):
         #return 1
 
     @classmethod
-    def default_srs(cls, lang, limit):
+    def top_lang_srs(cls, lang, limit):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -297,45 +296,62 @@ class Subreddit(Thing, Printable):
         return list(pop_reddits)
 
     @classmethod
+    def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
+        """
+        Generates a list of the subreddits any user with the current
+        set of language preferences and no subscriptions would see.
+
+        An optional kw argument 'limit' is defaulted to g.num_default_reddits
+        """
+        langs = list(c.content_langs)
+        # g.lang will be in the the current set of content langs
+        # unless the user has explicity removed it.  Since most
+        # content is in g.lang, set the subreddit ratio to 50/50.
+        if limit and langs != 'all' and g.lang in langs and len(langs) != 1:
+            # lookup default lang subreddits
+            default_srs = cls.top_lang_srs([g.lang], limit)
+            # remove g.lang from conten_lang list and use it to
+            # grab content_lang subreddits
+            langs.remove(g.lang)
+            lang_srs = cls.top_lang_srs(langs, limit)
+            # interleave the two lists, putting the lang ones first
+            srs = list(interleave_lists(lang_srs, default_srs))
+            if limit:
+                srs = srs[:limit]
+        else:
+            # the user knows better and has set their langs accordingly
+            srs = cls.top_lang_srs(c.content_langs, limit)
+        return [s._id for s in srs] if ids else srs
+
+    @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
 
-        Otherwise, returns a set of 'limit' subreddits, making sure to
-        include a fair bit of content from the default language.
+        Otherwise, return the default set.
         """
+        # note: for user not logged in, the fake user account has
+        # has_subscribed == False by default.
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
             if limit and len(sr_ids) > limit:
                 sr_ids = random.sample(sr_ids, limit)
             return sr_ids if ids else Subreddit._byID(sr_ids, True, False)
         else:
-            langs = list(c.content_langs)
-            # g.lang will be in the the current set of content langs
-            # unless the user has explicity removed it.  Since most
-            # content is in g.lang, set the subreddit ratio to 50/50.
-            if limit and langs != 'all' and g.lang in langs and len(langs) != 1:
-                # lookup default lang subreddits
-                default_srs = cls.default_srs([g.lang], limit)
-                # remove g.lang from conten_lang list and use it to
-                # grab content_lang subreddits
-                langs.remove(g.lang)
-                lang_srs = cls.default_srs(langs, limit)
-                # interleave the two lists, putting the lang ones first
-                srs = list(interleave_lists(lang_srs, default_srs))
-                if limit:
-                    srs = srs[:limit]
-            else:
-                # the user knows better and has set their langs accordingly
-                srs = cls.default_srs(c.content_langs, limit)
-            return [s._id for s in srs] if ids else srs
-
+            # if there is a limit, we want *at most* limit subreddits.
+            # Allow the default_subreddit list to return the number it
+            # would normally and then slice.
+            srs = cls.default_subreddits(ids = ids)
+            if limit:
+                srs = srs[:limit]
+            return srs
+            
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:
             return self.is_subscriber(user)
         else:
-            return self in self.user_subreddits(None, ids = False)
+            return self in self.default_subreddits(ids = False)
 
     @classmethod
     def subscribe_defaults(cls, user):

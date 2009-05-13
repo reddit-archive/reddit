@@ -220,8 +220,7 @@ class HotController(FixListing, ListingController):
             self.fix_listing = False
 
         if c.site == Default:
-            user = c.user if c.user_is_loggedin else None
-            sr_ids = Subreddit.user_subreddits(user,
+            sr_ids = Subreddit.user_subreddits(c.user,
                                                limit = g.num_default_reddits)
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages

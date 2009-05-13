@@ -726,12 +726,8 @@ class SubredditTopBar(Wrapped):
     def __init__(self):
         Wrapped.__init__(self)
 
-        my_reddits = []
-        sr_ids = Subreddit.user_subreddits(c.user if c.user_is_loggedin else None)
-        if sr_ids:
-            my_reddits = Subreddit._byID(sr_ids, True,
-                                         return_dict = False)
-            my_reddits.sort(key = lambda sr: sr.name.lower())
+        my_reddits = Subreddit.user_subreddits(c.user, ids = False)
+        my_reddits.sort(key = lambda sr: sr.name.lower())
 
         drop_down_buttons = []    
         for sr in my_reddits:
@@ -748,7 +744,8 @@ class SubredditTopBar(Wrapped):
                                          title = _('my reddits'),
                                          type = 'srdrop')
 
-        pop_reddits = Subreddit.user_subreddits(None, ids = False)
+        pop_reddits = Subreddit.default_subreddits(ids = False,
+                                                   limit = Subreddit.sr_limit)
         buttons = [SubredditButton(sr) for sr in c.recent_reddits]
         for sr in pop_reddits:
             if sr not in c.recent_reddits:
@@ -761,14 +758,7 @@ class SubscriptionBox(Wrapped):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
     def __init__(self):
-        user = c.user if c.user_is_loggedin else None
-        # user_subreddits does know to limit to just
-        # g.num_default_reddits if the user is not subscribed.
-        if not user or not user.has_subscribed:
-            limit = g.num_default_reddits
-        else:
-            limit = Subreddit.sr_limit
-        srs = Subreddit.user_subreddits(user, ids = False, limit = limit)
+        srs = Subreddit.user_subreddits(c.user, ids = False)
         srs.sort(key = lambda sr: sr.name.lower())
         b = IDBuilder([sr._fullname for sr in srs])
         self.reddits = LinkListing(b).listing().things
