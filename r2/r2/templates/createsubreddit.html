@@ -140,7 +140,7 @@ function update_title(elem) {
         <%
            default_lang = thing.site and thing.site.lang or c.lang or ''
            default_lang = default_lang.split('-')[0]
-           default_lang = 'en' if len(default_lang) != 2 else default_lang
+           default_lang = g.lang if len(default_lang) != 2 else default_lang
          %>
         ${language_tool(all_langs = True, default_lang = default_lang)}
       </td>

@@ -1030,3 +1030,10 @@ def common_subdomain(domain1, domain2):
             if domain2.endswith(d):
                 return d
     return ""
+
+def interleave_lists(*args):
+    max_len = max(len(x) for x in args)
+    for i in xrange(max_len):
+        for a in args:
+            if i < len(a):
+                yield a[i]

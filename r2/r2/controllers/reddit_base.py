@@ -80,9 +80,12 @@ class UnloggedUser(FakeAccount):
         if browser_langs:
             lang = browser_langs[0]
             content_langs = list(browser_langs)
+            # try to coerce the default language 
+            if g.lang not in content_langs:
+                content_langs.append(g.lang)
             content_langs.sort()
         else:
-            lang = 'en'
+            lang = g.lang
             content_langs = 'all'
         self._defaults = self._defaults.copy()
         self._defaults['pref_lang'] = lang
@@ -297,7 +300,7 @@ def set_iface_lang():
     # (used for formatting of large numbers to break them up with ",").
     # unfortunately, not directly compatible with gettext
     locale.setlocale(locale.LC_ALL, g.locale)
-    lang = ['en']
+    lang = [g.lang]
     # GET param wins
     if c.host_lang:
         lang = [c.host_lang]
@@ -316,7 +319,7 @@ def set_iface_lang():
             break
         except h.LanguageError:
             #we don't have a translation for that language
-            h.set_lang('en', graceful_fail = True)
+            h.set_lang(g.lang, graceful_fail = True)
             
     #TODO: add exceptions here for rtl languages
     if c.lang in ('ar', 'he', 'fa'):

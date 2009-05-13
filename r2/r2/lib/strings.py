@@ -28,6 +28,7 @@ hooks to the UI are the same.
 """
 
 import helpers as h
+from pylons import g
 from pylons.i18n import _, ungettext
 import random
 
@@ -220,14 +221,14 @@ class Score(object):
 def fallback_trans(x):
     """For translating placeholder strings the user should never see
     in raw form, such as 'funny 500 message'.  If the string does not
-    translate in the current language, falls back on the 'en'
+    translate in the current language, falls back on the g.lang
     translation that we've hopefully already provided"""
     t = _(x)
     if t == x:
         l = h.get_lang()
-        h.set_lang('en', graceful_fail = True)
+        h.set_lang(g.lang, graceful_fail = True)
         t = _(x)
-        if l and l[0] != 'en':
+        if l and l[0] != g.lang:
             h.set_lang(l[0])
     return t
 

@@ -25,7 +25,7 @@ import pytz, os, logging, sys, socket
 from datetime import timedelta
 from r2.lib.cache import LocalCache, Memcache, CacheChain
 from r2.lib.db.stats import QueryStats
-from r2.lib.translation import _get_languages
+from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 
@@ -44,7 +44,7 @@ class Globals(object):
                  'RATELIMIT',
                  'num_comments',
                  'max_comments',
-                 'num_side_reddits',
+                 'num_default_reddits',
                  'num_query_queue_workers',
                  'max_sr_images',
                  ]
@@ -131,7 +131,8 @@ class Globals(object):
         self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
 
         # turn on for language support
-        self.languages, self.lang_name = _get_languages()
+        self.languages, self.lang_name = \
+                        get_active_langs(default_lang= self.lang)
 
         all_languages = self.lang_name.keys()
         all_languages.sort()

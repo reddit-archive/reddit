@@ -477,7 +477,8 @@ class Translator(LoggedSlots):
 
 
     @classmethod
-    def get_slots(cls, locale = 'en'):
+    def get_slots(cls, locale = None):
+        locale = locale or pylons.g.lang
         f = cls.outfile(locale, extension='data')
         return LoggedSlots._get_slots(f)
 
@@ -571,7 +572,7 @@ def _rebuild_trans(path = _i18n_path):
                 t.save(compile = True)
 
 
-def _get_languages(path = _i18n_path):
+def get_active_langs(path = _i18n_path, default_lang = 'en'):
     trans = []
     trans_name = {}
     for lang in os.listdir(path):
@@ -580,14 +581,15 @@ def _get_languages(path = _i18n_path):
             name = Translator.get_name(lang)
             trans_name[lang] = name
             if Translator.is_enabled(lang) and Translator.in_use(lang):
-                # en is treated specially
-                if lang != 'en':
+                if lang != default_lang:
                     trans.append(lang)
                     if Translator.get_complete_frac(lang) < .5:
                         name += ' (*)'
     trans.sort()
-    trans.insert(0, 'en')
-    trans_name['en'] = "English"
+    # insert the default language at the top of the list
+    trans.insert(0, default_lang)
+    if default_lang not in trans_name:
+        trans_name[default_lang] = default_lang
     return trans, trans_name
     
 

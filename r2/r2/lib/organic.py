@@ -96,7 +96,7 @@ def insert_promoted(link_names, sr_ids, logged_in):
 @memoize('cached_organic_links', time = organic_lifetime)
 def cached_organic_links(user_id, langs):
     if user_id is None:
-        sr_ids = Subreddit.default_srs(langs, ids = True)
+        sr_ids = Subreddit.user_subreddits(None)
     else:
         user = Account._byID(user_id, data=True)
         sr_ids = Subreddit.user_subreddits(user)

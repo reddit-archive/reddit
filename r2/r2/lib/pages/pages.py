@@ -748,8 +748,7 @@ class SubredditTopBar(Wrapped):
                                          title = _('my reddits'),
                                          type = 'srdrop')
 
-    
-        pop_reddits = Subreddit.default_srs(c.content_langs, limit = 30)        
+        pop_reddits = Subreddit.user_subreddits(None, ids = False)
         buttons = [SubredditButton(sr) for sr in c.recent_reddits]
         for sr in pop_reddits:
             if sr not in c.recent_reddits:
@@ -758,57 +757,18 @@ class SubredditTopBar(Wrapped):
         self.sr_bar = NavMenu(buttons, type='flatlist', separator = '-',
                                         _id = 'sr-bar')
     
-class SubredditBox(Wrapped):
-    """A content pane that has the lists of subreddits that go in the
-    right pane by default"""
-    def __init__(self):
-        Wrapped.__init__(self)
-        
-        self.title = _('Other reddit communities')
-        self.subtitle = 'Visit your subscribed reddits (in bold) or explore new ones'
-        self.create_link = ('/reddits/', menu.more)
-        self.more_link   = ('/reddits/create', _('create'))
-
-        my_reddits = []
-        sr_ids = Subreddit.user_subreddits(c.user if c.user_is_loggedin else None)
-        if sr_ids:
-            my_reddits = Subreddit._byID(sr_ids, True,
-                                         return_dict = False)
-            my_reddits.sort(key = lambda sr: sr._downs, reverse = True)
-
-        display_reddits = my_reddits[:g.num_side_reddits]
-        
-        #remove the current reddit
-        display_reddits = filter(lambda x: x != c.site, display_reddits)
-
-        pop_reddits = Subreddit.default_srs(c.content_langs, limit = g.num_side_reddits)
-        #add english reddits to the list
-        if c.content_langs != 'all' and 'en' not in c.content_langs:
-            en_reddits = Subreddit.default_srs(['en'])
-            pop_reddits += [sr for sr in en_reddits if sr not in pop_reddits]
-
-        for sr in pop_reddits:
-            if len(display_reddits) >= g.num_side_reddits:
-                break
-
-            if sr != c.site and sr not in display_reddits:
-                display_reddits.append(sr)
-
-        col1, col2 = [], []
-        cur_col, other = col1, col2
-        for sr in display_reddits:
-            cur_col.append((sr, sr in my_reddits))
-            cur_col, other = other, cur_col
-
-        self.cols = ((col1, col2))
-        self.mine = my_reddits
-
 class SubscriptionBox(Wrapped):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
     def __init__(self):
-        sr_ids = Subreddit.user_subreddits(c.user if c.user_is_loggedin else None)
-        srs = Subreddit._byID(sr_ids, True, return_dict = False)
+        user = c.user if c.user_is_loggedin else None
+        # user_subreddits does know to limit to just
+        # g.num_default_reddits if the user is not subscribed.
+        if not user or not user.has_subscribed:
+            limit = g.num_default_reddits
+        else:
+            limit = Subreddit.sr_limit
+        srs = Subreddit.user_subreddits(user, ids = False, limit = limit)
         srs.sort(key = lambda sr: sr.name.lower())
         b = IDBuilder([sr._fullname for sr in srs])
         self.reddits = LinkListing(b).listing().things
