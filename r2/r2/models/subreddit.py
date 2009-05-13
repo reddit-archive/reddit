@@ -370,9 +370,7 @@ class Subreddit(Thing, Printable):
     def submit_sr_names(cls, user):
         """subreddit names that appear in a user's submit page. basically a
         sorted/rearranged version of user_subreddits()."""
-        sub_ids = cls.user_subreddits(user, False)
-        srs = Subreddit._byID(sub_ids, True,
-                              return_dict = False)
+        srs = cls.user_subreddits(user, ids = False)
         names = [s.name for s in srs if s.can_submit(user)]
         names.sort()
 
