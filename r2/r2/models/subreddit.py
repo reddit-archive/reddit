@@ -324,6 +324,14 @@ class Subreddit(Thing, Printable):
         return [s._id for s in srs] if ids else srs
 
     @classmethod
+    @memoize('random_reddits', time = 1800)
+    def random_reddits(cls, user_name, sr_ids, limit):
+        """This gets called when a user is subscribed to more than 50
+        reddits. Randomly choose 50 of those reddits and cache it for
+        a while so their front page doesn't jump around."""
+        return random.sample(sr_ids, limit)
+
+    @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
         """
         subreddits that appear in a user's listings. If the user has
@@ -336,7 +344,8 @@ class Subreddit(Thing, Printable):
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
             if limit and len(sr_ids) > limit:
-                sr_ids = random.sample(sr_ids, limit)
+                sr_ids.sort()
+                sr_ids = cls.random_reddits(user.name, sr_ids, limit)
             return sr_ids if ids else Subreddit._byID(sr_ids, True, False)
         else:
             # if there is a limit, we want *at most* limit subreddits.
