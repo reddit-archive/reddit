@@ -598,11 +598,14 @@ class RedditController(BaseController):
         if c.user_is_loggedin:
             return
 
-        date = utils.is_modified_since(thing, action, request.if_modified_since)
-        if date is False:
+        last_modified = utils.last_modified_date(thing, action)
+        date_str = http_utils.http_date_str(last_modified)
+        c.response.headers['last-modified'] = date_str
+        c.response.headers['cache-control'] = "private, max-age=0, must-revalidate"
+
+        modified_since = request.if_modified_since
+        if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
-        else:
-            c.response.headers['Last-Modified'] = http_utils.http_date_str(date)
 
     def abort404(self):
         abort(404, "not found")

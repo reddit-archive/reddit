@@ -143,7 +143,8 @@ class ErrorController(RedditController):
                 c.response.content = toofast
                 return c.response
             elif code == '304':
-                c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
+                if request.GET.has_key('x-sup-id'):
+                    c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
                 return c.response
             elif c.site:
                 return self.send404()
