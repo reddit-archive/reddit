@@ -181,7 +181,7 @@ class VLang(Validator):
             if lang in g.all_languages:
                 return lang
         #else
-        return 'en'
+        return g.lang
 
 class VRequired(Validator):
     def __init__(self, param, error, *a, **kw):

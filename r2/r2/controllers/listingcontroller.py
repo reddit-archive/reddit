@@ -34,7 +34,7 @@ from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
 from r2.lib.solrsearch import SearchQuery
-from r2.lib.utils import iters, check_cheating
+from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 
 from admin import admin_profile_query
@@ -127,9 +127,13 @@ class ListingController(RedditController):
                         after = self.after,
                         count = self.count,
                         reverse = self.reverse,
+                        keep_fn = self.keep_fn(),
                         wrap = self.builder_wrapper)
 
         return b
+
+    def keep_fn(self):
+        return None
 
     def listing(self):
         """Listing to generate from the builder"""
@@ -220,8 +224,8 @@ class HotController(FixListing, ListingController):
             self.fix_listing = False
 
         if c.site == Default:
-            user = c.user if c.user_is_loggedin else None
-            sr_ids = Subreddit.user_subreddits(user)
+            sr_ids = Subreddit.user_subreddits(c.user,
+                                               limit = g.num_default_reddits)
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
@@ -279,12 +283,34 @@ class NewController(ListingController):
     def menus(self):
         return [NewMenu(default = self.sort)]
 
+    def keep_fn(self):
+        def keep(item):
+            """Avoid showing links that are too young, to give time
+            for things like the spam filter and thumbnail fetcher to
+            act on them before releasing them into the wild"""
+            wouldkeep = item.keep_item(item)
+            if c.user_is_loggedin and (c.user_is_admin or item.subreddit.is_moderator(c.user)):
+                # let admins and moderators see them regardless
+                return wouldkeep
+            elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
+                # also let the author of the link see them
+                return True
+            elif item._date > timeago(g.new_incubation):
+                # it's too young to show yet
+                return False
+            else:
+                # otherwise, fall back to the regular logic (don't
+                # show hidden links, etc)
+                return wouldkeep
+
+        return keep
+
     def query(self):
         if self.sort == 'rising':
             return get_rising(c.site)
         else:
             return c.site.get_links('new', 'all')
-        
+
     @validate(sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):
         self.sort = sort

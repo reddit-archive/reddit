@@ -257,6 +257,7 @@ class Link(Thing, Printable):
         from r2.lib.count import incr_counts
         from r2.lib.media import thumbnail_url
         from r2.lib.utils import timeago
+        from r2.lib.template_helpers import get_domain
 
         saved = Link._saved(user, wrapped) if user else {}
         hidden = Link._hidden(user, wrapped) if user else {}
@@ -317,6 +318,17 @@ class Link(Thing, Printable):
             else:
                 item.nofollow = False
 
+            item.subreddit_path = item.subreddit.path
+            if c.cname:
+                item.subreddit_path = ("http://" + 
+                     get_domain(cname = (c.site == item.subreddit),
+                                subreddit = False))
+                if c.site != item.subreddit:
+                    item.subreddit_path += item.subreddit.path
+            item.domain_path = "/domain/%s" % item.domain
+            if item.is_self:
+                item.domain_path = item.subreddit_path
+                
         if c.user_is_loggedin:
             incr_counts(wrapped)
 

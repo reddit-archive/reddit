@@ -281,45 +281,6 @@ ul.flat-vert {text-align: left;}
     margin: 7px 0;
  }
 
-.subredditbox {
-    border: 1px solid gray;
-}
-
-.subredditbox h4 {
-    font-size: 170%;
-    color: #333;
-    padding: 5px 0 0 5px;
-}
-.subredditbox h5 { 
-    font-weight: normal;
-    color: dimgray;
-    font-size: 110%;
-    padding-left: 5px;
-}
-
-.subredditbox input[type=submit] {
-    border: none;
-    background-color: white;
-    text-decoration: underline;
-    cursor: pointer;
-    margin-left: 10px;
-    color: #369;
-}
-
-.subredditbox input[type=checkbox] {margin-right: 5px;}
-
-.subredditbox ul {
-    padding: 5px;
-    width: 139px;
-    list-style-type: none;
-    float: left;
-}
-
-.subredditbox li {padding: 4px; text-transform: uppercase;}
-.subredditbox li a {color: #369;}
-.subredditbox li.selected a{font-weight: bold;}
-.subredditbox .spacer { margin: 5px 0 }
-
 .morelink {
     background-color:#FFFFFF;
     color:#369;
