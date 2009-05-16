@@ -84,7 +84,7 @@ setup(
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup >= 3",
-                      "cssutils",
+                      "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
                       "py_interface"],
