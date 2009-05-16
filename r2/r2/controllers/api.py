@@ -700,7 +700,8 @@ class ApiController(RedditController):
         spam = (c.user._spam or
                 errors.BANNED_IP in c.errors or
                 errors.CHEATER in c.errors)
-        if thing:
+        # TODO: temporary hack until we migrate the rest of the vote data
+        if thing and thing._date > datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
             dir = (True if dir > 0
                    else False if dir < 0
                    else None)
