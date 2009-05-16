@@ -41,7 +41,7 @@ def add_query(cached_results):
         query_queue_table.insert().execute(d)
     except SQLError, e:
         #don't worry about inserting duplicates
-        if not 'IntegrityError' in e.message:
+        if not 'IntegrityError' in str(e):
             raise
 
 def remove_query(iden):

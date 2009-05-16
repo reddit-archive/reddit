@@ -168,7 +168,7 @@ class Report(MultiRelation('report',
             rel_table, rel_dtable = tables[0], tables[3]
 
             where = [dtable.c.key == 'author_id',
-                     sa.func.substring(dtable.c.value, 1, 1000) == author_id,
+                     sa.func.substring(dtable.c.value, 1, 1000) == str(author_id),
                      dtable.c.thing_id == rel_table.c.thing2_id]
             if amount is not None:
                 where.extend([rel_table.c.name == str(amount),
@@ -431,7 +431,7 @@ def unreport_account(user, correct = True, types = (Link, Comment, Message),
         
         by_user_query = sa.and_(table.c.thing_id == dtable.c.thing_id,
                                 dtable.c.key == 'author_id',
-                                sa.func.substring(dtable.c.value, 1, 1000) == user._id)
+                                sa.func.substring(dtable.c.value, 1, 1000) == str(user._id))
 
         s = sa.select(["count(*)"],
                       sa.and_(by_user_query, table.c.spam == (not correct)))
@@ -453,7 +453,7 @@ def unreport_account(user, correct = True, types = (Link, Comment, Message),
         u = """UPDATE %(table)s SET spam='%(spam)s' FROM %(dtable)s
         WHERE %(table)s.thing_id = %(dtable)s.thing_id
         AND %(dtable)s.key = 'author_id'
-        AND substring(%(dtable)s.value, 1, 1000) = %(author_id)s"""
+        AND substring(%(dtable)s.value, 1, 1000) = '%(author_id)s'"""
         u = u % dict(spam = 't' if correct else 'f',
                      table = table.name,
                      dtable = dtable.name,
