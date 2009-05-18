@@ -19,6 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from __future__ import with_statement
 import os, re, sys, socket, time, random, time, signal
 from itertools import chain
 
@@ -85,13 +86,16 @@ class AppServiceMonitor(Wrapped):
         db_info = {}
         for db in g.databases:
             dbase, ip = list(g.to_iter(getattr(g, db + "_db")))[:2]
-            name = socket.gethostbyaddr(ip)[0]
+            try:
+                name = socket.gethostbyaddr(ip)[0]
     
-            for host in g.monitored_servers:
-                if (name == host or
-                    ("." in host and name.endswith("." + host)) or
-                    name.startswith(host + ".")):
-                    db_info[db] = (dbase, ip, host)
+                for host in g.monitored_servers:
+                    if (name == host or
+                        ("." in host and name.endswith("." + host)) or
+                        name.startswith(host + ".")):
+                        db_info[db] = (dbase, ip, host)
+            except socket.gaierror:
+                print "error resolving host: %s" % ip
 
         self._db_info = db_info
         self.hostlogs = []
@@ -280,6 +284,16 @@ class HostLogger(object):
             
         self.database = Database() if self.db_names else None
 
+        self.ncpu = 0
+        try:
+            with open('/proc/cpuinfo', 'r') as handle:
+                for line in handle:
+                    if line.startswith("processor"):
+                        self.ncpu += 1
+        except IOError:
+            # guess we don't know
+            self.ncpu = 1
+
     def service_pids(self):
         return self.services.keys()
 
@@ -414,7 +428,7 @@ def check_database(db_names, check_vacuum = True, user='ri'):
         cmd = cmd % dict(query = query, user = user, db = _db)
         handle = ShellProcess(cmd)
         if handle.rcode and not handle.timeout:
-            conn_failure.add(db)
+            conn_failure.add(_db)
             return []
         return iter(handle)
         

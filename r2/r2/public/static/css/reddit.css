@@ -966,11 +966,15 @@ textarea.gray { color: gray; }
 .server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
 .server-status .load0 { background-color: #FFFFFF; }
-.server-status .load1 { background-color: #E2ECFF; }
-.server-status .load2 { background-color: #CAFF98; }
-.server-status .load3 { background-color: #FFEA71; }
-.server-status .load4 { background-color: #FF9191; }
-.server-status .load5 { background-color: #FF0000; color: #FFFFFF }
+.server-status .load1 { background-color: #f0f5FF; }
+.server-status .load2 { background-color: #E2ECFF; }
+.server-status .load3 { background-color: #d6f5cb; }
+.server-status .load4 { background-color: #CAFF98; }
+.server-status .load5 { background-color: #e4f484; }
+.server-status .load6 { background-color: #FFEA71; }
+.server-status .load7 { background-color: #ffdb81; }
+.server-status .load8 { background-color: #FF9191; }
+.server-status .load9 { background-color: #FF0000; color: #FFFFFF }
 .server-status tr.down > * { 
     background-color: #C0C0C0; 
     text-decoration: line-through; 

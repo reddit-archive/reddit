@@ -25,6 +25,13 @@
    cpu_col = 75.
    mem_col = 40.
    hide_data = "style='display:none'" if len(thing.hostlogs) > 4 else ''
+   # default number of color coding levels (to match reddit.css)
+   def get_load_level(host, nlevels = 8):
+       # default number of cpus shall be 1
+       ncpus = getattr(host, "ncpu", 1)
+       # color code in nlevel levels
+       return min(max(int(nlevels*host.load()/ncpus+0.4), 0),nlevels+1)
+     
  %>
 
 <div class="server-status">
@@ -50,7 +57,7 @@
         <%
            host_id = host.host.replace('.', '-')
            load = host.load()
-           load_level = min(max(int(load+0.4), 0),4)
+           load_level = get_load_level(host)
            if hasattr(host.database, "disk_usage"):
                du = host.database.disk_usage
            else:
@@ -166,7 +173,7 @@
      <%
         host_id = host.host.replace('.', '-')
         load = host.load()
-        load_level = min(max(int(load+0.5), 0),5)
+        load_level = get_load_level(host)
      %>
     %if len(host.services):
     <tr class="load${load_level} title-region" id="${host_id}">
