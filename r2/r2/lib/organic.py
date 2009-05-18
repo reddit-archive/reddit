@@ -76,6 +76,10 @@ def insert_promoted(link_names, sr_ids, logged_in):
 
     if not promoted_items:
         return
+
+    #make a copy before we start messing with things
+    orig_promoted = list(promoted_items)
+
     # don't insert one at the head of the list 50% of the time for
     # logged in users, and 50% of the time for logged-off users when
     # the pool of promoted links is less than 3 (to avoid showing the
@@ -83,17 +87,22 @@ def insert_promoted(link_names, sr_ids, logged_in):
     if (logged_in or len(promoted_items) < 3) and random.choice((True,False)):
         promoted_items.insert(0, None)
 
+    #repeat the same promoted links for non logged in users
+    if not logged_in:
+        while len(promoted_items) * promoted_every_n < len(link_names):
+            promoted_items.extend(orig_promoted)
+
     # insert one promoted item for every N items
     for i, item in enumerate(promoted_items):
-        pos = i * promoted_every_n
+        pos = i * promoted_every_n + i
         if pos > len(link_names):
             break
         elif item is None:
             continue
         else:
-            link_names.insert(pos, promoted_items[i]._fullname)
+            link_names.insert(pos, item._fullname)
 
-@memoize('cached_organic_links', time = organic_lifetime)
+@memoize('cached_organic_links2', time = organic_lifetime)
 def cached_organic_links(user_id, langs):
     if user_id is None:
         sr_ids = Subreddit.default_subreddits()
@@ -124,15 +133,18 @@ def cached_organic_links(user_id, langs):
                         num = organic_length)
     link_names = [ x._fullname for x in builder.get_items()[0] ]
 
-    calculation_key = str(time())
-    update_pos(0, calculation_key)
+    #if not logged in, don't reset the count. if we did that we might get in a
+    #cycle where the cache will return the same link over and over
+    if user_id:
+        update_pos(0)
 
     insert_promoted(link_names, sr_ids, user_id is not None)
 
-    # remove any duplicates caused by insert_promoted
-    ret = [ l for l in UniqueIterator(link_names) ]
+    # remove any duplicates caused by insert_promoted if the user is logged in
+    if user_id:
+        link_names = list(UniqueIterator(link_names))
 
-    return (calculation_key, ret)
+    return link_names
 
 def organic_links(user):
     from r2.controllers.reddit_base import organic_pos
@@ -142,20 +154,20 @@ def organic_links(user):
     sr_ids.sort()
 
     if c.user_is_loggedin:
-        cached_key, links = cached_organic_links(user._id, None)
+        links = cached_organic_links(user._id, None)
     else:
-        cached_key, links = cached_organic_links(None, c.content_langs)
+        links = cached_organic_links(None, c.content_langs)
 
-    cookie_key, pos = organic_pos()
+    pos = organic_pos()
     # pos will be 0 if it wasn't specified
     if links and pos != 0:
         # make sure that we're not running off the end of the list
         pos = pos % len(links)
 
-    return links, pos, cached_key
+    return links, pos
 
-def update_pos(pos, key):
+def update_pos(pos):
     "Update the user's current position within the cached organic list."
     from r2.controllers import reddit_base
 
-    reddit_base.set_organic_pos(key, pos)
+    reddit_base.set_organic_pos(pos)

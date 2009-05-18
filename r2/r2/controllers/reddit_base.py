@@ -192,15 +192,14 @@ def set_redditfirst(key,val):
 organic_pos_key = 'organic_pos'
 def organic_pos():
     "organic_pos() -> (calc_date = str(), pos  = int())"
-    try:
-        d,p = get_redditfirst(organic_pos_key, ('',0))
-    except ValueError:
-        d,p = ('',0)
-    return d,p
+    pos = get_redditfirst(organic_pos_key, 0)
+    if not isinstance(pos, int):
+        pos = 0
+    return pos
 
-def set_organic_pos(key,pos):
+def set_organic_pos(pos):
     "set_organic_pos(str(), int()) -> None"
-    set_redditfirst(organic_pos_key,[key,pos])
+    set_redditfirst(organic_pos_key, pos)
 
 
 def over18():

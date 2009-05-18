@@ -197,7 +197,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def organic(self):
-        o_links, pos, calculation_key = organic.organic_links(c.user)
+        o_links, pos = organic.organic_links(c.user)
         if o_links:
             # get links in proximity to pos
             l = min(len(o_links) - 3, 8)
@@ -213,7 +213,7 @@ class HotController(FixListing, ListingController):
             if len(o.things) > 0:
                 # only pass through a listing if the links made it
                 # through our builder
-                organic.update_pos(pos+1, calculation_key)
+                organic.update_pos(pos+1)
 
                 return o
 
