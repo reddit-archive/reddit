@@ -670,10 +670,11 @@ class VMenu(Validator):
 
 class VRatelimit(Validator):
     def __init__(self, rate_user = False, rate_ip = False,
-                 prefix = 'rate_', *a, **kw):
+                 prefix = 'rate_', error = errors.RATELIMIT, *a, **kw):
         self.rate_user = rate_user
         self.rate_ip = rate_ip
         self.prefix = prefix
+        self.error = error
         Validator.__init__(self, *a, **kw)
 
     def run (self):
@@ -687,12 +688,23 @@ class VRatelimit(Validator):
         if r:
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
-            self.set_error(errors.RATELIMIT, {'time': time})
+
+            print "rate-limiting %s from %s" % (self.prefix, r.keys())
+
+            # when errors have associated field parameters, we'll need
+            # to add that here
+            if self.error == errors.RATELIMIT:
+                self.set_error(errors.RATELIMIT, {'time': time})
+            else:
+                self.set_error(self.error)
+                
 
     @classmethod
-    def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_"):
+    def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_",
+                  seconds = None):
         to_set = {}
-        seconds = g.RATELIMIT*60
+        if seconds is None:
+            seconds = g.RATELIMIT*60
         expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time

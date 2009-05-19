@@ -265,14 +265,18 @@ class ApiController(RedditController):
         form.redirect(dest)
 
 
-    @validatedForm(user = VLogin(['user', 'passwd']),
+    @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
+                              error = errors.WRONG_PASSWORD),
+                   user = VLogin(['user', 'passwd']),
                    dest   = nop('dest'),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
-        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
+        if form.has_errors("passwd", errors.WRONG_PASSWORD):
+            VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
+        else:
             self._login(form, user, dest, rem)
 
 
