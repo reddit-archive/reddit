@@ -143,7 +143,8 @@ class ApiController(RedditController):
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
                                 errors.NO_USER) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
-                form.has_errors("message", errors.NO_MSG_BODY) or
+                form.has_errors("message", errors.NO_MSG_BODY,
+                                errors.COMMENT_TOO_LONG) or
                 form.chk_captcha(errors.BAD_CAPTCHA)):
             spam = (c.user._spam or
                     errors.BANNED_IP in c.errors or

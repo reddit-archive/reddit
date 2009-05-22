@@ -125,14 +125,17 @@ class ButtonsController(RedditController):
     @validate(buttontype = VInt('t', 1, 5),
               url = VSanitizedUrl("url"),
               _height = VInt('height', 0, 300),
-              _width = VInt('width', 0, 800))
-    def GET_button_embed(self, buttontype, _height, _width, url):
+              _width = VInt('width', 0, 800),
+              autohide = VBoolean("autohide"))
+    def GET_button_embed(self, buttontype, _height, _width, url, autohide):
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
             return self.abort404()
-            
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
+        if not c.user_is_loggedin and autohide:
+            c.response.content = "void(0);"
+            return c.response
 
         buttontype = buttontype or 1
         width, height = ((120, 22), (51, 69), (69, 52), (51, 52), (600, 52))[min(buttontype - 1, 4)]

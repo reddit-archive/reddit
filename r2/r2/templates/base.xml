@@ -36,8 +36,10 @@
             header_img = DefaultSR.header
         else:
             header_img = c.site.header
+        if not header_img.startswith("http:"):
+            header_img = add_sr(header_img, sr_path=False, force_hostname=True)
       %>
-      <url>http://${get_domain(subreddit = False, cname = c.cname)}${header_img}</url>
+      <url>${header_img}</url>
       <title>${self.Title()}</title>
       <link>${add_sr("/", force_hostname = True)}</link>
     </image>
@@ -46,6 +48,12 @@
 </rss>  
 
 <%def name="Title()">
-  ${c.site.name}: ${_("what's new online")}
+<% 
+   try:
+     title = _(c.site.title)
+   except UnicodeDecodeError:
+     title = c.site.title
+ %>
+${title}
 </%def>
 

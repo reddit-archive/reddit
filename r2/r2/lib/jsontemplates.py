@@ -197,6 +197,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 title        = "title",
                                                 url          = "url",
                                                 author       = "author", 
+                                                thumbnail    = "thumbnail",
+                                                media        = "media_object",
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id")
