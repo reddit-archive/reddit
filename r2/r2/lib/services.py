@@ -340,7 +340,7 @@ class HostLogger(object):
 
         foo = ShellProcess('/usr/bin/env uptime').read()
         foo = foo.split("load average")[1].split(':')[1].strip(' ')
-        self.load.add(float(foo.split(' ')[1].strip(',')))
+        self.load.add(float(foo.split(' ')[0].strip(',')))
         
         self.clean_dead()
 
