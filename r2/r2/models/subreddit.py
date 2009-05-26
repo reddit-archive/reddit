@@ -303,24 +303,7 @@ class Subreddit(Thing, Printable):
 
         An optional kw argument 'limit' is defaulted to g.num_default_reddits
         """
-        langs = list(c.content_langs)
-        # g.lang will be in the the current set of content langs
-        # unless the user has explicity removed it.  Since most
-        # content is in g.lang, set the subreddit ratio to 50/50.
-        if limit and langs != 'all' and g.lang in langs and len(langs) != 1:
-            # lookup default lang subreddits
-            default_srs = cls.top_lang_srs([g.lang], limit)
-            # remove g.lang from conten_lang list and use it to
-            # grab content_lang subreddits
-            langs.remove(g.lang)
-            lang_srs = cls.top_lang_srs(langs, limit)
-            # interleave the two lists, putting the lang ones first
-            srs = list(interleave_lists(lang_srs, default_srs))
-            if limit:
-                srs = srs[:limit]
-        else:
-            # the user knows better and has set their langs accordingly
-            srs = cls.top_lang_srs(c.content_langs, limit)
+        srs = cls.top_lang_srs(c.content_langs, limit)
         return [s._id for s in srs] if ids else srs
 
     @classmethod
