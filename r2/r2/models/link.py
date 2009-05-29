@@ -328,7 +328,17 @@ class Link(Thing, Printable):
             item.domain_path = "/domain/%s" % item.domain
             if item.is_self:
                 item.domain_path = item.subreddit_path
-                
+               
+            item.tblink = "http://%s/tb/%s" % (
+                get_domain(cname = c.cname, subreddit=False),
+                item._id36)
+
+            item.click_url = item.url
+            if item.is_self:
+                item.click_url = item.permalink
+            elif c.user.pref_frame:
+                item.click_url = item.tblink
+
         if c.user_is_loggedin:
             incr_counts(wrapped)
 
@@ -461,13 +471,16 @@ class Comment(Thing, Printable):
                               wrapped.likes,
                               wrapped.friend,
                               wrapped.collapsed,
-                              wrapped.moderator_banned,
+                              wrapped.nofollow,
                               wrapped.show_spam,
                               wrapped.show_reports,
+                              wrapped.target,
                               wrapped.can_ban,
                               wrapped.moderator_banned,
                               wrapped.can_reply,
-                              wrapped.deleted))
+                              wrapped.deleted,
+                              wrapped.render_class,
+                              ))
         s = ''.join(s)
         return s
 
@@ -481,8 +494,8 @@ class Comment(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         #fetch parent links
-        links = Link._byID(set(l.link_id for l in wrapped), True)
-        
+        links = Link._byID(set(l.link_id for l in wrapped), data = True,
+                           return_dict = True)
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
@@ -499,8 +512,11 @@ class Comment(Thing, Printable):
 
         for item in wrapped:
             item.link = links.get(item.link_id)
+
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
+            if not hasattr(item, 'target'):
+                item.target = None
             if hasattr(item, 'parent_id'):
                 if cids.has_key(item.parent_id):
                     item.parent_permalink = '#' + utils.to36(item.parent_id)
@@ -541,6 +557,11 @@ class Comment(Thing, Printable):
             item.num_children = 0
             item.score_fmt = Score.points
             item.permalink = item.make_permalink(item.link, item.subreddit)
+
+class StarkComment(Comment):
+    """Render class for the comments in the top-comments display in
+       the reddit toolbar"""
+    _nodb = True
 
 class MoreComments(object):
     show_spam = False

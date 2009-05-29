@@ -22,12 +22,12 @@
 from validator import *
 from pylons.i18n import _, ungettext
 from reddit_base import RedditController, base_listing
-from api import link_listing_by_url
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
-from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url, query_string, UrlParser
+from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
+from r2.lib.utils import query_string, UrlParser, link_from_url
 from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
@@ -76,20 +76,20 @@ class FrontController(RedditController):
 
     def GET_random(self):
         """The Serendipity button"""
-        n = rand.randint(0, 9)
-        sort = 'new' if n > 5 else 'hot'
+        sort = 'new' if rand.choice((True,False)) else 'hot'
         links = c.site.get_links(sort, 'all')
         if isinstance(links, thing.Query):
-                links._limit = 25
-                links = [x._fullname for x in links]
+            links._limit = 25
+            links = [x._fullname for x in links]
         else:
-            links = links[:25]
+            links = list(links)[:25]
+
         if links:
-            name = links[rand.randint(0, min(24, len(links)-1))]
+            name = rand.choice(links)
             link = Link._by_fullname(name, data = True)
-            return self.redirect(link.url)
+            return self.redirect(add_sr("/tb/" + link._id36))
         else:
-            return self.redirect('/')
+            return self.redirect(add_sr('/'))
 
     def GET_password(self):
         """The 'what is my password' page"""
@@ -138,8 +138,8 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
-        # if there is a focal comment, communicate down to comment_skeleton.html who
-        # that will be
+        # if there is a focal comment, communicate down to
+        # comment_skeleton.html who that will be
         if comment:
             c.focal_comment = comment._id36
 
@@ -150,7 +150,9 @@ class FrontController(RedditController):
 
         check_cheating('comments')
 
-        # figure out number to show based on the menu
+        # figure out number to show based on the menu (when num_comments
+        # is 'true', the user wants to temporarily override their
+        # comments limit pref
         user_num = c.user.pref_num_comments or g.num_comments
         num = g.max_comments if num_comments == 'true' else user_num
 
@@ -411,8 +413,6 @@ class FrontController(RedditController):
 
         return builder.total_num, timing, res
 
-
-
     def GET_login(self):
         """The /login form.  No link to this page exists any more on
         the site (all actions invoking it now go through the login
@@ -432,10 +432,10 @@ class FrontController(RedditController):
 
     @validate(VUser(),
               VModhash())
-    def POST_logout(self):
+    def POST_logout(self, dest = None):
         """wipe login cookie and redirect to referer."""
         self.logout()
-        dest = request.referer or '/'
+        dest = request.post.get('dest','') or request.referer or '/'
         return self.redirect(dest)
 
     
@@ -474,38 +474,25 @@ class FrontController(RedditController):
     @validate(VUser(), 
               VSRSubmitPage(),
               url = VRequired('url', None),
-              title = VRequired('title', None))
-    def GET_submit(self, url, title):
+              title = VRequired('title', None),
+              then = VOneOf('then', ('tb','comments'), default = 'comments'))
+    def GET_submit(self, url, title, then):
         """Submit form."""
         if url and not request.get.get('resubmit'):
             # check to see if the url has already been submitted
-            listing = link_listing_by_url(url)
-            redirect_link = None
-            if listing.things:
-                # if there is only one submission, the operation is clear
-                if len(listing.things) == 1:
-                    redirect_link = listing.things[0]
-                # if there is more than one, check the users' subscriptions
-                else:
-                    subscribed = [l for l in listing.things
-                                  if c.user_is_loggedin
-                                  and l.subreddit.is_subscriber_defaults(c.user)]
+            links = link_from_url(url)
+            if links and len(links) == 1:
+                return self.redirect(links[0].already_submitted_link)
+            elif links:
+                builder = IDBuilder([link._fullname for link in links])
+                listing = LinkListing(builder, nextprev=False).listing()
+                infotext = (strings.multiple_submitted
+                            % links[0].resubmit_link())
+                res = BoringPage(_("seen it"),
+                                 content = listing,
+                                 infotext = infotext).render()
+                return res
 
-                    #if there is only 1 link to be displayed, just go there
-                    if len(subscribed) == 1:
-                        redirect_link = subscribed[0]
-                    else:
-                        infotext = strings.multiple_submitted % \
-                            listing.things[0].resubmit_link()
-                        res = BoringPage(_("seen it"),
-                                         content = listing,
-                                         infotext = infotext).render()
-                        return res
-
-            # we've found a link already.  Redirect to its permalink page
-            if redirect_link:
-                return self.redirect(redirect_link.already_submitted_link)
-            
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = Subreddit.submit_sr_names(c.user) if c.default_sr else ()
 
@@ -513,7 +500,8 @@ class FrontController(RedditController):
                         content=NewLink(url=url or '',
                                         title=title or '',
                                         subreddits = sr_names,
-                                        captcha=captcha)).render()
+                                        captcha=captcha,
+                                        then = then)).render()
 
     def _render_opt_in_out(self, msg_hash, leave):
         """Generates the form for an optin/optout page"""

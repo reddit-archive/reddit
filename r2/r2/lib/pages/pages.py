@@ -24,7 +24,7 @@ from r2.models import IDBuilder, LinkListing, Account, Default, FakeSubreddit, S
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
-from pylons.i18n import _
+from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
@@ -33,11 +33,13 @@ from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, OffsiteButton, menu
-from r2.lib.strings import plurals, rand_strings, strings
-from r2.lib.utils import title_to_url, query_string, UrlParser, to_js
+from r2.lib.strings import plurals, rand_strings, strings, Score
+from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.template_helpers import add_sr, get_domain
-import sys, random, datetime, locale, calendar
+
+import sys, random, datetime, locale, calendar, re
 import graph
+from urllib import quote
 
 datefmt = _force_utf8(_('%d %b %Y'))
 
@@ -71,20 +73,23 @@ class Reddit(Wrapped):
 
     create_reddit_box  = True
     submit_box         = True
+    footer             = True
     searchbox          = True
     extension_handling = True
     enable_login_cover = True
     site_tracking      = True
+    show_firsttext     = True
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
-                 show_sidebar = True, **context):
+                 show_sidebar = True, footer = True, **context):
         Wrapped.__init__(self, **context)
         self.title          = title
         self.robots         = robots
         self.infotext       = infotext
         self.loginbox       = True
         self.show_sidebar   = show_sidebar
+        self.footer         = footer
         self.space_compress = space_compress
 
         #put the sort menus at the top
@@ -92,7 +97,7 @@ class Reddit(Wrapped):
 
         #add the infobar
         self.infobar = None
-        if c.firsttime and c.site.firsttext and not infotext:
+        if self.show_firsttext and c.firsttime and c.site.firsttext and not infotext:
             infotext = c.site.firsttext
         if infotext:
             self.infobar = InfoBar(message = infotext)
@@ -190,6 +195,7 @@ class Reddit(Wrapped):
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
                          NamedButton("stats", False, nocname=True),
+                         NamedButton('random', False, nocname=False),
                          NamedButton("feedback", False),],
                         title = 'site links', type = 'flat_vert',
                         separator = ''),
@@ -296,6 +302,13 @@ class Reddit(Wrapped):
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack(self.infobar, self.nav_menu, self._content)
+
+class RedditMin(Reddit):
+    """a version of Reddit that has no sidebar, toolbar, footer,
+       etc"""
+    footer       = False
+    show_sidebar = False
+    show_firsttext = False
 
 class LoginFormWide(Wrapped):
     """generates a login form suitable for the 300px rightbox."""
@@ -455,6 +468,17 @@ class SearchPage(BoringPage):
         return self.content_stack(self.searchbar, self.infobar,
                                   self.nav_menu, self._content)
 
+class CommentsPanel(Wrapped):
+    """the side-panel on the reddit toolbar frame that shows the top
+       comments of a link"""
+
+    def __init__(self, link = None, listing = None, expanded = False, *a, **kw):
+        self.link = link
+        self.listing = listing
+        self.expanded = expanded
+
+        Wrapped.__init__(self, *a, **kw)
+
 class LinkInfoPage(Reddit):
     """Renders the varied /info pages for a link.  The Link object is
     passed via the link argument and the content passed to this class
@@ -531,11 +555,7 @@ class LinkInfoPage(Reddit):
 class LinkInfoBar(Wrapped):
     """Right box for providing info about a link."""
     def __init__(self, a = None):
-        if a:
-            a = Wrapped(a)
-
         Wrapped.__init__(self, a = a, datefmt = datefmt)
-
 
 class EditReddit(Reddit):
     """Container for the about page for a reddit"""
@@ -880,27 +900,73 @@ class SearchBar(Wrapped):
 
 
 class Frame(Wrapped):
-    """Frameset for the FrameToolbar used when a user hits /goto and
-    has pref_toolbar set.  The top 30px of the page are dedicated to
-    the toolbar, while the rest of the page will show the results of
-    following the link."""
-    def __init__(self, url='', title='', fullname=''):
+    """Frameset for the FrameToolbar used when a user hits /tb/. The
+    top 30px of the page are dedicated to the toolbar, while the rest
+    of the page will show the results of following the link."""
+    def __init__(self, url='', title='', fullname=None):
+        if title:
+            title = (_('%(site_title)s via %(domain)s')
+                     % dict(site_title = _force_unicode(title),
+                            domain     = g.domain))
+        else:
+            title = g.domain
+
         Wrapped.__init__(self, url = url, title = title, fullname = fullname)
 
+dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+$")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
     extension_handling = False
-    def __init__(self, link = None, **kw):
-        self.title = link.title
-        Wrapped.__init__(self, link = link, *kw)
-    
+    def __init__(self, link = None, title = None, url = None, expanded = False, **kw):
+        self.title = title
+        self.url = url
+        self.expanded = expanded
+        self.link = link
+
+        self.dorks = dorks_re.match(link.url if link else url)
+
+        if link:
+            self.tblink = add_sr("/tb/"+link._id36)
+
+            likes = link.likes
+            self.upstyle = "mod" if likes else ""
+            self.downstyle = "mod" if likes is False else ""
+            if c.user_is_loggedin:
+                self.vh = vote_hash(c.user, link, 'valid')
+            score = link.score
+
+            if not link.num_comments:
+                # generates "comment" the imperative verb
+                self.com_label = _("comment {verb}")
+            else:
+                # generates "XX comments" as a noun
+                com_label = ungettext("comment", "comments", link.num_comments)
+                self.com_label = strings.number_label % (link.num_comments, com_label)
+
+            # generates "XX points" as a noun
+            self.score_label = Score.safepoints(score)
+
+        else:
+            self.tblink = add_sr("/s/"+quote(url))
+            submit_url_options = dict(url  = _force_unicode(url),
+                                      then = 'tb')
+            if title:
+                submit_url_options['title'] = _force_unicode(title)
+            self.submit_url = add_sr('/submit' + query_string(submit_url_options))
+
+        if not c.user_is_loggedin:
+            self.loginurl = add_sr("/login?dest="+quote(self.tblink))
+
+        Wrapped.__init__(self, **kw)
 
 
 class NewLink(Wrapped):
     """Render the link submission form"""
-    def __init__(self, captcha = None, url = '', title= '', subreddits = ()):
+    def __init__(self, captcha = None, url = '', title= '', subreddits = (),
+                 then = 'comments'):
         Wrapped.__init__(self, captcha = captcha, url = url,
-                         title = title, subreddits = subreddits)
+                         title = title, subreddits = subreddits,
+                         then = then)
 
 class ShareLink(Wrapped):
     def __init__(self, link_name = "", emails = None):
@@ -994,7 +1060,13 @@ class Socialite(Wrapped):
 
 class Bookmarklets(Wrapped):
     """The bookmarklets page."""
-    def __init__(self, buttons=["reddit", "serendipity!"]):
+    def __init__(self, buttons=None):
+        if buttons is None:
+            buttons = ["submit", "serendipity!"]
+            # only include the toolbar link if we're not on an
+            # unathorised cname. See toolbar.py:GET_s for discussion
+            if not (c.cname and c.site.domain not in g.authorized_cnames):
+                buttons.insert(0, "reddit toolbar")
         Wrapped.__init__(self, buttons = buttons)
 
 
@@ -1377,4 +1449,6 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
-    
+class InnerToolbarFrame(Wrapped):
+    def __init__(self, link, expanded = False):
+        Wrapped.__init__(self, link = link, expanded = expanded)

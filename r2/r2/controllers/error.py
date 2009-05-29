@@ -113,6 +113,8 @@ class ErrorController(RedditController):
 
     def send404(self):
         c.response.status_code = 404
+        if 'usable_error_content' in request.environ:
+            return request.environ['usable_error_content']
         if c.site._spam and not c.user_is_admin:
             message = (strings.banned_subreddit % dict(link = '/feedback'))
 

@@ -73,6 +73,16 @@
     <link rel="alternate" type="application/rss+xml" title="RSS"
           href="${add_sr(join_urls(request.path,'.rss'))}" />
   %endif
+
+  <!--[if lt IE 7]>
+    <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"" 
+          type="text/css" />
+  <![endif]-->
+
+  <!--[if lt IE 8]>
+    <link rel="stylesheet" href="${static('reddit-ie7-hax.css')}"" 
+          type="text/css" />
+  <![endif]-->
 </%def>
 
 <%def name="javascript()">
@@ -81,10 +91,6 @@
   <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
   <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
   <script src="${static('reddit.js')}" type="text/javascript"></script>
-  <!--[if lt IE 7]>
-    <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"" 
-          type="text/css" />
-  <![endif]-->
 </%def>
 
 <%def name="javascript_run()">
@@ -110,7 +116,10 @@
       </div>
     %endif
     
-    <%include file="redditfooter.html"/>
+    %if thing.footer:
+      <%include file="redditfooter.html"/>
+    %endif
+
     ${framebuster()}
     
   </body>

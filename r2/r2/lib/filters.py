@@ -115,7 +115,7 @@ fix_url = re.compile('&lt;(http://[^\s\'\"\]\)]+)&gt;')
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
-def safemarkdown(text, nofollow = False):
+def safemarkdown(text, nofollow=False, target=None):
     from contrib.markdown import markdown
     if text:
         # increase escaping of &, < and > once
@@ -133,8 +133,12 @@ def safemarkdown(text, nofollow = False):
         def href_handler(m):
             url = m.group(1).replace('&amp;', '&')
             link = '<a href="%s"' % url
-            if c.cname:
+
+            if target:
+                link += ' target="%s"' % target
+            elif c.cname:
                 link += ' target="_top"'
+
             if nofollow:
                 link += ' rel="nofollow"'
             return link

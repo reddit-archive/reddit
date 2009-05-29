@@ -72,12 +72,14 @@
          mail_img ="mail"
          if c.have_messages:
            mail_img += ".png"
+           mail_img_class = 'havemail'
          else:
            mail_img += "gray.png"
+           mail_img_class = 'nohavemail'
          mail_img = static(mail_img)
        %>
       ${img_link(_("messages"), mail_img, path="/message/inbox/",
-                 _id = "mail" )}
+                 _id = "mail", _class=mail_img_class)}
       ${separator("|")}
     %endif
       

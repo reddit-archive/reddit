@@ -26,6 +26,7 @@ import Queue
 from copy import deepcopy
 import cPickle as pickle
 import re, datetime, math, random, string, sha, os
+from operator import attrgetter
 
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
@@ -1037,3 +1038,47 @@ def interleave_lists(*args):
         for a in args:
             if i < len(a):
                 yield a[i]
+
+def link_from_url(path, filter_spam = False, multiple = True):
+    from pylons import c
+    from r2.models import IDBuilder, Link, Subreddit, NotFound
+
+    if not path:
+        return
+
+    try:
+        links = Link._by_url(path, c.site)
+    except NotFound:
+        return [] if multiple else None
+
+    links = tup(links)
+
+    # run the list through a builder to remove any that the user
+    # isn't allowed to see
+    links = IDBuilder([link._fullname for link in links],
+                      skip = False).get_items()[0]
+    if not links:
+        return
+
+    if filter_spam:
+        # first, try to remove any spam
+        links_nonspam = [ link for link in links
+                          if not link._spam ]
+        if links_nonspam:
+            links = links_nonspam
+
+    # if it occurs in one or more of their subscriptions, show them
+    # that one first
+    subs = set(Subreddit.user_subreddits(c.user, limit = None))
+    def cmp_links(a, b):
+        if a.sr_id in subs and b.sr_id not in subs:
+            return -1
+        elif a.sr_id not in subs and b.sr_id in subs:
+            return 1
+        else:
+            return cmp(a._hot, b._hot)
+    links = sorted(links, cmp = cmp_links)
+
+    # among those, show them the hottest one
+    return links if multiple else links[0]
+

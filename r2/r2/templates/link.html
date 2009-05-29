@@ -43,19 +43,13 @@
 </%def>
 
 <%def name="make_link(name, css_class)">
-  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}" 
-     %if c.user.pref_frame:
-       href="http://${get_domain(cname = c.cname, subreddit = False)}/goto?id=${thing._id36}"
-     %elif thing.is_self:
-       href="${thing.permalink}"
-     %else:
-       href="${thing.url}" 
-     %endif
+  <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
+     href="${thing.click_url}"
      %if thing.nofollow:
        rel="nofollow"
      %endif
      %if c.user.pref_newwindow:
-       target="_blank" 
+       target="_blank"
      %elif c.cname:
        target="_top"
      %endif
@@ -96,7 +90,7 @@
     %if thing.hide_score:
       <div class="score">&bull;</div> 
     %else:
-      ${self.score(thing, thing.likes, inline=False)}
+      ${self.score(thing, thing.likes, tag='div')}
     %endif                
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>

@@ -114,7 +114,6 @@ class NestedListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)
 
-        self.nested = kw.get('nested', True)
         self.num = kw.get('num', g.num_comments)
         self.parent_name = kw.get('parent_name')
         
@@ -122,7 +121,7 @@ class NestedListing(Listing):
         ##TODO use the local builder with the render cache. this may
         ##require separating the builder's get_items and tree-building
         ##functionality
-        wrapped_items = self.get_items(num = self.num, nested = True)
+        wrapped_items = self.get_items(num = self.num)
 
         self.things = wrapped_items
 

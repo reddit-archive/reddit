@@ -21,31 +21,228 @@
 ################################################################################
 from reddit_base import RedditController
 from r2.lib.pages import *
+from r2.models import *
+from r2.lib.menus import CommentSortMenu
 from r2.lib.filters import spaceCompress
+from r2.lib.memoize import memoize
+from r2.lib.template_helpers import add_sr
+from r2.lib import utils
 from validator import *
-from pylons import c
+from pylons import c, Response
+
+import string
+
+# strips /r/foo/, /s/, or both
+strip_sr          = re.compile('^/r/[a-zA-Z0-9_-]+')
+strip_s_path      = re.compile('^/s/')
+leading_slash     = re.compile('^/+')
+has_protocol      = re.compile('^https?:')
+need_insert_slash = re.compile('^https?:/[^/]')
+def demangle_url(path):
+    # there's often some URL mangling done by the stack above us, so
+    # let's clean up the URL before looking it up
+    path = strip_sr.sub('', path)
+    path = strip_s_path.sub('', path)
+    path = leading_slash.sub("", path)
+
+    if not has_protocol.match(path):
+        path = 'http://%s' % path
+
+    if need_insert_slash.match(path):
+        path = string.replace(path, '/', '//', 1)
+
+    path = utils.sanitize_url(path)
+
+    return path
+
+def force_html():
+    """Because we can take URIs like /s/http://.../foo.png, and we can
+       guarantee that the toolbar will never be used with a non-HTML
+       render style, we don't want to interpret the extension from the
+       target URL. So here we rewrite Middleware's interpretation of
+       the extension to force it to be HTML
+    """
+
+    c.render_style = 'html'
+    c.extension = None
+    c.content_type = 'text/html; charset=UTF-8'
+
+def auto_expand_panel(link):
+    if not link.num_comments:
+        return False
+    else:
+        return c.user.pref_frame_commentspanel
+
+@memoize('toolbar.get_title', time = 500)
+def get_title(url):
+    """Find the <title> in the page contained at 'url'. Copied here
+       from utils so that we can memoize it"""
+    return utils.get_title(url)
 
 class ToolbarController(RedditController):
+    @validate(link1 = VByName('id'),
+              link2 = VLink('id', redirect = False))
+    def GET_goto(self, link1, link2):
+        """Support old /goto?id= urls. deprecated"""
+        link = link2 if link2 else link1
+        if link:
+            return self.redirect(add_sr("/tb/" + link._id36))
+        return self.abort404()
 
-    @validate(link = VByName('id'))
-    def GET_toolbar(self, link):
-        if not link: return self.abort404()
+    @validate(link = VLink('id'))
+    def GET_tb(self, link):
+        "/tb/$id36, show a given link with the toolbar"
+        if not link:
+            return self.abort404()
+
+        res = Frame(title = link.title,
+                    url = link.url,
+                    fullname = link._fullname)
+        return spaceCompress(res.render())
+
+    def GET_s(self, rest):
+        """/s/http://..., show a given URL with the toolbar. if it's
+           submitted, redirect to /tb/$id36"""
+        force_html()
+        path = demangle_url(request.fullpath)
+
+        if not path:
+            # it was malformed
+            self.abort404()
+
+        link = utils.link_from_url(path, multiple = False)
+
+        if c.cname and not c.authorized_cname:
+            # In this case, we make some bad guesses caused by the
+            # cname frame on unauthorised cnames. 
+            # 1. User types http://foo.com/http://myurl?cheese=brie
+            #    (where foo.com is an unauthorised cname)
+            # 2. We generate a frame that points to
+            #    http://www.reddit.com/r/foo/http://myurl?cnameframe=0.12345&cheese=brie
+            # 3. Because we accept everything after the /r/foo/, and
+            #    we've now parsed, modified, and reconstituted that
+            #    URL to add cnameframe, we really can't make any good
+            #    assumptions about what we've done to a potentially
+            #    already broken URL, and we can't assume that we've
+            #    rebuilt it in the way that it was originally
+            #    submitted (if it was)
+            # We could try to work around this with more guesses (by
+            # having demangle_url try to remove that param, hoping
+            # that it's not already a malformed URL, and that we
+            # haven't re-ordered the GET params, removed
+            # double-slashes, etc), but for now, we'll just refuse to
+            # do this operation
+            return self.abort404()
+
+        if link:
+            # we were able to find it, let's send them to the
+            # link-id-based URL so that their URL is reusable
+            return self.redirect(add_sr("/tb/" + link._id36))
+
+        title = get_title(path)
+        if not title:
+            title = utils.domain(path)
+        res = Frame(title = title, url = path)
+
+        # we don't want clients to think that this URL is actually a
+        # valid URL for search-indexing or the like
+        c.response = Response()
+        c.response.status_code = 404
+        request.environ['usable_error_content'] = spaceCompress(res.render())
+
+        return c.response
+
+    @validate(link = VLink('id'))
+    def GET_comments(self, link):
+        if not link:
+            self.abort404()
+        if not link.subreddit_slow.can_view(c.user):
+            abort(403, 'forbidden')
+
+        def builder_wrapper(cm):
+            w = Wrapped(cm)
+            w.render_class = StarkComment
+            w.target = "_top"
+            return w
+
         link_builder = IDBuilder((link._fullname,))
         link_listing = LinkListing(link_builder, nextprev=False).listing()
-        res = FrameToolbar(link = link_listing.things[0]).render()
-        return spaceCompress(res)
+        links = link_listing.things[0],
+        if not links:
+            # they aren't allowed to see this link
+            return self.abort(403, 'forbidden')
+        link = links[0]
+
+        res = FrameToolbar(link = link,
+                           title = link.title,
+                           url = link.url)
+
+
+        b = TopCommentBuilder(link, CommentSortMenu.operator('top'),
+                              wrap = builder_wrapper)
+
+        listing = NestedListing(b, num = 10, # TODO: add config var
+                                parent_name = link._fullname)
+
+        res = RedditMin(content=CommentsPanel(link=link, listing=listing.listing(),
+                                              expanded = auto_expand_panel(link)))
+
+        return res.render()
 
     @validate(link = VByName('id'),
-              link2 = VLink('id', redirect = False))
-    def GET_goto(self, link, link2):
-        link = link2 if link2 else link
+              url = nop('url'))
+    def GET_toolbar(self, link, url):
+        """The visible toolbar, with voting buttons and all"""
+        if not link:
+            link = utils.link_from_url(url, multiple = False)
+
         if link:
-            link._load()
-            if c.user and c.user.pref_frame:
-                return Frame(title = link.title,
-                             url = link.url,
-                             fullname = link._fullname).render()
-            else:
-                return self.redirect(link.url)
-        return self.abort404()
+            link_builder = IDBuilder((link._fullname,))
+            res = FrameToolbar(link = link_builder.get_items()[0][0],
+                               title = link.title,
+                               url = link.url,
+                               expanded = auto_expand_panel(link))
+        else:
+            res = FrameToolbar(link = None,
+                               title = get_title(url),
+                               url = url,
+                               expanded = False)
+
+        return spaceCompress(res.render())
+
+    @validate(link = VByName('id'))
+    def GET_inner(self, link):
+        """The intermediate frame that displays the comments side-bar
+           on one side and the link on the other"""
+        if not link:
+            return self.abort404()
+
+        res = InnerToolbarFrame(link = link, expanded = auto_expand_panel(link))
+        return spaceCompress(res.render())
+
+    @validate(link = VLink('linkoid'))
+    def GET_linkoid(self, link):
+        if not link:
+            return self.abort404()
+        return self.redirect(add_sr("/tb/" + link._id36))
+
+    slash_fixer = re.compile('(/s/https?:)/+')
+    @validate(urloid = nop('urloid'))
+    def GET_urloid(self, urloid):
+        # they got here from "/http://..."
+        path = demangle_url(request.fullpath)
+
+        if not path:
+            # malformed URL
+            self.abort404()
+
+        redir_path = add_sr("/s/" + path)
+        force_html()
+
+        # Redirect to http://reddit.com/s/http://google.com
+        # rather than http://reddit.com/s/http:/google.com
+        redir_path = self.slash_fixer.sub(r'\1///', redir_path, 1)
+        #                               ^^^
+        # 3=2 when it comes to self.redirect()
+        return self.redirect(redir_path)
 

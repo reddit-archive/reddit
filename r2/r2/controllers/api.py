@@ -33,7 +33,7 @@ import r2.models.thing_changes as tc
 from r2.controllers import ListingController
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, to36, timefromnow
+from r2.lib.utils import query_string, to36, timefromnow, link_from_url
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
@@ -55,25 +55,6 @@ from md5 import md5
 
 from r2.lib.promote import promote, unpromote, get_promoted
 
-def link_listing_by_url(url, count = None):
-    """
-    Generates a listing of links which share a common url
-    """
-    links = ()
-    try:
-        if url:
-            links = list(tup(Link._by_url(url, sr = c.site)))
-            links.sort(key = lambda x: -x._score)
-            if count is not None:
-                links = links[:count]
-    except NotFound:
-        pass
-    names = [l._fullname for l in links]
-    builder = IDBuilder(names, num = 25)
-    return LinkListing(builder).listing()
-
-
-    
 class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
@@ -95,10 +76,14 @@ class ApiController(RedditController):
               count = VLimit('limit'))
     def GET_info(self, link, count):
         """
-        Get's a listing of links which have the provided url.  
+        Gets a listing of links which have the provided url.  
         """
-        listing = link_listing_by_url(request.params.get('url'),
-                                      count = count)
+        if not link or 'url' not in request.params:
+            return abort(404, 'not found')
+
+        links = link_from_url(request.params.get('url'), filter_spam = False)
+        builder = IDBuilder([link._fullname for link in links], num = count)
+        listing = LinkListing(builder, nextprev = False).listing()
         return BoringPage(_("API"), content = listing).render()
 
     @validatedForm(VCaptcha(),
@@ -169,8 +154,9 @@ class ApiController(RedditController):
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
+                   then = VOneOf('then', ('tb', 'comments'), default='comments')
                    )
-    def POST_submit(self, form, jquery, url, title, save, sr, ip):
+    def POST_submit(self, form, jquery, url, title, save, sr, ip, then):
         if isinstance(url, (unicode, str)):
             form.set_inputs(url = url)
             
@@ -245,13 +231,12 @@ class ApiController(RedditController):
         # flag search indexer that something has changed
         tc.changed(l)
         
-        # make_permalink is designed for links that can be set to _top
-        # here, we need to generate an ajax redirect as if we were not on a
-        # cname.
-        cname = c.cname
-        c.cname = False
-        path = l.make_permalink_slow()
-        c.cname = cname
+        if then == 'comments':
+            path = add_sr(l.make_permalink_slow())
+        elif then == 'tb':
+            form.attr('target', '_top')
+            path = add_sr('/tb/%s' % l._id36)
+
         form.redirect(path)
 
     def _login(self, form, user, dest='', rem = None):
@@ -706,7 +691,9 @@ class ApiController(RedditController):
                 errors.BANNED_IP in c.errors or
                 errors.CHEATER in c.errors)
         # TODO: temporary hack until we migrate the rest of the vote data
-        if thing and thing._date > datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
+        if thing and thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
+            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
+        elif thing:
             dir = (True if dir > 0
                    else False if dir < 0
                    else None)
@@ -1371,6 +1358,18 @@ class ApiController(RedditController):
         else:
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
+
+    @noresponse()
+    def POST_tb_commentspanel_show(self):
+        # this preference is allowed for non-logged-in users
+        c.user.pref_frame_commentspanel = True
+        c.user._commit()
+
+    @noresponse()
+    def POST_tb_commentspanel_hide(self):
+        # this preference is allowed for non-logged-in users
+        c.user.pref_frame_commentspanel = False
+        c.user._commit()
 
     @validatedForm(promoted = VByName('ids', thing_cls = Link, multiple = True))
     def POST_onload(self, form, jquery, promoted, *a, **kw):

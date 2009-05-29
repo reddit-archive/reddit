@@ -20,118 +20,164 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%! 
-   from r2.lib.template_helpers import static, get_domain
+   from r2.lib.template_helpers import static, get_domain, add_sr, panel_size
+   from r2.lib.strings import Score
 %>
 
 <%inherit file="reddit.html"/>
 <%namespace file="utils.html" import="plain_link, logout"/>
-<%namespace file="printable.html" import="state_button, comment_button, thing_css_class" />
+<%namespace file="printable.html" import="state_button, comment_button, thing_css_class, score" />
+
+<%def name="javascript_run()">
+  ${parent.javascript_run()}
+  toolbar = new toolbar_p("${panel_size('expanded')}", "${panel_size('collapsed')}");
+</%def>
 
 <%def name="bodyHTML()">
-<body>
-  <% fullname = thing.link._fullname %>
-  <% upstyle = "mod" if thing.link.likes else "" %>
-  <% downstyle = "mod" if thing.link.likes is False else "" %>
-  <table class="${thing_css_class(thing.link)} toolbar" width="100%">
-    <script type="text/javascript">
-      function kill(uh) {
-          $("#main").hide();
-          $("#killed").show();
-          $.request('noframe');
-      }
-      
-      function unkill() {
-          $("#killed").hide();
-          $("#main").show();
-          $.request('frame');
-      }
-      
-    </script>
-    <tr id="killed" style="display: none" class="menu">
-      <td nowrap="nowrap"> 
-        after reloading, this frame will not be shown again. click 
-        &#32;<a href="javascript:unkill()"> here</a>&#32;to undo.</td>
-      <td width="100%" />
-    </tr>
-    <tr id="main">
-      <td id="frame-left">
-        <a target="_top" href="http://${get_domain(cname = c.cname)}/">
-          <img style="border: none" src="${static('littlehead.png')}" 
-               alt="reddit.com" title="reddit.com" />
-        </a>
-        <a id="up_${fullname}" class="arrow up${upstyle}" 
-           %if c.user_is_loggedin:
-              href="javascript:void(0);"
-              onclick="$(this).vote()"
-           %else:
-              href="/login"
-              target="_top"
-           %endif
-           >
-          ${_("like")}
-        </a>
-        <a id="down_${fullname}" class="arrow down${downstyle}" 
-           %if c.user_is_loggedin:
-              href="javascript:void(0);"
-              onclick="$(this).vote()"
-           %else:
-              href="/login"
-              target="_top"
-           %endif
-           >
-          ${_("dislike")}
-        </a>
-        %if c.user_is_loggedin:
-          %if thing.link.saved:
-            ${state_button("unsave", _("unsave"), 
-              "return change_state(this, 'unsave');", _("unsaved"))}
-          %else:
-            ${state_button("save", _("save"), 
-              "return change_state(this, 'save');", _("saved"))}
-          %endif
-        %endif
-        <% 
-           if not thing.link.num_comments:
-               # generates "comment" the imperative verb
-               com_label = _("comment {verb}")
-           else:
-               # generates "XX comments" as a noun
-               com_label = ungettext("comment", "comments", thing.link.num_comments)
-         %>
-        <span>
-        ${comment_button("comment", com_label,
-                         thing.link.num_comments,
-                         thing.link.permalink)} 
-        </span>
-        </td>
-      <td id="frame-middle" nowrap="nowrap" style="display: none">
-      </td>
-      <td id="frame-right" class="menu" nowrap="nowrap">
-      %if c.user_is_loggedin:
-        <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}" 
-           target="_parent">${c.user.name}</a> (${c.user.safe_karma}) 
-        ${logout()}
-      %else:
-        <a href="/login">${_("login")}</a>
-        <a href="/login">${_("register")}</a>
+<body class="toolbar">
+  <div class="left-side">
+    <a class="logo" target="_top" href="http://${get_domain(cname = c.cname)}/">
+      <img src="${static('logo-toolbar.png')}" alt="${c.site.description or c.site.name}"
+           title="${c.site.description or c.site.name}"/>
+      %if thing.dorks:
+        <img src="${static('dorks-toolbar.png')}"
+             title="${_('caution: dorkbar detected')}"/>
       %endif
-        <a target="_top" href="/help/">
-          <img style="border: none" src="${static('help.png')}" 
-               alt="help" title="help" />
-        </a>&nbsp;
-        <a target="_top" href="${thing.link.url}">
-          <img style="border: none" 
-               src="${static('breakout.png')}" 
-               alt="open without frame" title="open without frame" />
-        </a>&nbsp;
-        <a href="javascript:kill()">
-          <img style="cursor: pointer" 
-               src="${static('kill.png')}" 
-               alt="permanently close this frame" 
-               title="permanently close this frame"  />
-        </a>
-      </td>
-    </tr>
-  </table>
+    </a>
+
+    %if thing.link:
+      ${withlink()}
+    %endif
+  </div>
+
+  <div class="right-side">
+    <a href="#" onclick="return toolbar.toggle_linktitle(this);">
+      <img src="${static('link.png')}" height="13" width="16"
+           title="${_('show url')}" alt="${_('show url')}"/>
+    </a>
+
+    <a class="serendipity popped-button"
+       title="${_('load a random link')}"
+       onmousedown="toolbar.push_button(this)"
+       onmouseup="toolbar.pop_button(this)"
+       onclick="toolbar.serendipity()"
+       href="${add_sr('/random')}"
+       target="_top" />
+      %if c.default_sr:
+        ${_("serendipity")}
+      %else:
+        ${"%(subreddit)s serendipity" % dict (subreddit=c.site.name)}
+      %endif
+    </a>
+
+    %if c.user_is_loggedin:
+      <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}"
+         title="${_('visit your userpage')}"
+         class="clickable" target="_top">${c.user.name}</a>
+      ${logout(top=True,dest=thing.tblink,a_class="clickable")}
+    %elif thing.link:
+      <a href="${thing.loginurl}" target="_top" class="clickable">
+        ${_("login / register")}
+      </a>
+    %endif
+
+    <a target="_top" href="/help/toolbar">
+      <img src="${static('help.png')}"
+           height="11" width="11"
+           alt="${_('help')}" title="${_('help')}" />
+    </a>
+
+    <a href="${thing.url}" target="_top">
+      <img src="${static('kill.png')}"
+           height="11" width="11"
+           alt="${_('turn off the toolbar')}"
+           title="${_('turn off the toolbar')}" />
+    </a>
+  </div>
+
+  <div class="middle-side clickable">
+    %if thing.link:
+    <a
+       title="${_('click to visit the main page for this submission')}"
+       class="title clickable"
+       target="_top"
+       href="${thing.link.make_permalink_slow()}">
+       ${thing.link.title}
+    </a>
+    %else:
+      ${plain_link(_('click to submit this link to reddit'), thing.submit_url,
+                      target="_top", _class="submit")}
+    %endif
+    <div class="url" style="display: none;">
+      <form onsubmit="return toolbar.gourl(this, '${add_sr('/s/')}')">
+        <input type="text" value="${thing.url}" />
+      </form>
+    </div>
+  </div>
+
+  <div class="toolbar-status-bar" style="display: none;">
+    <div class="login-arrow" style="display: none;">
+      <img src="${static('tb-loginarrow-right.png')}" class="login-arrow-right"/>
+      <div class="login-arrow-left">
+        <p class="login-message">
+          ${_("you'll need to login or register to do that")}
+        </p>
+      </div>
+    </div>
 </body>
+</%def>
+
+
+<%def name="withlink()">
+<span class="${thing_css_class(thing.link)}">
+  <span>
+    ${score(thing.link, thing.link.likes, score_fmt = Score.safepoints, tag='b')}
+  </span>
+  <span class="arrows">
+    <%def name="arrow(direction, style, message)">
+      <a class="arrow ${direction + style}"
+         title="${_('vote %(direction)s') % dict(direction=direction)}"
+       %if c.user_is_loggedin:
+         href="javascript:void(0);"
+         onclick="$(this).vote('${thing.vh}')"
+       %else:
+         href="${thing.loginurl}"
+         target="_top"
+         onclick="return toolbar.login_msg()"
+       %endif
+      >
+        ${message}
+      </a>
+    </%def>
+
+    ${arrow("up",   thing.upstyle,   _("like"))}
+    ${arrow("down", thing.downstyle, _("dislike"))}
+  </span>
+
+
+  %if c.user_is_loggedin:
+    %if thing.link.saved:
+      ${state_button("unsave", _("unsave"),
+        "return change_state(this, 'unsave');", "<b>%s</b>" % _("unsaved"),
+        a_class="clickable")}
+    %else:
+       ${state_button("save", _("save"),
+         "return change_state(this, 'save');", "<b>%s</b>" % _("saved"),
+         a_class="clickable")}
+    %endif
+  %endif
+
+  <a href="/toolbar/comments/${thing.link._id36}" target="reddit_panel"
+     title="${_('toggle the comments panel')}"
+     onclick="toolbar.comments_pushed(this); return toolbar.panel_loadurl(this.href);"
+     class="comments comments-button">${thing.com_label}</a>
+  </span>
+
+  %if thing.link and thing.expanded:
+    <script type="text/javascript">
+      $(function() {
+        toolbar.comments_pushed($('.comments-button'));
+      });
+    </script>
+  %endif
 </%def>

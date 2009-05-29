@@ -39,6 +39,7 @@ class Account(Thing):
     _int_prop_suffix = '_karma'
     _defaults = dict(pref_numsites = 25,
                      pref_frame = False,
+                     pref_frame_commentspanel = True,
                      pref_newwindow = False,
                      pref_public_votes = False,
                      pref_hide_ups = False,

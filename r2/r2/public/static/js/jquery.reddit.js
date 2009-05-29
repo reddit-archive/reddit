@@ -33,7 +33,16 @@ $.redirect = function(dest) {
 $.fn.redirect = function(dest) {
     /* for forms which are "posting" by ajax leading to a redirect */
     $(this).filter("form").find(".status").show().html("redirecting...");
-    $.redirect(dest);
+    var target = $(this).attr('target');
+    if(target == "_top") {
+      var w = window;
+      while(w != w.parent) {
+        w = w.parent;
+      }
+      w.location = dest;
+    } else {
+      $.redirect(dest);
+    }
     /* this should never happen, but for the sake of internal consistency */
     return $(this)
 }

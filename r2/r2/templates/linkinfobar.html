@@ -23,6 +23,8 @@
 
 <div class="raisedbox linkinfo ${thing_css_class(thing.a)}">
   <table class="details">
+    <tr><th>${_("toolbar link")}</th>
+      <td><a href="${thing.a.tblink}">${thing.a.tblink}</a></td></tr>
     <tr><th>${_("submitted on")}</th>
       <td>${thing.a._date.strftime(thing.datefmt)}</td></tr>
     <tr><th>${ungettext('point', 'points', 5)}</th>

@@ -47,7 +47,7 @@ from r2.lib.tracking import encrypt, decrypt
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
-cache_affecting_cookies = ('reddit_first','over18')
+cache_affecting_cookies = ('reddit_first','over18','_options')
 
 r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
 
@@ -73,7 +73,7 @@ class Cookie(object):
 
 class UnloggedUser(FakeAccount):
     _cookie = 'options'
-    allowed_prefs = ('pref_content_langs', 'pref_lang')
+    allowed_prefs = ('pref_content_langs', 'pref_lang', 'pref_frame_commentspanel')
 
     def __init__(self, browser_langs, *a, **kw):
         FakeAccount.__init__(self, *a, **kw)
@@ -90,6 +90,7 @@ class UnloggedUser(FakeAccount):
         self._defaults = self._defaults.copy()
         self._defaults['pref_lang'] = lang
         self._defaults['pref_content_langs'] = content_langs
+        self._defaults['pref_frame_commentspanel'] = False
         self._load()
 
     @property

@@ -21,6 +21,7 @@
 ################################################################################
 from r2.models import *
 from r2.lib import promote
+from r2.lib.utils import fetch_things2
 
 import string
 import random
@@ -64,3 +65,12 @@ def create_links(num):
         if random.choice(([False] * 50) + [True]):
             promote.promote(l)
             
+
+def by_url_cache():
+    q = Link._query(Link.c._spam == (True,False),
+                    data = True,
+                    sort = desc('_date'))
+    for i, link in enumerate(fetch_things2(q)):
+        if i % 100 == 0:
+            print "%s..." % i
+        link.set_url_cache()

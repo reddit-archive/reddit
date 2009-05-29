@@ -196,9 +196,15 @@ def dockletStr(context, type, browser):
 
     if type == "serendipity!":
         return "http://"+site_domain+"/random"
-    elif type == "reddit":
-        return "javascript:location.href='http://"+site_domain+"/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)"
+    elif type == "submit":
+        return ("javascript:location.href='http://"+site_domain+
+               "/submit?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)")
+    elif type == "reddit toolbar":
+        return ("javascript:%20var%20h%20=%20window.location.href;%20h%20=%20'http://" +
+                site_domain + "/s/'%20+%20escape(h);%20window.location%20=%20h;")
     else:
+        # these are the linked/disliked buttons, which we have removed
+        # from the UI
         return (("javascript:function b(){var u=encodeURIComponent(location.href);"
                  "var i=document.getElementById('redstat')||document.createElement('a');"
                  "var s=i.style;s.position='%(position)s';s.top='0';s.left='0';"
@@ -283,3 +289,7 @@ def choose_width(link, width):
             return 100 + (10 * (len(str(link._ups - link._downs))))
         else:
             return 110
+
+def panel_size(state):
+    "the frame.cols of the reddit-toolbar's inner frame"
+    return '100%, 400px' if state =='expanded' else '100%x, 0px'

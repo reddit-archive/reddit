@@ -54,7 +54,7 @@ ${parent.midcol(not thing.collapsed)}
 ${parent.collapsed()}
 </%def>
 
-<%def name="tagline(collapse=False)">
+<%def name="tagline(collapse=False,showexpandcollapse=True)">
   <%
      if c.user_is_admin:
        show = True
@@ -76,24 +76,25 @@ ${parent.collapsed()}
     %if show:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
-    ${thing.timesince} ${_("ago")}
+    ${_("%(timeago)s ago") % dict(timeago=thing.timesince)}
     %if thing.editted:
       <em>*</em>&nbsp;
     %endif
   %endif
-  <a href="#" class="expand"
-     %if collapse:
-       onclick="return showcomment(this)">
-     %else:
-       onclick="return hidecomment(this)">
-     %endif
-     [${_("+") if collapse else _("-")}]
-  %if collapse:
-     (${thing.num_children} 
-      ${ungettext("child", "children", thing.num_children)})
+  %if showexpandcollapse:
+    <a href="#" class="expand"
+       %if collapse:
+         onclick="return showcomment(this)">
+       %else:
+         onclick="return hidecomment(this)">
+       %endif
+       [${_("+") if collapse else _("-")}]
+    %if collapse:
+       (${thing.num_children} 
+        ${ungettext("child", "children", thing.num_children)})
+    %endif
+    </a>
   %endif
-</a>
-
 </%def>
 
 <%def name="Child()">
@@ -102,7 +103,8 @@ ${parent.Child(not thing.collapsed)}
 
 <%def name="commentBody()">
 %if c.user_is_admin or not thing.deleted:
-${unsafe(safemarkdown(thing.body, thing.nofollow))}
+${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow,
+                      target=thing.target))}
 %else:
 <div class="gray md">
   ${_("[deleted]")}

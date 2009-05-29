@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
+   from r2.lib.template_helpers import add_sr
 %>
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links"/>
 
@@ -31,11 +32,12 @@
   <h1>${_("submit to %(site)s") % dict(site=c.site.name)}</h1>
 %endif
 
-<%call expr="submit_form(onsubmit='return post_form(this, \'submit\', linkstatus, null, true)', 
-             action='/submit', _class='long-text content', _id='newlink')">
+<%call expr="submit_form(onsubmit='return post_form(this, \'submit\', linkstatus, null, true)',
+             action=add_sr('/submit'), _class='long-text content', _id='newlink')">
   %if not thing.subreddits:
     <input type="hidden" name="sr" value="${c.site.name}" />
   %endif
+  <input type="hidden" name="then" value="${thing.then}" />
   <table>
     <tr>
       <th>

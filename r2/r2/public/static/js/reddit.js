@@ -621,6 +621,118 @@ function register(elem) {
     return post_user(this, "register");
 };
 
+var toolbar_p = function(expanded_size, collapsed_size) {
+    /* namespace for functions related to the reddit toolbar frame */
+
+    this.toggle_linktitle = function(s) {
+        $('.title, .submit, .url').toggle();
+        if($(s).is('.pushed-button')) {
+            $(s).parents('.middle-side').removeClass('clickable');
+        } else {
+            $(s).parents('.middle-side').addClass('clickable');
+        }
+        return this.toggle_pushed(s);
+    };
+
+    this.toggle_pushed = function(s) {
+        s = $(s);
+        if(s.is('.pushed-button')) {
+            s.removeClass('pushed-button').addClass('popped-button');
+        } else {
+            s.removeClass('popped-button').addClass('pushed-button');
+        }
+        return false;
+    };
+
+    this.push_button = function(s) {
+        $(s).removeClass("popped-button").addClass("pushed-button");
+    };
+
+    this.pop_button = function(s) {
+        $(s).removeClass("pushed-button").addClass("popped-button");
+    };
+    
+    this.serendipity = function() {
+        this.push_button('.serendipity');
+        return true;
+    };
+    
+    this.show_panel = function() {
+        parent.inner_toolbar.document.body.cols = expanded_size;
+    };
+        
+    this.hide_panel = function() {
+        parent.inner_toolbar.document.body.cols = collapsed_size;
+    };
+        
+    this.resize_toolbar = function() {
+        var height = $("body").height();
+        parent.document.body.rows = height + "px, 100%";
+    };
+        
+    this.login_msg = function() {
+        $(".toolbar-status-bar").show();
+        $(".login-arrow").show();
+        this.resize_toolbar();
+        return false;
+    };
+        
+    this.top_window = function() {
+        var w = window;
+        while(w != w.parent) {
+            w = w.parent;
+        }
+        return w.parent;
+    };
+        
+    var pop_obj = null;
+    this.panel_loadurl = function(url) {
+        try {
+            var cur = window.parent.inner_toolbar.reddit_panel.location;
+            if (cur == url) {
+                return false;
+            } else {
+                if (pop_obj != null) {
+                    this.pop_button(pop_obj);
+                    pop_obj = null;
+                }
+                return true;
+            }
+        } catch (e) {
+            return true;
+        }
+    };
+        
+    var comments_on = 0;
+    this.comments_pushed = function(ctl) {
+        comments_on = ! comments_on;
+        
+        if (comments_on) {
+            this.push_button(ctl);
+            this.show_panel();
+        } else {
+            this.pop_button(ctl);
+            this.hide_panel();
+        }
+    };
+    
+    this.gourl = function(form, base_url) {
+        var url = $(form).find('input[type=text]').attr('value');
+        var newurl = base_url + escape(url);
+        
+        this.top_window().location.href = newurl;
+        
+        return false;
+    };
+
+    this.pref_commentspanel_hide = function() {
+        $.request('tb_commentspanel_hide');
+    };
+    this.pref_commentspanel_show = function() {
+        $.request('tb_commentspanel_show');
+    };
+};
+
 /* The ready method */
 $(function() {
         /* set function to be called on thing creation/replacement,

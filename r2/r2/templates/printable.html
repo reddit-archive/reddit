@@ -54,11 +54,12 @@ thing id-${what._fullname}
 <%def name="RenderPrintable()">
 <% cls = thing.lookups[0].__class__.__name__.lower() %>
 <%
-   if hasattr(thing, 'render_class'):
-      cls = thing.render_class
+   if hasattr(thing, 'render_css_class'):
+      cls = thing.render_css_class
+   elif hasattr(thing, 'render_class'):
+      cls = thing.render_class.__name__.lower()
    else:
-      cls = thing.lookups[0].__class__
-   cls = cls.__name__.lower()
+      cls = thing.lookups[0].__class__.__name__.lower()
 
    if thing.show_spam:
      rowclass = thing.rowstyle + " spam"
@@ -145,6 +146,11 @@ thing id-${what._fullname}
   %if thing.deleted and not c.user_is_admin:
     [deleted]
   %else:
+  <%
+      target = None
+      if hasattr(thing, "target"):
+        target = thing.target
+  %>
   %if thing.author._deleted:
     <span>[deleted]</span>
   %else:
@@ -155,11 +161,12 @@ thing id-${what._fullname}
           author_cls += " friend"
        elif gray:
           author_cls += " gray"
-       name = websafe(author.name)
-       href = unsafe('href="%s"' % add_sr("/user/%s/" % name, sr_path = False))
-       if c.user_is_admin: name += " (%d)" % (author.link_karma)
+       disp_name = websafe(author.name)
+       if c.user_is_admin:
+           disp_name += " (%d)" % (author.link_karma)
     %>
-    <a class="${author_cls}" ${href}>${name}</a>
+    ${plain_link(disp_name, '/user/%s' % websafe(author.name),
+                 _class = author_cls, _sr_path = False, target=target)}
    %endif
   %endif
   %if c.user_is_admin and hasattr(thing, 'ip') and thing.ip:
@@ -184,25 +191,26 @@ thing id-${what._fullname}
   </div>
 </%def>
 
-<%def name="score(this, likes=None, inline=True)">
+<%def name="score(this, likes=None, tag='span', score_fmt = None)">
 <%
-   tag = "span" if inline else "div"
    _class = "" if likes is None else "likes" if likes else "dislikes"
 
    # figure out alterna-points
    score = this.score
    base_score = score - 1 if likes else score if likes is None else score + 1
    base_score = [base_score + x for x in range(-1, 2)];
-   
+
+   if score_fmt is None:
+       score_fmt = thing.score_fmt
  %>
   <${tag} class="score ${_class}">
-    ${thing.score_fmt(this.score)}
+    ${score_fmt(this.score)}
   </${tag}>
   <script type="text/javascript">
     if(reddit)
-      reddit.vl['${this._fullname}'] = ['${thing.score_fmt(base_score[0])}',
-                                        '${thing.score_fmt(base_score[1])}', 
-                                        '${thing.score_fmt(base_score[2])}' ];
+      reddit.vl['${this._fullname}'] = ['${score_fmt(base_score[0])}',
+                                        '${score_fmt(base_score[1])}', 
+                                        '${score_fmt(base_score[2])}' ];
   </script>
 </%def>
 

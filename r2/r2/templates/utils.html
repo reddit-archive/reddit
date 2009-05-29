@@ -52,7 +52,11 @@ id="${arg}_${thing and thing._fullname or ''}"
 
 <%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
 <form class="pretty-form ${_class or ''}" onsubmit="${onsubmit or ''}" 
-      action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}">
+      action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}"
+      %if c.cname:
+        target="_top"
+      %endif
+      >
   %if c.user_is_loggedin:
   <input type="hidden" name="uh" value="${c.user.modhash()}" />
   %endif
@@ -367,10 +371,23 @@ ${unsafe(txt)}
    };
 </%def>
 
-<%def name="logout()">
-  <form method="post" action="/logout" class="logout hover">
+<%def name="logout(top=False,dest=None,a_class='')">
+  <form method="post" action="/logout" class="logout hover"
+    %if top:
+      target="_top"
+    %endif
+    >
     <input type="hidden" name="uh" value="${c.modhash}"/>
-    <a href="javascript:void(0)" onclick="$(this).parent().submit()">
+    <input type="hidden" name="top" value="${'on' if top else 'off'}"/>
+    %if dest:
+      <input type="hidden" name="dest" value="${dest}"/>
+    %endif
+    
+    <a href="javascript:void(0)" onclick="$(this).parent().submit()"
+       %if a_class:
+         class="${a_class}" 
+       %endif
+    >
       ${_("logout")}
     </a>
   </form>

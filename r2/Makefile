@@ -23,7 +23,7 @@
 # Jacascript files to be compressified
 js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js
 # CSS targets 
-css_targets = reddit.css reddit-ie6-hax.css
+css_targets = reddit.css reddit-ie6-hax.css reddit-ie7-hax.css
 
 SED=sed
 

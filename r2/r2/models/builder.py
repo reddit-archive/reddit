@@ -400,11 +400,16 @@ class SearchBuilder(QueryBuilder):
         return done, new_items
 
 class CommentBuilder(Builder):
-    def __init__(self, link, sort, comment = None, context = None):
-        Builder.__init__(self)
+    def __init__(self, link, sort, comment = None, context = None,
+                 load_more=True, continue_this_thread=True,
+                 max_depth = MAX_RECURSION, **kw):
+        Builder.__init__(self, **kw)
         self.link = link
         self.comment = comment
         self.context = context
+        self.load_more = load_more
+        self.max_depth = max_depth
+        self.continue_this_thread = continue_this_thread
 
         if sort.col == '_date':
             self.sort_key = lambda x: x._date
@@ -419,7 +424,7 @@ class CommentBuilder(Builder):
                 for j in self.item_iter(i.child.things):
                     yield j
 
-    def get_items(self, num, nested = True, starting_depth = 0):
+    def get_items(self, num, starting_depth = 0):
         r = link_comments(self.link._id)
         cids, comment_tree, depth, num_children = r
         if cids:
@@ -496,14 +501,14 @@ class CommentBuilder(Builder):
             comments.remove(to_add)
             if to_add._deleted and not comment_tree.has_key(to_add._id):
                 pass
-            elif depth[to_add._id] < MAX_RECURSION:
+            elif depth[to_add._id] < self.max_depth:
                 #add children
                 if comment_tree.has_key(to_add._id):
                     candidates.extend(comment_tree[to_add._id])
                     sort_candidates()
                 items.append(to_add)
                 num_have += 1
-            else:
+            elif self.continue_this_thread:
                 #add the recursion limit
                 p_id = to_add.parent_id
                 w = Wrapped(MoreRecursion(self.link, 0,
@@ -540,6 +545,9 @@ class CommentBuilder(Builder):
             parent = cids[p_id]
             parent.child = empty_listing(morelink)
             parent.child.parent_name = parent._fullname
+
+        if not self.load_more:
+            return final
 
         #put the remaining comments into the tree (the show more comments link)
         more_comments = {}
@@ -587,3 +595,16 @@ class CommentBuilder(Builder):
             mc2.count += 1
 
         return final
+
+class TopCommentBuilder(CommentBuilder):
+    """A comment builder to fetch only the top-level, non-spam,
+       non-deleted comments"""
+    def __init__(self, link, sort, wrap = Wrapped):
+        CommentBuilder.__init__(self, link, sort,
+                                load_more = False,
+                                continue_this_thread = False,
+                                max_depth = 1, wrap = wrap)
+
+    def get_items(self, num = 10):
+        final = CommentBuilder.get_items(self, num = num, starting_depth = 0)
+        return [ cm for cm in final if not cm.deleted ]

@@ -1,3 +1,7 @@
+html {
+    height: 100%; /* Needed for toolbar's comments panel's pinstripe */
+}
+
 body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,th,td,iframe {
   margin:0;
   padding:0;
@@ -18,8 +22,6 @@ body {
     background-color: white;
     z-index: 1;
 }
-
-/*html,body { height: 100%; }*/
 
 /* IE dumbness patch. hidden input in a hidden block that is
  * subsequently shown leads to the input to "show" and generate undesired
@@ -725,6 +727,10 @@ a.star { text-decoration: none; color: #ff8b60 }
     font-size: medium;
     text-align: right;
 }
+.linkcompressed .arrow.down, .linkcompressed .arrow.downmod {
+    margin-top: 2px;
+}
+
 .linkcompressed .tagline { display: inline; margin-top: 0px; margin-bottom: 1px; }
 .linkcompressed .flat-list { display: inline }
 
@@ -733,7 +739,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f6f6f6;
+    background-color: #f7f7f7;
     font-weight: bold
 }
 
@@ -880,6 +886,20 @@ textarea.gray { color: gray; }
     color: gray;
     background-color: #E0E0E0;
     padding-left: 5px;
+}
+
+.starkcomment + .clearleft + .starkcomment {
+    margin-top: 10px
+}
+.starkcomment .commentbox {
+    color: black;
+    background-color: #f0f0f0;
+    padding: 5px;
+    margin-left: 10px;
+    margin-right: 5px;
+}
+.starkcomment .tagline {
+    text-align: right;
 }
 
 .fixedwidth { float: left; width: 100px; height: 0px; }
@@ -1246,7 +1266,9 @@ textarea.gray { color: gray; }
     padding-right: 5px;
     font-weight: bold;
 }
-
+.details td { 
+    vertical-align: top;
+}
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
 
@@ -1407,18 +1429,154 @@ textarea.gray { color: gray; }
   font-size: larger;
 }
 
-/* the toolbar */
-.toolbar { height: 30px; border-bottom: 1px solid black;}
-.toolbar td { vertical-align: center; }
-.toolbar td#frame-left > a,
-.toolbar td#frame-left > form { margin-right: 20px; }
-.toolbar td#frame-right { text-align: right; }
-.toolbar td#frame-right > a,
-.toolbar td#frame-right > form { margin: 0 5px; }
-.toolbar .arrow { 
-    background-position: center left; 
-    padding-left: 18px; 
-    display: inline;
+.bookmarklet {
+    border: solid #888888 1px;
+    padding: 0px 2px;
+}
+
+.toolbar {
+    font-size: small;
+    border-bottom: 1px solid #336699;
+    background-color: #CEE3F8;
+}
+
+.toolbar .left-side {
+    height: 19px;
+    float: left;
+    border-right: solid #336699 1px;
+    background-image: url(/static/button-normal.png);
+}
+
+.toolbar .middle-side {
+    text-align: center;
+    background-image: url(/static/button-normal.png);
+}
+
+.toolbar .middle-side a, .toolbar .middle-side b {
+    display: block;
+    border-left: none;
+}
+
+.toolbar .middle-side input[type=text] {
+    font-size: 14px;
+    vertical-align: baseline;
+    width: 100%;
+    height: 18px;
+    border: none;
+    border-top: solid transparent 1px;
+}
+.toolbar .middle-side .url {
+    overflow: hidden;
+}
+.toolbar .right-side {
+    float: right;
+    background-image: url(/static/button-normal.png);
+}
+
+.toolbar a, .toolbar b {
+    font-weight: normal;
+    display: inline-block;
+    height: 18px;
+    border-left: solid #336699 1px;
+    white-space: nowrap;
+    padding: 1px 4px 0px;
+    overflow: hidden;
+    outline: none;
+    -moz-outline: none;
+}
+
+.toolbar a, .toolbar .clickable {
+    cursor: pointer;
+    color: #336699;
+    text-decoration: none !important;
+}
+
+.toolbar .clickable:active, .pushed-button {
+    background-image: url(/static/button-pressed.png) !important;
+    color: orangered !important;
+}
+
+.toolbar a img, toolbar b img {
+    vertical-align: middle;
+    padding-top: 3px;
+}
+
+.toolbar .content {
+    float: left;
+    vertical-align: middle;
+}
+.toolbar .logo {
+    margin: 0px;
+    padding: 0 2px;
+    border-left: none;
+    vertical-align: top;
+}
+.toolbar .title {
+    padding-left: 20px;
+    color: black;
+    font-style: italic;
+}
+.toolbar .controls {
+    float: right;
+}
+.toolbar .arrow {
+    display: inline-block;
+    width: auto;
+    margin: 0px;
+    background-position: left center;
+    padding-left: 18px;
+}
+
+.toolbar .arrow.upmod   { background-image: url(/static/aminiupmod.gif); }
+.toolbar .arrow.downmod { background-image: url(/static/aminidownmod.gif); }
+.toolbar .arrow.up      { background-image: url(/static/aminiupgray.gif); }
+.toolbar .arrow.down    { background-image: url(/static/aminidowngray.gif); }
+
+.toolbar-status-bar {
+    border-top: solid #336699 1px;
+    border-bottom: solid #336699 1px;
+    background-color: #F6E69F;
+    padding: 0px 2px;
+    overflow: auto;
+}
+.toolbar-status-bar .login-arrow-left {
+    overflow: auto;
+    background-image: url(/static/tb-loginarrow-left.png);
+    background-position: top right;
+}
+.toolbar-status-bar .login-arrow-right {
+    float: right;
+    margin-right: 75px;
+}
+.toolbar-status-bar .login-message {
+    float: left;
+    background-color: #F6E69F;
+    padding-right: 3px;
+}
+.tb-comments-panel-toggle {
+    display: block;
+    font-size: larger;
+    margin: 15px 13px;
+}
+.min-body {
+    height: 100%;
+}
+
+.min-body .content {
+    margin-top: 0px;
+    border-left: solid #369 1px;
+    min-height: 100%;
+    max-width: 60em;
+    overflow: auto;
+}
+
+.min-body .content h1, .min-body .content h2 {
+    padding-left: 13px;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+.min-body .content #noresults {
+    margin: 0 0 0 13px;
 }
 
 /* default form styles */

@@ -134,8 +134,16 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="help|blog"))
     mc('/help/:anything', controller='embed', action='help')
     
-    mc('/:action', controller='toolbar',
-       requirements=dict(action="goto|toolbar"))
+    mc('/goto', controller='toolbar', action='goto')
+    mc('/tb/:id', controller='toolbar', action='tb')
+    mc('/toolbar/:action', controller='toolbar',
+       requirements=dict(action="toolbar|inner|login"))
+    mc('/toolbar/comments/:id', controller='toolbar', action='comments')
+
+    mc('/s/*rest', controller='toolbar', action='s')
+    # additional toolbar-related rules just above the catchall
+
+    mc('/d/:what', controller='api', action='bookmarklet')
     
     mc('/resetpassword/:key', controller='front',
        action='resetpassword')
@@ -150,8 +158,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/:action', controller='api')
-
-    mc('/d/:what', controller='api', action='bookmarklet')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
@@ -174,6 +180,15 @@ def make_map(global_conf={}, app_conf={}):
     # to ensure that the error page is
     # displayed properly.
     mc('/error/document/:id', controller='error', action="document")
+
+    # these should be near the buttom, because they should only kick
+    # in if everything else fails. It's the attempted catch-all
+    # reddit.com/http://... and reddit.com/34fr, but these redirect to
+    # the less-guessy versions at /s/ and /tb/
+    mc('/:linkoid', controller='toolbar', action='linkoid',
+       requirements=dict(linkoid='[0-9a-z]{1,6}'))
+    mc('/:urloid', controller='toolbar', action='urloid',
+       requirements=dict(urloid=r'(\w+\.\w{2,}|https?).*'))
 
     mc("/*url", controller='front', action='catchall')
 

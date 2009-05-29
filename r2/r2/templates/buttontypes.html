@@ -52,7 +52,7 @@ ${class_def(1, width=choose_width(thing.link, thing.width))}
     %if thing.vote:
     ${arrow(thing.link, 1, thing.likes)}
     ${arrow(thing.link, 0, thing.likes == False)}
-    ${score(thing.link, thing.likes, inline=False)}
+    ${score(thing.link, thing.likes, tag='div')}
     %else:
     ${thing.link.score}
     %endif
@@ -68,7 +68,7 @@ ${class_def(1, width=choose_width(thing.link, thing.width))}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False)}
+      ${score(thing.link, thing.likes, tag='div')}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
@@ -96,7 +96,7 @@ ${class_def(3)}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False)}
+      ${score(thing.link, thing.likes, tag='div')}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
@@ -121,7 +121,7 @@ ${class_def(3)}
     %if thing.link:
       %if thing.vote:
       ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, inline=False)}
+      ${score(thing.link, thing.likes, tag='div')}
       ${arrow(thing.link, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
