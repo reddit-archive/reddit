@@ -68,7 +68,7 @@ def force_html():
     c.content_type = 'text/html; charset=UTF-8'
 
 def auto_expand_panel(link):
-    if not link.num_comments:
+    if not link.num_comments or link.is_self:
         return False
     else:
         return c.user.pref_frame_commentspanel

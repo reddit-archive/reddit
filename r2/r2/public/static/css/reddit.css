@@ -1488,7 +1488,7 @@ textarea.gray { color: gray; }
 .toolbar a, .toolbar .clickable {
     cursor: pointer;
     color: #336699;
-    text-decoration: none !important;
+    text-decoration: none;
 }
 
 .toolbar .clickable:active, .pushed-button {
@@ -1515,6 +1515,10 @@ textarea.gray { color: gray; }
     padding-left: 20px;
     color: black;
     font-style: italic;
+    cursor: pointer;
+}
+.toolbar .title:hover {
+    text-decoration: underline;
 }
 .toolbar .controls {
     float: right;
