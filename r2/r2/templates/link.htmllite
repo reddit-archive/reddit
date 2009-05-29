@@ -70,7 +70,7 @@
        %endif
        >
       %if not expanded:
-      ${score(thing, thing.likes, inline = True)}
+      ${score(thing, thing.likes, tag='span')}
       &#32;|&#32;
       %endif
       <a class="reddit-comment-link"
