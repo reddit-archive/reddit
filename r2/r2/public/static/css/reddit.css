@@ -1528,7 +1528,7 @@ textarea.gray { color: gray; }
     width: auto;
     margin: 0px;
     background-position: left center;
-    padding-left: 18px;
+    padding-left: 16px;
 }
 
 .toolbar .arrow.upmod   { background-image: url(/static/aminiupmod.gif); }

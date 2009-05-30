@@ -913,7 +913,7 @@ class Frame(Wrapped):
 
         Wrapped.__init__(self, url = url, title = title, fullname = fullname)
 
-dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+$")
+dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
     extension_handling = False

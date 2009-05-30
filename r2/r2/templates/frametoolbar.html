@@ -74,7 +74,6 @@
       <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}"
          title="${_('visit your userpage')}"
          class="clickable" target="_top">${c.user.name}</a>
-      ${logout(top=True,dest=thing.tblink,a_class="clickable")}
     %elif thing.link:
       <a href="${thing.loginurl}" target="_top" class="clickable">
         ${_("login / register")}
