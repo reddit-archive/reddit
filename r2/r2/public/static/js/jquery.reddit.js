@@ -216,12 +216,13 @@ $.fn.vote = function(vh, callback) {
         /* let the user vote only if they are logged in */
         if(reddit.logged) {
             things.each(function() {
+                    var entry =  $(this).find(".entry:first");
                     if(dir > 0) 
-                        $(this).addClass('likes').removeClass('dislikes');
+                        entry.addClass('likes').removeClass('dislikes');
                     else if(dir < 0) 
-                        $(this).removeClass('likes').addClass('dislikes');
+                        entry.removeClass('likes').addClass('dislikes');
                     else
-                        $(this).removeClass('likes').removeClass('dislikes');
+                        entry.removeClass('likes').removeClass('dislikes');
                 });
             
             $.request("vote", {id: things.filter(":first").thing_id(), 

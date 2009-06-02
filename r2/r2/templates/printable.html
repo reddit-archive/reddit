@@ -49,13 +49,6 @@ ${self.RenderPrintable()}
 
 <%def name="thing_css_class(what)" buffered="True">
 thing id-${what._fullname}
-  %if getattr(what, "likes", None):
-    likes
-  %elif getattr(what, "likes", None) is False:
-    dislikes
-  %elif getattr(what, "like", False) is None:
-    unvoted
-  %endif
 </%def>
 
 <%def name="RenderPrintable()">
@@ -85,7 +78,14 @@ thing id-${what._fullname}
   </p>
   ${self.numcol()}
   ${self.midcol()}
-  <div class="entry">
+  <% 
+     like_cls = "unvoted"
+     if getattr(thing, "likes", None):
+         like_cls = "likes"
+     elif getattr(thing, "likes", None) is False:
+         like_cls = "dislikes"
+   %>
+  <div class="entry ${like_cls}">
     ${self.entry()}
   </div>
   ${self.Child()}
@@ -201,17 +201,19 @@ thing id-${what._fullname}
 <%def name="score(this, likes=None, tag='span', score_fmt = None)">
 <%
    score = this.score
+   base_score = score - 1 if likes else score if likes is None else score + 1
+   base_score = [base_score + x for x in range(-1, 2)]
    if score_fmt is None:
        score_fmt = thing.score_fmt
  %>
   <${tag} class="score dislikes">
-    ${score_fmt(score - 1)}
+    ${score_fmt(base_score[0])}
   </${tag}>
-  <${tag} class="score">
-    ${score_fmt(score)}
+  <${tag} class="score unvoted">
+    ${score_fmt(base_score[1])}
   </${tag}>
   <${tag} class="score likes">
-    ${score_fmt(score + 1)}
+    ${score_fmt(base_score[2])}
   </${tag}>
 </%def>
 
