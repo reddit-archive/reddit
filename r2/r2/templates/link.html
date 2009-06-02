@@ -88,7 +88,9 @@
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.hide_score:
-      <div class="score">&bull;</div> 
+      <div class="score likes">&bull;</div> 
+      <div class="score unvoted">&bull;</div> 
+      <div class="score dislikes">&bull;</div> 
     %else:
       ${self.score(thing, thing.likes, tag='div')}
     %endif                
