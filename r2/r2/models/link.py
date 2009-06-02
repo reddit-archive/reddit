@@ -231,6 +231,7 @@ class Link(Thing, Printable):
             s += ''.join(map(str, [request.get.has_key('style'),
                                    request.get.has_key('expanded'),
                                    request.get.has_key('twocolumn'),
+                                   getattr(wrapped, 'embed_voting_style', None),
                                    c.bgcolor,
                                    c.bordercolor]))
         return s

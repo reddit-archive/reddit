@@ -22,7 +22,7 @@
 
 <%! 
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info
-   from r2.lib.pages import SearchForm
+   from r2.lib.pages import SearchForm, ClickGadget
    from pylons import request
 %>
 <%namespace file="framebuster.html" import="framebuster"/>
@@ -133,6 +133,9 @@
   %else:
     <%include file="ads.html"/>
   %endif
+
+  ##cheating... we should move ads into a template of its own
+  ${ClickGadget().render()}
 </%def>
 
 

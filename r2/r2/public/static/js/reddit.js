@@ -448,20 +448,56 @@ function update_reddit_count(site) {
 
 function add_thing_to_cookie(thing, cookie_name) {
     var id = $(thing).thing_id();
-    var cookie = $.cookie_read(cookie_name);
-    cookie.data += ":" + id;
-    /* enforce a cookie max size of 1000 characters */
-    while(cookie.data.length > 1000) {
-        var i = cookie.data.indexOf(":");
-        /* break on bad data in the cookie and whipe out the contents */
-        if (i < 0) {
-            cookie.data = "";
-            break;
-        }
-        cookie.data = cookie.data.slice(i+1);
+
+    if(id && id.length) {
+        return add_thing_id_to_cookie(id, cookie_name);
     }
+}
+
+function add_thing_id_to_cookie(id, cookie_name) {
+    var cookie = $.cookie_read(cookie_name);
+    if(!cookie.data) {
+        cookie.data = "";
+    }
+
+    /* avoid adding consecutive duplicates */
+    if(cookie.data.substring(0, id.length) == id) {
+        return;
+    }
+
+    cookie.data = id + ':' + cookie.data;
+
+    if(cookie.data.length > 1000) {
+        var fullnames = cookie.data.split(':');
+        fullnames = $.uniq(fullnames, 20);
+        cookie.data = fullnames.join(':');
+    }
+
     $.cookie_write(cookie);
 };
+
+function clicked_items() {
+    var cookie = $.cookie_read('click');
+    if(cookie && cookie.data) {
+        var fullnames = cookie.data.split(":");
+        /* don't return empty ones */
+        for(var i=fullnames.length-1; i >= 0; i--) {
+            if(!fullnames[i] || !fullnames[i].length) {
+                fullnames.splice(i,1);
+            }
+        }
+        return fullnames;
+    } else {
+        return [];
+    }
+}
+
+function clear_clicked_items() {
+    var cookie = $.cookie_read('click');
+    cookie.data = '';
+    $.cookie_write(cookie);
+    $('.gadget').remove();
+}
 
 function updateEventHandlers(thing) {
     /* this function serves as a default callback every time a new
@@ -563,38 +599,22 @@ function last_click(thing, organic) {
             olisting.find('.thing:visible').hide();
             thing.show();
           } else {
-            /* we're going to have to put it into the organic box
-               somehow */
-            var thingelsewhere = $.things(current.what).filter(':not(.stub):first');
-
-            if(thingelsewhere.length > 0) {
-              /* if it's available on the page somewhere else, we can
-                 clone it up into the organic box rather than go to
-                 the server for it */
-
-              /* if there was a stub before, remove it */
-              thing.remove();
-
-              var othercopy = thingelsewhere.clone();
-              olisting.find('.thing:visible').before(othercopy).hide();
-              othercopy.show();
-            } else {
               /* either it's available in the organic box, but the
                  data there is a stub, or it's not available at
                  all. either way, we need a server round-trip */
+
+              /* remove the stub if it's there */
               thing.remove();
 
-              /* and add a new stub */
-            
+              /* add a new stub */
               olisting.find('.thing:visible')
-                .before('<div class="thing id-'+current.what+' stub" style="display: none"></div');
+                  .before('<div class="thing id-'+current.what+' stub" style="display: none"></div');
               
-              /* and ask the server to fill in that stub */
+              /* and ask the server to fill it in */
               $.request('fetch_links',
                         {links: [current.what],
-                            show: current.what,
-                            listing: olisting.attr('id')});
-            }
+                                show: current.what,
+                                listing: olisting.attr('id')});
           }
         }
       }
@@ -620,6 +640,20 @@ function register(elem) {
         return true;
     return post_user(this, "register");
 };
+
+function populate_click_gadget() {
+    /* if we can find the click-gadget, populate it */
+    if($('.click-gadget').length) {
+        var clicked = clicked_items();
+
+        if(clicked && clicked.length) {
+            clicked = $.uniq(clicked, 5);
+            clicked.sort();
+
+            $.request('gadget/click/' + clicked.join(','), undefined, undefined, undefined, true);
+        }
+    }
+}
 
 var toolbar_p = function(expanded_size, collapsed_size) {
     /* namespace for functions related to the reddit toolbar frame */
@@ -758,8 +792,7 @@ $(function() {
 
         /* visually mark the last-clicked entry */
         last_click();
+
+        populate_click_gadget();
     });
-
-
-
 

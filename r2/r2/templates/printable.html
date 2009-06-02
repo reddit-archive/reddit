@@ -49,6 +49,13 @@ ${self.RenderPrintable()}
 
 <%def name="thing_css_class(what)" buffered="True">
 thing id-${what._fullname}
+  %if getattr(what, "likes", None):
+    likes
+  %elif getattr(what, "likes", None) is False:
+    dislikes
+  %elif getattr(what, "like", False) is None:
+    unvoted
+  %endif
 </%def>
 
 <%def name="RenderPrintable()">
@@ -193,25 +200,19 @@ thing id-${what._fullname}
 
 <%def name="score(this, likes=None, tag='span', score_fmt = None)">
 <%
-   _class = "" if likes is None else "likes" if likes else "dislikes"
-
-   # figure out alterna-points
    score = this.score
-   base_score = score - 1 if likes else score if likes is None else score + 1
-   base_score = [base_score + x for x in range(-1, 2)];
-
    if score_fmt is None:
        score_fmt = thing.score_fmt
  %>
-  <${tag} class="score ${_class}">
-    ${score_fmt(this.score)}
+  <${tag} class="score dislikes">
+    ${score_fmt(score - 1)}
   </${tag}>
-  <script type="text/javascript">
-    if(reddit)
-      reddit.vl['${this._fullname}'] = ['${score_fmt(base_score[0])}',
-                                        '${score_fmt(base_score[1])}', 
-                                        '${score_fmt(base_score[2])}' ];
-  </script>
+  <${tag} class="score">
+    ${score_fmt(score)}
+  </${tag}>
+  <${tag} class="score likes">
+    ${score_fmt(score + 1)}
+  </${tag}>
 </%def>
 
 

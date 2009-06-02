@@ -129,6 +129,12 @@
 
 <%def name="withlink()">
 <span class="${thing_css_class(thing.link)}">
+  ## add us to the click cookie
+  <script type="text/javascript">
+    $(function() {
+      add_thing_id_to_cookie('${thing.link._fullname}', 'click');
+    });
+  </script>
   <span>
     ${score(thing.link, thing.link.likes, score_fmt = Score.safepoints, tag='b')}
   </span>

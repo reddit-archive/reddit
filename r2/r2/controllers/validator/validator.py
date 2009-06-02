@@ -370,15 +370,13 @@ class VByName(Validator):
     def run(self, items):
         if items and self.re.match(items):
             if self.multiple:
-                items = self.splitter.split(items)
+                items = filter(None, self.splitter.split(items))
             try:
                 return Thing._by_fullname(items, return_dict = False,
                                           data=True)
             except NotFound:
                 pass
         return self.set_error(self._error)
-        
-
 
 class VByNameIfAuthor(VByName):
     def run(self, fullname):

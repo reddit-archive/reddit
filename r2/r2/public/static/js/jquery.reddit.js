@@ -69,6 +69,20 @@ $.unsafe = function(text) {
     return (text || "");
 };
 
+$.uniq = function(list, max) {
+    /* $.unique only works on arrays of DOM elements */
+    var ret = [];
+    var seen = {};
+    var num = max ? max : list.length;
+    for(var i = 0; i < list.length && ret.length < num; i++) {
+        if(!seen[list[i]]) {
+            seen[list[i]] = true;
+            ret.push(list[i]);
+        }
+    }
+    return ret;
+};
+
 /* upgrade show and hide to trigger onshow/onhide events when fired. */
 (function(show, hide) {
     $.fn.show = function(speed, callback) {
@@ -123,7 +137,7 @@ function handleResponse(action) {
 };
 
 var api_loc = '/api/';
-$.request = function(op, parameters, worker_in, block) {
+$.request = function(op, parameters, worker_in, block, get_only) {
     /* 
        Uniquitous reddit AJAX poster.  Automatically addes
        handleResponse(action) worker to deal with the API result.  The
@@ -146,6 +160,7 @@ $.request = function(op, parameters, worker_in, block) {
         return worker_in(r);
     };
 
+    get_only = $.with_default(get_only, false);
 
     /* set the subreddit name if there is one */
     if (reddit.post_site) 
@@ -163,7 +178,11 @@ $.request = function(op, parameters, worker_in, block) {
         op = api_loc + op;
         /*if( document.location.host == reddit.ajax_domain ) 
             /* normal AJAX post */
-        $.post(op, parameters, worker, "json");
+        if(get_only) {
+            $.get(op, parameters, worker, "json");
+        } else {
+            $.post(op, parameters, worker, "json");
+        }
         /*else { /* cross domain it is... * /
             op = "http://" + reddit.ajax_domain + op + "?callback=?";
             $.getJSON(op, parameters, worker);
@@ -196,21 +215,13 @@ $.fn.vote = function(vh, callback) {
 
         /* let the user vote only if they are logged in */
         if(reddit.logged) {
-
-            /* set the score and update the class */
             things.each(function() {
-                    var score = $(this).children().not(".child").find(".score");
-                    var to_update = score.add($(this));
-                    var label = reddit && reddit.vl && 
-                        reddit.vl[$(this).thing_id()];
-                    if(label)
-                        score.html(label[dir+1]);
                     if(dir > 0) 
-                        to_update.addClass('likes').removeClass('dislikes');
+                        $(this).addClass('likes').removeClass('dislikes');
                     else if(dir < 0) 
-                        to_update.removeClass('likes').addClass('dislikes');
+                        $(this).removeClass('likes').addClass('dislikes');
                     else
-                        to_update.removeClass('likes').removeClass('dislikes');
+                        $(this).removeClass('likes').removeClass('dislikes');
                 });
             
             $.request("vote", {id: things.filter(":first").thing_id(), 
@@ -364,10 +375,6 @@ $.replace_things = function(things, keep_children, reveal, stubs) {
             new_thing.find(".midcol").css("width", midcol).end()
                 .find(".rank").css("width", midcol);
 
-            /* update the score lookups */
-            if(data.vl)
-                reddit.vl[data.id] = data.vl;
-
             if(keep_children) {
                 /* show the new thing */
                 new_thing.show()
@@ -417,8 +424,6 @@ $.insert_things = function(things, append) {
             var midcol = $(".midcol:visible:first").css("width");
             var numcol = $(".rank:visible:first").css("width");
             var s = $.listing(data.parent);
-            if(data.vl)
-                reddit.vl[data.id] = data.vl;
             if(append) 
                 s = s.append($.unsafe(data.content)).children(".thing:last");
             else 

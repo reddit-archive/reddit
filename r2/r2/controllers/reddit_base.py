@@ -26,7 +26,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters
-from r2.lib.utils import http_utils
+from r2.lib.utils import http_utils, UniqueIterator
 from r2.lib.cache import LocalCache
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount
@@ -140,21 +140,22 @@ def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
     c.cookies[uname + '_' + name] = Cookie(value = val)
     
-valid_click_cookie = re.compile(r'(t[0-9]_[a-zA-Z0-9]+:)+').match
+valid_click_cookie = re.compile(r'(:?t[0-9]+_[a-zA-Z0-9]+)+').match
 def read_click_cookie():
-    if c.user_is_loggedin:
-        click_cookie = read_user_cookie('click')
-        if click_cookie and valid_click_cookie(click_cookie):
-            ids = [s for s in click_cookie.split(':') if s]
-            things = Thing._by_fullname(ids, return_dict = False)
-            for t in things:
-                def foo(t1, user):
-                    return lambda: t1._click(user)
-                #don't record clicks for the time being
-                #utils.worker.do(foo(t, c.user))
-    set_user_cookie('click', '')
+    # not used at the moment, if you start using this, you should also
+    # test it
+    click_cookie = read_user_cookie('click')
+    if click_cookie:
+        if valid_click_cookie(click_cookie):
+            fullnames = [ x for x in UniqueIterator(click_cookie.split(':')) if x ]
 
-            
+            if len(click_cookie) > 1000:
+                fullnames = fullnames[:20]
+                set_user_cookie('click', ':'.join(fullnames))
+            return fullnames
+        else:
+            set_user_cookie('click', '')
+
 def read_mod_cookie():
     cook = [s.split('=')[0:2] for s in read_user_cookie('mod').split(':') if s]
     if cook:
@@ -481,7 +482,6 @@ class RedditController(BaseController):
                 c.user._load()
             c.modhash = c.user.modhash()
             if request.method.lower() == 'get':
-                read_click_cookie()
                 read_mod_cookie()
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime

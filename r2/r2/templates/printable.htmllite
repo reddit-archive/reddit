@@ -82,19 +82,19 @@ ${self.Child()}
 </%def>
 
 <%def name="real_arrows(thing)">
-<div class="midcol">
-  ${arrow(thing, 1, thing.likes)}
-  ${arrow(thing, 0, thing.likes == False)}
-</div>
+  <div class="midcol" ${optionalstyle("width: 15px")}>
+    ${arrow(thing, 1, thing.likes)}
+    ${arrow(thing, 0, thing.likes == False)}
+ </div>
 </%def>
 
 
 <%def name="arrows(thing)">
- %if request.get.get("votable"):
-   ${self.real_arrows(thing)}
- %elif request.get.get("expanded"):
-   ${self.iframe_arrows(thing)}
- %else:
-   ${self.static_arrows(thing)}
- %endif
+  %if getattr(thing, 'embed_voting_style',None) == 'votable':
+    ${self.real_arrows(thing)}
+  %elif request.get.get("expanded") or getattr(thing, 'embed_voting_style',None) == 'expanded':
+    ${self.iframe_arrows(thing)}
+  %else:
+    ${self.static_arrows(thing)}
+  %endif
 </%def>

@@ -19,10 +19,12 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+
+<%! from r2.lib.template_helpers import replace_render %>
+
 <%namespace file="utils.html" import="optionalstyle"/>
 <%namespace file="printable.html" import="thing_css_class"/>
-<div class="reddit-listing" 
-       ${optionalstyle("margin-left:5px;margin-top:7px;")}>
+<div ${optionalstyle("margin-left:5px;margin-top:7px;")}>
   <% 
      t = thing.things
      l = len(t)
@@ -46,7 +48,11 @@
    %endif
 
      <div class="${cls} ${thing_css_class(a)}">
-      ${a.render()}
+      %if getattr(a, 'embed_voting_style', None) == 'votable':
+        ${unsafe(replace_render(thing,a))}
+      %else:
+        ${a.render()}
+      %endif
      </div>
    %if two_col and i == l - 1:
    </div>

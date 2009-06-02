@@ -52,10 +52,10 @@
        %if expanded:
          ${optionalstyle("margin-left: 58px;")}
        %else:
-         ${optionalstyle("margin-left: 20px; min-height:32px;")}
+         ${optionalstyle("margin-left: 28px; min-height:32px;")}
        %endif
        >
-    <a href="${thing.url}" class="reddit-link-title"
+    <a href="${thing.click_url}" class="reddit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}>
       ${thing.title}
     </a>

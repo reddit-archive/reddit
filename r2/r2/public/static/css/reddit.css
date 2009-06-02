@@ -708,9 +708,17 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 
+/* display the right score based on whether they've voted */
+.score.likes, .score.dislikes {display: none;}
+.likes .score, .dislikes .score {display: none;}
+.likes .score.likes {display: inline;}
+.dislikes .score.dislikes {display: inline;}
+.likes div.score.likes {display: block;}
+.dislikes div.score.dislikes {display: block;}
+
 /* compressed links */
-.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 6px; }
-.linkcompressed .title {margin-bottom: 1px; font-size:medium; font-weight: normal;}
+.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 7px; }
+.linkcompressed .title {margin-bottom: 2px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
     text-transform: none; 
@@ -739,7 +747,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f7f7f7;
+    background-color: #f8f8f8;
     font-weight: bold
 }
 
@@ -751,6 +759,35 @@ a.star { text-decoration: none; color: #ff8b60 }
 .hot-entry .rank { color: #E47234; }
 .cool-entry .rank { color: #A5ABFB; }
 .cold-entry .rank { color: #4959F7; }
+
+/* widget styling */
+.gadget {
+    font-size: x-small;
+    border: 1px solid gray;
+    padding: 5px;
+}
+
+.gadget h2 {
+    padding-left: 49px;
+    font-size: 150%;
+    margin-bottom: 5px;
+}
+
+.gadget .midcol {
+    width: 15px;
+    margin: 0;
+}
+
+.gadget .reddit-link-end {
+    clear: left;
+    padding-top: 10px;
+}
+
+.gadget .click-gadget {font-size: small;}
+.gadget small {color: gray;}
+.gadget .reddit-entry {margin-left: 20px;}
+.gadget .right {text-align: right;}
+
 
 /* comments */
 
@@ -1095,7 +1132,7 @@ textarea.gray { color: gray; }
     border: 0px;
     overflow: hidden;
     width: 300px;
-    height: 300px;
+    height: 280px;
 }
 
 

@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController
+from reddit_base import RedditController, set_user_cookie
 
 from pylons.i18n import _
 from pylons import c, request
@@ -42,7 +42,7 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
-from r2.lib.filters import _force_unicode, websafe_json
+from r2.lib.filters import _force_unicode, websafe_json, spaceCompress
 from r2.lib.db import queries
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
@@ -1359,6 +1359,30 @@ class ApiController(RedditController):
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()
 
+    @validatedForm(type = VOneOf('type', ('click'), default = 'click'),
+                   links = VByName('ids', thing_cls = Link, multiple = True))
+    def GET_gadget(self, form, jquery, type, links):
+        if not links and type == 'click':
+            # malformed cookie, clear it out
+            set_user_cookie('click', '')
+
+        if not links:
+            return
+
+        def wrapper(link):
+            link.embed_voting_style = 'votable'
+            return Wrapped(link)
+
+        #this will disable the hardcoded widget styles
+        request.get.style = "off"
+
+        c.render_style = 'htmllite'
+        builder = IDBuilder([ link._fullname for link in links ],
+                            wrap = wrapper)
+        listing = LinkListing(builder, nextprev=False, show_nums=False).listing()
+        jquery('.gadget').show().find('.click-gadget').html(
+            spaceCompress(listing.render()))
+
     @noresponse()
     def POST_tb_commentspanel_show(self):
         # this preference is allowed for non-logged-in users
@@ -1373,6 +1397,9 @@ class ApiController(RedditController):
 
     @validatedForm(promoted = VByName('ids', thing_cls = Link, multiple = True))
     def POST_onload(self, form, jquery, promoted, *a, **kw):
+        if not promoted:
+            return
+
         # make sure that they are really promoted
         promoted = [ l for l in promoted if l.promoted ]
 

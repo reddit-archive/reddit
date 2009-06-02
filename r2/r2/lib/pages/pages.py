@@ -140,6 +140,11 @@ class Reddit(Wrapped):
                               '/reddits/create', 'create',
                               subtitles = rand_strings.get("create_reddit", 2),
                               show_cover = True, nocname=True))
+
+        #we should do this here, but unless we move the ads into a
+        #template of its own, it will render above the ad
+        #ps.append(ClickGadget())
+
         return ps
 
     def render(self, *a, **kw):
@@ -302,6 +307,8 @@ class Reddit(Wrapped):
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack(self.infobar, self.nav_menu, self._content)
+
+class ClickGadget(Wrapped): pass
 
 class RedditMin(Reddit):
     """a version of Reddit that has no sidebar, toolbar, footer,

@@ -157,6 +157,8 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
+    mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
+    mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='api')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

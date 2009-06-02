@@ -125,14 +125,12 @@ class ThingJsonTemplate(JsonTemplate):
         when sent out).  The elements are:
 
          * id : Thing _fullname of thing.
-         * vl : triplet of scores (up, none, down) from self.score
          * content : rendered  representation of the thing by
            calling replace_render on it using the style of get_api_subtype().
         """
         from r2.lib.template_helpers import replace_render
         listing = thing.listing if hasattr(thing, "listing") else None
         return dict(id = thing._fullname,
-                    #vl = self.points(thing),
                     content = spaceCompress(
                         replace_render(listing, thing,
                                        style=get_api_subtype())))
