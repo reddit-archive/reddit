@@ -525,7 +525,7 @@ function updateEventHandlers(thing) {
         .filter(":visible").trigger("onshow");
 
     /* click on a title.. */
-    $(thing).find("a.title").mousedown(function() {
+    $(thing).find("a.title, a.comments").mousedown(function() {
             /* the site is either stored in the sr dict, or we are on
              * an sr and it is the current one */
             var sr = reddit.sr[$(this).thing_id()] || reddit.cur_site;

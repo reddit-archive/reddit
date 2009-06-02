@@ -77,7 +77,6 @@ thing id-${what._fullname}
     ${self.ParentDiv()}
   </p>
   ${self.numcol()}
-  ${self.midcol()}
   <% 
      like_cls = "unvoted"
      if getattr(thing, "likes", None):
@@ -85,6 +84,7 @@ thing id-${what._fullname}
      elif getattr(thing, "likes", None) is False:
          like_cls = "dislikes"
    %>
+  ${self.midcol(cls = like_cls)}
   <div class="entry ${like_cls}">
     ${self.entry()}
   </div>
@@ -218,8 +218,8 @@ thing id-${what._fullname}
 </%def>
 
 
-<%def name="midcol(display=True)">
-  <div class="midcol" 
+<%def name="midcol(display=True, cls = '')">
+  <div class="midcol ${cls}" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     ${self.arrow(thing, 0, thing.likes == False)}

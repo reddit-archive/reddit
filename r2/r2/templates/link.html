@@ -83,8 +83,8 @@
   </script>
 </%def>
 
-<%def name="midcol(display=True)">
-  <div class="midcol" style="width:$midcolmargin;" 
+<%def name="midcol(display=True, cls = '')">
+  <div class="midcol ${cls}" style="width:$midcolmargin;" 
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.hide_score:
