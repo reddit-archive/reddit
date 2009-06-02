@@ -144,17 +144,17 @@ valid_click_cookie = re.compile(r'(:?t[0-9]+_[a-zA-Z0-9]+)+').match
 def read_click_cookie():
     # not used at the moment, if you start using this, you should also
     # test it
-    click_cookie = read_user_cookie('click')
+    click_cookie = read_user_cookie('recentclicks')
     if click_cookie:
         if valid_click_cookie(click_cookie):
             fullnames = [ x for x in UniqueIterator(click_cookie.split(':')) if x ]
 
             if len(click_cookie) > 1000:
                 fullnames = fullnames[:20]
-                set_user_cookie('click', ':'.join(fullnames))
+                set_user_cookie('recentclicks', ':'.join(fullnames))
             return fullnames
         else:
-            set_user_cookie('click', '')
+            set_user_cookie('recentclicks', '')
 
 def read_mod_cookie():
     cook = [s.split('=')[0:2] for s in read_user_cookie('mod').split(':') if s]
