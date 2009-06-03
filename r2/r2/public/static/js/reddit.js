@@ -485,7 +485,7 @@ function add_thing_id_to_cookie(id, cookie_name) {
 };
 
 function clicked_items() {
-    var cookie = $.cookie_read('recentclicks');
+    var cookie = $.cookie_read('recentclicks2');
     if(cookie && cookie.data) {
         var fullnames = cookie.data.split(",");
         /* don't return empty ones */
@@ -501,7 +501,7 @@ function clicked_items() {
 }
 
 function clear_clicked_items() {
-    var cookie = $.cookie_read('recentclicks');
+    var cookie = $.cookie_read('recentclicks2');
     cookie.data = '';
     $.cookie_write(cookie);
     $('.gadget').remove();
@@ -542,7 +542,7 @@ function updateEventHandlers(thing) {
             /* mark as clicked */
             $(this).addClass("click");
             /* set the click cookie. */
-            add_thing_to_cookie(this, "recentclicks");
+            add_thing_to_cookie(this, "recentclicks2");
             /* remember this as the last thing clicked */
             var wasorganic = $(this).parents('.organic-listing').length > 0;
             last_click(thing, wasorganic);

@@ -139,6 +139,7 @@ def read_user_cookie(name):
 def set_user_cookie(name, val):
     uname = c.user.name if c.user_is_loggedin else ""
     c.cookies[uname + '_' + name] = Cookie(value = val)
+
     
 valid_click_cookie = fullname_regex(Link, True).match
 def set_recent_clicks():
@@ -146,21 +147,21 @@ def set_recent_clicks():
     if not c.user_is_loggedin:
         return
 
-    click_cookie = read_user_cookie('recentclicks')
+    click_cookie = read_user_cookie('recentclicks2')
     if click_cookie:
         if valid_click_cookie(click_cookie):
             names = [ x for x in UniqueIterator(click_cookie.split(',')) if x ]
 
             if len(click_cookie) > 1000:
                 names = names[:20]
-                set_user_cookie('recentclicks', ','.join(names))
+                set_user_cookie('recentclicks2', ','.join(names))
             #eventually this will look at the user preference
             names = names[:5]
             c.recent_clicks = Link._by_fullname(names, data = True,
                                                 return_dict = False)
         else:
             #if the cookie wasn't valid, clear it
-            set_user_cookie('recentclicks', '')
+            set_user_cookie('recentclicks2', '')
 
 def read_mod_cookie():
     cook = [s.split('=')[0:2] for s in read_user_cookie('mod').split(':') if s]

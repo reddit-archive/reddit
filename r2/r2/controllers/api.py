@@ -1365,7 +1365,7 @@ class ApiController(RedditController):
     def GET_gadget(self, form, jquery, type, links):
         if not links and type == 'click':
             # malformed cookie, clear it out
-            set_user_cookie('recentclicks', '')
+            set_user_cookie('recentclicks2', '')
 
         if not links:
             return
