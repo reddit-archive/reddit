@@ -36,7 +36,8 @@ from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, to36, timefromnow, link_from_url
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
-    BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage
+    BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage, \
+    ClickGadget
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
@@ -1369,19 +1370,10 @@ class ApiController(RedditController):
         if not links:
             return
 
-        def wrapper(link):
-            link.embed_voting_style = 'votable'
-            return Wrapped(link)
+        content = ClickGadget(links).make_content()
 
-        #this will disable the hardcoded widget styles
-        request.get.style = "off"
-
-        c.render_style = 'htmllite'
-        builder = IDBuilder([ link._fullname for link in links ],
-                            wrap = wrapper)
-        listing = LinkListing(builder, nextprev=False, show_nums=False).listing()
         jquery('.gadget').show().find('.click-gadget').html(
-            spaceCompress(listing.render()))
+            spaceCompress(content))
 
     @noresponse()
     def POST_tb_commentspanel_show(self):

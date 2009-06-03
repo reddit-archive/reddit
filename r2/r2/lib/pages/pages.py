@@ -308,7 +308,36 @@ class Reddit(Wrapped):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack(self.infobar, self.nav_menu, self._content)
 
-class ClickGadget(Wrapped): pass
+class ClickGadget(Wrapped):
+    def __init__(self, links, *a, **kw):
+        self.links = links
+        self.content = ''
+        if c.user_is_loggedin and self.links:
+            self.content = self.make_content()
+        Wrapped.__init__(self, *a, **kw)
+
+    def make_content(self):
+        def wrapper(link):
+            link.embed_voting_style = 'votable'
+            return Wrapped(link)
+
+        #temporarily change the render style
+        orig_render_style = c.render_style
+        c.render_style = 'htmllite'
+
+        #this will disable the hardcoded widget styles
+        request.get.style = "off"
+
+        builder = IDBuilder([link._fullname for link in self.links],
+                            wrap = wrapper)
+        listing = LinkListing(builder, nextprev=False, show_nums=False).listing()
+        content = listing.render()
+
+        #restore render style
+        c.render_style = orig_render_style
+
+        return content
+
 
 class RedditMin(Reddit):
     """a version of Reddit that has no sidebar, toolbar, footer,

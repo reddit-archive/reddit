@@ -790,8 +790,12 @@ $(function() {
                         .filter(".gray").removeClass("gray").attr("value", "")
                         });
         /* set cookies to be from this user if there is one */
-        if(reddit.logged) 
+        if (reddit.logged) {
             $.cookie_name_prefix(reddit.logged);
+        }
+        else {
+            populate_click_gadget();
+        }
         /* set up the cookie domain */
         $.default_cookie_domain(reddit.cur_domain.split(':')[0]);
         
@@ -802,6 +806,6 @@ $(function() {
         /* visually mark the last-clicked entry */
         last_click();
 
-        populate_click_gadget();
+
     });
 

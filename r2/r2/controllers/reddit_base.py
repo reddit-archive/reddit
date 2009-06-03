@@ -141,19 +141,25 @@ def set_user_cookie(name, val):
     c.cookies[uname + '_' + name] = Cookie(value = val)
     
 valid_click_cookie = re.compile(r'(:?t[0-9]+_[a-zA-Z0-9]+)+').match
-def read_click_cookie():
-    # not used at the moment, if you start using this, you should also
-    # test it
+def set_recent_clicks():
+    c.recent_clicks = []
+    if not c.user_is_loggedin:
+        return
+
     click_cookie = read_user_cookie('recentclicks')
     if click_cookie:
         if valid_click_cookie(click_cookie):
-            fullnames = [ x for x in UniqueIterator(click_cookie.split(':')) if x ]
+            names = [ x for x in UniqueIterator(click_cookie.split(':')) if x ]
 
             if len(click_cookie) > 1000:
-                fullnames = fullnames[:20]
-                set_user_cookie('recentclicks', ':'.join(fullnames))
-            return fullnames
+                names = names[:20]
+                set_user_cookie('recentclicks', ':'.join(names))
+            #eventually this will look at the user preference
+            names = names[:5]
+            c.recent_clicks = Link._by_fullname(names, data = True,
+                                                return_dict = False)
         else:
+            #if the cookie wasn't valid, clear it
             set_user_cookie('recentclicks', '')
 
 def read_mod_cookie():
@@ -497,6 +503,7 @@ class RedditController(BaseController):
         set_content_lang()
         set_colors()
         set_recent_reddits()
+        set_recent_clicks()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):
