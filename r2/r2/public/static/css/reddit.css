@@ -718,7 +718,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* compressed links */
 .linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 7px; }
-.linkcompressed .title {margin-bottom: 2px; font-size:medium; font-weight: normal;}
+.linkcompressed .title {margin-bottom: 3px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
     text-transform: none; 
@@ -728,7 +728,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .score.likes   { color: #FF8B60; }
 .linkcompressed .score.dislikes { color: #9494FF; }
 .linkcompressed .rank {
-    margin-top: 7px;
+    margin-top: 8px;
     float:left;
     color: #c6c6c6;
     font-family: arial;
@@ -736,7 +736,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 .linkcompressed .arrow.down, .linkcompressed .arrow.downmod {
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
 .linkcompressed .tagline { display: inline; margin-top: 0px; margin-bottom: 1px; }
@@ -747,7 +747,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f8f8f8;
+    background-color: #f9f9f9;
     font-weight: bold
 }
 
@@ -923,20 +923,6 @@ textarea.gray { color: gray; }
     color: gray;
     background-color: #E0E0E0;
     padding-left: 5px;
-}
-
-.starkcomment + .clearleft + .starkcomment {
-    margin-top: 10px
-}
-.starkcomment .commentbox {
-    color: black;
-    background-color: #f0f0f0;
-    padding: 5px;
-    margin-left: 10px;
-    margin-right: 5px;
-}
-.starkcomment .tagline {
-    text-align: right;
 }
 
 .fixedwidth { float: left; width: 100px; height: 0px; }
@@ -1481,12 +1467,13 @@ textarea.gray { color: gray; }
     height: 19px;
     float: left;
     border-right: solid #336699 1px;
-    background-image: url(/static/button-normal.png);
+    background-color: #EFF7FF;
 }
 
 .toolbar .middle-side {
     text-align: center;
-    background-image: url(/static/button-normal.png);
+    background-color: #EFF7FF;
+    cursor: pointer;
 }
 
 .toolbar .middle-side a, .toolbar .middle-side b {
@@ -1501,13 +1488,20 @@ textarea.gray { color: gray; }
     height: 18px;
     border: none;
     border-top: solid transparent 1px;
+    margin-left: 2px;
 }
 .toolbar .middle-side .url {
     overflow: hidden;
 }
+
+.toolbar .middle-side .domain {
+    color: #888;
+    font-size: small;
+}
+
 .toolbar .right-side {
     float: right;
-    background-image: url(/static/button-normal.png);
+    background-color: #EFF7FF;
 }
 
 .toolbar a, .toolbar b {
@@ -1529,7 +1523,7 @@ textarea.gray { color: gray; }
 }
 
 .toolbar .clickable:active, .pushed-button {
-    background-image: url(/static/button-pressed.png) !important;
+    background-color: #cee3f8 !important;
     color: orangered !important;
 }
 
@@ -1549,13 +1543,14 @@ textarea.gray { color: gray; }
     vertical-align: top;
 }
 .toolbar .title {
-    padding-left: 20px;
+    padding-left: 1em;
+    padding-right: 1em;
     color: black;
-    font-style: italic;
-    cursor: pointer;
+    display: block;
+    overflow: hidden;
 }
-.toolbar .title:hover {
-    text-decoration: underline;
+.toolbar .title:active {
+    color: orangered;
 }
 .toolbar .controls {
     float: right;
@@ -1595,17 +1590,19 @@ textarea.gray { color: gray; }
     padding-right: 3px;
 }
 .tb-comments-panel-toggle {
-    display: block;
-    font-size: larger;
-    margin: 15px 13px;
 }
+.comments-panel .infobar {
+    padding: 3px 10px 7px;
+    margin: 5px 10px 10px 3px;
+}
+
 .min-body {
     height: 100%;
 }
 
 .min-body .content {
     margin-top: 0px;
-    border-left: solid #369 1px;
+    border-right: solid #369 1px;
     min-height: 100%;
     max-width: 60em;
     overflow: auto;
@@ -1618,6 +1615,20 @@ textarea.gray { color: gray; }
 }
 .min-body .content #noresults {
     margin: 0 0 0 13px;
+}
+
+.starkcomment + .clearleft + .starkcomment {
+    margin-top: 10px
+}
+.starkcomment .commentbox {
+    color: black;
+    background-color: #f0f0f0;
+    padding: 5px;
+    margin-left: 0px;
+    margin-right: 10px;
+}
+.starkcomment .tagline {
+    text-align: right;
 }
 
 /* default form styles */

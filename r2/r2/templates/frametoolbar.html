@@ -51,9 +51,13 @@
   </div>
 
   <div class="right-side">
-    <a href="#" onclick="return toolbar.toggle_linktitle(this);">
-      <img src="${static('link.png')}" height="13" width="16"
+    <a href="${thing.url}" onclick="return toolbar.toggle_linktitle(this);">
+      <img class="linkicon" src="${static('link.png')}"
+           height="13" width="16"
            title="${_('show url')}" alt="${_('show url')}"/>
+      <img class="linkicon" src="${static('link-active.png')}"
+           style="display: none" height="13" width="16"
+           title="${_('hide url')}" alt="${_('hide url')}"/>
     </a>
 
     <a class="serendipity popped-button"
@@ -80,15 +84,23 @@
       </a>
     %endif
 
+    %if c.have_messages:
+      <a target="_top" href="/message/inbox/">
+        <img src="${static('mail.png')}"
+             width="15" height="10"
+             alt="${_('help')}" title="${_('help')}" />
+      </a>
+    %endif
+
     <a target="_top" href="/help/toolbar">
       <img src="${static('help.png')}"
-           height="11" width="11"
+           width="11" height="11"
            alt="${_('help')}" title="${_('help')}" />
     </a>
 
     <a href="${thing.url}" target="_top">
       <img src="${static('kill.png')}"
-           height="11" width="11"
+           width="11" height="11"
            alt="${_('visit this link without the toolbar')}"
            title="${_('visit this link without the toolbar')}" />
     </a>
@@ -100,8 +112,13 @@
        title="${_('click to visit the main page for this submission')}"
        class="title clickable"
        target="_top"
-       href="${thing.link.make_permalink_slow()}">
-       ${thing.link.title}
+       href="${thing.link.make_permalink_slow()}"
+    >
+         ${thing.link.title}
+
+         %if thing.domain:
+           <span class="domain">&#32;(${thing.domain})</span>
+         %endif
     </a>
     %else:
       ${plain_link(_('click to submit this link to reddit'), thing.submit_url,

@@ -79,15 +79,19 @@ class FrontController(RedditController):
         sort = 'new' if rand.choice((True,False)) else 'hot'
         links = c.site.get_links(sort, 'all')
         if isinstance(links, thing.Query):
-            links._limit = 25
+            links._limit = g.num_serendipity
             links = [x._fullname for x in links]
         else:
-            links = list(links)[:25]
+            links = list(links)[:g.num_serendipity]
+
+        builder = IDBuilder(links, skip = True,
+                            keep_fn = lambda x: x.fresh,
+                            num = g.num_serendipity)
+        links = builder.get_items()[0]
 
         if links:
-            name = rand.choice(links)
-            link = Link._by_fullname(name, data = True)
-            return self.redirect(add_sr("/tb/" + link._id36))
+            l = rand.choice(links)
+            return self.redirect(add_sr("/tb/" + l._id36))
         else:
             return self.redirect(add_sr('/'))
 

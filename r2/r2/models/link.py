@@ -340,6 +340,13 @@ class Link(Thing, Printable):
             elif c.user.pref_frame:
                 item.click_url = item.tblink
 
+            item.fresh = not any((item.likes != None,
+                                  item.saved,
+                                  item.clicked,
+                                  item.hidden,
+                                  item._deleted,
+                                  item._spam))
+
         if c.user_is_loggedin:
             incr_counts(wrapped)
 

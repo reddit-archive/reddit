@@ -292,4 +292,4 @@ def choose_width(link, width):
 
 def panel_size(state):
     "the frame.cols of the reddit-toolbar's inner frame"
-    return '100%, 400px' if state =='expanded' else '100%x, 0px'
+    return '400px, 100%' if state =='expanded' else '0px, 100%x'

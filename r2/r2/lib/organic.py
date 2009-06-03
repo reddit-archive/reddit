@@ -38,12 +38,7 @@ organic_length   = 30
 promoted_every_n = 5
 
 def keep_link(link):
-    return not any((link.likes != None,
-                    link.saved,
-                    link.clicked,
-                    link.hidden,
-                    link._deleted,
-                    link._spam))
+    return link.fresh
 
 def insert_promoted(link_names, sr_ids, logged_in):
     """

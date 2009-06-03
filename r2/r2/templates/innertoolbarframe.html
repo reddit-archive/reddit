@@ -23,8 +23,10 @@
     from r2.lib.template_helpers import add_sr, panel_size
 %>
 <html>
-  <frameset cols="${panel_size('expanded' if thing.expanded else 'collapsed')}" name="inner_toolbar">
+  <frameset cols="${panel_size('expanded' if thing.expanded else 'collapsed')}"
+           name="inner_toolbar">
+    <frame frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}"
+           name="reddit_panel" />
     <frame frameborder="0" src="${thing.link.url}" name="reddit_link" />
-    <frame frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}" name="reddit_panel" />
   </frameset>
 </html>

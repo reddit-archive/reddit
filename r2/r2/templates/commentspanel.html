@@ -20,27 +20,28 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="printable.html" import="toggle_button"/>
+<%namespace file="printable.html" import="toggleable_label"/>
+
+<div class="comments-panel">
 
 <script type="text/javascript">
     toolbar = new toolbar_p();
 </script>
 
-<h1>
-    ${_('top comments')}
-</h1>
-<h2>
-  <a target="_top" href="${thing.link.permalink}">
-    ${_("full discussion")}
-  </a>
-</h2>
+<% from r2.lib.strings import strings %>
+
+<div class="infobar">
+  ${unsafe(thing.infobar)}
+
+  ${toggleable_label("tb-comments-panel-toggle",
+                     _("This panel will appear when " +
+                       "there are comments."),
+                     _("This panel will be hidden by default."),
+                     "toolbar.pref_commentspanel_hide",
+                     "toolbar.pref_commentspanel_show",
+                     reverse = not c.user.pref_frame_commentspanel)}
+</div>
 
 ${thing.listing.render()}
 
-${toggle_button("tb-comments-panel-toggle",
-                _("hide this panel by default"),
-                _("show this panel " +
-                  "when there are comments"),
-                "toolbar.pref_commentspanel_hide",
-                "toolbar.pref_commentspanel_show",
-                reverse = not c.user.pref_frame_commentspanel)}
+</div>

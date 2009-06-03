@@ -326,6 +326,28 @@ thing id-${what._fullname}
 </span>
 </%def>
 
+<%def name="toggleable_label(class_name,
+            title, alt_title,
+            callback, cancelback,
+            reverse = False)">
+ <%
+   if reverse:
+       callback, cancelback = cancelback, callback
+       title, alt_title = alt_title, title
+ %>
+<span class="${class_name} toggle">
+  <span class="toggle option active">${title}</span>
+  <span class="toggle option">${alt_title}</span>
+  &#32;(
+  <a href="#"
+     onclick="return toggle_label(this, ${callback}, ${cancelback})"
+     >
+    ${_("toggle")}
+  </a>
+  )
+</span>
+</%def>
+
 <%def name="tags(**kw)">
   %for k, v in kw.iteritems():
     %if v is not None:

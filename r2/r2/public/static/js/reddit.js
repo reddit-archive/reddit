@@ -147,6 +147,14 @@ function hide_thing(elem) {
         thing.addClass("hidden");
 };
 
+function toggle_label (elem, callback, cancelback) {
+  $(elem).parent().find(".option").toggle();
+  $(elem).onclick = function() {
+    return(toggle_label(elem, cancelback, callback));
+  }
+  if (callback) callback(elem);
+}
+
 function toggle(elem, callback, cancelback) {
     var self = $(elem).parent().andSelf().filter(".option");
     var sibling = self.removeClass("active")
@@ -659,11 +667,12 @@ var toolbar_p = function(expanded_size, collapsed_size) {
     /* namespace for functions related to the reddit toolbar frame */
 
     this.toggle_linktitle = function(s) {
-        $('.title, .submit, .url').toggle();
+        $('.title, .submit, .url, .linkicon').toggle();
         if($(s).is('.pushed-button')) {
             $(s).parents('.middle-side').removeClass('clickable');
         } else {
             $(s).parents('.middle-side').addClass('clickable');
+            $('.url').children('form').children('input').focus().select();
         }
         return this.toggle_pushed(s);
     };

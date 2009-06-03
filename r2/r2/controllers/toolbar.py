@@ -23,7 +23,7 @@ from reddit_base import RedditController
 from r2.lib.pages import *
 from r2.models import *
 from r2.lib.menus import CommentSortMenu
-from r2.lib.filters import spaceCompress
+from r2.lib.filters import spaceCompress, safemarkdown
 from r2.lib.memoize import memoize
 from r2.lib.template_helpers import add_sr
 from r2.lib import utils
@@ -177,15 +177,20 @@ class ToolbarController(RedditController):
                            title = link.title,
                            url = link.url)
 
-
         b = TopCommentBuilder(link, CommentSortMenu.operator('top'),
                               wrap = builder_wrapper)
 
         listing = NestedListing(b, num = 10, # TODO: add config var
                                 parent_name = link._fullname)
 
+        raw_bar = strings.comments_panel_text % dict(
+            fd_link=link.permalink)
+
+        md_bar = safemarkdown(raw_bar, target="_top")
+
         res = RedditMin(content=CommentsPanel(link=link, listing=listing.listing(),
-                                              expanded = auto_expand_panel(link)))
+                                              expanded=auto_expand_panel(link),
+                                              infobar=md_bar))
 
         return res.render()
 
@@ -198,9 +203,13 @@ class ToolbarController(RedditController):
 
         if link:
             link_builder = IDBuilder((link._fullname,))
+
             res = FrameToolbar(link = link_builder.get_items()[0][0],
                                title = link.title,
                                url = link.url,
+                               domain = None
+                                 if link.is_self
+                                 else domain(link.url),
                                expanded = auto_expand_panel(link))
         else:
             res = FrameToolbar(link = None,

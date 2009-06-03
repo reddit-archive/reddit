@@ -947,8 +947,11 @@ class FrameToolbar(Wrapped):
                 self.com_label = _("comment {verb}")
             else:
                 # generates "XX comments" as a noun
-                com_label = ungettext("comment", "comments", link.num_comments)
-                self.com_label = strings.number_label % (link.num_comments, com_label)
+                com_label = ungettext("comment", "comments",
+                                      link.num_comments)
+                self.com_label = strings.number_label % (
+                    link.num_comments, com_label)
+
 
             # generates "XX points" as a noun
             self.score_label = Score.safepoints(score)
