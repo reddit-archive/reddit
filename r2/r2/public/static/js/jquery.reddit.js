@@ -600,7 +600,7 @@ $.default_cookie_domain = function(domain) {
     return default_cookie_domain;
 };
 
-var cookie_name_prefix = ""; 
+var cookie_name_prefix = "_";
 $.cookie_name_prefix = function(name) {
     if($.defined(name))
         cookie_name_prefix = name + "_";

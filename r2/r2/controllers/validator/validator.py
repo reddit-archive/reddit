@@ -349,19 +349,22 @@ class VAccountByName(VRequired):
             except NotFound: pass
         return self.error()
 
+def fullname_regex(thing_cls = None, multiple = False):
+    pattern = Thing._type_prefix
+    if thing_cls:
+        pattern += utils.to36(thing_cls._type_id)
+    else:
+        pattern += r"[0-9a-z]+"
+    pattern += r"_[0-9a-z]+"
+    if multiple:
+        pattern = r"(%s *,? *)+" % pattern
+    return re.compile(r"^" + pattern + r"$")
+
 class VByName(Validator):
     splitter = re.compile('[ ,]+')
     def __init__(self, param, thing_cls = None, multiple = False,
                  error = errors.NO_THING_ID, **kw):
-        pattern = Thing._type_prefix
-        if thing_cls:
-            pattern += utils.to36(thing_cls._type_id)
-        else:
-            pattern += r"[0-9a-z]+"
-        pattern += r"_[0-9a-z]+"
-        if multiple:
-            pattern = r"(%s *,? *)+" % pattern
-        self.re = re.compile(r"^" + pattern + r"$")
+        self.re = fullname_regex(thing_cls, multiple)
         self.multiple = multiple
         self._error = error
         

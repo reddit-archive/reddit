@@ -473,12 +473,12 @@ function add_thing_id_to_cookie(id, cookie_name) {
         return;
     }
 
-    cookie.data = id + ':' + cookie.data;
+    cookie.data = id + ',' + cookie.data;
 
     if(cookie.data.length > 1000) {
-        var fullnames = cookie.data.split(':');
+        var fullnames = cookie.data.split(',');
         fullnames = $.uniq(fullnames, 20);
-        cookie.data = fullnames.join(':');
+        cookie.data = fullnames.join(',');
     }
 
     $.cookie_write(cookie);
@@ -487,7 +487,7 @@ function add_thing_id_to_cookie(id, cookie_name) {
 function clicked_items() {
     var cookie = $.cookie_read('recentclicks');
     if(cookie && cookie.data) {
-        var fullnames = cookie.data.split(":");
+        var fullnames = cookie.data.split(",");
         /* don't return empty ones */
         for(var i=fullnames.length-1; i >= 0; i--) {
             if(!fullnames[i] || !fullnames[i].length) {
@@ -533,7 +533,8 @@ function updateEventHandlers(thing) {
         .filter(":visible").trigger("onshow");
 
     /* click on a title.. */
-    $(thing).find("a.title, a.comments").mousedown(function() {
+    $(thing).filter(".link, .linkcompressed")
+        .find("a.title, a.comments").mousedown(function() {
             /* the site is either stored in the sr dict, or we are on
              * an sr and it is the current one */
             var sr = reddit.sr[$(this).thing_id()] || reddit.cur_site;
