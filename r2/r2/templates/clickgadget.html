@@ -21,6 +21,7 @@
 ################################################################################
 <%namespace file="printable.html" import="simple_button" />
 
+%if c.user.pref_clickgadget:
 <div class="gadget" style="display: none;">
   <h2>${_("Recently viewed links")}</h2>
 
@@ -32,3 +33,4 @@
     ${simple_button(_("clear"), "clear_clicked_items")}
   </div>
 </div>
+%endif

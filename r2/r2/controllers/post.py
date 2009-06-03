@@ -87,6 +87,7 @@ class PostController(ApiController):
         return self.redirect(request.referer)
 
     @validate(pref_frame = VBoolean('frame'),
+              pref_clickgadget = VBoolean('clickgadget'),
               pref_organic = VBoolean('organic'),
               pref_newwindow = VBoolean('newwindow'),
               pref_public_votes = VBoolean('public_votes'),
@@ -104,6 +105,10 @@ class PostController(ApiController):
               pref_show_stylesheets = VBoolean('show_stylesheets'),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
+        #temporary. eventually we'll change pref_clickgadget to an
+        #integer preference
+        kw['pref_clickgadget'] = kw['pref_clickgadget'] and 5 or 0
+
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")
         u.update_query(done = 'true')

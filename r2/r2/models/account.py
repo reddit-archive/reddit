@@ -41,6 +41,7 @@ class Account(Thing):
                      pref_frame = False,
                      pref_frame_commentspanel = False,
                      pref_newwindow = False,
+                     pref_clickgadget = 5,
                      pref_public_votes = False,
                      pref_hide_ups = False,
                      pref_hide_downs = False,
