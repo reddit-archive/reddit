@@ -218,11 +218,14 @@ $.fn.vote = function(vh, callback) {
             things.each(function() {
                     var entry =  $(this).find(".entry:first, .midcol:first");
                     if(dir > 0) 
-                        entry.addClass('likes').removeClass('dislikes');
+                        entry.addClass('likes')
+                            .removeClass('dislikes unvoted');
                     else if(dir < 0) 
-                        entry.removeClass('likes').addClass('dislikes');
+                        entry.addClass('dislikes')
+                            .removeClass('likes unvoted');
                     else
-                        entry.removeClass('likes').removeClass('dislikes');
+                        entry.addClass('unvoted')
+                            .removeClass('likes dislikes');
                 });
             
             $.request("vote", {id: things.filter(":first").thing_id(), 

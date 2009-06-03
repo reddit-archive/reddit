@@ -48,7 +48,7 @@
    thing.score_fmt = Score.safepoints
  %>
   ${self.arrows(thing)}
-  <div class="reddit-entry" 
+  <div class="reddit-entry entry ${thing.like_cls}" 
        %if expanded:
          ${optionalstyle("margin-left: 58px;")}
        %else:

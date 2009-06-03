@@ -22,6 +22,14 @@
 <%namespace file="utils.html" import="optionalstyle"/>
 <%namespace file="printable.html" import="arrow"/>
 
+<%
+    like_cls = "unvoted"
+    if getattr(thing, "likes", None):
+        like_cls = "likes"
+    elif getattr(thing, "likes", None) is False:
+        like_cls = "dislikes"
+    thing.like_cls = like_cls
+ %>
 ${self.parent()}
 ${self.entry()}
 ${self.Child()}
@@ -82,7 +90,7 @@ ${self.Child()}
 </%def>
 
 <%def name="real_arrows(thing)">
-  <div class="midcol" ${optionalstyle("width: 15px")}>
+  <div class="midcol ${thing.like_cls}" ${optionalstyle("width: 15px")}>
     ${arrow(thing, 1, thing.likes)}
     ${arrow(thing, 0, thing.likes == False)}
  </div>

@@ -1,5 +1,24 @@
 .link { line-height: 1.1; }
 
+/* I don't even pretend to understand why we need this when we set 
+ *   .score.likes, .score.dislikes { display: none }
+ * in the main css.  Those act to hide the *entire* thing in IE6, but is fixed
+ * by only changing the midcol css.  */
+.thing .midcol.likes, .thing .midcol.dislikes  { display: block; }
+
+.thing .midcol .score { display: none;  }
+
+.thing .midcol.unvoted .score.unvoted { display: block;  }
+.thing .midcol.likes .score.likes { display: block;  }
+.thing .midcol.dislikes .score.dislikes { display: block;  }
+
+.thing .entry .score { display: none;  }
+
+.thing .entry.unvoted .score.unvoted { display: inline;  }
+.thing .entry.likes .score.likes { display: inline;  }
+.thing .entry.dislikes .score.dislikes { display: inline;  }
+
+
 div.dropdown.tabdrop { display: inline; }
 
 div.drop-choices { 
