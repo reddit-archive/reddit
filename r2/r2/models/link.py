@@ -334,11 +334,15 @@ class Link(Thing, Printable):
                 get_domain(cname = c.cname, subreddit=False),
                 item._id36)
 
-            item.click_url = item.url
             if item.is_self:
-                item.click_url = item.permalink
-            elif c.user.pref_frame:
-                item.click_url = item.tblink
+                item.href_url = item.permalink
+            else:
+                item.href_url = item.url
+
+            if c.user.pref_frame:
+                item.mousedown_url = item.tblink
+            else:
+                item.mousedown_url = None
 
             item.fresh = not any((item.likes != None,
                                   item.saved,

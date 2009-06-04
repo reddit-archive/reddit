@@ -44,7 +44,7 @@
 
 <%def name="make_link(name, css_class)">
   <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
-     href="${thing.click_url}"
+     href="${thing.href_url}"
      %if thing.nofollow:
        rel="nofollow"
      %endif
@@ -52,6 +52,9 @@
        target="_blank"
      %elif c.cname:
        target="_top"
+     %endif
+     %if thing.mousedown_url:
+       onmousedown="this.href='${thing.mousedown_url}'"
      %endif
      >
      ${caller.body()}

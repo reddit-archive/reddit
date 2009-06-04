@@ -55,8 +55,17 @@
          ${optionalstyle("margin-left: 28px; min-height:32px;")}
        %endif
        >
-    <a href="${thing.click_url}" class="reddit-link-title"
-      ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}>
+    <a href="${thing.href_url}" class="reddit-link-title"
+      ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
+       %if c.user.pref_newwindow:
+         target="_blank"
+       %elif c.cname:
+         target="_top"
+       %endif
+       %if thing.mousedown_url:
+         onmousedown="this.href='${thing.mousedown_url}'"
+       %endif
+       >
       ${thing.title}
     </a>
     %if not expanded:
