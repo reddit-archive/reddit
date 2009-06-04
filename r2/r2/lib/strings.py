@@ -111,7 +111,9 @@ string_dict = dict(
     banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [feedback](%(link)s) and be sure to include the exact name of the reddit."""),
     comments_panel_text = _("""
     The following is a sample of what Reddit users had to say about this
-    page. The full discussion is available [here](%(fd_link)s).
+    page. The full discussion is available [here](%(fd_link)s); you can
+    also get there by clicking the link's title
+    (in the middle of the toolbar, to the right of the comments button).
     """),
 )
 

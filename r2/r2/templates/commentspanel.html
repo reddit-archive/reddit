@@ -34,9 +34,9 @@
   ${unsafe(thing.infobar)}
 
   ${toggleable_label("tb-comments-panel-toggle",
-                     _("This panel will appear when " +
-                       "there are comments."),
-                     _("This panel will be hidden by default."),
+                     _("This sidebar will automatically appear " +
+                       "when there are comments."),
+                     _("This sidebar will not be shown automatically."),
                      "toolbar.pref_commentspanel_hide",
                      "toolbar.pref_commentspanel_show",
                      reverse = not c.user.pref_frame_commentspanel)}

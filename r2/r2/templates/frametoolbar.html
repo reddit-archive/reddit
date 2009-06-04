@@ -35,6 +35,17 @@
 
 <%def name="bodyHTML()">
 <body class="toolbar">
+  <div class="preload">
+    ## everything in here will get rendered off screen for pre-fetching purposes.
+    <div class="arrow up"></div>
+    <div class="arrow upmod"></div>
+    <div class="arrow down"></div>
+    <div class="arrow downmod"></div>
+    <img src="${static('link.png')}" />
+    <img src="${static('link-active.png')}" />
+    <img src="${static('tb-loginarrow-right.png')}" />
+  </div>
+
   <div class="left-side">
     <a class="logo" target="_top" href="http://${get_domain(cname = c.cname)}/">
       <img src="${static('logo-toolbar.png')}" alt="${c.site.description or c.site.name}"

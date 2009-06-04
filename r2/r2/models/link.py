@@ -339,7 +339,7 @@ class Link(Thing, Printable):
             else:
                 item.href_url = item.url
 
-            if c.user.pref_frame:
+            if c.user.pref_frame and not item.is_self:
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
