@@ -795,7 +795,7 @@ $(function() {
             $.cookie_name_prefix(reddit.logged);
         }
         else {
-            populate_click_gadget();
+            //populate_click_gadget();
         }
         /* set up the cookie domain */
         $.default_cookie_domain(reddit.cur_domain.split(':')[0]);
