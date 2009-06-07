@@ -286,27 +286,55 @@ def get_read_table(tables):
     ips = dict((t[0].bind.url.host, t) for t in tables)
     ip_loads = AppServiceMonitor.get_db_load(ips.keys())
 
-    candidates = []
-    all_ips = []
+    total_load = 0
+    missing_loads = []
+    no_connections = []
+    have_loads = []
+
     for ip in ips:
         if ip not in ip_loads:
-            print 'no load info for %s' % ip
-            all_ips.append(ip)
+            missing_loads.append(ip)
         else:
             load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
 
             #prune high-connection machines
             if conns < .9 * max_conns:
-                candidates.append((ip, max(load, avg_load)))
+                max_load = max(load, avg_load)
+                total_load += max_load
+                have_loads.append((ip, max_load))
             else:
-                all_ips.append(ip)
+                no_connections.append(ip)
 
-    #add the least loaded machine to all_ips
-    if candidates:
-        all_ips.append(min(candidates, key = lambda x: x[1])[0])
+    if total_load:
+        avg_load = total_load / max(len(have_loads), 1)
+        ip_weights = [(ip, 1 - load / total_load) for ip, load in have_loads]
+    #if total_load is 0, which happens when have_loads is empty
+    else:
+        avg_load = 1.0
+        ip_weights = [(ip, 1.0 / len(have_loads)) for ip, load in have_loads]
 
-    best_ip = random.choice(all_ips)
-    return ips[best_ip]
+    if missing_loads or no_connections:
+        #add in the missing load numbers with an average weight
+        ip_weights.extend((ip, avg_load) for ip in missing_loads)
+
+        #add in the over-connected machines with a 1% weight
+        ip_weights.extend((ip, .01) for ip in no_connections)
+
+        #rebalance the weights
+        total_weight = sum(w[1] for w in ip_weights)
+        ip_weights = [(ip, weight / total_weight)
+                      for ip, weight in ip_weights]
+
+    r = random.random()
+    for ip, load in ip_weights:
+        if r < load:
+            return ips[ip]
+        else:
+            r = r - load
+
+    #should never happen
+    print 'yer stupid'
+    return  random.choice(tables)
 
 def get_table(kind, action, tables):
     if action == 'write':
