@@ -65,14 +65,14 @@
           %endif
         </li>
     %else:
-      <li>
+      <li class="karma">
         ${_("karma:")} &#32;<b>${thing.user.safe_karma}</b>
       </li>
-      <li>
+      <li class="comment-karma">
         ${_("comment karma:")} &#32;<b>${thing.user.comment_karma}</b>
       </li>
     %endif 
-    <li>
+    <li class="user-age">
       ${_("user for %(time)s") % dict(time=timesince(thing.user._date))}
     </li>
 

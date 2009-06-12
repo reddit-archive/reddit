@@ -717,8 +717,8 @@ a.star { text-decoration: none; color: #ff8b60 }
 .dislikes div.score.dislikes {display: block;}
 
 /* compressed links */
-.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 7px; }
-.linkcompressed .title {margin-bottom: 3px; font-size:medium; font-weight: normal;}
+.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 8px; }
+.linkcompressed .title {margin-bottom: 4px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
     text-transform: none; 
@@ -736,7 +736,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 .linkcompressed .arrow.down, .linkcompressed .arrow.downmod {
-    margin-top: 3px;
+    margin-top: 4px;
 }
 
 .linkcompressed .tagline { display: inline; margin-top: 0px; margin-bottom: 1px; }
@@ -747,7 +747,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #f9f9f9;
+    background-color: #fafafa;
     font-weight: bold
 }
 

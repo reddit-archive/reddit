@@ -30,7 +30,7 @@ $(function() {
         var p = $(this).prev();
         var s = p.html();
         var id = $(this).attr("id");
-        if (s.length < 80) {
+        if (s.length < 20) {
            p.replaceWith("<input type='text' width='40'/>");
            $(this).prev().attr("value", s);
         }
@@ -47,10 +47,20 @@ $(function() {
 %if thing.locale:
   Translation: en to ${thing.locale}
   %if thing.is_valid():
-   &nbsp;<a href="/admin/i18n/try/${thing.locale}" target="_blank"
-      style="color: green">
-    [try translation]
-   </a>
+   <ul style="padding: 5px 15px">
+     <li>
+       <a href="/admin/i18n/try/${thing.locale}" target="_blank"
+          style="color: green">
+         [try translation]
+       </a>
+     </li>
+     <li>
+       <a href="/admin/i18n/try/${thing.locale}?numbers=on" target="_blank"
+          style="color: green">
+         [try translation with numbers]
+       </a>
+     </li>
+   </ul>
   %endif
 %else:
   Base Translation Template

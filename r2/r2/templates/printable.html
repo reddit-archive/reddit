@@ -364,7 +364,7 @@ thing id-${what._fullname}
      cls = "comments empty" if num == 0 else "comments"
 
      if num > 0:
-         link_text = strings.number_label % (num, link_text)
+         link_text = strings.number_label % dict(num=num, thing=link_text)
 
      target = '_blank' if newwindow else '_parent'
   %>

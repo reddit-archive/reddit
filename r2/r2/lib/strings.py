@@ -46,10 +46,16 @@ string_dict = dict(
     reports   = "reports: %d",
     
     # this accomodates asian languages which don't use spaces
-    number_label = _("%d %s"),
+    number_label = _("%(num)d %(thing)s"),
 
     # this accomodates asian languages which don't use spaces
-    float_label = _("%5.3f %s"),
+    points_label = _("%(num)d %(point)s"),
+
+    # this accomodates asian languages which don't use spaces
+    time_label = _("%(num)d %(time)s"),
+
+    # this accomodates asian languages which don't use spaces
+    float_label = _("%(num)5.3f %(thing)s"),
 
     # this is for Japanese which treats people counds differently
     person_label = _("%(num)d %(persons)s"),
@@ -208,11 +214,12 @@ class Score(object):
 
     @staticmethod
     def points(x):
-        return  strings.number_label % (x, plurals.N_points(x))
+        return  strings.points_label % dict(num=x, point=plurals.N_points(x))
 
     @staticmethod
     def safepoints(x):
-        return  strings.number_label % (max(x,0), plurals.N_points(x))
+        return  strings.points_label % dict(num=max(x,0), 
+                                            point=plurals.N_points(x))
 
     @staticmethod
     def subscribers(x):

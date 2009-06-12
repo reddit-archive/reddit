@@ -202,15 +202,15 @@ class Reddit(Wrapped):
                          NamedButton("stats", False, nocname=True),
                          NamedButton('random', False, nocname=False),
                          NamedButton("feedback", False),],
-                        title = 'site links', type = 'flat_vert',
+                        title = _('site links'), type = 'flat_vert',
                         separator = ''),
 
                 NavMenu([NamedButton("help", False, nocname=True),
-                         OffsiteButton("FAQ", dest = '/help/faq',
+                         OffsiteButton(_("FAQ"), dest = '/help/faq',
                                        nocname=True),
-                         OffsiteButton("reddiquette", nocname=True,
+                         OffsiteButton(_("reddiquette"), nocname=True,
                                        dest = '/help/reddiquette')],
-                        title = 'help', type = 'flat_vert',
+                        title = _('help'), type = 'flat_vert',
                         separator = ''),
 
                 NavMenu([NamedButton("bookmarklets", False),
@@ -219,16 +219,16 @@ class Reddit(Wrapped):
                          NamedButton("socialite", False),
                          NamedButton("widget", True),
                          NamedButton("iphone", False),],
-                        title = 'reddit tools', type = 'flat_vert',
+                        title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
 
                 NavMenu([NamedButton("blog", False, nocname=True),
-                         OffsiteButton("our pet fish",
+                         OffsiteButton(_("our pet fish"),
                                        dest="http://justin.tv/reddit"),
                          NamedButton("ad_inq", False, nocname=True),
                          OffsiteButton('reddit.tv', "http://www.reddit.tv"),
                          OffsiteButton('redditall', "http://www.redditall.com"),],
-                        title = 'about us', type = 'flat_vert',
+                        title = _('about us'), type = 'flat_vert',
                         separator = ''),
                 NavMenu([OffsiteButton('BaconBuzz',
                                        "http://www.baconbuzz.com"),
@@ -244,7 +244,7 @@ class Reddit(Wrapped):
                                        "http://www.weheartgossip.com"),
                          OffsiteButton('idealistNews',
                                        "http://www.idealistnews.com"),],
-                        title = 'brothers', type = 'flat_vert',
+                        title = _('brothers'), type = 'flat_vert',
                         separator = ''),
                 NavMenu([OffsiteButton('Wired.com',
                                        "http://www.wired.com"),
@@ -256,7 +256,7 @@ class Reddit(Wrapped):
                                        "http://www.epicurious.com"),
                          OffsiteButton('Concierge.com',
                                        "http://www.concierge.com")],
-                        title = 'sisters', type = 'flat_vert',
+                        title = _('sisters'), type = 'flat_vert',
                         separator = '')
                 ]
 
@@ -978,8 +978,8 @@ class FrameToolbar(Wrapped):
                 # generates "XX comments" as a noun
                 com_label = ungettext("comment", "comments",
                                       link.num_comments)
-                self.com_label = strings.number_label % (
-                    link.num_comments, com_label)
+                self.com_label = strings.number_label % dict(
+                    num = link.num_comments, thing = com_label)
 
 
             # generates "XX points" as a noun

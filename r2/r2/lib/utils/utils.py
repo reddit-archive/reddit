@@ -407,10 +407,11 @@ def timetext(delta, resultion = 1, bare=True):
     from r2.lib.strings import strings
     if count == 0 and delta.seconds == 0 and delta != timedelta(0):
         n = math.floor(delta.microseconds / 1000)
-        s = strings.number_label % (n, ungettext("millisecond", 
-                                                 "milliseconds", n))
+        s = strings.time_label % dict(num=n, 
+                                      time=ungettext("millisecond", 
+                                                     "milliseconds", n))
     else:
-        s = strings.number_label % (count, name(int(count)))
+        s = strings.time_label % dict(num=count, time=name(int(count)))
         if resultion > 1:
             if i + 1 < len(chunks):
                 # Now get the second item

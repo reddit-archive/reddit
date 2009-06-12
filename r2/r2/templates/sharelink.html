@@ -67,7 +67,7 @@
       <tr>
         <th>
           <label for="message_${thing.link_name}">
-            ${_("message")}
+            ${_("message {share form}")}
           </label>&nbsp;
           <span class="little gray">
             ${_("(optional)")}
@@ -76,7 +76,7 @@
         <td>
           <textarea id="message_${thing.link_name}" 
                     name="message" rows="4" cols="40">
-            ${c.user.name} from http://${c.site.domain if c.cname and hasattr(c.site, 'domain') else g.domain}/ has shared a link with you.
+            ${_("%(user)s from http://%(site)s/ has shared a link with you.") % dict(user = c.user.name, site=c.site.domain if c.cname and hasattr(c.site, 'domain') else g.domain)}
           </textarea>
         </td>
         <td class="message-errors">

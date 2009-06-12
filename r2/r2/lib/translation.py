@@ -117,18 +117,20 @@ class TranslatedString(Wrapped):
         def __repr__(self):
             return self.str
 
-        def _po_str(self, header, cut = 60):
-            if len(self.str) > cut:
-                if '\\n' in self.str:
-                    txt = [i + "\\n" for i in self.str.split('\\n') if i]
+        def _po_str(self, header, cut = 60, include_index = False):
+            s = self.str
+            if include_index:
+                s = ("/*%s:*/" % include_index) + s
+            if len(s) > cut:
+                if '\\n' in s:
+                    txt = [i + "\\n" for i in s.split('\\n') if i]
                 else:
-                    txt = [self.str] #[self.str[i:i+cut]
-                           #for i in range(0, len(self.str), cut)]
+                    txt = [s]
                 res = '%s ""\n' % header
                 for t in txt:
                     res += '"%s"\n' % t.replace('"', '\\"')
             else:
-                res = '%s "%s"\n' % (header, self.str.replace('"', '\\"'))
+                res = '%s "%s"\n' % (header, s.replace('"', '\\"'))
             if isinstance(res, unicode):
                 return res.encode('utf8')
             return res
@@ -154,14 +156,15 @@ class TranslatedString(Wrapped):
             return other.valid() and (not self.name or other.subst.issubset(self.subst))
 
     def __init__(self, translator, sing, plural = '', message = '',
-                 enabled = True, locale = '', tip = ''):
-        Wrapped.__init__(self, self)
+                 enabled = True, locale = '', tip = '', index = 0):
+        Wrapped.__init__(self)
 
         self.translator = translator
         self.message = message
         self.enabled = enabled
         self.locale = locale
         self.tip = ''
+        self.index = 0
 
         # figure out where this item appears in the source
         source = source_line.findall(message)
@@ -231,23 +234,28 @@ class TranslatedString(Wrapped):
     def __repr__(self):
         return "<TranslatioString>"
 
-    def __str__(self):
+    def to_string(self, include_index = False):
         res = ''
         if self.message:
             res = '#' + self.message.replace('\n', '\n#')
             if res[-1] == '#': res = res[:-1]
-        res += self.msgid._po_str('msgid')
+        res += self.msgid._po_str('msgid', include_index = False)
         if unicode(self.msgid_plural):
-            res += self.msgid_plural._po_str('msgid_plural')
+            res += self.msgid_plural._po_str('msgid_plural', 
+                                             include_index = False)
             for i in range(0, min(len(self.msgstr), self.translator.nplurals)):
-                res += self.msgstr[i]._po_str('msgstr[%d]'%i)
+                res += self.msgstr[i]._po_str('msgstr[%d]'%i, 
+                                              include_index = include_index)
         else:
-            res += self.msgstr._po_str('msgstr')
+            res += self.msgstr._po_str('msgstr', include_index = include_index)
         res += "\n"
         try:
             return str(res)
         except UnicodeEncodeError:
             return unicode(res + "\n").encode('utf-8')
+
+    def __str__(self):
+        return self.to_string(False)
 
 
     def is_valid(self, indx = -1):
@@ -355,6 +363,7 @@ class Translator(LoggedSlots):
                 yield (k, self.strings[indx].singular)
     
     def from_file(self, file, merge = False):
+        indx = 0
         with open(file, 'r') as handle:
             line = True
             while line:
@@ -380,6 +389,9 @@ class Translator(LoggedSlots):
                     key = ts.md5
                     if self.enabled.has_key(key):
                         ts.enabled = self.enabled[key]
+                        if ts.enabled:
+                            indx += 1
+                            ts.index = indx
                     while msgstr.match(line):
                         r, translation, line = get_next_str_block(line, handle)
                         ts.add(translation)
@@ -394,6 +406,7 @@ class Translator(LoggedSlots):
                         self.sources[md5(ts.source).hexdigest()] = ts.source
 
     def load_specialty_strings(self):
+        indx = len(self.strings)
         from r2.lib.strings import rand_strings
         for name, rs in rand_strings:
             for desc in rs:
@@ -408,6 +421,8 @@ class Translator(LoggedSlots):
                     ts = self.strings[self.string_dict[key]]
                 self.sources[md5(ts.source).hexdigest()] = ts.source
                 ts.enabled = True
+                indx += 1
+                ts.index = indx
 
 
     def __getitem__(self, key):
@@ -425,10 +440,12 @@ class Translator(LoggedSlots):
         if s: s[indx] = val
 
 
-    def to_file(self, file, compile=False, mo_file=None):
+    def to_file(self, file, compile=False, mo_file=None,
+                include_index = False):
         with WithWriteLock(file) as handle:
             for string in self.strings:
-                handle.write(str(string))
+                indx = include_index and string.index
+                handle.write(string.to_string(include_index = indx))
         if compile and self.is_valid():
             if mo_file:
                 out_file = mo_file
@@ -440,6 +457,10 @@ class Translator(LoggedSlots):
             cmd = 'msgfmt -o "%s" "%s"' % (out_file, file)
             with os.popen(cmd) as handle:
                 x = handle.read()
+        if include_index:
+            with WithWriteLock(file) as handle:
+                for string in self.strings:
+                    handle.write(string.to_string(include_index = False))
             
 
     def __iter__(self):
@@ -466,9 +487,10 @@ class Translator(LoggedSlots):
         return os.path.exists(cls.outfile(locale, domain=domain, path=path))
 
 
-    def save(self, compile = False):
+    def save(self, compile = False, include_index = False):
         self.to_file(self._out_file('po'), compile = compile,
-                     mo_file = self._out_file('mo'))
+                     mo_file = self._out_file('mo'),
+                     include_index = include_index)
         self.gen_stats()
         self.dump_slots()
 

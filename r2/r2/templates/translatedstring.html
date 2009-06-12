@@ -32,73 +32,62 @@
 
  %>
 
-<%def name="midcol()">
-<td>
-<a name="thing_${thing.md5}"></a>
-%if c.user_is_admin and not thing.locale:
-    <input type="checkbox" name="enabled_${thing.md5}" 
-           ${thing.enabled and "checked='checked'" or ''}
-           />
-%endif
-</td>
-</%def>
-
 %if (singular and thing.enabled) or c.user_is_admin:
-<tr style="vertical-align:top">
-  %if plural:
-  <td style="text-align: right; width: 25em; padding-right: 5px; padding-bottom: 5px">
-    <b>Singular:</b>&nbsp;${singular},&nbsp;
-    <b>Plural:</b>&nbsp;${plural}
-  </td>
-  ${midcol()}
-  <td style="padding-bottom: 5px">
-    %for i in xrange(thing.translator.nplurals):
-    ${text_input(thing.translation(i), thing.is_valid(i), 
-                 index=i)}
-    <span style="margin-left: 5px; color:gray">
-      (${thing.translator.plural_names[i] if len(thing.translator.plural_names) > i else "case #%d" % (i+1)})
-    </span><br/>
-    %endfor
-  %else:
-  <td style="text-align: right; width: 25em; padding-right: 5px">
-    ${singular}
-  </td>
-  
-  ${midcol()}
-  <td style="padding-bottom: 5px">
-    ${text_input(thing.translation(), thing.is_valid(), 
-                 len=len(thing.singular))}
-   %endif
+  <tr style="vertical-align:top">
+    <th style="padding-right: 5px; text-align: right;">
+      <b>(${thing.index})</b>
+    </th>
+    %if plural:
+     <td style="text-align: right; width: 25em; padding-right: 5px; padding-bottom: 5px">
+       <b>Singular:</b>&nbsp;${singular},&nbsp;
+       <b>Plural:</b>&nbsp;${plural}
+     </td>
+    %else:
+      <td style="text-align: right; width: 25em; padding-right: 5px">
+        ${singular}
+      </td>
+    %endif
+    <td>
+      <a name="thing_${thing.md5}"></a>
+      %if c.user_is_admin and not thing.locale:
+        <input type="checkbox" name="enabled_${thing.md5}" 
+               ${thing.enabled and "checked='checked'" or ''}
+               />
+      %endif
+    </td>
+    %if plural:
+     <td style="padding-bottom: 5px">
+       %for i in xrange(thing.translator.nplurals):
+       ${text_input(thing.translation(i), thing.is_valid(i), 
+                    index=i)}
+       <span style="margin-left: 5px; color:gray">
+         (${thing.translator.plural_names[i] if len(thing.translator.plural_names) > i else "case #%d" % (i+1)})
+       </span><br/>
+       %endfor
+    %else:
+       <td style="padding-bottom: 5px">
+         ${text_input(thing.translation(), thing.is_valid(), 
+                      len=len(singular))}
+    %endif
     %if thing.tip:
       <span style="color: gray; margin-left: 5px;">${thing.tip}</span>
     %endif
-  </td>
-</tr>
+    </td>
+  </tr>
 %endif
 
 
-<%def name="text_input(text, valid, 
-            index = 0, len = 0)">
-<div style="display:inline">
-  %if text and valid:
+<%def name="text_input(text, valid, index = 0, len = 0)">
+  <div style="display:inline">
     <b style="padding-right: 5px">
       ${text}
     </b>
     <a class="edit-trans" id="${thing.md5}_${index}"
        href="javascript:void(0)">edit</a>
-  %elif len < 80:
-    <input type="text" value="${text}" size="40"
-           name="trans_${thing.md5}_${index}"/>
-  %else:
-    <textarea rows="4" cols="40"
-              name="trans_${thing.md5}_${index}"> 
-      ${text}
-    </textarea>
-  %endif
-  %if not valid:
-  <span class="error">
-    Invalid Translation
-  </span>
-  %endif
-</div>
+    %if not valid:
+    <span class="error">
+      Invalid Translation
+    </span>
+    %endif
+  </div>
 </%def>

@@ -1,1873 +1,2734 @@
 # Translations template for r2.
-# Copyright (C) 2008 ORGANIZATION
+# Copyright (C) 2009 ORGANIZATION
 # This file is distributed under the same license as the r2 project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: r2 0.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2008-06-16 14:26-0700\n"
+"POT-Creation-Date: 2009-06-09 10:14-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.1\n"
+"Generated-By: Babel 0.9.4\n"
 
-#: r2/controllers/api.py:67
+#: r2/controllers/api.py:88 r2/controllers/listingcontroller.py:361
 msgid "API"
 msgstr ""
 
-#: r2/controllers/api.py:110 r2/controllers/feedback.py:14
+#: r2/controllers/api.py:111 r2/controllers/feedback.py:35
 msgid "thanks for your message! you should hear back from us shortly."
 msgstr ""
 
-#: r2/controllers/api.py:143 r2/templates/messagecompose.html:5
+#: r2/controllers/api.py:140 r2/templates/messagecompose.html:32
 msgid "your message has been delivered"
 msgstr ""
 
-#: r2/controllers/api.py:173 r2/controllers/front.py:424
-msgid "seen it"
+#: r2/controllers/api.py:403
+msgid "added"
 msgstr ""
 
-#: r2/controllers/api.py:184 r2/controllers/front.py:435 r2/lib/menus.py:64
-#: r2/templates/newlink.html:4 r2/templates/newlink.html:64
-msgid "submit"
-msgstr ""
-
-#: r2/controllers/api.py:433
+#: r2/controllers/api.py:443
 msgid "your email has been updated"
 msgstr ""
 
-#: r2/controllers/api.py:446
+#: r2/controllers/api.py:453
 msgid "your email and password have been updated"
 msgstr ""
 
-#: r2/controllers/api.py:449
+#: r2/controllers/api.py:456
 msgid "your password has been updated"
 msgstr ""
 
-#: r2/controllers/api.py:464
+#: r2/controllers/api.py:475
 msgid "see? you don't really want to leave"
 msgstr ""
 
-#: r2/controllers/buttons.py:76
+#: r2/controllers/api.py:603
+msgid "replied"
+msgstr ""
+
+#: r2/controllers/api.py:669
+msgid "shared"
+msgstr ""
+
+#: r2/controllers/api.py:672
+msgid "your link has been shared."
+msgstr ""
+
+#: r2/controllers/api.py:745
+msgid "validation errors"
+msgstr ""
+
+#: r2/controllers/api.py:766 r2/controllers/api.py:902 r2/controllers/api.py:989
+#: r2/controllers/api.py:1360 r2/controllers/listingcontroller.py:258
+#: r2/lib/menus.py:49 r2/templates/frametoolbar.html:198 r2/templates/link.html:159
+msgid "saved"
+msgstr ""
+
+#: r2/controllers/api.py:832 r2/lib/menus.py:145 r2/templates/printable.html:128
+#: r2/templates/subredditstylesheet.html:236
+msgid "deleted"
+msgstr ""
+
+#: r2/controllers/api.py:878 r2/templates/subredditstylesheet.html:195
+msgid "bad image name"
+msgstr ""
+
+#: r2/controllers/api.py:885 r2/controllers/api.py:1355
+msgid "bad image"
+msgstr ""
+
+#: r2/controllers/api.py:889
+#, python-format
+msgid "too many images (you only get %d)"
+msgstr ""
+
+#: r2/controllers/api.py:1147
+msgid "an email will be sent to that account's address shortly"
+msgstr ""
+
+#: r2/controllers/buttons.py:183
 msgid "reddit buttons"
 msgstr ""
 
-#: r2/controllers/buttons.py:82
+#: r2/controllers/buttons.py:189
 msgid "reddit widget"
 msgstr ""
 
-#: r2/controllers/buttons.py:88 r2/lib/menus.py:71
+#: r2/controllers/buttons.py:194
+msgid "socialite toolbar"
+msgstr ""
+
+#: r2/controllers/buttons.py:200 r2/lib/menus.py:93
 msgid "bookmarklets"
 msgstr ""
 
-#: r2/controllers/embed.py:18 r2/lib/menus.py:65
-#: r2/templates/commentreplybox.html:41
+#: r2/controllers/embed.py:46
+msgid "edit this page"
+msgstr ""
+
+#: r2/controllers/embed.py:47
+msgid "read this first"
+msgstr ""
+
+#: r2/controllers/embed.py:62 r2/lib/menus.py:87 r2/lib/pages/pages.py:213
+#: r2/templates/commentreplybox.html:58 r2/templates/frametoolbar.html:102
+#: r2/templates/frametoolbar.html:109
 msgid "help"
 msgstr ""
 
-#: r2/controllers/error.py:79
+#: r2/controllers/error.py:110
 #, python-format
 msgid "forbidden (%(domain)s)"
 msgstr ""
 
-#: r2/controllers/error.py:88
-msgid "this reddit has been banned."
-msgstr ""
-
-#: r2/controllers/error.py:96
-msgid "page not found"
-msgstr ""
-
-#: r2/controllers/errors.py:6
-msgid "url required"
-msgstr ""
-
-#: r2/controllers/errors.py:7
-msgid "you should check that url"
-msgstr ""
-
-#: r2/controllers/errors.py:8
-msgid "title required"
-msgstr ""
-
-#: r2/controllers/errors.py:9 r2/controllers/errors.py:10
-msgid "you can be more succinct than that"
-msgstr ""
-
-#: r2/controllers/errors.py:11
-msgid "your letters stink"
-msgstr ""
-
-#: r2/controllers/errors.py:12
-msgid "invalid user name"
-msgstr ""
-
-#: r2/controllers/errors.py:13
-msgid "that username is already taken"
-msgstr ""
-
-#: r2/controllers/errors.py:14
-msgid "id not specified"
-msgstr ""
-
-#: r2/controllers/errors.py:15
-msgid "you can't do that"
-msgstr ""
-
-#: r2/controllers/errors.py:16
-msgid "please enter a comment"
-msgstr ""
-
-#: r2/controllers/errors.py:17 r2/controllers/errors.py:18
-msgid "invalid password"
-msgstr ""
-
-#: r2/controllers/errors.py:19
-msgid "passwords do not match"
-msgstr ""
-
-#: r2/controllers/errors.py:20
-msgid "please enter a name"
-msgstr ""
-
-#: r2/controllers/errors.py:21
-msgid "please enter an email address"
-msgstr ""
-
-#: r2/controllers/errors.py:22
-msgid "no email address for that user"
-msgstr ""
-
-#: r2/controllers/errors.py:23 r2/controllers/errors.py:25
-msgid "please enter a message"
-msgstr ""
-
-#: r2/controllers/errors.py:24
-msgid "send it to whom?"
-msgstr ""
-
-#: r2/controllers/errors.py:26
-msgid "please enter a subject"
+#: r2/controllers/error.py:121
+msgid "this reddit has been banned"
 msgstr ""
 
 #: r2/controllers/errors.py:27
-msgid "that user doesn't exist"
+msgid "please login to do that"
 msgstr ""
 
 #: r2/controllers/errors.py:28
-msgid "please enter a username"
+msgid "url required"
+msgstr ""
+
+#: r2/controllers/errors.py:29
+msgid "you should check that url"
 msgstr ""
 
 #: r2/controllers/errors.py:30
-msgid "that number isn't in the right range"
+msgid "title required"
 msgstr ""
 
-#: r2/controllers/errors.py:31
-msgid "that link has already been submitted"
-msgstr ""
-
-#: r2/controllers/errors.py:32
-msgid "that subreddit already exists"
+#: r2/controllers/errors.py:31 r2/controllers/errors.py:32
+msgid "you can be more succinct than that"
 msgstr ""
 
 #: r2/controllers/errors.py:33
-msgid "that name isn't going to work"
+msgid "your letters stink"
 msgstr ""
 
 #: r2/controllers/errors.py:34
+msgid "invalid user name"
+msgstr ""
+
+#: r2/controllers/errors.py:35
+msgid "that username is already taken"
+msgstr ""
+
+#: r2/controllers/errors.py:36
+msgid "id not specified"
+msgstr ""
+
+#: r2/controllers/errors.py:37
+msgid "you can't do that"
+msgstr ""
+
+#: r2/controllers/errors.py:38
+msgid "please enter a comment"
+msgstr ""
+
+#: r2/controllers/errors.py:39
+msgid "that comment has been deleted"
+msgstr ""
+
+#: r2/controllers/errors.py:40
+msgid "that element has been deleted."
+msgstr ""
+
+#: r2/controllers/errors.py:41 r2/controllers/errors.py:42
+msgid "invalid password"
+msgstr ""
+
+#: r2/controllers/errors.py:43
+msgid "passwords do not match"
+msgstr ""
+
+#: r2/controllers/errors.py:44
+msgid "please enter a name"
+msgstr ""
+
+#: r2/controllers/errors.py:45
+msgid "please enter an email address"
+msgstr ""
+
+#: r2/controllers/errors.py:46
+msgid "no email address for that user"
+msgstr ""
+
+#: r2/controllers/errors.py:47 r2/controllers/errors.py:49
+msgid "please enter a message"
+msgstr ""
+
+#: r2/controllers/errors.py:48
+msgid "send it to whom?"
+msgstr ""
+
+#: r2/controllers/errors.py:50
+msgid "please enter a subject"
+msgstr ""
+
+#: r2/controllers/errors.py:51
+msgid "that user doesn't exist"
+msgstr ""
+
+#: r2/controllers/errors.py:52
+msgid "please enter a username"
+msgstr ""
+
+#: r2/controllers/errors.py:54
+msgid "that number isn't in the right range"
+msgstr ""
+
+#: r2/controllers/errors.py:55
+msgid "that link has already been submitted"
+msgstr ""
+
+#: r2/controllers/errors.py:56
+msgid "that reddit already exists"
+msgstr ""
+
+#: r2/controllers/errors.py:57
+msgid "that reddit doesn't exist"
+msgstr ""
+
+#: r2/controllers/errors.py:58
+msgid "that name isn't going to work"
+msgstr ""
+
+#: r2/controllers/errors.py:59
 #, python-format
 msgid "you are trying to submit too fast. try again in %(time)s."
 msgstr ""
 
-#: r2/controllers/errors.py:35
+#: r2/controllers/errors.py:60
 msgid "your session has expired"
 msgstr ""
 
-#: r2/controllers/errors.py:36
+#: r2/controllers/errors.py:61
 msgid "you must accept the terms first"
 msgstr ""
 
-#: r2/controllers/errors.py:39
+#: r2/controllers/errors.py:66
 msgid "that option is not valid"
 msgstr ""
 
-#: r2/controllers/errors.py:40
+#: r2/controllers/errors.py:67
 msgid "description is too long"
 msgstr ""
 
-#: r2/controllers/feedback.py:10
+#: r2/controllers/errors.py:69
+#, python-format
+msgid "the following emails are invalid: %(emails)s"
+msgstr ""
+
+#: r2/controllers/errors.py:70
+msgid "please enter at least one email address"
+msgstr ""
+
+#: r2/controllers/errors.py:71
+#, python-format
+msgid "please only share to %(num)s emails at a time."
+msgstr ""
+
+#: r2/controllers/feedback.py:31
 msgid "inquire about advertising on reddit"
 msgstr ""
 
-#: r2/controllers/feedback.py:17 r2/lib/menus.py:75
+#: r2/controllers/feedback.py:38
 msgid "advertise"
 msgstr ""
 
-#: r2/controllers/feedback.py:18 r2/lib/menus.py:70
+#: r2/controllers/feedback.py:39 r2/lib/menus.py:92
 msgid "feedback"
 msgstr ""
 
-#: r2/controllers/front.py:40 r2/templates/login.html:45
+#: r2/controllers/front.py:100 r2/templates/login.html:87
 msgid "password"
 msgstr ""
 
-#: r2/controllers/front.py:51
+#: r2/controllers/front.py:114
 msgid "reset password"
 msgstr ""
 
-#: r2/controllers/front.py:200
-#, python-format
-msgid "overview for %(user)s on %(site)s"
+#: r2/controllers/front.py:219 r2/controllers/front.py:221
+#: r2/templates/createsubreddit.html:63
+msgid "create a reddit"
 msgstr ""
 
-#: r2/controllers/front.py:201
-#, python-format
-msgid "comments by %(user)s on %(site)s"
+#: r2/controllers/front.py:250
+msgid "your reddit has been created"
 msgstr ""
 
-#: r2/controllers/front.py:202
-#, python-format
-msgid "submitted by %(user)s on %(site)s"
+#: r2/controllers/front.py:308 r2/lib/menus.py:85
+msgid "stats"
 msgstr ""
 
-#: r2/controllers/front.py:203
-#, python-format
-msgid "liked by %(user)s on %(site)s"
+#: r2/controllers/front.py:349 r2/controllers/front.py:396
+msgid "search results"
 msgstr ""
 
-#: r2/controllers/front.py:204
-#, python-format
-msgid "disliked by %(user)s on %(site)s"
+#: r2/controllers/front.py:495
+msgid "seen it"
 msgstr ""
 
-#: r2/controllers/front.py:205
-#, python-format
-msgid "hidden by %(user)s on %(site)s"
+#: r2/controllers/front.py:503 r2/lib/menus.py:86 r2/templates/newlink.html:30
+#: r2/templates/newlink.html:89
+msgid "submit"
 msgstr ""
 
-#: r2/controllers/front.py:206
+#: r2/controllers/front.py:516 r2/controllers/post.py:146
+msgid "opt out"
+msgstr ""
+
+#: r2/controllers/front.py:516 r2/controllers/post.py:156
+msgid "welcome back"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:269 r2/controllers/listingcontroller.py:334
+msgid "top scoring links"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:279
+msgid "newest submissions"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:336
+msgid "most controversial links"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:343
+msgid "you're really bored now, eh?"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:377
+msgid "recommended for you"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:398
+#, python-format
+msgid "overview for %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:399
+#, python-format
+msgid "comments by %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:400
+#, python-format
+msgid "submitted by %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:401
+#, python-format
+msgid "liked by %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:402
+#, python-format
+msgid "disliked by %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:403
+#, python-format
+msgid "hidden by %(user)s"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:404
 #, python-format
 msgid "profile for %(user)s"
 msgstr ""
 
-#: r2/controllers/front.py:235 r2/controllers/front.py:237
-#: r2/templates/createsubreddit.html:40
-msgid "create a reddit"
-msgstr ""
-
-#: r2/controllers/front.py:277 r2/lib/menus.py:63
-msgid "stats"
-msgstr ""
-
-#: r2/controllers/front.py:314 r2/controllers/front.py:338
-msgid "search results"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:195 r2/lib/menus.py:27
-#: r2/templates/frametoolbar.html:61 r2/templates/link.html:128
-msgid "saved"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:210 r2/controllers/listingcontroller.py:277
-msgid "top scoring links"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:224
-msgid "newest submissions"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:279
-msgid "most controversial links"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:287
-msgid "recommended for you"
-msgstr ""
-
-#: r2/controllers/listingcontroller.py:307 r2/templates/redditheader.html:31
+#: r2/controllers/listingcontroller.py:475 r2/templates/redditheader.html:81
 msgid "messages"
 msgstr ""
 
-#: r2/controllers/listingcontroller.py:366 r2/templates/pagenamenav.html:9
+#: r2/controllers/listingcontroller.py:485
+msgid "comment reply"
+msgstr ""
+
+#: r2/controllers/listingcontroller.py:531 r2/templates/pagenamenav.html:33
 msgid "reddits"
 msgstr ""
 
-#: r2/controllers/listingcontroller.py:401
+#: r2/controllers/listingcontroller.py:565
 msgid "reddits: "
 msgstr ""
 
-#: r2/controllers/post.py:81
+#: r2/controllers/listingcontroller.py:601
+msgid "comments"
+msgstr ""
+
+#: r2/controllers/post.py:120
 msgid "over 18?"
 msgstr ""
 
-#: r2/lib/menus.py:23
-msgid "what's hot"
+#: r2/lib/cssfilter.py:252
+msgid "if you need backslashes, you're doing it wrong"
 msgstr ""
 
-#: r2/lib/menus.py:24
-msgid "what's new"
+#: r2/lib/emailer.py:127
+#, python-format
+msgid "[reddit] %(user)s has shared a link with you"
 msgstr ""
 
-#: r2/lib/menus.py:25
-msgid "top scoring"
+#: r2/lib/emailer.py:130
+msgid "[reddit] a user has shared a link with you"
 msgstr ""
 
-#: r2/lib/menus.py:26
-msgid "most controversial"
+#: r2/lib/emailer.py:135
+msgid "[reddit] email removal notice"
 msgstr ""
 
-#: r2/lib/menus.py:28 r2/lib/menus.py:43
-msgid "recommended"
-msgstr ""
-
-#: r2/lib/menus.py:32
-msgid "hot"
-msgstr ""
-
-#: r2/lib/menus.py:33
-msgid "new"
-msgstr ""
-
-#: r2/lib/menus.py:34
-msgid "old"
-msgstr ""
-
-#: r2/lib/menus.py:35
-msgid "ups"
-msgstr ""
-
-#: r2/lib/menus.py:36
-msgid "downs"
-msgstr ""
-
-#: r2/lib/menus.py:37 r2/templates/widgetdemopanel.html:73
-#: r2/templates/widgetdemopanel.html:94
-msgid "top"
-msgstr ""
-
-#: r2/lib/menus.py:38
-msgid "rank"
-msgstr ""
-
-#: r2/lib/menus.py:39 r2/templates/subredditbox.html:40
-msgid "more"
-msgstr ""
-
-#: r2/lib/menus.py:40
-msgid "relevance"
-msgstr ""
-
-#: r2/lib/menus.py:41
-msgid "controversial"
-msgstr ""
-
-#: r2/lib/menus.py:42
-msgid "saved {toolbar}"
-msgstr ""
-
-#: r2/lib/menus.py:44
-msgid "rising"
+#: r2/lib/emailer.py:141
+msgid "[reddit] email addition notice"
 msgstr ""
 
 #: r2/lib/menus.py:45
-msgid "admin"
+msgid "what's hot"
 msgstr ""
 
-#: r2/lib/menus.py:48 r2/templates/widgetdemopanel.html:78
-msgid "this hour"
+#: r2/lib/menus.py:46
+msgid "what's new"
 msgstr ""
 
-#: r2/lib/menus.py:49 r2/templates/userstats.html:14
-#: r2/templates/widgetdemopanel.html:79
-msgid "today"
+#: r2/lib/menus.py:47
+msgid "top scoring"
 msgstr ""
 
-#: r2/lib/menus.py:50 r2/templates/userstats.html:24
-#: r2/templates/widgetdemopanel.html:80
-msgid "this week"
+#: r2/lib/menus.py:48
+msgid "most controversial"
 msgstr ""
 
-#: r2/lib/menus.py:51 r2/templates/widgetdemopanel.html:81
-msgid "this month"
+#: r2/lib/menus.py:50 r2/lib/menus.py:65
+msgid "recommended"
 msgstr ""
 
-#: r2/lib/menus.py:52
-msgid "this year"
+#: r2/lib/menus.py:51 r2/lib/menus.py:148
+msgid "promote"
 msgstr ""
 
-#: r2/lib/menus.py:53
-msgid "all time"
+#: r2/lib/menus.py:55
+msgid "hot"
 msgstr ""
 
 #: r2/lib/menus.py:56
-msgid "spam"
+msgid "new"
 msgstr ""
 
 #: r2/lib/menus.py:57
-msgid "autobanned"
+msgid "old"
 msgstr ""
 
-#: r2/lib/menus.py:60
-msgid "turn admin on"
+#: r2/lib/menus.py:58
+msgid "ups"
 msgstr ""
 
-#: r2/lib/menus.py:61
-msgid "turn admin off"
+#: r2/lib/menus.py:59
+msgid "downs"
 msgstr ""
 
-#: r2/lib/menus.py:62 r2/lib/pages/pages.py:234 r2/lib/pages/pages.py:242
-msgid "preferences"
+#: r2/lib/menus.py:60 r2/templates/widgetdemopanel.html:173
+msgid "top"
+msgstr ""
+
+#: r2/lib/menus.py:61 r2/templates/subreddittopbar.html:28
+msgid "more"
+msgstr ""
+
+#: r2/lib/menus.py:62
+msgid "relevance"
+msgstr ""
+
+#: r2/lib/menus.py:63 r2/templates/buttontypes.html:177
+msgid "controversial"
+msgstr ""
+
+#: r2/lib/menus.py:64
+msgid "saved {toolbar}"
 msgstr ""
 
 #: r2/lib/menus.py:66
-msgid "blog"
+msgid "rising"
 msgstr ""
 
-#: r2/lib/menus.py:67 r2/templates/frametoolbar.html:107
-msgid "logout"
+#: r2/lib/menus.py:67
+msgid "admin"
 msgstr ""
 
-#: r2/lib/menus.py:72
-msgid "buttons"
+#: r2/lib/menus.py:70 r2/templates/widgetdemopanel.html:121
+msgid "this hour"
 msgstr ""
 
-#: r2/lib/menus.py:73
-msgid "widget"
+#: r2/lib/menus.py:71 r2/templates/userstats.html:38
+#: r2/templates/widgetdemopanel.html:122
+msgid "today"
+msgstr ""
+
+#: r2/lib/menus.py:72 r2/templates/userstats.html:48
+#: r2/templates/widgetdemopanel.html:123
+msgid "this week"
+msgstr ""
+
+#: r2/lib/menus.py:73 r2/templates/widgetdemopanel.html:124
+msgid "this month"
 msgstr ""
 
 #: r2/lib/menus.py:74
-msgid "store"
+msgid "this year"
+msgstr ""
+
+#: r2/lib/menus.py:75
+msgid "all time"
 msgstr ""
 
 #: r2/lib/menus.py:78
-msgid "options"
+msgid "spam"
 msgstr ""
 
 #: r2/lib/menus.py:79
-msgid "friends"
+msgid "autobanned"
 msgstr ""
 
-#: r2/lib/menus.py:80
-msgid "password/email"
+#: r2/lib/menus.py:82
+msgid "turn admin on"
 msgstr ""
 
-#: r2/lib/menus.py:81 r2/templates/prefdelete.html:24
-#: r2/templates/printable.html:87
-msgid "delete"
+#: r2/lib/menus.py:83
+msgid "turn admin off"
 msgstr ""
 
-#: r2/lib/menus.py:84
-msgid "compose"
+#: r2/lib/menus.py:84 r2/lib/pages/pages.py:389 r2/lib/pages/pages.py:397
+msgid "preferences"
 msgstr ""
 
-#: r2/lib/menus.py:85
-msgid "inbox"
+#: r2/lib/menus.py:88
+msgid "the reddit blog"
 msgstr ""
 
-#: r2/lib/menus.py:86
-msgid "sent"
+#: r2/lib/menus.py:89 r2/templates/utils.html:392
+msgid "logout"
 msgstr ""
 
-#: r2/lib/menus.py:89
-msgid "related"
+#: r2/lib/menus.py:94
+msgid "socialite firefox extension"
 msgstr ""
 
-#: r2/lib/menus.py:90
-msgid "details"
+#: r2/lib/menus.py:95
+msgid "buttons"
 msgstr ""
 
-#: r2/lib/menus.py:93
-msgid "about"
+#: r2/lib/menus.py:96
+msgid "widget"
 msgstr ""
 
-#: r2/lib/menus.py:94 r2/templates/comment.html:104
-#: r2/templates/commentreplybox.html:29
-msgid "edit"
-msgstr ""
-
-#: r2/lib/menus.py:95 r2/templates/printable.html:16 r2/templates/printable.html:63
-msgid "banned"
-msgstr ""
-
-#: r2/lib/menus.py:96 r2/lib/pages/pages.py:953
-msgid "ban users"
+#: r2/lib/menus.py:97
+msgid "source code"
 msgstr ""
 
 #: r2/lib/menus.py:98
-msgid "popular"
+msgid "mobile"
 msgstr ""
 
-#: r2/lib/menus.py:99 r2/lib/pages/pages.py:566
-#: r2/templates/admintranslations.html:11 r2/templates/createsubreddit.html:226
-msgid "create"
+#: r2/lib/menus.py:99
+msgid "store"
 msgstr ""
 
 #: r2/lib/menus.py:100
-msgid "my reddits"
+msgid "advertise on reddit"
+msgstr ""
+
+#: r2/lib/menus.py:101
+msgid "top links"
 msgstr ""
 
 #: r2/lib/menus.py:102
-msgid "translate site"
+msgid "random"
 msgstr ""
 
 #: r2/lib/menus.py:103
-msgid "reporters"
-msgstr ""
-
-#: r2/lib/menus.py:104
-msgid "reports"
-msgstr ""
-
-#: r2/lib/menus.py:105
-msgid "reported authors"
+msgid "iPhone app"
 msgstr ""
 
 #: r2/lib/menus.py:106
-msgid "info"
+msgid "options"
+msgstr ""
+
+#: r2/lib/menus.py:107
+msgid "friends"
 msgstr ""
 
 #: r2/lib/menus.py:108
-msgid "overview"
+msgid "password/email"
 msgstr ""
 
-#: r2/lib/menus.py:109
-msgid "submitted"
-msgstr ""
-
-#: r2/lib/menus.py:110
-msgid "liked"
-msgstr ""
-
-#: r2/lib/menus.py:111
-msgid "disliked"
+#: r2/lib/menus.py:109 r2/templates/prefdelete.html:46
+#: r2/templates/printable.html:128
+msgid "delete"
 msgstr ""
 
 #: r2/lib/menus.py:112
+msgid "compose"
+msgstr ""
+
+#: r2/lib/menus.py:113
+msgid "inbox"
+msgstr ""
+
+#: r2/lib/menus.py:114
+msgid "sent"
+msgstr ""
+
+#: r2/lib/menus.py:117
+msgid "related"
+msgstr ""
+
+#: r2/lib/menus.py:118
+msgid "details"
+msgstr ""
+
+#: r2/lib/menus.py:119
+msgid "traffic"
+msgstr ""
+
+#: r2/lib/menus.py:122
+msgid "home"
+msgstr ""
+
+#: r2/lib/menus.py:123
+msgid "about"
+msgstr ""
+
+#: r2/lib/menus.py:124 r2/templates/comment.html:146
+#: r2/templates/commentreplybox.html:49 r2/templates/promotedlink.html:35
+msgid "edit"
+msgstr ""
+
+#: r2/lib/menus.py:125 r2/templates/printable.html:40
+#: r2/templates/printable.html:107 r2/templates/subredditinfobar.html:75
+msgid "banned"
+msgstr ""
+
+#: r2/lib/menus.py:126 r2/lib/pages/pages.py:1247
+msgid "ban users"
+msgstr ""
+
+#: r2/lib/menus.py:128
+msgid "popular"
+msgstr ""
+
+#: r2/lib/menus.py:129 r2/templates/admintranslations.html:33
+#: r2/templates/createsubreddit.html:261 r2/templates/promotelinkform.html:144
+msgid "create"
+msgstr ""
+
+#: r2/lib/menus.py:130 r2/lib/pages/pages.py:800
+msgid "my reddits"
+msgstr ""
+
+#: r2/lib/menus.py:132
+msgid "translate site"
+msgstr ""
+
+#: r2/lib/menus.py:133
+msgid "promoted"
+msgstr ""
+
+#: r2/lib/menus.py:134 r2admin/controllers/admin.py:77
+msgid "reporters"
+msgstr ""
+
+#: r2/lib/menus.py:135 r2admin/controllers/admin.py:98
+msgid "reports"
+msgstr ""
+
+#: r2/lib/menus.py:136
+msgid "reported authors"
+msgstr ""
+
+#: r2/lib/menus.py:137
+msgid "info"
+msgstr ""
+
+#: r2/lib/menus.py:138 r2/templates/link.html:149 r2/templates/sharelink.html:96
+msgid "share"
+msgstr ""
+
+#: r2/lib/menus.py:140
+msgid "overview"
+msgstr ""
+
+#: r2/lib/menus.py:141
+msgid "submitted"
+msgstr ""
+
+#: r2/lib/menus.py:142
+msgid "liked"
+msgstr ""
+
+#: r2/lib/menus.py:143
+msgid "disliked"
+msgstr ""
+
+#: r2/lib/menus.py:144
 msgid "hidden {toolbar}"
 msgstr ""
 
-#: r2/lib/menus.py:113 r2/templates/printable.html:89
-msgid "deleted"
-msgstr ""
-
-#: r2/lib/menus.py:114 r2/templates/printable.html:82
+#: r2/lib/menus.py:146 r2/templates/printable.html:123
+#: r2admin/controllers/admin.py:81
 msgid "reported"
 msgstr ""
 
-#: r2/lib/menus.py:341 r2/lib/menus.py:378
+#: r2/lib/menus.py:149
+msgid "new promoted link"
+msgstr ""
+
+#: r2/lib/menus.py:150
+msgid "promoted links"
+msgstr ""
+
+#: r2/lib/menus.py:394
 msgid "sort by"
 msgstr ""
 
-#: r2/lib/menus.py:393
+#: r2/lib/menus.py:455
 msgid "kind"
 msgstr ""
 
-#: r2/lib/menus.py:398 r2/lib/menus.py:447
+#: r2/lib/menus.py:460 r2/lib/menus.py:509
 msgid "all"
 msgstr ""
 
-#: r2/lib/menus.py:408
+#: r2/lib/menus.py:470
 msgid "links from"
 msgstr ""
 
-#: r2/lib/strings.py:27
+#: r2/lib/strings.py:49
 #, python-format
-msgid "%d %s"
+msgid "%(num)d %(thing)s"
 msgstr ""
 
-#: r2/lib/strings.py:30
+#: r2/lib/strings.py:52
 #, python-format
-msgid "%5.3f %s"
+msgid "%(num)d %(point)s"
 msgstr ""
 
-#: r2/lib/strings.py:33
+#: r2/lib/strings.py:55
+#, python-format
+msgid "%(num)d %(time)s"
+msgstr ""
+
+#: r2/lib/strings.py:58
+#, python-format
+msgid "%(num)5.3f %(thing)s"
+msgstr ""
+
+#: r2/lib/strings.py:61
 #, python-format
 msgid "%(num)d %(persons)s"
 msgstr ""
 
-#: r2/lib/strings.py:35
+#: r2/lib/strings.py:63
 msgid ""
 "reddit is a source for what's new and popular online. vote on links that you "
 "like or dislike and help decide what's popular, or submit your own!"
 msgstr ""
 
-#: r2/lib/strings.py:37
+#: r2/lib/strings.py:65
 #, python-format
 msgid ""
 "that link has already been submitted, but you can try to [submit it "
 "again](%s)."
 msgstr ""
 
-#: r2/lib/strings.py:39
+#: r2/lib/strings.py:67
 #, python-format
 msgid ""
 "that link has been submitted to multiple reddits. you can try to [submit it "
 "again](%s)."
 msgstr ""
 
-#: r2/lib/strings.py:41
+#: r2/lib/strings.py:69
 msgid "your account has been deleted, but we won't judge you for it."
 msgstr ""
 
-#: r2/lib/strings.py:43
+#: r2/lib/strings.py:71 r2/templates/frametoolbar.html:150
 msgid "you'll need to login or register to do that"
 msgstr ""
 
-#: r2/lib/strings.py:44
+#: r2/lib/strings.py:72
 msgid "(don't worry, it only takes a few seconds)"
 msgstr ""
 
-#: r2/lib/strings.py:46
+#: r2/lib/strings.py:74
 #, python-format
 msgid ""
 "I understand and agree that registration on or use of this site constitutes "
 "agreement to its %(user_agreement)s and %(privacy_policy)s."
 msgstr ""
 
-#: r2/lib/strings.py:48
+#: r2/lib/strings.py:76
 #, python-format
 msgid ""
 "to view reddit with only submissions from your friends, use "
 "[reddit.com/r/friends](%s)"
 msgstr ""
 
-#: r2/lib/strings.py:52
+#: r2/lib/strings.py:80
 #, python-format
 msgid "you have been added as a moderator to [%(title)s](%(url)s)."
 msgstr ""
 
-#: r2/lib/strings.py:53
+#: r2/lib/strings.py:81
 #, python-format
 msgid "you have been added as a contributor to [%(title)s](%(url)s)."
 msgstr ""
 
-#: r2/lib/strings.py:54
+#: r2/lib/strings.py:82
 #, python-format
 msgid "you have been banned from posting to [%(title)s](%(url)s)."
 msgstr ""
 
-#: r2/lib/strings.py:59
+#: r2/lib/strings.py:87
 msgid "you are a moderator"
 msgstr ""
 
-#: r2/lib/strings.py:60
+#: r2/lib/strings.py:88
 msgid "you are a contributor"
 msgstr ""
 
-#: r2/lib/strings.py:61
+#: r2/lib/strings.py:89
 msgid "you've been banned"
 msgstr ""
 
-#: r2/lib/strings.py:65
+#: r2/lib/strings.py:93
 msgid "you have not subscribed to any reddits."
 msgstr ""
 
-#: r2/lib/strings.py:66
+#: r2/lib/strings.py:94
 msgid "below are the reddits you have subscribed to"
 msgstr ""
 
-#: r2/lib/strings.py:67
+#: r2/lib/strings.py:95
 msgid "below are the reddits that you have contributor access to."
 msgstr ""
 
-#: r2/lib/strings.py:68
+#: r2/lib/strings.py:96
 msgid "below are the reddits that you have moderator access to."
 msgstr ""
 
-#: r2/lib/strings.py:71
-msgid "click the checkbox next to a reddit to subscribe"
+#: r2/lib/strings.py:99
+msgid ""
+"click the `add` or `remove` buttons to choose which reddits appear on your "
+"front page."
 msgstr ""
 
-#: r2/lib/strings.py:131 r2/lib/strings.py:136 r2/templates/frametoolbar.html:71
-#: r2/templates/link.html:114 r2/templates/link.htmllite:12
-#: r2/templates/link.htmllite:15
+#: r2/lib/strings.py:101
+#, python-format
+msgid ""
+"you're searching within the [%(reddit_name)s](%(reddit_link)s) reddit. you "
+"can also search within [all reddits](%(all_reddits_link)s)"
+msgstr ""
+
+#: r2/lib/strings.py:105
+#, python-format
+msgid "\"%(brokenurl)s\" is not a valid URL"
+msgstr ""
+
+#: r2/lib/strings.py:106
+#, python-format
+msgid "\"%(cssprop)s\" is not a valid CSS property"
+msgstr ""
+
+#: r2/lib/strings.py:107
+#, python-format
+msgid "\"%(cssvalue)s\" is not a valid value for CSS property \"%(cssprop)s\""
+msgstr ""
+
+#: r2/lib/strings.py:108
+#, python-format
+msgid "too big. keep it under %(max_size)dkb"
+msgstr ""
+
+#: r2/lib/strings.py:109
+#, python-format
+msgid "syntax error: \"%(syntaxerror)s\""
+msgstr ""
+
+#: r2/lib/strings.py:110
+msgid "@imports are not allowed"
+msgstr ""
+
+#: r2/lib/strings.py:111
+#, python-format
+msgid "invalid CSS property list \"%(proplist)s\""
+msgstr ""
+
+#: r2/lib/strings.py:112
+#, python-format
+msgid "unknown CSS rule type \"%(ruletype)s\""
+msgstr ""
+
+#: r2/lib/strings.py:114
+msgid "to anything interesting: news article, blog entry, video, picture..."
+msgstr ""
+
+#: r2/lib/strings.py:115
+#, python-format
+msgid "%(author)s comments on %(title)s"
+msgstr ""
+
+#: r2/lib/strings.py:116
+#, python-format
+msgid "%(title)s : %(site)s"
+msgstr ""
+
+#: r2/lib/strings.py:117
+#, python-format
+msgid ""
+"**this reddit has been banned**\n"
+"\n"
+"most likely this was done automatically by our spam filtering program. the "
+"program is still learning, and may even have some bugs, so if you feel the "
+"ban was a mistake, please send a message to [feedback](%(link)s) and be sure "
+"to include the exact name of the reddit."
+msgstr ""
+
+#: r2/lib/strings.py:118
+#, python-format
+msgid ""
+"\n"
+"    The following is a sample of what Reddit users had to say about this\n"
+"    page. The full discussion is available [here](%(fd_link)s); you can\n"
+"    also get there by clicking the link's title\n"
+"    (in the middle of the toolbar, to the right of the comments button).\n"
+"    "
+msgstr ""
+
+#: r2/lib/strings.py:183 r2/lib/strings.py:188 r2/lib/pages/pages.py:979
+#: r2/templates/link.html:140 r2/templates/link.htmllite:38
+#: r2/templates/link.htmllite:41 r2/templates/link.xml:29
+#: r2/templates/subredditstylesheet.html:270
 msgid "comment"
 msgid_plural "comments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:132 r2/templates/comment.htmllite:18
-#: r2/templates/link.htmllite:20 r2/templates/linkinfobar.html:9
+#: r2/lib/strings.py:184 r2/templates/comment.htmllite:50
+#: r2/templates/linkinfobar.html:32
 msgid "point"
 msgid_plural "points"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:135
+#: r2/lib/strings.py:187
 msgid "link"
 msgid_plural "links"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:137 r2/lib/pages/pages.py:273 r2/templates/feedback.html:69
-#: r2/templates/messagecompose.html:32
+#: r2/lib/strings.py:189 r2/lib/pages/pages.py:430 r2/templates/feedback.html:94
+#: r2/templates/messagecompose.html:54
 msgid "message"
 msgid_plural "messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:138 r2/templates/newlink.html:40
+#: r2/lib/strings.py:190 r2/templates/newlink.html:65
 msgid "subreddit"
 msgid_plural "subreddits"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:141 r2/templates/subredditinfobar.html:34
+#: r2/lib/strings.py:193 r2/templates/subredditinfobar.html:43
 msgid "subscriber"
 msgid_plural "subscribers"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:142
+#: r2/lib/strings.py:194 r2/templates/subreddit.html:80
+#: r2/templates/subreddit.html:81
 msgid "contributor"
 msgid_plural "contributors"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:143
+#: r2/lib/strings.py:195 r2/templates/subreddit.html:74
 msgid "moderator"
 msgid_plural "moderators"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:146
+#: r2/lib/strings.py:198
 msgid "milliseconds"
 msgid_plural "milliseconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:147 r2/lib/utils/utils.py:348 r2/templates/searchbar.html:19
+#: r2/lib/strings.py:199 r2/lib/utils/utils.py:398 r2/templates/searchbar.html:42
 msgid "second"
 msgid_plural "seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:148 r2/lib/utils/utils.py:347
+#: r2/lib/strings.py:200 r2/lib/utils/utils.py:397
 msgid "minute"
 msgid_plural "minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:149 r2/lib/utils/utils.py:346
+#: r2/lib/strings.py:201 r2/lib/utils/utils.py:396
 msgid "hour"
 msgid_plural "hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:150 r2/lib/utils/utils.py:345
+#: r2/lib/strings.py:202 r2/lib/utils/utils.py:395
 msgid "day"
 msgid_plural "days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:151 r2/lib/utils/utils.py:344
+#: r2/lib/strings.py:203 r2/lib/utils/utils.py:394
 msgid "month"
 msgid_plural "months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/strings.py:152 r2/lib/utils/utils.py:343
+#: r2/lib/strings.py:204 r2/lib/utils/utils.py:393
 msgid "year"
 msgid_plural "years"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/pages/pages.py:91
+#: r2/lib/pages/pages.py:44
+#, python-format
+msgid "%d %b %Y"
+msgstr ""
+
+#: r2/lib/pages/pages.py:132
 msgid "Submit a link"
 msgstr ""
 
-#: r2/lib/pages/pages.py:93
-msgid "to anything interesting: news article, blog entry, video, picture..."
-msgstr ""
-
-#: r2/lib/pages/pages.py:97
+#: r2/lib/pages/pages.py:139
 msgid "Create your own reddit"
 msgstr ""
 
-#: r2/lib/pages/pages.py:312
+#: r2/lib/pages/pages.py:205
+msgid "site links"
+msgstr ""
+
+#: r2/lib/pages/pages.py:209
+msgid "FAQ"
+msgstr ""
+
+#: r2/lib/pages/pages.py:211
+msgid "reddiquette"
+msgstr ""
+
+#: r2/lib/pages/pages.py:222
+msgid "reddit tools"
+msgstr ""
+
+#: r2/lib/pages/pages.py:226
+msgid "our pet fish"
+msgstr ""
+
+#: r2/lib/pages/pages.py:231
+msgid "about us"
+msgstr ""
+
+#: r2/lib/pages/pages.py:247
+msgid "brothers"
+msgstr ""
+
+#: r2/lib/pages/pages.py:259
+msgid "sisters"
+msgstr ""
+
+#: r2/lib/pages/pages.py:478
 msgid "login or register"
 msgstr ""
 
-#: r2/lib/pages/pages.py:405 r2/templates/createsubreddit.html:34
+#: r2/lib/pages/pages.py:547 r2/templates/comment.html:70
+#: r2/templates/comment.html:110 r2/templates/comment.htmllite:42
+#: r2/templates/comment.xml:30 r2/templates/comment.xml:31
+msgid "[deleted]"
+msgstr ""
+
+#: r2/lib/pages/pages.py:604 r2/templates/createsubreddit.html:57
 msgid "manage your reddit"
 msgstr ""
 
-#: r2/lib/pages/pages.py:406
+#: r2/lib/pages/pages.py:605
 #, python-format
 msgid "about %(site)s"
 msgstr ""
 
-#: r2/lib/pages/pages.py:430
+#: r2/lib/pages/pages.py:632
 msgid "search reddits"
 msgstr ""
 
-#: r2/lib/pages/pages.py:538
+#: r2/lib/pages/pages.py:754
+msgid "page not found"
+msgstr ""
+
+#: r2/lib/pages/pages.py:765
 msgid "you aren't allowed to do that."
 msgstr ""
 
-#: r2/lib/pages/pages.py:560
-msgid "Customize your reddit"
-msgstr ""
-
-#: r2/lib/pages/pages.py:561
-msgid "Select which communities you want to see"
-msgstr ""
-
-#: r2/lib/pages/pages.py:563
-msgid "Other reddit communities"
-msgstr ""
-
-#: r2/lib/pages/pages.py:630
+#: r2/lib/pages/pages.py:867
 msgid "try entering those letters again"
 msgstr ""
 
-#: r2/lib/pages/pages.py:688
+#: r2/lib/pages/pages.py:924
 msgid "previous search"
 msgstr ""
 
-#: r2/lib/pages/pages.py:802
+#: r2/lib/pages/pages.py:944
+#, python-format
+msgid "%(site_title)s via %(domain)s"
+msgstr ""
+
+#: r2/lib/pages/pages.py:976 r2/templates/commentreplybox.html:46
+#: r2/templates/link.html:137
+msgid "comment {verb}"
+msgstr ""
+
+#: r2/lib/pages/pages.py:1131
 msgid "This feature is currently unavailable. Sorry"
 msgstr ""
 
-#: r2/lib/pages/pages.py:904
+#: r2/lib/pages/pages.py:1198
 msgid "add a friend"
 msgstr ""
 
-#: r2/lib/pages/pages.py:908
+#: r2/lib/pages/pages.py:1202
 msgid "your friends"
 msgstr ""
 
-#: r2/lib/pages/pages.py:923
+#: r2/lib/pages/pages.py:1217
 msgid "add contributor"
 msgstr ""
 
-#: r2/lib/pages/pages.py:938
+#: r2/lib/pages/pages.py:1221
+#, python-format
+msgid "contributors to %(reddit)s"
+msgstr ""
+
+#: r2/lib/pages/pages.py:1232
 msgid "add moderator"
 msgstr ""
 
-#: r2/lib/pages/pages.py:957
+#: r2/lib/pages/pages.py:1236
+#, python-format
+msgid "moderators to %(reddit)s"
+msgstr ""
+
+#: r2/lib/pages/pages.py:1251
 msgid "banned users"
 msgstr ""
 
-#: r2/lib/utils/utils.py:360
+#: r2/lib/utils/utils.py:411
 msgid "millisecond"
 msgid_plural "milliseconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/lib/utils/utils.py:371 r2/templates/comment.html:48
+#: r2/lib/utils/utils.py:422 r2/templates/comment.htmllite:42
 msgid "ago"
 msgstr ""
 
-#: r2/models/subreddit.py:333
+#: r2/models/subreddit.py:548
 msgid "reddit.com: what's new online!"
 msgstr ""
 
-#: r2/templates/admintranslations.html:40
+#: r2/models/subreddit.py:592
+msgid "on reddit.com"
+msgstr ""
+
+#: r2/templates/admintranslations.html:62
 msgid "disable"
 msgstr ""
 
-#: r2/templates/admintranslations.html:41
+#: r2/templates/admintranslations.html:63
 msgid "disabled"
 msgstr ""
 
-#: r2/templates/admintranslations.html:43
+#: r2/templates/admintranslations.html:66
 msgid "enable"
 msgstr ""
 
-#: r2/templates/admintranslations.html:44
+#: r2/templates/admintranslations.html:67
 msgid "enabled"
 msgstr ""
 
-#: r2/templates/admintranslations.html:83
+#: r2/templates/admintranslations.html:106
 msgid "add authors"
 msgstr ""
 
-#: r2/templates/base.htmllite:9
+#: r2/templates/base.html:54
+msgid ""
+"/* Custom css: use this block to insert special translation-dependent css in "
+"the page header */"
+msgstr ""
+
+#: r2/templates/base.htmllite:53
 #, python-format
-msgid "link from %(site)s"
+msgid "links from %(site)s"
 msgstr ""
 
-#: r2/templates/base.xml:16
-msgid "what's new online"
-msgstr ""
-
-#: r2/templates/bookmarklets.html:8
+#: r2/templates/bookmarklets.html:30
 #, python-format
 msgid "install the %(site)s bookmarklet set"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:10
+#: r2/templates/bookmarklets.html:32
 msgid ""
-"once added to your toolbar, these buttons will let you \"reddit this\" "
-"(submit the link, or if it's already been submitted, share it and/or comment "
-"on it), like, dislike, and save links while you surf."
+"once added to your bookmark bar, you can click these buttons from any site to"
+" get quick access to reddit functionality."
 msgstr ""
 
-#: r2/templates/bookmarklets.html:11
+#: r2/templates/bookmarklets.html:33
 msgid "in Firefox"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:13 r2/templates/bookmarklets.html:39
+#: r2/templates/bookmarklets.html:35 r2/templates/bookmarklets.html:64
 msgid "click and drag"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:19 r2/templates/bookmarklets.html:45
-msgid "to your toolbar."
+#: r2/templates/bookmarklets.html:41 r2/templates/bookmarklets.html:70
+msgid "to your bookmark bar."
 msgstr ""
 
-#: r2/templates/bookmarklets.html:24
+#: r2/templates/bookmarklets.html:49
 msgid "in Internet Explorer"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:26
+#: r2/templates/bookmarklets.html:51
 msgid "right-click on"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:32
-msgid "choose \"Add to Favorites\" and add to the \"Links\" folder."
+#: r2/templates/bookmarklets.html:57
+msgid "then choose \"Add to Favorites\" and add to the \"Links\" folder."
 msgstr ""
 
-#: r2/templates/bookmarklets.html:37
+#: r2/templates/bookmarklets.html:62
 msgid "in Safari"
 msgstr ""
 
-#: r2/templates/bookmarklets.html:51
+#: r2/templates/bookmarklets.html:76
 #, python-format
 msgid "voila! now you have all the functionality of %(site)s in your toolbar."
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:18
+#: r2/templates/buttondemopanel.html:29
 #, python-format
 msgid "put %(site)s buttons on your site"
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:19
+#: r2/templates/buttondemopanel.html:30
 msgid ""
-"copy and paste the code for the style of button you would like      into your"
-" site.  The green lines are      optional."
+"the reddit button is the smart way to get your content submitted to      and "
+"discussed on reddit.  pick the button you like from below, and then      "
+"copy/paste the code into your HTML editor."
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:23
-msgid ""
-"if the site has not been submitted yet, clicking on the button      will take"
-" the user to a reddit submit page, otherwise it takes      them to the "
-"comments page."
+#: r2/templates/buttondemopanel.html:34
+msgid "commonly used buttons"
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:27
+#: r2/templates/buttondemopanel.html:35
 msgid ""
-"if you want to specify the URL that should be submitted to      reddit, "
-"include the reddit_url line.  if you don't include that      line, then the "
-"current page's URL will be used."
+"use one of these buttons to quickly add reddit links to your site, or       "
+"see below for more options."
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:31
-msgid ""
-"if you want to specify the title that should be submitted to      reddit, "
-"include the reddit_title line.  if you don't include that      line, then the"
-" user will have to specify a title when they      submit."
+#: r2/templates/buttondemopanel.html:46
+msgid "buttons with points"
 msgstr ""
 
-#: r2/templates/buttondemopanel.html:42
+#: r2/templates/buttondemopanel.html:52
+msgid "customizing the look of your buttons"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:53
+msgid "the buttons with points have three additional options."
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:56
+msgid "no styles will be added, so you can style it yourself"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:58
+msgid "specify a url to use instead of the current url"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:60
+msgid "opens links in a new window"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:62 r2/templates/buttondemopanel.html:110
+msgid "Example:"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:68
+msgid "simple interactive button"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:69
+msgid "put this code on your page:"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:73
+msgid "and you'll get something like this:"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:78
+msgid "more interactive buttons"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:85
+msgid "interactive button advanced settings"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:89
+msgid "specify a url"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:90
+msgid "useful in places like blogs, where you want to link to the post's permalink"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:94
+msgid "specify a title"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:98 r2/templates/prefoptions.html:101
+msgid "open links in a new window"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:102
+msgid "specify the color"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:106
+msgid "specify a border color"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:111
+msgid "to make this button:"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:113
+msgid "use this code:"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:123
+msgid "more badges and buttons"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:154
+msgid "view code"
+msgstr ""
+
+#: r2/templates/buttondemopanel.html:155
+msgid "hide code"
+msgstr ""
+
+#: r2/templates/buttontypes.html:175
+msgid "quite controversial"
+msgstr ""
+
+#: r2/templates/buttontypes.html:179
+msgid "uncontroversial"
+msgstr ""
+
+#: r2/templates/buttontypes.html:181
+msgid "quite uncontroversial"
+msgstr ""
+
+#: r2/templates/buttontypes.html:198
+msgid "Vote on this article"
+msgstr ""
+
+#: r2/templates/buttontypes.html:203
 #, python-format
-msgid "style %(number)s"
+msgid "Discuss at the %(name)s reddit"
 msgstr ""
 
-#: r2/templates/captcha.html:25
+#: r2/templates/buttontypes.html:205
+#, python-format
+msgid "Submit to the %(name)s reddit"
+msgstr ""
+
+#: r2/templates/captcha.html:54
 msgid "human?"
 msgstr ""
 
-#: r2/templates/captcha.html:33
+#: r2/templates/captcha.html:64
 msgid "type the letters from the image above"
 msgstr ""
 
-#: r2/templates/comment.html:40
-msgid "comment deleted"
+#: r2/templates/clickgadget.html:26
+msgid "Recently viewed links"
 msgstr ""
 
-#: r2/templates/comment.html:43
+#: r2/templates/clickgadget.html:33
+msgid "clear"
+msgstr ""
+
+#: r2/templates/comment.html:66
+msgid "deleted comment from"
+msgstr ""
+
+#: r2/templates/comment.html:74
 msgid "comment score below threshold"
 msgstr ""
 
-#: r2/templates/comment.html:59
+#: r2/templates/comment.html:79
+#, python-format
+msgid "%(timeago)s ago"
+msgstr ""
+
+#: r2/templates/comment.html:91
 msgid "+"
 msgstr ""
 
-#: r2/templates/comment.html:59
+#: r2/templates/comment.html:91
 msgid "-"
 msgstr ""
 
-#: r2/templates/comment.html:62
+#: r2/templates/comment.html:94
 msgid "child"
 msgid_plural "children"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/templates/comment.html:93
+#: r2/templates/comment.html:128
 msgid "permalink"
 msgstr ""
 
-#: r2/templates/comment.html:99
+#: r2/templates/comment.html:134 r2/templates/comment.html:141
 msgid "parent"
 msgstr ""
 
-#: r2/templates/comment.html:113 r2/templates/message.html:63
+#: r2/templates/comment.html:154 r2/templates/message.html:84
 msgid "reply {verb}"
 msgstr ""
 
-#: r2/templates/comment.xml:6
-msgid "on"
-msgstr ""
-
-#: r2/templates/commentreplybox.html:26 r2/templates/frametoolbar.html:68
-#: r2/templates/link.html:111
-msgid "comment {verb}"
-msgstr ""
-
-#: r2/templates/commentreplybox.html:33
+#: r2/templates/comment.html:155 r2/templates/commentreplybox.html:52
+#: r2/templates/link.html:149 r2/templates/link.html:181
+#: r2/templates/sharelink.html:100
 msgid "cancel"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:40
+#: r2/templates/comment.xml:38
+msgid "on"
+msgstr ""
+
+#: r2/templates/commentreplybox.html:60
 msgid "hide help"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:49
+#: r2/templates/commentreplybox.html:65
 msgid "enter a comment here"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:56
+#: r2/templates/commentreplybox.html:71
 msgid "you type:"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:57
+#: r2/templates/commentreplybox.html:72
 msgid "you see:"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:58 r2/templates/commentreplybox.html:59
+#: r2/templates/commentreplybox.html:73 r2/templates/commentreplybox.html:74
 msgid "italics"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:60 r2/templates/commentreplybox.html:61
+#: r2/templates/commentreplybox.html:75 r2/templates/commentreplybox.html:76
 msgid "bold"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:64 r2/templates/commentreplybox.html:65
-#: r2/templates/commentreplybox.html:66 r2/templates/commentreplybox.html:67
-#: r2/templates/commentreplybox.html:68 r2/templates/commentreplybox.html:69
+#: r2/templates/commentreplybox.html:79 r2/templates/commentreplybox.html:80
+#: r2/templates/commentreplybox.html:81 r2/templates/commentreplybox.html:82
+#: r2/templates/commentreplybox.html:83 r2/templates/commentreplybox.html:84
 msgid "item"
 msgstr ""
 
-#: r2/templates/commentreplybox.html:70 r2/templates/commentreplybox.html:71
+#: r2/templates/commentreplybox.html:85 r2/templates/commentreplybox.html:86
 msgid "quoted text"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:38
+#: r2/templates/commentspanel.html:37
+msgid "This sidebar will automatically appear when there are comments."
+msgstr ""
+
+#: r2/templates/commentspanel.html:39
+msgid "This sidebar will not be shown automatically."
+msgstr ""
+
+#: r2/templates/createsubreddit.html:61
 msgid "that subreddit doesn't exist, but you can create it here."
 msgstr ""
 
-#: r2/templates/createsubreddit.html:51
+#: r2/templates/createsubreddit.html:75
 msgid "name"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:67
+#: r2/templates/createsubreddit.html:91
 msgid "no spaces, e.g. slashdot"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:74 r2/templates/newlink.html:29
+#: r2/templates/createsubreddit.html:98 r2/templates/newlink.html:55
+#: r2/templates/promotelinkform.html:44
 msgid "title"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:89
+#: r2/templates/createsubreddit.html:113
 msgid "e.g. slashdot: news for nerds, stuff that matters"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:96
+#: r2/templates/createsubreddit.html:121
 msgid "description"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:113
-msgid "first text"
-msgstr ""
-
-#: r2/templates/createsubreddit.html:127
-msgid "static directory"
-msgstr ""
-
-#: r2/templates/createsubreddit.html:141
-msgid "headerfile"
-msgstr ""
-
-#: r2/templates/createsubreddit.html:155
-msgid "style sheet"
-msgstr ""
-
-#: r2/templates/createsubreddit.html:169
-msgid "ad file"
-msgstr ""
-
-#: r2/templates/createsubreddit.html:184
+#: r2/templates/createsubreddit.html:137
 msgid "language"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:198
+#: r2/templates/createsubreddit.html:151
 msgid "type"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:202
+#: r2/templates/createsubreddit.html:155
 msgid "public"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:202
+#: r2/templates/createsubreddit.html:155
 msgid "anyone can view and submit"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:203
+#: r2/templates/createsubreddit.html:156
 msgid "restricted"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:203
-msgid "anyone can view, but only contributors can submit"
+#: r2/templates/createsubreddit.html:157
+msgid "anyone can view, but only contributors can submit links"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:204
+#: r2/templates/createsubreddit.html:158 r2/templates/subreddit.html:92
 msgid "private"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:204
+#: r2/templates/createsubreddit.html:158
 msgid "only contributors can view and submit"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:211
+#: r2/templates/createsubreddit.html:164
 msgid "age"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:215
+#: r2/templates/createsubreddit.html:169
 msgid "viewers must be over eighteen years old"
 msgstr ""
 
-#: r2/templates/createsubreddit.html:224
-msgid "update"
+#: r2/templates/createsubreddit.html:174 r2/templates/prefoptions.html:105
+msgid "media"
 msgstr ""
 
-#: r2/templates/feedback.html:26
+#: r2/templates/createsubreddit.html:180
+msgid "show thumbnail images of content"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:186
+msgid "domain"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:196
+msgid ""
+"Own a domain?  Enter it here and then go to your DNS provider and add a CNAME"
+" record aliasing your domain to rhs.reddit.com. You will be able to access "
+"your reddit through your domain."
+msgstr ""
+
+#: r2/templates/createsubreddit.html:209
+msgid "look and feel"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:213
+msgid "edit the stylesheet"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:217
+msgid "leaves this page"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:225
+msgid "upload header image"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:232
+msgid "restore default header"
+msgstr ""
+
+#: r2/templates/createsubreddit.html:258 r2/templates/prefoptions.html:187
+#: r2/templates/promotelinkform.html:141
+msgid "save options"
+msgstr ""
+
+#: r2/templates/feedback.html:48 r2/templates/sharelink.html:33
 msgid "your name"
 msgstr ""
 
-#: r2/templates/feedback.html:35 r2/templates/login.html:39
-#: r2/templates/prefupdate.html:12
+#: r2/templates/feedback.html:57 r2/templates/login.html:77
+#: r2/templates/prefupdate.html:34
 msgid "email"
 msgstr ""
 
-#: r2/templates/feedback.html:44
+#: r2/templates/feedback.html:66
 msgid "reply to"
 msgstr ""
 
-#: r2/templates/feedback.html:52 r2/templates/login.html:39
+#: r2/templates/feedback.html:75 r2/templates/login.html:77
 msgid "optional"
 msgstr ""
 
-#: r2/templates/feedback.html:63
-msgid "(only used to reply)"
-msgstr ""
-
-#: r2/templates/feedback.html:81 r2/templates/messagecompose.html:46
-msgid "send"
-msgstr ""
-
-#: r2/templates/feedback.html:92
+#: r2/templates/feedback.html:85
 msgid "put your email here"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:47
+#: r2/templates/feedback.html:88
+msgid "(only used to reply)"
+msgstr ""
+
+#: r2/templates/feedback.html:106 r2/templates/messagecompose.html:71
+msgid "send"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:55
+msgid "caution: dorkbar detected"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:68
+msgid "show url"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:71
+msgid "hide url"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:75
+msgid "load a random link"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:82
+msgid "serendipity"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:90
+msgid "visit your userpage"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:94
+msgid "login / register"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:115 r2/templates/frametoolbar.html:116
+msgid "visit this link without the toolbar"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:123
+msgid "click to visit the main page for this submission"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:135
+msgid "click to submit this link to reddit"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:172
+#, python-format
+msgid "vote %(direction)s"
+msgstr ""
+
+#: r2/templates/frametoolbar.html:186
 msgid "like"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:53
+#: r2/templates/frametoolbar.html:187
 msgid "dislike"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:57 r2/templates/link.html:124
+#: r2/templates/frametoolbar.html:193 r2/templates/link.html:155
 msgid "unsave"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:58 r2/templates/link.html:125
+#: r2/templates/frametoolbar.html:194 r2/templates/link.html:156
 msgid "unsaved"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:60 r2/templates/link.html:127
-#: r2/templates/prefupdate.html:28
+#: r2/templates/frametoolbar.html:197 r2/templates/link.html:158
+#: r2/templates/prefupdate.html:52 r2/templates/subredditstylesheet.html:79
 msgid "save"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:111 r2/templates/login.html:81
-#: r2/templates/login.html:104 r2/templates/loginformwide.html:18
-msgid "login"
+#: r2/templates/frametoolbar.html:204
+msgid "toggle the comments panel"
 msgstr ""
 
-#: r2/templates/frametoolbar.html:112 r2/templates/redditheader.html:13
-msgid "register"
-msgstr ""
-
-#: r2/templates/help.html:6
-msgid "what's this?"
-msgstr ""
-
-#: r2/templates/help.html:13 r2/templates/help.html:19
-msgid "here"
-msgstr ""
-
-#: r2/templates/help.html:15
-#, python-format
-msgid "Click %(here)s to disable this feature."
-msgstr ""
-
-#: r2/templates/help.html:17 r2/templates/prefdelete.html:4
-#: r2/templates/printable.html:225
-msgid "are you sure?"
-msgstr ""
-
-#: r2/templates/help.html:18 r2/templates/prefdelete.html:5
-#: r2/templates/printable.html:225 r2/templates/subredditinfobar.html:69
-msgid "yes"
-msgstr ""
-
-#: r2/templates/help.html:18 r2/templates/prefdelete.html:5
-#: r2/templates/printable.html:225 r2/templates/subredditinfobar.html:69
-msgid "no"
-msgstr ""
-
-#: r2/templates/help.html:21
-#, python-format
-msgid "Click %(here)s to close help."
-msgstr ""
-
-#: r2/templates/help.html:26
-msgid ""
-"The new link area will no longer appear for you. To re-enable it, visit your "
-"preferences."
-msgstr ""
-
-#: r2/templates/link.html:92
+#: r2/templates/link.html:118
 #, python-format
 msgid "submitted %(when)s ago by %(author)s to %(reddit)s"
 msgstr ""
 
-#: r2/templates/link.html:94
+#: r2/templates/link.html:120
 #, python-format
 msgid "submitted %(when)s ago by %(author)s"
 msgstr ""
 
-#: r2/templates/link.html:132
+#: r2/templates/link.html:163
 msgid "unhide"
 msgstr ""
 
-#: r2/templates/link.html:133
+#: r2/templates/link.html:164
 msgid "unhidden"
 msgstr ""
 
-#: r2/templates/link.html:135
+#: r2/templates/link.html:166
 msgid "hide"
 msgstr ""
 
-#: r2/templates/link.html:136
+#: r2/templates/link.html:167
 msgid "hidden"
 msgstr ""
 
-#: r2/templates/linkcompressed.html:32
-#, python-format
-msgid "%(points)s posted %(when)s ago by %(author)s"
+#: r2/templates/link.html:181
+msgid "watch"
 msgstr ""
 
-#: r2/templates/linkcompressed.html:34
+#: r2/templates/linkcompressed.html:49
 #, python-format
 msgid "posted %(when)s ago by %(author)s"
 msgstr ""
 
-#: r2/templates/linkinfobar.html:5
+#: r2/templates/linkcompressed.html:51
 #, python-format
-msgid "%d %b %Y"
+msgid "%(points)s posted %(when)s ago by %(author)s"
 msgstr ""
 
-#: r2/templates/linkinfobar.html:7
+#: r2/templates/linkinfobar.html:27
+msgid "toolbar link"
+msgstr ""
+
+#: r2/templates/linkinfobar.html:30
 msgid "submitted on"
 msgstr ""
 
-#: r2/templates/linkinfobar.html:11
+#: r2/templates/linkinfobar.html:34
 msgid "up votes"
 msgstr ""
 
-#: r2/templates/linkinfobar.html:13
+#: r2/templates/linkinfobar.html:36
 msgid "down votes"
 msgstr ""
 
-#: r2/templates/listing.html:16
+#: r2/templates/linkpromoteinfobar.html:30
+msgid "promoted on"
+msgstr ""
+
+#: r2/templates/linkpromoteinfobar.html:37
+msgid "promoted by"
+msgstr ""
+
+#: r2/templates/linkpromoteinfobar.html:45
+msgid "promote until"
+msgstr ""
+
+#: r2/templates/linkpromoteinfobar.html:49
+msgid "(this link has expired and is no longer being promoted)"
+msgstr ""
+
+#: r2/templates/linkpromoteinfobar.html:57
+#, python-format
+msgid "shown only to subscribers of %(subreddit)s"
+msgstr ""
+
+#: r2/templates/listing.html:37
 msgid "view more:"
 msgstr ""
 
-#: r2/templates/listing.html:18
+#: r2/templates/listing.html:39
 msgid "prev"
 msgstr ""
 
-#: r2/templates/listing.html:24
+#: r2/templates/listing.html:45
 msgid "next"
 msgstr ""
 
-#: r2/templates/listing.html:29
+#: r2/templates/listing.html:50
 msgid "there doesn't seem to be anything here"
 msgstr ""
 
-#: r2/templates/login.html:9
+#: r2/templates/login.html:34
 msgid "you are logged in. go use the site!"
 msgstr ""
 
-#: r2/templates/login.html:29 r2/templates/password.html:15
+#: r2/templates/login.html:66 r2/templates/password.html:35
+#: r2/templates/resetpassword.html:38
 msgid "username"
 msgstr ""
 
-#: r2/templates/login.html:56 r2/templates/prefupdate.html:22
-#: r2/templates/resetpassword.html:28
+#: r2/templates/login.html:98 r2/templates/prefupdate.html:46
+#: r2/templates/resetpassword.html:59
 msgid "verify password"
 msgstr ""
 
-#: r2/templates/login.html:69 r2/templates/loginformwide.html:22
+#: r2/templates/login.html:112 r2/templates/loginformwide.html:53
 msgid "remember me"
 msgstr ""
 
-#: r2/templates/login.html:75
-msgid "User Agreement"
-msgstr ""
-
-#: r2/templates/login.html:76
-msgid "Privacy Policy"
-msgstr ""
-
-#: r2/templates/login.html:81
+#: r2/templates/login.html:118
 msgid "create account"
 msgstr ""
 
-#: r2/templates/login.html:92
+#: r2/templates/login.html:118 r2/templates/login.html:141
+#: r2/templates/loginformwide.html:51
+msgid "login"
+msgstr ""
+
+#: r2/templates/login.html:129
 msgid "create a new account"
 msgstr ""
 
-#: r2/templates/login.html:94
+#: r2/templates/login.html:131
 msgid "all it takes is a username and password"
 msgstr ""
 
-#: r2/templates/login.html:99
+#: r2/templates/login.html:136
 msgid "is it really that easy? only one way to find out..."
 msgstr ""
 
-#: r2/templates/login.html:106
+#: r2/templates/login.html:143
 msgid "already have an account and just want to login?"
 msgstr ""
 
-#: r2/templates/login.html:110
-msgid "forgot your password?"
-msgstr ""
-
-#: r2/templates/loginformwide.html:23
+#: r2/templates/loginformwide.html:54
 msgid "recover password"
 msgstr ""
 
-#: r2/templates/message.html:20 r2/templates/message.xml:10
+#: r2/templates/message.html:42 r2/templates/message.xml:32
 #, python-format
 msgid "from %(author)s sent %(when)s ago"
 msgstr ""
 
-#: r2/templates/message.html:22 r2/templates/message.xml:12
+#: r2/templates/message.html:44 r2/templates/message.xml:34
 #, python-format
 msgid "to %(dest)s sent %(when)s ago"
 msgstr ""
 
-#: r2/templates/message.html:24
+#: r2/templates/message.html:46
 #, python-format
 msgid "to %(dest)s from %(author)s sent %(when)s ago"
 msgstr ""
 
-#: r2/templates/message.html:54
+#: r2/templates/message.html:76 r2/templates/starkcomment.html:33
 msgid "context"
 msgstr ""
 
-#: r2/templates/messagecompose.html:3
+#: r2/templates/messagecompose.html:25
 msgid "send a message"
 msgstr ""
 
-#: r2/templates/messagecompose.html:14
+#: r2/templates/messagecompose.html:36
 msgid "to (username)"
 msgstr ""
 
-#: r2/templates/messagecompose.html:22
+#: r2/templates/messagecompose.html:44
 msgid "subject"
 msgstr ""
 
-#: r2/templates/morechildren.html:12
+#: r2/templates/morechildren.html:36
 msgid "reply"
 msgid_plural "replies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: r2/templates/morerecursion.html:7
+#: r2/templates/morerecursion.html:29
 msgid "continue this thread"
 msgstr ""
 
-#: r2/templates/newlink.html:6
+#: r2/templates/newlink.html:32
 #, python-format
 msgid "submit to %(site)s"
 msgstr ""
 
-#: r2/templates/newlink.html:17
+#: r2/templates/newlink.html:44 r2/templates/promotelinkform.html:53
 msgid "url"
 msgstr ""
 
-#: r2/templates/newlink.html:55
+#: r2/templates/newlink.html:80
 msgid "add to my saved sites"
 msgstr ""
 
-#: r2/templates/newlink.html:75
+#: r2/templates/newlink.html:100
 msgid "type \"self\" here to make this post refer to itself."
 msgstr ""
 
-#: r2/templates/newlink.html:77
+#: r2/templates/newlink.html:102
 msgid "enter a title, or click submit to find one automatically."
 msgstr ""
 
-#: r2/templates/newlink.html:82
+#: r2/templates/newlink.html:107
 #, python-format
 msgid "use reddit from your toolbar with the %(bookmarklets)s"
 msgstr ""
 
-#: r2/templates/newlink.html:83
+#: r2/templates/newlink.html:108
 msgid "reddit bookmarklets"
 msgstr ""
 
-#: r2/templates/organiclisting.html:23
+#: r2/templates/optout.html:26
+#, python-format
+msgid "The address '%(email)s' will no longer receive email from us."
+msgstr ""
+
+#: r2/templates/optout.html:29
+msgid ""
+"A confirmation email has been queued up and should be reaching you shortly.  "
+"It will be the last you hear of us."
+msgstr ""
+
+#: r2/templates/optout.html:33
+#, python-format
+msgid "Would you like the address %(email)s to no longer receive email from us?"
+msgstr ""
+
+#: r2/templates/optout.html:36 r2/templates/optout.html:52
+#: r2/templates/prefdelete.html:27 r2/templates/printable.html:291
+msgid "yes"
+msgstr ""
+
+#: r2/templates/optout.html:39 r2/templates/optout.html:55
+#: r2/templates/prefdelete.html:27 r2/templates/printable.html:294
+msgid "no"
+msgstr ""
+
+#: r2/templates/optout.html:45
+#, python-format
+msgid "'%(email)s' has been removed from our block list."
+msgstr ""
+
+#: r2/templates/optout.html:49
+#, python-format
+msgid "Allow '%(email)s' to receive email from us?"
+msgstr ""
+
+#: r2/templates/organiclisting.html:61
+msgid "what's this?"
+msgstr ""
+
+#: r2/templates/organiclisting.html:67
 msgid ""
 "This area shows new and upcoming links. Vote on links here to help them "
 "become popular, and click the forwards and backwards buttons to view more. "
 msgstr ""
 
-#: r2/templates/over18.html:3
+#: r2/templates/organiclisting.html:72 r2/templates/organiclisting.html:82
+msgid "here"
+msgstr ""
+
+#: r2/templates/organiclisting.html:72
+msgid "This element has been disabled."
+msgstr ""
+
+#: r2/templates/organiclisting.html:74
+#, python-format
+msgid "Click %(here)s to disable this feature."
+msgstr ""
+
+#: r2/templates/organiclisting.html:81
+#, python-format
+msgid "Click %(here)s to close help."
+msgstr ""
+
+#: r2/templates/organiclisting.html:95
+msgid ""
+"The new link area will no longer appear for you. To re-enable it, visit your "
+"preferences."
+msgstr ""
+
+#: r2/templates/over18.html:25
 msgid "you must be at least eighteen to view this reddit"
 msgstr ""
 
-#: r2/templates/over18.html:10
+#: r2/templates/over18.html:33
 msgid "are you over eighteen and willing to see adult content?"
 msgstr ""
 
-#: r2/templates/password.html:2
-msgid "what's my password?"
-msgstr ""
-
-#: r2/templates/password.html:4
-msgid "enter your user name below to receive your login information"
-msgstr ""
-
-#: r2/templates/password.html:7
+#: r2/templates/password.html:24
 msgid "you should receive an email shortly"
 msgstr ""
 
-#: r2/templates/password.html:22
+#: r2/templates/password.html:30
+msgid "what's my password?"
+msgstr ""
+
+#: r2/templates/password.html:31
+msgid "enter your user name below to receive your login information"
+msgstr ""
+
+#: r2/templates/password.html:41
 msgid "email me"
 msgstr ""
 
-#: r2/templates/permalinkmessage.html:4
+#: r2/templates/permalinkmessage.html:26
 msgid "you are viewing a single comment's thread"
 msgstr ""
 
-#: r2/templates/permalinkmessage.html:6
+#: r2/templates/permalinkmessage.html:28
 msgid "see the above comments"
 msgstr ""
 
-#: r2/templates/prefdelete.html:15
+#: r2/templates/prefdelete.html:26 r2/templates/printable.html:273
+msgid "are you sure?"
+msgstr ""
+
+#: r2/templates/prefdelete.html:37
 msgid "delete your reddit account? hope you have a good reason."
 msgstr ""
 
-#: r2/templates/prefdelete.html:18
+#: r2/templates/prefdelete.html:40
 msgid "deleting..."
 msgstr ""
 
-#: r2/templates/prefoptions.html:28
+#: r2/templates/prefoptions.html:63
 msgid "your preferences have been updated"
 msgstr ""
 
-#: r2/templates/prefoptions.html:36
+#: r2/templates/prefoptions.html:81
 msgid "interface language"
 msgstr ""
 
-#: r2/templates/prefoptions.html:40
+#: r2/templates/prefoptions.html:85
 msgid "incomplete"
 msgstr ""
 
-#: r2/templates/prefoptions.html:41
+#: r2/templates/prefoptions.html:86
 msgid "volunteer to translate"
 msgstr ""
 
-#: r2/templates/prefoptions.html:45
+#: r2/templates/prefoptions.html:90
 msgid "content language"
 msgstr ""
 
-#: r2/templates/prefoptions.html:52
+#: r2/templates/prefoptions.html:97
 msgid "clicking options"
 msgstr ""
 
-#: r2/templates/prefoptions.html:54
+#: r2/templates/prefoptions.html:99
 msgid "display links with a reddit toolbar"
 msgstr ""
 
-#: r2/templates/prefoptions.html:56
-msgid "open links in a new window"
+#: r2/templates/prefoptions.html:108
+msgid "show thumbnails next to links"
 msgstr ""
 
-#: r2/templates/prefoptions.html:60
+#: r2/templates/prefoptions.html:109
+msgid "don't show thumbnails next to links"
+msgstr ""
+
+#: r2/templates/prefoptions.html:110
+msgid "show thumbnails based on that reddit's media preferences"
+msgstr ""
+
+#: r2/templates/prefoptions.html:112
+msgid "to enable thumbnails, disable compressed link display"
+msgstr ""
+
+#: r2/templates/prefoptions.html:118
 msgid "link options"
 msgstr ""
 
-#: r2/templates/prefoptions.html:62
+#: r2/templates/prefoptions.html:120
 msgid "show me new links on the front page"
 msgstr ""
 
-#: r2/templates/prefoptions.html:64
+#: r2/templates/prefoptions.html:121
+msgid "show me links I've recently viewed"
+msgstr ""
+
+#: r2/templates/prefoptions.html:122
 msgid "compress the link display"
 msgstr ""
 
-#: r2/templates/prefoptions.html:66
+#: r2/templates/prefoptions.html:123
 msgid "don't show links after i've liked them"
 msgstr ""
 
-#: r2/templates/prefoptions.html:68
+#: r2/templates/prefoptions.html:124
 msgid "don't show links after i've disliked them"
 msgstr ""
 
-#: r2/templates/prefoptions.html:72
+#: r2/templates/prefoptions.html:127
 msgid "display"
 msgstr ""
 
-#: r2/templates/prefoptions.html:73
+#: r2/templates/prefoptions.html:128
 msgid "links at once"
 msgstr ""
 
-#: r2/templates/prefoptions.html:74
+#: r2/templates/prefoptions.html:129
 msgid "don't show me sites with a score less than"
 msgstr ""
 
-#: r2/templates/prefoptions.html:75
+#: r2/templates/prefoptions.html:130
 msgid "don't show me comments with a score less than"
 msgstr ""
 
-#: r2/templates/prefoptions.html:76
+#: r2/templates/prefoptions.html:131
 msgid "comments by default"
 msgstr ""
 
-#: r2/templates/prefoptions.html:78
+#: r2/templates/prefoptions.html:134
 #, python-format
 msgid "display %(num)s links at once"
 msgstr ""
 
-#: r2/templates/prefoptions.html:85
+#: r2/templates/prefoptions.html:142
 #, python-format
 msgid "don't show me sites with a score less than %(num)s"
 msgstr ""
 
-#: r2/templates/prefoptions.html:86 r2/templates/prefoptions.html:97
+#: r2/templates/prefoptions.html:143 r2/templates/prefoptions.html:156
 msgid "(blank for none)"
 msgstr ""
 
-#: r2/templates/prefoptions.html:90
+#: r2/templates/prefoptions.html:148
 msgid "comment options"
 msgstr ""
 
-#: r2/templates/prefoptions.html:96
+#: r2/templates/prefoptions.html:155
 #, python-format
 msgid "don't show me comments with a score less than %(num)s"
 msgstr ""
 
-#: r2/templates/prefoptions.html:104
+#: r2/templates/prefoptions.html:164
 #, python-format
 msgid "display %(num)s comments by default"
 msgstr ""
 
-#: r2/templates/prefoptions.html:111
+#: r2/templates/prefoptions.html:170 r2/templates/widgetdemopanel.html:193
+msgid "display options"
+msgstr ""
+
+#: r2/templates/prefoptions.html:172
+msgid "allow reddits to show me custom styles"
+msgstr ""
+
+#: r2/templates/prefoptions.html:176
 msgid "privacy options"
 msgstr ""
 
-#: r2/templates/prefoptions.html:113
+#: r2/templates/prefoptions.html:178
 msgid "make my votes public"
 msgstr ""
 
-#: r2/templates/prefoptions.html:115
+#: r2/templates/prefoptions.html:180
 msgid "i am over eighteen years old and willing to view adult content"
 msgstr ""
 
-#: r2/templates/prefoptions.html:116
+#: r2/templates/prefoptions.html:181
 msgid "required to view some reddits"
 msgstr ""
 
-#: r2/templates/prefoptions.html:122
-msgid "save options"
-msgstr ""
-
-#: r2/templates/prefupdate.html:7
+#: r2/templates/prefupdate.html:29
 msgid "current password (required)"
 msgstr ""
 
-#: r2/templates/prefupdate.html:17 r2/templates/resetpassword.html:16
+#: r2/templates/prefupdate.html:41 r2/templates/resetpassword.html:47
 msgid "new password"
 msgstr ""
 
-#: r2/templates/printable.html:57
+#: r2/templates/printable.html:101 r2/templates/subredditinfobar.html:68
 msgid "unban"
 msgstr ""
 
-#: r2/templates/printable.html:58
+#: r2/templates/printable.html:102 r2/templates/subredditinfobar.html:69
 msgid "unbanned"
 msgstr ""
 
-#: r2/templates/printable.html:62
+#: r2/templates/printable.html:106 r2/templates/subredditinfobar.html:74
 msgid "ban"
 msgstr ""
 
-#: r2/templates/printable.html:68
+#: r2/templates/printable.html:112
 msgid "ignore"
 msgstr ""
 
-#: r2/templates/printable.html:69
+#: r2/templates/printable.html:113
 msgid "ignored"
 msgstr ""
 
-#: r2/templates/printable.html:80
+#: r2/templates/printable.html:123
 msgid "report"
 msgstr ""
 
-#: r2/templates/profilebar.html:34
+#: r2/templates/printable.html:345
+msgid "toggle"
+msgstr ""
+
+#: r2/templates/profilebar.html:69
 msgid "karma:"
 msgstr ""
 
-#: r2/templates/profilebar.html:37
+#: r2/templates/profilebar.html:72
 msgid "comment karma:"
 msgstr ""
 
-#: r2/templates/profilebar.html:41
+#: r2/templates/profilebar.html:76
 #, python-format
 msgid "user for %(time)s"
 msgstr ""
 
-#: r2/templates/profilebar.html:47 r2/templates/usertableitem.html:20
+#: r2/templates/profilebar.html:81 r2/templates/usertableitem.html:43
 msgid "send message"
 msgstr ""
 
-#: r2/templates/profilebar.html:58 r2/templates/profilebar.html:64
+#: r2/templates/profilebar.html:84
 msgid "add to friends"
 msgstr ""
 
-#: r2/templates/profilebar.html:59 r2/templates/profilebar.html:63
+#: r2/templates/profilebar.html:84
 msgid "remove from friends"
 msgstr ""
 
-#: r2/templates/reddit.html:72
-msgid "fetching title..."
+#: r2/templates/promotedlink.html:39 r2/templates/promotedlinks.html:43
+msgid "unpromote"
 msgstr ""
 
-#: r2/templates/reddit.html:73
-msgid "submitting..."
+#: r2/templates/promotedlink.html:39 r2/templates/promotedlinks.html:43
+msgid "unpromoted"
 msgstr ""
 
-#: r2/templates/reddit.html:74
-msgid "loading..."
+#: r2/templates/promotedlink.html:54
+msgid "sponsored link"
 msgstr ""
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/promotedlinks.html:30
+msgid "current promotions"
+msgstr ""
+
+#: r2/templates/promotedlinks.html:37
+#, python-format
+msgid "(until %(until)s)"
+msgstr ""
+
+#: r2/templates/promotedlinks.html:52
+msgid "promotions this month"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:65
+msgid "reddit"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:69
+#, python-format
+msgid "show only to subscribers of %(reddit)s"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:76
+msgid "show only to subscribers of this reddit"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:85
+msgid "site options"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:88
+msgid "disable comments"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:94
+msgid "duration"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:98
+#, python-format
+msgid "expire in %(timedelta)s (%(expires_at)s)"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:102 r2/templates/promotelinkform.html:115
+msgid "expire in"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:105 r2/templates/promotelinkform.html:118
+msgid "hours"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:106 r2/templates/promotelinkform.html:119
+msgid "days"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:107 r2/templates/promotelinkform.html:120
+msgid "weeks"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:110 r2/templates/promotelinkform.html:113
+msgid "don't expire"
+msgstr ""
+
+#: r2/templates/promotelinkform.html:131
+msgid "thumbnail"
+msgstr ""
+
+#: r2/templates/redditfooter.html:41
 #, python-format
 msgid ""
 "Use of this site constitutes acceptance of our %(user_agreement)s and "
 "%(privacy_policy)s"
 msgstr ""
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/redditfooter.html:41
 msgid "User Agreement {Genitive}"
 msgstr ""
 
-#: r2/templates/redditfooter.html:19
+#: r2/templates/redditfooter.html:41
 msgid "Privacy Policy {Genitive}"
 msgstr ""
 
-#: r2/templates/redditfooter.html:20
-msgid "(c) 2008 CondeNet, Inc. All rights reserved."
-msgstr ""
-
-#: r2/templates/redditfooter.html:21
+#: r2/templates/redditfooter.html:42
 #, python-format
-msgid "(c) %(year)d CondeNet, Inc. All rights reserved."
+msgid "(c) %(year)d Conde Nast Digital. All rights reserved."
 msgstr ""
 
-#: r2/templates/redditfooter.html:39 r2/templates/redditfooter.html:51
+#: r2/templates/redditfooter.html:65 r2/templates/redditfooter.html:80
 msgid "close this window"
 msgstr ""
 
-#: r2/templates/redditheader.html:12
+#: r2/templates/redditheader.html:58
 #, python-format
 msgid "want to join? %(register)s in seconds"
 msgstr ""
 
-#: r2/templates/searchbar.html:17
+#: r2/templates/redditheader.html:59
+msgid "register"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:44 r2/templates/reddittraffic.html:51
+#: r2/templates/reddittraffic.html:82 r2/templates/reddittraffic.html:153
+#: r2/templates/reddittraffic.html:172
+msgid "date"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:45 r2/templates/reddittraffic.html:47
+#: r2/templates/reddittraffic.html:52 r2/templates/reddittraffic.html:83
+#: r2/templates/reddittraffic.html:154 r2/templates/reddittraffic.html:173
+#: r2/templates/reddittraffic.html:175
+msgid "uniques"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:46 r2/templates/reddittraffic.html:48
+#: r2/templates/reddittraffic.html:53 r2/templates/reddittraffic.html:84
+#: r2/templates/reddittraffic.html:155 r2/templates/reddittraffic.html:174
+#: r2/templates/reddittraffic.html:176
+msgid "impressions"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:49 r2/templates/reddittraffic.html:55
+msgid "subscriptions"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:99
+msgid "Daily Mean"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:110
+msgid ""
+"There doesn't seem to be any traffic data at the moment.  Please check back "
+"later."
+msgstr ""
+
+#: r2/templates/reddittraffic.html:169
+msgid "cnamed"
+msgstr ""
+
+#: r2/templates/reddittraffic.html:177
+msgid "cname"
+msgstr ""
+
+#: r2/templates/searchbar.html:39
 #, python-format
 msgid "about %(num)d results in %(second)s."
 msgstr ""
 
-#: r2/templates/searchform.html:10
-msgid "search"
+#: r2/templates/searchform.html:32
+msgid "search reddit"
 msgstr ""
 
-#: r2/templates/subreddit.html:64
-msgid "leave"
+#: r2/templates/share.email:31
+#, python-format
+msgid "There is currently %(num_comments)s on this link.  You can view it here:"
+msgid_plural "There are currently %(num_comments)s on this link.  You can view them here:"
+msgstr[0] ""
+msgstr[1] ""
+
+#: r2/templates/sharelink.html:15
+msgid "send this link to"
 msgstr ""
 
-#: r2/templates/subreddit.html:65
-msgid "left"
+#: r2/templates/sharelink.html:36 r2/templates/sharelink.html:54
+#: r2/templates/sharelink.html:73
+msgid "(optional)"
 msgstr ""
 
-#: r2/templates/subredditbox.html:13
-msgid "save edits"
+#: r2/templates/sharelink.html:51
+msgid "your email"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:18 r2/templates/subredditinfobar.html:28
-msgid "subscribe"
+#: r2/templates/sharelink.html:70
+msgid "message {share form}"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:20 r2/templates/subredditinfobar.html:26
-msgid "unsubscribe"
+#: r2/templates/sharelink.html:79
+#, python-format
+msgid "%(user)s from http://%(site)s/ has shared a link with you."
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:37
+#: r2/templates/subreddit.html:59 r2/templates/subredditinfobar.html:46
 #, python-format
 msgid "a community for %(time)s"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:43
-#, python-format
-msgid "you are a %(contributor)s of this reddit."
+#: r2/templates/subreddit.html:84 r2/templates/subreddit.html:85
+msgid "not contributor"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:44
+#: r2/templates/subreddit.html:96
+msgid "over18"
+msgstr ""
+
+#: r2/templates/subredditinfobar.html:36
+msgid "subscribe"
+msgstr ""
+
+#: r2/templates/subredditinfobar.html:36
+msgid "unsubscribe"
+msgstr ""
+
+#: r2/templates/subredditinfobar.html:53
+#, python-format
+msgid "you are a contributor of this reddit. (%(leave)s)"
+msgstr ""
+
+#: r2/templates/subredditinfobar.html:54
 msgid "stop being a contributor?"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:45
+#: r2/templates/subredditinfobar.html:55
 msgid "you are no longer a contributor"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:50
+#: r2/templates/subredditinfobar.html:60
 #, python-format
-msgid "you are a %(moderator)s of this reddit."
+msgid "you are a moderator of this reddit. (%(leave)s)"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:51
+#: r2/templates/subredditinfobar.html:61
 msgid "stop being a moderator?"
 msgstr ""
 
-#: r2/templates/subredditinfobar.html:52
+#: r2/templates/subredditinfobar.html:62
 msgid "you are no longer a moderator"
 msgstr ""
 
-#: r2/templates/unfoundpage.html:3
+#: r2/templates/subredditinfobar.html:88
+msgid "leave"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:42
+msgid "stylesheet"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:72
+msgid "show the default stylesheet"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:73
+msgid "hide the default stylesheet"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:83
+#: r2/templates/subredditstylesheet.html:255
+msgid "preview"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:89
+msgid "errors"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:98
+msgid "images"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:103
+msgid "image file"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:107
+msgid "new image name:"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:114
+msgid "(image names should consist of alphanumeric characters and '-' only)"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:120
+msgid ""
+"Note: any changes to images here will be reflected immediately on reload and "
+"cannot be undone."
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:204
+msgid "please select an image"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:233
+msgid "paste into stylesheet"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:236
+msgid "delete this image"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:258
+msgid "normal link"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:262
+msgid "compressed link"
+msgstr ""
+
+#: r2/templates/subredditstylesheet.html:266
+msgid "link with thumbnail"
+msgstr ""
+
+#: r2/templates/unfoundpage.html:25
 msgid "the page you requested does not exist"
 msgstr ""
 
-#: r2/templates/userlist.html:16
+#: r2/templates/userlist.html:35
 msgid "add"
 msgstr ""
 
-#: r2/templates/userstats.html:11
+#: r2/templates/userstats.html:35
 msgid "biggest karma gainers"
 msgstr ""
 
-#: r2/templates/userstats.html:34 r2/templates/widgetdemopanel.html:82
+#: r2/templates/userstats.html:58 r2/templates/widgetdemopanel.html:125
 msgid "all-time"
 msgstr ""
 
-#: r2/templates/usertableitem.html:22
+#: r2/templates/usertableitem.html:47
 msgid "remove"
 msgstr ""
 
-#: r2/templates/usertableitem.html:25
-msgid "removed"
-msgstr ""
-
-#: r2/templates/utils.html:144
+#: r2/templates/utils.html:189
 msgid "all languages"
 msgstr ""
 
-#: r2/templates/utils.html:148
+#: r2/templates/utils.html:193
 msgid "some languages"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:52
+#: r2/templates/utils.html:267
+msgid "uploading"
+msgstr ""
+
+#: r2/templates/utils.html:269
+msgid "upload"
+msgstr ""
+
+#: r2/templates/utils.html:366
+msgid "fetching title..."
+msgstr ""
+
+#: r2/templates/utils.html:367
+msgid "submitting..."
+msgstr ""
+
+#: r2/templates/utils.html:368
+msgid "loading..."
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:111
 #, python-format
 msgid "get live %(site)s headlines on your site"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:54
+#: r2/templates/widgetdemopanel.html:113
 #, python-format
 msgid ""
 "just cut and paste the generated code into your site and your specified "
 "%(site)s feed will be displayed and updated as new stories bubble up"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:55
+#: r2/templates/widgetdemopanel.html:115
 msgid "which links do you want to display?"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:59
-msgid "number"
-msgstr ""
-
-#: r2/templates/widgetdemopanel.html:68
-#, python-format
-msgid "%(site)s %(what)s links from %(when)s"
-msgstr ""
-
-#: r2/templates/widgetdemopanel.html:71 r2/templates/widgetdemopanel.html:92
-msgid "hottest"
-msgstr ""
-
-#: r2/templates/widgetdemopanel.html:72 r2/templates/widgetdemopanel.html:93
-msgid "newest"
-msgstr ""
-
-#: r2/templates/widgetdemopanel.html:88
-#, python-format
-msgid "%(what)s %(where)s %(who)s"
-msgstr ""
-
-#: r2/templates/widgetdemopanel.html:100
+#: r2/templates/widgetdemopanel.html:131
 msgid "submitted by"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:101
+#: r2/templates/widgetdemopanel.html:132
 msgid "saved by"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:102
+#: r2/templates/widgetdemopanel.html:133
 msgid "liked by"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:103
+#: r2/templates/widgetdemopanel.html:134
 msgid "disliked by"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:114
+#: r2/templates/widgetdemopanel.html:145
+msgid "listing options"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:151
+#, python-format
+msgid "links from %(domain)s"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:155
+#, python-format
+msgid "links %(submitted_by)s the user %(who)s"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:159
+#, python-format
+msgid "links from the domain %(domain)s"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:165
+msgid "sorting options"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:171
+msgid "hottest"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:172
+msgid "newest"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:176
+#, python-format
+msgid "sort links by %(what)s"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:179
+#, python-format
+msgid "date range includes %(when)s"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:182
+msgid "number of links to show"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:200
+msgid "remove css styling"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:202
+msgid "(the widget will inherit all styles from the page)"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:210
+msgid "enable in-widget voting"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:212
+msgid "(will slow down the rendering)"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:221
+msgid "two columns"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:228
+msgid "background color"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:232
+msgid "(e.g., FF0000 = red)"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:239
+msgid "border color"
+msgstr ""
+
+#: r2/templates/widgetdemopanel.html:249
 msgid "the code"
 msgstr ""
 
-#: r2/templates/widgetdemopanel.html:116
+#: r2/templates/widgetdemopanel.html:251
 #, python-format
 msgid "add this into your HTML where you want the %(site)s links displayed"
+msgstr ""
+
+#: r2admin/templates/switchuser.html:29
+msgid "switch"
 msgstr ""
 

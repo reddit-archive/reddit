@@ -482,7 +482,7 @@ class MessageController(ListingController):
             w = Wrapped(thing)
             w.render_class = Message
             w.to_id = c.user._id
-            w.subject = 'comment reply'
+            w.subject = _('comment reply')
             w.was_comment = True
             w.permalink, w._fullname = p, f
             return w

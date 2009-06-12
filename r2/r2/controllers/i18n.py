@@ -90,11 +90,12 @@ class I18nController(RedditController):
 
     @validate(VTranslationEnabled(),
               VTranslator('lang'),
-              lang = nop('lang'))
-    def GET_try(self, lang):
+              lang = nop('lang'),
+              numbers = VBoolean("numbers"))
+    def GET_try(self, lang, numbers):
         if lang:
             tr = get_translator(locale = lang)
-            tr.save(compile=True)
+            tr.save(compile=True, include_index = numbers)
 
             tran_keys = _translations.keys()
             for key in tran_keys:
@@ -123,6 +124,7 @@ class I18nController(RedditController):
         for k, val in request.post.iteritems():
             if k.startswith('trans_'):
                 k = k.split('_')
+                val = val.replace('\n', ' ').replace('\r', ' ')
                 # check if this is a translation string
                 if k[1:] and tr.get(k[1]):
                     tr.set(k[1], val, indx = int(k[2] if k[2:] else -1))

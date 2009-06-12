@@ -50,7 +50,9 @@
     <script type="text/javascript">
       ${self.javascript_run()}
     </script>
-    
+    <style type="text/css">
+      ${unsafe(_("/* Custom css: use this block to insert special translation-dependent css in the page header */"))}
+    </style>
 
     ${self.head()}
   </head>

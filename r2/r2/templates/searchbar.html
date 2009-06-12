@@ -38,7 +38,8 @@
       <%
          label = _("about %(num)d results in %(second)s.")
          seconds = strings.float_label % \
-              (thing.elapsed_time, ungettext('second', 'seconds', 2))
+              dict(num=thing.elapsed_time,
+                   thing=ungettext('second', 'seconds', 2))
        %>
       ${label % dict(num=thing.num_results, second=seconds)}
     </div>
