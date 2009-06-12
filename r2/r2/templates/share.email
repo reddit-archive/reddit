@@ -28,7 +28,7 @@ ${thing.body}
 "${thing.link.title}"
 http://${g.domain}/goto?share=true&id=${thing.link._fullname}
 
-<% from r2.lib.strings import strings, plurals %>${ungettext("There is currently %(num_comments)s on this link.  You can view it here:", "There are currently %(num_comments)s on this link.  You can view them here:", thing.link.num_comments) % dict(num_comments = strings.number_label % (thing.link.num_comments, plurals.N_comments(thing.link.num_comments)))}
+<% from r2.lib.strings import strings, plurals %>${ungettext("There is currently %(num_comments)s on this link.  You can view it here:", "There are currently %(num_comments)s on this link.  You can view them here:", thing.link.num_comments) % dict(num_comments = strings.number_label % dict(num=thing.link.num_comments, thing=plurals.N_comments(thing.link.num_comments)))}
 
 <% from r2.lib.template_helpers import add_sr %>${add_sr(thing.link.make_permalink_slow(), force_hostname = True)}
 
