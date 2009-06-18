@@ -30,7 +30,14 @@
   <head>
     <title>${thing.title}</title>
   </head>
-  <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%">
+  <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%"
+    %if not thing.fullname:
+     onload="window.frames[1].focus();"
+    %endif
+## When thing.fullname is present, innertoolbarframe.html will take care of
+## the focus.
+    >
+
     %if thing.fullname:
       <frame frameborder="0" border="0" scrolling="no" name="reddit_top"
        noresize="1" src="${add_sr('/toolbar/toolbar?id=' + thing.fullname)}"

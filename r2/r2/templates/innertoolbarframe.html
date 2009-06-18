@@ -24,7 +24,7 @@
 %>
 <html>
   <frameset cols="${panel_size('expanded' if thing.expanded else 'collapsed')}"
-           name="inner_toolbar">
+           name="inner_toolbar" onload="window.frames[1].focus()">
     <frame frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}"
            name="reddit_panel" />
     <frame frameborder="0" src="${thing.link.url}" name="reddit_link" />

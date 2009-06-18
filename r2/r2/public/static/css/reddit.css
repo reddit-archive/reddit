@@ -743,7 +743,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* compressed links */
 .linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 8px; }
-.linkcompressed .title {margin-bottom: 4px; font-size:medium; font-weight: normal;}
+.linkcompressed .title {margin-bottom: 5px; font-size:medium; font-weight: normal;}
 .linkcompressed .child h3 { 
     margin: 15px; 
     text-transform: none; 
@@ -772,7 +772,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .linkcompressed .entry .buttons li.first {padding-left: .5em;}
 .linkcompressed .entry .buttons li a {
     padding: 0 2px;
-    background-color: #fafafa;
+    background-color: #fbfbfb;
     font-weight: bold
 }
 

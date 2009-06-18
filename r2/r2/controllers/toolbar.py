@@ -73,12 +73,6 @@ def auto_expand_panel(link):
     else:
         return c.user.pref_frame_commentspanel
 
-@memoize('toolbar.get_title', time = 500)
-def get_title(url):
-    """Find the <title> in the page contained at 'url'. Copied here
-       from utils so that we can memoize it"""
-    return utils.get_title(url)
-
 class ToolbarController(RedditController):
     @validate(link1 = VByName('id'),
               link2 = VLink('id', redirect = False))
@@ -139,9 +133,7 @@ class ToolbarController(RedditController):
             # link-id-based URL so that their URL is reusable
             return self.redirect(add_sr("/tb/" + link._id36))
 
-        title = get_title(path)
-        if not title:
-            title = utils.domain(path)
+        title = utils.domain(path)
         res = Frame(title = title, url = path)
 
         # we don't want clients to think that this URL is actually a
@@ -213,7 +205,7 @@ class ToolbarController(RedditController):
                                expanded = auto_expand_panel(link))
         else:
             res = FrameToolbar(link = None,
-                               title = get_title(url),
+                               title = None,
                                url = url,
                                expanded = False)
 

@@ -260,9 +260,18 @@ class ApiController(RedditController):
         form.redirect(path)
 
 
-    @validatedForm(VUser(),
-                  url = VSanitizedUrl(['url']))
+    @validatedForm(VRatelimit(rate_ip = True,
+                              rate_user = True,
+                              prefix = 'fetchtitle_'),
+                   VUser(),
+                   url = VSanitizedUrl(['url']))
     def POST_fetch_title(self, form, jquery, url):
+        if form.has_errors('ratelimit', errors.RATELIMIT):
+            form.set_html(".title-status", "");
+            return
+
+        VRatelimit.ratelimit(rate_ip = True, rate_user = True,
+                             prefix = 'fetchtitle_', seconds=1)
         if url:
             title = get_title(url)
             if title:
