@@ -168,10 +168,10 @@ class PostController(ApiController):
         errors = list(c.errors)
         if errors:
             for e in errors:
-                if not e.endswith("_login"):
+                if not e[0].endswith("_login"):
                     msg = c.errors[e].message
                     c.errors.remove(e)
-                    c.errors._add(e + "_login", msg)
+                    c.errors.add(e[0], msg)
 
             dest = request.post.get('dest', request.referer or '/')
             return LoginPage(user_login = request.post.get('user'),
@@ -188,10 +188,10 @@ class PostController(ApiController):
         errors = list(c.errors)
         if errors:
             for e in errors:
-                if not e.endswith("_reg"):
+                if not e[0].endswith("_reg"):
                     msg = c.errors[e].message
                     c.errors.remove(e)
-                    c.errors._add(e + "_reg", msg)
+                    c.errors.add(e[0], msg)
             return LoginPage(user_reg = request.post.get('user'),
                              dest = dest).render()
 
