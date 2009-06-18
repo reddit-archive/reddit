@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
+from r2.lib.jsontemplates import is_api
 from filters import unsafe, websafe
 from r2.lib.utils import vote_hash, UrlParser
 
@@ -102,8 +103,11 @@ def replace_render(listing, item, style = None, display = True):
             pass
         return rendered_item
 
-    child_txt = ( hasattr(item, "child") and item.child )\
-        and item.child.render(style = style) or ""
+    if is_api():
+        child_txt = ""
+    else:
+        child_txt = ( hasattr(item, "child") and item.child )\
+                    and item.child.render(style = style) or ""
 
     # handle API calls differently from normal request: dicts not strings are passed around
     if isinstance(rendered_item, dict):
@@ -239,7 +243,7 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
        path to include c.site.path.
     """
     # don't do anything if it is just an anchor
-    if path.startswith('#'):
+    if path.startswith('#') or path.startswith('javascript:'):
         return path
     
     u = UrlParser(path)

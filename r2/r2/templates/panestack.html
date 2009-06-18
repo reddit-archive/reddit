@@ -26,6 +26,10 @@
          ${thing.css_class and ("class='%s'" % str(thing.css_class)) or ""}>
   %endif
 
+  %if thing.title:
+    <h1>${thing.title}</h1>
+  %endif
+
   ${t.render() if t else ''}
 
   %if thing.div:

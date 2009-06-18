@@ -21,34 +21,42 @@
 ################################################################################
 
 <%namespace file="utils.html" import="error_field"/>
+<%namespace name="utils" file="utils.html"/>
 
-<form action="/post/update" method="post" class="pretty-form medium-text"
+<h1>${_("update your email or password")}</h1>
+
+<form action="/post/update" method="post" 
       onsubmit="return post_form(this, 'update')" id="pref-update">
-<table>
-<tr>
-    <td align="right">${_("current password (required)")}:</td>
-    <td><input name="curpass" type="password" /></td>
-    <td>${error_field("WRONG_PASSWORD")}</td>
-</tr>
-<tr>
-    <td align="right">${_("email")}:</td>
-    <td><input name="email" type="text" value="${hasattr(c.user,'email') and c.user.email or ''}"/></td>
-    <td>
-      ${error_field("BAD_EMAILS")}
-    </td>
-</tr>
-<tr>
-    <td align="right">${_("new password")}:</td>
-    <td><input name="newpass" type="password" maxlength="20"/></td>
-    <td>${error_field("BAD_PASSWORD")}</td>
-</tr>
-<tr>
-    <td align="right">${_("verify password")}:</td>
-    <td><input name="verpass" type="password" maxlength="20"/></td>
-    <td> ${error_field("BAD_PASSWORD_MATCH")}
-    </td>
-</tr>
-</table>
+
+<div class="spacer">
+  <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
+    <input type="password" name="curpass" />
+    ${error_field("WRONG_PASSWORD", "curpass")}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  <%utils:round_field title="${_('email')}">
+    <input type="text" name="email" value="${getattr(c.user, 'email', '')}"/>
+    ${error_field("BAD_EMAILS", "email")}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  <%utils:round_field title="${_('new password')}">
+    <input type="password" name="newpass"/>
+    ${error_field("BAD_PASSWORD", "newpass")}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  <%utils:round_field title="${_('verify password')}">
+    <input type="password" name="verpass"/>
+    ${error_field("BAD_PASSWORD_MATCH", "verpass")}
+  </%utils:round_field>
+</div>  
+
 <button type="submit" class="btn">${_('save')}</button>
 <span class="status error"></span>
+
 </form>

@@ -48,12 +48,15 @@ class Validator(object):
         self.default = default
         self.post, self.get, self.url = post, get, url
 
-    def set_error(self, error, msg_params = {}):
+    def set_error(self, error, msg_params = {}, field = False):
         """
         Adds the provided error to c.errors and flags that it is come
         from the validator's param
         """
-        c.errors.add(error, msg_params = msg_params, field = self.param)
+        if field is False:
+            field = self.param
+
+        c.errors.add(error, msg_params = msg_params, field = field)
 
     def __call__(self, url):
         a = []
@@ -135,7 +138,7 @@ def api_validate(response_function):
                                              simple_vals, param_vals, *a, **kw)
                 except UserRequiredException:
                     responder.send_failure(errors.USER_REQUIRED)
-                    return self.response_func(dict(iter(responder)))
+                    return self.response_func(responder.make_response())
             return newfn
         return val
     return _api_validate
@@ -146,6 +149,10 @@ def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     self_method(self, *a, **kw)
     return self.response_func({})
 
+@api_validate
+def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
+    r = self_method(self, *a, **kw)
+    return self.response_func(r)
 
 @api_validate
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
@@ -156,16 +163,19 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     # clear out the status line as a courtesy
     form.set_html(".status", "")
 
-    # do the actual work
-    val = self_method(self, form, responder, *a, **kw)
-
     # auto-refresh the captcha if there are errors.
     if (c.errors.errors and
         any(isinstance(v, VCaptcha) for v in simple_vals)):
+        form.has_errors('captcha', errors.BAD_CAPTCHA)
         form.new_captcha()
     
-    if val: return val
-    return self.response_func(dict(iter(responder)))
+    # do the actual work
+    val = self_method(self, form, responder, *a, **kw)
+
+    if val:
+        return val
+    else:
+        return self.response_func(responder.make_response())
 
 
 
@@ -266,46 +276,41 @@ def chksrname(x):
 
 
 class VLength(Validator):
-    def __init__(self, item, length = 10000,
-                 empty_error = errors.BAD_COMMENT,
-                 length_error = errors.COMMENT_TOO_LONG, **kw):
-        Validator.__init__(self, item, **kw)
-        self.length = length
-        self.len_error = length_error
-        self.emp_error = empty_error
+    only_whitespace = re.compile(r"^\s*$", re.UNICODE)
 
-    def run(self, title):
-        if not title:
-            self.set_error(self.emp_error)
-        elif len(title) > self.length:
-            self.set_error(self.len_error)
+    def __init__(self, param, max_length,
+                 empty_error = errors.NO_TEXT,
+                 length_error = errors.TOO_LONG,
+                 **kw):
+        Validator.__init__(self, param, **kw)
+        self.max_length = max_length
+        self.length_error = length_error
+        self.empty_error = empty_error
+
+    def run(self, text, text2 = ''):
+        text = text or text2
+        if self.empty_error and (not text or self.only_whitespace.match(text)):
+            self.set_error(self.empty_error)
+        elif len(text) > self.max_length:
+            self.set_error(self.length_error, {'max_length': self.max_length})
         else:
-            return title
+            return text
         
 class VTitle(VLength):
-    only_whitespace = re.compile(r"^\s*$", re.UNICODE)
-    
-    def __init__(self, item, length = 300, **kw):
-        VLength.__init__(self, item, length = length,
-                         empty_error = errors.NO_TITLE,
-                         length_error = errors.TITLE_TOO_LONG, **kw)
-
-    def run(self, title):
-        title = VLength.run(self, title)
-        if title and self.only_whitespace.match(title):
-            self.set_error(errors.NO_TITLE)
-        else:
-            return title
+    def __init__(self, param, max_length = 300, **kw):
+        VLength.__init__(self, param, max_length, **kw)
     
 class VComment(VLength):
-    def __init__(self, item, length = 10000, **kw):
-        VLength.__init__(self, item, length = length, **kw)
+    def __init__(self, param, max_length = 10000, **kw):
+        VLength.__init__(self, param, max_length, **kw)
 
+class VSelfText(VLength):
+    def __init__(self, param, max_length = 10000, **kw):
+        VLength.__init__(self, param, max_length, **kw)
         
 class VMessage(VLength):
-    def __init__(self, item, length = 10000, **kw):
-        VLength.__init__(self, item, length = length, 
-                         empty_error = errors.NO_MSG_BODY, **kw)
+    def __init__(self, param, max_length = 10000, **kw):
+        VLength.__init__(self, param, max_length, **kw)
 
 
 class VSubredditName(VRequired):
@@ -388,7 +393,7 @@ class VByNameIfAuthor(VByName):
             if not thing._loaded: thing._load()
             if c.user_is_loggedin and thing.author_id == c.user._id:
                 return thing
-        return self.error(errors.NOT_AUTHOR)
+        return self.set_error(errors.NOT_AUTHOR)
 
 class VCaptcha(Validator):
     default_param = ('iden', 'captcha')
@@ -466,7 +471,9 @@ class VSRSubmitPage(Validator):
             abort(403, "forbidden")
 
 class VSubmitParent(VByName):
-    def run(self, fullname):
+    def run(self, fullname, fullname2):
+        #for backwards compatability (with iphone app)
+        fullname = fullname or fullname2
         if fullname:
             parent = VByName.run(self, fullname)
             if parent and parent._deleted:
@@ -482,30 +489,34 @@ class VSubmitParent(VByName):
 
 class VSubmitSR(Validator):
     def run(self, sr_name):
+        if not sr_name:
+            self.set_error(errors.SUBREDDIT_REQUIRED)
+            return None
+
         try:
             sr = Subreddit._by_name(sr_name)
         except (NotFound, AttributeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
-            sr = None
+            return None
 
         if sr and not (c.user_is_loggedin and sr.can_submit(c.user)):
             abort(403, "forbidden")
         else:
             return sr
         
-pass_rx = re.compile(r".{3,20}")
+pass_rx = re.compile(r"^.{3,20}$")
 
 def chkpass(x):
     return x if x and pass_rx.match(x) else None
 
-class VPassword(VRequired):
-    def __init__(self, item, *a, **kw):
-        VRequired.__init__(self, item, errors.BAD_PASSWORD, *a, **kw)
+class VPassword(Validator):
     def run(self, password, verify):
         if not chkpass(password):
-            return self.error()
+            self.set_error(errors.BAD_PASSWORD)
+            return
         elif verify != password:
-            return self.error(errors.BAD_PASSWORD_MATCH)
+            self.set_error(errors.BAD_PASSWORD_MATCH)
+            return password
         else:
             return password
 
@@ -695,11 +706,11 @@ class VRatelimit(Validator):
             # when errors have associated field parameters, we'll need
             # to add that here
             if self.error == errors.RATELIMIT:
-                self.set_error(errors.RATELIMIT, {'time': time})
+                self.set_error(errors.RATELIMIT, {'time': time},
+                               field = 'ratelimit')
             else:
                 self.set_error(self.error)
                 
-
     @classmethod
     def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_",
                   seconds = None):
@@ -736,16 +747,13 @@ class VCacheKey(Validator):
         self.key = key
         if key:
             uid = g.cache.get(str(self.cache_prefix + "_" + self.key))
-            try:
-                a = Account._byID(uid, data = True)
-                if name and a.name.lower() != name.lower():
-                    self.set_error(errors.BAD_USERNAME)
-                else:
-                    self.user = a
-            except NotFound:
-                self.set_error(errors.BAD_USERNAME)
+            if uid:
+                try:
+                    self.user = Account._byID(uid, data = True)
+                except NotFound:
+                    return
+            #found everything we need
             return self
-            
         self.set_error(errors.EXPIRED)
 
 class VOneOf(Validator):

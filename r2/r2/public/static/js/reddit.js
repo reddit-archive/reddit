@@ -56,7 +56,7 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
 function get_form_fields(form, fields) {
     fields = fields || {};
     /* consolidate the form's inputs for submission */
-    $(form).find("select, input, textarea").not(".gray").each(function() {
+    $(form).find("select, input, textarea").not(".gray, :disabled").each(function() {
             if (($(this).attr("type") != "radio" &&
                  $(this).attr("type") != "checkbox") ||
                 $(this).attr("checked"))
@@ -158,7 +158,15 @@ function toggle_label (elem, callback, cancelback) {
 function toggle(elem, callback, cancelback) {
     var self = $(elem).parent().andSelf().filter(".option");
     var sibling = self.removeClass("active")
-        .siblings().addClass("active").get(0);
+        .siblings().addClass("active").get(0); 
+
+    /*
+    var self = $(elem).siblings().andSelf();
+    var sibling = self.filter(":hidden").debug();
+    self = self.filter(":visible").removeClass("active");
+    sibling = sibling.addClass("active").get(0);
+    */
+
     if(cancelback && !sibling.onclick) {
         sibling.onclick = function() {
             return toggle(sibling, cancelback, callback);
@@ -238,10 +246,7 @@ function get_organic(elem, next) {
 /* links */
 
 function linkstatus(form) {
-    var title = $(form).find("#title").attr("value");
-    if(title) 
-        return reddit.status_msg.submitting;
-    return reddit.status_msg.fetching;
+    return reddit.status_msg.submitting;
 };
 
 
@@ -271,22 +276,8 @@ function unfriend(user_name, container_name, type) {
     }
 };
 
-function show_media(obj) {
-    obj = $.unsafe(obj);
-    return function(elem) {
-        var where = $(elem).thing().find(".embededmedia");
-        if (where.length) 
-            where.show().html(obj);
-        else
-            $(elem).new_thing_child('<div class="embededmedia">' + obj + '</div>');
-    }
-};
-
-function cancelMedia(elem) {
-    return cancelToggleForm(elem, ".embededmedia", ".media-button");
-};
-
 function share(elem) {
+    $.request("new_captcha");
     $(elem).new_thing_child($(".sharelink:first").clone(true)
                             .attr("id", "sharelink_" + $(elem).thing_id()),
                              false);
@@ -299,55 +290,11 @@ function cancelShare(elem) {
 
 /* Comment generation */
 function helpon(elem) {
-    $(elem).parents("form:first").children(".markhelp:first").show();
+    $(elem).parents(".usertext-edit:first").children(".markhelp:first").show();
 };
 function helpoff(elem) {
-    $(elem).parents("form:first").children(".markhelp:first").hide();
+    $(elem).parents(".usertext-edit:first").children(".markhelp:first").hide();
 };
-
-
-function chkcomment(form) {
-    var entry = $(form).find("textarea");
-    if( entry.hasClass("gray") || !entry.attr("value") ) {
-        return false;
-    } else if(form.replace.value) 
-        return post_form(form, 'editcomment', null, null, true);
-    else 
-        return post_form(form, 'comment', null, null, true);
-};
-
-function comment_edit(elem) {
-    return $(".commentreply:first").clone(true)
-        .find("button[name=cancel]").show().end()
-        .attr("id", "commentreply_" + $(elem).thing_id());
-};
-
-function reply(elem) {
-    $(elem).new_thing_child(comment_edit(elem))
-          .find('textarea:first').focus();
-};
-
-function editcomment(elem) {
-    var comment = $(elem).thing();
-    var thing_name = comment.thing_id();
-    var edit = comment_edit(elem);
-    var content = comment.find(".edit-body:first").html();
-    content = decodeURIComponent(content.replace(/\+/g, " "));
-    edit.prependTo(comment)
-        .hide()
-        .find("button[name=comment]").hide().end()
-        .find("button[name=edit]").show().end()
-        .find("textarea")
-        .attr("value", content)
-        .removeClass("gray")
-    edit.attr("parent").value = thing_name;
-    edit.attr("replace").value = 1;
-    
-    comment.children(".midcol, .entry").hide();
-    edit.find("textarea:first").focus();
-    edit.show();
-};
-
 
 function hidecomment(elem) {
     $(elem).thing().hide()
@@ -363,15 +310,6 @@ function showcomment(elem) {
         .show();
     return false;
 };
-
-function cancelReply(elem) {
-    var on_hide = function(form) {
-        $.things($(form).attr("parent").value)
-        .children(".midcol, .entry").show();
-    };
-    return cancelToggleForm(elem, ".commentreply", ".reply-button", on_hide);
-};
-
 
 function morechildren(form, link_id, children, depth) {
     $(form).html(reddit.status_msg.loading)
@@ -650,6 +588,304 @@ function register(elem) {
     return post_user(this, "register");
 };
 
+/***submit stuff***/
+function fetch_title() {
+    var url_field = $("#url-field");
+    var error = url_field.find(".NO_URL");
+    var status = url_field.find(".title-status");
+    var url = $("#url").val();
+    if (url) {
+        status.show().text("loading...");
+        error.hide();
+        $.request("fetch_title", {url: url});
+    }
+    else {
+        status.hide();
+        error.show().text("a url is required");
+    }
+}
+
+/**** sr completing ****/
+function sr_cache() {
+    if (!$.defined(reddit.sr_cache)) {
+        reddit.sr_cache = new Array();
+    }
+    return reddit.sr_cache;
+}
+
+function highlight_reddit(item) {
+    $("#sr-drop-down").children('.sr-selected').removeClass('sr-selected');
+    if (item) {
+        $(item).addClass('sr-selected');
+    }
+}
+
+function update_dropdown(sr_names) {
+    var drop_down = $("#sr-drop-down");
+    if (!sr_names.length) {
+        drop_down.hide();
+        return;
+    }
+
+    var first_row = drop_down.children(":first");
+    first_row.removeClass('sr-selected');
+    drop_down.children().remove();
+
+    $.each(sr_names, function(i) {
+            if (i > 10) return;
+            var name = sr_names[i];
+            var new_row = first_row.clone();
+            new_row.text(name);
+            drop_down.append(new_row);
+        });
+
+    drop_down.show();
+}
+
+function sr_search(query) {
+    query = query.toLowerCase();
+    var cache = sr_cache();
+    if (!cache[query]) {
+        $.request('search_reddit_names', {query: query},
+                  function (r) {
+                      cache[query] = r['names'];
+                      update_dropdown(r['names']);
+                  });
+    }
+    else {
+        update_dropdown(cache[query]);
+    }
+}
+
+function sr_name_up(e) {
+    var new_sr_name = $("#sr-autocomplete").val();
+    var old_sr_name = window.old_sr_name || '';
+    window.old_sr_name = new_sr_name;
+
+    if (new_sr_name == '') {
+        hide_sr_name_list();
+    }
+    else if (e.keyCode == 38 || e.keyCode == 40 || e.keyCode == 9) {
+    }
+    else if (e.keyCode == 27 && reddit.orig_sr) {
+        $("#sr-autocomplete").val(reddit.orig_sr);
+        hide_sr_name_list();
+    }
+    else if (new_sr_name != old_sr_name) {
+        reddit.orig_sr = new_sr_name;
+        sr_search($("#sr-autocomplete").val());
+    }
+}
+
+function sr_name_down(e) {
+    var input = $("#sr-autocomplete");
+    
+    if (e.keyCode == 38 || e.keyCode == 40) {
+        var dir = e.keyCode == 38 && 'up' || 'down';
+
+        var cur_row = $("#sr-drop-down .sr-selected:first");
+        var first_row = $("#sr-drop-down .sr-name-row:first");
+        var last_row = $("#sr-drop-down .sr-name-row:last");
+
+        var new_row = null;
+        if (dir == 'down') {
+            if (!cur_row.length) new_row = first_row;
+            else if (cur_row.get(0) == last_row.get(0)) new_row = null;
+            else new_row = cur_row.next(':first');
+        }
+        else {
+            if (!cur_row.length) new_row = last_row;
+            else if (cur_row.get(0) == first_row.get(0)) new_row = null;
+            else new_row = cur_row.prev(':first');
+        }
+        highlight_reddit(new_row);
+        if (new_row) {
+            input.val($.trim(new_row.text()));
+        }
+        else {
+            input.val(reddit.orig_sr);
+        }
+        return false;
+    }
+    else if (e.keyCode == 13) {
+        hide_sr_name_list();
+        input.parents("form").submit();
+        return false;
+    }   
+}
+
+function hide_sr_name_list(e) {
+    $("#sr-drop-down").hide();
+}
+
+function sr_dropdown_mdown(row) {
+    reddit.sr_mouse_row = row; //global
+    return false;
+}
+
+function sr_dropdown_mup(row) {
+    if (reddit.sr_mouse_row == row) {
+        var name = $(row).text();
+        $("#sr-autocomplete").val(name);
+        $("#sr-drop-down").hide();
+    }
+}
+
+function set_sr_name(link) {
+    var name = $(link).text();
+    $("#sr-autocomplete").trigger('focus').val(name);
+}
+
+/*** tabbed pane stuff ***/
+function select_form_tab(elem, to_show, to_hide) {
+    //change the menu    
+    var link_parent = $(elem).parent();
+    link_parent
+        .addClass('selected')
+        .siblings().removeClass('selected');
+    
+    //swap content and enable/disable form elements
+    var content = link_parent.parent('ul').next('.formtabs-content');
+    content.find(to_show)
+        .show()
+        .find(":input").removeAttr("disabled").end();
+    content.find(to_hide)
+        .hide()
+        .find(":input").attr("disabled", true);
+}
+
+/**** expando stuff ********/
+function expando_cache() {
+    if (!$.defined(reddit.thing_child_cache)) {
+        reddit.thing_child_cache = new Array();
+    }
+    return reddit.thing_child_cache;
+}
+
+function expando_child(elem) {
+    var child_cache = expando_cache();
+    var thing = $(elem).thing();
+
+    //swap button
+    var button = thing.find(".expando-button");
+    button
+        .addClass("expanded")
+        .removeClass("collapsed")
+        .get(0).onclick = function() {unexpando_child(elem)};
+
+    //load content
+    var expando = thing.find(".expando");
+    var key = thing.thing_id() + "_cache";
+    if (!child_cache[key]) {
+        $.request("expando",
+                  {"link_id":thing.thing_id()},
+                  function(r) {
+                      child_cache[key] = r;
+                      expando.html($.unsafe(r));
+                  },
+                  false, "html");
+    }
+    else {
+        expando.html($.unsafe(child_cache[key]));
+    }
+    expando.show();
+}
+
+function unexpando_child(elem) {
+    var thing = $(elem).thing();
+    var button = thing.find(".expando-button");
+    button
+        .addClass("collapsed")
+        .removeClass("expanded")
+        .get(0).onclick = function() {expando_child(elem)};
+
+    thing.find(".expando").hide().empty();
+}
+
+/******* editting comments *********/
+function show_edit_usertext(form) {
+    var edit = form.find(".usertext-edit");
+    var body = form.find(".usertext-body");
+    var textarea = edit.find('div > textarea');
+
+    //max of the height of the content or the min values from the css.
+    var body_width = Math.max(body.children(".md").width(), 500);
+    var body_height = Math.max(body.children(".md").height(), 100);
+
+    //we need to show the textbox first so it has dimensions
+    body.hide();
+    edit.show();
+
+    //restore original (?) css width/height. I can't explain why, but
+    //this is important.
+    textarea.css('width', '');
+    textarea.css('height', '');
+
+    //if there would be scroll bars, expand the textarea to the size
+    //of the rendered body text
+    if (textarea.get(0).scrollHeight > textarea.height()) {
+        var new_width = Math.max(body_width - 5, textarea.width());
+        textarea.width(new_width);
+        edit.width(new_width);
+
+        var new_height = Math.max(body_height, textarea.height());
+        textarea.height(new_height);
+    }
+
+    form
+        .find(".cancel, .save").show().end()
+        .find(".help-toggle").show().end();
+
+    textarea.focus();
+}
+
+function hide_edit_usertext(form) {
+    form
+        .find(".usertext-edit").hide().end()
+        .find(".usertext-body").show().end()
+        .find(".cancel, .save").hide().end()
+        .find(".help-toggle").hide().end()
+        .find(".markhelp").hide().end()
+}
+
+function comment_reply_for_elem(elem) {
+    elem = $(elem);
+    var thing = elem.thing();
+    var thing_id = elem.thing_id();
+    //try to find a previous form
+    var form = thing.find(".child .usertext:first");
+    if (!form.length || form.parent().thing_id() != thing.thing_id()) {
+        form = $(".usertext.cloneable:first").clone(true);
+        elem.new_thing_child(form);
+        form.attr("thing_id").value = thing_id;
+        form.attr("id", "commentreply_" + thing_id);
+        form.find(".error").hide();
+    }
+    return form;
+}
+
+function edit_usertext(elem) {
+    show_edit_usertext($(elem).thing().find(".usertext:first"));
+}
+
+function cancel_usertext(elem) {
+    hide_edit_usertext($(elem).thing().find(".usertext:first"));
+}
+
+function save_usertext(elem) {
+}
+
+function reply(elem) {
+    var form = comment_reply_for_elem(elem);
+    //show the right buttons
+    show_edit_usertext(form);
+    //re-show the whole form if required
+    form.show();
+    //update the cancel button to call the toggle button's click
+    form.find(".cancel").get(0).onclick = function() {form.hide()};
+}
+
+
 function populate_click_gadget() {
     /* if we can find the click-gadget, populate it */
     if($('.click-gadget').length) {
@@ -659,7 +895,8 @@ function populate_click_gadget() {
             clicked = $.uniq(clicked, 5);
             clicked.sort();
 
-            $.request('gadget/click/' + clicked.join(','), undefined, undefined, undefined, true);
+            $.request('gadget/click/' + clicked.join(','), undefined, undefined,
+                      undefined, "json", true);
         }
     }
 }
@@ -809,4 +1046,3 @@ $(function() {
 
 
     });
-

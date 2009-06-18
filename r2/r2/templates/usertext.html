@@ -1,0 +1,145 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   from r2.lib.filters import unsafe, safemarkdown, keep_space
+   from r2.lib.utils import randstr
+%>
+
+<%namespace file="printable.html" import="toggle_button" />
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="action_button(name, btn_type, onclick, display)">
+  <button type="${btn_type}" onclick="${onclick}" class="${name}"
+          ${"style='display:none'" if not display else ""}>
+    ${name}
+  </button>
+</%def>
+
+%if thing.have_form:
+  <form action="#" class="${thing.css_class}"
+        onsubmit="return post_form(this, '${thing.post_form}')"
+        ${"style='display:none'" if not thing.display else ""}
+        id="form-${(thing.item._fullname if thing.item else "") + randstr(3)}">
+%else:
+  <div class="${thing.css_class}">
+%endif
+
+  ##this is set for both editting selftext and creating new comments
+  <input type="hidden" name="thing_id"
+         value="${thing.item and thing.item._fullname or ''}"/>
+
+  %if not thing.creating:
+    <div class="usertext-body">
+      ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow))}
+    </div>
+  %endif
+
+  %if thing.editable or thing.creating:
+    ##keep this on one line so we don't add extra spaces
+    <div class="usertext-edit"
+         style="${"" if thing.creating else 'display: none'}">
+      ##this div prevents IE7 from adding extra margin to the textarea.
+      <div>
+        <textarea rows="1" cols="1"
+                  name="text"
+                  >${keep_space(thing.text)}</textarea>
+      </div>
+
+      <div class="bottom-area">
+        ${toggle_button("help-toggle", _("formatting help"), _("hide help"),
+                        "helpon", "helpoff",
+                         style = "" if thing.creating else "display: none")}
+
+        ${error_field("TOO_LONG", "text", "span")}
+        ${error_field("NO_TEXT", "text", "span")}
+      
+        <div class="usertext-buttons">
+          ${action_button("save", "submit", "",
+                          thing.creating and thing.have_form)}
+          ${action_button("cancel", "button", "cancel_usertext(this)", False)}
+          %if thing.have_form:
+            <span class="status"></span>
+          %endif
+        </div>
+      </div>
+
+      <table class="markhelp md" style="display: none">
+        <tr style="background-color: #ffff99; text-align: center">
+          <td><em>${_( "you type:")}</em></td>
+          <td><em>${_( "you see:")}</em></td>
+        </tr>
+        <tr>
+          <td>*${_( "italics")}*</td>
+          <td><em>${_( "italics")}</em></td>
+        </tr>
+        <tr>
+          <td>**${_( "bold")}**</td>
+          <td><b>${_( "bold")}</b></td>
+        </tr>
+        <tr>
+          <td>[reddit!](http://reddit.com)</td>
+          <td><a href="http://reddit.com">reddit!</a></td>
+        </tr>
+        <tr>
+          <td>
+            * ${_( "item")} 1<br/>
+            * ${_( "item")} 2<br/>
+            * ${_( "item")} 3
+          </td>
+          <td>
+            <ul>
+              <li>${_( "item")} 1</li>
+              <li>${_( "item")} 2</li>
+              <li>${_( "item")} 3</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td>&gt; ${_( "quoted text")}</td>
+          <td><blockquote>${_( "quoted text" )}</blockquote></td>
+        </tr>
+        <tr>
+            <td>
+                Here is some code:<br/>
+                <span class="spaces">
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                </span>
+                def foo():<br/>
+                <span class="spaces">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </span>
+                print "hello, world!"<br/>
+            </td>
+            <td>Here is come code:<br/>
+                <pre>def foo():<br/>&nbsp;&nbsp;&nbsp;&nbsp;print "hello,
+                world!"</pre>
+            </td>
+        </tr>
+      </table>
+    </div>
+  %endif
+
+%if thing.have_form:
+  </form>
+%else:
+  </div>
+%endif

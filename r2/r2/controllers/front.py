@@ -109,7 +109,7 @@ class FrontController(RedditController):
         if not key and request.referer:
             referer_path =  request.referer.split(g.domain)[-1]
             done = referer_path.startswith(request.fullpath)
-        elif not cache_evt.user:
+        elif not getattr(cache_evt, "user", None):
             return self.abort404()
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
@@ -174,12 +174,11 @@ class FrontController(RedditController):
         # insert reply box only for logged in user
         if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user):
             #no comment box for permalinks
-            if not comment:
-                displayPane.append(CommentReplyBox(link_name = 
-                                                   article._fullname))
-            else:
-                displayPane.append(CommentReplyBox())
-                
+            displayPane.append(UserText(item = article, creating = True,
+                                        post_form = 'comment',
+                                        display = not bool(comment),
+                                        cloneable = True))
+            
         # finally add the comment listing
         displayPane.append(listing.listing())
 
@@ -498,7 +497,9 @@ class FrontController(RedditController):
                 return res
 
         captcha = Captcha() if c.user.needs_captcha() else None
-        sr_names = Subreddit.submit_sr_names(c.user) if c.default_sr else ()
+        sr_names = (Subreddit.submit_sr_names(c.user) or
+                    Subreddit.submit_sr_names(None))
+        
 
         return FormPage(_("submit"), 
                         content=NewLink(url=url or '',

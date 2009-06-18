@@ -24,6 +24,7 @@ from utils import storage
 
 from itertools import chain
 import sys
+
 sys.setrecursionlimit(500)
 
 class NoTemplateFound(Exception): pass
@@ -111,3 +112,26 @@ def SimpleWrapped(**kw):
             kw.update(kw1)
             Wrapped.__init__(self, *a, **kw)
     return _SimpleWrapped
+
+class Styled(Wrapped):
+    """Rather than creating a separate template for every possible
+    menu/button style we might want to use, this class overrides the
+    render function to render only the <%def> in the template whose
+    name matches 'style'.
+
+    Additionally, when rendering, the '_id' and 'css_class' attributes
+    are intended to be used in the outermost container's id and class
+    tag.
+    """
+    def __init__(self, style, _id = '', css_class = '', **kw):
+        self._id = _id
+        self.css_class = css_class
+        self.style = style
+        Wrapped.__init__(self, **kw)
+
+    def render(self, **kw):
+        """Using the canonical template file, only renders the <%def>
+        in the template whose name is given by self.style"""
+        from pylons import c
+        style = kw.get('style', c.render_style or 'html')
+        return Wrapped.part_render(self, self.style, style = style, **kw)

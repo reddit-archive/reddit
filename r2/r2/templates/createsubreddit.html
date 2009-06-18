@@ -85,8 +85,8 @@ function update_title(elem) {
       </td>
       <td class="note" id="note_name">
         %if not thing.site:
-          ${error_field("SUBREDDIT_EXISTS", "span")}
-          ${error_field("BAD_SR_NAME", "span")}
+          ${error_field("SUBREDDIT_EXISTS", "name")}
+          ${error_field("BAD_SR_NAME", "name")}
           <span class="gray" id="example_name">
             ${_("no spaces, e.g. slashdot")}
           </span>
@@ -106,8 +106,8 @@ function update_title(elem) {
         %endif
       </td>
       <td class="note" id="note_title">
-        ${error_field("NO_TITLE", "span")}
-        ${error_field("TITLE_TOO_LONG", "span")}
+        ${error_field("NO_TEXT", "title")}
+        ${error_field("TOO_LONG", "title")}
         %if not thing.site:
           <span class="gray" id="example_title">
             ${_("e.g. slashdot: news for nerds, stuff that matters")}
@@ -129,7 +129,7 @@ function update_title(elem) {
         </textarea>
       </td>
       <td class="note" id="note_description">
-        ${error_field("DESC_TOO_LONG", "span")}
+        ${error_field("TOO_LONG", "description")}
       </td>
     </tr>
     <tr>
@@ -199,8 +199,8 @@ function update_title(elem) {
       <td class="note" id="note_domain">
         <a id="example_domain" href="#" 
            onclick="$('#domainhelp').slideDown(); $('#example_domain').fadeOut(); return false;">what's this?</a>
-        ${error_field("BAD_CNAME", "span")}
-        ${error_field("USED_CNAME", "span")}
+        ${error_field("BAD_CNAME", "domain")}
+        ${error_field("USED_CNAME", "domain")}
       </td>
     </tr>
     %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
@@ -265,5 +265,5 @@ function update_title(elem) {
   >${text}</button>
   &#32;
   <span class="status error"></span>
-  ${error_field("RATELIMIT", "span")}
+  ${error_field("RATELIMIT", "ratelimit")}
 </div>

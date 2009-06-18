@@ -22,90 +22,109 @@
 
 <%!
    from r2.lib.strings import strings
+   from r2.lib.pages import UserText
    from r2.lib.template_helpers import add_sr
 %>
+
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links"/>
+<%namespace name="utils" file="utils.html"/>
 
-%if thing.subreddits:
-  <h1>${_("submit")}</h1>
-%else:
-  <h1>${_("submit to %(site)s") % dict(site=c.site.name)}</h1>
+<h1>${_("submit to reddit")}</h1>
+
+<%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
+                    action=${add_sr("/submit")},
+                    _class="submit content",
+                    _id="newlink">
+
+${thing.formtabs_menu.render()}
+<div class="formtabs-content">
+
+<div class="spacer">
+    <div id="link-desc" class="infobar">${strings.submit_link}</div>
+    <div id="text-desc" class="infobar">${strings.submit_text}</div>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('title')}" id="title-field">
+    <textarea name="title" rows="2" cols="1" wrap="hard">${thing.title}</textarea>
+    ${error_field("NO_TEXT", "title", "span")}
+    ${error_field("TOO_LONG", "title", "span")}
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('url')}" id="url-field">
+    <input name="kind" value="link" type="hidden"/>
+    <input id="url" name="url" type="text" value="${thing.url}"/>
+    ${error_field("NO_URL", "url", "span")}
+    ${error_field("BAD_URL", "url", "span")}
+    ${error_field("ALREADY_SUB", "url", "span")}
+    <div>
+      <button type="button" onclick="fetch_title()">${_("suggest title")}</button>
+      <span class="title-status"></span>
+    </div>
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field">
+    <input name="kind" value="self" type="hidden"/>
+    ${UserText(None, have_form = False, creating = True).render()}
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('reddit')}" id="reddit-field">
+    <div id="sr-autocomplete-area">
+      <input id="sr-autocomplete" name="sr" type="text"
+             autocomplete="off"
+             onkeyup="sr_name_up(event)"
+             onkeydown="return sr_name_down(event)"
+             onblur="hide_sr_name_list()"
+             value = "${thing.default_sr}" />
+      <ul id="sr-drop-down">
+        <li class="sr-name-row"
+            onmouseover="highlight_reddit(this)"
+            onmousedown="return sr_dropdown_mdown(this)"
+            onmouseup="sr_dropdown_mup(this)">nothin</li>
+      </ul>
+    </div>
+    <script type="text/javascript">
+      reddit.sr_cache = ${unsafe(thing.sr_searches)};
+    </script>
+    ${error_field("SUBREDDIT_NOEXIST", "sr", "span")}
+    ${error_field("SUBREDDIT_REQUIRED", "sr", "span")}
+    
+    <div id="suggested-reddits">
+        <span class="">${_("popular choices")}&#32;</span>
+      <ul>
+        %for name in thing.subreddits:
+        <li>
+          <a href="#" onclick="set_sr_name(this); return false">${name}</a>&#32;
+        </li>
+        %endfor
+      </ul>
+    </div>
+  </%utils:round_field>
+</div>
+
+%if thing.captcha:
+  ${thing.captcha.render()}
 %endif
+    
+</div>
 
-<%call expr="submit_form(onsubmit='return post_form(this, \'submit\', linkstatus, null, true)',
-             action=add_sr('/submit'), _class='long-text content', _id='newlink')">
-  %if not thing.subreddits:
-    <input type="hidden" name="sr" value="${c.site.name}" />
-  %endif
-  <input type="hidden" name="then" value="${thing.then}" />
-  <table>
-    <tr>
-      <th>
-        <label for="url">${_("url")}</label>
-      </th>
-      <td>
-        <input id="url" name="url" type="text" value="${thing.url}"/>
-        ${error_field("NO_URL", "span")}
-        ${error_field("BAD_URL", "span")}
-        ${error_field("ALREADY_SUB", "span")}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <label for="title">${_("title")}</label>
-      </th>
-      <td><input id="title" name="title" value="${thing.title}" type="text" />
-        ${error_field("NO_TITLE", "span")}
-        ${error_field("TITLE_TOO_LONG", "span")}
-      </td>
-    </tr>
-    %if thing.subreddits:
-      <tr>
-        <th>
-          <label for="sr">${_("subreddit")}</label>
-        </th>
-        <td>
-          <select id="sr" name="sr">
-            %for sr in thing.subreddits:
-              <option value="${sr}">${sr}</option>
-            %endfor
-          </select>
-        </td>
-      </tr>
-    %endif
-    <tr>
-      <td></td>
-      <td>
-        <input id="save" name="save" type="checkbox" />
-        <label for="save">${_("add to my saved sites")}</label>
-      </td>
-    </tr>
-    %if thing.captcha:
-      ${thing.captcha.render()}
-    %endif
-    <tr>
-      <td></td>
-      <td>
-        <button class="btn" type="submit">${_("submit")}</button>
-        <span class="status"></span>
-        ${error_field("RATELIMIT", "span")}
-      </td>
-    </tr>
-  </table>
+<div class="spacer">
+  <button class="btn" name="submit" value="form" type="submit" tabindex=1>${_("submit")}</button>
+  <span class="status"></span>
+  ${error_field("RATELIMIT", "ratelimit")}
+</div>
+</%utils:submit_form>
 
-  <script type="text/javascript">
-    var form = $("#newlink");
-    if(form.length) {
-      emptyInput(form.find("#url"),
-                 '${unsafe(_('type "self" here to make this post refer to itself.'))}');
-    emptyInput(form.find("#title"), 
-                 "${_('enter a title, or click submit to find one automatically.')}")
-    }
-  </script>
-
-  <p>
-    ${text_with_links(_("use reddit from your toolbar with the %(bookmarklets)s"),
-                      bookmarklets = (_('reddit bookmarklets'), '/bookmarklets'))}
-  </p>
-</%call>
-
+<script type="text/javascript">
+  var form = $("#newlink");
+  if(form.length) {
+    var default_menu = form.find(".${thing.default_tab}:first");
+    select_form_tab(default_menu, "${thing.default_show}", "${thing.default_hide}");
+  }
+</script>

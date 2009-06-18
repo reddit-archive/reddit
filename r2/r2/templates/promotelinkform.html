@@ -46,7 +46,8 @@
         <input name="title" type="text" value="${thing.link.title if thing.link else ""}" />
       </td>
       <td>
-        ${error_field("NO_TITLE", "span")}
+        ${error_field("NO_TEXT", "title")}
+        ${error_field("TOO_LONG", "title")}
       </td>
     </tr>
     <tr>
@@ -56,9 +57,9 @@
                value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
       </td>
       <td>
-        ${error_field("NO_URL", "span")}
-        ${error_field("BAD_URL", "span")}
-        ${error_field("ALREADY_SUB", "span")}
+        ${error_field("NO_URL", "url")}
+        ${error_field("BAD_URL", "url")}
+        ${error_field("ALREADY_SUB", "url")}
       </td>
     </tr>
     <tr>
@@ -78,7 +79,7 @@
         %endif
       </td>
       <td>
-        ${error_field("SUBREDDIT_NOEXIST")}
+        ${error_field("SUBREDDIT_NOEXIST", "sr")}
       </td>
     </tr>
     <tr>
@@ -121,7 +122,7 @@
             </select>
         %endif
       </td>
-      <td>${error_field("BAD_NUMBER", "span")}</td>
+      <td>${error_field("BAD_NUMBER", "timelimitlength")}</td>
     </tr>
   </table>
 </form>
@@ -148,5 +149,5 @@
   >${text}</button>
   &#32;
   <span class="status error"></span>
-  ${error_field("RATELIMIT", "span")}
+  ${error_field("RATELIMIT", "ratelimit")}
 </div>

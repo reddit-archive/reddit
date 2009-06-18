@@ -66,10 +66,6 @@
 ${unsafe(safemarkdown(thing.body))}
 </%def>
 
-<%def name="commentText()">
-  ${edit_comment_filter(thing.body)}
-</%def>
-
 <%def name="buttons()">
 %if hasattr(thing, "was_comment"):
     <li>
@@ -81,7 +77,7 @@ ${unsafe(safemarkdown(thing.body))}
     ${parent.buttons()}
     %if c.user_is_loggedin:
       <li>
-      ${parent.simple_button(_("reply {verb}"), "reply")}
+        ${parent.simple_button(_("reply"), "reply")}
       </li>
     %endif
 %endif
@@ -94,11 +90,7 @@ ${unsafe(safemarkdown(thing.body))}
   </p>
   <div class="body">${self.commentBody()}
   </div>
-  %if thing.author == c.user:
-    <div style="display: none;">${self.commentText()}\
-    </div>
-  %endif
-  <ul class="flat-list buttons" ${(collapse and "style='display:none'" or '')}>
+ <ul class="flat-list buttons" ${(collapse and "style='display:none'" or '')}>
     ${self.buttons()}
   </ul>
 </div>

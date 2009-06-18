@@ -20,7 +20,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from wrapped import Wrapped
+from wrapped import Wrapped, Styled
 from pylons import c, request, g
 from utils import  query_string, timeago
 from strings import StringHandler, plurals
@@ -150,30 +150,6 @@ menu =   MenuHandler(hot          = _('hot'),
                      current_promos = _('promoted links'),
                      )
 
-class Styled(Wrapped):
-    """Rather than creating a separate template for every possible
-    menu/button style we might want to use, this class overrides the
-    render function to render only the <%def> in the template whose
-    name matches 'style'.
-
-    Additionally, when rendering, the '_id' and 'css_class' attributes
-    are intended to be used in the outermost container's id and class
-    tag.
-    """
-    def __init__(self, style, _id = '', css_class = '', **kw):
-        self._id = _id
-        self.css_class = css_class
-        self.style = style
-        Wrapped.__init__(self, **kw)
-
-    def render(self, **kw):
-        """Using the canonical template file, only renders the <%def>
-        in the template whose name is given by self.style"""
-        style = kw.get('style', c.render_style or 'html')
-        return Wrapped.part_render(self, self.style, style = style, **kw)
-
-
-
 def menu_style(type):
     """Simple manager function for the styled menus.  Returns a
     (style, css_class) pair given a 'type', defaulting to style =
@@ -185,11 +161,10 @@ def menu_style(type):
              srdrop = ('dropdown', 'srdrop'),
              flatlist =  ('flatlist', 'flat-list'),
              tabmenu = ('tabmenu', ''),
+             formtab = ('tabmenu', 'formtab'),
              flat_vert = ('flatlist', 'flat-vert'),
              )
     return d.get(type, default)
-
-         
 
 class NavMenu(Styled):
     """generates a navigation menu.  The intention here is that the
@@ -337,7 +312,7 @@ class JsButton(NavButton):
     """A button which fires a JS event and thus has no path and cannot
     be in the 'selected' state"""
     def __init__(self, title, style = 'js', **kw):
-        NavButton.__init__(self, title, '', style = style, **kw)
+        NavButton.__init__(self, title, '#', style = style, **kw)
 
     def build(self, *a, **kw):
         self.path = 'javascript:void(0)'
@@ -391,7 +366,7 @@ class SortMenu(SimpleGetMenu):
     options   = ('hot', 'new', 'top', 'old', 'controversial')
 
     def __init__(self, **kw):
-        kw['title'] = _("sort by")
+        kw['title'] = _("sorted by")
         SimpleGetMenu.__init__(self, **kw)
     
     @classmethod
@@ -520,6 +495,11 @@ class SubredditMenu(NavMenu):
     def find_selected(self):
         """Always return False so the title is always displayed"""
         return None
+
+class JsNavMenu(NavMenu):
+    def find_selected(self):
+        """Always return the first element."""
+        return self.options[0]
 
 # --------------------
 # TODO: move to admin area

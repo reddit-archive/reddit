@@ -20,93 +20,57 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="error_field"/>
+<%namespace file="utils.html" import="error_field"/
+<%namespace name="utils" file="utils.html"/>
+
+<%!
+   from r2.lib.pages import UserText
+%>
+
 
 %if thing.title:
 <h1>${thing.title}</h1>
 %endif
 
-%if not thing.success:
 <form onsubmit="return post_form(this, 'feedback');"
-      class="pretty-form"
-      %if action:
-      action="/${thing.action}" \
-      %else:
-      action=''
-      %endif
+      action="/${thing.action}"
       method="post" class="content" id="feedback">
-  <p class="success" class="error">${thing.success or ''}
-  </p>
 
   %if c.user_is_loggedin:
-    <input type="hidden" name="whodunnit" value="${c.user.name}" />
+    <input type="hidden" name="whodunnit" value="${thing.name}" />
   %endif
-  <input type="hidden" name="reason" value="${thing.action}" />
-  <div>
-    <table>
-      <tr>
-        <th><label for="name">${_("your name")}</label></th>
-        <td>
-          <input id="name" name="name" type="text"
-                 value="${thing.name or (c.user_is_loggedin and c.user.name or '')}"
-                 size="30"/>
-          ${error_field("NO_NAME", "span")}
-        </td>
-      </tr>
-      <tr>
-        <th><label for="email">${_("email")}</label></th>
-        <td>
-          %if c.user_is_loggedin and hasattr(c.user, "email"):
-          <input id="email" name="email" value="${c.user.email}" 
-                 type="text" disabled=disabled size="30"/>
-          </td>
-        </tr>
-      <tr>
-        <th>
-          <label for="replyto">${_("reply to")}</label>
-        </th>
-        <td>
-          %if thing.replyto:
-            <input id="replyto" name="replyto" type="text"
-                   value="${thing.email}" 
-                   size="30"/>
-          %else:
-            <input id="replyto" name="replyto" class="gray"
-                   value="${_('optional')}"  type="text"
-                   size="30"/>
-          %endif
-            ${error_field("BAD_EMAILS", "span")}
-          %else:
-          %if thing.email:
-            <input id="email" name="email" type="text"
-                   value="${thing.email}" size="30"/>
-          %else:
-            <input id="email" type="text" name="email" size="30"
-                   value="${ _('put your email here')}" class="gray"/>
-          %endif
-          %endif
-          <span class="little gray">${_("(only used to reply)")}</span>
-        </td><td>
-          ${error_field("NO_EMAIL", "span")}
-        </td>
-      </tr><tr>
-        <th valign="top">
-          <label for="message">${_("message")}</label>
-        </th>
-        <td>
-          <textarea id="personal" name="message" rows="5" cols="60">${thing.message or ''}</textarea>
-          ${error_field("NO_MESSAGE", "span")}
-        </td>
-      </tr>
-      %if thing.captcha:
-      ${thing.captcha.render()}
-      %endif
-    </table>
-    <div style="margin: 10px 0 20px 0">
-      <button class="btn" type="submit">${_("send")}</button>
-      <span class="status"></span>
-    </div>
-  </div>
-</form>
 
-%endif
+  <input type="hidden" name="reason" value="${thing.action}" />
+
+<div class="spacer">
+  <%utils:round_field title="${_('your name')}">
+    <input type="text" name="name" value="${thing.name}"/>
+    ${error_field("NO_NAME", "name", "span")}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  <%utils:round_field title="${_('email')}" description="${_('(only used to reply)')}">
+    <input type="text" name="email" value="${thing.email}"/>
+    ${error_field("BAD_EMAILS", "email", "span")}
+    ${error_field("NO_EMAIL", "email", "span")}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  <%utils:round_field title="${_('message')}">
+    ${UserText(None, have_form = False, creating = True).render()}
+  </%utils:round_field>
+</div>  
+
+<div class="spacer">
+  %if thing.captcha:
+    ${thing.captcha.render()}
+  %endif
+</div>  
+
+<button class="btn" type="submit">${_("send")}</button>
+&nbsp;
+<span class="status"></span>
+
+</form>

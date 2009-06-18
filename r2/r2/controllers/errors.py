@@ -25,17 +25,13 @@ from copy import copy
 
 error_list = dict((
         ('USER_REQUIRED', _("please login to do that")), 
-        ('NO_URL', _('url required')),
+        ('NO_URL', _('a url is required')),
         ('BAD_URL', _('you should check that url')),
-        ('NO_TITLE', _('title required')),
-        ('TITLE_TOO_LONG', _('you can be more succinct than that')),
-        ('COMMENT_TOO_LONG', _('you can be more succinct than that')),
-        ('BAD_CAPTCHA', _('your letters stink')),
+        ('BAD_CAPTCHA', _('care to try these again?')),
         ('BAD_USERNAME', _('invalid user name')),
         ('USERNAME_TAKEN', _('that username is already taken')),
         ('NO_THING_ID', _('id not specified')),
         ('NOT_AUTHOR', _("you can't do that")),
-        ('BAD_COMMENT', _('please enter a comment')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted.')),
         ('BAD_PASSWORD', _('invalid password')),
@@ -44,9 +40,7 @@ error_list = dict((
         ('NO_NAME', _('please enter a name')),
         ('NO_EMAIL', _('please enter an email address')),
         ('NO_EMAIL_FOR_USER', _('no email address for that user')),
-        ('NO_MESSAGE', _('please enter a message')),
         ('NO_TO_ADDRESS', _('send it to whom?')),
-        ('NO_MSG_BODY', _('please enter a message')),
         ('NO_SUBJECT', _('please enter a subject')),
         ('USER_DOESNT_EXIST', _("that user doesn't exist")),
         ('NO_USER', _('please enter a username')),
@@ -55,6 +49,7 @@ error_list = dict((
         ('ALREADY_SUB', _("that link has already been submitted")),
         ('SUBREDDIT_EXISTS', _('that reddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that reddit doesn\'t exist')),
+        ('SUBREDDIT_REQUIRED', _('you must specify a reddit')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('RATELIMIT', _('you are trying to submit too fast. try again in %(time)s.')),
         ('EXPIRED', _('your session has expired')),
@@ -64,11 +59,13 @@ error_list = dict((
         ('BAD_CNAME', "that domain isn't going to work"),
         ('USED_CNAME', "that domain is already in use"),
         ('INVALID_OPTION', _('that option is not valid')),
-        ('DESC_TOO_LONG', _('description is too long')),
         ('CHEATER', 'what do you think you\'re doing there?'),
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
+
+        ('TOO_LONG', _("this is too long (max: %(max_length)s)")),
+        ('NO_TEXT', _('we need something here')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
@@ -97,8 +94,10 @@ class ErrorSet(object):
     def __init__(self):
         self.errors = {}
 
-    def __contains__(self, error_name):
-        return self.errors.has_key(error_name)
+    def __contains__(self, pair):
+        """Expectes an (error_name, field_name) tuple and checks to
+        see if it's in the errors list."""
+        return self.errors.has_key(pair)
 
     def __getitem__(self, name):
         return self.errors[name]
@@ -110,16 +109,16 @@ class ErrorSet(object):
         for x in self.errors:
             yield x
         
-    def _add(self, error_name, msg, msg_params = {}, field = None):
-        self.errors[error_name] = Error(error_name, msg, msg_params,
-                                        field = field)
-        
     def add(self, error_name, msg_params = {}, field = None):
         msg = error_list[error_name]
-        self._add(error_name,  msg, msg_params = msg_params, field = field)
+        for field_name in tup(field):
+            e = Error(error_name, msg, msg_params, field = field_name)
+            self.errors[(error_name, field_name)] = e
 
-    def remove(self, error_name):
-        if self.errors.has_key(error_name):
-            del self.errors[error_name]
+    def remove(self, pair):
+        """Expectes an (error_name, field_name) tuple and removes it
+        from the errors list."""
+        if self.errors.has_key(pair):
+            del self.errors[pair]
 
 class UserRequiredException(Exception): pass

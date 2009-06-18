@@ -61,6 +61,13 @@
   </a>
 </%def>
 
+<%def name="bottom_buttons()">
+  <ul class="flat-list buttons">
+    ${self.buttons()}
+    ${self.admintagline()}
+  </ul>
+ </%def>
+
 <%def name="entry()">
   <p class="title">
     <%call expr="make_link('title', 'title')">
@@ -69,13 +76,50 @@
     &#32;
     ${self.domain()}
   </p>
+
+  ##the expando button
+  %if thing.link_child and not thing.link_child.expand:
+    <div class="expando-button collapsed
+                ${thing.link_child.css_style}"
+         onclick="expando_child(this)"></div>
+  %endif
+   
   <p class="tagline">
     ${self.tagline()}
   </p>
-  <ul class="flat-list buttons">
-    ${self.buttons()}
-    ${self.admintagline()}
-  </ul>
+
+  <% 
+     child_content = ""
+     if thing.link_child and thing.link_child.load:
+       child_content = unsafe(thing.link_child.content())
+     expand = thing.link_child and thing.link_child.expand
+  %>
+
+  ##if we're not on a permalink page we'll render the buttons on top
+  %if not expand:
+    ${bottom_buttons()}
+  %endif
+
+  <div class="expando" ${"style='display: none'" if not expand else ""}>
+    %if expand:
+      ${child_content}
+    %else:
+      <span class="error">loading...</span>
+    %endif
+  </div>
+
+  ##if we are on a permalink page, we'll render the buttons below
+  %if expand:
+    ${bottom_buttons()}
+  %endif
+
+ ##populate the expando cache if we have something
+  %if not expand and child_content:
+    <script type="text/javascript">
+      var cache = expando_cache();
+      cache["${thing._fullname}_cache"] = "${websafe(child_content)}";
+    </script>
+  %endif
 </%def>
 
 <%def name="subreddit()" buffered="True">
@@ -145,6 +189,11 @@
                             newwindow = c.user.pref_newwindow)}
     </li>
   %endif
+  %if thing.editable:
+    <li>
+      ${parent.simple_button(_("edit"), "edit_usertext")}
+    </li>
+  %endif
   <li class="share">
     ${parent.toggle_button("share-button", _("share"), _("cancel"),
                            "share", "cancelShare", login_required = True)}
@@ -171,18 +220,6 @@
   ${parent.delete_or_report_buttons(delete=delete,report=report)}
   ${parent.buttons(ban=ban)}
   ${additional}
-  ${self.media_embed()}
-</%def>
-
-
-<%def name="media_embed()">
-  %if thing.media_object:
-  <li>
-    ${parent.toggle_button("media-button", _("watch"), _("cancel"),
-                           'show_media("%s")' % websafe(thing.media_object), 
-                           "cancelMedia")}
-  </li>
-  %endif
 </%def>
 
 <%def name="thumbnail()">

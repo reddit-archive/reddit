@@ -125,8 +125,9 @@ function handleResponse(action) {
                         objs[new_i] = objs[old_i][args];
                         if(objs[new_i])
                             objs[new_i]._obj = objs[old_i];
-                        else
+                        else {
                             $.debug("unrecognized");
+                        }
                     }
                     else {
                         $.debug("unrecognized");
@@ -137,7 +138,7 @@ function handleResponse(action) {
 };
 
 var api_loc = '/api/';
-$.request = function(op, parameters, worker_in, block, get_only) {
+$.request = function(op, parameters, worker_in, block, type, get_only) {
     /* 
        Uniquitous reddit AJAX poster.  Automatically addes
        handleResponse(action) worker to deal with the API result.  The
@@ -153,6 +154,7 @@ $.request = function(op, parameters, worker_in, block, get_only) {
 
     parameters = $.with_default(parameters, {});
     worker_in  = $.with_default(worker_in, handleResponse(action));
+    type  = $.with_default(type, "json");
     if (typeof(worker_in) != 'function')
         worker_in  = handleResponse(action);
     var worker = function(r) {
@@ -178,10 +180,11 @@ $.request = function(op, parameters, worker_in, block, get_only) {
         op = api_loc + op;
         /*if( document.location.host == reddit.ajax_domain ) 
             /* normal AJAX post */
+
         if(get_only) {
-            $.get(op, parameters, worker, "json");
+            $.get(op, parameters, worker, type);
         } else {
-            $.post(op, parameters, worker, "json");
+            $.post(op, parameters, worker, type);
         }
         /*else { /* cross domain it is... * /
             op = "http://" + reddit.ajax_domain + op + "?callback=?";
@@ -359,7 +362,7 @@ $.fn.randomize_ids = function() {
     return $(this);
 }
 
-$.replace_things = function(things, keep_children, reveal, stubs) {
+$.fn.replace_things = function(things, keep_children, reveal, stubs) {
     /* Given the api-html structured things, insert them into the DOM
      * in such a way as to remove any elements with the same thing_id.
      * "keep_children" is a boolean to determine whether or not any
@@ -369,9 +372,10 @@ $.replace_things = function(things, keep_children, reveal, stubs) {
      * animate the transition from old to new. */
     var midcol = $(".midcol:visible:first").css("width");
     var numcol = $(".rank:visible:first").css("width");
+    var self = this;
     return $.map(things, function(thing) {
             var data = thing.data;
-            var existing = $.things(data.id);
+            var existing = $(self).things(data.id);
             if(stubs) 
                 existing = existing.filter(".stub");
             existing.after($.unsafe(data.content));

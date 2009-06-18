@@ -43,11 +43,12 @@ from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
-from r2.lib.filters import _force_unicode, websafe_json, spaceCompress
+from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking, sup, cssfilter, emailer
+from r2.lib.subreddit_search import search_reddits
 
 from simplejson import dumps
 
@@ -89,28 +90,24 @@ class ApiController(RedditController):
 
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
-                   email=VRequired('email', errors.NO_EMAIL),
-                   replyto = ValidEmails("replyto", num = 1), 
+                   email=ValidEmails('email', num = 1),
                    reason = VOneOf('reason', ('ad_inq', 'feedback')),
-                   message=VRequired('message', errors.NO_MESSAGE),
+                   message=VRequired('text', errors.NO_TEXT),
                    )
-    def POST_feedback(self, form, jquery, name, email,
-                      replyto, reason, message):
+    def POST_feedback(self, form, jquery, name, email, reason, message):
         if not (form.has_errors('name',     errors.NO_NAME) or
-                form.has_errors('email',    errors.NO_EMAIL) or
-                (request.POST.get("replyto") and replyto is None and 
-                 form.has_errors("replyto",  errors.BAD_EMAILS)) or
-                form.has_errors('personal', errors.NO_MESSAGE) or
-                form.chk_captcha(errors.BAD_CAPTCHA)):
+                form.has_errors('email',    errors.BAD_EMAILS) or
+                form.has_errors('text', errors.NO_TEXT) or
+                form.has_errors('captcha', errors.BAD_CAPTCHA)):
+
             if reason != 'ad_inq':
-                emailer.feedback_email(email, message, name = name or '',
-                                       reply_to = replyto or '')
+                emailer.feedback_email(email, message, name, reply_to = '')
             else:
-                emailer.ad_inq_email(email, message, name = name or '',
-                                       reply_to = replyto or '')
+                emailer.ad_inq_email(email, message, name, reply_to = '')
+            
             form.set_html(".status", _("thanks for your message! "
                             "you should hear back from us shortly."))
-            form.set_inputs(personal = "", captcha = "")
+            form.set_inputs(text = "", captcha = "")
 
     POST_ad_inq = POST_feedback
 
@@ -121,7 +118,7 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    to = VExistingUname('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
-                   body = VMessage('message'))
+                   body = VMessage(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
         handles message composition under /message/compose.  
@@ -129,16 +126,15 @@ class ApiController(RedditController):
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
                                 errors.NO_USER) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
-                form.has_errors("message", errors.NO_MSG_BODY,
-                                errors.COMMENT_TOO_LONG) or
-                form.chk_captcha(errors.BAD_CAPTCHA)):
+                form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
+                form.has_errors("captcha", errors.BAD_CAPTCHA)):
             spam = (c.user._spam or
                     errors.BANNED_IP in c.errors or
                     errors.BANNED_DOMAIN in c.errors)
             
             m, inbox_rel = Message._new(c.user, to, subject, body, ip, spam)
-            form.set_html(".success", _("your message has been delivered"))
-            form.set_inputs(to = "", subject = "", message = "")
+            form.set_html(".status", _("your message has been delivered"))
+            form.set_inputs(to = "", subject = "", text = "", captcha="")
 
             if g.write_query_queue:
                 queries.new_message(m, inbox_rel)
@@ -155,39 +151,57 @@ class ApiController(RedditController):
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
-                   then = VOneOf('then', ('tb', 'comments'), default='comments')
-                   )
-    def POST_submit(self, form, jquery, url, title, save, sr, ip, then):
+                   selftext = VSelfText('text'),
+                   kind = VOneOf('kind', ['link', 'self', 'poll']),
+                   then = VOneOf('then', ('tb', 'comments'), default='comments'))
+    def POST_submit(self, form, jquery, url, selftext, kind, title, save,
+                    sr, ip, then):
+        #backwards compatability
+        if url == 'self':
+            kind = 'self'
+
         if isinstance(url, (unicode, str)):
+            # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url = url)
-            
-        should_ratelimit = sr.should_ratelimit(c.user, 'link')
 
-        #remove the ratelimit error if the user's karma is high
-        if not should_ratelimit:
-            c.errors.remove(errors.RATELIMIT)
+        if not kind:
+            # this should only happen if somebody is trying to post
+            # links in some automated manner outside of the regular
+            # submission page, and hasn't updated their script
+            return
 
-        # check for no url, or clear that error field on return
-        if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
+        if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                           errors.SUBREDDIT_REQUIRED):
+            # checking to get the error set in the form, but we can't
+            # check for rate-limiting if there's no subreddit
+            return
+        else:
+            should_ratelimit = sr.should_ratelimit(c.user, 'link')
+            #remove the ratelimit error if the user's karma is high
+            if not should_ratelimit:
+                c.errors.remove((errors.RATELIMIT, 'ratelimit'))
+
+        if kind == 'link':
+            # check for no url, or clear that error field on return
+            if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
+                pass
+            elif form.has_errors("url", errors.ALREADY_SUB):
+                form.redirect(url[0].already_submitted_link)
+            # check for title, otherwise look it up and return it
+            elif form.has_errors("title", errors.NO_TEXT):
+                pass
+
+        elif kind == 'self' and form.has_errors('text', errors.TOO_LONG):
             pass
-        elif form.has_errors("url", errors.ALREADY_SUB):
-            form.redirect(url[0].already_submitted_link)
-        # check for title, otherwise look it up and return it
-        elif form.has_errors("title", errors.NO_TITLE):
-            # try to fetch the title
-            title = get_title(url)
-            if title:
-                # note: focus first, since it clears the form
-                form.set_inputs(title = title)
-                # wipe out the no title error
-                form.clear_errors(errors.NO_TITLE)
-                return 
 
-        elif (form.has_errors("title", errors.TITLE_TOO_LONG) or
-              form.chk_captcha(errors.BAD_CAPTCHA, errors.RATELIMIT)):
+        if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass
 
-        if form.has_error() or not title: return
+        if form.has_errors('ratelimit', errors.RATELIMIT):
+            pass
+
+        if form.has_error() or not title:
+            return
 
         # check whether this is spam:
         spam = (c.user._spam or
@@ -195,12 +209,17 @@ class ApiController(RedditController):
                 errors.BANNED_DOMAIN in c.errors)
 
         # well, nothing left to do but submit it
-        l = Link._submit(request.post.title, url, c.user, sr, ip, spam)
-        if url.lower() == 'self':
+        l = Link._submit(request.post.title, url if kind == 'link' else 'self',
+                         c.user, sr, ip, spam)
+
+        if kind == 'self':
             l.url = l.make_permalink_slow()
             l.is_self = True
+            l.selftext = selftext
+
             l._commit()
             l.set_url_cache()
+
         v = Vote.vote(c.user, l, True, ip, spam)
         if save:
             r = l._save(c.user)
@@ -240,6 +259,18 @@ class ApiController(RedditController):
 
         form.redirect(path)
 
+
+    @validatedForm(VUser(),
+                  url = VSanitizedUrl(['url']))
+    def POST_fetch_title(self, form, jquery, url):
+        if url:
+            title = get_title(url)
+            if title:
+                form.set_inputs(title = title)
+                form.set_html(".title-status", "");
+            else:
+                form.set_html(".title-status", _("no title found"))
+        
     def _login(self, form, user, dest='', rem = None):
         """
         AJAX login handler, used by both login and register to set the
@@ -282,7 +313,9 @@ class ApiController(RedditController):
                 form.has_errors("email", errors.BAD_EMAILS) or
                 form.has_errors("passwd", errors.BAD_PASSWORD) or
                 form.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
-                form.chk_captcha(errors.BAD_CAPTCHA,errors.RATELIMIT)):
+                form.has_errors('ratelimit', errors.RATELIMIT) or
+                form.has_errors('captcha', errors.BAD_CAPTCHA)):
+
             user = register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
     
@@ -310,7 +343,6 @@ class ApiController(RedditController):
                         self._subscribe(sr, sub)
     
             self._login(form, user, dest, rem)
-    
 
     @noresponse(VUser(),
                 VModhash(),
@@ -429,7 +461,6 @@ class ApiController(RedditController):
         """
         # password is required to proceed
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
-            form.set_input(curpass = "")
             return
         
         # check if the email is valid.  If one is given and it is
@@ -444,7 +475,7 @@ class ApiController(RedditController):
             updated = True
             
         # change password
-        if (password and 
+        if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
                  form.has_errors("verpass", errors.BAD_PASSWORD_MATCH))):
             change_password(c.user, password)
@@ -454,6 +485,7 @@ class ApiController(RedditController):
             else:
                 form.set_html('.status', 
                               _('your password has been updated'))
+            form.set_inputs(curpass = "", newpass = "", verpass = "")
             # the password has changed, so the user's cookie has been
             # invalidated.  drop a new cookie.
             self.login(c.user)
@@ -509,32 +541,41 @@ class ApiController(RedditController):
             Report.new(c.user, thing)
 
 
-    @validatedForm(VUser(), VModhash(),
-              comment = VByNameIfAuthor('parent'),
-              body = VComment('comment'))
-    def POST_editcomment(self, form, jquery, comment, body):
-
-        if not form.has_errors("comment",
-                               errors.BAD_COMMENT, errors.COMMENT_TOO_LONG,
+    @validatedForm(VUser(),
+                   VModhash(),
+                   item = VByNameIfAuthor('thing_id'),
+                   text = VComment('text'))
+    def POST_editusertext(self, form, jquery, item, text):
+        if not form.has_errors("text",
+                               errors.NO_TEXT, errors.TOO_LONG,
                                errors.NOT_AUTHOR):
-            comment.body = body
-            comment.editted = True
-            comment._commit()
 
-            jquery.replace_things(comment, True, True)
+            if isinstance(item, Comment):
+                kind = 'comment'
+                item.body = text
+            elif isinstance(item, Link):
+                kind = 'link'
+                item.selftext = text
 
-            # flag search indexer that something has changed
-            tc.changed(comment)
+            item.editted = True
+            item._commit()
 
+            tc.changed(item)
 
+            if kind == 'link':
+                set_last_modified(item, 'comments')
+
+            wrapper = make_wrapper(ListingController.builder_wrapper,
+                                   expand_children = True)
+            jquery(".content").replace_things(item, True, True, wrap = wrapper)
 
     @validatedForm(VUser(),
-              VModhash(),
-              VRatelimit(rate_user = True, rate_ip = True,
-                         prefix = "rate_comment_"),
-              ip = ValidIP(),
-              parent = VSubmitParent('parent'),
-              comment = VComment('comment'))
+                   VModhash(),
+                   VRatelimit(rate_user = True, rate_ip = True,
+                              prefix = "rate_comment_"),
+                   ip = ValidIP(),
+                   parent = VSubmitParent(['thing_id', 'parent']),
+                   comment = VComment(['text', 'comment']))
     def POST_comment(self, commentform, jquery, parent, comment, ip):
         should_ratelimit = True
         #check the parent type here cause we need that for the
@@ -559,14 +600,14 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove(errors.RATELIMIT)
 
-        if (not commentform.has_errors("comment",
-                                       errors.BAD_COMMENT,
-                                       errors.COMMENT_TOO_LONG,
+        if (not commentform.has_errors("text",
+                                       errors.NO_TEXT,
+                                       errors.TOO_LONG,
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT)):
             spam = (c.user._spam or errors.BANNED_IP in c.errors)
-            
+
             if is_message:
                 to = Account._byID(parent.author_id)
                 subject = parent.subject
@@ -607,7 +648,6 @@ class ApiController(RedditController):
             # remove any null listings that may be present
             jquery("#noresults").hide()
     
-    
             #update the queries
             if g.write_query_queue:
                 if is_message:
@@ -627,10 +667,10 @@ class ApiController(RedditController):
                    VCaptcha(),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_share_"),
-                   share_from = VLength('share_from', length = 100),
+                   share_from = VLength('share_from', max_length = 100),
                    emails = ValidEmails("share_to"),
                    reply_to = ValidEmails("replyto", num = 1), 
-                   message = VLength("message", length = 1000), 
+                   message = VLength("message", max_length = 1000), 
                    thing = VByName('parent'))
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
                    message):
@@ -641,14 +681,11 @@ class ApiController(RedditController):
         if not should_ratelimit:
             c.errors.remove(errors.RATELIMIT)
 
-        if emails and (errors.NO_EMAILS in c.errors):
-            c.errors.remove(errors.NO_EMAILS)
-
-        # share_from and messages share a comment_too_long error.
+        # share_from and messages share a too_long error.
         # finding an error on one necessitates hiding the other error
-        if shareform.has_errors("share_from", errors.COMMENT_TOO_LONG):
+        if shareform.has_errors("share_from", errors.TOO_LONG):
             shareform.find(".message-errors").children().hide()
-        elif shareform.has_errors("message", errors.COMMENT_TOO_LONG):
+        elif shareform.has_errors("message", errors.TOO_LONG):
             shareform.find(".share-form-errors").children().hide()
         # reply_to and share_to also share errors...
         elif shareform.has_errors("share_to", errors.BAD_EMAILS,
@@ -656,11 +693,12 @@ class ApiController(RedditController):
                                   errors.TOO_MANY_EMAILS):
             shareform.find(".reply-to-errors").children().hide()
         elif shareform.has_errors("replyto", errors.BAD_EMAILS,
-                                  errors.NO_EMAILS,
                                   errors.TOO_MANY_EMAILS):
             shareform.find(".share-to-errors").children().hide()
         # lastly, check the captcha.
-        elif shareform.chk_captcha(errors.BAD_CAPTCHA, errors.RATELIMIT):
+        elif shareform.has_errors("captcha", errors.BAD_CAPTCHA):
+            pass
+        elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             pass
         else:
             c.user.add_share_emails(emails)
@@ -845,7 +883,7 @@ class ApiController(RedditController):
 
     @validate(VSrModerator(),
               VModhash(),
-              file = VLength('file', length=1024*500),
+              file = VLength('file', max_length=1024*500),
               name = VCssName("name"),
               header = nop('header'))
     def POST_upload_sr_img(self, file, header, name):
@@ -910,9 +948,9 @@ class ApiController(RedditController):
                               prefix = 'create_reddit_'),
                    sr = VByName('sr'),
                    name = VSubredditName("name"),
-                   title = VSubredditTitle("title"),
+                   title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VSubredditDesc("description"),
+                   description = VLength("description", max_length = 500),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    show_media = VBoolean('show_media'),
@@ -946,12 +984,12 @@ class ApiController(RedditController):
         elif not sr and form.has_errors("name", errors.SUBREDDIT_EXISTS,
                                         errors.BAD_SR_NAME):
             form.find('#example_name').hide()
-        elif form.has_errors('title', errors.NO_TITLE, errors.TITLE_TOO_LONG):
+        elif form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG):
             form.find('#example_title').hide()
         elif form.has_errors('domain', errors.BAD_CNAME, errors.USED_CNAME):
             form.find('#example_domain').hide()
         elif (form.has_errors(None, errors.INVALID_OPTION) or
-              form.has_errors('description', errors.DESC_TOO_LONG)):
+              form.has_errors('description', errors.TOO_LONG)):
             pass
         #creating a new reddit
         elif not sr:
@@ -1141,8 +1179,11 @@ class ApiController(RedditController):
 
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):
-        if not form.has_errors('name', errors.USER_DOESNT_EXIST,
-                               errors.NO_EMAIL_FOR_USER):
+        if form.has_errors('name', errors.USER_DOESNT_EXIST):
+            return
+        elif form.has_errors('name', errors.NO_EMAIL_FOR_USER):
+            return
+        else:
             emailer.password_email(user)
             form.set_html(".status", _("an email will be sent to that account's address shortly"))
 
@@ -1150,16 +1191,17 @@ class ApiController(RedditController):
     @validatedForm(cache_evt = VCacheKey('reset', ('key', 'name')),
                    password  = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, cache_evt, password):
-        if errors.BAD_USERNAME in c.errors:
-            # clear reset event -- the user failed to know their user name
+        if form.has_errors('name', errors.EXPIRED):
             cache_evt.clear()
-            return form.redirect('/password')
-        elif (not form.has_errors('passwd',  errors.BAD_PASSWORD) and
-              not form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH) and
-              cache_evt.user):
+            form.redirect('/password')
+        elif form.has_errors('passwd',  errors.BAD_PASSWORD):
+            pass
+        elif form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH):
+            pass
+        elif cache_evt.user:
             # successfully entered user name and valid new password
             change_password(cache_evt.user, password)
-            self._login(jquery, cache_evt.user, '/resetpassword')
+            self._login(jquery, cache_evt.user, '/')
             cache_evt.clear()
 
 
@@ -1239,7 +1281,7 @@ class ApiController(RedditController):
         l.num_margin = 0
         l.mid_margin = 0
         
-        jquery.replace_things(l, stubs = True)
+        jquery(".content").replace_things(l, stubs = True)
 
         if show:
             jquery('.organic-listing .link:visible').hide()
@@ -1289,7 +1331,7 @@ class ApiController(RedditController):
             # we're allowing mutliple submissions, so we really just
             # want the URL
             url = url[0].url
-        if form.has_errors('title', errors.NO_TITLE):
+        if form.has_errors('title', errors.NO_TEXT, errors.TOO_LONG):
             pass
         elif form.has_errors('url', errors.NO_URL, errors.BAD_URL):
             pass
@@ -1345,7 +1387,7 @@ class ApiController(RedditController):
 
     @validate(VSponsor(),
               link = VByName('link_id'),
-              file = VLength('file',500*1024))
+              file = VLength('file', 500*1024))
     def POST_link_thumb(self, link=None, file=None):
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
         try:
@@ -1407,3 +1449,18 @@ class ApiController(RedditController):
                                                        ip = request.ip)
                 )
 
+    @json_validate(query = nop('query'))
+    def POST_search_reddit_names(self, query):
+        names = []
+        if query:
+            names = search_reddits(query)
+
+        return {'names': names}
+
+    @validate(link = VByName('link_id', thing_cls = Link))
+    def POST_expando(self, link):
+        if not link:
+            abort(404, 'not found')
+
+        wrapped = IDBuilder([link._fullname]).get_items()[0][0]
+        return spaceCompress(websafe(wrapped.link_child.content()))

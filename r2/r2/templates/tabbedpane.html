@@ -1,0 +1,14 @@
+${thing.tabmenu.render()}
+<div class="tabpane-content">
+  %for i, (name, title, pane) in enumerate(thing.tabs):
+    <div id="tabbedpane-${name}" class="tabbedpane"
+         ${"style='display:none'" if i > 0 else ""}>
+      ${pane.render()}
+    </div>
+  %endfor
+  ##select the front tab and init the other tabs
+  <script type="text/javascript">
+    select_tab("${thing.tabs[0][0]}", true)
+  </script>
+
+</div>

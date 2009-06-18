@@ -26,11 +26,17 @@ from r2.lib.filters import websafe_json
 from r2.lib.template_helpers import replace_render
 from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
+from r2.models import IDBuilder, Listing
+
 import simplejson
-from pylons import c
+from pylons import c, g
 
 def json_respond(x):
-    return websafe_json(simplejson.dumps(x or ''))
+    if g.debug:
+        return websafe_json(simplejson.dumps(x or '',
+                                             sort_keys=True, indent=4))
+    else:
+        return websafe_json(simplejson.dumps(x or ''))
 
 class JsonResponse(object):
     """
@@ -42,14 +48,14 @@ class JsonResponse(object):
         self._clear()
 
     def _clear(self):
-        self._has_errors = set([])
+        self._errors = set()
         self._new_captcha = False
         self._data = {}
         
     def send_failure(self, error):
         c.errors.add(error)
         self._clear()
-        self._has_errors.add(error)
+        self._errors.add((error, None))
 
     def __call__(self, *a):
         return self
@@ -57,58 +63,39 @@ class JsonResponse(object):
     def __getattr__(self, key):
         return self
 
-    def __iter__(self):
+    def make_response(self):
         res = {}
         if self._data:
             res['data'] = self._data
-        res['errors'] = [(e, c.errors[e].message) for e in self._has_errors]
-        yield ("json", res)
-
-    def _mark_error(self, e):
-        pass
-
-    def _unmark_error(self, e):
-        pass
+        res['errors'] = [(e[0], c.errors[e].message) for e in self._errors]
+        return {"json": res}
+    
+    def set_error(self, error_name, field_name):
+        self._errors.add((error_name, field_name))
 
     def has_error(self):
-        return bool(self._has_errors)
+        return bool(self._errors)
 
-    def has_errors(self, input, *errors, **kw):
-        rval = False
-        for e in errors:
-            if e in c.errors:
-                # get list of params checked to generate this error
-                # if they exist, make sure they match input checked
-                fields = c.errors[e].fields
-                if not input or not fields or input in fields:
-                    self._has_errors.add(e)
-                    rval = True
-                    self._mark_error(e)
-            else:
-                self._unmark_error(e)
-
-        if rval and input:
-            self.focus_input(input)
-        return rval
-
-    def clear_errors(self, *errors):
-        for e in errors:
-            if e in self._has_errors:
-                self._has_errors.remove(e)
-                self._unmark_error(e)
+    def has_errors(self, field_name, *errors, **kw):
+        have_error = False
+        for error_name in errors:
+            if (error_name, field_name) in c.errors:
+                self.set_error(error_name, field_name)
+                have_error = True
+        return have_error
 
     def _things(self, things, action, *a, **kw):
         """
         function for inserting/replacing things in listings.
         """
-        from r2.models import IDBuilder, Listing
         listing = None
         if isinstance(things, Listing):
             listing = things.listing()
             things = listing.things
         things = tup(things)
         if not all(isinstance(t, Wrapped) for t in things):
-            b = IDBuilder([t._fullname for t in things])
+            wrap = kw.pop('wrap', Wrapped)
+            b = IDBuilder([t._fullname for t in things], wrap)
             things = b.get_items()[0]
         data = [replace_render(listing, t) for t in things]
 
@@ -162,7 +149,9 @@ class JQueryResponse(JsonResponse):
         JsonResponse._clear(self)
         
     def send_failure(self, error):
-        JsonResponse.send_failure(self, error)
+        c.errors.add(error)
+        self._clear()
+        self._errors.add((self, error, None))
         self.refresh()
 
     def __call__(self, *a):
@@ -178,8 +167,25 @@ class JQueryResponse(JsonResponse):
         self.ops.append([self.objs[obj], newi, op, args])
         return new
 
-    def __iter__(self):
-        yield ("jquery", self.ops)
+    def set_error(self, error_name, field_name):
+        #self is the form that had the error checked, but we need to
+        #add this error to the top_node of this response and give it a
+        #reference to the form.
+        self.top_node._errors.add((self, error_name, field_name))
+
+    def has_error(self):
+        return bool(self.top_node._errors)
+
+    def make_response(self):
+        #add the error messages
+        for (form, error_name, field_name) in self._errors:
+            selector = ".error." + error_name
+            if field_name:
+                selector += ".field-" + field_name
+            message = c.errors[(error_name, field_name)].message
+            form.find(selector).show().html(message).end()
+
+        return {"jquery": self.ops}
 
     # thing methods
     #--------------
@@ -196,22 +202,17 @@ class JQueryResponse(JsonResponse):
 
     # convenience methods:
     # --------------------
-    def _mark_error(self, e):
-        self.find("." + e).show().html(c.errors[e].message).end()
-
-    def _unmark_error(self, e):
-        self.find("." + e).html("").end()
+    #def _mark_error(self, e, field):
+    #    self.find("." + e).show().html(c.errors[e].message).end()
+    #
+    #def _unmark_error(self, e):
+    #    self.find("." + e).html("").end()
 
     def new_captcha(self):
         if not self._new_captcha:
             self.captcha(get_iden())
             self._new_captcha = True
         
-    def chk_captcha(self, *errors):
-        if self.has_errors(None, *errors):
-            self.new_captcha()
-            return True
-
     def get_input(self, name):
         return self.find("*[name=%s]" % name)
 

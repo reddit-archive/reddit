@@ -52,6 +52,7 @@ class Link(Thing, Printable):
                      promote_until = None,
                      promoted_by = None,
                      disable_comments = False,
+                     selftext = '',
                      ip = '0.0.0.0')
 
     def __init__(self, *a, **kw):
@@ -204,6 +205,7 @@ class Link(Thing, Printable):
         if c.user_is_admin:
             return False
 
+        link_child = wrapped.link_child
         s = (str(i) for i in (wrapped._fullname,
                               bool(c.user_is_sponsor),
                               bool(c.user_is_loggedin),
@@ -224,7 +226,12 @@ class Link(Thing, Printable):
                               wrapped.show_reports,
                               wrapped.can_ban,
                               wrapped.thumbnail,
-                              wrapped.moderator_banned))
+                              wrapped.moderator_banned,
+                              #link child stuff
+                              bool(link_child),
+                              bool(link_child) and link_child.load,
+                              bool(link_child) and link_child.expand
+                              ))
         # htmllite depends on other get params
         s = ''.join(s)
         if c.render_style == "htmllite":
@@ -284,7 +291,8 @@ class Link(Thing, Printable):
                 item.thumbnail = thumbnail_url(item)
             else:
                 item.thumbnail = g.default_thumb
-            
+
+
             item.score = max(0, item.score)
 
             item.domain = (domain(item.url) if not item.is_self
@@ -329,6 +337,20 @@ class Link(Thing, Printable):
             item.domain_path = "/domain/%s" % item.domain
             if item.is_self:
                 item.domain_path = item.subreddit_path
+
+            #this is wrong, but won't be so wrong when we move this
+            #whole chunk of code into pages.py
+            from r2.lib.pages import MediaChild, SelfTextChild
+            item.link_child = None
+            item.editable = False
+            if item.media_object:
+                item.link_child = MediaChild(item, load = True)
+            elif item.selftext:
+                expand = getattr(item, 'expand_children', False)
+                item.link_child = SelfTextChild(item, expand = expand,
+                                                nofollow = item.nofollow)
+                #draw the edit button if the contents are pre-expanded
+                item.editable = expand and item.author == c.user
                
             item.tblink = "http://%s/tb/%s" % (
                 get_domain(cname = c.cname, subreddit=False),
@@ -549,9 +571,18 @@ class Comment(Thing, Printable):
                              item.author != c.user and
                              not item.show_spam)))
 
-            if item._deleted and not c.user_is_admin:
-                item.author = DeletedUser()
-                item.body = '[deleted]'
+            extra_css = ''
+            if item._deleted:
+                if c.user_is_admin:
+                    extra_css += "grayed"
+                else:
+                    item.author = DeletedUser()
+                    item.body = '[deleted]'
+
+
+            if c.focal_comment == item._id36:
+                extra_css += 'border'
+
 
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = ((item.score < min_score) and
@@ -570,6 +601,12 @@ class Comment(Thing, Printable):
             item.score_fmt = Score.points
             item.permalink = item.make_permalink(item.link, item.subreddit)
 
+            #will seem less horrible when add_props is in pages.py
+            from r2.lib.pages import UserText
+            item.usertext = UserText(item, item.body,
+                                     editable = item.author == c.user,
+                                     nofollow = item.nofollow,
+                                     extra_css = extra_css)
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
        the reddit toolbar"""

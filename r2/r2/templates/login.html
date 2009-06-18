@@ -67,8 +67,8 @@
           <input value="${user}" name="user" id="user_${op}" 
                  type="text" maxlength="20"/>
           %if register:
-            ${error_field("BAD_USERNAME", kind="span")}
-            ${error_field("USERNAME_TAKEN", kind="span")}
+            ${error_field("BAD_USERNAME", "user", kind="span")}
+            ${error_field("USERNAME_TAKEN", "user", kind="span")}
           %endif
         </li>
       %if register:
@@ -79,7 +79,7 @@
           <input value="" name="email" id="email_${op}" 
                  type="text" maxlength="50"/>
           %if register:
-            ${error_field("BAD_EMAILS", kind="span")}
+            ${error_field("BAD_EMAILS", "email", kind="span")}
           %endif
         </li>
       %endif
@@ -88,9 +88,9 @@
           <input id="passwd_${op}" name="passwd" type="password" 
                  maxlength="20"/>
           %if register:
-            ${error_field("BAD_PASSWORD", kind="span")}
+            ${error_field("BAD_PASSWORD", "passwd", kind="span")}
           %else:
-            ${error_field("WRONG_PASSWORD", kind="span")}
+            ${error_field("WRONG_PASSWORD", "passwd", kind="span")}
           %endif
         </li>
       %if register:
@@ -98,12 +98,12 @@
           <label for="passwd2_${op}">${_('verify password')}:</label>
           <input name="passwd2" id="passwd2_${op}" 
                  type="password" maxlength="20" />
-          ${error_field("BAD_PASSWORD_MATCH", kind="span")}
+          ${error_field("BAD_PASSWORD_MATCH", "passwd2", kind="span")}
         </li>
         <li>
-          ${captchagen('', tabulate=True, label=False, size=30)}
-          ${error_field("DRACONIAN", kind="span")}
-          ${error_field("RATELIMIT", kind="span")}
+          <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
+          ${captchagen(iden, tabulate=True, label=False, size=30)}
+          ${error_field("RATELIMIT", "ratelimit")}
         </li>
       %endif
       <li>

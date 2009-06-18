@@ -305,14 +305,15 @@ thing id-${what._fullname}
                     callback, cancelback, 
                     css_class = '', alt_css_class = '',
                     reverse = False,
-                    login_required = False)">
+                    login_required = False,
+                    style = '',)">
 <%
    if reverse:
        callback, cancelback = cancelback, callback
        title, alt_title = alt_title, title
        css_class, alt_css_class = alt_css_class, css_class
  %>
-<span class="${class_name} toggle">
+<span class="${class_name} toggle" style="${style}">
  <a class="option active ${css_class}" href="#" 
     %if login_required and not c.user_is_loggedin:
       onclick="return showcover('', '${callback}_' + $(this).thing_id());"

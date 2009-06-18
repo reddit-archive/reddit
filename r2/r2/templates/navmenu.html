@@ -111,7 +111,8 @@
 
 <%def name="tabmenu()">
   %if thing:
-    <ul class="tabmenu"
+    <% css_class = str(thing.css_class) if thing.css_class else "" %>
+    <ul class="tabmenu ${css_class}"
         ${"id='%s'" % thing._id if thing._id else ""}>
       %for i, option in enumerate(thing):
         <%

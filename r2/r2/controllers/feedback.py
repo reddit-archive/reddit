@@ -26,29 +26,16 @@ from r2.lib.pages import FormPage, Feedback, Captcha
 
 class FeedbackController(RedditController):
 
-    def _feedback(self, name = '', email = '', message='', 
-                replyto='', action=''):
-        title = _("inquire about advertising on reddit") if action else ''
-        captcha = Captcha() if not c.user_is_loggedin \
-            or c.user.needs_captcha() else None
-        if request.get.has_key("done"):
-            success = _("thanks for your message! you should hear back from us shortly.")
-        else:
-            success = ''
-            return FormPage(_("advertise") if action == 'ad_inq' \
-                                else _("feedback"),
-                        content = Feedback(captcha=captcha,
-                                           message=message, 
-                                           replyto=replyto,
-                                           email=email, name=name, 
-                                           success=success,
-                                           action=action,
-                                           title=title),
+    def GET_ad_inq(self):
+        title = _("inquire about advertising on reddit")
+        return FormPage('advertise',
+                        content = Feedback(title=title,
+                                           action='ad_inq'),
                         loginbox = False).render()
 
-
-    def GET_ad_inq(self):
-        return self._feedback(action='ad_inq')
-
     def GET_feedback(self):
-        return self._feedback()
+        title = _("send reddit feedback")
+        return FormPage('feedback',
+                        content = Feedback(title=title,
+                                           action='feedback'),
+                        loginbox = False).render()

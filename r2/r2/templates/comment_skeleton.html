@@ -37,11 +37,9 @@ ${self.tagline(True)}
 </%def>
 
 <%def name="commentBody()">
+  ${thing.usertext.render(style="html")}
 </%def>
 
-
-<%def name="commentText()">
-</%def>
 
 <%def name="entry()">
 <% collapse = thing.collapsed %>
@@ -52,18 +50,7 @@ ${self.tagline(True)}
   <p class="tagline">
     ${self.tagline()}
   </p>
-  <%
-     if c.user_is_admin and thing.deleted:
-       colorclass = 'grayed'
-     elif c.focal_comment and c.focal_comment == thing._id36:
-       colorclass = 'border'
-     else:
-       colorclass = ''
-  %>
-  <div class="commentbody ${colorclass}">
-    ${self.commentBody()}
-  </div>
-  <div class="edit-body">${self.commentText()}</div>
+  ${self.commentBody()}
   <ul class="flat-list buttons">
     ${self.buttons()}
   </ul>

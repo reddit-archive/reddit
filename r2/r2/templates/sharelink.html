@@ -6,7 +6,7 @@
       class="pretty-form sharelink" action="/post/share"
      ${"" if thing.link_name else "style='display:none'"}>
   <div class="clearleft"><!--IEsux--></div>
-    ${error_field("RATELIMIT")}
+    ${error_field("RATELIMIT", "ratelimit")}
     <input type="hidden" name="parent" value="${thing.link_name}"/>
     <table class="sharetable preftable">
       <tr class="">
@@ -22,9 +22,9 @@
           </textarea>
         </td>
         <td class="share-to-errors">
-          ${error_field("BAD_EMAILS")}
-          ${error_field("TOO_MANY_EMAILS")}
-          ${error_field("NO_EMAILS")}
+          ${error_field("BAD_EMAILS", "share_to")}
+          ${error_field("TOO_MANY_EMAILS", "share_to")}
+          ${error_field("NO_EMAILS", "share_to")}
         </td>
       </tr>
       <tr>
@@ -42,7 +42,7 @@
                  name="share_from" />
         </td>
         <td class="share-from-errors">
-          ${error_field("COMMENT_TOO_LONG" )}
+          ${error_field("COMMENT_TOO_LONG", "share_from" )}
         </td>
       </tr>
       <tr>
@@ -60,8 +60,8 @@
                  value="${c.user.email if hasattr(c.user, 'email') else ''}"/>
         </td>
         <td class="reply-to-errors">
-          ${error_field("BAD_EMAILS")}
-          ${error_field("TOO_MANY_EMAILS")}
+          ${error_field("BAD_EMAILS", "replyto")}
+          ${error_field("TOO_MANY_EMAILS", "replyto")}
         </td>
       </tr>
       <tr>
@@ -80,18 +80,16 @@
           </textarea>
         </td>
         <td class="message-errors">
-          ${error_field("COMMENT_TOO_LONG")}
+          ${error_field("TOO_LONG", "message")}
         </td>
       </tr>
       %if thing.captcha:
-        ${captchagen(thing.captcha.iden, thing.captcha.error, 
-                     tabulate = False, size = 30)}
+        ${captchagen('', tabulate = False, size = 30)}
       %endif
       <tr>
         <td>
         </td>
         <td>
-          <span class="status error"></span>
           <button type="submit" class="btn">
             ${_("share")}
           </button>
@@ -99,6 +97,7 @@
                   onclick="return cancelShare(this);">
             ${_("cancel")}
           </button>
+          <span class="status error"></span>
         </td>
         <td>
         </td>

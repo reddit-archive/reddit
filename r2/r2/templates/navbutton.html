@@ -31,7 +31,7 @@
 
 <%def name="js(selected = False)">
   ${plain_link(thing.selected_title() if selected else thing.title, 
-               '/', _sr_path = False, nocname = thing.nocname, 
+               thing.path, _sr_path = False, nocname = True, 
                _class = thing.css_class, _id = thing._id, onclick = thing.onclick)}
 </%def>
 

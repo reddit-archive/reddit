@@ -42,10 +42,6 @@ def make_typename(typ):
 def make_fullname(typ, _id):
     return '%s_%s' % (make_typename(typ), to36(_id))
 
-def mass_part_render(thing, **kw):
-    return dict([(k, spaceCompress(thing.part_render(v)).strip(' ')) \
-                 for k, v in kw.iteritems()])
-
 class JsonTemplate(Template):
     def __init__(self): pass
 
@@ -253,8 +249,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
         else:
             parent_id = make_fullname(Comment, parent_id)
         d = ThingJsonTemplate.rendered_data(self, wrapped)
-        d.update(mass_part_render(wrapped, contentHTML = 'commentBody',
-                                  contentTxt = 'commentText'))
+        d['contentText'] = self.thing_attr(wrapped, 'body')
+        d['contentHTML'] = self.thing_attr(wrapped, 'body_html')
         d['parent'] = parent_id
         d['link'] = make_fullname(Link, wrapped.link_id)
         return d
@@ -267,6 +263,9 @@ class MoreCommentJsonTemplate(CommentJsonTemplate):
 
     def kind(self, wrapped):
         return "more"
+
+    def rendered_data(self, wrapped):
+        return ThingJsonTemplate.rendered_data(self, wrapped)
 
 class MessageJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",

@@ -88,12 +88,18 @@ def unsafe(text=''):
 def websafe_json(text=""):
     return c_websafe_json(_force_unicode(text))
 
-def websafe(text=''):
+def mako_websafe(text = ''):
     if text.__class__ == _Unsafe:
         return text
     elif text.__class__ != unicode:
         text = _force_unicode(text)
     return c_websafe(text)
+
+def websafe(text=''):
+    if text.__class__ != unicode:
+        text = _force_unicode(text)
+    #wrap the response in _Unsafe so make_websafe doesn't unescape it
+    return _Unsafe(c_websafe(text))
 
 from mako.filters import url_escape
 def edit_comment_filter(text = ''):

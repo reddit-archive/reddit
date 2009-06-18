@@ -102,20 +102,7 @@ ${parent.Child(not thing.collapsed)}
 </%def>
 
 <%def name="commentBody()">
-%if c.user_is_admin or not thing.deleted:
-${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow,
-                      target=thing.target))}
-%else:
-<div class="gray md">
-  ${_("[deleted]")}
-</div>
-%endif
-</%def>
-
-<%def name="commentText()">
-%if c.user == thing.author:
-${edit_comment_filter(thing.body)}
-%endif
+  ${parent.commentBody()}
 </%def>
 
 <%def name="arrows()">
@@ -141,9 +128,9 @@ ${parent.midcol()}
           ${parent.bylink_button(_("parent"), thing.parent_permalink)}
         </li>
       %endif
-      %if c.user_is_loggedin and thing.author.name == c.user.name:
+      %if thing.usertext.editable:
         <li>
-          ${parent.simple_button(_("edit"), "editcomment")}
+          ${parent.simple_button(_("edit"), "edit_usertext")}
         </li>
       %endif
     %endif
@@ -151,9 +138,7 @@ ${parent.midcol()}
     ${parent.buttons()}
     %if not c.profilepage and thing.can_reply:
       <li>
-        ${parent.toggle_button("reply-button", _("reply {verb}"), 
-                                _("cancel"), "reply", "cancelReply",
-                               login_required = True)}
+        ${parent.simple_button(_("reply"), "reply")}
       </li>
     %endif
   %endif

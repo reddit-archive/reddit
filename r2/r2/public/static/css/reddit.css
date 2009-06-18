@@ -23,6 +23,10 @@ body {
     z-index: 1;
 }
 
+textarea { font:  normal small verdana, arial, helvetica, sans-serif; }
+
+/*html,body { height: 100%; }*/
+
 /* IE dumbness patch. hidden input in a hidden block that is
  * subsequently shown leads to the input to "show" and generate undesired
  * )padding.  This makes it go away. */ 
@@ -69,7 +73,6 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 /* forms */
 
-.iform th { text-align: right; color: black; font-weight: normal; text-transform: lowercase; }
 .wrong {color: red; font-weight: normal}
 
 .subform input.text { width: 25em }
@@ -112,13 +115,15 @@ ul.flat-vert {text-align: left;}
 .pref { font-weight: bold; }
 
 #header {
+
     border-bottom: 1px solid #5f99cf;
+
     position: relative;
     background-color: #cee3f8;
     z-index: 99;
 }
 
-#header-img {margin-top: 2px;}
+#header-img {margin-top: 2px; margin-right: 5px;}
 
 #header-top {
     position: absolute;
@@ -147,6 +152,7 @@ ul.flat-vert {text-align: left;}
     font-weight: bold;
     margin-right: 1ex;
     font-variant: small-caps;
+    line-height: 100%;
     font-size: 1.2em;
 }
 .pagename a {color: black; }
@@ -234,19 +240,20 @@ ul.flat-vert {text-align: left;}
     white-space: nowrap;
     display: inline;
 }
+
 .tabmenu li {
     display: inline;
     font-weight: bold;
     margin: 0px 3px;
-    padding: 2px 6px 0px 6px;
-    background-color: #eff7ff;
 }
 
-.tabmenu li.selected {  padding: 0; }
+.tabmenu li a { 
+    padding: 2px 6px 0 6px;
+    background-color: #eff7ff;
+ }
 
 .tabmenu li.selected a{ 
     color: orangered;
-    padding: 2px 6px 1px 6px;
     background-color: white;
     border: 1px solid #5f99cf;
     border-bottom: 1px solid white;
@@ -458,7 +465,7 @@ before enabling */
 
 .midcol { 
     float: left; 
-    margin-right: 2px; 
+    margin-right: 4px; 
     margin-left: 7px; 
     background: transparent; 
     overflow: hidden;
@@ -609,6 +616,33 @@ before enabling */
 
 .organic-help-button { padding: 0 .5ex; }
 
+.menuarea {
+    border-bottom: 1px dotted gray;
+    padding: 5px 10px;
+    margin: 5px 310px 5px 5px;
+    font-size: larger;
+}
+
+.menuarea .spacer {display: inline; margin-right: 15px}
+
+.commentarea h1 {
+    margin: 10px 310px 0px 10px;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted gray;
+}
+
+.commentarea .menuarea {
+    border: none;
+    margin: 0 310px 10px 10px;
+    padding: 0;
+    color: gray;
+}
+
+.commentarea > .usertext { 
+    margin: 0 0 10px 10px;
+    overflow: auto;
+}
+
 .infobar {
     background-color: #f6e69f;
     padding: 5px 10px;
@@ -642,16 +676,6 @@ before enabling */
     margin-right: 15px;
 }
 
-.menuarea {
-    border-bottom: 1px dotted gray;
-    padding: 5px 10px;
-    margin: 5px 310px 5px 5px;
-    font-size: larger;
-}
-
-.menuarea .spacer {display: inline; margin-right: 15px}
-
-
 /*top link*/
 a.star { text-decoration: none; color: #ff8b60 }
 
@@ -662,7 +686,8 @@ a.star { text-decoration: none; color: #ff8b60 }
 .entry .buttons li { 
     display: inline;
     padding: 0 4px;
-    border: none;}
+    border: none;
+}
 
 .entry .buttons li.first {padding-left: 0px;}
 
@@ -753,6 +778,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .linkcompressed .midcol { width: 15px; }
 .linkcompressed .entry .buttons li a:hover { text-decoration: underline}
+.linkcompressed .expando-button {display: none}
 
 
 .warm-entry .rank { color: #EDA179; }
@@ -822,56 +848,7 @@ a.star { text-decoration: none; color: #ff8b60 }
     margin-left: 15px; 
 }
 
-.commentreply {
-    margin: 10px; 
-    margin-left: 15px; 
-    width: 40em; 
-}
-
 textarea.gray { color: gray; }
-
-.commentreply textarea { 
-    border: 1px solid #369;
-    width: 100%;
-    margin: 0px; 
-    margin-bottom: -1px;
-}
-.commentreply .buttons { 
-    margin: 0px; 
-    float: left; 
-}
-.commentreply .buttons button { 
-    margin: 5px; 
-}
-
-.commentreply table.help { 
-    margin: 0px;
-    margin-top: 5px; 
-    font-size: larger;
-    width: 100%;
-}
-
-.commentreply .help, 
-.commentreply .help td, 
-.commentreply .help tr {
-    border: 1px solid #C0C0C0;
-    padding: 4px;
-    margin: 0px;
-}
-.commentreply .help-toggle { 
-    float:right;
-    margin-top: 7px; 
-}
-
-.permamessage {
-    font-size: larger;
-    border: 1px dotted black;
-    padding: 5px 5px 5px 18px;
-    white-space: nowrap;   
-    background-image: url(/static/permalink-arrow.png);
-    background-repeat: no-repeat;
-    background-position: 5px center;
-}
 
 .deepthread {
     padding-right: 30px;
@@ -915,8 +892,6 @@ textarea.gray { color: gray; }
 .sr-type-img { 
     margin-right: 2px;
 }
-
-.commentbody { }
 
 .commentbody.border { background-color: #ffc; padding-left: 5px}
 .commentbody.grayed {
@@ -1108,7 +1083,7 @@ textarea.gray { color: gray; }
 }
 
 
-.status { color: red; }
+.status { margin-left: 5px; color: red; font-size: small;}
 .error { color: red; font-size: small; margin: 5px; }
 .line-through { text-decoration: line-through }
 
@@ -1219,6 +1194,9 @@ textarea.gray { color: gray; }
 .loginform #captcha { 
     width: 250px;
  }
+
+#passform h1 {margin-bottom: 0px}
+#passform p {margin-bottom: 5px; font-size: small}
 
 /* cover */
 .cover {
@@ -1632,6 +1610,16 @@ textarea.gray { color: gray; }
 }
 
 /* default form styles */
+
+
+form .spacer + .spacer {
+    margin: 15px 0;
+}
+
+form input[type=checkbox],
+form input[type=radio] {margin: 2px .5em 0 0; }
+
+
 .pretty-form { 
     font-size: larger;
     vertical-align: top; 
@@ -1639,7 +1627,7 @@ textarea.gray { color: gray; }
 
 .pretty-form p {margin: 3px ;}
 .pretty-form input[type=checkbox],
-.pretty-form input[type=radio] {margin: 2px .5em 0px .5em; }
+.pretty-form input[type=radio] {margin: 2px .5em 0 0; }
 .pretty-form img { margin: 3px .5em}
 .pretty-form input[type=text],
 .pretty-form textarea,
@@ -1660,29 +1648,24 @@ textarea.gray { color: gray; }
 .pretty-form select,
 .pretty-form b,
 .pretty-form textarea,
-.pretty-form button  { margin: 3px .5em; }
+.pretty-form button  { margin: 3px 5px; }
 .pretty-form th { text-align: right }
+
+/* delete page */
+.delete-field { 
+    background-color: white;
+    padding: 10px;
+}
 
 /*pref page boxes*/
 .pretty-form.short-text input[type=text],
 .pretty-form.short-text textarea,
 .pretty-form.short-text input[type=password] {width: 2em }
 
-/*update password*/
-.pretty-form.medium-text input[type=text],
-.pretty-form.medium-text textarea,
-.pretty-form.medium-text input[type=password] {width: 15em }
-
 /*submit*/
-.pretty-form.long-text input[type=text],
-.pretty-form.long-text textarea,
-.pretty-form.long-text input[type=password] {padding: 2px; width: 40em }
 
-/*forgot password*/
-#passform h1 { margin: 0px; }
-#passform p { font-size: smaller; color: orangered; margin-bottom: 7px}
-#passform.pretty-form button { padding: 0px 1px; }
-
+#url-field button {margin: 10px 5px 0 0;}
+#url-field .title-status { color: red; font-size: small}
 
 /*opt-out/in form*/
 .opt-form { font-size: larger }
@@ -1815,8 +1798,8 @@ ul#image-preview-list .description pre {
 
 #preview-table > table > tbody > tr { padding-bottom: 10px;  }
 #preview-table > table > tbody > tr > td { padding: 5px; padding-right: 15px;}
-#preview-table > table > tbody > tr > th { padding: 5px; padding-right: 15px;}
 #preview-table > table > tbody > tr > th { 
+    padding: 5px; padding-right: 15px;
     font-weight: bold; 
     vertical-align: top;
     font-size: larger;
@@ -1984,6 +1967,293 @@ ul#image-preview-list .description pre {
  
 .toggle.deltranslator-button { display: inline; }
 
+/****************/
+
+#sr { margin-left: 0px }
+
+#sr-list-wrapper { 
+    width: 454px;
+    height: 200px;
+    border: 1px solid gray;
+    border-top: none;
+    margin: 0 5px;
+    font-size: smaller;
+    position: relative;
+}
+
+#sr-list-cover { 
+    position: absolute;
+    background: gray url(/static/throbber.gif) no-repeat scroll center center;
+    height: 100%;
+    width: 100%;
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+    z-index: 1000;
+    display: none;
+}
+
+#sr-list { 
+    overflow: auto;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+
+#sr-searchfield { margin: 0 5px; }
+
+.sr-name {
+    font-size: small;
+    vertical-align: top;
+    padding: 3px 3px 3px 0;
+}
+
+.sr-description { 
+    padding: 3px
+ }
+
+.sr-row { 
+    cursor: default;
+ }
+
+.sr-row.sr-selected { 
+    background: #EFF7FF url(/static/rightarrow.png) no-repeat scroll 0px 5px;
+}
+
+.sr-arrow { 
+    width: 10px;
+    height: 12px;
+ }
+
+#sr-autocomplete-area { 
+    position: relative;
+    z-index: 100;
+ }
+
+#sr-drop-down { 
+    position: absolute;
+    width: 498px;
+    border: 1px solid gray;
+    background: white;
+    display: none;
+}
+
+#sr-drop-down  table { 
+    width: 100%;
+}
+
+.sr-name-row { 
+    cursor: default;
+ }
+
+.sr-name-row.sr-selected { 
+    background-color: #369;
+    color: white;
+}
+
+.submit-header {
+    font-size: larger;
+    font-weight: bold;
+}
+
+#suggested-reddits {
+    margin-top: 5px;
+    font-size: small;
+}
+
+#suggested-reddits ul { 
+
+}
+
+#suggested-reddits li {
+    display: inline;
+    padding-right: 5px;
+}
+
+
+/*** new menu shit ***/
+
+.formtabs-content { 
+    width: 520px;
+    border-top: 4px solid #5f99cf;
+    padding-top: 10px;
+ }
+
+.formtabs-content .infobar { 
+    margin: 0;
+    padding: 5px;
+ }
+
+ul.tabmenu.formtab { 
+    display: block;
+    padding-left: 10px;
+    font-size: larger;
+}
+
+.tabmenu.formtab li { 
+    margin: 0;
+ }
+
+.tabmenu.formtab a { 
+    font-weight: normal;
+    outline: none;
+    padding: 0px 12px;
+    vertical-align: bottom;
+
+    border: 1px solid #c1c1c1;
+    border-bottom: none;
+}
+
+.tabmenu.formtab .selected a { 
+    color:white;
+    font-size: 130%;
+    background-color: #5f99cf;
+    border: none;
+}
+
+
+/******* embed stuff ******/
+.expando {
+    clear: left;
+    margin: 5px 0 5px 0;
+}
+
+.expando-content { 
+    display: none;
+}
+
+
+.expando-button { 
+    float: left;
+    height: 23px;
+    width: 23px;
+    margin: 2px 5px 2px 0;
+    background: white none no-repeat scroll center center;
+}
+
+.expando-button.selftext.collapsed {background-image: url(/static/blog-collapsed.png);}
+.expando-button.selftext.collapsed:hover, .eb-sch {background-image: url(/static/blog-collapsed-hover.png);}
+.expando-button.selftext.expanded, .eb-se {
+    margin-bottom: 5px;
+    background-image: url(/static/blog-expanded.png);
+}
+.expando-button.selftext.expanded:hover, .eb-seh {background-image: url(/static/blog-expanded-hover.png);}
+
+.expando-button.video.collapsed {background-image: url(/static/vid-collapsed.png);}
+
+.expando-button.video.collapsed:hover, .eb-vch {background-image: url(/static/vid-collapsed-hover.png);}
+.expando-button.video.expanded, .eb-ve {background-image: url(/static/vid-expanded.png);}
+.expando-button.video.expanded:hover, .eb-veh {background-image: url(/static/vid-expanded-hover.png);}
+
+
+/******** self text stuff ****/
+.link .usertext .md,
+.linkcompressed .usertext .md {
+    padding: 0 5px;
+    background-color: #fafafa;
+    border: 1px solid #369;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+}
+
+.usertext { 
+    font-size: small;
+    position: relative;
+}
+
+.usertext-edit { 
+    margin-top: 5px;
+    padding: 0 1px; /* so the border of help/textbox don't get chopped off */
+    width: 500px;
+}
+
+.usertext-edit textarea { 
+    width: 500px;
+    height: 100px;
+}
+
+/*permalinks*/
+.usertext.border .usertext-body {
+    background-color: #ffc; padding-left: 5px;
+}
+
+/*admin see deleted comment*/
+.usertext.grayed .usertext-body {
+    color: gray;
+    background-color: #e0e0e0;
+    padding-left: 5px;
+}
+
+.usertext button { 
+    margin: 5px 5px 10px 0;
+}
+
+.usertext .help-toggle { 
+    font-size: smaller;
+    float:right;
+    margin-top: 5px; 
+}
+
+.usertext .bottom-area { 
+    /* this restricts children floats to the container */
+    overflow: hidden;
+    width: 100%;
+}
+
+.usertext table.markhelp { 
+    background-color: white;
+    margin: 5px 0px; 
+    width: 100%;
+}
+
+.usertext .markhelp, 
+.usertext .markhelp td, 
+.usertext .markhelp tr {
+    border: 1px solid #C0C0C0;
+    padding: 4px;
+    margin: 0px;
+}
+
+.usertext .markhelp .spaces {background-color: #c0c0c0}
+
+/*** roundfield stuff *******/
+.roundfield {
+    width: 500px;
+    background-color: #cee3f8;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    padding: 5px 10px 10px 10px;
+    font-size: large;
+}
+
+.roundfield .title {
+}
+
+.roundfield .roundfield-content {
+    margin-top: 5px;
+    border: none;
+    vertical-align: top;
+}
+
+.roundfield .usertext-edit { 
+    width: 500px;
+}
+
+.roundfield textarea,
+.roundfield input[type=text],
+.roundfield input[type=password] {
+    font-size: 100%;
+    width: 492px;
+    padding: 3px;
+    margin: 0;
+    border: 1px solid gray;
+}
+
+.roundfield.captcha .capimage { 
+    margin-bottom: 10px;
+}
+
+/***traffic stuff***/
 .traffic-table {margin: 10px 20px; }
 .traffic-table a:hover { text-decoration: underline; }
 .traffic-table th { font-weight: bold; text-align: center;}
@@ -2005,3 +2275,6 @@ ul#image-preview-list .description pre {
     border: 1px solid #B0B0B0; 
     margin-left: 10px;
     margin-bottom: 10px; }
+
+
+

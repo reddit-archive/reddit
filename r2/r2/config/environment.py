@@ -61,9 +61,9 @@ def load_environment(global_conf={}, app_conf={}):
     #tmpl_options['myghty.escapes'] = dict(l=webhelpers.auto_link, s=webhelpers.simple_format)
 
     tmpl_options = config['buffet.template_options']
-    tmpl_options['mako.default_filters'] = ["websafe"]
+    tmpl_options['mako.default_filters'] = ["mako_websafe"]
     tmpl_options['mako.imports'] = \
-                                 ["from r2.lib.filters import websafe, unsafe",
+                                 ["from r2.lib.filters import websafe, unsafe, mako_websafe",
                                   "from pylons import c, g, request",
                                   "from pylons.i18n import _, ungettext"]
     

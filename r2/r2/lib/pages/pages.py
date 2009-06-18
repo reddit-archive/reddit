@@ -19,8 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.wrapped import Wrapped, NoTemplateFound
-from r2.models import IDBuilder, LinkListing, Account, Default, FakeSubreddit, Subreddit, Friends, All, Sub, NotFound, DomainSR
+from r2.lib.wrapped import Wrapped, NoTemplateFound, Styled
+from r2.models import IDBuilder, LinkListing, Account, Default
+from r2.models import FakeSubreddit, Subreddit
+from r2.models import Friends, All, Sub, NotFound, DomainSR
+from r2.models import  make_wrapper
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -32,13 +35,16 @@ from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
-from r2.lib.menus import SubredditButton, SubredditMenu, OffsiteButton, menu
+from r2.lib.menus import SubredditButton, SubredditMenu
+from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.template_helpers import add_sr, get_domain
+from r2.lib.subreddit_search import popular_searches
 
-import sys, random, datetime, locale, calendar, re
+import sys, random, datetime, locale, calendar, simplejson, re
 import graph
+from itertools import chain
 from urllib import quote
 
 datefmt = _force_utf8(_('%d %b %Y'))
@@ -274,7 +280,6 @@ class Reddit(Wrapped):
 
         if c.user_is_loggedin:
             more_buttons.append(NamedButton('saved', False))
-            more_buttons.append(NamedButton('recommended', False))
         
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin'))
@@ -286,6 +291,11 @@ class Reddit(Wrapped):
 
             if c.user_is_admin:
                 more_buttons.append(NamedButton('traffic'))
+
+        #if there's only one button in the dropdown, get rid of the dropdown
+        if len(more_buttons) == 1:
+            main_buttons.append(more_buttons[0])
+            more_buttons = []
 
         toolbar = [NavMenu(main_buttons, type='tabmenu')]
         if more_buttons:
@@ -300,13 +310,13 @@ class Reddit(Wrapped):
         return "<Reddit>"
 
     @staticmethod
-    def content_stack(*a):
+    def content_stack(panes, css_class = None):
         """Helper method for reordering the content stack."""
-        return PaneStack(filter(None, a))
+        return PaneStack(filter(None, panes), css_class = css_class)
 
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
-        return self.content_stack(self.infobar, self.nav_menu, self._content)
+        return self.content_stack((self.infobar, self.nav_menu, self._content))
 
 class ClickGadget(Wrapped):
     def __init__(self, links, *a, **kw):
@@ -417,11 +427,15 @@ class MessagePage(Reddit):
         if not kw.has_key('show_sidebar'):
             kw['show_sidebar'] = False
         Reddit.__init__(self, *a, **kw)
-        self.replybox = CommentReplyBox()
+        self.replybox = UserText(item = None, creating = True,
+                                 post_form = 'comment', display = False,
+                                 cloneable = True)
 
     def content(self):
-        return self.content_stack(self.replybox, self.infobar,
-                                  self.nav_menu, self._content)
+        return self.content_stack((self.replybox,
+                                   self.infobar,
+                                   self.nav_menu,
+                                   self._content))
 
     def build_toolbars(self):
         buttons =  [NamedButton('compose'),
@@ -486,8 +500,11 @@ class LoginPage(BoringPage):
 class Login(Wrapped):
     """The two-unit login and register form."""
     def __init__(self, user_reg = '', user_login = '', dest=''):
-        Wrapped.__init__(self, user_reg = user_reg, user_login = user_login,
-                         dest = dest)
+        Wrapped.__init__(self,
+                         user_reg = user_reg,
+                         user_login = user_login,
+                         dest = dest,
+                         captcha = Captcha())
 
     
 class SearchPage(BoringPage):
@@ -501,8 +518,8 @@ class SearchPage(BoringPage):
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
-        return self.content_stack(self.searchbar, self.infobar,
-                                  self.nav_menu, self._content)
+        return self.content_stack((self.searchbar, self.infobar,
+                                   self.nav_menu, self._content))
 
 class CommentsPanel(Wrapped):
     """the side-panel on the reddit toolbar frame that shows the top
@@ -530,10 +547,11 @@ class LinkInfoPage(Reddit):
 
     def __init__(self, link = None, comment = None,
                  link_title = '', *a, **kw):
-        # TODO: temp hack until we find place for builder_wrapper
         from r2.controllers.listingcontroller import ListingController
+        wrapper = make_wrapper(ListingController.builder_wrapper,
+                               expand_children = True)
         link_builder = IDBuilder(link._fullname,
-                                 wrap = ListingController.builder_wrapper)
+                                 wrap = wrapper)
 
         # link_listing will be the one-element listing at the top
         self.link_listing = LinkListing(link_builder, nextprev=False).listing()
@@ -553,6 +571,7 @@ class LinkInfoPage(Reddit):
         else:
             params = {'title':_force_unicode(link_title), 'site' : c.site.name}
             title = strings.link_info_title % params
+
         Reddit.__init__(self, title = title, *a, **kw)
 
     def build_toolbars(self):
@@ -579,8 +598,11 @@ class LinkInfoPage(Reddit):
         return toolbar
     
     def content(self):
-        return self.content_stack(self.infobar, self.link_listing,
-                                  self.nav_menu, self._content)
+        return self.content_stack((self.infobar, self.link_listing,
+                                   PaneStack([PaneStack((self.nav_menu,
+                                                         self._content))],
+                                             title = _("comments"),
+                                             css_class = "commentarea")))
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
@@ -611,8 +633,6 @@ class EditReddit(Reddit):
             return [PageNameNav('subreddit')]
         else:
             return []
-
-
 
 class SubredditsPage(Reddit):
     """container for rendering a list of reddits.  The corner
@@ -651,8 +671,8 @@ class SubredditsPage(Reddit):
                 NavMenu(buttons, base_path = '/reddits', type="tabmenu")]
 
     def content(self):
-        return self.content_stack(self.searchbar, self.nav_menu,
-                                  self.sr_infobar, self._content)
+        return self.content_stack((self.searchbar, self.nav_menu,
+                                   self.sr_infobar, self._content))
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
@@ -663,7 +683,7 @@ class MySubredditsPage(SubredditsPage):
     """Same functionality as SubredditsPage, without the search box."""
     
     def content(self):
-        return self.content_stack(self.nav_menu, self.infobar, self._content)
+        return self.content_stack((self.nav_menu, self.infobar, self._content))
 
 
 def votes_visible(user):
@@ -868,15 +888,6 @@ class Captcha(Wrapped):
         self.iden = get_captcha()
         Wrapped.__init__(self)
 
-class CommentReplyBox(Wrapped):
-    """Used on LinkInfoPage to render the comment reply form at the
-    top of the comment listing as well as the template for the forms
-    which are JS inserted when clicking on 'reply' in either a comment
-    or message listing."""
-    def __init__(self, link_name='', captcha=None, action = 'comment'):
-        Wrapped.__init__(self, link_name = link_name, captcha = captcha,
-                         action = action)
-
 class PermalinkMessage(Wrapped):
     """renders the box on comment pages that state 'you are viewing a
     single comment's thread'"""
@@ -886,12 +897,14 @@ class PermalinkMessage(Wrapped):
 class PaneStack(Wrapped):
     """Utility class for storing and rendering a list of block elements."""
     
-    def __init__(self, panes=[], div_id = None, css_class=None, div=False):
+    def __init__(self, panes=[], div_id = None, css_class=None, div=False,
+                 title=""):
         div = div or div_id or css_class or False
         self.div_id    = div_id
         self.css_class = css_class
         self.div       = div
         self.stack     = list(panes)
+        self.title = title
         Wrapped.__init__(self)
 
     def append(self, item):
@@ -952,7 +965,6 @@ class Frame(Wrapped):
 dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
-    extension_handling = False
     def __init__(self, link = None, title = None, url = None, expanded = False, **kw):
         self.title = title
         self.url = url
@@ -998,11 +1010,41 @@ class FrameToolbar(Wrapped):
 
         Wrapped.__init__(self, **kw)
 
+    extension_handling = False
 
 class NewLink(Wrapped):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', subreddits = (),
                  then = 'comments'):
+        tabs = (('link', ('link-desc', 'url-field')),
+                ('text', ('text-desc', 'text-field')))
+        all_fields = set(chain(*(parts for (tab, parts) in tabs)))
+    
+        buttons = []
+        self.default_tabs = tabs[0][1]
+        self.default_tab = tabs[0][0]
+        for tab_name, parts in tabs:
+            to_show = ','.join('#' + p for p in parts)
+            to_hide = ','.join('#' + p for p in all_fields if p not in parts)
+            onclick = "return select_form_tab(this, '%s', '%s');"
+            onclick = onclick % (to_show, to_hide)
+            
+            if tab_name == self.default_tab:
+                self.default_show = to_show
+                self.default_hide = to_hide
+
+            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name))
+
+        self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
+        self.default_tabs = tabs[0][1]
+
+        self.sr_searches = simplejson.dumps(popular_searches())
+
+        if isinstance(c.site, FakeSubreddit):
+            self.default_sr = subreddits[0] if subreddits else g.default_sr
+        else:
+            self.default_sr = c.site.name
+
         Wrapped.__init__(self, captcha = captcha, url = url,
                          title = title, subreddits = subreddits,
                          then = then)
@@ -1082,11 +1124,22 @@ class ButtonDemoPanel(Wrapped):
 
 class Feedback(Wrapped):
     """The feedback and ad inquery form(s)"""
-    def __init__(self, captcha=None, title=None, action='/feedback',
-                    message='', name='', email='', replyto='', success = False):
-        Wrapped.__init__(self, captcha = captcha, title = title, action = action,
-                         message = message, name = name, email = email, replyto = replyto,
-                         success = success)
+    def __init__(self, title, action):
+        email = name = ''
+        if c.user_is_loggedin:
+            email = getattr(c.user, "email", "")
+            name = c.user.name
+
+        captcha = None
+        if not c.user_is_loggedin or c.user.needs_captcha():
+            captcha = Captcha()
+
+        Wrapped.__init__(self,
+                         captcha = captcha,
+                         title = title,
+                         action = action,
+                         email = email,
+                         name = name)
 
 
 class WidgetDemoPanel(Wrapped):
@@ -1260,7 +1313,7 @@ class DetailsPage(LinkInfoPage):
     def content(self):
         # TODO: a better way?
         from admin_pages import Details
-        return self.content_stack(self.link_listing, Details(link = self.link))
+        return self.content_stack((self.link_listing, Details(link = self.link)))
 
 class Cnameframe(Wrapped):
     """The frame page."""
@@ -1289,8 +1342,7 @@ class PromotePage(Reddit):
         buttons = [NamedButton('current_promos', dest = ''),
                    NamedButton('new_promo')]
 
-        menu  = NavMenu(buttons, title='show', base_path = '/promote',
-                        type='flatlist')
+        menu  = NavMenu(buttons, base_path = '/promote', type='flatlist')
 
         if nav_menus:
             nav_menus.insert(0, menu)
@@ -1330,6 +1382,83 @@ class PromoteLinkForm(Wrapped):
                          listing = listing,
                          *a, **kw)
 
+class TabbedPane(Wrapped):
+    def __init__(self, tabs):
+        """Renders as tabbed area where you can choose which tab to
+        render. Tabs is a list of tuples (tab_name, tab_pane)."""
+        buttons = []
+        for tab_name, title, pane in tabs:
+            buttons.append(JsButton(title, onclick="return select_tab_menu(this, '%s');" % tab_name))
+
+        self.tabmenu = JsNavMenu(buttons, type = 'tabpane')
+        self.tabs = tabs
+
+        Wrapped.__init__(self)
+
+class LinkChild(Wrapped):
+    def __init__(self, link, load = False, expand = False, nofollow = False):
+        self.link = link
+        self.expand = expand
+        self.load = load or expand
+        self.nofollow = nofollow
+        Wrapped.__init__(self)
+    
+    def content(self):
+        return ''
+
+class MediaChild(LinkChild):
+    css_style = "video"
+    def content(self):
+        return self.link.media_object
+
+class SelfTextChild(LinkChild):
+    css_style = "selftext"
+    def content(self):
+        u = UserText(self.link, self.link.selftext,
+                     editable = c.user == self.link.author,
+                     nofollow = self.nofollow)
+        #have to force the render style to html for now cause of some
+        #c.render_style weirdness
+        return u.render(style = 'html')
+
+class SelfText(Wrapped):
+    def __init__(self, link):
+        Wrapped.__init__(self, link = link)
+
+class UserText(Wrapped):
+    def __init__(self,
+                 item,
+                 text = '',
+                 have_form = True,
+                 editable = False,
+                 creating = False,
+                 nofollow = False,
+                 display = True,
+                 post_form = 'editusertext',
+                 cloneable = False,
+                 extra_css = ''):
+
+        css_class = "usertext"
+        if cloneable:
+            css_class += " cloneable"
+        if extra_css:
+            css_class += " " + extra_css
+
+        Wrapped.__init__(self,
+                         item = item,
+                         text = text,
+                         have_form = have_form,
+                         editable = editable,
+                         creating = creating,
+                         nofollow = nofollow,
+                         display = display,
+                         post_form = post_form,
+                         cloneable = cloneable,
+                         css_class = css_class)
+
+    def button(self):
+        pass
+        
 class Traffic(Wrapped):
     @staticmethod
     def slice_traffic(traffic, *indices):
@@ -1491,3 +1620,4 @@ class RedditTraffic(Traffic):
 class InnerToolbarFrame(Wrapped):
     def __init__(self, link, expanded = False):
         Wrapped.__init__(self, link = link, expanded = expanded)
+

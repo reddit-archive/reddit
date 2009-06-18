@@ -51,7 +51,7 @@ id="${arg}_${thing and thing._fullname or ''}"
 </%def>
 
 <%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
-<form class="pretty-form ${_class or ''}" onsubmit="${onsubmit or ''}" 
+<form class="${_class or ''}" onsubmit="${onsubmit or ''}" 
       action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}"
       %if c.cname:
         target="_top"
@@ -73,11 +73,11 @@ ${first_defined(kw[1:])}
 %endif
 </%def>
 
-<%def name="error_field(name, kind='p')">
-  <${kind} class="error ${name}" 
-           style="${'' if name in c.errors else 'display:none'}">
-   %if name in c.errors:
-     ${c.errors[name].message}
+<%def name="error_field(error_name, field_name, kind='span')">
+  <${kind} class="error ${error_name} field-${field_name}" 
+           style="${'' if error_name in c.errors else 'display:none'}">
+   %if error_name in c.errors:
+     ${c.errors[error_name].message}
    %endif
   </${kind}>
 </%def>
@@ -392,4 +392,21 @@ ${unsafe(txt)}
       ${_("logout")}
     </a>
   </form>
+</%def>
+
+<%def name="round_field(title, description = '', css_class= '', **kw)">
+  <div class="roundfield ${css_class}"
+       %for k, v in kw.iteritems():
+         ${k}="${v}"
+       %endfor
+       >
+    <span class="title">${title}</span>
+    &#32;
+    %if description:
+      <span class="gray">${description}</span>
+    %endif
+    <div class="roundfield-content">
+      ${caller.body()}
+    </div>
+  </div>
 </%def>

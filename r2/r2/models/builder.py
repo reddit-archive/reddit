@@ -596,6 +596,14 @@ class CommentBuilder(Builder):
 
         return final
 
+def make_wrapper(parent_wrapper = Wrapped, **params):
+    def wrapper_fn(thing):
+        w = parent_wrapper(thing)
+        for k, v in params.iteritems():
+            setattr(w, k, v)
+        return w
+    return wrapper_fn
+
 class TopCommentBuilder(CommentBuilder):
     """A comment builder to fetch only the top-level, non-spam,
        non-deleted comments"""

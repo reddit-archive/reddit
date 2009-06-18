@@ -281,7 +281,7 @@ def make_scraper(url):
 
 #Youtube
 class YoutubeScraper(MediaScraper):
-    media_template = '<object width="425" height="350"><param name="movie" value="http://www.youtube.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="425" height="350"></embed></object>'
+    media_template = '<object width="480" height="295"><param name="movie" value="http://www.youtube-nocookie.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube-nocookie.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="480" height="295"></embed></object>'
     thumbnail_template = 'http://img.youtube.com/vi/$video_id/default.jpg'
     video_id_rx = re.compile('.*v=([A-Za-z0-9-_]+).*')
 
