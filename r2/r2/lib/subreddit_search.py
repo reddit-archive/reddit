@@ -21,13 +21,11 @@ def load_all_reddits():
             if len(names) < 10:
                 names.append(sr.name)
 
-    g.rendercache.set_multi(query_cache, prefix = sr_prefix)
-
-def search_reddits_cached(query):
-    return g.rendercache.get(sr_prefix + query) or []
+    g.permacache.set_multi(query_cache, prefix = sr_prefix)
 
 def search_reddits(query):
-    return search_reddits_cached(str(query.lower()))
+    query = str(query.lower())
+    return g.permacache.get(sr_prefix + query) or []
 
 @memoize('popular_searches', time = 3600)
 def popular_searches():
