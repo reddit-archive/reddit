@@ -639,6 +639,9 @@ function update_dropdown(sr_names) {
             drop_down.append(new_row);
         });
 
+
+    var height = $("#sr-autocomplete").outerHeight();
+    drop_down.css('top', height);
     drop_down.show();
 }
 

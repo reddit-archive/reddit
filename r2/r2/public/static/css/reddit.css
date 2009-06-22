@@ -2036,6 +2036,7 @@ ul#image-preview-list .description pre {
     border: 1px solid gray;
     background: white;
     display: none;
+    left: 0;
 }
 
 #sr-drop-down  table { 

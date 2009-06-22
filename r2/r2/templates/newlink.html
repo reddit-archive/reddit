@@ -47,8 +47,8 @@ ${thing.formtabs_menu.render()}
 <div class="spacer">
   <%utils:round_field title="${_('title')}" id="title-field">
     <textarea name="title" rows="2" cols="1" wrap="hard">${thing.title}</textarea>
-    ${error_field("NO_TEXT", "title", "span")}
-    ${error_field("TOO_LONG", "title", "span")}
+    ${error_field("NO_TEXT", "title", "div")}
+    ${error_field("TOO_LONG", "title", "div")}
   </%utils:round_field>
 </div>
 
@@ -56,11 +56,11 @@ ${thing.formtabs_menu.render()}
   <%utils:round_field title="${_('url')}" id="url-field">
     <input name="kind" value="link" type="hidden"/>
     <input id="url" name="url" type="text" value="${thing.url}"/>
-    ${error_field("NO_URL", "url", "span")}
-    ${error_field("BAD_URL", "url", "span")}
-    ${error_field("ALREADY_SUB", "url", "span")}
+    ${error_field("NO_URL", "url", "div")}
+    ${error_field("BAD_URL", "url", "div")}
+    ${error_field("ALREADY_SUB", "url", "div")}
     <div>
-      <button type="button" onclick="fetch_title()">${_("suggest title")}</button>
+      <button type="button" tabindex="100" onclick="fetch_title()">${_("suggest title")}</button>
       <span class="title-status"></span>
     </div>
   </%utils:round_field>
@@ -92,15 +92,15 @@ ${thing.formtabs_menu.render()}
     <script type="text/javascript">
       reddit.sr_cache = ${unsafe(thing.sr_searches)};
     </script>
-    ${error_field("SUBREDDIT_NOEXIST", "sr", "span")}
-    ${error_field("SUBREDDIT_REQUIRED", "sr", "span")}
+    ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
+    ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
     
     <div id="suggested-reddits">
         <span class="">${_("popular choices")}&#32;</span>
       <ul>
         %for name in thing.subreddits:
         <li>
-          <a href="#" onclick="set_sr_name(this); return false">${name}</a>&#32;
+          <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
         </li>
         %endfor
       </ul>
@@ -115,7 +115,7 @@ ${thing.formtabs_menu.render()}
 </div>
 
 <div class="spacer">
-  <button class="btn" name="submit" value="form" type="submit" tabindex=1>${_("submit")}</button>
+  <button class="btn" name="submit" value="form" type="submit">${_("submit")}</button>
   <span class="status"></span>
   ${error_field("RATELIMIT", "ratelimit")}
 </div>
