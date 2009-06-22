@@ -105,6 +105,12 @@ class FrontController(RedditController):
         """page hit once a user has been sent a password reset email
         to verify their identity before allowing them to update their
         password."""
+
+        #if another user is logged-in, log them out
+        if c.user_is_loggedin:
+            self.logout()
+            return self.redirect(request.path)
+
         done = False
         if not key and request.referer:
             referer_path =  request.referer.split(g.domain)[-1]
