@@ -51,7 +51,7 @@ def simple_email(to, fr, subj, body):
 def password_email(user):
     key = passhash(random.randint(0, 1000), user.email)
     passlink = 'http://' + g.domain + '/resetpassword/' + key
-    print passlink
+    print "Generated password reset link: " + passlink
     cache.set("reset_%s" %key, user._id, time=1800)
     simple_email(user.email, 'reddit@reddit.com',
                  'reddit.com password reset',

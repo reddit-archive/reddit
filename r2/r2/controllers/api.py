@@ -1210,6 +1210,8 @@ class ApiController(RedditController):
         elif cache_evt.user:
             # successfully entered user name and valid new password
             change_password(cache_evt.user, password)
+            print "%s did a password reset for %s via %s" % (
+                request.ip, cache_evt.user.name, cache_evt.key)
             self._login(jquery, cache_evt.user, '/')
             cache_evt.clear()
 
