@@ -122,7 +122,7 @@ string_dict = dict(
     (in the middle of the toolbar, to the right of the comments button).
     """),
 
-    submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a deceptive title."""),
+    submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
 )
 

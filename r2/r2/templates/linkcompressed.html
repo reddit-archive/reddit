@@ -26,10 +26,6 @@
 
 <%def name="domain()">
   <span class="domain">
-    <% from r2.models import FakeSubreddit, Default %>
-    %if isinstance(c.site, FakeSubreddit) and thing.subreddit.name != "reddit.com":
-    [${unsafe(self.subreddit())}]
-    %endif
     &#32;
     (<a href="/domain/${thing.domain}">${thing.domain}</a>)
   </span> 
@@ -46,15 +42,19 @@
 <%def name="tagline()">
   <%
     if thing.hide_score:
-        taglinetext = _("posted %(when)s ago by %(author)s")
+        taglinetext = _("submitted %(when)s ago by %(author)s")
     else:
-        taglinetext = _("%(points)s posted %(when)s ago by %(author)s")
+        taglinetext = _("%(points)s submitted %(when)s ago by %(author)s")
     taglinetext = taglinetext.replace(" ", "&#32;")
   %>
   ${unsafe(taglinetext % dict(points = capture(self.score, thing, likes=thing.likes),
                               when = thing.timesince, 
                               author= self.author(friend = thing.friend)))}
 
+  <% from r2.models import FakeSubreddit, Default %>
+  %if isinstance(c.site, FakeSubreddit):
+    &#32;${unsafe( _( "to %(reddit)s") % dict(reddit="&#32;" + self.subreddit())) }
+  %endif
 
 
 </%def>
