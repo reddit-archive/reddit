@@ -27,7 +27,7 @@ from r2.models import *
 from r2.lib.pages import *
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
-from r2.lib.utils import query_string, UrlParser, link_from_url
+from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
@@ -192,6 +192,7 @@ class FrontController(RedditController):
         
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane, 
+                           subtitle = _("comments"),
                            nav_menus = [CommentSortMenu(default = sort), 
                                         NumCommentsMenu(article.num_comments,
                                                         default=num_comments)],
@@ -336,7 +337,24 @@ class FrontController(RedditController):
                                     num = num, after = after, reverse = reverse,
                                     count = count)
 
-        return LinkInfoPage(link = article, content = pane).render()
+        return LinkInfoPage(link = article, content = pane,
+                            subtitle = _('related')).render()
+
+    @base_listing
+    @validate(article = VLink('article'))
+    def GET_duplicates(self, article):
+        links = link_duplicates(article)
+
+        builder = IDBuilder([ link._fullname for link in links ],
+                            skip = False)
+        listing = LinkListing(builder).listing()
+
+        res = LinkInfoPage(link = article,
+                           comment = None,
+                           duplicates = links,
+                           content = listing,
+                           subtitle = _('other discussions')).render()
+        return res
 
     @base_listing
     @validate(query = nop('q'))

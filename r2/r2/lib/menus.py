@@ -116,6 +116,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      # comments
                      related      = _("related"),
                      details      = _("details"),
+                     duplicates   = _("other discussions (%(num)s)"),
                      traffic      = _("traffic"),
 
                      # reddits
@@ -294,9 +295,10 @@ class NamedButton(NavButton):
     'dest' defaults to the 'name' as well (unless specified
     separately)."""
     
-    def __init__(self, name, sr_path = True, nocname=False, dest = None, **kw):
+    def __init__(self, name, sr_path = True, nocname=False, dest = None, fmt_args = {}, **kw):
         self.name = name.strip('/')
-        NavButton.__init__(self, menu[self.name], name if dest is None else dest,
+        menutext = menu[self.name] % fmt_args
+        NavButton.__init__(self, menutext, name if dest is None else dest,
                            sr_path = sr_path, nocname=nocname, **kw)
 
     def selected_title(self):

@@ -39,6 +39,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
+from r2.lib.utils import link_duplicates
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 
@@ -546,7 +547,8 @@ class LinkInfoPage(Reddit):
     create_reddit_box = False
 
     def __init__(self, link = None, comment = None,
-                 link_title = '', *a, **kw):
+                 link_title = '', subtitle = None, duplicates = None,
+                 *a, **kw):
         from r2.controllers.listingcontroller import ListingController
         wrapper = make_wrapper(ListingController.builder_wrapper,
                                expand_children = True)
@@ -572,18 +574,30 @@ class LinkInfoPage(Reddit):
             params = {'title':_force_unicode(link_title), 'site' : c.site.name}
             title = strings.link_info_title % params
 
+        self.subtitle = subtitle
+
+        # if we're already looking at the 'duplicates' page, we can
+        # avoid doing this lookup twice
+        if duplicates is None:
+            self.duplicates = link_duplicates(self.link)
+        else:
+            self.duplicates = duplicates
+
         Reddit.__init__(self, title = title, *a, **kw)
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))
         base_path = _force_utf8(base_path)
-        def info_button(name):
+        def info_button(name, **fmt_args):
             return NamedButton(name, dest = '/%s%s' % (name, base_path),
-                               aliases = ['/%s/%s' % (name, self.link._id36)])
-        
+                               aliases = ['/%s/%s' % (name, self.link._id36)],
+                               fmt_args = fmt_args)
+
         buttons = [info_button('comments'),
                    info_button('related')]
 
+        if not self.link.is_self and self.duplicates:
+            buttons.append(info_button('duplicates', num = len(self.duplicates)))
         if c.user_is_admin:
             buttons += [info_button('details')]
         if c.user_is_sponsor:
@@ -601,7 +615,7 @@ class LinkInfoPage(Reddit):
         return self.content_stack((self.infobar, self.link_listing,
                                    PaneStack([PaneStack((self.nav_menu,
                                                          self._content))],
-                                             title = _("comments"),
+                                             title = self.subtitle,
                                              css_class = "commentarea")))
 
     def rightbox(self):

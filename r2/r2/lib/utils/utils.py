@@ -1083,3 +1083,16 @@ def link_from_url(path, filter_spam = False, multiple = True):
     # among those, show them the hottest one
     return links if multiple else links[0]
 
+def link_duplicates(article):
+    from r2.models import Link, NotFound
+
+    try:
+        links = tup(Link._by_url(article.url, None))
+    except NotFound:
+        links = []
+
+    duplicates = [ link for link in links
+                   if link._fullname != article._fullname ]
+
+    return duplicates
+
