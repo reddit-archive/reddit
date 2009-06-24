@@ -342,11 +342,12 @@ class FrontController(RedditController):
 
     @base_listing
     @validate(article = VLink('article'))
-    def GET_duplicates(self, article):
+    def GET_duplicates(self, article, num, after, reverse, count):
         links = link_duplicates(article)
 
         builder = IDBuilder([ link._fullname for link in links ],
-                            skip = False)
+                            num = num, after = after, reverse = reverse,
+                            count = count, skip = False)
         listing = LinkListing(builder).listing()
 
         res = LinkInfoPage(link = article,
@@ -355,6 +356,7 @@ class FrontController(RedditController):
                            content = listing,
                            subtitle = _('other discussions')).render()
         return res
+
 
     @base_listing
     @validate(query = nop('q'))
