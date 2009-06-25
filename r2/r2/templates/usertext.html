@@ -49,7 +49,8 @@
 
   %if not thing.creating:
     <div class="usertext-body">
-      ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow))}
+      ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
+                                        target = thing.target))}
     </div>
   %endif
 

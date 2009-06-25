@@ -573,9 +573,8 @@ class Comment(Thing, Printable):
 
             extra_css = ''
             if item._deleted:
-                if c.user_is_admin:
-                    extra_css += "grayed"
-                else:
+                extra_css += "grayed"
+                if not c.user_is_admin:
                     item.author = DeletedUser()
                     item.body = '[deleted]'
 
@@ -606,6 +605,7 @@ class Comment(Thing, Printable):
             item.usertext = UserText(item, item.body,
                                      editable = item.author == c.user,
                                      nofollow = item.nofollow,
+                                     target = item.target,
                                      extra_css = extra_css)
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
