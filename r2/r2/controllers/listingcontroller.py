@@ -158,10 +158,6 @@ class ListingController(RedditController):
                 w.render_class = PromotedLink
                 w.rowstyle = 'promoted link'
 
-            elif c.user.pref_compress:
-                w.render_class = LinkCompressed
-                w.score_fmt = Score.points
-
         return w
 
     def GET_listing(self, **env):

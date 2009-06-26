@@ -61,6 +61,9 @@ thing id-${what._fullname}
    else:
       cls = thing.lookups[0].__class__.__name__.lower()
 
+   if cls == 'link' and c.user.pref_compress:
+     cls = 'compressed link'
+
    if thing.show_spam:
      rowclass = thing.rowstyle + " spam"
    elif thing.show_reports:

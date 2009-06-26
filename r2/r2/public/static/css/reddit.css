@@ -493,10 +493,6 @@ before enabling */
     color: #336699;
 }
 
-.linkcompressed .media-button .option.active { 
-    padding-right: 15px;
-}
-
 .embededmedia { margin-top: 5px; margin-left: 60px; }
 
 .thing .title { color: blue; padding: 0px; overflow: hidden; }
@@ -556,12 +552,6 @@ before enabling */
     padding: 5px 7em 10px 0;
     margin-bottom: 0px;  
 }
-
-.organic-listing .linkcompressed { 
-    background-color: #F8F8F8;
-    padding: 5px 7em 10px 0;
-    margin-bottom: 0px; 
- }
 
 .organic-listing .nextprev { 
     margin: 0px;
@@ -733,6 +723,12 @@ a.star { text-decoration: none; color: #ff8b60 }
     text-align: right;
 }
 
+.compressed { margin-bottom: 5px; }
+.compressed .rank { margin-top: 10px; }
+.compressed .title { margin: -2px 0 }
+.compressed .score { color: #888888 }
+.compressed .score-placeholder { height: 3px }
+
 /* display the right score based on whether they've voted */
 .score.likes, .score.dislikes {display: none;}
 .likes .score, .dislikes .score {display: none;}
@@ -740,45 +736,6 @@ a.star { text-decoration: none; color: #ff8b60 }
 .dislikes .score.dislikes {display: inline;}
 .likes div.score.likes {display: block;}
 .dislikes div.score.dislikes {display: block;}
-
-/* compressed links */
-.linkcompressed { margin: 4px 0; overflow: hidden; margin-top: 9px; }
-.linkcompressed .title {margin-bottom: 5px; font-size:medium; font-weight: normal;}
-.linkcompressed .child h3 { 
-    margin: 15px; 
-    text-transform: none; 
-    font-size: medium; 
-}
-
-.linkcompressed .score.likes   { color: #FF8B60; }
-.linkcompressed .score.dislikes { color: #9494FF; }
-.linkcompressed .rank {
-    margin-top: 9px;
-    float:left;
-    color: #c6c6c6;
-    font-family: arial;
-    font-size: medium;
-    text-align: right;
-}
-.linkcompressed .arrow.down, .linkcompressed .arrow.downmod {
-    margin-top: 5px;
-}
-
-.linkcompressed .tagline { display: inline; margin-top: 0px; margin-bottom: 1px; }
-.linkcompressed .flat-list { display: inline }
-
-/* compressed buttons */
-.linkcompressed .entry .buttons li { padding: 2px; background-color: transparent; }
-.linkcompressed .entry .buttons li.first {padding-left: .5em;}
-.linkcompressed .entry .buttons li a {
-    padding: 0 2px;
-    background-color: #fdfdfd;
-    font-weight: bold
-}
-
-.linkcompressed .midcol { width: 15px; }
-.linkcompressed .entry .buttons li a:hover { text-decoration: underline}
-.linkcompressed .expando-button {display: none}
 
 
 .warm-entry .rank { color: #EDA179; }
@@ -2148,8 +2105,7 @@ ul.tabmenu.formtab {
 
 
 /******** self text stuff ****/
-.link .usertext .md,
-.linkcompressed .usertext .md {
+.link .usertext .md {
     padding: 0 5px;
     background-color: #fafafa;
     border: 1px solid #369;

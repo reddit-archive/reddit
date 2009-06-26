@@ -471,7 +471,7 @@ function updateEventHandlers(thing) {
         .filter(":visible").trigger("onshow");
 
     /* click on a title.. */
-    $(thing).filter(".link, .linkcompressed")
+    $(thing).filter(".link")
         .find("a.title, a.comments").mousedown(function() {
             /* the site is either stored in the sr dict, or we are on
              * an sr and it is the current one */
