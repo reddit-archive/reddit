@@ -728,6 +728,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .compressed .title { margin: -2px 0 }
 .compressed .score { color: #888888 }
 .compressed .score-placeholder { height: 3px }
+.compressed .entry .buttons .first a { padding: 0 !important }
 
 /* display the right score based on whether they've voted */
 .score.likes, .score.dislikes {display: none;}
