@@ -725,10 +725,12 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .compressed { margin-bottom: 5px; }
 .compressed .rank { margin-top: 10px; }
-.compressed .title { margin: -2px 0 }
+.compressed .title { margin: -2px 0 3px }
 .compressed .score { color: #888888 }
 .compressed .score-placeholder { height: 3px }
-.compressed .entry .buttons .first a { padding: 0 !important }
+.compressed .subreddit { font-weight: bold }
+.compressed .tagline { display: inline; margin-right: 12px }
+.compressed .expando-button { display: none; }
 
 /* display the right score based on whether they've voted */
 .score.likes, .score.dislikes {display: none;}
