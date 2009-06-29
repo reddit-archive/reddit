@@ -1,3 +1,4 @@
+
 .link { line-height: 1.1; }
 
 /* I don't even pretend to understand why we need this when we set 
@@ -18,6 +19,42 @@
 .thing .entry.likes .score.likes { display: inline;  }
 .thing .entry.dislikes .score.dislikes { display: inline;  }
 
+body.button-body {
+    margin:0;
+    padding:0;
+    height:100%; /* this is the key! */
+} 
+
+.button #cover { 
+    position: absolute; 
+    top: 0px;
+    left: 0px; 
+    height: 100%;
+}
+.button.thing { 
+    text-align: left;
+    position: relative;  
+    background-color: clear; 
+}
+
+
+.button .blog { 
+    text-align: center; 
+}
+
+.button #cover #popup {
+    display: block; 
+    text-align: center; 
+}
+
+.button #cover .cover { 
+    display: block; 
+    top: 0px;
+    left: 0px;
+    position: static; 
+    width: 100%;
+    height: 100%;
+}
 
 div.dropdown.tabdrop { display: inline; }
 

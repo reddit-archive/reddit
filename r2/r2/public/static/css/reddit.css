@@ -1257,7 +1257,10 @@ textarea.gray { color: gray; }
     width: 80%; 
     z-index: 1001; 
     background: white; 
-    padding: 2px; 
+    padding: 1px; 
+    left: 0px; 
+    top: 0px; 
+    margin: 0px; 
     border-color: #B2B2B2 black black #B2B2B2;
     border-style: solid;
     border-width: 1px;

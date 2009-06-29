@@ -34,7 +34,14 @@
 </%def>
 
 <%def name="class_def(class_number, width=None)">
-  <div class="blog blog${class_number}" 
+  <% 
+     like_cls = "unvoted"
+     if getattr(thing.link, "likes", None):
+         like_cls = "likes"
+     elif getattr(thing.link, "likes", None) is False:
+         like_cls = "dislikes"
+   %>
+  <div class="blog blog${class_number} entry ${like_cls}" 
     %if style_line(width):
        style="${style_line(width)}"
     %endif
