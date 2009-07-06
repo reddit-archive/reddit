@@ -361,7 +361,7 @@ def make_cachable(v, *a):
     elif hasattr(v, "cache_key"):
         return v.cache_key(*a)
     else:
-        raise Uncachable, type(v)
+        raise Uncachable, "%s, %s" % (v, type(v))
 
 class CachedTemplate(Templated):
     cachable = True

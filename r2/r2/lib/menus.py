@@ -225,7 +225,7 @@ class NavButton(Styled):
         aliases = set(a.rstrip('/') for a in aliases)
         aliases.add(dest.rstrip('/'))
 
-        self.request_params = dict(request.params)
+        self.request_params = dict(request.GET)
         self.stripped_path = request.path.rstrip('/').lower()
 
         Styled.__init__(self, style = style, sr_path = sr_path, 
