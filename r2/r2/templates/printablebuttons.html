@@ -1,0 +1,277 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%namespace file="utils.html" import="plain_link" />
+<%!
+   from r2.lib.strings import strings
+ %>
+
+<%def name="banbuttons()">
+  %if thing.show_report:
+    <li>
+      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
+    </li>
+  %endif
+  %if thing.show_delete:
+    <li>
+      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
+    </li>
+  %endif
+  %if thing.can_ban and thing.show_ban:
+    %if thing.show_spam:
+      <li>
+         ${self.state_button("unban", _("unban"), 
+            "return change_state(this, 'unban');", _("unbanned"))}
+      </li>
+     %else:
+      <li>
+         ${self.state_button("ban", _("ban"), 
+            "return change_state(this, 'ban');", _("banned"))}
+      </li>
+     %endif
+    %if thing.show_reports:
+      <li>
+        ${self.state_button("ignore", _("ignore"), \
+         "change_state(this, 'ignore');", _("ignored"))}
+      </li>
+    %endif
+  %endif
+</%def>
+
+<%def name="linkbuttons()">
+  %if thing.show_comments:
+    <li class="first">
+    ${self.comment_button("comment", thing.comment_label, thing.permalink,
+                          a_class = thing.commentcls, 
+                          newwindow = thing.new_window)}
+    </li>
+  %endif
+  %if thing.editable:
+    <li>
+      ${self.simple_button(_("edit"), "edit_usertext")}
+    </li>
+  %endif
+  <li class="share">
+    ${self.toggle_button("share-button", _("share"), _("cancel"),
+                         "share", "cancelShare", login_required = True)}
+  </li>
+  %if thing.is_loggedin:
+    <li>
+    %if thing.saved:
+       ${self.state_button("unsave", _("unsave"), \
+          "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
+    %else:
+       ${self.state_button("save", _("save"), \
+          "return change_state(this, 'save', save_thing);", _("saved"))}
+    %endif
+    </li><li>
+    %if thing.hidden:
+      ${self.state_button("unhide", _("unhide"), \
+        "change_state(this, 'unhide', hide_thing);", _("unhidden"))}
+    %else:
+      ${self.state_button("hide", _("hide"), \
+         "change_state(this, 'hide', hide_thing);", _("hidden"))}
+    %endif
+    </li>
+  %endif
+  ${self.banbuttons()}
+</%def>
+
+<%def name="commentbuttons()">
+  <li class="first">
+    ${self.bylink_button(_("permalink"), thing.permalink)}
+  </li>
+  %if thing.deleted:
+    %if thing.parent_permalink and not thing.profilepage:
+      <li>
+        ${self.bylink_button(_("parent"), thing.parent_permalink)}
+      </li>
+    %endif
+  %else:
+    %if not thing.profilepage:
+      %if thing.parent_permalink:
+        <li>
+          ${self.bylink_button(_("parent"), thing.parent_permalink)}
+        </li>
+      %endif
+      %if thing.is_author:
+        <li>
+          ${self.simple_button(_("edit"), "edit_usertext")}
+        </li>
+      %endif
+    %endif
+    ${self.banbuttons()}
+    %if not thing.profilepage and thing.can_reply:
+      <li>
+        ${self.simple_button(_("reply"), "reply")}
+      </li>
+    %endif
+  %endif
+</%def>
+
+
+<%def name="messagebuttons()"> 
+  %if thing.was_comment:
+    <li>
+      ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
+    </li>
+  %endif
+  ${self.banbuttons()}
+  %if not thing.was_comment and thing.can_reply:
+    <li>
+      ${self.simple_button(_("reply {verb}"), "reply")}
+    </li>
+  %endif
+</%def>
+
+##------------
+<%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
+
+  <%def name="_link()" buffered="True">
+    <a href="javascript:void()" 
+       %if a_class:
+         class="${a_class}" 
+       %endif
+       onclick="${onclick}">${title}</a>
+  </%def>
+  <%
+     link = _link()
+     if fmt:
+         link = fmt % {fmt_param: link}
+         ## preserve spaces before and after < & > for space compression
+         link = link.replace(" <", "&#32;<").replace("> ", ">&#32;")
+   %>   
+
+  %if clicked:
+    ${executed}
+  %else:
+    <form action="/post/${name}" method="post" 
+          class="state-button ${name}-button">
+        <input type="hidden" name="executed" value="${executed}" />
+        %for key, value in hidden_data.iteritems():
+          <input type="hidden" name="${key}" value="${value}" />
+        %endfor
+        <span>
+          ${unsafe(link)}
+        </span>
+    </form>
+  %endif
+</%def>
+
+
+<%def name="ynbutton(title, executed, op, callback = 'null', 
+                     question = None,
+                     format = '%(link)s',
+                     format_arg = 'link',
+                     hidden_data = {})">
+  <%
+     if question is None:
+         question = _("are you sure?")
+     link = ('<a href="#" onclick="return toggle(this)">'
+             + title + '</a>')
+     link = format % {format_arg : link}
+     link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
+   %>
+  <form class="toggle ${op}-button" action="#" method="get">
+    <input type="hidden" name="executed" value="${executed}"/>
+    %for k, v in hidden_data.iteritems():
+      <input type="hidden" name="${k}" value="${v}"/>
+    %endfor
+    <span class="option active">
+      ${link}
+    </span>
+    <span class="option error">
+      ${question}
+      &#32;<a href="javascript:void(0)" class="yes"
+         onclick='change_state(this, "${op}", ${callback})'>
+        ${_("yes")}
+      </a>&#32;/&#32;
+      <a href="javascript:void(0)" class="no"
+         onclick="return toggle(this)">${_("no")}</a>
+    </span>
+  </form>
+</%def>
+
+<%def name="simple_button(title, nameFunc)">
+ <a class="" href="javascript:void(0)" 
+    onclick="return ${nameFunc}(this)">${title}</a>
+</%def>
+
+<%def name="toggle_button(class_name, title, alt_title, 
+                    callback, cancelback, 
+                    css_class = '', alt_css_class = '',
+                    reverse = False,
+                    login_required = False,
+                    style = '', )">
+<%
+   if reverse:
+       callback, cancelback = cancelback, callback
+       title, alt_title = alt_title, title
+       css_class, alt_css_class = alt_css_class, css_class
+ %>
+<span class="${class_name} toggle" style="${style}">
+ <a class="option active ${css_class}" href="#" 
+    %if login_required and not c.user_is_loggedin:
+      onclick="return showcover('', '${callback}_' + $(this).thing_id());"
+    %else:
+      onclick="return toggle(this, ${callback}, ${cancelback})"
+    %endif
+    >
+   ${title}
+ </a>
+ <a class="option ${alt_css_class}" href="#">${alt_title}</a>
+</span>
+</%def>
+
+### originally in commentbutton
+<%def name="comment_button(name, link_text, link,\
+            a_class='', title='', newwindow = False)">
+  ${plain_link(link_text, link, 
+               _class=a_class, title=title, 
+               target='_blank' if newwindow else '_parent')}
+</%def>
+
+<%def name="bylink_button(title, link)">
+ ${plain_link(title, link, _class="bylink", rel="nofollow")}
+</%def>
+
+<%def name="toggleable_label(class_name,
+            title, alt_title,
+            callback, cancelback,
+            reverse = False)">
+ <%
+   if reverse:
+       callback, cancelback = cancelback, callback
+       title, alt_title = alt_title, title
+ %>
+<span class="${class_name} toggle">
+  <span class="toggle option active">${title}</span>
+  <span class="toggle option">${alt_title}</span>
+  &#32;(
+  <a href="#"
+     onclick="return toggle_label(this, ${callback}, ${cancelback})"
+     >
+    ${_("toggle")}
+  </a>
+  )
+</span>
+</%def>
+
