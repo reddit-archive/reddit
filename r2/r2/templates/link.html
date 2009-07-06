@@ -21,21 +21,21 @@
 ################################################################################
 
 <%!
-   from r2.models.subreddit import Default 
    from r2.lib.template_helpers import get_domain
- %>
-
+   from r2.lib.pages.things import LinkButtons
+%>
+ 
 <%inherit  file="printable.html"/>
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="printablebuttons.html" import="toggle_button" />
  
 <%def name="numcol()">
   <% num = thing.num %>
-  <span class="rank" style="width:$numcolmargin;">
+  <span class="rank" style="width:${thing.numcolmargin};">
     %if thing.top_link:
       <a class="star" href="/toplinks">
     %endif
-      ##placeholder for the number
-      $num
+    ${thing.num}
     %if thing.top_link:
       </a>
     %endif
@@ -48,7 +48,7 @@
      %if thing.nofollow:
        rel="nofollow"
      %endif
-     %if c.user.pref_newwindow:
+     %if thing.newwindow:
        target="_blank"
      %elif c.cname:
        target="_top"
@@ -131,14 +131,14 @@
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
-  %if c.user.pref_compress:
-  <div class="midcol ${cls}" style="width:2ex;" 
+  %if thing.pref_compress:
+    <div class="midcol ${cls}" style="width:2ex;" 
   %else:
-  <div class="midcol ${cls}" style="width:$midcolmargin;" 
+    <div class="midcol ${cls}" style="width:${thing.midcolmargin};" 
   %endif
        ${not display and "style='display:none'" or ''}>
     ${self.arrow(thing, 1, thing.likes)}
-    %if c.user.pref_compress:
+    %if thing.pref_compress:
       <div class="score-placeholder"></div>
     %elif thing.hide_score:
       <div class="score likes">&bull;</div> 
@@ -161,19 +161,15 @@
 
 <%def name="tagline()">
   <% 
-    from r2.lib.utils import timeago
-    from r2.models import FakeSubreddit
-    from r2.lib.strings import Score
-
-    if isinstance(c.site, FakeSubreddit) or c.site != thing.subreddit:
+    if thing.different_sr:
       taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s") 
     else:
       taglinetext = _("submitted %(when)s ago by %(author)s") 
     taglinetext = taglinetext.replace(" ", "&#32;")
   %>
 
-  %if c.user.pref_compress and not thing.hide_score:
-    ${self.score(thing, thing.likes, score_fmt = Score.safepoints, tag='span')}
+  %if thing.pref_compress and not thing.hide_score:
+    ${self.score(thing, thing.likes, tag='span')}
     &#32;
   %endif
 
@@ -185,54 +181,9 @@
 <%def name="child()">
 </%def>
 
-<%def name="buttons(comments=True,delete=True,report=True,ban=True,additional='')">
-  <% fullname = thing._fullname %>
-  %if comments:
-    <% 
-       if not thing.num_comments:
-         # generates "comment" the imperative verb
-         com_label = _("comment {verb}")
-       else:
-         # generates "XX comments" as a noun
-         com_label = ungettext("comment", "comments", thing.num_comments)
-       %>
-    <li class="first">
-    ${parent.comment_button("comment", com_label,
-                            thing.num_comments, thing.permalink,
-                            newwindow = c.user.pref_newwindow)}
-    </li>
-  %endif
-  %if thing.editable:
-    <li>
-      ${parent.simple_button(_("edit"), "edit_usertext")}
-    </li>
-  %endif
-  <li class="share">
-    ${parent.toggle_button("share-button", _("share"), _("cancel"),
-                           "share", "cancelShare", login_required = True)}
-  </li>
-  %if c.user_is_loggedin:
-    <li>
-    %if thing.saved:
-       ${parent.state_button("unsave", _("unsave"), \
-          "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
-    %else:
-       ${parent.state_button("save", _("save"), \
-          "return change_state(this, 'save', save_thing);", _("saved"))}
-    %endif
-    </li><li>
-    %if thing.hidden:
-      ${parent.state_button("unhide", _("unhide"), \
-        "change_state(this, 'unhide', hide_thing);", _("unhidden"))}
-    %else:
-      ${parent.state_button("hide", _("hide"), \
-         "change_state(this, 'hide', hide_thing);", _("hidden"))}
-    %endif
-    </li>
-  %endif
-  ${parent.delete_or_report_buttons(delete=delete,report=report)}
-  ${parent.buttons(ban=ban)}
-  ${additional}
+<%def name="buttons(comments=True, delete=True, report=True, ban=True, additional='')">
+  ${LinkButtons(thing, comments = comments, delete = delete, 
+                report = report, ban = ban)}
 </%def>
 
 <%def name="thumbnail()">

@@ -29,7 +29,7 @@ def api(type, cls):
     tpm.add_handler(type, 'api-html', cls())
 
 # blanket fallback rule
-api('wrapped', NullJsonTemplate)
+api('templated', NullJsonTemplate)
 
 # class specific overrides
 api('link',          LinkJsonTemplate)

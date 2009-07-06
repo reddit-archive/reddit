@@ -1,9 +1,9 @@
-${thing.tabmenu.render()}
+${thing.tabmenu}
 <div class="tabpane-content">
   %for i, (name, title, pane) in enumerate(thing.tabs):
     <div id="tabbedpane-${name}" class="tabbedpane"
          ${"style='display:none'" if i > 0 else ""}>
-      ${pane.render()}
+      ${pane}
     </div>
   %endfor
   ##select the front tab and init the other tabs

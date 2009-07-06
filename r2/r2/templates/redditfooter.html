@@ -21,65 +21,29 @@
 ################################################################################
 
 <%!
-   from r2.lib.template_helpers import get_domain, static, UrlParser
    from r2.lib.strings import strings
-   from r2.lib import tracking
-   import random, datetime
+   import datetime
 %>
-<%namespace file="login.html" import="login_panel, login_form"/>
-<%namespace file="utils.html" import="text_with_links, plain_link"/>
+<%namespace file="utils.html" import="text_with_links"/>
 
 <div class="footer-parent">
   <div class="footer rounded">
-      %for toolbar in thing.footer_nav():
+      %for toolbar in thing.nav():
       <div class="col">
-        ${toolbar.render()}
+        ${toolbar}
       </div>
       %endfor
 
     <p class="bottommenu">
-      ${text_with_links(_("Use of this site constitutes acceptance of our %(user_agreement)s and %(privacy_policy)s"), nocname=True, user_agreement= (_("User Agreement {Genitive}"), "http://reddit.com/help/useragreement"), privacy_policy = (_("Privacy Policy {Genitive}"), "http://reddit.com/help/privacypolicy"))}.  
+      ${text_with_links(
+              _("Use of this site constitutes acceptance of our "
+                "%(user_agreement)s and %(privacy_policy)s"), nocname=True, 
+        user_agreement= (_("User Agreement {Genitive}"), 
+                         "http://reddit.com/help/useragreement"), 
+        privacy_policy = (_("Privacy Policy {Genitive}"), 
+                          "http://reddit.com/help/privacypolicy"))}.  
       ${_("(c) %(year)d Conde Nast Digital. All rights reserved.") % \
       dict(year=datetime.datetime.now().timetuple()[0])}
     </p>
-   %if g.tracker_url and thing.site_tracking:
-    <img alt="" src="${tracking.UserInfo.gen_url()}"/>
-   %endif
   </div>
 </div>
-%if not c.user_is_loggedin:
-  %if thing.enable_login_cover:
-    ${self.loginpopup(login_panel, login_form)}
-  %endif
-  ${self.langpopup()}
-%endif
-
-<%def name="loginpopup(lp, lf)">
-  <div class="login-popup cover-overlay" style="display: none">
-    <div class="cover" onclick="return hidecover(this)"></div>
-    <div class="popup">
-      <h1 class="cover-msg">${strings.cover_msg}</h1>
-      ${lp(lf)}
-      <div style="text-align:center; clear: both">
-        <a href="#" onclick="return hidecover(this)">
-          ${_("close this window")}
-        </a>
-      </div>
-    </div>
-  </div>
-</%def>
-
-
-<%def name="langpopup()">
-  <div class="lang-popup cover-overlay" style="display: none">
-    <div class="cover" onclick="return hidecover(this)"></div>
-    <div class="popup">
-      <%include file="prefoptions.html" />
-      <div style="text-align:center; clear:both;">
-        <a href="#" onclick="return hidecover(this)">
-          ${_("close this window")}
-        </a>
-      </div>
-    </div>
-  </div>
-</%def>

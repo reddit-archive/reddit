@@ -26,7 +26,8 @@
 
 <%inherit file="reddit.html"/>
 <%namespace file="utils.html" import="plain_link, logout"/>
-<%namespace file="printable.html" import="state_button, comment_button, thing_css_class, score" />
+<%namespace file="printablebuttons.html" import="state_button, comment_button"/>
+<%namespace file="printable.html" import="thing_css_class, score" />
 
 <%def name="javascript_run()">
   ${parent.javascript_run()}
@@ -56,7 +57,7 @@
       %endif
     </a>
 
-    %if thing.link:
+    %if thing._fullname:
       ${withlink()}
     %endif
   </div>
@@ -89,7 +90,7 @@
       <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}"
          title="${_('visit your userpage')}"
          class="clickable" target="_top">${c.user.name}</a>
-    %elif thing.link:
+    %elif thing._fullname:
       <a href="${thing.loginurl}" target="_top" class="clickable">
         ${_("login / register")}
       </a>
@@ -118,14 +119,14 @@
   </div>
 
   <div class="middle-side clickable">
-    %if thing.link:
+    %if thing._fullname:
     <a
        title="${_('click to visit the main page for this submission')}"
        class="title clickable"
        target="_top"
-       href="${thing.link.make_permalink_slow()}"
+       href="${thing.permalink}"
     >
-         ${thing.link.title}
+         ${thing.title}
 
          %if thing.domain:
            <span class="domain">&#32;(${thing.domain})</span>
@@ -156,15 +157,15 @@
 
 
 <%def name="withlink()">
-<span class="${thing_css_class(thing.link)}">
+<span class="${thing_css_class(thing)}">
   ## add us to the click cookie
   <script type="text/javascript">
     $(function() {
-      add_thing_id_to_cookie("${thing.link._fullname}", "recentclicks2");
+      add_thing_id_to_cookie("${thing._fullname}", "recentclicks2");
     });
   </script>
-  <span>
-    ${score(thing.link, thing.link.likes, score_fmt = Score.safepoints, tag='b')}
+  <span class="entry ${'likes' if thing.likes else 'dislikes' if thing.likes is False else 'unvoted'}">
+    ${score(thing, thing.likes, tag='b')}
   </span>
   <span class="arrows">
     <%def name="arrow(direction, style, message)">
@@ -172,7 +173,7 @@
          title="${_('vote %(direction)s') % dict(direction=direction)}"
        %if c.user_is_loggedin:
          href="javascript:void(0);"
-         onclick="$(this).vote('${thing.vh}')"
+         onclick="$(this).vote('${thing.votehash}')"
        %else:
          href="${thing.loginurl}"
          target="_top"
@@ -189,7 +190,7 @@
 
 
   %if c.user_is_loggedin:
-    %if thing.link.saved:
+    %if thing.saved:
       ${state_button("unsave", _("unsave"),
         "return change_state(this, 'unsave');", "<b>%s</b>" % _("unsaved"),
         a_class="clickable")}
@@ -200,13 +201,13 @@
     %endif
   %endif
 
-  <a href="/toolbar/comments/${thing.link._id36}" target="reddit_panel"
+  <a href="/toolbar/comments/${thing._id36}" target="reddit_panel"
      title="${_('toggle the comments panel')}"
      onclick="toolbar.comments_pushed(this); return toolbar.panel_loadurl(this.href);"
-     class="comments comments-button">${thing.com_label}</a>
+     class="comments comments-button">${thing.comment_label}</a>
   </span>
 
-  %if thing.link and thing.expanded:
+  %if thing._fullname and thing.expanded:
     <script type="text/javascript">
       $(function() {
         toolbar.comments_pushed($('.comments-button'));

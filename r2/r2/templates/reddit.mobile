@@ -24,7 +24,7 @@
 
 <%include file="redditheader.mobile"/>
 
-${thing.content and thing.content().render() or ''}
+${thing.content and thing.content() or ''}
 
 <%def name="Title()">
   %if thing.title:

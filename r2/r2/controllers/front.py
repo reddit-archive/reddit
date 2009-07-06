@@ -25,6 +25,7 @@ from reddit_base import RedditController, base_listing
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
+from r2.lib.pages.things import wrap_links
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
@@ -513,12 +514,10 @@ class FrontController(RedditController):
             if links and len(links) == 1:
                 return self.redirect(links[0].already_submitted_link)
             elif links:
-                builder = IDBuilder([link._fullname for link in links])
-                listing = LinkListing(builder, nextprev=False).listing()
                 infotext = (strings.multiple_submitted
                             % links[0].resubmit_link())
                 res = BoringPage(_("seen it"),
-                                 content = listing,
+                                 content = wrap_links(links),
                                  infotext = infotext).render()
                 return res
 

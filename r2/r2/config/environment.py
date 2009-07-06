@@ -24,6 +24,9 @@ import os
 #import pylons.config
 from pylons import config
 
+import mimetypes
+mimetypes.init()
+
 import webhelpers
 
 from   r2.config.routing import make_map

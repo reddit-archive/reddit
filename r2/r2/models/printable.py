@@ -19,10 +19,52 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from pylons import c, request
+from r2.lib.strings import Score
 class Printable(object):
+    show_spam = False
+    show_reports = False
+    is_special = False
+    can_ban = False
+    deleted = False
+    rowstyle = 'even'
+    reported = False
+    collapsed = False
+    author = None
+    margin = 0
+    is_focal = False
+    childlisting = None
+    cache_ignore = set(['author', 'score_fmt', 'child',
+                        # displayed score is cachable, so remove score
+                        # related fields.
+                        'voting_score', 'display_score',
+                        'render_score', 'score', '_score', 
+                        'upvotes', '_ups',
+                        'downvotes', '_downs',
+                        'subreddit_slow', 
+                        'cachable', 'make_permalink', 'permalink',
+                        'timesince', 'votehash'
+                        ])
+
     @classmethod
-    def add_props(cls, listing, wrapped):
-        pass
+    def add_props(cls, user, wrapped):
+        from r2.lib.wrapped import CachedVariable
+        for item in wrapped:
+            # insert replacement variable for timesince to allow for
+            # caching of thing templates
+            item.display = CachedVariable("display")
+            item.timesince = CachedVariable("timesince")
+            item.votehash = CachedVariable("votehash")
+            item.childlisting = CachedVariable("childlisting")
+
+            score_fmt = getattr(item, "score_fmt", Score.number_only)
+            item.display_score = map(score_fmt, item.voting_score)
+
+            if item.cachable:
+                item.render_score  = item.display_score
+                item.display_score = map(CachedVariable,
+                                         ["scoredislikes", "scoreunvoted",
+                                          "scorelikes"])
 
     @property
     def permalink(self, *a, **kw):
@@ -30,3 +72,14 @@ class Printable(object):
 
     def keep_item(self, wrapped):
         return True
+
+    @staticmethod
+    def wrapped_cache_key(wrapped, style):
+        s = [wrapped._fullname, wrapped._spam]
+
+        if style == 'htmllite':
+            s.extend([c.bgcolor, c.bordercolor, 
+                      request.get.has_key('style'),
+                      request.get.get("expanded"), 
+                      getattr(wrapped, 'embed_voting_style', None)])
+        return s

@@ -30,14 +30,13 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 import r2.models.thing_changes as tc
 
-from r2.controllers import ListingController
-
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, to36, timefromnow, link_from_url
 from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage, \
     ClickGadget
+from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
@@ -84,8 +83,7 @@ class ApiController(RedditController):
             return abort(404, 'not found')
 
         links = link_from_url(request.params.get('url'), filter_spam = False)
-        builder = IDBuilder([link._fullname for link in links], num = count)
-        listing = LinkListing(builder, nextprev = False).listing()
+        listing = wrap_links(links, num = count)
         return BoringPage(_("API"), content = listing).render()
 
     @validatedForm(VCaptcha(),
@@ -574,8 +572,7 @@ class ApiController(RedditController):
             if kind == 'link':
                 set_last_modified(item, 'comments')
 
-            wrapper = make_wrapper(ListingController.builder_wrapper,
-                                   expand_children = True)
+            wrapper = default_thing_wrapper(expand_children = True)
             jquery(".content").replace_things(item, True, True, wrap = wrapper)
 
     @validatedForm(VUser(),
@@ -1116,7 +1113,8 @@ class ApiController(RedditController):
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
                                      children)
-            items = builder.get_items(starting_depth = depth, num = 20)
+            listing = Listing(builder, nextprev = False)
+            items = listing.get_items(starting_depth = depth, num = 20)
             def _children(cur_items):
                 items = []
                 for cm in cur_items:
@@ -1286,12 +1284,8 @@ class ApiController(RedditController):
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))
     def POST_fetch_links(self, form, jquery, links, show):
-        b = IDBuilder([l._fullname for l in links], 
-                      wrap = ListingController.builder_wrapper)
-        l = OrganicListing(b)
-        l.num_margin = 0
-        l.mid_margin = 0
-        
+        l = wrap_links(links, listing_cls = OrganicListing,
+                       num_margin = 0, mid_margin = 0)
         jquery(".content").replace_things(l, stubs = True)
 
         if show:
@@ -1473,5 +1467,6 @@ class ApiController(RedditController):
         if not link:
             abort(404, 'not found')
 
-        wrapped = IDBuilder([link._fullname]).get_items()[0][0]
+        wrapped = wrap_links(link)
+        wrapped = list(wrapped)[0]
         return spaceCompress(websafe(wrapped.link_child.content()))

@@ -21,11 +21,11 @@
 ################################################################################
 from r2.lib.utils import tup
 from r2.lib.captcha import get_iden
-from r2.lib.wrapped import Wrapped
+from r2.lib.wrapped import Wrapped, StringTemplate
 from r2.lib.filters import websafe_json
-from r2.lib.template_helpers import replace_render
 from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
+from r2.lib.pages.things import wrap_links
 from r2.models import IDBuilder, Listing
 
 import simplejson
@@ -88,16 +88,11 @@ class JsonResponse(object):
         """
         function for inserting/replacing things in listings.
         """
-        listing = None
-        if isinstance(things, Listing):
-            listing = things.listing()
-            things = listing.things
         things = tup(things)
         if not all(isinstance(t, Wrapped) for t in things):
             wrap = kw.pop('wrap', Wrapped)
-            b = IDBuilder([t._fullname for t in things], wrap)
-            things = b.get_items()[0]
-        data = [replace_render(listing, t) for t in things]
+            things = wrap_links(things, wrapper = wrap)
+        data = [t.render() for t in things]
 
         if kw:
             for d in data:

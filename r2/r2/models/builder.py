@@ -101,7 +101,9 @@ class Builder(object):
         for item in items:
             w = self.wrap(item)
             wrapped.append(w)
-
+            # add for caching (plus it should be bad form to use _
+            # variables in templates)
+            w.fullname = item._fullname
             types.setdefault(w.render_class, []).append(w)
 
             #TODO pull the author stuff into add_props for links and
@@ -124,16 +126,24 @@ class Builder(object):
             else:
                 w.likes = None
 
-            #definite
-            w.timesince = utils.timesince(item._date)
 
             # update vote tallies
             compute_votes(w, item)
             
             w.score = w.upvotes - w.downvotes
+            if w.likes:
+                base_score = w.score - 1
+            elif w.likes is None:
+                base_score = w.score
+            else:
+                base_score = w.score + 1
+            # store the set of available scores based on the vote
+            # for ease of i18n when there is a label
+            w.voting_score = [max(base_score + x - 1, 0) for x in range(3)]
+
             w.deleted = item._deleted
 
-            w.rowstyle = w.rowstyle if hasattr(w,'rowstyle') else ''
+            w.rowstyle = getattr(w, 'rowstyle', "")
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
 
             count += 1
@@ -157,15 +167,16 @@ class Builder(object):
                 w.can_ban = True
                 if item._spam:
                     w.show_spam = True
-                    if not hasattr(item,'moderator_banned'):
-                        w.moderator_banned = False
-
+                    w.moderator_banned = getattr(item,'moderator_banned', False)
                     w.autobanned, w.banner = ban_info.get(item._fullname,
                                                               (False, None))
 
                 elif hasattr(item,'reported') and item.reported > 0:
                     w.show_reports = True
 
+        # recache the user object: it may be None if user is not logged in,
+        # whereas now we are happy to have the UnloggedUser object
+        user = c.user
         for cls in types.keys():
             cls.add_props(user, types[cls])
 

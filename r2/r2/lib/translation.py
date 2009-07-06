@@ -27,7 +27,7 @@ from pylons.i18n import _
 from babel import Locale
 import os, re
 import cPickle as pickle
-from wrapped import Wrapped
+from wrapped import Templated
 from utils import Storage
 from md5 import md5
 
@@ -98,7 +98,7 @@ def hax(string):
     return hax_dict.get(string, string)
     
 
-class TranslatedString(Wrapped):
+class TranslatedString(Templated):
     class _SubstString:
         def __init__(self, string, enabled = True):
             self.str = hax(string)
@@ -157,7 +157,7 @@ class TranslatedString(Wrapped):
 
     def __init__(self, translator, sing, plural = '', message = '',
                  enabled = True, locale = '', tip = '', index = 0):
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
         self.translator = translator
         self.message = message

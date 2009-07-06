@@ -20,13 +20,14 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from wrapped import Wrapped, Styled
+from wrapped import CachedTemplate, Styled
 from pylons import c, request, g
 from utils import  query_string, timeago
 from strings import StringHandler, plurals
 from r2.lib.db import operators
 from r2.lib.filters import _force_unicode
 from pylons.i18n import _
+
 
 
 class MenuHandler(StringHandler):
@@ -172,7 +173,7 @@ class NavMenu(Styled):
     'style' parameter sets what template/layout to use to differentiate, say,
     a dropdown from a flatlist, while the optional _class, and _id attributes
     can be used to set individualized CSS."""
-    
+
     def __init__(self, options, default = None, title = '', type = "dropdown",
                  base_path = '', separator = '|', **kw):
         self.options = options
@@ -208,9 +209,6 @@ class NavMenu(Styled):
                 if opt.dest == self.default:
                     return opt
 
-    def __repr__(self):
-        return "<NavMenu>"
-
     def __iter__(self):
         for opt in self.options:
             yield opt
@@ -223,14 +221,17 @@ class NavButton(Styled):
     def __init__(self, title, dest, sr_path = True, 
                  nocname=False, opt = '', aliases = [],
                  target = "", style = "plain", **kw):
-        
         # keep original dest to check against c.location when rendering
-        self.aliases = set(a.rstrip('/') for a in aliases)
-        self.aliases.add(dest.rstrip('/'))
-        self.dest = dest
+        aliases = set(a.rstrip('/') for a in aliases)
+        aliases.add(dest.rstrip('/'))
+
+        self.request_params = dict(request.params)
+        self.stripped_path = request.path.rstrip('/').lower()
 
         Styled.__init__(self, style = style, sr_path = sr_path, 
-                        nocname = nocname, target = target, 
+                        nocname = nocname, target = target,
+                        aliases = aliases, dest = dest,
+                        selected = False, 
                         title = title, opt = opt, **kw)
 
     def build(self, base_path = ''):
@@ -239,7 +240,7 @@ class NavButton(Styled):
         # append to the path or update the get params dependent on presence
         # of opt 
         if self.opt:
-            p = request.get.copy()
+            p = self.request_params.copy()
             p[self.opt] = self.dest
         else:
             p = {}
@@ -258,13 +259,11 @@ class NavButton(Styled):
     def is_selected(self):
         """Given the current request path, would the button be selected."""
         if self.opt:
-            return request.params.get(self.opt, '') in self.aliases
+            return self.request_params.get(self.opt, '') in self.aliases
         else:
-            stripped_path = request.path.rstrip('/').lower()
-            ustripped_path = _force_unicode(stripped_path)
-            if stripped_path == self.bare_path:
+            if self.stripped_path == self.bare_path:
                 return True
-            if stripped_path in self.aliases:
+            if self.stripped_path in self.aliases:
                 return True
 
     def selected_title(self):
@@ -277,17 +276,24 @@ class OffsiteButton(NavButton):
         self.sr_path = False
         self.path = self.bare_path = self.dest
 
+    def cachable_attrs(self):
+        return [('path', self.path), ('title', self.title)]
+
 class SubredditButton(NavButton):
     def __init__(self, sr):
-        self.sr = sr
-        NavButton.__init__(self, sr.name, sr.path, False)
+        self.path = sr.path
+        NavButton.__init__(self, sr.name, sr.path, False,
+                           isselected = (c.site == sr))
 
     def build(self, base_path = ''):
-        self.path = self.sr.path
+        pass
 
     def is_selected(self):
-        return c.site == self.sr
+        return self.isselected
 
+    def cachable_attrs(self):
+        return [('path', self.path), ('title', self.title),
+                ('isselected', self.isselected)]
 
 class NamedButton(NavButton):
     """Convenience class for handling the majority of NavButtons
@@ -345,13 +351,11 @@ class SimpleGetMenu(NavMenu):
     type = 'lightdrop'
     
     def __init__(self, **kw):
-        kw['default'] = kw.get('default', self.default)
-        kw['base_path'] = kw.get('base_path') or request.path
         buttons = [NavButton(self.make_title(n), n, opt = self.get_param)
                    for n in self.options]
+        kw['default'] = kw.get('default', self.default)
+        kw['base_path'] = kw.get('base_path') or request.path
         NavMenu.__init__(self, buttons, type = self.type, **kw)
-        #if kw.get('default'):
-        #    self.selected = kw['default']
     
     def make_title(self, attr):
         return menu[attr]
@@ -467,29 +471,29 @@ class NumCommentsMenu(SimpleGetMenu):
 
     def __init__(self, num_comments, **context):
         self.num_comments = num_comments
+        self.max_comments = g.max_comments
+        self.user_num = c.user.pref_num_comments
         SimpleGetMenu.__init__(self, **context)
 
     def make_title(self, attr):
-        user_num = c.user.pref_num_comments
-        if user_num > self.num_comments:
+        if self.user_num > self.num_comments:
             # no menus needed if the number of comments is smaller
             # than any of the limits
             return ""
-        elif self.num_comments > g.max_comments:
+        elif self.num_comments > self.max_comments:
             # if the number present is larger than the global max,
             # label the menu as the user pref and the max number
-            return dict(true=str(g.max_comments), 
-                        false=str(user_num))[attr]
+            return dict(true=str(self.max_comments), 
+                        false=str(self.user_num))[attr]
         else:
             # if the number is less than the global max, display "all"
             # instead for the upper bound.
             return dict(true=_("all"),
-                        false=str(user_num))[attr]
+                        false=str(self.user_num))[attr]
         
 
     def render(self, **kw):
-        user_num = c.user.pref_num_comments
-        if user_num > self.num_comments:
+        if self.user_num > self.num_comments:
             return ""
         return SimpleGetMenu.render(self, **kw)
 

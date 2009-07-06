@@ -23,7 +23,7 @@
 <%namespace file="utils.html" import="plain_link"/>
 
 <div id="sr-header-area">
-  ${thing.sr_dropdown.render()}
-  ${thing.sr_bar.render()}
+  ${thing.my_reddits_dropdown()}
+  ${thing.recent_reddits()}
   ${plain_link(unsafe(_("more") + " &raquo;"), "/reddits/", id="sr-more-link")}
 </div>

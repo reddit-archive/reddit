@@ -20,9 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="printable.html" import="ynbutton"/>
+<%namespace file="printablebuttons.html" import="ynbutton"/>
 <% 
-   from r2.lib.template_helpers import replace_render, static
+   from r2.lib.template_helpers import static
    from r2.lib.promote import get_promoted
 %>
 
@@ -43,8 +43,7 @@
       <% pass %>
     %elif lookup.has_key(name):
       <% seen.add(name) %>
-      ${unsafe(replace_render(thing, lookup[name], 
-                               display = (thing.visible_link == name)))} 
+      ${unsafe(lookup[name].render(display = (thing.visible_link == name)))} 
     %else:
       <div class="thing id-${name} stub" style="display:none"></div>
     %endif

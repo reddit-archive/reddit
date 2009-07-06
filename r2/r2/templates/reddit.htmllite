@@ -22,4 +22,4 @@
 
 <%inherit file="base.htmllite"/>
 
-${thing.content and thing.content().render() or ''}
+${thing.content and thing.content() or ''}

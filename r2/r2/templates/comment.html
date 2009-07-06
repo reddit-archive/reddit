@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
-   from r2.lib.utils import to36
+   from r2.lib.pages.things import CommentButtons
 %>
 <%inherit file="comment_skeleton.html"/>
 
@@ -76,7 +76,8 @@ ${parent.collapsed()}
     %if show:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
-    ${_("%(timeago)s ago") % dict(timeago=thing.timesince)}
+    ## thing.timesince is a cache stub
+    ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}
     %if thing.editted:
       <em>*</em>&nbsp;
     %endif
@@ -106,41 +107,11 @@ ${parent.Child(not thing.collapsed)}
 </%def>
 
 <%def name="arrows()">
-${parent.midcol()}
+  ${parent.midcol()}
 </%def>
 
 
 <%def name="buttons()">
-  <li class="first">
-    ${parent.bylink_button(_("permalink"), thing.permalink)}
-  </li>
-
-  %if thing.deleted:
-    %if thing.parent_permalink and not c.profilepage:
-      <li>
-        ${parent.bylink_button(_("parent"), thing.parent_permalink)}
-      </li>
-    %endif
-  %else:
-    %if not c.profilepage:
-      %if thing.parent_permalink:
-        <li>
-          ${parent.bylink_button(_("parent"), thing.parent_permalink)}
-        </li>
-      %endif
-      %if thing.usertext.editable:
-        <li>
-          ${parent.simple_button(_("edit"), "edit_usertext")}
-        </li>
-      %endif
-    %endif
-    ${parent.delete_or_report_buttons()}
-    ${parent.buttons()}
-    %if not c.profilepage and thing.can_reply:
-      <li>
-        ${parent.simple_button(_("reply"), "reply")}
-      </li>
-    %endif
-  %endif
+  ${CommentButtons(thing)}
   ${self.admintagline()}
 </%def>

@@ -24,6 +24,7 @@ from validator import *
 
 from r2.models import *
 from r2.lib.pages import *
+from r2.lib.pages.things import wrap_links
 from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
@@ -148,17 +149,7 @@ class ListingController(RedditController):
         """Contents of the right box when rendering"""
         pass
 
-    @staticmethod
-    def builder_wrapper(thing):
-        w = Wrapped(thing)
-
-        if isinstance(thing, Link):
-            if thing.promoted:
-                w = Wrapped(thing)
-                w.render_class = PromotedLink
-                w.rowstyle = 'promoted link'
-
-        return w
+    builder_wrapper = staticmethod(default_thing_wrapper())
 
     def GET_listing(self, **env):
         return self.build_listing(**env)

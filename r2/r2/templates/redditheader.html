@@ -29,10 +29,7 @@
 <%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
 
 <div id="header">
-  %if thing.srtopbar:
-    ${thing.srtopbar.render()}
-  %endif
-
+  ${thing.srtopbar}
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
         if c.site.header and c.allow_styles:
@@ -47,7 +44,7 @@
     &nbsp;
 
     %for toolbar in thing.toolbars:
-      ${toolbar.render()}
+      ${toolbar}
     %endfor
   </div>
 
@@ -83,7 +80,7 @@
       ${separator("|")}
     %endif
       
-    ${thing.corner_buttons().render()}
+    ${thing.corner_buttons()}
     %if c.user_is_loggedin:
       ${separator("|")}
       ${logout()}

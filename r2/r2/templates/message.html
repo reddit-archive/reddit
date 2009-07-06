@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.filters import edit_comment_filter, safemarkdown
+   from r2.lib.pages.things import MessageButtons
 %>
 <%inherit file="comment_skeleton.html"/>
 
@@ -67,20 +68,7 @@ ${unsafe(safemarkdown(thing.body))}
 </%def>
 
 <%def name="buttons()">
-%if hasattr(thing, "was_comment"):
-    <li>
-    ${parent.bylink_button(_("context"), thing.permalink + "?context=3")}
-    </li>
-    ${parent.delete_or_report_buttons(delete=False)}
-%else:
-    ${parent.delete_or_report_buttons(delete=False)}
-    ${parent.buttons()}
-    %if c.user_is_loggedin:
-      <li>
-        ${parent.simple_button(_("reply"), "reply")}
-      </li>
-    %endif
-%endif
+  ${MessageButtons(thing)}
 </%def>
 
 <%def name="entry()">

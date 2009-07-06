@@ -22,6 +22,7 @@
 <%!
    from r2.lib.template_helpers import get_domain, static, style_line, choose_width
    from r2.lib.utils import query_string
+   from r2.lib.strings import Score
  %>
 
 <%namespace file="printable.html" import="arrow, score" />
@@ -36,9 +37,9 @@
 <%def name="class_def(class_number, width=None)">
   <% 
      like_cls = "unvoted"
-     if getattr(thing.link, "likes", None):
+     if getattr(thing, "likes", None):
          like_cls = "likes"
-     elif getattr(thing.link, "likes", None) is False:
+     elif getattr(thing, "likes", None) is False:
          like_cls = "dislikes"
    %>
   <div class="blog blog${class_number} entry ${like_cls}" 
@@ -46,41 +47,46 @@
        style="${style_line(width)}"
     %endif
     >
+    ${caller.body()}
+  </div>
 </%def>
 
 <%def name="button1(thing)">
-${class_def(1, width=choose_width(thing.link, thing.width))}
+<%self:class_def class_number="1" 
+                 width="${choose_width(thing, thing.width)}">
   <div class="headimgcell">
     <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">
       <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
     </a>
   </div>
-  %if thing.link:
+  %if thing._fullname:
     %if thing.vote:
-    ${arrow(thing.link, 1, thing.likes)}
-    ${arrow(thing.link, 0, thing.likes == False)}
-    ${score(thing.link, thing.likes, tag='div')}
+      ${arrow(thing, 1, thing.likes)}
+      ${arrow(thing, 0, thing.likes == False)}
+      ${score(thing, thing.likes, 
+              scores = map(Score.safepoints, thing.voting_score), 
+              tag='div')}
     %else:
-    ${thing.link.score}
+      ${thing.score}
     %endif
   %else:
     ${submitlink(thing.url, thing.title)}
   %endif
   <div class="clear"></div>
-</div>
+</%self:class_def>
 </%def>
 
 <%def name="button2(thing)">
-  ${class_def(2)}
-    %if thing.link:
+<%self:class_def class_number="2">
+    %if thing._fullname:
       %if thing.vote:
-      ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, tag='div')}
-      ${arrow(thing.link, 0, thing.likes == False)}
+        ${arrow(thing, 1, thing.likes)}
+        ${score(thing, thing.likes, tag='div')}
+        ${arrow(thing, 0, thing.likes == False)}
       %else:
-      &nbsp;<br />
-      ${thing.link.score}
-      &nbsp;<br />
+        &nbsp;<br />
+        ${thing.score}
+        &nbsp;<br />
       %endif
     %else:
       <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
@@ -93,21 +99,21 @@ ${class_def(1, width=choose_width(thing.link, thing.width))}
       %endif
       <a href="${submiturl(thing.url, thing.title)}" target="${thing.target}">reddit</a>
     </div>
-  </div>
+</%self:class_def>
 </%def>
 
 
 <%def name="button3(thing)">
-${class_def(3)}
+<%self:class_def class_number="3">
   <div class="left">
-    %if thing.link:
+    %if thing._fullname:
       %if thing.vote:
-      ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, tag='div')}
-      ${arrow(thing.link, 0, thing.likes == False)}
+      ${arrow(thing, 1, thing.likes)}
+      ${score(thing, thing.likes, tag='div')}
+      ${arrow(thing, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
-      ${thing.link.score}
+      ${thing.score}
       &nbsp;<br />
       %endif
     %else:
@@ -120,47 +126,48 @@ ${class_def(3)}
     ${img_link('submit', '/static/blog_snoo.gif', capture(submiturl, thing.url, thing.title), target=thing.target)}
   </div>
   <div class="clear"></div>
-</div>
+</%self:class_def>
 </%def>
 
 <%def name="button4(thing)">
-  ${class_def(2)}
-    %if thing.link:
+<%self:class_def class_number="2"> 
+    %if thing._fullname:
       %if thing.vote:
-      ${arrow(thing.link, 1, thing.likes)}
-      ${score(thing.link, thing.likes, tag='div')}
-      ${arrow(thing.link, 0, thing.likes == False)}
+      ${arrow(thing, 1, thing.likes)}
+      ${score(thing, thing.likes, tag='div')}
+      ${arrow(thing, 0, thing.likes == False)}
       %else:
       &nbsp;<br />
-      ${thing.link.score}
+      ${thing.score}
       &nbsp;<br />
       %endif
     %else:
       <img src="http://www.reddit.com/static/blog_head.png" alt=""/>
       ${submitlink(thing.url, thing.title, 'submit to')}
     %endif
-  </div>
+</%self:class_def>
 </%def>
 
 <%def name="button5(thing)">
-  ${class_def(5, width=choose_width(thing.link, thing.width))}
+<%self:class_def class_number="5" 
+                 width="${choose_width(thing, thing.width)}">
   ${img_link('submit', '/static/blog_snoo.gif', capture(submiturl, thing.url, thing.title), _class="left")}
 <%
      # this button style submits to the cname as a default
      c.cname = hasattr(c.site, "domain") and bool(c.site.domain)
      submitlink = capture(submiturl, thing.url, thing.title)
-     if thing.link:
-        fullname = thing.link._fullname
-        ups = thing.link.upvotes
-        downs = thing.link.downvotes
+     if thing._fullname:
+        fullname = thing._fullname
+        ups = thing.upvotes
+        downs = thing.downvotes
         link = "http://%s%s" % (get_domain(cname = c.cname, subreddit = False),
-                                thing.link.make_permalink_slow())
+                                thing.make_permalink_slow())
      else:
         fullname = ""
         ups = 0
         downs = 0
         link = submitlink
-     if c.user_is_loggedin:
+     if c.user_is_loggedin and thing._fullname:
         dir = 1 if thing.likes else 0 if thing.likes is None else -1
         ups   = ups - (1 if dir > 0 else 0)
         downs = downs - (1 if dir < 0 else 0)
@@ -206,7 +213,7 @@ ${class_def(3)}
       </li>
       <li>
         <a href="${link}" target="_new">
-          %if thing.link:
+          %if thing._fullname:
             ${_("Discuss at the %(name)s reddit") % dict(name = c.site.name)}
           %else:
             ${_("Submit to the %(name)s reddit") % dict(name = c.site.name)}
@@ -214,7 +221,7 @@ ${class_def(3)}
         </a>
       </li>
     </ul>
-    <div class="votes ${'' if thing.link else 'disabled'}">
+    <div class="votes ${'' if thing._fullname else 'disabled'}">
       %for i in range(3):
         <div class="right" id="controversy${i}_${fullname}"
            ${"" if i == dir + 1 else "style='display:none'"}>
@@ -223,7 +230,7 @@ ${class_def(3)}
       %endfor
       <a class="arrow up${'mod' if dir==1 else ''}" 
          id="up_${fullname}"
-         %if c.user_is_loggedin and thing.link:
+         %if c.user_is_loggedin and thing._fullname:
             href="#" onclick="$(this).vote('', set_score); return false; "
          %else:
            href="${submitlink}" target="_new"
@@ -236,7 +243,7 @@ ${class_def(3)}
         %endfor
       </a>
       <a class="arrow down${'mod' if dir==-1 else ''}" id="down_${fullname}"
-         %if c.user_is_loggedin and thing.link:
+         %if c.user_is_loggedin and thing._fullname:
            href="#" onclick="$(this).vote('', set_score); return false;"
          %else:
            href="${submitlink}" target="_new"
@@ -251,5 +258,5 @@ ${class_def(3)}
     </div>
     <div class="clearleft"><!--IEsux--></div>
   </div>
-  </div>
+ </%self:class_def>
 </%def>

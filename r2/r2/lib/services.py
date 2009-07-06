@@ -23,7 +23,7 @@ from __future__ import with_statement
 import os, re, sys, socket, time, random, time, signal
 from itertools import chain
 
-from wrapped import Wrapped
+from wrapped import Templated
 from datetime import datetime, timedelta
 from pylons import g
 from r2.lib.utils import tup
@@ -58,7 +58,7 @@ class ShellProcess(object):
         return self.output
     
     
-class AppServiceMonitor(Wrapped):
+class AppServiceMonitor(Templated):
     cache_key       = "service_datalogger_data_"
     cache_key_small = "service_datalogger_db_summary_"
     cache_lifetime  = "memcached_lifetime"
@@ -99,7 +99,7 @@ class AppServiceMonitor(Wrapped):
 
         self._db_info = db_info
         self.hostlogs = []
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
     @classmethod
     def set_cache_lifetime(cls, data):
@@ -145,7 +145,7 @@ class AppServiceMonitor(Wrapped):
 
     def render(self, *a, **kw):
         self.hostlogs = list(self)
-        return Wrapped.render(self, *a, **kw)
+        return Templated.render(self, *a, **kw)
 
     def monitor(self, srvname, loop = True, loop_time = 5, *a, **kw):
 

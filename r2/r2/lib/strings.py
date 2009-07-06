@@ -213,7 +213,7 @@ class Score(object):
     fasion, used primarily by the score() method in printable.html"""
     @staticmethod
     def number_only(x):
-        return max(x, 0)
+        return str(max(x, 0))
 
     @staticmethod
     def points(x):

@@ -200,47 +200,16 @@ class Link(Thing, Printable):
 
         return True
 
+    # none of these things will change over a link's lifetime
+    cache_ignore = set(['subreddit', 'num_comments', 'link_child']
+                       ).union(Printable.cache_ignore)
     @staticmethod
-    def cache_key(wrapped):
-        if c.user_is_admin:
-            return False
-
-        link_child = wrapped.link_child
-        s = (str(i) for i in (wrapped._fullname,
-                              bool(c.user_is_sponsor),
-                              bool(c.user_is_loggedin),
-                              wrapped.subreddit == c.site,
-                              c.user.pref_newwindow,
-                              c.user.pref_frame,
-                              c.user.pref_compress,
-                              c.user.pref_media,
-                              request.host,
-                              c.cname, 
-                              wrapped.author == c.user,
-                              wrapped.likes,
-                              wrapped.saved,
-                              wrapped.clicked,
-                              wrapped.hidden,
-                              wrapped.friend,
-                              wrapped.show_spam,
-                              wrapped.show_reports,
-                              wrapped.can_ban,
-                              wrapped.thumbnail,
-                              wrapped.moderator_banned,
-                              #link child stuff
-                              bool(link_child),
-                              bool(link_child) and link_child.load,
-                              bool(link_child) and link_child.expand
-                              ))
-        # htmllite depends on other get params
-        s = ''.join(s)
-        if c.render_style == "htmllite":
-            s += ''.join(map(str, [request.get.has_key('style'),
-                                   request.get.has_key('expanded'),
-                                   request.get.has_key('twocolumn'),
-                                   getattr(wrapped, 'embed_voting_style', None),
-                                   c.bgcolor,
-                                   c.bordercolor]))
+    def wrapped_cache_key(wrapped, style):
+        s = Printable.wrapped_cache_key(wrapped, style)
+        if style == "htmllite":
+             s.append(request.get.has_key('twocolumn'))
+        elif style == "xml":
+            s.append(request.GET.has_key("nothumbs"))
         return s
 
     def make_permalink(self, sr, force_domain = False):
@@ -266,23 +235,39 @@ class Link(Thing, Printable):
         from r2.lib.media import thumbnail_url
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain
+        from r2.models.subreddit import FakeSubreddit
+        from r2.lib.wrapped import CachedVariable
 
-        saved = Link._saved(user, wrapped) if user else {}
-        hidden = Link._hidden(user, wrapped) if user else {}
+        # referencing c's getattr is cheap, but not as cheap when it
+        # is in a loop that calls it 30 times on 25-200 things.
+        user_is_admin = c.user_is_admin
+        user_is_loggedin = c.user_is_loggedin
+        pref_media = user.pref_media
+        pref_frame = user.pref_frame
+        pref_newwindow = user.pref_newwindow
+        cname = c.cname
+        site = c.site
+
+        saved = Link._saved(user, wrapped) if user_is_loggedin else {}
+        hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
 
         for item in wrapped:
             show_media = False
-            if c.user.pref_compress:
-                pass
-            elif c.user.pref_media == 'on':
+            if not hasattr(item, "score_fmt"):
+                item.score_fmt = Score.number_only
+            item.pref_compress = user.pref_compress
+            if user.pref_compress:
+                item.render_css_class = "compressed link"
+                item.score_fmt = Score.points
+            elif pref_media == 'on':
                 show_media = True
-            elif c.user.pref_media == 'subreddit' and item.subreddit.show_media:
+            elif pref_media == 'subreddit' and item.subreddit.show_media:
                 show_media = True
             elif (item.promoted
                   and item.has_thumbnail
-                  and c.user.pref_media != 'off'):
+                  and pref_media != 'off'):
                 show_media = True
 
             if not show_media:
@@ -291,7 +276,6 @@ class Link(Thing, Printable):
                 item.thumbnail = thumbnail_url(item)
             else:
                 item.thumbnail = g.default_thumb
-
 
             item.score = max(0, item.score)
 
@@ -304,23 +288,30 @@ class Link(Thing, Printable):
             item.hidden = bool(hidden.get((user, item, 'hide')))
             item.clicked = bool(clicked.get((user, item, 'click')))
             item.num = None
-            item.score_fmt = Score.number_only
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
                 item.url = item.make_permalink(item.subreddit, force_domain = True)
 
-            if c.user_is_admin:
+            # do we hide the score?
+            if user_is_admin:
                 item.hide_score = False
             elif item.promoted:
                 item.hide_score = True
-            elif c.user == item.author:
+            elif user == item.author:
                 item.hide_score = False
             elif item._date > timeago("2 hours"):
                 item.hide_score = True
             else:
                 item.hide_score = False
 
-            if c.user_is_loggedin and item.author._id == c.user._id:
+            # store user preferences locally for caching
+            item.pref_frame = pref_frame
+            item.newwindow = pref_newwindow
+            # is this link a member of a different (non-c.site) subreddit?
+            item.different_sr = (isinstance(site, FakeSubreddit) or
+                                 site.name != item.subreddit.name)
+
+            if user_is_loggedin and item.author._id == user._id:
                 item.nofollow = False
             elif item.score <= 1 or item._spam or item.author._spam:
                 item.nofollow = True
@@ -328,11 +319,11 @@ class Link(Thing, Printable):
                 item.nofollow = False
 
             item.subreddit_path = item.subreddit.path
-            if c.cname:
+            if cname:
                 item.subreddit_path = ("http://" + 
-                     get_domain(cname = (c.site == item.subreddit),
+                     get_domain(cname = (site == item.subreddit),
                                 subreddit = False))
-                if c.site != item.subreddit:
+                if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
             item.domain_path = "/domain/%s" % item.domain
             if item.is_self:
@@ -353,7 +344,7 @@ class Link(Thing, Printable):
                 item.editable = expand and item.author == c.user
                
             item.tblink = "http://%s/tb/%s" % (
-                get_domain(cname = c.cname, subreddit=False),
+                get_domain(cname = cname, subreddit=False),
                 item._id36)
 
             if item.is_self:
@@ -361,7 +352,7 @@ class Link(Thing, Printable):
             else:
                 item.href_url = item.url
 
-            if c.user.pref_frame and not item.is_self:
+            if pref_frame and not item.is_self:
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
@@ -373,8 +364,19 @@ class Link(Thing, Printable):
                                   item._deleted,
                                   item._spam))
 
-        if c.user_is_loggedin:
+            # bits that we will render stubs (to make the cached
+            # version more flexible)
+            item.num = CachedVariable("num")
+            item.numcolmargin = CachedVariable("numcolmargin")
+            item.commentcls = CachedVariable("commentcls")
+            item.midcolmargin = CachedVariable("midcolmargin")
+            item.comment_label = CachedVariable("numcomments")
+            
+        if user_is_loggedin:
             incr_counts(wrapped)
+
+        # Run this last
+        Printable.add_props(user, wrapped)
 
     @property
     def subreddit_slow(self):
@@ -395,9 +397,9 @@ class PromotedLink(Link):
     @classmethod
     def add_props(cls, user, wrapped):
         Link.add_props(user, wrapped)
-
+        user_is_sponsor = c.user_is_sponsor
         try:
-            if c.user_is_sponsor:
+            if user_is_sponsor:
                 promoted_by_ids = set(x.promoted_by
                                       for x in wrapped
                                       if hasattr(x,'promoted_by'))
@@ -414,11 +416,14 @@ class PromotedLink(Link):
         for item in wrapped:
             # these are potentially paid for placement
             item.nofollow = True
+            item.user_is_sponsor = user_is_sponsor
             if item.promoted_by in promoted_by_accounts:
                 item.promoted_by_name = promoted_by_accounts[item.promoted_by].name
             else:
                 # keep the template from trying to read it
                 item.promoted_by = None
+        # Run this last
+        Printable.add_props(user, wrapped)
 
 class Comment(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('reported',)
@@ -478,33 +483,12 @@ class Comment(Thing, Printable):
     def keep_item(self, wrapped):
         return True
 
+    cache_ignore = set(["subreddit", "link", "to"]
+                       ).union(Printable.cache_ignore)
     @staticmethod
-    def cache_key(wrapped):
-        if c.user_is_admin:
-            return False
-
-        s = (str(i) for i in (c.profilepage,
-                              wrapped._fullname,
-                              bool(c.user_is_loggedin),
-                              c.focal_comment == wrapped._id36,
-                              request.host,
-                              c.cname, 
-                              wrapped.author == c.user,
-                              wrapped.editted, 
-                              wrapped.likes,
-                              wrapped.friend,
-                              wrapped.collapsed,
-                              wrapped.nofollow,
-                              wrapped.show_spam,
-                              wrapped.show_reports,
-                              wrapped.target,
-                              wrapped.can_ban,
-                              wrapped.moderator_banned,
-                              wrapped.can_reply,
-                              wrapped.deleted,
-                              wrapped.render_class,
-                              ))
-        s = ''.join(s)
+    def wrapped_cache_key(wrapped, style):
+        s = Printable.wrapped_cache_key(wrapped, style)
+        s.extend([wrapped.body])
         return s
 
     def make_permalink(self, link, sr=None):
@@ -517,6 +501,7 @@ class Comment(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         #fetch parent links
+
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
 
@@ -527,13 +512,21 @@ class Comment(Thing, Printable):
         
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
-        can_reply_srs = set(s._id for s in subreddits if s.can_comment(user))
+        can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
+                        if c.user_is_loggedin else set()
 
-        min_score = c.user.pref_min_comment_score
+        min_score = user.pref_min_comment_score
 
         cids = dict((w._id, w) for w in wrapped)
 
+        profilepage = c.profilepage
+        user_is_admin = c.user_is_admin
+        user_is_loggedin = c.user_is_loggedin
+        focal_comment = c.focal_comment
+
         for item in wrapped:
+            # for caching:
+            item.profilepage = c.profilepage
             item.link = links.get(item.link_id)
 
             if not hasattr(item, 'subreddit'):
@@ -554,32 +547,31 @@ class Comment(Thing, Printable):
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin
-            item.deleted = (not c.profilepage and
+            item.deleted = (not profilepage and
                            (item._deleted or
                             (item._spam and
-                             item.author != c.user and
+                             item.author != user and
                              not item.show_spam)))
 
             extra_css = ''
             if item._deleted:
                 extra_css += "grayed"
-                if not c.user_is_admin:
+                if not user_is_admin:
                     item.author = DeletedUser()
                     item.body = '[deleted]'
 
 
-            if c.focal_comment == item._id36:
+            if focal_comment == item._id36:
                 extra_css += 'border'
 
 
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = ((item.score < min_score) and
-                             not (c.profilepage or
+                             not (profilepage or
                                   item.deleted or
-                                  c.user_is_admin))
+                                  user_is_admin))
 
-            if not hasattr(item,'editted'):
-                item.editted = False
+            item.editted = getattr(item, "editted", False)
 
             #score less than 3, nofollow the links
             item.nofollow = item._score < 3
@@ -589,32 +581,30 @@ class Comment(Thing, Printable):
             item.score_fmt = Score.points
             item.permalink = item.make_permalink(item.link, item.subreddit)
 
+            item.is_author = (user == item.author)
+            item.is_focal  = (focal_comment == item._id36)
+
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
-                                     editable = item.author == c.user,
+                                     editable = item.author == user,
                                      nofollow = item.nofollow,
                                      target = item.target,
                                      extra_css = extra_css)
+        # Run this last
+        Printable.add_props(user, wrapped)
+
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
        the reddit toolbar"""
     _nodb = True
 
-class MoreComments(object):
-    show_spam = False
-    show_reports = False
-    is_special = False
-    can_ban = False
-    deleted = False
-    rowstyle = 'even'
-    reported = False
-    collapsed = False
-    author = None
-    margin = 0
-
+class MoreComments(Printable):
+    cachable = False
+    display = ""
+    
     @staticmethod
-    def cache_key(item):
+    def wrapped_cache_key(item, style):
         return False
     
     def __init__(self, link, depth, parent=None):
@@ -647,7 +637,8 @@ class MoreChildren(MoreComments):
 class Message(Thing, Printable):
     _defaults = dict(reported = 0,)
     _data_int_props = Thing._data_int_props + ('reported', )
-
+    cache_ignore = set(["to"]).union(Printable.cache_ignore)
+    
     @classmethod
     def _new(cls, author, to, subject, body, ip, spam = False):
         m = Message(subject = subject,
@@ -685,13 +676,15 @@ class Message(Thing, Printable):
             else:
                 item.new = False
             item.score_fmt = Score.none
+        # Run this last
+        Printable.add_props(user, wrapped)
 
- 
     @staticmethod
-    def cache_key(wrapped):
-        #warning: inbox/sent messages
-        #comments as messages
-        return False
+    def wrapped_cache_key(wrapped, style):
+        s = Printable.wrapped_cache_key(wrapped, style)
+        s.extend([c.msg_location])
+        return s
+    
 
     def keep_item(self, wrapped):
         return True

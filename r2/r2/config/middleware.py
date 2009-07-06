@@ -39,8 +39,7 @@ from r2.lib.jsontemplates import api_type
 #middleware stuff
 from r2.lib.html_source import HTMLValidationParser
 from cStringIO import StringIO
-import sys, tempfile, urllib, re, os, sha
-
+import sys, tempfile, urllib, re, os, sha, subprocess
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
@@ -94,17 +93,70 @@ class DebugMiddleware(object):
         if debug and self.keyword in args.keys():
             prof_arg = args.get(self.keyword)
             prof_arg = urllib.unquote(prof_arg) if prof_arg else None
-            return self.filter(foo, prof_arg = prof_arg)
+            r = self.filter(foo, prof_arg = prof_arg)
+            if isinstance(r, Response):
+                return r(environ, start_response)
+            return r
         return self.app(environ, start_response)
 
     def filter(self, execution_func, prof_arg = None):
         pass
+
+
+class ProfileGraphMiddleware(DebugMiddleware):
+    def __init__(self, app):
+        DebugMiddleware.__init__(self, app, 'profile-graph')
+        
+    def filter(self, execution_func, prof_arg = None):
+        # put thie imports here so the app doesn't choke if profiling
+        # is not present (this is a debug-only feature anyway)
+        import cProfile as profile
+        from pstats import Stats
+        from r2.lib.contrib import gprof2dot
+        # profiling needs an actual file to dump to.  Everything else
+        # can be mitigated with streams
+        tmpfile = tempfile.NamedTemporaryFile()
+        dotfile = StringIO()
+        # simple cutoff validation
+        try:
+            cutoff = .01 if prof_arg is None else float(prof_arg)/100
+        except ValueError:
+            cutoff = .01
+        try:
+            # profile the code in the current context
+            profile.runctx('execution_func()',
+                           globals(), locals(), tmpfile.name)
+            # parse the data
+            parser = gprof2dot.PstatsParser(tmpfile.name)
+            prof = parser.parse()
+            # remove nodes and edges with less than cutoff work
+            prof.prune(cutoff, cutoff)
+            # make the dotfile
+            dot = gprof2dot.DotWriter(dotfile)
+            dot.graph(prof, gprof2dot.TEMPERATURE_COLORMAP)
+            # convert the dotfile to PNG in local stdout
+            proc = subprocess.Popen("dot -Tpng",
+                                    shell = True,
+                                    stdin =subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            out, error =  proc.communicate(input = dotfile.getvalue())
+            # generate the response
+            r = Response()
+            r.status_code = 200
+            r.headers['content-type'] = "image/png"
+            r.content = out
+            return r
+        finally:
+            tmpfile.close()
 
 class ProfilingMiddleware(DebugMiddleware):
     def __init__(self, app):
         DebugMiddleware.__init__(self, app, 'profile')
 
     def filter(self, execution_func, prof_arg = None):
+        # put thie imports here so the app doesn't choke if profiling
+        # is not present (this is a debug-only feature anyway)
         import cProfile as profile
         from pstats import Stats
 
@@ -383,6 +435,10 @@ class RequestLogMiddleware(object):
         return r
 
 class LimitUploadSize(object):
+    """
+    Middleware for restricting the size of uploaded files (such as
+    image files for the CSS editing capability).
+    """
     def __init__(self, app, max_size=1024*500):
         self.app = app
         self.max_size = max_size
@@ -398,6 +454,29 @@ class LimitUploadSize(object):
                 return r(environ, start_response)
 
         return self.app(environ, start_response)
+
+
+class CleanupMiddleware(object):
+    """
+    Put anything here that should be called after every other bit of
+    middleware. This currently includes the code for removing
+    duplicate headers (such as multiple cookie setting).  The behavior
+    here is to disregard all but the last record.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        def custom_start_response(status, headers, exc_info = None):
+            fixed = []
+            seen = set()
+            for head, val in reversed(headers):
+                head = head.lower()
+                if head not in seen:
+                    fixed.insert(0, (head, val))
+                    seen.add(head)
+            return start_response(status, fixed, exc_info)
+        return self.app(environ, custom_start_response)
 
 #god this shit is disorganized and confusing
 class RedditApp(PylonsBaseWSGIApp):
@@ -439,7 +518,11 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)
 
+    # last thing first from here down
+    app = CleanupMiddleware(app)
+
     app = LimitUploadSize(app)
+    app = ProfileGraphMiddleware(app)
     app = ProfilingMiddleware(app)
     app = SourceViewMiddleware(app)
 

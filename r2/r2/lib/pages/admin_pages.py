@@ -20,18 +20,18 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from pylons         import c, g
-from r2.lib.wrapped import Wrapped
+from r2.lib.wrapped import Templated
 from pages   import Reddit
 from r2.lib.menus   import NamedButton, NavButton, menu, NavMenu
 
-class AdminSidebar(Wrapped):
+class AdminSidebar(Templated):
     def __init__(self, user):
         self.user = user
 
 
-class Details(Wrapped):
+class Details(Templated):
     def __init__(self, link):
-        Wrapped.__init__(self)
+        Templated.__init__(self)
         self.link = link
 
 

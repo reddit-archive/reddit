@@ -23,6 +23,7 @@
 <%! 
    from r2.lib.template_helpers import add_sr
    from r2.lib.strings import strings
+   from r2.lib.pages.things import BanButtons
 %>
 
 <%namespace file="utils.html" import="plain_link" />
@@ -61,9 +62,6 @@ thing id-${what._fullname}
    else:
       cls = thing.lookups[0].__class__.__name__.lower()
 
-   if cls == 'link' and c.user.pref_compress:
-     cls = 'compressed link'
-
    if thing.show_spam:
      rowclass = thing.rowstyle + " spam"
    elif thing.show_reports:
@@ -75,7 +73,7 @@ thing id-${what._fullname}
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
  %>
-<div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" $display>
+<div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" ${thing.display}>
   <p class="parent">
     ${self.ParentDiv()}
   </p>
@@ -98,42 +96,8 @@ thing id-${what._fullname}
 </%def>
 
 <%def name="buttons(ban=True)">
-%if thing.can_ban and ban:
-  %if thing.show_spam:
-    <li>
-       ${self.state_button("unban", _("unban"), 
-          "return change_state(this, 'unban');", _("unbanned"))}
-    </li>
-   %else:
-    <li>
-       ${self.state_button("ban", _("ban"), 
-          "return change_state(this, 'ban');", _("banned"))}
-    </li>
-   %endif
-  %if thing.show_reports:
-    <li>
-      ${self.state_button("ignore", _("ignore"), \
-       "change_state(this, 'ignore');", _("ignored"))}
-    </li>
-  %endif
-%endif
+  ${BanButtons(thing, show_ban = ban)}
 </%def>
-
-<%def name="delete_or_report_buttons(delete=True, report=True)">
-%if c.user_is_loggedin:
-  %if (not thing.author or thing.author.name != c.user.name) and report:
-    <li>
-      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
-    </li>
-  %endif
-  %if (not thing.author or thing.author.name == c.user.name) and delete and not thing._deleted:
-    <li>
-      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
-    </li>
-  %endif
-%endif
-</%def>
-
 
 <%def name="ParentDiv()">
 </%def>
@@ -144,11 +108,9 @@ thing id-${what._fullname}
 <%def name="entry()">
 </%def>
 
-<%def name="Child(display=True, render_hook=True)">
+<%def name="Child(display=True)">
 <div class="child" ${(not display and "style='display:none'" or "")}>
-  %if render_hook:
-    $child
-  %endif
+  ${thing.childlisting}
 </div>
 </%def>
 
@@ -193,7 +155,7 @@ thing id-${what._fullname}
 %>
   <div class="arrow ${_class}" 
        %if c.user_is_loggedin:
-         onclick="$(this).vote('$votehash')"
+         onclick="$(this).vote('${thing.votehash}')"
        %else:
          onclick="showcover(true, 'vote_${fullname}')"
        %endif
@@ -201,23 +163,16 @@ thing id-${what._fullname}
   </div>
 </%def>
 
-<%def name="score(this, likes=None, tag='span', score_fmt = None)">
-<%
-   score = this.score
-   base_score = score - 1 if likes else score if likes is None else score + 1
-   base_score = [base_score + x for x in range(-1, 2)]
-   if score_fmt is None:
-       score_fmt = thing.score_fmt
- %>
-  <${tag} class="score dislikes">
-    ${score_fmt(base_score[0])}
-  </${tag}>
-  <${tag} class="score unvoted">
-    ${score_fmt(base_score[1])}
-  </${tag}>
-  <${tag} class="score likes">
-    ${score_fmt(base_score[2])}
-  </${tag}>
+<%def name="score(this, likes=None, scores = None, tag='span')">
+  <%
+     if scores is None:
+        scores = this.display_score
+   %>
+  %for cls, score in zip(["dislikes", "unvoted", "likes"], scores):
+    <${tag} class="score ${cls}">
+      ${score}
+    </${tag}>
+  %endfor
 </%def>
 
 
@@ -227,152 +182,4 @@ thing id-${what._fullname}
     ${self.arrow(thing, 1, thing.likes)}
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
-</%def>
-
-##
-##
-##
-### originally in statebuttons
-<%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
-  <%def name="_link()" buffered="True">
-    <a href="javascript:void()" 
-       %if a_class:
-         class="${a_class}" 
-       %endif
-       onclick="${onclick}">${title}</a>
-  </%def>
-  <%
-     link = _link()
-     if fmt:
-         link = fmt % {fmt_param: link}
-         ## preserve spaces before and after < & > for space compression
-         link = link.replace(" <", "&#32;<").replace("> ", ">&#32;")
-   %>   
-
-  %if clicked:
-    ${executed}
-  %else:
-    <form action="/post/${name}" method="post" 
-          class="state-button ${name}-button">
-        <input type="hidden" name="executed" value="${executed}" />
-        %for key, value in hidden_data.iteritems():
-          <input type="hidden" name="${key}" value="${value}" />
-        %endfor
-        <span>
-          ${unsafe(link)}
-        </span>
-    </form>
-  %endif
-</%def>
-
-
-<%def name="ynbutton(title, executed, op, callback = 'null', 
-                     question = None,
-                     format = '%(link)s',
-                     format_arg = 'link',
-                     hidden_data = {})">
-  <%
-     if question is None:
-         question = _("are you sure?")
-     link = ('<a href="#" onclick="return toggle(this)">'
-             + title + '</a>')
-     link = format % {format_arg : link}
-     link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
-   %>
-  <form class="toggle ${op}-button" action="#" method="get">
-    <input type="hidden" name="executed" value="${executed}"/>
-    %for k, v in hidden_data.iteritems():
-      <input type="hidden" name="${k}" value="${v}"/>
-    %endfor
-    <span class="option active">
-      ${link}
-    </span>
-    <span class="option error">
-      ${question}
-      &#32;<a href="javascript:void(0)" class="yes"
-         onclick='change_state(this, "${op}", ${callback})'>
-        ${_("yes")}
-      </a>&#32;/&#32;
-      <a href="javascript:void(0)" class="no"
-         onclick="return toggle(this)">${_("no")}</a>
-    </span>
-  </form>
-</%def>
-
-<%def name="simple_button(title, nameFunc)">
- <a class="" href="javascript:void(0)" 
-    onclick="return ${nameFunc}(this)">${title}</a>
-</%def>
-
-<%def name="toggle_button(class_name, title, alt_title, 
-                    callback, cancelback, 
-                    css_class = '', alt_css_class = '',
-                    reverse = False,
-                    login_required = False,
-                    style = '',)">
-<%
-   if reverse:
-       callback, cancelback = cancelback, callback
-       title, alt_title = alt_title, title
-       css_class, alt_css_class = alt_css_class, css_class
- %>
-<span class="${class_name} toggle" style="${style}">
- <a class="option active ${css_class}" href="#" tabindex="100"
-    %if login_required and not c.user_is_loggedin:
-      onclick="return showcover('', '${callback}_' + $(this).thing_id());"
-    %else:
-      onclick="return toggle(this, ${callback}, ${cancelback})"
-    %endif
-    >
-   ${title}
- </a>
- <a class="option ${alt_css_class}" href="#">${alt_title}</a>
-</span>
-</%def>
-
-<%def name="toggleable_label(class_name,
-            title, alt_title,
-            callback, cancelback,
-            reverse = False)">
- <%
-   if reverse:
-       callback, cancelback = cancelback, callback
-       title, alt_title = alt_title, title
- %>
-<span class="${class_name} toggle">
-  <span class="toggle option active">${title}</span>
-  <span class="toggle option">${alt_title}</span>
-  &#32;(
-  <a href="#"
-     onclick="return toggle_label(this, ${callback}, ${cancelback})"
-     >
-    ${_("toggle")}
-  </a>
-  )
-</span>
-</%def>
-
-<%def name="tags(**kw)">
-  %for k, v in kw.iteritems():
-    %if v is not None:
-      ${k.strip('_')}="${v}" \
-    %endif
-  %endfor
-</%def>
-
-
-### originally in commentbutton
-<%def name="comment_button(name, link_text, num, link,\
-            a_class='', title='', newwindow = False)">
-  <% 
-     cls = "comments empty" if num == 0 else "comments"
-
-     if num > 0:
-         link_text = strings.number_label % dict(num=num, thing=link_text)
-
-     target = '_blank' if newwindow else '_parent'
-  %>
-  ${plain_link(link_text, link, 
-               _class="%s %s" % (a_class, cls), title=title, target=target)}
-
 </%def>

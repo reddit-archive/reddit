@@ -58,15 +58,13 @@
 </div>  
 
 <div class="spacer">
-  <%utils:round_field title="${_('message')}">
-    ${UserText(None, have_form = False, creating = True).render()}
+  <%utils:round_field title="message">
+    ${UserText(None, have_form = False, creating = True)}
   </%utils:round_field>
 </div>  
 
 <div class="spacer">
-  %if thing.captcha:
-    ${thing.captcha.render()}
-  %endif
+  ${thing.captcha}
 </div>  
 
 <button class="btn" type="submit">${_("send")}</button>

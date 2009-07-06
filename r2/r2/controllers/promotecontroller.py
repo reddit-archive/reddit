@@ -23,6 +23,7 @@ from validator import *
 from pylons.i18n import _
 from r2.models import *
 from r2.lib.pages import *
+from r2.lib.pages.things import wrap_links
 from r2.lib.menus import *
 from r2.controllers import ListingController
 
@@ -40,16 +41,10 @@ class PromoteController(RedditController):
 
     @validate(VSponsor())
     def GET_current_promos(self):
-        current_list = get_promoted()
-
-        b = IDBuilder(current_list)
-
-        render_list = b.get_items()[0]
-
+        render_list = list(wrap_links(get_promoted()))
         for x in render_list:
             if x.promote_until:
                 x.promote_expires = timetext(datetime.now(g.tz) - x.promote_until)
-
         page = PromotePage('current_promos',
                            content = PromotedLinks(render_list))
     
@@ -65,12 +60,8 @@ class PromoteController(RedditController):
               link = VLink('link'))
     def GET_edit_promo(self, link):
         sr = Subreddit._byID(link.sr_id)
-
-        names = [link._fullname]
-        builder = IDBuilder(names, wrap = ListingController.builder_wrapper)
-        listing = LinkListing(builder,
-                              show_nums = False, nextprev = False)
-        rendered = listing.listing().render()
+        listing = wrap_links(link)
+        rendered = listing.render()
 
         timedeltatext = ''
         if link.promote_until:

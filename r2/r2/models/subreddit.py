@@ -248,32 +248,20 @@ class Subreddit(Thing, Printable):
             if not user or not user.has_subscribed:
                 item.subscriber = item._id in defaults
             else:
-                item.subscriber = rels.get((item, user, 'subscriber'))
-            item.moderator = rels.get((item, user, 'moderator'))
-            item.contributor = item.moderator or \
-                rels.get((item, user, 'contributor'))
+                item.subscriber = bool(rels.get((item, user, 'subscriber')))
+            item.moderator = bool(rels.get((item, user, 'moderator')))
+            item.contributor = bool(item.moderator or \
+                                    rels.get((item, user, 'contributor')))
             item.score = item._ups
             item.score_fmt = Score.subscribers
-
+        Printable.add_props(user, wrapped)
     #TODO: make this work
+    cache_ignore = set(["subscribers"]).union(Printable.cache_ignore)
     @staticmethod
-    def cache_key(wrapped):
-        if c.user_is_admin:
-            return False
-
-        s = (str(i) for i in (wrapped._fullname,
-                              bool(c.user_is_loggedin),
-                              wrapped.subscriber,
-                              wrapped.moderator,
-                              wrapped.contributor,
-                              wrapped._spam))
-        s = ''.join(s)
+    def wrapped_cache_key(wrapped, style):
+        s = Printable.wrapped_cache_key(wrapped, style)
+        s.extend([wrapped._spam])
         return s
-
-    #TODO: make this work
-    #@property
-    #def author_id(self):
-        #return 1
 
     @classmethod
     def top_lang_srs(cls, lang, limit):

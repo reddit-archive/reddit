@@ -45,7 +45,7 @@
 <%def name="bodyHTML()">
   <body style="background-color: ${'#%s' % (c.bgcolor or 'FFFFFF')}"
         class="button-body">
-    <div class="button ${thing_css_class(thing.link) if thing.link else ''}">
+    <div class="button ${thing_css_class(thing) if thing._fullname else ''}">
     %if not c.user_is_loggedin:
       <div id="cover" style="display: none">
         <div class="cover"></div>

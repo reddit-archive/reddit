@@ -21,41 +21,41 @@
 ################################################################################
 
 <%! 
-   from r2.models import FakeSubreddit 
    from r2.lib.utils import timesince
    from r2.lib.strings import strings
    %>
-<%namespace file="printable.html" import="ynbutton, toggle_button, state_button"/>
+<%namespace file="printablebuttons.html" 
+            import="ynbutton, toggle_button, state_button"/>
 <%namespace file="printable.html" import="thing_css_class" />
 
-%if not isinstance(c.site, FakeSubreddit):
-  <div class="raisedbox subreddit-info ${thing_css_class(c.site)}">
-    <h3>${c.site.name}</h3>
-        %if c.user_is_loggedin:
+%if not thing.is_fake:
+  <div class="raisedbox subreddit-info thing id-${thing.fullname}">
+    <h3>${thing.name}</h3>
+        %if thing.is_loggedin:
            ${toggle_button("subscribe-button", 
                            _("subscribe"), _("unsubscribe"),
-                           'subscribe("%s")' % c.site._fullname,
-                           'unsubscribe("%s")' % c.site._fullname,
-                           reverse = c.site.is_subscriber_defaults(c.user))}
+                           'subscribe("%s")' % thing.fullname,
+                           'unsubscribe("%s")' % thing.fullname,
+                           reverse = thing.is_subscriber)}
         %endif
         <span class="label">
-          (${strings.person_label % dict(num = c.site._ups,
-          persons = ungettext('subscriber', 'subscribers', c.site._ups))})
+          (${strings.person_label % dict(num = thing.subscribers,
+                     persons = ungettext('subscriber', 'subscribers', 
+                                         thing.subscribers))})
         </span>
       <p>
-        ${_("a community for %(time)s") % dict(time=timesince(c.site._date))}
+        ${_("a community for %(time)s") % dict(time=timesince(thing.date))}
       </p>
 
-      <div id="${c.site._fullname}" class="thing">
-        %if c.site.type in ("private", "restricted") and c.user_is_loggedin and \
-          c.site.is_contributor(c.user):
+      <div id="${thing.fullname}" class="thing">
+        %if thing.is_contributor:
           ${moderate_button("leave_contributor",
                             _("you are a contributor of this reddit. (%(leave)s)"),
                             _("stop being a contributor?"),
                             _("you are no longer a contributor"))}
         %endif
 
-        %if c.user_is_loggedin and c.site.is_moderator(c.user):
+        %if thing.is_moderator:
           ${moderate_button("leave_moderator",
                             _("you are a moderator of this reddit. (%(leave)s)"),
                             _("stop being a moderator?"),
@@ -63,12 +63,12 @@
                            
         %endif
       </div>
-    %if c.user_is_admin:
-      %if c.site._spam:
+    %if thing.is_admin:
+      %if thing.spam:
         ${state_button("unban", _("unban"),
           "return change_state(this, 'unban');", _("unbanned"))}
-        %if hasattr(c.site, 'banner'):
-          <div>${strings.banned_by % c.site.banner}</div>
+        %if thing.banner:
+          <div>${strings.banned_by % thing.banner}</div>
         %endif
       %else:
         ${state_button("ban", _("ban"),
@@ -77,7 +77,7 @@
     %endif
     <div class="spacer">  
     %for n in thing.nav():
-      ${n.render()}
+      ${n}
     %endfor
     </div>
   </div>

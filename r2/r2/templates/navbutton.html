@@ -22,17 +22,18 @@
 
 <%namespace file="utils.html" import="plain_link" />
 
-<%def name="plain(selected = False)">
-  ${plain_link(thing.selected_title() if selected else thing.title, 
+<%def name="plain()">
+  ${plain_link(thing.selected_title() if thing.selected else thing.title, 
                thing.path, _sr_path = thing.sr_path, nocname = thing.nocname,
                target = thing.target, 
                _class = thing.css_class, _id = thing._id)}
 </%def>
 
-<%def name="js(selected = False)">
-  ${plain_link(thing.selected_title() if selected else thing.title, 
+<%def name="js()">
+  ${plain_link(thing.selected_title() if thing.selected else thing.title, 
                thing.path, _sr_path = False, nocname = True, 
-               _class = thing.css_class, _id = thing._id, onclick = thing.onclick)}
+               _class = thing.css_class, _id = thing._id, 
+               onclick = thing.onclick)}
 </%def>
 
 

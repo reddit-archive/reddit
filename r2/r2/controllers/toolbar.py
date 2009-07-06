@@ -22,6 +22,7 @@
 from reddit_base import RedditController
 from r2.lib.pages import *
 from r2.models import *
+from r2.lib.pages.things import wrap_links
 from r2.lib.menus import CommentSortMenu
 from r2.lib.filters import spaceCompress, safemarkdown
 from r2.lib.memoize import memoize
@@ -151,26 +152,16 @@ class ToolbarController(RedditController):
         if not link.subreddit_slow.can_view(c.user):
             abort(403, 'forbidden')
 
-        def builder_wrapper(cm):
-            w = Wrapped(cm)
-            w.render_class = StarkComment
-            w.target = "_top"
-            return w
-
-        link_builder = IDBuilder((link._fullname,))
-        link_listing = LinkListing(link_builder, nextprev=False).listing()
-        links = link_listing.things[0],
+        links = list(wrap_links(link))
         if not links:
             # they aren't allowed to see this link
             return self.abort(403, 'forbidden')
         link = links[0]
 
-        res = FrameToolbar(link = link,
-                           title = link.title,
-                           url = link.url)
-
+        wrapper = make_wrapper(render_class = StarkComment,
+                               target = "_top")
         b = TopCommentBuilder(link, CommentSortMenu.operator('top'),
-                              wrap = builder_wrapper)
+                              wrap = wrapper)
 
         listing = NestedListing(b, num = 10, # TODO: add config var
                                 parent_name = link._fullname)
@@ -180,7 +171,8 @@ class ToolbarController(RedditController):
 
         md_bar = safemarkdown(raw_bar, target="_top")
 
-        res = RedditMin(content=CommentsPanel(link=link, listing=listing.listing(),
+        res = RedditMin(content=CommentsPanel(link=link,
+                                              listing=listing.listing(),
                                               expanded=auto_expand_panel(link),
                                               infobar=md_bar))
 
@@ -194,15 +186,9 @@ class ToolbarController(RedditController):
             link = utils.link_from_url(url, multiple = False)
 
         if link:
-            link_builder = IDBuilder((link._fullname,))
-
-            res = FrameToolbar(link = link_builder.get_items()[0][0],
-                               title = link.title,
-                               url = link.url,
-                               domain = None
-                                 if link.is_self
-                                 else domain(link.url),
-                               expanded = auto_expand_panel(link))
+            link = list(wrap_links(link, wrapper = FrameToolbar))
+        if link:
+            res = link[0]
         else:
             res = FrameToolbar(link = None,
                                title = None,

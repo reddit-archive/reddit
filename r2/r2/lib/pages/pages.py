@@ -19,11 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.wrapped import Wrapped, NoTemplateFound, Styled
-from r2.models import IDBuilder, LinkListing, Account, Default
+from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
+from r2.models import Account, Default
 from r2.models import FakeSubreddit, Subreddit
 from r2.models import Friends, All, Sub, NotFound, DomainSR
-from r2.models import  make_wrapper
+from r2.models import Link, Printable
 from r2.config import cache
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -48,13 +48,15 @@ import graph
 from itertools import chain
 from urllib import quote
 
+from things import wrap_links, default_thing_wrapper
+
 datefmt = _force_utf8(_('%d %b %Y'))
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
         return get_iden()
 
-class Reddit(Wrapped):
+class Reddit(Templated):
     '''Base class for rendering a page on reddit.  Handles toolbar creation,
     content of the footers, and content of the corner buttons.
 
@@ -90,15 +92,16 @@ class Reddit(Wrapped):
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
                  show_sidebar = True, footer = True, **context):
-        Wrapped.__init__(self, **context)
+        Templated.__init__(self, **context)
         self.title          = title
         self.robots         = robots
         self.infotext       = infotext
         self.loginbox       = True
         self.show_sidebar   = show_sidebar
-        self.footer         = footer
         self.space_compress = space_compress
-
+        # instantiate a footer
+        self.footer         = RedditFooter() if footer else None
+        
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
 
@@ -155,14 +158,14 @@ class Reddit(Wrapped):
         return ps
 
     def render(self, *a, **kw):
-        """Overrides default Wrapped.render with two additions
+        """Overrides default Templated.render with two additions
            * support for rendering API requests with proper wrapping
            * support for space compression of the result
-        In adition, unlike Wrapped.render, the result is in the form of a pylons
+        In adition, unlike Templated.render, the result is in the form of a pylons
         Response object with it's content set.
         """
         try:
-            res = Wrapped.render(self, *a, **kw)
+            res = Templated.render(self, *a, **kw)
             if is_api():
                 res = json_respond(res)
             elif self.space_compress:
@@ -200,73 +203,6 @@ class Reddit(Wrapped):
                                   css_class = "pref-lang")]
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
-    def footer_nav(self):
-        """navigation buttons in the footer."""
-        return [NavMenu([NamedButton("toplinks", False),
-                         NamedButton("mobile", False, nocname=True),
-                         OffsiteButton("rss", dest = '/.rss'),
-                         NamedButton("store", False, nocname=True),
-                         NamedButton("stats", False, nocname=True),
-                         NamedButton('random', False, nocname=False),
-                         NamedButton("feedback", False),],
-                        title = _('site links'), type = 'flat_vert',
-                        separator = ''),
-
-                NavMenu([NamedButton("help", False, nocname=True),
-                         OffsiteButton(_("FAQ"), dest = '/help/faq',
-                                       nocname=True),
-                         OffsiteButton(_("reddiquette"), nocname=True,
-                                       dest = '/help/reddiquette')],
-                        title = _('help'), type = 'flat_vert',
-                        separator = ''),
-
-                NavMenu([NamedButton("bookmarklets", False),
-                         NamedButton("buttons", True),
-                         NamedButton("code", False, nocname=True),
-                         NamedButton("socialite", False),
-                         NamedButton("widget", True),
-                         NamedButton("iphone", False),],
-                        title = _('reddit tools'), type = 'flat_vert',
-                        separator = ''),
-
-                NavMenu([NamedButton("blog", False, nocname=True),
-                         NamedButton("ad_inq", False, nocname=True),
-                         OffsiteButton('reddit.tv', "http://www.reddit.tv"),
-                         OffsiteButton('redditall', "http://www.redditall.com"),
-                         OffsiteButton(_('job board'),
-                                       "http://www.redditjobs.com")],
-                        title = _('about us'), type = 'flat_vert',
-                        separator = ''),
-                NavMenu([OffsiteButton('BaconBuzz',
-                                       "http://www.baconbuzz.com"),
-                         OffsiteButton('Destructoid reddit',
-                                       "http://reddit.destructoid.com"),
-                         OffsiteButton('TheCuteList',
-                                       "http://www.thecutelist.com"),
-                         OffsiteButton('The Independent reddit',
-                                       "http://reddit.independent.co.uk"),
-                         OffsiteButton('redditGadgetGuide',
-                                       "http://www.redditgadgetguide.com"),
-                         OffsiteButton('WeHeartGossip',
-                                       "http://www.weheartgossip.com"),
-                         OffsiteButton('idealistNews',
-                                       "http://www.idealistnews.com"),],
-                        title = _('brothers'), type = 'flat_vert',
-                        separator = ''),
-                NavMenu([OffsiteButton('Wired.com',
-                                       "http://www.wired.com"),
-                         OffsiteButton('Ars Technica',
-                                       "http://www.arstechnica.com"),
-                         OffsiteButton('Style.com',
-                                       "http://www.style.com"),
-                         OffsiteButton('Epicurious.com',
-                                       "http://www.epicurious.com"),
-                         OffsiteButton('Concierge.com',
-                                       "http://www.concierge.com")],
-                        title = _('sisters'), type = 'flat_vert',
-                        separator = '')
-                ]
-
     def build_toolbars(self):
         """Sets the layout of the navigation topbar on a Reddit.  The result
         is a list of menus which will be rendered in order and
@@ -275,13 +211,12 @@ class Reddit(Wrapped):
                         NamedButton('new'), 
                         NamedButton('controversial'),
                         NamedButton('top'),
+                        NamedButton('saved', False)
                         ]
 
         more_buttons = []
 
         if c.user_is_loggedin:
-            more_buttons.append(NamedButton('saved', False))
-        
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin'))
             elif c.site.is_moderator(c.user):
@@ -319,35 +254,97 @@ class Reddit(Wrapped):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack((self.infobar, self.nav_menu, self._content))
 
-class ClickGadget(Wrapped):
+class RedditHeader(Templated):
+    def __init__(self):
+        pass
+
+class RedditFooter(CachedTemplate):
+    def cachable_attrs(self):
+        return [('path', request.path)]
+    
+    def nav(self):
+        return [NavMenu([NamedButton("toplinks", False),
+                         NamedButton("mobile", False, nocname=True),
+                         OffsiteButton("rss", dest = '/.rss'),
+                         NamedButton("store", False, nocname=True),
+                         NamedButton("stats", False, nocname=True),
+                         NamedButton('random', False, nocname=False),
+                         NamedButton("feedback", False),],
+                        title = _('site links'), type = 'flat_vert',
+                        separator = ''),
+                
+                NavMenu([NamedButton("help", False, nocname=True),
+                         OffsiteButton(_("FAQ"), dest = '/help/faq',
+                                       nocname=True),
+                         OffsiteButton(_("reddiquette"), nocname=True,
+                                       dest = '/help/reddiquette')],
+                        title = _('help'), type = 'flat_vert',
+                        separator = ''),
+                
+                NavMenu([NamedButton("bookmarklets", False),
+                         NamedButton("buttons", True),
+                         NamedButton("code", False, nocname=True),
+                         NamedButton("socialite", False),
+                         NamedButton("widget", True),
+                         NamedButton("iphone", False),],
+                        title = _('reddit tools'), type = 'flat_vert',
+                        separator = ''),
+                
+                NavMenu([NamedButton("blog", False, nocname=True),
+                         NamedButton("ad_inq", False, nocname=True),
+                         OffsiteButton('reddit.tv', "http://www.reddit.tv"),
+                         OffsiteButton('redditall', "http://www.redditall.com"),
+                         OffsiteButton(_('job board'),
+                                       "http://www.redditjobs.com")],
+                        title = _('about us'), type = 'flat_vert',
+                        separator = ''),
+                NavMenu([OffsiteButton('BaconBuzz',
+                                       "http://www.baconbuzz.com"),
+                         OffsiteButton('Destructoid reddit',
+                                       "http://reddit.destructoid.com"),
+                         OffsiteButton('TheCuteList',
+                                       "http://www.thecutelist.com"),
+                         OffsiteButton('The Independent reddit',
+                                       "http://reddit.independent.co.uk"),
+                         OffsiteButton('redditGadgetGuide',
+                                       "http://www.redditgadgetguide.com"),
+                         OffsiteButton('WeHeartGossip',
+                                       "http://www.weheartgossip.com"),
+                         OffsiteButton('idealistNews',
+                                       "http://www.idealistnews.com"),],
+                        title = _('brothers'), type = 'flat_vert',
+                        separator = ''),
+                NavMenu([OffsiteButton('Wired.com',
+                                       "http://www.wired.com"),
+                         OffsiteButton('Ars Technica',
+                                       "http://www.arstechnica.com"),
+                         OffsiteButton('Style.com',
+                                       "http://www.style.com"),
+                         OffsiteButton('Epicurious.com',
+                                       "http://www.epicurious.com"),
+                         OffsiteButton('Concierge.com',
+                                       "http://www.concierge.com")],
+                        title = _('sisters'), type = 'flat_vert',
+                        separator = '')
+                    ]
+
+
+class ClickGadget(Templated):
     def __init__(self, links, *a, **kw):
         self.links = links
         self.content = ''
         if c.user_is_loggedin and self.links:
             self.content = self.make_content()
-        Wrapped.__init__(self, *a, **kw)
+        Templated.__init__(self, *a, **kw)
 
     def make_content(self):
-        def wrapper(link):
-            link.embed_voting_style = 'votable'
-            return Wrapped(link)
-
-        #temporarily change the render style
-        orig_render_style = c.render_style
-        c.render_style = 'htmllite'
-
         #this will disable the hardcoded widget styles
         request.get.style = "off"
+        wrapper = default_thing_wrapper(embed_voting_style = 'votable',
+                                        style = "htmllite")
+        content = wrap_links(self.links, wrapper = wrapper)
 
-        builder = IDBuilder([link._fullname for link in self.links],
-                            wrap = wrapper)
-        listing = LinkListing(builder, nextprev=False, show_nums=False).listing()
-        content = listing.render()
-
-        #restore render style
-        c.render_style = orig_render_style
-
-        return content
+        return content.render(style = "htmllite")
 
 
 class RedditMin(Reddit):
@@ -357,37 +354,62 @@ class RedditMin(Reddit):
     show_sidebar = False
     show_firsttext = False
 
-class LoginFormWide(Wrapped):
+class LoginFormWide(CachedTemplate):
     """generates a login form suitable for the 300px rightbox."""
-    pass
+    def __init__(self):
+        self.cname = c.cname
+        self.auth_cname = not c.frameless_cname or c.authorized_cname
+        CachedTemplate.__init__(self)
 
-class SubredditInfoBar(Wrapped):
+class SubredditInfoBar(CachedTemplate):
     """When not on Default, renders a sidebox which gives info about
     the current reddit, including links to the moderator and
     contributor pages, as well as links to the banning page if the
     current user is a moderator."""
+    def __init__(self, site = None):
+        site = site or c.site
+        self.spam = site._spam
+        self.name = site.name
+        self.type = site.type
+        self.is_fake = isinstance(site, FakeSubreddit)
+        self.is_loggedin = c.user_is_loggedin
+        self.is_admin  = c.user_is_admin
+        self.fullname = site._fullname
+        self.is_subscriber = bool(c.user_is_loggedin and \
+                                  site.is_subscriber_defaults(c.user))
+        self.is_moderator = bool(c.user_is_loggedin and \
+                                 site.is_moderator(c.user))
+        self.is_contributor = bool(site.type in ("private", "restricted") and \
+                                   c.user_is_loggedin and \
+                                   site.is_contributor(c.user))
+        self.subscribers = site._ups
+        self.date = site._date
+        self.spam = site._spam
+        self.banner = getattr(site, "banner", None)
+        CachedTemplate.__init__(self)
+    
     def nav(self):
-        is_moderator = c.user_is_loggedin and \
-            c.site.is_moderator(c.user) or c.user_is_admin
-
         buttons = [NavButton(plurals.moderators, 'moderators')]
-        if c.site.type != 'public':
+        if self.type != 'public':
             buttons.append(NavButton(plurals.contributors, 'contributors'))
 
-        if is_moderator:
+        if self.is_moderator:
             buttons.append(NamedButton('edit'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
                             NamedButton('spam')])
             buttons.append(NamedButton('traffic'))
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
 
-class SideBox(Wrapped):
-    """Generic sidebox used to generate the 'submit' and 'create a reddit' boxes."""
+class SideBox(CachedTemplate):
+    """
+    Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
+    """
     def __init__(self, title, link, css_class='', subtitles = [],
                  show_cover = False, nocname=False, sr_path = False):
-        Wrapped.__init__(self, link = link, target = '_top',
-                         title = title, css_class = css_class, sr_path = sr_path,
-                         subtitles = subtitles, show_cover = show_cover, nocname=nocname)
+        Templated.__init__(self, link = link, target = '_top',
+                           title = title, css_class = css_class,
+                           sr_path = sr_path, subtitles = subtitles,
+                           show_cover = show_cover, nocname=nocname)
 
 
 class PrefsPage(Reddit):
@@ -408,16 +430,16 @@ class PrefsPage(Reddit):
         return [PageNameNav('nomenu', title = _("preferences")), 
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
-class PrefOptions(Wrapped):
+class PrefOptions(Templated):
     """Preference form for updating language and display options"""
     def __init__(self, done = False):
-        Wrapped.__init__(self, done = done)
+        Templated.__init__(self, done = done)
 
-class PrefUpdate(Wrapped):
+class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
     pass
 
-class PrefDelete(Wrapped):
+class PrefDelete(Templated):
     """preference form for deleting a user's own account."""
     pass
 
@@ -445,11 +467,11 @@ class MessagePage(Reddit):
         return [PageNameNav('nomenu', title = _("message")), 
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
 
-class MessageCompose(Wrapped):
+class MessageCompose(Templated):
     """Compose message form."""
     def __init__(self,to='', subject='', message='', success='', 
                  captcha = None):
-        Wrapped.__init__(self, to = to, subject = subject,
+        Templated.__init__(self, to = to, subject = subject,
                          message = message, success = success, 
                          captcha = captcha)
 
@@ -498,15 +520,11 @@ class LoginPage(BoringPage):
             kw[x] = getattr(self, x) if hasattr(self, x) else ''
         return Login(dest = self.dest, **kw)
 
-class Login(Wrapped):
+class Login(Templated):
     """The two-unit login and register form."""
     def __init__(self, user_reg = '', user_login = '', dest=''):
-        Wrapped.__init__(self,
-                         user_reg = user_reg,
-                         user_login = user_login,
-                         dest = dest,
-                         captcha = Captcha())
-
+        Templated.__init__(self, user_reg = user_reg, user_login = user_login,
+                           dest = dest, captcha = Captcha())
     
 class SearchPage(BoringPage):
     """Search results page"""
@@ -522,7 +540,7 @@ class SearchPage(BoringPage):
         return self.content_stack((self.searchbar, self.infobar,
                                    self.nav_menu, self._content))
 
-class CommentsPanel(Wrapped):
+class CommentsPanel(Templated):
     """the side-panel on the reddit toolbar frame that shows the top
        comments of a link"""
 
@@ -531,7 +549,7 @@ class CommentsPanel(Wrapped):
         self.listing = listing
         self.expanded = expanded
 
-        Wrapped.__init__(self, *a, **kw)
+        Templated.__init__(self, *a, **kw)
 
 class LinkInfoPage(Reddit):
     """Renders the varied /info pages for a link.  The Link object is
@@ -549,14 +567,10 @@ class LinkInfoPage(Reddit):
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, duplicates = None,
                  *a, **kw):
-        from r2.controllers.listingcontroller import ListingController
-        wrapper = make_wrapper(ListingController.builder_wrapper,
-                               expand_children = True)
-        link_builder = IDBuilder(link._fullname,
-                                 wrap = wrapper)
+        wrapper = default_thing_wrapper(expand_children = True)
 
         # link_listing will be the one-element listing at the top
-        self.link_listing = LinkListing(link_builder, nextprev=False).listing()
+        self.link_listing = wrap_links(link, wrapper = wrapper)
 
         # link is a wrapped Link object
         self.link = self.link_listing.things[0]
@@ -624,10 +638,12 @@ class LinkInfoPage(Reddit):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
-class LinkInfoBar(Wrapped):
+class LinkInfoBar(Templated):
     """Right box for providing info about a link."""
     def __init__(self, a = None):
-        Wrapped.__init__(self, a = a, datefmt = datefmt)
+        if a:
+            a = Wrapped(a)
+        Templated.__init__(self, a = a, datefmt = datefmt)
 
 class EditReddit(Reddit):
     """Container for the about page for a reddit"""
@@ -753,23 +769,23 @@ class ProfilePage(Reddit):
             rb.append(AdminSidebar(self.user))
         return rb
 
-class ProfileBar(Wrapped): 
+class ProfileBar(Templated): 
     """Draws a right box for info about the user (karma, etc)"""
     def __init__(self, user):
-        Wrapped.__init__(self, user = user)
+        Templated.__init__(self, user = user)
         self.isFriend = self.user._id in c.user.friends \
             if c.user_is_loggedin else False
         self.isMe = (self.user == c.user)
 
-class MenuArea(Wrapped):
+class MenuArea(Templated):
     """Draws the gray box at the top of a page for sort menus"""
     def __init__(self, menus = []):
-        Wrapped.__init__(self, menus = menus)
+        Templated.__init__(self, menus = menus)
 
-class InfoBar(Wrapped):
+class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
     def __init__(self, message = ''):
-        Wrapped.__init__(self, message = message)
+        Templated.__init__(self, message = message)
 
 
 class RedditError(BoringPage):
@@ -789,126 +805,126 @@ class Reddit404(BoringPage):
                             show_sidebar = False, 
                             content=UnfoundPage(ch))
         
-class UnfoundPage(Wrapped):
+class UnfoundPage(Templated):
     """Wrapper for the 404 page"""
     def __init__(self, choice):
-        Wrapped.__init__(self, choice = choice)
+        Templated.__init__(self, choice = choice)
     
-class ErrorPage(Wrapped):
+class ErrorPage(Templated):
     """Wrapper for an error message"""
     def __init__(self, message = _("you aren't allowed to do that.")):
-        Wrapped.__init__(self, message = message)
+        Templated.__init__(self, message = message)
     
-class Profiling(Wrapped):
+class Profiling(Templated):
     """Debugging template for code profiling using built in python
     library (only used in middleware)"""
     def __init__(self, header = '', table = [], caller = [], callee = [], path = ''):
-        Wrapped.__init__(self, header = header, table = table, caller = caller,
+        Templated.__init__(self, header = header, table = table, caller = caller,
                          callee = callee, path = path)
 
-class Over18(Wrapped):
+class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
     pass
 
-class SubredditTopBar(Wrapped):
+class SubredditTopBar(Templated):
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
-        my_reddits = Subreddit.user_subreddits(c.user, ids = False)
-        my_reddits.sort(key = lambda sr: sr.name.lower())
+        self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
+        self.my_reddits.sort(key = lambda sr: sr.name.lower())
 
-        drop_down_buttons = []    
-        for sr in my_reddits:
-            drop_down_buttons.append(SubredditButton(sr))
-
-        #leaving the 'home' option out for now
-        #drop_down_buttons.insert(0, NamedButton('home', sr_path = False,
-        #                                        css_class = 'top-option',
-        #                                        dest = '/'))
-        drop_down_buttons.append(NamedButton('edit', sr_path = False,
-                                             css_class = 'bottom-option',
-                                             dest = '/reddits/'))
-        self.sr_dropdown = SubredditMenu(drop_down_buttons,
-                                         title = _('my reddits'),
-                                         type = 'srdrop')
 
         pop_reddits = Subreddit.default_subreddits(ids = False,
                                                    limit = Subreddit.sr_limit)
-        buttons = [SubredditButton(sr) for sr in c.recent_reddits]
+        self.reddits = c.recent_reddits
         for sr in pop_reddits:
             if sr not in c.recent_reddits:
-                buttons.append(SubredditButton(sr))
+                self.reddits.append(sr)
+
+    def my_reddits_dropdown(self):
+        drop_down_buttons = []    
+        for sr in self.my_reddits:
+            drop_down_buttons.append(SubredditButton(sr))
+        drop_down_buttons.append(NamedButton('edit', sr_path = False,
+                                             css_class = 'bottom-option',
+                                             dest = '/reddits/'))
+        return SubredditMenu(drop_down_buttons,
+                             title = _('my reddits'),
+                             type = 'srdrop')
+        
     
-        self.sr_bar = NavMenu(buttons, type='flatlist', separator = '-',
-                                        _id = 'sr-bar')
-    
-class SubscriptionBox(Wrapped):
+    def recent_reddits(self):
+        return NavMenu([SubredditButton(sr) for sr in self.reddits],
+                       type='flatlist', separator = '-',
+                       _id = 'sr-bar')
+
+class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
     def __init__(self):
         srs = Subreddit.user_subreddits(c.user, ids = False)
         srs.sort(key = lambda sr: sr.name.lower())
-        b = IDBuilder([sr._fullname for sr in srs])
-        self.reddits = LinkListing(b).listing().things
+        self.reddits = wrap_links(srs)
+        Templated.__init__(self)
 
-class CreateSubreddit(Wrapped):
+class CreateSubreddit(Templated):
     """reddit creation form."""
     def __init__(self, site = None, name = ''):
-        Wrapped.__init__(self, site = site, name = name)
+        Templated.__init__(self, site = site, name = name)
 
-class SubredditStylesheet(Wrapped):
+class SubredditStylesheet(Templated):
     """form for editing or creating subreddit stylesheets"""
     def __init__(self, site = None,
                  stylesheet_contents = ''):
-        Wrapped.__init__(self, site = site,
+        Templated.__init__(self, site = site,
                          stylesheet_contents = stylesheet_contents)
 
-class CssError(Wrapped):
+class CssError(Templated):
     """Rendered error returned to the stylesheet editing page via ajax"""
     def __init__(self, error):
         # error is an instance of cssutils.py:ValidationError
-        Wrapped.__init__(self, error = error)
+        Templated.__init__(self, error = error)
 
-class UploadedImage(Wrapped):
+class UploadedImage(Templated):
     "The page rendered in the iframe during an upload of a header image"
     def __init__(self,status,img_src, name="", errors = {}):
         self.errors = list(errors.iteritems())
-        Wrapped.__init__(self, status=status, img_src=img_src, name = name)
+        Templated.__init__(self, status=status, img_src=img_src, name = name)
 
-class Password(Wrapped):
+class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):
-        Wrapped.__init__(self, success = success)
+        Templated.__init__(self, success = success)
 
-class PasswordReset(Wrapped):
+class PasswordReset(Templated):
     """Template for generating an email to the user who wishes to
     reset their password (step 2 of password recovery, after they have
     entered their user name in Password.)"""
     pass
 
-class ResetPassword(Wrapped):
+class ResetPassword(Templated):
     """Form for actually resetting a lost password, after the user has
     clicked on the link provided to them in the Password_Reset email
     (step 3 of password recovery.)"""
     pass
 
 
-class Captcha(Wrapped):
+class Captcha(Templated):
     """Container for rendering robot detection device."""
     def __init__(self, error=None):
         self.error = _('try entering those letters again') if error else ""
         self.iden = get_captcha()
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
-class PermalinkMessage(Wrapped):
+class PermalinkMessage(Templated):
     """renders the box on comment pages that state 'you are viewing a
     single comment's thread'"""
     def __init__(self, comments_url):
-        Wrapped.__init__(self, comments_url = comments_url)
+        Templated.__init__(self, comments_url = comments_url)
 
-class PaneStack(Wrapped):
+class PaneStack(Templated):
     """Utility class for storing and rendering a list of block elements."""
     
     def __init__(self, panes=[], div_id = None, css_class=None, div=False,
@@ -919,7 +935,7 @@ class PaneStack(Wrapped):
         self.div       = div
         self.stack     = list(panes)
         self.title = title
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
     def append(self, item):
         """Appends an element to the end of the current stack"""
@@ -934,14 +950,14 @@ class PaneStack(Wrapped):
         return self.stack.insert(*a)
 
 
-class SearchForm(Wrapped):
+class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
     def __init__(self, prev_search = ''):
-        Wrapped.__init__(self, prev_search = prev_search)
+        Templated.__init__(self, prev_search = prev_search)
 
 
-class SearchBar(Wrapped):
+class SearchBar(Templated):
     """More detailed search box for /search and /reddits pages.
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
@@ -959,10 +975,10 @@ class SearchBar(Wrapped):
         else:
             self.num_results = num_results
 
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
 
-class Frame(Wrapped):
+class Frame(Templated):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
     top 30px of the page are dedicated to the toolbar, while the rest
     of the page will show the results of following the link."""
@@ -973,60 +989,60 @@ class Frame(Wrapped):
                             domain     = g.domain))
         else:
             title = g.domain
-
-        Wrapped.__init__(self, url = url, title = title, fullname = fullname)
+        Templated.__init__(self, url = url, title = title, fullname = fullname)
 
 dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
-    def __init__(self, link = None, title = None, url = None, expanded = False, **kw):
-        self.title = title
-        self.url = url
-        self.expanded = expanded
-        self.link = link
 
-        self.dorks = dorks_re.match(link.url if link else url)
-
-        if link:
-            self.tblink = add_sr("/tb/"+link._id36)
-
-            likes = link.likes
-            self.upstyle = "mod" if likes else ""
-            self.downstyle = "mod" if likes is False else ""
-            if c.user_is_loggedin:
-                self.vh = vote_hash(c.user, link, 'valid')
-            score = link.score
-
-            if not link.num_comments:
-                # generates "comment" the imperative verb
-                self.com_label = _("comment {verb}")
-            else:
-                # generates "XX comments" as a noun
-                com_label = ungettext("comment", "comments",
-                                      link.num_comments)
-                self.com_label = strings.number_label % dict(
-                    num = link.num_comments, thing = com_label)
-
-
-            # generates "XX points" as a noun
-            self.score_label = Score.safepoints(score)
-
-        else:
-            self.tblink = add_sr("/s/"+quote(url))
-            submit_url_options = dict(url  = _force_unicode(url),
-                                      then = 'tb')
-            if title:
-                submit_url_options['title'] = _force_unicode(title)
-            self.submit_url = add_sr('/submit' + query_string(submit_url_options))
-
-        if not c.user_is_loggedin:
-            self.loginurl = add_sr("/login?dest="+quote(self.tblink))
-
-        Wrapped.__init__(self, **kw)
-
+    cachable = True
     extension_handling = False
+    cache_ignore = Link.cache_ignore
+    def __init__(self, link, title = None, url = None, expanded = False, **kw):
+        if link:
+            self.title = link.title
+            self.url = link.url
+        else:
+            self.title = title
+            self.url = url
 
-class NewLink(Wrapped):
+        self.expanded = expanded
+
+        self.dorks = dorks_re.match(self.url)
+        Wrapped.__init__(self, link)
+        if link is None:
+            self.add_props(c.user, [self])
+    
+    @classmethod
+    def add_props(cls, user, wrapped):
+        # unlike most wrappers we can guarantee that there is a link
+        # that this wrapper is wrapping.
+        nonempty = [w for w in wrapped if hasattr(w, "_fullname")]
+        Link.add_props(user, nonempty)
+        for w in wrapped:
+            w.score_fmt = Score.points
+            if not hasattr(w, '_fullname'):
+                w._fullname = None
+                w.tblink = add_sr("/s/"+quote(w.url))
+                submit_url_options = dict(url  = _force_unicode(w.url),
+                                          then = 'tb')
+                if w.title:
+                    submit_url_options['title'] = _force_unicode(w.title)
+                w.submit_url = add_sr('/submit' +
+                                         query_string(submit_url_options))
+            else:
+                w.tblink = add_sr("/tb/"+w._id36)
+    
+                w.upstyle = "mod" if w.likes else ""
+                w.downstyle = "mod" if w.likes is False else ""
+            if not c.user_is_loggedin:
+                w.loginurl = add_sr("/login?dest="+quote(w.tblink))
+        # run to set scores with current score format (for example)
+        Printable.add_props(user, nonempty)
+
+
+
+class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', subreddits = (),
                  then = 'comments'):
@@ -1059,34 +1075,37 @@ class NewLink(Wrapped):
         else:
             self.default_sr = c.site.name
 
-        Wrapped.__init__(self, captcha = captcha, url = url,
+        Templated.__init__(self, captcha = captcha, url = url,
                          title = title, subreddits = subreddits,
                          then = then)
 
-class ShareLink(Wrapped):
+class ShareLink(CachedTemplate):
     def __init__(self, link_name = "", emails = None):
-        captcha = Captcha() if c.user.needs_captcha() else None
-        Wrapped.__init__(self, link_name = link_name,
-                         emails = c.user.recent_share_emails(),
-                         captcha = captcha)
+        self.captcha = c.user.needs_captcha()
+        self.email = getattr(c.user, 'email', "")
+        self.username = c.user.name
+        Templated.__init__(self, link_name = link_name,
+                           emails = c.user.recent_share_emails())
 
-class Share(Wrapped):
+        
+
+class Share(Templated):
     pass
 
-class Mail_Opt(Wrapped):
+class Mail_Opt(Templated):
     pass
 
-class OptOut(Wrapped):
+class OptOut(Templated):
     pass
 
-class OptIn(Wrapped):
+class OptIn(Templated):
     pass
 
 
-class UserStats(Wrapped):
+class UserStats(Templated):
     """For drawing the stats page, which is fetched from the cache."""
     def __init__(self):
-        Wrapped.__init__(self)
+        Templated.__init__(self)
         cache_stats = cache.get('stats')
         if cache_stats:
             top_users, top_day, top_week = cache_stats
@@ -1105,38 +1124,46 @@ class UserStats(Wrapped):
             self.top_users = self.top_day = self.top_week = ()
 
 
-class ButtonEmbed(Wrapped):
+class ButtonEmbed(Templated):
     """Generates the JS wrapper around the buttons for embedding."""
-    def __init__(self, button = None, width = 100, height=100, referer = "", url = ""):
-        Wrapped.__init__(self, button = button, width = width, height = height,
-                         referer=referer, url = url)
+    def __init__(self, button = None, width = 100,
+                 height=100, referer = "", url = "", **kw):
+        Templated.__init__(self, button = button,
+                           width = width, height = height,
+                           referer=referer, url = url, **kw)
         
-class ButtonLite(Wrapped):
-    """Generates the JS wrapper around the buttons for embedding."""
-    def __init__(self, image = None, link = None, url = "", styled = True, target = '_top'):
-        Wrapped.__init__(self, image = image, link = link, url = url, styled = styled, target = target)
-
 class Button(Wrapped):
-    """the voting buttons, embedded with the ButtonEmbed wrapper, shown on /buttons"""
+    cachable = True
     extension_handling = False
-    def __init__(self, link = None, button = None, css=None, 
-                 url = None, title = '', score_fmt = None, vote = True, target = "_parent", 
-                 bgcolor = None, width = 100):
-        Wrapped.__init__(self, link = link, score_fmt = score_fmt,
-                         likes = link.likes if link else None, 
-                         button = button, css = css, url = url, title = title, 
-                         vote = vote, target = target, bgcolor=bgcolor, width=width)
+    def __init__(self, link, **kw):
+        Wrapped.__init__(self, link, **kw)
+        if link is None:
+            self.add_props(c.user, [self])
+            
+    
+    @classmethod
+    def add_props(cls, user, wrapped):
+        # unlike most wrappers we can guarantee that there is a link
+        # that this wrapper is wrapping.
+        Link.add_props(user, [w for w in wrapped if hasattr(w, "_fullname")])
+        for w in wrapped:
+            if not hasattr(w, '_fullname'):
+                w._fullname = None
+
+class ButtonLite(Button):
+    pass
+            
 
 class ButtonNoBody(Button):
     """A button page that just returns the raw button for direct embeding"""
     pass
 
-class ButtonDemoPanel(Wrapped):
+class ButtonDemoPanel(Templated):
     """The page for showing the different styles of embedable voting buttons"""
     pass
 
 
-class Feedback(Wrapped):
+class Feedback(Templated):
     """The feedback and ad inquery form(s)"""
     def __init__(self, title, action):
         email = name = ''
@@ -1148,7 +1175,7 @@ class Feedback(Wrapped):
         if not c.user_is_loggedin or c.user.needs_captcha():
             captcha = Captcha()
 
-        Wrapped.__init__(self,
+        Templated.__init__(self,
                          captcha = captcha,
                          title = title,
                          action = action,
@@ -1156,15 +1183,15 @@ class Feedback(Wrapped):
                          name = name)
 
 
-class WidgetDemoPanel(Wrapped):
+class WidgetDemoPanel(Templated):
     """Demo page for the .embed widget."""
     pass
 
-class Socialite(Wrapped):
+class Socialite(Templated):
     """Demo page for the socialite Firefox extension"""
     pass
 
-class Bookmarklets(Wrapped):
+class Bookmarklets(Templated):
     """The bookmarklets page."""
     def __init__(self, buttons=None):
         if buttons is None:
@@ -1173,35 +1200,35 @@ class Bookmarklets(Wrapped):
             # unathorised cname. See toolbar.py:GET_s for discussion
             if not (c.cname and c.site.domain not in g.authorized_cnames):
                 buttons.insert(0, "reddit toolbar")
-        Wrapped.__init__(self, buttons = buttons)
+        Templated.__init__(self, buttons = buttons)
 
 
 
-class AdminTranslations(Wrapped):
+class AdminTranslations(Templated):
     """The translator control interface, used for determining which
     user is allowed to edit which translation file and for providing a
     summary of what translation files are done and/or in use."""
     def __init__(self):
         from r2.lib.translation import list_translations
-        Wrapped.__init__(self)
+        Templated.__init__(self)
         self.translations = list_translations()
         
 
-class Embed(Wrapped):
+class Embed(Templated):
     """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
     def __init__(self,content = ''):
-        Wrapped.__init__(self, content = content)
+        Templated.__init__(self, content = content)
 
 
-class Page_down(Wrapped):
+class Page_down(Templated):
     def __init__(self, **kw):
         message = kw.get('message', _("This feature is currently unavailable. Sorry"))
-        Wrapped.__init__(self, message = message)
+        Templated.__init__(self, message = message)
 
 # Classes for dealing with friend/moderator/contributor/banned lists
 
 
-class UserTableItem(Wrapped):
+class UserTableItem(Templated):
     """A single row in a UserList of type 'type' and of name
     'container_name' for a given user.  The provided list of 'cells'
     will determine what order the different columns are rendered in.
@@ -1211,12 +1238,12 @@ class UserTableItem(Wrapped):
         self.user, self.type, self.cells = user, type, cellnames
         self.container_name = container_name
         self.editable       = editable
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
     def __repr__(self):
         return '<UserTableItem "%s">' % self.user.name
 
-class UserList(Wrapped):
+class UserList(Templated):
     """base class for generating a list of users"""    
     form_title     = ''
     table_title    = ''
@@ -1227,7 +1254,7 @@ class UserList(Wrapped):
 
     def __init__(self, editable = True):
         self.editable = editable
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
     def user_row(self, user):
         """Convenience method for constructing a UserTableItem
@@ -1329,10 +1356,10 @@ class DetailsPage(LinkInfoPage):
         from admin_pages import Details
         return self.content_stack((self.link_listing, Details(link = self.link)))
 
-class Cnameframe(Wrapped):
+class Cnameframe(Templated):
     """The frame page."""
     def __init__(self, original_path, subreddit, sub_domain):
-        Wrapped.__init__(self, original_path=original_path)
+        Templated.__init__(self, original_path=original_path)
         if sub_domain and subreddit and original_path:
             self.title = "%s - %s" % (subreddit.title, sub_domain)
             u = UrlParser(subreddit.path + original_path)
@@ -1344,7 +1371,7 @@ class Cnameframe(Wrapped):
             self.title = ""
             self.frame_target = None
 
-class FrameBuster(Wrapped):
+class FrameBuster(Templated):
     pass
 
 class PromotePage(Reddit):
@@ -1366,37 +1393,31 @@ class PromotePage(Reddit):
         Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
 
 
-class PromotedLinks(Wrapped):
+class PromotedLinks(Templated):
     def __init__(self, current_list, *a, **kw):
         self.things = current_list
         
         self.recent =  dict(load_summary("thing"))
 
         if self.recent:
-            from r2.models import Link
-            # TODO: temp hack until we find place for builder_wrapper
-            from r2.controllers.listingcontroller import ListingController
-            builder = IDBuilder(self.recent.keys(),
-                                wrap = ListingController.builder_wrapper)
-            link_listing = LinkListing(builder, nextprev=False).listing()
-
-            for t in link_listing.things:
+            link_listing = wrap_links(self.recent.keys())
+            for t in link_listing:
                 self.recent[t._fullname].insert(0, t)
 
             self.recent = self.recent.values()
             self.recent.sort(key = lambda x: x[0]._date)
-        Wrapped.__init__(self, datefmt = datefmt, *a, **kw)
+        Templated.__init__(self, datefmt = datefmt, *a, **kw)
 
-class PromoteLinkForm(Wrapped):
+class PromoteLinkForm(Templated):
     def __init__(self, sr = None, link = None, listing = '',
                  timedeltatext = '', *a, **kw):
-        Wrapped.__init__(self, sr = sr, link = link,
+        Templated.__init__(self, sr = sr, link = link,
                          datefmt = datefmt,
                          timedeltatext = timedeltatext,
                          listing = listing,
                          *a, **kw)
 
-class TabbedPane(Wrapped):
+class TabbedPane(Templated):
     def __init__(self, tabs):
         """Renders as tabbed area where you can choose which tab to
         render. Tabs is a list of tuples (tab_name, tab_pane)."""
@@ -1407,15 +1428,14 @@ class TabbedPane(Wrapped):
         self.tabmenu = JsNavMenu(buttons, type = 'tabpane')
         self.tabs = tabs
 
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
-class LinkChild(Wrapped):
+class LinkChild(object):
     def __init__(self, link, load = False, expand = False, nofollow = False):
         self.link = link
         self.expand = expand
         self.load = load or expand
         self.nofollow = nofollow
-        Wrapped.__init__(self)
     
     def content(self):
         return ''
@@ -1431,15 +1451,13 @@ class SelfTextChild(LinkChild):
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow)
-        #have to force the render style to html for now cause of some
-        #c.render_style weirdness
-        return u.render(style = 'html')
+        return u.render()
 
-class SelfText(Wrapped):
+class SelfText(Templated):
     def __init__(self, link):
-        Wrapped.__init__(self, link = link)
+        Templated.__init__(self, link = link)
 
-class UserText(Wrapped):
+class UserText(CachedTemplate):
     def __init__(self,
                  item,
                  text = '',
@@ -1459,23 +1477,20 @@ class UserText(Wrapped):
         if extra_css:
             css_class += " " + extra_css
 
-        Wrapped.__init__(self,
-                         item = item,
-                         text = text,
-                         have_form = have_form,
-                         editable = editable,
-                         creating = creating,
-                         nofollow = nofollow,
-                         target = target,
-                         display = display,
-                         post_form = post_form,
-                         cloneable = cloneable,
-                         css_class = css_class)
+        CachedTemplate.__init__(self,
+                                fullname = item._fullname if item else "", 
+                                text = text,
+                                have_form = have_form,
+                                editable = editable,
+                                creating = creating,
+                                nofollow = nofollow,
+                                target = target,
+                                display = display,
+                                post_form = post_form,
+                                cloneable = cloneable,
+                                css_class = css_class)
 
-    def button(self):
-        pass
-        
-class Traffic(Wrapped):
+class Traffic(Templated):
     @staticmethod
     def slice_traffic(traffic, *indices):
         return [[a] + [b[i] for i in indices] for a, b in traffic]
@@ -1525,7 +1540,7 @@ class PromotedTraffic(Traffic):
                                                          cli_total))
         else:
             self.imp_graph = self.cli_graph = None
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
 class RedditTraffic(Traffic):
     """
@@ -1579,7 +1594,7 @@ class RedditTraffic(Traffic):
                 uni_by_day[d.weekday()].append(float(uniques[i]))
             self.uniques_by_dow     = [sum(x)/len(x) for x in uni_by_day]
             self.impressions_by_dow = [sum(x)/len(x) for x in imp_by_day]
-        Wrapped.__init__(self)
+        Templated.__init__(self)
 
     def reddits_summary(self):
         if c.default_sr:
@@ -1633,7 +1648,6 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
-class InnerToolbarFrame(Wrapped):
+class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
-        Wrapped.__init__(self, link = link, expanded = expanded)
-
+        Templated.__init__(self, link = link, expanded = expanded)

@@ -34,7 +34,7 @@
 <%def name="Child()">
   %if hasattr(thing, "child"):
     <div id="child_${thing._fullname}" class="child">
-     ${hasattr(thing, "child") and thing.child.render() or ''}
+     ${thing.child}
     </div>
   %endif
 </%def>

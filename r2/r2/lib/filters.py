@@ -24,6 +24,7 @@ from pylons import c
 import cgi
 import urllib
 import re
+from wrapped import Templated, CacheStub
 
 SC_OFF = "<!-- SC_OFF -->"
 SC_ON = "<!-- SC_ON -->"
@@ -75,6 +76,8 @@ class _Unsafe(unicode): pass
 def _force_unicode(text):
     try:
         text = unicode(text, 'utf-8')
+    except UnicodeDecodeError:
+        text = unicode(text, 'latin1')
     except TypeError:
         text = unicode(text)
     return text
@@ -91,6 +94,12 @@ def websafe_json(text=""):
 def mako_websafe(text = ''):
     if text.__class__ == _Unsafe:
         return text
+    elif isinstance(text, Templated):
+        return _Unsafe(text.render())
+    elif isinstance(text, CacheStub):
+        return _Unsafe(text)
+    elif text is None:
+        return ""
     elif text.__class__ != unicode:
         text = _force_unicode(text)
     return c_websafe(text)

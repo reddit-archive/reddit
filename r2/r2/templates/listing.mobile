@@ -25,7 +25,7 @@
 
 <ul>
 %for a in thing.things:
-  ${a.render()}
+  ${a}
 %endfor:
 </ul>
 

@@ -20,16 +20,16 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
-from r2.lib.jsontemplates import is_api
 from filters import unsafe, websafe
-from r2.lib.utils import vote_hash, UrlParser
+from r2.lib.utils import vote_hash, UrlParser, timesince
 
 from mako.filters import url_escape
 import simplejson
 import os.path
 from copy import copy
 import random
-from pylons import i18n, g, c
+from pylons import g, c
+from pylons.i18n import _, ungettext
 
 def static(file):
     """
@@ -76,7 +76,6 @@ def class_dict():
     res = ', '.join(classes)
     return unsafe('{ %s }' % res)
 
-
 def path_info():
     loc = dict(path = request.path,
                params = dict(request.get))
@@ -84,82 +83,86 @@ def path_info():
     return unsafe(simplejson.dumps(loc))
     
 
-def replace_render(listing, item, style = None, display = True):
-    style = style or c.render_style or 'html'
-    rendered_item = item.render(style = style)
 
-    # for string rendered items
-    def string_replace(x, y):
-        return rendered_item.replace(x, y)
-
-    # for JSON responses
-    def dict_replace(x, y):
-        try:
-            res = rendered_item['data']['content']
-            rendered_item['data']['content'] = res.replace(x, y)
-        except AttributeError:
-            pass
-        except TypeError:
-            pass
-        return rendered_item
-
-    if is_api():
-        child_txt = ""
-    else:
-        child_txt = ( hasattr(item, "child") and item.child )\
-                    and item.child.render(style = style) or ""
-
-    # handle API calls differently from normal request: dicts not strings are passed around
-    if isinstance(rendered_item, dict):
-        replace_fn = dict_replace
-        try:
-            rendered_item['data']['child'] = child_txt
-        except AttributeError:
-            pass
-        except TypeError:
-            pass
-    else:
-        replace_fn = string_replace
-        rendered_item = replace_fn(u"$child", child_txt)
-
-    #only LinkListing has a show_nums attribute
-    if listing: 
-        if hasattr(listing, "show_nums"):
-            if listing.show_nums:
-                num_str = str(item.num) 
-                if hasattr(listing, "num_margin"):
-                    num_margin = listing.num_margin
-                else:
-                    num_margin = "%.2fex" % (len(str(listing.max_num))*1.1)
-            else:
-                num_str = ''
-                num_margin = "0px"
+def replace_render(listing, item, render_func):
+    def _replace_render(style = None, display = True):
+        """
+        A helper function for listings to set uncachable attributes on a
+        rendered thing (item) to its proper display values for the current
+        context.
+        """
+        style = style or c.render_style or 'html'
+        replacements = {}
     
-            rendered_item = replace_fn(u"$numcolmargin", num_margin)
-            rendered_item = replace_fn(u"$num", num_str)
-
-        if hasattr(listing, "max_score"):
-            mid_margin = len(str(listing.max_score)) 
-            if hasattr(listing, "mid_margin"):
-                mid_margin = listing.mid_margin
-            elif mid_margin == 1:
-                mid_margin = "15px"
+        child_txt = ( hasattr(item, "child") and item.child )\
+            and item.child.render(style = style) or ""
+        replacements["childlisting"] = child_txt
+        
+    
+        #only LinkListing has a show_nums attribute
+        if listing: 
+            if hasattr(listing, "show_nums"):
+                if listing.show_nums:
+                    num_str = str(item.num) 
+                    if hasattr(listing, "num_margin"):
+                        num_margin = str(listing.num_margin)
+                    else:
+                        num_margin = "%.2fex" % (len(str(listing.max_num))*1.1)
+                else:
+                    num_str = ''
+                    num_margin = "0px"
+    
+                replacements["numcolmargin"] = num_margin
+                replacements["num"] = num_str
+    
+            if hasattr(listing, "max_score"):
+                mid_margin = len(str(listing.max_score)) 
+                if hasattr(listing, "mid_margin"):
+                    mid_margin = str(listing.mid_margin)
+                elif mid_margin == 1:
+                    mid_margin = "15px"
+                else:
+                    mid_margin = "%dex" % (mid_margin+1)
+    
+                replacements["midcolmargin"] = mid_margin
+    
+            #$votehash is only present when voting arrows are present
+            if c.user_is_loggedin:
+                replacements['votehash'] = vote_hash(c.user, item,
+                                                     listing.vote_hash_type)
+        if hasattr(item, "num_comments"):
+            if not item.num_comments:
+                # generates "comment" the imperative verb
+                com_label = _("comment {verb}")
+                com_cls = 'comments empty'
             else:
-                mid_margin = "%dex" % (mid_margin+1)
+                # generates "XX comments" as a noun
+                com_label = ungettext("comment", "comments", item.num_comments)
+                com_label = strings.number_label % dict(num=item.num_comments,
+                                                        thing=com_label)
+                com_cls = 'comments'
+            replacements['numcomments'] = com_label
+            replacements['commentcls'] = com_cls
+    
+        replacements['display'] =  "" if display else "style='display:none'"
+    
+        if hasattr(item, "render_score"):
+            # replace the score stub
+            (replacements['scoredislikes'],
+             replacements['scoreunvoted'],
+             replacements['scorelikes'])  = item.render_score
+    
+        # compute the timesince here so we don't end up caching it
+        if hasattr(item, "_date"):
+            replacements['timesince'] = timesince(item._date)
 
-            rendered_item = replace_fn(u"$midcolmargin", mid_margin)
-
-        # TODO: one of these things is not like the other.  We should & ->
-        # $ elsewhere as it plays nicer with the websafe filter.
-        rendered_item = replace_fn(u"$ListClass", listing._js_cls)
-
-        #$votehash is only present when voting arrows are present
-        if c.user_is_loggedin and u'$votehash' in rendered_item:
-            hash = vote_hash(c.user, item, listing.vote_hash_type)
-            rendered_item = replace_fn(u'$votehash', hash)
-            
-    rendered_item = replace_fn(u"$display", "" if display else "style='display:none'")
-    return rendered_item
+        renderer = render_func or item.render
+        res = renderer(style = style, **replacements)
+        if isinstance(res, (str, unicode)):
+            return unsafe(res)
+        return res
+                          
+    return _replace_render
 
 def get_domain(cname = False, subreddit = True, no_www = False):
     """
@@ -181,15 +184,19 @@ def get_domain(cname = False, subreddit = True, no_www = False):
        the trailing path).
 
     """
+    # locally cache these lookups as this gets run in a loop in add_props
     domain = g.domain
-    if not no_www and g.domain_prefix:
-        domain = g.domain_prefix + "." + g.domain
-    if cname and c.cname and c.site.domain:
-        domain = c.site.domain
+    domain_prefix = g.domain_prefix
+    site  = c.site
+    ccname = c.cname
+    if not no_www and domain_prefix:
+        domain = domain_prefix + "." + domain
+    if cname and ccname and site.domain:
+        domain = site.domain
     if hasattr(request, "port") and request.port:
         domain += ":" + str(request.port)
-    if (not c.cname or not cname) and subreddit:
-        domain += c.site.path.rstrip('/')
+    if (not ccname or not cname) and subreddit:
+        domain += site.path.rstrip('/')
     return domain
 
 def dockletStr(context, type, browser):
@@ -241,6 +248,9 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
 
      * sr_path: if a cname is not used for the domain, updates the
        path to include c.site.path.
+
+    For caching purposes: note that this function uses:
+      c.cname, c.render_style, c.site.name
     """
     # don't do anything if it is just an anchor
     if path.startswith('#') or path.startswith('javascript:'):
@@ -289,7 +299,7 @@ def choose_width(link, width):
     if width:
         return width - 5
     else:
-        if link:
+        if hasattr(link, "_ups"):
             return 100 + (10 * (len(str(link._ups - link._downs))))
         else:
             return 110

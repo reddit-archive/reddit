@@ -43,7 +43,7 @@
   <table>
     %if thing.users:
       %for item in thing.users:
-        ${item.render()}
+        ${item}
       %endfor
     %else:
       <tr><td></td></tr>

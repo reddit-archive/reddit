@@ -24,6 +24,7 @@ from __future__ import with_statement
 from r2.models import *
 from r2.lib.utils import sanitize_url, domain, randstr
 from r2.lib.strings import string_dict
+from r2.lib.pages.things import wrap_links
 
 from pylons import g, c
 from pylons.i18n import _
@@ -332,38 +333,14 @@ def find_preview_links(sr):
     return links
 
 def rendered_link(links, media, compress):
-    from pylons.controllers.util import abort
-    from r2.controllers import ListingController
-
-    try:
-        render_style    = c.render_style
-
-        c.render_style = 'html'
-
-        with c.user.safe_set_attr:
-            c.user.pref_compress = compress
-            c.user.pref_media    = media
-
-            b = IDBuilder([l._fullname for l in links],
-                          num = 1, wrap = ListingController.builder_wrapper)
-            return LinkListing(b, nextprev=False,
-                               show_nums=True).listing().render(style='html')
-    finally:
-        c.render_style = render_style
+    with c.user.safe_set_attr:
+        c.user.pref_compress = compress
+        c.user.pref_media    = media
+        links = wrap_links(links, show_nums = True, num = 1)
+        return links.render(style = "html")
 
 def rendered_comment(comments):
-    try:
-        render_style    = c.render_style
-
-        c.render_style = 'html'
-
-        b = IDBuilder([x._fullname for x in comments],
-                      num = 1)
-        return LinkListing(b, nextprev=False,
-                        show_nums=False).listing().render(style='html')
-        
-    finally:
-        c.render_style = render_style
+    return wrap_links(comments, num = 1).render(style = "html")
 
 class BadImage(Exception): pass
 

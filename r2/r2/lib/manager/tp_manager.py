@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-import pylons
+import pylons, sha
 from mako.template import Template as mTemplate
 from mako.exceptions import TemplateLookupException
 from r2.lib.filters import websafe, unsafe
@@ -67,6 +67,11 @@ class tp_manager:
                     template = _loader.load_template(self.templates[key])
                     if cache:
                         self.templates[key] = template
+                        # also store a hash for the template
+                        if (not hasattr(template, "hash") and
+                            hasattr(template, "filename")):
+                            with open(template.filename, 'r') as handle:
+                                template.hash = sha.new(handle.read()).hexdigest()
                         # cache also for the base class so
                         # introspection is not required on subsequent passes
                         if key != top_key:
@@ -78,3 +83,4 @@ class tp_manager:
         if not template or not isinstance(template, self.Template):
             raise AttributeError, ("template doesn't exist for %s" % str(top_key))
         return template
+

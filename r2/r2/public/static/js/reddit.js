@@ -281,6 +281,7 @@ function share(elem) {
     $(elem).new_thing_child($(".sharelink:first").clone(true)
                             .attr("id", "sharelink_" + $(elem).thing_id()),
                              false);
+    $.request("new_captcha");
 };
 
 function cancelShare(elem) {
@@ -887,7 +888,6 @@ function reply(elem) {
     //update the cancel button to call the toggle button's click
     form.find(".cancel").get(0).onclick = function() {form.hide()};
 }
-
 
 function populate_click_gadget() {
     /* if we can find the click-gadget, populate it */

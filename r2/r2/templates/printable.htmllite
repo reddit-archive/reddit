@@ -39,7 +39,7 @@ ${self.Child()}
 </%def>
 
 <%def name="Child()">
-  ${hasattr(thing, "child") and thing.child.render() or ''}
+  ${getattr(thing, "child", '')}
 </%def>
 
 <%def name="entry()">

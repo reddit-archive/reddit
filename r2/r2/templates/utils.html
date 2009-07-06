@@ -114,6 +114,13 @@ ${first_defined(kw[1:])}
 </%def>
 
 <%def name="plain_link(link_text, path, _sr_path = True, nocname=False, fmt='', target='', **kw)">
+  ## caching comment: 
+  ##  in addition to the args, this function also makes use of c.cname, 
+  ##  and, via add_sr, both c.site.name and c.render_style. 
+  ##
+  ##  This function is called by (among other places) NavMenu as the
+  ##  primary rendering view.  Any changes to the c-usage of this function 
+  ##  will have to be propagated up. 
   <% 
      if (not target or target == '_parent') and c.cname:
          target = '_top'
@@ -122,7 +129,9 @@ ${first_defined(kw[1:])}
      if target:
          kw['target'] = target
 
-     link = _a_buffered(link_text, href=add_sr(path, sr_path=_sr_path, nocname=nocname), **kw) 
+     link = _a_buffered(link_text, 
+                        href=add_sr(path, sr_path=_sr_path, nocname=nocname), 
+                        **kw) 
   %>
 
   ${unsafe((fmt % link) if fmt else link)}

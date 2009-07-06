@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from utils import to36, tup, iters
-from wrapped import Wrapped
+from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable
 from mako.template import Template
 from r2.lib.filters import spaceCompress, safemarkdown
 import time, pytz
@@ -42,11 +42,34 @@ def make_typename(typ):
 def make_fullname(typ, _id):
     return '%s_%s' % (make_typename(typ), to36(_id))
 
+
+class ObjectTemplate(StringTemplate):
+    def __init__(self, d):
+        self.d = d
+    
+    def update(self, kw):
+        def _update(obj):
+            if isinstance(obj, (str, unicode)):
+                return spaceCompress(StringTemplate(obj).finalize(kw))
+            elif isinstance(obj, dict):
+                return dict((k, _update(v)) for k, v in obj.iteritems())
+            elif isinstance(obj, (list, tuple)):
+                return map(_update, obj)
+            elif isinstance(obj, CacheStub) and kw.has_key(obj.name):
+                return kw[obj.name]
+            else:
+                return obj
+        res = _update(self.d)
+        return ObjectTemplate(res)
+
+    def finalize(self, kw = {}):
+        return self.update(kw).d
+    
 class JsonTemplate(Template):
     def __init__(self): pass
 
     def render(self, thing = None, *a, **kw):
-        return {}
+        return ObjectTemplate({})
 
 class TableRowTemplate(JsonTemplate):
     def cells(self, thing):
@@ -59,15 +82,15 @@ class TableRowTemplate(JsonTemplate):
         return ""
 
     def render(self, thing = None, *a, **kw):
-        return {"id": self.css_id(thing),
-                "css_class": self.css_class(thing),
-                "cells": self.cells(thing)}
+        return ObjectTemplate(dict(id = self.css_id(thing),
+                                   css_class = self.css_class(thing),
+                                   cells = self.cells(thing)))
 
 class UserItemJsonTemplate(TableRowTemplate):
     def cells(self, thing):
         cells = []
         for cell in thing.cells:
-            r = Wrapped.part_render(thing, 'cell_type', cell)
+            r = Templated.part_render(thing, 'cell_type', cell)
             cells.append(spaceCompress(r))
         return cells
 
@@ -90,18 +113,6 @@ class ThingJsonTemplate(JsonTemplate):
         d.update(kw)
         return d
     
-    def points(self, wrapped):
-        """
-        Generates the JS-style point triplet for votable elements
-        (stored on the vl var on the JS side).
-        """
-        score = wrapped.score
-        likes = wrapped.likes
-        base_score = score-1 if likes else score if likes is None else score+1
-        base_score = [base_score + x for x in range(-1, 2)]
-        return [wrapped.score_fmt(s) for s in base_score]
-        
-    
     def kind(self, wrapped):
         """
         Returns a string literal which identifies the type of this
@@ -122,31 +133,18 @@ class ThingJsonTemplate(JsonTemplate):
 
          * id : Thing _fullname of thing.
          * content : rendered  representation of the thing by
-           calling replace_render on it using the style of get_api_subtype().
+           calling render on it using the style of get_api_subtype().
         """
-        from r2.lib.template_helpers import replace_render
-        listing = thing.listing if hasattr(thing, "listing") else None
-        return dict(id = thing._fullname,
-                    content = spaceCompress(
-                        replace_render(listing, thing,
-                                       style=get_api_subtype())))
-
+        res =  dict(id = thing._fullname,
+                    content = thing.render(style=get_api_subtype()))
+        return res
+        
     def raw_data(self, thing):
         """
         Complement to rendered_data.  Called when a dictionary of
         thing data attributes is to be sent across the wire.
         """
-        def strip_data(x):
-            if isinstance(x, dict):
-                return dict((k, strip_data(v)) for k, v in x.iteritems())
-            elif isinstance(x, iters):
-                return [strip_data(y) for y in x]
-            elif isinstance(x, Wrapped):
-                return x.render()
-            else:
-                return x
-        
-        return dict((k, strip_data(self.thing_attr(thing, v)))
+        return dict((k, self.thing_attr(thing, v))
                     for k, v in self._data_attrs_.iteritems())
             
     def thing_attr(self, thing, attr):
@@ -162,7 +160,9 @@ class ThingJsonTemplate(JsonTemplate):
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
             return time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
-        return getattr(thing, attr) if hasattr(thing, attr) else None
+        elif attr == "child":
+            return CachedVariable("childlisting")
+        return getattr(thing, attr, None)
 
     def data(self, thing):
         if get_api_subtype():
@@ -171,7 +171,8 @@ class ThingJsonTemplate(JsonTemplate):
             return self.raw_data(thing)
         
     def render(self, thing = None, action = None, *a, **kw):
-        return dict(kind = self.kind(thing), data = self.data(thing))
+        return ObjectTemplate(dict(kind = self.kind(thing),
+                                   data = self.data(thing)))
         
 class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "score",
@@ -244,26 +245,17 @@ class CommentJsonTemplate(ThingJsonTemplate):
         return make_typename(Comment)
 
     def rendered_data(self, wrapped):
-        from r2.models import Comment, Link
-        try:
-            parent_id = wrapped.parent_id
-        except AttributeError:
-            parent_id = make_fullname(Link, wrapped.link_id)
-        else:
-            parent_id = make_fullname(Comment, parent_id)
         d = ThingJsonTemplate.rendered_data(self, wrapped)
+        d['replies'] = self.thing_attr(wrapped, 'child')
         d['contentText'] = self.thing_attr(wrapped, 'body')
         d['contentHTML'] = self.thing_attr(wrapped, 'body_html')
-        d['parent'] = parent_id
-        d['link'] = make_fullname(Link, wrapped.link_id)
+        d['link'] = self.thing_attr(wrapped, 'link_id')
+        d['parent'] = self.thing_attr(wrapped, 'parent_id')
         return d
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
     _data_attrs_ = dict(id           = "_id36",
                         name         = "_fullname")
-    def points(self, wrapped):
-        return []
-
     def kind(self, wrapped):
         return "more"
 
@@ -303,12 +295,14 @@ class MessageJsonTemplate(ThingJsonTemplate):
             parent_id = make_fullname(Message, parent_id)
         d = ThingJsonTemplate.rendered_data(self, wrapped)
         d['parent'] = parent_id
+        d['contentText'] = self.thing_attr(wrapped, 'body')
+        d['contentHTML'] = self.thing_attr(wrapped, 'body_html')
         return d
 
 
 class RedditJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
-        return thing.content().render() if thing else {}
+        return ObjectTemplate(thing.content().render() if thing else {})
 
 class PanestackJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
@@ -316,35 +310,33 @@ class PanestackJsonTemplate(JsonTemplate):
         res = [x for x in res if x]
         if not res:
             return {}
-        return res if len(res) > 1 else res[0] 
+        return ObjectTemplate(res if len(res) > 1 else res[0] )
 
 class NullJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
-        return None
+        return ""
 
 class ListingJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(children = "things")
     
-    def points(self, w):
-        return []
+    def thing_attr(self, thing, attr):
+        if attr == "things":
+            res = []
+            for a in thing.things:
+                a.childlisting = False
+                r = a.render()
+                if isinstance(r, str):
+                    r = spaceCompress(r)
+                res.append(r)
+            return res
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
+        
 
     def rendered_data(self, thing):
-        from r2.lib.template_helpers import replace_render
-        res = []
-        for a in thing.things:
-            a.listing = thing
-            r = replace_render(thing, a, style = 'api')
-            if isinstance(r, str):
-                r = spaceCompress(r)
-            res.append(r)
-        return res
+        return self.thing_attr(thing, "things")
     
     def kind(self, wrapped):
         return "Listing"
-
-    def render(self, *a, **kw):
-        res = ThingJsonTemplate.render(self, *a, **kw)
-        return res
 
 class OrganicListingJsonTemplate(ListingJsonTemplate):
     def kind(self, wrapped):
@@ -357,4 +349,4 @@ class TrafficJsonTemplate(JsonTemplate):
             if hasattr(thing, ival + "_data"):
                 res[ival] = [[time.mktime(date.timetuple())] + list(data)
                              for date, data in getattr(thing, ival+"_data")]
-        return res
+        return ObjectTemplate(res)

@@ -28,7 +28,7 @@
 <%inherit file="printable.htmllite" />
 
 <%def name="parent()">
-%if isBlog:
+%if c.profilepage:
 <small>
 <a href="${thing.ancestor.url}">${thing.ancestor.titleprefix}${thing.ancestor.title}</a></small><br \>
 %endif

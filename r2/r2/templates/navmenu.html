@@ -23,6 +23,9 @@
 <%namespace file="utils.html" import="plain_link, text_with_links, img_link, separator"/>
 
 <%def name="dropdown()">
+  ## caching comment:
+  ##  see caching comment for plain_link.  In addition to the args, 
+  ##  this function depends on c.site.name, c.render_style and c.cname.
   <% css_class = str(thing.css_class) if thing.css_class else "" %>
   %if thing:
     %if thing.title and thing.selected:
@@ -69,16 +72,15 @@
            ##option.title isn't the title, option.render() is the entire link
            if option == thing.selected:
              class_name = "class='selected'"
-             content = option.render(selected=True)
+             option.selected = True                                           
            else:
              class_name = ""
-             content = option.render()
         %>
         <li ${class_name}>
           %if i > 0:
             ${separator(thing.separator)}
           %endif
-          ${content}
+          ${option}
         </li>
       %endfor
     </ul>
@@ -102,7 +104,7 @@
         %if option == thing.selected:
           <li class="selected ${cls}">${option.selected_title()}</li>
         %else:
-          <li class="${cls}">${option.render()}</li>
+          <li class="${cls}">${option}</li>
         %endif
       %endfor
     </ul>
@@ -116,10 +118,10 @@
         ${"id='%s'" % thing._id if thing._id else ""}>
       %for i, option in enumerate(thing):
         <%
-           selected = (option == thing.selected)
+           option.selected = (option == thing.selected)
         %>
-        <li ${"class='selected'" if selected else ""}>
-          ${option.render(selected = selected)}
+        <li ${"class='selected'" if option.selected else ""}>
+          ${option}
         </li>
       %endfor
     </ul>

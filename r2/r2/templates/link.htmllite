@@ -31,21 +31,10 @@
 <%def name="entry()">
 <% 
    from r2.lib.strings import Score
-   if thing.num_comments:
-       # generates "XX comments" as a noun
-       com_label = "%d %s" % \
-             (thing.num_comments,
-              ungettext("comment", "comments", thing.num_comments))
-   else:
-       # generates "comment" the imperative verb
-       com_label = _("comment") 
-
    domain = get_domain(subreddit=False)
    permalink = "http://%s%s" % (domain, thing.permalink)
    expanded = request.get.get("expanded")
    two_col = request.get.has_key("twocolumn") if l else False
-
-   thing.score_fmt = Score.safepoints
  %>
   ${self.arrows(thing)}
   <div class="reddit-entry entry ${thing.like_cls}" 
@@ -84,7 +73,7 @@
       %endif
       <a class="reddit-comment-link"
          ${optionalstyle("color:gray")}
-         href="${permalink}">${com_label}</a>
+         href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>
   <div class="reddit-link-end" ${optionalstyle("clear:left; padding:3px;")}>

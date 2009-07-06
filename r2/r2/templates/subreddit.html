@@ -26,8 +26,8 @@
    %>
 <%inherit  file="printable.html"/>
 
+<%namespace file="printablebuttons.html" import="toggle_button"/>
 <%namespace file="utils.html" import="plain_link"/>
-<%namespace file="printable.html" import="toggle_button"/>
 
 <%def name="numcol()">
 </%def>
@@ -47,10 +47,10 @@
   </p>
 %endif
 <p class="tagline">
-  ${tagline()}
+  ${self.tagline()}
 </p>
 <ul class="flat-list buttons">
-  ${buttons()}
+  ${self.buttons()}
 </ul>
 </%def>
 
@@ -106,10 +106,5 @@
 </%def>
 
 <%def name="child()">
-</%def>
-
-<%def name="buttons()">
-  ${parent.delete_or_report_buttons(delete=False)}
-  ${parent.buttons()}
 </%def>
 

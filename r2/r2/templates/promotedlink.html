@@ -24,6 +24,7 @@
 %>
 
 <%inherit file="link.html"/>
+<%namespace file="printablebuttons.html" import="ynbutton" />
 <%namespace file="utils.html" import="plain_link" />
 
 <%def name="tagline()">
@@ -36,7 +37,7 @@
                  _sr_path = False)}
   </li>
   <li>
-    ${self.ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
+    ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
   </li>
   %endif
 </%def>

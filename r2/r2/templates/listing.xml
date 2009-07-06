@@ -19,7 +19,6 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
 %for a in thing.things:
-  ${a.render()}
+  ${a}
 %endfor:

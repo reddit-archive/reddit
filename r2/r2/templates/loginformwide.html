@@ -30,13 +30,13 @@
 <% op = "login-main" %>
 <form method="post" 
       id="login_${op}" action="${add_sr('/post/login', nocname = True)}" 
-      %if not c.frameless_cname or c.authorized_cname:
+      %if thing.auth_cname:
         onsubmit="return post_user(this, 'login');"
       %else:
         onsubmit="return update_user(this);"
       %endif
       class="login-form-side">
-  %if c.cname:
+  %if thing.cname:
     <input type="hidden" name="${UrlParser.cname_get}" 
            value="${random.random()}" />
   %endif

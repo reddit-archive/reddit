@@ -27,11 +27,16 @@
 <%namespace file="buttontypes.html" import="submiturl" />
 
 <% 
-   domain = get_domain()
+    domain = get_domain()
+    if thing._fullname:
+        path = thing.make_permalink_slow()
+    else:
+        path = capture(submiturl, thing.url, thing.title)
 %>
 (function() {
-    var styled_submit = '<a style="color: #369; text-decoration: none;" href="${submiturl(thing.url)}" target="${thing.target}">';
-    var unstyled_submit = '<a href="${submiturl(thing.url)}" target="${thing.target}">';
+       
+    var styled_submit = '<a style="color: #369; text-decoration: none;" href="${path}" target="${thing.target}">';
+    var unstyled_submit = '<a href="${submiturl(thing.url)}" target="${path}">';
     var write_string='<span class="reddit_button" style="';
 %if thing.styled:    
     write_string += 'color: grey;';
@@ -40,8 +45,8 @@
 %if thing.image > 0:
     write_string += unstyled_submit + '<img style="height: 2.3ex; vertical-align:top; margin-right: 1ex" src="http://${get_domain(subreddit=False)}/static/spreddit${thing.image}.gif">' + "</a>";
 %endif
-%if thing.link:
-    write_string += '${Score.safepoints(thing.link.score)}';
+%if thing._fullname:
+    write_string += '${Score.safepoints(thing.score)}';
     %if thing.styled:  
         write_string += ' on ' + styled_submit + 'reddit</a>';
     %else:

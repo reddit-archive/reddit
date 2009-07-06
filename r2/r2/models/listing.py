@@ -54,38 +54,11 @@ class Listing(object):
 
     def get_items(self, *a, **kw):
         """Wrapper around builder's get_items that caches the rendering."""
+        from r2.lib.template_helpers import replace_render
         builder_items = self.builder.get_items(*a, **kw)
-
-        #render cache
-        #fn to render non-boring items
-        fullnames = {}
-        for i in self.builder.item_iter(builder_items):
-            rs = c.render_style
-            key = i.render_class.cache_key(i)
-            if key:
-                fullnames[key + rs + c.lang] = i
-
-        def render_items(names):
-            r = {}
-            for i in names:
-                item = fullnames[i]
-                r[i] = item.render()
-            return r
-
-        rendered_items = sgm(g.rendercache, fullnames, render_items, 'render_',
-                             time = g.page_cache_time)
-        #replace the render function
-        for k, v in rendered_items.iteritems():
-            def make_fn(v):
-                default = c.render_style
-                default_render = fullnames[k].render
-                def r(style = default):
-                    if style != c.render_style:
-                        return default_render(style = style)
-                    return v
-                return r
-            fullnames[k].render = make_fn(v)
-        
+        for item in self.builder.item_iter(builder_items):
+            # rewrite the render method 
+            item.render = replace_render(self, item, item.render)
         return builder_items
 
     def listing(self):
@@ -103,6 +76,9 @@ class Listing(object):
             self.next = (request.path + utils.query_string(p))
         #TODO: need name for template -- must be better way
         return Wrapped(self)
+
+    def __iter__(self):
+        return iter(self.things)
 
 class LinkListing(Listing):
     def __init__(self, *a, **kw):

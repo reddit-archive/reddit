@@ -22,4 +22,4 @@
 
 <%inherit file="base.xml"/>
 
-${thing.content().render()}
+${thing.content()}

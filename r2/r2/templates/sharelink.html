@@ -37,7 +37,7 @@
           </span>
         </th>
         <td>
-          <input class="real-name" value="${c.user.name}"
+          <input class="real-name" value="${thing.username}"
                  type="text" id="share_from_${thing.link_name}" 
                  name="share_from" />
         </td>
@@ -57,7 +57,7 @@
         <td>
           <input name="replyto" type="text" size="30"
                  id="replyto_${thing.link_name}"
-                 value="${c.user.email if hasattr(c.user, 'email') else ''}"/>
+                 value="${thing.email}"/>
         </td>
         <td class="reply-to-errors">
           ${error_field("BAD_EMAILS", "replyto")}

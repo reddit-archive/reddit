@@ -20,7 +20,6 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<% from r2.lib.template_helpers import replace_render, add_sr %>
 <%namespace file="utils.html" import="plain_link" />
 
 <%
@@ -29,7 +28,7 @@
  %>
 <div id="siteTable${_id}" class="sitetable ${cls}">
   %for a in thing.things:
-     ${unsafe(replace_render(thing, a))}
+      ${a}
   %endfor
 </div>
 

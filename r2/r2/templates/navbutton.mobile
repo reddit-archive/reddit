@@ -22,11 +22,11 @@
 
 <%inherit file="navbutton.html" />
 
-<%def name="plain(selected = False)">
-  ${parent.plain(selected=selected)}
+<%def name="plain()">
+  ${parent.plain()}
 </%def>
 
-<%def name="js(selected = False)">
+<%def name="js()">
 </%def>
 
 

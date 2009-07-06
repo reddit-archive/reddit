@@ -22,8 +22,8 @@
 from reddit_base import RedditController
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
     ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, Socialite
+from r2.lib.pages.things import wrap_links
 from r2.models import *
-from r2.lib.strings import Score
 from r2.lib.utils import tup, query_string
 from pylons import c, request
 from validator import *
@@ -39,7 +39,7 @@ class ButtonsController(RedditController):
         except ValueError:
             return 1
 
-    def get_wrapped_link(self, url, link = None):
+    def get_wrapped_link(self, url, link = None, wrapper = None):
         try:
             if link:
                 links = [link]
@@ -51,24 +51,20 @@ class ButtonsController(RedditController):
                     links = []
 
             if links:
-                # cache the render style and reset it to html
-                rs = c.render_style
-                c.render_style = 'html'
-                link_builder = IDBuilder([l._fullname for l in links],
-                                         wrap=ListingController.builder_wrapper)
-                
-                # link_listing will be the one-element listing at the top
-                link_listing = LinkListing(link_builder, 
-                                           nextprev=False).listing()
-                
-                # reset the render style
-                c.render_style = rs
-                links = link_listing.things
+                kw = {}
+                if wrapper:
+                    links = wrap_links(links, wrapper = wrapper)
+                else:
+                    links = wrap_links(links)
+                links = list(links)
+                links = max(links, key = lambda x: x._score) if links else None
+            if not links and wrapper:
+                return wrapper(None)
+            return links
             # note: even if _by_url successed or a link was passed in,
             # it is possible link_listing.things is empty if the
             # link(s) is/are members of a private reddit
             # return the link with the highest score (if more than 1)
-            return max(links, key = lambda x: x._score) if links else None
         except:
             #we don't want to return 500s in other people's pages.
             import traceback
@@ -84,42 +80,30 @@ class ButtonsController(RedditController):
               width = VInt('width', 0, 800),
               link = VByName('id'))
     def GET_button_content(self, url, title, css, vote, newwindow, width, link):
-
+            
+        
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
             c.site = Default
             return self.redirect(request.path + query_string(request.GET))
-
-        l = self.get_wrapped_link(url, link)
-        if l: url = l.url
 
         #disable css hack 
         if (css != 'http://blog.wired.com/css/redditsocial.css' and
             css != 'http://www.wired.com/css/redditsocial.css'): 
             css = None 
 
-        bt = self.buttontype()
-        if bt == 1:
-            score_fmt = Score.safepoints
-        else:
-            score_fmt = Score.number_only
-            
-        page_handler = Button
-        if not vote:
-            page_handler = ButtonNoBody
+        wrapper = make_wrapper(Button if vote else ButtonNoBody,
+                               url = url, 
+                               target = "_new" if newwindow else "_parent",
+                               title = title, vote = vote, bgcolor = c.bgcolor,
+                               width = width, css = css,
+                               button = self.buttontype())
 
-        if newwindow:
-            target = "_new"
-        else:
-            target = "_parent"
-
-        res = page_handler(button=bt, css=css,
-                           score_fmt = score_fmt, link = l, 
-                           url=url, title=title,
-                           vote = vote, target = target,
-                           bgcolor=c.bgcolor, width=width).render()
+        l = self.get_wrapped_link(url, link, wrapper)
+        res = l.render()
         c.response.content = spaceCompress(res)
         return c.response
+
 
     
     @validate(buttontype = VInt('t', 1, 5),
@@ -138,7 +122,8 @@ class ButtonsController(RedditController):
             return c.response
 
         buttontype = buttontype or 1
-        width, height = ((120, 22), (51, 69), (69, 52), (51, 52), (600, 52))[min(buttontype - 1, 4)]
+        width, height = ((120, 22), (51, 69), (69, 52),
+                         (51, 52), (600, 52))[min(buttontype - 1, 4)]
         if _width: width = _width
         if _height: height = _height
 
@@ -147,32 +132,36 @@ class ButtonsController(RedditController):
                           height=height,
                           url = url,
                           referer = request.referer).render()
-        # we doing want the JS to be cached!
+        # we doing want the JS to be cached (it is referer dependent)
         c.used_cache = True
         return self.sendjs(bjs, callback='', escape=False)
 
     @validate(buttonimage = VInt('i', 0, 14),
+              title = nop('title'),
               url = VSanitizedUrl('url'),
               newwindow = VBoolean('newwindow', default = False),
               styled = VBoolean('styled', default=True))
-    def GET_button_lite(self, buttonimage, url, styled, newwindow):
+    def GET_button_lite(self, buttonimage, title, url, styled, newwindow):
         c.render_style = 'js'
         c.response_content_type = 'text/javascript; charset=UTF-8'
+
         if not url:
             url = request.referer
-        if newwindow:
-            target = "_new"
-        else:
-            target = "_parent"
+            # we don't want the JS to be cached if the referer was involved.
+            c.used_cache = True
 
-        l = self.get_wrapped_link(url)
-        image = 1 if buttonimage is None else buttonimage
+        def builder_wrapper(thing = None):
+            kw = {}
+            if not thing:
+                kw['url'] = url
+                kw['title'] = title
+            return ButtonLite(thing,
+                              image = 1 if buttonimage is None else buttonimage,
+                              target = "_new" if newwindow else "_parent",
+                              styled = styled, **kw)
 
-        bjs = ButtonLite(image = image, link = l, url = l.url if l else url,
-                         target = target, styled = styled).render()
-        # we don't want the JS to be cached!
-        c.used_cache = True
-        return self.sendjs(bjs, callback='', escape=False)
+        bjs = self.get_wrapped_link(url, wrapper = builder_wrapper)
+        return self.sendjs(bjs.render(), callback='', escape=False)
 
 
 

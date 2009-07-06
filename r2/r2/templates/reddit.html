@@ -21,10 +21,13 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info
+   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info,  get_domain
    from r2.lib.pages import SearchForm, ClickGadget
+   from r2.lib import tracking
    from pylons import request
+   from r2.lib.strings import strings
 %>
+<%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
 <%inherit file="base.html"/>
 
@@ -37,8 +40,6 @@
 </%def>
 
 <%def name="stylesheet()">
-  <% from r2.lib.template_helpers import static, get_domain %>
-
   %if c.lang_rtl:
     <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
           type="text/css" />
@@ -112,21 +113,52 @@
       ##<div class="fixedwidth"><!--IE6sux--></div>
       ##<div class="clearleft"><!--IE6sux--></div>
       <div class="content">
-        ${thing.content().render()}
+        ${thing.content()}
       </div>
     %endif
     
     %if thing.footer:
-      <%include file="redditfooter.html"/>
-    %endif
+  
+      ${thing.footer}
+  
+      %if not c.user_is_loggedin:
+        %if thing.enable_login_cover:
+        <div class="login-popup cover-overlay" style="display: none">
+          <div class="cover" onclick="return hidecover(this)"></div>
+          <div class="popup">
+            <h1 class="cover-msg">${strings.cover_msg}</h1>
+            ${login_panel(login_form)}
+            <div style="text-align:center; clear: both">
+              <a href="#" onclick="return hidecover(this)">
+                ${_("close this window")}
+              </a>
+            </div>
+          </div>
+        </div>
+        %endif
+        <div class="lang-popup cover-overlay" style="display: none">
+          <div class="cover" onclick="return hidecover(this)"></div>
+          <div class="popup">
+            <%include file="prefoptions.html" />
+            <div style="text-align:center; clear:both;">
+              <a href="#" onclick="return hidecover(this)">
+                ${_("close this window")}
+              </a>
+            </div>
+          </div>
+        </div>
+      %endif
 
+      %if g.tracker_url and thing.site_tracking:
+        <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+      %endif
+    %endif
     ${framebuster()}
-    
   </body>
 </%def>
 
 <%def name="sidebar(content=None)">
-  ${content.render() if content else ''}
+  ${content}
 
   %if c.user_is_admin:
     <%include file="admin_rightbox.html"/>
@@ -135,7 +167,7 @@
   %endif
 
   ##cheating... we should move ads into a template of its own
-  ${ClickGadget(c.recent_clicks).render()}
+  ${ClickGadget(c.recent_clicks)}
 </%def>
 
 
