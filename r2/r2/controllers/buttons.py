@@ -70,6 +70,8 @@ class ButtonsController(RedditController):
             import traceback
             g.log.debug("FULLPATH: get_link error in buttons code")
             g.log.debug(traceback.format_exc())
+            if wrapper:
+                return wrapper(None)
 
 
     @validate(url = VSanitizedUrl('url'),

@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from utils import to36, tup, iters
-from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable
+from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
 from r2.lib.filters import spaceCompress, safemarkdown
 import time, pytz
@@ -90,7 +90,8 @@ class UserItemJsonTemplate(TableRowTemplate):
     def cells(self, thing):
         cells = []
         for cell in thing.cells:
-            r = Templated.part_render(thing, 'cell_type', cell)
+            thing.name = cell
+            r = thing.part_render('cell_type', style = "html")
             cells.append(spaceCompress(r))
         return cells
 

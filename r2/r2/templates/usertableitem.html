@@ -31,8 +31,8 @@
   %endfor
 </tr>
   
-<%def name="cell_type(name)">
-  %if name == "user":
+<%def name="cell_type()">
+  %if thing.name == "user":
       <span class="user">
          ${plain_link(thing.user.name, "/user/%s/" % thing.user.name, 
                       _sr_path=False)}
@@ -43,7 +43,7 @@
     ${plain_link(_("send message"), 
                  "/message/compose?to=%s" % (thing.user.name))}
       &nbsp;
-  %elif name == "remove" and thing.editable:
+  %elif thing.name == "remove" and thing.editable:
     ${ynbutton(_("remove"), "removed", "unfriend", 
                callback="deleteRow",
                hidden_data = dict(type = thing.type, 

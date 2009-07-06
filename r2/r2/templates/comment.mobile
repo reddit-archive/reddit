@@ -29,7 +29,7 @@
 <%def name="parent()">
 %if c.profilepage:
 <small>
-<a href="${thing.ancestor.url}">${thing.ancestor.titleprefix}${thing.ancestor.title}</a></small><br \>
+<a href="${thing.link.url}">${thing.link.title}</a></small><br \>
 %endif
 </%def>
 

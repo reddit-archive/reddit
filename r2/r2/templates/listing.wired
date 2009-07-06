@@ -24,7 +24,7 @@
 
 <table>
 %for a in thing.things:
-  ${unsafe(replace_render(thing, a))}
+     ${a}
 %endfor:
 </table>
 

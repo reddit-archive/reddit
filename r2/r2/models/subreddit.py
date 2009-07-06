@@ -242,7 +242,7 @@ class Subreddit(Thing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')
-        rels = (SRMember._fast_query(wrapped, [user], names) if user else {})
+        rels = (SRMember._fast_query(wrapped, [user], names) if c.user_is_loggedin else {})
         defaults = Subreddit.default_subreddits()
         for item in wrapped:
             if not user or not user.has_subscribed:

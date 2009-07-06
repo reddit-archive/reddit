@@ -22,4 +22,4 @@
 
 <%inherit file="base.wired"/>
 
-${thing.content().render()}
+${thing.content()}
