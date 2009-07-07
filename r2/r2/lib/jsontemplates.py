@@ -50,13 +50,13 @@ class ObjectTemplate(StringTemplate):
     def update(self, kw):
         def _update(obj):
             if isinstance(obj, (str, unicode)):
-                return spaceCompress(StringTemplate(obj).finalize(kw))
+                return StringTemplate(obj).finalize(kw)
             elif isinstance(obj, dict):
                 return dict((k, _update(v)) for k, v in obj.iteritems())
             elif isinstance(obj, (list, tuple)):
                 return map(_update, obj)
             elif isinstance(obj, CacheStub) and kw.has_key(obj.name):
-                return kw[obj.name]
+                return spaceCompress(kw[obj.name])
             else:
                 return obj
         res = _update(self.d)
@@ -238,7 +238,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
             except AttributeError:
                 return make_fullname(Link, thing.link_id)
         elif attr == "body_html":
-            return safemarkdown(thing.body)
+            return spaceCompress(safemarkdown(thing.body))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):
@@ -326,8 +326,6 @@ class ListingJsonTemplate(ThingJsonTemplate):
             for a in thing.things:
                 a.childlisting = False
                 r = a.render()
-                if isinstance(r, str):
-                    r = spaceCompress(r)
                 res.append(r)
             return res
         return ThingJsonTemplate.thing_attr(self, thing, attr)
