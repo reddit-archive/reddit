@@ -61,7 +61,6 @@ class PromoteController(RedditController):
     def GET_edit_promo(self, link):
         sr = Subreddit._byID(link.sr_id)
         listing = wrap_links(link)
-        rendered = listing.render()
 
         timedeltatext = ''
         if link.promote_until:
@@ -69,7 +68,7 @@ class PromoteController(RedditController):
                                      resultion=2)
 
         form = PromoteLinkForm(sr = sr, link = link,
-                               listing = rendered,
+                               listing = listing,
                                timedeltatext = timedeltatext)
         page = PromotePage('new_promo', content = form)
 
