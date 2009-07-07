@@ -26,6 +26,7 @@ from r2 import config
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
+from r2.lib.jsontemplates import is_api
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
@@ -179,7 +180,8 @@ class FrontController(RedditController):
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
         # insert reply box only for logged in user
-        if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user):
+        if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user)\
+                and not is_api():
             #no comment box for permalinks
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',

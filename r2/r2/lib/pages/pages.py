@@ -116,7 +116,7 @@ class Reddit(Templated):
         if not c.cname:
             self.srtopbar = SubredditTopBar()
 
-        if c.user_is_loggedin and self.show_sidebar:
+        if c.user_is_loggedin and self.show_sidebar and not is_api():
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
@@ -450,9 +450,13 @@ class MessagePage(Reddit):
         if not kw.has_key('show_sidebar'):
             kw['show_sidebar'] = False
         Reddit.__init__(self, *a, **kw)
-        self.replybox = UserText(item = None, creating = True,
-                                 post_form = 'comment', display = False,
-                                 cloneable = True)
+        if is_api():
+            self.replybox = None
+        else:
+            self.replybox = UserText(item = None, creating = True,
+                                     post_form = 'comment', display = False,
+                                     cloneable = True)
+            
 
     def content(self):
         return self.content_stack((self.replybox,
