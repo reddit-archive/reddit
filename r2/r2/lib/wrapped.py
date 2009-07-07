@@ -386,7 +386,7 @@ class CachedTemplate(Templated):
         # a menu is just a set of links, so we best cache against
         # them.
         keys = [c.user_is_loggedin, c.use_is_admin,
-                c.render_style, c.cname, c.lang, c.site.name,
+                c.render_style, c.cname, c.lang, c.site.path,
                 template_hash]
         keys = [make_cachable(x, *a) for x in keys]
 
