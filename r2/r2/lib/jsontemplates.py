@@ -56,7 +56,10 @@ class ObjectTemplate(StringTemplate):
             elif isinstance(obj, (list, tuple)):
                 return map(_update, obj)
             elif isinstance(obj, CacheStub) and kw.has_key(obj.name):
-                return spaceCompress(kw[obj.name])
+                r = kw[obj.name]
+                if isinstance(r, (str, unicode)):
+                    r = spaceCompress(r)
+                return r    
             else:
                 return obj
         res = _update(self.d)
