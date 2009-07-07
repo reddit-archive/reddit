@@ -55,12 +55,12 @@
       %endif
       <br/>
       <a href="${thing.url}">[link]</a>
-      <a href="${url}">[${thing.comment_label}]</a>
-      %if use_thumbs:
-        </td></tr></table>
-      %endif
     </%def>
   ${description()}
+   &lt;a href="${url}"&gt;[${thing.comment_label}]&lt;/a&gt;
+   %if use_thumbs:
+     &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+   %endif
   </description>
   %if use_thumbs:
     <media:title>${thing.title}</media:title>

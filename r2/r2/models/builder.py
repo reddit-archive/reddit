@@ -139,7 +139,7 @@ class Builder(object):
                 base_score = w.score + 1
             # store the set of available scores based on the vote
             # for ease of i18n when there is a label
-            w.voting_score = [max(base_score + x - 1, 0) for x in range(3)]
+            w.voting_score = [(base_score + x - 1) for x in range(3)]
 
             w.deleted = item._deleted
 

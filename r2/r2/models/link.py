@@ -554,7 +554,7 @@ class Comment(Thing, Printable):
                              not item.show_spam)))
 
             extra_css = ''
-            if item._deleted:
+            if item.deleted:
                 extra_css += "grayed"
                 if not user_is_admin:
                     item.author = DeletedUser()
@@ -587,7 +587,7 @@ class Comment(Thing, Printable):
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
-                                     editable = item.author == user,
+                                     editable = item.is_author,
                                      nofollow = item.nofollow,
                                      target = item.target,
                                      extra_css = extra_css)
