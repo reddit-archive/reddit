@@ -253,6 +253,11 @@ class Subreddit(Thing, Printable):
             item.contributor = bool(item.moderator or \
                                     rels.get((item, user, 'contributor')))
             item.score = item._ups
+            # override "voting" score behavior (it will override the use of
+            # item.score in builder.py to be ups-downs)
+            item.likes = item.subscriber or None
+            base_score = item.score - (1 if item.likes else 0)
+            item.voting_score = [(base_score + x - 1) for x in range(3)]
             item.score_fmt = Score.subscribers
         Printable.add_props(user, wrapped)
     #TODO: make this work

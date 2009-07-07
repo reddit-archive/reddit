@@ -252,13 +252,23 @@ function linkstatus(form) {
 
 function subscribe(reddit_name) {
     return function() { 
-        $.request("subscribe", {sr: reddit_name, action: "sub"});
+        if (!reddit.logged)  {
+            showcover();
+        } else {
+            $.things(reddit_name).find(".entry").addClass("likes");
+            $.request("subscribe", {sr: reddit_name, action: "sub"});
+        }
     };
 };
 
 function unsubscribe(reddit_name) {
     return function() { 
-        $.request("subscribe", {sr: reddit_name, action: "unsub"});
+        if (!reddit.logged)  {
+            showcover();
+        } else {
+            $.things(reddit_name).find(".entry").removeClass("likes");
+            $.request("subscribe", {sr: reddit_name, action: "unsub"});
+        }
     };
 };
 

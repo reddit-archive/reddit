@@ -189,12 +189,13 @@ class ToolbarController(RedditController):
             link = list(wrap_links(link, wrapper = FrameToolbar))
         if link:
             res = link[0]
-        else:
+        elif url:
             res = FrameToolbar(link = None,
                                title = None,
                                url = url,
                                expanded = False)
-
+        else:
+            self.abort404()
         return spaceCompress(res.render())
 
     @validate(link = VByName('id'))
