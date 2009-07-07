@@ -34,7 +34,8 @@ ${self.RenderPrintable()}
   %if thing.show_spam:
       <li><b>[
         %if c.user_is_admin:
-          ${"auto" if thing.autobanned else ""}banned by ${thing.banner}
+          ${"auto" if thing.autobanned else ""}banned 
+          ${("by %s" % thing.banner) if thing.banner else ""}
         %elif thing.moderator_banned and thing.banner:
           ${strings.banned_by % thing.banner}
         %else:
