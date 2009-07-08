@@ -49,6 +49,7 @@ error_list = dict((
         ('ALREADY_SUB', _("that link has already been submitted")),
         ('SUBREDDIT_EXISTS', _('that reddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that reddit doesn\'t exist')),
+        ('SUBREDDIT_NOTALLOWED', _("you aren't allowed to post there.")),
         ('SUBREDDIT_REQUIRED', _('you must specify a reddit')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('RATELIMIT', _('you are trying to submit too fast. try again in %(time)s.')),

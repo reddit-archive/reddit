@@ -40,7 +40,11 @@ ${parent.midcol(not thing.collapsed, cls = cls)}
   %if c.profilepage:
     %if thing.link: 
       %if thing.link.title:
-        <a href="${thing.link.url}" class="title">
+        <a href="${thing.link.url}" class="title"
+           %if thing.nofollow:
+             rel="nofollow"
+           %endif
+           >
           ${thing.link.title}
         </a>
       %else:

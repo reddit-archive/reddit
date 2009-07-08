@@ -169,6 +169,7 @@ class ApiController(RedditController):
             return
 
         if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                           errors.SUBREDDIT_NOTALLOWED,
                            errors.SUBREDDIT_REQUIRED):
             # checking to get the error set in the form, but we can't
             # check for rate-limiting if there's no subreddit
@@ -1344,7 +1345,8 @@ class ApiController(RedditController):
                form.has_errors('url', errors.NO_URL, errors.ALREADY_SUB) ):
             #if url == l.url, we're just editting something else
             pass
-        elif form.has_errors('sr', errors.SUBREDDIT_NOEXIST):
+        elif form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
+                             errors.SUBREDDIT_NOTALLOWED):
             pass
         elif (expire == 'expirein' and 
               form.has_errors('timelimitlength', errors.BAD_NUMBER)):

@@ -500,7 +500,7 @@ class VSubmitSR(Validator):
             return None
 
         if sr and not (c.user_is_loggedin and sr.can_submit(c.user)):
-            abort(403, "forbidden")
+            self.set_error(errors.SUBREDDIT_NOTALLOWED)
         else:
             return sr
         
@@ -599,6 +599,9 @@ class VExistingUname(VRequired):
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
     def run(self, name):
+        # make sure the name satisfies our user name regexp before
+        # bothering to look it up.
+        name = chkuser(name)
         if name:
             try:
                 return Account._by_name(name)

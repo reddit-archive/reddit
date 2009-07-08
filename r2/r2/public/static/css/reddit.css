@@ -1456,6 +1456,9 @@ textarea.gray { color: gray; }
     -moz-outline: none;
 }
 
+.toolbar .likes .score.likes {display: inline-block;}
+.toolbar .dislikes .score.dislikes {display: inline-block;}
+
 .toolbar a, .toolbar .clickable {
     cursor: pointer;
     color: #336699;

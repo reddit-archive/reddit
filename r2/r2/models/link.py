@@ -529,6 +529,13 @@ class Comment(Thing, Printable):
             item.profilepage = c.profilepage
             item.link = links.get(item.link_id)
 
+            if (item.link._score <= 1 or item.score < 3 or
+                item.link._spam or item._spam or item.author._spam):
+                
+                item.nofollow = True
+            else:
+                item.nofollow = False
+
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
             if not hasattr(item, 'target'):
@@ -573,8 +580,6 @@ class Comment(Thing, Printable):
 
             item.editted = getattr(item, "editted", False)
 
-            #score less than 3, nofollow the links
-            item.nofollow = item._score < 3
 
             #will get updated in builder
             item.num_children = 0
