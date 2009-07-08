@@ -355,7 +355,7 @@ class VAccountByName(VRequired):
         return self.error()
 
 def fullname_regex(thing_cls = None, multiple = False):
-    pattern = Thing._type_prefix
+    pattern = "[%s%s]" % (Relation._type_prefix, Thing._type_prefix)
     if thing_cls:
         pattern += utils.to36(thing_cls._type_id)
     else:

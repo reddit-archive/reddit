@@ -510,7 +510,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _set_data = staticmethod(tdb.set_rel_data)
         _get_item = staticmethod(tdb.get_rel)
         _incr_data = staticmethod(tdb.incr_rel_data)
-        _type_prefix = 'r'
+        _type_prefix = Relation._type_prefix
 
         def __init__(self, thing1, thing2, name, date = None, id = None, **attrs):
             DataThing.__init__(self)
@@ -666,6 +666,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
 
     return RelationCls
+Relation._type_prefix = 'r'
 
 class Query(object):
     def __init__(self, kind, *rules, **kw):

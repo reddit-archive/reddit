@@ -321,7 +321,9 @@ class NullJsonTemplate(JsonTemplate):
         return ""
 
 class ListingJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = dict(children = "things")
+    _data_attrs_ = dict(children = "things",
+                        after = "after",
+                        before = "before")
     
     def thing_attr(self, thing, attr):
         if attr == "things":

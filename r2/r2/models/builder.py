@@ -312,9 +312,9 @@ class QueryBuilder(Builder):
                     i.num = count
                 last_item = i
         
-        #unprewrap the last item
-        if self.prewrap_fn and last_item:
-            last_item = orig_items[last_item._id]
+            #unprewrap the last item
+            if self.prewrap_fn and last_item:
+                last_item = orig_items[last_item._id]
 
         if self.reverse:
             items.reverse()

@@ -65,14 +65,18 @@ class Listing(object):
         self.things, prev, next, bcount, acount = self.get_items()
 
         self.max_num = max(acount, bcount)
+        self.after = None
+        self.before = None
 
         if self.nextprev and self.prev_link and prev and bcount > 1:
             p = request.get.copy()
             p.update({'after':None, 'before':prev._fullname, 'count':bcount})
+            self.before = prev._fullname
             self.prev = (request.path + utils.query_string(p))
         if self.nextprev and self.next_link and next:
             p = request.get.copy()
             p.update({'after':next._fullname, 'before':None, 'count':acount})
+            self.after = next._fullname
             self.next = (request.path + utils.query_string(p))
         #TODO: need name for template -- must be better way
         return Wrapped(self)
