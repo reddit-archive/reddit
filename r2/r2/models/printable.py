@@ -28,7 +28,6 @@ class Printable(object):
     can_ban = False
     deleted = False
     rowstyle = 'even'
-    reported = False
     collapsed = False
     author = None
     margin = 0
@@ -75,7 +74,7 @@ class Printable(object):
 
     @staticmethod
     def wrapped_cache_key(wrapped, style):
-        s = [wrapped._fullname, wrapped._spam]
+        s = [wrapped._fullname, wrapped._spam, wrapped.reported]
 
         if style == 'htmllite':
             s.extend([c.bgcolor, c.bordercolor, 

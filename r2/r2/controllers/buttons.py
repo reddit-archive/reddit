@@ -94,6 +94,8 @@ class ButtonsController(RedditController):
             css != 'http://www.wired.com/css/redditsocial.css'): 
             css = None 
 
+        if link:
+            url = link.url
         wrapper = make_wrapper(Button if vote else ButtonNoBody,
                                url = url, 
                                target = "_new" if newwindow else "_parent",

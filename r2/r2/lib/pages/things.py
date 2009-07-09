@@ -109,16 +109,15 @@ class MessageButtons(PrintableButtons):
 
 # formerly ListingController.builder_wrapper
 def default_thing_wrapper(**params):
-    style = params.get('style', c.render_style)
     def _default_thing_wrapper(thing):
         w = Wrapped(thing)
+        style = params.get('style', c.render_style)
         if isinstance(thing, Link):
             if thing.promoted:
                 w.render_class = PromotedLink
                 w.rowstyle = 'promoted link'
             elif style == 'htmllite':
                 w.score_fmt = Score.points
-                
         return w
     params['parent_wrapper'] = _default_thing_wrapper
     return make_wrapper(**params)

@@ -182,6 +182,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "score",
                                                 title        = "title",
                                                 url          = "path",
+                                                over18       = "over_18", 
                                                 description  = "description")
 
 class LinkJsonTemplate(ThingJsonTemplate):

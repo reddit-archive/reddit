@@ -55,6 +55,7 @@ class Link(Thing, Printable):
                      selftext = '',
                      ip = '0.0.0.0')
 
+
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
 

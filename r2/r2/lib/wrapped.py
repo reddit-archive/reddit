@@ -410,8 +410,9 @@ class Wrapped(CachedTemplate):
         if self.cachable:
             for i, l in enumerate(self.lookups):
                 if hasattr(l, "wrapped_cache_key"):
-                    # setattr will force a __dict__ entry
-                    setattr(self, "_lookup%d_cache_key" % i,
+                    # setattr will force a __dict__ entry, but only if the
+                    # param doesn't start with "_"
+                    setattr(self, "lookup%d_cache_key" % i,
                             ''.join(map(repr,
                                         l.wrapped_cache_key(self, style))))
         return CachedTemplate.cache_key(self, attr, style)
