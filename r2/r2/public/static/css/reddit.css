@@ -1229,6 +1229,25 @@ textarea.gray { color: gray; }
 .details td { 
     vertical-align: top;
 }
+
+.vote-note {
+    max-width: 200px;
+}
+.vote-a-notes {
+    color: red;
+}
+.vote-up {
+    color: orangered;
+}
+.vote-down {
+    color: #336699;
+}
+.vote-invalid {
+    color: #888888 !important;
+    font-style: italic;
+}
+
+
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
 

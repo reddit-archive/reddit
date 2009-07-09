@@ -32,7 +32,7 @@ from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 
 from pylons import c, g, request
-from pylons.i18n import ungettext
+from pylons.i18n import ungettext, _
 
 import random
 
@@ -116,10 +116,10 @@ class Link(Thing, Printable):
         return submit_url
 
     @classmethod
-    def _submit(cls, title, url, author, sr, ip, spam = False):
+    def _submit(cls, title, url, author, sr, ip):
         l = cls(title = title,
                 url = url,
-                _spam = spam,
+                _spam = author._spam,
                 author_id = author._id,
                 sr_id = sr._id, 
                 lang = sr.lang,
@@ -439,14 +439,14 @@ class Comment(Thing, Printable):
         link._incr('num_comments', -1)
     
     @classmethod
-    def _new(cls, author, link, parent, body, ip, spam = False):
+    def _new(cls, author, link, parent, body, ip):
         c = Comment(body = body,
                     link_id = link._id,
                     sr_id = link.sr_id,
                     author_id = author._id,
                     ip = ip)
 
-        c._spam = spam
+        c._spam = author._spam
 
         #these props aren't relations
         if parent:
@@ -645,12 +645,12 @@ class Message(Thing, Printable):
     cache_ignore = set(["to"]).union(Printable.cache_ignore)
     
     @classmethod
-    def _new(cls, author, to, subject, body, ip, spam = False):
+    def _new(cls, author, to, subject, body, ip):
         m = Message(subject = subject,
                     body = body,
                     author_id = author._id,
                     ip = ip)
-        m._spam = spam
+        m._spam = author._spam
         m.to_id = to._id
         m._commit()
 

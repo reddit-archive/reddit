@@ -50,7 +50,7 @@ class Vote(MultiRelation('vote',
 
 
     @classmethod
-    def vote(cls, sub, obj, dir, ip, spam = False, organic = False):
+    def vote(cls, sub, obj, dir, ip, organic = False):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_counts
 
@@ -80,8 +80,7 @@ class Vote(MultiRelation('vote',
             #these still need to be recalculated
             old_valid_thing = v.valid_thing
             v.valid_thing = (valid_thing(v, karma)
-                             and v.valid_thing
-                             and not spam)
+                             and v.valid_thing)
             v.valid_user = (v.valid_user
                             and v.valid_thing
                             and valid_user(v, sr, karma))
@@ -92,8 +91,7 @@ class Vote(MultiRelation('vote',
             v = rel(sub, obj, str(amount))
             v.author_id = obj.author_id
             v.ip = ip
-            old_valid_thing = v.valid_thing = (valid_thing(v, karma) and
-                                               not spam)
+            old_valid_thing = v.valid_thing = (valid_thing(v, karma))
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
             if organic:

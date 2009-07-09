@@ -126,11 +126,8 @@ class ApiController(RedditController):
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
-            spam = (c.user._spam or
-                    errors.BANNED_IP in c.errors or
-                    errors.BANNED_DOMAIN in c.errors)
             
-            m, inbox_rel = Message._new(c.user, to, subject, body, ip, spam)
+            m, inbox_rel = Message._new(c.user, to, subject, body, ip)
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
 
@@ -202,14 +199,9 @@ class ApiController(RedditController):
         if form.has_error() or not title:
             return
 
-        # check whether this is spam:
-        spam = (c.user._spam or
-                errors.BANNED_IP in c.errors or
-                errors.BANNED_DOMAIN in c.errors)
-
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
-                         c.user, sr, ip, spam)
+                         c.user, sr, ip)
 
         if kind == 'self':
             l.url = l.make_permalink_slow()
@@ -219,7 +211,7 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        v = Vote.vote(c.user, l, True, ip, spam)
+        v = Vote.vote(c.user, l, True, ip)
         if save:
             r = l._save(c.user)
             if g.write_query_queue:
@@ -455,8 +447,7 @@ class ApiController(RedditController):
                                  title = container.title)
                         msg = msg % d
                         subj = subj % d
-                        Message._new(c.user, friend, subj, msg, ip,
-                                     c.user._spam)
+                        Message._new(c.user, friend, subj, msg, ip)
 
 
     @validatedForm(VUser('curpass', default = ''),
@@ -613,7 +604,6 @@ class ApiController(RedditController):
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT)):
-            spam = (c.user._spam or errors.BANNED_IP in c.errors)
 
             if is_message:
                 to = Account._byID(parent.author_id)
@@ -622,11 +612,11 @@ class ApiController(RedditController):
                 if not subject.startswith(re):
                     subject = re + subject
                 item, inbox_rel = Message._new(c.user, to, subject,
-                                               comment, ip, spam)
+                                               comment, ip)
                 item.parent_id = parent._id
             else:
                 item, inbox_rel =  Comment._new(c.user, link, parent_comment,
-                                                comment, ip, spam)
+                                                comment, ip)
                 Vote.vote(c.user, item, True, ip)
                 # flag search indexer that something has changed
                 tc.changed(item)
@@ -733,9 +723,6 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
-        spam = (c.user._spam or
-                errors.BANNED_IP in c.errors or
-                errors.CHEATER in c.errors)
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing and thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
@@ -744,7 +731,7 @@ class ApiController(RedditController):
                    else False if dir < 0
                    else None)
             organic = vote_type == 'organic'
-            v = Vote.vote(user, thing, dir, ip, spam, organic)
+            v = Vote.vote(user, thing, dir, ip, organic)
 
             #update relevant caches
             if isinstance(thing, Link):

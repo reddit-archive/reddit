@@ -47,7 +47,7 @@ def is_banned_domain(dom):
     return False
 
 def valid_thing(v, karma):
-    return True
+    return not v._thing1._spam
 
 def valid_user(v, sr, karma):
     return True
