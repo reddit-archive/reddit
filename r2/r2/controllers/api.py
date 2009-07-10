@@ -1358,7 +1358,7 @@ class ApiController(RedditController):
 
             form.redirect('/promote/edit_promo/%s' % to36(l._id))
         else:
-            l = Link._submit(title, url, c.user, sr, ip, False)
+            l = Link._submit(title, url, c.user, sr, ip)
 
             if expire == 'expirein' and timelimitlength and timelimittype:
                 promote_until = timefromnow("%d %s" % (timelimitlength,
