@@ -405,7 +405,7 @@ before enabling */
 
 .infotable { margin-top: 5px; margin-bottom: 10px; }
 .infotable .small { font-size: smaller; }
-.infotable td { padding-right: 3px; }
+.infotable td { padding-right: 1em; }
 .infotable a:hover { text-decoration: underline }
 .infotable .state-button a {  background-color: #F0F0F0; color: gray; }
 .infotable .bold { font-weight: bold; }
@@ -1230,8 +1230,19 @@ textarea.gray { color: gray; }
     vertical-align: top;
 }
 
+.ring {
+    font-weight:bold;
+    background-color:red;
+    color:white;
+    text-align:center;
+    padding-left: 3px;
+    padding-right: 4px !important;
+    cursor: pointer;
+}
+
 .vote-note {
-    max-width: 200px;
+    padding-left: 3px;
+    max-width: 170px;
 }
 .vote-a-notes {
     color: red;
@@ -2161,11 +2172,12 @@ ul.tabmenu.formtab {
     background-color: #ffc; padding-left: 5px;
 }
 
-/*admin see deleted comment*/
 .usertext.grayed .usertext-body {
     color: gray;
-    background-color: #e0e0e0;
+    background-color: #f0f0f0;
     padding-left: 5px;
+    padding-right: 5px;
+    display: inline-block;
 }
 
 .usertext button { 

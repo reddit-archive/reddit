@@ -570,7 +570,7 @@ class Comment(Thing, Printable):
 
 
             if focal_comment == item._id36:
-                extra_css += 'border'
+                extra_css += " border"
 
 
             # don't collapse for admins, on profile pages, or if deleted

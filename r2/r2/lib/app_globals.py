@@ -118,7 +118,11 @@ class Globals(object):
         self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
         
         # set default time zone if one is not set
-        self.tz = pytz.timezone(global_conf.get('timezone'))
+        tz = global_conf.get('timezone')
+        dtz = global_conf.get('display_timezone', tz)
+
+        self.tz = pytz.timezone(tz)
+        self.display_tz = pytz.timezone(dtz)
 
         #load the database info
         self.dbm = self.load_db_params(global_conf)
