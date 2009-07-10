@@ -596,11 +596,12 @@ class ApiController(RedditController):
 
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
-            c.errors.remove(errors.RATELIMIT)
+            c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
         if (not commentform.has_errors("text",
                                        errors.NO_TEXT,
-                                       errors.TOO_LONG,
+                                       errors.TOO_LONG) and
+            not commentform.has_errors("ratelimit",
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT)):
@@ -676,7 +677,7 @@ class ApiController(RedditController):
         sr = thing.subreddit_slow
         should_ratelimit = sr.should_ratelimit(c.user, 'link')
         if not should_ratelimit:
-            c.errors.remove(errors.RATELIMIT)
+            c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
         # share_from and messages share a too_long error.
         # finding an error on one necessitates hiding the other error
