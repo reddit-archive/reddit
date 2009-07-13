@@ -169,7 +169,11 @@ def read_mod_cookie():
         set_user_cookie('mod', '')
 
 def firsttime():
-    if get_redditfirst('firsttime'):
+    if (request.user_agent and 'iphone' in request.user_agent.lower() and 
+        not get_redditfirst('iphone')):
+        set_redditfirst('iphone','first')
+        return 'iphone'
+    elif get_redditfirst('firsttime'):
         return False
     else:
         set_redditfirst('firsttime','first')

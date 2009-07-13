@@ -107,8 +107,11 @@ class Reddit(Templated):
 
         #add the infobar
         self.infobar = None
-        if self.show_firsttext and c.firsttime and c.site.firsttext and not infotext:
-            infotext = c.site.firsttext
+        if self.show_firsttext and not infotext:
+            if c.firsttime == 'iphone':
+                infotext = strings.iphone_first
+            elif c.firsttime and c.site.firsttext:
+                infotext = c.site.firsttext
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
