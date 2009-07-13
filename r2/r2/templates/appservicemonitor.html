@@ -36,14 +36,21 @@
 
 <div class="server-status">
   <h3>Rendered by PID ${g.reddit_pid} on ${g.reddit_host}</h3>
-  <% 
-     cache_lifetime = thing.get_cache_lifetime()
-     if cache_lifetime > 0:
-        cache_lifetime = '%s' % datetime.timedelta(0, max(cache_lifetime, 0))
-     else:
-        cache_lifetime = "--:--.--"
-     %>
-  <h4>Cache lifetime: ${'%s' % cache_lifetime}</h4>
+  <table>
+  %for cache in ("memcaches", "rendercaches"):
+    <% 
+       cache_lifetime = thing.get_cache_lifetime(key = cache)
+       if cache_lifetime > 0:
+          cache_lifetime = '%s' % datetime.timedelta(0, max(cache_lifetime, 0))
+       else:
+          cache_lifetime = "--:--.--"
+       %>
+    <tr>
+      <th>${cache} lifetime:</th>
+      <td>${'%s' % cache_lifetime}</td>
+    </tr>
+  %endfor
+  </table>
   %if any(h.database for h in thing.hostlogs):
   <table class="monitor-database"> 
     <tr class="title-region"> 

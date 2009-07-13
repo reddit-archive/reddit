@@ -61,7 +61,6 @@ class ShellProcess(object):
 class AppServiceMonitor(Templated):
     cache_key       = "service_datalogger_data_"
     cache_key_small = "service_datalogger_db_summary_"
-    cache_lifetime  = "memcached_lifetime"
 
     """
     Master controller class for service monitoring.
@@ -102,12 +101,12 @@ class AppServiceMonitor(Templated):
         Templated.__init__(self)
 
     @classmethod
-    def set_cache_lifetime(cls, data):
-        g.rendercache.set(cls.cache_lifetime, data)
+    def set_cache_lifetime(cls, data, key = "memcaches"):
+        g.rendercache.set(key + "_lifetime", data)
 
     @classmethod
-    def get_cache_lifetime(cls, average = None):
-        d =  g.rendercache.get(cls.cache_lifetime, DataLogger())
+    def get_cache_lifetime(cls, average = None, key = "memcaches"):
+        d =  g.rendercache.get(key + "_lifetime", DataLogger())
         return d(average)
 
     @classmethod
@@ -243,11 +242,12 @@ class Database(object):
               query_count = None, max_connections = -1,
               failures = [], disk_usage = 0):
 
-        #log the number of connections
-        self.connections.add(conn)
         if max_connections and max_connections > 0:
             self.max_connections = max_connections
 
+        # if connection failures, assume we are out of connections
+        self.connections.add(self.max_connections if failures else conn)
+        
         # log usage by ip
         for ip, num in ip_conn.iteritems():
             self.ip_conn.setdefault(ip, DataLogger())
@@ -497,23 +497,22 @@ def check_database(db_names, check_vacuum = True, user='ri'):
     return res    
 
 def monitor_cache_lifetime(minutes, retest = 10, ntest = -1,
-                           cache_key = "cache_life_", verbose = False):
+                           cache_name = "memcaches", verbose = False):
 
     # list of list of active memcache test keys
     keys = []
     period = 60  # 1 minute cycle time
     data = DataLogger()
     
-    
     # we'll create an independent connection to memcached for this test
-    mc = Memcache(g.memcaches)
+    mc = Memcache(getattr(g, cache_name))
 
     counter = 0
     while ntest:
 
         if counter == 0 or (retest and counter % retest == 0):
             randstr = random.random()
-            newkeys = [("%s_%s_%d" % (cache_key, randstr, x), x+1)
+            newkeys = [("%s_lifetime_%s_%d" % (cache_name, randstr, x), x+1)
                        for x in xrange(minutes)]
 
             # set N keys, and tell them not to live for longer than this test
@@ -535,7 +534,7 @@ def monitor_cache_lifetime(minutes, retest = 10, ntest = -1,
                 if verbose:
                     print "cache expiration: %d seconds" % (period * age)
                 data.add(period * age)
-                AppServiceMonitor.set_cache_lifetime(data)
+                AppServiceMonitor.set_cache_lifetime(data, key = cache_name)
                 # wipe out the list for removal by the subsequent filter
                 while k: k.pop()
 
