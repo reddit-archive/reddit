@@ -436,6 +436,7 @@ class RedditController(BaseController):
                        str(c.cname), 
                        str(request.fullpath),
                        str(c.over18),
+                       str(c.firsttime),
                        ''.join(cookie_keys)))
         return key
 
