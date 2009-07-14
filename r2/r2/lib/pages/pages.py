@@ -1015,7 +1015,7 @@ class FrameToolbar(Wrapped):
 
         self.expanded = expanded
 
-        self.dorks = dorks_re.match(self.url)
+        self.dorks = bool( dorks_re.match(self.url) )
         Wrapped.__init__(self, link)
         if link is None:
             self.add_props(c.user, [self])
