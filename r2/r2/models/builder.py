@@ -23,9 +23,10 @@ from account import *
 from link import *
 from vote import *
 from report import *
-from subreddit import SRMember
+from subreddit import SRMember, FakeSubreddit
 from listing import Listing
 from pylons import i18n, request, g
+from pylons.i18n import _
 
 import subreddit
 
@@ -43,6 +44,36 @@ from admintools import compute_votes, admintools
 
 EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
+
+# Appends to the list "attrs" a tuple of:
+# <priority (higher trumps lower), letter,
+#  css class, i18n'ed mouseover label, hyperlink (or None)>
+def add_attr(attrs, code, label=None, link=None):
+    if code == 'F':
+        priority = 1
+        cssclass = 'friend'
+        if not label:
+            label = _('friend')
+        if not link:
+            link = '/prefs/friends'
+    elif code == 'M':
+        priority = 2
+        cssclass = 'moderator'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'S':
+        priority = 3
+        cssclass = 'submitter'
+        if not label:
+            label = _('submitter')
+        if not link:
+            raise ValueError ("Need a link")
+    else:
+        raise ValueError ("Got weird code [%s]" % code)
+
+    attrs.append( (priority, code, cssclass, label, link) )
 
 class Builder(object):
     def __init__(self, wrap = Wrapped, keep_fn = None):
@@ -98,6 +129,21 @@ class Builder(object):
         types = {}
         wrapped = []
         count = 0
+
+        if isinstance(c.site, FakeSubreddit):
+            mods = []
+        else:
+            mods = c.site.moderators
+            modlink = ''
+            if c.cname:
+                modlink = '/about/moderators'
+            else:
+                modlink = '/r/%s/about/moderators' % c.site.name
+
+            modlabel = (_('moderator of /r/%(reddit)s') %
+                        dict(reddit = c.site.name) )
+
+
         for item in items:
             w = self.wrap(item)
             wrapped.append(w)
@@ -108,12 +154,26 @@ class Builder(object):
 
             #TODO pull the author stuff into add_props for links and
             #comments and messages?
+            w.author = None
+            w.friend = False
+
+            # List of tuples <priority (higher trumps lower), letter,
+            # css class, i18n'ed mouseover label, hyperlink (or None)>
+            w.attribs = []
+
             try:
                 w.author = authors.get(item.author_id)
-                w.friend = item.author_id in user.friends if user else False
+                if user and item.author_id in user.friends:
+                        # deprecated old way:
+                        w.friend = True
+                        # new way:
+                        add_attr(w.attribs, 'F')
+
             except AttributeError:
-                w.author = None
-                w.friend = False
+                pass
+
+            if getattr(item, "author_id", None) in mods:
+                add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]

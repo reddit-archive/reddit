@@ -483,7 +483,9 @@ before enabling */
 .tagline { color:#888; font-size:x-small; 
 }
 .tagline a {color: #369; text-decoration: none; }
-.tagline a.friend {color: orangered }
+.tagline .friend    { color: orangered }
+.tagline .submitter { color: #0055df }
+.tagline .moderator { color: #338833 }
 .tagline a:hover { text-decoration: underline }
 
 .media-button .option { color: red; }
@@ -1242,7 +1244,7 @@ textarea.gray { color: gray; }
 
 .vote-note {
     padding-left: 3px;
-    max-width: 170px;
+    max-width: 150px;
 }
 .vote-a-notes {
     color: red;

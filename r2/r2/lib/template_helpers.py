@@ -307,3 +307,20 @@ def choose_width(link, width):
 def panel_size(state):
     "the frame.cols of the reddit-toolbar's inner frame"
     return '400px, 100%' if state =='expanded' else '0px, 100%x'
+
+def find_author_class(thing, attribs, gray):
+    #assume attribs is sorted
+    author = thing.author
+    author_cls = "author"
+
+    extra_class = ''
+    attribs.sort()
+
+    if gray:
+        author_cls += " gray"
+    elif attribs:
+        #the last element in attribs will be the highest priority
+        extra_class = attribs[-1][2]
+        author_cls += " " + extra_class
+
+    return author_cls

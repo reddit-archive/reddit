@@ -501,6 +501,8 @@ class Comment(Thing, Printable):
     
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.models.builder import add_attr
+
         #fetch parent links
 
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
@@ -539,6 +541,9 @@ class Comment(Thing, Printable):
 
             if not hasattr(item, 'subreddit'):
                 item.subreddit = item.subreddit_slow
+            if item.author_id == item.link.author_id:
+                add_attr(item.attribs, 'S',
+                         link = item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
                 item.target = None
             if hasattr(item, 'parent_id'):

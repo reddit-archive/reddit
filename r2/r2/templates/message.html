@@ -49,7 +49,7 @@
    taglinetext = taglinetext.replace(' ', '&nbsp;')
   %>
   ${unsafe(taglinetext % dict(when = thing.timesince, 
-                              author= u"<b>%s</b>" % self.author(thing.friend),
+                              author= u"<b>%s</b>" % self.author(thing.attribs),
                               dest = u"<b>%s</b>" % thing.to.name))}
   </span>
   %if c.user_is_admin:

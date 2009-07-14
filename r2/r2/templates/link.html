@@ -175,7 +175,7 @@
 
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
                               when = thing.timesince, 
-                              author= self.author(friend = thing.friend)))}
+                              author= self.author(attribs = thing.attribs)))}
 </%def>
 
 <%def name="child()">

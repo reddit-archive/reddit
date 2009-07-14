@@ -69,7 +69,7 @@ ${parent.collapsed()}
      %if thing.deleted:
        <em>${_("deleted comment from")}</em>&#32;
      %endif
-     ${unsafe(self.author(friend=thing.friend, gray = collapse))}&#32;
+     ${unsafe(self.author(attribs=thing.attribs, gray = collapse))}&#32;
   %else:
      <em>${_("[deleted]")}</em>&#32;
   %endif
