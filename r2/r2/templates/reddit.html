@@ -67,6 +67,10 @@
       %endif
     %endif
   %endif
+  %if getattr(thing, "additional_css", None):
+    <link rel="stylesheet" href="${static(thing.additional_css)}" 
+          type="text/css" />
+  %endif
 
   <link rel='shortcut icon' href="${static('favicon.ico')}"
         type="image/x-icon" />

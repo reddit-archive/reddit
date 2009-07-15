@@ -131,6 +131,13 @@ class FrontController(RedditController):
         return DetailsPage(link = article).render()
     
 
+    @validate(article = VLink('article'))
+    def GET_shirt(self, article):
+        if g.spreadshirt_url:
+            from r2.lib.spreadshirt import ShirtPage
+            return ShirtPage(link = article).render()
+        return self.abort404()
+
     @validate(article      = VLink('article'),
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),

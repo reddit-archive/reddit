@@ -32,12 +32,12 @@ import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, to36, timefromnow, link_from_url
-from r2.lib.wrapped import Wrapped
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, NewLink, CssError, UploadedImage, \
     ClickGadget
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
+from r2.lib import spreadshirt
 from r2.lib.menus import CommentSortMenu
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
@@ -1460,3 +1460,19 @@ class ApiController(RedditController):
         wrapped = wrap_links(link)
         wrapped = list(wrapped)[0]
         return spaceCompress(websafe(wrapped.link_child.content()))
+
+    @validatedForm(link = VByName('name', thing_cls = Link, multiple = False),
+                   color = VOneOf('color', spreadshirt.ShirtPane.colors),
+                   style = VOneOf('style', spreadshirt.ShirtPane.styles),
+                   size  = VOneOf("size", spreadshirt.ShirtPane.sizes),
+                   quantity = VInt("quantity", min = 1))
+    def POST_shirt(self, form, jquery, link, color, style, size, quantity):
+        if not g.spreadshirt_url:
+            return self.abort404()
+        else:
+            res = spreadshirt.shirt_request(link, color, style, size, quantity)
+            if res:
+                form.set_html(".status", _("redirecting..."))
+                jquery.redirect(res)
+            else:    
+                form.set_html(".status", _("error (sorry)"))

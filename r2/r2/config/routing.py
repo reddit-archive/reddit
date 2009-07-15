@@ -99,6 +99,8 @@ def make_map(global_conf={}, app_conf={}):
        action = 'details', title=None)
     mc('/traffic/:article/:title', controller='front',
        action = 'traffic', title=None)
+    mc('/shirt/:article/:title', controller='front',
+       action = 'shirt', title=None)
     mc('/comments/:article/:title/:comment', controller='front', 
        action = 'comments', title=None, comment = None)
     mc('/duplicates/:article/:title', controller = 'front',

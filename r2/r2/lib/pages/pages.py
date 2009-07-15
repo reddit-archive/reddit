@@ -88,6 +88,7 @@ class Reddit(Templated):
     enable_login_cover = True
     site_tracking      = True
     show_firsttext     = True
+    additional_css     = None
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
@@ -624,6 +625,9 @@ class LinkInfoPage(Reddit):
         if c.user_is_sponsor:
             if self.link.promoted is not None:
                 buttons += [info_button('traffic')]
+        if len(self.link.title) < 200 and g.spreadshirt_url:
+            buttons += [info_button('shirt')]
+            
 
         toolbar = [NavMenu(buttons, base_path = "", type="tabmenu")]
 

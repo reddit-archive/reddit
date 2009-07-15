@@ -118,6 +118,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      related      = _("related"),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
+                     shirt        = _("shirt"),
                      traffic      = _("traffic"),
 
                      # reddits
