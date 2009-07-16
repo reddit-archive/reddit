@@ -276,7 +276,7 @@ class Subreddit(Thing, Printable):
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
                                                             'restricted'),
-                                       Subreddit.c.allow_top == True,
+                                       # Subreddit.c.allow_top == True,
                                        sort=desc('_downs'),
                                        limit = limit,
                                        data = True,
