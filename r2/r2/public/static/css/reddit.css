@@ -1889,14 +1889,18 @@ ul#image-preview-list .description pre {
 } 
 
 #sr-header-area { 
-    padding: 3px 0px;
-    background-color: #e0e0e0;
+    padding: 3px 0px 3px 5px;
+    background-color: #f0f0f0;
     white-space: nowrap;
     overflow: hidden;
     text-transform: uppercase;
     border-bottom: 1px solid gray;
     font-size: 90%;
  }
+
+#sr-header-area .selected a {
+    color: orangered;
+}
 
 .dropdown.srdrop .selected { 
     background: transparent url(/static/droparrowgray.gif) no-repeat scroll center right;
@@ -1906,6 +1910,8 @@ ul#image-preview-list .description pre {
     padding-left: 5px; /* have to use padding instead of margin cause of ie */
     color: black;
     font-weight: normal;
+    margin-left: -5px; /* There's 5px margin intended for the SR list... */
+    margin-right: 10px;/* ...so we move it to the right side plus 5 more */
  }
 
 .srdrop .choice {margin-top: 3px;}
@@ -1922,19 +1928,18 @@ ul#image-preview-list .description pre {
     border-top: 1px dotted #369;
 }
 
-#sr-bar { margin-left: 10px; }
 #sr-bar .separator {color: gray; }
 #sr-bar a {color: black;} 
 
 #sr-more-link {
     color: black;
-    background-color: #e0e0e0;
+    background-color: #f0f0f0;
     position: absolute;
     right: 0px;
     top: 3px;
     padding: 0 5px 0 15px;
     font-weight: bold;
-    margin: 0 1px;
+    margin: 0;
 }
 
 #sr-more-link:hover {text-decoration: underline;}

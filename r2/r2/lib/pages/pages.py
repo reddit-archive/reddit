@@ -33,7 +33,7 @@ from pylons.controllers.util import abort
 
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
+from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -847,12 +847,14 @@ class SubredditTopBar(Templated):
         self.my_reddits.sort(key = lambda sr: sr.name.lower())
 
 
-        pop_reddits = Subreddit.default_subreddits(ids = False,
+        self.pop_reddits = Subreddit.default_subreddits(ids = False,
                                                    limit = Subreddit.sr_limit)
-        self.reddits = c.recent_reddits
-        for sr in pop_reddits:
-            if sr not in c.recent_reddits:
-                self.reddits.append(sr)
+
+# This doesn't actually work.
+#        self.reddits = c.recent_reddits
+#        for sr in pop_reddits:
+#            if sr not in c.recent_reddits:
+#                self.reddits.append(sr)
 
     def my_reddits_dropdown(self):
         drop_down_buttons = []    
@@ -865,11 +867,37 @@ class SubredditTopBar(Templated):
                              title = _('my reddits'),
                              type = 'srdrop')
         
-    
-    def recent_reddits(self):
-        return NavMenu([SubredditButton(sr) for sr in self.reddits],
+    def subscribed_reddits(self):
+        return NavMenu([SubredditButton(sr) for sr in self.my_reddits],
                        type='flatlist', separator = '-',
                        _id = 'sr-bar')
+
+    def popular_reddits(self, exclude=[]):
+        exclusions = set(exclude)
+        buttons = [SubredditButton(sr)
+                   for sr in self.pop_reddits if sr not in exclusions]
+    
+        return NavMenu(buttons,
+                       type='flatlist', separator = '-',
+                       _id = 'sr-bar')
+
+    def sr_bar (self):
+        menus = []
+
+        if not c.user_is_loggedin:
+            menus.append(self.popular_reddits())
+        else:
+            if len(self.my_reddits) > g.sr_dropdown_threshold:
+                menus.append(self.my_reddits_dropdown())
+
+            menus.append(self.subscribed_reddits())
+
+            sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
+            menus.append(RawString(sep))
+
+            menus.append(self.popular_reddits(exclude=self.my_reddits))
+
+        return menus
 
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
@@ -1662,3 +1690,10 @@ class RedditTraffic(Traffic):
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
         Templated.__init__(self, link = link, expanded = expanded)
+
+class RawString(Templated):
+   def __init__(self, s):
+       self.s = s
+
+   def render(self, *a, **kw):
+       return unsafe(self.s)

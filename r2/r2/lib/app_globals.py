@@ -48,6 +48,7 @@ class Globals(object):
                  'num_query_queue_workers',
                  'max_sr_images',
                  'num_serendipity',
+                 'sr_dropdown_threshold',
                  ]
     
     bool_props = ['debug', 'translator', 

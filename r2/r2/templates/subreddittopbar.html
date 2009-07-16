@@ -23,7 +23,14 @@
 <%namespace file="utils.html" import="plain_link"/>
 
 <div id="sr-header-area">
-  ${thing.my_reddits_dropdown()}
-  ${thing.recent_reddits()}
-  ${plain_link(unsafe(_("more") + " &raquo;"), "/reddits/", id="sr-more-link")}
+  %for m in thing.sr_bar():
+     ${m.render()}
+  %endfor
+
+  <%
+     editmore = 'edit' if c.user_is_loggedin else 'more'
+   %>
+
+  ${plain_link(unsafe(_(editmore) + " &raquo;"),
+               "/reddits/", id="sr-more-link")}
 </div>
