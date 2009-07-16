@@ -48,6 +48,7 @@ class Subreddit(Thing, Printable):
                      firsttext = strings.firsttext,
                      header = None,
                      description = '',
+                     allow_top = True,
                      images = {},
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
@@ -72,6 +73,7 @@ class Subreddit(Thing, Printable):
                                over_18 = over_18,
                                author_id = author_id,
                                ip = ip,
+                               allow_top = True,
                                **kw)
                 sr._commit()
 
@@ -274,6 +276,7 @@ class Subreddit(Thing, Printable):
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
                                                             'restricted'),
+                                       Subreddit.c.allow_top == True,
                                        sort=desc('_downs'),
                                        limit = limit,
                                        data = True,
