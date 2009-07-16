@@ -844,8 +844,6 @@ class SubredditTopBar(Templated):
         Templated.__init__(self)
 
         self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
-        self.my_reddits.sort(key = lambda sr: sr.name.lower())
-
 
         self.pop_reddits = Subreddit.default_subreddits(ids = False,
                                                    limit = Subreddit.sr_limit)
@@ -858,7 +856,7 @@ class SubredditTopBar(Templated):
 
     def my_reddits_dropdown(self):
         drop_down_buttons = []    
-        for sr in self.my_reddits:
+        for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
             drop_down_buttons.append(SubredditButton(sr))
         drop_down_buttons.append(NamedButton('edit', sr_path = False,
                                              css_class = 'bottom-option',
@@ -868,7 +866,11 @@ class SubredditTopBar(Templated):
                              type = 'srdrop')
         
     def subscribed_reddits(self):
-        return NavMenu([SubredditButton(sr) for sr in self.my_reddits],
+        return NavMenu([SubredditButton(sr) for sr in
+                        sorted(self.my_reddits,
+                               key = lambda sr: sr._downs,
+                               reverse=True)
+                        ],
                        type='flatlist', separator = '-',
                        _id = 'sr-bar')
 
