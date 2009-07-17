@@ -162,8 +162,10 @@ class CacheChain(CacheUtils, local):
     delete_multi = make_set_fn('delete_multi')
     flush_all = make_set_fn('flush_all')
 
-    def get(self, key, default=None):
+    def get(self, key, default = None, local = True):
         for c in self.caches:
+            if not local and isinstance(c,LocalCache):
+                continue
             val = c.get(key, default)
             if val is not None:
                 #update other caches
@@ -211,31 +213,31 @@ def sgm(cache, keys, miss_fn, prefix='', time=0):
 def test_cache(cache):
     #basic set/get
     cache.set('1', 1)
-    assert(cache.get('1') == 1)
+    assert cache.get('1') == 1
 
     #python data
     cache.set('2', [1,2,3])
-    assert(cache.get('2') == [1,2,3])
+    assert cache.get('2') == [1,2,3]
 
     #set multi, no prefix
     cache.set_multi({'3':3, '4': 4})
-    assert(cache.get_multi(('3', '4')) == {'3':3, '4': 4})
+    assert cache.get_multi(('3', '4')) == {'3':3, '4': 4}
 
     #set multi, prefix
     cache.set_multi({'3':3, '4': 4}, prefix='p_')
-    assert(cache.get_multi(('3', 4), prefix='p_') == {'3':3, 4: 4})
-    assert(cache.get_multi(('p_3', 'p_4')) == {'p_3':3, 'p_4': 4})
+    assert cache.get_multi(('3', 4), prefix='p_') == {'3':3, 4: 4}
+    assert cache.get_multi(('p_3', 'p_4')) == {'p_3':3, 'p_4': 4}
 
     #incr
     cache.set('5', 1)
     cache.set('6', 1)
     cache.incr('5')
-    assert(cache.get('5'), 2)
+    assert cache.get('5') == 2
     cache.incr('5',2)
-    assert(cache.get('5'), 4)
+    assert cache.get('5') == 4
     cache.incr_multi(('5', '6'), 1)
-    assert(cache.get('5'), 5)    
-    assert(cache.get('6'), 2)
+    assert cache.get('5') == 5
+    assert cache.get('6') == 2
 
 # a cache that occasionally dumps itself to be used for long-running
 # processes

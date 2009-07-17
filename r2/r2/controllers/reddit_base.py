@@ -291,14 +291,15 @@ def get_browser_langs():
         for l in langs:
             if ';' in l:
                 l = l.split(';')[0]
-            if l not in seen_langs:
+            if l not in seen_langs and l in g.languages:
                 browser_langs.append(l)
                 seen_langs.add(l)
             if '-' in l:
                 l = l.split('-')[0]
-            if l not in seen_langs:
+            if l not in seen_langs and l in g.languages:
                 browser_langs.append(l)
                 seen_langs.add(l)
+    browser_langs.sort()
     return browser_langs
 
 def set_host_lang():

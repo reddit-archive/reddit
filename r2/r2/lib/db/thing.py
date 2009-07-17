@@ -775,24 +775,40 @@ class Query(object):
         if self._stats_collector:
             self._stats_collector.add(self)
 
-        lst = None
-        if self._read_cache:
-            names = cache.get(self._iden())
-            if names is not None:
-                lst = Thing._by_fullname(names, data = self._data, return_dict = False)
+        def _retrieve():
+            return self._cursor().fetchall()
 
-        if lst is None:
-            #hit the db
-            lst = self._cursor().fetchall()
+        names = lst = []
+
+        if not self._read_cache:
+            lst = _retrieve()
         else:
-            used_cache = True
+            names = cache.get(self._iden())
+            if names is None and not self._write_cache:
+                # it wasn't in the cache, and we're not going to
+                # replace it, so just hit the db
+                lst = _retrieve()
+            elif names is None and self._write_cache:
+                # it's not in the cache, and we have the power to
+                # update it, which we should do in a lock to prevent
+                # concurrent requests for the same data
+                with g.make_lock("lock_%s" % self._iden()):
+                    # see if it was set while we were waiting for our
+                    # lock
+                    names = cache.get(self._iden(), local = False)
+                    if not names:
+                        lst = _retrieve()
+                        cache.set(self._iden(),
+                                  [ x._fullname for x in lst ],
+                                  self._cache_time)
 
-        if self._write_cache and not used_cache:
-            names = tuple(i._fullname for i in lst)
-            cache.set(self._iden(), names, self._cache_time)
+        if names and not lst:
+            # we got our list of names from the cache, so we need to
+            # turn them back into Things
+            lst = Thing._by_fullname(names, data = self._data, return_dict = False)
 
-        for i in lst:
-            yield i
+        for item in lst:
+            yield item
 
 class Things(Query):
     def __init__(self, kind, *rules, **kw):
