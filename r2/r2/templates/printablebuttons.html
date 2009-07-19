@@ -35,7 +35,7 @@
       ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
     </li>
   %endif
-  %if thing.can_ban and thing.show_ban:
+  %if thing.can_ban:
     %if thing.show_spam:
       <li>
          ${self.state_button("unban", _("unban"), 
@@ -53,6 +53,44 @@
          "change_state(this, 'ignore');", _("ignored"))}
       </li>
     %endif
+  %endif
+</%def>
+
+<%def name="distinguish_setter(value)">
+  <a href="javascript:void(0)"
+     onclick="return set_distinguish(this, '${value}')">${_(value)}</a>
+</%def>
+
+<%def name="distinguish()">
+  %if thing.show_distinguish:
+  <li class="toggle">
+    <form method="post" action="/post/distinguish">
+      <input type="hidden" value="${_('distinguishing...')}" name="executed"/>
+      <a href="javascript:void(0)"
+         onclick="return toggle_distinguish_span(this)">${_("distinguish")}</a>
+      <span class="option error">
+         ${_("distinguish this?")}
+
+         &#32;
+         ${distinguish_setter('yes')}
+         &#32;/&#32;
+         ${distinguish_setter('no')}
+         &#32;
+
+         %if c.user_is_admin:
+         /&#32;
+         ${distinguish_setter('admin')}
+         &#32;
+         %endif
+
+         /&#32;
+         <a class="nonbutton" href="/help/moderation#Distinguishing">
+           help
+         </a>
+         &#32;
+      </span>
+    </form>
+  </li>
   %endif
 </%def>
 
@@ -93,6 +131,7 @@
     </li>
   %endif
   ${self.banbuttons()}
+  ${self.distinguish()}
 </%def>
 
 <%def name="commentbuttons()">
@@ -119,9 +158,10 @@
       %endif
     %endif
     ${self.banbuttons()}
+    ${self.distinguish()}
     %if not thing.profilepage and thing.can_reply:
       <li>
-        ${self.simple_button(_("reply"), "reply")}
+        ${self.simple_button(_("reply {verb}"), "reply")}
       </li>
     %endif
   %endif

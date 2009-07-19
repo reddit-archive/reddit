@@ -173,6 +173,11 @@ class Subreddit(Thing, Printable):
                 and (c.user_is_admin
                      or self.is_moderator(user)))
 
+    def can_distinguish(self,user):
+        return (user
+                and (c.user_is_admin
+                     or self.is_moderator(user)))
+
     def can_change_stylesheet(self, user):
         if c.user_is_loggedin:
             return c.user_is_admin or self.is_moderator(user)

@@ -97,7 +97,7 @@ thing id-${what._fullname}
 </%def>
 
 <%def name="buttons(ban=True)">
-  ${BanButtons(thing, show_ban = ban)}
+  ${BanButtons(thing)}
 </%def>
 
 <%def name="ParentDiv()">
@@ -144,14 +144,13 @@ thing id-${what._fullname}
             <a class="${css_class}" title="${label}"
             %if target:
                target="${target}"
-   %endif
+            %endif
                href="${attr_link}">${abbv}</a>
           %else:
             <span class="${css_class}" title="${label}">${abbv}</span>
           %endif
-          ## author_cls contains the final css_class, so this is a hack
-          ## that will print a comma after all but the final attr
-          %if css_class not in author_cls:
+          ## this is a hack to print a comma after all but the final attr
+          %if priority != attribs[-1][0]:
             ,
           %endif
         %endfor

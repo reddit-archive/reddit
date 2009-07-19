@@ -566,6 +566,7 @@ class ApiController(RedditController):
 
             wrapper = default_thing_wrapper(expand_children = True)
             jquery(".content").replace_things(item, True, True, wrap = wrapper)
+            jquery(".content .link .rank").hide()
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1024,7 +1025,7 @@ class ApiController(RedditController):
         if redir:
             form.redirect(redir)
 
-    @noresponse(VModhash(),
+    @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ban(self, thing):
@@ -1035,7 +1036,8 @@ class ApiController(RedditController):
         # NB: change table updated by reporting
         unreport(thing, correct=True, auto=False)
 
-    @noresponse(VModhash(),
+
+    @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_unban(self, thing):
@@ -1043,13 +1045,26 @@ class ApiController(RedditController):
         if not thing: return
         unreport(thing, correct=False)
 
-    @noresponse(VModhash(),
+    @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ignore(self, thing):
         if not thing: return
         # NB: change table updated by reporting
         unreport(thing, correct=False)
+
+    @validatedForm(VUser(), VModhash(),
+                   VSrCanDistinguish('id'),
+                   thing = VByName('id'),
+                   how = VOneOf('how', ('yes','no','admin')))
+    def POST_distinguish(self, form, jquery, thing, how):
+        if not thing:return
+        thing.distinguished = how
+        thing._commit()
+        wrapper = default_thing_wrapper(expand_children = True)
+        w = wrap_links(thing, wrapper)
+        jquery(".content").replace_things(w, True, True)
+        jquery(".content .link .rank").hide()
 
     @noresponse(VUser(),
                 VModhash(),

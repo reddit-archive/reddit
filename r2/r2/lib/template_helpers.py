@@ -318,9 +318,9 @@ def find_author_class(thing, attribs, gray):
 
     if gray:
         author_cls += " gray"
-    elif attribs:
-        #the last element in attribs will be the highest priority
-        extra_class = attribs[-1][2]
-        author_cls += " " + extra_class
+
+    for priority, abbv, css_class, label, attr_link in attribs:
+        author_cls += " " + css_class
+
 
     return author_cls

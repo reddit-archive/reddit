@@ -298,7 +298,6 @@ function cancelShare(elem) {
     return cancelToggleForm(elem, ".sharelink", ".share-button");
 };
 
-
 /* Comment generation */
 function helpon(elem) {
     $(elem).parents(".usertext-edit:first").children(".markhelp:first").show();
@@ -897,6 +896,16 @@ function reply(elem) {
     form.show();
     //update the cancel button to call the toggle button's click
     form.find(".cancel").get(0).onclick = function() {form.hide()};
+}
+
+function toggle_distinguish_span(elem) {
+  var form = $(elem).parents("form")[0];
+  $(form).children().toggle();
+}
+
+function set_distinguish(elem, value) {
+  change_state(elem, "distinguish/" + value);
+  $(elem).children().toggle();
 }
 
 function populate_click_gadget() {

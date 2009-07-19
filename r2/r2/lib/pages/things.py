@@ -27,26 +27,27 @@ from r2.lib.strings import Score
 from pylons import c
 
 class PrintableButtons(Styled):
-    def __init__(self, style, thing, show_ban = True,
-                 show_delete = False, show_report = True, **kw):
+    def __init__(self, style, thing,
+                 show_delete = False, show_report = True,
+                 show_distinguish = False, **kw):
         show_report = show_report and c.user_is_loggedin
         Styled.__init__(self, style = style,
-                        fullnaem = thing._fullname, 
+                        fullname = thing._fullname,
                         can_ban = thing.can_ban,
                         show_spam = thing.show_spam,
                         show_reports = thing.show_reports,
-                        show_ban = show_ban,
                         show_delete = show_delete,
-                        show_report = show_report, **kw)
+                        show_report = show_report,
+                        show_distinguish = show_distinguish,
+                        **kw)
         
 class BanButtons(PrintableButtons):
-    def __init__(self, thing, show_ban = True,
+    def __init__(self, thing,
                  show_delete = False, show_report = True):
         PrintableButtons.__init__(self, "banbuttons", thing)
 
 class LinkButtons(PrintableButtons):
-    def __init__(self, thing, comments = True, delete = True, report = True,
-                 ban = True):
+    def __init__(self, thing, comments = True, delete = True, report = True):
         # is the current user the author?
         is_author = (c.user_is_loggedin and thing.author and
                      c.user.name == thing.author.name)
@@ -54,6 +55,11 @@ class LinkButtons(PrintableButtons):
         show_report = not is_author and report
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
+        # do we show the distinguish button? among other things,
+        # we never want it to appear on link listings -- only
+        # comments pages
+        show_distinguish = (is_author and thing.can_ban 
+                            and getattr(thing, "expand_children", False))
 
         PrintableButtons.__init__(self, 'linkbuttons', thing, 
                                   # user existence and preferences
@@ -69,7 +75,7 @@ class LinkButtons(PrintableButtons):
                                   hidden = thing.hidden, 
                                   show_delete = show_delete,
                                   show_report = show_report,
-                                  show_ban = ban,
+                                  show_distinguish = show_distinguish,
                                   show_comments = comments)
 
 class CommentButtons(PrintableButtons):
@@ -82,6 +88,8 @@ class CommentButtons(PrintableButtons):
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
 
+        show_distinguish = is_author and thing.can_ban
+
         PrintableButtons.__init__(self, "commentbuttons", thing,
                                   is_author = is_author, 
                                   profilepage = c.profilepage,
@@ -90,8 +98,8 @@ class CommentButtons(PrintableButtons):
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
                                   show_report = show_report,
-                                  show_delete = show_delete,
-                                  show_ban = True)
+                                  show_distinguish = show_distinguish,
+                                  show_delete = show_delete)
 
 class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):
@@ -104,8 +112,7 @@ class MessageButtons(PrintableButtons):
                                   was_comment = was_comment, 
                                   can_reply = c.user_is_loggedin,
                                   show_report = True,
-                                  show_delete = False,
-                                  show_ban = True)
+                                  show_delete = False)
 
 # formerly ListingController.builder_wrapper
 def default_thing_wrapper(**params):

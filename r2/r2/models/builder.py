@@ -56,20 +56,27 @@ def add_attr(attrs, code, label=None, link=None):
             label = _('friend')
         if not link:
             link = '/prefs/friends'
-    elif code == 'M':
-        priority = 2
-        cssclass = 'moderator'
-        if not label:
-            raise ValueError ("Need a label")
-        if not link:
-            raise ValueError ("Need a link")
     elif code == 'S':
-        priority = 3
+        priority = 2
         cssclass = 'submitter'
         if not label:
             label = _('submitter')
         if not link:
             raise ValueError ("Need a link")
+    elif code == 'M':
+        priority = 3
+        cssclass = 'moderator'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'A':
+        priority = 4
+        cssclass = 'admin'
+        if not label:
+            label = _('reddit admin, speaking officially')
+        if not link:
+            link = '/help/faq#Whomadereddit'
     else:
         raise ValueError ("Got weird code [%s]" % code)
 
@@ -140,7 +147,7 @@ class Builder(object):
             else:
                 modlink = '/r/%s/about/moderators' % c.site.name
 
-            modlabel = (_('moderator of /r/%(reddit)s') %
+            modlabel = (_('moderator of /r/%(reddit)s, speaking officially') %
                         dict(reddit = c.site.name) )
 
 
@@ -161,6 +168,13 @@ class Builder(object):
             # css class, i18n'ed mouseover label, hyperlink (or None)>
             w.attribs = []
 
+            w.distinguished = None
+            if hasattr(item, "distinguished"):
+                if item.distinguished == 'yes':
+                    w.distinguished = 'moderator'
+                elif item.distinguished == 'admin':
+                    w.distinguished = 'admin'
+
             try:
                 w.author = authors.get(item.author_id)
                 if user and item.author_id in user.friends:
@@ -172,7 +186,12 @@ class Builder(object):
             except AttributeError:
                 pass
 
-            if getattr(item, "author_id", None) in mods:
+            if (w.distinguished == 'admin' and
+                w.author and w.author.name in g.admins):
+                add_attr(w.attribs, 'A')
+
+            if (w.distinguished == 'moderator' and
+                getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
             if hasattr(item, "sr_id"):

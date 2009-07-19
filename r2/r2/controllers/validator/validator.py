@@ -436,6 +436,21 @@ class VSrModerator(Validator):
                 or c.user_is_admin):
             abort(403, "forbidden")
 
+class VSrCanDistinguish(VByName):
+    def run(self, thing_name):
+        if c.user_is_admin:
+            return True
+        elif c.user_is_loggedin:
+            item = VByName.run(self, thing_name)
+            if item.author_id == c.user._id:
+                # will throw a legitimate 500 if this isn't a link or
+                # comment, because this should only be used on links and
+                # comments
+                subreddit = item.subreddit_slow
+                if subreddit.can_distinguish(c.user):
+                    return True
+        abort(403,'forbidden')
+
 class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
