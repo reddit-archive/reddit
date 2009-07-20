@@ -1633,8 +1633,10 @@ class RedditTraffic(Traffic):
             for i, d in enumerate(dates):
                 imp_by_day[d.weekday()].append(float(imps[i]))
                 uni_by_day[d.weekday()].append(float(uniques[i]))
-            self.uniques_by_dow     = [sum(x)/len(x) for x in uni_by_day]
-            self.impressions_by_dow = [sum(x)/len(x) for x in imp_by_day]
+            self.uniques_by_dow     = [sum(x)/max(len(x),1)
+                                       for x in uni_by_day]
+            self.impressions_by_dow = [sum(x)/max(len(x),1)
+                                       for x in imp_by_day]
         Templated.__init__(self)
 
     def reddits_summary(self):
