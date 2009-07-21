@@ -42,6 +42,7 @@ api('reddit',        RedditJsonTemplate)
 api('panestack',     PanestackJsonTemplate)
 api('listing',       ListingJsonTemplate)
 api('usertableitem', UserItemJsonTemplate)
+api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
 api('reddittraffic', TrafficJsonTemplate)

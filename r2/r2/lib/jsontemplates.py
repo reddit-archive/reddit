@@ -185,6 +185,11 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 over18       = "over_18", 
                                                 description  = "description")
 
+class AccountJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
+                                                link_karma = "safe_karma",
+                                                comment_karma = "comment_karma")
+
 class LinkJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
                                                 downs        = "downvotes",
@@ -248,6 +253,12 @@ class CommentJsonTemplate(ThingJsonTemplate):
     def kind(self, wrapped):
         from r2.models import Comment
         return make_typename(Comment)
+
+    def raw_data(self, thing):
+        d = ThingJsonTemplate.raw_data(self, thing)
+        if c.profilepage:
+            d['link_title'] = thing.link.title
+        return d
 
     def rendered_data(self, wrapped):
         d = ThingJsonTemplate.rendered_data(self, wrapped)

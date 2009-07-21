@@ -82,6 +82,8 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/admin/:action', controller='admin')
     
+    mc('/user/:username/about', controller='user', action='about',
+       where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
     

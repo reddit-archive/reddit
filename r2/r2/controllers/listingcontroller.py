@@ -34,6 +34,7 @@ from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
+from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
@@ -453,6 +454,11 @@ class UserController(ListingController):
 
         return ListingController.GET_listing(self, **env)
 
+    @validate(vuser = VExistingUname('username'))
+    def GET_about(self, vuser):
+        if not is_api() or not vuser:
+            return self.abort404()
+        return Reddit(content = Wrapped(vuser)).render()
 
 class MessageController(ListingController):
     show_sidebar = False
