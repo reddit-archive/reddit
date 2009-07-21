@@ -211,6 +211,7 @@ class Link(Thing, Printable):
              s.append(request.get.has_key('twocolumn'))
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))
+        s.append(getattr(wrapped, 'media_object', {}))
         return s
 
     def make_permalink(self, sr, force_domain = False):

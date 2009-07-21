@@ -168,6 +168,8 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
+    mc('/mediaembed/:link', controller="mediaembed", action="mediaembed")
+
     mc('/doquery', controller='query', action='doquery')
 
     mc('/store', controller='redirect', action='redirect',

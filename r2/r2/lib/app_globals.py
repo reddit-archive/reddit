@@ -174,6 +174,11 @@ class Globals(object):
         if self.debug:
             self.log.setLevel(logging.DEBUG)
 
+        if not self.media_domain:
+            self.media_domain = self.domain
+        if self.media_domain == self.domain:
+            print "Warning: g.media_domain == g.domain. This may give untrusted content access to user cookies"
+
         #read in our CSS so that it can become a default for subreddit
         #stylesheets
         stylesheet_path = os.path.join(paths.get('static_files'),

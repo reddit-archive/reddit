@@ -151,12 +151,25 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
 def fetch_size(url, referer = None, retries = 1):
     return fetch_url(url, referer, retries, dimension = True)
 
+class MediaEmbed(object):
+    width   = None
+    height  = None
+    content = None
+
+    def __init__(self, height, width, content):
+        self.height  = height
+        self.width   = width
+        self.content = content
+
 class Scraper:
     def __init__(self, url):
         self.url = url
         self.content = None
         self.content_type = None
         self.soup = None
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.url)
 
     def download(self):
         self.content_type, self.content = fetch_url(self.url)
@@ -183,6 +196,12 @@ class Scraper:
 
         max_area = 0
         max_url = None
+
+        if self.soup:
+            thumbnail_spec = self.soup.find('link', rel = 'image_src')
+            if thumbnail_spec and thumbnail_spec['href']:
+                log.debug("Using image_src")
+                return thumbnail_spec['href']
 
         for image_url in self.image_urls():
             size = fetch_size(image_url, referer = self.url)
@@ -228,28 +247,60 @@ class Scraper:
                 return image
 
     def media_object(self):
-        return None
+        for deepscraper in deepscrapers:
+            ds = deepscraper()
+            found = ds.find_media_object(self)
+            if found:
+                return found
+
+    @classmethod
+    def media_embed(cls):
+        raise NotImplementedError
 
 class MediaScraper(Scraper):
     media_template = ""
     thumbnail_template = ""
+    video_id = None
     video_id_rx = None
-    
+
     def __init__(self, url):
-        m = self.video_id_rx.match(url)
-        if m:
-            self.video_id = m.groups()[0]
-        else:
-            #if we can't find the id just treat it like a normal page
-            log.debug('reverting to regular scraper: %s' % url)
-            self.__class__ = Scraper
         Scraper.__init__(self, url)
 
+        # first try the simple regex against the URL. If that fails,
+        # see if the MediaScraper subclass has its own extraction
+        # function
+        if self.video_id_rx:
+            m = self.video_id_rx.match(url)
+            if m:
+                self.video_id = m.groups()[0]
+        if not self.video_id:
+            video_id = self.video_id_extract()
+            if video_id:
+                self.video_id = video_id
+        if not self.video_id:
+            #if we still can't find the id just treat it like a normal page
+            log.debug('reverting to regular scraper: %s' % url)
+            self.__class__ = Scraper
+
+    def video_id_extract(self):
+        return None
+
     def largest_image_url(self):
-        return self.thumbnail_template.replace('$video_id', self.video_id)
+        if self.thumbnail_template:
+            return self.thumbnail_template.replace('$video_id', self.video_id)
+        else:
+            return Scraper.largest_image_url(self)
 
     def media_object(self):
-        return self.media_template.replace('$video_id', self.video_id)
+        return dict(video_id = self.video_id,
+                    type = self.domains[0])
+
+    @classmethod
+    def media_embed(cls, video_id = None, height = None, width = None, **kw):
+        content = cls.media_template.replace('$video_id', video_id)
+        return MediaEmbed(height = height or cls.height,
+                          width = width or cls.width,
+                          content = content)
     
 def youtube_in_google(google_url):
     h = Scraper(google_url)
@@ -276,17 +327,20 @@ def make_scraper(url):
             return make_scraper(youtube_url)
     return scraper(url)
 
-
 ########## site-specific video scrapers ##########
 
-#Youtube
 class YoutubeScraper(MediaScraper):
-    media_template = '<object width="480" height="295"><param name="movie" value="http://www.youtube-nocookie.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube-nocookie.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="480" height="295"></embed></object>'
+    domains = ['youtube.com']
+    height = 295
+    width = 480
+    media_template = '<object width="490" height="295"><param name="movie" value="http://www.youtube.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="480" height="295"></embed></object>'
     thumbnail_template = 'http://img.youtube.com/vi/$video_id/default.jpg'
     video_id_rx = re.compile('.*v=([A-Za-z0-9-_]+).*')
 
-#Metacage
 class MetacafeScraper(MediaScraper):
+    domains = ['metacafe.com']
+    height = 345
+    width  = 400
     media_template = '<embed src="$video_id" width="400" height="345" wmode="transparent" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash"> </embed>'
     video_id_rx = re.compile('.*/watch/([^/]+)/.*')
 
@@ -296,20 +350,16 @@ class MetacafeScraper(MediaScraper):
 
         if self.soup:
             video_url =  self.soup.find('link', rel = 'video_src')['href']
-            return self.media_template.replace('$video_id', video_url)
+            return dict(video_id = video_url,
+                        type = self.domains[0])
 
-    def largest_image_url(self):
-        if not self.soup:
-            self.download()
-
-        if self.soup:
-            return self.soup.find('link', rel = 'image_src')['href']
-
-#Google Video
-gootube_thumb_rx = re.compile(".*thumbnail:\s*\'(http://[^/]+/ThumbnailServer2[^\']+)\'.*", re.IGNORECASE | re.S)
 class GootubeScraper(MediaScraper):
+    domains = ['video.google.com']
+    height = 326
+    width  = 400
     media_template = '<embed style="width:400px; height:326px;" id="VideoPlayback" type="application/x-shockwave-flash" src="http://video.google.com/googleplayer.swf?docId=$video_id&hl=en" flashvars=""> </embed>'
-    video_id_rx = re.compile('.*videoplay\?docid=([A-Za-z0-9-_]+).*')    
+    video_id_rx = re.compile('.*videoplay\?docid=([A-Za-z0-9-_]+).*')
+    gootube_thumb_rx = re.compile(".*thumbnail:\s*\'(http://[^/]+/ThumbnailServer2[^\']+)\'.*", re.IGNORECASE | re.S)
 
     def largest_image_url(self):
         if not self.content:
@@ -318,40 +368,353 @@ class GootubeScraper(MediaScraper):
         if not self.content:
             return None
 
-        m = gootube_thumb_rx.match(self.content)
+        m = self.gootube_thumb_rx.match(self.content)
         if m:
             image_url = m.groups()[0]
             image_url = utils.safe_eval_str(image_url)
             return image_url
 
-scrapers = {'youtube.com': YoutubeScraper,
-            'video.google.com': GootubeScraper,
-            'metacafe.com': MetacafeScraper}
+class VimeoScraper(MediaScraper):
+    domains = ['vimeo.com']
+    height = 448
+    width = 520
+    media_template = '<embed src="$video_id" width="520" height="448" wmode="transparent" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash"> </embed>'
+    video_id_rx = re.compile('.*/(.*)')
+
+    def media_object(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            video_url =  self.soup.find('link', rel = 'video_src')['href']
+            return dict(video_id = video_url,
+                        type = self.domains[0])
+
+class BreakScraper(MediaScraper):
+    domains = ['break.com']
+    height = 421
+    width = 520
+    media_template = '<object width="520" height="421"><param name="movie" value="$video_id"></param><param name="allowScriptAccess" value="always"></param><embed src="$video_id" type="application/x-shockwave-flash" allowScriptAccess="always" width="520" height="421"></embed></object>'
+    video_id_rx = re.compile('.*/index/([^/]+).*');
+
+    def video_id_extract(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            video_src = self.soup.find('link', rel = 'video_src')
+            if video_src and video_src['href']:
+                return video_src['href']
+
+class TheOnionScraper(MediaScraper):
+    domains = ['theonion.com']
+    height = 430
+    width = 480
+    media_template = """<object width="480" height="430">
+                          <param name="allowfullscreen" value="true" />
+                          <param name="allowscriptaccess" value="always" />
+                          <param name="movie" value="http://www.theonion.com/content/themes/common/assets/onn_embed/embedded_player.swf?&amp;videoid=$video_id" />
+                          <param name="wmode" value="transparent" />
+
+                          <embed src="http://www.theonion.com/content/themes/common/assets/onn_embed/embedded_player.swf"
+                                 width="480" height="430"
+                                 wmode="transparent"
+                                 pluginspage="http://www.macromedia.com/go/getflashplayer"
+                                 type="application/x-shockwave-flash"
+                                 flashvars="videoid=$video_id" >
+                          </embed>
+                        </object>"""
+    video_id_rx = re.compile('.*/video/([^/?#]+).*')
+
+    def media_object(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            video_url = self.soup.find('meta', attrs={'name': 'nid'})['content']
+            return dict(video_id = video_url,
+                        type = self.domains[0])
+
+class CollegeHumorScraper(MediaScraper):
+    domains = ['collegehumor.com']
+    height = 390
+    width = 520
+    media_template = '<object type="application/x-shockwave-flash" data="http://www.collegehumor.com/moogaloop/moogaloop.swf?clip_id=$video_id&fullscreen=1" width="520" height="390" ><param name="allowfullscreen" value="true" /><param name="AllowScriptAccess" value="true" /><param name="movie" quality="best" value="http://www.collegehumor.com/moogaloop/moogaloop.swf?clip_id=$video_id&fullscreen=1" /></object>'
+    video_id_rx = re.compile('.*video:(\d+).*');
+
+class FunnyOrDieScraper(MediaScraper):
+    domains = ['funnyordie.com']
+    height = 438
+    width = 464
+    media_template = '<object width="464" height="438" classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" id="fodplayer"><param name="movie" value="http://player.ordienetworks.com/flash/fodplayer.swf?c79e63ac?key=$video_id" /><param name="flashvars" value="key=$video_id&autostart=true&internal=true" /><param name="allowfullscreen" value="true" /><embed width="464" height="438" flashvars="key=$video_id&autostart=true" allowfullscreen="true" quality="high" src="http://player.ordienetworks.com/flash/fodplayer.swf?c79e63ac" name="fodplayer" type="application/x-shockwave-flash"></embed></object>'
+    thumbnail_template = 'http://assets1.ordienetworks.com/tmbs/$video_id/medium_2.jpg?c79e63ac'
+    video_id_rx = re.compile('.*/videos/([^/]+)/.*')
+
+class ComedyCentralScraper(MediaScraper):
+    domains = ['comedycentral.com', 'thedailyshow.com']
+    height = 316
+    width = 332
+    media_template = '<embed FlashVars="videoId=$video_id" src="http://www.comedycentral.com/sitewide/video_player/view/default/swf.jhtml" quality="high" bgcolor="#cccccc" width="332" height="316" name="comedy_central_player" align="middle" allowScriptAccess="always" allownetworking="external" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer"></embed>'
+    video_id_rx = re.compile('.*videoId=(\d+).*')
+
+class ColbertNationScraper(ComedyCentralScraper):
+    domains = ['colbertnation.com']
+    video_id_rx = re.compile('.*videos/(\d+)/.*')
+
+class LiveLeakScraper(MediaScraper):
+    domains = ['liveleak.com']
+    height = 370
+    width = 450
+    media_template = '<object width="450" height="370"><param name="movie" value="http://www.liveleak.com/e/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.liveleak.com/e/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="450" height="370"></embed></object>'
+    video_id_rx = re.compile('.*i=([a-zA-Z0-9_]+).*')
+
+    def largest_image_url(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            return self.soup.find('link', rel = 'videothumbnail')['href']
+
+class DailyMotionScraper(MediaScraper):
+    domains = ['dailymotion.com']
+    height = 381
+    width = 480
+    media_template = '<object width="480" height="381"><param name="movie" value="$video_id"></param><param name="allowFullScreen" value="true"></param><param name="allowScriptAccess" value="always"></param><embed src="$video_id" type="application/x-shockwave-flash" width="480" height="381" allowFullScreen="true" allowScriptAccess="always"></embed></object>'
+    video_id_rx = re.compile('.*/video/([a-zA-Z0-9]+)_.*')
+
+    def media_object(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            video_url =  self.soup.find('link', rel = 'video_src')['href']
+            return dict(video_id = video_url,
+                        type = self.domains[0])
+
+class RevverScraper(MediaScraper):
+    domains = ['revver.com']
+    height = 392
+    width = 480
+    media_template = '<script src="http://flash.revver.com/player/1.0/player.js?mediaId:$video_id;width:480;height:392;" type="text/javascript"></script>'
+    video_id_rx = re.compile('.*/video/([a-zA-Z0-9]+)/.*')
+
+class EscapistScraper(MediaScraper):
+    domains = ['escapistmagazine.com']
+    height = 294
+    width = 480
+    media_template = """<script src="http://www.escapistmagazine.com/videos/embed/$video_id"></script>"""
+    video_id_rx = re.compile('.*/videos/view/[A-Za-z-9-]+/([0-9]+).*')
+
+class JustintvScraper(MediaScraper):
+    """Can grab streams from justin.tv, but not clips"""
+    domains = ['justin.tv']
+    height = 295
+    width = 353
+    stream_media_template = """<object type="application/x-shockwave-flash" height="295" width="353" id="jtv_player_flash" data="http://www.justin.tv/widgets/jtv_player.swf?channel=$video_id" bgcolor="#000000"><param name="allowFullScreen" value="true" /><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="movie" value="http://www.justin.tv/widgets/jtv_player.swf" /><param name="flashvars" value="channel=$video_id&auto_play=false&start_volume=25" /></object>"""
+    video_id_rx = re.compile('^http://www.justin.tv/([a-zA-Z0-9_]+)[^/]*$')
+
+    @classmethod
+    def media_embed(cls, video_id, **kw):
+        content = cls.stream_media_template.replace('$video_id', video_id)
+        return MediaEmbed(height = cls.height,
+                          width = cls.width,
+                          content = content)
+
+class SoundcloudScraper(MediaScraper):
+    """soundcloud.com"""
+    domains = ['soundcloud.com']
+    height = 81
+    width  = 400
+    media_template = """<div style="font-size: 11px;">
+                          <object height="81" width="100%">
+                            <param name="movie"
+                                   value="http://player.soundcloud.com/player.swf?track=$video_id">
+                            </param>
+                            <param name="allowscriptaccess" value="always"></param>
+                            <embed allowscriptaccess="always" height="81"
+                                   src="http://player.soundcloud.com/player.swf?track=$video_id"
+                                   type="application/x-shockwave-flash"
+                                   width="100%">
+                            </embed>
+                          </object>"""
+    video_id_rx = re.compile('^http://soundcloud.com/[a-zA-Z0-9_-]+/([a-zA-Z0-9_-]+)')
+    
+
+class DeepScraper(object):
+    """Subclasses of DeepScraper attempt to dive into generic pages
+       for embeds of other types (like YouTube videos on blog
+       sites)."""
+
+    def find_media_object(self, scraper):
+        return None
+
+class YoutubeEmbedDeepScraper(DeepScraper):
+    youtube_url_re = re.compile('^(http://www.youtube.com/v/([_a-zA-Z0-9-]+)).*')
+
+    def find_media_object(self, scraper):
+        # try to find very simple youtube embeds
+        if not scraper.soup:
+            scraper.download()
+
+        if scraper.soup:
+            movie_embed = scraper.soup.find('embed',
+                                            attrs={'src': lambda x: self.youtube_url_re.match(x)})
+            if movie_embed:
+                youtube_id = self.youtube_url_re.match(movie_embed['src']).group(2)
+                youtube_url = 'http://www.youtube.com/watch?v=%s"' % youtube_id
+                log.debug('found youtube embed %s' % youtube_url)
+                mo = YoutubeScraper(youtube_url).media_object()
+                mo['deep'] = scraper.url
+                return mo
+
+#scrapers =:= dict(domain -> ScraperClass)
+scrapers = {}
+for scraper in [ YoutubeScraper,
+                 MetacafeScraper,
+                 GootubeScraper,
+                 VimeoScraper,
+                 BreakScraper,
+                 TheOnionScraper,
+                 CollegeHumorScraper,
+                 FunnyOrDieScraper,
+                 ComedyCentralScraper,
+                 ColbertNationScraper,
+                 LiveLeakScraper,
+                 DailyMotionScraper,
+                 RevverScraper,
+                 EscapistScraper,
+                 JustintvScraper,
+                 SoundcloudScraper,
+                 ]:
+    for domain in scraper.domains:
+        scrapers[domain] = scraper
+
+deepscrapers = [YoutubeEmbedDeepScraper]
+
+def convert_old_media_objects():
+    q = Link._query(Link.c.media_object is not None,
+                    Link.c._date > whenever,
+                    data = True)
+    for link in utils.fetch_things2(q):
+        if not getattr(link, 'media_object', None):
+            continue
+
+        if 'youtube' in link.media_object:
+            # we can rewrite this one without scraping
+            video_id = YoutubeScraper.video_id_rx.match(link.url)
+            link.media_object = dict(type='youtube.com',
+                                     video_id = video_id.group(1))
+        elif ('video.google.com' in link.media_object
+              or 'metacafe' in link.media_object):
+            scraper = make_scraper(link.url)
+            if not scraper:
+                continue
+            mo = scraper.media_object()
+            if not mo:
+                continue
+
+            link.media_object = mo
+
+        else:
+            print "skipping %s because it confuses me" % link._fullname
+            continue
+
+        link._commit()
+
+test_urls = [
+    'http://www.facebook.com/pages/Rick-Astley/5807213510?sid=c99aaf3888171e73668a38e0749ae12d', # regular thumbnail finder
+    'http://www.flickr.com/photos/septuagesima/317819584/', # thumbnail with image_src
+
+    'http://www.youtube.com/watch?v=Yu_moia-oVI',
+    'http://www.metacafe.com/watch/sy-1473689248/rick_astley_never_gonna_give_you_up_official_music_video/',
+    'http://video.google.com/videoplay?docid=5908758151704698048',
+    'http://vimeo.com/4495451',
+    'http://www.break.com/usercontent/2008/11/Macy-s-Thankgiving-Day-Parade-Rick-Roll-611965.html',
+    'http://www.theonion.com/content/video/sony_releases_new_stupid_piece_of',
+    'http://www.collegehumor.com/video:1823712',
+    'http://www.funnyordie.com/videos/7f2a184755/macys-thanksgiving-day-parade-gets-rick-rolled-from-that-happened',
+    'http://www.comedycentral.com/videos/index.jhtml?videoId=178342&title=ultimate-fighting-vs.-bloggers',
+    'http://www.thedailyshow.com/video/index.jhtml?videoId=175244&title=Photoshop-of-Horrors',
+    'http://www.colbertnation.com/the-colbert-report-videos/63549/may-01-2006/sign-off---spam',
+    'http://www.liveleak.com/view?i=e09_1207983531',
+    'http://www.dailymotion.com/relevance/search/rick+roll/video/x5l8e6_rickroll_fun',
+    'http://revver.com/video/1199591/rick-rolld-at-work/',
+    'http://www.escapistmagazine.com/videos/view/zero-punctuation/10-The-Orange-Box',
+    'http://www.escapistmagazine.com/videos/view/unskippable/736-Lost-Odyssey',
+
+    # justin.tv has two media types that we care about, streams, which
+    # we can scrape, and clips, which we can't
+    'http://www.justin.tv/help', # stream
+    'http://www.justin.tv/clip/c07a333f94e5716b', # clip, which we can't currently scrape, and shouldn't try
+
+    'http://soundcloud.com/kalhonaaho01/never-gonna-stand-you-up-rick-astley-vs-ludacris-album-version',
+    'http://listen.grooveshark.com/#/song/Never_Gonna_Give_You_Up/12616328',
+    'http://tinysong.com/2WOJ', # also Grooveshark
+
+    'http://www.rickrolled.com/videos/video/rickrolld' # test the DeepScraper
+    ]
+
+def submit_all():
+    from r2.models import Subreddit, Account, Link, NotFound
+    from r2.lib.media import set_media
+    from r2.lib.db import queries
+    sr = Subreddit._by_name('testmedia')
+    author = Account._by_name('testmedia')
+    links = []
+    for url in test_urls:
+        try:
+            # delete any existing version of the link
+            l = Link._by_url(url, sr)
+            print "Deleting %s" % l
+            l._deleted = True
+            l._commit()
+        except NotFound:
+            pass
+
+        l = Link._submit(url, url, author, sr, '0.0.0.0')
+
+        try:
+            set_media(l)
+        except Exception, e:
+            print e
+
+        if g.write_query_queue:
+            queries.new_link(l)
+
+        links.append(l)
+
+    return links
 
 def test():
-    #from r2.lib.pool2 import WorkQueue
-    jobs = []
-    f = open('/tmp/testurls.txt')
-    for url in f:
-        if url.startswith('#'):
-            continue
-        if url.startswith('/info'):
-            continue
-        
-        def make_job(url):
-            def fetch(url):
-                print 'START', url
-                url = url.strip()
-                h = make_scraper(url)
-                image_url = h.largest_image_url()
-                print 'DONE', image_url
-            return lambda: fetch(url)
+    """Take some example URLs and print out a nice pretty HTML table
+       of their extracted thubmnails and media objects"""
+    import sys
+    from r2.lib.filters import websafe
 
-        jobs.append(make_job(url))
+    print "<html><body><table border=\"1\">"
+    for url in test_urls:
+        sys.stderr.write("%s\n" % url)
+        print "<tr>"
+        h = make_scraper(url)
+        print "<td>"
+        print "<b>", websafe(url), "</b>"
+        print "<br />"
+        print websafe(repr(h))
+        img = h.largest_image_url()
+        if img:
+            print "<td><img src=\"%s\" /></td>" % img
+        else:
+            print "<td>(no image)</td>"
+        mo = h.media_object()
+        print "<td>"
+        if mo:
+            s = scrapers[mo['type']]
+            print websafe(repr(mo))
+            print "<br />"
+            print s.media_embed(**mo).content
+        else:
+            print "None"
+        print "</td>"
+        print "</tr>"
+    print "</table></body></html>"
 
-    print jobs[0]()
-    #wq = WorkQueue(jobs)
-    #wq.start()            
-
-if __name__ == '__main__':
-    test()

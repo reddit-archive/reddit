@@ -42,6 +42,7 @@ from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
+from r2.lib.scraper import scrapers
 
 import sys, random, datetime, locale, calendar, simplejson, re
 import graph
@@ -1482,9 +1483,25 @@ class LinkChild(object):
         return ''
 
 class MediaChild(LinkChild):
+    """renders when the user hits the expando button to expand media
+       objects, like embedded videos"""
     css_style = "video"
     def content(self):
-        return self.link.media_object
+        if isinstance(self.link.media_object, basestring):
+            return self.link.media_object
+
+        media_object_type = self.link.media_object['type']
+        if media_object_type in scrapers:
+            scraper = scrapers[media_object_type]
+            media_embed = scraper.media_embed(**self.link.media_object)
+            return MediaEmbed(media_domain = g.media_domain,
+                              height = media_embed.height+10,
+                              width = media_embed.width+10,
+                              id36 = self.link._id36).render()
+
+class MediaEmbed(Templated):
+    """The actual rendered iframe for a media child"""
+    pass
 
 class SelfTextChild(LinkChild):
     css_style = "selftext"
@@ -1493,10 +1510,6 @@ class SelfTextChild(LinkChild):
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow)
         return u.render()
-
-class SelfText(Templated):
-    def __init__(self, link):
-        Templated.__init__(self, link = link)
 
 class UserText(CachedTemplate):
     def __init__(self,
@@ -1530,6 +1543,10 @@ class UserText(CachedTemplate):
                                 post_form = post_form,
                                 cloneable = cloneable,
                                 css_class = css_class)
+
+class MediaEmbedBody(CachedTemplate):
+    """What's rendered inside the iframe that contains media objects"""
+    pass
 
 class Traffic(Templated):
     @staticmethod

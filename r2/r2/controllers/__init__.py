@@ -45,6 +45,7 @@ from post import PostController
 from toolbar import ToolbarController
 from i18n import I18nController
 from promotecontroller import PromoteController
+from mediaembed import MediaembedController
 
 from querycontroller import QueryController
 

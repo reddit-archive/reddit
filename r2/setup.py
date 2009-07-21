@@ -83,7 +83,7 @@ setup(
                       "flup",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
-                      "BeautifulSoup >= 3",
+                      "BeautifulSoup == 3.0.7a", # last version to use the good parser
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",

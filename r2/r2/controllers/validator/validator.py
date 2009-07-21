@@ -865,7 +865,8 @@ class VCnameDomain(Validator):
     def run(self, domain):
         if (domain
             and (not self.domain_re.match(domain)
-                 or domain.endswith('.reddit.com')
+                 or domain.endswith('.' + g.domain)
+                 or domain.endswith('.' + g.media_domain)
                  or len(domain) > 300)):
             self.set_error(errors.BAD_CNAME)
         elif domain:
