@@ -299,7 +299,6 @@ def get_browser_langs():
             if l not in seen_langs and l in g.languages:
                 browser_langs.append(l)
                 seen_langs.add(l)
-    browser_langs.sort()
     return browser_langs
 
 def set_host_lang():
