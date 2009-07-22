@@ -465,16 +465,17 @@ class RedditController(BaseController):
         set_subreddit()
         set_cnameframe()
 
-        # populate c.cookies
+        # populate c.cookies unless we're on the unsafe media_domain
         c.cookies = Cookies()
-        try:
-            for k,v in request.cookies.iteritems():
-                # we can unquote even if it's not quoted
-                c.cookies[k] = Cookie(value=unquote(v), dirty=False)
-        except CookieError:
-            #pylons or one of the associated retarded libraries can't
-            #handle broken cookies
-            request.environ['HTTP_COOKIE'] = ''
+        if request.host != g.media_domain or g.media_domain == g.domain:
+            try:
+                for k,v in request.cookies.iteritems():
+                    # we can unquote even if it's not quoted
+                    c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+            except CookieError:
+                #pylons or one of the associated retarded libraries
+                #can't handle broken cookies
+                request.environ['HTTP_COOKIE'] = ''
 
         c.response_wrappers = []
         c.errors = ErrorSet()
