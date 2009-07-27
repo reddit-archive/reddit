@@ -303,7 +303,7 @@ def new_link(link):
     results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
     results.append(get_submitted(author, 'new', 'all'))
-    results.append(get_links(sr, 'toplinks', 'all'))
+    #results.append(get_links(sr, 'toplinks', 'all'))
     
     if link._deleted:
         add_queries(results, delete_item = link)
@@ -334,7 +334,7 @@ def new_vote(vote):
         sr = item.subreddit_slow
         results = all_queries(get_links, sr, ('hot', 'new'), ['all'])
         results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        results.append(get_links(sr, 'toplinks', 'all'))
+        #results.append(get_links(sr, 'toplinks', 'all'))
         add_queries(results)
     
     #must update both because we don't know if it's a changed vote
