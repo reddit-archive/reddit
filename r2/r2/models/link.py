@@ -337,7 +337,9 @@ class Link(Thing, Printable):
             item.link_child = None
             item.editable = False
             if item.media_object:
-                item.link_child = MediaChild(item, load = True)
+                link_child = MediaChild(item, load = True)
+                if link_child.valid():
+                    item.link_child = link_child
             elif item.selftext:
                 expand = getattr(item, 'expand_children', False)
                 item.link_child = SelfTextChild(item, expand = expand,

@@ -152,14 +152,16 @@ def fetch_size(url, referer = None, retries = 1):
     return fetch_url(url, referer, retries, dimension = True)
 
 class MediaEmbed(object):
-    width   = None
-    height  = None
-    content = None
+    width     = None
+    height    = None
+    content   = None
+    scrolling = False
 
-    def __init__(self, height, width, content):
-        self.height  = height
-        self.width   = width
-        self.content = content
+    def __init__(self, height, width, content, scrolling = False):
+        self.height    = height
+        self.width     = width
+        self.content   = content
+        self.scrolling = scrolling
 
 class Scraper:
     def __init__(self, url):
@@ -451,11 +453,29 @@ class FunnyOrDieScraper(MediaScraper):
     video_id_rx = re.compile('.*/videos/([^/]+)/.*')
 
 class ComedyCentralScraper(MediaScraper):
-    domains = ['comedycentral.com', 'thedailyshow.com']
+    domains = ['comedycentral.com']
     height = 316
     width = 332
     media_template = '<embed FlashVars="videoId=$video_id" src="http://www.comedycentral.com/sitewide/video_player/view/default/swf.jhtml" quality="high" bgcolor="#cccccc" width="332" height="316" name="comedy_central_player" align="middle" allowScriptAccess="always" allownetworking="external" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer"></embed>'
     video_id_rx = re.compile('.*videoId=(\d+).*')
+
+class TheDailyShowScraper(MediaScraper):
+    domains = ['thedailyshow.com']
+    height = 353
+    width = 360
+    media_template = """<embed style='display:block' src='http://media.mtvnservices.com/mgid:cms:item:comedycentral.com:$video_id' width='360' height='301' type='application/x-shockwave-flash' wmode='window' allowFullscreen='true' flashvars='autoPlay=false' allowscriptaccess='always' allownetworking='all' bgcolor='#000000'></embed>"""
+
+    def video_id_extract(self):
+        "This is a bit of a hack"
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            embed_container = self.soup.find('div', {'class': 'videoplayerPromo module'})
+            if embed_container:
+                if embed_container['id'].startswith('promo_'):
+                    video_id = embed_container['id'].split('_')[1]
+                    return video_id
 
 class ColbertNationScraper(ComedyCentralScraper):
     domains = ['colbertnation.com']
@@ -538,7 +558,48 @@ class SoundcloudScraper(MediaScraper):
                             </embed>
                           </object>"""
     video_id_rx = re.compile('^http://soundcloud.com/[a-zA-Z0-9_-]+/([a-zA-Z0-9_-]+)')
-    
+
+class CraigslistScraper(MediaScraper):
+    domains = ['craigslist.org']
+    height = 480
+    width  = 640
+    max_size_kb = 50
+
+    def video_id_extract(self):
+        return self.url
+
+    def media_object(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            ub = self.soup.find('div', {'id': 'userbody'})
+            if ub:
+                ub = str(ub)
+                if len(ub) <= self.max_size_kb * 1024:
+                    return dict(content = ub,
+                                type = self.domains[0])
+
+    @classmethod
+    def media_embed(cls, content, **kw):
+        return MediaEmbed(height = cls.height,
+                          width = cls.width,
+                          content = content,
+                          scrolling = True)
+
+class GenericScraper(MediaScraper):
+    """a special scrapper not associated with any domains, used to
+       write media objects to links by hand"""
+    domains = ['*']
+    height = 480
+    width = 640
+
+    @classmethod
+    def media_embed(cls, content, height = None, width = None, scrolling = False, **kw):
+        return MediaEmbed(height = height or cls.height,
+                          width = width or cls.width,
+                          scrolling = scrolling,
+                          content = content)
 
 class DeepScraper(object):
     """Subclasses of DeepScraper attempt to dive into generic pages
@@ -579,12 +640,15 @@ for scraper in [ YoutubeScraper,
                  FunnyOrDieScraper,
                  ComedyCentralScraper,
                  ColbertNationScraper,
+                 TheDailyShowScraper,
                  LiveLeakScraper,
                  DailyMotionScraper,
                  RevverScraper,
                  EscapistScraper,
                  JustintvScraper,
                  SoundcloudScraper,
+                 #CraigslistScraper,
+                 GenericScraper,
                  ]:
     for domain in scraper.domains:
         scrapers[domain] = scraper
@@ -634,7 +698,12 @@ test_urls = [
     'http://www.collegehumor.com/video:1823712',
     'http://www.funnyordie.com/videos/7f2a184755/macys-thanksgiving-day-parade-gets-rick-rolled-from-that-happened',
     'http://www.comedycentral.com/videos/index.jhtml?videoId=178342&title=ultimate-fighting-vs.-bloggers',
+
+    # old style
     'http://www.thedailyshow.com/video/index.jhtml?videoId=175244&title=Photoshop-of-Horrors',
+    # new style
+    'http://www.thedailyshow.com/watch/wed-july-22-2009/the-born-identity',
+
     'http://www.colbertnation.com/the-colbert-report-videos/63549/may-01-2006/sign-off---spam',
     'http://www.liveleak.com/view?i=e09_1207983531',
     'http://www.dailymotion.com/relevance/search/rick+roll/video/x5l8e6_rickroll_fun',
@@ -648,6 +717,9 @@ test_urls = [
     'http://www.justin.tv/clip/c07a333f94e5716b', # clip, which we can't currently scrape, and shouldn't try
 
     'http://soundcloud.com/kalhonaaho01/never-gonna-stand-you-up-rick-astley-vs-ludacris-album-version',
+
+    'http://www.craigslist.org/about/best/sea/240705630.html',
+
     'http://listen.grooveshark.com/#/song/Never_Gonna_Give_You_Up/12616328',
     'http://tinysong.com/2WOJ', # also Grooveshark
 

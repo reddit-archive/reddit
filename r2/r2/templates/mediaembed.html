@@ -19,6 +19,10 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+  from r2.lib.utils import randstr
+%>
 <iframe src="http://${thing.media_domain}/mediaembed/${thing.id36}"
+        id="media-embed-${thing.id36}-${randstr(3)}" class="media-embed"
         width="${thing.width}" height="${thing.height}" border="0"
-        frameBorder="0" scrolling="no"></iframe>
+        frameBorder="0" scrolling="${'auto' if thing.scrolling else 'no'}"></iframe>
