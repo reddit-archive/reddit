@@ -48,9 +48,9 @@
   </div>
 
   <div class="left-side">
-    <a class="logo" target="_top" href="http://${get_domain(cname = c.cname)}/">
-      <img src="${static('logo-toolbar.png')}" alt="${c.site.description or c.site.name}"
-           title="${c.site.description or c.site.name}"/>
+    <a class="logo" target="_top" href="http://${get_domain(cname = thing.cname)}/">
+      <img src="${static('logo-toolbar.png')}" alt="${thing.site_description or thing.site_name}"
+           title="${thing.site_description or thing.site_name}"/>
       %if thing.dorks:
         <img src="${static('dorks-toolbar.png')}"
              title="${_('caution: dorkbar detected')}"/>
@@ -79,24 +79,24 @@
        onclick="toolbar.serendipity()"
        href="${add_sr('/random')}"
        target="_top" />
-      %if c.default_sr:
+      %if thing.default_sr:
         ${_("serendipity")}
       %else:
-        ${"%(subreddit)s serendipity" % dict (subreddit=c.site.name)}
+        ${"%(subreddit)s serendipity" % dict (subreddit=thing.site_name)}
       %endif
     </a>
 
-    %if c.user_is_loggedin:
-      <a href="http://${get_domain(cname = c.cname)}/user/${c.user.name}"
+    %if thing.user_is_loggedin:
+      <a href="http://${get_domain(cname = thing.cname)}/user/${thing.user_name}"
          title="${_('visit your userpage')}"
-         class="clickable" target="_top">${c.user.name}</a>
+         class="clickable" target="_top">${thing.user_name}</a>
     %elif thing._fullname:
       <a href="${thing.loginurl}" target="_top" class="clickable">
         ${_("login / register")}
       </a>
     %endif
 
-    %if c.have_messages:
+    %if thing.have_messages:
       <a target="_top" href="/message/inbox/">
         <img src="${static('mail.png')}"
              width="15" height="10"
@@ -171,7 +171,7 @@
     <%def name="arrow(direction, style, message)">
       <a class="arrow ${direction + style}"
          title="${_('vote %(direction)s') % dict(direction=direction)}"
-       %if c.user_is_loggedin:
+       %if thing.user_is_loggedin:
          href="javascript:void(0);"
          onclick="$(this).vote('${thing.votehash}')"
        %else:
@@ -189,7 +189,7 @@
   </span>
 
 
-  %if c.user_is_loggedin:
+  %if thing.user_is_loggedin:
     %if thing.saved:
       ${state_button("unsave", _("unsave"),
         "return change_state(this, 'unsave');", "<b>%s</b>" % _("unsaved"),

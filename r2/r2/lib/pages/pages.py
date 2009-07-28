@@ -1051,6 +1051,13 @@ class FrameToolbar(Wrapped):
             self.url = url
 
         self.expanded = expanded
+        self.user_is_loggedin = c.user_is_loggedin
+        self.have_messages = c.have_messages
+        self.user_name = c.user.name
+        self.cname = c.cname
+        self.site_name = c.site.name
+        self.site_description = c.site.description
+        self.default_sr = c.default_sr
 
         self.dorks = bool( dorks_re.match(self.url) )
         Wrapped.__init__(self, link)
