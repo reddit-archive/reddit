@@ -1053,7 +1053,7 @@ class FrameToolbar(Wrapped):
         self.expanded = expanded
         self.user_is_loggedin = c.user_is_loggedin
         self.have_messages = c.have_messages
-        self.user_name = c.user.name
+        self.user_name = c.user.name if self.user_is_loggedin else ""
         self.cname = c.cname
         self.site_name = c.site.name
         self.site_description = c.site.description
