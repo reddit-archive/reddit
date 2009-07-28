@@ -348,7 +348,7 @@ def new_link(link):
     results.append(get_submitted(author, 'new', 'all'))
     #results.append(get_links(sr, 'toplinks', 'all'))
     if link._spam:
-        job.append(get_spam_links(sr))
+        results.append(get_spam_links(sr))
     
     if link._deleted:
         add_queries(results, delete_item = link)
