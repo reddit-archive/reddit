@@ -785,13 +785,16 @@ class Worker:
             fn = self.q.get()
             try:
                 fn()
+                self.q.task_done()
             except:
                 import traceback
                 print traceback.format_exc()
-                
 
     def do(self, fn):
         self.q.put(fn)
+
+    def join(self):
+        self.q.join()
 
 worker = Worker()
 
