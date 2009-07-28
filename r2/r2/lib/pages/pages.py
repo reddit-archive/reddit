@@ -389,7 +389,6 @@ class SubredditInfoBar(CachedTemplate):
                                    site.is_contributor(c.user))
         self.subscribers = site._ups
         self.date = site._date
-        self.spam = site._spam
         self.banner = getattr(site, "banner", None)
         CachedTemplate.__init__(self)
     
@@ -401,7 +400,6 @@ class SubredditInfoBar(CachedTemplate):
         if self.is_moderator or self.is_admin:
             buttons.append(NamedButton('edit'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
-                            NamedButton('spam'),
                             NamedButton('reports'),
                             NamedButton('spam')])
             buttons.append(NamedButton('traffic'))
