@@ -8,6 +8,7 @@ from r2.lib.utils import fetch_things2, worker
 from r2.lib.solrsearch import DomainSearchQuery
 
 from datetime import datetime
+import operator
 
 from pylons import g
 query_cache = g.permacache
@@ -97,11 +98,11 @@ class CachedResults(object):
         t = self.make_item_tuple(item)
 
         if t not in self.data:
-            if self.data and t > self.data[0]:
+            if self.data and t[1:] > self.data[0][1:]:
                 self.data.insert(0, t)
             else:
                 self.data.append(t)
-                self.data.sort()
+                self.data.sort(key=operator.itemgetter(1))
             query_cache.set(self.iden, self.data[:precompute_limit])
 
 
