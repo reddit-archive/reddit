@@ -101,7 +101,7 @@ class CachedResults(object):
                 self.data.insert(0, t)
             else:
                 self.data.append(t)
-                self.data.sort(key=lambda x: x[1:])
+                self.data.sort(key=lambda x: x[1:], reverse=True)
             query_cache.set(self.iden, self.data[:precompute_limit])
 
 
