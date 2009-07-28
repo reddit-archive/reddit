@@ -725,10 +725,15 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
+        if not thing:
+            return
+
         # TODO: temporary hack until we migrate the rest of the vote data
-        if thing and thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
+        if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
-        elif thing:
+            return
+
+        with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
             dir = (True if dir > 0
                    else False if dir < 0
                    else None)

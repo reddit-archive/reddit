@@ -33,6 +33,7 @@ from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
+from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
 from r2.lib import jsontemplates
@@ -282,36 +283,17 @@ class FrontController(RedditController):
                 stylesheet_contents = ''
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
-        elif is_moderator and location == 'reports':
-            links = Link._query(Link.c.reported != 0,
-                                Link.c._spam == False)
-            comments = Comment._query(Comment.c.reported != 0,
-                                      Comment.c._spam == False)
-            query = thing.Merge((links, comments),
-                                Link.c.sr_id == c.site._id,
-                                sort = desc('_date'),
-                                data = True)
-            
-            builder = QueryBuilder(query, num = num, after = after, 
-                                   count = count, reverse = reverse,
-                                   wrap = ListingController.builder_wrapper)
+        elif location in ('reports', 'spam') and is_moderator:
+            query = (c.site.get_reported() if location == 'reports'
+                     else c.site.get_spam())
+            builder_cls = (QueryBuilder if isinstance(query, thing.Query)
+                           else IDBuilder)
+            builder = builder_cls(query,
+                                  num = num, after = after,
+                                  count = count, reverse = reverse,
+                                  wrap = ListingController.builder_wrapper)
             listing = LinkListing(builder)
             pane = listing.listing()
-
-        elif is_moderator and location == 'spam':
-#            links = Link._query(Link.c._spam == True)
-#            comments = Comment._query(Comment.c._spam == True)
-#            query = thing.Merge((links, comments),
-#                                Link.c.sr_id == c.site._id,
-#                                sort = desc('_date'),
-#                                data = True)
-#            
-#            builder = QueryBuilder(query, num = num, after = after, 
-#                                   count = count, reverse = reverse,
-#                                   wrap = ListingController.builder_wrapper)
-#            listing = LinkListing(builder)
-#            pane = listing.listing()
-            pane = InfoBar(message = "There doesn't seem to be anything here.")
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
         else:

@@ -22,9 +22,8 @@
 from r2.lib.utils import tup
 
 class AdminTools(object):
-    def spam(self, thing, amount = 1, mark_as_spam = True, **kw):
-        things = tup(thing)
-        for t in things:
+    def spam(self, things, amount = 1, mark_as_spam = True, **kw):
+        for t in tup(things):
             if mark_as_spam:
                 t._spam = (amount > 0)
                 t._commit()

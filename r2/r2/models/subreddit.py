@@ -246,6 +246,14 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_links(self, sort, time)
 
+    def get_spam(self):
+        from r2.lib.db import queries
+        return queries.get_spam(self)
+
+    def get_reported(self):
+        from r2.lib.db import queries
+        return queries.get_reported(self)
+
     @classmethod
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')

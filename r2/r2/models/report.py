@@ -55,6 +55,8 @@ class Report(MultiRelation('report',
     
     @classmethod
     def new(cls, user, thing):
+        from r2.lib.db import queries
+
         # check if this report exists already!
         rel = cls.rel(user, thing)
         oldreport = list(rel._query(rel.c._thing1_id == user._id,
@@ -66,7 +68,8 @@ class Report(MultiRelation('report',
         if oldreport: return oldreport[0]
 
         r = Report(user, thing, '0', amount = 0)
-        if not thing._loaded: thing._load()
+        if not thing._loaded:
+            thing._load()
 
         # mark item as reported
         thing._incr(cls._field)
@@ -76,13 +79,16 @@ class Report(MultiRelation('report',
             aid = thing.author_id
             author = Account._byID(aid)
             author._incr(cls._field)
-        
+
         # mark user as having made a report
         user._incr('report_made')
         
         r._commit()
 
         admintools.report(thing)
+
+        # update the reports queue if it exists
+        queries.new_report(r)
 
         # if the thing is already marked as spam, accept the report
         if thing._spam:
@@ -124,6 +130,8 @@ class Report(MultiRelation('report',
     def accept(cls, r, correct = True):
         ''' sets the various reporting fields, but does nothing to
         the corresponding spam fields (handled by unreport)'''
+        from r2.lib.db import queries
+
         amount = 1 if correct else -1
         oldamount = int(r._name)
 
@@ -138,6 +146,8 @@ class Report(MultiRelation('report',
 
         # update the amount
         cls.set_amount(r, amount)
+
+        queries.clear_report(r)
 
         # update the thing's number of reports only if we made no
         # decision prior to this
@@ -386,6 +396,8 @@ class Report(MultiRelation('report',
 
 
 def unreport(things, correct=False, auto = False, banned_by = ''):
+    from r2.lib.db import queries
+
     things = tup(things)
 
     # load authors (to set the spammer flag)
@@ -394,11 +406,20 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
 
     authors = Account._byID(tuple(aids), data=True) if aids else {}
 
+    with_srs = [ t for t in things if hasattr(t, 'sr_id') ]
+    if with_srs:
+        # populate local cache in batch, because
+        # queries.{ban,unban,new_report,clear_report} will do a
+        # Subreddit._byID(link.sr_id) on each link individually. Not
+        # required for Messages or Subreddits, which don't have sr_ids
+        Subreddit._byID(set(t.sr_id for t in with_srs))
+
     # load all reports (to set their amount to be +/-1)
     reports = Report.reported(things=things, amount = 0)
 
     # mark the reports as finalized:
-    for r in reports.values(): Report.accept(r, correct)
+    for r in reports.values():
+        Report.accept(r, correct)
 
     amount = 1 if correct else -1
 
@@ -415,6 +436,11 @@ def unreport(things, correct=False, auto = False, banned_by = ''):
         if t._spam != correct and hasattr(t, 'author_id'):
             # tally the spamminess of the author
             spammer[t.author_id] = spammer.get(t.author_id,0) + amount
+
+        if correct:
+            queries.ban(t, auto = auto)
+        elif not correct and t._spam:
+            queries.unban(t)
 
     #will be empty if the items didn't have authors
     for s, v in spammer.iteritems():

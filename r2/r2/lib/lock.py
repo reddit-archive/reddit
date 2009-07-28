@@ -23,8 +23,10 @@
 from __future__ import with_statement
 from time import sleep
 from datetime import datetime
+from threading import local
 
-from pylons import c
+# thread-local storage for detection of recursive locks
+locks = local()
 
 class TimeoutExpired(Exception): pass
 
@@ -34,6 +36,9 @@ class MemcacheLock(object):
     is True, we have the lock. If it's False, someone else has it."""
 
     def __init__(self, key, cache, time = 30, timeout = 30):
+        # get a thread-local set of locks that we own
+        self.locks = locks.locks = getattr(locks, 'locks', set())
+
         self.key = key
         self.cache = cache
         self.time = time
@@ -43,11 +48,8 @@ class MemcacheLock(object):
     def __enter__(self):
         start = datetime.now()
 
-        if not c.locks:
-            c.locks = {}
-
         #if this thread already has this lock, move on
-        if c.locks.get(self.key):
+        if self.key in self.locks:
             return
 
         #try and fetch the lock, looping until it's available
@@ -59,14 +61,14 @@ class MemcacheLock(object):
 
         #tell this thread we have this lock so we can avoid deadlocks
         #of requests for the same lock in the same thread
-        c.locks[self.key] = True
+        self.locks.add(self.key)
         self.have_lock = True
 
     def __exit__(self, type, value, tb):
         #only release the lock if we gained it in the first place
         if self.have_lock:
             self.cache.delete(self.key)
-            del c.locks[self.key]
+            self.locks.remove(self.key)
 
 def make_lock_factory(cache):
     def factory(key):

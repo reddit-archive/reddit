@@ -398,9 +398,11 @@ class SubredditInfoBar(CachedTemplate):
         if self.type != 'public':
             buttons.append(NavButton(plurals.contributors, 'contributors'))
 
-        if self.is_moderator:
+        if self.is_moderator or self.is_admin:
             buttons.append(NamedButton('edit'))
             buttons.extend([NavButton(menu.banusers, 'banned'),
+                            NamedButton('spam'),
+                            NamedButton('reports'),
                             NamedButton('spam')])
             buttons.append(NamedButton('traffic'))
         return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]

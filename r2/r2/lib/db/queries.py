@@ -95,13 +95,15 @@ class CachedResults(object):
         is sorted by date descending"""
         self.fetch()
         t = self.make_item_tuple(item)
-        changed = False
-        if t not in self.data:
-            self.data.insert(0, t)
-            changed = True
 
-        if changed:
+        if t not in self.data:
+            if self.data and t > self.data[0]:
+                self.data.insert(0, t)
+            else:
+                self.data.append(t)
+                self.data.sort()
             query_cache.set(self.iden, self.data[:precompute_limit])
+
 
     def delete(self, item):
         """Deletes an item from the cached data."""
@@ -133,14 +135,14 @@ class CachedResults(object):
             yield x[0]
 
 def merge_cached_results(*results):
-    """Given two CachedResults, mergers their lists based on the sorts of
+    """Given two CachedResults, merges their lists based on the sorts of
     their queries."""
     if len(results) == 1:
         return list(results[0])
 
     #make sure the sorts match
     sort = results[0].query._sort
-    assert(all(r.query._sort == sort for r in results[1:]))
+    assert all(r.query._sort == sort for r in results[1:])
 
     def thing_cmp(t1, t2):
         for i, s in enumerate(sort):
@@ -187,6 +189,42 @@ def get_links(sr, sort, time):
     if time != 'all':
         q._filter(db_times[time])
     return make_results(q)
+
+def get_spam_links(sr):
+    q_l = Link._query(Link.c.sr_id == sr._id,
+                      Link.c._spam == True,
+                      sort = db_sort('new'))
+    return make_results(q_l)
+
+def get_spam_comments(sr):
+    q_c = Comment._query(Comment.c.sr_id == sr._id,
+                         Comment.c._spam == True,
+                         sort = db_sort('new'))
+    return make_results(q_c)
+
+def get_spam(sr):
+    return get_spam_links(sr)
+    #return merge_results(get_spam_links(sr),
+    #                     get_spam_comments(sr))
+
+def get_reported_links(sr):
+    q_l = Link._query(Link.c.reported != 0,
+                      Link.c.sr_id == sr._id,
+                      Link.c._spam == False,
+                      sort = db_sort('new'))
+    return make_results(q_l)
+
+def get_reported_comments(sr):
+    q_c = Comment._query(Comment.c.reported != 0,
+                         Comment.c.sr_id == sr._id,
+                         Comment.c._spam == False,
+                         sort = db_sort('new'))
+    return make_results(q_c)
+
+def get_reported(sr):
+    return get_reported_links(sr)
+    #return merge_results(get_reported_links(sr),
+    #                     get_reported_comments(sr))
 
 def get_domain_links(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
@@ -258,17 +296,22 @@ def add_queries(queries, insert_item = None, delete_item = None):
     """Adds multiple queries to the query queue. If insert_item or
     delete_item is specified, the query may not need to be recomputed at
     all."""
+    log = g.log.debug
+    make_lock = g.make_lock
     def _add_queries():
         for q in queries:
             if not isinstance(q, CachedResults):
                 continue
 
-            if insert_item and q.can_insert():
-                q.insert(insert_item)
-            elif delete_item and q.can_delete():
-                q.delete(delete_item)
-            else:
-                query_queue.add_query(q)
+            log('Adding precomputed query %s' % q)
+
+            with make_lock("add_query(%s)" % q.iden):
+                if insert_item and q.can_insert():
+                    q.insert(insert_item)
+                elif delete_item and q.can_delete():
+                    q.delete(delete_item)
+                else:
+                    query_queue.add_query(q)
     worker.do(_add_queries)
 
 #can be rewritten to be more efficient
@@ -304,6 +347,8 @@ def new_link(link):
     results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
     results.append(get_submitted(author, 'new', 'all'))
     #results.append(get_links(sr, 'toplinks', 'all'))
+    if link._spam:
+        job.append(get_spam_links(sr))
     
     if link._deleted:
         add_queries(results, delete_item = link)
@@ -316,6 +361,9 @@ def new_comment(comment, inbox_rel):
     if comment._deleted:
         add_queries(job, delete_item = comment)
     else:
+        #if comment._spam:
+        #    sr = Subreddit._byID(comment.sr_id)
+        #    job.append(get_spam_comments(sr))
         add_queries(job, insert_item = comment)
 
     if inbox_rel:
@@ -367,13 +415,67 @@ def new_savehide(rel):
     elif name == 'unhide':
         add_queries([get_hidden(user)], delete_item = rel)
 
+def ban(x, auto = False):
+    if isinstance(x,Link):
+        sr = Subreddit._byID(x.sr_id)
+        add_queries([get_spam_links(sr)], insert_item = x)
+
+    #elif isinstance(x,Comment):
+    #    sr = Subreddit._byID(x.sr_id)
+    #    add_queries([get_spam_comments(sr)])
+
+def unban(x):
+    if isinstance(x,Link):
+        sr = Subreddit._byID(x.sr_id)
+        add_queries([get_spam_links(sr)], delete_item = x)
+    #elif isinstance(x,Comment):
+    #    sr = Subreddit._byID(x.sr_id)
+    #    add_queries([get_spam_comments(sr)])
+
+def new_report(report):
+    reporter = report._thing1
+    reported = report._thing2
+
+    if isinstance(reported, Link):
+        sr = Subreddit._byID(reported.sr_id)
+        add_queries([get_reported_links(sr)], insert_item = reported)
+    #elif isinstance(reported, Comment):
+    #    sr = Subreddit._byID(reported.sr_id)
+    #    add_queries([get_reported_comments(sr)], insert_item = reported)
+
+def clear_report(report):
+    reporter = report._thing1
+    reported = report._thing2
+
+    if isinstance(reported, Link):
+        sr = Subreddit._byID(reported.sr_id)
+        add_queries([get_reported_links(sr)], delete_item = reported)
+    #elif isinstance(reported, Comment):
+    #    sr = Subreddit._byID(reported.sr_id)
+    #    add_queries([get_reported_comments(sr)], delete_item = reported)
+
+def add_all_ban_report_srs():
+    """Adds the initial spam/reported pages to the report queue"""
+    q = Subreddit._query(sort = asc('_date'))
+    for sr in fetch_things2(q):
+        add_queries([get_spam_links(sr),
+                     #get_spam_comments(sr),
+                     get_reported_links(sr),
+                     #get_reported_comments(sr),
+                     ])
+        
 def add_all_srs():
     """Adds every listing query for every subreddit to the queue."""
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         add_queries(all_queries(get_links, sr, ('hot', 'new', 'old'), ['all']))
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        add_queries([get_links(sr, 'toplinks', 'all')])
+        add_queries([get_links(sr, 'toplinks', 'all'),
+                     get_spam_links(sr),
+                     #get_spam_comments(sr),
+                     get_reported_links(sr),
+                     #get_reported_comments(sr),
+                     ])
 
 
 def update_user(user):
