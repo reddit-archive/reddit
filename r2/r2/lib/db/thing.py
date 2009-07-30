@@ -105,7 +105,7 @@ class DataThing(object):
             self._t[attr] = val
 
         if make_dirty and val != old_val:
-            self._dirties[attr] = val
+            self._dirties[attr] = (old_val, val)
 
     def __getattr__(self, attr):
         #makes pickling work for some reason
@@ -127,17 +127,55 @@ class DataThing(object):
                     raise AttributeError,\
                               attr + ' not found. thing is not loaded'
 
+    def _cache_key(self):
+        return thing_prefix(self.__class__.__name__, self._id)
+
+    def _other_self(self):
+        """Load from the cached version of myself. Skip the local cache."""
+        return cache.get(self._cache_key(), local = False)
+
+    def _cache_myself(self):
+        cache.set(self._cache_key(), self)
+
+    def _sync_latest(self):
+        """Load myself from the cache to and re-apply the .dirties
+        list to make sure we don't overwrite a previous commit. """
+        other_self = self._other_self()
+        if not other_self:
+            return self._dirty
+
+        g.log.info("thing conflict: " + self._fullname)
+
+        #copy in the cache's version
+        for prop in self._base_props:
+            self.__setattr__(prop, getattr(other_self, prop), False)
+        self._t = other_self._t
+
+        #re-apply the .dirties
+        old_dirties = self._dirties
+        self._dirties = {}
+        for k, (old_val, new_val) in old_dirties.iteritems():
+            setattr(self, k, new_val)
+
+        #return whether we're still dirty or not
+        return self._dirty
+
     def _commit(self, keys=None):
         if not self._created:
             self._create()
 
-        if self._dirty:
+        with g.make_lock('commit_' + self._fullname):
+            if not self._sync_latest():
+                #sync'd and we have nothing to do now, but we still cache anyway
+                self._cache_myself()
+                return
+
             if keys:
                 keys = tup(keys)
-                to_set = dict((k, self._dirties[k])
+                to_set = dict((k, self._dirties[k][1])
                               for k in keys if self._dirties.has_key(k))
             else:
-                to_set = self._dirties
+                to_set = dict((k, v[1]) for k, v in self._dirties.iteritems())
 
             data_props = {}
             thing_props = {}
@@ -149,10 +187,10 @@ class DataThing(object):
 
             if data_props:
                 self._set_data(self._type_id, self._id, **data_props)
-            
+
             if thing_props:
                 self._set_props(self._type_id, self._id, **thing_props)
-            
+
             if keys:
                 for k in keys:
                     if self._dirties.has_key(k):
@@ -160,8 +198,30 @@ class DataThing(object):
             else:
                 self._dirties.clear()
 
-        # always set the cache
-        cache.set(thing_prefix(self.__class__.__name__, self._id), self)
+            self._cache_myself()
+
+    @classmethod
+    def _all_data_int_props(cls, items):
+        """Returns the cache keys for _data_int_props plus keys for
+        any properties that end with _int_prop_suffix."""
+        int_props = {}
+
+        #prop prefix
+        def pp(prop, id):
+            return prop + '_' + str(i._id)
+
+        #do defined data props first, this also checks default values
+        for prop in cls._data_int_props:
+            for i in items:
+                int_props[pp(prop, i._id)] = getattr(i, prop)
+
+        #int props based on the suffix
+        for i in items:
+            for prop, val in i._t.iteritems():
+                if cls._int_prop_suffix and prop.endswith(cls._int_prop_suffix):
+                    int_props[pp(prop, i._id)] = val
+
+        return int_props
 
     @classmethod
     def _load_multi(cls, need):
@@ -179,24 +239,10 @@ class DataThing(object):
 
         #avoid race condition when incrementing data int props by
         #putting all the int props into the cache.
+        to_save.update(cls._all_data_int_props(need))
 
-        #prop prefix
-        def pp(prop, id):
-            return prop + '_' + str(i._id)
-
-        #do defined data props first, this also checks default values
-        for prop in cls._data_int_props:
-            for i in need:
-                to_save[pp(prop, i._id)] = getattr(i, prop)
-
-        #int props based on the suffix
-        for i in need:
-            for prop, val in i._t.iteritems():
-                if cls._int_prop_suffix and prop.endswith(cls._int_prop_suffix):
-                    to_save[pp(prop, i._id)] = val
-
+        #write the data to the cache
         cache.set_multi(to_save, prefix)
-        
 
     def _load(self):
         self._load_multi(self)
@@ -206,9 +252,18 @@ class DataThing(object):
             self._load()
 
     def _incr(self, prop, amt = 1):
-
         if self._dirty:
             raise ValueError, "cannot incr dirty thing"
+
+        #make sure we're incr'ing an _int_prop or _data_int_prop.
+        if prop not in self._int_props:
+            if (prop in self._data_int_props or
+                self._int_prop_suffix and prop.endswith(self._int_prop_suffix)):
+                #if we're incr'ing a data_prop, make sure we're loaded
+                if not self._loaded:
+                    self._load()
+            else:
+                raise ValueError, "cannot incr non int prop"
 
         prefix = thing_prefix(self.__class__.__name__)
         key =  prefix + prop + '_' + str(self._id)
@@ -228,13 +283,11 @@ class DataThing(object):
                 tdb.incr_thing_prop(self._type_id, self._id, prop[1:], amt)
             else:
                 self._incr_data(self._type_id, self._id, prop, amt)
-            cache.set(prefix + str(self._id), self)
-            
-        #cache
-        if cache_val:
-            cache.incr(key, amt)
-        else:
-            cache.set(key, getattr(self, prop))
+
+        #update cache
+        if cache_val is None:
+            cache.add(key, old_val)
+        cache.incr(key, amt)
 
     @property
     def _id36(self):
@@ -260,6 +313,8 @@ class DataThing(object):
             for prop in cls._int_props:
                 keys = dict((i, getattr(item, prop))
                             for i, item in items.iteritems())
+
+                #this is a 'set' because the db values are gospel
                 cache.set_multi(keys, prefix + prop + '_' )
 
             return items
@@ -275,6 +330,25 @@ class DataThing(object):
             need = [v for v in bases.itervalues() if not v._loaded]
             if need:
                 cls._load_multi(need)
+
+        ###load the int_props
+        keys = []
+        #keys for the _int_props
+        for prop in cls._int_props:
+            for _id in ids:
+                keys.append(prop + '_' + str(_id))
+
+        #add in the _data_int_props if there are any
+        keys.extend(cls._all_data_int_props(bases.values()).keys())
+
+        int_vals = cache.get_multi(keys, prefix)
+        for key, val in int_vals.iteritems():
+            #for each int prop in the cache, set it on the object. the
+            #response from the cache looks like: _ups_177, so we need
+            #to split it
+            i = key.rfind('_')
+            prop, _id = key[:i], int(key[i+1:])
+            bases[_id].__setattr__(prop, int_vals[key], False)
 
         #e.g. add the sort prop
         if extra_props:
