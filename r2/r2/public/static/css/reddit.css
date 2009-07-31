@@ -365,22 +365,9 @@ ul.flat-vert {text-align: left;}
 .subreddit-info .state-button { display:block }
 .subreddit-info .spacer { margin: 10px 0px 0px 0px }
 
-.raisedbox .flat-list {  }
-.raisedbox .flat-list .separator { display: none; }
-.raisedbox .flat-list a { 
-    background-color: #F0F0F0;
-    border: 1px solid white;
-    border-bottom: none;
-    margin-right: 1px; 
-    padding: 3px 5px 3px 5px; 
-}
-
-
-.raisedbox .hover a:hover { 
-    background-color: #369; 
-    color: white;
-    text-decoration: none;
-}
+.raisedbox .flat-vert {  }
+.raisedbox .flat-vert .separator { display: none; }
+.raisedbox .flat-vert a {font-size: larger;}
 
 /* feature disabled. need to go through this to see what's relevant
 before enabling */

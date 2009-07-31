@@ -224,14 +224,9 @@ class Reddit(Templated):
         if c.user_is_loggedin:
             if c.user_is_admin:
                 more_buttons.append(NamedButton('admin'))
-            elif c.site.is_moderator(c.user):
-                more_buttons.append(NavButton(menu.admin, 'about/edit'))
-        
+
             if c.user_is_sponsor:
                 more_buttons.append(NamedButton('promote'))
-
-            if c.user_is_admin:
-                more_buttons.append(NamedButton('traffic'))
 
         #if there's only one button in the dropdown, get rid of the dropdown
         if len(more_buttons) == 1:
@@ -371,6 +366,7 @@ class SubredditInfoBar(CachedTemplate):
     the current reddit, including links to the moderator and
     contributor pages, as well as links to the banning page if the
     current user is a moderator."""
+
     def __init__(self, site = None):
         site = site or c.site
         self.spam = site._spam
@@ -390,6 +386,9 @@ class SubredditInfoBar(CachedTemplate):
         self.subscribers = site._ups
         self.date = site._date
         self.banner = getattr(site, "banner", None)
+
+        #so the menus cache properly
+        self.path = request.path
         CachedTemplate.__init__(self)
     
     def nav(self):
@@ -398,12 +397,15 @@ class SubredditInfoBar(CachedTemplate):
             buttons.append(NavButton(plurals.contributors, 'contributors'))
 
         if self.is_moderator or self.is_admin:
-            buttons.append(NamedButton('edit'))
-            buttons.extend([NavButton(menu.banusers, 'banned'),
-                            NamedButton('reports'),
-                            NamedButton('spam')])
-            buttons.append(NamedButton('traffic'))
-        return [NavMenu(buttons, type = "flatlist", base_path = "/about/")]
+            buttons.extend([
+                    NamedButton('spam'),
+                    NamedButton('reports'),
+                    NavButton(menu.banusers, 'banned'),
+                    NamedButton('traffic'),
+                    NamedButton('edit'),
+                    ])
+        return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
+                        separator = '')]
 
 class SideBox(CachedTemplate):
     """

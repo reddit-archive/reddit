@@ -42,7 +42,7 @@
          &nbsp;(<b>${thing.user.safe_karma}</b>)
       </span>
       &nbsp;
-  %elif c.user_is_loggedin and name == "sendmessage" and c.user != thing.user:
+  %elif c.user_is_loggedin and thing.name == "sendmessage" and c.user != thing.user:
     ${plain_link(_("send message"), 
                  "/message/compose?to=%s" % (thing.user.name))}
       &nbsp;
