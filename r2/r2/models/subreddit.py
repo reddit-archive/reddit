@@ -523,6 +523,9 @@ class AllSR(FakeSubreddit):
             q._filter(queries.db_times[time])
         return q
 
+    def rising_srs(self):
+        return None
+
 
 class DefaultSR(FakeSubreddit):
     #notice the space before reddit.com
@@ -576,6 +579,10 @@ class MultiReddit(DefaultSR):
 
     def get_links(self, sort, time):
         return self.get_links_sr_ids(self.sr_ids, sort, time)
+
+    def rising_srs(self):
+        return self.sr_ids
+
 
 class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'

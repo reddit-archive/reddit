@@ -64,4 +64,7 @@ def get_rising(sr):
     #get the sr_ids
     sr_ids = sr.rising_srs()
     rising = cache.get('rising') or ()
-    return [p[0] for p in filter(lambda pair: pair[1] in sr_ids, rising)]
+    if sr_ids:
+        return [p[0] for p in filter(lambda pair: pair[1] in sr_ids, rising)]
+    else:
+        return [p[0] for p in rising]
