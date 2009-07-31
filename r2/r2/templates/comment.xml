@@ -35,6 +35,7 @@
 %>
 
 <item>
+  <guid isPermaLink="true">${thing.permalink}</guid>
   <title>${author} ${_("on")} ${thing.link.title}</title>
   <link>${thing.permalink}</link>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>

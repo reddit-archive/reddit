@@ -25,6 +25,7 @@
 %>
 
 <item>
+  <guid>${thing._fullname}</guid>
   <title>
   <%
    taglinetext = ''
