@@ -42,6 +42,11 @@ def add_comment_nolock(comment):
 
     cids, comment_tree, depth, num_children = link_comments(link_id)
 
+    #make sure we haven't already done this before (which would happen
+    #if the tree isn't cached when you add a comment)
+    if comment._id in cids:
+        return
+
     #add to comment list
     cids.append(comment._id)
 
