@@ -1238,10 +1238,6 @@ class WidgetDemoPanel(Templated):
     """Demo page for the .embed widget."""
     pass
 
-class Socialite(Templated):
-    """Demo page for the socialite Firefox extension"""
-    pass
-
 class Bookmarklets(Templated):
     """The bookmarklets page."""
     def __init__(self, buttons=None):

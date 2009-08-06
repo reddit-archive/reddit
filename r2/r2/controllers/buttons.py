@@ -21,7 +21,7 @@
 ################################################################################
 from reddit_base import RedditController
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
-    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, Socialite
+    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage
 from r2.lib.pages.things import wrap_links
 from r2.models import *
 from r2.lib.utils import tup, query_string
@@ -183,12 +183,6 @@ class ButtonsController(RedditController):
                           show_sidebar = False, 
                           content=WidgetDemoPanel()).render()
 
-    def GET_socialite_demo_page(self):
-        return BoringPage(_("socialite toolbar"),
-                          show_sidebar = False, 
-                          content=Socialite()).render()
-
-    
     def GET_bookmarklets(self):
         return BoringPage(_("bookmarklets"),
                           show_sidebar = False, 

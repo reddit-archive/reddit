@@ -67,7 +67,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/buttonlite', controller='buttons', action='button_lite')
     
     mc('/widget', controller='buttons', action='widget_demo_page')
-    mc('/socialite', controller='buttons', action='socialite_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
     
     mc('/stats', controller='front', action='stats')
