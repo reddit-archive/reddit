@@ -147,7 +147,9 @@ class DataThing(object):
         #copy in the cache's version
         for prop in self._base_props:
             self.__setattr__(prop, getattr(other_self, prop), False)
-        self._t = other_self._t
+
+        if other_self._loaded:
+            self._t = other_self._t
 
         #re-apply the .dirties
         old_dirties = self._dirties
