@@ -117,21 +117,8 @@ class Builder(object):
         #get likes/dislikes
         #TODO Vote.likes should accept empty lists
         likes = Vote.likes(user, items) if user and items else {}
-        reports = Report.fastreported(user, items) if user else {}
 
         uid = user._id if user else None
-
-        # we'll be grabbing this in the spam processing below
-        if c.user_is_admin:
-            ban_info = admintools.ban_info([x for x in items if x._spam])
-        elif user and len(can_ban_set) > 0:
-            ban_info = admintools.ban_info(
-                [ x for x in items
-                  if (x._spam
-                      and hasattr(x,'sr_id')
-                      and x.sr_id in can_ban_set) ])
-        else:
-            ban_info = dict()
 
         types = {}
         wrapped = []
@@ -227,12 +214,6 @@ class Builder(object):
 
             count += 1
 
-            # would have called it "reported", but that is already
-            # taken on the thing itself as "how many total
-            # reports". Indicates whether this user reported this
-            # item, and should be visible to all users
-            w.report_made = reports.get((user, item, Report._field))
-
             # if the user can ban things on a given subreddit, or an
             # admin, then allow them to see that the item is spam, and
             # add the other spam-related display attributes
@@ -246,11 +227,12 @@ class Builder(object):
                 w.can_ban = True
                 if item._spam:
                     w.show_spam = True
-                    w.moderator_banned = getattr(item,'moderator_banned', False)
-                    w.autobanned, w.banner = ban_info.get(item._fullname,
-                                                              (False, None))
+                    ban_info = getattr(item, 'ban_info', {})
+                    w.moderator_banned = ban_info.get('moderator_banned', False)
+                    w.autobanned = ban_info.get('auto', False)
+                    w.banner = ban_info.get('banner')
 
-                elif hasattr(item,'reported') and item.reported > 0:
+                elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
 
         # recache the user object: it may be None if user is not logged in,

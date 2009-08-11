@@ -127,6 +127,8 @@ class Link(Thing, Printable):
                 ip = ip)
         l._commit()
         l.set_url_cache()
+        if author._spam:
+            admintools.spam(l, True, False, 'banned user')
         return l
 
     @classmethod

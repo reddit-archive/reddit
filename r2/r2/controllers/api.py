@@ -539,7 +539,6 @@ class ApiController(RedditController):
             not (hasattr(thing, "promoted") and thing.promoted)):
             Report.new(c.user, thing)
 
-
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
@@ -1034,29 +1033,20 @@ class ApiController(RedditController):
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ban(self, thing):
-        if not thing: return
-        thing.moderator_banned = not c.user_is_admin
-        thing.banner = c.user.name
-        thing._commit()
-        # NB: change table updated by reporting
-        unreport(thing, correct=True, auto=False)
-
+        admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_unban(self, thing):
-        # NB: change table updated by reporting
-        if not thing: return
-        unreport(thing, correct=False)
+        admintools.unspam(thing, c.user.name)
 
     @noresponse(VUser(), VModhash(),
                 VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_ignore(self, thing):
         if not thing: return
-        # NB: change table updated by reporting
-        unreport(thing, correct=False)
+        Report.accept(thing, False)
 
     @validatedForm(VUser(), VModhash(),
                    VSrCanDistinguish('id'),

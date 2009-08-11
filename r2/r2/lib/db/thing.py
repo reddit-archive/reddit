@@ -612,8 +612,8 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             and caches them"""
             prefix = thing_prefix(cls.__name__)
 
-            thing1_dict = dict((t._id, t) for t in thing1s)
-            thing2_dict = dict((t._id, t) for t in thing2s)
+            thing1_dict = dict((t._id, t) for t in tup(thing1s))
+            thing2_dict = dict((t._id, t) for t in tup(thing2s))
 
             thing1_ids = thing1_dict.keys()
             thing2_ids = thing2_dict.keys()

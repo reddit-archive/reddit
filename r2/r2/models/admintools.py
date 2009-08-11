@@ -20,22 +20,62 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.utils import tup
+from r2.models import Report, Account
+from r2.models.thing_changes import changed
+from r2.lib.db import queries
+
+from pylons import g
+
+from datetime import datetime
+from copy import copy
 
 class AdminTools(object):
-    def spam(self, things, amount = 1, mark_as_spam = True, **kw):
-        for t in tup(things):
-            if mark_as_spam:
-                t._spam = (amount > 0)
-                t._commit()
+    def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+        Report.accept(things, True)
+        things = [ x for x in tup(things) if not x._spam ]
+        for t in things:
+            t._spam = True
+            ban_info = copy(getattr(t, 'ban_info', {}))
+            ban_info.update(auto = auto,
+                            moderator_banned = moderator_banned,
+                            banner = banner,
+                            banned_at = date or datetime.now(g.tz),
+                            **kw)
+            t.ban_info = ban_info
+            t._commit()
+            changed(t)
+        self.author_spammer(things, True)
+        queries.ban(things)
 
-    def report(self, thing, amount = 1):
-        pass
+    def unspam(self, things, unbanner = None):
+        Report.accept(things, False)
+        things = [ x for x in tup(things) if x._spam ]
+        for t in things:
+            ban_info = copy(getattr(t, 'ban_info', {}))
+            ban_info['unbanned_at'] = datetime.now(g.tz)
+            if unbanner:
+                ban_info['unbanner'] = unbanner
+            t.ban_info = ban_info
+            t._spam = False
+            t._commit()
+            changed(t)
+        self.author_spammer(things, False)
+        queries.unban(things)
 
-    def ban_info(self, thing):
-        return {}
+    def author_spammer(self, things, spam):
+        """incr/decr the 'spammer' field for the author of every
+           passed thing"""
+        by_aid = {}
+        for thing in things:
+            if hasattr(thing, 'author_id'):
+                by_aid.setdefault(thing.author_id, []).append(thing)
 
-    def get_corrections(self, cls, min_date = None, max_date = None, limit = 50):
-        return []
+        if by_aid:
+            authors = Account._byID(by_aid.keys(), data=True, return_dict=True)
+
+            for aid, author_things in by_aid.iteritems():
+                author = authors[aid]
+                author._incr('spammer', len(author_things) if spam else -len(author_things))
 
 admintools = AdminTools()
 
@@ -62,5 +102,5 @@ def compute_votes(wrapper, item):
 
 try:
     from r2admin.models.admintools import *
-except:
+except ImportError:
     pass

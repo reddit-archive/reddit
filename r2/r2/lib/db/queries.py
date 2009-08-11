@@ -4,7 +4,7 @@ from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, worker
+from r2.lib.utils import fetch_things2, worker, tup
 from r2.lib.solrsearch import DomainSearchQuery
 
 from datetime import datetime
@@ -90,29 +90,31 @@ class CachedResults(object):
         """True if a item can be removed from the listing, always true for now."""
         return True
 
-    def insert(self, item):
+    def insert(self, items):
         """Inserts the item at the front of the cached data. Assumes the query
         is sorted by date descending"""
         self.fetch()
-        t = self.make_item_tuple(item)
+        t = [ self.make_item_tuple(item) for item in tup(items) ]
 
-        if t not in self.data:
-            if self.data and t[1:] > self.data[0][1:]:
-                self.data.insert(0, t)
-            else:
-                self.data.append(t)
-                self.data.sort(key=lambda x: x[1:], reverse=True)
-            query_cache.set(self.iden, self.data[:precompute_limit])
+        if len(t) == 1 and self.data and t[0][1:] > self.data[0][1:]:
+            self.data.insert(0, t[0])
+        else:
+            self.data.extend(t)
+            self.data = list(set(self.data))
+            self.data.sort(key=lambda x: x[1:], reverse=True)
 
+        query_cache.set(self.iden, self.data[:precompute_limit])
 
-    def delete(self, item):
+    def delete(self, items):
         """Deletes an item from the cached data."""
         self.fetch()
-        t = self.make_item_tuple(item)
         changed = False
-        while t in self.data:
-            self.data.remove(t)
-            changed = True
+
+        for item in tup(items):
+            t = self.make_item_tuple(item)
+            while t in self.data:
+                self.data.remove(t)
+                changed = True
             
         if changed:
             query_cache.set(self.iden, self.data)
@@ -292,9 +294,9 @@ def get_sent(user):
                        sort = desc('_date'))
     return make_results(q)
 
-def add_queries(queries, insert_item = None, delete_item = None):
-    """Adds multiple queries to the query queue. If insert_item or
-    delete_item is specified, the query may not need to be recomputed at
+def add_queries(queries, insert_items = None, delete_items = None):
+    """Adds multiple queries to the query queue. If insert_items or
+    delete_items is specified, the query may not need to be recomputed at
     all."""
     log = g.log.debug
     make_lock = g.make_lock
@@ -303,14 +305,15 @@ def add_queries(queries, insert_item = None, delete_item = None):
             if not isinstance(q, CachedResults):
                 continue
 
-            log('Adding precomputed query %s' % q)
-
             with make_lock("add_query(%s)" % q.iden):
-                if insert_item and q.can_insert():
-                    q.insert(insert_item)
-                elif delete_item and q.can_delete():
-                    q.delete(delete_item)
+                if insert_items and q.can_insert():
+                    log("Inserting %s into query %s" % (insert_items, q))
+                    q.insert(insert_items)
+                elif delete_items and q.can_delete():
+                    log("Deleting %s from query %s" % (delete_items, q))
+                    q.delete(delete_items)
                 else:
+                    log('Adding precomputed query %s' % q)
                     query_queue.add_query(q)
     worker.do(_add_queries)
 
@@ -351,25 +354,25 @@ def new_link(link):
         results.append(get_spam_links(sr))
     
     if link._deleted:
-        add_queries(results, delete_item = link)
+        add_queries(results, delete_items = link)
     else:
-        add_queries(results, insert_item = link)
+        add_queries(results, insert_items = link)
 
 def new_comment(comment, inbox_rel):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all')]
     if comment._deleted:
-        add_queries(job, delete_item = comment)
+        add_queries(job, delete_items = comment)
     else:
         #if comment._spam:
         #    sr = Subreddit._byID(comment.sr_id)
         #    job.append(get_spam_comments(sr))
-        add_queries(job, insert_item = comment)
+        add_queries(job, insert_items = comment)
 
     if inbox_rel:
         inbox_owner = inbox_rel._thing1
         add_queries([get_inbox_comments(inbox_owner)],
-                    insert_item = inbox_rel)
+                    insert_items = inbox_rel)
 
 def new_vote(vote):
     user = vote._thing1
@@ -387,72 +390,103 @@ def new_vote(vote):
     
     #must update both because we don't know if it's a changed vote
     if vote._name == '1':
-        add_queries([get_liked(user)], insert_item = vote)
-        add_queries([get_disliked(user)], delete_item = vote)
+        add_queries([get_liked(user)], insert_items = vote)
+        add_queries([get_disliked(user)], delete_items = vote)
     elif vote._name == '-1':
-        add_queries([get_liked(user)], delete_item = vote)
-        add_queries([get_disliked(user)], insert_item = vote)
+        add_queries([get_liked(user)], delete_items = vote)
+        add_queries([get_disliked(user)], insert_items = vote)
     else:
-        add_queries([get_liked(user)], delete_item = vote)
-        add_queries([get_disliked(user)], delete_item = vote)
+        add_queries([get_liked(user)], delete_items = vote)
+        add_queries([get_disliked(user)], delete_items = vote)
     
 def new_message(message, inbox_rel):
     from_user = Account._byID(message.author_id)
     to_user = Account._byID(message.to_id)
 
-    add_queries([get_sent(from_user)], insert_item = message)
-    add_queries([get_inbox_messages(to_user)], insert_item = inbox_rel)
+    add_queries([get_sent(from_user)], insert_items = message)
+    add_queries([get_inbox_messages(to_user)], insert_items = inbox_rel)
 
 def new_savehide(rel):
     user = rel._thing1
     name = rel._name
     if name == 'save':
-        add_queries([get_saved(user)], insert_item = rel)
+        add_queries([get_saved(user)], insert_items = rel)
     elif name == 'unsave':
-        add_queries([get_saved(user)], delete_item = rel)
+        add_queries([get_saved(user)], delete_items = rel)
     elif name == 'hide':
-        add_queries([get_hidden(user)], insert_item = rel)
+        add_queries([get_hidden(user)], insert_items = rel)
     elif name == 'unhide':
-        add_queries([get_hidden(user)], delete_item = rel)
+        add_queries([get_hidden(user)], delete_items = rel)
 
-def ban(x, auto = False):
-    if isinstance(x,Link):
-        sr = Subreddit._byID(x.sr_id)
-        add_queries([get_spam_links(sr)], insert_item = x)
+def _by_srid(things):
+    """Takes a list of things and returns them in a dict separated by
+       sr_id, in addition to the looked-up subreddits"""
+    ret = {}
 
-    #elif isinstance(x,Comment):
-    #    sr = Subreddit._byID(x.sr_id)
-    #    add_queries([get_spam_comments(sr)])
+    for thing in things:
+        if hasattr(thing, 'sr_id'):
+            ret.setdefault(thing.sr_id, []).append(thing)
 
-def unban(x):
-    if isinstance(x,Link):
-        sr = Subreddit._byID(x.sr_id)
-        add_queries([get_spam_links(sr)], delete_item = x)
-    #elif isinstance(x,Comment):
-    #    sr = Subreddit._byID(x.sr_id)
-    #    add_queries([get_spam_comments(sr)])
+    srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
 
-def new_report(report):
-    reporter = report._thing1
-    reported = report._thing2
+    return ret, srs
 
-    if isinstance(reported, Link):
-        sr = Subreddit._byID(reported.sr_id)
-        add_queries([get_reported_links(sr)], insert_item = reported)
-    #elif isinstance(reported, Comment):
-    #    sr = Subreddit._byID(reported.sr_id)
-    #    add_queries([get_reported_comments(sr)], insert_item = reported)
+def ban(things):
+    by_srid, srs = _by_srid(things)
+    if not by_srid:
+        return
 
-def clear_report(report):
-    reporter = report._thing1
-    reported = report._thing2
+    for sr_id, things in by_srid.iteritems():
+        sr = srs[sr_id]
+        links = [ x for x in things if isinstance(x, Link) ]
+        #comments = [ x for x in things if isinstance(x, Comment) ]
 
-    if isinstance(reported, Link):
-        sr = Subreddit._byID(reported.sr_id)
-        add_queries([get_reported_links(sr)], delete_item = reported)
-    #elif isinstance(reported, Comment):
-    #    sr = Subreddit._byID(reported.sr_id)
-    #    add_queries([get_reported_comments(sr)], delete_item = reported)
+        if links:
+            add_queries([get_spam_links(sr)], insert_items = links)
+            add_queries([get_links(sr, 'new', 'all')], delete_items = links)
+        #if comments:
+        #    add_queries([get_spam_comments(sr)], insert_items = comments)
+
+def unban(things):
+    by_srid, srs = _by_srid(things)
+    if not by_srid:
+        return
+
+    for sr_id, things in by_srid.iteritems():
+        sr = srs[sr_id]
+        links = [ x for x in things if isinstance(x, Link) ]
+        #comments = [ x for x in things if isinstance(x, Comment) ]
+
+        if links:
+            add_queries([get_spam_links(sr)], delete_items = links)
+            # put it back in 'new'
+            add_queries([get_links(sr, 'new', 'all')], insert_items = links)
+        #if comments:
+        #    add_queries([get_spam_comments(sr)], delete_items = comments)
+
+def new_report(thing):
+    if isinstance(thing, Link):
+        sr = Subreddit._byID(thing.sr_id)
+        add_queries([get_reported_links(sr)], insert_items = thing)
+    #elif isinstance(thing, Comment):
+    #    sr = Subreddit._byID(thing.sr_id)
+    #    add_queries([get_reported_comments(sr)], insert_items = thing)
+
+def clear_reports(things):
+    by_srid, srs = _by_srid(things)
+    if not by_srid:
+        return
+
+    for sr_id, sr_things in by_srid.iteritems():
+        sr = srs[sr_id]
+
+        links = [ x for x in sr_things if isinstance(x, Link) ]
+        #comments = [ x for x in sr_things if isinstance(x, Comment) ]
+
+        if links:
+            add_queries([get_reported_links(sr)], delete_items = links)
+        #if comments:
+        #    add_queries([get_reported_comments(sr)], delete_items = comments)
 
 def add_all_ban_report_srs():
     """Adds the initial spam/reported pages to the report queue"""
@@ -476,7 +510,6 @@ def add_all_srs():
                      get_reported_links(sr),
                      #get_reported_comments(sr),
                      ])
-
 
 def update_user(user):
     if isinstance(user, str):

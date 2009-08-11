@@ -845,7 +845,7 @@ def fetch_things(t_class,since,until,batch_fn=None,
         q._after(t)
         things = list(q)
 
-def fetch_things2(query, chunk_size = 100, batch_fn = None):
+def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
     """Incrementally run query with a limit of chunk_size until there are
     no results left. batch_fn transforms the results for each chunk
     before returning."""
@@ -861,12 +861,16 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None):
         if batch_fn:
             items = batch_fn(items)
 
-        for i in items:
-            yield i
+        if chunks:
+            yield items
+        else:
+            for i in items:
+                yield i
+        after = items[-1]
 
         if not done:
             query._rules = deepcopy(orig_rules)
-            query._after(i)
+            query._after(after)
             items = list(query)
 
 def set_emptying_cache():
