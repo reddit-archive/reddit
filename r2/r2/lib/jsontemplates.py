@@ -163,7 +163,8 @@ class ThingJsonTemplate(JsonTemplate):
         elif attr == "created":
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
-            return time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
+            return (time.mktime(thing._date.astimezone(pytz.UTC).timetuple())
+                    - time.timezone)
         elif attr == "child":
             return CachedVariable("childlisting")
         return getattr(thing, attr, None)
@@ -204,20 +205,32 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 author       = "author", 
                                                 thumbnail    = "thumbnail",
                                                 media        = "media_object",
+                                                media_embed  = "media_embed",
                                                 selftext     = "selftext",
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id")
-    
+
     def thing_attr(self, thing, attr):
-        if attr == 'subreddit':
+        from r2.lib.scraper import scrapers
+        if attr == "media_embed":
+           if (thing.media_object and
+               not isinstance(thing.media_object, basestring)):
+               scraper = scrapers[thing.media_object['type']]
+               media_embed = scraper.media_embed(**thing.media_object)
+               return dict(scrolling = media_embed.scrolling,
+                           width = media_embed.width,
+                           height = media_embed.height,
+                           content = media_embed.content)
+           return dict()
+        elif attr == 'subreddit':
             return thing.subreddit.name
         elif attr == 'subreddit_id':
             return thing.subreddit._fullname
         elif attr == 'selftext':
             return safemarkdown(thing.selftext)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
-                          
+
     def rendered_data(self, thing):
         d = ThingJsonTemplate.rendered_data(self, thing)
         d['sr'] = thing.subreddit._fullname
@@ -234,13 +247,18 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 likes        = "likes",
                                                 author       = "author", 
                                                 link_id      = "link_id",
+                                                sr_id        = "sr_id",
                                                 parent_id    = "parent_id",
                                                 )
 
     def thing_attr(self, thing, attr):
-        from r2.models import Comment, Link
+        from r2.models import Comment, Link, Subreddit
         if attr == 'link_id':
             return make_fullname(Link, thing.link_id)
+        elif attr == 'sr_id':
+            if hasattr(thing, attr):
+                return make_fullname(Subreddit, thing.sr_id)
+            return None
         elif attr == "parent_id":
             try:
                 return make_fullname(Comment, thing.parent_id)

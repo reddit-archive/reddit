@@ -329,6 +329,9 @@ def sanitize_url(url, require_scheme = False):
         u = urlparse(url)
 
     if u.scheme and u.scheme in valid_schemes:
+        # if there is a scheme and no hostname, it is a bad url.
+        if not u.hostname:
+            return
         labels = u.hostname.split('.')
         for label in labels:
             try:
