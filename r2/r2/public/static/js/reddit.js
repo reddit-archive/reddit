@@ -1036,6 +1036,14 @@ var toolbar_p = function(expanded_size, collapsed_size) {
     };
 };
 
+function clear_all_langs(elem) {
+    $(elem).parents("form").find("input[type=checkbox]").attr("checked", false);
+}
+
+function check_some_langs(elem) {
+    $(elem).parents("form").find("#some-langs").attr("checked", true);
+}
+
 /* The ready method */
 $(function() {
         /* set function to be called on thing creation/replacement,

@@ -194,7 +194,7 @@ ${unsafe(txt)}
      all_checked, some_checked = some_checked, all_checked
 %>
 <input type="radio" name="all-langs" id="all-langs" value="all"
-       onclick="clear_all(this)" ${all_checked}/>
+       onclick="clear_all_langs(this)" ${all_checked}/>
 <label for="all-langs">${_("all languages")}</label>
 <br/>
 <input type="radio" name="all-langs" id="some-langs" value="some"
@@ -217,7 +217,7 @@ ${unsafe(txt)}
          checked = ""
     %>
     <input type="checkbox" name="${idname}" id="${idname}"
-           onclick="check_some()" ${checked}/>
+           onclick="check_some_langs(this)" ${checked}/>
     <label for="${idname}">${g.lang_name[lang]}</label>
     </td>
   %endfor

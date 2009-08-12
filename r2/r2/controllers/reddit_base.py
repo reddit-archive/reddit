@@ -121,7 +121,8 @@ class UnloggedUser(FakeAccount):
 
     def _commit(self):
         if self._dirty:
-            self._t.update(self._dirties)
+            for k, (oldv, newv) in self._dirties.iteritems():
+                self._t[k] = newv
             self._to_cookie(self._t)
 
     def _load(self):
@@ -488,8 +489,13 @@ class RedditController(BaseController):
             c.user_is_loggedin = True
         else:
             c.user = UnloggedUser(get_browser_langs())
-            c.user._load()
-
+            # patch for fixing mangled language preferences
+            if (not isinstance(c.user.pref_lang, basestring) or
+                not all(isinstance(x, basestring)
+                        for x in c.user.pref_content_langs)):
+                c.user.pref_lang = g.lang
+                c.user.pref_content_langs = [g.lang]
+                c.user._commit()
         if c.user_is_loggedin:
             if not c.user._loaded:
                 c.user._load()
