@@ -28,9 +28,14 @@ def htmlquote(text):
     text = text.replace('"', "&quot;")
     return text
 
+def mangle_text(text):
+    from pylons import g
+    return md5.new(text + g.SECRET).hexdigest()
+
 def semirandom(seed):
+    from pylons import g
     x = 0
-    for c in md5.new(seed).digest(): x += ord(c)
+    for c in md5.new(seed + g.SECRET).digest(): x += ord(c)
     return x / (255*16.)
 
 class _Markdown:
@@ -40,7 +45,7 @@ class _Markdown:
     escapechars = '\\`*_{}[]()>#+-.!'
     escapetable = {}
     for char in escapechars:
-        escapetable[char] = md5.new(char).hexdigest()
+        escapetable[char] = mangle_text(char)
     
     r_multiline = re.compile("\n{2,}")
     r_stripspace = re.compile(r"^[ \t]+$", re.MULTILINE)
@@ -155,7 +160,7 @@ class _Markdown:
                 key = key.encode('utf8')
             except UnicodeDecodeError:
                 key = ''.join(k for k in key if ord(k) < 128)
-            key = md5.new(key).hexdigest()
+            key = mangle_text(key)
             self.html_blocks[key] = m.group(1)
             return "\n\n%s\n\n" % key
 
@@ -288,7 +293,7 @@ class _Markdown:
             res += ">%s</a>" % htmlquote(link_text)
             return res
 
-        text = self.r_DoAnchors1.sub(handler1, text)
+        #text = self.r_DoAnchors1.sub(handler1, text)
         text = self.r_DoAnchors2.sub(handler2, text)
         return text
 
