@@ -78,10 +78,12 @@ class JsonResponse(object):
 
     def has_errors(self, field_name, *errors, **kw):
         have_error = False
+        field_name = tup(field_name)
         for error_name in errors:
-            if (error_name, field_name) in c.errors:
-                self.set_error(error_name, field_name)
-                have_error = True
+            for fname in field_name:
+                if (error_name, fname) in c.errors:
+                    self.set_error(error_name, fname)
+                    have_error = True
         return have_error
 
     def _things(self, things, action, *a, **kw):

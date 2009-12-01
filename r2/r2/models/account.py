@@ -23,11 +23,12 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr 
+from r2.lib.utils        import modhash, valid_hash, randstr
 
 from pylons import g
 import time, sha
 from copy import copy
+from datetime import datetime, timedelta
 
 class AccountExists(Exception): pass
 
@@ -58,12 +59,17 @@ class Account(Thing):
                      report_made = 0,
                      report_correct = 0,
                      report_ignored = 0,
+                     cup_date = None,
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
                      pref_media = 'subreddit',
                      share = {},
                      wiki_override = None,
+                     email = "",
+                     email_verified = None,
+                     ignorereports = False,
+                     pref_show_promote = None, 
                      )
 
     def karma(self, kind, sr = None):
@@ -143,7 +149,22 @@ class Account(Thing):
                        self._t.get('comment_karma', 0)))
 
         return karmas
-        
+
+    def update_last_visit(self, current_time):
+        from admintools import apply_updates
+
+        apply_updates(self)
+
+        prev_visit = getattr(self, 'last_visit', None)
+
+        if prev_visit and current_time - prev_visit < timedelta(0, 3600):
+            return
+
+        g.log.debug ("Updating last visit for %s" % self.name)
+        self.last_visit = current_time
+
+        self._commit()
+
     def make_cookie(self, timestr = None, admin = False):
         if not self._loaded:
             self._load()
@@ -185,6 +206,14 @@ class Account(Thing):
             return cls._byID(uid, True)
         else:
             raise NotFound, 'Account %s' % name
+
+    # Admins only, since it's not memoized
+    @classmethod
+    def _by_name_multiple(cls, name):
+        q = cls._query(lower(Account.c.name) == name.lower(),
+                       Account.c._spam == (True, False),
+                       Account.c._deleted == (True, False))
+        return list(q)
 
     @property
     def friends(self):
@@ -235,9 +264,30 @@ class Account(Thing):
         share['recent'] = emails
 
         self.share = share
-        
-            
-            
+
+    def extend_cup(self, new_expiration):
+        if self.cup_date and self.cup_date > new_expiration:
+            return
+        self.cup_date = new_expiration
+        self._commit()
+
+    def remove_cup(self):
+        if not self.cup_date:
+            return
+        self.cup_date = None
+        self._commit()
+
+    def should_show_cup(self):
+        # FIX ME.
+        # this is being called inside builder (Bad #1) in the
+        # listing loop. On machines that are not allowed to write to
+        # the db, this generates an exception (Bad #2) on every
+        # listing page with users with cups.
+        return False # temporarily disable cups
+        if self.cup_date and self.cup_date < datetime.now(g.tz):
+            self.cup_date = None
+            self._commit()
+        return self.cup_date
 
 class FakeAccount(Account):
     _nodb = True
@@ -314,6 +364,7 @@ def register(name, password):
         return a
 
 class Friend(Relation(Account, Account)): pass
+
 Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn = True),)
 
 class DeletedUser(FakeAccount):

@@ -20,9 +20,9 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.utils import tup
+from r2.lib.filters import websafe
 from r2.models import Report, Account
 from r2.models.thing_changes import changed
-from r2.lib.db import queries
 
 from pylons import g
 
@@ -30,26 +30,41 @@ from datetime import datetime
 from copy import copy
 
 class AdminTools(object):
+
     def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+        from r2.lib.db import queries
+
+        things = [x for x in tup(things) if not x._spam]
         Report.accept(things, True)
-        things = [ x for x in tup(things) if not x._spam ]
         for t in things:
             t._spam = True
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info.update(auto = auto,
                             moderator_banned = moderator_banned,
-                            banner = banner,
                             banned_at = date or datetime.now(g.tz),
                             **kw)
+
+            if isinstance(banner, dict):
+                ban_info['banner'] = banner[t._fullname]
+            else:
+                ban_info['banner'] = banner
+
             t.ban_info = ban_info
             t._commit()
             changed(t)
-        self.author_spammer(things, True)
+
+
+        if not auto:
+            self.author_spammer(things, True)
+            self.set_last_sr_ban(things)
+
         queries.ban(things)
 
     def unspam(self, things, unbanner = None):
+        from r2.lib.db import queries
+
+        things = [x for x in tup(things) if x._spam]
         Report.accept(things, False)
-        things = [ x for x in tup(things) if x._spam ]
         for t in things:
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info['unbanned_at'] = datetime.now(g.tz)
@@ -59,7 +74,11 @@ class AdminTools(object):
             t._spam = False
             t._commit()
             changed(t)
+
+        # auto is always False for unbans
         self.author_spammer(things, False)
+        self.set_last_sr_ban(things)
+
         queries.unban(things)
 
     def author_spammer(self, things, spam):
@@ -77,6 +96,24 @@ class AdminTools(object):
                 author = authors[aid]
                 author._incr('spammer', len(author_things) if spam else -len(author_things))
 
+    def set_last_sr_ban(self, things):
+        by_srid = {}
+        for thing in things:
+            if hasattr(thing, 'sr_id'):
+                by_srid.setdefault(thing.sr_id, []).append(thing)
+
+        if by_srid:
+            srs = Subreddit._byID(by_srid.keys(), data=True, return_dict=True)
+            for sr_id, sr_things in by_srid.iteritems():
+                sr = srs[sr_id]
+
+                sr.last_mod_action = datetime.now(g.tz)
+                sr._commit()
+                sr._incr('mod_actions', len(sr_things))
+
+    def admin_queues(self, chan, exchange):
+        pass
+
 admintools = AdminTools()
 
 def is_banned_IP(ip):
@@ -91,6 +128,9 @@ def valid_thing(v, karma):
 def valid_user(v, sr, karma):
     return True
 
+def apply_updates(user):
+    pass
+
 def update_score(obj, up_change, down_change, new_valid_thing, old_valid_thing):
      obj._incr('_ups',   up_change)
      obj._incr('_downs', down_change)
@@ -99,6 +139,9 @@ def compute_votes(wrapper, item):
     wrapper.upvotes   = item._ups
     wrapper.downvotes = item._downs
 
+def ip_span(ip):
+    ip = websafe(ip)
+    return '<!-- %s -->' % ip
 
 try:
     from r2admin.models.admintools import *

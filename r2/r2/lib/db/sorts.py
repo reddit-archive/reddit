@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from math import log
+from math import log, sqrt
 from datetime import datetime, timedelta
 from pylons import g
 
@@ -46,3 +46,28 @@ def controversy(ups, downs):
     """The controversy sort."""
     return float(ups + downs) / max(abs(score(ups, downs)), 1)
 
+def _confidence(ups, downs):
+    """The confidence sort.
+       http://www.evanmiller.org/how-not-to-sort-by-average-rating.html"""
+    n = float(ups + downs)
+    if n == 0:
+        return 0
+    z = 1.0 #1.0 = 85%, 1.6 = 95%
+    phat = float(ups) / n
+    return sqrt(phat+z*z/(2*n)-z*((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+
+
+up_range = 400
+down_range = 100
+confidences = []
+for ups in xrange(up_range):
+    for downs in xrange(down_range):
+        confidences.append(_confidence(ups, downs))
+
+def confidence(ups, downs):
+    if ups + downs == 0:
+        return 0
+    elif ups < up_range and downs < down_range:
+        return confidences[downs + ups * down_range]
+    else:
+        return _confidence(ups, downs)

@@ -1,4 +1,3 @@
-
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -62,6 +61,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      more         = _('more'),
                      relevance    = _('relevance'),
                      controversial  = _('controversial'),
+                     confidence   = _('best'),
                      saved        = _('saved {toolbar}'),
                      recommended  = _('recommended'),
                      rising       = _('rising'), 
@@ -83,7 +83,6 @@ menu =   MenuHandler(hot          = _('hot'),
                      adminon      = _("turn admin on"),
                      adminoff     = _("turn admin off"), 
                      prefs        = _("preferences"), 
-                     stats        = _("stats"), 
                      submit       = _("submit"),
                      help         = _("help"),
                      blog         = _("the reddit blog"),
@@ -115,27 +114,31 @@ menu =   MenuHandler(hot          = _('hot'),
                      sent         = _("sent"),
 
                      # comments
+                     comments     = _("comments {toolbar}"),
                      related      = _("related"),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
                      shirt        = _("shirt"),
-                     traffic      = _("traffic"),
+                     traffic      = _("traffic stats"),
 
                      # reddits
                      home         = _("home"),
                      about        = _("about"),
-                     edit         = _("edit"),
-                     banned       = _("banned"),
+                     edit         = _("edit this reddit"),
+                     moderators   = _("edit moderators"),
+                     contributors = _("edit contributors"),
+                     banned       = _("ban users"),
                      banusers     = _("ban users"),
 
                      popular      = _("popular"),
                      create       = _("create"),
                      mine         = _("my reddits"),
 
-                     i18n         = _("translate site"),
+                     i18n         = _("help translate"),
+                     awards       = _("awards"),
                      promoted     = _("promoted"),
                      reporters    = _("reporters"),
-                     reports      = _("reports"),
+                     reports      = _("reported links"),
                      reportedauth = _("reported authors"),
                      info         = _("info"),
                      share        = _("share"),
@@ -148,9 +151,15 @@ menu =   MenuHandler(hot          = _('hot'),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
 
-                     promote      = _('promote'),
-                     new_promo    = _('new promoted link'),
-                     current_promos = _('promoted links'),
+                     promote        = _('self-serve'),
+                     new_promo      = _('create promotion'),
+                     my_current_promos = _('my promoted links'),
+                     current_promos = _('all promoted links'),
+                     future_promos = _('unapproved'),
+                     graph          = _('analytics'),
+                     live_promos    = _('live'),
+                     unpaid_promos  = _('unpaid'),
+                     pending_promos = _('pending')
                      )
 
 def menu_style(type):
@@ -179,7 +188,10 @@ class NavMenu(Styled):
                  base_path = '', separator = '|', **kw):
         self.options = options
         self.base_path = base_path
-        kw['style'], kw['css_class'] = menu_style(type)
+
+        #add the menu style, but preserve existing css_class parameter
+        kw['style'], css_class = menu_style(type)
+        kw['css_class'] = css_class + ' ' + kw.get('css_class', '')
 
         #used by flatlist to delimit menu items
         self.separator = separator
@@ -223,11 +235,11 @@ class NavButton(Styled):
                  nocname=False, opt = '', aliases = [],
                  target = "", style = "plain", **kw):
         # keep original dest to check against c.location when rendering
-        aliases = set(a.rstrip('/') for a in aliases)
-        aliases.add(dest.rstrip('/'))
+        aliases = set(_force_unicode(a.rstrip('/')) for a in aliases)
+        aliases.add(_force_unicode(dest.rstrip('/')))
 
         self.request_params = dict(request.GET)
-        self.stripped_path = request.path.rstrip('/').lower()
+        self.stripped_path = _force_unicode(request.path.rstrip('/').lower())
 
         Styled.__init__(self, style = style, sr_path = sr_path, 
                         nocname = nocname, target = target,
@@ -263,6 +275,8 @@ class NavButton(Styled):
             return self.request_params.get(self.opt, '') in self.aliases
         else:
             if self.stripped_path == self.bare_path:
+                return True
+            if self.bare_path and self.stripped_path.startswith(self.bare_path):
                 return True
             if self.stripped_path in self.aliases:
                 return True
@@ -388,10 +402,13 @@ class SortMenu(SimpleGetMenu):
             return operators.desc('_score')
         elif sort == 'controversial':
             return operators.desc('_controversy')
+        elif sort == 'confidence':
+            return operators.desc('_confidence')
 
 class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
-    options   = ('hot', 'new', 'controversial', 'top', 'old')
+    default   = 'confidence'
+    options   = ('hot', 'new', 'controversial', 'top', 'old', 'confidence')
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""

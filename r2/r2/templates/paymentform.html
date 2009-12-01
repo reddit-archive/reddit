@@ -1,0 +1,209 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+  from r2.lib.template_helpers import static
+%>
+<%namespace file="utils.html" import="error_field"/>
+
+<script type="text/javascript" src="${static('sponsored.js')}"></script>
+<script type="text/javascript">
+  $(function() { update_bid("#bid-field"); }); 
+</script>
+
+<div class="payment-setup">
+  <h1>${_("set up payment for this link")}</h1>
+  <form method="POST" action="/post/pay" id="pay-form"
+        class="pretty-form"
+        ##onsubmit="return post_form(this, 'update_pay', null, null, true)">
+        onsubmit="return post_form(this, 'update_pay')">
+        <input type="hidden" name="startdate" 
+               value="${thing.link._date.strftime('%m/%d/%Y')}"/>
+        <input type="hidden" name="enddate" 
+               value="${thing.link.promote_until.strftime('%m/%d/%Y')}"/>
+   <p>
+    <% 
+       day = (thing.link.promote_until - thing.link._date).days
+     %>
+    The duration of this link is ${day} ${ungettext("day", "days", day)}
+    (${thing.link._date.strftime("%m/%d/%Y")} -
+    ${thing.link.promote_until.strftime("%m/%d/%Y")}).
+  </p>
+  <p id="bid-field">
+    <%
+       bid = unsafe("<input name='bid' maxlength='8' value='%.2f' type='text' size='4' onchange='update_bid(this)' onkeyup='update_bid(this)'/>" % thing.link.promote_bid)
+     %>
+    ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=bid))}
+    ${error_field("BAD_BID", "bid")}
+    <span class="gray">
+      ${_('(total for the duration provided)')}
+    </span>
+  </p>
+  %if thing.profiles:
+  <p>
+    ${_("Please pick your credit card:")}
+    <select onchange="change_address(this)" name="account">
+      <option value="0">${_("select...")}</option>
+      %for profile in thing.profiles:
+        <option value="${profile.customerPaymentProfileId}">
+          Card: ${profile.payment.creditCard.cardNumber}
+        </option>
+      %endfor
+      <option value="">${_("create a new one...")}</option>
+    </select>
+  </p>
+  %else:
+    <p class="info">
+      ${_("please create a new payment profile")}
+    </p>
+  %endif
+  <p class="info">
+   ${_("NOTE: your card will not be charged until the link has been queued for promotion.")}
+  </p>
+    %if thing.link:
+      <input type="hidden" name="link" value="${thing.link._fullname}" />
+    %endif
+    <input type="hidden" name="customer_id" value="${thing.customer_id}" />
+    
+    ${profile_info(None, disabled=bool(thing.profiles))}
+    %for profile in thing.profiles:
+      ${profile_info(profile, disabled=True)}
+    %endfor
+  </form>
+  
+  <script type="text/javascript">
+    function cancel_enable_all(elem) {
+      
+    }
+    function enable_all(elem) {
+       $(elem).parents("div.pay-form").andSelf()
+             .find("[disabled]").removeAttr("disabled").end()
+             .find("table").removeClass("disabled").end()
+             .find("[name=edit]").val("on");
+       return false;
+    }
+    function disable_all(elem) {
+       var what = $(elem).parents("div.pay-form").andSelf()
+                     .find("table").addClass("disabled")
+                     .find(":input").not("button")
+                     .attr("disabled", "disabled");
+       return false;
+    }
+    function change_address(what) {
+       var val = $(what).val();
+       var inputs = $(".pay-form").not("#form-option-" + val).hide()
+                       .each(function() { disable_all(this); })
+                       .end()
+                       .filter("#form-option-" + val).show();
+       if (val == "" || inputs.find("[name=edit]").val() == "on") 
+            enable_all(inputs);
+    }
+    
+  </script>
+</div>
+
+<%def name="profile_info(profile, disabled=False)">
+   <%
+      address = ((_("first name") , "firstName", ""),
+                 (_("last name")  , "lastName", ""),
+                 (_("company")    , "company", _("(optional)")),
+                 (_("address")    , "address", ""),
+                 (_("city")       , "city", ""),
+                 (_("state")      , "state", ""),
+                 (_("zip")        , "zip", ""),
+                 ## (_("country")    , "country", ""),
+                 (_("phone")      , "phoneNumber", _("(optional)")))
+      cc      = ((_("card number")     , "cardNumber", _("(14-17 digits)")),
+                 (_("expiration date") , "expirationDate", "(YYYY-MM please)"),
+                 (_("CCV")             , "cardCode", _("(3 or 4 digits)")))
+      bill_to = getattr(profile, "billTo",None)
+      credit  = getattr(profile, "payment", None)
+      credit  = getattr(credit,  "creditCard", None)
+      prof_id = getattr(profile, "customerPaymentProfileId", "")
+      display  = "style='display:none'" if disabled else ''
+      disabled = "disabled" if disabled else ""
+    %>
+   <div id="form-option-${prof_id}" class="pay-form" ${display}>
+   %if profile:
+     <input type="hidden" name="pay_id" ${disabled}
+            value="${prof_id}" />
+   %endif
+   <input type="hidden" name="edit" ${disabled}
+          value="${'off' if profile else 'on'}" />
+   <table class="content preftable ${'disabled' if disabled else ''}">
+     %for fields, data, error_name in ((address, bill_to, "BAD_ADDRESS"), (cc, credit, "BAD_CARD")):
+     %for label, field, optional in fields:
+     <tr class="payment-${field.lower()}" 
+         id="payment-${field.lower()}-${prof_id}">
+       <th><label for="input-${field}-${prof_id}">
+         ${label}
+       </label></th>
+       <td>
+         %if field == "address":
+           <textarea ${disabled} id="input-${field}-${prof_id}" name="${field}">
+             ${getattr(data, field, '')}
+           </textarea>
+         %elif field == "country":
+           ## TODO: pycountry does country name i18n
+           <select name="${field}" ${disabled}>
+             %for country in thing.countries:
+               <option value="${country.alpha2}" 
+                     %if getattr(data, field, 'United States') == country.name:
+                       selected="selected"
+                     %endif
+                       >${country.name}</option>
+             %endfor
+           </select>
+         %else:
+           <input ${disabled}
+                  id="input-${field}-${prof_id}" type="text" name="${field}" 
+                  value="${getattr(data, field, '')}" />
+         %endif
+         %if optional:
+           <span class="optional">${optional}</span>
+         %endif
+       </td>
+       <td>
+         ${error_field(error_name, field)}
+       </td>
+     </tr>
+     %endfor
+     %endfor
+     <tr>
+       <td></td>
+       <td>
+         <button type="submit">${_("authorize payment")}</button>
+         %if disabled and profile:
+            <button onclick="$(this).hide();return enable_all(this);">
+              ${_("edit")}
+            </button>
+         %endif
+       </td>
+     </tr>       
+     <tr>
+       <td></td>
+       <td>
+         <span class="status"></span>
+       </td>
+     </tr>
+   </table>
+   </div>
+</%def>

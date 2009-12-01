@@ -29,7 +29,7 @@
 <%def name="entry()">
 <tr><td valign="top" rowspan="2" class="number">${thing.num}</td>
     <td>
-        <a target="reddit_pop" href="${thing.url}" class="title">${thing.title}</a>
+        <a target="reddit_pop" href="${thing.url}" class="title" rel="nofollow">${thing.title}</a>
         <span class="small">&nbsp;(${thing.domain})</span>
     </td>
 <tr><td class="small byline">${thing.score} ${ungettext("point", "points", thing.score)}

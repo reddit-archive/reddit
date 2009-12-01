@@ -97,24 +97,18 @@
   <div id="images">
     <h2><a name="images">${_("images")}</a></h2>
 
-  <%call expr="image_upload('/api/upload_sr_img', thing.site.header, 
-                              tabular=True, 
+  <%call expr="image_upload('/api/upload_sr_img', '', 
                               onchange='return file_changed(this)',
                               label = _('image file'))">
     
-    <tr>
-      <th>
-        <label for="img-name">${_("new image name:")}</label>
-      </th>
-      <td class="prefright">
-        <input id="img-name" name="name" value="" type="text"/>
-        ${error_field("BAD_CSS_NAME", "name")}
-        <br/>
-        <span class="little gray">
-          ${_("(image names should consist of alphanumeric characters and '-' only)")}
-        </span>
-      </td>
-    </tr>
+    <br/>
+    <label for="img-name">${_("new image name:")}</label>
+    <input id="img-name" name="name" value="" type="text"/>
+    ${error_field("BAD_CSS_NAME", "name")}
+    <br/>
+    <span class="little gray">
+      ${_("(image names should consist of alphanumeric characters and '-' only)")}
+    </span>
   </%call>
 <p class="error">
   ${_("Note: any changes to images here will be reflected immediately on reload and cannot be undone.")}

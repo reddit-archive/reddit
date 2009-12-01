@@ -28,9 +28,11 @@ import time
 
 log = g.log
 
+
 class WorkQueue(object):
     """A WorkQueue is a queue that takes a number of functions and runs
     them in parallel"""
+    global_env = g._current_obj()
 
     def __init__(self, jobs = [], num_workers = 5, timeout = None):
         """Creates a WorkQueue that will process jobs with num_workers
@@ -54,7 +56,7 @@ class WorkQueue(object):
             for worker, start_time in self.workers.items():
                 if (not worker.isAlive() or
                     self.timeout
-                    and datetime.now() - start_time > self.timeout): 
+                    and datetime.now() - start_time > self.timeout):
 
                     self.work_count.get_nowait()
                     self.jobs.task_done()
@@ -62,13 +64,23 @@ class WorkQueue(object):
 
             time.sleep(1)
 
+    def _init_thread(self, job, global_env):
+        # make sure that pylons.g is available for the worker thread
+        g._push_object(global_env)
+        try:
+            job()
+        finally:
+            # free it up
+            g._pop_object()
+
     def run(self):
         """The main thread for the queue. Pull a job off the job queue and
         create a thread for it."""
         while True:
             job = self.jobs.get()
 
-            work_thread = Thread(target = job)
+            work_thread = Thread(target = self._init_thread,
+                                 args=(job, self.global_env))
             work_thread.setDaemon(True)
             self.work_count.put(True)
             self.workers[work_thread] = datetime.now()
@@ -117,4 +129,3 @@ def test():
     #q.wait()
 
     print 'DONE'
-

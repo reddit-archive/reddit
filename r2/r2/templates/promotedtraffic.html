@@ -25,8 +25,26 @@
    def num(x):
       return locale.format('%d', x, True)
  %>
+<div class="promoted-traffic">
+
+  <div class="instructions">
+    <p>
+      Below you will see your promotion's impression and click traffic per hour of promotion.  Please note that these traffic totals will lag behind by two to three hours, and that daily totals will be preliminary till 24 hours after the link has finished its run.
+    </p>
+    <p>
+      Also below is a form which can be used to share traffic results with another user.  
+    </p>
+  </div>
+
+${thing.viewers}
 
 %if thing.traffic:
+  <h1>
+    ${_("Promotion Traffic")}
+      <a href="/traffic/${thing.thing._id36}.csv">
+      ${_("(download as .csv)")}
+      </a>
+  </h1>
   %if thing.imp_graph:
     <img class="traffic-graph" src="${thing.imp_graph}"
          alt="impressions graph"/>
@@ -51,31 +69,43 @@
       <th>unique</th>
       <th>total</th>
     </tr>
-    %for date, (uimp, nimp, ucli, ncli) in thing.traffic:
-      <tr>
-        <td>${date.strftime("%Y-%m-%d %H:%M")}</td>
-        <td>${num(uimp)}</td>
-        <td>${num(nimp)}</td>
-        <td>${num(ucli)}</td>
-        <td>${num(ncli)}</td>
-        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
-        <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
-      </tr>
+    %for x in thing.to_iter():
+       <tr>
+         %for y in x:
+           <td>${y}</td>
+         %endfor
+       </tr>
     %endfor
     %if thing.totals:
       <% 
          uimp, nimp, ucli, ncli = thing.totals
        %>
      <tr style="font-weight:bold">
-        <td>total (users approx)</td>
-        <td>${num(uimp)}</td>
+        <td>
+          total 
+          %if thing.preliminary:
+            (users approx)
+          %endif
+        </td>
+        <td ${"class='prelim'" if thing.preliminary else ''}>
+          ${num(uimp)}${'*' if thing.preliminary else ''}
+        </td>
         <td>${num(nimp)}</td>
-        <td>${num(ucli)}</td>
+        <td ${"class='prelim'" if thing.preliminary else ''}>
+          ${num(ucli)}${'*' if thing.preliminary else ''}
+        </td>
         <td>${num(ncli)}</td>
         <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
         <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
       </tr>
-      
+      %if thing.preliminary:
+      <tr>
+        <td colspan="7" class="prelim error">
+          * totals are preliminary until 24 hours after the end of the promotion.
+        </td>
+      </tr>
+      %endif
     %endif
   </table>
 %endif
+</div>

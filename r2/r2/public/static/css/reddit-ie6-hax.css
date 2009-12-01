@@ -144,3 +144,23 @@ div.popup {
 .shirt .shirt-container .main.red   .caption.big .byline {
     background-image: non; 
 }
+
+.usertext .bottom-area .usertext-buttons {display: inline;  }
+
+.arrow.upmod { 
+    background-image: url(/static/aupmod.gif); 
+    background-position: 0 0;
+}
+.arrow.downmod { 
+    background-image: url(/static/adownmod.gif); 
+    background-position: 0 0;
+}
+.arrow.up { 
+    background-image: url(/static/aupgray.gif); 
+    background-position: 0 0;
+}
+.arrow.down { 
+    background-image: url(/static/adowngray.gif); 
+    background-position: 0 0;
+}
+

@@ -38,6 +38,7 @@ from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
+from r2.lib.promote import PromoteSR
 
 from admin import admin_profile_query
 
@@ -97,7 +98,6 @@ class ListingController(RedditController):
                                show_sidebar = self.show_sidebar, 
                                nav_menus = self.menus, 
                                title = self.title(),
-                               infotext = self.infotext,
                                **self.render_params).render()
         return res
 
@@ -135,10 +135,17 @@ class ListingController(RedditController):
         return b
 
     def keep_fn(self):
-        return None
+        def keep(item):
+            wouldkeep = item.keep_item(item)
+            if getattr(item, "promoted", None) is not None:
+                return False
+            return wouldkeep
+        return keep
 
     def listing(self):
         """Listing to generate from the builder"""
+        if c.site.path == PromoteSR.path and not c.user_is_sponsor:
+            abort(403, 'forbidden')
         listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
         return listing.listing()
 
@@ -189,9 +196,12 @@ class HotController(FixListing, ListingController):
         if o_links:
             # get links in proximity to pos
             l = min(len(o_links) - 3, 8)
-            disp_links = [o_links[(i + pos) % len(o_links)] for i in xrange(-2, l)]
-
-            b = IDBuilder(disp_links, wrap = self.builder_wrapper)
+            disp_links = [o_links[(i + pos) % len(o_links)]
+                          for i in xrange(-2, l)]
+            def keep_fn(item):
+                return item.likes is None and item.keep_item(item)
+            b = IDBuilder(disp_links, wrap = self.builder_wrapper,
+                          skip = True, keep_fn = keep_fn)
             o = OrganicListing(b,
                                org_links = o_links,
                                visible_link = o_links[pos],
@@ -276,7 +286,10 @@ class NewController(ListingController):
             for things like the spam filter and thumbnail fetcher to
             act on them before releasing them into the wild"""
             wouldkeep = item.keep_item(item)
-            if c.user_is_loggedin and (c.user_is_admin or item.subreddit.is_moderator(c.user)):
+            if item.promoted is not None:
+                return False
+            elif c.user_is_loggedin and (c.user_is_admin or
+                                         item.subreddit.is_moderator(c.user)):
                 # let admins and moderators see them regardless
                 return wouldkeep
             elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
@@ -379,7 +392,6 @@ class RecommendedController(ListingController):
 
 class UserController(ListingController):
     render_cls = ProfilePage
-    skip = False
     show_nums = False
 
     def title(self):
@@ -392,6 +404,14 @@ class UserController(ListingController):
         title = titles.get(self.where, _('profile for %(user)s')) \
             % dict(user = self.vuser.name, site = c.site.name)
         return title
+
+    # TODO: this might not be the place to do this
+    skip = True
+    def keep_fn(self):
+        # keep promotions off of profile pages.
+        def keep(item):
+            return getattr(item, "promoted", None) is None
+        return keep
 
     def query(self):
         q = None
@@ -475,7 +495,6 @@ class MessageController(ListingController):
             w = Wrapped(thing)
             w.render_class = Message
             w.to_id = c.user._id
-            w.subject = _('comment reply')
             w.was_comment = True
             w.permalink, w._fullname = p, f
             return w

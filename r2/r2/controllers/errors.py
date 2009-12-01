@@ -25,6 +25,7 @@ from copy import copy
 
 error_list = dict((
         ('USER_REQUIRED', _("please login to do that")), 
+        ('VERIFIED_USER_REQUIRED', _("you need to set a valid email address to do that.")), 
         ('NO_URL', _('a url is required')),
         ('BAD_URL', _('you should check that url')),
         ('BAD_CAPTCHA', _('care to try these again?')),
@@ -45,7 +46,8 @@ error_list = dict((
         ('USER_DOESNT_EXIST', _("that user doesn't exist")),
         ('NO_USER', _('please enter a username')),
         ('INVALID_PREF', "that preference isn't valid"),
-        ('BAD_NUMBER', _("that number isn't in the right range")),
+        ('BAD_NUMBER', _("that number isn't in the right range (%(min)d to %(max)d)")),
+        ('BAD_BID', _("your bid must be at least $%(min)d per day and no more than to $%(max)d in total.")),
         ('ALREADY_SUB', _("that link has already been submitted")),
         ('SUBREDDIT_EXISTS', _('that reddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that reddit doesn\'t exist')),
@@ -64,7 +66,12 @@ error_list = dict((
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
-
+        ('BAD_DATE', _('please provide a date of the form mm/dd/yyyy')),
+        ('BAD_DATE_RANGE', _('the dates need to be in order and not identical')),
+        ('BAD_FUTURE_DATE', _('please enter a date at least %(day)s days in the future')),
+        ('BAD_PAST_DATE', _('please enter a date at least %(day)s days in the past')),
+        ('BAD_ADDRESS', _('address problem: %(message)s')),
+        ('BAD_CARD', _('card problem: %(message)s')),
         ('TOO_LONG', _("this is too long (max: %(max_length)s)")),
         ('NO_TEXT', _('we need something here')),
     ))
@@ -123,3 +130,4 @@ class ErrorSet(object):
             del self.errors[pair]
 
 class UserRequiredException(Exception): pass
+class VerifiedUserRequiredException(Exception): pass

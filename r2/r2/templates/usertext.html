@@ -44,7 +44,7 @@
 %endif
 
   ##this is set for both editting selftext and creating new comments
-  <input type="hidden" name="thing_id" value="${thing.fullname}"/>
+  <input type="hidden" name="thing_id" value="${thing.fullname or ''}"/>
 
   %if not thing.creating:
     <div class="usertext-body">
@@ -60,7 +60,7 @@
       ##this div prevents IE7 from adding extra margin to the textarea.
       <div>
         <textarea rows="1" cols="1"
-                  name="text"
+                  name="${thing.name}"
                   >${keep_space(thing.text)}</textarea>
       </div>
 
@@ -69,10 +69,10 @@
                         "helpon", "helpoff",
                          style = "" if thing.creating else "display: none")}
 
-        ${error_field("TOO_LONG", "text", "span")}
+        ${error_field("TOO_LONG", thing.name, "span")}
         ${error_field("RATELIMIT", "ratelimit", "span")}
-        ${error_field("NO_TEXT", "text", "span")}
-      
+        ${error_field("NO_TEXT", thing.name, "span")}
+        ${error_field("DELETED_COMMENT", "parent", "span")}
         <div class="usertext-buttons">
           ${action_button("save", "submit", "",
                           thing.creating and thing.have_form)}

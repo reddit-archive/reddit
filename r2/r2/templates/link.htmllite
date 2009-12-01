@@ -20,7 +20,6 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%namespace file="utils.html" import="optionalstyle"/>
-<%namespace file="printable.html" import="score"/>
 
 <%!
    from pylons.i18n import _, ungettext
@@ -46,7 +45,12 @@
        >
     <a href="${thing.href_url}" class="reddit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
-       %if c.user.pref_newwindow:
+       %if thing.nofollow:
+         rel="nofollow"
+       %endif
+       %if c.link_target:
+         target="${c.link_target}"
+       %elif c.user.pref_newwindow:
          target="_blank"
        %elif c.cname:
          target="_top"
@@ -68,11 +72,24 @@
        %endif
        >
       %if not expanded:
-      ${score(thing, thing.likes, tag='span')}
+      <% 
+       if thing.likes is False:
+           score, cls = thing.display_score[0], "dislikes"
+       elif thing.likes is None:
+           score, cls = thing.display_score[1], "unvoted"
+       else:
+           score, cls = thing.display_score[2], "likes"
+       %>
+      <span class="score ${cls}">
+         ${score}
+      </span>
       &#32;|&#32;
       %endif
       <a class="reddit-comment-link"
          ${optionalstyle("color:gray")}
+         %if c.link_target:
+           target="${c.link_target}"
+         %endif
          href="${permalink}">${thing.comment_label}</a>
     </small>
   </div>

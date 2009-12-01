@@ -24,7 +24,7 @@ from r2.lib.memoize import memoize
 from r2.lib.normalized_hot import get_hot, only_recent
 from r2.lib import count
 from r2.lib.utils import UniqueIterator, timeago
-from r2.lib.promote import get_promoted
+from r2.lib.promote import random_promoted
 
 from pylons import c
 
@@ -45,47 +45,34 @@ def insert_promoted(link_names, sr_ids, logged_in):
     Inserts promoted links into an existing organic list. Destructive
     on `link_names'
     """
-    promoted_items = get_promoted()
+    promoted_items = random_promoted()
 
     if not promoted_items:
         return
-
-    def my_keepfn(l):
-        if l.promoted_subscribersonly and l.sr_id not in sr_ids:
-            return False
-        else:
-            return keep_link(l)
 
     # no point in running the builder over more promoted links than
     # we'll even use
     max_promoted = max(1,len(link_names)/promoted_every_n)
 
-    # in the future, we may want to weight this sorting somehow
-    random.shuffle(promoted_items)
-
     # remove any that the user has acted on
-    builder = IDBuilder(promoted_items,
-                        skip = True, keep_fn = my_keepfn,
-                        num = max_promoted)
+    def keep(item):
+        if c.user_is_loggedin and c.user._id == item.author_id:
+            return True
+        else:
+            return item.keep_item(item)
+        
+    builder = IDBuilder(promoted_items, keep_fn = keep, 
+                        skip = True,  num = max_promoted)
     promoted_items = builder.get_items()[0]
 
     if not promoted_items:
         return
-
-    #make a copy before we start messing with things
-    orig_promoted = list(promoted_items)
-
     # don't insert one at the head of the list 50% of the time for
     # logged in users, and 50% of the time for logged-off users when
     # the pool of promoted links is less than 3 (to avoid showing the
     # same promoted link to the same person too often)
     if (logged_in or len(promoted_items) < 3) and random.choice((True,False)):
         promoted_items.insert(0, None)
-
-    #repeat the same promoted links for non logged in users
-    if not logged_in:
-        while len(promoted_items) * promoted_every_n < len(link_names):
-            promoted_items.extend(orig_promoted)
 
     # insert one promoted item for every N items
     for i, item in enumerate(promoted_items):
@@ -106,11 +93,9 @@ def cached_organic_links(user_id, langs):
         sr_ids = Subreddit.user_subreddits(user)
 
     sr_count = count.get_link_counts()
-
     #only use links from reddits that you're subscribed to
     link_names = filter(lambda n: sr_count[n][1] in sr_ids, sr_count.keys())
     link_names.sort(key = lambda n: sr_count[n][0])
-
     #potentially add a up and coming link
     if random.choice((True, False)) and sr_ids:
         sr = Subreddit._byID(random.choice(sr_ids))
@@ -122,6 +107,8 @@ def cached_organic_links(user_id, langs):
                 new_item = random.choice(items[1:4])
             link_names.insert(0, new_item._fullname)
 
+    insert_promoted(link_names, sr_ids, user_id is not None)
+
     # remove any that the user has acted on
     builder = IDBuilder(link_names,
                         skip = True, keep_fn = keep_link,
@@ -132,8 +119,6 @@ def cached_organic_links(user_id, langs):
     #cycle where the cache will return the same link over and over
     if user_id:
         update_pos(0)
-
-    insert_promoted(link_names, sr_ids, user_id is not None)
 
     # remove any duplicates caused by insert_promoted if the user is logged in
     if user_id:

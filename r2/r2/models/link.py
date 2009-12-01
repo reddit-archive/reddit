@@ -48,9 +48,7 @@ class Link(Thing, Printable):
                      media_object = None,
                      has_thumbnail = False,
                      promoted = None,
-                     promoted_subscribersonly = False,
-                     promote_until = None,
-                     promoted_by = None,
+                     pending = False, 
                      disable_comments = False,
                      selftext = '',
                      ip = '0.0.0.0')
@@ -211,8 +209,16 @@ class Link(Thing, Printable):
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
+        if wrapped.promoted is not None:
+            s.extend([getattr(wrapped, "promote_status", -1),
+                      wrapped.disable_comments,
+                      wrapped._date,
+                      wrapped.promote_until,
+                      c.user_is_sponsor,
+                      wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
-             s.append(request.get.has_key('twocolumn'))
+             s.extend([request.get.has_key('twocolumn'),
+                       c.link_target])
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))
         s.append(getattr(wrapped, 'media_object', {}))
@@ -221,7 +227,15 @@ class Link(Thing, Printable):
     def make_permalink(self, sr, force_domain = False):
         from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
-        if not c.cname and not force_domain:
+        # promoted links belong to a separate subreddit and shouldn't
+        # include that in the path
+        if self.promoted is not None:
+            if force_domain:
+                res = "http://%s/%s" % (get_domain(cname = False,
+                                                   subreddit = False), p)
+            else:
+                res = "/%s" % p
+        elif not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
             res = "http://%s/%s" % (get_domain(cname = (c.cname and
@@ -229,6 +243,11 @@ class Link(Thing, Printable):
                                                subreddit = not c.cname), p)
         else:
             res = "/%s" % p
+
+        # WARNING: If we ever decide to add any ?foo=bar&blah parameters
+        # here, Comment.make_permalink will need to be updated or else
+        # it will fail.
+
         return res
 
     def make_permalink_slow(self, force_domain = False):
@@ -256,6 +275,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
+
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
 
@@ -264,17 +284,18 @@ class Link(Thing, Printable):
             if not hasattr(item, "score_fmt"):
                 item.score_fmt = Score.number_only
             item.pref_compress = user.pref_compress
-            if user.pref_compress:
+            if user.pref_compress and item.promoted is None:
                 item.render_css_class = "compressed link"
                 item.score_fmt = Score.points
-            elif pref_media == 'on':
+            elif pref_media == 'on' and not user.pref_compress:
                 show_media = True
             elif pref_media == 'subreddit' and item.subreddit.show_media:
                 show_media = True
-            elif (item.promoted
-                  and item.has_thumbnail
-                  and pref_media != 'off'):
-                show_media = True
+            elif item.promoted and item.has_thumbnail:
+                if user_is_loggedin and item.author_id == user._id:
+                    show_media = True
+                elif pref_media != 'off' and not user.pref_compress:
+                    show_media = True
 
             if not show_media:
                 item.thumbnail = ""
@@ -358,7 +379,9 @@ class Link(Thing, Printable):
             else:
                 item.href_url = item.url
 
-            if pref_frame and not item.is_self:
+            # show the toolbar if the preference is set and the link
+            # is neither a promoted link nor a self post
+            if pref_frame and not item.is_self and not item.promoted:
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
@@ -370,6 +393,8 @@ class Link(Thing, Printable):
                                   item._deleted,
                                   item._spam))
 
+            item.is_author = (user == item.author)
+
             # bits that we will render stubs (to make the cached
             # version more flexible)
             item.num = CachedVariable("num")
@@ -377,7 +402,7 @@ class Link(Thing, Printable):
             item.commentcls = CachedVariable("commentcls")
             item.midcolmargin = CachedVariable("midcolmargin")
             item.comment_label = CachedVariable("numcomments")
-            
+
         if user_is_loggedin:
             incr_counts(wrapped)
 
@@ -402,32 +427,21 @@ class PromotedLink(Link):
 
     @classmethod
     def add_props(cls, user, wrapped):
+        # prevents cyclic dependencies
+        from r2.lib import promote
         Link.add_props(user, wrapped)
         user_is_sponsor = c.user_is_sponsor
-        try:
-            if user_is_sponsor:
-                promoted_by_ids = set(x.promoted_by
-                                      for x in wrapped
-                                      if hasattr(x,'promoted_by'))
-                promoted_by_accounts = Account._byID(promoted_by_ids,
-                                                     data=True)
-            else:
-                promoted_by_accounts = {}
 
-        except NotFound:
-            # since this is just cosmetic, we can skip it altogether
-            # if one isn't found or is broken
-            promoted_by_accounts = {}
-
+        status_dict = dict((v, k) for k, v in promote.STATUS.iteritems())
         for item in wrapped:
             # these are potentially paid for placement
             item.nofollow = True
             item.user_is_sponsor = user_is_sponsor
-            if item.promoted_by in promoted_by_accounts:
-                item.promoted_by_name = promoted_by_accounts[item.promoted_by].name
+            status = getattr(item, "promote_status", -1)
+            if item.is_author or c.user_is_sponsor:
+                item.rowstyle = "link " + promote.STATUS.name[status].lower()
             else:
-                # keep the template from trying to read it
-                item.promoted_by = None
+                item.rowstyle = "link promoted"
         # Run this last
         Printable.add_props(user, wrapped)
 
@@ -443,7 +457,7 @@ class Comment(Thing, Printable):
     def _delete(self):
         link = Link._byID(self.link_id, data = True)
         link._incr('num_comments', -1)
-    
+
     @classmethod
     def _new(cls, author, link, parent, body, ip):
         c = Comment(body = body,
@@ -462,12 +476,16 @@ class Comment(Thing, Printable):
 
         link._incr('num_comments', 1)
 
-        inbox_rel = None
+        to = None
         if parent:
             to = Account._byID(parent.author_id)
-            # only global admins can be message spammed.
-            if not c._spam or to.name in g.admins:
-                inbox_rel = Inbox._add(to, c, 'inbox')
+        elif link.is_self:
+            to = Account._byID(link.author_id)
+
+        inbox_rel = None
+        # only global admins can be message spammed.
+        if to and (not c._spam or to.name in g.admins):
+            inbox_rel = Inbox._add(to, c, 'inbox')
 
         return (c, inbox_rel)
 
@@ -497,16 +515,23 @@ class Comment(Thing, Printable):
         s.extend([wrapped.body])
         return s
 
-    def make_permalink(self, link, sr=None):
-        return link.make_permalink(sr) + self._id36
+    def make_permalink(self, link, sr=None, context=None, anchor=False):
+        url = link.make_permalink(sr) + self._id36
+        if context:
+            url += "?context=%d" % context
+        if anchor:
+            url += "#%s" % self._id36
+        return url
 
-    def make_permalink_slow(self):
+    def make_permalink_slow(self, context=None, anchor=False):
         l = Link._byID(self.link_id, data=True)
-        return self.make_permalink(l, l.subreddit_slow)
-    
+        return self.make_permalink(l, l.subreddit_slow,
+                                   context=context, anchor=anchor)
+
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.models.builder import add_attr
+        from r2.lib.template_helpers import add_attr
+        from r2.lib import promote
 
         #fetch parent links
 
@@ -517,11 +542,13 @@ class Comment(Thing, Printable):
         for cm in wrapped:
             if not hasattr(cm, 'sr_id'):
                 cm.sr_id = links[cm.link_id].sr_id
-        
+
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
+
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
+        can_reply_srs.add(promote.PromoteSR._id)
 
         min_score = user.pref_min_comment_score
 
@@ -539,7 +566,6 @@ class Comment(Thing, Printable):
 
             if (item.link._score <= 1 or item.score < 3 or
                 item.link._spam or item._spam or item.author._spam):
-                
                 item.nofollow = True
             else:
                 item.nofollow = False
@@ -651,7 +677,7 @@ class MoreChildren(MoreComments):
     pass
     
 class Message(Thing, Printable):
-    _defaults = dict(reported = 0,)
+    _defaults = dict(reported = 0, was_comment = False)
     _data_int_props = Thing._data_int_props + ('reported', )
     cache_ignore = set(["to"]).union(Printable.cache_ignore)
     
@@ -684,6 +710,14 @@ class Message(Thing, Printable):
         #load the "to" field if required
         to_ids = set(w.to_id for w in wrapped)
         tos = Account._byID(to_ids, True) if to_ids else {}
+        links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
+                           data = True,
+                           return_dict = True)
+        subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
+                                     data = True, return_dict = True)
+        parents = Comment._byID(set(l.parent_id for l in wrapped
+                                  if hasattr(l, "parent_id") and l.was_comment),
+                                data = True, return_dict = True)
 
         for item in wrapped:
             item.to = tos[item.to_id]
@@ -692,6 +726,23 @@ class Message(Thing, Printable):
             else:
                 item.new = False
             item.score_fmt = Score.none
+
+            item.message_style = ""
+            if item.was_comment:
+                link = links[item.link_id]
+                sr = subreddits[link.sr_id]
+                item.link_title = link.title
+                item.link_permalink = link.make_permalink(sr)
+                if hasattr(item, "parent_id"):
+                    item.subject = _('comment reply')
+                    item.message_style = "comment-reply"
+                    parent = parents[item.parent_id]
+                    item.parent = parent._fullname
+                    item.parent_permalink = parent.make_permalink(link, sr)
+                else:
+                    item.subject = _('post reply')
+                    item.message_style = "post-reply"
+
         # Run this last
         Printable.add_props(user, wrapped)
 

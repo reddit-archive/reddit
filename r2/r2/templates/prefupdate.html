@@ -23,7 +23,19 @@
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 
-<h1>${_("update your email or password")}</h1>
+<h1>
+%if thing.email and thing.password:
+  ${_("update your email or password")}
+%elif thing.email:
+  %if thing.verify:
+    ${_("verify your email")}
+  %else:
+    ${_("update your email")}
+  %endif
+%else:
+  ${_("update your password")}
+%endif
+</h1>
 
 <form action="/post/update" method="post" 
       onsubmit="return post_form(this, 'update')" id="pref-update">
@@ -35,13 +47,25 @@
   </%utils:round_field>
 </div>  
 
+%if thing.email:
 <div class="spacer">
-  <%utils:round_field title="${_('email')}">
+  <%
+     if c.user.email_verified:
+       description = _("verified")
+     elif c.user.email_verified is False:
+       description = _("verification pending")
+     else:
+       description = _("unverified")
+     description = "(%s)" % description
+     %>
+  <%utils:round_field title="${_('email')}" description="${description}">
     <input type="text" name="email" value="${getattr(c.user, 'email', '')}"/>
     ${error_field("BAD_EMAILS", "email")}
   </%utils:round_field>
 </div>  
+%endif
 
+%if thing.password:
 <div class="spacer">
   <%utils:round_field title="${_('new password')}">
     <input type="password" name="newpass"/>
@@ -55,8 +79,13 @@
     ${error_field("BAD_PASSWORD_MATCH", "verpass")}
   </%utils:round_field>
 </div>  
+%endif
 
-<button type="submit" class="btn">${_('save')}</button>
+%if thing.verify and not c.user.email_verified:
+   <input type="hidden" name="verify" value="1"/>
+   <button type="submit" class="btn">${_('send verification email')}</button>
+%else:
+   <button type="submit" class="btn">${_('save')}</button>
+%endif
 <span class="status error"></span>
-
 </form>

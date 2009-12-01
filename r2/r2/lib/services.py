@@ -36,7 +36,7 @@ class ShellProcess(object):
         self.proc = subprocess.Popen(cmd, shell = True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
-        
+
         ntries = int(math.ceil(timeout / sleepcycle))
         for n in xrange(ntries):
             if self.proc.poll() is not None:
@@ -45,7 +45,7 @@ class ShellProcess(object):
         else:
             print "Process timeout: '%s'" % cmd
             os.kill(self.proc.pid, signal.SIGTERM)
-        
+
         self.output, self.error = self.proc.communicate()
 
         self.rcode = self.proc.poll()
@@ -56,8 +56,8 @@ class ShellProcess(object):
 
     def read(self):
         return self.output
-    
-    
+
+
 class AppServiceMonitor(Templated):
     cache_key       = "service_datalogger_data_"
     cache_key_small = "service_datalogger_db_summary_"
@@ -76,7 +76,7 @@ class AppServiceMonitor(Templated):
 
     """
 
-    def __init__(self, hosts = None):
+    def __init__(self, hosts = None, queue_length_max = {}):
         """
         hosts is a list of machine hostnames to be tracked.
         """
@@ -87,7 +87,7 @@ class AppServiceMonitor(Templated):
             dbase, ip = list(g.to_iter(getattr(g, db + "_db")))[:2]
             try:
                 name = socket.gethostbyaddr(ip)[0]
-    
+
                 for host in g.monitored_servers:
                     if (name == host or
                         ("." in host and name.endswith("." + host)) or
@@ -97,6 +97,13 @@ class AppServiceMonitor(Templated):
                 print "error resolving host: %s" % ip
 
         self._db_info = db_info
+        q_host = g.amqp_host.split(':')[0]
+        if q_host:
+            # list of machines that have amqp queues
+            self._queue_hosts = set([q_host, socket.gethostbyaddr(q_host)[0]])
+        # dictionary of max lengths for each queue 
+        self._queue_length_max = queue_length_max
+
         self.hostlogs = []
         Templated.__init__(self)
 
@@ -135,7 +142,7 @@ class AppServiceMonitor(Templated):
     def server_load(self, mach_name):
         h = self.from_cache(host) 
         return h.load.most_recent()
-        
+
     def __iter__(self):
         if not self.hostlogs:
             self.hostlogs = [self.from_cache(host) for host in self._hosts]
@@ -152,13 +159,16 @@ class AppServiceMonitor(Templated):
         h = HostLogger(host, self)
         while True:
             h.monitor(srvname, *a, **kw)
-            
+
             self.set_cache(h)
             if loop:
                 time.sleep(loop_time)
             else:
                 break
-            
+
+    def is_queue(self, host):
+        name = socket.gethostbyaddr(host)[0]
+        return name in self._queue_hosts or host in self._queue_hosts
 
     def is_db_machine(self, host):
         """
@@ -177,7 +187,7 @@ class DataLogger(object):
     of the interval provided or returns the last element if no
     interval is provided
     """
-    
+
     def __init__(self, maxlen = 30):
         self._list = []
         self.maxlen = maxlen
@@ -186,7 +196,6 @@ class DataLogger(object):
         self._list.append((value, datetime.utcnow()))
         if len(self._list) > self.maxlen:
             self._list = self._list[-self.maxlen:]
-                          
 
     def __call__(self, average = None):
         time = datetime.utcnow()
@@ -208,7 +217,6 @@ class DataLogger(object):
         else:
             return [0, None]
 
-        
 class Service(object):
     def __init__(self, name, pid, age):
         self.name = name
@@ -221,6 +229,29 @@ class Service(object):
     def last_update(self):
         return max(x.most_recent()[1] for x in [self.mem, self.cpu])
 
+class AMQueueP(object):
+
+    default_max_queue = 1000
+
+    def __init__(self, max_lengths = {}):
+        self.queues = {}
+        self.max_lengths = max_lengths
+
+    def track(self, cmd = "rabbitmqctl"):
+        for line in ShellProcess("%s list_queues" % cmd):
+            try:
+                name, length = line.split('\t')
+                length = int(length.strip(' \n'))
+                self.queues.setdefault(name, DataLogger()).add(length)
+            except ValueError:
+                continue
+
+    def max_length(self, name):
+        return self.max_lengths.get(name, self.default_max_queue)
+
+    def __iter__(self):
+        for x in sorted(self.queues.keys()):
+            yield (x, self.queues[x])
 
 class Database(object):
 
@@ -277,12 +308,14 @@ class HostLogger(object):
         self.load = DataLogger()
         self.services = {}
         db_info = master.is_db_machine(host)
+        is_queue = master.is_queue(host)
 
         self.ini_db_names = db_info.keys()
         self.db_names = set(name for name, ip in db_info.itervalues())
         self.db_ips   = set(ip   for name, ip in db_info.itervalues())
-            
+
         self.database = Database() if self.db_names else None
+        self.queue    = AMQueueP(master._queue_length_max) if is_queue else None
 
         self.ncpu = 0
         try:
@@ -320,7 +353,8 @@ class HostLogger(object):
 
 
     def monitor(self, srvname, 
-                srv_params = {}, top_params = {}, db_params = {}):
+                srv_params = {}, top_params = {}, db_params = {},
+                queue_params = {}):
         # (re)populate the service listing
         if srvname:
             for name, status, pid, t in supervise_list(**srv_params):
@@ -337,6 +371,9 @@ class HostLogger(object):
         if self.database:
             self.database.track(**check_database(self.db_names,
                                                  **db_params))
+
+        if self.queue:
+            self.queue.track(**queue_params)
 
         foo = ShellProcess('/usr/bin/env uptime').read()
         foo = foo.split("load average")[1].split(':')[1].strip(' ')
@@ -542,6 +579,4 @@ def monitor_cache_lifetime(minutes, retest = 10, ntest = -1,
         if [] in keys:
             keys = filter(None, keys)
             ntest -= 1
-                
-        
-        
+

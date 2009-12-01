@@ -22,9 +22,13 @@
 
 <%!
    from r2.lib.filters import keep_space
+   from r2.lib.pages import UserText
 %>
 <%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
 <%namespace file="utils.html" import="image_upload"/>
+<%namespace file="printablebuttons.html" import="toggle_button, simple_button" />
+
+<%namespace name="utils" file="utils.html"/>
 
 <script type="text/javascript">
 function update_title(elem) {
@@ -53,8 +57,17 @@ function update_title(elem) {
   </tr>
 </%def>
  
+<div class="create-reddit thing"
+     %if thing.site:
+       id="${thing.site._fullname}"
+     %endif
+     >
 %if thing.site:
-  <h1>${_("manage your reddit")}</h1>
+  <h1>${_("manage your reddit")}
+  %if thing.site:
+    | &#32;<b>${thing.site.name}</b>
+  %endif
+  </h1>
 %else:
   %if thing.name:
     <p class="infobar">
@@ -63,196 +76,253 @@ function update_title(elem) {
   <h1>${_("create a reddit")}</h1>
 %endif
 
-<form class="pretty-form" action="/post/site_admin"
-      id="sr_form" method="post" 
-      onsubmit="return post_form(this, 'site_admin', null, null, true)">
-  %if thing.site:
-    <input type="hidden" name="sr" value="${thing.site._fullname}"/>
-  %endif
-  <table class="preftable">
-    <tr>
-      <th>
-        <label for="name">${_("name")}</label>
-      </th>
-      <td class="prefright">
-        %if thing.site:
-          <b id="name">${thing.site.name}</b>
-        %else:
-          <input type="text" name="name" id="name" class="text"
-                 value="${thing.name}"
-                 onchange="update_title(this)"/>
-        %endif
-      </td>
-      <td class="note" id="note_name">
-        %if not thing.site:
-          ${error_field("SUBREDDIT_EXISTS", "name")}
-          ${error_field("BAD_SR_NAME", "name")}
-          <span class="gray" id="example_name">
-            ${_("no spaces, e.g. slashdot")}
-          </span>
-        %endif
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <label for="title">${_("title")}</label>
-      </th>
-      <td class="prefright">
-        %if thing.site:
-          <input id="title" type="text" name="title" class="text"
-                 value="${thing.site.title}"/>
-        %else:
-          <input id="title" type="text" name="title" class="text" />
-        %endif
-      </td>
-      <td class="note" id="note_title">
-        ${error_field("NO_TEXT", "title")}
-        ${error_field("TOO_LONG", "title")}
-        %if not thing.site:
-          <span class="gray" id="example_title">
-            ${_("e.g. slashdot: news for nerds, stuff that matters")}
-          </span>
-        %endif
-      </td>
-    </tr>
+<div class="pretty-form" id="sr-form">
 
-    <tr>
-      <th>
-        <label for="description">${_("description")}</label>
-      </th>
-      <td class="prefright">
-        <textarea id="description" name="description"
-                  rows="5" cols="30" class="text">
-          %if thing.site:
-            ${keep_space(thing.site.description or '')}
-          %endif
-        </textarea>
-      </td>
-      <td class="note" id="note_description">
-        ${error_field("TOO_LONG", "description")}
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <label for="lang">${_("language")}</label>
-      </th>
-      <td class="prefright">
-        <%
-           default_lang = thing.site and thing.site.lang or c.lang or ''
-           default_lang = default_lang.split('-')[0]
-           default_lang = g.lang if len(default_lang) != 2 else default_lang
-         %>
-        ${language_tool(all_langs = True, default_lang = default_lang)}
-      </td>
-    </tr>
+%if not thing.site:
+    <%utils:line_field title="${_('name')}"
+                        description='${_("no spaces, e.g., slashdot")}'>
+     <input type="text" name="name" id="name" class="text"
+            value="${thing.name}"
+            onchange="update_title(this)"/>
+      %if not thing.site:
+        ${error_field("SUBREDDIT_EXISTS", "name")}
+        ${error_field("BAD_SR_NAME", "name")}
+      %endif
+    </%utils:line_field>
+%else:
+  <input type="hidden" name="sr" id="name" value="${thing.site._fullname}"/>
+%endif
 
-    <tr>
-      <th>
-        <label>${_("type")}</label>
-      </th>
-      <td colspan="2" class="prefright">
-         <table >
-         ${radio_type("public", _("public"), _("anyone can view and submit"))}
-         ${radio_type("restricted", _("restricted"), 
-                _("anyone can view, but only contributors can submit links"))}
-         ${radio_type("private", _("private"),
-                _("only contributors can view and submit"))}
-         </table>
-      </td>
-    </tr>
+  <%utils:line_field title="${_('title')}"
+       description='${_("e.g., slashdot: news for nerds, stuff that matters")}'>
+    %if thing.site:
+      <input id="title" type="text" name="title" class="text"
+             value="${thing.site.title}"/>
+    %else:
+      <input id="title" type="text" name="title" class="text" />
+    %endif
+    ${error_field("NO_TEXT", "title")}
+    ${error_field("TOO_LONG", "title")}
+  </%utils:line_field>
 
-    <tr>
-      <th><label>${_("age")}</label></th>
-      <td colspan="2" class="prefright">
-        <input class="nomargin" type="checkbox" name="over_18" id="over_18"
-           ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
-        <label for="over_18">
-          ${_("viewers must be over eighteen years old")}
-        </label>
-      </td>
-    </tr>
-    <tr>
-      <th><label>${_("media")}</label></th>
-      <td colspan="2" class="prefright">
-        <input class="nomargin" type="checkbox" 
-               name="show_media" id="show_media"
-               ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
-        <label for="show_media">
-          ${_("show thumbnail images of content")}
-        </label>
-      </td>
-    </tr>
-    <tr>
-      <th>
-        <label for="domain">${_("domain")}</label>
-      </th>
-      <td class="prefright">
-        %if thing.site:
-          <input id="domain" type="text" name="domain" class="text"
-                 value="${getattr(thing.site, 'domain', None) or ""}"/>
-        %else:
-          <input id="domain" type="text" name="domain" class="text" />
-        %endif
-      <div id="domainhelp" class="infobar" style="display: none">
+  <%utils:line_field title="${_('description')}" css_class="usertext"
+                     description="${_('500 characters max.  Make them count.')}">
+    %if thing.site and thing.site.description:
+     ${UserText(None, text = thing.site.description or "", editable = True, creating = True, name="description", have_form = False)}
+    %else:
+     ${UserText(None, text = "", creating = True, name="description", have_form = False)}
+    %endif
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('language')}">
+    <div class="delete-field">
+      <%
+         default_lang = thing.site and thing.site.lang or c.lang or ''
+         default_lang = default_lang.split('-')[0]
+         default_lang = g.lang if len(default_lang) != 2 else default_lang
+       %>
+      ${language_tool(all_langs = True, default_lang = default_lang)}
+    </div>
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('type')}">
+    <div class="delete-field">
+      <table >
+      ${radio_type("public", _("public"), _("anyone can view and submit"))}
+      ${radio_type("restricted", _("restricted"), 
+             _("anyone can view, but only contributors can submit links"))}
+      ${radio_type("private", _("private"),
+             _("only contributors can view and submit"))}
+      </table>
+    </div>
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('other options')}">
+    <div class="delete-field">
+      <ul>
+        <li>
+          <input class="nomargin" type="checkbox" name="over_18" id="over_18"
+                 ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
+          <label for="over_18">
+            ${_("viewers must be over eighteen years old")}
+          </label>
+        </li>
+        <li>
+          <input class="nomargin" type="checkbox" 
+                 name="show_media" id="show_media"
+                 ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
+          <label for="show_media">
+            ${_("show thumbnail images of content")}
+          </label>
+        </li>
+      </ul>
+    </div>
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('domain')}" css_class="usertext">
+    <div class="delete-field">
+      %if thing.site and c.site.domain:
+          <input class="nomargin" type="checkbox" 
+                 name="css_on_cname" id="css_on_cname"
+                 ${thing.site.css_on_cname and "checked='checked'" or ""}/>
+          <label for="css_on_cname">
+            ${_("make custom CSS styles apply only when accessed from the cname.")}
+          </label>
+      %endif
+    </div>
+    <div class="usertext-edit">
+      %if thing.site:
+        <input id="domain" type="text" name="domain" class="text"
+               value="${getattr(thing.site, 'domain', None) or ""}"/>
+      %else:
+        <input id="domain" type="text" name="domain" class="text" />
+      %endif
+      <div class="bottom-area">
+        ${toggle_button("help-toggle", _("what's this?"), _("hide help"),
+            "helpon", "helpoff")}
+      </div>
+      <div class="infobar markhelp md" style="display: none">
         ${_("Own a domain?  Enter it here and then go to your DNS provider and add a CNAME record aliasing your domain to rhs.reddit.com. You will be able to access your reddit through your domain.")}
       </div>
-      </td>
-      <td class="note" id="note_domain">
-        <a id="example_domain" href="#" 
-           onclick="$('#domainhelp').slideDown(); $('#example_domain').fadeOut(); return false;">what's this?</a>
-        ${error_field("BAD_CNAME", "domain")}
-        ${error_field("USED_CNAME", "domain")}
-      </td>
-    </tr>
-    %if thing.site and thing.site.can_change_stylesheet(c.user) and not g.css_killswitch:
-    <tr>
-      <th>
-        ${_("look and feel")}
-      </th>
-      <td class="prefright">
-        <div class="spacer">
+    </div>
+  </%utils:line_field>
+
+%if thing.site:
+  <input type="hidden" name="sr" value="${thing.site._fullname}"/> 
+    <%utils:line_field title="${_('look and feel')}">
+      <ul class="upload">
+        <li>
         ${plain_link(_("edit the stylesheet"),
                       "/about/stylesheet",
                       _sr_path = True)}
         &#32;
         <span class="gray">(${_("leaves this page")})</span>
-      </div>
-    </td>
-  </table>
-</form>
+        </li>
+        <li>
+          <%utils:image_upload post_target="/api/upload_sr_img" 
+                               current_image="${thing.site.header}"
+                               label="${_('upload header image')}">
+            <button id="delete-img" class="delete-img"
+                    %if not thing.site.header:
+                       style="display: none;"
+                    %endif
+                    onclick="return post_form(this.form, 'delete_sr_header');">
+              ${_('restore default header')}
+            </button>
+            <div class="clearleft"></div>
+            <input type="hidden" name="uh" value="${c.modhash}" />
+            <input type="hidden" name="r"  value="${c.site.name}" />
+            <input type="hidden" name="header" value="1" />
+  
+            <script type="text/javascript">
+              function on_image_success(img) {
+                 $("#header-img").log().attr("src", img.attr("src"));
+              }
+            </script>
+          </%utils:image_upload>
+        </li>
+      </ul>
+    </%utils:line_field>
 
-<%call expr="image_upload('/api/upload_sr_img', thing.site.header, 
-             tabular=True, 
-             label = _('upload header image'))">
-     <tr><td></td><td>
-          <button id="delete-img"
-                  %if not thing.site.header:
-                     style="display: none;"
-                  %endif
-                  onclick="return post_form(this.form, 'delete_sr_header');">
-            ${_('restore default header')}
-          </button>
-
-          <input type="hidden" name="uh" value="${c.modhash}" />
-          <input type="hidden" name="r"  value="${c.site.name}" />
-          <input type="hidden" name="header" value="1" />
-
-          <script type="text/javascript">
-            function on_image_success(img) {
-               $("#header-img").attr("src", img.attr("src"));
-               $('#delete-img').show();
-               $('#submit-img').hide();
-            }
-          </script>
-       </td>
+  %if c.user_is_admin:
+    <%
+       ad_type = "default"
+       if thing.site.ad_type == "custom" or thing.site.ad_file != thing.site._defaults.get("ad_file"):
+          ad_type = "custom"
+       elif thing.site.ad_type == "basic":
+          ad_type = "basic"
+     %>
+    <%utils:line_field title="${_('ad frame')}">
+    <div class="delete-field">
+      <table valign="top">
+      <tr>
+        <td class="nowrap nopadding">
+          <input name="ad" type="radio" value="default" id="ad_default"
+                 ${"checked='checked'" if ad_type == 'default' else ''}
+                 class="nomargin"/>
+          <label for="ad_default">${_("default")}</label>
+        </td>
+        <td class="leftpad"><span class="gray">
+          ${_("Use the same ad frame as on the front page.")}
+          </span>
+        </td>
       </tr>
-   </%call>
-%else:
-  </table>
-</form>
+      <tr>
+        <td class="nowrap nopadding">
+          <input name="ad" type="radio" value="basic" id="ad_basic"
+                 ${"checked='checked'" if ad_type == 'basic' else ''}
+                 class="nomargin"/>
+          <label for="ad_basic">${_("basic")}</label>
+        </td>
+        <td class="leftpad"><span class="gray">
+          ${_("Use the default customized (subreddit-specific) DART ad frame")}
+        </span></td>
+      </tr>
+      <tr>
+        <td class="nowrap nopadding">
+          <input name="ad" type="radio" value="custom" id="ad_custom" 
+                 class="nomargin"
+                 ${"checked='checked'" if ad_type == 'custom' else ''} />
+          <label for="ad_custom">${_("custom")}</label>
+        </td>
+        <td class="leftpad"><span class="gray">
+          ${_("specify the location of the ad frame:")}
+          </span>
+          <input type="text" name="ad-location" value="${thing.site.ad_file}"
+                 class="small-text"/>
+        </td>
+      </tr>
+    </table>
+    </div>
+    </%utils:line_field>
+
+    <%utils:line_field title="${_('sponsorship')}">
+      <ul class="upload">
+        <li>
+          <input type="text" name="sponsorship-name" 
+                 %if thing.site.sponsorship_name:
+                     value="${thing.site.sponsorship_name}"
+                 %else:
+                     value="${'name this campaign (for traffic)'}" class="gray"
+                 %endif
+                 />
+        </li>
+        <li>
+          <input type="text" name="sponsorship-url" 
+                 %if thing.site.sponsorship_url:
+                     value="${thing.site.sponsorship_url}"
+                 %else:
+                     value="${'enter link url here'}" class="gray"
+                 %endif
+                 />
+        </li>
+        <li>
+          <%utils:image_upload post_target="/api/upload_sr_img" 
+                               current_image="${thing.site.sponsorship_img}"
+                               label="${_('upload sponsorship image')}"
+                               form_id="sponsor-upload">
+            <button id="delete-sponsor" class="delete-img"
+                   %if not thing.site.sponsorship_img:
+                      style="display: none;"
+                   %endif
+                   onclick="return post_form(this.form, 'delete_sr_header');">
+              ${_('delete')}
+            </button>
+            <div class="clearleft"></div>
+            <input type="hidden" name="uh" value="${c.modhash}" />
+            <input type="hidden" name="r"  value="${c.site.name}" />
+            <input type="hidden" name="sponsor" value="1" />
+          </%utils:image_upload>
+        </li>
+      </ul>
+    </%utils:line_field>
+
   %endif
 
-<div class="save-button">
+%endif
+
+
+  <div class="save-button">
   <%
      if thing.site:
          name = "edit"
@@ -262,9 +332,13 @@ function update_title(elem) {
          text = _("create")
   %>
   <button name="${name}" class="btn" type="button"
-          onclick="$('#sr_form').get(0).onsubmit()"
-  >${text}</button>
+          onclick="return post_pseudo_form('#sr-form', 'site_admin')">
+    ${text}
+  </button>
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
+  </div>
 </div>
+</div>
+

@@ -26,6 +26,7 @@ from r2.lib.emailer import opt_in, opt_out
 from pylons import request, c, g
 from validator import *
 from pylons.i18n import _
+from r2.models import *
 import sha
 
 def to_referer(func, **params):
@@ -37,7 +38,7 @@ def to_referer(func, **params):
 
 
 class PostController(ApiController):
-    def response_func(self, kw):
+    def api_wrapper(self, kw):
         return Storage(**kw)
 
 #TODO: feature disabled for now
@@ -103,11 +104,16 @@ class PostController(ApiController):
               pref_num_comments = VInt('num_comments', 1, g.max_comments,
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
+              pref_show_promote = VBoolean('show_promote'),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
         #integer preference
         kw['pref_clickgadget'] = kw['pref_clickgadget'] and 5 or 0
+        if c.user.pref_show_promote is None:
+            kw['pref_show_promote'] = None
+        elif not kw.get('pref_show_promote'):
+            kw['pref_show_promote'] = False
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")
@@ -115,14 +121,14 @@ class PostController(ApiController):
         if c.cname:
             u.put_in_frame()
         return self.redirect(u.unparse())
-            
+
     def GET_over18(self):
         return BoringPage(_("over 18?"),
                           content = Over18()).render()
 
     @validate(over18 = nop('over18'),
               uh = nop('uh'),
-              dest = nop('dest'))
+              dest = VDestination(default = '/'))
     def POST_over18(self, over18, uh, dest):
         if over18 == 'yes':
             if c.user_is_loggedin and c.user.valid_hash(uh):
@@ -199,3 +205,4 @@ class PostController(ApiController):
 
     def GET_login(self, *a, **kw):
         return self.redirect('/login' + query_string(dict(dest="/")))
+

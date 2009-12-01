@@ -37,6 +37,7 @@ from listingcontroller import MyredditsController
 
 from feedback import FeedbackController
 from front import FrontController
+from health import HealthController
 from buttons import ButtonsController
 from captcha import CaptchaController
 from embed import EmbedController
@@ -44,6 +45,7 @@ from error import ErrorController
 from post import PostController
 from toolbar import ToolbarController
 from i18n import I18nController
+from awards import AwardsController
 from promotecontroller import PromoteController
 from mediaembed import MediaembedController
 

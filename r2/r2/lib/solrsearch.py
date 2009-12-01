@@ -21,25 +21,28 @@
 ################################################################################
 """
     Module for communication reddit-level communication with
-    Solr. Contains functions for indexing (`reindex_all`, `changed`)
+    Solr. Contains functions for indexing (`reindex_all`, `run_changed`)
     and searching (`search_things`). Uses pysolr (placed in r2.lib)
     for lower-level communication with Solr
 """
 
 from __future__ import with_statement
 
-from r2.models import *
-from r2.lib.contrib import pysolr
-from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago, set_emptying_cache, IteratorChunker
-from r2.lib.utils import psave, pload, unicode_safe, tup
-from r2.lib.cache import SelfEmptyingCache
 from Queue import Queue
 from threading import Thread
 import time
 from datetime import datetime, date
 from time import strftime
-from pylons import g,config
+
+from pylons import g, config
+
+from r2.models import *
+from r2.lib.contrib import pysolr
+from r2.lib.contrib.pysolr import SolrError
+from r2.lib.utils import timeago
+from r2.lib.utils import unicode_safe, tup
+from r2.lib.cache import SelfEmptyingCache
+from r2.lib import amqp
 
 ## Changes to the list of searchable languages will require changes to
 ## Solr's configuration (specifically, the fields that are searched)
@@ -49,7 +52,8 @@ searchable_langs    = set(['dk','nl','en','fi','fr','de','it','no','nn','pt',
 ## Adding types is a matter of adding the class to indexed_types here,
 ## adding the fields from that type to search_fields below, and adding
 ## those fields to Solr's configuration
-indexed_types       = (Subreddit, Link)
+indexed_types = (Subreddit, Link)
+
 
 class Field(object):
     """
@@ -402,42 +406,6 @@ def reindex_all(types = None, delete_all_first=False):
             q.put(e,timeout=30)
         raise e
 
-def changed(commit=True,optimize=False,delete_old=True):
-    """
-        Run by `cron` (through `paster run`) on a schedule to update
-        all Things that have been created or have changed since the
-        last run. Things add themselves to a `thing_changes` table,
-        which we read, find the Things, tokenise, and re-submit them
-        to Solr
-    """
-    set_emptying_cache()
-    with SolrConnection(commit=commit,optimize=optimize) as s:
-        changes = thing_changes.get_changed()
-        if changes:
-            max_date = max(x[1] for x in changes) 
-            changed = IteratorChunker(x[0] for x in changes)
-            
-            while not changed.done:
-                chunk = changed.next_chunk(200)
-    
-                # chunk =:= [(Fullname,Date) | ...]
-                chunk = Thing._by_fullname(chunk,
-                                           data=True, return_dict=False)
-                chunk = [x for x in chunk if not x._spam and not x._deleted]
-                to_delete = [x for x in chunk if x._spam or x._deleted]
-    
-                # note: anything marked as spam or deleted is not
-                # updated in the search database. Since these are
-                # filtered out in the UI, that's probably fine.
-                if len(chunk) > 0:
-                    chunk  = tokenize_things(chunk)
-                    s.add(chunk)
-    
-                for i in to_delete:
-                    s.delete(id=i._fullname)
-
-    if delete_old:
-        thing_changes.clear_changes(max_date = max_date)
 
 def combine_searchterms(terms):
     """
@@ -728,3 +696,38 @@ def get_after(fullnames, fullname, num):
             return fullnames[i+1:i+num+1]
     else:
         return fullnames[:num]
+
+
+def run_commit(optimize=False):
+    with SolrConnection(commit=True, optimize=optimize) as s:
+        pass
+
+
+def run_changed(drain=False):
+    """
+        Run by `cron` (through `paster run`) on a schedule to update
+        all Things that have been created or have changed since the
+        last run. Note: unlike many queue-using functions, this one is
+        run from cron and totally drains the queue before terminating
+    """
+
+    def _run_changed(msgs):
+        print "changed: Processing %d items" % len(msgs)
+
+        fullnames = set([x.body for x in msgs])
+        things = Thing._by_fullname(fullnames, data=True, return_dict=False)
+        things = [x for x in things if isinstance(x, indexed_types)]
+
+        update_things = [x for x in things if not x._spam and not x._deleted]
+        delete_things = [x for x in things if x._spam or x._deleted]
+
+        with SolrConnection() as s:
+            if update_things:
+                tokenized = tokenize_things(update_things)
+                s.add(tokenized)
+            if delete_things:
+                for i in delete_things:
+                    s.delete(id=i._fullname)
+
+    amqp.handle_items('searchchanges_q', _run_changed, limit=1000,
+                      drain=drain)

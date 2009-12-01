@@ -74,6 +74,10 @@ class JsonTemplate(Template):
     def render(self, thing = None, *a, **kw):
         return ObjectTemplate({})
 
+class TakedownJsonTemplate(JsonTemplate):
+    def render(self, thing = None, *a, **kw):
+        return thing.explanation
+
 class TableRowTemplate(JsonTemplate):
     def cells(self, thing):
         raise NotImplementedError
@@ -202,11 +206,12 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 domain       = "domain",
                                                 title        = "title",
                                                 url          = "url",
-                                                author       = "author", 
+                                                author       = "author",
                                                 thumbnail    = "thumbnail",
                                                 media        = "media_object",
                                                 media_embed  = "media_embed",
                                                 selftext     = "selftext",
+                                                selftext_html= "selftext_html",
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id")
@@ -228,6 +233,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
         elif attr == 'subreddit_id':
             return thing.subreddit._fullname
         elif attr == 'selftext':
+            return thing.selftext
+        elif attr == 'selftext_html':
             return safemarkdown(thing.selftext)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
@@ -237,6 +244,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
         return d
 
 
+class PromotedLinkJsonTemplate(LinkJsonTemplate):
+    _data_attrs_ = LinkJsonTemplate.data_attrs(promoted = "promoted")
+    del _data_attrs_['author']
 
 class CommentJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
@@ -293,8 +303,13 @@ class MoreCommentJsonTemplate(CommentJsonTemplate):
     def kind(self, wrapped):
         return "more"
 
+    def thing_attr(self, thing, attr):
+        if attr in ('body', 'body_html'):
+            return ""
+        return CommentJsonTemplate.thing_attr(self, thing, attr)
+
     def rendered_data(self, wrapped):
-        return ThingJsonTemplate.rendered_data(self, wrapped)
+        return CommentJsonTemplate.rendered_data(self, wrapped)
 
 class MessageJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(new          = "new",
@@ -309,9 +324,9 @@ class MessageJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         if attr == "was_comment":
-            return hasattr(thing, "was_comment")
+            return thing.was_comment
         elif attr == "context":
-            return ("" if not hasattr(thing, "was_comment")
+            return ("" if not thing.was_comment
                     else thing.permalink + "?context=3")
         elif attr == "dest":
             return thing.to.name

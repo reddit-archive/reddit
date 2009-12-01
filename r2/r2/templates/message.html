@@ -23,6 +23,7 @@
 <%!
    from r2.lib.filters import edit_comment_filter, safemarkdown
    from r2.lib.pages.things import MessageButtons
+   from r2.lib.pages import WrappedUser
 %>
 <%inherit file="comment_skeleton.html"/>
 
@@ -47,9 +48,10 @@
         taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
 
    taglinetext = taglinetext.replace(' ', '&nbsp;')
+   author = WrappedUser(thing.author, thing.attribs, thing).render()
   %>
   ${unsafe(taglinetext % dict(when = thing.timesince, 
-                              author= u"<b>%s</b>" % self.author(thing.attribs),
+                              author= u"<b>%s</b>" % author,
                               dest = u"<b>%s</b>" % thing.to.name))}
   </span>
   %if c.user_is_admin:
@@ -58,6 +60,17 @@
   </p>
   <p class="subject">
     ${thing.subject}
+  %if thing.was_comment:
+    <a href="${thing.link_permalink}" class="title">${thing.link_title}</a>
+    %if hasattr(thing, "parent"):
+    </p>
+    <p>
+      <a href="#" class="parent-link"
+         onclick="return fetch_parent(this, '${thing.parent_permalink}/.json', '${thing.parent}')">
+        ${_("show parent")}
+      </a>
+    %endif
+  %endif
 </%def>
 
 <%def name="ParentDiv()">
@@ -72,7 +85,7 @@ ${unsafe(safemarkdown(thing.body))}
 </%def>
 
 <%def name="entry()">
-<div class="uncollapsed">
+<div class="uncollapsed ${thing.message_style}">
   <p class="tagline">
     ${self.tagline()}
   </p>

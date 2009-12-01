@@ -22,7 +22,7 @@
 from pylons import c, request, g
 from pylons.i18n import _
 from pylons.controllers.util import abort
-from r2.lib import utils, captcha
+from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
@@ -30,12 +30,36 @@ from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
 
 from r2.models import *
+from r2.lib.authorize import Address, CreditCard
 
 from r2.controllers.errors import errors, UserRequiredException
+from r2.controllers.errors import VerifiedUserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
 import re, inspect
+import pycountry
+
+def visible_promo(article):
+    is_promo = getattr(article, "promoted", None) is not None
+    is_author = (c.user_is_loggedin and
+                 c.user._id == article.author_id)
+    # promos are visible only if comments are not disabled and the
+    # user is either the author or the link is live/previously live.
+    if is_promo:
+        return (not article.disable_comments and
+                (is_author or
+                 article.promote_status >= promote.STATUS.promoted))
+    # not a promo, therefore it is visible
+    return True
+
+def can_view_link_comments(article):
+    return (article.subreddit_slow.can_view(c.user) and
+            visible_promo(article))
+
+def can_comment_link(article):
+    return (article.subreddit_slow.can_comment(c.user) and
+            visible_promo(article))
 
 class Validator(object):
     default_param = None
@@ -110,6 +134,8 @@ def validate(*simple_vals, **param_vals):
                 return fn(self, *a, **kw)
             except UserRequiredException:
                 return self.intermediate_redirect('/login')
+            except VerifiedUserRequiredException:
+                return self.intermediate_redirect('/verify')
         return newfn
     return val
 
@@ -138,7 +164,10 @@ def api_validate(response_function):
                                              simple_vals, param_vals, *a, **kw)
                 except UserRequiredException:
                     responder.send_failure(errors.USER_REQUIRED)
-                    return self.response_func(responder.make_response())
+                    return self.api_wrapper(responder.make_response())
+                except VerifiedUserRequiredException:
+                    responder.send_failure(errors.VERIFIED_USER_REQUIRED)
+                    return self.api_wrapper(responder.make_response())
             return newfn
         return val
     return _api_validate
@@ -147,12 +176,12 @@ def api_validate(response_function):
 @api_validate
 def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     self_method(self, *a, **kw)
-    return self.response_func({})
+    return self.api_wrapper({})
 
 @api_validate
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     r = self_method(self, *a, **kw)
-    return self.response_func(r)
+    return self.api_wrapper(r)
 
 @api_validate
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
@@ -175,7 +204,7 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     if val:
         return val
     else:
-        return self.response_func(responder.make_response())
+        return self.api_wrapper(responder.make_response())
 
 
 
@@ -209,21 +238,57 @@ class VRequired(Validator):
         else:
             return item
 
-class VLink(Validator):
-    def __init__(self, param, redirect = True, *a, **kw):
+class VThing(Validator):
+    def __init__(self, param, thingclass, redirect = True, *a, **kw):
         Validator.__init__(self, param, *a, **kw)
+        self.thingclass = thingclass
         self.redirect = redirect
-    
-    def run(self, link_id):
-        if link_id:
+
+    def run(self, thing_id):
+        if thing_id:
             try:
-                aid = int(link_id, 36)
-                return Link._byID(aid, True)
+                tid = int(thing_id, 36)
+                thing = self.thingclass._byID(tid, True)
+                if thing.__class__ != self.thingclass:
+                    raise TypeError("Expected %s, got %s" %
+                                    (self.thingclass, thing.__class__))
+                return thing
             except (NotFound, ValueError):
                 if self.redirect:
                     abort(404, 'page not found')
                 else:
                     return None
+
+class VLink(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Link, redirect=redirect, *a, **kw)
+
+class VCommentByID(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Comment, redirect=redirect, *a, **kw)
+
+class VAward(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Award, redirect=redirect, *a, **kw)
+
+class VAwardByCodename(Validator):
+    def run(self, codename, required_fullname=None):
+        if not codename:
+            return self.set_error(errors.NO_TEXT)
+
+        try:
+            a = Award._by_codename(codename)
+        except NotFound:
+            a = None
+
+        if a and required_fullname and a._fullname != required_fullname:
+            return self.set_error(errors.INVALID_OPTION)
+        else:
+            return a
+
+class VTrophy(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Trophy, redirect=redirect, *a, **kw)
 
 class VMessage(Validator):
     def run(self, message_id):
@@ -425,10 +490,45 @@ class VAdmin(Validator):
         if not c.user_is_admin:
             abort(404, "page not found")
 
-class VSponsor(Validator):
+class VVerifiedUser(VUser):
     def run(self):
-        if not c.user_is_sponsor:
-            abort(403, 'forbidden')
+        VUser.run(self)
+        if not c.user.email_verified:
+            raise VerifiedUserRequiredException
+
+class VSponsor(VVerifiedUser):
+    def user_test(self, thing):
+        return (thing.author_id == c.user._id)
+
+    def run(self, link_id = None):
+        VVerifiedUser.run(self)
+        if c.user_is_sponsor:
+            return
+        elif link_id:
+            try:
+                if '_' in link_id:
+                    t = Link._by_fullname(link_id, True)
+                else:
+                    aid = int(link_id, 36)
+                    t = Link._byID(aid, True)
+                if self.user_test(t):
+                    return
+            except (NotFound, ValueError):
+                pass
+        abort(403, 'forbidden')
+
+class VTrafficViewer(VSponsor):
+    def user_test(self, thing):
+        return (VSponsor.user_test(self, thing) or
+                promote.is_traffic_viewer(thing, c.user))
+
+# TODO: tempoary validator to be replaced with Vuser once we get he
+# bugs worked out
+class VPaidSponsor(VSponsor):
+    def run(self, link_id = None):
+        if c.user_is_paid_sponsor:
+            return
+        VSponsor.run(self, link_id)
 
 class VSrModerator(Validator):
     def run(self):
@@ -496,8 +596,10 @@ class VSubmitParent(VByName):
             if isinstance(parent, Message):
                 return parent
             else:
-                sr = parent.subreddit_slow
-                if c.user_is_loggedin and sr.can_comment(c.user):
+                link = parent
+                if isinstance(parent, Comment):
+                    link = Link._byID(parent.link_id)
+                if c.user_is_loggedin and can_comment_link(link):
                     return parent
         #else
         abort(403, "forbidden")
@@ -614,6 +716,13 @@ class VExistingUname(VRequired):
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
     def run(self, name):
+        if name and name.startswith('~') and c.user_is_admin:
+            try:
+                user_id = int(name[1:])
+                return Account._byID(user_id)
+            except (NotFound, ValueError):
+                return self.error(errors.USER_DOESNT_EXIST)
+
         # make sure the name satisfies our user name regexp before
         # bothering to look it up.
         name = chkuser(name)
@@ -630,31 +739,74 @@ class VUserWithEmail(VExistingUname):
         if not user or not hasattr(user, 'email') or not user.email:
             return self.error(errors.NO_EMAIL_FOR_USER)
         return user
-            
+
 
 class VBoolean(Validator):
     def run(self, val):
         return val != "off" and bool(val)
 
-class VInt(Validator):
-    def __init__(self, param, min=None, max=None, *a, **kw):
-        self.min = min
-        self.max = max
+class VNumber(Validator):
+    def __init__(self, param, min=None, max=None, coerce = True,
+                 error = errors.BAD_NUMBER, *a, **kw):
+        self.min = self.cast(min) if min is not None else None
+        self.max = self.cast(max) if max is not None else None
+        self.coerce = coerce
+        self.error = error
         Validator.__init__(self, param, *a, **kw)
+
+    def cast(self, val):
+        raise NotImplementedError
 
     def run(self, val):
         if not val:
             return
-
         try:
-            val = int(val)
+            val = self.cast(val)
             if self.min is not None and val < self.min:
-                val = self.min
+                if self.coerce:
+                    val = self.min
+                else:
+                    raise ValueError, ""
             elif self.max is not None and val > self.max:
-                val = self.max
+                if self.coerce:
+                    val = self.max
+                else:
+                    raise ValueError, ""
             return val
         except ValueError:
-            self.set_error(errors.BAD_NUMBER)
+            self.set_error(self.error, msg_params = dict(min=self.min,
+                                                         max=self.max))
+
+class VInt(VNumber):
+    def cast(self, val):
+        return int(val)
+
+class VFloat(VNumber):
+    def cast(self, val):
+        return float(val)
+
+class VBid(VNumber):
+    def __init__(self, bid, link_id):
+        self.duration = 1
+        VNumber.__init__(self, (bid, link_id), min = g.min_promote_bid,
+                         max = g.max_promote_bid, coerce = False,
+                         error = errors.BAD_BID)
+
+    def cast(self, val):
+        return float(val)/self.duration
+
+    def run(self, bid, link_id):
+        if link_id:
+            try:
+                link = Thing._by_fullname(link_id, return_dict = False,
+                                          data=True)
+                self.duration = max((link.promote_until - link._date).days, 1)
+            except NotFound:
+                pass
+        if VNumber.run(self, bid):
+            return float(bid)
+
+
 
 class VCssName(Validator):
     """
@@ -728,7 +880,7 @@ class VRatelimit(Validator):
                                field = 'ratelimit')
             else:
                 self.set_error(self.error)
-                
+
     @classmethod
     def ratelimit(self, rate_user = False, rate_ip = False, prefix = "rate_",
                   seconds = None):
@@ -750,28 +902,33 @@ class VCommentIDs(Validator):
         comments = Comment._byID(cids, data=True, return_dict = False)
         return comments
 
-class VCacheKey(Validator):
-    def __init__(self, cache_prefix, param, *a, **kw):
+
+class CachedUser(object):
+    def __init__(self, cache_prefix, user, key):
         self.cache_prefix = cache_prefix
-        self.user = None
-        self.key = None
-        Validator.__init__(self, param, *a, **kw)
+        self.user = user
+        self.key = key
 
     def clear(self):
         if self.key and self.cache_prefix:
             g.cache.delete(str(self.cache_prefix + "_" + self.key))
 
-    def run(self, key, name):
-        self.key = key
+
+class VCacheKey(Validator):
+    def __init__(self, cache_prefix, param, *a, **kw):
+        self.cache_prefix = cache_prefix
+        Validator.__init__(self, param, *a, **kw)
+
+    def run(self, key):
+        c_user = CachedUser(self.cache_prefix, None, key)
         if key:
-            uid = g.cache.get(str(self.cache_prefix + "_" + self.key))
+            uid = g.cache.get(str(self.cache_prefix + "_" + key))
             if uid:
                 try:
-                    self.user = Account._byID(uid, data = True)
+                    c_user.user = Account._byID(uid, data = True)
                 except NotFound:
                     return
-            #found everything we need
-            return self
+            return c_user
         self.set_error(errors.EXPIRED)
 
 class VOneOf(Validator):
@@ -894,3 +1051,154 @@ class ValidDomain(Validator):
         if url and is_banned_domain(url):
             self.set_error(errors.BANNED_DOMAIN)
 
+
+
+
+
+class VDate(Validator):
+    """
+    Date checker that accepts string inputs in %m/%d/%Y format.
+
+    Optional parameters include 'past' and 'future' which specify how
+    far (in days) into the past or future the date must be to be
+    acceptable.
+
+    NOTE: the 'future' param will have precidence during evaluation.
+
+    Error conditions:
+       * BAD_DATE on mal-formed date strings (strptime parse failure)
+       * BAD_FUTURE_DATE and BAD_PAST_DATE on respective range errors.
+    
+    """
+    def __init__(self, param, future=None, past = None,
+                 admin_override = False,
+                 reference_date = lambda : datetime.now(g.tz), 
+                 business_days = False):
+        self.future = future
+        self.past   = past
+
+        # are weekends to be exluded from the interval?
+        self.business_days = business_days
+
+        # function for generating "now"
+        self.reference_date = reference_date
+
+        # do we let admins override date range checking?
+        self.override = admin_override
+        Validator.__init__(self, param)
+
+    def run(self, date):
+        now = self.reference_date()
+        override = c.user_is_sponsor and self.override
+        try:
+            date = datetime.strptime(date, "%m/%d/%Y")
+            if not override:
+                # can't put in __init__ since we need the date on the fly
+                future = utils.make_offset_date(now, self.future,
+                                          business_days = self.business_days)
+                past = utils.make_offset_date(now, self.past, future = False,
+                                          business_days = self.business_days)
+                if self.future is not None and date.date() < future.date():
+                    self.set_error(errors.BAD_FUTURE_DATE,
+                               {"day": future.days})
+                elif self.past is not None and date.date() > past.date():
+                    self.set_error(errors.BAD_PAST_DATE,
+                                   {"day": past.days})
+            return date.replace(tzinfo=g.tz)
+        except (ValueError, TypeError):
+            self.set_error(errors.BAD_DATE)
+
+class VDateRange(VDate):
+    """
+    Adds range validation to VDate.  In addition to satisfying
+    future/past requirements in VDate, two date fields must be
+    provided and they must be in order.
+
+    Additional Error conditions:
+      * BAD_DATE_RANGE if start_date is not less than end_date
+    """
+    def run(self, *a):
+        try:
+            start_date, end_date = [VDate.run(self, x) for x in a]
+            if not start_date or not end_date or end_date < start_date:
+                self.set_error(errors.BAD_DATE_RANGE)
+            return (start_date, end_date)
+        except ValueError:
+            # insufficient number of arguments provided (expect 2)
+            self.set_error(errors.BAD_DATE_RANGE)
+
+
+class VDestination(Validator):
+    def __init__(self, param = 'dest', default = "", **kw):
+        self.default = default
+        Validator.__init__(self, param, **kw)
+    
+    def run(self, dest):
+        return dest or request.referer or self.default
+
+class ValidAddress(Validator):
+    def __init__(self, param, usa_only = True):
+        self.usa_only = usa_only
+        Validator.__init__(self, param)
+
+    def set_error(self, msg, field):
+        Validator.set_error(self, errors.BAD_ADDRESS,
+                            dict(message=msg), field = field)
+
+    def run(self, firstName, lastName, company, address,
+            city, state, zipCode, country, phoneNumber):
+        if not firstName:
+            self.set_error(_("please provide a first name"), "firstName")
+        elif not lastName:
+            self.set_error(_("please provide a last name"), "lastName")
+        elif not address:
+            self.set_error(_("please provide an address"), "address")
+        elif not city: 
+            self.set_error(_("please provide your city"), "city")
+        elif not state: 
+            self.set_error(_("please provide your state"), "state")
+        elif not zipCode:
+            self.set_error(_("please provide your zip or post code"), "zip")
+        elif (not self.usa_only and
+              (not country or not pycountry.countries.get(alpha2=country))):
+            self.set_error(_("please pick a country"), "country")
+        else:
+            if self.usa_only:
+                country = 'United States'
+            else:
+                country = pycountry.countries.get(alpha2=country).name
+            return Address(firstName = firstName,
+                           lastName = lastName,
+                           company = company or "",
+                           address = address,
+                           city = city, state = state,
+                           zip = zipCode, country = country,
+                           phoneNumber = phoneNumber or "")
+
+class ValidCard(Validator):
+    valid_ccn  = re.compile(r"\d{13,16}")
+    valid_date = re.compile(r"\d\d\d\d-\d\d")
+    valid_ccv  = re.compile(r"\d{3,4}")
+    def set_error(self, msg, field):
+        Validator.set_error(self, errors.BAD_CARD,
+                            dict(message=msg), field = field)
+
+    def run(self, cardNumber, expirationDate, cardCode):
+        if not self.valid_ccn.match(cardNumber or ""):
+            self.set_error(_("credit card numbers should be 13 to 16 digits"),
+                           "cardNumber")
+        elif not self.valid_date.match(expirationDate or ""):
+            self.set_error(_("dates should be YYYY-MM"), "expirationDate")
+        elif not self.valid_ccv.match(cardCode or ""):
+            self.set_error(_("card verification codes should be 3 or 4 digits"),
+                           "cardCode")
+        else:
+            return CreditCard(cardNumber = cardNumber,
+                              expirationDate = expirationDate,
+                              cardCode = cardCode)
+
+class VTarget(Validator):
+    target_re = re.compile("^[\w_-]{3,20}$") 
+    def run(self, name):
+        if name and self.target_re.match(name):
+            return name

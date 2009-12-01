@@ -23,6 +23,7 @@
 <%!
    from r2.lib.template_helpers import get_domain
    from r2.lib.pages.things import LinkButtons
+   from r2.lib.pages import WrappedUser
 %>
  
 <%inherit  file="printable.html"/>
@@ -175,7 +176,7 @@
 
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
                               when = thing.timesince, 
-                              author= self.author(attribs = thing.attribs)))}
+                              author= WrappedUser(thing.author, thing.attribs, thing).render()))}
 </%def>
 
 <%def name="child()">

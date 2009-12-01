@@ -23,23 +23,24 @@
 from pylons import g, config
 
 from r2.models.link import Link
-from r2.lib.workqueue import WorkQueue
 from r2.lib import s3cp
 from r2.lib.utils import timeago, fetch_things2
+from r2.lib.utils import TimeoutFunction, TimeoutFunctionException
 from r2.lib.db.operators import desc
 from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_image
+from r2.lib import amqp
 
 import tempfile
-from Queue import Queue
+import traceback
 
 s3_thumbnail_bucket = g.s3_thumb_bucket
-media_period = g.media_period
 threads = 20
 log = g.log
 
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
     return 'http:/%s%s.png' % (s3_thumbnail_bucket, link._fullname)
+
 
 def upload_thumb(link, image):
     """Given a link and an image, uploads the image to s3 into an image
@@ -52,26 +53,6 @@ def upload_thumb(link, image):
     s3cp.send_file(f.name, resource, 'image/png', 'public-read', None, False)
     log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
 
-def make_link_info_job(results, link, useragent):
-    """Returns a unit of work to send to a work queue that downloads a
-    link's thumbnail and media object. Places the result in the results
-    dict"""
-    def job():
-        try:
-            scraper = make_scraper(link.url)
-
-            thumbnail = scraper.thumbnail()
-            media_object = scraper.media_object()
-
-            if thumbnail:
-                upload_thumb(link, thumbnail)
-
-            results[link] = (thumbnail, media_object)
-        except:
-            log.warning('error fetching %s %s' % (link._fullname, link.url))
-            raise
-
-    return job
 
 def update_link(link, thumbnail, media_object):
     """Sets the link's has_thumbnail and media_object attributes iin the
@@ -84,40 +65,48 @@ def update_link(link, thumbnail, media_object):
 
     link._commit()
 
-def process_new_links(period = media_period, force = False):
-    """Fetches links from the last period and sets their media
-    properities. If force is True, it will fetch properities for links
-    even if the properties already exist"""
-    links = Link._query(Link.c._date > timeago(period), sort = desc('_date'),
-                        data = True)
-    results = {}
-    jobs = []
-    for link in fetch_things2(links):
-        if link.is_self or link.promoted:
-            continue
-        elif not force and (link.has_thumbnail or link.media_object):
-            continue
 
-        jobs.append(make_link_info_job(results, link, g.useragent))
+def set_media(link, force = False):
+    if link.is_self:
+        return
+    if not force and link.promoted:
+        return
+    elif not force and (link.has_thumbnail or link.media_object):
+        return
+        
+    scraper = make_scraper(link.url)
 
-    #send links to a queue
-    wq = WorkQueue(jobs, num_workers = 20, timeout = 30)
-    wq.start()
-    wq.jobs.join()
+    thumbnail = scraper.thumbnail()
+    media_object = scraper.media_object()
 
-    #when the queue is finished, do the db writes in this thread
-    for link, info in results.items():
-        update_link(link, info[0], info[1])
+    if thumbnail:
+        upload_thumb(link, thumbnail)
 
-def set_media(link):
-    """Sets the media properties for a single link."""
-    results = {}
-    make_link_info_job(results, link, g.useragent)()
-    update_link(link, *results[link])
+    update_link(link, thumbnail, media_object)
 
 def force_thumbnail(link, image_data):
     image = str_to_image(image_data)
     image = prepare_image(image)
     upload_thumb(link, image)
     update_link(link, thumbnail = True, media_object = None)
-    
+
+def run():
+    def process_msgs(msgs):
+        def _process_link(fname):
+            print "media: Processing %s" % fname
+
+            link = Link._by_fullname(fname, data=True, return_dict=False)
+            set_media(link)
+        for msg in msgs:
+            fname = msg.body
+            try:
+                TimeoutFunction(_process_link, 30)(fname)
+            except TimeoutFunctionException:
+                print "Timed out on %s" % fname
+            except KeyboardInterrupt:
+                raise
+            except:
+                print "Error fetching %s" % fname
+                print traceback.format_exc()
+
+    amqp.handle_items('scraper_q', process_msgs, limit=1)

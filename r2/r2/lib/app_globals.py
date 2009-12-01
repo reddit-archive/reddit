@@ -50,7 +50,11 @@ class Globals(object):
                  'num_serendipity',
                  'sr_dropdown_threshold',
                  ]
-    
+
+    float_props = ['min_promote_bid',
+                   'max_promote_bid',
+                   ]
+
     bool_props = ['debug', 'translator', 
                   'sqlprinting',
                   'template_debug',
@@ -58,8 +62,11 @@ class Globals(object):
                   'enable_doquery',
                   'use_query_cache',
                   'write_query_queue',
+                  'show_awards',
                   'css_killswitch',
-                  'db_create_tables']
+                  'db_create_tables',
+                  'disallow_db_writes',
+                  'allow_shutdown']
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -67,8 +74,10 @@ class Globals(object):
                    'rendercaches',
                    'admins',
                    'sponsors',
+                   # TODO: temporary until we open it up to all users
+                   'paid_sponsors',
                    'monitored_servers',
-                   'default_srs',
+                   'automatic_reddits',
                    'agents',
                    'allowed_css_linked_domains']
 
@@ -103,14 +112,19 @@ class Globals(object):
             if not k.startswith("_") and not hasattr(self, k):
                 if k in self.int_props:
                     v = int(v)
+                elif k in self.float_props:
+                    v = float(v)
                 elif k in self.bool_props:
                     v = self.to_bool(v)
                 elif k in self.tuple_props:
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
+        self.paid_sponsors = set(x.lower() for x in self.paid_sponsors)
+
         # initialize caches
         mc = Memcache(self.memcaches, pickleProtocol = 1)
+        self.memcache = mc
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
         self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
@@ -173,6 +187,11 @@ class Globals(object):
         self.log.addHandler(logging.StreamHandler())
         if self.debug:
             self.log.setLevel(logging.DEBUG)
+        else:
+            self.log.setLevel(logging.WARNING)
+
+        # set log level for pycountry which is chatty
+        logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
         if not self.media_domain:
             self.media_domain = self.domain
@@ -190,26 +209,35 @@ class Globals(object):
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
 
+        #the shutdown toggle
+        self.shutdown = False
+
+        #if we're going to use the query_queue, we need amqp
+        if self.write_query_queue and not self.amqp_host:
+            raise Exception("amqp_host must be defined to use the query queue")
+
     @staticmethod
     def to_bool(x):
         return (x.lower() == 'true') if x else None
 
     @staticmethod
     def to_iter(v, delim = ','):
-        return (x.strip() for x in v.split(delim))
+        return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
         self.databases = tuple(self.to_iter(gc['databases']))
+        self.db_params = {}
         if not self.databases:
             return
 
         dbm = db_manager.db_manager()
-        db_params = ('name', 'db_host', 'db_user', 'db_pass',
-                     'pool_size', 'max_overflow')
+        db_param_names = ('name', 'db_host', 'db_user', 'db_pass',
+                          'pool_size', 'max_overflow')
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
-            params = dict(zip(db_params, conf_params))
+            params = dict(zip(db_param_names, conf_params))
             dbm.engines[db_name] = db_manager.get_engine(**params)
+            self.db_params[db_name] = params
 
         dbm.type_db = dbm.engines[gc['type_db']]
         dbm.relation_type_db = dbm.engines[gc['rel_type_db']]

@@ -138,9 +138,9 @@ class LineGraph(object):
 
     def __init__(self, xydata, colors = ("FF4500", "336699"),
                  width = 300, height = 175):
-        
+
         series = zip(*xydata)
-        
+
         self.xdata = DataSeries(series[0])
         self.ydata = map(DataSeries, series[1:])
         self.width = width
@@ -150,13 +150,13 @@ class LineGraph(object):
     def google_chart(self, multiy = True, ylabels = [], title = "", 
                      bar_fmt = True):
         xdata, ydata = self.xdata, self.ydata
-        
+
         # Bar format makes the line chart look like it is a series of
         # contiguous bars without the boundary line between each bar.
         if bar_fmt:
             xdata = DataSeries(range(len(self.xdata))).toBarX()
             ydata = [y.toBarY() for y in self.ydata]
-        
+
         # TODO: currently we are only supporting time series.  Make general
         xaxis = make_date_axis_labels(self.xdata)
 

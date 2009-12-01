@@ -30,8 +30,10 @@
        # default number of cpus shall be 1
        ncpus = getattr(host, "ncpu", 1)
        # color code in nlevel levels
-       return min(max(int(nlevels*host.load()/ncpus+0.4), 0),nlevels+1)
-     
+       return _load_int(host.load(), ncpus, nlevels = 8)
+   def _load_int(current, max_val, nlevels = 8):
+       return min(max(int(nlevels*current/max_val+0.4), 0),nlevels+1)
+
  %>
 
 <div class="server-status">
@@ -51,6 +53,32 @@
     </tr>
   %endfor
   </table>
+  %if any(getattr(h, "queue", None) for h in thing.hostlogs):
+    <table class="process-monitor">
+      <tr> 
+        <th>queue</th>
+        <th>length</th>
+      </tr>
+      %for host in thing.hostlogs:
+        %if host.queue:
+         <tr>
+           <th colspan="2"></th>
+         </tr>
+         %for name, data in host.queue:
+           <%
+              length = data()
+              max_len = host.queue.max_length(name)
+              load_level = _load_int(length, max_len)
+            %>
+           <tr class="load${load_level} title-region">
+             <td>${name}</td>
+             <td>${length} / ${max_len}</td>
+           </tr>
+         %endfor
+        %endif
+      %endfor
+    </table>
+  %endif
   %if any(h.database for h in thing.hostlogs):
   <table class="monitor-database"> 
     <tr class="title-region"> 
@@ -239,7 +267,8 @@
     %endfor
   </table>
 </div>
-    
+
+
 <script type="text/javascript">
   $(".server-status tr").click(function() {
        if(!$(this).hasClass("data")) {

@@ -244,36 +244,27 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
-                         onchange = '', 
-                         tabular = False, label = '')">
-  <% form_id = "image-upload" %>
+                         onchange = '', label = '', form_id = 'image-upload')">
   <form id="${form_id}" enctype="multipart/form-data"
-        class="pretty-form image-upload"
+        class="image-upload"
         target="upload-iframe"
         %if onsubmit:
            onsubmit="${onsubmit}"
         %endif
         action="${post_target}" method="post">
-    %if tabular:
-    <table class="preftable">
-     <tr>
-       <th>
-    %endif
       %if label:
          <label for="file">${label}</label>
       %endif
-    %if tabular:
-       </th>
-       <td class="prefright">
-    %endif
           <input type="hidden" name="uh" value="${c.modhash}" />
           %if not c.default_sr:
             <input type="hidden" name="r"  value="${c.site.name}" />
           %endif
+          <input type="hidden" name="formid" value="${form_id}" />
           <input type="file" name="file" id="file" 
-                 onchange="$('#submit-img').show(); ${onchange}"/>
-          <button id="submit-img" type="submit" name="upload" 
-                  onclick="$('.img-status').show().html('${_('uploading')}'); return true;"
+                 onchange="$(this).next().show(); ${onchange}"/>
+          <button id="submit-img" class="submit-img"
+                  type="submit" name="upload" 
+                  onclick="$(this).siblings('.img-status').show().html('${_('uploading')}'); return true;"
                   style="display: none;" >
             ${_('upload')}
           </button>
@@ -283,8 +274,8 @@ ${unsafe(txt)}
        function on_image_success(img) {}
        function create_new_image(name) {}
 
-       function completedUploadImage(status, img_src, name, errors) {
-           var form = $("#${form_id}");
+       function completedUploadImage(status, img_src, name, errors, form_id) {
+           var form = $("#" + form_id);
            if (status) 
                form.find(".img-status").show().html(status);
            else
@@ -299,7 +290,6 @@ ${unsafe(txt)}
               form.get(0).reset();
               var img = (name) ? $("#img-preview-" + name) :
                   form.find("img.img-preview:first");
-              $.log(img);
               if(!$.defined(img) || img.length == 0) 
                   img = create_new_image(name);
               if(img_src.indexOf("?") == -1)
@@ -307,6 +297,8 @@ ${unsafe(txt)}
               if(img)
                   img.attr("src", "").attr("src", img_src);
               img.show().parent().show();
+              form.find(".delete-img").show();
+              form.find(".submit-img").hide();
               on_image_success(img);
           }
        }
@@ -316,7 +308,7 @@ ${unsafe(txt)}
                   style="display: none;"
                   name="upload-iframe" id="upload-iframe"></iframe>
 
-          <div id="img-preview-container" 
+          <div id="img-preview-container" class="img-preview-container"
                style="${'' if current_image else 'display:none;'}">
             <img id="img-preview-upload" alt="header preview" 
                  class="img-preview"
@@ -327,13 +319,9 @@ ${unsafe(txt)}
                  %endif
                  /><br />
           </div>
-      %if tabular:
-       </td>
-      %endif 
      %if caller:
        ${caller.body()}
      %endif
-    </table>
   </form>
   <script type="text/javascript">
     $(function() {
@@ -369,6 +357,8 @@ ${unsafe(txt)}
                                 no_www = True)}",
       /* where do ajax request go? */
       ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
+      /* debugging? */
+      debug: ${"true" if g.debug else "false"}, 
       vl: {},
       sr: {},
       status_msg: {
@@ -403,7 +393,7 @@ ${unsafe(txt)}
   </form>
 </%def>
 
-<%def name="round_field(title, description = '', css_class= '', **kw)">
+<%def name="block_field(title, description = '', css_class= '', **kw)">
   <div class="roundfield ${css_class}"
        %for k, v in kw.iteritems():
          ${k}="${v}"
@@ -418,4 +408,33 @@ ${unsafe(txt)}
       ${caller.body()}
     </div>
   </div>
+</%def>
+
+<%def name="block_field(kind, title, description = '', css_class= '', **kw)">
+  <div class="${kind} ${css_class}"
+       %for k, v in kw.iteritems():
+         ${k}="${v}"
+       %endfor
+       >
+    <span class="title">${title}</span>
+    &#32;
+    %if description:
+      <span class="gray">${description}</span>
+    %endif
+    <div class="${kind}-content">
+      ${caller.body()}
+    </div>
+  </div>
+</%def>
+
+<%def name="round_field(title, description = '', css_class= '', **kw)">
+  <%call expr="block_field('roundfield', title, description = description, css_class= css_class, **kw)">
+     ${caller.body()}
+  </%call>
+</%def>
+
+<%def name="line_field(title, description = '', css_class= '', **kw)">
+  <%call expr="block_field('linefield', title, description = description, css_class= css_class, **kw)">
+     ${caller.body()}
+  </%call>
 </%def>

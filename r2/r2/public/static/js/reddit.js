@@ -53,13 +53,16 @@ function post_form(form, where, statusfunc, nametransformfunc, block) {
     }
 };
 
-function get_form_fields(form, fields) {
+function get_form_fields(form, fields, filter_func) {
     fields = fields || {};
+    if (!filter_func)
+        filter_func = function(x) { return true; };
     /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray, :disabled").each(function() {
-            if (($(this).attr("type") != "radio" &&
-                 $(this).attr("type") != "checkbox") ||
-                $(this).attr("checked"))
+            var type = $(this).attr("type");
+            if (filter_func(this) && 
+                ( (type != "radio" && type != "checkbox") || 
+                  $(this).attr("checked")) )
                 fields[$(this).attr("name")] = $(this).attr("value");
         });
     if (fields.id == null) {
@@ -73,6 +76,16 @@ function simple_post_form(form, where, fields, block) {
     return false;
 };
 
+function post_pseudo_form(form, where, block) {
+    var filter_func = function(x) {
+        var parent = $(x).parents("form:first");
+        return (parent.length == 0 || parent.get(0) == $(form).get(0))
+    };
+    $(form).find(".error").not(".status").hide();
+    $(form).find(".status").html(reddit.status_msg.submitting).show();
+    $.request(where, get_form_fields(form, {}, filter_func), null, block);
+    return false;
+}
 
 function emptyInput(elem, msg) {
     if (! $(elem).attr("value") || $(elem).attr("value") == msg ) 
@@ -274,8 +287,13 @@ function unsubscribe(reddit_name) {
 
 function friend(user_name, container_name, type) {
     return function() {
-        $.request("friend", 
-                  {name: user_name, container: container_name, type: type});
+        if (!reddit.logged)  {
+            showcover();
+        }
+        else {
+            $.request("friend", 
+                      {name: user_name, container: container_name, type: type});
+        }
     }
 };
 
@@ -297,6 +315,19 @@ function share(elem) {
 function cancelShare(elem) {
     return cancelToggleForm(elem, ".sharelink", ".share-button");
 };
+
+function reject_promo(elem) {
+    $(elem).thing().find(".rejection-form").show().find("textare").focus();
+}
+
+function cancel_reject_promo(elem) {  
+    $(elem).thing().find(".rejection-form").hide();
+}
+
+function complete_reject_promo(elem) {
+    $(elem).thing().removeClass("accepted").addClass("rejected")
+        .find(".reject_promo").remove();
+}
 
 /* Comment generation */
 function helpon(elem) {
@@ -463,7 +494,8 @@ function updateEventHandlers(thing) {
     thing = $(thing);
     var listing = thing.parent();
 
-    $(thing).filter(".promotedlink").bind("onshow", function() {
+    $(thing).filter(".promotedlink, .sponsorshipbox")
+        .bind("onshow", function() {
             var id = $(this).thing_id();
             if($.inArray(id, reddit.tofetch) != -1) {
                 $.request("onload", {ids: reddit.tofetch.join(",")});
@@ -472,6 +504,7 @@ function updateEventHandlers(thing) {
             var tracker = reddit.trackers[id]; 
             if($.defined(tracker)) {
                 $(this).find("a.title").attr("href", tracker.click).end()
+                    .find("a.thumbnail").attr("href", tracker.click).end()
                     .find("img.promote-pixel")
                     .attr("src", tracker.show);
                 delete reddit.trackers[id];
@@ -605,7 +638,7 @@ function fetch_title() {
     var status = url_field.find(".title-status");
     var url = $("#url").val();
     if (url) {
-        status.show().text("loading...");
+        status.show().text(reddit.status_msg.loading);
         error.hide();
         $.request("fetch_title", {url: url});
     }
@@ -878,14 +911,20 @@ function comment_reply_for_elem(elem) {
 }
 
 function edit_usertext(elem) {
-    show_edit_usertext($(elem).thing().find(".usertext:first"));
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().hide();
+    show_edit_usertext(t.find(".usertext:first"));
 }
 
 function cancel_usertext(elem) {
-    hide_edit_usertext($(elem).thing().find(".usertext:first"));
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
+    hide_edit_usertext(t.find(".usertext:first"));
 }
 
 function save_usertext(elem) {
+    var t = $(elem).thing();
+    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
 }
 
 function reply(elem) {
@@ -1044,6 +1083,34 @@ function check_some_langs(elem) {
     $(elem).parents("form").find("#some-langs").attr("checked", true);
 }
 
+function fetch_parent(elem, parent_permalink, parent_id) {
+    $(elem).css("color", "red").html(reddit.status_msg.loading);
+    var thing = $(elem).thing();
+    var parentdiv = thing.find(".body .parent");
+    if (parentdiv.length == 0) {
+        var parent = '';
+        $.getJSON(parent_permalink, function(response) {
+                $.each(response, function() {
+                        if (this && this.data.children) {
+                            $.each(this.data.children, function() {
+                                    if(this.data.name == parent_id) {
+                                        parent= this.data.body_html; 
+                                    }
+                                });
+                        }
+                    });
+                if(parent) {
+                    /* make a parent div for the contents of the fetch */
+                    thing.find(".body .md").before('<div class="parent rounded">' +
+                                                   $.unsafe(parent) +
+                                                   '</div>'); 
+                }
+                $(elem).parent("li").andSelf().remove();
+            });
+    }
+    return false;
+}
+
 /* The ready method */
 $(function() {
         /* set function to be called on thing creation/replacement,
@@ -1073,6 +1140,5 @@ $(function() {
 
         /* visually mark the last-clicked entry */
         last_click();
-
 
     });

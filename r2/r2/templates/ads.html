@@ -21,13 +21,33 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import get_domain, static
+   from r2.lib.tracking import AdframeInfo
    import random
  %>
 
-<iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
-        src="${c.site.ad_file}">
-</iframe>
-##<script type="text/javascript">
-## $('ad-frame').src = $('ad-frame').src;
-##</script>
-
+%if c.site.ad_type == "custom" or c.site.ad_file != c.site._defaults.get("ad_file"):
+   <iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
+           src="${c.site.ad_file}">
+   </iframe>
+%elif c.site.ad_type == "basic":
+   <% name = c.site.name if not c.default_sr else '' %>
+   <iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
+           src="/ads/${name}">
+   </iframe>
+%else:
+   <iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
+           src="/ads/">
+   </iframe>
+%endif
+<script type="text/javascript">
+    <% 
+      tracker_url = AdframeInfo.gen_url(fullname = "adblock", ip = request.ip)
+     %>
+    $(function() {
+      var ad = $("#ad-frame");
+      if(ad.height() == 0 || ad.width() == 0) {
+        $(".footer").append("<img alt='' src='${unsafe(tracker_url)}&random=" +
+                                    Math.random()*10000000000000000 + "'/>");
+      }
+    });
+</script>

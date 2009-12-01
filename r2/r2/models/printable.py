@@ -40,7 +40,7 @@ class Printable(object):
                         'render_score', 'score', '_score', 
                         'upvotes', '_ups',
                         'downvotes', '_downs',
-                        'subreddit_slow', 
+                        'subreddit_slow', '_deleted', '_spam',
                         'cachable', 'make_permalink', 'permalink',
                         'timesince', 'votehash'
                         ])

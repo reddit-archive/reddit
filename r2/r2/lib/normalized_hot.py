@@ -101,7 +101,7 @@ def normalized_hot_cached(sr_ids):
         if not items:
             continue
 
-        top_score = max(items[0]._hot, 1)
+        top_score = max(max(x._hot for x in items), 1)
         if items:
             results.extend((l, l._hot / top_score) for l in items)
 

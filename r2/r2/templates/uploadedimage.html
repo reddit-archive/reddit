@@ -29,7 +29,8 @@
          errors = simplejson.dumps(thing.errors)
        %>
       parent.completedUploadImage('${thing.status}','${thing.img_src or ""}',
-                                  '${thing.name or ""}', ${unsafe(errors)});
+                                  '${thing.name or ""}', ${unsafe(errors)},
+                                  '${thing.form_id}');
     </script>
   </head>
   <body>

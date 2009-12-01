@@ -103,14 +103,13 @@ class DataThing(object):
         else:
             old_val = self._t.get(attr, self._defaults.get(attr))
             self._t[attr] = val
-
         if make_dirty and val != old_val:
             self._dirties[attr] = (old_val, val)
 
     def __getattr__(self, attr):
         #makes pickling work for some reason
         if attr.startswith('__'):
-            raise AttributeError
+            raise AttributeError, attr
 
         try:
             if hasattr(self, '_t'):
@@ -303,6 +302,23 @@ class DataThing(object):
             return filter(None, (bases.get(i) for i in ids))
 
     @classmethod
+    def _byID36(cls, id36s, return_dict = True, **kw):
+
+        id36s, single = tup(id36s, True)
+
+        # will fail if it's not a string
+        ids = [ int(x, 36) for x in id36s ]
+
+        things = cls._byID(ids, return_dict=True, **kw)
+
+        if single:
+            return things.values()[0]
+        elif return_dict:
+            return things
+        else:
+            return things.values()
+
+    @classmethod
     def _by_fullname(cls, names,
                      return_dict = True, 
                      data=False, extra_props=None):
@@ -453,6 +469,10 @@ class Thing(DataThing):
     @property
     def _controversy(self):
         return sorts.controversy(self._ups, self._downs)
+
+    @property
+    def _confidence(self):
+        return sorts.confidence(self._ups, self._downs)
 
     @classmethod
     def _build(cls, id, bases):

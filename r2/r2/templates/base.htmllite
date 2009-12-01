@@ -38,7 +38,11 @@
       ${optionalstyle("margin:0;" + 
                       ("padding-bottom:3px" if not c.cname else ""))}
       >
-    <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}>
+    <a href="http://${get_domain()}/" ${optionalstyle("margin:5px;")}
+      %if c.link_target:
+         target="${c.link_target}"
+      %endif
+       >
       <img src="http://${get_domain(subreddit=False)}/static/spreddit1.gif" 
            alt="" 
            ${optionalstyle("border:none")} />
@@ -48,7 +52,11 @@
        name = c.site.name
        if not isinstance(c.site, FakeSubreddit):
            name += ".%s" % g.domain
-       link = ('<a %s href="http://%s/">%s</a></h3>' % 
+       if c.link_target:
+          link = ('<a %s href="http://%s/" target="%s">%s</a></h3>' % 
+                  (style, get_domain(), c.link_target, name))
+       else:
+          link = ('<a %s href="http://%s/">%s</a></h3>' % 
                  (style, get_domain(), name))
        label = _("links from %(site)s").replace(" ", "&#32;");
      %>
@@ -60,7 +68,11 @@
     <small>
       powered by&#32; 
       <a href="http://${g.domain}" 
-         ${optionalstyle("text-decoration:none;color:#336699")}>
+         ${optionalstyle("text-decoration:none;color:#336699")}
+        %if c.link_target:
+          target="${c.link_target}"
+        %endif
+      >
         ${Default.name}
       </a>
     </small>

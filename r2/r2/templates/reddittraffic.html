@@ -217,8 +217,8 @@
 
 <%def name="bars(uni, imp)">
   <%
-     wid_uni = int(50 * min(2, float(uni)/thing.uniques_mean))
-     wid_imp = int(50 * min(2, float(imp)/thing.impressions_mean))
+     wid_uni = int(50 * min(2, float(uni)/max(thing.uniques_mean, 1)))
+     wid_imp = int(50 * min(2, float(imp)/max(thing.impressions_mean,1)))
    %>
   <td>
     <div style="height:4px; width:${wid_imp}px; background-color:#336699; margin-bottom:1px">

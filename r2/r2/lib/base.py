@@ -90,6 +90,8 @@ class BaseController(WSGIController):
             request.environ['pylons.routes_dict']['action'] = \
                     meth + '_' + action
 
+        c.thread_pool = environ['paste.httpserver.thread_pool']
+
         c.response = Response()
         res = WSGIController.__call__(self, environ, start_response)
         return res

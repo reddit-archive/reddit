@@ -26,19 +26,21 @@
 <%namespace file="utils.html" import="plain_link" />
 
 %if thing.a.promoted:
-  <tr>
-    <th>${_('promoted on')}</th>
-    <td>
-      ${thing.a.promoted_on.strftime(thing.datefmt)}
-    </td>
-  </tr>
-  %if thing.a.promoted_by:
+  %if hasattr(thing.a, "promoted_on"):
     <tr>
-      <th>${_('promoted by')}</th>
+      <th>${_('promoted on')}</th>
       <td>
-        ${thing.a.promoted_by_name}
+        ${thing.a.promoted_on.strftime(thing.datefmt)}
       </td>
-    </tr>
+  </tr>
+  %endif
+  %if hasattr(thing.a, "unpromoted_on"):
+    <tr>
+      <th>${_('unpromoted on')}</th>
+      <td>
+        ${thing.a.unpromoted_on.strftime(thing.datefmt)}
+      </td>
+  </tr>
   %endif
   %if thing.a.promote_until:
     <tr>
@@ -49,13 +51,6 @@
           ${_('(this link has expired and is no longer being promoted)')}
         %endif
       </td>
-    </tr>
-  %endif
-  %if thing.a.promoted_subscribersonly:
-    <tr>
-      <th></th>
-      <td>${(_('shown only to subscribers of %(subreddit)s')
-             %  dict(subreddit = c.site.name))}</td>
     </tr>
   %endif
 %endif

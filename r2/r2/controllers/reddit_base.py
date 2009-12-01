@@ -42,6 +42,7 @@ from Cookie import CookieError
 from datetime import datetime
 import sha, simplejson, locale
 from urllib import quote, unquote
+from simplejson import dumps
 
 from r2.lib.tracking import encrypt, decrypt
 
@@ -409,10 +410,16 @@ def base_listing(fn):
     @validate(num    = VLimit('limit'),
               after  = VByName('after'),
               before = VByName('before'),
-              count  = VCount('count'))
+              count  = VCount('count'),
+              target = VTarget("target"))
     def new_fn(self, before, **env):
+        if c.render_style == "htmllite":
+            c.link_target = env.get("target")
+        elif "target" in env:
+            del env["target"]
+
         kw = build_arg_list(fn, env)
-        
+
         #turn before into after/reverse
         kw['reverse'] = False
         if before:
@@ -454,8 +461,12 @@ class RedditController(BaseController):
         c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
+        c.start_time = datetime.now(g.tz)
+
         g.cache.caches = (LocalCache(),) + g.cache.caches[1:]
 
+        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
+                                              g.domain_prefix)
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
             ratelimit_agents()
@@ -506,6 +517,11 @@ class RedditController(BaseController):
                 c.have_messages = c.user.msgtime
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
+            if not g.disallow_db_writes:
+                c.user.update_last_visit(c.start_time)
+
+            #TODO: temporary
+            c.user_is_paid_sponsor = c.user.name.lower() in g.paid_sponsors
 
         c.over18 = over18()
 
@@ -544,7 +560,7 @@ class RedditController(BaseController):
         elif not c.user.pref_show_stylesheets and not c.cname:
             c.allow_styles = False
         #if the site has a cname, but we're not using it
-        elif c.site.domain and not c.cname:
+        elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.allow_styles = False
 
         #check content cache
@@ -608,6 +624,7 @@ class RedditController(BaseController):
             and request.method == 'GET'
             and not c.user_is_loggedin
             and not c.used_cache
+            and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
             g.rendercache.set(self.request_key(),
@@ -645,3 +662,11 @@ class RedditController(BaseController):
         merged = copy(request.get)
         merged.update(dict)
         return request.path + utils.query_string(merged)
+
+    def api_wrapper(self, kw):
+        data = dumps(kw)
+        if request.method == "GET" and request.GET.get("callback"):
+            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
+                               websafe_json(data))
+        return self.sendstring(data)
+

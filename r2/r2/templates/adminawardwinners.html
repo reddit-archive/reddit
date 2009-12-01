@@ -20,45 +20,46 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="plain_link"/>
-
-##<h1>awards</h1>
-##<table class='stats'>
-##<tr><td></td><th>today</th></tr>
-###for a in $awards
-##    #set u = $user_objs[a["uid"]]
-##    <tr><td class='ri' style="padding-right: 10px">$a['award']</td><td class='k'>${plain_link(u.name, "/user/%s" % u.name)} ($sanekarma($u.pop))</td></tr>
-###end for
-##</table>
-###end if
-
-<h1>${_("biggest karma gainers")}</h1>
-
-<table class="stats">
-  <tr><th colspan="2">${_("today")}</th></tr>
-  %for user, change in thing.top_day:
+<%def name="winnerline(trophy)">
     <tr>
-      <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
-      <td class="ri">+${change}</td>
+      <td>
+        <a href="/user/${trophy._thing1.name}">${trophy._thing1.name}</a>
+      </td>
+      <td>
+        ${trophy._name}
+      </td>
+      <td>
+        ${getattr(trophy, "description", "")}
+      </td>
+      <td>
+        %if hasattr(trophy, "url"):
+         <a href="${trophy.url}">${trophy.url}</a>
+        %endif
+      </td>
     </tr>
-  %endfor
-</table>
+</%def>
 
-<table class="stats">
-  <tr><th colspan="2">${_("this week")}</th></tr>
-  %for user, change in thing.top_week:
+<table class="award-table">
   <tr>
-    <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
-    <td class="ri">+${change}</td>
+    <td>
+      <img src="${thing.award.imgurl % 40}"/>
+    </td>
+    <td>
+      <h1>${thing.award.title}</h1>
+    </td>
+    <th>
+      description
+    </th>
+    <th>
+      url
+    </th>
   </tr>
+  %for trophy in thing.trophies:
+    ${winnerline(trophy)}
   %endfor
 </table>
 
-<table class="stats">
-  <tr><th colspan="2">${_("all-time")}</th></tr>
-  %for user in thing.top_users:
-    <tr>
-      <td class="k">${plain_link(user.name, "/user/%s" % user.name)} (${user.link_karma})</td>
-    </tr>
-  %endfor
-</table>
+<p>
+  <a href="/admin/awards">back to awards</a>
+</p>
+

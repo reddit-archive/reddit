@@ -365,7 +365,7 @@ def clean_image(data,format):
 
     return ret
     
-def save_sr_image(sr, data, num = None):
+def save_sr_image(sr, data, resource = None):
     """
     uploades image data to s3 as a PNG and returns its new url.  Urls
     will be of the form:
@@ -383,11 +383,12 @@ def save_sr_image(sr, data, num = None):
         f.write(data)
         f.flush()
 
-        resource = g.s3_thumb_bucket + sr._fullname
-        if num is not None:
-            resource += '_' + str(num)
-        resource += '.png'
-        
+        if resource is not None:
+            resource = "_%s" % resource
+        else:
+            resource = ""
+        resource = g.s3_thumb_bucket + sr._fullname + resource + ".png"
+
         s3cp.send_file(f.name, resource, 'image/png', 'public-read', 
                        None, False)
     finally:

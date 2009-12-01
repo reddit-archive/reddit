@@ -387,11 +387,10 @@ class Translator(LoggedSlots):
                                            message = msg,
                                            locale = self.locale)
                     key = ts.md5
-                    if self.enabled.has_key(key):
-                        ts.enabled = self.enabled[key]
-                        if ts.enabled:
-                            indx += 1
-                            ts.index = indx
+                    if not self.enabled.has_key(key) or self.enabled[key]:
+                        indx += 1
+                        ts.index = indx
+
                     while msgstr.match(line):
                         r, translation, line = get_next_str_block(line, handle)
                         ts.add(translation)
@@ -455,6 +454,7 @@ class Translator(LoggedSlots):
                 out_file = file + ".mo"
             
             cmd = 'msgfmt -o "%s" "%s"' % (out_file, file)
+            print cmd
             with os.popen(cmd) as handle:
                 x = handle.read()
         if include_index:

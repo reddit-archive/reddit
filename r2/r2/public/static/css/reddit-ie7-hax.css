@@ -2,3 +2,11 @@
     border: none;
     height: 17px;
 }
+
+.entry.unvoted .score.unvoted { display: inline;  }
+.entry.unvoted div.score.unvoted { display: inline;  }
+
+/* Award name font is too big in IE */
+.award-square .award-name {
+  font-size:18px;
+}

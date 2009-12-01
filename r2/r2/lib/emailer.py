@@ -21,51 +21,61 @@
 ################################################################################
 from email.MIMEText import MIMEText
 from pylons.i18n import _
-from pylons import c, g, request
-from r2.lib.pages import PasswordReset, Share, Mail_Opt
-from r2.lib.utils import timeago
-from r2.models import passhash, Email, Default, has_opted_out
-from r2.config import cache
+from pylons import c, g
+from r2.lib.utils import timeago, query_string
+from r2.models import passhash, Email, Default, has_opted_out, Account
 import os, random, datetime
-import smtplib, traceback, sys
-
-def email_address(name, address):
-    return '"%s" <%s>' % (name, address) if name else address
-feedback = email_address('reddit feedback', g.feedback_email)
-
-def send_mail(msg, fr, to):
-    session = smtplib.SMTP(g.smtp_server)
-    session.sendmail(fr, to, msg.as_string())
-    session.quit()
-
-def simple_email(to, fr, subj, body):
-    def utf8(s):
-        return s.encode('utf8') if isinstance(s, unicode) else s
-    msg = MIMEText(utf8(body))
-    msg.set_charset('utf8')
-    msg['To']      = utf8(to)
-    msg['From']    = utf8(fr)
-    msg['Subject'] = utf8(subj)
-    send_mail(msg, fr, to)
-
-def password_email(user):
-    key = passhash(random.randint(0, 1000), user.email)
-    passlink = 'http://' + g.domain + '/resetpassword/' + key
-    print "Generated password reset link: " + passlink
-    cache.set("reset_%s" %key, user._id, time=1800)
-    simple_email(user.email, 'reddit@reddit.com',
-                 'reddit.com password reset',
-                 PasswordReset(user=user, passlink=passlink).render(style='email'))
-
+import traceback, sys, smtplib
 
 def _feedback_email(email, body, kind, name='', reply_to = ''):
     """Function for handling feedback and ad_inq emails.  Adds an
     email to the mail queue to the feedback email account."""
     Email.handler.add_to_queue(c.user if c.user_is_loggedin else None, 
-                               None, [feedback], name, email, 
-                               datetime.datetime.now(), 
-                               request.ip, kind, body = body, 
-                               reply_to = reply_to)
+                               g.feedback_email, name, email, 
+                               kind, body = body, reply_to = reply_to)
+
+def _system_email(email, body, kind, reply_to = "", thing = None):
+    """
+    For sending email from the system to a user (reply address will be
+    feedback and the name will be reddit.com)
+    """
+    Email.handler.add_to_queue(c.user if c.user_is_loggedin else None,
+                               email, g.domain, g.feedback_email,
+                               kind, body = body, reply_to = reply_to,
+                               thing = thing)
+
+def verify_email(user, dest):
+    """
+    For verifying an email address
+    """
+    from r2.lib.pages import VerifyEmail
+    key = passhash(user.name, user.email)
+    user.email_verified = False
+    user._commit()
+    emaillink = ('http://' + g.domain + '/verification/' + key
+                 + query_string(dict(dest=dest)))
+    print "Generated email verification link: " + emaillink
+    g.cache.set("email_verify_%s" %key, user._id, time=1800)
+
+    _system_email(user.email,
+                  VerifyEmail(user=user,
+                              emaillink = emaillink).render(style='email'),
+                  Email.Kind.VERIFY_EMAIL)
+
+def password_email(user):
+    """
+    For reseting a user's password.
+    """
+    from r2.lib.pages import PasswordReset
+    key = passhash(random.randint(0, 1000), user.email)
+    passlink = 'http://' + g.domain + '/resetpassword/' + key
+    print "Generated password reset link: " + passlink
+    g.cache.set("reset_%s" %key, user._id, time=1800)
+    _system_email(user.email,
+                  PasswordReset(user=user,
+                                passlink=passlink).render(style='email'),
+                  Email.Kind.RESET_PASSWORD)
+
 
 def feedback_email(email, body, name='', reply_to = ''):
     """Queues a feedback email to the feedback account."""
@@ -77,41 +87,49 @@ def ad_inq_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.ADVERTISE, name = name,
                            reply_to = reply_to)
 
-    
+def i18n_email(email, body, name='', reply_to = ''):
+    """Queues a ad_inq email to the feedback account."""
+    return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
+                           reply_to = reply_to)
+
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""
     now = datetime.datetime.now(g.tz)
     ival = now - timeago(g.new_link_share_delay)
     date = max(now,link._date + ival)
-    Email.handler.add_to_queue(c.user, link, emails, from_name, g.share_reply,
-                               date, request.ip, Email.Kind.SHARE,
-                               body = body, reply_to = reply_to)
-                               
-def send_queued_mail():
+    Email.handler.add_to_queue(c.user, emails, from_name, g.share_reply,
+                               Email.Kind.SHARE, date = date,
+                               body = body, reply_to = reply_to,
+                               thing = link)
+
+def send_queued_mail(test = False):
     """sends mail from the mail queue to smtplib for delivery.  Also,
     on successes, empties the mail queue and adds all emails to the
     sent_mail list."""
+    from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail, Promo_Email
     now = datetime.datetime.now(g.tz)
     if not c.site:
         c.site = Default
 
     clear = False
-    session = smtplib.SMTP(g.smtp_server)
-    # convienence funciton for sending the mail to the singly-defined session and
-    # marking the mail as read.
+    if not test:
+        session = smtplib.SMTP(g.smtp_server)
     def sendmail(email):
         try:
-            session.sendmail(email.fr_addr, email.to_addr,
-                             email.to_MIMEText().as_string())
-            email.set_sent(rejected = False)
+            if test:
+                print email.to_MIMEText().as_string()
+            else:
+                session.sendmail(email.fr_addr, email.to_addr,
+                                 email.to_MIMEText().as_string())
+                email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
                 UnicodeDecodeError):
             # handle error and print, but don't stall the rest of the queue
-	    print "Handled error sending mail (traceback to follow)"
-	    traceback.print_exc(file = sys.stdout)
+            print "Handled error sending mail (traceback to follow)"
+            traceback.print_exc(file = sys.stdout)
             email.set_sent(rejected = True)
-        
+
 
     try:
         for email in Email.get_unsent(now):
@@ -124,38 +142,32 @@ def send_queued_mail():
                                    msg_hash = email.msg_hash,
                                    link = email.thing,
                                    body = email.body).render(style = "email")
-                try:
-                    email.subject = _("[reddit] %(user)s has shared a link with you") % \
-                        {"user": email.from_name()}
-                except UnicodeDecodeError:
-                    email.subject = _("[reddit] a user has shared a link with you")
-                sendmail(email)
             elif email.kind == Email.Kind.OPTOUT:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
                                       leave = True).render(style = "email")
-                email.subject = _("[reddit] email removal notice")
-                sendmail(email)
-                
             elif email.kind == Email.Kind.OPTIN:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
                                       leave = False).render(style = "email")
-                email.subject = _("[reddit] email addition notice")
-                sendmail(email)
+            elif email.kind in (Email.Kind.ACCEPT_PROMO,
+                                Email.Kind.REJECT_PROMO,
+                                Email.Kind.QUEUED_PROMO,
+                                Email.Kind.LIVE_PROMO,
+                                Email.Kind.BID_PROMO,
+                                Email.Kind.FINISHED_PROMO,
+                                Email.Kind.NEW_PROMO):
+                email.body = Promo_Email(link = email.thing,
+                                    kind = email.kind,
+                                    body = email.body).render(style="email")
 
-            elif email.kind in (Email.Kind.FEEDBACK, Email.Kind.ADVERTISE):
-                if email.kind == Email.Kind.FEEDBACK:
-                    email.subject = "[feedback] feedback from '%s'" % \
-                                    email.from_name()
-                else:
-                    email.subject = "[ad_inq] feedback from '%s'" % \
-                                    email.from_name()
-                sendmail(email)
-            # handle failure
-            else:
+            # handle unknown types here
+            elif email.kind not in Email.Kind:
                 email.set_sent(rejected = True)
+                continue
+            sendmail(email)
 
     finally:
-        session.quit()
+        if not test:
+            session.quit()
         
     # clear is true if anything was found and processed above
     if clear:
@@ -168,9 +180,7 @@ def opt_out(msg_hash):
     address has been opted out of receiving any future mail)"""
     email, added =  Email.handler.opt_out(msg_hash)
     if email and added:
-        Email.handler.add_to_queue(None, None, [email], "reddit.com",
-                                   datetime.datetime.now(g.tz),
-                                   '127.0.0.1', Email.Kind.OPTOUT)
+        _system_email(email, "", Email.Kind.OPTOUT)
     return email, added
         
 def opt_in(msg_hash):
@@ -178,7 +188,33 @@ def opt_in(msg_hash):
     from our opt out list)"""
     email, removed =  Email.handler.opt_in(msg_hash)
     if email and removed:
-        Email.handler.add_to_queue(None, None, [email], "reddit.com",
-                                   datetime.datetime.now(g.tz),
-                                   '127.0.0.1', Email.Kind.OPTIN)
+        _system_email(email, "", Email.Kind.OPTIN)
     return email, removed
+
+
+def _promo_email(thing, kind, body = ""):
+    a = Account._byID(thing.author_id)
+    return _system_email(a.email, body, kind, thing = thing,
+                         reply_to = "selfservicesupport@reddit.com")
+
+
+def new_promo(thing):
+    return _promo_email(thing, Email.Kind.NEW_PROMO)
+
+def promo_bid(thing):
+    return _promo_email(thing, Email.Kind.BID_PROMO)
+
+def accept_promo(thing):
+    return _promo_email(thing, Email.Kind.ACCEPT_PROMO)
+
+def reject_promo(thing, reason = ""):
+    return _promo_email(thing, Email.Kind.REJECT_PROMO, reason)
+
+def queue_promo(thing):
+    return _promo_email(thing, Email.Kind.QUEUED_PROMO)
+
+def live_promo(thing):
+    return _promo_email(thing, Email.Kind.LIVE_PROMO)
+
+def finished_promo(thing):
+    return _promo_email(thing, Email.Kind.FINISHED_PROMO)

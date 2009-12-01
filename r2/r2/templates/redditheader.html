@@ -70,12 +70,15 @@
          if c.have_messages:
            mail_img += ".png"
            mail_img_class = 'havemail'
+           mail_img_title = "new mail!"
          else:
            mail_img += "gray.png"
            mail_img_class = 'nohavemail'
+           mail_img_title = "no new mail"
          mail_img = static(mail_img)
        %>
       ${img_link(_("messages"), mail_img, path="/message/inbox/",
+                 alt = mail_img_title, title = mail_img_title, 
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
     %endif
@@ -100,4 +103,7 @@
   <div class="eb-vch"></div>
   <div class="eb-ve"></div>
   <div class="eb-veh"></div>
+  <div class="morelink nub"></div>
+  <div class="mlh"></div>
+  <div class="mlhn"></div>
 </div>

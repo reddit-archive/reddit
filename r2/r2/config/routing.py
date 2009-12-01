@@ -34,6 +34,7 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/login',    controller='front', action='login')
     mc('/logout',   controller='front', action='logout')
+    mc('/verify',    controller='front', action='verify')
     mc('/adminon',  controller='front', action='adminon')
     mc('/adminoff', controller='front', action='adminoff')
     mc('/submit',   controller='front', action='submit')
@@ -51,6 +52,7 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
+    mc('/reddits/login', controller='front', action='login')
     mc('/reddits/:where', controller='reddits', action='listing',
        where = 'popular',
        requirements=dict(where="popular|new|banned"))
@@ -69,8 +71,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
     
-    mc('/stats', controller='front', action='stats')
+    mc('/awards', controller='front', action='awards')
     
+    mc('/i18n', controller='feedback', action='i18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
     
@@ -78,6 +81,10 @@ def make_map(global_conf={}, app_conf={}):
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
     mc('/admin/i18n/:action/:lang', controller='i18n')
+
+    mc('/admin/awards', controller='awards')
+    mc('/admin/awards/:awardcn/:action', controller='awards',
+       requirements=dict(action="give|winners"))
 
     mc('/admin/:action', controller='admin')
     
@@ -115,8 +122,20 @@ def make_map(global_conf={}, app_conf={}):
     mc('/framebuster/:what/:blah',
        controller='front', action = 'framebuster')
 
-    mc('/promote/edit_promo/:link', controller='promote', action = 'edit_promo')
-    mc('/promote/:action', controller='promote')
+    mc('/promoted/edit_promo/:link',
+       controller='promote', action = 'edit_promo')
+    mc('/promoted/pay/:link',
+       controller='promote', action = 'pay')
+    mc('/promoted/graph',
+       controller='promote', action = 'graph')
+    mc('/promoted/:action', controller='promote',
+       requirements = dict(action = "new_promo"))
+    mc('/promoted/:sort', controller='promote', action = "listing")
+    mc('/promoted/', controller='promoted', action = "listing",
+       sort = "")
+
+    mc('/health', controller='health', action='health')
+    mc('/shutdown', controller='health', action='shutdown')
 
     mc('/', controller='hot', action='listing')
     
@@ -137,13 +156,15 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="password|random|framebuster"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
-    mc('/help/:anything', controller='embed', action='help')
+    mc('/help/*anything', controller='embed', action='help')
     
     mc('/goto', controller='toolbar', action='goto')
     mc('/tb/:id', controller='toolbar', action='tb')
     mc('/toolbar/:action', controller='toolbar',
        requirements=dict(action="toolbar|inner|login"))
     mc('/toolbar/comments/:id', controller='toolbar', action='comments')
+
+    mc('/c/:comment_id', controller='front', action='comment_by_id')
 
     mc('/s/*rest', controller='toolbar', action='s')
     # additional toolbar-related rules just above the catchall
@@ -152,6 +173,8 @@ def make_map(global_conf={}, app_conf={}):
     
     mc('/resetpassword/:key', controller='front',
        action='resetpassword')
+    mc('/verification/:key', controller='front',
+       action='verify_email')
     mc('/resetpassword', controller='front',
        action='resetpassword')
 
@@ -165,6 +188,8 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
+    mc('/api/:action', controller='promote',
+       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
     mc('/api/:action', controller='api')
     
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
@@ -184,6 +209,8 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
     
+    mc("/ads/", controller = "front", action = "ad")
+    mc("/ads/:reddit", controller = "front", action = "ad")
     # This route handles displaying the error page and 
     # graphics used in the 404/500
     # error pages. It should likely stay at the top 

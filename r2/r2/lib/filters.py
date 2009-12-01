@@ -127,7 +127,6 @@ code_re = re.compile('<code>([^<]+)</code>')
 a_re    = re.compile('>([^<]+)</a>')
 fix_url = re.compile('&lt;(http://[^\s\'\"\]\)]+)&gt;')
 
-
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
 def safemarkdown(text, nofollow=False, target=None):

@@ -47,7 +47,7 @@
                  "/message/compose?to=%s" % (thing.user.name))}
       &nbsp;
   %elif thing.name == "remove" and thing.editable:
-    ${ynbutton(_("remove"), "removed", "unfriend", 
+    ${ynbutton(_("remove"), "removed", thing.remove_action, 
                callback="deleteRow",
                hidden_data = dict(type = thing.type, 
                                   id = thing.user._fullname, 

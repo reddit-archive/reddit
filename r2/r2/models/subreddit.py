@@ -50,16 +50,24 @@ class Subreddit(Thing, Printable):
                      description = '',
                      allow_top = True,
                      images = {},
+                     ad_type = None,
                      ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
+                     css_on_cname = True, 
                      domain = None,
+                     mod_actions = 0,
+                     sponsorship_url = None,
+                     sponsorship_img = None,
+                     sponsorship_name = None,
                      )
+    _data_int_props = ('mod_actions',)
+
     sr_limit = 50
 
     @classmethod
-    def _new(self, name, title, author_id, ip, lang = g.lang, type = 'public',
+    def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
         with g.make_lock('create_sr_' + name.lower()):
             try:
@@ -265,8 +273,9 @@ class Subreddit(Thing, Printable):
             else:
                 item.subscriber = bool(rels.get((item, user, 'subscriber')))
             item.moderator = bool(rels.get((item, user, 'moderator')))
-            item.contributor = bool(item.moderator or \
-                                    rels.get((item, user, 'contributor')))
+            item.contributor = bool(item.type != 'public' and
+                                    (item.moderator or
+                                     rels.get((item, user, 'contributor'))))
             item.score = item._ups
             # override "voting" score behavior (it will override the use of
             # item.score in builder.py to be ups-downs)
@@ -274,6 +283,12 @@ class Subreddit(Thing, Printable):
             base_score = item.score - (1 if item.likes else 0)
             item.voting_score = [(base_score + x - 1) for x in range(3)]
             item.score_fmt = Score.subscribers
+
+            #will seem less horrible when add_props is in pages.py
+            from r2.lib.pages import UserText
+            item.usertext = UserText(item, item.description)
+
+
         Printable.add_props(user, wrapped)
     #TODO: make this work
     cache_ignore = set(["subscribers"]).union(Printable.cache_ignore)
@@ -290,7 +305,7 @@ class Subreddit(Thing, Printable):
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
                                                             'restricted'),
                                        sort=desc('_downs'),
-                                       limit = limit * 1.5 if limit else None,
+                                       limit = limit,
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
@@ -301,14 +316,7 @@ class Subreddit(Thing, Printable):
         if not c.over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
 
-        # evaluate the query and remove the ones with
-        # allow_top==False.  Note that because this filtering is done
-        # after the query is run, if there are a lot of top reddits
-        # with allow_top==False, we may return fewer than `limit`
-        # results.
-        srs = filter(lambda sr: sr.allow_top, pop_reddits)
-
-        return srs[:limit] if limit else srs
+        return list(pop_reddits)
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -318,8 +326,26 @@ class Subreddit(Thing, Printable):
 
         An optional kw argument 'limit' is defaulted to g.num_default_reddits
         """
-        srs = cls.top_lang_srs(c.content_langs, limit)
-        return [s._id for s in srs] if ids else srs
+
+        # If we ever have much more than two of these, we should update
+        # _by_name to support lists of them
+        auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
+
+        srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs))
+        rv = []
+        for i, s in enumerate(srs):
+            if len(rv) >= limit:
+                break
+            if s in auto_srs:
+                continue
+            rv.append(s)
+
+        rv = auto_srs + rv
+
+        if ids:
+            return [ sr._id for sr in rv ]
+        else:
+            return rv
 
     @classmethod
     @memoize('random_reddits', time = 1800)
@@ -516,6 +542,7 @@ class AllSR(FakeSubreddit):
     title = 'all'
 
     def get_links(self, sort, time):
+        from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
         q = Link._query(sort = queries.db_sort(sort))

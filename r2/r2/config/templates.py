@@ -33,6 +33,7 @@ api('templated', NullJsonTemplate)
 
 # class specific overrides
 api('link',          LinkJsonTemplate)
+api('promotedlink',  PromotedLinkJsonTemplate)
 api('comment',       CommentJsonTemplate)
 api('message',       MessageJsonTemplate)
 api('subreddit',     SubredditJsonTemplate)
@@ -46,3 +47,4 @@ api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
 api('reddittraffic', TrafficJsonTemplate)
+api('takedownpane', TakedownJsonTemplate)

@@ -19,26 +19,47 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   import locale
+   from r2.lib.strings import strings
+ %>
+
+
 <%namespace file="printablebuttons.html" import="state_button" />
 <%namespace file="printable.html" import="thing_css_class" />
 
-<div class="raisedbox linkinfo">
-  <table class="details">
-    %if not thing.a.is_self:
-      <tr><th>${_("toolbar link")}</th>
-        <td><a href="${thing.a.tblink}">${thing.a.tblink}</a></td></tr>
-    %endif
-    <tr><th>${_("submitted on")}</th>
-      <td>${thing.a._date.strftime(thing.datefmt)}</td></tr>
-    <tr><th>${ungettext('point', 'points', 5)}</th>
-      <td class="score">${thing.a.score}</td></tr>
-    <tr><th>${_("up votes")}</th>
-      <td class="upvotes">${thing.a.upvotes}</td></tr>
-    <tr><th>${_("down votes")}</th>
-      <td class="downvotes">${thing.a.downvotes}</td></tr>
+
+
+<div class="linkinfo">
+  ${_("this post was submitted on")}
+  &#32;
+  ${thing.a._date.strftime(thing.datefmt)}
+
+  <div class="score">
+    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.score, True),
+                                         persons = ungettext("point", "points", 
+                                         thing.a.score)))}
+    <% percent = int(float(thing.a.upvotes) / max(thing.a.upvotes + thing.a.downvotes, 1) * 100) %>
+    &#32;(${percent}% ${_("like it")})
+  </div>
+
+  <span class="upvotes">
+    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.upvotes, True),
+                                         persons = ungettext("up vote", "up votes", 
+                                         thing.a.upvotes)))}
+  </span>
+  &#32;
+  <span class="downvotes">
+    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.downvotes, True),
+                                         persons = ungettext("down vote", "down votes", 
+                                         thing.a.downvotes)))}
+  </span>
+
+  <table>
     %if c.user_is_admin:
       <%include file="adminlinkinfo.html"/>
     %endif
+
     %if c.user_is_sponsor:
       <%include file="linkpromoteinfobar.html"/>
     %endif

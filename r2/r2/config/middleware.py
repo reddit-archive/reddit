@@ -60,6 +60,8 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
             d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):
             d['srname'] = environ.get('REDDIT_NAME')
+        if environ.get('REDDIT_TAKEDOWN'):
+            d['takedown'] = environ.get('REDDIT_TAKEDOWN')
 
         #preserve x-sup-id when 304ing
         if code == 304:
@@ -288,7 +290,7 @@ class DomainMiddleware(object):
         sr_redirect = None
         for sd in list(sub_domains):
             # subdomains to disregard completely
-            if sd in ('www', 'origin', 'beta'):
+            if sd in ('www', 'origin', 'beta', 'pay'):
                 continue
             # subdomains which change the extension
             elif sd == 'm':
@@ -297,6 +299,7 @@ class DomainMiddleware(object):
                 environ['reddit-domain-extension'] = sd
             elif (len(sd) == 2 or (len(sd) == 5 and sd[2] == '-')) and self.lang_re.match(sd):
                 environ['reddit-prefer-lang'] = sd
+                environ['reddit-domain-prefix'] = sd
             else:
                 sr_redirect = sd
                 sub_domains.remove(sd)
@@ -357,6 +360,7 @@ class ExtensionMiddleware(object):
                   'mobile' : ('mobile', 'text/html; charset=UTF-8'),
                   'png' : ('png', 'image/png'),
                   'css' : ('css', 'text/css'),
+                  'csv' : ('csv', 'text/csv; charset=UTF-8'),
                   'api' : (api_type(), 'application/json; charset=UTF-8'),
                   'json' : (api_type(), 'application/json; charset=UTF-8'),
                   'json-html' : (api_type('html'), 'application/json; charset=UTF-8')}

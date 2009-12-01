@@ -21,89 +21,14 @@
 ################################################################################
 import sqlalchemy as sa
 
-from r2.lib.db.tdb_sql import make_metadata
-from r2.lib.utils import worker
-
 from pylons import g
 
-def index_str(table, name, on, where = None):
-    index_str = 'create index idx_%s_' % name
-    index_str += table.name
-    index_str += ' on '+ table.name + ' (%s)' % on
-    if where:
-        index_str += ' where %s' % where
-    return index_str
-    
-def create_table(table, index_commands=None, force = False):
-    t = table
-    if g.db_create_tables:
-        if not t.bind.has_table(t.name) or force:
-            try:
-                t.create(checkfirst = False)
-            except: pass
-            if index_commands:
-                for i in index_commands:
-                    try:
-                        t.bind.execute(i)
-                    except: pass
+from r2.lib import amqp
+from r2.lib.utils import worker
 
-def change_table(metadata):
-    return sa.Table(g.db_app_name + '_changes', metadata,
-                    sa.Column('fullname', sa.String, nullable=False,
-                              primary_key = True),
-                    sa.Column('thing_type', sa.Integer, nullable=False),
-                    sa.Column('date',
-                              sa.DateTime(timezone = True),
-                              default = sa.func.now(),
-                              nullable = False)
-                    )
-
-def make_change_tables(force = False):
-    engine = g.dbm.engines['change']
-    metadata = make_metadata(engine)
-    table = change_table(metadata)
-    indices = [
-        index_str(table, 'fullname', 'fullname'),
-        index_str(table, 'date', 'date')
-        ]
-    create_table(table, indices, force = force)
-    return table
-
-_change_table = make_change_tables()
 
 def changed(thing):
     def _changed():
-        d = dict(fullname = thing._fullname,
-                 thing_type = thing._type_id)
-        try:
-            _change_table.insert().execute(d)
-        except sa.exceptions.SQLError:
-            t = _change_table
-            t.update(t.c.fullname == thing._fullname,
-                     values = {t.c.date: sa.func.now()}).execute()
-    from r2.lib.solrsearch import indexed_types
-    if isinstance(thing, indexed_types):
-        worker.do(_changed)
-
-
-def _where(cls = None, min_date = None, max_date = None):
-    t = _change_table
-    where = []
-    if cls:
-        where.append(t.c.thing_type == cls._type_id)
-    if min_date:
-        where.append(t.c.date > min_date)
-    if max_date:
-        where.append(t.c.date <= max_date)
-    if where:
-        return sa.and_(*where)
-
-def get_changed(cls = None, min_date = None, limit = None):
-    t = _change_table
-    res = sa.select([t.c.fullname, t.c.date], _where(cls, min_date = min_date),
-                    order_by = t.c.date, limit = limit).execute()
-    return res.fetchall()
-
-def clear_changes(cls = None, min_date=None, max_date=None):
-    t = _change_table
-    t.delete(_where(cls, min_date = min_date, max_date = max_date)).execute()
+        amqp.add_item('searchchanges_q', thing._fullname,
+                      message_id = thing._fullname)
+    worker.do(_changed)

@@ -1,12 +1,16 @@
 .shirt { 
     margin-left: 30px; 
-    width: 600px; 
  }
-.shirt h2 { 
-    margin: 30px;
-    text-align: center; 
-    font-size: large; 
-    color: gray; 
+.shirt p { 
+    font-family: arial;
+    font-size: larger; 
+    color: #111;
+}
+.shirt h2 {
+    font-family: arial;
+    color:gray;
+    font-size:x-large;
+    font-weight:normal;
  }
 .shirt .shirt-container { margin: 10px; }
 .shirt .shirt-container .left { 

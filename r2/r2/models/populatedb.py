@@ -20,7 +20,6 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
-from r2.lib import promote
 from r2.lib.utils import fetch_things2
 
 import string
@@ -62,9 +61,6 @@ def create_links(num):
         sr = random.choice(subreddits)
         l = Link._submit(title, url, user, sr, '127.0.0.1')
 
-        if random.choice(([False] * 50) + [True]):
-            promote.promote(l)
-            
 
 def by_url_cache():
     q = Link._query(Link.c._spam == (True,False),

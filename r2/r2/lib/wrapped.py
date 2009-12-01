@@ -147,7 +147,7 @@ class Templated(object):
                                style, cache = not debug)
         except AttributeError:
             raise NoTemplateFound, (repr(self), style)
-                
+
         return template
 
     def cache_key(self, *a):
@@ -209,7 +209,6 @@ class Templated(object):
         """
         from pylons import c, g
         style = style or c.render_style or 'html'
-        
         # prepare (and store) the list of cachable items. 
         primary = False
         if not isinstance(c.render_tracker, dict):
@@ -385,7 +384,7 @@ class CachedTemplate(Templated):
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against
         # them.
-        keys = [c.user_is_loggedin, c.user_is_admin,
+        keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
                 c.render_style, c.cname, c.lang, c.site.path,
                 template_hash]
         keys = [make_cachable(x, *a) for x in keys]

@@ -125,7 +125,7 @@ class ShirtPage(LinkInfoPage):
                                    ShirtPane(self.link)))
 
 class ShirtPane(Templated):
-    default_color = "white"
+    default_color = "black"
     default_size = "large"
     default_style = "men"
 

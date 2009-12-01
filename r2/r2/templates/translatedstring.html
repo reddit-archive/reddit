@@ -22,8 +22,8 @@
 
 <% 
  highlight = lambda x: ("<span class='orangered' style='padding: 0px 1ex 0px 1ex'>" + x + "</span>")
- singular = thing._singular(highlight)
- plural = thing._plural(highlight)
+ singular = thing._singular(highlight).replace("\\n", "<br/>")
+ plural = thing._plural(highlight).replace("\\n", "<br/>")
  # downplay explanation strings
  singular = singular.replace(" {", "&#32;<span class='gray little'><i>(").replace("}", ")</i></span>")
  plural = plural.replace(" {", "&#32;<span class='gray little'><i>(").replace("}", ")</i></span>")
@@ -33,7 +33,7 @@
  %>
 
 %if (singular and thing.enabled) or c.user_is_admin:
-  <tr style="vertical-align:top">
+  <tr style="vertical-align:top; ${'background-color:#FDFEBC;' if not thing.translation() else ''}">
     <th style="padding-right: 5px; text-align: right;">
       <b>(${thing.index})</b>
     </th>

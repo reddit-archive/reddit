@@ -4,10 +4,11 @@ from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, worker, tup
+from r2.lib.utils import fetch_things2, worker, tup, UniqueIterator
 from r2.lib.solrsearch import DomainSearchQuery
 
 from datetime import datetime
+import itertools
 
 from pylons import g
 query_cache = g.permacache
@@ -82,26 +83,38 @@ class CachedResults(object):
         return tuple(lst)
 
     def can_insert(self):
-        """True if a new item can just be inserted, which is when the
-        query is only sorted by date."""
-        return self.query._sort == [desc('_date')]
+        """True if a new item can just be inserted rather than
+           rerunning the query. This is only true in some
+           circumstances, which includes having no time rules, and
+           being sorted descending"""
+        if self.query._sort in ([desc('_date')],
+                                [desc('_hot'), desc('_date')],
+                                [desc('_score'), desc('_date')],
+                                [desc('_controversy'), desc('_date')]):
+            if not any(r.lval.name == '_date'
+                       for r in self.query._rules):
+                # if no time-rule is specified, then it's 'all'
+                return True
+        return False
 
     def can_delete(self):
         """True if a item can be removed from the listing, always true for now."""
         return True
 
     def insert(self, items):
-        """Inserts the item at the front of the cached data. Assumes the query
-        is sorted by date descending"""
+        """Inserts the item into the cached data. This only works
+           under certain criteria, see can_insert."""
         self.fetch()
         t = [ self.make_item_tuple(item) for item in tup(items) ]
 
-        if len(t) == 1 and self.data and t[0][1:] > self.data[0][1:]:
-            self.data.insert(0, t[0])
-        else:
-            self.data.extend(t)
-            self.data = list(set(self.data))
-            self.data.sort(key=lambda x: x[1:], reverse=True)
+        # insert the new items, remove the duplicates (keeping the one
+        # being inserted over the stored value if applicable), and
+        # sort the result
+        data = itertools.chain(t, self.data)
+        data = UniqueIterator(data, key = lambda x: x[0])
+        data = sorted(data, key=lambda x: x[1:], reverse=True)
+        data = list(data)
+        self.data = data
 
         query_cache.set(self.iden, self.data[:precompute_limit])
 
@@ -316,6 +329,7 @@ def add_queries(queries, insert_items = None, delete_items = None):
                     log('Adding precomputed query %s' % q)
                     query_queue.add_query(q)
     worker.do(_add_queries)
+    
 
 #can be rewritten to be more efficient
 def all_queries(fn, obj, *param_lists):
@@ -381,12 +395,12 @@ def new_vote(vote):
     if not isinstance(item, Link):
         return
 
-    if vote.valid_thing:
+    if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
-        results = all_queries(get_links, sr, ('hot', 'new'), ['all'])
+        results = [get_links(sr, 'hot', 'all')]
         results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
         #results.append(get_links(sr, 'toplinks', 'all'))
-        add_queries(results)
+        add_queries(results, insert_items = item)
     
     #must update both because we don't know if it's a changed vote
     if vote._name == '1':
@@ -443,7 +457,14 @@ def ban(things):
 
         if links:
             add_queries([get_spam_links(sr)], insert_items = links)
-            add_queries([get_links(sr, 'new', 'all')], delete_items = links)
+            # rip it out of the listings. bam!
+            results = [get_links(sr, 'hot', 'all'),
+                       get_links(sr, 'new', 'all'),
+                       get_links(sr, 'top', 'all'),
+                       get_links(sr, 'controversial', 'all')]
+            results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+            add_queries(results, delete_items = links)
+
         #if comments:
         #    add_queries([get_spam_comments(sr)], insert_items = comments)
 
@@ -459,8 +480,14 @@ def unban(things):
 
         if links:
             add_queries([get_spam_links(sr)], delete_items = links)
-            # put it back in 'new'
-            add_queries([get_links(sr, 'new', 'all')], insert_items = links)
+            # put it back in the listings
+            results = [get_links(sr, 'hot', 'all'),
+                       get_links(sr, 'new', 'all'),
+                       get_links(sr, 'top', 'all'),
+                       get_links(sr, 'controversial', 'all')]
+            results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
+            add_queries(results, insert_items = links)
+
         #if comments:
         #    add_queries([get_spam_comments(sr)], delete_items = comments)
 

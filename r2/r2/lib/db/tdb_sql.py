@@ -273,7 +273,10 @@ def get_rel_type_id(name):
     return rel_types_name[name][0]
 
 def get_write_table(tables):
-    return tables[0]
+    if g.disallow_db_writes:
+        raise Exception("not so fast! writes are not allowed on this app.")
+    else:
+        return tables[0]
 
 def get_read_table(tables):
     #shortcut with 1 entry
@@ -320,14 +323,15 @@ def get_read_table(tables):
         #add in the over-connected machines with a 1% weight
         ip_weights.extend((ip, .01) for ip in no_connections)
 
-        #rebalance the weights
-        total_weight = sum(w[1] for w in ip_weights)
-        ip_weights = [(ip, weight / total_weight)
-                      for ip, weight in ip_weights]
+    #rebalance the weights
+    total_weight = sum(w[1] for w in ip_weights)
+    ip_weights = [(ip, weight / total_weight)
+                  for ip, weight in ip_weights]
 
     r = random.random()
     for ip, load in ip_weights:
         if r < load:
+            # print "db ip: %s" % str(ips[ip][0].metadata.bind.url.host)
             return ips[ip]
         else:
             r = r - load

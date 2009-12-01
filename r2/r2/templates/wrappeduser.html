@@ -1,0 +1,66 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="plain_link" />
+
+%if context_deleted and not c.user_is_admin:
+  [deleted]
+%else:
+  %if thing.user_deleted:
+    <span>[deleted]</span>
+  %else:
+    ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
+               _class = thing.author_cls, _sr_path = False, target=target)}
+    %if thing.attribs:
+      <span class="userattrs">
+      &#32;[
+      %for priority, abbv, css_class, label, attr_link, img in thing.attribs:
+        %if attr_link:
+          <a class="${css_class}" title="${label}"
+          %if target:
+             target="${target}"
+          %endif
+             href="${attr_link}">
+          %if img:
+            <% (src, alt, width, height) = img %>
+            <img src="${src}" alt="${alt}" width="${width}" height="${height}"/>
+          %else:
+            ${abbv}
+          %endif
+          </a>
+        %else:
+          <span class="${css_class}" title="${label}">${abbv}</span>
+        %endif
+        ## this is a hack to print a comma after all but the final attr
+        %if priority != thing.attribs[-1][0]:
+          ,
+        %endif
+      %endfor
+      ]
+      </span>
+    %endif
+  %endif
+%endif
+
+%if thing.ip_span:
+  ${unsafe(thing.ip_span)}
+%endif

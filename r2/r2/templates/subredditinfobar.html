@@ -20,71 +20,76 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%! 
+<%!
+   import locale
    from r2.lib.utils import timesince
-   from r2.lib.strings import strings
-   %>
-<%namespace file="printablebuttons.html" 
-            import="ynbutton, toggle_button, state_button"/>
-<%namespace file="printable.html" import="thing_css_class" />
+   from r2.lib.strings import strings, Score
+   from r2.lib.pages import WrappedUser
+ %>
 
-%if not thing.is_fake:
-  <div class="raisedbox subreddit-info thing id-${thing.fullname}">
-    <h3>${thing.name}</h3>
-        %if thing.is_loggedin:
-           ${toggle_button("subscribe-button", 
-                           _("subscribe"), _("unsubscribe"),
-                           'subscribe("%s")' % thing.fullname,
-                           'unsubscribe("%s")' % thing.fullname,
-                           reverse = thing.is_subscriber)}
-        %endif
-        <span class="label">
-          (${strings.person_label % dict(num = thing.subscribers,
-                     persons = ungettext('subscriber', 'subscribers', 
-                                         thing.subscribers))})
-        </span>
-      <p>
-        ${_("a community for %(time)s") % dict(time=timesince(thing.date))}
-      </p>
-
-      <div id="${thing.fullname}" class="thing">
-        %if thing.is_contributor:
-          ${moderate_button("leave_contributor",
-                            _("you are a contributor of this reddit. (%(leave)s)"),
-                            _("stop being a contributor?"),
-                            _("you are no longer a contributor"))}
-        %endif
-
-        %if thing.is_moderator:
-          ${moderate_button("leave_moderator",
-                            _("you are a moderator of this reddit. (%(leave)s)"),
-                            _("stop being a moderator?"),
-                            _("you are no longer a moderator"))}
-                           
-        %endif
-      </div>
-    %if thing.is_admin:
-      %if thing.spam:
-        ${state_button("unban", _("unban"),
-          "return change_state(this, 'unban');", _("unbanned"))}
-        %if thing.banner:
-          <div>${strings.banned_by % thing.banner}</div>
-        %endif
-      %else:
-        ${state_button("ban", _("ban"),
-          "return change_state(this, 'ban');", _("banned"))}
-      %endif
-    %endif
-    <div class="spacer">  
-    %for n in thing.nav():
-      ${n}
-    %endfor
-    </div>
-  </div>
-%endif
-
+<%namespace file="subreddit.html" import="addremove_button" />
+<%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
 <%def name="moderate_button(location, fmt, question, left)">
   ${ynbutton(_("leave"), left, location,
-             question = question, format = fmt, format_arg = "leave")}
+             question = question, format = fmt, format_arg = "leave",
+             hidden_data = dict(id = thing.sr._fullname))}
 </%def>
+
+<div class="titlebox">
+  <h1>${thing.sr.name}</h1>
+
+  ${addremove_button(thing.sr)}
+  ${unsafe(Score.readers(thing.subscribers))}
+
+  %if thing.sr.moderator:
+    ${moderate_button("leavemoderator",
+                      _("you are a moderator of this reddit. (%(leave)s)"),
+                      _("stop being a moderator?"),
+                      _("you are no longer a moderator"))}
+                     
+  %endif
+
+  %if thing.sr.contributor:
+    ${moderate_button("leavecontributor",
+                      _("you are a contributor of this reddit. (%(leave)s)"),
+                      _("stop being a contributor?"),
+                      _("you are no longer a contributor"))}
+  %endif
+
+  %if thing.sr.description:
+    ${thing.sr.usertext}
+  %endif
+
+  <div class="bottom">
+    %if thing.sr.author:
+      created by &#32;
+      ${WrappedUser(thing.sr.author).render()}
+    %endif
+    
+    <span class="age">
+      ${_("a community for %(time)s") % dict(time=timesince(thing.sr._date))}
+    </span>  
+  </div>
+
+  %if c.user_is_admin:
+    %if thing.sr._spam:
+      ${state_button("unban", _("unban this reddit"),
+        "return change_state(this, 'unban');", _("unbanned"),
+        hidden_data = dict(id = thing.sr._fullname))}
+      %if thing.sr._spam and hasattr(thing.sr, "banner"):
+         &#32;(${strings.banned_by % thing.sr.banner})
+      %endif
+
+    %else:
+      ${state_button("ban", _("ban this reddit"),
+        "return change_state(this, 'ban');", _("banned"),
+        hidden_data = dict(id = thing.sr._fullname))}
+    %endif
+  %endif
+
+  <div class="clear"> </div>
+  
+
+</div>
+

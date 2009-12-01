@@ -21,11 +21,14 @@
 ################################################################################
 
 # Jacascript files to be compressified
-js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js
+js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js ui.core.js ui.datepicker.js sponsored.js
 # CSS targets 
-css_targets = reddit.css reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
+main_css = reddit.css
+css_targets = reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
 
 SED=sed
+CAT=cat
+CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
 
 package    = r2
 static_dir = $(package)/public/static
@@ -41,7 +44,8 @@ PRIVATEREPOS = $(shell python -c 'exec "try: import r2admin; print r2admin.__pat
 
 JSTARGETS  := $(foreach js,  $(js_targets),  $(static_dir)/$(js))
 CSSTARGETS := $(foreach css, $(css_targets), $(static_dir)/$(css))
-RTLCSS      = $(CSSTARGETS:.css=-rtl.css)
+MAINCSS    := $(foreach css, $(main_css), $(static_dir)/$(css))
+RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
 
 MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5)
@@ -67,10 +71,10 @@ $(JSTARGETS): 	$(static_dir)/%.js : $(static_dir)/js/%.js
 	$(JSCOMPRESS) < $< > $@
 
 $(CSSTARGETS): 	$(static_dir)/%.css : $(static_dir)/css/%.css
-	$(SED) -e 's/ \+/ /'  \
-	       -e 's/\/\*.*\*\///g' \
-	       -e 's/: /:/' \
-	   $< | grep -v "^ *$$" > $@
+	$(CAT) $< | $(CSS_COMPRESS) > $@
+
+$(MAINCSS):  $(static_dir)/%.css : $(static_dir)/css/%.css
+	python r2/lib/contrib/nymph.py $< | $(CSS_COMPRESS) > $@
 
 $(RTLCSS):	%-rtl.css : %.css
 	$(SED) -e "s/left/>####</g" \

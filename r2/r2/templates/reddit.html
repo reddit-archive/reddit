@@ -21,8 +21,8 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, path_info,  get_domain
-   from r2.lib.pages import SearchForm, ClickGadget
+   from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
+   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
@@ -54,18 +54,17 @@
   %else:
     <link rel="stylesheet" href="${static(g.stylesheet)}" 
           type="text/css" />
-    %if c.allow_styles:
       %if c.site.stylesheet:
       <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
             type="text/css" />
       %endif
-      %if c.site.stylesheet_contents:
-      <link rel="stylesheet" 
-            href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
-            title="applied_subreddit_stylesheet"
-            type="text/css" />
-      %endif
-    %endif
+  %endif
+
+  %if c.allow_styles and c.site.stylesheet_contents:
+     <link rel="stylesheet" 
+           href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
+           title="applied_subreddit_stylesheet"
+           type="text/css" />
   %endif
   %if getattr(thing, "additional_css", None):
     <link rel="stylesheet" href="${static(thing.additional_css)}" 
@@ -99,7 +98,6 @@
 </%def>
 
 <%def name="javascript_run()">
-   reddit.where = ${path_info()};
    reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
 </%def>
 
@@ -166,12 +164,14 @@
 
   %if c.user_is_admin:
     <%include file="admin_rightbox.html"/>
-  %else:
-    <%include file="ads.html"/>
   %endif
 
+  <%include file="ads.html"/>
+
   ##cheating... we should move ads into a template of its own
-  ${ClickGadget(c.recent_clicks)}
+  %if c.user.pref_clickgadget and c.recent_clicks:
+    ${SideContentBox(_("Recently viewed links"), [ClickGadget(c.recent_clicks)])}
+  %endif
 </%def>
 
 

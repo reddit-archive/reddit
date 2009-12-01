@@ -39,7 +39,11 @@
        # generates "comment" the imperative verb
        com_label = _("comment") 
  %>
-  <p class="link"><a href="${thing.url}" class="title">${thing.title}</a></p>
+  <p class="link"><a href="${thing.url}" class="title"
+                     %if thing.nofollow:
+                       rel="nofollow"
+                     %endif
+                     >${thing.title}</a></p>
   <p class="byline">${thing.score} ${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
   ${plain_link(com_label, thing.permalink)}</span>&nbsp;|&nbsp;${tagline()}</p>
 </%def>

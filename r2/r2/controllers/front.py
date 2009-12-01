@@ -102,7 +102,46 @@ class FrontController(RedditController):
         """The 'what is my password' page"""
         return BoringPage(_("password"), content=Password()).render()
 
-    @validate(cache_evt = VCacheKey('reset', ('key', 'name')),
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_verify(self, dest):
+        if c.user.email_verified:
+            content = InfoBar(message = strings.email_verified)
+            if dest:
+                return self.redirect(dest)
+        else:
+            content = PaneStack(
+                [InfoBar(message = strings.verify_email),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+        return BoringPage(_("verify email"), content = content).render()
+
+    @validate(VUser(),
+              cache_evt = VCacheKey('email_verify', ('key',)),
+              key = nop('key'),
+              dest = VDestination(default = "/prefs/update"))
+    def GET_verify_email(self, cache_evt, key, dest):
+        if c.user_is_loggedin and c.user.email_verified:
+            cache_evt.clear()
+            return self.redirect(dest)
+        elif not (cache_evt.user and
+                key == passhash(cache_evt.user.name, cache_evt.user.email)):
+            content = PaneStack(
+                [InfoBar(message = strings.email_verify_failed),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+            return BoringPage(_("verify email"), content = content).render()
+        elif c.user != cache_evt.user:
+            # wrong user.  Log them out and try again. 
+            self.logout()
+            return self.redirect(request.fullpath)
+        else:
+            cache_evt.clear()
+            c.user.email_verified = True
+            c.user._commit()
+            return self.redirect(dest)
+
+    @validate(cache_evt = VCacheKey('reset', ('key',)),
               key = nop('key'))
     def GET_resetpassword(self, cache_evt, key):
         """page hit once a user has been sent a password reset email
@@ -129,11 +168,13 @@ class FrontController(RedditController):
         """The (now depricated) details page.  Content on this page
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
-        return DetailsPage(link = article).render()
-    
+        return DetailsPage(link = article, expand_children=False).render()
+
 
     @validate(article = VLink('article'))
     def GET_shirt(self, article):
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
         if g.spreadshirt_url:
             from r2.lib.spreadshirt import ShirtPage
             return ShirtPage(link = article).render()
@@ -147,12 +188,18 @@ class FrontController(RedditController):
     def GET_comments(self, article, comment, context, sort, num_comments):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
-            return self.abort404()    
-
-        if not c.default_sr and c.site._id != article.sr_id: 
             return self.abort404()
-        
-        if not article.subreddit_slow.can_view(c.user):
+
+        sr = Subreddit._byID(article.sr_id, True)
+
+        if sr.name == g.takedown_sr:
+            request.environ['REDDIT_TAKEDOWN'] = article._fullname
+            return self.abort404()
+
+        if not c.default_sr and c.site._id != sr._id:
+            return self.abort404()
+
+        if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
         #check for 304
@@ -188,8 +235,7 @@ class FrontController(RedditController):
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
         # insert reply box only for logged in user
-        if c.user_is_loggedin and article.subreddit_slow.can_comment(c.user)\
-                and not is_api():
+        if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
@@ -200,7 +246,7 @@ class FrontController(RedditController):
         displayPane.append(listing.listing())
 
         loc = None if c.focal_comment or context is not None else 'comments'
-        
+
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane, 
                            subtitle = _("comments"),
@@ -300,10 +346,10 @@ class FrontController(RedditController):
             return self.abort404()
 
         return EditReddit(content = pane).render()
-                              
-    def GET_stats(self):
-        """The stats page."""
-        return BoringPage(_("stats"), content = UserStats()).render()
+
+    def GET_awards(self):
+        """The awards page."""
+        return BoringPage(_("awards"), content = UserAwards()).render()
 
     # filter for removing punctuation which could be interpreted as lucene syntax
     related_replace_regex = re.compile('[?\\&|!{}+~^()":*-]+')
@@ -314,6 +360,9 @@ class FrontController(RedditController):
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query."""
+
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
 
         title = c.site.name + ((': ' + article.title) if hasattr(article, 'title') else '')
 
@@ -335,8 +384,10 @@ class FrontController(RedditController):
     @base_listing
     @validate(article = VLink('article'))
     def GET_duplicates(self, article, num, after, reverse, count):
-        links = link_duplicates(article)
+        if not can_view_link_comments(article):
+            abort(403, 'forbidden')
 
+        links = link_duplicates(article)
         builder = IDBuilder([ link._fullname for link in links ],
                             num = num, after = after, reverse = reverse,
                             count = count, skip = False)
@@ -492,6 +543,12 @@ class FrontController(RedditController):
             c.response.content = ''
         return c.response
 
+    @validate(VAdmin(),
+              comment = VCommentByID('comment_id'))
+    def GET_comment_by_id(self, comment):
+        href = comment.make_permalink_slow(context=5, anchor=True)
+        return self.redirect(href)
+
     @validate(VUser(), 
               VSRSubmitPage(),
               url = VRequired('url', None),
@@ -609,15 +666,23 @@ class FrontController(RedditController):
             return self.abort404()
 
 
-    @validate(VSponsor(),
+    @validate(VTrafficViewer('article'),
               article = VLink('article'))
     def GET_traffic(self, article):
-        res = LinkInfoPage(link = article,
+        content = PromotedTraffic(article)
+        if c.render_style == 'csv':
+            c.response.content = content.as_csv()
+            return c.response
+
+        return LinkInfoPage(link = article,
                            comment = None,
-                           content = PromotedTraffic(article)).render()
-        return res
-        
+                           content = content).render()
+
     @validate(VAdmin())
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
+
+
+    def GET_ad(self, reddit = None):
+        return Dart_Ad(reddit).render(style="html")

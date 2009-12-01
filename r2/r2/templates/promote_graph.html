@@ -1,0 +1,276 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+## 
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+## 
+## The Original Code is Reddit.
+## 
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+## 
+## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   import datetime, locale
+   def num(x):
+      return locale.format('%d', x, True)
+   def money(x):
+      return "$%.2f" % x
+ %>
+<h1>Sponsored link calendar</h1>
+
+%if not c.user_is_sponsor:
+<div class="instructions">
+  <p>Below is a calendar of your scheduled and completed promotions (if you have any, of course), along with some site-wide averages to use as a guide for setting up future promotions.  These values are:</p>
+  <dl>
+    <dt>Count:</dt>
+      <dd>Total number of sponsored links which either ran or are scheduled to run (site-wide).</dd>
+    <dt>CPM:</dt>
+      <dd>Cost per thousand impressions (site-wide).  Note that today's CPM is estimated.</dd>
+    <dt>CPC:</dt>
+      <dd>Cost per click, also site-wide and with the same caveat about today's value</dd>
+    <dt>your commit:</dt>
+      <dd>Total amount you have spent or have scheduled to spend on a given day</dd>
+  </dl>
+</div>
+
+%endif
+
+<% max_percent = 97. %>
+
+<div class="calendar">
+  <%
+     today = thing.now.date()
+   %>
+    <div class="grid" 
+         style="left:0; right:${'%.2f'%(100 - max_percent/(thing.total_size+1))}%">
+      <div class="header">
+        DATE
+      </div>
+      <div class="header total">
+        COUNT
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+        IMPRESSIONS<br/>
+        %endif
+        CPM
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+        CLICKS<br/>
+        %endif
+        CPC
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+          TOTAL COMMIT
+        %else:
+          YOUR COMMIT
+        %endif
+      </div>      
+    </div>
+  %for i in xrange(thing.total_size):
+    <%
+       left = "%.2f" % (max_percent*float(i+1)/(thing.total_size+1))
+       right = "%.2f" %  (100 - max_percent*float(i+2)/(thing.total_size+1))
+       day = thing.start_date + datetime.timedelta(i)
+       CPC = CPM = imp_traffic = cli_traffic = "---"
+       if thing.promo_traffic.has_key(day):
+           imp_traffic, cli_traffic = thing.promo_traffic[day]
+           if thing.market.has_key(i):
+              CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
+              CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
+           imp_traffic = num(imp_traffic)
+           cli_traffic = num(cli_traffic)
+           if day == today:
+              imp_traffic = "(%s)" % imp_traffic
+              cli_traffic = "(%s)" % cli_traffic
+     %>
+    <div class="grid ${'today' if day == today else ''}" 
+         style="left:${left}%; right:${right}%">
+      <div class="header">
+        ${day}
+      </div>
+      <div class="header total">
+        ${thing.promo_counter.get(i, unsafe("&nbsp;"))}
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+          ${imp_traffic}<br/>
+        %endif
+        ${CPM}
+      </div>
+      <div class="header total">
+        %if c.user_is_sponsor:
+          ${cli_traffic}<br/>
+        %endif
+        ${CPC}
+      </div>
+      <div class="header total">
+        ${"$%.2f" % thing.my_market[i] if thing.my_market.has_key(i) else "---"}
+      </div>      
+    </div>
+  %endfor
+
+<% 
+   prev_end = 0
+ %>
+%for link, start, end in thing.promote_blocks:
+  <% 
+     start += 1
+     end += 1
+   %>
+ %if start != end:
+  %if prev_end > start:
+    <% prev_end = 0 %>
+    <div class="clearleft"></div>
+  %endif
+  <%
+     margin = "%.2f" % (float(max_percent*(start-prev_end))/(thing.total_size+1))
+     width  = "%.2f" % (float(max_percent*(end-start))/(thing.total_size+1))
+     prev_end = end 
+   %>  
+  <div class="blob promotedlink ${link.rowstyle} rounded"
+       title="${link.title}"  
+       onclick="$.redirect($(this).find('a').attr('href'));"
+       style="width: ${width}%; margin-left: ${margin}%">
+    <div class="bid">
+        $${int(link.promote_bid)}
+    </div>
+    <a class="title" 
+       href="/promoted/edit_promo/${link._id36}"
+       title="${link.title}">
+      ${link.author.name}
+    </a>
+  </div>
+ %endif
+%endfor
+</div>
+<div class="clear"></div>
+
+%if c.user_is_sponsor:
+  <h1>${_("total promotion traffic")}</h1>
+  <div>
+  %if thing.imp_graph:
+    <img class="traffic-graph" src="${thing.imp_graph}"
+         alt="impressions graph"/>
+  %endif
+  %if thing.cli_graph:
+     <img class="traffic-graph" src="${thing.cli_graph}" 
+          alt="click graph"/>
+  %endif
+  %if thing.money_graph:
+     <img class="traffic-graph" src="${thing.money_graph}" 
+          alt="money graph"/>
+  %endif
+  </div>
+%endif
+
+<h1>${_("historical site performance")}</h1>
+<div>
+%if thing.cpm_graph:
+   <img class="traffic-graph" src="${thing.cpm_graph}" 
+        alt="CPM graph"/>
+%endif
+%if thing.cpc_graph:
+   <img class="traffic-graph" src="${thing.cpc_graph}" 
+        alt="CPC graph"/>
+%endif
+%if thing.cpc_graph and c.user_is_sponsor:
+   <img class="traffic-graph" src="${thing.ctr_graph}" 
+        alt="CTR graph"/>
+%endif
+</div>
+
+%if c.user_is_sponsor:
+<div class="clear"></div>
+  %if thing.top_promoters:
+  <h1>${_('top promoters this month')}</h1>
+  
+  <table class="traffic-table">
+    <tr>
+      <th>user</th>
+      <th>promos</th>
+      <th>bids</th>
+      <th>credits</th>
+      <th>total</th>
+      <th>per promo</th>
+    </tr>
+    %for account, bid, refund, promos in thing.top_promoters:
+      <tr>
+        <td>${account.name}</td>
+        <td>${len(promos)}</td>
+        <td>${money(bid)}</td>
+        <td>${money(refund)}</td>
+        <td>${money(bid - refund)}</td>
+        <td>${money((bid - refund)/len(promos))}</td>
+      </tr>
+    %endfor
+    %if len(thing.top_promoters) != 1:
+      <% 
+         totals = zip(*thing.top_promoters)
+         total_bid = sum(totals[1])
+         total_refund = sum(totals[2])
+         total_promos = sum(map(len, totals[3]))
+       %>
+      <tr class="totals">
+        <td>Total</td>
+        <td>${total_promos}</td>
+        <td>${money(total_bid)}</td>
+        <td>${money(total_refund)}</td>
+        <td>${money(total_bid - total_refund)}</td>
+        <td>${money((total_bid - total_refund)/total_promos)}</td>
+      </tr>
+   %endif
+  </table>
+  %endif
+
+  %if thing.recent:
+  <h1>${_('promotions this month')}&nbsp;<a href="/promoted/graph.csv">[CSV]</a></h1>
+  
+  <table class="traffic-table">
+    <tr>
+      <th colspan="2">Impresions</th>
+      <th colspan="2">Clicks</th>
+      <th></th>
+      <th></th>
+    </tr>
+    <tr>
+      <th>date</th>
+      <th>unique</th>
+      <th>total</th>
+      <th>unique</th>
+      <th>total</th>
+      <th>price</th>
+      <th>points</th>
+      <th>title</th>
+    </tr>
+    %for link, uimp, nimp, ucli, ncli in thing.recent:
+    <tr>
+      <td style="white-space:nowrap">
+        ${link._date.strftime("%Y-%m-%d")}
+      </td>
+      <td>${num(uimp)}</td>
+      <td>${num(nimp)}</td>
+      <td>${num(ucli)}</td>
+      <td>${num(ncli)}</td>
+      <td>${money(link.promote_bid)}</td>
+      <td>${link._ups - link._downs}</td>
+      <td style="text-align:left">
+        <a class="title" href="${link.permalink}">${link.title}</a>
+      </td>
+    </tr>
+    %endfor
+  </table>
+  %endif
+%endif

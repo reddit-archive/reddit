@@ -21,7 +21,7 @@
 ################################################################################
 
 <%! 
-   from r2.lib.template_helpers import add_sr, find_author_class
+   from r2.lib.template_helpers import add_sr
    from r2.lib.strings import strings
    from r2.lib.pages.things import BanButtons
 %>
@@ -114,57 +114,6 @@ thing id-${what._fullname}
   ${thing.childlisting}
 </div>
 </%def>
-
-<%def name="author(attribs = None, gray = False)" buffered="True">
-  %if thing.deleted and not c.user_is_admin:
-    [deleted]
-  %else:
-  <%
-      attribs.sort()
-      author_cls = find_author_class(thing, attribs, gray)
-
-      target = getattr(thing, "target", None)
-
-      disp_name = websafe(thing.author.name)
-      karma = ""
-      if c.user_is_admin:
-        karma = " (%d)" % (thing.author.link_karma)
-  %>
-
-  %if thing.author._deleted:
-    <span>[deleted]</span>
-  %else:
-      ${plain_link(disp_name + karma, "/user/%s" % disp_name,
-                 _class = author_cls, _sr_path = False, target=target)}
-      %if attribs:
-        <span class="userattrs">
-        &#32;[
-        %for priority, abbv, css_class, label, attr_link in attribs:
-          %if attr_link:
-            <a class="${css_class}" title="${label}"
-            %if target:
-               target="${target}"
-            %endif
-               href="${attr_link}">${abbv}</a>
-          %else:
-            <span class="${css_class}" title="${label}">${abbv}</span>
-          %endif
-          ## this is a hack to print a comma after all but the final attr
-          %if priority != attribs[-1][0]:
-            ,
-          %endif
-        %endfor
-        ]
-        </span>
-  %endif
-    %endif
-  %endif
-
-  %if c.user_is_admin and hasattr(thing, 'ip') and thing.ip:
-    <span class="ip" style="display: none;">${thing.ip}</span>
-  %endif
-</%def>
-
 
 <%def name="arrow(this, dir, mod)">
 <% 

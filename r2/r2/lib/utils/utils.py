@@ -23,6 +23,7 @@ from urllib import unquote_plus, quote_plus, urlopen, urlencode
 from urlparse import urlparse, urlunparse
 from threading import local, Thread
 import Queue
+import signal
 from copy import deepcopy
 import cPickle as pickle
 import re, datetime, math, random, string, sha, os
@@ -198,6 +199,17 @@ def strips(text, remove):
     
     """
     return rstrips(lstrips(text, remove), remove)
+
+class Enum(Storage):
+    def __init__(self, *a):
+        self.name = tuple(a)
+        Storage.__init__(self, ((e, i) for i, e in enumerate(a)))
+    def __contains__(self, item):
+        if isinstance(item, int):
+            return item in self.values()
+        else:
+            return Storage.__contains__(self, item)
+            
 
 class Results():
     def __init__(self, sa_ResultProxy, build_fn, do_batch=False):
@@ -887,7 +899,7 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
-def find_recent_broken_things(from_time = None, delete = False):
+def find_recent_broken_things(from_time = None, to_time = None, delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
         be partially written out to the database. Things missing data
@@ -896,11 +908,10 @@ def find_recent_broken_things(from_time = None, delete = False):
         them as appropriate.
     """
     from r2.models import Link,Comment
+    from pylons import g
 
-    if not from_time:
-        from_time = timeago("1 hour")
-
-    to_time = timeago("60 seconds")
+    from_time = from_time or timeago('1 hour')
+    to_time = to_time or datetime.now(g.tz)
 
     for (cls,attrs) in ((Link,('author_id','sr_id')),
                         (Comment,('author_id','sr_id','body','link_id'))):
@@ -921,7 +932,6 @@ def find_broken_things(cls,attrs,from_time,to_time,delete = False):
                 getattr(t,a)
             except AttributeError:
                 # that failed; let's explicitly load it, and try again
-                print "Reloading %s" % t._fullname
                 t._load()
                 try:
                     getattr(t,a)
@@ -943,37 +953,23 @@ def lineno():
     import inspect
     print "%s\t%s" % (datetime.now(),inspect.currentframe().f_back.f_lineno)
 
-class IteratorChunker(object):
-    def __init__(self,it):
-        self.it = it
-        self.done=False
-
-    def next_chunk(self,size):
-        chunk = []
-        if not self.done:
-            try:
-                for i in xrange(size):
-                    chunk.append(self.it.next())
-            except StopIteration:
-                self.done=True
-        return chunk
-
 def IteratorFilter(iterator, fn):
     for x in iterator:
         if fn(x):
             yield x
 
-def UniqueIterator(iterator):
+def UniqueIterator(iterator, key = lambda x: x):
     """
     Takes an iterator and returns an iterator that returns only the
     first occurence of each entry
     """
     so_far = set()
     def no_dups(x):
-        if x in so_far:
+        k = key(x)
+        if k in so_far:
             return False
         else:
-            so_far.add(x)
+            so_far.add(k)
             return True
 
     return IteratorFilter(iterator, no_dups)
@@ -1087,7 +1083,7 @@ def link_from_url(path, filter_spam = False, multiple = True):
         elif a.sr_id not in subs and b.sr_id in subs:
             return 1
         else:
-            return cmp(a._hot, b._hot)
+            return cmp(b._hot, a._hot)
     links = sorted(links, cmp = cmp_links)
 
     # among those, show them the hottest one
@@ -1106,3 +1102,62 @@ def link_duplicates(article):
 
     return duplicates
 
+class TimeoutFunctionException(Exception):
+    pass
+
+class TimeoutFunction:
+    """Force an operation to timeout after N seconds. Works with POSIX
+       signals, so it's not safe to use in a multi-treaded environment"""
+    def __init__(self, function, timeout):
+        self.timeout = timeout
+        self.function = function
+
+    def handle_timeout(self, signum, frame):
+        raise TimeoutFunctionException()
+
+    def __call__(self, *args):
+        # can only be called from the main thread
+        old = signal.signal(signal.SIGALRM, self.handle_timeout)
+        signal.alarm(self.timeout)
+        try:
+            result = self.function(*args)
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old)
+        return result
+
+def make_offset_date(start_date, interval, future = True,
+                     business_days = False):
+    """
+    Generates a date in the future or past "interval" days from start_date.
+
+    Can optionally give weekends no weight in the calculation if
+    "business_days" is set to true.
+    """
+    if interval is not None:
+        interval = int(interval)
+        if business_days:
+            weeks = interval / 7
+            dow = start_date.weekday()
+            if future:
+                future_dow = (dow + interval) % 7
+                if dow > future_dow or future_dow > 4:
+                    weeks += 1
+            else:
+                future_dow = (dow - interval) % 7
+                if dow < future_dow or future_dow > 4:
+                    weeks += 1
+            interval += 2 * weeks;
+        if future:
+            return start_date + timedelta(interval)
+        return start_date - timedelta(interval)
+    return start_date
+
+def to_csv(table):
+    # commas and linebreaks must result in a quoted string
+    def quote_commas(x):
+        if ',' in x or '\n' in x:
+            return u'"%s"' % x.replace('"', '""')
+        return x
+    return u"\n".join(u','.join(quote_commas(y) for y in x)
+                      for x in table)

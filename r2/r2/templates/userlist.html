@@ -24,8 +24,10 @@
 <% from r2.lib.template_helpers import static %>
 <div class="${thing._class} usertable">
   %if thing.editable:
-    <form action="/post/friend" method="post" class="pretty-form medium-text"
-          onsubmit="return post_form(this, 'friend');" id="${thing.type}">
+    <form action="/post/${thing.destination}"
+          method="post" class="pretty-form medium-text"
+          onsubmit="return post_form(this, '${thing.destination}');" 
+          id="${thing.type}">
       <h1>${thing.form_title}</h1>
 
       <input type="hidden" name="action" value="add"/>
@@ -38,16 +40,21 @@
     </form>
   %endif
 
-  <h1>${thing.table_title}</h1>
+  <div id="${thing.type}-table" 
+       ${"style='display:none'" if not thing.users else ""}>
+    <h1> 
+      ${thing.table_title}
+    </h1>
 
-  <table>
-    %if thing.users:
-      %for item in thing.users:
-        ${item}
-      %endfor
-    %else:
-      <tr><td></td></tr>
-    %endif
-  </table>
+    <table>
+      %if thing.users:
+        %for item in thing.users:
+          ${item}
+        %endfor
+      %else:
+        <tr><td></td></tr>
+      %endif
+    </table>
+  </div>
 </div>
 

@@ -21,76 +21,94 @@
 ################################################################################
 
 <%! 
+   import locale
    from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
+   from r2.lib.template_helpers import static
    from r2.lib.utils import timesince
  %>
 <%namespace file="utils.html" import="submit_form, plain_link"/>
 <%namespace file="printablebuttons.html" import="toggle_button"/>
-<% user = thing.user %>
-%if thing.user:
-<div class="raisedbox">
-  <h3> ${thing.user.name} </h3>
 
-  <ul>
+<div class="titlebox">
+  <h1>
+    ${thing.user.name}
+
     %if c.user_is_admin:
-      %if thing.user._spam:
-        <li><b>(banned)</b></li>
-      %endif
-        <li>
-          <table>
-         <%
-           karmas = thing.user.all_karmas()
-         %>
-        %for i, (label, lc, cc) in enumerate(karmas):
-          <tr
-          %if i < 5:
-              style="text-align:right"
-          %else:
-              class="more-karmas"
-              style="text-align:right; display: none"
-          %endif
-            >
-            <th>${label}:</th>
-            <td><b>${lc}</b></td>
-            <td>/</td>
-            <td><b>${cc}</b></td>
-          </tr>
-        %endfor
-          </table>
-          %if i >= 5:
-            <a href="javascript:void(0)"
-               onclick="$('.more-karmas').show();$(this).hide();return false">
-               show karma for all ${len(karmas)} reddits
-            </a>
-          %endif
-        </li>
-    %else:
-      <li class="karma">
-        ${_("karma:")} &#32;<b>${thing.user.safe_karma}</b>
-      </li>
-      <li class="comment-karma">
-        ${_("comment karma:")} &#32;<b>${thing.user.comment_karma}</b>
-      </li>
-    %endif 
-    <li class="user-age">
-      ${_("user for %(time)s") % dict(time=timesince(thing.user._date))}
-    </li>
+      <span class="account-notes">
+        #${thing.user._id}
 
-    %if c.user_is_loggedin and not thing.isMe:
-    <li>
-      ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}
-    </li>
-    <li>
-      ${toggle_button("", _("add to friends"), _("remove from friends"),
-         "friend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
-         "unfriend('%s', '%s', 'friend')" % (thing.user.name, c.user._fullname),
-         reverse = thing.isFriend)}
-    </li>
+        %if thing.user._deleted:
+          <span class="unusual">(deleted)</span>
+        %endif
+
+        %if thing.user._spam:
+          <span class="unusual">(banned)</span>
+        %endif
+      </span>
+    %endif
+
+  </h1>
+
+  %if c.user != thing.user:
+    <div>
+    ${toggle_button("fancy-toggle-button", _("+ friends"), _("- friends"), 
+         "friend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
+         "unfriend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
+         css_class = "add", alt_css_class = "remove",
+         reverse = thing.is_friend)}
+    </div>
   %endif
-  </ul>
 
-  <div class="clear"></div>
+  %if c.user_is_admin:
+    <table>
+     <%
+       karmas = thing.user.all_karmas()
+     %>
+     %for i, (label, lc, cc) in enumerate(karmas):
+        <tr
+        %if i < 5:
+          style="text-align:right"
+        %else:
+          class="more-karmas"
+          style="text-align:right; display: none"
+        %endif
+        >
+          <th>${label}:</th>
+          <td><b>${lc}</b></td>
+          <td>/</td>
+          <td><b>${cc}</b></td>
+        </tr>
+      %endfor
+    </table>
+    %if i >= 5:
+      <a href="javascript:void(0)"
+         onclick="$('.more-karmas').show();$(this).hide();return false">
+         show karma for all ${len(karmas)} reddits
+      </a>
+    %endif
+  %else:
+    <span class="karma">${locale.format("%d", thing.user.safe_karma, True)}</span>
+    &#32;
+    ${_("link karma")}
+    
+    <br/>
+    <span class="karma">${locale.format("%d", thing.user.comment_karma, True)}</span>
+    &#32;
+    ${_("comment karma")}
+  %endif
+
+  <div class="bottom">
+    %if thing.user != c.user:
+      <img src="${static('mailgray.png')}"/>
+      &#32;
+      ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}
+    %endif
+    
+    <span class="age">
+      ${_("redditor for %(time)s") % dict(time=timesince(thing.user._date))}
+    </span>  
+  </div>
+
+  <div class="clear"> </div>
 
 </div>
-
-%endif

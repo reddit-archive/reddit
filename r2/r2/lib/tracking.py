@@ -140,7 +140,7 @@ class UserInfo(Info):
         self.site = safe_str(c.site.name if c.site else '')
         self.lang = safe_str(c.lang if c.lang else '')
         self.cname = safe_str(c.cname)
-            
+
 class PromotedLinkInfo(Info):
     _tracked = []
     tracker_url = g.adtracker_url
@@ -174,7 +174,17 @@ class PromotedLinkClickInfo(PromotedLinkInfo):
     def tracking_url(self):
         s = (PromotedLinkInfo.tracking_url(self) + '&url=' + self.dest)
         return s
-        
+
+class AdframeInfo(PromotedLinkInfo):
+    tracker_url = g.adframetracker_url
+
+    @classmethod
+    def make_hash(cls, ip, fullname):
+        return sha.new("%s%s" % (fullname,
+                                 g.tracking_secret)).hexdigest()
+
+
+
 def benchmark(n = 10000):
     """on my humble desktop machine, this gives ~150 microseconds per gen_url"""
     import time

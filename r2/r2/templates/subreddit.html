@@ -42,9 +42,9 @@
   %endif
 </p>
 %if thing.description:
-  <p class="description">
-    ${thing.description}
-  </p>
+  <div class="description">
+    ${thing.usertext}
+  </div>
 %endif
 <p class="tagline">
   ${self.tagline()}
@@ -61,7 +61,7 @@
 
 ##this function is used by subscriptionbox.html
 <%def name="addremove_button(sr)">
-  ${toggle_button("sr-toggle-button", "", "", 
+  ${toggle_button("fancy-toggle-button", _("+ frontpage"), _("- frontpage"), 
                   "subscribe('%s')" % sr._fullname, 
                   "unsubscribe('%s')" % sr._fullname, 
                   css_class = "add", alt_css_class = "remove",

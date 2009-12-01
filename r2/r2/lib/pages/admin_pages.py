@@ -26,6 +26,7 @@ from r2.lib.menus   import NamedButton, NavButton, menu, NavMenu
 
 class AdminSidebar(Templated):
     def __init__(self, user):
+        Templated.__init__(self)
         self.user = user
 
 
@@ -46,7 +47,9 @@ class AdminPage(Reddit):
             buttons = []
 
             if g.translator:
-                buttons.append(NavButton(menu.i18n, ""))
+                buttons.append(NavButton(menu.i18n, "i18n"))
+
+            buttons.append(NavButton(menu.awards, "awards"))
 
             admin_menu = NavMenu(buttons, title='show', base_path = '/admin',
                                  type="lightdrop")

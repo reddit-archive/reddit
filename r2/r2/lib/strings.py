@@ -30,7 +30,7 @@ hooks to the UI are the same.
 import helpers as h
 from pylons import g
 from pylons.i18n import _, ungettext
-import random
+import random, locale
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
            'Score', 'rand_strings']
@@ -58,7 +58,7 @@ string_dict = dict(
     float_label = _("%(num)5.3f %(thing)s"),
 
     # this is for Japanese which treats people counds differently
-    person_label = _("%(num)d %(persons)s"),
+    person_label = _('<span class="number">%(num)s</span>&#32;<span class="word">%(persons)s</span>'),
 
     firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
 
@@ -79,14 +79,16 @@ string_dict = dict(
         friend = None,
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
         contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
-        banned = _("you have been banned from posting to [%(title)s](%(url)s).")
+        banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
+        traffic = _('you have been added to the list of users able to see [traffic for the sponsoted link "%(title)s"](%(traffic_url)s).')
         ),
 
     subj_add_friend = dict(
         friend = None,
         moderator = _("you are a moderator"),
         contributor = _("you are a contributor"),
-        banned = _("you've been banned")
+        banned = _("you've been banned"),
+        traffic = _("you can view traffic on a promoted link")
         ),
     
     sr_messages = dict(
@@ -96,7 +98,7 @@ string_dict = dict(
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
-    sr_subscribe =  _('click the `add` or `remove` buttons to choose which reddits appear on your front page.'),
+    sr_subscribe =  _('click the `+frontpage` or `-frontpage` buttons to choose which reddits appear on your front page.'),
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
                            'you can also search within [all reddits](%(all_reddits_link)s)'),
@@ -125,6 +127,9 @@ string_dict = dict(
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
     iphone_first = _("You should consider using [reddit's free iphone app](http://itunes.com/apps/iredditfree)."),
+    verify_email = _("we're going to need to verify your email address for you to proceed."),
+    email_verified =  _("your email address has been verfied"),
+    email_verify_failed = _("Verification failed.  Please try that again"),
 )
 
 class StringHandler(object):
@@ -194,6 +199,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("subreddit",   "subreddits"),
                          
                          # people
+                         P_("reader",  "readers"),
                          P_("subscriber",  "subscribers"),
                          P_("contributor", "contributors"),
                          P_("moderator",   "moderators"),
@@ -226,9 +232,18 @@ class Score(object):
                                             point=plurals.N_points(x))
 
     @staticmethod
+    def _people(x, label):
+        return strings.person_label % \
+            dict(num = locale.format("%d", x, True),
+                 persons = label(x))
+
+    @staticmethod
     def subscribers(x):
-        return  strings.person_label % \
-            dict(num = x, persons = plurals.N_subscribers(x))
+        return  Score._people(x, plurals.N_subscribers)
+
+    @staticmethod
+    def readers(x):
+        return  Score._people(x, plurals.N_readers)
 
     @staticmethod
     def none(x):

@@ -21,10 +21,7 @@
 ################################################################################
 <%namespace file="printablebuttons.html" import="simple_button" />
 
-%if c.user.pref_clickgadget:
-<div class="gadget" style="${'display: none' if not thing.content else ''}">
-  <h2>${_("Recently viewed links")}</h2>
-
+<div class="gadget">
   <div class="click-gadget">
     ${unsafe(thing.content)}
   </div>
@@ -33,4 +30,3 @@
     ${simple_button(_("clear"), "clear_clicked_items")}
   </div>
 </div>
-%endif

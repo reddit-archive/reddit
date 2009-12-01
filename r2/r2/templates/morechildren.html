@@ -33,7 +33,8 @@
 <a style="font-size: smaller; font-weight: bold" 
    id="more_${thing._fullname}" href="javascript:void()" 
    onclick="return morechildren(this, '${thing.link_name}', '${",".join(cids)}', ${thing.depth})">
-load more comments <span class="gray">&nbsp;(${thing.count} ${ungettext("reply", "replies", thing.count)})</span>
+${_("load more comments")}
+<span class="gray">&nbsp;(${thing.count} ${ungettext("reply", "replies", thing.count)})</span>
 </a>
 </span>
 </%def>

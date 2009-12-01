@@ -76,14 +76,6 @@ def class_dict():
     res = ', '.join(classes)
     return unsafe('{ %s }' % res)
 
-def path_info():
-    loc = dict(path = request.path,
-               params = dict(request.get))
-    
-    return unsafe(simplejson.dumps(loc))
-    
-
-
 def replace_render(listing, item, render_func):
     def _replace_render(style = None, display = True):
         """
@@ -143,25 +135,31 @@ def replace_render(listing, item, render_func):
                 com_cls = 'comments'
             replacements['numcomments'] = com_label
             replacements['commentcls'] = com_cls
-    
+
         replacements['display'] =  "" if display else "style='display:none'"
-    
+
         if hasattr(item, "render_score"):
             # replace the score stub
             (replacements['scoredislikes'],
              replacements['scoreunvoted'],
              replacements['scorelikes'])  = item.render_score
-    
+
         # compute the timesince here so we don't end up caching it
         if hasattr(item, "_date"):
-            replacements['timesince'] = timesince(item._date)
+            if hasattr(item, "promoted") and item.promoted is not None:
+                from r2.lib import promote
+                # promoted links are special in their date handling
+                replacements['timesince'] = timesince(item._date -
+                                                      promote.timezone_offset)
+            else:
+                replacements['timesince'] = timesince(item._date)
 
         renderer = render_func or item.render
         res = renderer(style = style, **replacements)
         if isinstance(res, (str, unicode)):
             return unsafe(res)
         return res
-                          
+
     return _replace_render
 
 def get_domain(cname = False, subreddit = True, no_www = False):
@@ -186,7 +184,7 @@ def get_domain(cname = False, subreddit = True, no_www = False):
     """
     # locally cache these lookups as this gets run in a loop in add_props
     domain = g.domain
-    domain_prefix = g.domain_prefix
+    domain_prefix = c.domain_prefix
     site  = c.site
     ccname = c.cname
     if not no_www and domain_prefix:
@@ -308,19 +306,51 @@ def panel_size(state):
     "the frame.cols of the reddit-toolbar's inner frame"
     return '400px, 100%' if state =='expanded' else '0px, 100%x'
 
-def find_author_class(thing, attribs, gray):
-    #assume attribs is sorted
-    author = thing.author
-    author_cls = "author"
+# Appends to the list "attrs" a tuple of:
+# <priority (higher trumps lower), letter,
+#  css class, i18n'ed mouseover label, hyperlink (opt), img (opt)>
+def add_attr(attrs, code, label=None, link=None):
+    from r2.lib.template_helpers import static
 
-    extra_class = ''
-    attribs.sort()
+    img = None
 
-    if gray:
-        author_cls += " gray"
+    if code == 'F':
+        priority = 1
+        cssclass = 'friend'
+        if not label:
+            label = _('friend')
+        if not link:
+            link = '/prefs/friends'
+    elif code == 'S':
+        priority = 2
+        cssclass = 'submitter'
+        if not label:
+            label = _('submitter')
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'M':
+        priority = 3
+        cssclass = 'moderator'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    elif code == 'A':
+        priority = 4
+        cssclass = 'admin'
+        if not label:
+            label = _('reddit admin, speaking officially')
+        if not link:
+            link = '/help/faq#Whomadereddit'
+    elif code == 'trophy':
+        img = (static('award.png'), '!', 11, 8)
+        priority = 99
+        cssclass = 'recent-trophywinner'
+        if not label:
+            raise ValueError ("Need a label")
+        if not link:
+            raise ValueError ("Need a link")
+    else:
+        raise ValueError ("Got weird code [%s]" % code)
 
-    for priority, abbv, css_class, label, attr_link in attribs:
-        author_cls += " " + css_class
-
-
-    return author_cls
+    attrs.append( (priority, code, cssclass, label, link, img) )

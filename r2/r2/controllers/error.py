@@ -33,6 +33,7 @@ try:
     # the stack trace won't be presented to the user in production
     from reddit_base import RedditController
     from r2.models.subreddit import Default, Subreddit
+    from r2.models.link import Link
     from r2.lib import pages
     from r2.lib.strings import strings, rand_strings
 except Exception, e:
@@ -45,7 +46,7 @@ except Exception, e:
         # kill this app
         import os
         os._exit(1)
-    
+
 redditbroke =  \
 '''<html>
   <head>
@@ -131,10 +132,14 @@ class ErrorController(RedditController):
 
             code =  request.GET.get('code', '')
             srname = request.GET.get('srname', '')
+            takedown = request.GET.get('takedown', "")
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
                 return str(code)
+            elif takedown and code == '404':
+                link = Link._by_fullname(takedown)
+                return pages.TakedownPage(link).render()
             elif code == '403':
                 return self.send403()
             elif code == '500':

@@ -86,12 +86,12 @@ def Alert(restart_list = ['MEM','CPU'],
                                                     alert_recipients,
                                                       mesg)
                         session.quit()
-           
-
-
 
 def Run(srvname, *a, **kw):
-    AppServiceMonitor().monitor(srvname, *a, **kw)
+    args = {}
+    if kw.has_key('queue_length_max'):
+        args['queue_length_max'] = kw.pop('queue_length_max')
+    AppServiceMonitor(**args).monitor(srvname, *a, **kw)
 
 def Test(num, load = 1., pid = 0):
     services = Services()

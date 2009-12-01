@@ -30,7 +30,11 @@
 <%def name="parent()">
 %if c.profilepage:
 <small>
-<a href="${thing.link.url}">${thing.link.title}</a></small><br \>
+<a href="${thing.link.url}"
+   %if thing.nofollow:
+     rel="nofollow"
+   %endif
+   >${thing.link.title}</a></small><br \>
 %endif
 </%def>
 
@@ -50,7 +54,7 @@
   <span id="score_${thing._fullname}">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
 ${thing.timesince}
 </small><br/>
-${unsafe(safemarkdown(thing.body))}
+${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
 
 %endif
 

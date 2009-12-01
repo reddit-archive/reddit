@@ -20,7 +20,11 @@ $.log = function(message) {
         alert(message);
 };
 
-$.debug = $.log;
+$.debug = function(message) {
+    if ($.with_default(reddit.debug, false)) {
+        return $.log(message);
+    }
+}
 $.fn.debug = function() { 
     $.debug($(this));
     return $(this);
@@ -149,6 +153,9 @@ $.request = function(op, parameters, worker_in, block, type, get_only) {
     var action = op;
     var worker = worker_in;
 
+    if (rate_limit(op))
+        return;
+
     /* we have a lock if we are not blocking or if we have gotten a lock */
     var have_lock = !$.with_default(block, false) || acquire_ajax_lock(action);
 
@@ -198,6 +205,31 @@ var upmod_cls = "upmod";
 var down_cls = "down";
 var downmod_cls = "downmod";
 
+rate_limit = function() {
+    /* default rate-limit duration (in milliseconds) */
+    var default_rate_limit = 333;
+    /* rate limit on a per-action basis (also in ms, 0 = don't rate limit) */
+    var rate_limits = {"vote": 333, "comment": 5000,
+                       "ignore": 0, "ban": 0, "unban": 0};
+    var last_dates = {};
+
+    /* paranoia: copy global functions used to avoid tampering.  */
+    var defined = $.defined;
+    var with_default = $.with_default;
+    var _Date = Date;
+
+    return function(action) {
+        var now = new _Date();
+        var last_date = last_dates[action];
+        var allowed_interval = with_default(rate_limits[action], 
+                                            default_rate_limit);
+        last_dates[action] = now;
+        /* true = being rate limited */
+        return (defined(last_date) && now - last_date < allowed_interval)
+    };
+}()
+
+
 $.fn.vote = function(vh, callback) {
     /* for vote to work, $(this) should be the clicked arrow */
     if($(this).hasClass("arrow")) {
@@ -230,7 +262,7 @@ $.fn.vote = function(vh, callback) {
                         entry.addClass('unvoted')
                             .removeClass('likes dislikes');
                 });
-            
+
             $.request("vote", {id: things.filter(":first").thing_id(), 
                         dir : dir, vh : vh});
         }
