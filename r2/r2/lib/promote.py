@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from __future__ import with_statement
@@ -190,7 +190,7 @@ def auth_paid_promo(thing, user, pay_id, bid):
     trans_id = authorize.auth_transaction(bid, user, pay_id, thing)
     thing.promote_bid = bid
     
-    if trans_id is not None:
+    if trans_id is not None and int(trans_id) != 0:
         # we won't reset to unseen if already approved and the payment went ok
         promotion_log(thing, "updated payment and/or bid: SUCCESS (id: %s)"
                       % trans_id)

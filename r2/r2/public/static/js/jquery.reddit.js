@@ -240,7 +240,7 @@ rate_limit = function() {
 }()
 
 
-$.fn.vote = function(vh, callback) {
+$.fn.vote = function(vh, callback, event) {
     /* for vote to work, $(this) should be the clicked arrow */
     if($(this).hasClass("arrow")) {
         var dir = ( $(this).hasClass(up_cls) ? 1 :
@@ -272,9 +272,10 @@ $.fn.vote = function(vh, callback) {
                         entry.addClass('unvoted')
                             .removeClass('likes dislikes');
                 });
-
-            $.request("vote", {id: things.filter(":first").thing_id(), 
-                        dir : dir, vh : vh});
+            var thing_id = things.filter(":first").thing_id();
+            /* IE6 hack */
+            vh += event ? "" : ("-" + thing_id); 
+            $.request("vote", {id: thing_id, dir : dir, vh : vh});
         }
         /* execute any callbacks passed in.  */
         if(callback) 
@@ -420,11 +421,19 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
             var existing = $(self).things(data.id);
             if(stubs) 
                 existing = existing.filter(".stub");
+            if(existing.length == 0) {
+                var parent = $.things(data.parent);
+                if (parent.length) {
+                    existing = $("<div></div>");
+                    parent.find(".child:first").append(existing);
+                }
+            }
             existing.after($.unsafe(data.content));
             var new_thing = existing.next();
-            new_thing.find(".midcol").css("width", midcol).end()
-                .find(".rank").css("width", midcol);
-
+            if($.defined(midcol)) {
+                new_thing.find(".midcol").css("width", midcol).end()
+                    .find(".rank").css("width", midcol);
+            }
             if(keep_children) {
                 /* show the new thing */
                 new_thing.show()

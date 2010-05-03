@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from __future__ import with_statement
@@ -329,11 +329,14 @@ def find_preview_links(sr):
     from r2.lib.normalized_hot import get_hot
 
     # try to find a link to use, otherwise give up and return
-    links = get_hot(c.site)
+    links = get_hot(c.site, only_fullnames = True)
     if not links:
         sr = Subreddit._by_name(g.default_sr)
         if sr:
-            links = get_hot(sr)
+            links = get_hot(sr, only_fullnames = True)
+
+    if links:
+        links = Link._by_fullname(links, data=True, return_dict=False)
 
     return links
 

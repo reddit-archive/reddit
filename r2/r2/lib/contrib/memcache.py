@@ -256,6 +256,8 @@ class Client(local):
         #        return server, key
         #    serverhash = serverHashFunction(str(serverhash) + str(i))
 
+        print ("Couldn't connect to any of the %d memcache servers" %
+               len(self.buckets))
         return None, key
 
     def disconnect_all(self):
@@ -355,7 +357,7 @@ class Client(local):
             return 0
         return 1
 
-    def incr(self, key, delta=1):
+    def incr(self, key, delta=1, time=0):
         """
         Sends a command to the server to atomically increment the value for C{key} by
         C{delta}, or by 1 if C{delta} is unspecified.  Returns None if C{key} doesn't
@@ -379,8 +381,10 @@ class Client(local):
         @rtype: int
         """
         return self._incrdecr("incr", key, delta)
+        # Note: cachechain throws away this return value, so it's almost
+        # pointless to return anything
 
-    def decr(self, key, delta=1):
+    def decr(self, key, delta=1, time=0):
         """
         Like L{incr}, but decrements.  Unlike L{incr}, underflow is checked and
         new values are capped at 0.  If server value is 1, a decrement of 2

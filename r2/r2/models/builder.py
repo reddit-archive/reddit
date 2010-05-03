@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from account import *
@@ -34,7 +34,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
-from r2.lib.comment_tree import link_comments
+from r2.lib.comment_tree import link_comments, user_messages, conversation, tree_sort_fn
 from copy import deepcopy, copy
 
 import time
@@ -64,12 +64,15 @@ class Builder(object):
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
 
-        try:
-            aids = set(l.author_id for l in items)
-        except AttributeError:
-            aids = None
+        aids = set(l.author_id for l in items if hasattr(l, 'author_id'))
 
-        authors = Account._byID(aids, True) if aids else {}
+        if aids:
+            authors = Account._byID(aids, True) if aids else {}
+            cup_infos = Account.cup_info_multi(aids)
+        else:
+            authors = {}
+            cup_infos = {}
+
         # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
 
@@ -127,10 +130,10 @@ class Builder(object):
             try:
                 w.author = authors.get(item.author_id)
                 if user and item.author_id in user.friends:
-                        # deprecated old way:
-                        w.friend = True
-                        # new way:
-                        add_attr(w.attribs, 'F')
+                    # deprecated old way:
+                    w.friend = True
+                    # new way:
+                    add_attr(w.attribs, 'F')
 
             except AttributeError:
                 pass
@@ -143,12 +146,13 @@ class Builder(object):
                 getattr(item, "author_id", None) in mods):
                 add_attr(w.attribs, 'M', label=modlabel, link=modlink)
 
-            if (g.show_awards and w.author
-                              and w.author.should_show_cup()):
-                add_attr(w.attribs, 'trophy', label=
-                    _("%(user)s recently won a trophy! click here to see it.")
-                         % {'user':w.author.name},
-                     link = "/user/%s" % w.author.name)
+            if w.author and w.author._id in cup_infos and not c.profilepage:
+                cup_info = cup_infos[w.author._id]
+                label = _(cup_info["label_template"]) % \
+                        {'user':w.author.name}
+                add_attr(w.attribs, 'trophy:' + cup_info["img_url"],
+                         label=label,
+                         link = "/user/%s" % w.author.name)
 
             if hasattr(item, "sr_id"):
                 w.subreddit = subreddits[item.sr_id]
@@ -159,12 +163,14 @@ class Builder(object):
             compute_votes(w, item)
 
             w.score = w.upvotes - w.downvotes
+
             if w.likes:
                 base_score = w.score - 1
             elif w.likes is None:
                 base_score = w.score
             else:
                 base_score = w.score + 1
+
             # store the set of available scores based on the vote
             # for ease of i18n when there is a label
             w.voting_score = [(base_score + x - 1) for x in range(3)]
@@ -239,6 +245,9 @@ class QueryBuilder(Builder):
         if hasattr(query, 'prewrap_fn'):
             self.prewrap_fn = query.prewrap_fn
         #self.prewrap_fn = kw.get('prewrap_fn')
+
+    def __repr__(self):
+        return "<%s(%r)>" % (self.__class__.__name__, self.query)
 
     def item_iter(self, a):
         """Iterates over the items returned by get_items"""
@@ -438,6 +447,18 @@ class SearchBuilder(QueryBuilder):
 
         return done, new_items
 
+def empty_listing(*things):
+    parent_name = None
+    for t in things:
+        try:
+            parent_name = t.parent_name
+            break
+        except AttributeError:
+            continue
+    l = Listing(None, None, parent_name = parent_name)
+    l.things = list(things)
+    return Wrapped(l)
+
 class CommentBuilder(Builder):
     def __init__(self, link, sort, comment = None, context = None,
                  load_more=True, continue_this_thread=True,
@@ -471,18 +492,6 @@ class CommentBuilder(Builder):
                                          return_dict = False))
         else:
             comments = ()
-
-        def empty_listing(*things):
-            parent_name = None
-            for t in things:
-                try:
-                    parent_name = t.parent_name
-                    break
-                except AttributeError:
-                    continue
-            l = Listing(None, None, parent_name = parent_name)
-            l.things = list(things)
-            return Wrapped(l)
 
         comment_dict = dict((cm._id, cm) for cm in comments)
 
@@ -531,7 +540,7 @@ class CommentBuilder(Builder):
 
         def sort_candidates():
             candidates.sort(key = self.sort_key, reverse = self.rev_sort)
-        
+
         #find the comments
         num_have = 0
         sort_candidates()
@@ -558,7 +567,7 @@ class CommentBuilder(Builder):
         wrapped = self.wrap_items(items)
 
         cids = dict((cm._id, cm) for cm in wrapped)
-        
+
         final = []
         #make tree
 
@@ -623,13 +632,120 @@ class CommentBuilder(Builder):
             #add more children
             if comment_tree.has_key(to_add._id):
                 candidates.extend(comment_tree[to_add._id])
-                
+
             if direct_child:
                 mc2.children.append(to_add)
 
             mc2.count += 1
 
         return final
+
+class MessageBuilder(Builder):
+    def __init__(self, user, parent = None, focal = None,
+                 skip = True, **kw):
+        self.user = user
+        self.num = kw.pop('num', None)
+        self.focal = focal
+        self.parent = parent
+        self.skip = skip
+
+        self.after = kw.pop('after', None)
+        self.reverse = kw.pop('reverse', None)
+
+        Builder.__init__(self, **kw)
+
+    def item_iter(self, a):
+        for i in a[0]:
+            yield i
+            if hasattr(i, 'child'):
+                for j in i.child.things:
+                    yield j
+
+    def get_items(self):
+        if self.parent:
+            tree = conversation(self.user, self.parent)
+        else:
+            tree = user_messages(self.user)
+
+        prev = next = None
+        if not self.parent:
+            if self.num is not None:
+                if self.after:
+                    if self.reverse:
+                        tree = filter(
+                            lambda x: tree_sort_fn(x) >= self.after._id, tree)
+                        next = self.after._id
+                        if len(tree) > self.num:
+                            prev = tree[-(self.num+1)][0]
+                            tree = tree[-self.num:]
+                    else:
+                        prev = self.after._id
+                        tree = filter(
+                            lambda x: tree_sort_fn(x) < self.after._id, tree)
+                if len(tree) > self.num:
+                    tree = tree[:self.num]
+                    next = tree[-1][0]
+
+        # generate the set of ids to look up and look them up
+        message_ids = []
+        for root, thread in tree:
+            message_ids.append(root)
+            message_ids.extend(thread)
+        if prev:
+            message_ids.append(prev)
+
+        messages = Message._byID(message_ids, data = True, return_dict = False)
+        wrapped = dict((m._id, m) for m in self.wrap_items(messages))
+
+        if prev:
+            prev = wrapped[prev]
+        if next:
+            next = wrapped[next]
+
+        final = []
+        for parent, children in tree:
+            parent = wrapped[parent]
+            if children:
+                # if no parent is specified, check if any of the messages are
+                # uncollapsed, and truncate the thread
+                children = [wrapped[child] for child in children]
+                parent.child = empty_listing()
+                # if the parent is new, uncollapsed, or focal we don't
+                # want it to become a moremessages wrapper.
+                if (self.skip and 
+                    not self.parent and not parent.new and parent.is_collapsed 
+                    and not (self.focal and self.focal._id == parent._id)):
+                    for i, child in enumerate(children):
+                        if (child.new or not child.is_collapsed or
+                            (self.focal and self.focal._id == child._id)):
+                            break
+                    else:
+                        i = -1
+                    parent = Wrapped(MoreMessages(parent, empty_listing()))
+                    children = children[i:]
+
+                parent.child.parent_name = parent._fullname
+                parent.child.things = []
+
+                for child in children:
+                    child.is_child = True
+                    if self.focal and child._id == self.focal._id:
+                        # focal message is never collapsed
+                        child.collapsed = False
+                        child.focal = True
+                    else:
+                        child.collapsed = child.is_collapsed
+                    parent.child.things.append(child)
+            parent.is_parent = True
+            # the parent might be the focal message on a permalink page
+            if self.focal and parent._id == self.focal._id:
+                parent.collapsed = False
+                parent.focal = True
+            else:
+                parent.collapsed = parent.is_collapsed
+            final.append(parent)
+
+        return (final, prev, next, len(final), len(final))
 
 def make_wrapper(parent_wrapper = Wrapped, **params):
     def wrapper_fn(thing):

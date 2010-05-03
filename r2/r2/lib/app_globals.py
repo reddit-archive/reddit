@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from __future__ import with_statement
@@ -24,6 +24,7 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
+from r2.lib.cache import SelfEmptyingCache
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -63,7 +64,6 @@ class Globals(object):
                   'enable_doquery',
                   'use_query_cache',
                   'write_query_queue',
-                  'show_awards',
                   'css_killswitch',
                   'db_create_tables',
                   'disallow_db_writes',
@@ -77,6 +77,7 @@ class Globals(object):
                    'sponsors',
                    'monitored_servers',
                    'automatic_reddits',
+                   'skip_precompute_queries',
                    'agents',
                    'allowed_css_linked_domains']
 
@@ -119,12 +120,19 @@ class Globals(object):
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
-        # initialize caches
+        self.running_as_script = global_conf.get('running_as_script', False)
+
+        self.skip_precompute_queries = set(self.skip_precompute_queries)
+
+        # initialize caches. Any cache-chains built here must be added
+        # to reset_caches so that they can properly reset their local
+        # components
         mc = Memcache(self.memcaches, pickleProtocol = 1)
         self.memcache = mc
         self.cache = CacheChain((LocalCache(), mc))
         self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
         self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
+
         self.make_lock = make_lock_factory(mc)
 
         self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
@@ -140,7 +148,10 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)))
+        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)),
+                                    cache_negative_results = True)
+
+        self.reset_caches()
 
         #make a query cache
         self.stats_collector = QueryStats()
@@ -190,8 +201,6 @@ class Globals(object):
         else:
             self.log.setLevel(logging.WARNING)
 
-        if self.log_start:
-            self.log.error("reddit app started on %s" % datetime.now())
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
@@ -240,6 +249,15 @@ class Globals(object):
         except object, e:
             self.log.info("Couldn't read source revision (%r)" % e)
             self.version = self.short_version = '(unknown)'
+
+        if self.log_start:
+            self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
+
+    def reset_caches(self):
+        for ca in ('cache', 'hardcache'):
+            cache = getattr(self, ca)
+            new_cache = SelfEmptyingCache() if self.running_as_script else LocalCache()
+            cache.caches = (new_cache,) + cache.caches[1:]
 
     @staticmethod
     def to_bool(x):

@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
@@ -25,6 +25,11 @@ from datetime import timedelta as timedelta
 from datetime import datetime
 import sqlalchemy as sa
 from r2.lib.db.tdb_lite import tdb_lite
+
+def expiration_from_time(time):
+    if time <= 0:
+        raise ValueError ("HardCache items *must* have an expiration time")
+    return datetime.now(g.tz) + timedelta(0, time)
 
 class HardCacheBackend(object):
     def __init__(self, gc):
@@ -50,9 +55,9 @@ class HardCacheBackend(object):
 
         self.delete(category, ids) # delete it if it already exists
 
-        expiration = datetime.now(g.tz) + timedelta(0, time)
-
         value, kind = self.tdb.py2db(val, True)
+
+        expiration = expiration_from_time(time)
 
         self.table.insert().execute(
             category=category,
@@ -61,6 +66,53 @@ class HardCacheBackend(object):
             kind=kind,
             expiration=expiration
             )
+
+    def add(self, category, ids, val, time=0):
+        expiration = expiration_from_time(time)
+
+        value, kind = self.tdb.py2db(val, True)
+
+        try:
+            rp = self.table.insert().execute(
+                category=category,
+                ids=ids,
+                value=value,
+                kind=kind,
+                expiration=expiration
+                )
+
+            return value
+
+        except sa.exceptions.IntegrityError, e:
+            return self.get(category, ids)
+
+    def incr(self, category, ids, time=0, delta=1):
+        expiration = expiration_from_time(time)
+
+        rp = self.table.update(sa.and_(self.table.c.category==category,
+                                       self.table.c.ids==ids,
+                                       self.table.c.kind=='num'),
+                               values = {
+                                         self.table.c.value:
+                                         sa.cast(
+                                                 sa.cast(self.table.c.value,
+                                                          sa.Integer) + delta,
+                                                 sa.String),
+                                         self.table.c.expiration: expiration
+                                         }
+                               ).execute()
+        if rp.rowcount == 1:
+            return self.get(category, ids)
+        elif rp.rowcount == 0:
+            existing_value = self.get(category, ids)
+            if existing_value is None:
+                raise ValueError("[%s][%s] can't be incr()ed -- it's not set" %
+                                 (category, ids))
+            else:
+                raise ValueError("[%s][%s] has non-integer value %r" %
+                                 (category, ids, existing_value))
+        else:
+            raise ValueError("Somehow %d rows got updated" % rp.rowcount)
 
     def get(self, category, ids):
         s = sa.select([self.table.c.value,
@@ -76,6 +128,25 @@ class HardCacheBackend(object):
             return None
         else:
             return self.tdb.db2py(rows[0].value, rows[0].kind)
+
+    def get_multi(self, category, idses):
+        s = sa.select([self.table.c.ids,
+                       self.table.c.value,
+                       self.table.c.kind,
+                       self.table.c.expiration],
+                      sa.and_(self.table.c.category==category,
+                              sa.or_(*[self.table.c.ids==ids
+                                       for ids in idses])))
+        rows = s.execute().fetchall()
+
+        results = {}
+
+        for row in rows:
+          if row.expiration >= datetime.now(g.tz):
+              k = "%s-%s" % (category, row.ids)
+              results[k] = self.tdb.db2py(row.value, row.kind)
+
+        return results
 
     def delete(self, category, ids):
         self.table.delete(

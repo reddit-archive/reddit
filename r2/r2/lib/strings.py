@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 """
@@ -58,7 +58,7 @@ string_dict = dict(
     float_label = _("%(num)5.3f %(thing)s"),
 
     # this is for Japanese which treats people counds differently
-    person_label = _('<span class="number">%(num)s</span>&#32;<span class="word">%(persons)s</span>'),
+    person_label = _("<span class='number'>%(num)s</span>&#32;<span class='word'>%(persons)s</span>"),
 
     firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
 
@@ -116,7 +116,7 @@ string_dict = dict(
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [feedback](%(link)s) and be sure to include the exact name of the reddit."""),
+    banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [our site admins](%(link)s) and be sure to include the **exact name of the reddit**."""),
     comments_panel_text = _("""
     The following is a sample of what Reddit users had to say about this
     page. The full discussion is available [here](%(fd_link)s); you can
@@ -130,6 +130,7 @@ string_dict = dict(
     verify_email = _("we're going to need to verify your email address for you to proceed."),
     email_verified =  _("your email address has been verfied"),
     email_verify_failed = _("Verification failed.  Please try that again"),
+    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience.\n\n[Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
 )
 
 class StringHandler(object):

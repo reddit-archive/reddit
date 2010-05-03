@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController
@@ -41,6 +41,7 @@ class ButtonsController(RedditController):
 
     def get_wrapped_link(self, url, link = None, wrapper = None):
         try:
+            links = []
             if link:
                 links = [link]
             else:
@@ -48,7 +49,7 @@ class ButtonsController(RedditController):
                 try:
                     links = tup(Link._by_url(url, sr))
                 except NotFound:
-                    links = []
+                    pass
 
             if links:
                 kw = {}
@@ -80,10 +81,9 @@ class ButtonsController(RedditController):
               vote = VBoolean('vote', default=True),
               newwindow = VBoolean('newwindow'),
               width = VInt('width', 0, 800),
-              link = VByName('id'))
-    def GET_button_content(self, url, title, css, vote, newwindow, width, link):
-            
-        
+              l = VByName('id'))
+    def GET_button_content(self, url, title, css, vote, newwindow, width, l):
+             
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
             c.site = Default
@@ -94,17 +94,20 @@ class ButtonsController(RedditController):
             css != 'http://www.wired.com/css/redditsocial.css'): 
             css = None 
 
-        if link:
-            url = link.url
-            title = link.title 
+        if l:
+            url = l.url
+            title = l.title 
+        kw = {}
+        if title:
+            kw = dict(title = title)
         wrapper = make_wrapper(Button if vote else ButtonNoBody,
                                url = url, 
                                target = "_new" if newwindow else "_parent",
-                               title = title, vote = vote, bgcolor = c.bgcolor,
+                               vote = vote, bgcolor = c.bgcolor,
                                width = width, css = css,
-                               button = self.buttontype())
+                               button = self.buttontype(), **kw)
 
-        l = self.get_wrapped_link(url, link, wrapper)
+        l = self.get_wrapped_link(url, l, wrapper)
         res = l.render()
         c.response.content = spaceCompress(res)
         return c.response

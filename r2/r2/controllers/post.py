@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.pages import *
@@ -108,6 +108,8 @@ class PostController(ApiController):
               pref_label_nsfw = VBoolean('label_nsfw'),
               pref_show_promote = VBoolean('show_promote'),
               pref_mark_messages_read = VBoolean("mark_messages_read"),
+              pref_threaded_messages = VBoolean("threaded_messages"),
+              pref_collapse_read_messages = VBoolean("collapse_read_messages"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an

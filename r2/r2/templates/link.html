@@ -6,17 +6,17 @@
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
 ## with Exhibit B.
-## 
+##
 ## Software distributed under the License is distributed on an "AS IS" basis,
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
-## 
+##
 ## The Original Code is Reddit.
-## 
+##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
-## 
-## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
@@ -65,8 +65,10 @@
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
     %if thing.nsfw:
-     <li>
-       <acronym title="Not Safe for Work">NSFW</acronym>
+     <li class="rounded nsfw-stamp">
+       <acronym title="${_('Adult content: Not Safe For Work')}">
+         ${_("NSFW")}
+       </acronym>
      </li>
     %endif
     ${self.buttons()}
@@ -156,7 +158,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
       <div class="score dislikes">&bull;</div> 
     %else:
       ${self.score(thing, thing.likes, tag='div')}
-    %endif                
+    %endif
     ${self.arrow(thing, 0, thing.likes == False)}
   </div>
  ${self.thumbnail()}

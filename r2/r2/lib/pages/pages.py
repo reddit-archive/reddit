@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
@@ -35,7 +35,9 @@ from pylons.controllers.util import abort
 from r2.lib import promote
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8, unsafe, websafe
+from r2.lib.contrib.markdown import markdown
+from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
+from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -865,13 +867,14 @@ class ProfilePage(Reddit):
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.append(AdminSidebar(self.user))
-        if g.show_awards:
-            tc = TrophyCase(self.user)
-            helplink = ( "/help/awards", _("what's this?") )
-            scb = SideContentBox(title=_("trophy case"),
-                     helplink=helplink, content=[tc],
-                     extra_class="trophy-area")
-            rb.append(scb)
+
+        tc = TrophyCase(self.user)
+        helplink = ( "/help/awards", _("what's this?") )
+        scb = SideContentBox(title=_("trophy case"),
+                 helplink=helplink, content=[tc],
+                 extra_class="trophy-area")
+        rb.append(scb)
+
         return rb
 
 class TrophyCase(Templated):
@@ -893,7 +896,7 @@ class TrophyCase(Templated):
                 self.trophies.append(trophy)
                 award_ids_seen.append(trophy._thing2_id)
 
-        self.cup_date = user.should_show_cup()
+        self.cup_info = user.cup_info()
         Templated.__init__(self)
 
 class ProfileBar(Templated): 
@@ -1148,6 +1151,16 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params)
 
+class SearchFail(Templated):
+    """Search failure page."""
+    def __init__(self, **kw):
+        md = SC_OFF + markdown(strings.search_failed % dict(
+            link="javascript:tryagain\(\)")) + SC_ON
+
+        self.errmsg = md
+
+        Templated.__init__(self)
+
 
 class Frame(Templated):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
@@ -1294,6 +1307,7 @@ class Button(Wrapped):
     def __init__(self, link, **kw):
         Wrapped.__init__(self, link, **kw)
         if link is None:
+            self.title = ""
             self.add_props(c.user, [self])
 
 
@@ -1322,6 +1336,9 @@ class ButtonDemoPanel(Templated):
 
 
 class SelfServeBlurb(Templated):
+    pass
+
+class FeedbackBlurb(Templated):
     pass
 
 class Feedback(Templated):
@@ -1360,6 +1377,14 @@ class Bookmarklets(Templated):
         Templated.__init__(self, buttons = buttons)
 
 
+class Translator_Message(Templated):
+    def __init__(self, locale, user):
+        from r2.lib.translation import Translator
+        self.user = user
+        self.locale = locale
+        self.lang_name = Translator.get_name(self.locale)
+        self.en_name = Translator.get_en_name(self.locale)
+        Templated.__init__(self)
 
 class AdminTranslations(Templated):
     """The translator control interface, used for determining which
@@ -1375,9 +1400,6 @@ class UserAwards(Templated):
     def __init__(self):
         from r2.models import Award, Trophy
         Templated.__init__(self)
-
-        if not g.show_awards:
-            abort(404, "not found");
 
         self.regular_winners = []
         self.manuals = []
@@ -1734,7 +1756,7 @@ class LinkChild(object):
         self.expand = expand
         self.load = load or expand
         self.nofollow = nofollow
-    
+
     def content(self):
         return ''
 
@@ -2125,6 +2147,8 @@ class Promote_Graph(Templated):
                          (total_sale, total_refund)),
                 multiy = False)
 
+            # table is labeled as "last month"
+            history = self.now - datetime.timedelta(30)
             self.top_promoters = bidding.PromoteDates.top_promoters(history)
         else:
             self.money_graph = None

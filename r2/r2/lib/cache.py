@@ -6,31 +6,33 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from threading import local
 
-from utils import lstrips
+from utils import lstrips, in_chunks
 from contrib import memcache
 
 from r2.lib.hardcachebackend import HardCacheBackend
 
+class NoneResult(object): pass
+
 class CacheUtils(object):
-    def incr_multi(self, keys, amt=1, prefix=''):
+    def incr_multi(self, keys, delta=1, time=0, prefix=''):
         for k in keys:
             try:
-                self.incr(prefix + k, amt)
+                self.incr(prefix + k, time=time, delta=delta)
             except ValueError:
                 pass
 
@@ -92,10 +94,33 @@ class HardCache(CacheUtils):
         return category, ids
 
     def set(self, key, val, time=0):
+        if val is NoneResult:
+            # NoneResult caching is for other parts of the chain
+            return
+
         category, ids = self._split_key(key)
-        if time <= 0:
-            raise ValueError ("HardCache.set() *must* have an expiration time")
         self.backend.set(category, ids, val, time)
+
+    def simple_get_multi(self, keys):
+        results = {}
+        category_bundles = {}
+        for key in keys:
+            category, ids = self._split_key(key)
+            category_bundles.setdefault(category, []).append(ids)
+
+        for category in category_bundles:
+            idses = category_bundles[category]
+            chunks = in_chunks(idses, size=50)
+            for chunk in chunks:
+                new_results = self.backend.get_multi(category, chunk)
+                results.update(new_results)
+
+        return results
+
+    def set_multi(self, keys, prefix='', time=0):
+        for k,v in keys.iteritems():
+            if v is not NoneResult:
+                self.set(prefix+str(k), v, time=time)
 
     def get(self, key, default=None):
         category, ids = self._split_key(key)
@@ -104,8 +129,19 @@ class HardCache(CacheUtils):
         return r
 
     def delete(self, key, time=0):
+        # Potential optimization: When on a negative-result caching chain,
+        # shove NoneResult throughout the chain when a key is deleted.
         category, ids = self._split_key(key)
         self.backend.delete(category, ids)
+
+    def add(self, key, value, time=0):
+        category, ids = self._split_key(key)
+        return self.backend.add(category, ids, value, time=time)
+
+    def incr(self, key, delta=1, time=0):
+        category, ids = self._split_key(key)
+        return self.backend.incr(category, ids, delta=delta, time=time)
+
 
 class LocalCache(dict, CacheUtils):
     def __init__(self, *a, **kw):
@@ -129,16 +165,17 @@ class LocalCache(dict, CacheUtils):
         return out
 
     def set(self, key, val, time = 0):
+        # time is ignored on localcache
         self._check_key(key)
         self[key] = val
 
     def set_multi(self, keys, prefix='', time=0):
         for k,v in keys.iteritems():
-            self.set(prefix+str(k), v)
+            self.set(prefix+str(k), v, time=time)
 
     def add(self, key, val, time = 0):
         self._check_key(key)
-        self.setdefault(key, val)
+        return self.setdefault(key, val)
 
     def delete(self, key):
         if self.has_key(key):
@@ -149,11 +186,11 @@ class LocalCache(dict, CacheUtils):
             if self.has_key(key):
                 del self[key]
 
-    def incr(self, key, amt=1):
+    def incr(self, key, delta=1, time=0):
         if self.has_key(key):
-            self[key] = int(self[key]) + amt
+            self[key] = int(self[key]) + delta
 
-    def decr(self, key, amt=1): 
+    def decr(self, key, amt=1):
         if self.has_key(key):
             self[key] = int(self[key]) - amt
 
@@ -173,13 +210,15 @@ class LocalCache(dict, CacheUtils):
         self.clear()
 
 class CacheChain(CacheUtils, local):
-    def __init__(self, caches):
+    def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
+        self.cache_negative_results = cache_negative_results
 
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
             for c in self.caches:
-                getattr(c, fn_name)(*a, **kw)
+                ret = getattr(c, fn_name)(*a, **kw)
+            return ret
         return fn
 
     set = make_set_fn('set')
@@ -193,20 +232,60 @@ class CacheChain(CacheUtils, local):
     delete = make_set_fn('delete')
     delete_multi = make_set_fn('delete_multi')
     flush_all = make_set_fn('flush_all')
+    cache_negative_results = False
+
+    def add(self, key, val, time=0):
+        authority = self.caches[-1]
+        added_val = authority.add(key, val, time=time)
+        for cache in self.caches[:-1]:
+            # Calling set() rather than add() to ensure that all caches are
+            # in sync and that de-syncs repair themselves
+            cache.set(key, added_val, time=time)
+        return added_val
+
+    def accrue(self, key, time=0, delta=1):
+        auth_value = self.caches[-1].get(key)
+
+        if auth_value is None:
+            self.caches[-1].set(key, 0, time)
+            auth_value = 0
+
+        try:
+            auth_value = int(auth_value)
+        except ValueError:
+            raise ValueError("Can't accrue %s; it's a %s (%r)" %
+                             (key, auth_value.__class__.__name__, auth_value))
+
+        for c in self.caches:
+            c.set(key, auth_value, time=time)
+
+        self.incr(key, time=time, delta=delta)
 
     def get(self, key, default = None, local = True):
         for c in self.caches:
             if not local and isinstance(c,LocalCache):
                 continue
-            val = c.get(key, default)
+
+            val = c.get(key)
+
             if val is not None:
                 #update other caches
                 for d in self.caches:
                     if c == d:
-                        break;
+                        break # so we don't set caches later in the chain
                     d.set(key, val)
-                return val
+
+                if self.cache_negative_results and val is NoneResult:
+                    return None
+                else:
+                    return val
+
         #didn't find anything
+
+        if self.cache_negative_results:
+            for c in self.caches:
+                c.set(key, NoneResult)
+
         return default
 
     def simple_get_multi(self, keys):
@@ -220,12 +299,31 @@ class CacheChain(CacheUtils, local):
             if r:
                 for d in self.caches:
                     if c == d:
-                        break;
+                        break # so we don't set caches later in the chain
                     d.set_multi(r)
                 r.update(out)
                 out = r
                 need = need - set(r.keys())
+
+        if need and self.cache_negative_results:
+            d = dict( (key,NoneResult) for key in need)
+            for c in self.caches:
+                c.set_multi(d)
+
+        if self.cache_negative_results:
+            filtered_out = {}
+            for k,v in out.iteritems():
+                if v is not NoneResult:
+                    filtered_out[k] = v
+            out = filtered_out
+
         return out
+
+    def debug(self, key):
+        print "Looking up [%r]" % key
+        for i, c in enumerate(self.caches):
+            print "[%d] %10s has value [%r]" % (i, c.__class__.__name__,
+                                                c.get(key))
 
 #smart get multi
 def sgm(cache, keys, miss_fn, prefix='', time=0):
@@ -274,7 +372,7 @@ def test_cache(cache):
 # a cache that occasionally dumps itself to be used for long-running
 # processes
 class SelfEmptyingCache(LocalCache):
-    def __init__(self,max_size=100*1000):
+    def __init__(self, max_size=10*1000):
         self.max_size = max_size
 
     def maybe_reset(self):
@@ -284,5 +382,6 @@ class SelfEmptyingCache(LocalCache):
     def set(self,key,val,time = 0):
         self.maybe_reset()
         return LocalCache.set(self,key,val,time)
+
     def add(self,key,val):
         return self.set(key,val)

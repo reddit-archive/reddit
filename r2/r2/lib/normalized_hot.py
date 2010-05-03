@@ -6,25 +6,26 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import Link, Subreddit
 from r2.lib.db.operators import desc, timeago
+from r2.lib.db.sorts import epoch_seconds
+
 from r2.lib import utils 
 from r2.config import cache
 from r2.lib.memoize import memoize
-from r2.lib.db.thing import Query
 
 from pylons import g
 
@@ -33,6 +34,7 @@ import random
 
 expire_delta = timedelta(minutes = 2)
 TOP_CACHE = 1800
+max_items = 150
 
 def access_key(sr):
     return sr.name + '_access'
@@ -48,7 +50,7 @@ def expire_hot(sr):
 def cached_query(query, sr):
     """Returns the results from running query. The results are cached and
     only recomputed after 'expire_delta'"""
-    query._limit = 150
+    query._limit = max_items
     query._write_cache = True
     iden = query._iden()
 
@@ -75,40 +77,55 @@ def cached_query(query, sr):
 
     return res
 
-def get_hot(sr):
-    """Get the hottest links for a subreddit. If g.use_query_cache is
-    True, it'll use the query cache, otherwise it'll use cached_query()
-    from above."""
+def get_hot(sr, only_fullnames = False):
+    """Get the (fullname, hotness, epoch_seconds) for the hottest
+       links in a subreddit. Use the query-cache to avoid some lookups
+       if we can."""
+    from r2.lib.db.thing import Query
+    from r2.lib.db.queries import CachedResults
+
     q = sr.get_links('hot', 'all')
     if isinstance(q, Query):
-        return cached_query(q, sr)
-    else:
-        return Link._by_fullname(list(q)[:150], return_dict = False)
+        links = cached_query(q, sr)
+        res = [(link._fullname, link._hot, epoch_seconds(link._date))
+               for link in links]
+    elif isinstance(q, CachedResults):
+        # we're relying on an implementation detail of CachedResults
+        # here, where it's storing tuples that look exactly like the
+        # return-type we want, to make our sorting a bit cheaper
+        q.fetch()
+        res = list(q.data)
 
-def only_recent(items):
-    return filter(lambda l: l._date > utils.timeago('%d day' % g.HOT_PAGE_AGE),
-                  items)
+    age_limit = epoch_seconds(utils.timeago('%d days' % g.HOT_PAGE_AGE))
+    return [(fname if only_fullnames else (fname, hot, date))
+            for (fname, hot, date) in res
+            if date > age_limit]
 
 @memoize('normalize_hot', time = g.page_cache_time)
 def normalized_hot_cached(sr_ids):
-    """Fetches the hot lists for each subreddit, normalizes the scores,
-    and interleaves the results."""
+    """Fetches the hot lists for each subreddit, normalizes the
+       scores, and interleaves the results."""
     results = []
     srs = Subreddit._byID(sr_ids, data = True, return_dict = False)
     for sr in srs:
-        items = only_recent(get_hot(sr))
+        # items =:= (fname, hot, epoch_seconds), ordered desc('_hot')
+        items = get_hot(sr)[:max_items]
 
         if not items:
             continue
 
-        top_score = max(max(x._hot for x in items), 1)
-        if items:
-            results.extend((l, l._hot / top_score) for l in items)
+        # the hotness of the hottest item in this subreddit
+        top_score = max(items[0][1], 1)
 
-    results.sort(key = lambda x: (x[1], x[0]._hot), reverse = True)
-    return [l[0]._fullname for l in results]
+        results.extend((fname, hot/top_score, hot, date)
+                       for (fname, hot, date) in items)
+
+    # sort by (normalized_hot, hot, date)
+    results.sort(key = lambda x: x[1:], reverse = True)
+
+    # and return the fullnames
+    return [l[0] for l in results]
 
 def normalized_hot(sr_ids):
-    sr_ids = list(sr_ids)
-    sr_ids.sort()
+    sr_ids = list(sorted(sr_ids))
     return normalized_hot_cached(sr_ids) if sr_ids else ()

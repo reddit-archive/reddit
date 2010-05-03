@@ -1,0 +1,69 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   from r2.lib.pages import Feedback
+   import random
+ %>
+
+<div class="feedback instructions">
+  <h1>Request Help</h1>
+
+  <p>
+    reddit is a community, and as such there are a lot of outlets to get help for what ails you.
+  </p>
+
+  <dl>
+    <dt>Are your submissions not showing up?  Subreddit marked as spam?  Is the spam filter acting up?</dt>
+    <dd>
+      &#32;<a href="/message/compose?to=${g.admin_message_acct}">Send a private message to an admin.</a>&#32;(We really do want to help)
+    </dd>
+    <dt>Got a feature request?</dt>
+    <dd><a href="/r/ideasfortheadmins">Post it to our development community so the admins can see it</a>.</dd>
+    <dt>Got a bug report?</dt>
+    <dd><a href="http://code.reddit.com/">reddit is open source and you can submit a ticket (or even a patch!)</a></dd>
+    <dt>Are you a new moderator?  Having trouble staying out of the fray? Need advice?</dt>
+    <dd><a href="/r/modhelp">There's a reddit for that</a>.</dd>
+    <dt>Want to advertise but don't know how?</dt>
+    <dd><a href="/ad_inq">The instructions are here</a>.</dd>
+    <dt>General questions?  Need help?</dt>
+    <dd><a href="/r/help">There's a reddit for that, too</a>.</dd>
+    <dt>Crazy, or just feel like ranting at us?</dt>
+    <% r = random.randint(0,2) %>
+    %if r == 0:
+      <dd><a href="/r/null">Here is a soothing place to get your aggressions out</a>.</dd>
+    %elif r == 1:
+      <dd><a href="/important" onclick="return false">Just click here until you feel better (like a stress ball)</a>.</dd>
+    %elif r == 2:
+      <dd><a href="about:blank" target="_blank">There are always other options</a>.</dd>
+    %endif
+  </dl>
+<p>
+  Or, if none of these solve your problem,&#32;
+  <a href="#" onclick="$('#feedback-form').slideDown(function(){$(this).find('input[type=text]:first').focus();}); return false;">
+    send a message to our feedback.
+  </a> 
+</p>
+
+  <div id="feedback-form" style="display:none">
+    ${Feedback(title=_("send reddit feedback"), action = "feedback")}
+  </div>
+</div>

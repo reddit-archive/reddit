@@ -6,22 +6,23 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from pylons import request, g
 from reddit_base import RedditController
-from r2.lib.pages import UnfoundPage, AdminTranslations, AdminPage
+from r2.lib.pages import UnfoundPage, AdminTranslations, \
+    AdminPage, Translator_Message
 
 from r2.lib.translation import Translator, TranslatorTemplate, get_translator
 from validator import *
@@ -49,10 +50,18 @@ class I18nController(RedditController):
               lang = nop('lang'),
               a = VExistingUname('name'))
     def POST_adduser(self, lang, a):
+        from r2.lib.db import queries
         if a and Translator.exists(lang):
             tr = get_translator(locale = lang)
             tr.author.add(a.name)
             tr.save()
+
+            # send the user a message
+            body = Translator_Message(lang, a).render("html")
+            subject = "Thanks for offering to help translate!"
+            m, inbox_rel = Message._new(c.user, a, subject, body, request.ip)
+            queries.new_message(m, inbox_rel)
+
         return self.redirect("/admin/i18n")
 
 
@@ -60,7 +69,8 @@ class I18nController(RedditController):
               VAdmin())
     def GET_list(self):
         res = AdminPage(content = AdminTranslations(),
-                        title = 'translate reddit').render()
+                        title = 'translate reddit',
+                        show_sidebar = False).render()
         return res
 
 
@@ -85,7 +95,8 @@ class I18nController(RedditController):
         else:
             content = UnfoundPage()
         res = AdminPage(content = content, 
-                        title = 'translate reddit').render()
+                        title = 'translate reddit',
+                        show_sidebar = False).render()
         return res
 
     @validate(VTranslationEnabled(),

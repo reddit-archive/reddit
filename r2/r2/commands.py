@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import paste.deploy.config
@@ -34,7 +34,7 @@ from pylons.wsgiapp import PylonsApp
 import os, sys
 #
 # commands that will be available by running paste with this app
-# 
+#
 
 class RunCommand(command.Command):
     max_args = 2
@@ -55,6 +55,7 @@ class RunCommand(command.Command):
         here_dir = os.getcwd()
 
         conf = appconfig(config_name, relative_to=here_dir)
+        conf.global_conf['running_as_script'] = True
         conf.update(dict(app_conf=conf.local_conf,
                          global_conf=conf.global_conf))
         paste.deploy.config.CONFIG.push_thread_config(conf)
@@ -67,7 +68,7 @@ class RunCommand(command.Command):
         # Load the wsgi app first so that everything is initialized right
         wsgiapp = RegistryManager(PylonsApp())
         test_app = paste.fixture.TestApp(wsgiapp)
-                        
+
         # Query the test app to setup the environment
         tresponse = test_app.get('/_test_vars')
         request_id = int(tresponse.body)

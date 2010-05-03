@@ -17,7 +17,7 @@
 * The Original Developer is the Initial Developer.  The Initial Developer of the
 * Original Code is CondeNet, Inc.
 * 
-* All portions of the code written by CondeNet are Copyright (c) 2006-2009
+* All portions of the code written by CondeNet are Copyright (c) 2006-2010
 * CondeNet, Inc. All Rights Reserved.
 *******************************************************************************/
 #include <Python.h>
@@ -179,7 +179,7 @@ filters_websafe(PyObject * self, PyObject *args)
       buffer[ib++] = 'u';
       buffer[ib++] = 'o';
       buffer[ib++] = 't';
-      buffer[ib]   = ';';      
+      buffer[ib]   = ';';
     }
     else {
       buffer[ib] = input_buffer[ic];

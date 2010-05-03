@@ -6,20 +6,21 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import os.path
+from mako.filters import url_escape
 
 import paste.fileapp
 from pylons.middleware import error_document_template, media_path
@@ -117,13 +118,31 @@ class ErrorController(RedditController):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         if c.site._spam and not c.user_is_admin:
-            message = (strings.banned_subreddit % dict(link = '/feedback'))
+            subject = ("the subreddit /r/%s has been incorrectly banned" %
+                       c.site.name)
+            message = (strings.banned_subreddit %
+                       dict(link = '/message/compose?to=%s&subject=%s' %
+                            (g.admin_message_acct,
+                             url_escape(subject))))
 
             res = pages.RedditError(_('this reddit has been banned'),
                                     unsafe(safemarkdown(message)))
             return res.render()
         else:
             return pages.Reddit404().render()
+
+    def send503(self):
+        c.response.status_code = 503
+        if 'retry_after' in request.environ:
+            c.response.headers['Retry-After'] = request.environ['retry_after']
+        else:
+            c.response.headers['Retry-After'] = 1
+
+        if 'usable_error_content' in request.environ:
+            return request.environ['usable_error_content']
+        else:
+            c.response.content = toofast
+            return c.response
 
     def GET_document(self):
         try:
@@ -145,10 +164,7 @@ class ErrorController(RedditController):
             elif code == '500':
                 return redditbroke % rand_strings.sadmessages
             elif code == '503':
-                c.response.status_code = 503
-                c.response.headers['Retry-After'] = 1
-                c.response.content = toofast
-                return c.response
+                return self.send503()
             elif code == '304':
                 if request.GET.has_key('x-sup-id'):
                     c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')

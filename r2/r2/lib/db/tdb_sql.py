@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from datetime import datetime
@@ -307,12 +307,12 @@ def get_read_table(tables):
             load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
 
             #prune high-connection machines
-            if conns < .9 * max_conns:
-                max_load = max(load, avg_load)
-                total_load += max_load
-                have_loads.append((ip, max_load))
-            else:
-                no_connections.append(ip)
+            #if conns < .9 * max_conns:
+            max_load = max(load, avg_load)
+            total_load += max_load
+            have_loads.append((ip, max_load))
+            #else:
+            #    no_connections.append(ip)
 
     if total_load:
         avg_load = total_load / max(len(have_loads), 1)
@@ -390,6 +390,11 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         transactions.add_engine(t.bind)
         r = t.insert().execute(**params)
         new_id = r.last_inserted_ids()[0]
+        new_r = r.last_inserted_params()
+        for k, v in params.iteritems():
+            if new_r[k] != v:
+                raise CreationError, ("There's shit in the plumbing. " +
+                                      "expected %s, got %s" % (params,  new_r))
         return new_id
 
     try:
@@ -401,7 +406,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
             raise
         # wrap the error to prevent db layer bleeding out
         raise CreationError, "Thing exists (%s)" % str(params)
-        
+
 
 def set_thing_props(type_id, thing_id, **props):
     table = get_thing_table(type_id, action = 'write')[0]
@@ -554,7 +559,12 @@ def get_data(table, thing_id):
     for row in r:
         val = db2py(row.value, row.kind)
         stor = res if single else res.setdefault(row.thing_id, storage())
+        if single and row.thing_id != thing_id:
+            raise ValueError, ("tdb_sql.py: there's shit in the plumbing." 
+                               + " got %s, wanted %s" % (row.thing_id,
+                                                         thing_id))
         stor[row.key] = val
+
     return res
 
 def set_thing_data(type_id, thing_id, **vals):
@@ -583,6 +593,11 @@ def get_thing(type_id, thing_id):
                        spam = row.spam)
         if single:
             res = stor
+            # check that we got what we asked for
+            if row.thing_id != thing_id:
+                raise ValueError, ("tdb_sql.py: there's shit in the plumbing." 
+                                    + " got %s, wanted %s" % (row.thing_id,
+                                                              thing_id))
         else:
             res[row.thing_id] = stor
     return res

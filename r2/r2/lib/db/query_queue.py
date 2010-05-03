@@ -12,12 +12,20 @@ TIMEOUT = 600
 def add_query(cached_results):
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
+def _skip_key(iden):
+    return 'skip_precompute_queries-%s' % iden
+
 def run():
     def callback(msgs, chan):
         for msg in msgs: # will be len==1
             # r2.lib.db.queries.CachedResults
             cr = pickle.loads(msg.body)
             iden = cr.query._iden()
+
+            if (iden in g.skip_precompute_queries
+                and g.hardcache.get(_skip_key(iden))):
+                print 'skipping known query', iden
+                continue
 
             working_key = working_prefix + iden
             key = prefix + iden
@@ -34,13 +42,17 @@ def run():
                 print 'skipping, someone else is working', working_key
                 return
 
-            cr = pickle.loads(msg.body)
-
             print 'working: ', iden, cr.query._rules, cr.query._sort
             start = datetime.now()
             try:
                 cr.update()
                 g.memcache.set(key, datetime.now())
+
+                if iden in g.skip_precompute_queries:
+                    print 'setting to be skipped for 6 hours', iden
+                    g.hardcache.set(_skip_key(iden), start,
+                                    60*60*6)
+
             finally:
                 g.memcache.delete(working_key)
 

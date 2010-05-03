@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from urllib import unquote_plus, urlopen
@@ -862,18 +862,6 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             query._after(after)
             items = list(query)
 
-def set_emptying_cache():
-    """
-        The default thread-local cache is a regular dictionary, which
-        isn't designed for long-running processes. This sets the
-        thread-local cache to be a SelfEmptyingCache, which naively
-        empties itself out every N requests
-    """
-    from pylons import g
-    from r2.lib.cache import SelfEmptyingCache
-    g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
-
-
 def fix_if_broken(thing, delete = True):
     from r2.models import Link, Comment
 
@@ -897,7 +885,7 @@ def fix_if_broken(thing, delete = True):
                 if not delete:
                     raise
                 # it still broke. We should delete it
-                print "%s is missing %r, deleting" % (thing._fullname, a)
+                print "%s is missing %r, deleting" % (thing._fullname, attr)
                 thing._deleted = True
                 thing._commit()
                 break
@@ -1146,3 +1134,16 @@ def to_csv(table):
         return x
     return u"\n".join(u','.join(quote_commas(y) for y in x)
                       for x in table)
+
+def in_chunks(it, size=25):
+    chunk = []
+    it = iter(it)
+    try:
+        while True:
+            chunk.append(it.next())
+            if len(chunk) >= size:
+                yield chunk
+                chunk = []
+    except StopIteration:
+        if chunk:
+            yield chunk

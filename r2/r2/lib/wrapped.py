@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from itertools import chain
@@ -169,7 +169,7 @@ class Templated(object):
         # fetch template
         template = self.template(style)
         if template:
-            # store the global render style (since child templates
+            # store the global render style (since child templates)
             render_style = c.render_style
             c.render_style = style
             # are we doing a partial render?
@@ -293,7 +293,7 @@ class Templated(object):
             g.rendercache.set_multi(dict((k, v)
                                          for k, (v, kw) in updates.values()
                                          if k in to_cache))
-    
+
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
@@ -374,7 +374,7 @@ class CachedTemplate(Templated):
                 if (k not in self.cache_ignore and not k.startswith('_')))
 
     def cache_key(self, attr, style, *a):
-        from pylons import c
+        from pylons import c, g
 
         # if template debugging is on, there will be no hash and we
         # can make the caching process-local.
@@ -385,8 +385,8 @@ class CachedTemplate(Templated):
         # a menu is just a set of links, so we best cache against
         # them.
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
-                c.render_style, c.cname, c.lang, c.site.path,
-                template_hash]
+                style, c.cname, c.lang, c.site.path,
+                template_hash, g.markdown_backend]
         keys = [make_cachable(x, *a) for x in keys]
 
         # add all parameters sent into __init__, using their current value

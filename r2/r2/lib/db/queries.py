@@ -124,15 +124,13 @@ class CachedResults(object):
     def delete(self, items):
         """Deletes an item from the cached data."""
         self.fetch()
-        did_change = False
+        fnames = set(self.filter(x)._fullname for x in tup(items))
 
-        for item in tup(items):
-            t = self.make_item_tuple(item)
-            while t in self.data:
-                self.data.remove(t)
-                did_change = True
-            
-        if did_change:
+        data = filter(lambda x: x[0] not in fnames,
+                      self.data)
+
+        if data != self.data:
+            self.data = data
             query_cache.set(self.iden, self.data)
         
     def update(self):
@@ -270,8 +268,8 @@ def get_submitted(user, sort, time):
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))
-    
-def user_rel_query(rel, user, name):
+
+def user_rel_query(rel, user, name, filters = []):
     """General user relationship query."""
     q = rel._query(rel.c._thing1_id == user._id,
                    rel.c._t2_deleted == False,
@@ -280,6 +278,8 @@ def user_rel_query(rel, user, name):
                    eager_load = True,
                    thing_data = not g.use_query_cache
                    )
+    if filters:
+        q._filter(*filters)
 
     return make_results(q, filter_thing2)
 
@@ -301,12 +301,24 @@ inbox_message_rel = Inbox.rel(Account, Message)
 def get_inbox_messages(user):
     return user_rel_query(inbox_message_rel, user, 'inbox')
 
+def get_unread_messages(user):
+    return user_rel_query(inbox_message_rel, user, 'inbox', 
+                          filters = [inbox_message_rel.c.new == True])
+
 inbox_comment_rel = Inbox.rel(Account, Comment)
 def get_inbox_comments(user):
     return user_rel_query(inbox_comment_rel, user, 'inbox')
 
+def get_unread_comments(user):
+    return user_rel_query(inbox_comment_rel, user, 'inbox', 
+                          filters = [inbox_comment_rel.c.new == True])
+
 def get_inbox_selfreply(user):
     return user_rel_query(inbox_comment_rel, user, 'selfreply')
+
+def get_unread_selfreply(user):
+    return user_rel_query(inbox_comment_rel, user, 'selfreply', 
+                          filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox(user):
     return merge_results(get_inbox_comments(user),
@@ -318,6 +330,11 @@ def get_sent(user):
                        Message.c._spam == (True, False),
                        sort = desc('_date'))
     return make_results(q)
+
+def get_unread_inbox(user):
+    return merge_results(get_unread_comments(user),
+                         get_unread_messages(user),
+                         get_unread_selfreply(user))
 
 def add_queries(queries, insert_items = None, delete_items = None):
     """Adds multiple queries to the query queue. If insert_items or
@@ -420,6 +437,8 @@ def new_comment(comment, inbox_rel):
         else:
             add_queries([get_inbox_selfreply(inbox_owner)],
                         insert_items = inbox_rel)
+        set_unread(comment, True)
+
 
 
 def new_subreddit(sr):
@@ -451,13 +470,28 @@ def new_vote(vote):
     else:
         add_queries([get_liked(user)], delete_items = vote)
         add_queries([get_disliked(user)], delete_items = vote)
-    
+
 def new_message(message, inbox_rel):
+    from r2.lib.comment_tree import add_message
+
     from_user = Account._byID(message.author_id)
     to_user = Account._byID(message.to_id)
 
     add_queries([get_sent(from_user)], insert_items = message)
     add_queries([get_inbox_messages(to_user)], insert_items = inbox_rel)
+
+    add_message(message)
+    set_unread(message, True)
+
+def set_unread(message, unread):
+    for i in Inbox.set_unread(message, unread):
+        kw = dict(insert_items = i) if unread else dict(delete_items = i)
+        if i._name == 'selfreply':
+            add_queries([get_unread_selfreply(i._thing1)], **kw)
+        elif isinstance(message, Comment):
+            add_queries([get_unread_comments(i._thing1)], **kw)
+        else:
+            add_queries([get_unread_messages(i._thing1)], **kw)
 
 def new_savehide(rel):
     user = rel._thing1
@@ -653,14 +687,19 @@ def run_new_comments():
 #    amqp.handle_items('newpage_q', _run_new_links, limit=100)
 
 
-def queue_vote(user, thing, dir, ip, organic = False):
-    if g.amqp_host:
-        key = "registered_vote_%s_%s" % (user._id, thing._fullname)
-        g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
-        amqp.add_item('register_vote_q',
-                      pickle.dumps((user._id, thing._fullname, dir, ip, organic)))
-    else:
-        handle_vote(user, thing, dir, ip, organic)
+def queue_vote(user, thing, dir, ip, organic = False,
+               cheater = False, store = True):
+    # set the vote in memcached so the UI gets updated immediately
+    key = "registered_vote_%s_%s" % (user._id, thing._fullname)
+    g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
+    # queue the vote to be stored unless told not to
+    if store:
+        if g.amqp_host:
+            amqp.add_item('register_vote_q',
+                          pickle.dumps((user._id, thing._fullname,
+                                        dir, ip, organic, cheater)))
+        else:
+            handle_vote(user, thing, dir, ip, organic)
 
 def get_likes(user, items):
     if not user or not items:
@@ -688,14 +727,22 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic):
+def handle_vote(user, thing, dir, ip, organic, cheater = False):
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = Vote.vote(user, thing, dir, ip, organic)
+        v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
+
+    # keep track of upvotes in the hard cache by subreddit
+    sr_id = getattr(thing, "sr_id", None)
+    if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
+        and v.valid_thing):
+        now = datetime.now(g.tz).strftime("%Y/%m/%d")
+        g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
+                        sr_id, time = 86400 * 7) # 1 week for now
 
     if isinstance(thing, Link):
         new_vote(v)
@@ -732,17 +779,21 @@ def process_votes(drain = False, limit = 100):
         uids = set()
         tids = set()
         for x in msgs:
-            uid, tid, dir, ip, organic = pickle.loads(x.body)
-            print (uid, tid, dir, ip, organic)
+            r = pickle.loads(x.body)
+            uid, tid, dir, ip, organic, cheater = r
+
+            print (uid, tid, dir, ip, organic, cheater)
+
             uids.add(uid)
             tids.add(tid)
-            to_do.append((uid, tid, dir, ip, organic))
+            to_do.append((uid, tid, dir, ip, organic, cheater))
 
         users = Account._byID(uids, data = True, return_dict = True)
         things = Thing._by_fullname(tids, data = True, return_dict = True)
 
-        for uid, tid, dir, ip, organic in to_do:
-            handle_vote(users[uid], things[tid], dir, ip, organic)
+        for uid, tid, dir, ip, organic, cheater in to_do:
+            handle_vote(users[uid], things[tid], dir, ip, organic,
+                        cheater = cheater)
 
     amqp.handle_items('register_vote_q', _handle_votes, limit = limit,
                       drain = drain)

@@ -6,16 +6,16 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
+#
 # All portions of the code written by CondeNet are Copyright (c) 2006-2008
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
@@ -25,6 +25,7 @@ from r2.lib.db.operators import desc, lower
 from r2.lib.memoize import memoize
 from r2.models import Account
 from pylons import c, g, request
+from r2.lib.db.operators import asc
 
 class Award (Thing):
     _defaults = dict(
@@ -34,12 +35,15 @@ class Award (Thing):
     @classmethod
     @memoize('award.all_awards')
     def _all_awards_cache(cls):
-        return [ a._id for a in Award._query(limit=100) ]
+        return [ a._id for a in Award._query(sort=asc('_date'), limit=100) ]
 
     @classmethod
     def _all_awards(cls, _update=False):
         all = Award._all_awards_cache(_update=_update)
-        return Award._byID(all, data=True).values()
+        # Can't just return Award._byID() results because
+        # the ordering will be lost
+        d = Award._byID(all, data=True)
+        return [ d[id] for id in all ]
 
     @classmethod
     def _new(cls, codename, title, awardtype, imgurl):
@@ -62,7 +66,7 @@ class Award (Thing):
             raise NotFound, 'Award %s' % codename
 
     @classmethod
-    def give_if_needed(cls, codename, user, cup_expiration=None):
+    def give_if_needed(cls, codename, user, cup_info=None):
         """Give an award to a user, unless they already have it.
            Returns silently (except for g.log.debug) if the award
            doesn't exist"""
@@ -80,7 +84,7 @@ class Award (Thing):
                 g.log.debug("%s already has %s" % (user, codename))
                 return
 
-        Trophy._new(user, award, cup_expiration=cup_expiration)
+        Trophy._new(user, award, cup_info=cup_info)
         g.log.debug("Gave %s to %s" % (codename, user))
 
     @classmethod
@@ -115,7 +119,7 @@ class Award (Thing):
 class Trophy(Relation(Account, Award)):
     @classmethod
     def _new(cls, recipient, award, description = None,
-             url = None, cup_expiration = None):
+             url = None, cup_info = None):
 
         # The "name" column of the relation can't be a constant or else a
         # given account would not be allowed to win a given award more than
@@ -133,29 +137,39 @@ class Trophy(Relation(Account, Award)):
         if url:
             t.url = url
 
-        if cup_expiration:
-            recipient.extend_cup(cup_expiration)
+        if cup_info:
+            recipient.set_cup(cup_info)
 
         t._commit()
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
 
     @classmethod
-    @memoize('trophy.by_account')
-    def by_account(cls, account):
+    @memoize('trophy.by_account2')
+    def by_account_cache(cls, account):
         q = Trophy._query(Trophy.c._thing1_id == account._id,
-                          eager_load = True, thing_data = True,
-                          data = True,
-                          sort = desc('_date'))
-        q._limit = 50
-        return list(q)
-
-    @classmethod
-    @memoize('trophy.by_award')
-    def by_award(cls, award):
-        q = Trophy._query(Trophy.c._thing2_id == award._id,
-                          eager_load = True, thing_data = True,
-                          data = True,
                           sort = desc('_date'))
         q._limit = 500
-        return list(q)
+        return [ t._id for t in q ]
+
+    @classmethod
+    def by_account(cls, account, _update=False):
+        rel_ids = cls.by_account_cache(account, _update=_update)
+        trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
+                                    thing_data=True, return_dict = False)
+        return trophies
+
+    @classmethod
+    @memoize('trophy.by_award2')
+    def by_award_cache(cls, award):
+        q = Trophy._query(Trophy.c._thing2_id == award._id,
+                          sort = desc('_date'))
+        q._limit = 500
+        return [ t._id for t in q ]
+
+    @classmethod
+    def by_award(cls, award, _update=False):
+        rel_ids = cls.by_award_cache(award, _update=_update)
+        trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
+                                    thing_data=True, return_dict = False)
+        return trophies

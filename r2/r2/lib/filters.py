@@ -6,19 +6,21 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from BeautifulSoup import BeautifulSoup
+
 from pylons import c
 
 import cgi
@@ -29,6 +31,8 @@ from wrapped import Templated, CacheStub
 SC_OFF = "<!-- SC_OFF -->"
 SC_ON = "<!-- SC_ON -->"
 
+MD_START = '<div class="md">'
+MD_END = '</div>'
 
 
 def python_websafe(text):
@@ -118,59 +122,79 @@ def edit_comment_filter(text = ''):
         text = unicode(text)
     return url_escape(text)
 
-#TODO is this fast?
-r_url = re.compile('(?<![\(\[])(http://[^\s\'\"\]\)]+)')
-jscript_url = re.compile('<a href="(?!http|ftp|mailto|/).*</a>', re.I | re.S)
-img = re.compile('<img.*?>', re.I | re.S)
-href_re = re.compile('<a href="([^"]+)"', re.I)
-code_re = re.compile('<code>([^<]+)</code>')
-a_re    = re.compile('>([^<]+)</a>')
-fix_url = re.compile('&lt;(http://[^\s\'\"\]\)]+)&gt;')
+def markdown_souptest(text, nofollow=False, target=None, lang=None):
+    ok_tags  = {
+        'div': ('class'),
+        'a': ('href', 'title', 'target', 'nofollow'),
+        }
+
+    boring_tags = ( 'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
+                    'pre', 'code', 'blockquote',
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', )
+
+    for bt in boring_tags:
+        ok_tags[bt] = ()
+
+    smd = safemarkdown (text, nofollow, target, lang)
+    soup = BeautifulSoup(smd)
+
+    for tag in soup.findAll():
+        if not tag.name in ok_tags:
+            raise ValueError("<%s> tag found in markdown!" % tag.name)
+        ok_attrs = ok_tags[tag.name]
+        for k,v in tag.attrs:
+            if not k in ok_attrs:
+                raise ValueError("<%s %s='%s'> attr found in markdown!"
+                                 % (tag.name, k,v))
+            if tag.name == 'a' and k == 'href':
+                lv = v.lower()
+                if lv.startswith("http:"):
+                    pass
+                elif lv.startswith("https:"):
+                    pass
+                elif lv.startswith("ftp:"):
+                    pass
+                elif lv.startswith("mailto:"):
+                    pass
+                elif lv.startswith("/"):
+                    pass
+                else:
+                    raise ValueError("Link to '%s' found in markdown!" % v)
+
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
-def safemarkdown(text, nofollow=False, target=None):
+def safemarkdown(text, nofollow=False, target=None, lang=None):
+    from r2.lib.c_markdown import c_markdown
+    from r2.lib.py_markdown import py_markdown
+    from pylons import g
+
     from contrib.markdown import markdown
+
     if c.user.pref_no_profanity:
         text = profanity_filter(text)
-    if text:
-        # increase escaping of &, < and > once
-        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        #wrap urls in "<>" so that markdown will handle them as urls
-        text = r_url.sub(r'<\1>', text)
-        try:
-            text = markdown(text)
-        except RuntimeError:
-            text = "<p><em>Comment Broken</em></p>"
-        #remove images
-        text = img.sub('', text)
-        #wipe malicious javascript
-        text = jscript_url.sub('', text)
-        def href_handler(m):
-            url = m.group(1).replace('&amp;', '&')
-            link = '<a href="%s"' % url
 
-            if target:
-                link += ' target="%s"' % target
-            elif c.cname:
-                link += ' target="_top"'
+    if not text:
+        return None
 
-            if nofollow:
-                link += ' rel="nofollow"'
-            return link
-        def code_handler(m):
-            l = m.group(1)
-            return '<code>%s</code>' % l.replace('&amp;','&')
-        #unescape double escaping in links
-        def inner_a_handler(m):
-            l = m.group(1)
-            return '>%s</a>' % l.replace('&amp;','&')
-        # remove the "&" escaping in urls
-        text = href_re.sub(href_handler, text)
-        text = code_re.sub(code_handler, text)
-        text = a_re.sub(inner_a_handler, text)
-        text = fix_url.sub(r'\1', text)
-        return SC_OFF + '<div class="md">' + text + '</div>' + SC_ON
+    if c.cname and not target:
+        target = "_top"
+
+    if lang is None:
+        # TODO: lang should respect g.markdown_backend
+        lang = "py"
+
+    try:
+        if lang == "c":
+            text = c_markdown(text, nofollow, target)
+        elif lang == "py":
+            text = py_markdown(text, nofollow, target)
+        else:
+            raise ValueError("weird lang")
+    except RuntimeError:
+        text = "<p><em>Comment Broken</em></p>"
+
+    return SC_OFF + MD_START + text + MD_END + SC_ON
 
 
 def keep_space(text):

@@ -380,18 +380,63 @@ function helpoff(elem) {
     $(elem).parents(".usertext-edit:first").children(".markhelp:first").hide();
 };
 
+function show_all_messages(elem) {
+    var m = $(elem).parents(".message");
+    var ids = [];
+    m.find(".entry .collapsed").hide().end()
+        .find(".noncollapsed, .midcol:first").filter(":hidden")
+        .each(function() { 
+                var t = $(this).show().thing_id(); 
+                if(ids.indexOf(t) == -1) {
+                    ids.push(t);
+                }
+            });
+    if(ids.length) {
+        $.request("uncollapse_message", {"id": ids.join(',')});
+    }
+    return false; 
+}
+
+function hide_all_messages(elem) {
+    var m = $(elem).parents(".message");
+    var ids = [];
+    m.find(".entry .collapsed").show().end()
+        .find(".noncollapsed, .midcol:first").filter(":visible")
+        .each(function() { 
+                var t = $(this).hide().thing_id(); 
+                if(ids.indexOf(t) == -1) {
+                    ids.push(t);
+                }
+            });
+    if(ids.length) {
+        $.request("collapse_message", {"id": ids.join(',')});
+    }
+    return false; 
+}
+
 function hidecomment(elem) {
-    $(elem).thing().hide()
-        .find(".noncollapsed:first, .midcol:first, .child:first").hide().end()
+    var t = $(elem).thing();
+    t.hide()
+        .find(".noncollapsed:first, .midcol:first").hide().end()
         .show().find(".entry:first .collapsed").show();
+    if(t.hasClass("message")) {
+        $.request("collapse_message", {"id": $(t).thing_id()});
+    } else {
+        t.find(".child:first").hide();
+    }
     return false;
 };
 
 function showcomment(elem) {
-    var comment = $(elem).thing();
-    comment.find(".entry:first .collapsed").hide().end()
-        .find(".noncollapsed:first, .midcol:first, .child:first").show().end()
+    var t = $(elem).thing();
+    t.find(".entry:first .collapsed").hide().end()
+        .find(".noncollapsed:first, .midcol:first").show().end()
         .show();
+    if(t.hasClass("message")) {
+        $.request("uncollapse_message", {"id": $(t).thing_id()});
+    } else {
+        t.find(".child:first").show();
+    }
     return false;
 };
 
@@ -403,6 +448,12 @@ function morechildren(form, link_id, children, depth) {
                 children: children, depth: depth, id: id});
     return false;
 };
+
+function moremessages(elem) {
+    $(elem).html(reddit.status_msg.loading).css("color", "red");
+    $.request("moremessages", {parent_id: $(elem).thing_id()});
+    return false;
+}
 
 /* stylesheet and CSS stuff */
 
@@ -1129,7 +1180,7 @@ function check_some_langs(elem) {
 function fetch_parent(elem, parent_permalink, parent_id) {
     $(elem).css("color", "red").html(reddit.status_msg.loading);
     var thing = $(elem).thing();
-    var parentdiv = thing.find(".body .parent");
+    var parentdiv = thing.find(".uncollapsed .parent");
     if (parentdiv.length == 0) {
         var parent = '';
         $.getJSON(parent_permalink, function(response) {
@@ -1144,9 +1195,10 @@ function fetch_parent(elem, parent_permalink, parent_id) {
                     });
                 if(parent) {
                     /* make a parent div for the contents of the fetch */
-                    thing.find(".body .md").before('<div class="parent rounded">' +
-                                                   $.unsafe(parent) +
-                                                   '</div>'); 
+                    thing.find(".noncollapsed .md")
+                        .before('<div class="parent rounded">' +
+                                $.unsafe(parent) +
+                                '</div>'); 
                 }
                 $(elem).parent("li").andSelf().remove();
             });

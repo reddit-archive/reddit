@@ -6,17 +6,17 @@
 ## software over a computer network and provide for limited attribution for the
 ## Original Developer. In addition, Exhibit A has been modified to be consistent
 ## with Exhibit B.
-## 
+##
 ## Software distributed under the License is distributed on an "AS IS" basis,
 ## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 ## the specific language governing rights and limitations under the License.
-## 
+##
 ## The Original Code is Reddit.
-## 
+##
 ## The Original Developer is the Initial Developer.  The Initial Developer of
 ## the Original Code is CondeNet, Inc.
-## 
-## All portions of the code written by CondeNet are Copyright (c) 2006-2009
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%namespace file="utils.html" import="plain_link" />
@@ -223,19 +223,23 @@
     <li>
       ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
     </li>
+  %else:
+    <li class="first">
+      ${self.bylink_button(_("permalink"), thing.permalink)}
+    </li>
   %endif
-  ${self.banbuttons()}
   %if thing.recipient:
-  <li class="unread">
+    ${self.banbuttons()}
+    <li class="unread">
      ${self.state_button("unread", _("mark unread"), \
         "return change_state(this, 'unread_message', unread_thing, true);", \
          _("unread"))}
-  </li>
-  %endif
-  %if thing.can_reply:
-    <li>
-       ${self.simple_button(_("reply {verb}"), "reply")}
     </li>
+    %if thing.can_reply:
+      <li>
+         ${self.simple_button(_("reply {verb}"), "reply")}
+      </li>
+    %endif
   %endif
 </%def>
 

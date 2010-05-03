@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.db.thing import MultiRelation, Relation, thing_prefix, cache
@@ -50,7 +50,7 @@ class Vote(MultiRelation('vote',
 
 
     @classmethod
-    def vote(cls, sub, obj, dir, ip, organic = False):
+    def vote(cls, sub, obj, dir, ip, organic = False, cheater = False):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_counts
 
@@ -78,7 +78,7 @@ class Vote(MultiRelation('vote',
 
             #these still need to be recalculated
             old_valid_thing = v.valid_thing
-            v.valid_thing = (valid_thing(v, karma)
+            v.valid_thing = (valid_thing(v, karma, cheater = cheater)
                              and v.valid_thing)
             v.valid_user = (v.valid_user
                             and v.valid_thing
@@ -91,7 +91,8 @@ class Vote(MultiRelation('vote',
             v.author_id = obj.author_id
             v.sr_id = sr._id
             v.ip = ip
-            old_valid_thing = v.valid_thing = (valid_thing(v, karma))
+            old_valid_thing = v.valid_thing = \
+                              valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)
                             and not is_self_link)
             if organic:

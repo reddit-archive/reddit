@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from account import *
@@ -57,8 +57,10 @@ class Listing(object):
         from r2.lib.template_helpers import replace_render
         builder_items = self.builder.get_items(*a, **kw)
         for item in self.builder.item_iter(builder_items):
-            # rewrite the render method 
-            item.render = replace_render(self, item, item.render)
+            # rewrite the render method
+            if not hasattr(item, "render_replaced"):
+                item.render = replace_render(self, item, item.render)
+                item.render_replaced = True
         return builder_items
 
     def listing(self):

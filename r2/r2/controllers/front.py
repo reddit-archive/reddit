@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from validator import *
@@ -31,16 +31,18 @@ from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
+from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
+from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
 from listingcontroller import ListingController
-from pylons import c, request
+from pylons import c, request, request, Response
 
 import random as rand
 import re
@@ -228,7 +230,7 @@ class FrontController(RedditController):
                                  comment, context)
         listing = NestedListing(builder, num = num,
                                 parent_name = article._fullname)
-        
+
         displayPane = PaneStack()
 
         # if permalink page, add that message first to the content
@@ -238,11 +240,12 @@ class FrontController(RedditController):
         # insert reply box only for logged in user
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
+            display = not bool(comment)
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
-                                        display = not bool(comment),
+                                        display = display,
                                         cloneable = True))
-            
+
         # finally add the comment listing
         displayPane.append(listing.listing())
 
@@ -469,12 +472,13 @@ class FrontController(RedditController):
                                       SearchSortMenu(default=sort)],
                          search_params = dict(sort = sort, t = time),
                          infotext = infotext).render()
-        
+
         return res
-        
+
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
         thin wrapper for SearchBuilder."""
+
         builder = SearchBuilder(query_obj,
                                 after = after, num = num, reverse = reverse,
                                 count = count,
@@ -484,7 +488,31 @@ class FrontController(RedditController):
 
         # have to do it in two steps since total_num and timing are only
         # computed after fetch_more
-        res = listing.listing()
+        try:
+            res = listing.listing()
+        except SolrError, e:
+            errmsg = "SolrError: %r %r" % (e, query_obj)
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+
+            sf = SearchFail()
+            sb = SearchBar(prev_search = query_obj.q)
+
+            us = unsafe(sb.render() + sf.render())
+
+            errpage = pages.RedditError(_('search failed'), us)
+
+            c.response = Response()
+            c.response.status_code = 503
+            request.environ['usable_error_content'] = errpage.render()
+            request.environ['retry_after'] = 60
+
+            abort(503)
+
         timing = time_module.time() - builder.start_time
 
         return builder.total_num, timing, res

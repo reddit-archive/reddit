@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, set_user_cookie
@@ -31,7 +31,7 @@ from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, link_from_url, timefromnow
-from r2.lib.utils import timeago
+from r2.lib.utils import timeago, tup
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
@@ -202,7 +202,8 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        queries.queue_vote(c.user, l, True, ip)
+        queries.queue_vote(c.user, l, True, ip,
+                           cheater = (errors.CHEATER, None) in c.errors)
         if save:
             r = l._save(c.user)
             queries.new_savehide(r)
@@ -258,22 +259,33 @@ class ApiController(RedditController):
     @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
                               error = errors.WRONG_PASSWORD),
                    user = VLogin(['user', 'passwd']),
+                   username = VLength('user', max_length = 100),
                    dest   = VDestination(),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
-    def POST_login(self, form, jquery, user, dest, rem, reason):
+    def POST_login(self, form, jquery, user, username, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
         hc_key = "login_attempts-%s" % request.ip
 
-        recent_attempts = g.hardcache.get(hc_key, 0)
+        # TODO: You-know-what (not mentioning it, just in case
+        # we accidentally release code with this comment in it)
 
+        # Cache lifetime for login_attmempts
+        la_expire_time = 3600 * 8
+
+        recent_attempts = g.hardcache.add(hc_key, 0, time=la_expire_time)
+
+        fake_failure = False
         if recent_attempts >= 25:
-            raise NotImplementedError("need proper fail msg")
-        elif form.has_errors("passwd", errors.WRONG_PASSWORD):
+            g.log.error ("%s failed to login as %s (attempt #%d)"
+                         % (request.ip, username, recent_attempts))
+            fake_failure = True
+
+        if fake_failure or form.has_errors("passwd", errors.WRONG_PASSWORD):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            g.hardcache.set(hc_key, recent_attempts + 1, 3600 * 8)
+            g.hardcache.incr(hc_key, time = la_expire_time)
         else:
             self._login(form, user, dest, rem)
 
@@ -635,7 +647,8 @@ class ApiController(RedditController):
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
-                queries.queue_vote(c.user, item, True, ip)
+                queries.queue_vote(c.user, item, True, ip,
+                                   cheater = (errors.CHEATER, None) in c.errors)
 
                 #update last modified
                 set_last_modified(link, 'comments')
@@ -653,6 +666,7 @@ class ApiController(RedditController):
 
             # insert the new comment
             jquery.insert_things(item)
+            
             # remove any null listings that may be present
             jquery("#noresults").hide()
 
@@ -721,7 +735,7 @@ class ApiController(RedditController):
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_share_")
-            
+
     @noresponse(VUser(),
                 VModhash(),
                 vote_type = VVotehash(('vh', 'id')),
@@ -731,13 +745,21 @@ class ApiController(RedditController):
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
+        store = True
+
         if not thing or thing._deleted:
             return
 
+        if vote_type == "rejected":
+            g.log.error("POST_vote: rejected vote (%s) from '%s' on %s (%s)"%
+                        (request.params.get('dir'), c.user.name,
+                         thing._fullname, request.ip))
+            store = False
+
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
-            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
-            return
+            g.log.error("POST_vote: ignoring old vote on %s" % thing._fullname)
+            store = False
 
         # in a lock to prevent duplicate votes from people
         # double-clicking the arrows
@@ -745,16 +767,18 @@ class ApiController(RedditController):
             dir = (True if dir > 0
                    else False if dir < 0
                    else None)
+
             organic = vote_type == 'organic'
-            queries.queue_vote(user, thing, dir, ip, organic)
+            queries.queue_vote(user, thing, dir, ip, organic, store = store,
+                               cheater = (errors.CHEATER, None) in c.errors)
+            if store:
+                #update relevant caches
+                if isinstance(thing, Link):
+                    set_last_modified(c.user, 'liked')
+                    set_last_modified(c.user, 'disliked')
 
-            #update relevant caches
-            if isinstance(thing, Link):
-                set_last_modified(c.user, 'liked')
-                set_last_modified(c.user, 'disliked')
-
-            # flag search indexer that something has changed
-            changed(thing)
+                # flag search indexer that something has changed
+                changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -967,12 +991,13 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
                    ad_file = VLength('ad-location', max_length = 500),
+                   sponsor_text =VLength('sponsorship-text', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
     def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
-                        sponsor_url, sponsor_name,  **kw):
+                        sponsor_text, sponsor_url, sponsor_name,  **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1004,6 +1029,7 @@ class ApiController(RedditController):
         elif (form.has_errors(None, errors.INVALID_OPTION) or
               form.has_errors('description', errors.TOO_LONG)):
             pass
+
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above
@@ -1032,6 +1058,7 @@ class ApiController(RedditController):
                 if ad_type != "custom":
                     ad_file = Subreddit._defaults['ad_file']
                 sr.ad_file = ad_file
+                sr.sponsorship_text = sponsor_text or ""
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
 
@@ -1053,7 +1080,10 @@ class ApiController(RedditController):
             changed(sr)
             form.parent().set_html('.status', _("saved"))
 
-        if redir:
+        # don't go any further until the form validates
+        if form.has_error():
+            return
+        elif redir:
             form.redirect(redir)
         else:
             jquery.refresh()
@@ -1109,14 +1139,39 @@ class ApiController(RedditController):
 
     @noresponse(VUser(),
                 VModhash(),
+                thing = VByName('id', multiple = True))
+    def POST_collapse_message(self, thing):
+        if not thing:
+            return
+        for t in tup(thing):
+            if hasattr(t, "to_id") and c.user._id == t.to_id:
+                t.to_collapse = True
+            elif hasattr(t, "author_id") and c.user._id == t.author_id:
+                t.author_collapse = True
+            t._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id', multiple = True))
+    def POST_uncollapse_message(self, thing):
+        if not thing:
+            return
+        for t in tup(thing):
+            if hasattr(t, "to_id") and c.user._id == t.to_id:
+                t.to_collapse = False
+            elif hasattr(t, "author_id") and c.user._id == t.author_id:
+                t.author_collapse = False
+            t._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
                 thing = VByName('id'))
     def POST_unread_message(self, thing):
         if not thing:
             return
         if hasattr(thing, "to_id") and c.user._id != thing.to_id:
             return 
-        thing.new = True
-        thing._commit()
+        queries.set_unread(thing, True)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1125,10 +1180,7 @@ class ApiController(RedditController):
         if not thing: return
         if hasattr(thing, "to_id") and c.user._id != thing.to_id:
             return 
-        thing.new = False
-        thing._commit()
-
-
+        queries.set_unread(thing, False)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1147,6 +1199,24 @@ class ApiController(RedditController):
         if r:
             queries.new_savehide(r)
 
+
+    @validatedForm(VUser(),
+                   parent = VByName('parent_id'))
+    def POST_moremessages(self, form, jquery, parent):
+        if not parent.can_view():
+            return self.abort(403,'forbidden')
+
+        builder = MessageBuilder(c.user, parent = parent, skip = False)
+        listing = Listing(builder).listing()
+        a = []
+        for item in listing.things:
+            a.append(item)
+            for x in item.child.things:
+                a.append(x)
+        for item in a:
+            if hasattr(item, "child"):
+                item.child = None
+        jquery.things(parent._fullname).parent().replace_things(a, False, True)
 
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
@@ -1221,7 +1291,8 @@ class ApiController(RedditController):
                     #vote up all of the links
                     for link in links:
                         queries.queue_vote(c.user, link,
-                                           action == 'like', request.ip)
+                                           action == 'like', request.ip,
+                                           cheater = (errors.CHEATER, None) in c.errors)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     r = link._save(c.user)
@@ -1285,7 +1356,7 @@ class ApiController(RedditController):
         jquery("body").captcha(get_iden())
 
     @noresponse(VAdmin(),
-                tr = VTranslation("id"), 
+                tr = VTranslation("lang"), 
                 user = nop('user'))
     def POST_deltranslator(self, tr, user):
         if tr:
@@ -1398,8 +1469,8 @@ class ApiController(RedditController):
         else:
             cup_expiration = None
 
-        t = Trophy._new(recipient, award, description=description,
-                        url=url, cup_expiration=cup_expiration)
+        t = Trophy._new(recipient, award, description=description, url=url,
+                        cup_info=dict(expiration=cup_expiration))
 
         form.set_html(".status", _('saved'))
 

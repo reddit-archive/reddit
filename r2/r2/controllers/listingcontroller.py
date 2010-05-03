@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, base_listing
@@ -39,10 +39,12 @@ from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
+from r2.lib.contrib.pysolr import SolrError
 
 from admin import admin_profile_query
 
 from pylons.i18n import _
+from pylons import Response
 
 import random
 
@@ -147,7 +149,29 @@ class ListingController(RedditController):
         if c.site.path == PromoteSR.path and not c.user_is_sponsor:
             abort(403, 'forbidden')
         listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
-        return listing.listing()
+        try:
+            return listing.listing()
+        except SolrError, e:
+            errmsg = "SolrError: %r %r" % (e, self.builder_obj)
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+
+            sf = SearchFail()
+
+            us = unsafe(sf.render())
+
+            errpage = pages.RedditError(_('search failed'), us)
+
+            c.response = Response()
+            c.response.status_code = 503
+            request.environ['usable_error_content'] = errpage.render()
+            request.environ['retry_after'] = 60
+
+            abort(503)
 
     def title(self):
         """Page <title>"""
@@ -229,7 +253,7 @@ class HotController(FixListing, ListingController):
               and not isinstance(c.site, FakeSubreddit)
               and self.after is None
               and self.count == 0):
-            return [l._fullname for l in get_hot(c.site)]
+            return get_hot(c.site, only_fullnames = True)
         else:
             return c.site.get_links('hot', 'all')
 
@@ -483,8 +507,10 @@ class MessageController(ListingController):
 
     @property
     def menus(self):
-        if self.where in ('inbox', 'messages', 'comments', 'selfreply'):
+        if self.where in ('inbox', 'messages', 'comments',
+                          'selfreply', 'unread'):
             buttons = (NavButton(_("all"), "inbox"),
+                       NavButton(_("unread"), "unread"),
                        NavButton(plurals.messages, "messages"),
                        NavButton(_("comment replies"), 'comments'),
                        NavButton(_("post replies"), 'selfreply'))
@@ -509,13 +535,35 @@ class MessageController(ListingController):
             w.permalink, w._fullname = p, f
         else:
             w = ListingController.builder_wrapper(thing)
-            
-        if c.user.pref_mark_messages_read and thing.new:
-            w.new = True
-            thing.new = False
-            thing._commit()
 
         return w
+
+    def builder(self):
+        if self.where == 'messages':
+            if self.message:
+                if self.message.first_message:
+                    parent = Message._byID(self.message.first_message)
+                else:
+                    parent = self.message
+                return MessageBuilder(c.user, parent = parent,
+                                      skip = False, 
+                                      focal = self.message, 
+                                      wrap = self.builder_wrapper,
+                                      num = self.num)
+            elif c.user.pref_threaded_messages:
+                skip = (c.render_style == "html")
+                return MessageBuilder(c.user, wrap = self.builder_wrapper,
+                                      skip = skip, 
+                                      num = self.num,
+                                      after = self.after,
+                                      reverse = self.reverse)
+        return ListingController.builder(self)
+
+    def listing(self):
+        if (self.where == 'messages' and 
+            (c.user.pref_threaded_messages or self.message)):
+            return Listing(self.builder_obj).listing()
+        return ListingController.listing(self)
 
     def query(self):
         if self.where == 'messages':
@@ -524,24 +572,28 @@ class MessageController(ListingController):
             q = queries.get_inbox_comments(c.user)
         elif self.where == 'selfreply':
             q = queries.get_inbox_selfreply(c.user)
-        if self.where == 'inbox':
+        elif self.where == 'inbox':
             q = queries.get_inbox(c.user)
+        elif self.where == 'unread':
+            q = queries.get_unread_inbox(c.user)
+        elif self.where == 'sent':
+            q = queries.get_sent(c.user)
 
+        if self.where != 'sent':
             #reset the inbox
             if c.have_messages and self.mark != 'false':
                 c.user.msgtime = False
                 c.user._commit()
 
-        elif self.where == 'sent':
-            q = queries.get_sent(c.user)
-
         return q
 
     @validate(VUser(),
+              message = VMessageID('mid'),
               mark = VOneOf('mark',('true','false'), default = 'true'))
-    def GET_listing(self, where, mark, **env):
+    def GET_listing(self, where, mark, message, **env):
         self.where = where
         self.mark = mark
+        self.message = message
         c.msg_location = where
         return ListingController.GET_listing(self, **env)
 
@@ -627,7 +679,7 @@ class MyredditsController(ListingController):
         return stack
 
     @validate(VUser())
-    def GET_listing(self, where, **env):
+    def GET_listing(self, where = 'inbox', **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
@@ -636,3 +688,4 @@ class CommentsController(ListingController):
 
     def query(self):
         return queries.get_all_comments()
+

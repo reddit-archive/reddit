@@ -6,17 +6,17 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 #TODO byID use Things?
@@ -131,7 +131,13 @@ class DataThing(object):
 
     def _other_self(self):
         """Load from the cached version of myself. Skip the local cache."""
-        return cache.get(self._cache_key(), local = False)
+        l = cache.get(self._cache_key(), local = False)
+        if l and l._id != self._id:
+            g.log.error("thing.py: Doppleganger on read: got %s for %s",
+                        (l, self))
+            cache.delete(self._cache_key())
+            return 
+        return l
 
     def _cache_myself(self):
         cache.set(self._cache_key(), self)
@@ -270,8 +276,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         if not all(x <= tdb.MAX_THING_ID for x in ids):
-            g.log.debug("Attempted to look up too-big thing_id?")
-            raise NotFound('thing_id greater than MAX_THING_ID')
+            raise NotFound('huge thing_id in %r' % ids)
 
         def items_db(ids):
             items = cls._get_item(cls._type_id, ids)
@@ -283,9 +288,16 @@ class DataThing(object):
         bases = sgm(cache, ids, items_db, prefix)
 
         #check to see if we found everything we asked for
-        if any(i not in bases for i in ids):
-            missing = [i for i in ids if i not in bases]
-            raise NotFound, '%s %s' % (cls.__name__, missing)
+        for i in ids:
+            if i not in bases:
+                missing = [i for i in ids if i not in bases]
+                raise NotFound, '%s %s' % (cls.__name__, missing)
+            if bases[i] and bases[i]._id != i:
+                g.log.error("thing.py: Doppleganger on byID: %s got %s for %s" %
+                            (cls.__name__, bases[i]._id, i))
+                bases[i] = items_db([i]).values()[0]
+                bases[i]._cache_myself()
+
 
         if data:
             need = [v for v in bases.itervalues() if not v._loaded]
@@ -548,6 +560,27 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _get_item = staticmethod(tdb.get_rel)
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
+
+        @classmethod
+        def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
+                      eager_load=False, thing_data=False):
+
+            ids, single = tup(ids, True)
+
+            bases = cls._byID(ids, data=data, return_dict=True,
+                              extra_props=extra_props)
+
+            values = bases.values()
+
+            if values and eager_load:
+                load_things(values, thing_data)
+
+            if single:
+                return bases[ids[0]]
+            elif return_dict:
+                return bases
+            else:
+                return filter(None, (bases.get(i) for i in ids))
 
         def __init__(self, thing1, thing2, name, date = None, id = None, **attrs):
             DataThing.__init__(self)

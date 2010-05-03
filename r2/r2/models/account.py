@@ -6,24 +6,25 @@
 # software over a computer network and provide for limited attribution for the
 # Original Developer. In addition, Exhibit A has been modified to be consistent
 # with Exhibit B.
-# 
+#
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 # the specific language governing rights and limitations under the License.
-# 
+#
 # The Original Code is Reddit.
-# 
+#
 # The Original Developer is the Initial Developer.  The Initial Developer of the
 # Original Code is CondeNet, Inc.
-# 
-# All portions of the code written by CondeNet are Copyright (c) 2006-2009
+#
+# All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr
+from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
+from r2.lib.cache        import sgm
 
 from pylons import g
 import time, sha
@@ -58,11 +59,12 @@ class Account(Thing):
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
                      pref_mark_messages_read = True,
+                     pref_threaded_messages = True,
+                     pref_collapse_read_messages = False,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,
                      report_ignored = 0,
-                     cup_date = None,
                      spammer = 0,
                      sort_options = {},
                      has_subscribed = False,
@@ -263,34 +265,53 @@ class Account(Thing):
         share_emails = share['emails']
         for e in emails:
             share_emails[e] = share_emails.get(e, 0) +1
-            
+
         share['recent'] = emails
 
         self.share = share
 
-    def extend_cup(self, new_expiration):
-        if self.cup_date and self.cup_date > new_expiration:
+    def set_cup(self, cup_info):
+        from r2.lib.template_helpers import static
+
+        if cup_info is None:
             return
-        self.cup_date = new_expiration
-        self._commit()
+
+        if cup_info.get("expiration", None) is None:
+            return
+
+        cup_info.setdefault("label_template",
+          "%(user)s recently won a trophy! click here to see it.")
+
+        cup_info.setdefault("img_url", static('award.png'))
+
+        existing_info = self.cup_info()
+
+        if (existing_info and
+            existing_info["expiration"] > cup_info["expiration"]):
+            # The existing award has a later expiration,
+            # so it trumps the new one as far as cups go
+            return
+
+        td = cup_info["expiration"] - timefromnow("0 seconds")
+
+        cache_lifetime = td.seconds
+
+        if cache_lifetime <= 0:
+            g.log.error("Adding a cup that's already expired?")
+        else:
+            g.hardcache.set("cup_info-%d" % self._id, cup_info, cache_lifetime)
+
 
     def remove_cup(self):
-        if not self.cup_date:
-            return
-        self.cup_date = None
-        self._commit()
+        g.hardcache.delete("cup_info-%d" % self._id)
 
-    def should_show_cup(self):
-        # FIX ME.
-        # this is being called inside builder (Bad #1) in the
-        # listing loop. On machines that are not allowed to write to
-        # the db, this generates an exception (Bad #2) on every
-        # listing page with users with cups.
-        return False # temporarily disable cups
-        if self.cup_date and self.cup_date < datetime.now(g.tz):
-            self.cup_date = None
-            self._commit()
-        return self.cup_date
+    def cup_info(self):
+        return g.hardcache.get("cup_info-%d" % self._id)
+
+    @classmethod
+    def cup_info_multi(cls, ids):
+        ids = [ int(i) for i in ids ]
+        return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
 class FakeAccount(Account):
     _nodb = True

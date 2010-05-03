@@ -99,6 +99,9 @@ label.disabled { color: gray; }
 .flat-list form {display: inline; }
 .flat-list .selected a { color: orangered; }
 
+.link .flat-list { display: block; padding-bottom: 1px; }
+.link.compressed .flat-list { display: inline-block; }
+
 ul.flat-vert {text-align: left;}
 .flat-vert .separator { margin: 0 }
 
@@ -580,6 +583,11 @@ ul.flat-vert {text-align: left;}
 .link.promotedlink.finished { background-color: #DDD; }
 #promo-form + form #img-preview-container { display: none; }
 
+.rejection-form textarea { 
+    width: 40em;
+    height: 10em; 
+}
+
 .promoted-list { font-size: larger; }
 .promoted-list .unpromote-button { display: inline }
 .promoted-list .unpromote-button a { color: gray; }
@@ -840,6 +848,13 @@ textarea.gray { color: gray; }
 .morecomments a:hover { text-decoration: underline}
 .morecomments .gray {font-weight: normal; color: gray}
 
+.expand-btn { 
+    font-size: smaller;
+    margin: 0px 5px;  
+    margin-top: 4px; 
+    display: inline-block; 
+}
+
 .message {
     margin: 10px 10px 20px 5px; 
     padding-left: 5px; 
@@ -847,7 +862,40 @@ textarea.gray { color: gray; }
     padding:7px;
 }
 
-.message.new { 
+.message.focal > .entry .md { 
+    background-color: #FFFFCC;
+}
+
+.message .collapsed .head { 
+    color: #888888;
+    font-style: italic;
+}
+
+
+.message.message-parent .tagline,
+.message.message-reply .tagline  { 
+    color: #485;
+}
+
+.message.message-parent > .entry .noncollapsed,
+.message.message-reply  > .entry .noncollapsed  { 
+    color: #485;
+}
+
+.message.recipient > .entry .noncollapsed  { 
+    color: black;
+}
+
+.message.message-reply.recipient > .entry .head,
+.message.message-parent.recipient > .entry .head { 
+    color: black; 
+    font-weight: bold;
+}
+
+.message.new > .entry .head {
+  color:orangered; font-weight: bold;  
+}
+.message.new > .entry{ 
     background-color:#F7F7F7;
     border:1px solid #E9E9E9;
     padding: 6px;
@@ -858,6 +906,59 @@ textarea.gray { color: gray; }
 }
 
 
+.message .child .message,
+.message .child .usertext { 
+    margin-top: 10px; 
+    margin-left: 12px; 
+}
+
+.message .expand { 
+    display: none;
+}
+
+.message .entry { 
+    margin-left: 0px; 
+}
+
+.message.message-parent .expand { 
+    display: inline; 
+}
+
+/* threaded message styles: remove padding */
+.message.message-parent .child,
+.message.message-reply .child { 
+    margin: 0;
+    padding: 0; 
+}
+
+.message.message-parent .child .message,
+.message.message-reply  .child .message
+ { 
+    margin: 0;
+    padding: 0; 
+}
+
+.message.message-parent .subject { 
+    margin-bottom: 10px; 
+}
+
+.message.message-parent .message .subject { 
+    display: none; 
+}
+
+.message.message-reply .subject { 
+    display:none;
+}
+
+.message.message-reply .entry, 
+.message.message-parent .entry { 
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px; 
+    border-left: 2px dashed #E7E7E7;
+}
+
+
 .message .buttons,
 .message .md { margin-left: 15px; }
 .message .entry .parent { 
@@ -865,6 +966,16 @@ textarea.gray { color: gray; }
     max-width: 60em;
     margin: 3px 10px; 
 }
+
+.message .subject .correspondent {
+    background-color:#EFF7FF;
+    border:1px solid #336699;
+    color:#336699;
+    display:inline-block;
+    margin-right:10px;
+    padding:2px 5px; 
+}
+
 .message .subject .title { 
     font-weight: normal;
     font-style: italic;
@@ -886,9 +997,7 @@ textarea.gray { color: gray; }
     margin-left: 2px; 
  }
 
-.message .child { margin-left: 15px;  }
 
-.message.new .head {color:orangered; font-weight: bold;  }
 .message .subject { font-weight: bold; font-size: larger; }
 
 .clippy img {
@@ -1190,6 +1299,17 @@ textarea.gray { color: gray; }
 
 .searchpane .clearleft {
     margin-bottom: 10px; 
+}
+
+.searchfail {
+    color: #c00000;
+    font-size: larger;
+    line-height: 2em;
+}
+
+.searchfail a {
+    color: red;
+    text-decoration: underline;
 }
 
 /* login, register */
@@ -1522,6 +1642,22 @@ textarea.gray { color: gray; }
     list-style-image:url(/static/red-arrow.png);
 }
 
+
+.feedback.instructions dl { 
+    margin-left: 20px; 
+}
+
+.feedback.instructions dt { 
+    margin-top: 10px; 
+}
+
+.feedback.instructions dd { 
+    background: transparent none no-repeat scroll bottom left;
+    background-image: url(/static/red-arrow.png);
+    padding-left: 35px; 
+}
+
+
 .button-demo a.view-code,
 .button-demo a.hide-code { float: right; margin-bottom: 1em; }
 .button-demo a.hide-code { display: none; }
@@ -1816,9 +1952,16 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
-.link.over18 acronym { 
-    color: red;
-    font-weight: bold;
+.entry .buttons li.nsfw-stamp {
+    border: 1px solid #ff7777 !important;
+    padding: 0 4px;
+    background-color: white;
+}
+
+.nsfw-stamp acronym {
+    border: none;
+    color: black;
+    text-decoration: none;
 }
 
 .reported { background-color: #f6e69f }
@@ -2694,6 +2837,15 @@ table.award-table {
 
 .removecup-button {
     display: inline;
+}
+
+.cup-info-box {
+    border: dashed #eeaa33 2px;
+    padding: 5px;
+}
+
+.cup-info-box tt {
+    background-color: #f5f5aa;
 }
 
 /* Datepicker
