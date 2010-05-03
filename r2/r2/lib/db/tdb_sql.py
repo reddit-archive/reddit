@@ -42,6 +42,8 @@ transactions = TransSet()
 
 BigInteger = postgres.PGBigInteger
 
+MAX_THING_ID = 9223372036854775807 # http://www.postgresql.org/docs/8.3/static/datatype-numeric.html
+
 def make_metadata(engine):
     metadata = sa.MetaData(engine)
     metadata.bind.echo = g.sqlprinting
@@ -81,7 +83,7 @@ def index_commands(table, type):
         commands.append(index_str(table, 'thing_id', 'thing_id'))
         commands.append(index_str(table, 'key_value', 'key, substring(value, 1, %s)' \
                                   % max_val_len))
-                                  
+
         #lower name
         commands.append(index_str(table, 'lower_key_value', 'key, lower(value)',
                                   where = "key = 'name'"))
@@ -98,6 +100,9 @@ def index_commands(table, type):
         commands.append(index_str(table, 'thing2_id', 'thing2_id'))
         commands.append(index_str(table, 'name', 'name'))
         commands.append(index_str(table, 'date', 'date'))
+    else:
+        print "unknown index_commands() type %s" % type
+
     return commands
 
 def get_type_table(metadata):
@@ -113,7 +118,6 @@ def get_rel_type_table(metadata):
                      sa.Column('type2_id', sa.Integer, nullable = False),
                      sa.Column('name', sa.String, nullable = False))
     return table
-
 
 def get_thing_table(metadata, name):
     table = sa.Table(g.db_app_name + '_thing_' + name, metadata,
@@ -214,6 +218,7 @@ def build_thing_tables():
 
         thing = storage(type_id = type_id,
                         name = name,
+                        avoid_master_reads = dbm.avoid_master_reads.get(name),
                         tables = tables)
 
         types_id[type_id] = thing
@@ -259,6 +264,7 @@ def build_rel_tables():
         rel = storage(type_id = type_id,
                       type1_id = type1_id,
                       type2_id = type2_id,
+                      avoid_master_reads = dbm.avoid_master_reads.get(name),
                       name = name,
                       tables = tables)
 
@@ -279,7 +285,7 @@ def get_write_table(tables):
         return tables[0]
 
 def get_read_table(tables):
-    #shortcut with 1 entry
+    # short-cut for only one element
     if len(tables) == 1:
         return tables[0]
 
@@ -340,7 +346,7 @@ def get_read_table(tables):
     print 'yer stupid'
     return  random.choice(tables)
 
-def get_table(kind, action, tables):
+def get_table(kind, action, tables, avoid_master_reads = False):
     if action == 'write':
         #if this is a write, store the kind in the c.use_write_db dict
         #so that all future requests use the write db
@@ -354,15 +360,21 @@ def get_table(kind, action, tables):
         if c.use_write_db and c.use_write_db.has_key(kind):
             return get_write_table(tables)
         else:
+            if avoid_master_reads and len(tables) > 1:
+                return get_read_table(tables[1:])
             return get_read_table(tables)
+
 
 def get_thing_table(type_id, action = 'read' ):
     return get_table('t' + str(type_id), action,
-                     types_id[type_id].tables)
+                     types_id[type_id].tables,
+                     avoid_master_reads = types_id[type_id].avoid_master_reads)
 
 def get_rel_table(rel_type_id, action = 'read'):
     return get_table('r' + str(rel_type_id), action,
-                     rel_types_id[rel_type_id].tables)
+                     rel_types_id[rel_type_id].tables,
+                     avoid_master_reads = rel_types_id[rel_type_id].avoid_master_reads)
+
 
 #TODO does the type actually exist?
 def make_thing(type_id, ups, downs, date, deleted, spam, id=None):

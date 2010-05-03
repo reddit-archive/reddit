@@ -335,9 +335,47 @@ class YoutubeScraper(MediaScraper):
     domains = ['youtube.com']
     height = 295
     width = 480
-    media_template = '<object width="490" height="295"><param name="movie" value="http://www.youtube.com/v/$video_id"></param><param name="wmode" value="transparent"></param><embed src="http://www.youtube.com/v/$video_id" type="application/x-shockwave-flash" wmode="transparent" width="480" height="295"></embed></object>'
+    media_template = '<object width="490" height="295"><param name="movie" value="http://www.youtube.com/v/$video_id&fs=1"></param><param name="wmode" value="transparent"></param><param name="allowFullScreen" value="true"></param><embed src="http://www.youtube.com/v/$video_id&fs=1" type="application/x-shockwave-flash" wmode="transparent" allowFullScreen="true" width="480" height="295"></embed></object>'
     thumbnail_template = 'http://img.youtube.com/vi/$video_id/default.jpg'
     video_id_rx = re.compile('.*v=([A-Za-z0-9-_]+).*')
+    video_deeplink_rx = re.compile('.*#t=(\d+)m(\d+)s.*')
+
+    def video_id_extract(self):
+        vid = self.video_id_rx.match(self.url)
+        if(vid):
+            video_id = vid.groups()[0]
+        d = self.video_deeplink_rx.match(self.url)
+        if(d):
+            seconds = int(d.groups()[0])*60 + int(d.groups()[1])
+            video_id += "&start=%d" % seconds
+        return video_id
+
+    def largest_image_url(self):
+        # Remove the deeplink part from the video id
+        return self.thumbnail_template.replace("$video_id",
+                                               self.video_id.split("&")[0])
+
+class TedScraper(MediaScraper):
+    domains = ['ted.com']
+    height = 326
+    width = 446
+    media_template = '<object width="446" height="326"><param name="movie" value="http://video.ted.com/assets/player/swf/EmbedPlayer.swf"></param><param name="allowFullScreen" value="true" /><param name="wmode" value="transparent"></param><param name="bgColor" value="#ffffff"></param> <param name="flashvars" value="$video_id" /><embed src="http://video.ted.com/assets/player/swf/EmbedPlayer.swf" pluginspace="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" wmode="transparent" bgColor="#ffffff" width="446" height="326" allowFullScreen="true" flashvars="$video_id"></embed></object>'
+    flashvars_rx = re.compile('.*flashvars="(.*)".*')
+
+    def video_id_extract(self):
+        if "/talks/" in self.url:
+            content_type, content = fetch_url(self.url.replace("/talks/","/talks/embed/"))
+            if content:
+                m = self.flashvars_rx.match(content)
+                if m:
+                    return m.groups()[0]
+    def largest_image_url(self):
+        if not self.soup:
+            self.download()
+
+        if self.soup:
+            return self.soup.find('link', rel = 'image_src')['href']
+
 
 class MetacafeScraper(MediaScraper):
     domains = ['metacafe.com']
@@ -641,6 +679,7 @@ for scraper in [ YoutubeScraper,
                  ComedyCentralScraper,
                  ColbertNationScraper,
                  TheDailyShowScraper,
+                 TedScraper,
                  LiveLeakScraper,
                  DailyMotionScraper,
                  RevverScraper,

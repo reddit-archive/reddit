@@ -64,6 +64,11 @@
 
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
+    %if thing.nsfw:
+     <li>
+       <acronym title="Not Safe for Work">NSFW</acronym>
+     </li>
+    %endif
     ${self.buttons()}
     ${self.admintagline()}
   </ul>
@@ -121,6 +126,10 @@
       cache["${thing._fullname}_cache"] = "${websafe(child_content)}";
     </script>
   %endif
+</%def>
+
+<%def name="thing_css_class(what)" buffered="True">
+${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 </%def>
 
 <%def name="subreddit()" buffered="True">

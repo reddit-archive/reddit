@@ -24,6 +24,8 @@ from threading import local
 from utils import lstrips
 from contrib import memcache
 
+from r2.lib.hardcachebackend import HardCacheBackend
+
 class CacheUtils(object):
     def incr_multi(self, keys, amt=1, prefix=''):
         for k in keys:
@@ -74,6 +76,36 @@ class Memcache(CacheUtils, memcache.Client):
     def delete_multi(self, keys, prefix='', time=0):
         memcache.Client.delete_multi(self, keys, time = time,
                                      key_prefix = prefix)
+
+class HardCache(CacheUtils):
+    backend = None
+
+    def __init__(self, gc):
+        self.backend = HardCacheBackend(gc)
+
+    def _split_key(self, key):
+        tokens = key.split("-", 1)
+        if len(tokens) != 2:
+            raise ValueError("key %s has no dash" % key)
+
+        category, ids = tokens
+        return category, ids
+
+    def set(self, key, val, time=0):
+        category, ids = self._split_key(key)
+        if time <= 0:
+            raise ValueError ("HardCache.set() *must* have an expiration time")
+        self.backend.set(category, ids, val, time)
+
+    def get(self, key, default=None):
+        category, ids = self._split_key(key)
+        r = self.backend.get(category, ids)
+        if r is None: return default
+        return r
+
+    def delete(self, key, time=0):
+        category, ids = self._split_key(key)
+        self.backend.delete(category, ids)
 
 class LocalCache(dict, CacheUtils):
     def __init__(self, *a, **kw):

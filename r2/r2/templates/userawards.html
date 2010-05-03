@@ -20,9 +20,28 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<div class="award-square-container">
+<%def name="other_awards(heading, awards)">
+  <br class="clear" />
+  <h1>${heading}</h1>
+  %for award in awards:
+    <div class="award-square mini">
+      <a href="/help/awards/#${award.codename}">
+        <img src="${award.imgurl % 70}" />
+        <br/>
+        <span class="award-name mini">${award.title}</span>
+      </a>
+    </div>
+  %endfor
+</%def>
 
-  %for i, (award, winner, trophy) in enumerate(thing.winners):
+<div class="award-square-container">
+  %if thing.manuals:
+    <h1>${_("Awards given out regularly:")}</h1>
+  %else:
+    <h1>&nbsp;</h1>
+  %endif
+
+  %for award, winner, trophy in thing.regular_winners:
 
     <div class="award-square">
       <a href="/help/awards/#${award.codename}">
@@ -59,4 +78,13 @@
 
     </div>
   %endfor
+
+  %if thing.manuals:
+    ${other_awards(_("Special one-time awards:"), thing.manuals)}
+  %endif
+
+  %if c.user_is_admin and thing.invisibles:
+    ${other_awards("Invisible awards:", thing.invisibles)}
+  %endif
+
 </div>

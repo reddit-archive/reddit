@@ -29,6 +29,7 @@ from r2.lib.utils import TimeoutFunction, TimeoutFunctionException
 from r2.lib.db.operators import desc
 from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_image
 from r2.lib import amqp
+from r2.lib.contrib.nymph import optimize_png
 
 import tempfile
 import traceback
@@ -41,7 +42,6 @@ def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
     return 'http:/%s%s.png' % (s3_thumbnail_bucket, link._fullname)
 
-
 def upload_thumb(link, image):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
@@ -50,7 +50,8 @@ def upload_thumb(link, image):
 
     resource = s3_thumbnail_bucket + link._fullname + '.png'
     log.debug('uploading to s3: %s' % link._fullname)
-    s3cp.send_file(f.name, resource, 'image/png', 'public-read', None, False)
+    s3cp.send_file(optimize_png(f.name, g.png_optimizer),
+                   resource, 'image/png', 'public-read', None, False)
     log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
 
 
@@ -91,12 +92,11 @@ def force_thumbnail(link, image_data):
     update_link(link, thumbnail = True, media_object = None)
 
 def run():
-    def process_msgs(msgs):
+    def process_msgs(msgs, chan):
         def _process_link(fname):
-            print "media: Processing %s" % fname
-
             link = Link._by_fullname(fname, data=True, return_dict=False)
             set_media(link)
+
         for msg in msgs:
             fname = msg.body
             try:

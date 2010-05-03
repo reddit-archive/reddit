@@ -710,8 +710,7 @@ def run_changed(drain=False):
         last run. Note: unlike many queue-using functions, this one is
         run from cron and totally drains the queue before terminating
     """
-
-    def _run_changed(msgs):
+    def _run_changed(msgs, chan):
         print "changed: Processing %d items" % len(msgs)
 
         fullnames = set([x.body for x in msgs])

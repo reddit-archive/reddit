@@ -21,6 +21,11 @@
 ################################################################################
 import re, sys, Image, os, hashlib, StringIO
 
+def optimize_png(fname, optimizer = "/usr/bin/env optipng"):
+    if os.path.exists(fname):
+        os.popen("%s %s" % (optimizer, fname))
+    return fname
+
 
 class Spriter(object):
     spritable = re.compile(r" *background-image: *url\((.*)\) *.*/\* *SPRITE *\*/")
@@ -31,7 +36,7 @@ class Spriter(object):
         self.im_lookup = {}
         self.ypos = [0]
         self.padding = padding
-        
+
         self.css_path = css_path
         self.actual_path = actual_path
 
@@ -65,12 +70,19 @@ class Spriter(object):
             master.paste(image,
                          (self.padding[0], self.padding[1] + self.ypos[i]))
 
-        master.save(os.path.join(self.actual_path, out_file))
+        f = os.path.join(self.actual_path, out_file)
+        master.save(f)
+
+        # optimize the file
+        optimize_png(f)
 
         d = dict(('pos_' + str(i), -self.padding[1] - y)
                  for i, y in enumerate(self.ypos))
 
-        h = hashlib.md5(master.tostring()).hexdigest()
+        # md5 the final contents
+        with open(f) as handle:
+            h = hashlib.md5(handle.read()).hexdigest()
+
         d['sprite'] = os.path.join(self.css_path, "%s?v=%s" % (out_file, h))
 
         return out_string % d

@@ -22,7 +22,6 @@
 from r2.lib.utils import tup
 from r2.lib.filters import websafe
 from r2.models import Report, Account
-from r2.models.thing_changes import changed
 
 from pylons import g
 
@@ -51,8 +50,6 @@ class AdminTools(object):
 
             t.ban_info = ban_info
             t._commit()
-            changed(t)
-
 
         if not auto:
             self.author_spammer(things, True)
@@ -73,7 +70,6 @@ class AdminTools(object):
             t.ban_info = ban_info
             t._spam = False
             t._commit()
-            changed(t)
 
         # auto is always False for unbans
         self.author_spammer(things, False)
@@ -86,7 +82,10 @@ class AdminTools(object):
            passed thing"""
         by_aid = {}
         for thing in things:
-            if hasattr(thing, 'author_id'):
+            if (hasattr(thing, 'author_id')
+                and not getattr(thing, 'ban_info', {}).get('auto',True)):
+                # only decrement 'spammer' for items that were not
+                # autobanned
                 by_aid.setdefault(thing.author_id, []).append(thing)
 
         if by_aid:
@@ -111,8 +110,6 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def admin_queues(self, chan, exchange):
-        pass
 
 admintools = AdminTools()
 

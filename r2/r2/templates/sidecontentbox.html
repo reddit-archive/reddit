@@ -31,5 +31,13 @@
     %for c in thing.content:
       ${c}
     %endfor
+
+    %if thing.more_href:
+      <div class="more">
+        <a href="${thing.more_href}">
+          ${thing.more_text} &raquo;
+        </a>
+      </div>
+    %endif
   </div>
 </div>

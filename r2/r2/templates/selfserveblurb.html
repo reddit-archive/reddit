@@ -19,17 +19,45 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2009
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.pages import Feedback
+ %>
 
-%if c.user_is_sponsor or c.user_is_paid_sponsor:
-<div class="instructions">
+<div class="self-service instructions">
   <h1>use our self-serve advertising tool</h1>
 
-  <p>
+  <p>reddit has created a system where you can buy sponsored links on the
+    front page using our&#32;<a href="http://blog.reddit.com/2009/11/now-for-as-little-as-20-you-can-buy.html">self-serve tool</a>.  Overall, we've been quite pleased to find a ridiculously successful (2% CTR to upwards of 10% CTR) means of advertising that doesn't diminish the user experience.</p>
 
-    reddit has created a system where you can buy sponsored links on the
-    front page using our&#32;<a href="/promoted/new_promo">self-serve tool</a>.
+  <p>Even if your budget is only $20 a day, you can get in on the action. Here's how: we'll allow you to submit a sponsored link (set the title, upload an image), and set the start date and duration. Then, you can bid on how much you want to spend on that link (we've set a minimum of $20 per link per day). This bid is exactly how much you'll pay for the link once it starts running.</p>
+
+  <p>On each day, we tally up the total number of bids, and use the total to figure out how large a piece of the pie each sponsored link gets. For example, if you were to bid $20, and the total for the day is $200, you'll get 10% of sponsored link impressions for the day. </p>
+
+  <p>
+    To begin all you will need is a valid credit card and a valid email address.  Simply follow these steps to get started:
 
   </p>
+  <%
+     step1 = c.user_is_loggedin
+     step2 = c.user_is_loggedin and c.user.email_verified
+     %>
+  <ul>
+    <li class="${'done' if step1 else 'unfinished'}"> 
+      please&#32;<a href="/login?dest=${request.fullpath|u}">login or create an account</a>.  You will be redirected back here once you are done.</li>
+    <li class="${'done' if step2 else 'unfinished' if step1 else ''}"> 
+      please&#32;<a href="/verify?dest=${request.fullpath|u}">verify your email address</a>&#32; so that we'll be able to send you information about your promotion while it is running
+    </li>
+    <li class="${'unfinished' if step2 else ''}"> 
+      Go to the&#32;<a href="/promoted/new_promo">self-serve area</a>&#32;and create your sponsored link. 
+    </li>
+  </ul>
+<p>
+  If you are instead interested in purchasing a banner ad or other form of advertisement on the site,&#32<a href="#" onclick="$('#ad-inq-form').slideDown(function(){$(this).find('input[type=text]:first').focus();}); return false;">inquire here and fill out the form.</a> 
+</p>
+
+<div id="ad-inq-form" style="display:none">
+  ${Feedback(title=_("inquire about advertising on reddit"), action = "ad_inq")}
+</div>
 
 </div>
-%endif
+ 

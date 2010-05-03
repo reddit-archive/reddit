@@ -47,8 +47,7 @@ def visible_promo(article):
     # promos are visible only if comments are not disabled and the
     # user is either the author or the link is live/previously live.
     if is_promo:
-        return (not article.disable_comments and
-                (is_author or
+        return (is_author or (not article.disable_comments and
                  article.promote_status >= promote.STATUS.promoted))
     # not a promo, therefore it is visible
     return True
@@ -515,20 +514,12 @@ class VSponsor(VVerifiedUser):
                     return
             except (NotFound, ValueError):
                 pass
-        abort(403, 'forbidden')
+            abort(403, 'forbidden')
 
 class VTrafficViewer(VSponsor):
     def user_test(self, thing):
         return (VSponsor.user_test(self, thing) or
                 promote.is_traffic_viewer(thing, c.user))
-
-# TODO: tempoary validator to be replaced with Vuser once we get he
-# bugs worked out
-class VPaidSponsor(VSponsor):
-    def run(self, link_id = None):
-        if c.user_is_paid_sponsor:
-            return
-        VSponsor.run(self, link_id)
 
 class VSrModerator(Validator):
     def run(self):
@@ -1100,10 +1091,10 @@ class VDate(Validator):
                                           business_days = self.business_days)
                 if self.future is not None and date.date() < future.date():
                     self.set_error(errors.BAD_FUTURE_DATE,
-                               {"day": future.days})
+                               {"day": self.future})
                 elif self.past is not None and date.date() > past.date():
                     self.set_error(errors.BAD_PAST_DATE,
-                                   {"day": past.days})
+                                   {"day": self.past})
             return date.replace(tzinfo=g.tz)
         except (ValueError, TypeError):
             self.set_error(errors.BAD_DATE)

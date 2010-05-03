@@ -6,7 +6,7 @@ from pylons.controllers.util import abort
 from pylons import c, g
 
 from reddit_base import RedditController
-from r2.lib.utils import worker
+from r2.lib.amqp import worker
 
 class HealthController(RedditController):
     def shutdown(self):

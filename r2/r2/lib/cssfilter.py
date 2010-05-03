@@ -29,6 +29,11 @@ from r2.lib.pages.things import wrap_links
 from pylons import g, c
 from pylons.i18n import _
 
+import tempfile
+from r2.lib import s3cp
+from md5 import md5
+from r2.lib.contrib.nymph import optimize_png
+
 import re
 
 import cssutils
@@ -372,10 +377,6 @@ def save_sr_image(sr, data, resource = None):
       http:/${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
     [Note: g.s3_thumb_bucket begins with a "/" so the above url is valid.]
     """
-    import tempfile
-    from r2.lib import s3cp
-    from md5 import md5
-
     hash = md5(data).hexdigest()
 
     try:
@@ -389,8 +390,8 @@ def save_sr_image(sr, data, resource = None):
             resource = ""
         resource = g.s3_thumb_bucket + sr._fullname + resource + ".png"
 
-        s3cp.send_file(f.name, resource, 'image/png', 'public-read', 
-                       None, False)
+        s3cp.send_file(optimize_png(f.name, g.png_optimizer), resource,
+                       'image/png', 'public-read', None, False)
     finally:
         f.close()
 

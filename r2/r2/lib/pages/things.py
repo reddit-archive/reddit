@@ -127,6 +127,8 @@ class MessageButtons(PrintableButtons):
                                   profilepage = c.profilepage,
                                   permalink = permalink,
                                   was_comment = was_comment,
+                                  unread = thing.new,
+                                  recipient = thing.recipient,
                                   can_reply = c.user_is_loggedin,
                                   parent_id = getattr(thing, "parent_id", None),
                                   show_report = True,

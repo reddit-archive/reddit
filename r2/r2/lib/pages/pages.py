@@ -147,13 +147,14 @@ class Reddit(Templated):
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         css_class = "icon-menu",  separator = '')]
 
-    def sr_moderators(self):
-        accounts = [Account._byID(uid, True) for uid in c.site.moderators]
+    def sr_moderators(self, limit = 10):
+        accounts = [Account._byID(uid, True)
+                    for uid in c.site.moderators[:limit]]
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
         """generates content in <div class="rightbox">"""
-        
+
         ps = PaneStack(css_class='spacer')
 
         if self.searchbox:
@@ -169,7 +170,14 @@ class Reddit(Templated):
 
             moderators = self.sr_moderators()
             if moderators:
-                ps.append(SideContentBox(_('moderators'), moderators))
+                total = len(c.site.moderators)
+                more_text = mod_href = ""
+                if total > len(moderators):
+                    more_text = "...and %d more" % (total - len(moderators))
+                    mod_href = "http://%s/about/moderators" % get_domain()
+                ps.append(SideContentBox(_('moderators'), moderators,
+                                         more_href = mod_href,
+                                         more_text = more_text))
 
             if (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)):
@@ -326,6 +334,8 @@ class RedditFooter(CachedTemplate):
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([NamedButton("blog", False, nocname=True),
+                         NamedButton("promote", False, nocname=True,
+                                     dest = '/promoted', css_class = "red"),
                          NamedButton("ad_inq", False, nocname=True),
                          OffsiteButton('reddit.tv', "http://www.reddit.tv"),
                          OffsiteButton('redditall', "http://www.redditall.com"),
@@ -435,9 +445,12 @@ class SponsorshipBox(Templated):
     pass
 
 class SideContentBox(Templated):
-    def __init__(self, title, content, helplink=None, extra_class=None):
-        Templated.__init__(self, title=title, helplink=helplink,
-                           content=content, extra_class=extra_class)
+    def __init__(self, title, content, helplink=None, extra_class=None,
+                 more_href = None, more_text = "more"):
+        Templated.__init__(self, title=title, helplink = helplink,
+                           content=content, extra_class=extra_class,
+                           more_href = more_href,
+                           more_text = more_text)
 
 class SideBox(CachedTemplate):
     """
@@ -512,7 +525,9 @@ class MessagePage(Reddit):
 
     def build_toolbars(self):
         buttons =  [NamedButton('compose'),
-                    NamedButton('inbox'),
+                    NamedButton('inbox', aliases = ["/message/comments",
+                                                    "/message/messages",
+                                                    "/message/selfreply"]),
                     NamedButton('sent')]
         return [PageNameNav('nomenu', title = _("message")), 
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
@@ -580,10 +595,12 @@ class SearchPage(BoringPage):
     """Search results page"""
     searchbox = False
 
-    def __init__(self, pagename, prev_search, elapsed_time, num_results, *a, **kw):
+    def __init__(self, pagename, prev_search, elapsed_time,
+                 num_results, search_params = {}, *a, **kw):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
-                                   num_results = num_results)
+                                   num_results = num_results,
+                                   search_params = search_params)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -753,13 +770,15 @@ class SubredditsPage(Reddit):
     searchbox    = False
     submit_box   = False
     def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
-                 title = '', loginbox = True, infotext = None, *a, **kw):
+                 title = '', loginbox = True, infotext = None,
+                 search_params = {}, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   header = _('search reddits')
+                                   header = _('search reddits'),
+                                   search_params = {}
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -858,7 +877,22 @@ class ProfilePage(Reddit):
 class TrophyCase(Templated):
     def __init__(self, user):
         self.user = user
-        self.trophies = Trophy.by_account(user)
+        self.trophies = []
+        self.invisible_trophies = []
+
+        self.dupe_trophies = []
+
+        award_ids_seen = []
+
+        for trophy in Trophy.by_account(user):
+            if trophy._thing2.awardtype == 'invisible':
+                self.invisible_trophies.append(trophy)
+            elif trophy._thing2_id in award_ids_seen:
+                self.dupe_trophies.append(trophy)
+            else:
+                self.trophies.append(trophy)
+                award_ids_seen.append(trophy._thing2_id)
+
         self.cup_date = user.should_show_cup()
         Templated.__init__(self)
 
@@ -1088,15 +1122,17 @@ class PaneStack(Templated):
 class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
-    def __init__(self, prev_search = ''):
-        Templated.__init__(self, prev_search = prev_search)
+    def __init__(self, prev_search = '', search_params = {}):
+        Templated.__init__(self, prev_search = prev_search,
+                           search_params = search_params)
 
 
 class SearchBar(Templated):
     """More detailed search box for /search and /reddits pages.
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
-    def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0, **kw):
+    def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
+                 search_params = {}, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
@@ -1110,7 +1146,7 @@ class SearchBar(Templated):
         else:
             self.num_results = num_results
 
-        Templated.__init__(self)
+        Templated.__init__(self, search_params = search_params)
 
 
 class Frame(Templated):
@@ -1343,14 +1379,25 @@ class UserAwards(Templated):
         if not g.show_awards:
             abort(404, "not found");
 
-        self.winners = []
+        self.regular_winners = []
+        self.manuals = []
+        self.invisibles = []
+
         for award in Award._all_awards():
-            trophies = Trophy.by_award(award)
-            # Don't show awards that nobody's ever won
-            # (e.g., "9-Year Club")
-            if trophies:
-                winner = trophies[0]._thing1.name
-                self.winners.append( (award, winner, trophies[0]) )
+            if award.awardtype == 'regular':
+                trophies = Trophy.by_award(award)
+                # Don't show awards that nobody's ever won
+                # (e.g., "9-Year Club")
+                if trophies:
+                    winner = trophies[0]._thing1.name
+                    self.regular_winners.append( (award, winner, trophies[0]) )
+            elif award.awardtype == 'manual':
+                self.manuals.append(award)
+            elif award.awardtype == 'invisible':
+                self.invisibles.append(award)
+            else:
+                raise NotImplementedError
+
 
 
 class AdminAwards(Templated):
@@ -1364,7 +1411,10 @@ class AdminAwardGive(Templated):
     """The interface for giving an award"""
     def __init__(self, award):
         now = datetime.datetime.now(g.display_tz)
-        self.description = "??? -- " + now.strftime("%Y-%m-%d")
+        if award.awardtype == 'regular':
+            self.description = "??? -- " + now.strftime("%Y-%m-%d")
+        else:
+            self.description = ""
         self.url = ""
 
         Templated.__init__(self, award = award)
@@ -1613,11 +1663,10 @@ class PromotePage(Reddit):
 
         buttons += [NamedButton('future_promos'),
                     NamedButton('unpaid_promos'),
+                    NamedButton('rejected_promos'),
                     NamedButton('pending_promos'),
-                    NamedButton('live_promos')]
-
-        if c.user_is_sponsor or c.user_is_paid_sponsor:
-            buttons.append(NamedButton('graph'))
+                    NamedButton('live_promos'),
+                    NamedButton('graph')]
 
         menu  = NavMenu(buttons, base_path = '/promoted',
                         type='flatlist')

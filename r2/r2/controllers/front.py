@@ -139,6 +139,7 @@ class FrontController(RedditController):
             cache_evt.clear()
             c.user.email_verified = True
             c.user._commit()
+            Award.give_if_needed("verified_email", c.user)
             return self.redirect(dest)
 
     @validate(cache_evt = VCacheKey('reset', ('key',)),
@@ -414,14 +415,16 @@ class FrontController(RedditController):
                              prev_search = query,
                              elapsed_time = t,
                              num_results = num,
+                             # update if we ever add sorts
+                             search_params = {},
                              title = _("search results")).render()
         return res
 
     verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
     @base_listing
     @validate(query = nop('q'),
-              time = VMenu('action', TimeMenu, remember = False),
-              sort = VMenu('sort', SearchSortMenu, remember = False),
+              time = VMenu('action', TimeMenu),
+              sort = VMenu('sort', SearchSortMenu),
               langs = nop('langs'))
     def GET_search(self, query, num, time, reverse, after, count, langs, sort):
         """Search links page."""
@@ -464,6 +467,7 @@ class FrontController(RedditController):
         res = SearchPage(_('search results'), query, t, num, content=spane,
                          nav_menus = [TimeMenu(default = time),
                                       SearchSortMenu(default=sort)],
+                         search_params = dict(sort = sort, t = time),
                          infotext = infotext).render()
         
         return res

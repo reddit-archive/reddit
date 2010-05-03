@@ -28,10 +28,9 @@ from validator import *
 
 from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
-import r2.models.thing_changes as tc
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, link_from_url, timefromnow, worker
+from r2.lib.utils import query_string, link_from_url, timefromnow
 from r2.lib.utils import timeago
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
@@ -45,10 +44,11 @@ from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
-from r2.lib import amqp, promote
+from r2.lib.db.queries import changed
+from r2.lib import promote
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
-from r2.lib import tracking, sup, cssfilter, emailer
+from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 
 from datetime import datetime, timedelta
@@ -124,8 +124,7 @@ class ApiController(RedditController):
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
 
-            if g.write_query_queue:
-                queries.new_message(m, inbox_rel)
+            queries.new_message(m, inbox_rel)
 
     @validatedForm(VUser(),
                    VCaptcha(),
@@ -203,15 +202,10 @@ class ApiController(RedditController):
             l._commit()
             l.set_url_cache()
 
-        v = Vote.vote(c.user, l, True, ip)
+        queries.queue_vote(c.user, l, True, ip)
         if save:
             r = l._save(c.user)
-            if g.write_query_queue:
-                queries.new_savehide(r)
-
-        #reset the hot page
-        if v.valid_thing:
-            expire_hot(sr)
+            queries.new_savehide(r)
 
         #set the ratelimiter
         if should_ratelimit:
@@ -219,21 +213,8 @@ class ApiController(RedditController):
                                  prefix = "rate_submit_")
 
         #update the queries
-        if g.write_query_queue:
-            queries.new_link(l)
-            queries.new_vote(v)
+        queries.new_link(l)
 
-        # also notifies the searchchanges
-        worker.do(lambda: amqp.add_item('new_link', l._fullname))
-
-        #update the modified flags
-        set_last_modified(c.user, 'overview')
-        set_last_modified(c.user, 'submitted')
-        set_last_modified(c.user, 'liked')
-
-        #update sup listings
-        sup.add_update(c.user, 'submitted')
-        
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
         elif then == 'tb':
@@ -283,8 +264,16 @@ class ApiController(RedditController):
     def POST_login(self, form, jquery, user, dest, rem, reason):
         if reason and reason[0] == 'redirect':
             dest = reason[1]
-        if form.has_errors("passwd", errors.WRONG_PASSWORD):
+
+        hc_key = "login_attempts-%s" % request.ip
+
+        recent_attempts = g.hardcache.get(hc_key, 0)
+
+        if recent_attempts >= 25:
+            raise NotImplementedError("need proper fail msg")
+        elif form.has_errors("passwd", errors.WRONG_PASSWORD):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
+            g.hardcache.set(hc_key, recent_attempts + 1, 3600 * 8)
         else:
             self._login(form, user, dest, rem)
 
@@ -406,7 +395,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer','banned')
+            and (type in ('moderator','contributer', 'banned')
                  and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
 
@@ -442,8 +431,7 @@ class ApiController(RedditController):
                         item, inbox_rel = Message._new(c.user, friend,
                                                        subj, msg, ip)
 
-                        if g.write_query_queue:
-                            queries.new_message(item, inbox_rel)
+                        queries.new_message(item, inbox_rel)
 
 
     @validatedForm(VUser('curpass', default = ''),
@@ -470,6 +458,7 @@ class ApiController(RedditController):
                 # unverified email for now
                 c.user.email_verified = None
                 c.user._commit()
+                Award.take_away("verified_email", c.user)
                 updated = True
             if verify:
                 # TODO: rate limit this?
@@ -523,21 +512,19 @@ class ApiController(RedditController):
         thing._commit()
 
         # flag search indexer that something has changed
-        tc.changed(thing)
+        changed(thing)
 
         #expire the item from the sr cache
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
             expire_hot(sr)
-            if g.use_query_cache:
-                queries.new_link(thing)
+            queries.new_link(thing)
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
             thing._delete()
             delete_comment(thing)
-            if g.use_query_cache:
-                queries.new_comment(thing, None)
+            queries.new_comment(thing, None)
 
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
@@ -545,9 +532,23 @@ class ApiController(RedditController):
         '''for reporting...'''
         if not thing or thing._deleted:
             return
-        elif c.user._spam or c.user.ignorereports:
-            return
         elif getattr(thing, 'promoted', False):
+            return
+
+        # if it is a message that is being reported, ban it.
+        # every user is admin over their own personal inbox
+        if isinstance(thing, Message):
+            admintools.spam(thing, False, True, c.user.name)
+        # auto-hide links that are reported
+        elif isinstance(thing, Link):
+            r = thing._hide(c.user)
+            queries.new_savehide(r)
+        # TODO: be nice to be able to remove comments that are reported
+        # from a user's inbox so they don't have to look at them.
+        elif isinstance(thing, Comment):
+            pass
+
+        if c.user._spam or c.user.ignorereports:
             return
         Report.new(c.user, thing)
 
@@ -573,7 +574,7 @@ class ApiController(RedditController):
 
             item._commit()
 
-            tc.changed(item)
+            changed(item)
 
             if kind == 'link':
                 set_last_modified(item, 'comments')
@@ -629,27 +630,19 @@ class ApiController(RedditController):
                 if not subject.startswith(re):
                     subject = re + subject
                 item, inbox_rel = Message._new(c.user, to, subject,
-                                               comment, ip)
+                                               comment, ip, parent = parent)
                 item.parent_id = parent._id
             else:
                 item, inbox_rel = Comment._new(c.user, link, parent_comment,
                                                comment, ip)
-                Vote.vote(c.user, item, True, ip)
-
-                # will also update searchchanges as appropriate
-                worker.do(lambda: amqp.add_item('new_comment', item._fullname))
+                queries.queue_vote(c.user, item, True, ip)
 
                 #update last modified
-                set_last_modified(c.user, 'overview')
-                set_last_modified(c.user, 'commented')
                 set_last_modified(link, 'comments')
 
-                #update sup listings
-                sup.add_update(c.user, 'commented')
-    
                 #update the comment cache
                 add_comment(item)
-    
+
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")
             t.attr('rows', 3).html("").attr("value", "")
@@ -657,25 +650,22 @@ class ApiController(RedditController):
                 commentform.remove()
                 jquery.things(parent._fullname).set_html(".reply-button:first",
                                                          _("replied"))
-    
+
             # insert the new comment
             jquery.insert_things(item)
             # remove any null listings that may be present
             jquery("#noresults").hide()
-    
+
             #update the queries
-            if g.write_query_queue:
-                if is_message:
-                    queries.new_message(item, inbox_rel)
-                else:
-                    queries.new_comment(item, inbox_rel)
-    
+            if is_message:
+                queries.new_message(item, inbox_rel)
+            else:
+                queries.new_comment(item, inbox_rel)
+
             #set the ratelimiter
             if should_ratelimit:
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_comment_")
-            
-
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -756,28 +746,15 @@ class ApiController(RedditController):
                    else False if dir < 0
                    else None)
             organic = vote_type == 'organic'
-            v = Vote.vote(user, thing, dir, ip, organic)
+            queries.queue_vote(user, thing, dir, ip, organic)
 
             #update relevant caches
             if isinstance(thing, Link):
-                sr = thing.subreddit_slow
                 set_last_modified(c.user, 'liked')
                 set_last_modified(c.user, 'disliked')
 
-                #update sup listings
-                if dir:
-                    sup.add_update(c.user, 'liked')
-                elif dir is False:
-                    sup.add_update(c.user, 'disliked')
-
-                if v.valid_thing:
-                    expire_hot(sr)
-
-                if g.write_query_queue:
-                    queries.new_vote(v)
-
             # flag search indexer that something has changed
-            tc.changed(thing)
+            changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -817,7 +794,7 @@ class ApiController(RedditController):
             c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
 
             set_last_modified(c.site,'stylesheet_contents')
-            tc.changed(c.site)
+            changed(c.site)
             c.site._commit()
 
             form.set_html(".status", _('saved'))
@@ -984,6 +961,7 @@ class ApiController(RedditController):
                    description = VLength("description", max_length = 1000),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
+                   allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
@@ -1001,7 +979,8 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'lang', "css_on_cname"))
+                           'show_media', 'type', 'lang', "css_on_cname",
+                           'allow_top'))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1031,9 +1010,6 @@ class ApiController(RedditController):
             sr = Subreddit._new(name = name, author_id = c.user._id, ip = ip,
                                 **kw)
 
-            # will also update search
-            worker.do(lambda: amqp.add_item('new_subreddit', sr._fullname))
-
             Subreddit.subscribe_defaults(c.user)
             # make sure this user is on the admin list of that site!
             if sr.add_subscriber(c.user):
@@ -1045,6 +1021,8 @@ class ApiController(RedditController):
                 VRatelimit.ratelimit(rate_user=True,
                                      rate_ip = True,
                                      prefix = "create_reddit_")
+
+            queries.new_subreddit(sr)
 
         #editting an existing reddit
         elif sr.is_moderator(c.user) or c.user_is_admin:
@@ -1072,7 +1050,7 @@ class ApiController(RedditController):
                 Subreddit._by_domain(sr.domain, _update = True)
 
             # flag search indexer that something has changed
-            tc.changed(sr)
+            changed(sr)
             form.parent().set_html('.status', _("saved"))
 
         if redir:
@@ -1118,8 +1096,7 @@ class ApiController(RedditController):
     def POST_save(self, thing):
         if not thing: return
         r = thing._save(c.user)
-        if g.write_query_queue:
-            queries.new_savehide(r)
+        queries.new_savehide(r)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1127,8 +1104,31 @@ class ApiController(RedditController):
     def POST_unsave(self, thing):
         if not thing: return
         r = thing._unsave(c.user)
-        if g.write_query_queue and r:
+        if r:
             queries.new_savehide(r)
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_unread_message(self, thing):
+        if not thing:
+            return
+        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
+            return 
+        thing.new = True
+        thing._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
+                thing = VByName('id'))
+    def POST_read_message(self, thing):
+        if not thing: return
+        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
+            return 
+        thing.new = False
+        thing._commit()
+
+
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1136,8 +1136,7 @@ class ApiController(RedditController):
     def POST_hide(self, thing):
         if not thing: return
         r = thing._hide(c.user)
-        if g.write_query_queue:
-            queries.new_savehide(r)
+        queries.new_savehide(r)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1145,7 +1144,7 @@ class ApiController(RedditController):
     def POST_unhide(self, thing):
         if not thing: return
         r = thing._unhide(c.user)
-        if g.write_query_queue and r:
+        if r:
             queries.new_savehide(r)
 
 
@@ -1216,20 +1215,17 @@ class ApiController(RedditController):
             Subreddit.load_subreddits(links, return_dict = False)
             user = c.user if c.user_is_loggedin else None
             links = [l for l in links if l.subreddit_slow.can_view(user)]
-    
+
             if links:
                 if action in ['like', 'dislike']:
                     #vote up all of the links
                     for link in links:
-                        v = Vote.vote(c.user, link, action == 'like',
-                                      request.ip)
-                        if g.write_query_queue:
-                            queries.new_vote(v)
+                        queries.queue_vote(c.user, link,
+                                           action == 'like', request.ip)
                 elif action == 'save':
                     link = max(links, key = lambda x: x._score)
                     r = link._save(c.user)
-                    if g.write_query_queue:
-                        queries.new_savehide(r)
+                    queries.new_savehide(r)
                 return self.redirect("/static/css_%sd.png" % action)
         return self.redirect("/static/css_submit.png")
 
@@ -1315,7 +1311,7 @@ class ApiController(RedditController):
         else:
             if sr.remove_subscriber(c.user):
                 sr._incr('_ups', -1)
-        tc.changed(sr)
+        changed(sr)
 
 
     @noresponse(VAdmin(),
@@ -1337,11 +1333,18 @@ class ApiController(RedditController):
                    colliding_award=VAwardByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
                    title = VLength("title", max_length = 100),
+                   awardtype = VOneOf("awardtype",
+                                      ("regular", "manual", "invisible")),
                    imgurl = VLength("imgurl", max_length = 1000))
     def POST_editaward(self, form, jquery, award, colliding_award, codename,
-                       title, imgurl):
-        if form.has_errors(("codename", "title", "imgurl"), errors.NO_TEXT):
+                       title, awardtype, imgurl):
+        if form.has_errors(("codename", "title", "awardtype", "imgurl"),
+                           errors.NO_TEXT):
             pass
+
+        if awardtype is None:
+            form.set_html(".status", "bad awardtype")
+            return
 
         if form.has_errors(("codename"), errors.INVALID_OPTION):
             form.set_html(".status", "some other award has that codename")
@@ -1351,12 +1354,13 @@ class ApiController(RedditController):
             return
 
         if award is None:
-            Award._new(codename, title, imgurl)
+            Award._new(codename, title, awardtype, imgurl)
             form.set_html(".status", "saved. reload to see it.")
             return
 
         award.codename = codename
         award.title = title
+        award.awardtype = awardtype
         award.imgurl = imgurl
         award._commit()
         form.set_html(".status", _('saved'))

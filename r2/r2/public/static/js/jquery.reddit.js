@@ -142,7 +142,8 @@ function handleResponse(action) {
 };
 
 var api_loc = '/api/';
-$.request = function(op, parameters, worker_in, block, type, get_only) {
+$.request = function(op, parameters, worker_in, block, type, 
+                     get_only, errorhandler) {
     /* 
        Uniquitous reddit AJAX poster.  Automatically addes
        handleResponse(action) worker to deal with the API result.  The
@@ -168,6 +169,14 @@ $.request = function(op, parameters, worker_in, block, type, get_only) {
         release_ajax_lock(action);
         return worker_in(r);
     };
+    /* do the same for the error handler, and make sure to release the lock*/
+    errorhandler_in = $.with_default(errorhandler, function() { });
+    errorhandler = function(r) {
+        release_ajax_lock(action);
+        return errorhandler_in(r);
+    };
+
+
 
     get_only = $.with_default(get_only, false);
 
@@ -188,11 +197,12 @@ $.request = function(op, parameters, worker_in, block, type, get_only) {
         /*if( document.location.host == reddit.ajax_domain ) 
             /* normal AJAX post */
 
-        if(get_only) {
-            $.get(op, parameters, worker, type);
-        } else {
-            $.post(op, parameters, worker, type);
-        }
+        $.ajax({ type: (get_only) ? "GET" : "POST",
+                    url: op, 
+                    data: parameters, 
+                    success: worker,
+                    error: errorhandler,
+                    dataType: type});
         /*else { /* cross domain it is... * /
             op = "http://" + reddit.ajax_domain + op + "?callback=?";
             $.getJSON(op, parameters, worker);

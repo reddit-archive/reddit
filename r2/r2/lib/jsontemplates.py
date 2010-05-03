@@ -202,6 +202,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 saved        = "saved",
                                                 clicked      = "clicked",
                                                 hidden       = "hidden",
+                                                over_18       = "over_18", 
                                                 likes        = "likes",
                                                 domain       = "domain",
                                                 title        = "title",
@@ -270,9 +271,9 @@ class CommentJsonTemplate(ThingJsonTemplate):
                 return make_fullname(Subreddit, thing.sr_id)
             return None
         elif attr == "parent_id":
-            try:
+            if getattr(thing, "parent_id", None):
                 return make_fullname(Comment, thing.parent_id)
-            except AttributeError:
+            else:
                 return make_fullname(Link, thing.link_id)
         elif attr == "body_html":
             return spaceCompress(safemarkdown(thing.body))
@@ -336,11 +337,8 @@ class MessageJsonTemplate(ThingJsonTemplate):
 
     def rendered_data(self, wrapped):
         from r2.models import Message
-        try:
-            parent_id = wrapped.parent_id
-        except AttributeError:
-            parent_id = None
-        else:
+        parent_id = wrapped.parent_id
+        if parent_id:
             parent_id = make_fullname(Message, parent_id)
         d = ThingJsonTemplate.rendered_data(self, wrapped)
         d['parent'] = parent_id

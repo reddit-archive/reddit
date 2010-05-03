@@ -26,13 +26,21 @@
 %>
 <%namespace file="utils.html" import="language_tool, language_checkboxes, plain_link"/>
 
-<%def name="checkbox(text, name)">
-    <input name="${name}" id="${name}" type="checkbox"\
+<%def name="checkbox(text, name, disabled = False, disabled_text = '')">
+    <input name="${name}" id="${name}" type="checkbox"
                %if getattr(c.user, "pref_" + name):
-               checked="checked"\
+                 checked="checked"
+               %endif
+               %if disabled:
+                 disabled="disabled"
                %endif
                />
-    <label for="${name}">${text}</label>
+    <label class="${'disabled' if disabled else ''}" for="${name}">
+      ${text}
+    </label>
+    %if disabled and disabled_text:
+      &#32;<span class="little gray">${disabled_text}</span>
+    %endif
 </%def>
 
 <%def name="link_options()">
@@ -167,6 +175,16 @@
     </td>
   </tr>
   <tr>
+    <th>${_("messaging options")}</th>
+    <td class="prefright">
+      ${checkbox(_("mark messages as read when I open my inbox"), \
+         "mark_messages_read")}
+      &#32;<span class="little gray">
+        ${_("(otherwise, they will be marked as read when you click them)")}
+      </span>
+    </td>
+  </tr>
+  <tr>
     <th>${_("display options")}</th>
     <td class="prefright">
       ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
@@ -178,12 +196,19 @@
     </td>
   </tr>
   <tr>
+    <th>${_("content options")}</th>
+    <td class="prefright">
+      ${checkbox(_("i am over eighteen years old and willing to view adult content"), "over_18")}
+      &#32;<span class="little gray">(${_("required to view some reddits")})</span>
+      <br/>
+        ${checkbox(_("make safe(r) for work."), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
+      <br/>
+        ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
+    </td>
+  <tr>
     <th>${_("privacy options")}</th>
     <td class="prefright">
       ${checkbox(_("make my votes public"), "public_votes")}
-      <br/>
-      ${checkbox(_("i am over eighteen years old and willing to view adult content"), "over_18")}
-      &#32;<span class="little gray">(${_("required to view some reddits")})</span>
     </td>
   </tr>
   %endif

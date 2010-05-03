@@ -96,6 +96,7 @@ class ButtonsController(RedditController):
 
         if link:
             url = link.url
+            title = link.title 
         wrapper = make_wrapper(Button if vote else ButtonNoBody,
                                url = url, 
                                target = "_new" if newwindow else "_parent",

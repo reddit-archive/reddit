@@ -27,11 +27,8 @@ from r2.lib.pages import FormPage, Feedback, Captcha, PaneStack, SelfServeBlurb
 class FeedbackController(RedditController):
 
     def GET_ad_inq(self):
-        title = _("inquire about advertising on reddit")
         return FormPage('advertise',
-                        content = PaneStack([SelfServeBlurb(),
-                                             Feedback(title=title,
-                                                      action='ad_inq')]),
+                        content = SelfServeBlurb(),
                         loginbox = False).render()
 
     def GET_feedback(self):

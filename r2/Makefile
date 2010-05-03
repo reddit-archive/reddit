@@ -48,7 +48,7 @@ MAINCSS    := $(foreach css, $(main_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
 
-MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5)
+MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5) $(MAINCSS:=.md5) $(RTLCSS:=.md5)
 
 ifdef PRIVATEREPOS
 INIUPDATE = $(wildcard *.update)

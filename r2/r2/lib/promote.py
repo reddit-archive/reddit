@@ -192,7 +192,8 @@ def auth_paid_promo(thing, user, pay_id, bid):
     
     if trans_id is not None:
         # we won't reset to unseen if already approved and the payment went ok
-        promotion_log(thing, "updated payment and/or bid: SUCCESS")
+        promotion_log(thing, "updated payment and/or bid: SUCCESS (id: %s)"
+                      % trans_id)
         if trans_id < 0:
             promotion_log(thing, "FREEBIE")
         thing.promote_status = max(thing.promote_status, STATUS.unseen)
@@ -202,10 +203,10 @@ def auth_paid_promo(thing, user, pay_id, bid):
         promotion_log(thing, "updated payment and/or bid: FAILED")    
         thing.promore_status = STATUS.unpaid
         thing.promote_trans_id = 0
-    PromoteDates.update_bid(thing)
-    # commit last to guarantee consistency
     thing._commit()
+
     emailer.promo_bid(thing)
+    PromoteDates.update_bid(thing)
     return bool(trans_id)
 
     

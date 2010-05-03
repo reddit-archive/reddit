@@ -19,20 +19,18 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2009
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from urllib import unquote_plus, quote_plus, urlopen, urlencode
+from urllib import unquote_plus, urlopen
 from urlparse import urlparse, urlunparse
-from threading import local, Thread
-import Queue
+from threading import local
 import signal
 from copy import deepcopy
 import cPickle as pickle
-import re, datetime, math, random, string, sha, os
-from operator import attrgetter
+import re, math, random
 
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
-from mako.filters import url_escape, url_unescape
+from mako.filters import url_escape
         
 iters = (list, tuple, set)
 
@@ -766,7 +764,10 @@ def unicode_safe(res):
     try:
         return str(res)
     except UnicodeEncodeError:
-        return unicode(res).encode('utf-8')
+        try:
+            return unicode(res).encode('utf-8')
+        except UnicodeEncodeError:
+            return res.decode('utf-8').encode('utf-8')
 
 def decompose_fullname(fullname):
     """
@@ -785,33 +786,6 @@ def decompose_fullname(fullname):
     id      = int(thing_id36,36)
 
     return (type_class, type_id, id)
-
-
-
-class Worker:
-    def __init__(self):
-        self.q = Queue.Queue()
-        self.t = Thread(target=self._handle)
-        self.t.setDaemon(True)
-        self.t.start()
-
-    def _handle(self):
-        while True:
-            fn = self.q.get()
-            try:
-                fn()
-                self.q.task_done()
-            except:
-                import traceback
-                print traceback.format_exc()
-
-    def do(self, fn):
-        self.q.put(fn)
-
-    def join(self):
-        self.q.join()
-
-worker = Worker()
 
 def cols(lst, ncols):
     """divides a list into columns, and returns the
@@ -899,7 +873,38 @@ def set_emptying_cache():
     from r2.lib.cache import SelfEmptyingCache
     g.cache.caches = [SelfEmptyingCache(),] + list(g.cache.caches[1:])
 
-def find_recent_broken_things(from_time = None, to_time = None, delete = False):
+
+def fix_if_broken(thing, delete = True):
+    from r2.models import Link, Comment
+
+    # the minimum set of attributes that are required
+    attrs = {Link: ('author_id', 'sr_id'),
+             Comment: ('author_id', 'sr_id', 'body', 'link_id')}
+
+    if thing.__class__ not in attrs:
+        raise TypeError
+
+    for attr in attrs[thing.__class__]:
+        try:
+            # try to retrieve the attribute
+            getattr(thing, attr)
+        except AttributeError:
+            # that failed; let's explicitly load it and try again
+            thing._load()
+            try:
+                getattr(thing, attr)
+            except AttributeError:
+                if not delete:
+                    raise
+                # it still broke. We should delete it
+                print "%s is missing %r, deleting" % (thing._fullname, a)
+                thing._deleted = True
+                thing._commit()
+                break
+
+
+def find_recent_broken_things(from_time = None, to_time = None,
+                              delete = False):
     """
         Occasionally (usually during app-server crashes), Things will
         be partially written out to the database. Things missing data
@@ -907,41 +912,21 @@ def find_recent_broken_things(from_time = None, to_time = None, delete = False):
         breaks various pages. This function hunts for and destroys
         them as appropriate.
     """
-    from r2.models import Link,Comment
+    from r2.models import Link, Comment
+    from r2.lib.db.operators import desc
     from pylons import g
 
     from_time = from_time or timeago('1 hour')
     to_time = to_time or datetime.now(g.tz)
 
-    for (cls,attrs) in ((Link,('author_id','sr_id')),
-                        (Comment,('author_id','sr_id','body','link_id'))):
-        find_broken_things(cls,attrs,
-                           from_time, to_time,
-                           delete=delete)
+    for cls in (Link, Comment):
+        q = cls._query(cls.c._date > from_time,
+                       cls.c._date < to_time,
+                       data=True,
+                       sort=desc('_date'))
+        for thing in fetch_things2(q):
+            fix_if_broken(thing, delete = delete)
 
-def find_broken_things(cls,attrs,from_time,to_time,delete = False):
-    """
-        Take a class and list of attributes, searching the database
-        for Things of that class that are missing those attributes,
-        deleting them if requested
-    """
-    for t in fetch_things(cls,from_time,to_time):
-        for a in attrs:
-            try:
-                # try to retreive the attribute
-                getattr(t,a)
-            except AttributeError:
-                # that failed; let's explicitly load it, and try again
-                t._load()
-                try:
-                    getattr(t,a)
-                except AttributeError:
-                    # it still broke. We should delete it
-                    print "%s is missing '%s'" % (t._fullname,a)
-                    if delete:
-                        t._deleted = True
-                        t._commit()
-                    break
 
 def timeit(func):
     "Run some function, and return (RunTimeInSeconds,Result)"

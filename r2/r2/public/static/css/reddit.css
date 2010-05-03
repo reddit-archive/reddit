@@ -73,7 +73,8 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 /* forms */
 
-.wrong {color: red; font-weight: normal}
+label.disabled { color: gray; }
+.wrong {color: red; font-weight: normal} 
 
 .subform input.text { width: 25em }
 .subform textarea.text { width: 25em }
@@ -554,8 +555,12 @@ ul.flat-vert {text-align: left;}
     vertical-align: top;
 }
 
-.organic-listing .nextprev img { margin: 5px 5px 2px 0px; border: solid 1px #B3B3B3; }
-.organic-listing .nextprev img:hover  { cursor: pointer;  border: solid 1px #336699; }
+.organic-listing .nextprev img {
+    margin: 5px 5px 2px 0px; border: solid 1px #B3B3B3;
+}
+.organic-listing .nextprev img:hover {
+    cursor: pointer;  border: solid 1px #336699;
+}
 .organic-listing .nextprev img:active { margin: 6px 4px 1px 1px;}
 
 .link.promotedlink {
@@ -835,7 +840,24 @@ textarea.gray { color: gray; }
 .morecomments a:hover { text-decoration: underline}
 .morecomments .gray {font-weight: normal; color: gray}
 
-.message {margin: 10px; margin-bottom: 20px;}
+.message {
+    margin: 10px 10px 20px 5px; 
+    padding-left: 5px; 
+    margin:10px 10px 20px 5px;
+    padding:7px;
+}
+
+.message.new { 
+    background-color:#F7F7F7;
+    border:1px solid #E9E9E9;
+    padding: 6px;
+}
+
+.message.new .unread { 
+    display: none; 
+}
+
+
 .message .buttons,
 .message .md { margin-left: 15px; }
 .message .entry .parent { 
@@ -853,9 +875,20 @@ textarea.gray { color: gray; }
     padding: 0 2px;
     font-weight: bold; 
 }
+
+.message.was-comment .midcol { margin-left: 0px;  }
+
+.message.was-comment .buttons,
+.message.was-comment .parent-link { 
+    margin-left: 0px; }
+
+.message.was-comment .md { 
+    margin-left: 2px; 
+ }
+
 .message .child { margin-left: 15px;  }
 
-.message .head.new {color:orangered  }
+.message.new .head {color:orangered; font-weight: bold;  }
 .message .subject { font-weight: bold; font-size: larger; }
 
 .clippy img {
@@ -1108,6 +1141,7 @@ textarea.gray { color: gray; }
 
 .status { margin-left: 5px; color: red; font-size: small;}
 .error { color: red; font-size: small; margin: 5px; }
+.red { color:red }
 .line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
@@ -1461,6 +1495,32 @@ textarea.gray { color: gray; }
     padding: 10px; 
     max-width: 50em;}
 
+.self-service.instructions { 
+    margin-bottom: 50px; 
+ }
+
+.self-service.instructions p{ 
+    margin-left: 20px; 
+}
+
+.self-service.instructions ul { 
+    list-style-type: circle; 
+    margin-left: 60px; 
+}
+
+.self-service.instructions li + li { 
+    padding-top: 10px; 
+}
+
+.self-service.instructions li.done { 
+    text-decoration: line-through;
+    list-style-image:url(/static/green-check.png);
+}
+
+.self-service.instructions li.unfinished { 
+    font-weight:bold;
+    list-style-image:url(/static/red-arrow.png);
+}
 
 .button-demo a.view-code,
 .button-demo a.hide-code { float: right; margin-bottom: 1em; }
@@ -1755,6 +1815,11 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .preftable .note { width: 100%; vertical-align: top; padding-top: 10px; }
 
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
+
+.link.over18 acronym { 
+    color: red;
+    font-weight: bold;
+}
 
 .reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
@@ -2490,9 +2555,15 @@ ul.tabmenu.formtab {
 
 .award-square {
     float: left;
-    padding: 25px 0px 15px 40px;
+    padding: 10px 0px 30px 40px;
     white-space: nowrap;
     width: 300px;
+}
+
+.award-square.mini {
+    width: 100px;
+    white-space: normal;
+    text-align: center;
 }
 
 .award-square img {
@@ -2502,12 +2573,21 @@ ul.tabmenu.formtab {
     height: 70px;
 }
 
+.award-square.mini img {
+    float: none;
+    margin-bottom: 7px;
+}
+
 .award-square .award-name {
     color: black;
     font-size: 22px;
     font-family: verdana, arial, helvetica, sans-serif;
     font-weight: bold;
     line-height: 1em;
+}
+
+.award-square.mini .award-name {
+    font-size: 18px;
 }
 
 .award-square .winner-info {
@@ -2770,6 +2850,7 @@ table.award-table {
     border-color: red;
     color: black;
     background: none; 
+    width: 100%;
 }
 .create-promo h2 { margin-top: 10px; color: black; }
 .create-promo ol { margin: 0px 30px 10px 30px; }
@@ -2949,6 +3030,16 @@ dd { margin-left: 20px;  }
     font-size: larger;
 }
 
+.sidecontentbox .more { 
+    margin-top: 5px; 
+    text-align: right; 
+    font-size: smaller;
+}
+
+.sidecontentbox .more a { 
+    color: gray; 
+}
+
 .sidecontentbox h1 {
     text-transform:uppercase;
     margin: 0;
@@ -2961,8 +3052,8 @@ dd { margin-left: 20px;  }
 }
 
 .titlebox form.toggle {
-    margin: 5px 0;
-    padding-left: 20px;
+    margin: 0;
+    padding: 5px 0px 5px 20px;
     font-size: smaller;
     color: gray;
     background: white none no-repeat scroll center left;

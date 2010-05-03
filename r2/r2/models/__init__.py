@@ -30,5 +30,3 @@ from award import *
 from bidding import *
 from mail_queue import Email, has_opted_out, opt_count
 from admintools import *
-import thing_changes
-

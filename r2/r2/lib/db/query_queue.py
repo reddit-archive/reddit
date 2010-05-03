@@ -7,13 +7,13 @@ from pylons import g
 
 working_prefix = 'working_'
 prefix = 'prec_link_'
-TIMEOUT = 120
+TIMEOUT = 600
 
 def add_query(cached_results):
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
 def run():
-    def callback(msgs):
+    def callback(msgs, chan):
         for msg in msgs: # will be len==1
             # r2.lib.db.queries.CachedResults
             cr = pickle.loads(msg.body)
@@ -36,16 +36,18 @@ def run():
 
             cr = pickle.loads(msg.body)
 
-            print 'working: ', iden, cr.query._rules
+            print 'working: ', iden, cr.query._rules, cr.query._sort
             start = datetime.now()
-            cr.update()
+            try:
+                cr.update()
+                g.memcache.set(key, datetime.now())
+            finally:
+                g.memcache.delete(working_key)
+
             done = datetime.now()
             q_time_s = (done - msg.timestamp).seconds
             proc_time_s = (done - start).seconds + ((done - start).microseconds/1000000.0)
             print ('processed %s in %.6f seconds after %d seconds in queue'
                    % (iden, proc_time_s, q_time_s))
-
-            g.memcache.set(key, datetime.now())
-            g.memcache.delete(working_key)
 
     amqp.handle_items('prec_links', callback, limit = 1)

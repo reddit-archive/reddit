@@ -23,7 +23,7 @@ from email.MIMEText import MIMEText
 from pylons.i18n import _
 from pylons import c, g
 from r2.lib.utils import timeago, query_string
-from r2.models import passhash, Email, Default, has_opted_out, Account
+from r2.models import passhash, Email, Default, has_opted_out, Account, Award
 import os, random, datetime
 import traceback, sys, smtplib
 
@@ -52,6 +52,7 @@ def verify_email(user, dest):
     key = passhash(user.name, user.email)
     user.email_verified = False
     user._commit()
+    Award.take_away("verified_email", user)
     emaillink = ('http://' + g.domain + '/verification/' + key
                  + query_string(dict(dest=dest)))
     print "Generated email verification link: " + emaillink
@@ -136,7 +137,7 @@ def send_queued_mail(test = False):
             clear = True
 
             should_queue = email.should_queue()
-            # check only on sharing that the mail is invalid 
+            # check only on sharing that the mail is invalid
             if email.kind == Email.Kind.SHARE and should_queue:
                 email.body = Share(username = email.from_name(),
                                    msg_hash = email.msg_hash,
@@ -160,7 +161,7 @@ def send_queued_mail(test = False):
                                     body = email.body).render(style="email")
 
             # handle unknown types here
-            elif email.kind not in Email.Kind:
+            elif not email.body:
                 email.set_sent(rejected = True)
                 continue
             sendmail(email)

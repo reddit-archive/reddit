@@ -20,13 +20,15 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-from threading import local
+from Queue import Queue
+from threading import local, Thread
 from datetime import datetime
 import os
 import sys
 import time
 import errno
 import socket
+import itertools
 
 from amqplib import client_0_8 as amqp
 
@@ -44,9 +46,35 @@ channel = local()
 have_init = False
 
 #there are two ways of interacting with this module: add_item and
-#handle_items. add_item should only be called from the utils.worker
-#thread since it might block for an arbitrary amount of time while
-#trying to get a connection amqp.
+#handle_items. _add_item (the internal function for adding items to
+#amqp that are added using add_item) might block for an arbitrary
+#amount of time while trying to get a connection amqp.
+
+class Worker:
+    def __init__(self):
+        self.q = Queue()
+        self.t = Thread(target=self._handle)
+        self.t.setDaemon(True)
+        self.t.start()
+
+    def _handle(self):
+        while True:
+            fn = self.q.get()
+            try:
+                fn()
+                self.q.task_done()
+            except:
+                import traceback
+                print traceback.format_exc()
+
+    def do(self, fn, *a, **kw):
+        fn1 = lambda: fn(*a, **kw)
+        self.q.put(fn1)
+
+    def join(self):
+        self.q.join()
+
+worker = Worker()
 
 def get_connection():
     global connection
@@ -63,9 +91,9 @@ def get_connection():
             print 'error connecting to amqp'
             time.sleep(1)
 
-    #don't run init_queue until someone actually needs it. this allows
-    #the app server to start and serve most pages if amqp isn't
-    #running
+    # don't run init_queue until someone actually needs it. this
+    # allows the app server to start and serve most pages if amqp
+    # isn't running
     if not have_init:
         init_queue()
         have_init = True
@@ -73,7 +101,6 @@ def get_connection():
 def get_channel(reconnect = False):
     global connection
     global channel
-    global log
 
     # Periodic (and increasing with uptime) errors appearing when
     # connection object is still present, but appears to have been
@@ -91,67 +118,22 @@ def get_channel(reconnect = False):
         channel.chan = connection.channel()
     return channel.chan
 
+
 def init_queue():
-    from r2.models import admintools
+    from r2.lib.queues import RedditQueueMap
 
     exchange = 'reddit_exchange'
 
     chan = get_channel()
 
-    #we'll have one exchange for now
-    chan.exchange_declare(exchange=exchange,
-                          type='direct',
-                          durable=True,
-                          auto_delete=False)
-
-    #prec_links queue
-    chan.queue_declare(queue='prec_links',
-                       durable=True,
-                       exclusive=False,
-                       auto_delete=False)
-    chan.queue_bind(routing_key='prec_links',
-                    queue='prec_links',
-                    exchange=exchange)
-
-    chan.queue_declare(queue='scraper_q',
-                       durable=True,
-                       exclusive=False,
-                       auto_delete=False)
-
-    chan.queue_declare(queue='searchchanges_q',
-                       durable=True,
-                       exclusive=False,
-                       auto_delete=False)
-
-    # new_link
-    chan.queue_bind(routing_key='new_link',
-                    queue='scraper_q',
-                    exchange=exchange)
-    chan.queue_bind(routing_key='new_link',
-                    queue='searchchanges_q',
-                    exchange=exchange)
-
-    # new_subreddit
-    chan.queue_bind(routing_key='new_subreddit',
-                    queue='searchchanges_q',
-                    exchange=exchange)
-
-    # new_comment (nothing here for now)
-
-    # while new items will be put here automatically, we also need a
-    # way to specify that the item has changed by hand
-    chan.queue_bind(routing_key='searchchanges_q',
-                    queue='searchchanges_q',
-                    exchange=exchange)
-
-    admintools.admin_queues(chan, exchange)
+    RedditQueueMap(exchange, chan).init()
 
 
-def add_item(routing_key, body, message_id = None):
+def _add_item(routing_key, body, message_id = None):
     """adds an item onto a queue. If the connection to amqp is lost it
     will try to reconnect and then call itself again."""
     if not amqp_host:
-        print "Ignoring amqp message %r to %r" % (body, routing_key)
+        log.error("Ignoring amqp message %r to %r" % (body, routing_key))
         return
 
     chan = get_channel()
@@ -172,13 +154,16 @@ def add_item(routing_key, body, message_id = None):
         else:
             raise
 
+def add_item(routing_key, body, message_id = None):
+    if amqp_host:
+        log.debug("amqp: adding item %r to %r" % (body, routing_key))
+
+    worker.do(_add_item, routing_key, body, message_id = message_id)
+
 def handle_items(queue, callback, ack = True, limit = 1, drain = False):
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
-
-    # debuffer stdout so that logging comes through more real-time
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
     chan = get_channel()
     while True:
@@ -199,11 +184,26 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
                 break # the innermost loop only
             msg = chan.basic_get(queue)
 
-        callback(items)
+        try:
+            count_str = ''
+            if 'message_count' in items[-1].delivery_info:
+                # the count from the last message, if the count is
+                # available
+                count_str = '(%d remaining)' % items[-1].delivery_info['message_count']
+            print "%s: %d items %s" % (queue, len(items), count_str)
+            callback(items, chan)
 
-        if ack:
+            if ack:
+                for item in items:
+                    chan.basic_ack(item.delivery_tag)
+
+            # flush any log messages printed by the callback
+            sys.stdout.flush()
+        except:
             for item in items:
-                chan.basic_ack(item.delivery_tag)
+                # explicitly reject the items that we've not processed
+                chan.basic_reject(item.delivery_tag, requeue = True)
+            raise
 
 def empty_queue(queue):
     """debug function to completely erase the contents of a queue"""

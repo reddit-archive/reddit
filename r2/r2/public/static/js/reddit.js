@@ -71,8 +71,17 @@ function get_form_fields(form, fields, filter_func) {
     return fields;
 };
 
+function form_error(form) {
+    return function(r) {
+        $(form).find(".status")
+            .html("an error occurred while posting " + 
+                  "(status: " + r.status + ")").end();
+    }
+}
+
 function simple_post_form(form, where, fields, block) {
-    $.request(where, get_form_fields(form, fields), null, block);
+    $.request(where, get_form_fields(form, fields), null, block, 
+              "json", false, form_error(form));
     return false;
 };
 
@@ -83,7 +92,8 @@ function post_pseudo_form(form, where, block) {
     };
     $(form).find(".error").not(".status").hide();
     $(form).find(".status").html(reddit.status_msg.submitting).show();
-    $.request(where, get_form_fields(form, {}, filter_func), null, block);
+    $.request(where, get_form_fields(form, {}, filter_func), null, block,
+              "json", false, form_error(form));
     return false;
 }
 
@@ -127,7 +137,7 @@ function deleteRow(elem) {
 
 /* general things */
 
-function change_state(elem, op, callback) {
+function change_state(elem, op, callback, keep) {
     var form = $(elem).parents("form");
     /* look to see if the form has an id specified */
     var id = form.find("input[name=id]");
@@ -139,9 +149,28 @@ function change_state(elem, op, callback) {
     simple_post_form(form, op, {id: id});
     /* call the callback first before we mangle anything */
     if (callback) callback(form, op);
-    form.html(form.attr("executed").value);
+    if(!$.defined(keep)) {
+        form.html(form.attr("executed").value);
+    }
     return false;
 };
+
+function unread_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    $(t).addClass("new unread");
+}
+
+function read_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    $(t).removeClass("new");
+    $.request("read_message", {"id": $(t).thing_id()});
+}
 
 function save_thing(elem) {
     $(elem).thing().addClass("saved");
@@ -149,6 +178,20 @@ function save_thing(elem) {
 
 function unsave_thing(elem) {
     $(elem).thing().removeClass("saved");
+}
+
+function click_thing(elem) {
+    var t = $(elem);
+    if (!t.hasClass("thing")) {
+        t = t.thing();
+    }
+    if (t.hasClass("message") && t.hasClass("recipient")) {
+        if (t.hasClass("unread")) {
+            t.removeClass("unread");
+        } else if ( t.hasClass("new")) {
+            read_thing(elem);
+        }
+    }
 }
 
 function hide_thing(elem) {
@@ -1076,11 +1119,11 @@ var toolbar_p = function(expanded_size, collapsed_size) {
 };
 
 function clear_all_langs(elem) {
-    $(elem).parents("form").find("input[type=checkbox]").attr("checked", false);
+    $(elem).parents("td").find("input[type=checkbox]").attr("checked", false);
 }
 
 function check_some_langs(elem) {
-    $(elem).parents("form").find("#some-langs").attr("checked", true);
+    $(elem).parents("td").find("#some-langs").attr("checked", true);
 }
 
 function fetch_parent(elem, parent_permalink, parent_id) {

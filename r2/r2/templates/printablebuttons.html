@@ -138,9 +138,6 @@
         <li>
           ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
         </li>
-        <li>
-          ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
-        </li>
         %if thing.promote_status == STATUS.promoted:
           <li>
             ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
@@ -177,6 +174,11 @@
           </li>
         %endif
       %endif
+     %endif
+     %if (thing.user_is_sponsor or thing.is_author) and thing.promote_status >= STATUS.promoted:
+       <li>
+         ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+       </li>
      %endif
    %endif
   ${self.distinguish()}
@@ -223,6 +225,13 @@
     </li>
   %endif
   ${self.banbuttons()}
+  %if thing.recipient:
+  <li class="unread">
+     ${self.state_button("unread", _("mark unread"), \
+        "return change_state(this, 'unread_message', unread_thing, true);", \
+         _("unread"))}
+  </li>
+  %endif
   %if thing.can_reply:
     <li>
        ${self.simple_button(_("reply {verb}"), "reply")}

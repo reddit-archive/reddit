@@ -97,7 +97,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      code         = _("source code"),
                      mobile       = _("mobile"), 
                      store        = _("store"),  
-                     ad_inq       = _("advertise on reddit"),
+                     ad_inq       = _("inquire about advertising"),
                      toplinks     = _("top links"),
                      random       = _('random'),
                      iphone       = _("iPhone app"),
@@ -151,7 +151,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
 
-                     promote        = _('self-serve'),
+                     promote        = _('self-serve advertising'),
                      new_promo      = _('create promotion'),
                      my_current_promos = _('my promoted links'),
                      current_promos = _('all promoted links'),
@@ -159,7 +159,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      graph          = _('analytics'),
                      live_promos    = _('live'),
                      unpaid_promos  = _('unpaid'),
-                     pending_promos = _('pending')
+                     pending_promos = _('pending'),
+                     rejected_promos = _('rejected')
                      )
 
 def menu_style(type):

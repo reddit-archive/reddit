@@ -32,7 +32,15 @@
   </ul>
 </%def>
 
-<%def name="awardedit(fullname, title='', codename='', imgurl='')">
+<%def name="awardtype_radio(val, label, award_fn, current)">
+  <input id="awardtype_${award_fn}_${val}" class="nomargin"
+         type="radio"  value="${val}" name="awardtype"
+         ${"checked='checked'" if current == val else ''} />
+  <label for="awardtype_${award_fn}_${val}">${label}</label>
+  <br/>
+</%def>
+
+<%def name="awardedit(fullname, title='', awardtype='', codename='', imgurl='')">
  <form action="/post/editaward" method="post" class="pretty-form medium-text"
        style="display:none"
        onsubmit="return post_form(this, 'editaward');" id="awardedit-${fullname}">
@@ -55,6 +63,15 @@
       </td>
     </tr>
     <tr>
+      <td>type</td>
+      <td>
+        ${awardtype_radio("regular", "regular", fullname, awardtype)}
+        ${awardtype_radio("manual", "manual", fullname, awardtype)}
+        ${awardtype_radio("invisible", "invisible", fullname, awardtype)}
+        ${error_field("NO_TEXT", "awardtype", "span")}
+      </td>
+    </tr>
+    <tr>
       <td>img url</td>
       <td>
         <input type="text" name="imgurl" value="${imgurl}" />
@@ -74,6 +91,7 @@
      <th>cn</th>
      <th>img</th>
      <th>title</th>
+     <th>type</th>
      <th>buttons</th>
    </tr>
   %for award in thing.awards:
@@ -82,9 +100,11 @@
      <td>${award.codename}</td>
      <td><img src="${award.imgurl % 40}"/></td>
      <td>${award.title}</td>
+     <td>${award.awardtype}</td>
      <td class="entry">
        ${awardbuttons(award.codename)}
-       ${awardedit(award._fullname, award.title, award.codename, award.imgurl)}
+       ${awardedit(award._fullname, award.title, award.awardtype,
+       award.codename, award.imgurl)}
      </td>
    </tr>
   %endfor

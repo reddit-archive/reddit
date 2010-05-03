@@ -21,7 +21,8 @@
 ################################################################################
 import sqlalchemy as sa
 
-def get_engine(name, db_host='', db_user='', db_pass='', pool_size = 5, max_overflow = 5):
+def get_engine(name, db_host='', db_user='', db_pass='',
+               pool_size = 5, max_overflow = 5):
     host = db_host if db_host else '' 
     if db_user:
         if db_pass:
@@ -40,11 +41,15 @@ class db_manager:
         self.things = {}
         self.relations = {}
         self.engines = {}
+        self.avoid_master_reads = {}
 
-    def add_thing(self, name, thing_dbs):
+    def add_thing(self, name, thing_dbs, avoid_master = False, **kw):
         """thing_dbs is a list of database engines. the first in the
         list is assumed to be the master, the rest are slaves."""
         self.things[name] = thing_dbs
+        self.avoid_master_reads[name] = avoid_master
 
-    def add_relation(self, name, type1, type2, relation_dbs):
+    def add_relation(self, name, type1, type2, relation_dbs,
+                     avoid_master = False, **kw):
         self.relations[name] = (type1, type2, relation_dbs)
+        self.avoid_master_reads[name] = avoid_master

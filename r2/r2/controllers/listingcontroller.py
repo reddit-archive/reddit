@@ -295,9 +295,6 @@ class NewController(ListingController):
             elif wouldkeep and c.user_is_loggedin and c.user._id == item.author_id:
                 # also let the author of the link see them
                 return True
-            elif item._date > timeago(g.new_incubation):
-                # it's too young to show yet
-                return False
             else:
                 # otherwise, fall back to the regular logic (don't
                 # show hidden links, etc)
@@ -484,6 +481,19 @@ class MessageController(ListingController):
     show_sidebar = False
     render_cls = MessagePage
 
+    @property
+    def menus(self):
+        if self.where in ('inbox', 'messages', 'comments', 'selfreply'):
+            buttons = (NavButton(_("all"), "inbox"),
+                       NavButton(plurals.messages, "messages"),
+                       NavButton(_("comment replies"), 'comments'),
+                       NavButton(_("post replies"), 'selfreply'))
+
+            return [NavMenu(buttons, base_path = '/message/',
+                            default = 'inbox', type = "flatlist")]
+        return []
+
+
     def title(self):
         return _('messages') + ': ' + _(self.where)
 
@@ -497,11 +507,23 @@ class MessageController(ListingController):
             w.to_id = c.user._id
             w.was_comment = True
             w.permalink, w._fullname = p, f
-            return w
         else:
-            return ListingController.builder_wrapper(thing)
+            w = ListingController.builder_wrapper(thing)
+            
+        if c.user.pref_mark_messages_read and thing.new:
+            w.new = True
+            thing.new = False
+            thing._commit()
+
+        return w
 
     def query(self):
+        if self.where == 'messages':
+            q = queries.get_inbox_messages(c.user)
+        elif self.where == 'comments':
+            q = queries.get_inbox_comments(c.user)
+        elif self.where == 'selfreply':
+            q = queries.get_inbox_selfreply(c.user)
         if self.where == 'inbox':
             q = queries.get_inbox(c.user)
 
@@ -613,9 +635,4 @@ class CommentsController(ListingController):
     title_text = _('comments')
 
     def query(self):
-        q = Comment._query(Comment.c._spam == (True,False),
-                           sort = desc('_date'))
-        if not c.user_is_admin:
-            q._filter(Comment.c._spam == False)
-
-        return q
+        return queries.get_all_comments()

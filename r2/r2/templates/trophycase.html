@@ -66,20 +66,46 @@
   <div class="dust">${_("dust")}</div>
 %endif
 
-<table class="trophy-table">
- %for i, trophy in enumerate(thing.trophies):
-   %if i % 2 == 0:
-    <tr>
-   %endif
+<%def name="trophy_table(trophies, header='')">
 
-   ${trophy_info(trophy, i == len(thing.trophies) - 1)}
+  ${unsafe(header)}
 
-   %if i % 2 == 1:
-    </tr>
-   %endif
- %endfor
+  <table class="trophy-table">
+    %for i, trophy in enumerate(trophies):
+      %if i % 2 == 0:
+       <tr>
+      %endif
 
- %if len(thing.trophies) % 2 == 1:
-  </tr>
- %endif
-</table>
+      ${trophy_info(trophy, i == len(trophies) - 1)}
+
+      %if i % 2 == 1:
+       </tr>
+      %endif
+    %endfor
+
+    %if len(trophies) % 2 == 1:
+      </tr>
+    %endif
+  </table>
+</%def>
+
+${trophy_table(thing.trophies)}
+
+%if thing.dupe_trophies:
+  <p>
+    (
+    <a href="javascript:void(0)"
+       onclick="$('.dupe-trophies').show();$(this).parent().hide();return false">
+      ${_("%d more") % len(thing.dupe_trophies)}
+    </a>
+    )
+  </p>
+
+<div class="dupe-trophies" style="display: none">
+${trophy_table(thing.dupe_trophies)}
+</div>
+%endif
+
+%if c.user_is_admin and thing.invisible_trophies:
+  ${trophy_table(thing.invisible_trophies, "<p>Invisibles:</p>")}
+%endif

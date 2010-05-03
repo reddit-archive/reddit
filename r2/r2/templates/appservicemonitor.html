@@ -37,7 +37,7 @@
  %>
 
 <div class="server-status">
-  <h3>Rendered by PID ${g.reddit_pid} on ${g.reddit_host}</h3>
+  <h3>Rendered by PID ${g.reddit_pid} on ${g.reddit_host} running ${g.short_version}</h3>
   <table>
   %for cache in ("memcaches", "rendercaches"):
     <% 

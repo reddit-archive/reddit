@@ -21,9 +21,9 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys, socket
-from datetime import timedelta
-from r2.lib.cache import LocalCache, Memcache, CacheChain
+import pytz, os, logging, sys, socket, re, subprocess
+from datetime import timedelta, datetime
+from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -55,7 +55,8 @@ class Globals(object):
                    'max_promote_bid',
                    ]
 
-    bool_props = ['debug', 'translator', 
+    bool_props = ['debug', 'translator',
+                  'log_start', 
                   'sqlprinting',
                   'template_debug',
                   'uncompressedJS',
@@ -74,8 +75,6 @@ class Globals(object):
                    'rendercaches',
                    'admins',
                    'sponsors',
-                   # TODO: temporary until we open it up to all users
-                   'paid_sponsors',
                    'monitored_servers',
                    'automatic_reddits',
                    'agents',
@@ -120,8 +119,6 @@ class Globals(object):
                     v = tuple(self.to_iter(v))
                 setattr(self, k, v)
 
-        self.paid_sponsors = set(x.lower() for x in self.paid_sponsors)
-
         # initialize caches
         mc = Memcache(self.memcaches, pickleProtocol = 1)
         self.memcache = mc
@@ -141,6 +138,9 @@ class Globals(object):
 
         #load the database info
         self.dbm = self.load_db_params(global_conf)
+
+        # can't do this until load_db_params() has been called
+        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)))
 
         #make a query cache
         self.stats_collector = QueryStats()
@@ -190,6 +190,8 @@ class Globals(object):
         else:
             self.log.setLevel(logging.WARNING)
 
+        if self.log_start:
+            self.log.error("reddit app started on %s" % datetime.now())
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
 
@@ -206,6 +208,16 @@ class Globals(object):
         with open(stylesheet_path) as s:
             self.default_stylesheet = s.read()
 
+        self.profanities = None
+        if self.profanity_wordlist and os.path.exists(self.profanity_wordlist):
+            with open(self.profanity_wordlist, 'r') as handle:
+                words = []
+                for line in handle:
+                    words.append(line.strip(' \n\r'))
+                if words:
+                    self.profanities = re.compile(r"\b(%s)\b" % '|'.join(words),
+                                              re.I | re.U)
+
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
 
@@ -215,6 +227,19 @@ class Globals(object):
         #if we're going to use the query_queue, we need amqp
         if self.write_query_queue and not self.amqp_host:
             raise Exception("amqp_host must be defined to use the query queue")
+
+        # try to set the source control revision number
+        try:
+            popen = subprocess.Popen(["git", "log", "--date=short",
+                                      "--pretty=format:%H %h", '-n1'],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE)
+            resp, stderrdata = popen.communicate()
+            resp = resp.strip().split(' ')
+            self.version, self.short_version = resp
+        except object, e:
+            self.log.info("Couldn't read source revision (%r)" % e)
+            self.version = self.short_version = '(unknown)'
 
     @staticmethod
     def to_bool(x):
@@ -241,6 +266,11 @@ class Globals(object):
 
         dbm.type_db = dbm.engines[gc['type_db']]
         dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
+        dbm.hardcache_db = dbm.engines[gc['hardcache_db']]
+
+        def split_flags(p):
+            return ([n for n in p if not n.startswith("!")],
+                    dict((n.strip('!'), True) for n in p if n.startswith("!")))
 
         prefix = 'db_table_'
         for k, v in gc.iteritems():
@@ -249,10 +279,14 @@ class Globals(object):
                 name = k[len(prefix):]
                 kind = params[0]
                 if kind == 'thing':
-                    dbm.add_thing(name, [dbm.engines[n] for n in params[1:]])
+                    engines, flags = split_flags(params[1:])
+                    dbm.add_thing(name, [dbm.engines[n] for n in engines],
+                                  **flags)
                 elif kind == 'relation':
+                    engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.engines[n] for n in params[3:]])
+                                     [dbm.engines[n] for n in engines],
+                                     **flags)
         return dbm
 
     def __del__(self):

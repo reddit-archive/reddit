@@ -63,7 +63,7 @@
   ${thing.listing}
 %endif
 
-<div class="create-promo">
+<div class="create-promo pretty-form" id="promo-form">
 
 %if thing.link and not c.user_is_sponsor:
   %if thing.link.promote_status == STATUS.unpaid:
@@ -107,10 +107,6 @@
   %endif
 %endif
 
-<form class="pretty-form" method="POST" action="/post/new_promo"
-      id="promo-form" 
-      onsubmit="return post_form(this, 'new_promo')">
-
   %if thing.link:
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
@@ -125,7 +121,8 @@
         ${error_field("TOO_LONG", "title", "div")}
       </%utils:line_field>
 
-    <%utils:line_field title="${_('url')}" id="url-field">
+    <%utils:line_field title="${_('url')}" id="url-field"
+       description="${_('NOTE: interdomain redirects are not allowed.')}">
       <input name="kind" value="link" type="hidden"/>
       <input id="url" name="url" type="text" 
                ${"disabled" if thing.link and \
@@ -230,15 +227,12 @@
              ${_("This link is currently a freebie.")}
            </span>
          %endif
-        ${error_field("BAD_BID", "bid")}
     </%utils:line_field>
-</form>
 %else:
 
   <input id="bid" name="bid" size="7" type="hidden"
          value="${'%.2f'% float(getattr(thing.link, 'promote_bid', 
                 g.min_promote_bid))}" />
-</form>
     <%utils:line_field title="${_('bid amount')}" id="bid-field"
                         description="${_('(total for the duration provided)')}">
          <span>$${"%.2f" % thing.link.promote_bid}</span>
@@ -272,6 +266,7 @@
          %endif
     </%utils:line_field>
 %endif
+    ${error_field("BAD_BID", "bid")}
 
 ## provide a way to give refunds, but only if the link isn't already a freebie
 <%
@@ -366,7 +361,8 @@
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
   <button name="${name}" class="btn" type="button"
-         onclick="$('#promo-form').get(0).onsubmit()"
+          onclick="return post_pseudo_form('#promo-form', 'new_promo')"
+          ## onclick="$('#promo-form').get(0).onsubmit()"
           >${text}</button>
 
 </div>

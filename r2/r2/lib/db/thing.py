@@ -269,6 +269,10 @@ class DataThing(object):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
 
+        if not all(x <= tdb.MAX_THING_ID for x in ids):
+            g.log.debug("Attempted to look up too-big thing_id?")
+            raise NotFound('thing_id greater than MAX_THING_ID')
+
         def items_db(ids):
             items = cls._get_item(cls._type_id, ids)
             for i in items.keys():

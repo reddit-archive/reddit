@@ -149,6 +149,14 @@ function update_title(elem) {
         </li>
         <li>
           <input class="nomargin" type="checkbox" 
+                 name="allow_top" id="allow_top"
+                 ${(not thing.site or thing.site.allow_top) and "checked='checked'" or ""}/>
+          <label for="allow_top">
+            ${_("allow this reddit to be shown in the default set")}
+          </label>
+        </li>
+        <li>
+          <input class="nomargin" type="checkbox" 
                  name="show_media" id="show_media"
                  ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
           <label for="show_media">

@@ -29,23 +29,25 @@
 
 ## disable voting arrows
 <%def name="midcol(cls='')">
+  %if thing.was_comment and not thing._spam:
+    ${parent.midcol(display=True, cls = cls)}
+  %endif
 </%def>
 
+<%def name="thing_css_class(what)" buffered="True">
+${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if thing.was_comment else ""} ${"recipient" if thing.recipient else ""}
+</%def>
 
 <%def name="tagline(collapse=False)">
-  %if thing.new:
-    <span class="head new">
-  %else:
-    <span class="head">
-  %endif
+  <span class="head">
   <%
    taglinetext = ''
-   if c.msg_location == "inbox":
-        taglinetext = _("from %(author)s sent %(when)s ago")
-   elif c.msg_location == "sent" or not c.msg_location:
+   if c.msg_location == "sent" or not c.msg_location:
         taglinetext = _("to %(dest)s sent %(when)s ago")
    elif c.msg_location == "admin" and c.user_is_admin:
         taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
+   else:
+        taglinetext = _("from %(author)s sent %(when)s ago")
 
    taglinetext = taglinetext.replace(' ', '&nbsp;')
    author = WrappedUser(thing.author, thing.attribs, thing).render()

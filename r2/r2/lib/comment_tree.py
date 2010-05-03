@@ -37,7 +37,7 @@ def add_comment(comment):
 
 def add_comment_nolock(comment):
     cm_id = comment._id
-    p_id = comment.parent_id if hasattr(comment, 'parent_id') else None
+    p_id = comment.parent_id
     link_id = comment.link_id
 
     cids, comment_tree, depth, num_children = link_comments(link_id)
@@ -108,7 +108,7 @@ def load_link_comments(link_id):
     #make a tree
     comment_tree = {}
     for cm in comments:
-        p_id = cm.parent_id if hasattr(cm, 'parent_id') else None
+        p_id = cm.parent_id
         comment_tree.setdefault(p_id, []).append(cm._id)
 
     #calculate the depths

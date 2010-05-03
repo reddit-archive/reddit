@@ -60,7 +60,7 @@ def insert_promoted(link_names, sr_ids, logged_in):
             return True
         else:
             return item.keep_item(item)
-        
+
     builder = IDBuilder(promoted_items, keep_fn = keep, 
                         skip = True,  num = max_promoted)
     promoted_items = builder.get_items()[0]

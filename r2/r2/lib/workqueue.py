@@ -105,27 +105,36 @@ class WorkQueue(object):
         finished."""
         self.jobs.join()
 
+    def __enter__(self):
+        "required for 'with' blocks"
+        self.start()
+        return self
+
+    def __exit__(self, _type, _value, _tb):
+        "required for 'with' blocks"
+        self.wait()
+
+
 def test():
+    import random, time
+
     def make_job(n):
-        import random, time
         def job():
             print 'starting %s' % n
-            blah
             time.sleep(random.randint(1, 10))
             print 'ending %s' % n
         return job
 
+    print "TEST 1 (premade jobs)"
     jobs = [make_job(n) for n in xrange(10)]
     wq = WorkQueue(jobs, timeout = 5)
     wq.start()
     wq.wait()
 
-    #wq = WorkQueue()
-    #wq.start()
-    #wq.add(make_job(10))
-    #print 'added job'
-    #wq.add(make_job(3))
-    #print 'added another'
-    #q.wait()
+    print "TEST 2 (jobs added while running)"
+    with WorkQueue(jobs, timeout = 5) as wq:
+        for x in range(10):
+            print 'added job %d' % x
+            wq.add(make_job(x))
 
     print 'DONE'

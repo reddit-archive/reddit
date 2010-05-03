@@ -30,7 +30,8 @@
   <h4 style="color:gray">${thing.header}</h4>
   
   <div id="previoussearch">
-    ${SearchForm(prev_search = thing.prev_search)}
+    ${SearchForm(prev_search = thing.prev_search,
+                 search_params = thing.search_params)}
   </div>
   
   %if thing.prev_search:

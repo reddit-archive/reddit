@@ -32,4 +32,7 @@
            value="${_('search reddit')}" class="gray"
          %endif
          name="q"/>
+  %for k, v in thing.search_params.iteritems():
+    <input type="hidden" name="${k}" value="${v}" />
+  %endfor
 </form>
