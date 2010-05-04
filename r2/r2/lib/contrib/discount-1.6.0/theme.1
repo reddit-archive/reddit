@@ -1,0 +1,142 @@
+.\"     %A%
+.\"
+.Dd January 23, 2008
+.Dt THEME 1
+.Os MASTODON
+.Sh NAME
+.Nm theme
+.Nd create a web page from a template file
+.Sh SYNOPSIS
+.Nm
+.Op Fl d Pa root
+.Op Fl f
+.Op Fl o Pa file
+.Op Fl p Pa pagename
+.Op Fl t Pa template
+.Op Fl V
+.Op Pa textfile
+.Sh DESCRIPTION
+The
+.Nm
+utility takes a
+.Xr markdown 7 Ns -formatted
+.Pa textfile
+.Pq or stdin if not specified,
+compiles it, and combines it with a
+.Em template
+.Po
+.Pa page.theme
+by default
+.Pc
+to produce a web page.   If a path to the 
+template is not specified,
+.Nm
+looks for 
+.Pa page.theme
+in the current directory, then each parent directory up to the
+.Pa "document root"
+.Po
+set with
+.Fl d
+or, if unset, the
+.Em "root directory"
+of the system.
+.Pc
+If 
+.Pa page.theme
+is found,
+.Nm
+copies it to the output, looking for 
+.Em "<?theme action?>"
+html tags and processing the embedded
+.Ar action 
+as appropriate.
+.Pp
+.Nm
+processes the following actions:
+.Bl -tag -width "include("
+.It Ar author
+Prints the author name(s) from the
+.Xr mkd_doc_author 3
+function.
+.It Ar body
+Prints the formatted
+.Xr markdown 7
+input file.
+.It Ar date
+Prints the date returned by
+.Xr mkd_doc_date 3
+or, if none, the
+date the input file was last modified.
+.It Ar dir
+Prints the directory part of the pagename
+.It Ar include Ns Pq Pa file 
+Prints the contents of 
+.Pa file .
+.Xr Markdown 7
+translation will
+.Em NOT
+be done on this file.
+.It Ar source
+The filename part of the pagename.
+.It Ar style
+Print any stylesheets
+.Pq see Xr mkd-extensions 7
+found in the input file.
+.It Ar title
+Print the title returned by
+.Xr mkd_doc_title 3 ,
+or, if that does not exist, the source filename.
+.It Ar version
+Print the version of
+.Xr discount 7
+that this copy of theme was compiled with.
+.El
+.Pp
+If input is coming from a file and the output was not set with the
+.Ar o
+option, 
+.Nm writes the output to
+.Pa file-sans-text.html
+.Pq if 
+.Ar file
+has a 
+.Pa .text
+suffix, that will be stripped off and replaced with 
+.Pa .html ;
+otherwise a
+.Pa .html
+will be appended to the end of the filename.)
+.Pp
+The options are as follows:
+.Bl -tag -width "-o file"
+.It Fl d Pa root
+Set the 
+.Em "document root"
+to
+.Ar root
+.It Fl f
+Forcibly overwrite existing html files.
+.It Fl o Pa filename
+Write the output to
+.Ar filename .
+.It Fl p Ar path
+Set the pagename to
+.Ar path .
+.It Fl t Ar filename
+Use
+.Ar filename
+as the template file.
+.El
+.Sh RETURN VALUES
+The
+.Nm
+utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr markdown 1 ,
+.Xr markdown 3 ,
+.Xr markdown 7 ,
+.Xr mkd-extensions 7 .
+.Sh AUTHOR
+.An David Parsons
+.Pq Li orc@pell.chi.il.us

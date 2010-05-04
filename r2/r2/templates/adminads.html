@@ -1,0 +1,112 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+
+<%def name="adbuttons(codename, submit_link)">
+  <ul class="flat-list buttons">
+    %if codename != 'DART':
+     <li><a href="#"
+         onclick="$(this).parents('td').find('form').toggle(); return false;">
+         edit</a></li>
+     <li><a href="${submit_link}">submit</a></li>
+    %endif
+    <li><a href="/admin/ads/${codename}/assign">assign_SR</a></li>
+    <li><a href="/admin/ads/${codename}/srs">view_SRs</a></li>
+  </ul>
+</%def>
+
+<%def name="adedit(fullname, codename='', imgurl='', linkurl='')">
+ <form action="/post/editad" method="post" class="pretty-form medium-text"
+       style="display:none"
+       onsubmit="return post_form(this, 'editad');" id="adedit-${fullname}">
+  <input type="hidden" name="fullname" value="${fullname}" />
+
+  <table class="lined-table borderless">
+    <tr>
+      <td>codename</td>
+      <td>
+        <input type="text" name="codename" value="${codename}" />
+        ${error_field("NO_TEXT", "codename", "span")}
+        ${error_field("INVALID_OPTION", "codename", "span")}
+      </td>
+    </tr>
+    <tr>
+      <td>img url</td>
+      <td>
+        <input type="text" name="imgurl" value="${imgurl}" />
+        ${error_field("NO_TEXT", "imgurl", "span")}
+      </td>
+    </tr>
+    <tr>
+      <td>link url</td>
+      <td>
+        <input type="text" name="linkurl" value="${linkurl}" />
+        ${error_field("NO_TEXT", "linkurl", "span")}
+      </td>
+    </tr>
+  </table>
+  <button class="savebutton" type="submit">save</button>
+  <span class="status"></span>
+ </form>
+</%def>
+
+<table class="lined-table">
+ <tbody>
+   <tr>
+     <th>fn</th>
+     <th>cn</th>
+     <th>img</th>
+     <th>links &amp; buttons</th>
+   </tr>
+  %for ad in thing.ads:
+    <tr>
+      <td>${ad._fullname}</td>
+      <td>${ad.codename}</td>
+      %if ad.codename == "DART":
+       <td class="centered">
+         <img src="${ad.imgurl}"/>
+       </td>
+       <td class="entry">
+         ${adbuttons(ad.codename, ad.submit_link())}
+       </td>
+      %else:
+       <td>
+         <a name="${ad.codename}" href="${ad.linkurl}">
+           <img src="${ad.imgurl}"/>
+         </a>
+       </td>
+       <td class="entry">
+         img:&#32;<a href="${ad.imgurl}">${ad.imgurl}</a><br/>
+         link:&#32;<a href="${ad.linkurl}">${ad.linkurl}</a><br/>
+         <br/>
+         ${adbuttons(ad.codename, ad.submit_link())}
+         ${adedit(ad._fullname, ad.codename, ad.imgurl, ad.linkurl)}
+       </td>
+      %endif
+     </tr>
+  %endfor
+ </tbody>
+</table>
+<button onclick="$('#adedit-NEW').show()">new ad</button>
+
+${adedit("NEW")}

@@ -32,7 +32,7 @@ from r2.lib.filters import safemarkdown, unsafe
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
-    from reddit_base import RedditController
+    from reddit_base import RedditController, Cookies
     from r2.models.subreddit import Default, Subreddit
     from r2.models.link import Link
     from r2.lib import pages
@@ -122,7 +122,7 @@ class ErrorController(RedditController):
                        c.site.name)
             message = (strings.banned_subreddit %
                        dict(link = '/message/compose?to=%s&subject=%s' %
-                            (g.admin_message_acct,
+                            (url_escape(g.admin_message_acct),
                              url_escape(subject))))
 
             res = pages.RedditError(_('this reddit has been banned'),
@@ -146,8 +146,8 @@ class ErrorController(RedditController):
 
     def GET_document(self):
         try:
-            #no cookies on errors
-            c.cookies.clear()
+            # clear cookies the old fashioned way 
+            c.cookies = Cookies()
 
             code =  request.GET.get('code', '')
             srname = request.GET.get('srname', '')
@@ -155,7 +155,7 @@ class ErrorController(RedditController):
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
-                return str(code)
+                return str(int(code))
             elif takedown and code == '404':
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()

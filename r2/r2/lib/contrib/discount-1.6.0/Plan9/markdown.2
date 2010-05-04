@@ -1,0 +1,332 @@
+.TH MARKDOWN 2
+.SH NAME
+mkd_in, mkd_string, markdown, mkd_compile, mkd_css, mkd_generatecss,
+mkd_document, mkd_generatehtml, mkd_xhtmlpage, mkd_toc, mkd_generatetoc,
+mkd_cleanup, mkd_doc_title, mkd_doc_author, mkd_doc_date, mkd_line,
+mkd_generateline \- convert Markdown text to HTML
+.SH SYNOPSIS
+.ta \w'MMIOT* 'u
+.B #include <mkdio.h>
+.PP
+.B
+MMIOT* mkd_in(FILE *input, int flags)
+.PP
+.B
+MMIOT* mkd_string(char *buf, int size, int flags)
+.PP
+.B
+int	markdown(MMIOT *doc, FILE *output, int flags)
+.PP
+.B
+int	mkd_compile(MMIOT *document, int flags)
+.PP
+.B
+int	mkd_css(MMIOT *document, char **doc)
+.PP
+.B
+int	mkd_generatecss(MMIOT *document, FILE *output)
+.PP
+.B
+int	mkd_document(MMIOT *document, char **doc)
+.PP
+.B
+int	mkd_generatehtml(MMIOT *document, FILE *output)
+.PP
+.B
+int	mkd_xhtmlpage(MMIOT *document, int flags, FILE *output)
+.PP
+.B
+int	mkd_toc(MMIOT *document, char **doc)
+.PP
+.B
+int	mkd_generatetoc(MMIOT *document, FILE *output)
+.PP
+.B
+void	mkd_cleanup(MMIOT*);
+.PP
+.B
+char*	mkd_doc_title(MMIOT*)
+.PP
+.B
+char*	mkd_doc_author(MMIOT*)
+.PP
+.B
+char*	mkd_doc_date(MMIOT*)
+.PP
+.B
+int	mkd_line(char *string, int size, char **doc, int flags)
+.PP
+.B
+int	mkd_generateline(char *string, int size, FILE *output, int flags)
+.PD
+.PP
+.SH DESCRIPTION
+These functions convert
+.IR Markdown (6)
+text into
+.SM HTML
+markup.
+.PP
+.I Mkd_in
+reads the text referenced by pointer to
+.B FILE
+.I input
+and returns a pointer to an
+.B MMIOT
+structure of the form expected by
+.I markdown
+and the other converters.
+.I Mkd_string
+accepts one
+.I string
+and returns a pointer to
+.BR MMIOT .
+.PP
+After such preparation,
+.I markdown
+converts
+.I doc
+and writes the result to
+.IR output ,
+while
+.I mkd_compile
+transforms
+.I document
+in-place.
+.PP
+One or more of the following
+.I flags
+(combined with
+.BR OR )
+control
+.IR markdown 's
+processing of
+.IR doc :
+.TF MKD_NOIMAGE
+.TP
+.B MKD_NOIMAGE
+Do not process
+.B ![]
+and remove
+.B <img>
+tags from the output.
+.TP
+.B MKD_NOLINKS
+Do not process
+.B []
+and remove
+.B <a>
+tags from the output.
+.TP
+.B MKD_NOPANTS
+Suppress Smartypants-style replacement of quotes, dashes, or ellipses.
+.TP
+.B MKD_STRICT
+Disable superscript and relaxed emphasis processing if configured; otherwise a no-op.
+.TP
+.B MKD_TAGTEXT
+Process as inside an
+.SM HTML
+tag: no
+.BR <em> ,
+no
+.BR <bold> ,
+no
+.SM HTML
+or
+.B []
+expansion.
+.TP
+.B MKD_NO_EXT
+Don't process pseudo-protocols (in
+.IR markdown (6)).
+.TP
+.B MKD_CDATA
+Generate code for
+.SM XML
+.B ![CDATA[...]]
+element.
+.TP
+.B MKD_NOHEADER
+Don't process Pandoc-style headers.
+.TP
+.B MKD_TABSTOP
+When reading documents, expand tabs to 4 spaces, overriding any compile-time configuration.
+.TP
+.B MKD_TOC
+Label headings for use with the
+.I mkd_generatetoc
+and
+.I mkd_toc
+functions.
+.TP
+.B MKD_1_COMPAT
+MarkdownTest_1.0 compatibility. Trim trailing spaces from first line of code blocks and disable implicit reference links (in
+.IR markdown (6)).
+.TP
+.B MKD_AUTOLINK
+Greedy
+.SM URL
+generation. When set, any
+.SM URL
+is converted to a hyperlink, even those not encased in
+.BR <> .
+.TP
+.B MKD_SAFELINK
+Don't make hyperlinks from
+.B [][]
+links that have unknown
+.SM URL
+protocol types.
+.TP
+.B MKD_NOTABLES
+Do not process the syntax extension for tables (in
+.IR markdown (6)).
+.TP
+.B MKD_EMBED
+All of
+.BR MKD_NOLINKS ,
+.BR MKD_NOIMAGE ,
+and
+.BR MKD_TAGTEXT .
+.PD
+.PP
+This implementation supports
+Pandoc-style
+headers and inline
+.SM CSS
+.B <style>
+blocks, but
+.I markdown
+does not access the data provided by these extensions.
+The following functions do, and allow other manipulations.
+.PP
+Given a pointer to
+.B MMIOT
+prepared by
+.I mkd_in
+or
+.IR mkd_string ,
+.I mkd_compile
+compiles the
+.I document
+into
+.BR <style> ,
+Pandoc, and
+.SM HTML
+sections. It accepts the
+.I flags
+described for
+.IR markdown ,
+above.
+.PP
+Once compiled, the document particulars can be read and written:
+.PP
+.I Mkd_css
+allocates a string and populates it with any
+.B <style>
+sections from the document.
+.I Mkd_generatecss
+writes any
+.B <style>
+sections to
+.IR output .
+.PP
+.I Mkd_document
+points
+.I doc
+to the
+.B MMIOT
+.IR document ,
+returning
+.IR document 's
+size.
+.PP
+.I Mkd_generatehtml
+writes the rest of the
+.I document
+to the
+.IR output .
+.PP
+.IR Mkd_doc_title ,
+.IR mkd_doc_author ,
+and
+.I mkd_doc_date
+read the contents of any Pandoc header.
+.PP
+.I Mkd_xhtmlpage
+writes an
+.SM XHTML
+page representation of the document.
+It accepts the
+.I flags
+described for
+.IR markdown ,
+above.
+.PP
+.I Mkd_toc
+.IR malloc s
+a buffer into which it writes an outline, in the form of a
+.B <ul>
+element populated with
+.BR <li> s
+each containing a link to successive headings in the
+.IR document .
+It returns the size of that string.
+.I Mkd_generatetoc
+is similar,
+but writes the outline to the
+.I output
+referenced by a pointer to
+.BR FILE .
+.PP
+.I Mkd_cleanup
+deletes a processed
+.BR MMIOT .
+.PP
+The last two functions convert a single line of markdown source, for example a page title or a signature.
+.I Mkd_line
+allocates a buffer into which it writes an
+.SM HTML
+fragment representation of the
+.IR string .
+.I Mkd_generateline
+writes the result to
+.IR output .
+.SH SOURCE
+.B /sys/src/cmd/discount
+.SH SEE ALSO
+.IR markdown (1),
+.IR markdown (6)
+.SH DIAGNOSTICS
+The
+.I mkd_in
+and
+.I mkd_string
+functions return a pointer to
+.B MMIOT
+on success, null on failure.
+.IR Markdown ,
+.IR mkd_compile ,
+.IR mkd_style ,
+and
+.I mkd_generatehtml
+return
+.B 0
+on success,
+.B -1
+otherwise.
+.SH BUGS
+Error handling is minimal at best.
+.PP
+The
+.B MMIOT
+created by
+.I mkd_string
+is deleted by the
+.I markdown
+function.
+.PP
+This is an
+.SM APE
+library.

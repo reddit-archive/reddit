@@ -23,8 +23,9 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess
 from datetime import timedelta, datetime
-from r2.lib.cache import LocalCache, Memcache, HardCache, CacheChain
-from r2.lib.cache import SelfEmptyingCache
+from r2.lib.cache import LocalCache, SelfEmptyingCache
+from r2.lib.cache import Memcache, Permacache, HardCache
+from r2.lib.cache import MemcacheChain, DoubleMemcacheChain, PermacacheChain, HardcacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -57,7 +58,7 @@ class Globals(object):
                    ]
 
     bool_props = ['debug', 'translator',
-                  'log_start', 
+                  'log_start',
                   'sqlprinting',
                   'template_debug',
                   'uncompressedJS',
@@ -67,7 +68,9 @@ class Globals(object):
                   'css_killswitch',
                   'db_create_tables',
                   'disallow_db_writes',
-                  'allow_shutdown']
+                  'exception_logging',
+                  'enable_usage_stats',
+                  ]
 
     tuple_props = ['memcaches',
                    'rec_cache',
@@ -77,9 +80,9 @@ class Globals(object):
                    'sponsors',
                    'monitored_servers',
                    'automatic_reddits',
-                   'skip_precompute_queries',
                    'agents',
-                   'allowed_css_linked_domains']
+                   'allowed_css_linked_domains',
+                   'authorized_cnames']
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
@@ -89,22 +92,22 @@ class Globals(object):
         One instance of Globals is created by Pylons during
         application initialization and is available during requests
         via the 'g' variable.
-        
+
         ``global_conf``
             The same variable used throughout ``config/middleware.py``
             namely, the variables from the ``[DEFAULT]`` section of the
             configuration file.
-            
+
         ``app_conf``
             The same ``kw`` dictionary used throughout
             ``config/middleware.py`` namely, the variables from the
             section in the config file for your application.
-            
+
         ``extra``
             The configuration returned from ``load_config`` in 
             ``config/middleware.py`` which may be of use in the setup of
             your global variables.
-            
+
         """
 
         # slop over all variables to start with
@@ -122,21 +125,30 @@ class Globals(object):
 
         self.running_as_script = global_conf.get('running_as_script', False)
 
-        self.skip_precompute_queries = set(self.skip_precompute_queries)
-
         # initialize caches. Any cache-chains built here must be added
-        # to reset_caches so that they can properly reset their local
-        # components
-        mc = Memcache(self.memcaches, pickleProtocol = 1)
+        # to cache_chains (closed around by reset_caches) so that they
+        # can properly reset their local components
+
+        localcache_cls = SelfEmptyingCache if self.running_as_script else LocalCache
+
+        # we're going to temporarily run the old memcached behind the
+        # new one so the caches can start warmer
+        # mc = Memcache(self.memcaches, debug=self.debug)
+        mc = Permacache(self.memcaches)
+        rec_cache = Permacache(self.rec_cache)
+        rmc = Permacache(self.rendercaches)
+        pmc = Permacache(self.permacaches)
+        # hardcache is done after the db info is loaded, and then the
+        # chains are reset to use the appropriate initial entries
         self.memcache = mc
-        self.cache = CacheChain((LocalCache(), mc))
-        self.permacache = Memcache(self.permacaches, pickleProtocol = 1)
-        self.rendercache = Memcache(self.rendercaches, pickleProtocol = 1)
+        self.cache = PermacacheChain((localcache_cls(), mc))
+        self.permacache = PermacacheChain((localcache_cls(), pmc))
+        self.rendercache = PermacacheChain((localcache_cls(), rmc))
+        self.rec_cache = rec_cache
 
         self.make_lock = make_lock_factory(mc)
+        cache_chains = [self.cache, self.permacache, self.rendercache]
 
-        self.rec_cache = Memcache(self.rec_cache, pickleProtocol = 1)
-        
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
         dtz = global_conf.get('display_timezone', tz)
@@ -148,9 +160,19 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = CacheChain((LocalCache(), mc, HardCache(self)),
-                                    cache_negative_results = True)
+        self.hardcache = HardcacheChain((localcache_cls(), mc, HardCache(self)),
+                                        cache_negative_results = True)
+        cache_chains.append(self.hardcache)
 
+        # I know this sucks, but we need non-request-threads to be
+        # able to reset the caches, so we need them be able to close
+        # around 'cache_chains' without being able to call getattr on
+        # 'g'
+        def reset_caches():
+            for chain in cache_chains:
+                chain.reset()
+
+        self.reset_caches = reset_caches
         self.reset_caches()
 
         #make a query cache
@@ -169,6 +191,8 @@ class Globals(object):
         all_languages.sort()
         self.all_languages = all_languages
 
+        self.paths = paths
+
         # load the md5 hashes of files under static
         static_files = os.path.join(paths.get('static_files'), 'static')
         self.static_md5 = {}
@@ -185,6 +209,7 @@ class Globals(object):
         #set up the logging directory
         log_path = self.log_path
         process_iden = global_conf.get('scgi_port', 'default')
+        self.reddit_port = process_iden
         if log_path:
             if not os.path.exists(log_path):
                 os.makedirs(log_path)
@@ -207,7 +232,8 @@ class Globals(object):
         if not self.media_domain:
             self.media_domain = self.domain
         if self.media_domain == self.domain:
-            print "Warning: g.media_domain == g.domain. This may give untrusted content access to user cookies"
+            print ("Warning: g.media_domain == g.domain. " +
+                   "This may give untrusted content access to user cookies")
 
         #read in our CSS so that it can become a default for subreddit
         #stylesheets
@@ -252,12 +278,6 @@ class Globals(object):
 
         if self.log_start:
             self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
-
-    def reset_caches(self):
-        for ca in ('cache', 'hardcache'):
-            cache = getattr(self, ca)
-            new_cache = SelfEmptyingCache() if self.running_as_script else LocalCache()
-            cache.caches = (new_cache,) + cache.caches[1:]
 
     @staticmethod
     def to_bool(x):

@@ -1,6 +1,11 @@
+# 80legs
+User-agent: 008
+Disallow: /
+
 User-Agent: *
 Disallow: /goto
 Disallow: /*after=
 Disallow: /*before=
 Disallow: /domain/*t=
+Disallow: /login
 Allow: /

@@ -32,6 +32,7 @@ import sorts
 from .. utils import iters, Results, tup, to36, Storage
 from r2.config import cache
 from r2.lib.cache import sgm
+from r2.lib.log import log_text
 from pylons import g
 
 
@@ -75,6 +76,7 @@ class DataThing(object):
     _data_int_props = ()
     _int_prop_suffix = None
     _defaults = {}
+    _essentials = ()
     c = operators.Slots()
     __safe__ = False
 
@@ -120,11 +122,53 @@ class DataThing(object):
             try:
                 return getattr(self, '_defaults')[attr]
             except KeyError:
+                try:
+                    _id = object.__getattribute__(self, "_id")
+                except AttributeError:
+                    _id = "???"
+                try:
+                    cl = object.__getattribute__(self, "__class__").__name__
+                except AttributeError:
+                    cl = "???"
+
                 if self._loaded:
-                    raise AttributeError, '%s not found' % attr
+                    nl = "it IS loaded."
                 else:
-                    raise AttributeError,\
-                              attr + ' not found. thing is not loaded'
+                    nl = "it is NOT loaded."
+
+                # The %d format is nicer, since it has no "L" at the end, but
+                # if we can't do that, fall back on %r.
+                try:
+                    id_str = "%d" % _id
+                except TypeError:
+                    id_str = "%r" % _id
+
+                desc = '%s(%s).%s' % (cl, id_str, attr)
+
+                try:
+                    essentials = object.__getattribute__(self, "_essentials")
+                except AttributeError:
+                    print "%s has no _essentials" % desc
+                    essentials = ()
+
+                if isinstance(essentials, str):
+                    print "Some dumbass forgot a comma."
+                    essentials = essentials,
+
+                if attr in essentials:
+                    log_text ("essentials-bandaid-reload",
+                          "%s not found; %s Forcing reload." % (desc, nl),
+                          "warning")
+                    self._load()
+
+                    try:
+                        return self._t[attr]
+                    except KeyError:
+                        log_text ("essentials-bandaid-failed",
+                              "Reload of %s didn't help. I recommend deletion."
+                              % desc, "error")
+
+                raise AttributeError, '%s not found; %s' % (desc, nl)
 
     def _cache_key(self):
         return thing_prefix(self.__class__.__name__, self._id)
@@ -713,8 +757,12 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
             res = sgm(cache, pairs, items_db, prefix)
             #convert the keys back into objects
-            #we can assume the rels will be in the cache and just call
-            #_byID lots
+
+            # populate up the local-cache in batch
+            cls._byID(filter(None, res.values()), data=data)
+
+            # now we can assume the rels will be in the cache and just
+            # call _byID lots
             res_obj = {}
             for k, rid in res.iteritems():
                 obj_key = (thing1_dict[k[0]], thing2_dict[k[1]], k[2])

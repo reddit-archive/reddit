@@ -438,3 +438,12 @@ ${unsafe(txt)}
      ${caller.body()}
   </%call>
 </%def>
+
+<%def name="percentage(slice, total)">
+  %if total is None or total == "" or total == 0 or slice is None or slice == "":
+    --
+  %else:
+    ${int(100 * slice / total)}%
+  %endif
+</%def>
+

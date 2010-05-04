@@ -81,8 +81,25 @@
                  alt = mail_img_title, title = mail_img_title, 
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
+      %if c.show_mod_mail:
+         <%
+            mail_img ="modmail"
+            if c.have_mod_messages:
+              mail_img += ".png"
+              mail_img_class = 'havemail'
+              mail_img_title = "new mail!"
+            else:
+              mail_img += "gray.png"
+              mail_img_class = 'nohavemail'
+              mail_img_title = "no new mail"
+            mail_img = static(mail_img)
+          %>
+         ${img_link(_("mod messages"), mail_img , path="/message/moderator/",
+                    alt = mail_img_title, title = mail_img_title, 
+                    _id = "modmail", _class=mail_img_class)}
+         ${separator("|")}
+      %endif
     %endif
-      
     ${thing.corner_buttons()}
     %if c.user_is_loggedin:
       ${separator("|")}

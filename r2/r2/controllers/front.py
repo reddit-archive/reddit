@@ -89,13 +89,15 @@ class FrontController(RedditController):
         else:
             links = list(links)[:g.num_serendipity]
 
+        rand.shuffle(links)
+
         builder = IDBuilder(links, skip = True,
                             keep_fn = lambda x: x.fresh,
-                            num = g.num_serendipity)
+                            num = 1)
         links = builder.get_items()[0]
 
         if links:
-            l = rand.choice(links)
+            l = links[0]
             return self.redirect(add_sr("/tb/" + l._id36))
         else:
             return self.redirect(add_sr('/'))
@@ -274,8 +276,12 @@ class FrontController(RedditController):
             content.append(FriendList())
         elif location == 'update':
             content = PrefUpdate()
+        elif location == 'feeds' and c.user.pref_private_feeds:
+            content = PrefFeeds()
         elif location == 'delete':
             content = PrefDelete()
+        else:
+            return self.abort404()
 
         return PrefsPage(content = content, infotext=infotext).render()
 
@@ -310,7 +316,7 @@ class FrontController(RedditController):
 
         # moderator is either reddit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
-
+        extension_handling = False
         if is_moderator and location == 'edit':
             pane = PaneStack()
             if created == 'true':
@@ -320,8 +326,11 @@ class FrontController(RedditController):
             pane = ModList(editable = is_moderator)
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
-        elif location == 'contributors' and c.site.type != 'public':
-            pane = ContributorList(editable = is_moderator)
+        elif (location == 'contributors' and
+              (c.site.type != 'public' or 
+               (c.user_is_loggedin and c.site.use_whitelist and
+                (c.site.is_moderator(c.user) or c.user_is_admin)))):
+                pane = ContributorList(editable = is_moderator)
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
               and not g.css_killswitch):
@@ -338,18 +347,35 @@ class FrontController(RedditController):
                      else c.site.get_spam())
             builder_cls = (QueryBuilder if isinstance(query, thing.Query)
                            else IDBuilder)
+            def keep_fn(x):
+                # no need to bother mods with banned users, or deleted content
+                if x.hidden or x._deleted:
+                    return False
+                if location == "reports" and not x._spam:
+                    return (x.reported > 0)
+                if location == "spam":
+                    return x._spam
+                return True
+
             builder = builder_cls(query,
+                                  skip = True,
                                   num = num, after = after,
+                                  keep_fn = keep_fn,
                                   count = count, reverse = reverse,
                                   wrap = ListingController.builder_wrapper)
             listing = LinkListing(builder)
             pane = listing.listing()
+            if c.user.pref_private_feeds:
+                extension_handling = "private"
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
+        elif c.user_is_sponsor and location == 'ads':
+            pane = RedditAds()
         else:
             return self.abort404()
 
-        return EditReddit(content = pane).render()
+        return EditReddit(content = pane,
+                          extension_handling = extension_handling).render()
 
     def GET_awards(self):
         """The awards page."""
@@ -517,51 +543,50 @@ class FrontController(RedditController):
 
         return builder.total_num, timing, res
 
-    def GET_login(self):
+    @validate(dest = VDestination())
+    def GET_login(self, dest):
         """The /login form.  No link to this page exists any more on
         the site (all actions invoking it now go through the login
         cover).  However, this page is still used for logging the user
         in during submission or voting from the bookmarklets."""
 
-        # dest is the location to redirect to upon completion
-        dest = request.get.get('dest','') or request.referer or '/'
         if (c.user_is_loggedin and
             not request.environ.get('extension') == 'embed'):
             return self.redirect(dest)
         return LoginPage(dest = dest).render()
 
-    def GET_logout(self):
-        dest = request.referer or '/'
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def GET_logout(self, dest):
         return self.redirect(dest)
 
     @validate(VUser(),
-              VModhash())
-    def POST_logout(self, dest = None):
+              VModhash(),
+              dest = VDestination())
+    def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
         self.logout()
-        dest = request.post.get('dest','') or request.referer or '/'
         return self.redirect(dest)
 
-    
-    @validate(VUser())
-    def GET_adminon(self):
+
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_adminon(self, dest):
         """Enable admin interaction with site"""
         #check like this because c.user_is_admin is still false
         if not c.user.name in g.admins:
             return self.abort404()
         self.login(c.user, admin = True)
-        
-        dest = request.referer or '/'
         return self.redirect(dest)
 
-    @validate(VAdmin())
-    def GET_adminoff(self):
+    @validate(VAdmin(),
+              dest = VDestination())
+    def GET_adminoff(self, dest):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
             return self.abort404()
         self.login(c.user, admin = False)
-        
-        dest = request.referer or '/'
         return self.redirect(dest)
 
     def GET_validuser(self):
@@ -604,9 +629,9 @@ class FrontController(RedditController):
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
                     Subreddit.submit_sr_names(None))
-        
 
-        return FormPage(_("submit"), 
+        return FormPage(_("submit"),
+                        show_sidebar = True,
                         content=NewLink(url=url or '',
                                         title=title or '',
                                         subreddits = sr_names,
@@ -714,7 +739,3 @@ class FrontController(RedditController):
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
-
-
-    def GET_ad(self, reddit = None):
-        return Dart_Ad(reddit).render(style="html")

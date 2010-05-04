@@ -19,9 +19,15 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from hashlib import md5
+
 from r2.config import cache
 from r2.lib.filters import _force_utf8
-from r2.lib.cache import NoneResult
+from r2.lib.cache import NoneResult, make_key
+from r2.lib.lock import make_lock_factory
+from pylons import g
+
+make_lock = g.make_lock
 
 def memoize(iden, time = 0):
     def memoize_fn(fn):
@@ -35,49 +41,38 @@ def memoize(iden, time = 0):
                 update = kw['_update']
                 del kw['_update']
 
-            key = _make_key(iden, a, kw)
-            #print 'CHECKING', key
+            key = make_key(iden, *a, **kw)
 
             res = None if update else cache.get(key)
 
             if res is None:
-                res = fn(*a, **kw)
-                if res is None:
-                    res = NoneResult
-                cache.set(key, res, time = time)
+                # not cached, we should calculate it.
+                with make_lock('memoize_lock(%s)' % key):
+                    stored = None if update else cache.get(key)
+                    if stored is None:
+                        # okay now go and actually calculate it
+                        res = fn(*a, **kw)
+                        if res is None:
+                            res = NoneResult
+                        cache.set(key, res, time = time)
+                    else:
+                        # it was calculated while we were waiting on
+                        # the lock
+                        res = stored
+
             if res == NoneResult:
                 res = None
+
             return res
+
         return new_fn
     return memoize_fn
-
-def clear_memo(iden, *a, **kw):
-    key = _make_key(iden, a, kw)
-    #print 'CLEARING', key
-    cache.delete(key)
-
-def _make_key(iden, a, kw):
-    """
-    Make the cache key. We have to descend into *a and **kw to make
-    sure that only regular strings are used in the key to keep 'foo'
-    and u'foo' in an args list from resulting in differing keys
-    """
-    def _conv(s):
-        if isinstance(s, str):
-            return s
-        elif isinstance(s, unicode):
-            return _force_utf8(s)
-        else:
-            return str(s)
-
-    return (_conv(iden)
-            + str([_conv(x) for x in a])
-            + str([(_conv(x),_conv(y)) for (x,y) in sorted(kw.iteritems())]))
 
 @memoize('test')
 def test(x, y):
     import time
     time.sleep(1)
+    print 'calculating %d + %d' % (x, y)
     if x + y == 10:
         return None
     else:

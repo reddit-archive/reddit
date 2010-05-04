@@ -33,13 +33,7 @@
 <%def name="numcol()">
   <% num = thing.num %>
   <span class="rank" style="width:${thing.numcolmargin};">
-    %if thing.top_link:
-      <a class="star" href="/toplinks">
-    %endif
     ${thing.num}
-    %if thing.top_link:
-      </a>
-    %endif
   </span>
 </%def>
 
@@ -79,7 +73,7 @@
 <%def name="entry()">
   <p class="title">
     <%call expr="make_link('title', 'title')">
-      ${thing.title} 
+      ${thing.title}
     </%call>
     &#32;
     ${self.domain()}
@@ -91,7 +85,7 @@
                 ${thing.link_child.css_style}"
          onclick="expando_child(this)"></div>
   %endif
-   
+
   <p class="tagline">
     ${self.tagline()}
   </p>
@@ -168,15 +162,19 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 <%def name="domain()">
   <span class="domain">
     (${plain_link(thing.domain, thing.domain_path, _sr_path = False)})
+    %if c.user_is_admin:
+      &#32;
+      <a class="adminbox" href="/admin/domain/${thing.domain}">d</a>
+    %endif
   </span>
 </%def>
 
 <%def name="tagline()">
-  <% 
+  <%
     if thing.different_sr:
-      taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s") 
+      taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s")
     else:
-      taglinetext = _("submitted %(when)s ago by %(author)s") 
+      taglinetext = _("submitted %(when)s ago by %(author)s")
     taglinetext = taglinetext.replace(" ", "&#32;")
   %>
 
@@ -188,6 +186,10 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
                               when = thing.timesince, 
                               author= WrappedUser(thing.author, thing.attribs, thing).render()))}
+
+  %if c.user_is_admin and thing._deleted:
+    &#32;[link deleted]
+  %endif
 </%def>
 
 <%def name="child()">

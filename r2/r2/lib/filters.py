@@ -19,13 +19,17 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from BeautifulSoup import BeautifulSoup
-
-from pylons import c
-
 import cgi
 import urllib
 import re
+from cStringIO import StringIO
+
+from xml.sax.handler import ContentHandler
+from lxml.sax import saxify
+import lxml.etree
+
+from pylons import g, c
+
 from wrapped import Templated, CacheStub
 
 SC_OFF = "<!-- SC_OFF -->"
@@ -122,52 +126,63 @@ def edit_comment_filter(text = ''):
         text = unicode(text)
     return url_escape(text)
 
+class SouptestSaxHandler(ContentHandler):
+    def __init__(self, ok_tags):
+        self.ok_tags = ok_tags
+
+    def startElementNS(self, tagname, qname, attrs):
+        if qname not in self.ok_tags:
+            raise ValueError('HAX: Unknown tag: %r' % qname)
+
+        for (ns, name), val in attrs.items():
+            if ns is not None:
+                raise ValueError('HAX: Unknown namespace? Seriously? %r' % ns)
+
+            if name not in self.ok_tags[qname]:
+                raise ValueError('HAX: Unknown attribute-name %r' % name)
+
+            if qname == 'a' and name == 'href':
+                lv = val.lower()
+                if not (lv.startswith('http://')
+                        or lv.startswith('https://')
+                        or lv.startswith('ftp://')
+                        or lv.startswith('mailto:')
+                        or lv.startswith('news:')
+                        or lv.startswith('/')):
+                    raise ValueError('HAX: Unsupported link scheme %r' % val)
+
+markdown_ok_tags = {
+    'div': ('class'),
+    'a': set(('href', 'title', 'target', 'nofollow')),
+    'table': ("align", ),
+    'th': ("align", ),
+    'td': ("align", ),
+    }
+markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
+                         'pre', 'code', 'blockquote', 'center',
+                         'tbody', 'thead', "tr",
+                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
+for bt in markdown_boring_tags:
+    markdown_ok_tags[bt] = ()
+
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
-    ok_tags  = {
-        'div': ('class'),
-        'a': ('href', 'title', 'target', 'nofollow'),
-        }
+    if not text:
+        return text
 
-    boring_tags = ( 'p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
-                    'pre', 'code', 'blockquote',
-                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', )
+    smd = safemarkdown(text, nofollow, target, lang)
 
-    for bt in boring_tags:
-        ok_tags[bt] = ()
+    s = StringIO(smd)
+    tree = lxml.etree.parse(s)
+    handler = SouptestSaxHandler(markdown_ok_tags)
+    saxify(tree, handler)
 
-    smd = safemarkdown (text, nofollow, target, lang)
-    soup = BeautifulSoup(smd)
-
-    for tag in soup.findAll():
-        if not tag.name in ok_tags:
-            raise ValueError("<%s> tag found in markdown!" % tag.name)
-        ok_attrs = ok_tags[tag.name]
-        for k,v in tag.attrs:
-            if not k in ok_attrs:
-                raise ValueError("<%s %s='%s'> attr found in markdown!"
-                                 % (tag.name, k,v))
-            if tag.name == 'a' and k == 'href':
-                lv = v.lower()
-                if lv.startswith("http:"):
-                    pass
-                elif lv.startswith("https:"):
-                    pass
-                elif lv.startswith("ftp:"):
-                    pass
-                elif lv.startswith("mailto:"):
-                    pass
-                elif lv.startswith("/"):
-                    pass
-                else:
-                    raise ValueError("Link to '%s' found in markdown!" % v)
-
+    return smd
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
 def safemarkdown(text, nofollow=False, target=None, lang=None):
     from r2.lib.c_markdown import c_markdown
     from r2.lib.py_markdown import py_markdown
-    from pylons import g
 
     from contrib.markdown import markdown
 
@@ -181,18 +196,14 @@ def safemarkdown(text, nofollow=False, target=None, lang=None):
         target = "_top"
 
     if lang is None:
-        # TODO: lang should respect g.markdown_backend
-        lang = "py"
+        lang = g.markdown_backend
 
-    try:
-        if lang == "c":
-            text = c_markdown(text, nofollow, target)
-        elif lang == "py":
-            text = py_markdown(text, nofollow, target)
-        else:
-            raise ValueError("weird lang")
-    except RuntimeError:
-        text = "<p><em>Comment Broken</em></p>"
+    if lang == "c":
+        text = c_markdown(text, nofollow, target)
+    elif lang == "py":
+        text = py_markdown(text, nofollow, target)
+    else:
+        raise ValueError("weird lang [%s]" % lang)
 
     return SC_OFF + MD_START + text + MD_END + SC_ON
 
@@ -209,8 +220,6 @@ def unkeep_space(text):
 
 
 def profanity_filter(text):
-    from pylons import g
-
     def _profane(m):
         x = m.group(1)
         return ''.join(u"\u2731" for i in xrange(len(x)))

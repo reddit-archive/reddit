@@ -34,7 +34,7 @@ from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
 from r2.lib.cache import sgm
-from r2.lib.comment_tree import link_comments, user_messages, conversation, tree_sort_fn
+from r2.lib.comment_tree import *
 from copy import deepcopy, copy
 
 import time
@@ -90,18 +90,12 @@ class Builder(object):
         wrapped = []
         count = 0
 
-        if isinstance(c.site, FakeSubreddit):
-            mods = []
-        else:
-            mods = c.site.moderators
-            modlink = ''
-            if c.cname:
-                modlink = '/about/moderators'
-            else:
-                modlink = '/r/%s/about/moderators' % c.site.name
-
-            modlabel = (_('moderator of /r/%(reddit)s, speaking officially') %
-                        dict(reddit = c.site.name) )
+        modlink = {}
+        modlabel = {}
+        for s in subreddits.values():
+            modlink[s._id] = '/r/%s/about/moderators' % s.name
+            modlabel[s._id] = (_('moderator of /r/%(reddit)s, speaking officially') %
+                        dict(reddit = s.name) )
 
 
         for item in items:
@@ -142,9 +136,9 @@ class Builder(object):
                 w.author and w.author.name in g.admins):
                 add_attr(w.attribs, 'A')
 
-            if (w.distinguished == 'moderator' and
-                getattr(item, "author_id", None) in mods):
-                add_attr(w.attribs, 'M', label=modlabel, link=modlink)
+            if w.distinguished == 'moderator':
+                add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
+                         link=modlink[item.sr_id])
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]
@@ -154,7 +148,7 @@ class Builder(object):
                          label=label,
                          link = "/user/%s" % w.author.name)
 
-            if hasattr(item, "sr_id"):
+            if hasattr(item, "sr_id") and item.sr_id is not None:
                 w.subreddit = subreddits[item.sr_id]
 
             w.likes = likes.get((user, item))
@@ -204,6 +198,8 @@ class Builder(object):
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    if hasattr(w, "author") and w.author._spam:
+                        w.show_spam = "author"
 
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
@@ -240,7 +236,7 @@ class QueryBuilder(Builder):
         self.start_count = kw.get('count', 0) or 0
         self.after = kw.get('after')
         self.reverse = kw.get('reverse')
-        
+
         self.prewrap_fn = None
         if hasattr(query, 'prewrap_fn'):
             self.prewrap_fn = query.prewrap_fn
@@ -372,18 +368,30 @@ class QueryBuilder(Builder):
 
 class IDBuilder(QueryBuilder):
     def init_query(self):
-        names = self.names = list(tup(self.query))
+        names = list(tup(self.query))
 
-        if self.reverse:
+        after = self.after._fullname if self.after else None
+
+        self.names = self._get_after(names,
+                                     after,
+                                     self.reverse)
+
+    @staticmethod
+    def _get_after(l, after, reverse):
+        names = list(l)
+
+        if reverse:
             names.reverse()
 
-        if self.after:
+        if after:
             try:
-                i = names.index(self.after._fullname)
+                i = names.index(after)
             except ValueError:
-                self.names = ()
+                names = ()
             else:
-                self.names = names[i + 1:]
+                names = names[i + 1:]
+
+        return names
 
     def fetch_more(self, last_item, num_have):
         done = False
@@ -405,13 +413,21 @@ class IDBuilder(QueryBuilder):
 
         return done, new_items
 
-class SearchBuilder(QueryBuilder):
+class SearchBuilder(IDBuilder):
     def init_query(self):
         self.skip = True
-        self.total_num = 0
-        self.start_time = time.time()
 
         self.start_time = time.time()
+
+        search = self.query.run()
+        names = list(search.docs)
+        self.total_num = search.hits
+
+        after = self.after._fullname if self.after else None
+
+        self.names = self._get_after(names,
+                                     after,
+                                     self.reverse)
 
     def keep_item(self,item):
         # doesn't use the default keep_item because we want to keep
@@ -421,31 +437,6 @@ class SearchBuilder(QueryBuilder):
             return False
         else:
             return True
-
-
-    def fetch_more(self, last_item, num_have):
-        from r2.lib import solrsearch
-
-        done = False
-        limit = None
-        if self.num:
-            num_need = self.num - num_have
-            if num_need <= 0:
-                return True, None
-            else:
-                limit = max(int(num_need * EXTRA_FACTOR), 1)
-        else:
-            done = True
-
-        search = self.query.run(after = last_item or self.after,
-                                reverse = self.reverse,
-                                num = limit)
-
-        new_items = Thing._by_fullname(search.docs, data = True, return_dict=False)
-
-        self.total_num = search.hits
-
-        return done, new_items
 
 def empty_listing(*things):
     parent_name = None
@@ -484,9 +475,21 @@ class CommentBuilder(Builder):
                 for j in self.item_iter(i.child.things):
                     yield j
 
-    def get_items(self, num, starting_depth = 0):
+    def get_items(self, num):
         r = link_comments(self.link._id)
         cids, comment_tree, depth, num_children = r
+
+        if (not isinstance(self.comment, utils.iters)
+            and self.comment and not self.comment._id in depth):
+            g.log.error("self.comment (%d) not in depth. Forcing update..."
+                        % self.comment._id)
+
+            r = link_comments(self.link._id, _update=True)
+            cids, comment_tree, depth, num_children = r
+
+            if not self.comment._id in depth:
+                g.log.error("Update didn't help. This is gonna end in tears.")
+
         if cids:
             comments = set(Comment._byID(cids, data = True, 
                                          return_dict = False))
@@ -503,7 +506,11 @@ class CommentBuilder(Builder):
         extra = {}
         top = None
         dont_collapse = []
+        ignored_parent_ids = []
         #loading a portion of the tree
+
+        start_depth = 0
+
         if isinstance(self.comment, utils.iters):
             candidates = []
             candidates.extend(self.comment)
@@ -514,6 +521,10 @@ class CommentBuilder(Builder):
             #if hasattr(candidates[0], "parent_id"):
             #    parent = comment_dict[candidates[0].parent_id]
             #    items.append(parent)
+            if (hasattr(candidates[0], "parent_id") and
+                candidates[0].parent_id is not None):
+                ignored_parent_ids.append(candidates[0].parent_id)
+                start_depth = depth[candidates[0].parent_id]
         #if permalink
         elif self.comment:
             top = self.comment
@@ -549,7 +560,7 @@ class CommentBuilder(Builder):
             comments.remove(to_add)
             if to_add._deleted and not comment_tree.has_key(to_add._id):
                 pass
-            elif depth[to_add._id] < self.max_depth:
+            elif depth[to_add._id] < self.max_depth + start_depth:
                 #add children
                 if comment_tree.has_key(to_add._id):
                     candidates.extend(comment_tree[to_add._id])
@@ -589,6 +600,11 @@ class CommentBuilder(Builder):
 
         #put the extras in the tree
         for p_id, morelink in extra.iteritems():
+            if p_id not in cids:
+                if p_id in ignored_parent_ids:
+                    raise KeyError("%r not in cids because it was ignored" % p_id)
+                else:
+                    raise KeyError("%r not in cids but it wasn't ignored" % p_id)
             parent = cids[p_id]
             parent.child = empty_listing(morelink)
             parent.child.parent_name = parent._fullname
@@ -641,9 +657,9 @@ class CommentBuilder(Builder):
         return final
 
 class MessageBuilder(Builder):
-    def __init__(self, user, parent = None, focal = None,
+    def __init__(self, parent = None, focal = None,
                  skip = True, **kw):
-        self.user = user
+
         self.num = kw.pop('num', None)
         self.focal = focal
         self.parent = parent
@@ -661,11 +677,11 @@ class MessageBuilder(Builder):
                 for j in i.child.things:
                     yield j
 
+    def get_tree(self):
+        raise NotImplementedError, "get_tree"
+
     def get_items(self):
-        if self.parent:
-            tree = conversation(self.user, self.parent)
-        else:
-            tree = user_messages(self.user)
+        tree = self.get_tree()
 
         prev = next = None
         if not self.parent:
@@ -747,6 +763,37 @@ class MessageBuilder(Builder):
 
         return (final, prev, next, len(final), len(final))
 
+class SrMessageBuilder(MessageBuilder):
+    def __init__(self, sr, **kw):
+        self.sr = sr
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return sr_conversation(self.sr, self.parent)
+        return subreddit_messages(self.sr)
+
+class UserMessageBuilder(MessageBuilder):
+    def __init__(self, user, **kw):
+        self.user = user
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return conversation(self.user, self.parent)
+        return user_messages(self.user)
+
+class ModeratorMessageBuilder(MessageBuilder):
+    def __init__(self, user, **kw):
+        self.user = user
+        MessageBuilder.__init__(self, **kw)
+
+    def get_tree(self):
+        if self.parent:
+            return conversation(self.user, self.parent)
+        return moderator_messages(self.user)
+
+
 def make_wrapper(parent_wrapper = Wrapped, **params):
     def wrapper_fn(thing):
         w = parent_wrapper(thing)
@@ -765,5 +812,5 @@ class TopCommentBuilder(CommentBuilder):
                                 max_depth = 1, wrap = wrap)
 
     def get_items(self, num = 10):
-        final = CommentBuilder.get_items(self, num = num, starting_depth = 0)
+        final = CommentBuilder.get_items(self, num = num)
         return [ cm for cm in final if not cm.deleted ]

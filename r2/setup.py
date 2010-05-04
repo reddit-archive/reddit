@@ -39,6 +39,7 @@ except:
 from distutils.core import setup, Extension
 
 from setuptools.command.easy_install import main as easy_install
+import os
 
 # check the PIL is installed; since its package name isn't the same as
 # the distribution name, setuptools can't manage it as a dependency
@@ -76,6 +77,27 @@ except ImportError:
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
+discount_path = "r2/lib/contrib/discount-1.6.0"
+discountmod = Extension('reddit-discount',
+                        include_dirs = [discount_path],
+                        define_macros = [("VERSION", '"1.6.0"')],
+                        sources = ([ "r2/lib/c/reddit-discount-wrapper.c" ]
+                                   + map(lambda x: os.path.join(discount_path, x),
+                                      ["Csio.c",
+                                       "css.c",
+                                       "docheader.c",
+                                       "dumptree.c",
+                                       "generate.c",
+                                       "main.c",
+                                       "markdown.c",
+                                       "mkdio.c",
+                                       "resource.c",
+                                       "toc.c",
+                                       "version.c",
+                                       "xml.c",
+                                       "xmlpage.c"])))
+
+
 setup(
     name='r2',
     version="",
@@ -91,7 +113,7 @@ setup(
                       "flup",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
-                      "BeautifulSoup == 3.0.7a", # last version to use the good parser
+                      "BeautifulSoup == 3.0.8", # last version to use the good parser
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
@@ -106,7 +128,7 @@ setup(
                 'init_catalog':         babel.init_catalog,
                 'update_catalog':       babel.update_catalog,
                 },
-    ext_modules = [filtermod],
+    ext_modules = [filtermod, discountmod],
     entry_points="""
     [paste.app_factory]
     main=r2:make_app

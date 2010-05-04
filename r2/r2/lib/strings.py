@@ -80,7 +80,7 @@ string_dict = dict(
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
         contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
         banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
-        traffic = _('you have been added to the list of users able to see [traffic for the sponsoted link "%(title)s"](%(traffic_url)s).')
+        traffic = _('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).')
         ),
 
     subj_add_friend = dict(
@@ -117,12 +117,7 @@ string_dict = dict(
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
     banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [our site admins](%(link)s) and be sure to include the **exact name of the reddit**."""),
-    comments_panel_text = _("""
-    The following is a sample of what Reddit users had to say about this
-    page. The full discussion is available [here](%(fd_link)s); you can
-    also get there by clicking the link's title
-    (in the middle of the toolbar, to the right of the comments button).
-    """),
+    comments_panel_text = _("""The following is a sample of what Reddit users had to say about this page. The full discussion is available [here](%(fd_link)s); you can also get there by clicking the link's title (in the middle of the toolbar, to the right of the comments button)."""),
 
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
@@ -130,7 +125,7 @@ string_dict = dict(
     verify_email = _("we're going to need to verify your email address for you to proceed."),
     email_verified =  _("your email address has been verfied"),
     email_verify_failed = _("Verification failed.  Please try that again"),
-    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience.\n\n[Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
+    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. [Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
 )
 
 class StringHandler(object):

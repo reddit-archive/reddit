@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 
 def UserRel(name, relation, disable_ids_fn = False, disable_reverse_ids_fn = False):
 

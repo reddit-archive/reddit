@@ -44,6 +44,8 @@ from r2.lib.utils import unicode_safe, tup
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
 
+solr_cache_time = g.solr_cache_time
+
 ## Changes to the list of searchable languages will require changes to
 ## Solr's configuration (specifically, the fields that are searched)
 searchable_langs    = set(['dk','nl','en','fi','fr','de','it','no','nn','pt',
@@ -485,7 +487,7 @@ class SearchQuery(object):
 
         return "<%s(%s)>" % (self.__class__.__name__, ", ".join(attrs))
 
-    def run(self, after = None, num = 100, reverse = False):
+    def run(self, after = None, num = 1000, reverse = False):
         if not self.q:
             return pysolr.Results([],0)
 
@@ -568,71 +570,24 @@ class SearchQuery(object):
 
         if reverse:
             sort = swap_strings(sort,'asc','desc')
+        after = after._fullname if after else None
 
-        if after:
-            # size of the pre-search to run in the case that we need
-            # to search more than once. A bigger one can reduce the
-            # number of searches that need to be run twice, but if
-            # it's bigger than the default display size, it could
-            # waste some
-            PRESEARCH_SIZE = num
-
-            # run a search and get back the number of hits, so that we
-            # can re-run the search with that max_count.
-            pre_search = cls.run_search_cached(q, sort, 0, PRESEARCH_SIZE,
-                                               solr_params)
-
-            if (PRESEARCH_SIZE >= pre_search.hits
-                or pre_search.hits == len(pre_search.docs)):
-                # don't run a second search if our pre-search found
-                # all of the elements anyway
-                search = pre_search
-            else:
-                # now that we know how many to request, we can request
-                # the whole lot
-                search = cls.run_search_cached(q, sort, 0,
-                                               pre_search.hits,
-                                               solr_params, max=True)
-
-            search.docs = get_after(search.docs, after._fullname, num)
-        else:
-            search = cls.run_search_cached(q, sort, 0, num, solr_params)
+        search = cls.run_search_cached(q, sort, 0, num, solr_params)
+        search.docs = get_after(search.docs, after, num)
 
         return search
 
     @staticmethod
-    def run_search_cached(q, sort, start, rows, other_params, max=False):
-        "Run the search, first trying the best available cache"
+    @memoize('solr_search', solr_cache_time)
+    def run_search_cached(q, sort, start, rows, other_params):
+        with SolrConnection() as s:
+            g.log.debug(("Searching q = %r; sort = %r,"
+                         + " start = %r, rows = %r,"
+                         + " params = %r")
+                        % (q,sort,start,rows,other_params))
 
-        # first, try to see if we've cached the result for the entire
-        # dataset for that query, returning the requested slice of it
-        # if so. If that's not available, try the cache for the
-        # partial result requested (passing the actual search along to
-        # solr if both of those fail)
-        full_key = 'solrsearch_%s' % ','.join(('%r' % r)
-                                              for r in (q,sort,other_params))
-        part_key = "%s,%d,%d" % (full_key, start, rows)
-
-        full_cached = g.cache.get(full_key)
-        if full_cached:
-            res = pysolr.Results(hits = full_cached.hits,
-                                 docs = full_cached.docs[start:start+rows])
-        else:
-            part_cached = g.cache.get(part_key)
-            if part_cached:
-                res = part_cached
-            else:
-                with SolrConnection() as s:
-                    g.log.debug(("Searching q = %r; sort = %r,"
-                                 + " start = %r, rows = %r,"
-                                 + " params = %r, max = %r")
-                                % (q,sort,start,rows,other_params,max))
-
-                    res = s.search(q, sort, start = start, rows = rows,
-                                   other_params = other_params)
-
-                g.cache.set(full_key if max else part_key,
-                            res, time = g.solr_cache_time)
+            res = s.search(q, sort, start = start, rows = rows,
+                           other_params = other_params)
 
         # extract out the fullname in the 'docs' field, since that's
         # all we care about
@@ -708,11 +663,14 @@ class DomainSearchQuery(SearchQuery):
                        qt='standard')
 
 def get_after(fullnames, fullname, num):
+    if not fullname:
+        return fullnames[:num]
+
     for i, item in enumerate(fullnames):
         if item == fullname:
             return fullnames[i+1:i+num+1]
-    else:
-        return fullnames[:num]
+
+    return fullnames[:num]
 
 
 def run_commit(optimize=False):

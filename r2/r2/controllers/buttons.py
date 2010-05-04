@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController
+from reddit_base import RedditController, MinimalController, make_key
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
     ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage
 from r2.lib.pages.things import wrap_links
@@ -30,6 +30,55 @@ from validator import *
 from pylons.i18n import _
 from r2.lib.filters import spaceCompress
 from r2.controllers.listingcontroller import ListingController
+
+class ButtonjsController(MinimalController):
+    def pre(self):
+        MinimalController.pre(self)
+        # override user loggedin behavior to ensure this page always
+        # uses the page cache
+        (user, maybe_admin) = \
+            valid_cookie(c.cookies[g.login_cookie].value
+                         if g.login_cookie in c.cookies
+                         else '')
+        if user:
+            self.user_is_loggedin = True
+
+    @validate(buttontype = VInt('t', 1, 5),
+              url = VSanitizedUrl("url"),
+              _height = VInt('height', 0, 300),
+              _width = VInt('width', 0, 800),
+              autohide = VBoolean("autohide"))
+    def GET_button_embed(self, buttontype, _height, _width, url, autohide):
+        # no buttons on domain listings
+        if isinstance(c.site, DomainSR):
+            return self.abort404()
+        c.render_style = 'js'
+        c.response_content_type = 'text/javascript; charset=UTF-8'
+        if not c.user_is_loggedin and autohide:
+            c.response.content = "void(0);"
+            return c.response
+
+        buttontype = buttontype or 1
+        width, height = ((120, 22), (51, 69), (69, 52),
+                         (51, 52), (600, 52))[min(buttontype - 1, 4)]
+        if _width: width = _width
+        if _height: height = _height
+
+        bjs = ButtonEmbed(button=buttontype,
+                          width=width,
+                          height=height,
+                          url = url,
+                          referer = request.referer).render()
+        return self.sendjs(bjs, callback='', escape=False)
+
+    def request_key(self):
+        return make_key('button_request_key',
+                        c.lang,
+                        c.content_langs,
+                        request.host,
+                        c.cname,
+                        request.referer,
+                        request.fullpath)
 
 class ButtonsController(RedditController):
     def buttontype(self):
@@ -83,7 +132,6 @@ class ButtonsController(RedditController):
               width = VInt('width', 0, 800),
               l = VByName('id'))
     def GET_button_content(self, url, title, css, vote, newwindow, width, l):
-             
         # no buttons on domain listings
         if isinstance(c.site, DomainSR):
             c.site = Default
@@ -108,12 +156,9 @@ class ButtonsController(RedditController):
                                button = self.buttontype(), **kw)
 
         l = self.get_wrapped_link(url, l, wrapper)
-        res = l.render()
-        c.response.content = spaceCompress(res)
-        return c.response
+        return l.render()
 
 
-    
     @validate(buttontype = VInt('t', 1, 5),
               url = VSanitizedUrl("url"),
               _height = VInt('height', 0, 300),
@@ -191,5 +236,3 @@ class ButtonsController(RedditController):
         return BoringPage(_("bookmarklets"),
                           show_sidebar = False, 
                           content=Bookmarklets()).render()
-
-        

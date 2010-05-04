@@ -19,9 +19,9 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.wrapped import Wrapped, Templated, NoTemplateFound, CachedTemplate
-from r2.models import Account, Default
-from r2.models import FakeSubreddit, Subreddit
+from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
+from r2.models import Account, Default, make_feedurl
+from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR
 from r2.models import Link, Printable, Trophy, bidding, PromoteDates
 from r2.config import cache
@@ -39,14 +39,15 @@ from r2.lib.contrib.markdown import markdown
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
-from r2.lib.menus import SubredditButton, SubredditMenu
+from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates, make_offset_date, to_csv
+from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
+from r2.lib.log import log_text
 
 import sys, random, datetime, locale, calendar, simplejson, re
 import graph, pycountry
@@ -60,6 +61,18 @@ datefmt = _force_utf8(_('%d %b %Y'))
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
         return get_iden()
+
+def responsive(res, space_compress = False):
+    """
+    Use in places where the template is returned as the result of the
+    controller so that it becomes compatible with the page cache.
+    """
+    if is_api():
+        res = json_respond(res)
+    elif space_compress:
+        res = spaceCompress(res)
+    c.response.content = res
+    return c.response
 
 class Reddit(Templated):
     '''Base class for rendering a page on reddit.  Handles toolbar creation,
@@ -129,16 +142,22 @@ class Reddit(Templated):
             self._content = PaneStack([ShareLink(), content])
         else:
             self._content = content
-        
+
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
         buttons = [NamedButton('edit', css_class = 'reddit-edit'),
+                   NamedButton('modmail', dest = "message/inbox",
+                               css_class = 'moderator-mail'),
                    NamedButton('moderators', css_class = 'reddit-moderators')]
 
         if c.site.type != 'public':
             buttons.append(NamedButton('contributors',
                                        css_class = 'reddit-contributors'))
+        elif (c.user_is_loggedin and c.site.use_whitelist and
+              (c.site.is_moderator(c.user) or c.user_is_admin)):
+            buttons.append(NavButton(menu.whitelist, "contributors",
+                                     css_class = 'reddit-contributors'))
 
         buttons.extend([
                 NamedButton('traffic', css_class = 'reddit-traffic'),
@@ -177,7 +196,10 @@ class Reddit(Templated):
                 if total > len(moderators):
                     more_text = "...and %d more" % (total - len(moderators))
                     mod_href = "http://%s/about/moderators" % get_domain()
+                helplink = ("/message/compose?to=%%23%s" % c.site.name,
+                            "message the moderators")
                 ps.append(SideContentBox(_('moderators'), moderators,
+                                         helplink = helplink, 
                                          more_href = mod_href,
                                          more_text = more_text))
 
@@ -212,22 +234,8 @@ class Reddit(Templated):
         In adition, unlike Templated.render, the result is in the form of a pylons
         Response object with it's content set.
         """
-        try:
-            res = Templated.render(self, *a, **kw)
-            if is_api():
-                res = json_respond(res)
-            elif self.space_compress:
-                res = spaceCompress(res)
-            c.response.content = res
-        except NoTemplateFound, e:
-            # re-raise the error -- development environment
-            if g.debug:
-                s = sys.exc_info()
-                raise s[1], None, s[2]
-            # die gracefully -- production environment
-            else:
-                abort(404, "not found")
-        return c.response
+        res = Templated.render(self, *a, **kw)
+        return responsive(res, self.space_compress)
     
     def corner_buttons(self):
         """set up for buttons in upper right corner of main page."""
@@ -307,8 +315,7 @@ class RedditFooter(CachedTemplate):
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
 
     def __init__(self):
-        self.nav = [NavMenu([NamedButton("toplinks", False),
-                         NamedButton("mobile", False, nocname=True),
+        self.nav = [NavMenu([NamedButton("mobile", False, nocname=True),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
                          NamedButton("awards", False, nocname=True),
@@ -478,9 +485,13 @@ class PrefsPage(Reddit):
                         *a, **kw)
 
     def build_toolbars(self):
-        buttons = [NavButton(menu.options, ''),
-                   NamedButton('friends'),
-                   NamedButton('update')]
+        buttons = [NavButton(menu.options, '')]
+
+        if c.user.pref_private_feeds:
+            buttons.append(NamedButton('feeds'))
+
+        buttons.extend([NamedButton('friends'),
+                        NamedButton('update')])
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]
         buttons += [NamedButton('delete')]
@@ -491,6 +502,9 @@ class PrefOptions(Templated):
     """Preference form for updating language and display options"""
     def __init__(self, done = False):
         Templated.__init__(self, done = done)
+
+class PrefFeeds(Templated):
+    pass
 
 class PrefUpdate(Templated):
     """Preference form for updating email address and passwords"""
@@ -526,11 +540,21 @@ class MessagePage(Reddit):
                                    self._content))
 
     def build_toolbars(self):
-        buttons =  [NamedButton('compose'),
+        buttons =  [NamedButton('compose', sr_path = False),
                     NamedButton('inbox', aliases = ["/message/comments",
+                                                    "/message/uread",
                                                     "/message/messages",
-                                                    "/message/selfreply"]),
-                    NamedButton('sent')]
+                                                    "/message/selfreply"],
+                                sr_path = False),
+                    NamedButton('sent', sr_path = False)]
+        if c.show_mod_mail:
+            buttons.append(ModeratorMailButton(menu.modmail, "moderator",
+                                               sr_path = False))
+        if not c.default_sr:
+            buttons.append(ModeratorMailButton(
+                _("%(site)s mail") % {'site': c.site.name}, "moderator",
+                aliases = ["/about/message/inbox",
+                           "/about/message/unread"]))
         return [PageNameNav('nomenu', title = _("message")), 
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
 
@@ -565,6 +589,8 @@ class HelpPage(BoringPage):
         return [PageNameNav('help', title = self.pagename)]
 
 class FormPage(BoringPage):
+    create_reddit_box  = False
+    submit_box         = False
     """intended for rendering forms with no rightbox needed or wanted"""
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
@@ -1293,13 +1319,17 @@ class OptIn(Templated):
     pass
 
 
-class ButtonEmbed(Templated):
+class ButtonEmbed(CachedTemplate):
     """Generates the JS wrapper around the buttons for embedding."""
     def __init__(self, button = None, width = 100,
                  height=100, referer = "", url = "", **kw):
+        arg = "cnameframe=1&" if c.cname else ""
         Templated.__init__(self, button = button,
                            width = width, height = height,
-                           referer=referer, url = url, **kw)
+                           referer=referer, url = url,
+                           domain = get_domain(),
+                           arg = arg,
+                           **kw)
 
 class Button(Wrapped):
     cachable = True
@@ -1322,9 +1352,13 @@ class Button(Wrapped):
             if not hasattr(w, '_fullname'):
                 w._fullname = None
 
+    def render(self, *a, **kw):
+        res = Wrapped.render(self, *a, **kw)
+        return responsive(res, True)
+
 class ButtonLite(Button):
-    pass
-            
+    def render(self, *a, **kw):
+        return Wrapped.render(self, *a, **kw)
 
 class ButtonNoBody(Button):
     """A button page that just returns the raw button for direct embeding"""
@@ -1420,7 +1454,101 @@ class UserAwards(Templated):
             else:
                 raise NotImplementedError
 
+class AdminErrorLog(Templated):
+    """The admin page for viewing the error log"""
+    def __init__(self):
+        hcb = g.hardcache.backend
 
+        date_groupings = {}
+        hexkeys_seen = {}
+
+        for ids in hcb.ids_by_category("error"):
+            date, hexkey = ids.split("-")
+
+            hexkeys_seen[hexkey] = True
+
+            d = g.hardcache.get("error-" + ids)
+
+            if d is None:
+                log_text("error=None", "Why is error-%s None?" % ids,
+                         "warning")
+                continue
+
+            tpl = (len(d['occurrences']), hexkey, d)
+            date_groupings.setdefault(date, []).append(tpl)
+
+        self.nicknames = {}
+        self.statuses = {}
+
+        for hexkey in hexkeys_seen.keys():
+            nick = g.hardcache.get("error_nickname-%s" % hexkey, "???")
+            self.nicknames[hexkey] = nick
+            status = g.hardcache.get("error_status-%s" % hexkey, "normal")
+            self.statuses[hexkey] = status
+
+        for ids in hcb.ids_by_category("logtext"):
+            date, level, classification = ids.split("-", 2)
+            textoccs = []
+            dicts = g.hardcache.get("logtext-" + ids)
+            if dicts is None:
+                log_text("logtext=None", "Why is logtext-%s None?" % ids,
+                         "warning")
+                continue
+            for d in dicts:
+                textoccs.append( (d['text'], d['occ'] ) )
+
+            sort_order = {
+                'error': -1,
+                'warning': -2,
+                'info': -3,
+                'debug': -4,
+                }[level]
+
+            tpl = (sort_order, level, classification, textoccs)
+            date_groupings.setdefault(date, []).append(tpl)
+
+        self.date_summaries = []
+
+        for date in sorted(date_groupings.keys(), reverse=True):
+            groupings = sorted(date_groupings[date], reverse=True)
+            self.date_summaries.append( (date, groupings) )
+
+        Templated.__init__(self)
+
+class AdminAds(Templated):
+    """The admin page for editing ads"""
+    def __init__(self):
+        from r2.models import Ad
+        Templated.__init__(self)
+        self.ads = Ad._all_ads()
+
+class AdminAdAssign(Templated):
+    """The interface for assigning an ad to a community"""
+    def __init__(self, ad):
+        self.weight = 100
+        Templated.__init__(self, ad = ad)
+
+class AdminAdSRs(Templated):
+    """View the communities an ad is running on"""
+    def __init__(self, ad):
+        self.adsrs = AdSR.by_ad(ad)
+
+        # Create a dictionary of
+        #       SR => total weight of all its ads
+        # for all SRs that this ad is running on
+        self.sr_totals = {}
+        for adsr in self.adsrs:
+            sr = adsr._thing2
+
+            if sr.name not in self.sr_totals:
+                # We haven't added up this SR yet.
+                self.sr_totals[sr.name] = 0
+                # Get all its ads and total them up.
+                sr_adsrs = AdSR.by_sr_merged(sr)
+                for adsr2 in sr_adsrs:
+                    self.sr_totals[sr.name] += adsr2.weight
+
+        Templated.__init__(self, ad = ad)
 
 class AdminAwards(Templated):
     """The admin page for editing awards"""
@@ -1446,6 +1574,130 @@ class AdminAwardWinners(Templated):
     def __init__(self, award):
         trophies = Trophy.by_award(award)
         Templated.__init__(self, award = award, trophies = trophies)
+
+class AdminUsage(Templated):
+    """The admin page for viewing usage stats"""
+    def __init__(self):
+        hcb = g.hardcache.backend
+
+        self.actions = {}
+        triples = set() # sorting key
+        daily_stats = {}
+
+        for ids in hcb.ids_by_category("profile_count", limit=10000):
+            time, action = ids.split("-")
+
+            if time.endswith("xx:xx"):
+                factor = 1.0
+                label = time[5:10] # MM/DD
+                day = True
+            elif time.endswith(":xx"):
+                factor = 24.0
+                label = time[11:] # HH:xx
+            else:
+                factor = 288.0 # number of five-minute periods in a day
+                label = time[11:] # HH:MM
+
+            # Elapsed in hardcache is in hundredths of a second.
+            # Multiply it by 100 so from this point forward, we're
+            # dealing with seconds -- as floats with two decimal
+            # places of precision. Similarly, round the average
+            # to two decimal places.
+            count = g.hardcache.get("profile_count-" + ids)
+            if count is None or count == 0:
+                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
+                continue
+            elapsed = g.hardcache.get("profile_elapsed-" + ids, 0) / 100.0
+            average = int(100.0 * elapsed / count) / 100.0
+
+            triples.add( (factor, time, label) )
+
+            if factor == 1.0:
+                daily_stats.setdefault(action, []).append(
+                    (count, elapsed, average)
+                    )
+
+            self.actions.setdefault(action, {})
+            self.actions[action][label] = dict(count=count, elapsed=elapsed,
+                                               average=average,
+                                               factor=factor,
+                                               classes = {})
+
+        # Figure out what a typical day looks like. For each action,
+        # look at the daily stats and record the median.
+        for action in daily_stats.keys():
+            med = {}
+            med["count"]   = median([ x[0] for x in daily_stats[action] ])
+            med["elapsed"] = median([ x[1] for x in daily_stats[action] ])
+            med["average"] = median([ x[2] for x in daily_stats[action] ])
+
+            for d in self.actions[action].values():
+                ice_cold = False
+                for category in ("elapsed", "count", "average"):
+                    if category == "average":
+                        scaled = d[category]
+                    else:
+                        scaled = d[category] * d["factor"]
+
+                    if category == "elapsed" and scaled < 5 * 60:
+                        # If we're spending less than five mins a day
+                        # on this operation, consider it ice cold regardless
+                        # of how much of an outlier it is
+                        ice_cold = True
+
+                    if ice_cold:
+                        d["classes"][category] = "load0"
+                        continue
+
+                    if med[category] <= 0:
+                        # This shouldn't happen. If it does,
+                        # toggle commenting of the next three lines.
+                        raise ValueError("Huh. I guess this can happen.")
+#                        d["classes"][category] = "load9"
+#                        continue
+
+                    ratio = scaled / med[category]
+                    if ratio > 5.0:
+                        d["classes"][category] = "load9"
+                    elif ratio > 3.0:
+                        d["classes"][category] = "load8"
+                    elif ratio > 2.0:
+                        d["classes"][category] = "load7"
+                    elif ratio > 1.5:
+                        d["classes"][category] = "load6"
+                    elif ratio > 1.1:
+                        d["classes"][category] = "load5"
+                    elif ratio > 0.9:
+                        d["classes"][category] = "load4"
+                    elif ratio > 0.75:
+                        d["classes"][category] = "load3"
+                    elif ratio > 0.5:
+                        d["classes"][category] = "load2"
+                    elif ratio > 0.10:
+                        d["classes"][category] = "load1"
+                    else:
+                        d["classes"][category] = "load0"
+
+        # Build a list called labels that gives the template a sorting
+        # order for the columns.
+        self.labels = []
+        # Keep track of how many times we've seen a granularity (i.e., factor)
+        # so we can hide any that come after the third
+        factor_counts = {}
+        # sort actions by whatever will end up as the first column
+        action_sorting_column = None
+        for factor, time, label in sorted(triples, reverse=True):
+            if action_sorting_column is None:
+                action_sorting_column = label
+            factor_counts.setdefault(factor, 0)
+            factor_counts[factor] += 1
+            self.labels.append( (label, factor_counts[factor] > 3) )
+
+        self.action_order = sorted(self.actions.keys(), reverse=True,
+                key = lambda x:
+                      self.actions[x].get(action_sorting_column, {"elapsed":0})["elapsed"])
+
+        Templated.__init__(self)
 
 
 class Embed(Templated):
@@ -1578,6 +1830,8 @@ class ContributorList(UserList):
 
     @property
     def form_title(self):
+        if c.site.type == "public":
+            return _("add to whitelist")
         return _('add contributor')
 
     @property
@@ -1826,7 +2080,9 @@ class UserText(CachedTemplate):
 
 class MediaEmbedBody(CachedTemplate):
     """What's rendered inside the iframe that contains media objects"""
-    pass
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, True)
 
 class Traffic(Templated):
     @staticmethod
@@ -2058,6 +2314,28 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
+class RedditAds(Templated):
+    def __init__(self, **kw):
+        self.sr_name = c.site.name
+        self.adsrs = AdSR.by_sr_merged(c.site)
+        self.total = 0
+
+        self.adsrs.sort(key=lambda a: a._thing1.codename)
+
+        seen = {}
+        for adsr in self.adsrs:
+            seen[adsr._thing1.codename] = True
+            self.total += adsr.weight
+
+        self.other_ads = []
+        all_ads = Ad._all_ads()
+        all_ads.sort(key=lambda a: a.codename)
+        for ad in all_ads:
+            if ad.codename not in seen:
+                self.other_ads.append(ad)
+
+        Templated.__init__(self, **kw)
+
 class PaymentForm(Templated):
     def __init__(self, **kw):
         self.countries = pycountry.countries
@@ -2147,7 +2425,6 @@ class Promote_Graph(Templated):
                          (total_sale, total_refund)),
                 multiy = False)
 
-            # table is labeled as "last month"
             history = self.now - datetime.timedelta(30)
             self.top_promoters = bidding.PromoteDates.top_promoters(history)
         else:
@@ -2239,9 +2516,79 @@ class RawString(Templated):
    def render(self, *a, **kw):
        return unsafe(self.s)
 
-class Dart_Ad(Templated):
+class Dart_Ad(CachedTemplate):
     def __init__(self, tag = None):
         tag = tag or "homepage"
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, tracker_url = tracker_url)
+
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, False)
+
+class HouseAd(CachedTemplate):
+    def __init__(self, imgurl=None, linkurl=None, submit_link=None):
+        Templated.__init__(self, imgurl = imgurl, linkurl = linkurl,
+                           submit_link = submit_link)
+
+    def render(self, *a, **kw):
+        res = CachedTemplate.render(self, *a, **kw)
+        return responsive(res, False)
+
+class ComScore(CachedTemplate):
+    pass
+
+def render_ad(reddit_name=None, codename=None):
+    if not reddit_name:
+        reddit_name = g.default_sr
+
+    if codename:
+        if codename == "DART":
+            return Dart_Ad(reddit_name).render()
+        else:
+            try:
+                ad = Ad._by_codename(codename)
+            except NotFound:
+                abort(404)
+            attrs = ad.important_attrs()
+            return HouseAd(**attrs).render()
+
+    try:
+        sr = Subreddit._by_name(reddit_name)
+    except NotFound:
+        return Dart_Ad(g.default_sr).render()
+
+    ads = {}
+
+    for adsr in AdSR.by_sr_merged(sr):
+        ad = adsr._thing1
+        ads[ad.codename] = (ad, adsr.weight)
+
+    total_weight = sum(t[1] for t in ads.values())
+
+    if total_weight == 0:
+        log_text("no ads", "No ads found for %s" % reddit_name, "error")
+        abort(404)
+
+    lotto = random.randint(0, total_weight - 1)
+    winner = None
+    for t in ads.values():
+        lotto -= t[1]
+        if lotto <= 0:
+            winner = t[0]
+
+            if winner.codename == "DART":
+                return Dart_Ad(reddit_name).render()
+            else:
+                attrs = winner.important_attrs()
+                return HouseAd(**attrs).render()
+
+    # No winner?
+
+    log_text("no winner",
+             "No winner found for /r/%s, total_weight=%d" %
+             (reddit_name, total_weight),
+             "error")
+
+    return Dart_Ad(reddit_name).render()

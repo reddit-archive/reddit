@@ -1,13 +1,16 @@
 from r2.models import Account, Link, Comment, Vote, SaveHide
-from r2.models import Message, Inbox, Subreddit
+from r2.models import Message, Inbox, Subreddit, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
 from r2.lib.normalized_hot import expire_hot
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
+from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
+from r2.lib.comment_tree import add_comment, link_comments
+
 import cPickle as pickle
 
 from datetime import datetime
@@ -15,15 +18,15 @@ import itertools
 
 from pylons import g
 query_cache = g.permacache
+log = g.log
+make_lock = g.make_lock
 
 precompute_limit = 1000
 
 db_sorts = dict(hot = (desc, '_hot'),
                 new = (desc, '_date'),
                 top = (desc, '_score'),
-                controversial = (desc, '_controversy'),
-                old = (asc, '_date'),
-                toplinks = (desc, '_hot'))
+                controversial = (desc, '_controversy'))
 
 def db_sort(sort):
     cls, col = db_sorts[sort]
@@ -42,6 +45,29 @@ db_times = dict(all = None,
                 month = Thing.c._date >= timeago('1 month'),
                 year = Thing.c._date >= timeago('1 year'))
 
+# batched_time_sorts/batched_time_times: top and controversial
+# listings with a time-component are really expensive, and for the
+# ones that span more than a day they don't change much (if at all)
+# within that time. So we have some hacks to avoid re-running these
+# queries against the precomputer except up to once per day
+# * To get the results of the queries, we return the results of the
+#   (potentially stale) query, merged with the query by 'day' (see
+#   get_links)
+# * When we are adding the special queries to the queue, we add them
+#   with a preflight check to determine if they are runnable and a
+#   postflight action to make them not runnable again for 24 hours
+#   (see new_vote)
+# * We have a task called catch_up_batch_queries to be run at least
+#   once per day (ideally about once per hour) to find subreddits
+#   where these queries haven't been run in the last 24 hours but that
+#   have had at least one vote in that time
+# TODO:
+# * Do we need a filter on merged time-queries to keep items that are
+#   barely too old from making it into the listing? This probably only
+#   matters for 'week'
+batched_time_times = set(('year', 'month', 'week'))
+batched_time_sorts = set(('top', 'controversial'))
+
 #we need to define the filter functions here so cachedresults can be pickled
 def filter_identity(x):
     return x
@@ -50,6 +76,20 @@ def filter_thing2(x):
     """A filter to apply to the results of a relationship query returns
     the object of the relationship."""
     return x._thing2
+
+def make_batched_time_query(sr, sort, time, preflight_check = True):
+    q = get_links(sr, sort, time, merge_batched=False)
+
+    if (g.use_query_cache
+        and sort in batched_time_sorts
+        and time in batched_time_times):
+
+        if not preflight_check:
+            q.force_run = True
+
+        q.batched_time_srid = sr._id
+
+    return q
 
 class CachedResults(object):
     """Given a query returns a list-like object that will lazily look up
@@ -63,11 +103,57 @@ class CachedResults(object):
         self.data = []
         self._fetched = False
 
+        self.batched_time_srid = None
+
+    @property
+    def sort(self):
+        return self.query._sort
+
+    def preflight_check(self):
+        if getattr(self, 'force_run', False):
+            return True
+
+        sr_id = getattr(self, 'batched_time_srid', None)
+        if not sr_id:
+            return True
+
+        # this is a special query that tries to run less often, see
+        # the discussion about batched_time_times
+        sr = Subreddit._byID(sr_id, data=True)
+
+        if (self.iden in getattr(sr, 'last_batch_query', {}) 
+            and sr.last_batch_query[self.iden] > utils.timeago('1 day')):
+            # this has been done in the last 24 hours, so we should skip it
+            return False
+
+        return True
+
+    def postflight(self):
+        sr_id = getattr(self, 'batched_time_srid', None)
+        if not sr_id:
+            return True
+
+        with make_lock('modify_sr_last_batch_query(%s)' % sr_id):
+            sr = Subreddit._byID(sr_id, data=True)
+            last_batch_query = getattr(sr, 'last_batch_query', {}).copy()
+            last_batch_query[self.iden] = datetime.now(g.tz)
+            sr.last_batch_query = last_batch_query
+            sr._commit()
+
     def fetch(self):
         """Loads the query from the cache."""
-        if not self._fetched:
-            self._fetched = True
-            self.data = query_cache.get(self.iden) or []
+        self.fetch_multi([self])
+
+    @classmethod
+    def fetch_multi(cls, crs):
+        unfetched = [cr for cr in crs if not cr._fetched]
+        if not unfetched:
+            return
+
+        cached = query_cache.get_multi([cr.iden for cr in unfetched])
+        for cr in unfetched:
+            cr.data = cached.get(cr.iden) or []
+            cr._fetched = True
 
     def make_item_tuple(self, item):
         """Given a single 'item' from the result of a query build the tuple
@@ -87,15 +173,21 @@ class CachedResults(object):
 
     def can_insert(self):
         """True if a new item can just be inserted rather than
-           rerunning the query. This is only true in some
-           circumstances, which includes having no time rules, and
-           being sorted descending"""
+           rerunning the query."""
+         # This is only true in some circumstances: queries where
+         # eligibility in the list is determined only by its sort
+         # value (e.g. hot) and where addition/removal from the list
+         # incurs an insertion/deletion event called on the query. So
+         # the top hottest items in X some subreddit where the query
+         # is notified on every submission/banning/unbanning/deleting
+         # will work, but for queries with a time-component or some
+         # other eligibility factor, it cannot be inserted this way.
         if self.query._sort in ([desc('_date')],
                                 [desc('_hot'), desc('_date')],
                                 [desc('_score'), desc('_date')],
                                 [desc('_controversy'), desc('_date')]):
-            if not any(r.lval.name == '_date'
-                       for r in self.query._rules):
+            if not any(r for r in self.query._rules
+                       if r.lval.name == '_date'):
                 # if no time-rule is specified, then it's 'all'
                 return True
         return False
@@ -117,9 +209,11 @@ class CachedResults(object):
         data = UniqueIterator(data, key = lambda x: x[0])
         data = sorted(data, key=lambda x: x[1:], reverse=True)
         data = list(data)
+        data = data[:precompute_limit]
+
         self.data = data
 
-        query_cache.set(self.iden, self.data[:precompute_limit])
+        query_cache.set(self.iden, self.data)
 
     def delete(self, items):
         """Deletes an item from the cached data."""
@@ -150,33 +244,47 @@ class CachedResults(object):
         for x in self.data:
             yield x[0]
 
-def merge_cached_results(*results):
-    """Given two CachedResults, merges their lists based on the sorts of
-    their queries."""
-    if len(results) == 1:
-        return list(results[0])
+class MergedCachedResults(object):
+    """Given two CachedResults, merges their lists based on the sorts
+       of their queries."""
+    # normally we'd do this by having a superclass of CachedResults,
+    # but we have legacy pickled CachedResults that we don't want to
+    # break
 
-    #make sure the sorts match
-    sort = results[0].query._sort
-    assert all(r.query._sort == sort for r in results[1:])
+    def __init__(self, results):
+        self.cached_results = results
+        CachedResults.fetch_multi([r for r in results
+                                   if isinstance(r, CachedResults)])
+        self._fetched = True
 
-    def thing_cmp(t1, t2):
-        for i, s in enumerate(sort):
-            #t1 and t2 are tuples of (fullname, *sort_cols), so we can
-            #get the value to compare right out of the tuple
+        self.sort = results[0].sort
+        # make sure they're all the same
+        assert all(r.sort == self.sort for r in results[1:])
+
+        # if something is 'top' for the year *and* for today, it would
+        # appear in both listings, so we need to filter duplicates
+        all_items = UniqueIterator((item for cr in results
+                                    for item in cr.data),
+                                   key = lambda x: x[0])
+        all_items = sorted(all_items, cmp=self._thing_cmp)
+        self.data = list(all_items)
+
+    def _thing_cmp(self, t1, t2):
+        for i, s in enumerate(self.sort):
+            # t1 and t2 are tuples of (fullname, *sort_cols), so we
+            # can get the value to compare right out of the tuple
             v1, v2 = t1[i + 1], t2[i + 1]
             if v1 != v2:
                 return cmp(v1, v2) if isinstance(s, asc) else cmp(v2, v1)
         #they're equal
         return 0
 
-    all_items = []
-    for r in results:
-        r.fetch()
-        all_items.extend(r.data)
+    def __repr__(self):
+        return '<MergedCachedResults %r>' % (self.cached_results,)
 
-    #all_items = Thing._by_fullname(all_items, return_dict = False)
-    return [i[0] for i in sorted(all_items, cmp = thing_cmp)]
+    def __iter__(self):
+        for x in self.data:
+            yield x[0]
 
 def make_results(query, filter = filter_identity):
     if g.use_query_cache:
@@ -187,24 +295,37 @@ def make_results(query, filter = filter_identity):
 
 def merge_results(*results):
     if g.use_query_cache:
-        return merge_cached_results(*results)
+        return MergedCachedResults(results)
     else:
         m = Merge(results, sort = results[0]._sort)
         #assume the prewrap_fn's all match
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
-def get_links(sr, sort, time):
+def get_links(sr, sort, time, merge_batched=True):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
                     sort = db_sort(sort))
 
-    if sort == 'toplinks':
-        q._filter(Link.c.top_link == True)
-
     if time != 'all':
         q._filter(db_times[time])
-    return make_results(q)
+
+    res = make_results(q)
+
+    # see the discussion above batched_time_times
+    if (merge_batched
+        and g.use_query_cache
+        and sort in batched_time_sorts
+        and time in batched_time_times):
+
+        byday = Link._query(Link.c.sr_id == sr._id,
+                            sort = db_sort(sort))
+        byday._filter(db_times['day'])
+
+        res = merge_results(res,
+                            make_results(byday))
+
+    return res
 
 def get_spam_links(sr):
     q_l = Link._query(Link.c.sr_id == sr._id,
@@ -297,6 +418,13 @@ def get_hidden(user):
 def get_saved(user):
     return user_rel_query(SaveHide, user, 'save')
 
+def get_subreddit_messages(sr):
+    return user_rel_query(ModeratorInbox, sr, 'inbox')
+
+def get_unread_subreddit_messages(sr):
+    return user_rel_query(ModeratorInbox, sr, 'inbox',
+                          filters = [ModeratorInbox.c.new == True])
+
 inbox_message_rel = Inbox.rel(Account, Message)
 def get_inbox_messages(user):
     return user_rel_query(inbox_message_rel, user, 'inbox')
@@ -338,15 +466,14 @@ def get_unread_inbox(user):
 
 def add_queries(queries, insert_items = None, delete_items = None):
     """Adds multiple queries to the query queue. If insert_items or
-    delete_items is specified, the query may not need to be recomputed at
-    all."""
+       delete_items is specified, the query may not need to be
+       recomputed against the database."""
     if not g.write_query_queue:
         return
 
-    log = g.log
-    make_lock = g.make_lock
     def _add_queries():
         for q in queries:
+            query_cache.reset()
             if not isinstance(q, CachedResults):
                 continue
 
@@ -393,27 +520,22 @@ def new_link(link):
     sr = Subreddit._byID(link.sr_id)
     author = Account._byID(link.author_id)
 
-    results = all_queries(get_links, sr, ('hot', 'new', 'old'), ['all'])
+    results = [get_links(sr, 'new', 'all')]
+    # we don't have to do hot/top/controversy because new_vote will do
+    # that
 
-    results.extend(all_queries(get_links, sr, ('top', 'controversial'),
-                               db_times.keys()))
     results.append(get_submitted(author, 'new', 'all'))
-    #results.append(get_links(sr, 'toplinks', 'all'))
     if link._spam:
         results.append(get_spam_links(sr))
-    
-    if link._deleted:
-        results.append(get_links(sr, 'new', 'all'))
-        add_queries(results, delete_items = link)
-    else:
-        # only 'new' qualifies for insertion, which will be done in
-        # run_new_links
-        add_queries(results, insert_items = link)
 
-        amqp.add_item('new_link', link._fullname)
+    # only 'new' qualifies for insertion, which will be done in
+    # run_new_links
+    add_queries(results, insert_items = link)
+
+    amqp.add_item('new_link', link._fullname)
 
 
-def new_comment(comment, inbox_rel):
+def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
     job = [get_comments(author, 'new', 'all')]
     if comment._deleted:
@@ -425,19 +547,23 @@ def new_comment(comment, inbox_rel):
         #    job.append(get_spam_comments(sr))
         add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
+        if not g.amqp_host:
+            l = Link._byID(comment.link_id,data=True)
+            add_comment_tree(comment, l)
 
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments
 
-    if inbox_rel:
-        inbox_owner = inbox_rel._thing1
-        if inbox_rel._name == "inbox":
-            add_queries([get_inbox_comments(inbox_owner)],
-                        insert_items = inbox_rel)
-        else:
-            add_queries([get_inbox_selfreply(inbox_owner)],
-                        insert_items = inbox_rel)
-        set_unread(comment, True)
+    if inbox_rels:
+        for inbox_rel in tup(inbox_rels):
+            inbox_owner = inbox_rel._thing1
+            if inbox_rel._name == "inbox":
+                add_queries([get_inbox_comments(inbox_owner)],
+                            insert_items = inbox_rel)
+            else:
+                add_queries([get_inbox_selfreply(inbox_owner)],
+                            insert_items = inbox_rel)
+            set_unread(comment, inbox_owner, True)
 
 
 
@@ -455,10 +581,21 @@ def new_vote(vote):
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
+        # don't do 'new', because that was done by new_link
         results = [get_links(sr, 'hot', 'all')]
-        results.extend(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        #results.append(get_links(sr, 'toplinks', 'all'))
+
+        # for top and controversial we do some magic to recompute
+        # these less often; see the discussion above
+        # batched_time_times
+        for sort in batched_time_sorts:
+            for time in db_times.keys():
+                q = make_batched_time_query(sr, sort, time)
+                results.append(q)
+
         add_queries(results, insert_items = item)
+
+        sr.last_valid_vote = datetime.now(g.tz)
+        sr._commit()
     
     #must update both because we don't know if it's a changed vote
     if vote._name == '1':
@@ -471,27 +608,39 @@ def new_vote(vote):
         add_queries([get_liked(user)], delete_items = vote)
         add_queries([get_disliked(user)], delete_items = vote)
 
-def new_message(message, inbox_rel):
+def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
 
     from_user = Account._byID(message.author_id)
-    to_user = Account._byID(message.to_id)
-
-    add_queries([get_sent(from_user)], insert_items = message)
-    add_queries([get_inbox_messages(to_user)], insert_items = inbox_rel)
+    for inbox_rel in tup(inbox_rels):
+        to = inbox_rel._thing1
+        # moderator message
+        if isinstance(inbox_rel, ModeratorInbox):
+            add_queries([get_subreddit_messages(to)],
+                        insert_items = inbox_rel)
+        # personal message
+        else:
+            add_queries([get_sent(from_user)], insert_items = message)
+            add_queries([get_inbox_messages(to)],
+                        insert_items = inbox_rel)
+        set_unread(message, to, True)
 
     add_message(message)
-    set_unread(message, True)
 
-def set_unread(message, unread):
-    for i in Inbox.set_unread(message, unread):
-        kw = dict(insert_items = i) if unread else dict(delete_items = i)
-        if i._name == 'selfreply':
-            add_queries([get_unread_selfreply(i._thing1)], **kw)
-        elif isinstance(message, Comment):
-            add_queries([get_unread_comments(i._thing1)], **kw)
-        else:
-            add_queries([get_unread_messages(i._thing1)], **kw)
+def set_unread(message, to, unread):
+    if isinstance(to, Subreddit):
+        for i in ModeratorInbox.set_unread(message, unread):
+            kw = dict(insert_items = i) if unread else dict(delete_items = i)
+            add_queries([get_unread_subreddit_messages(i._thing1)], **kw)
+    else:
+        for i in Inbox.set_unread(message, unread):
+            kw = dict(insert_items = i) if unread else dict(delete_items = i)
+            if i._name == 'selfreply':
+                add_queries([get_unread_selfreply(i._thing1)], **kw)
+            elif isinstance(message, Comment):
+                add_queries([get_unread_comments(i._thing1)], **kw)
+            else:
+                add_queries([get_unread_messages(i._thing1)], **kw)
 
 def new_savehide(rel):
     user = rel._thing1
@@ -517,8 +666,8 @@ def _by_srid(things):
        sr_id, in addition to the looked-up subreddits"""
     ret = {}
 
-    for thing in things:
-        if hasattr(thing, 'sr_id'):
+    for thing in tup(things):
+        if getattr(thing, 'sr_id', None) is not None:
             ret.setdefault(thing.sr_id, []).append(thing)
 
     srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
@@ -526,6 +675,12 @@ def _by_srid(things):
     return ret, srs
 
 def ban(things):
+    del_or_ban(things, "ban")
+
+def delete_links(links):
+    del_or_ban(links, "del")
+
+def del_or_ban(things, why):
     by_srid, srs = _by_srid(things)
     if not by_srid:
         return
@@ -536,15 +691,19 @@ def ban(things):
         comments = [x for x in things if isinstance(x, Comment)]
 
         if links:
-            add_queries([get_spam_links(sr)], insert_items = links)
+            if why == "ban":
+                add_queries([get_spam_links(sr)], insert_items = links)
             # rip it out of the listings. bam!
             results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all'),
-                       get_links(sr, 'top', 'all'),
-                       get_links(sr, 'controversial', 'all')]
-            results.extend(all_queries(get_links, sr,
-                                       ('top', 'controversial'),
-                                       db_times.keys()))
+                       get_links(sr, 'new', 'all')]
+
+            for sort in batched_time_sorts:
+                for time in db_times.keys():
+                    # this will go through delete_items, so handling
+                    # of batched_time_times isn't necessary and is
+                    # included only for consistancy
+                    q = make_batched_time_query(sr, sort, time)
+
             add_queries(results, delete_items = links)
 
         if comments:
@@ -567,12 +726,15 @@ def unban(things):
             add_queries([get_spam_links(sr)], delete_items = links)
             # put it back in the listings
             results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all'),
-                       get_links(sr, 'top', 'all'),
-                       get_links(sr, 'controversial', 'all')]
-            results.extend(all_queries(get_links, sr,
-                                       ('top', 'controversial'),
-                                       db_times.keys()))
+                       get_links(sr, 'new', 'all')]
+            for sort in batched_time_sorts:
+                for time in db_times.keys():
+                    # skip the preflight check because we need to redo
+                    # this query regardless
+                    q = make_batched_time_query(sr, sort, time,
+                                                preflight_check=False)
+                    results.append(q)
+
             add_queries(results, insert_items = links)
 
         if comments:
@@ -619,10 +781,9 @@ def add_all_srs():
     """Adds every listing query for every subreddit to the queue."""
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
-        add_queries(all_queries(get_links, sr, ('hot', 'new', 'old'), ['all']))
+        add_queries(all_queries(get_links, sr, ('hot', 'new'), ['all']))
         add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        add_queries([get_links(sr, 'toplinks', 'all'),
-                     get_spam_links(sr),
+        add_queries([get_spam_links(sr),
                      #get_spam_comments(sr),
                      get_reported_links(sr),
                      #get_reported_comments(sr),
@@ -651,18 +812,52 @@ def add_all_users():
     for user in fetch_things2(q):
         update_user(user)
 
+def add_comment_tree(comment, link):
+    #update the comment cache
+    add_comment(comment)
+    #update last modified
+    set_last_modified(link, 'comments')
 
 # amqp queue processing functions
 
 def run_new_comments():
+    """Add new incoming comments to the /comments page"""
+    # this is done as a queue because otherwise the contention for the
+    # lock on the query would be very high
 
     def _run_new_comments(msgs, chan):
         fnames = [msg.body for msg in msgs]
-        comments = Comment._by_fullname(fnames, return_dict=False)
+        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+
         add_queries([get_all_comments()],
                     insert_items = comments)
 
     amqp.handle_items('newcomments_q', _run_new_comments, limit=100)
+
+def run_commentstree():
+    """Add new incoming comments to their respective comments trees"""
+
+    def _run_commentstree(msgs, chan):
+        fnames = [msg.body for msg in msgs]
+        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+
+        links = Link._byID(set(cm.link_id for cm in comments),
+                           data=True,
+                           return_dict=True)
+
+        # add the comment to the comments-tree
+        for comment in comments:
+            l = links[comment.link_id]
+            try:
+                add_comment_tree(comment, l)
+            except KeyError:
+                # Hackity hack. Try to recover from a corrupted
+                # comment tree
+                print "Trying to fix broken comments-tree."
+                link_comments(l._id, _update=True)
+                add_comment_tree(comment, l)
+
+    amqp.handle_items('commentstree_q', _run_commentstree, limit=1)
 
 
 #def run_new_links():
@@ -797,6 +992,32 @@ def process_votes(drain = False, limit = 100):
 
     amqp.handle_items('register_vote_q', _handle_votes, limit = limit,
                       drain = drain)
+
+def catch_up_batch_queries():
+    # catch up on batched_time_times queries that haven't been run
+    # that should be, which should only happen to small
+    # subreddits. This should be cronned to run about once an
+    # hour. The more often, the more the work of rerunning the actual
+    # queries is spread out, but every run has a fixed-cost of looking
+    # at every single subreddit
+    sr_q = Subreddit._query(sort=desc('_downs'),
+                            data=True)
+    dayago = utils.timeago('1 day')
+    for sr in fetch_things2(sr_q):
+        if hasattr(sr, 'last_valid_vote') and sr.last_valid_vote > dayago:
+            # if we don't know when the last vote was, it couldn't
+            # have been today
+            for sort in batched_time_sorts:
+                for time in batched_time_times:
+                    q = make_batched_time_query(sr, sort, time)
+                    if q.preflight_check():
+                        # we haven't run the batched_time_times in the
+                        # last day
+                        add_queries([q])
+
+    # make sure that all of the jobs have been completed or processed
+    # by the time we return
+    amqp.worker.join()
 
 try:
     from r2admin.lib.admin_queries import *

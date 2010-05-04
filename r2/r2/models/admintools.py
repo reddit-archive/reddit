@@ -21,6 +21,7 @@
 ################################################################################
 from r2.lib.utils import tup
 from r2.lib.filters import websafe
+from r2.lib.log import log_text
 from r2.models import Report, Account
 
 from pylons import g
@@ -30,7 +31,8 @@ from copy import copy
 
 class AdminTools(object):
 
-    def spam(self, things, auto, moderator_banned, banner, date = None, **kw):
+    def spam(self, things, auto=True, moderator_banned=False,
+             banner=None, date = None, **kw):
         from r2.lib.db import queries
 
         things = [x for x in tup(things) if not x._spam]
@@ -98,7 +100,7 @@ class AdminTools(object):
     def set_last_sr_ban(self, things):
         by_srid = {}
         for thing in things:
-            if hasattr(thing, 'sr_id'):
+            if getattr(thing, 'sr_id', None) is not None:
                 by_srid.setdefault(thing.sr_id, []).append(thing)
 
         if by_srid:
@@ -117,13 +119,17 @@ def is_banned_IP(ip):
     return False
 
 def is_banned_domain(dom):
-    return False
+    return None
 
 def valid_thing(v, karma):
     return not v._thing1._spam
 
 def valid_user(v, sr, karma):
     return True
+
+# Returns whether this person is being suspicious
+def login_throttle(username, wrong_password):
+    return False
 
 def apply_updates(user):
     pass

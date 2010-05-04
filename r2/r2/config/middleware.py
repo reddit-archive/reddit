@@ -33,7 +33,7 @@ from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
-from r2.lib.utils import rstrips
+from r2.lib.utils import rstrips, is_authorized_cname
 from r2.lib.jsontemplates import api_type
 
 #middleware stuff
@@ -245,11 +245,10 @@ class DomainMiddleware(object):
         auth_cnames = [x.strip() for x in auth_cnames.split(',')]
         # we are going to be matching with endswith, so make sure there
         # are no empty strings that have snuck in
-        self.auth_cnames = [x for x in auth_cnames if x]
+        self.auth_cnames = filter(None, auth_cnames)
 
     def is_auth_cname(self, domain):
-        return any((domain == cname or domain.endswith('.' + cname))
-                   for cname in self.auth_cnames)
+        return is_authorized_cname(domain, self.auth_cnames)
 
     def __call__(self, environ, start_response):
         # get base domain as defined in INI file

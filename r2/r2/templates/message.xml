@@ -22,24 +22,50 @@
 
 <%!
    from r2.lib.filters import safemarkdown
+   from r2.lib.template_helpers import add_sr
 %>
 
+<%
+   permalink = add_sr(thing.permalink, force_hostname = True)
+ %>
 <item>
-  <guid>${thing._fullname}</guid>
+  <guid isPermaLink="true">${permalink}</guid>
+  <link>${permalink}</link>
   <title>
   <%
    taglinetext = ''
-   if c.msg_location == "inbox":
+   if thing.to_id == c.user._id or thing.to_id is None:
         taglinetext = _("from %(author)s sent %(when)s ago")
-   elif c.msg_location == "sent" or not c.msg_location:
+   elif thing.author_id == c.user._id:
         taglinetext = _("to %(dest)s sent %(when)s ago")
-   taglinetext = taglinetext.replace(' ', '&#32;')
-  %>
-  ${unsafe(taglinetext % dict(when = thing.timesince, 
-                              author= u"%s" % thing.author.name,
-                              dest = u"%s" % thing.to.name))}
+   else:
+        taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
 
+   author = thing.author.name
+   if thing.sr_id and not (getattr(thing, "is_child", False) or
+                           getattr(thing, "is_parent", False)):
+     updated_author = _("%(author)s via %(subreddit)s")
+     subreddit = thing.subreddit.name
+     author = updated_author % dict(author = author, subreddit = subreddit)
+  %>
+  ${thing.subject} : ${unsafe(taglinetext % dict(when = thing.timesince, 
+                              author= u"%s" % author,
+                              dest = u"%s" % thing.to.name if thing.to else ""))}
   </title>
+  <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>
-  <description>${safemarkdown(thing.body)}</description>
+  <description>
+    ${description()}
+  </description>
 </item>
+
+<%def name="description()" filter="h">
+  ${unsafe(safemarkdown(thing.body))}
+  <div>
+    %if thing.was_comment:
+      <a href="${permalink + '?context=3'}">[context]</a>
+    %else:
+      <a href="${permalink}">[full conversation]</a>
+    %endif
+  </div>
+</%def>

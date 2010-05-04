@@ -48,11 +48,13 @@ function admincheck(elem) {
 </script>
 
 <div class="spacer">
-  <%utils:round_field title="${_('to')}", description="${_('(username)')}">
+  <%utils:round_field title="${_('to')}", 
+                      description="${_('(username, or # followed by the reddit name)')}">
     <input type="text" name="to" value="${thing.to or ''}"
            onchange="admincheck(this)"/>
     ${error_field("NO_USER", "to")}
     ${error_field("USER_DOESNT_EXIST", "to")}
+    ${error_field("SUBREDDIT_NOEXIST", "to")}
   </%utils:round_field>
 </div>
 
@@ -95,7 +97,7 @@ function admincheck(elem) {
        Also:
      </p>
      <ul>
-       <li>Please don't send out a mass-message to multiple admins.</li>
+       <li>If you'd like to message the admins, send your message to the&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
 
        <li>If you think your posts are being caught in the spam filter,
          please write to

@@ -21,16 +21,19 @@
 ################################################################################
 import os, re, sys, time, smtplib
 from r2.lib.services import AppServiceMonitor
+from pylons import g
+
+nerds_email = g.nerds_email
+smtp_server = g.smtp_server
 
 def Alert(restart_list = ['MEM','CPU'],
-          alert_recipients = ['nerds@reddit.com'],
-          alert_sender = 'nerds@reddit.com',
+          alert_recipients = [nerds_email],
+          alert_sender = nerds_email,
           cpu_limit = 99, mem_limit = 8,
-          smtpserver = 'nt03.wireddit.com', test = False):
+          smtpserver = smtp_server, test = False):
 
     p = re.compile("newreddit(\d+)")
     cache_key = 'already_alerted_'
-    from pylons import g
     for host in AppServiceMonitor(g.monitored_servers):
         for service in host:
             # cpu values

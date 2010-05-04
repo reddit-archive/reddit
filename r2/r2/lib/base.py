@@ -28,10 +28,12 @@ from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
+from r2.lib.log import log_exception
 
 import re, md5
-from urllib import quote 
+from urllib import quote
 import urllib2
+import sys
 
 
 #TODO hack
@@ -40,18 +42,22 @@ from r2.lib.utils import UrlParser, query_string
 logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
 class BaseController(WSGIController):
-    def __after__(self):
-        self.post()
+    def try_pagecache(self):
+        pass
 
     def __before__(self):
         self.pre()
+        self.try_pagecache()
+
+    def __after__(self):
+        self.post()
 
     def __call__(self, environ, start_response):
         true_client_ip = environ.get('HTTP_TRUE_CLIENT_IP')
         ip_hash = environ.get('HTTP_TRUE_CLIENT_IP_HASH')
         forwarded_for = environ.get('HTTP_X_FORWARDED_FOR', ())
         remote_addr = environ.get('REMOTE_ADDR')
-                
+
         if (g.ip_hash
             and true_client_ip
             and ip_hash
@@ -93,9 +99,18 @@ class BaseController(WSGIController):
         c.thread_pool = environ['paste.httpserver.thread_pool']
 
         c.response = Response()
-        res = WSGIController.__call__(self, environ, start_response)
+        try:
+            res = WSGIController.__call__(self, environ, start_response)
+        except Exception as e:
+            if g.exception_logging:
+                try:
+                    log_exception(e, *sys.exc_info())
+                except Exception as f:
+                    print "log_exception() freaked out: %r" % f
+                    print "sorry for breaking the stack trace:"
+            raise
         return res
-            
+
     def pre(self): pass
     def post(self): pass
 
@@ -154,7 +169,7 @@ class BaseController(WSGIController):
         Reformats the new Location (dest) using format_output_url and
         sends the user to that location with the provided HTTP code.
         """
-        dest = cls.format_output_url(dest)
+        dest = cls.format_output_url(dest or "/")
         c.response.headers['Location'] = dest
         c.response.status_code = code
         return c.response

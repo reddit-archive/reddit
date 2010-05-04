@@ -19,13 +19,16 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from urllib import unquote_plus, urlopen
+from urllib import unquote_plus
+from urllib2 import urlopen
 from urlparse import urlparse, urlunparse
 from threading import local
 import signal
 from copy import deepcopy
 import cPickle as pickle
 import re, math, random
+
+from BeautifulSoup import BeautifulSoup
 
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
@@ -54,6 +57,9 @@ def randstr(len, reallyrandom = False):
     return ''.join(random.choice(alphabet)
                    for i in range(len))
 
+def is_authorized_cname(domain, cnames):
+    return any((domain == cname or domain.endswith('.' + cname))
+               for cname in cnames)
 
 class Storage(dict):
     """
@@ -292,26 +298,31 @@ def path_component(s):
     res = r_path_component.findall(base_url(s))
     return (res and res[0]) or s
 
-r_title = re.compile('<title>(.*?)<\/title>', re.I|re.S)
-r_charset = re.compile("<meta.*charset\W*=\W*([\w_-]+)", re.I|re.S)
-r_encoding = re.compile("<?xml.*encoding=\W*([\w_-]+)", re.I|re.S)
 def get_title(url):
     """Fetches the contents of url and extracts (and utf-8 encodes)
-    the contents of <title>"""
-    import chardet
-    if not url or not url.startswith('http://'): return None
+       the contents of <title>"""
+    if not url or not url.startswith('http://'):
+        return None
+
     try:
-        content = urlopen(url).read()
-        t = r_title.findall(content)
-        if t:
-            title = t[0].strip()
-            en = (r_charset.findall(content) or
-                  r_encoding.findall(content))
-            encoding = en[0] if en else chardet.detect(content)["encoding"]
-            if encoding:
-                title = unicode(title, encoding).encode("utf-8")
-            return title
-    except: return None
+        # if we don't find it in the first kb of the resource, we
+        # probably won't find it
+        opener = urlopen(url, timeout=15)
+        text = opener.read(1024)
+        opener.close()
+        bs = BeautifulSoup(text)
+        if not bs:
+            return
+
+        title_bs = bs.first('title')
+
+        if not title_bs or title_bs.children:
+            return
+
+        return title_bs.text.encode('utf-8')
+
+    except:
+        return None
        
 valid_schemes = ('http', 'https', 'ftp', 'mailto')         
 valid_dns = re.compile('^[-a-zA-Z0-9]+$')
@@ -348,6 +359,9 @@ def sanitize_url(url, require_scheme = False):
                 #if this succeeds, this portion of the dns is almost
                 #valid and converted to ascii
                 label = label.encode('idna')
+            except TypeError:
+                print "label sucks: [%r]" % label
+                raise
             except UnicodeError:
                 return
             else:
@@ -455,6 +469,10 @@ def to_base(q, alphabet):
 
 def to36(q):
     return to_base(q, '0123456789abcdefghijklmnopqrstuvwxyz')
+
+def median(l):
+    if l:
+        return l[len(l)/2]
 
 def query_string(dict):
     pairs = []
@@ -628,8 +646,9 @@ class UrlParser(object):
         g.domain, or a subdomain of the provided subreddit's cname.
         """
         from pylons import g
-        return (not self.hostname or 
+        return (not self.hostname or
                 self.hostname.endswith(g.domain) or
+                is_authorized_cname(self.hostname, g.authorized_cnames) or
                 (subreddit and subreddit.domain and
                  self.hostname.endswith(subreddit.domain)))
 
@@ -1147,3 +1166,20 @@ def in_chunks(it, size=25):
     except StopIteration:
         if chunk:
             yield chunk
+
+class Hell(object):
+    def __str__(self):
+        return "boom!"
+
+class Bomb(object):
+    @classmethod
+    def __getattr__(cls, key):
+        raise Hell()
+
+    @classmethod
+    def __setattr__(cls, key, val):
+        raise Hell()
+
+    @classmethod
+    def __repr__(cls):
+        raise Hell()

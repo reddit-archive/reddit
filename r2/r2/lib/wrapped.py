@@ -23,7 +23,7 @@ from itertools import chain
 from datetime import datetime
 import re, types
 
-class NoTemplateFound(Exception): pass
+from hashlib import md5
 
 class StringTemplate(object):
     """
@@ -54,7 +54,7 @@ class StringTemplate(object):
             self.template = unicode(template)
         except UnicodeDecodeError:
             self.template = unicode(template, "utf8")
-    
+
     def update(self, d):
         """
         Given a dictionary of replacement rules for the Template,
@@ -134,20 +134,37 @@ class Templated(object):
         if not hasattr(self, "render_class"):
             self.render_class = self.__class__
 
+    def _notfound(self, style):
+        from pylons import g, request
+        from pylons.controllers.util import abort
+        from r2.lib.log import log_text
+        if g.debug:
+            raise NotImplementedError (repr(self), style)
+        else:
+            if style == 'png':
+                level = "debug"
+            else:
+                level = "warning"
+            log_text("missing template",
+                     "Couldn't find %s template for %r %s" %
+                      (style, self, request.path),
+                     level)
+            abort(404)
+
     def template(self, style = 'html'):
         """
         Fetches template from the template manager
         """
         from r2.config.templates import tpm
         from pylons import g
+
         debug = g.template_debug
         template = None
         try:
             template = tpm.get(self.render_class,
                                style, cache = not debug)
         except AttributeError:
-            raise NoTemplateFound, (repr(self), style)
-
+            self._notfound(style)
         return template
 
     def cache_key(self, *a):
@@ -165,6 +182,7 @@ class Templated(object):
         """
         from filters import unsafe
         from pylons import c
+
         # the style has to default to the global render style
         # fetch template
         template = self.template(style)
@@ -183,7 +201,7 @@ class Templated(object):
             c.render_style = render_style
             return res
         else:
-            raise NoTemplateFound, repr(self)
+            self._notfound(style)
 
     def _render(self, attr, style, **kwargs):
         """
@@ -249,7 +267,7 @@ class Templated(object):
                 # in the tuple that is the current dict's values.
                 # This dict cast will generate a new dict of cache_key
                 # to value
-                cached = g.rendercache.get_multi(dict(current.values()))
+                cached = self._read_cache(dict(current.values()))
                 # replacements will be a map of key -> rendered content
                 # for updateing the current set of updates
                 replacements = {}
@@ -290,10 +308,10 @@ class Templated(object):
             # that we didn't find in the cache.
 
             # cache content that was newly rendered
-            g.rendercache.set_multi(dict((k, v)
-                                         for k, (v, kw) in updates.values()
-                                         if k in to_cache))
-
+            self._write_cache(dict((k, v)
+                                   for k, (v, kw) in updates.values()
+                                   if k in to_cache))
+    
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
@@ -321,8 +339,25 @@ class Templated(object):
             res = res.finalize(kwargs)
         
         return res
-    
-        
+
+    def _write_cache(self, keys):
+        from pylons import g
+
+        toset = dict((md5(key).hexdigest(), val)
+                     for (key, val)
+                     in keys.iteritems())
+        g.rendercache.set_multi(toset)
+
+    def _read_cache(self, keys):
+        from pylons import g
+
+        ekeys = dict((md5(key).hexdigest(), key)
+                     for key in keys)
+        found = g.rendercache.get_multi(ekeys)
+        return dict((ekeys[fkey], val)
+                    for (fkey, val)
+                    in found.iteritems())
+
     def render(self, style = None, **kw):
         from r2.lib.filters import unsafe
         res = self._render(None, style, **kw)
@@ -380,7 +415,7 @@ class CachedTemplate(Templated):
         # can make the caching process-local.
         template_hash = getattr(self.template(style), "hash",
                                 id(self.__class__))
-        
+
         # these values are needed to render any link on the site, and
         # a menu is just a set of links, so we best cache against
         # them.
@@ -453,9 +488,9 @@ class Wrapped(CachedTemplate):
                 break
             except AttributeError:
                 pass
-            
+
         if not found:
-            raise AttributeError, attr
+            raise AttributeError, "%r has no %s" % (self, attr)
 
         setattr(self, attr, res)
         return res

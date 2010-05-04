@@ -263,8 +263,8 @@ class TranslatedString(Templated):
             if indx < 0:
                 return all(self.is_valid(i) for i in range(0,len(self.msgstr)))
             elif indx < len(self.msgstr):
-                return self.msgid.compatible(self.msgstr[indx]) or \
-                       self.msgstr.compatible(self.msgstr[indx])
+                return self.msgid.compatible(self.msgstr[indx]) #or \
+                    #self.msgstr.compatible(self.msgstr[indx])
             return True
         else:
             return self.msgid.compatible(self.msgstr)
@@ -655,7 +655,7 @@ class Transliterator(AutoTranslator):
     def __init__(self, **kw):
         Translator.__init__(self, **kw)
         for string in self.strings:
-            if string.is_translated() \
+            if not string.is_translated() \
                     and not isinstance(string, GettextHeader):
                 if string.plural:
                     string.add(self.translate(string.msgstr[0].unicode()), 
@@ -767,12 +767,80 @@ class TamilTranslator(Transliterator):
             t = t.replace(k, v)
         return t
             
+class SerbianCyrillicTranslator(Transliterator):
+    letters = \
+             ((         "A" , u'\u0410'),
+              (         "B" , u'\u0411'),
+              (         "V" , u'\u0412'),
+              (         "G" , u'\u0413'),
+              (         "D" , u'\u0414'),
+              (   u'\u0110' , u'\u0402'),
+              (         "E" , u'\u0415'),
+              (   u"\u017d" , u'\u0416'),
+              (         "Z" , u'\u0417'),
+              (         "I" , u'\u0418'),
+              (         "J" , u'\u0408'),
+              (         "K" , u'\u041a'),
+              (         "L" , u'\u041b'),
+              (        "Lj" , u'\u0409'),
+              (         "M" , u'\u041c'),
+              (         "N" , u'\u041d'),
+              (        "Nj" , u'\u040a'),
+              (         "O" , u'\u041e'),
+              (         "P" , u'\u041f'),
+              (         "R" , u'\u0420'),
+              (         "S" , u'\u0421'),
+              (         "T" , u'\u0422'),
+              (   u"\u0106" , u'\u040b'),
+              (         "U" , u'\u0423'),
+              (         "F" , u'\u0424'),
+              (         'H' , u'\u0425'),
+              (         "C" , u'\u0426'),
+              (    u"\u010c", u'\u0427'),
+              (   u"D\u017e", u'\u040f'),
+              (    u"\u0160", u'\u0428'),
 
-                          
-
+              (         "a" , u'\u0430'),
+              (         "b" , u'\u0431'),
+              (         "v" , u'\u0432'),
+              (         "g" , u'\u0433'),
+              (         "d" , u'\u0434'),
+              (   u'\u0111' , u'\u0452'),
+              (         "e" , u'\u0435'),
+              (   u"\u017e" , u'\u0436'),
+              (         "z" , u'\u0437'),
+              (         "i" , u'\u0438'),
+              (         "j" , u'\u0458'),
+              (         "k" , u'\u043a'),
+              (         "l" , u'\u043b'),
+              (        "lj" , u'\u0459'),
+              (         "m" , u'\u043c'),
+              (         "n" , u'\u043d'),
+              (        "nj" , u'\u045a'),
+              (         "o" , u'\u043e'),
+              (         "p" , u'\u043f'),
+              (         "r" , u'\u0440'),
+              (         "s" , u'\u0441'),
+              (         "t" , u'\u0442'),
+              (   u"\u0107" , u'\u045b'),
+              (         "u" , u'\u0443'),
+              (         "f" , u'\u0444'),
+              (         'h' , u'\u0445'),
+              (         "c" , u'\u0446'),
+              (    u"\u010d", u'\u0447'),
+              (   u"d\u017e", u'\u045f'),
+              (    u"\u0161", u'\u0448'))
+    ligatures = [(x,y) for x, y in letters if len(x) == 2]
+    letters = dict((x, y) for x, y in letters if len(x) == 1)
+    def trans_rules(self, string):
+        for x, y in self.ligatures:
+            string = string.replace(x, y)
+        return "".join(self.letters.get(s, s) for s in string)    
+        
 import random
 class LeetTranslator(AutoTranslator):
     def trans_rules(self, string):
+        print string
         key = dict(a=["4","@"], 
                    b=["8"], c=["("],
                    d=[")", "|)"], e=["3"], 
@@ -786,9 +854,11 @@ class LeetTranslator(AutoTranslator):
         return ''.join(s)
 
 def get_translator(locale):
+    #if locale == 'sr':
+    #    return SerbianCyrillicTranslator(locale = locale)
     if locale == 'leet':
         return LeetTranslator(locale = locale)
-    elif locale == 'en':
+    elif locale.startswith('en'):
         return USEnglishTranslator(locale = locale)
     elif locale == 'ta':
         return TamilTranslator(locale = locale)

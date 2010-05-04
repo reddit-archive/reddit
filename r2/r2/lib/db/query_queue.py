@@ -7,25 +7,19 @@ from pylons import g
 
 working_prefix = 'working_'
 prefix = 'prec_link_'
-TIMEOUT = 600
+TIMEOUT = 600 # after TIMEOUT seconds, assume that the process
+              # calculating a given query has crashed and allow it to
+              # be rerun as appropriate
 
 def add_query(cached_results):
     amqp.add_item('prec_links', pickle.dumps(cached_results, -1))
 
-def _skip_key(iden):
-    return 'skip_precompute_queries-%s' % iden
-
 def run():
     def callback(msgs, chan):
         for msg in msgs: # will be len==1
-            # r2.lib.db.queries.CachedResults
+            # cr is a r2.lib.db.queries.CachedResults
             cr = pickle.loads(msg.body)
             iden = cr.query._iden()
-
-            if (iden in g.skip_precompute_queries
-                and g.hardcache.get(_skip_key(iden))):
-                print 'skipping known query', iden
-                continue
 
             working_key = working_prefix + iden
             key = prefix + iden
@@ -33,8 +27,12 @@ def run():
             last_time = g.memcache.get(key)
             # check to see if we've computed this job since it was
             # added to the queue
-            if  last_time and last_time > msg.timestamp:
+            if last_time and last_time > msg.timestamp:
                 print 'skipping, already computed ', key
+                return
+
+            if not cr.preflight_check():
+                print 'skipping, preflight check failed', key
                 return
 
             # check if someone else is working on this
@@ -48,10 +46,7 @@ def run():
                 cr.update()
                 g.memcache.set(key, datetime.now())
 
-                if iden in g.skip_precompute_queries:
-                    print 'setting to be skipped for 6 hours', iden
-                    g.hardcache.set(_skip_key(iden), start,
-                                    60*60*6)
+                cr.postflight()
 
             finally:
                 g.memcache.delete(working_key)

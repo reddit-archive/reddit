@@ -24,11 +24,12 @@ from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
+from r2.lib.filters import markdown_souptest
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
 from r2.lib.jsontemplates import api_type
-
+from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 
@@ -37,6 +38,7 @@ from r2.controllers.errors import VerifiedUserRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
+from curses.ascii import isprint
 import re, inspect
 import pycountry
 
@@ -123,7 +125,6 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
     for var, validator in param_vals.iteritems():
         kw[var] = validator(env)
     return kw
-    
 
 def validate(*simple_vals, **param_vals):
     def val(fn):
@@ -230,7 +231,7 @@ class VRequired(Validator):
         if not e: e = self._error
         if e:
             self.set_error(e)
-        
+
     def run(self, item):
         if not item:
             self.error()
@@ -265,6 +266,25 @@ class VLink(VThing):
 class VCommentByID(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Comment, redirect=redirect, *a, **kw)
+
+class VAd(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, Ad, redirect=redirect, *a, **kw)
+
+class VAdByCodename(Validator):
+    def run(self, codename, required_fullname=None):
+        if not codename:
+            return self.set_error(errors.NO_TEXT)
+
+        try:
+            a = Ad._by_codename(codename)
+        except NotFound:
+            a = None
+
+        if a and required_fullname and a._fullname != required_fullname:
+            return self.set_error(errors.INVALID_OPTION)
+        else:
+            return a
 
 class VAward(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
@@ -314,7 +334,7 @@ class VMessageID(Validator):
             try:
                 cid = int(cid, 36)
                 m = Message._byID(cid, True)
-                if not m.can_view():
+                if not m.can_view_slow():
                     abort(403, 'forbidden')
                 return m
             except (NotFound, ValueError):
@@ -324,14 +344,23 @@ class VCount(Validator):
     def run(self, count):
         if count is None:
             count = 0
-        return max(int(count), 0)
+        try:
+            return max(int(count), 0)
+        except ValueError:
+            return 0
 
 
 class VLimit(Validator):
     def run(self, limit):
         if limit is None:
-            return c.user.pref_numsites 
-        return min(max(int(limit), 1), 100)
+            return c.user.pref_numsites
+
+        try:
+            i = int(limit)
+        except ValueError:
+            return c.user.pref_numsites
+
+        return min(max(i, 1), 100)
 
 class VCssMeasure(Validator):
     measure = re.compile(r"^\s*[\d\.]+\w{0,3}\s*$")
@@ -371,23 +400,47 @@ class VLength(Validator):
             self.set_error(self.length_error, {'max_length': self.max_length})
         else:
             return text
-        
+
+class VPrintable(VLength):
+    def run(self, text, text2 = ''):
+        text = VLength.run(self, text, text2)
+
+        if text is None:
+            return None
+
+        try:
+            if all(isprint(str(x)) for x in text):
+                return str(text)
+        except UnicodeEncodeError:
+            pass
+
+        self.set_error(errors.BAD_STRING)
+        return None
+
+
 class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
         VLength.__init__(self, param, max_length, **kw)
-    
-class VComment(VLength):
+
+class VMarkdown(VLength):
     def __init__(self, param, max_length = 10000, **kw):
         VLength.__init__(self, param, max_length, **kw)
 
-class VSelfText(VLength):
-    def __init__(self, param, max_length = 10000, **kw):
-        VLength.__init__(self, param, max_length, **kw)
-        
-class VMessage(VLength):
-    def __init__(self, param, max_length = 10000, **kw):
-        VLength.__init__(self, param, max_length, **kw)
-
+    def run(self, text, text2 = ''):
+        text = text or text2
+        VLength.run(self, text)
+        try:
+            markdown_souptest(text)
+            return text
+        except ValueError:
+            import sys
+            user = "???"
+            if c.user_is_loggedin:
+                user = c.user.name
+            g.log.error("HAX by %s: %s" % (user, text))
+            s = sys.exc_info()
+            # reraise the original error with the original stack trace
+            raise s[1], None, s[2]
 
 class VSubredditName(VRequired):
     def __init__(self, item, *a, **kw):
@@ -422,7 +475,7 @@ class VSubredditDesc(Validator):
 class VAccountByName(VRequired):
     def __init__(self, param, error = errors.USER_DOESNT_EXIST, *a, **kw):
         VRequired.__init__(self, param, error, *a, **kw)
-        
+
     def run(self, name):
         if name:
             try:
@@ -486,7 +539,7 @@ class VUser(Validator):
 
         if (password is not None) and not valid_password(c.user, password):
             self.set_error(errors.WRONG_PASSWORD)
-            
+
 class VModhash(Validator):
     default_param = 'uh'
     def run(self, uh):
@@ -595,7 +648,10 @@ class VSubmitParent(VByName):
         if fullname:
             parent = VByName.run(self, fullname)
             if parent and parent._deleted:
-                self.set_error(errors.DELETED_COMMENT)
+                if isinstance(parent, Link):
+                    self.set_error(errors.DELETED_LINK)
+                else:
+                    self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
                 return parent
             else:
@@ -623,7 +679,7 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
         else:
             return sr
-        
+
 pass_rx = re.compile(r"^.{3,20}$")
 
 def chkpass(x):
@@ -633,12 +689,10 @@ class VPassword(Validator):
     def run(self, password, verify):
         if not chkpass(password):
             self.set_error(errors.BAD_PASSWORD)
-            return
         elif verify != password:
             self.set_error(errors.BAD_PASSWORD_MATCH)
-            return password
         else:
-            return password
+            return password.encode('utf8')
 
 user_rx = re.compile(r"^[\w-]{3,20}$", re.UNICODE)
 
@@ -667,11 +721,15 @@ class VUname(VRequired):
 class VLogin(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.WRONG_PASSWORD, *a, **kw)
-        
+
     def run(self, user_name, password):
         user_name = chkuser(user_name)
         user = None
         if user_name:
+            try:
+                str(password)
+            except UnicodeEncodeError:
+                password = password.encode('utf8')
             user = valid_login(user_name, password)
         if not user:
             return self.error()
@@ -698,7 +756,7 @@ class VUrl(VRequired):
                 sr = None
         else:
             sr = None
-        
+
         if not url:
             return self.error(errors.NO_URL)
         url = utils.sanitize_url(url)
@@ -735,6 +793,21 @@ class VExistingUname(VRequired):
             except NotFound:
                 return self.error(errors.USER_DOESNT_EXIST)
         self.error()
+
+class VMessageRecipent(VExistingUname):
+    def run(self, name):
+        if not name:
+            return self.error()
+        if name.startswith('#'):
+            try:
+                s = Subreddit._by_name(name.strip('#'))
+                if isinstance(s, FakeSubreddit):
+                    raise NotFound, "fake subreddit"
+                return s
+            except NotFound:
+                self.set_error(errors.SUBREDDIT_NOEXIST)
+        else:
+            return VExistingUname.run(self, name)
 
 class VUserWithEmail(VExistingUname):
     def run(self, name):
@@ -901,9 +974,11 @@ class VRatelimit(Validator):
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's
     def run(self, id_str):
-        cids = [int(i, 36) for i in id_str.split(',')]
-        comments = Comment._byID(cids, data=True, return_dict = False)
-        return comments
+        if id_str:
+            cids = [int(i, 36) for i in id_str.split(',')]
+            comments = Comment._byID(cids, data=True, return_dict = False)
+            return comments
+        return []
 
 
 class CachedUser(object):
@@ -1049,14 +1124,9 @@ class ValidIP(Validator):
             self.set_error(errors.BANNED_IP)
         return request.ip
 
-class ValidDomain(Validator):
+class VOkayDomain(Validator):
     def run(self, url):
-        if url and is_banned_domain(url):
-            self.set_error(errors.BANNED_DOMAIN)
-
-
-
-
+        return is_banned_domain(url)
 
 class VDate(Validator):
     """
@@ -1135,9 +1205,32 @@ class VDestination(Validator):
     def __init__(self, param = 'dest', default = "", **kw):
         self.default = default
         Validator.__init__(self, param, **kw)
-    
+
     def run(self, dest):
-        return dest or request.referer or self.default
+        if not dest:
+            dest = request.referer or self.default or "/"
+
+        ld = dest.lower()
+        if (ld.startswith("/") or
+            ld.startswith("http://") or
+            ld.startswith("https://")):
+
+            u = UrlParser(dest)
+
+            if u.is_reddit_url():
+                return dest
+
+        ip = getattr(request, "ip", "[unknown]")
+        fp = getattr(request, "fullpath", "[unknown]")
+        dm = c.domain or "[unknown]"
+        cn = c.cname or "[unknown]"
+
+        log_text("invalid redirect",
+                 "%s attempted to redirect from %s to %s with domain %s and cname %s"
+                      % (ip, fp, dest, dm, cn),
+                 "info")
+
+        return "/"
 
 class ValidAddress(Validator):
     def __init__(self, param, usa_only = True):

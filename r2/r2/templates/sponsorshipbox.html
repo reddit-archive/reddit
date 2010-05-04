@@ -21,12 +21,12 @@
 ################################################################################
 
 %if c.site.sponsorship_url and c.site.sponsorship_img:
-<% 
+<%
    name = c.site._fullname
 %>
 <div class="thing sponsorshipbox id-${name}">
   <span>${c.site.sponsorship_text}</span>
-  <div> 
+  <div>
     <a class="title" href="${c.site.sponsorship_url}">
        <img alt="sponsor" src="${c.site.sponsorship_img}" />
     </a>

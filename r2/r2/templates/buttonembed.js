@@ -19,16 +19,8 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-<%!
-   from r2.lib.template_helpers import get_domain
- %>
-
-<% 
-   domain = get_domain()
-   arg = "cnameframe=1&" if c.cname else ""
-%>
 (function() {
-var write_string="<iframe src=\"http://${domain}/button_content?${arg}t=${thing.button}&width=${thing.width}&url=${thing.url or ""}";
+var write_string="<iframe src=\"http://${thing.domain}/button_content?${thing.arg}t=${thing.button}&width=${thing.width}&url=${thing.url or ""}";
 %if not thing.url:
 if (window.reddit_url)  { write_string += encodeURIComponent(reddit_url); }
 else { write_string += encodeURIComponent('${thing.referer}');}

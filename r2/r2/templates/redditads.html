@@ -1,0 +1,130 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field"/>
+<%namespace file="utils.html" import="percentage"/>
+
+<%def name="row(ad, weight, whence)">
+
+  <tr class="${whence}">
+    <td class="centered">
+      <a href="${ad.linkurl}">
+        <img src="${ad.imgurl}" alt="(place img here)"/>
+      </a>
+    </td>
+
+    <td class="details">
+      <div class="codename">
+        <a href="/admin/ads/${ad.codename}">
+          ${ad.codename}
+        </a>
+      </div>
+
+      <form action="/post/assignad" method="post"
+            id="${ad.codename}" class="assign-form"
+            onsubmit="return post_form(this, 'assignad');">
+
+        <div>
+          <input type="hidden" name="fullname" value="${ad._fullname}" />
+          <input type="hidden" name="community" value="${thing.sr_name}" />
+
+          %if whence == "inherited":
+            weight:&#32;
+            <input type="text" name="weight" class="weight" />
+            <div class="whence">
+              (inheriting ${weight} from /r/${g.default_sr})
+            </div>
+          %else:
+            weight:&#32;
+            <input
+               %if thing.sr_name == g.default_sr and ad.codename == 'DART':
+                 disabled="disabled"
+               %endif
+               type="text" name="weight" class="weight" value="${weight}" /><br/>
+            <div class="whence">
+              %if whence == "overridden":
+
+##              pass
+
+              %elif thing.sr_name == g.default_sr:
+                (hereby the sitewide default)
+              %else:
+                (overridden for /r/${thing.sr_name})
+              %endif
+            </div>
+          %endif
+          ${error_field("BAD_NUMBER", "weight", "span")}
+        </div>
+
+        %if whence != "unused":
+          <div>
+            percentage:&#32;
+            ${percentage(weight, thing.total)}
+          </div>
+        %endif
+
+        <br/>
+
+        <div>
+          %if thing.sr_name == g.default_sr and ad.codename == 'DART':
+            <button disabled="disabled">save</button>
+          %else:
+            <button class="savebutton" type="submit">save</button>
+            <span class="status"></span>
+          %endif
+        </div>
+
+      </form>
+
+  </tr>
+</%def>
+
+<table class="sr-ad-table lined-table">
+  %if thing.adsrs:
+    <tr>
+      <td colspan="2" class="centered">
+        Ads in rotation on /r/${thing.sr_name}:
+      </td>
+    </tr>
+  %endif
+
+  %for adsr in thing.adsrs:
+    ${row(adsr._thing1, adsr.weight,
+          "overridden" if adsr._thing2.name == thing.sr_name else "inherited")}
+  %endfor
+
+  %if thing.other_ads:
+    <tr>
+      <td colspan="2" class="centered">
+        Ads not (yet) used on this reddit:
+      </td>
+    </tr>
+  %endif
+
+  %for ad in thing.other_ads:
+    ${row(ad, "", "unused")}
+  %endfor
+</table>
+
+<button onclick="$('.assign-form .savebutton').click();">
+  save all
+</button>

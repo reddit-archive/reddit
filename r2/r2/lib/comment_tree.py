@@ -24,6 +24,7 @@ from __future__ import with_statement
 from pylons import g
 from itertools import chain
 from utils import tup
+from cache import sgm
 
 def comments_key(link_id):
     return 'comments_' + str(link_id)
@@ -86,10 +87,12 @@ def delete_comment(comment):
     #nothing really to do here, atm
     pass
 
-def link_comments(link_id):
+def link_comments(link_id, _update=False):
     key = comments_key(link_id)
+
     r = g.permacache.get(key)
-    if r:
+
+    if r and not _update:
         return r
     else:
         with g.make_lock(lock_key(link_id)):
@@ -148,14 +151,22 @@ def add_message(message):
     # add the message to the author's list and the recipient
     with g.make_lock(messages_lock_key(message.author_id)):
         add_message_nolock(message.author_id, message)
-    with g.make_lock(messages_lock_key(message.to_id)):
-        add_message_nolock(message.to_id, message)
+    if message.to_id:
+        with g.make_lock(messages_lock_key(message.to_id)):
+            add_message_nolock(message.to_id, message)
+    if message.sr_id:
+        with g.make_lock(sr_messages_lock_key(message.sr_id)):
+            add_sr_message_nolock(message.sr_id, message)
 
-def add_message_nolock(user_id, message):
+
+def _add_message_nolock(key, message):
     from r2.models import Account, Message
-    key = messages_key(user_id)
     trees = g.permacache.get(key)
     if not trees:
+        # in case an empty list got written at some point, delete it to
+        # force a recompute
+        if trees is not None:
+            g.permacache.delete(key)
         # no point computing it now.  We'll do it when they go to
         # their message page.
         return
@@ -184,10 +195,11 @@ def add_message_nolock(user_id, message):
     g.permacache.set(key, trees)
 
 
-def conversation(user, parent):
-    from r2.models import Message
-    trees = dict(user_messages(user))
+def add_message_nolock(user_id, message):
+    return _add_message_nolock(messages_key(user_id), message)
 
+def _conversation(trees, parent):
+    from r2.models import Message
     if parent._id in trees:
         convo = trees[parent._id]
         if convo:
@@ -202,41 +214,94 @@ def conversation(user, parent):
                        data = True)
     return compute_message_trees([parent] + list(m))
 
-def user_messages(user):
+def conversation(user, parent):
+    trees = dict(user_messages(user))
+    return _conversation(trees, parent)
+
+
+def user_messages(user, update = False):
     key = messages_key(user._id)
     trees = g.permacache.get(key)
-    if trees is None:
+    if not trees or update:
         trees = user_messages_nocache(user)
         g.permacache.set(key, trees)
     return trees
+
+def _process_message_query(inbox):
+    if hasattr(inbox, 'prewrap_fn'):
+        return [inbox.prewrap_fn(i) for i in inbox]
+    return list(inbox)
+
+
+def _load_messages(mlist):
+    from r2.models import Message
+    m = {}
+    ids = [x for x in mlist if not isinstance(x, Message)]
+    if ids:
+        m = Message._by_fullname(ids, return_dict = True, data = True)
+    messages = [m.get(x, x) for x in mlist]
+    return messages
 
 def user_messages_nocache(user):
     """
     Just like user_messages, but avoiding the cache
     """
     from r2.lib.db import queries
-    from r2.models import Message
-
-    inbox = queries.get_inbox_messages(user)
-    if hasattr(inbox, 'prewrap_fn'):
-        inbox = [inbox.prewrap_fn(i) for i in inbox]
-    else:
-        inbox = list(inbox)
-
-    sent = queries.get_sent(user)
-    if hasattr(sent, 'prewrap_fn'):
-        sent = [sent.prewrap_fn(i) for i in sent]
-    else:
-        sent = list(sent)
-    
-    m = {}
-    ids = [x for x in chain(inbox, sent) if not isinstance(x, Message)]
-    if ids:
-        m = Message._by_fullname(ids, return_dict = True, data = True)
-
-    messages = [m.get(x, x) for x in chain(inbox, sent)]
-
+    inbox = _process_message_query(queries.get_inbox_messages(user))
+    sent = _process_message_query(queries.get_sent(user))
+    messages = _load_messages(list(chain(inbox, sent)))
     return compute_message_trees(messages)
+
+def sr_messages_key(sr_id):
+    return 'sr_messages_conversation_' + str(sr_id)
+
+def sr_messages_lock_key(sr_id):
+    return 'sr_messages_conversation_lock_' + str(sr_id)
+
+
+def subreddit_messages(sr, update = False):
+    key = sr_messages_key(sr._id)
+    trees = g.permacache.get(key)
+    if not trees or update:
+        trees = subreddit_messages_nocache(sr)
+        g.permacache.set(key, trees)
+    return trees
+
+def moderator_messages(user):
+    from r2.models import Subreddit
+    sr_ids = Subreddit.reverse_moderator_ids(user)
+
+    def multi_load_tree(sr_ids):
+        srs = Subreddit._byID(sr_ids, return_dict = False)
+        res = {}
+        for sr in srs:
+            trees = subreddit_messages_nocache(sr)
+            if trees:
+                res[sr._id] = trees
+        return res
+
+    res = sgm(g.permacache, sr_ids, miss_fn = multi_load_tree,
+              prefix = sr_messages_key(""))
+
+    return sorted(chain(*res.values()), key = tree_sort_fn, reverse = True)
+
+def subreddit_messages_nocache(sr):
+    """
+    Just like user_messages, but avoiding the cache
+    """
+    from r2.lib.db import queries
+    inbox = _process_message_query(queries.get_subreddit_messages(sr))
+    messages = _load_messages(inbox)
+    return compute_message_trees(messages)
+
+
+def add_sr_message_nolock(sr_id, message):
+    return _add_message_nolock(sr_messages_key(sr_id), message)
+
+def sr_conversation(sr, parent):
+    trees = dict(subreddit_messages(sr))
+    return _conversation(trees, parent)
+
 
 def compute_message_trees(messages):
     from r2.models import Message

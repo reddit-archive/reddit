@@ -1,0 +1,14 @@
+ 1. <http://automatic>
+ 2. [automatic] (http://automatic "automatic link")
+ 3. [automatic](http://automatic "automatic link")
+ 4. [automatic](http://automatic)
+ 5. [automatic] (http://automatic)
+ 6. [automatic] []
+ 7. [automatic][]
+ 8. [my][automatic]
+ 9. [my] [automatic]
+
+ [automatic]: http://automatic "footnote"
+
+
+ [automatic] [

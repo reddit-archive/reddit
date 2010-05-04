@@ -1,0 +1,9 @@
+* [![an image](http://dustmite.org/mite.jpg =50x50)] (http://dustmite.org)
+* [[an embedded link](http://wontwork.org)](http://willwork.org)
+* [![dustmite][]] (http:/dustmite.org)
+* ![dustmite][]
+* ![dustmite][dustmite]
+* [<a href="http://cheating.us">cheat me</a>](http://I.am.cheating)
+
+[dustmite]: http://dustmite.org/mite.jpg =25x25 "here I am!"
+

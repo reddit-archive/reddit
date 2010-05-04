@@ -50,9 +50,24 @@ from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
+from r2.lib.log import log_text
 
 from datetime import datetime, timedelta
 from md5 import md5
+
+def reject_vote(thing):
+    voteword = request.params.get('dir')
+
+    if voteword == '1':
+        voteword = 'upvote'
+    elif voteword == '0':
+        voteword = '0-vote'
+    elif voteword == '-1':
+        voteword = 'downvote'
+
+    log_text ("rejected vote", "Rejected %s from %s (%s) on %s %s via %s" %
+              (voteword, c.user.name, request.ip, thing.__class__.__name__,
+               thing._id36, request.referer), "info")
 
 class ApiController(RedditController):
     """
@@ -73,6 +88,9 @@ class ApiController(RedditController):
             return abort(404, 'not found')
 
         links = link_from_url(request.params.get('url'), filter_spam = False)
+        if not links:
+            return abort(404, 'not found')
+
         listing = wrap_links(links, num = count)
         return BoringPage(_("API"), content = listing).render()
 
@@ -107,19 +125,19 @@ class ApiController(RedditController):
                    VUser(),
                    VModhash(),
                    ip = ValidIP(),
-                   to = VExistingUname('to'),
+                   to = VMessageRecipent('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
-                   body = VMessage(['text', 'message']))
+                   body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
         handles message composition under /message/compose.  
         """
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
-                                errors.NO_USER) or
+                                errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
-            
+
             m, inbox_rel = Message._new(c.user, to, subject, body, ip)
             form.set_html(".status", _("your message has been delivered"))
             form.set_inputs(to = "", subject = "", text = "", captcha="")
@@ -128,20 +146,20 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VCaptcha(),
-                   ValidDomain('url'),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
                    ip = ValidIP(),
                    sr = VSubmitSR('sr'),
                    url = VUrl(['url', 'sr']),
+                   banmsg = VOkayDomain('url'),
                    title = VTitle('title'),
                    save = VBoolean('save'),
-                   selftext = VSelfText('text'),
+                   selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'))
-    def POST_submit(self, form, jquery, url, selftext, kind, title, save,
-                    sr, ip, then):
+    def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
+                    save, sr, ip, then):
         #backwards compatability
         if url == 'self':
             kind = 'self'
@@ -178,6 +196,11 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
+# Uncomment if we want to let spammers know we're on to them
+#            if banmsg:
+#                form.set_html(".field-url.BAD_URL", banmsg)
+#                return
+
         elif kind == 'self' and form.has_errors('text', errors.TOO_LONG):
             pass
 
@@ -193,6 +216,9 @@ class ApiController(RedditController):
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
                          c.user, sr, ip)
+
+        if banmsg:
+            admintools.spam(l, banner = "domain (%s)" % banmsg)
 
         if kind == 'self':
             l.url = l.make_permalink_slow()
@@ -264,31 +290,18 @@ class ApiController(RedditController):
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, username, dest, rem, reason):
+
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
-        hc_key = "login_attempts-%s" % request.ip
-
-        # TODO: You-know-what (not mentioning it, just in case
-        # we accidentally release code with this comment in it)
-
-        # Cache lifetime for login_attmempts
-        la_expire_time = 3600 * 8
-
-        recent_attempts = g.hardcache.add(hc_key, 0, time=la_expire_time)
-
-        fake_failure = False
-        if recent_attempts >= 25:
-            g.log.error ("%s failed to login as %s (attempt #%d)"
-                         % (request.ip, username, recent_attempts))
-            fake_failure = True
-
-        if fake_failure or form.has_errors("passwd", errors.WRONG_PASSWORD):
+        if login_throttle(username, wrong_password = form.has_errors("passwd",
+                                                     errors.WRONG_PASSWORD)):
             VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-            g.hardcache.incr(hc_key, time = la_expire_time)
-        else:
-            self._login(form, user, dest, rem)
 
+            c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
+
+        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
+            self._login(form, user, dest, rem)
 
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
@@ -310,11 +323,11 @@ class ApiController(RedditController):
 
             user = register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
-    
+
             #anything else we know (email, languages)?
             if email:
                 user.email = email
-    
+
             user.pref_lang = c.lang
             if c.content_langs == 'all':
                 user.pref_content_langs = 'all'
@@ -322,10 +335,10 @@ class ApiController(RedditController):
                 langs = list(c.content_langs)
                 langs.sort()
                 user.pref_content_langs = tuple(langs)
-    
+
             d = c.user._dirties.copy()
             user._commit()
-                
+
             c.user = user
             if reason:
                 if reason[0] == 'redirect':
@@ -333,7 +346,7 @@ class ApiController(RedditController):
                 elif reason[0] == 'subscribe':
                     for sr, sub in reason[1].iteritems():
                         self._subscribe(sr, sub)
-    
+
             self._login(form, user, dest, rem)
 
     @noresponse(VUser(),
@@ -530,7 +543,7 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
             expire_hot(sr)
-            queries.new_link(thing)
+            queries.delete_links(thing)
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
@@ -567,11 +580,11 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
-                   text = VComment('text'))
+                   text = VMarkdown('text'))
     def POST_editusertext(self, form, jquery, item, text):
-        if not form.has_errors("text",
-                               errors.NO_TEXT, errors.TOO_LONG,
-                               errors.NOT_AUTHOR):
+        if (not form.has_errors("text",
+                                errors.NO_TEXT, errors.TOO_LONG) and
+            not form.has_errors("thing_id", errors.NOT_AUTHOR)):
 
             if isinstance(item, Comment):
                 kind = 'comment'
@@ -580,7 +593,10 @@ class ApiController(RedditController):
                 kind = 'link'
                 item.selftext = text
 
-            if (item._date < timeago('60 seconds')
+            if item._deleted:
+                return abort(403, "forbidden")
+
+            if (item._date < timeago('3 minutes')
                 or (item._ups + item._downs > 2)):
                 item.editted = True
 
@@ -601,7 +617,7 @@ class ApiController(RedditController):
                               prefix = "rate_comment_"),
                    ip = ValidIP(),
                    parent = VSubmitParent(['thing_id', 'parent']),
-                   comment = VComment(['text', 'comment']))
+                   comment = VMarkdown(['text', 'comment']))
     def POST_comment(self, commentform, jquery, parent, comment, ip):
         should_ratelimit = True
         #check the parent type here cause we need that for the
@@ -633,7 +649,8 @@ class ApiController(RedditController):
             not commentform.has_errors("ratelimit",
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
-                                       errors.DELETED_COMMENT)):
+                                       errors.DELETED_COMMENT,
+                                       errors.DELETED_LINK)):
 
             if is_message:
                 to = Account._byID(parent.author_id)
@@ -650,11 +667,9 @@ class ApiController(RedditController):
                 queries.queue_vote(c.user, item, True, ip,
                                    cheater = (errors.CHEATER, None) in c.errors)
 
-                #update last modified
-                set_last_modified(link, 'comments')
-
-                #update the comment cache
-                add_comment(item)
+                # adding to comments-tree is done as part of
+                # newcomments_q, so if they refresh immediately they
+                # won't see their comment
 
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")
@@ -666,7 +681,7 @@ class ApiController(RedditController):
 
             # insert the new comment
             jquery.insert_things(item)
-            
+
             # remove any null listings that may be present
             jquery("#noresults").hide()
 
@@ -751,14 +766,12 @@ class ApiController(RedditController):
             return
 
         if vote_type == "rejected":
-            g.log.error("POST_vote: rejected vote (%s) from '%s' on %s (%s)"%
-                        (request.params.get('dir'), c.user.name,
-                         thing._fullname, request.ip))
+            reject_vote(thing)
             store = False
 
         # TODO: temporary hack until we migrate the rest of the vote data
         if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
-            g.log.error("POST_vote: ignoring old vote on %s" % thing._fullname)
+            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
         # in a lock to prevent duplicate votes from people
@@ -982,21 +995,20 @@ class ApiController(RedditController):
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VLength("description", max_length = 1000),
+                   description = VMarkdown("description", max_length = 1000),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   use_whitelist = VBoolean('use_whitelist'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
-                   ad_type = VOneOf('ad', ('default', 'basic', 'custom')),
-                   ad_file = VLength('ad-location', max_length = 500),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
-    def POST_site_admin(self, form, jquery, name, ip, sr, ad_type, ad_file,
+    def POST_site_admin(self, form, jquery, name, ip, sr,
                         sponsor_text, sponsor_url, sponsor_name,  **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
@@ -1005,7 +1017,7 @@ class ApiController(RedditController):
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
                            'show_media', 'type', 'lang', "css_on_cname",
-                           'allow_top'))
+                           'allow_top', 'use_whitelist'))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1054,10 +1066,6 @@ class ApiController(RedditController):
         elif sr.is_moderator(c.user) or c.user_is_admin:
 
             if c.user_is_admin:
-                sr.ad_type = ad_type
-                if ad_type != "custom":
-                    ad_file = Subreddit._defaults['ad_file']
-                sr.ad_file = ad_file
                 sr.sponsorship_text = sponsor_text or ""
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
@@ -1137,50 +1145,58 @@ class ApiController(RedditController):
         if r:
             queries.new_savehide(r)
 
-    @noresponse(VUser(),
-                VModhash(),
-                thing = VByName('id', multiple = True))
-    def POST_collapse_message(self, thing):
-        if not thing:
+    def collapse_handler(self, things, collapse):
+        if not things:
             return
-        for t in tup(thing):
+        things = tup(things)
+        srs = Subreddit._byID([t.sr_id for t in things if t.sr_id],
+                              return_dict = True)
+        for t in things:
             if hasattr(t, "to_id") and c.user._id == t.to_id:
-                t.to_collapse = True
+                t.to_collapse = collapse
             elif hasattr(t, "author_id") and c.user._id == t.author_id:
-                t.author_collapse = True
+                t.author_collapse = collapse
+            elif isinstance(t, Message) and t.sr_id:
+                if srs[t.sr_id].is_moderator(c.user):
+                    t.to_collapse = collapse
             t._commit()
 
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id', multiple = True))
-    def POST_uncollapse_message(self, thing):
+                things = VByName('id', multiple = True))
+    def POST_collapse_message(self, things):
+        self.collapse_handler(things, True)
+
+    @noresponse(VUser(),
+                VModhash(),
+                things = VByName('id', multiple = True))
+    def POST_uncollapse_message(self, things):
+        self.collapse_handler(things, False)
+
+    def unread_handler(self, thing, unread):
         if not thing:
             return
-        for t in tup(thing):
-            if hasattr(t, "to_id") and c.user._id == t.to_id:
-                t.to_collapse = False
-            elif hasattr(t, "author_id") and c.user._id == t.author_id:
-                t.author_collapse = False
-            t._commit()
+        # if the message has a recipient, try validating that
+        # desitination first (as it is cheaper and more common)
+        if not hasattr(thing, "to_id") or c.user._id == thing.to_id:
+            queries.set_unread(thing, c.user, unread)
+        # if the message is for a subreddit, check that next
+        if hasattr(thing, "sr_id"):
+            sr = thing.subreddit_slow
+            if sr and sr.is_moderator(c.user):
+                queries.set_unread(thing, sr, unread)
 
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
     def POST_unread_message(self, thing):
-        if not thing:
-            return
-        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
-            return 
-        queries.set_unread(thing, True)
+        self.unread_handler(thing, True)
 
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
     def POST_read_message(self, thing):
-        if not thing: return
-        if hasattr(thing, "to_id") and c.user._id != thing.to_id:
-            return 
-        queries.set_unread(thing, False)
+        self.unread_handler(thing, False)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1203,10 +1219,14 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    parent = VByName('parent_id'))
     def POST_moremessages(self, form, jquery, parent):
-        if not parent.can_view():
+        if not parent.can_view_slow():
             return self.abort(403,'forbidden')
 
-        builder = MessageBuilder(c.user, parent = parent, skip = False)
+        if parent.sr_id:
+            builder = SrMessageBuilder(parent.subreddit_slow,
+                                       parent = parent, skip = False)
+        else:
+            builder = UserMessageBuilder(c.user, parent = parent, skip = False)
         listing = Listing(builder).listing()
         a = []
         for item in listing.things:
@@ -1221,19 +1241,18 @@ class ApiController(RedditController):
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
-                   depth = VInt('depth', min = 0, max = 8),
                    mc_id = nop('id'))
     def POST_morechildren(self, form, jquery,
-                          link, sort, children, depth, mc_id):
+                          link, sort, children, mc_id):
         user = c.user if c.user_is_loggedin else None
         if not link or not link.subreddit_slow.can_view(user):
-            return self.abort(403,'forbidden')
+            return abort(403,'forbidden')
 
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
                                      children)
             listing = Listing(builder, nextprev = False)
-            items = listing.get_items(starting_depth = depth, num = 20)
+            items = listing.get_items(num = 20)
             def _children(cur_items):
                 items = []
                 for cm in cur_items:
@@ -1400,6 +1419,107 @@ class ApiController(RedditController):
 
 
     @validatedForm(VAdmin(),
+                   hexkey=VLength("hexkey", max_length=32),
+                   nickname=VLength("nickname", max_length = 1000),
+                   status = VOneOf("status",
+                      ("new", "severe", "interesting", "normal", "fixed")))
+    def POST_edit_error(self, form, jquery, hexkey, nickname, status):
+        if form.has_errors(("hexkey", "nickname", "status"),
+                           errors.NO_TEXT, errors.INVALID_OPTION):
+            pass
+
+        if form.has_error():
+            return
+
+        key = "error_nickname-%s" % str(hexkey)
+        g.hardcache.set(key, nickname, 86400 * 365)
+
+        key = "error_status-%s" % str(hexkey)
+        g.hardcache.set(key, status, 86400 * 365)
+
+        form.set_html(".status", _('saved'))
+
+    @validatedForm(VSponsor(),
+                   ad = VByName("fullname"),
+                   colliding_ad=VAdByCodename(("codename", "fullname")),
+                   codename = VLength("codename", max_length = 100),
+                   imgurl = VLength("imgurl", max_length = 1000),
+                   linkurl = VLength("linkurl", max_length = 1000))
+    def POST_editad(self, form, jquery, ad, colliding_ad, codename,
+                    imgurl, linkurl):
+        if form.has_errors(("codename", "imgurl", "linkurl"),
+                           errors.NO_TEXT):
+            pass
+
+        if form.has_errors(("codename"), errors.INVALID_OPTION):
+            form.set_html(".status", "some other ad has that codename")
+            pass
+
+        if form.has_error():
+            return
+
+        if ad is None:
+            Ad._new(codename, imgurl, linkurl)
+            form.set_html(".status", "saved. reload to see it.")
+            return
+
+        ad.codename = codename
+        ad.imgurl = imgurl
+        ad.linkurl = linkurl
+        ad._commit()
+        form.set_html(".status", _('saved'))
+
+    @validatedForm(VSponsor(),
+                   ad = VByName("fullname"),
+                   sr = VSubmitSR("community"),
+                   weight = VInt("weight",
+                                 coerce=False, min=0, max=100000),
+                   )
+    def POST_assignad(self, form, jquery, ad, sr, weight):
+        if form.has_errors("ad", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("community", errors.SUBREDDIT_REQUIRED,
+            errors.SUBREDDIT_NOEXIST, errors.SUBREDDIT_NOTALLOWED):
+            pass
+
+        if form.has_errors("fullname", errors.NO_TEXT):
+            pass
+
+        if form.has_errors("weight", errors.BAD_NUMBER):
+            pass
+
+        if form.has_error():
+            return
+
+        if ad.codename == "DART" and sr.name == g.default_sr and weight != 100:
+            log_text("Bad default DART weight",
+                     "The default DART weight can only be 100, not %s."
+                     % weight,
+                     "error")
+            abort(403, 'forbidden')
+
+        existing = AdSR.by_ad_and_sr(ad, sr)
+
+        if weight is not None:
+            if existing:
+                existing.weight = weight
+                existing._commit()
+            else:
+                AdSR._new(ad, sr, weight)
+
+            form.set_html(".status", _('saved'))
+
+        else:
+            if existing:
+                existing._delete()
+                AdSR.by_ad(ad, _update=True)
+                AdSR.by_sr(sr, _update=True)
+
+            form.set_html(".status", _('deleted'))
+
+
+    @validatedForm(VAdmin(),
                    award = VByName("fullname"),
                    colliding_award=VAwardByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
@@ -1448,10 +1568,8 @@ class ApiController(RedditController):
         if form.has_errors("award", errors.NO_TEXT):
             pass
 
-        if form.has_errors("recipient", errors.USER_DOESNT_EXIST):
-            pass
-
-        if form.has_errors("recipient", errors.NO_USER):
+        if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
+                                        errors.NO_USER):
             pass
 
         if form.has_errors("fullname", errors.NO_TEXT):
@@ -1488,6 +1606,7 @@ class ApiController(RedditController):
             return self.abort404()
         recipient = trophy._thing1
         award = trophy._thing2
+
         trophy._delete()
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
@@ -1566,7 +1685,7 @@ class ApiController(RedditController):
                             "%s_%s" % (s._fullname, s.sponsorship_name))
 
 
-    @json_validate(query = nop('query'))
+    @json_validate(query = VPrintable('query', max_length = 50))
     def POST_search_reddit_names(self, query):
         names = []
         if query:

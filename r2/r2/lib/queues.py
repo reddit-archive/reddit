@@ -68,9 +68,12 @@ class RedditQueueMap(QueueMap):
         self._q('scraper_q')
         self._q('searchchanges_q', self_refer=True)
         self._q('newcomments_q')
+        self._q('commentstree_q')
         # this isn't in use until the spam_q plumbing is
         #self._q('newpage_q')
         self._q('register_vote_q', self_refer=True)
+        self._q('log_q', self_refer=True)
+        self._q('usage_q', self_refer=True)
 
     def bindings(self):
         self.newlink_bindings()
@@ -87,6 +90,7 @@ class RedditQueueMap(QueueMap):
 
     def newcomment_bindings(self):
         self._bind('new_comment', 'newcomments_q')
+        self._bind('new_comment', 'commentstree_q')
 
     def newsubreddit_bindings(self):
         self._bind('new_subreddit', 'searchchanges_q')

@@ -44,6 +44,13 @@ def _system_email(email, body, kind, reply_to = "", thing = None):
                                kind, body = body, reply_to = reply_to,
                                thing = thing)
 
+def _nerds_email(body, from_name, kind):
+    """
+    For sending email to the nerds who run this joint
+    """
+    Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
+                               kind, body = body)
+
 def verify_email(user, dest):
     """
     For verifying an email address
@@ -93,6 +100,10 @@ def i18n_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
                            reply_to = reply_to)
 
+def nerds_email(body, from_name=g.domain):
+    """Queues a feedback email to the nerds running this site."""
+    return _nerds_email(body, from_name, Email.Kind.NERDMAIL)
+
 def share(link, emails, from_name = "", reply_to = "", body = ""):
     """Queues a 'share link' email."""
     now = datetime.datetime.now(g.tz)
@@ -138,11 +149,15 @@ def send_queued_mail(test = False):
 
             should_queue = email.should_queue()
             # check only on sharing that the mail is invalid
-            if email.kind == Email.Kind.SHARE and should_queue:
-                email.body = Share(username = email.from_name(),
-                                   msg_hash = email.msg_hash,
-                                   link = email.thing,
-                                   body = email.body).render(style = "email")
+            if email.kind == Email.Kind.SHARE:
+                if should_queue:
+                    email.body = Share(username = email.from_name(),
+                                       msg_hash = email.msg_hash,
+                                       link = email.thing,
+                                       body =email.body).render(style = "email")
+                else:
+                    email.set_sent(rejected = True)
+                    continue
             elif email.kind == Email.Kind.OPTOUT:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
                                       leave = True).render(style = "email")

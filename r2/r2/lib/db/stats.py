@@ -78,24 +78,3 @@ def default_queries():
     queries.append(q)
 
     return queries
-
-def run_queries():
-    from r2.models import subreddit
-    from pylons import g
-    cache = g.cache
-    queries = cache.get(cache_key) or default_queries()
-    
-    for q in queries:
-        q._read_cache = False
-        q._write_cache = True
-        q._cache_time = cache_time
-        q._list()
-
-    #find top
-    q = default_queries()[0]
-    q._limit = 1
-    top_link = list(q)[0]
-    if top_link:
-        top_link._load()
-        top_link.top_link = True
-        top_link._commit()

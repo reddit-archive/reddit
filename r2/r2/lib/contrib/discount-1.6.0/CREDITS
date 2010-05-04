@@ -1,0 +1,33 @@
+Discount is primarily my work, but it has only reached the point
+where it is via contributions, critiques, and bug reports from a
+host of other people, some of which are listed before.   If your
+name isn't on this list, please remind me
+				    -david parsons (orc@pell.chi.il.us)
+
+
+Josh Wood	--  Plan9 support.
+Mike Schiraldi	--  Reddit style automatic links, MANY MANY MANY
+		    bug reports about boundary conditions and
+		    places where I didn't get it right.
+Jjgod Jiang	--  Table of contents support.
+Petite Abeille	--  Many bug reports about places where I didn't
+		    get it right.
+Tim Channon	--  inspiration for the `mkd_xhtmlpage()` function
+Christian Herenz--  Many bug reports regarding my implementation of
+		    `[]()` and `![]()`
+A.S.Bradbury	--  Portability bug reports for 64 bit systems.
+Joyent		--  Loan of a solaris box so I could get discount
+		    working under solaris.
+Ryan Tomayko	--  Portability requests (and the rdiscount ruby
+		    binding.)
+yidabu		--  feedback on the documentation, bug reports
+		    against utf-8 support.
+Pierre Joye	--  bug reports, php discount binding.
+Masayoshi Sekimura- perl discount binding.
+Jeremy Hinegardner- bug reports about list handling.
+Andrew White	--  bug reports about the format of generated urls.
+Steve Huff	--  bug reports about Makefile portability (for Fink)
+Ignacio Burgue?o--  bug reports about `>%class%`
+Henrik Nyh	--  bug reports about embedded html handling.
+
+		    

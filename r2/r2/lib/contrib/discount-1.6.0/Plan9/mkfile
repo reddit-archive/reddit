@@ -1,0 +1,37 @@
+BIN=/$objtype/bin
+CC='cc -D_BSD_EXTENSION'
+
+markdown:
+	ape/psh -c 'cd .. && make'
+
+none:V: markdown
+
+test: markdown
+	ape/psh -c 'cd ..&& make test'
+
+install: markdown
+	cp ../markdown $BIN/markdown
+
+install.progs: install
+	cp ../makepage $BIN/makepage
+	cp ../mkd2html $BIN/mkd2html
+
+install.libs: install
+	cp ../mkdio.h /sys/include/ape/mkdio.h
+	cp ../libmarkdown.a /$objtype/lib/ape/libmarkdown.a
+
+install.man: install
+	cp markdown.1 /sys/man/1/markdown
+	cp markdown.2 /sys/man/2/markdown
+	cp markdown.6 /sys/man/6/markdown
+
+installall:V: install.libs install.man install.progs
+
+config:
+	ape/psh -c 'cd .. && ./configure.sh $CONFIG'
+
+clean:
+	ape/psh -c 'cd .. && make clean'
+
+nuke:
+	ape/psh -c 'cd .. && make distclean'

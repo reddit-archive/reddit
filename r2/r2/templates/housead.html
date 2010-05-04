@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+  <head>
+    <title></title>
+    <style type="text/css">
+      #ad {
+        background-color: white;
+        width: 100%;
+        text-align: center;
+        font: normal small verdana, arial, sans-serif;
+      }
+      #adlink {
+        background-color: white;
+        width: 100%;
+        text-align: center;
+        font: normal small verdana, arial, sans-serif;
+      }
+      #adlink {width: 100%; text-align: center;}
+      #adlink a {color: #336699; text-decoration: none}
+      #adlink a:hover {text-decoration: underline}
+      #ad a img {border: none}
+    </style>
+  </head>
+  <body style="padding: 0; margin: 0;">
+    <div id="ad">
+      <a target="_top" href="${thing.linkurl}">
+        <img src="${thing.imgurl}" />
+      </a>
+    </div>
+    <div id="adlink">
+      <a target="_top" href="${thing.submit_link}">
+        ${_("reddit this ad")}
+      </a>
+    </div>
+  </body>
+</html>

@@ -163,6 +163,14 @@ function update_title(elem) {
             ${_("show thumbnail images of content")}
           </label>
         </li>
+        <li>
+          <input class="nomargin" type="checkbox" 
+                 name="use_whitelist" id="whitelist"
+                 ${thing.site and thing.site.use_whitelist and "checked='checked'" or ""}/>
+          <label for="whitelist">
+            ${_("enable whitelisting on this reddit")}
+          </label>
+        </li>
       </ul>
     </div>
   </%utils:line_field>
@@ -233,57 +241,6 @@ function update_title(elem) {
     </%utils:line_field>
 
   %if c.user_is_admin:
-    <%
-       ad_type = "default"
-       if thing.site.ad_type == "custom" or thing.site.ad_file != thing.site._defaults.get("ad_file"):
-          ad_type = "custom"
-       elif thing.site.ad_type == "basic":
-          ad_type = "basic"
-     %>
-    <%utils:line_field title="${_('ad frame')}">
-    <div class="delete-field">
-      <table valign="top">
-      <tr>
-        <td class="nowrap nopadding">
-          <input name="ad" type="radio" value="default" id="ad_default"
-                 ${"checked='checked'" if ad_type == 'default' else ''}
-                 class="nomargin"/>
-          <label for="ad_default">${_("default")}</label>
-        </td>
-        <td class="leftpad"><span class="gray">
-          ${_("Use the same ad frame as on the front page.")}
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td class="nowrap nopadding">
-          <input name="ad" type="radio" value="basic" id="ad_basic"
-                 ${"checked='checked'" if ad_type == 'basic' else ''}
-                 class="nomargin"/>
-          <label for="ad_basic">${_("basic")}</label>
-        </td>
-        <td class="leftpad"><span class="gray">
-          ${_("Use the default customized (subreddit-specific) DART ad frame")}
-        </span></td>
-      </tr>
-      <tr>
-        <td class="nowrap nopadding">
-          <input name="ad" type="radio" value="custom" id="ad_custom" 
-                 class="nomargin"
-                 ${"checked='checked'" if ad_type == 'custom' else ''} />
-          <label for="ad_custom">${_("custom")}</label>
-        </td>
-        <td class="leftpad"><span class="gray">
-          ${_("specify the location of the ad frame:")}
-          </span>
-          <input type="text" name="ad-location" value="${thing.site.ad_file}"
-                 class="small-text"/>
-        </td>
-      </tr>
-    </table>
-    </div>
-    </%utils:line_field>
-
     <%utils:line_field title="${_('sponsorship')}">
       <ul class="upload">
         <li>

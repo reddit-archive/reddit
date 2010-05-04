@@ -1,0 +1,123 @@
+.\"
+.Dd December 20, 2007
+.Dt MARKDOWN 3
+.Os Mastodon
+.Sh NAME
+.Nm markdown
+.Nd process Markdown documents
+.Sh LIBRARY
+Markdown 
+.Pq libmarkdown , -lmarkdown
+.Sh SYNOPSIS
+.Fd #include <mkdio.h>
+.Ft MMIOT
+.Fn *mkd_in "FILE *input" "int flags"
+.Ft MMIOT
+.Fn *mkd_string "char *string" "int size" "int flags"
+.Ft int
+.Fn markdown "MMIOT *doc" "FILE *output" "int flags"
+.Sh DESCRIPTION
+These functions
+convert
+.Em Markdown
+documents and strings into HTML.
+.Fn markdown
+processes an entire document, while
+.Fn mkd_text
+processes a single string.
+.Pp
+To process a file, you pass a FILE* to
+.Fn mkd_in ,
+and if it returns a nonzero value you pass that in to 
+.Fn markdown ,
+which then writes the converted document to the specified
+.Em FILE* .
+If your input has already been written into a string (generated
+input or a file opened 
+with 
+.Xr mmap 2 )
+you can feed that string to 
+.Fn mkd_string
+and pass its return value to
+.Fn markdown.
+.Pp
+.Fn Markdown
+accepts the following flag values (or-ed together if needed)
+to restrict how it processes input:
+.Bl -tag -width MKD_SAFELINK -compact
+.It Ar MKD_NOIMAGE
+Do not process `![]' and
+remove
+.Em \<img\>
+tags from the output.
+.It Ar MKD_NOLINKS
+Do not process `[]' and remove
+.Em \<a\>
+tags from the output.
+.It Ar MKD_NOPANTS
+Do not do Smartypants-style mangling of quotes, dashes, or ellipses.
+.It Ar MKD_STRICT
+Disable superscript and relaxed emphasis processing (if they are configured;
+otherwise it's a no-op.)
+.\" .It Ar MKD_QUOT
+.\" Expand
+.\" .Ar \&"
+.\" to \&&quot;.
+.It Ar MKD_NOHEADER
+Do not attempt to parse any Pandoc-style headers.
+.It Ar MKD_TABSTOP
+When reading documents, expand tabs to 
+.Em 4
+spaces instead of whatever
+.Nm
+was originally configured for.
+.It Ar MKD_TOC
+Label all headers for use with the
+.Fn mkd_generatetoc
+and
+.Fn mkd_toc
+functions.
+.It Ar MKD_1_COMPAT
+MarkdownTest_1.0 compatability flag; trim trailing spaces from the
+first line of code blocks and disable implicit reference links.
+.It Ar MKD_AUTOLINK
+Greedily urlify links -- if
+.Em MKD_AUTOLINK
+is set, urls will be converted into hyperlinks even if they
+aren't encased in
+.Em <> .
+.It Ar MKD_SAFELINK
+Don't make hyperlinks from 
+.Em [][]
+links that have unknown url types.
+.It Ar MKD_NOTABLES
+Don't process tables.
+.El
+.Sh RETURN VALUES
+.Fn markdown
+returns 0 on success, 1 on failure.
+The
+.Fn mkd_in
+and
+.Fn mkd_string
+functions return a MMIOT* on success, null on failure.
+.Sh SEE ALSO
+.Xr markdown 1 ,
+.Xr mkd-functions 3 ,
+.Xr mkd-line 3 ,
+.Xr markdown 7 ,
+.Xr mkd-extensions 7 ,
+.Xr mmap 2 .
+.Pp
+http://daringfireball.net/projects/markdown/syntax
+.Sh BUGS
+Error handling is minimal at best.
+.Pp
+The
+.Ar MMIOT
+created by
+.Fn mkd_string
+is deleted by the
+.Nm
+function.
+

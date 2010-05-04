@@ -52,7 +52,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
   <span class="head">
   <%
    taglinetext = ''
-   if thing.to_id == c.user._id:
+   if thing.to_id == c.user._id or thing.to_id is None:
         taglinetext = _("from %(author)s sent %(when)s ago")
    elif thing.author_id == c.user._id:
         taglinetext = _("to %(dest)s sent %(when)s ago")
@@ -61,10 +61,15 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 
    taglinetext = taglinetext.replace(' ', '&nbsp;')
    author = WrappedUser(thing.author, thing.attribs, thing).render()
+   if thing.sr_id:
+     updated_author = _("%(author)s via %(subreddit)s").replace(' ', '&nbsp;')
+     subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path, 
+                                          thing.subreddit.name)
+     author = updated_author % dict(author = author, subreddit = subreddit)
   %>
   ${unsafe(taglinetext % dict(when = thing.timesince, 
                               author= u"<b>%s</b>" % author,
-                              dest = u"<b>%s</b>" % thing.to.name))}
+                              dest = u"<b>%s</b>" % (thing.to.name if thing.to else "")))}
   </span>
   %if c.user_is_admin:
     ${self.admintagline()}
@@ -74,12 +79,20 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
 <%def name="subject()">
   <p class="subject">
     %if getattr(thing, "is_parent", False):
-       <span class="correspondent rounded">
-         <%
-            corr = thing.author if thing.recipient else thing.to
-          %>
-         ${WrappedUser(corr)}
-       </span>
+       %if thing.sr_id:
+         <span class="correspondent reddit rounded">
+           <a href="${thing.subreddit.path}message/moderator/inbox">
+             #${thing.subreddit.name}
+           </a>
+         </span>
+       %else:
+         <span class="correspondent rounded">
+           <%
+              corr = thing.author if thing.recipient else thing.to
+            %>
+           ${WrappedUser(corr)}
+         </span>
+       %endif
     %endif
     ${thing.subject}
   %if thing.was_comment:

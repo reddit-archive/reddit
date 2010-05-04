@@ -98,12 +98,12 @@ menu =   MenuHandler(hot          = _('hot'),
                      mobile       = _("mobile"), 
                      store        = _("store"),  
                      ad_inq       = _("inquire about advertising"),
-                     toplinks     = _("top links"),
                      random       = _('random'),
                      iphone       = _("iPhone app"),
 
                      #preferences
                      options      = _('options'),
+                     feeds        = _("RSS feeds"),
                      friends      = _("friends"),
                      update       = _("password/email"),
                      delete       = _("delete"),
@@ -126,6 +126,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      about        = _("about"),
                      edit         = _("edit this reddit"),
                      moderators   = _("edit moderators"),
+                     modmail      = _("moderator mail"),
                      contributors = _("edit contributors"),
                      banned       = _("ban users"),
                      banusers     = _("ban users"),
@@ -135,7 +136,10 @@ menu =   MenuHandler(hot          = _('hot'),
                      mine         = _("my reddits"),
 
                      i18n         = _("help translate"),
+                     errors       = _("errors"),
                      awards       = _("awards"),
+                     ads          = _("ads"),
+                     usage        = _("usage"),
                      promoted     = _("promoted"),
                      reporters    = _("reporters"),
                      reports      = _("reported links"),
@@ -160,7 +164,9 @@ menu =   MenuHandler(hot          = _('hot'),
                      live_promos    = _('live'),
                      unpaid_promos  = _('unpaid'),
                      pending_promos = _('pending'),
-                     rejected_promos = _('rejected')
+                     rejected_promos = _('rejected'),
+
+                     whitelist = _("whitelist")
                      )
 
 def menu_style(type):
@@ -286,6 +292,13 @@ class NavButton(Styled):
         """returns the title of the button when selected (for cases
         when it is different from self.title)"""
         return self.title
+
+class ModeratorMailButton(NavButton):
+    def is_selected(self):
+        if c.default_sr and not self.sr_path:
+            return NavButton.is_selected(self)
+        elif not c.default_sr and self.sr_path:
+            return NavButton.is_selected(self)
 
 class OffsiteButton(NavButton):
     def build(self, base_path = ''):

@@ -33,7 +33,6 @@ from datetime import datetime, timedelta
 import random
 
 expire_delta = timedelta(minutes = 2)
-TOP_CACHE = 1800
 max_items = 150
 
 def access_key(sr):
@@ -77,42 +76,54 @@ def cached_query(query, sr):
 
     return res
 
-def get_hot(sr, only_fullnames = False):
+def get_hot(srs, only_fullnames = False):
     """Get the (fullname, hotness, epoch_seconds) for the hottest
        links in a subreddit. Use the query-cache to avoid some lookups
        if we can."""
     from r2.lib.db.thing import Query
     from r2.lib.db.queries import CachedResults
 
-    q = sr.get_links('hot', 'all')
-    if isinstance(q, Query):
-        links = cached_query(q, sr)
-        res = [(link._fullname, link._hot, epoch_seconds(link._date))
-               for link in links]
-    elif isinstance(q, CachedResults):
-        # we're relying on an implementation detail of CachedResults
-        # here, where it's storing tuples that look exactly like the
-        # return-type we want, to make our sorting a bit cheaper
-        q.fetch()
-        res = list(q.data)
+    ret = []
+    queries = [sr.get_links('hot', 'all') for sr in srs]
 
-    age_limit = epoch_seconds(utils.timeago('%d days' % g.HOT_PAGE_AGE))
-    return [(fname if only_fullnames else (fname, hot, date))
-            for (fname, hot, date) in res
-            if date > age_limit]
+    # fetch these all in one go
+    cachedresults = filter(lambda q: isinstance(q, CachedResults), queries)
+    CachedResults.fetch_multi(cachedresults)
+
+    for q in queries:
+        if isinstance(q, Query):
+            links = cached_query(q, sr)
+            res = [(link._fullname, link._hot, epoch_seconds(link._date))
+                   for link in links]
+        elif isinstance(q, CachedResults):
+            # we're relying on an implementation detail of
+            # CachedResults here, where it's storing tuples that look
+            # exactly like the return-type we want, to make our
+            # sorting a bit cheaper
+            res = list(q.data)
+
+        # remove any that are too old
+        age_limit = epoch_seconds(utils.timeago('%d days' % g.HOT_PAGE_AGE))
+        res = [(fname if only_fullnames else (fname, hot, date))
+               for (fname, hot, date) in res
+               if date > age_limit]
+        ret.append(res)
+
+    return ret
 
 @memoize('normalize_hot', time = g.page_cache_time)
 def normalized_hot_cached(sr_ids):
     """Fetches the hot lists for each subreddit, normalizes the
        scores, and interleaves the results."""
     results = []
-    srs = Subreddit._byID(sr_ids, data = True, return_dict = False)
-    for sr in srs:
-        # items =:= (fname, hot, epoch_seconds), ordered desc('_hot')
-        items = get_hot(sr)[:max_items]
-
+    srs = Subreddit._byID(sr_ids, return_dict = False)
+    hots = get_hot(srs)
+    for items in hots:
         if not items:
             continue
+
+        # items =:= (fname, hot, epoch_seconds), ordered desc('_hot')
+        items = items[:max_items]
 
         # the hotness of the hottest item in this subreddit
         top_score = max(items[0][1], 1)

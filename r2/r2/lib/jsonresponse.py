@@ -22,7 +22,7 @@
 from r2.lib.utils import tup
 from r2.lib.captcha import get_iden
 from r2.lib.wrapped import Wrapped, StringTemplate
-from r2.lib.filters import websafe_json
+from r2.lib.filters import websafe_json, spaceCompress
 from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
 from r2.lib.pages.things import wrap_links
@@ -51,7 +51,7 @@ class JsonResponse(object):
         self._errors = set()
         self._new_captcha = False
         self._data = {}
-        
+
     def send_failure(self, error):
         c.errors.add(error)
         self._clear()
@@ -69,7 +69,7 @@ class JsonResponse(object):
             res['data'] = self._data
         res['errors'] = [(e[0], c.errors[e].message) for e in self._errors]
         return {"json": res}
-    
+
     def set_error(self, error_name, field_name):
         self._errors.add((error_name, field_name))
 
@@ -86,6 +86,9 @@ class JsonResponse(object):
                     have_error = True
         return have_error
 
+    def process_rendered(self, res):
+        return res
+
     def _things(self, things, action, *a, **kw):
         """
         function for inserting/replacing things in listings.
@@ -94,7 +97,7 @@ class JsonResponse(object):
         if not all(isinstance(t, Wrapped) for t in things):
             wrap = kw.pop('wrap', Wrapped)
             things = wrap_links(things, wrapper = wrap)
-        data = [t.render() for t in things]
+        data = [self.process_rendered(t.render()) for t in things]
 
         if kw:
             for d in data:
@@ -114,13 +117,13 @@ class JsonResponse(object):
 
     def _send_data(self, **kw):
         self._data.update(kw)
-            
+
 
 class JQueryResponse(JsonResponse):
     """
     class which mimics the jQuery in javascript for allowing Dom
     manipulations on the client side.
-    
+
     An instantiated JQueryResponse acts just like the "$" function on
     the JS layer with the exception of the ability to run arbitrary
     code on the client.  Selectors and method functions evaluate to
@@ -144,7 +147,13 @@ class JQueryResponse(JsonResponse):
             self.objs = None
             self.ops  = None
         JsonResponse._clear(self)
-        
+
+    def process_rendered(self, res):
+        if 'data' in res:
+            if 'content' in res['data']:
+                res['data']['content'] = spaceCompress(res['data']['content'])
+        return res
+
     def send_failure(self, error):
         c.errors.add(error)
         self._clear()
@@ -181,12 +190,11 @@ class JQueryResponse(JsonResponse):
                 selector += ".field-" + field_name
             message = c.errors[(error_name, field_name)].message
             form.find(selector).show().html(message).end()
-
         return {"jquery": self.ops}
 
     # thing methods
     #--------------
-    
+
     def _things(self, things, action, *a, **kw):
         data = JsonResponse._things(self, things, action, *a, **kw)
         new = self.__getattr__(action)

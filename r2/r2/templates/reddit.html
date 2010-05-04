@@ -26,6 +26,7 @@
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
+   from r2.models import make_feedurl, Sub
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
@@ -74,8 +75,13 @@
   <link rel='shortcut icon' href="${static('favicon.ico')}"
         type="image/x-icon" />
   %if thing.extension_handling:
+    <%
+       rss= add_sr(join_urls(request.path,'.rss'))
+       if thing.extension_handling == "private":
+          rss = make_feedurl(c.user, rss)
+     %>
     <link rel="alternate" type="application/rss+xml" title="RSS"
-          href="${add_sr(join_urls(request.path,'.rss'))}" />
+          href="${rss}" />
   %endif
 
   <!--[if lt IE 7]>
@@ -156,6 +162,31 @@
       %endif
     %endif
     ${framebuster()}
+    ##
+    ## 3rd party tracking stuff lives below here
+    ##
+    %if g.googleanalytics:
+        <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+        </script>
+        <script type="text/javascript">
+          try {
+            var pageTracker = _gat._getTracker("${g.googleanalytics}");
+            pageTracker._trackPageview();
+         } catch(err) {}
+        </script>
+    %endif
+    <%
+       fullpath = add_sr(request.fullpath, force_hostname = True,
+                    sr_path = (c.site != Sub))
+       # drop the scheme and the first /
+       fullpath = ':'.join(fullpath.split(':')[1:])[1:]
+     %>
+    <iframe id="comscore" class="to-pay-the-bills" frameborder="0"
+            style="width:1px; height:1px"
+            scrolling="no" src="/comscore-iframe${fullpath}">
+    </iframe>
   </body>
 </%def>
 

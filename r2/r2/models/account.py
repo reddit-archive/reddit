@@ -23,7 +23,7 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
+from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow, UrlParser
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -61,6 +61,7 @@ class Account(Thing):
                      pref_mark_messages_read = True,
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
+                     pref_private_feeds = True,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,
@@ -301,7 +302,6 @@ class Account(Thing):
         else:
             g.hardcache.set("cup_info-%d" % self._id, cup_info, cache_lifetime)
 
-
     def remove_cup(self):
         g.hardcache.delete("cup_info-%d" % self._id)
 
@@ -312,6 +312,7 @@ class Account(Thing):
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
+
 
 class FakeAccount(Account):
     _nodb = True
@@ -338,6 +339,29 @@ def valid_cookie(cookie):
         return (account, True)
     return (False, False)
 
+def valid_feed(name, feedhash, path):
+    if name and feedhash and path:
+        from r2.lib.template_helpers import add_sr
+        path = add_sr(path)
+        try:
+            user = Account._by_name(name)
+            if (user.pref_private_feeds and
+                feedhash == make_feedhash(user, path)):
+                return user
+        except NotFound:
+            pass
+
+def make_feedhash(user, path):
+    return sha.new("".join([user.name, user.password, g.FEEDSECRET])
+                   ).hexdigest()
+
+def make_feedurl(user, path, ext = "rss"):
+    u = UrlParser(path)
+    u.update_query(user = user.name,
+                   feed = make_feedhash(user, path))
+    u.set_extension(ext)
+    return u.unparse()
+
 def valid_login(name, password):
     try:
         a = Account._by_name(name)
@@ -358,7 +382,7 @@ def valid_password(a, password):
             salt = a.password[:3]
             if a.password == passhash(a.name, password, salt):
                 return a
-    except AttributeError:
+    except AttributeError, UnicodeEncodeError:
         return False
 
 def passhash(username, password, salt = ''):
@@ -398,8 +422,18 @@ class DeletedUser(FakeAccount):
     def name(self):
         return '[deleted]'
 
+    @property
+    def _deleted(self):
+        return True
+
     def _fullname(self):
         raise NotImplementedError
 
     def _id(self):
         raise NotImplementedError
+
+    def __setattr__(self, attr, val):
+        if attr == '_deleted':
+            pass
+        else:
+            object.__setattr__(self, attr, val)

@@ -65,6 +65,8 @@ thing id-${what._fullname}
 
    if thing.show_spam:
      rowclass = thing.rowstyle + " spam"
+     if thing.show_spam == "author":
+       rowclass += " banned-user"
    elif thing.show_reports:
      rowclass = thing.rowstyle + " reported"
    else:

@@ -19,7 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%!
+   from r2.models import Sub
+ %>
 <%namespace file="utils.html" import="plain_link" />
 
 <%
@@ -35,13 +37,13 @@
 %if thing.nextprev and (thing.prev or thing.next):
   <p class="nextprev"> ${_("view more:")}&#32;
   %if thing.prev:
-    ${plain_link(_("prev"), thing.prev, rel="nofollow,prev")}  
+    ${plain_link(_("prev"), thing.prev, _sr_path = (c.site != Sub), rel="nofollow,prev")}  
   %endif
   %if thing.prev and thing.next:
     &#32;|&#32;
   %endif
   %if thing.next:
-    ${plain_link(_("next"), thing.next, rel="nofollow,prev")}  
+    ${plain_link(_("next"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow,prev")}  
   %endif
   </p>
 %endif

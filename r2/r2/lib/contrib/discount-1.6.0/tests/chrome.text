@@ -1,0 +1,13 @@
+->###chrome with my markdown###<-
+
+1. `(c)`  -> `&copy;`  (c)
+2. `(r)`  -> `&reg;`   (r)
+3. `(tm)` -> `&trade;` (tm)
+4. `...`  -> `&hellip;` ...
+5. `--`   -> `&emdash;` --
+6. `-`    -> `&ndash;`  - (but not if it's between-words)
+7. "fancy quoting"
+8. 'fancy quoting (#2)'
+9. don't do it unless it's a real quote.
+10. `` (`) ``
+

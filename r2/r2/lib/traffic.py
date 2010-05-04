@@ -25,7 +25,7 @@ from cPickle import loads
 from utils import query_string
 import os, socket, time, datetime
 from pylons import g
-from r2.lib.memoize import memoize, clear_memo
+from r2.lib.memoize import memoize
 
 def load_traffic_uncached(interval, what, iden, 
                           start_time = None, stop_time = None,

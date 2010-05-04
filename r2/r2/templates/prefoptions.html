@@ -218,6 +218,10 @@
         ${checkbox(_("make safe(r) for work."), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
       <br/>
         ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
+      <br/>
+        ${checkbox(_("enable private RSS feeds"), "private_feeds")} 
+       &#32;<span class="little gray">
+        ${_("(available from the 'RSS feed' tab in prefs)")}</span>
     </td>
   <tr>
     <th>${_("privacy options")}</th>

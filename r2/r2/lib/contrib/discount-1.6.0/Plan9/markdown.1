@@ -1,0 +1,169 @@
+.TH MARKDOWN 1 
+.SH NAME
+markdown \- convert Markdown text to HTML
+.SH SYNOPSIS
+.B markdown
+[
+.B -dTV
+]
+[
+.BI -b " url-base
+]
+[
+.BI -F " bitmap
+]
+[
+.BI -f " flags
+]
+[
+.BI -o " ofile
+]
+[
+.BI -s " text
+]
+[
+.BI -t " text
+]
+[
+.I file
+]
+.SH DESCRIPTION
+The
+.I markdown
+utility reads the
+.IR Markdown (6)-formatted
+.I file
+(or standard input) and writes its
+.SM HTML
+fragment representation on standard output.
+.PP
+The options are:
+.TF dfdoptions
+.TP
+.BI -b " url-base
+Links in source begining with
+.B /
+will be prefixed with
+.I url-base
+in the output.
+.TP
+.B -d
+Instead of printing an
+.SM HTML
+fragment, print a parse tree.
+.TP
+.BI -F " bitmap
+Set translation flags.
+.I Bitmap
+is a bit map of the various configuration options described in
+.IR markdown (2).
+.TP
+.BI -f " flags
+Set or clear various translation
+.IR flags ,
+described below.
+.I Flags
+are in a comma-delimited list, with an optional
+.B +
+(set) prefix on each flag.
+.TP
+.BI -o " ofile
+Write the generated
+.SM HTML
+to
+.IR ofile .
+.TP
+.BI -s " text
+Use the
+.IR markdown (2)
+function to format the
+.I text
+on standard input.
+.TP
+.B -T
+Under
+.B -f
+.BR toc ,
+print the table of contents as an unordered list before the usual
+.SM HTML
+output.
+.TP
+.BI -t " text
+Use
+.IR mkd_text
+(in
+.IR markdown (2))
+to format
+.I text
+instead of processing standard input with
+.IR markdown .
+.TP
+.B -V
+Show version number and configuration. If the version includes the string
+.BR DL_TAG ,
+.I markdown
+was configured with definition list support. If the version includes the string
+.BR HEADER ,
+.I markdown
+was configured to support pandoc header blocks.
+.PD
+.SS TRANSLATION FLAGS
+The translation flags understood by
+.B -f
+are:
+.TF \ noheader
+.TP
+.B noimage
+Don't allow image tags.
+.TP
+.B nolinks
+Don't allow links.
+.TP
+.B nohtml
+Don't allow any embedded HTML.
+.TP
+.B cdata
+Generate valid XML output.
+.TP
+.B noheader
+Do not process pandoc headers.
+.TP
+.B notables
+Do not process the syntax extension for tables.
+.TP
+.B tabstops
+Use Markdown-standard 4-space tabstops.
+.TP
+.B strict
+Disable superscript and relaxed emphasis.
+.TP
+.B relax
+Enable superscript and relaxed emphasis (the default).
+.TP
+.B toc
+Enable table of contents support, generated from headings (in 
+.IR markdown (6))
+in the source.
+.TP
+.B 1.0
+Revert to Markdown 1.0 compatibility.
+.PD
+.PP
+For example,
+.B -f nolinks,quot
+tells
+.I markdown
+not to allow
+.B <a>
+tags, and to expand double quotes.
+.SH SOURCE
+.B /sys/src/cmd/discount
+.SH SEE ALSO
+.IR markdown (2),
+.IR markdown (6)
+.PP
+http://daringfireball.net/projects/markdown/,
+``Markdown''.
+.SH DIAGNOSTICS
+.I Markdown
+exits 0 on success and >0 if an error occurs.

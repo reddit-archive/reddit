@@ -29,28 +29,9 @@ from pylons.i18n import _
 from r2.models import *
 import sha
 
-def to_referer(func, **params):
-    def _to_referer(self, *a, **kw):
-        res = func(self, *a, **kw)
-        dest = res.get('redirect') or request.referer or '/'
-        return self.redirect(dest + query_string(params))        
-    return _to_referer
-
-
 class PostController(ApiController):
     def api_wrapper(self, kw):
         return Storage(**kw)
-
-#TODO: feature disabled for now
-#     @to_referer
-#     @validate(VUser(),
-#               key = VOneOf('key', ('pref_bio','pref_location',
-#                                    'pref_url')),
-#               value = nop('value'))
-#     def POST_user_desc(self, key, value):
-#         setattr(c.user, key, value)
-#         c.user._commit()
-#         return {}
 
     def set_options(self, all_langs, pref_lang, **kw):
         if c.errors.errors:
@@ -87,7 +68,9 @@ class PostController(ApiController):
         self.set_options( all_langs, pref_lang)
         return self.redirect(request.referer)
 
-    @validate(pref_frame = VBoolean('frame'),
+    @validate(VUser(),
+              VModhash(),
+              pref_frame = VBoolean('frame'),
               pref_clickgadget = VBoolean('clickgadget'),
               pref_organic = VBoolean('organic'),
               pref_newwindow = VBoolean('newwindow'),
@@ -110,6 +93,7 @@ class PostController(ApiController):
               pref_mark_messages_read = VBoolean("mark_messages_read"),
               pref_threaded_messages = VBoolean("threaded_messages"),
               pref_collapse_read_messages = VBoolean("collapse_read_messages"),
+              pref_private_feeds = VBoolean("private_feeds"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
@@ -176,12 +160,12 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
-    def POST_login(self, *a, **kw):
+    @validate(dest = VDestination(default = "/"))
+    def POST_login(self, dest, *a, **kw):
         ApiController.POST_login(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
-        dest = request.post.get('dest', request.referer or '/')
         errors = list(c.errors)
         if errors:
             for e in errors:
@@ -190,18 +174,17 @@ class PostController(ApiController):
                     c.errors.remove(e)
                     c.errors.add(e[0], msg)
 
-            dest = request.post.get('dest', request.referer or '/')
             return LoginPage(user_login = request.post.get('user'),
                              dest = dest).render()
 
         return self.redirect(dest)
 
-    def POST_reg(self, *a, **kw):
+    @validate(dest = VDestination(default = "/"))
+    def POST_reg(self, dest, *a, **kw):
         ApiController.POST_register(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
-        dest = request.post.get('dest', request.referer or '/')
         errors = list(c.errors)
         if errors:
             for e in errors:

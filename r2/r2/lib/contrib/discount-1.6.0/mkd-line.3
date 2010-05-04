@@ -1,0 +1,41 @@
+.\"
+.Dd January 18, 2008
+.Dt MKD_LINE 3
+.Os Mastodon
+.Sh NAME
+.Nm mkd_line 
+.Nd do Markdown translation of small items
+.Sh LIBRARY
+Markdown 
+.Pq libmarkdown , -lmarkdown
+.Sh SYNOPSIS
+.Fd #include <mkdio.h>
+.Ft int
+.Fn mkd_line "char *string" "int size" "char **doc" "int flags"
+.Ft int
+.Fn mkd_generateline "char *string" "int size" "FILE *output" "int flags"
+.Sh DESCRIPTION
+.Pp
+Occasionally one might want to do markdown translations on fragments of
+data, like the title of an weblog article, a date, or a simple signature
+line.
+.Nm mkd_line
+and
+.Nm mkd_generateline
+allow you to do markdown translations on small blocks of text.
+.Nm mkd_line
+allocates a buffer, then writes the translated text into that buffer,
+and
+.Nm mkd_generateline
+writes the output to the specified
+.Ar FILE* .
+.Sh SEE ALSO
+.Xr markdown 1 ,
+.Xr markdown 3 ,
+.Xr markdown 7 ,
+.Xr mkd-extensions 7 ,
+.Xr mmap 2 .
+.Pp
+http://daringfireball.net/projects/markdown/syntax
+.Sh BUGS
+Error handling is minimal at best.

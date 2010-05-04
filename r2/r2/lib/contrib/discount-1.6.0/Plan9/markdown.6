@@ -1,0 +1,543 @@
+.TH MARKDOWN 6
+.SH NAME
+Markdown \- text formatting syntax
+.SH DESCRIPTION
+Markdown
+is a text markup syntax for machine conversion to
+the more complex
+.SM HTML
+or
+.SM XHTML
+markup languages.
+It is intended to be easy to read and to write, with
+emphasis on readability.
+A Markdown-formatted document should be publishable as-is,
+in plain text, without the formatting distracting the reader.
+.PP
+The biggest source of inspiration for Markdown's
+syntax is the format of plain text email.  The markup is comprised entirely
+of punctuation characters, chosen so as to look like what they mean.
+Asterisks around a word look like
+.IR *emphasis* .
+Markdown lists look like lists.  Even
+blockquotes look like quoted passages of text, assuming the reader has
+used email.
+.PP
+.SS Block Elements
+.TF W
+.PD
+.TP
+Paragraphs and Line Breaks
+A paragraph is one or more consecutive lines of text, separated
+by one or more blank lines.  (A blank line is any line that looks like a
+blank line -- a line containing nothing but spaces or tabs is considered
+blank.) Normal paragraphs should not be indented with spaces or tabs.
+.IP
+Lines may be freely broken for readability; Markdown
+does not translate source line breaks to
+.B <br />
+tags.  To request generation of
+.B <br />
+in the output, end a line with two or more spaces, then a newline.
+.TP
+Headings
+Headings can be marked in two ways, called
+.I setext
+and
+.IR atx .
+.IP
+Setext-style headings are
+``underlined'' using equal signs (for first-level
+headings) and dashes (for second-level headings).
+.IP
+Atx-style headings use 1-6 hash characters at the start of the line,
+corresponding to
+.SM HTML
+.BR <h^(1-6)^> .
+Optional closing hashes may follow
+the heading text.
+.TP
+Blockquotes
+Lines beginning with
+.B >
+are output in blockquotes.
+Blockquotes can be nested
+by multiple levels of
+.BR >> .
+Blockquotes can contain other Markdown elements, including
+headings, lists, and code blocks.
+.TP
+Lists
+Markdown supports ordered (numbered) and unordered (bulleted) lists.
+List markers typically start at the left margin, but may be indented by
+up to three spaces.
+List markers must be followed by one or more spaces
+or a tab, then the list item text.
+A newline terminates each list item.
+.IP
+Unordered lists use asterisks, pluses, and hyphens interchangeably as
+list markers.
+.IP
+Ordered lists use integers followed by periods as list markers.
+The order of the integers is not interpreted,
+but the list should begin with
+.BR 1 .
+.IP
+If list items are separated by blank lines, Markdown will wrap each list
+item in
+.B <p>
+tags in the
+.SM HTML
+output.
+.IP
+List items may consist of multiple paragraphs.
+Each subsequent
+paragraph within a list item must be indented by either 4 spaces
+or one tab.
+To put a blockquote within a list item, the blockquote's
+.B >
+marker needs to be indented.
+To put a code block within a list item, the code block needs
+to be indented
+.I twice
+-- 8 spaces or two tabs.
+.TP
+Code Blocks
+To produce a code block, indent every line of the
+block by at least 4 spaces or 1 tab.
+A code block continues until it reaches a line that is not indented.
+.IP
+Rather than forming normal paragraphs, the lines
+of a code block are interpreted literally.
+Regular Markdown syntax is not processed within code blocks.
+Markdown wraps a code block in both
+.B <pre>
+and
+.B <code>
+tags.
+One level of indentation -- 4
+spaces or 1 tab -- is removed from each line of the code block in
+the output.
+.TP
+Horizontal Rules
+Produce a horizontal rule tag
+.RB ( <hr\ /> )
+by placing three or
+more hyphens, asterisks, or underscores on a line by themselves.
+.SS Span Elements
+.TF W
+.PD
+.TP
+Links
+Markdown supports two styles of links:
+.I inline
+and
+.IR reference .
+In both styles, the link text is delimited by square brackets
+.RB ( [] ).
+To create an inline link, use a set of regular parentheses immediately
+after the link text's closing square bracket.
+Inside the parentheses,
+put the link URL, along with an optional
+title for the link surrounded in double quotes.
+For example:
+.IP
+.EX
+	An [example](http://example.com/ "Title") inline link.
+.EE
+.IP
+Reference-style links use a second set of square brackets, inside
+which you place a label of your choosing to identify the link:
+.IP
+.EX
+	An [example][id] reference-style link.
+.EE
+.IP
+The label is then assigned a value on its own line, anywhere in the document:
+.IP
+.EX
+	[id]: http://example.com/  "Optional Title"
+.EE
+.IP
+Link label names may consist of letters, numbers, spaces, and
+punctuation.
+Labels are not case sensitive.
+An empty label bracket
+set after a reference-style link implies the link label is equivalent to
+the link text.
+A URL value can then be assigned to the link by referencing
+the link text as the label name.
+.TP
+Emphasis
+Markdown treats asterisks
+.RB ( * )
+and underscores
+.RB ( _ )
+as indicators of emphasis.
+Text surrounded with single asterisks or underscores
+will be wrapped with an
+.SM HTML
+.B <em>
+tag.
+Double asterisks or underscores generate an
+.SM HTML
+.B <strong>
+tag.
+.TP
+Code
+To indicate a span of code, wrap it with backtick quotes
+.RB ( ` ).
+Unlike a code block, a code span indicates code within a
+normal paragraph.
+To include a literal backtick character within a code span, you can use
+multiple backticks as the opening and closing delimiters:
+.IP
+.EX
+	``There is a literal backtick (`) here.``
+.EE
+.TP
+Images
+Markdown image syntax is intended to resemble that
+for links, allowing for two styles, once again
+.I inline
+and
+.IR reference .
+The syntax is as for each respective style of link, described above, but
+prefixed with an exclamation mark character
+.RB ( ! ).
+Inline image syntax looks like this:
+.IP
+.EX
+	![Alt text](/path/to/img.jpg "Optional title")
+.EE
+.IP
+That is:
+An exclamation mark;
+followed by a set of square brackets containing the `alt'
+attribute text for the image;
+followed by a set of parentheses containing the URL or path to
+the image, and an optional `title' attribute enclosed in double
+or single quotes.
+.IP
+Reference-style image syntax looks like this:
+.IP
+.EX
+	![Alt text][id]
+.EE
+.IP
+Where
+.I id
+is a label used as for reference-style URL links, described above.
+.SS Convenience
+.TF W
+.PD
+.TP
+Automatic Links
+There is a shortcut style for creating ``automatic''
+links for URLs and email addresses.
+Surround the URL
+or address with angle brackets.
+.TP
+Backslash Escapes
+Use backslash escapes to generate literal
+characters which would otherwise have special meaning in Markdown's
+formatting syntax.
+.TP
+Inline HTML
+For markup that is not covered by Markdown's
+syntax, simply use the
+.SM HTML
+directly.
+The only restrictions are that block-level
+.SM HTML
+elements -- 
+.BR <div> ,
+.BR <table> ,
+.BR <pre> ,
+.BR <p> ,
+etc. -- must be separated from surrounding
+content by blank lines, and the start and end tags of the block should
+not be indented with tabs or spaces. Markdown formatting syntax is
+not processed within block-level
+.SM HTML
+tags.
+.IP
+Span-level
+.SM HTML
+tags -- e.g. 
+.BR <span> ,
+.BR <cite> ,
+or
+.B <del>
+-- can be
+used anywhere in a Markdown
+paragraph, list item, or heading.
+It is permitted to use
+.SM HTML
+tags instead of Markdown formatting; e.g.
+.SM HTML 
+.B <a>
+or
+.B <img>
+tags instead of Markdown's
+link or image syntax.
+Unlike block-level
+.SM HTML
+tags, Markdown
+syntax
+.I is
+processed within the elements of span-level tags.
+.TP
+Automatic Special Character Escapes
+To be displayed literally in a user agent, the characters
+.B <
+and
+.B &
+must appear as escaped entities in
+.SM HTML
+source, e.g.
+.B &lt;
+and
+.BR &amp; .
+Markdown
+allows natural use of these characters, taking care of
+the necessary escaping.
+The ampersand part of a directly-used
+.SM HTML
+entity remains unchanged; otherwise it will be translated
+into
+.BR &amp; .
+Inside code spans and blocks, angle brackets and
+ampersands are always encoded automatically.
+This makes it easy to use Markdown to write about
+.SM HTML
+code.
+.PP
+.SS Smarty Pants
+The
+.IR markdown (1)
+utility transforms a few plain text symbols into their typographically-fancier
+.SM HTML
+entity equivalents.
+These are extensions to the standard Markdown syntax.
+.TF W
+.PD
+.TP
+Punctuation
+Input single- and double-quotes are transformed
+into ``curly'' quote entities in the output (e.g., 
+.B 'text'
+becomes
+.BR &lsquo;text&rsquo; ).
+Input double-dashes
+.RB ( -- )
+and triple-dashes become en- and em-dashes, respectively,
+while a series of three dots
+.RB ( ... )
+in the input becomes an ellipsis entity
+.RB ( &hellip; )
+in the
+.SM HTML
+output.
+.TP
+Symbols
+Three other transformations replace the common plain-text shorthands
+.BR (c) ,
+.BR (r) ,
+and
+.BR (tm)
+from the input with their respective
+.SM HTML
+entities. (As in
+.B (c)
+becoming
+.BR &copy; ,
+the Copyright symbol entity.)
+.TP
+Fractions
+A small set of plain-text shorthands for fractions is recognized.
+.B 1/4
+becomes
+.BR &frac14; ,
+for example. These fraction notations are replaced with their
+.SM HTML
+entity equivalents:
+.BR 1/4 ,
+.BR 1/2 ,
+.BR 3/4 .
+.B 1/4th
+and
+.B 3/4ths
+are replaced with their entity and the indicated ordinal suffix letters.
+.PP
+Like the basic Markdown syntax, none of the ``Smarty Pants'' extensions are processed
+inside code blocks or spans.
+.PP
+.SS Discount Extensions
+.IR Markdown (1)
+recognizes some extensions to the Markdown format,
+many of them adopted or adapted from other Markdown
+interpreters or document formatting systems.
+.TF W
+.PD
+.TP
+Pandoc Headers
+If
+.I markdown
+was configured with
+.BR --enable-pandoc-header ,
+the markdown source can have a 3-line Pandoc header in the format of
+.IP
+.EX
+% Title
+% Author
+% Date
+.EE
+.IP
+whose data is available to the
+.IR mkd_doc_title ,
+.IR mkd_doc_author ,
+and
+.I mkd_doc_date
+(in
+.IR markdown (2))
+functions.
+.TP
+Embedded Stylesheets
+Stylesheets may be defined and modified in a
+.B <style>
+block.   A style block is parsed like any other block-level
+.SM HTML;
+.B <style>
+starting on column 1, raw
+.SM HTML
+(or, in this case,
+.SM CSS \)
+following it, and either ending with a
+.B </style>
+at the end of the line or at the beginning of a subsequent line.
+.IP
+Style blocks apply to the entire document regardless of where they are defined.
+.TP
+Image Dimensions
+Image specification has been extended with an argument describing image dimensions:
+.BI = height x width.
+For an image 400 pixels high and 300 wide, the new syntax is:
+.IP
+.EX
+	![Alt text](/path/to/image.jpg =400x300 "Title")
+.EE
+.TP
+Pseudo-Protocols
+Pseudo-protocols that may replace the common
+.B http:
+or
+.B mailto:
+have been added to the link syntax described above.
+.IP
+.BR abbr :
+Text following is used as the
+.B title
+attribute of an
+.B abbr
+tag wrapping the link text. So
+.B [LT](abbr:Link Text)
+gives
+.B <abbr title="Link Text">LT</abbr>.
+.IP
+.BR id :
+The link text is marked up and written to the output, wrapped with
+.B <a id=text following>
+and
+.BR </a> .
+.IP
+.BR class :
+ The link text is marked up and written to the output, wrapped with
+.B <span class=text following>
+and
+.BR </span> .
+.IP
+.BR raw :
+Text following is written to the output with no further processing.
+The link text is discarded.
+.TP
+Alphabetic Lists
+If
+.I markdown
+was configured with
+.BR --enable-alpha-list ,
+.IP
+.EX
+a. this
+b. is
+c. an alphabetic
+d. list
+.EE
+.IP
+yields an
+.SM HTML
+.B ol
+ordered list.
+.TP
+Definition Lists
+If configured with
+.BR --enable-dl-tag ,
+markup for definition lists is enabled.  A definition list item is defined as
+.IP
+.EX
+=term=
+	definition
+.EE
+.TP
+Tables
+Tables are specified with a pipe
+.RB ( | )
+and dash
+.RB ( - )
+marking. The markdown text
+.IP
+.EX
+header0|header1
+-------|-------
+  textA|textB
+  textC|textD
+.EE
+.IP
+will produce an
+.SM HTML
+.B table
+of two columns and three rows.
+A header row is designated by ``underlining'' with dashes.
+Declare a column's alignment by affixing a colon
+.RB ( : )
+to the left or right end of the dashes underlining its header.
+In the output, this
+yields the corresponding value for the
+.B align
+attribute on each
+.B td
+cell in the column.
+A colon at both ends of a column's header dashes indicates center alignment.
+.TP
+Relaxed Emphasis
+If configured with
+.BR --relaxed-emphasis ,
+the rules for emphasis are changed so that a single
+.B _
+will not count as an emphasis character in the middle of a word.
+This is useful for documenting some code where
+.B _
+appears frequently, and would normally require a backslash escape.
+.PD
+.SH SEE ALSO
+.IR markdown (1),
+.IR markdown (2)
+.PP
+http://daringfireball.net/projects/markdown/syntax/,
+``Markdown: Syntax''.
+.PP
+http://daringfireball.net/projects/smartypants/,
+``Smarty Pants''.
+.PP
+http://michelf.com/projects/php-markdown/extra/#table,
+``PHP Markdown Extra: Tables''.

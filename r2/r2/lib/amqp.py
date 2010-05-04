@@ -29,10 +29,10 @@ import time
 import errno
 import socket
 import itertools
+import pickle
 
 from amqplib import client_0_8 as amqp
 
-from r2.lib.cache import LocalCache
 from pylons import g
 
 amqp_host = g.amqp_host
@@ -88,7 +88,7 @@ def get_connection():
                                          virtual_host = amqp_virtual_host,
                                          insist = False)
         except (socket.error, IOError):
-            print 'error connecting to amqp'
+            print 'error connecting to amqp %s @ %s' % (amqp_user, amqp_host)
             time.sleep(1)
 
     # don't run init_queue until someone actually needs it. this
@@ -160,26 +160,42 @@ def add_item(routing_key, body, message_id = None):
 
     worker.do(_add_item, routing_key, body, message_id = message_id)
 
-def handle_items(queue, callback, ack = True, limit = 1, drain = False):
+def add_kw(routing_key, **kw):
+    add_item(routing_key, pickle.dumps(kw))
+
+def handle_items(queue, callback, ack = True, limit = 1, drain = False,
+                 verbose=True, sleep_time = 1):
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
 
     chan = get_channel()
+    countdown = None
+
     while True:
+
+        # NB: None != 0, so we don't need an "is not None" check here
+        if countdown == 0:
+            break
+
         msg = chan.basic_get(queue)
         if not msg and drain:
             return
         elif not msg:
-            time.sleep(1)
+            time.sleep(sleep_time)
             continue
+
+        if countdown is None and drain and 'message_count' in msg.delivery_info:
+            countdown = 1 + msg.delivery_info['message_count']
 
         g.reset_caches()
 
         items = []
 
-        while msg:
+        while msg and countdown != 0:
             items.append(msg)
+            if countdown is not None:
+                countdown -= 1
             if len(items) >= limit:
                 break # the innermost loop only
             msg = chan.basic_get(queue)
@@ -190,7 +206,8 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
                 # the count from the last message, if the count is
                 # available
                 count_str = '(%d remaining)' % items[-1].delivery_info['message_count']
-            print "%s: %d items %s" % (queue, len(items), count_str)
+            if verbose:
+                print "%s: %d items %s" % (queue, len(items), count_str)
             callback(items, chan)
 
             if ack:
@@ -204,6 +221,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False):
                 # explicitly reject the items that we've not processed
                 chan.basic_reject(item.delivery_tag, requeue = True)
             raise
+
 
 def empty_queue(queue):
     """debug function to completely erase the contents of a queue"""

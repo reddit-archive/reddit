@@ -26,13 +26,17 @@
    from r2.models import FakeSubreddit
 %>
 <% 
-   url = add_sr(thing.permalink, force_hostname = True)
+   permalink = add_sr(thing.permalink, force_hostname = True)
+   if thing.mousedown_url:
+      url = thing.mousedown_url
+   else:
+      url = permalink
    use_thumbs = thing.thumbnail and not request.GET.has_key("nothumbs")
  %>
 <item>
   <title>${thing.title}</title>
   <link>${url}</link>
-  <guid isPermaLink="true">${url}</guid>
+  <guid isPermaLink="true">${permalink}</guid>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
   <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
@@ -57,7 +61,7 @@
       <a href="${thing.url}">[link]</a>
     </%def>
   ${description()}
-   &lt;a href="${url}"&gt;[${thing.comment_label}]&lt;/a&gt;
+   &lt;a href="${permalink}"&gt;[${thing.comment_label}]&lt;/a&gt;
    %if use_thumbs:
      &lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
    %endif

@@ -188,6 +188,11 @@
   <li class="first">
     ${self.bylink_button(_("permalink"), thing.permalink)}
   </li>
+  %if c.profilepage:
+    <li>
+      ${self.bylink_button(_("context"), thing.permalink + "?context=3")}
+    </li>
+  %endif
   %if thing.deleted:
     %if thing.parent_permalink and not thing.profilepage:
       <li>

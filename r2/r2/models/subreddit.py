@@ -50,12 +50,11 @@ class Subreddit(Thing, Printable):
                      allow_top = False, # overridden in "_new"
                      description = '',
                      images = {},
-                     ad_type = None,
-                     ad_file = os.path.join(g.static_path, 'ad_default.html'),
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
-                     css_on_cname = True, 
+                     css_on_cname = True,
+                     use_whitelist = False,
                      domain = None,
                      over_18 = False,
                      mod_actions = 0,
@@ -64,6 +63,7 @@ class Subreddit(Thing, Printable):
                      sponsorship_img = None,
                      sponsorship_name = None,
                      )
+    _essentials = ('type', 'name')
     _data_int_props = ('mod_actions',)
 
     sr_limit = 50
@@ -98,7 +98,11 @@ class Subreddit(Thing, Printable):
         q = cls._query(lower(cls.c.name) == name.lower(),
                        cls.c._spam == (True, False),
                        limit = 1)
-        l = list(q)
+        try:
+            l = list(q)
+        except UnicodeEncodeError:
+            print "Error looking up SR %r" % name
+            raise
         if l:
             return l[0]._id
 
@@ -199,8 +203,9 @@ class Subreddit(Thing, Printable):
         return (user
                 and (c.user_is_admin
                      or self.is_moderator(user)
-                     or (self.type in ('restricted', 'private')
-                         and self.is_contributor(user))))
+                     or ((self.type in ('restricted', 'private') or
+                          self.use_whitelist) and
+                         self.is_contributor(user))))
 
     def can_give_karma(self, user):
         return self.is_special(user)
@@ -213,8 +218,8 @@ class Subreddit(Thing, Printable):
             rl_karma = g.MIN_RATE_LIMIT_COMMENT_KARMA
         else:
             rl_karma = g.MIN_RATE_LIMIT_KARMA
-            
-        return not (self.is_special(user) or 
+
+        return not (self.is_special(user) or
                     user.karma(kind, self) >= rl_karma)
 
     def can_view(self, user):
@@ -231,7 +236,8 @@ class Subreddit(Thing, Printable):
     def load_subreddits(cls, links, return_dict = True):
         """returns the subreddits for a list of links. it also preloads the
         permissions for the current user."""
-        srids = set(l.sr_id for l in links if hasattr(l, "sr_id"))
+        srids = set(l.sr_id for l in links
+                    if getattr(l, "sr_id", None) is not None)
         subreddits = {}
         if srids:
             subreddits = cls._byID(srids, True)
@@ -312,7 +318,7 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = g.page_cache_time)
+                                       cache_time = 3600)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
@@ -579,15 +585,12 @@ class DefaultSR(FakeSubreddit):
             srs = Subreddit._byID(sr_ids, return_dict = False)
 
         if g.use_query_cache:
-            results = []
-            for sr in srs:
-                results.append(queries.get_links(sr, sort, time))
-            return queries.merge_cached_results(*results)
+            results = [queries.get_links(sr, sort, time)
+                       for sr in srs]
+            return queries.merge_results(*results)
         else:
             q = Link._query(Link.c.sr_id == sr_ids,
                             sort = queries.db_sort(sort))
-            if sort == 'toplinks':
-                q._filter(Link.c.top_link == True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q
@@ -652,7 +655,7 @@ class DomainSR(FakeSubreddit):
     def get_links(self, sort, time):
         from r2.lib.db import queries
         return queries.get_domain_links(self.domain, sort, time)
-        
+
 Sub = SubSR()
 Friends = FriendsSR()
 All = AllSR()

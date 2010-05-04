@@ -20,23 +20,24 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from validator import *
-from reddit_base import RedditController
+from reddit_base import MinimalController
 
 from r2.lib.scraper import scrapers
-from r2.lib.pages import MediaEmbedBody
+from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
 
 from pylons import request
+from pylons.controllers.util import abort
 
-class MediaembedController(RedditController):
+class MediaembedController(MinimalController):
     @validate(link = VLink('link'))
     def GET_mediaembed(self, link):
         if request.host != g.media_domain:
             # don't serve up untrusted content except on our
             # specifically untrusted domain
-            return self.abort404()
+            abort(404)
 
         if not link or not link.media_object:
-            return self.abort404()
+            abort(404)
 
         if isinstance(link.media_object, basestring):
             # it's an old-style string
@@ -50,3 +51,16 @@ class MediaembedController(RedditController):
             content = media_embed.content
 
         return MediaEmbedBody(body = content).render()
+
+    def GET_ad(self, reddit_name = None):
+        c.render_style = "html"
+        return render_ad(reddit_name=reddit_name)
+
+    def GET_ad_by_codename(self, codename = None):
+        if not codename:
+            abort(404)
+        c.render_style = "html"
+        return render_ad(codename=codename)
+
+    def GET_comscore(self, reddit = None):
+        return ComScore().render(style="html")

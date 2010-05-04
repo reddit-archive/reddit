@@ -8,6 +8,8 @@ from pylons import c, g
 from reddit_base import RedditController
 from r2.lib.amqp import worker
 
+from validator import *
+
 class HealthController(RedditController):
     def shutdown(self):
         thread_pool = c.thread_pool
@@ -40,9 +42,12 @@ class HealthController(RedditController):
             c.response.content = "i'm still alive!"
             return c.response
 
-    def GET_shutdown(self):
-        if not g.allow_shutdown:
+    @validate(secret=nop('secret'))
+    def GET_shutdown(self, secret):
+        if not g.shutdown_secret:
             self.abort404()
+        if not secret or secret != g.shutdown_secret:
+            self.abort403()
 
         c.dontcache = True
         #the will make the next health-check initiate the shutdown

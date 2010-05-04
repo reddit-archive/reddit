@@ -149,6 +149,11 @@ ul.flat-vert {text-align: left;}
  }
 
 #mail img {position: relative; top: 2px}
+#modmail img {position: relative; top: 4px; margin-top: -6px; }
+#modmail.nohavemail {
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+}
 .user {color: gray;}
 
 
@@ -692,6 +697,10 @@ ul.flat-vert {text-align: left;}
     margin: 5px;
     margin-right: 15px;
 }
+.md td, .md th { border: 1px solid #EEE; padding: 1px 3px; }
+.md th { font-weight: bold;  }
+.md table { margin: 5px 10px;  }
+.md center { text-align: left;  }
 
 /*top link*/
 a.star { text-decoration: none; color: #ff8b60 }
@@ -910,6 +919,12 @@ textarea.gray { color: gray; }
 .message .child .usertext { 
     margin-top: 10px; 
     margin-left: 12px; 
+}
+
+.message.was-comment .child .message,
+.message.was-comment .child .usertext { 
+    margin-top: 0px;
+    margin-left: 0px; 
 }
 
 .message .expand { 
@@ -1148,16 +1163,16 @@ textarea.gray { color: gray; }
 }
 .server-status td { padding-right: 2px; padding-left: 2px; }
 .server-status .bar { height: 5px; background-color: blue; }
-.server-status .load0 { background-color: #FFFFFF; }
-.server-status .load1 { background-color: #f0f5FF; }
-.server-status .load2 { background-color: #E2ECFF; }
-.server-status .load3 { background-color: #d6f5cb; }
-.server-status .load4 { background-color: #CAFF98; }
-.server-status .load5 { background-color: #e4f484; }
-.server-status .load6 { background-color: #FFEA71; }
-.server-status .load7 { background-color: #ffdb81; }
-.server-status .load8 { background-color: #FF9191; }
-.server-status .load9 { background-color: #FF0000; color: #FFFFFF }
+.load0 { background-color: #FFFFFF; } /* white */
+.load1 { background-color: #f0f5FF; } /* pale blue */
+.load2 { background-color: #E2ECFF; } /* blue */
+.load3 { background-color: #d6f5cb; } /* pale green */
+.load4 { background-color: #CAFF98; } /* green */
+.load5 { background-color: #e4f484; } /* yellowgreen */
+.load6 { background-color: #FFEA71; } /* orange */
+.load7 { background-color: #ffdb81; } /* orangerose */
+.load8 { background-color: #FF9191; } /* pink */
+.load9 { background-color: #FF0000; color: #FFFFFF } /* red */
 .server-status tr.down > * {
     background-color: #C0C0C0; 
     text-decoration: line-through; 
@@ -1427,6 +1442,250 @@ textarea.gray { color: gray; }
 .little a { font-size: x-small;  }
 
 .oldbylink a {  background-color: #F0F0F0; margin: 2px; color: gray}
+
+.error-log {
+    clear: both;
+}
+
+.error-log a:hover { text-decoration: underline }
+
+.error-log .rest {
+    display: none;
+}
+
+.error-log:first-child .rest {
+    display: block;
+}
+
+.error-log, .error-log .exception {
+    border: solid #aaa 1px;
+    padding: 3px 5px;
+    margin-bottom: 10px;
+}
+
+.error-log .exception {
+    background-color: #f0f0f8;
+}
+
+.error-log .exception.new {
+    border: dashed #ff6600 2px;
+}
+
+.error-log .exception.severe {
+    border: solid #ff0000 2px;
+    background-color: #ffdfdf;
+}
+
+.error-log .exception.interesting {
+    border: dotted black 2px;
+    background-color: #e0e0e8;
+}
+
+.error-log .exception.fixed {
+    border: solid #008800 1px;
+    background-color: #e8f6e8;
+}
+
+.error-log .exception span {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.error-log .exception span.normal {
+    margin-right: 0;
+    display: none;
+}
+
+.error-log .exception span.new, .error-log .edit-area label.new {
+    color: #ff6600;
+}
+
+.error-log .exception span.severe, .error-log .edit-area label.severe {
+    color: #ff0000;
+}
+
+.error-log .exception span.interesting, .error-log .edit-area label.interesting {
+    font-weight: normal;
+    font-style: italic;
+}
+
+.error-log .exception span.fixed, .error-log .edit-area label.fixed {
+    color: #008800;
+}
+
+.error-log .exception-name {
+    margin-right: 5px;
+}
+
+.error-log .nickname {
+    color: black;
+    font-weight: bold;
+    font-size: larger;
+}
+
+.error-log .exception.fixed .nickname {
+    text-decoration: line-through;
+}
+
+.error-log a:focus {
+    -moz-outline-style: none;
+}
+
+.error-log .edit-area {
+    border: solid black 1px;
+    background-color: #eee;
+}
+
+.error-log .edit-area label {
+    margin-right: 25px;
+}
+
+.error-log .edit-area input[type=radio] {
+    margin-right: 4px;
+}
+
+.error-log .edit-area input[type=text] {
+    width: 800px;
+}
+
+.error-log .edit-area table td, .error-log .edit-area table th {
+    padding: 5px 0 0 5px;
+}
+
+.error-log .save-button {
+    margin: 0 5px 5px 0;
+    font-size: small;
+    padding: 0;
+}
+
+.error-log .date {
+    font-size: 150%;
+    font-weight: bold;
+}
+
+.error-log .hexkey {
+    color: #997700;
+}
+
+.error-log .exception-name {
+    font-size: larger;
+    color: #000077;
+}
+
+.error-log .frequency {
+    font-size: larger;
+    float: right;
+    color: #886666;
+}
+
+.error-log .occurrences {
+    border: solid #003300 1px;
+    margin: 5px 0 2px;
+    padding: 2px;
+}
+
+.error-log .occurrence {
+    color: #003300;
+    font-family: monospace;
+    margin-right: 3em;
+    white-space: nowrap;
+}
+
+.error-log table.stacktrace th, .error-log table.stacktrace td {
+    border: solid 1px #aaa;
+}
+
+.error-log table.stacktrace td {
+    font-family: monospace;
+}
+
+.error-log table.stacktrace td.col-1 {
+    text-align: right;
+    padding-right: 10px;
+}
+
+.error-log .logtext.error {
+    color: black;
+    margin: 0 0 10px 0;
+}
+
+.error-log .logtext {
+    margin-bottom: 10px;
+    border: solid #555 2px;
+    background-color: #eeece6;
+    padding: 5px;
+    font-size: small;
+}
+
+.error-log .logtext * {
+    color: black;
+}
+
+.error-log .logtext.error .loglevel {
+    color: white;
+    background-color: red;
+}
+
+.error-log .logtext.warning .loglevel {
+    background-color: #ff6600;
+}
+
+.error-log .logtext.info .loglevel {
+    background-color: #00bbff;
+}
+
+.error-log .logtext.debug .loglevel {
+    background-color: #00ee00;
+}
+
+.error-log .logtext .loglevel {
+    padding: 0 5px;
+    margin-right: 5px;
+    border: solid black 1px;
+}
+.error-log .logtext table {
+    margin: 8px 5px 2px 0;
+    font-family: monospace;
+}
+
+.error-log .logtext table,
+.error-log .logtext table th,
+.error-log .logtext table td {
+  border: solid #aaa 1px;
+}
+.error-log .logtext table th, .error-log .logtext table td {
+    border: solid #aaa 1px;
+}
+
+.error-log .logtext table .occ {
+    text-align: right;
+}
+
+.error-log .logtext table .dotdotdot {
+    padding: 0;
+}
+.error-log .logtext table .dotdotdot a {
+    margin: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+}
+.error-log .logtext table .dotdotdot a:hover {
+    background-color: #bbb;
+    text-decoration: none;
+}
+
+.error-log .logtext .classification {
+    font-size: larger;
+    font-weight: bold;
+}
+.error-log .logtext .actual-text {
+    max-width: 600px;
+    overflow: hidden;
+}
+.error-log .logtext .occ {
+}
 
 .details {
     font-size: x-small; 
@@ -1967,6 +2226,15 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .reported { background-color: #f6e69f }
 .suspicious { background-color: #f6e69f }
 .spam { background-color: #FA8072 }
+.banned-user {
+    overflow: hidden;
+    opacity: .7;
+    filter:alpha(opacity=70); /* IE patch */
+}
+
+.banned-user .title {
+    text-decoration: line-through;
+}
 
 .little { font-size: smaller  }
 .gray { color: gray }
@@ -2087,7 +2355,31 @@ ul#image-preview-list .description pre {
     padding: 5px; 
     margin: 5px; 
     float: left;
-}    
+}
+
+.private-feeds.instructions .prefright { 
+    line-height: 2em;
+}
+
+.private-feeds.instructions .feedlink {
+    padding: 2px 5px;
+    font-weight: bold;
+    margin-right: 5px; 
+    border: 1px solid #0000FF;
+    color: white; 
+    padding-left: 22px; 
+    background: #336699 none no-repeat scroll top left;
+}
+
+.private-feeds.instructions .feedlink.rss-link {
+    background-image: url(/static/rss.png);
+}
+
+.private-feeds.instructions .feedlink.json-link {
+    background-color: #DDDDDD;
+    background-image: url(/static/json.png);
+    color: black; 
+}
 
 /* Socialite */
 .socialite.instructions ul {
@@ -2744,20 +3036,20 @@ ul.tabmenu.formtab {
     color: #336699;
 }
 
-.award-table {
+.lined-table {
     margin: 5px;
 }
 
-table.award-table {
+table.lined-table {
     margin: 5px 3px;
 }
 
-.award-table th, .award-table td {
+.lined-table th, .lined-table td {
     border: solid #cdcdcd 1px;
     padding: 3px;
 }
 
-.award-table th {
+.lined-table th {
     text-align: center;
     font-weight: bold;
 }
@@ -2782,7 +3074,6 @@ table.award-table {
 
 .sidecontentbox a.helplink {
     float: right;
-    font-size: x-small;
     margin-top: 4px;
 }
 
@@ -3242,6 +3533,9 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-moderators {
     background-image: url(/static/star.png); /* SPRITE */
 }
+.icon-menu .moderator-mail {
+    background-image: url(/static/mailgray.png); /* SPRITE */
+}
 .icon-menu .reddit-contributors {
     background-image: url(/static/pencil.png); /* SPRITE */
 }
@@ -3278,14 +3572,15 @@ dd { margin-left: 20px;  }
     border: 1px solid gray;
 }
 
-a.ip {
+a.adminbox {
     border: solid 1px #eeeeee;
     color: #cdcdcd;
     font-family: monospace;
-    text-size: x-small;
+    text-align: center;
+    padding-right: 1px;
 }
 
-a.ip:hover {
+a.adminbox:hover {
     text-decoration: none;
     color: orangered;
     border: solid 1px orangered;
@@ -3302,3 +3597,83 @@ a.ip:hover {
   font-weight: bold;
 }
 
+.wide {
+    width: 100%;
+}
+
+.centered {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.sr-ad-table .inherited {
+    background-color: #ddeeff;
+}
+.sr-ad-table .overridden {
+    background-color: #ffeedd;
+}
+.sr-ad-table .unused {
+    background-color: #eee;
+}
+.sr-ad-table .inherited .whence {
+    font-style: italic;
+}
+.sr-ad-table .overridden .whence {
+    font-weight: bold;
+}
+.sr-ad-table .details {
+    font-size: 150%;
+    padding: 10px;
+    vertical-align: top;
+}
+.sr-ad-table .details div {
+}
+.sr-ad-table .details .codename {
+    font-size: 150%;
+    margin-bottom: 20px;
+}
+.sr-ad-table .weight {
+    width: 4em;
+}
+
+.ad-assign-table .warning {
+    font-weight: bold;
+    color: red;
+}
+
+.usage-table .intersection {
+    color: #888;
+    font-family: monospace;
+    text-align: right;
+    border-left: none;
+    border-right: none;
+}
+
+.usage-table .intersection span {
+    padding: 1px 3px 0 2px;
+}
+
+.usage-table .empty.intersection {
+    text-align: center;
+    color: #ccc;
+}
+
+.usage-table .elapsed.intersection {
+    color: black;
+}
+
+.usage-table .count.intersection {
+    color: black;
+}
+
+.usage-table .average.intersection {
+    color: black;
+    border-right: solid #cdcdcd 1px;
+}
+
+.usage-table .empty.intersection, .usage-table .average.intersection {
+    padding-left: 0;
+    margin-left: 0;
+    border-right: solid #cdcdcd 1px;
+    padding-right: 5px;
+}
