@@ -25,7 +25,8 @@ from validator import *
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ControversyTimeMenu
+from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu
+from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
 from r2.lib.normalized_hot import normalized_hot, get_hot
@@ -37,6 +38,7 @@ from r2.lib import organic
 from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
 from r2.lib.utils import iters, check_cheating, timeago
+from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import PromoteSR
 from r2.lib.contrib.pysolr import SolrError
@@ -96,11 +98,12 @@ class ListingController(RedditController):
         self.builder_obj = self.builder()
         self.listing_obj = self.listing()
         content = self.content()
-        res =  self.render_cls(content = content,
-                               show_sidebar = self.show_sidebar, 
-                               nav_menus = self.menus, 
-                               title = self.title(),
-                               **self.render_params).render()
+
+        res = self.render_cls(content = content,
+                              show_sidebar = self.show_sidebar,
+                              nav_menus = self.menus,
+                              title = self.title(),
+                              **self.render_params).render()
         return res
 
 
@@ -215,29 +218,56 @@ class FixListing(object):
 class HotController(FixListing, ListingController):
     where = 'hot'
 
-    def organic(self):
-        o_links, pos = organic.organic_links(c.user)
-        if o_links:
-            # get links in proximity to pos
-            l = min(len(o_links) - 3, 8)
-            disp_links = [o_links[(i + pos) % len(o_links)]
-                          for i in xrange(-2, l)]
-            def keep_fn(item):
-                return item.likes is None and item.keep_item(item)
-            b = IDBuilder(disp_links, wrap = self.builder_wrapper,
-                          skip = True, keep_fn = keep_fn)
-            o = OrganicListing(b,
-                               org_links = o_links,
-                               visible_link = o_links[pos],
-                               max_num = self.listing_obj.max_num,
-                               max_score = self.listing_obj.max_score).listing()
+    def spotlight(self):
+        spotlight_links, pos = organic.organic_links(c.user)
 
-            if len(o.things) > 0:
-                # only pass through a listing if the links made it
-                # through our builder
-                organic.update_pos(pos+1)
+        trial = populate_spotlight()
 
-                return o
+        if trial:
+            spotlight_links.insert(pos, trial._fullname)
+
+        if not spotlight_links:
+            return None
+
+        # get links in proximity to pos
+        num_tl = len(spotlight_links)
+        if num_tl <= 3:
+            disp_links = spotlight_links
+        else:
+            left_side = max(-1, min(num_tl - 3, 8))
+            disp_links = [spotlight_links[(i + pos) % num_tl]
+                          for i in xrange(-2, left_side)]
+
+        def keep_fn(item):
+            if trial and trial._fullname == item._fullname:
+                return True
+            elif item.likes is not None:
+                return False
+            else:
+                return item.keep_item(item)
+
+        def wrap(item):
+           if item is trial:
+               w = Wrapped(item)
+               w.trial_mode = True
+               w.render_class = LinkOnTrial
+               return w
+           return self.builder_wrapper(item)
+
+        b = IDBuilder(disp_links, wrap = wrap,
+                      skip = True, keep_fn = keep_fn)
+
+        s = SpotlightListing(b,
+                          spotlight_links = spotlight_links,
+                          visible_link = spotlight_links[pos],
+                          max_num = self.listing_obj.max_num,
+                          max_score = self.listing_obj.max_score).listing()
+
+        if len(s.things) > 0:
+            # only pass through a listing if the links made it
+            # through our builder
+            organic.update_pos(pos+1)
+            return s
 
 
     def query(self):
@@ -258,13 +288,13 @@ class HotController(FixListing, ListingController):
             return c.site.get_links('hot', 'all')
 
     def content(self):
-        # only send an organic listing for HTML rendering
+        # only send a spotlight listing for HTML rendering
         if (c.site == Default and c.render_style == "html"
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
-            org = self.organic()
-            if org:
-                return PaneStack([org, self.listing_obj], css_class='spacer')
+            spotlight = self.spotlight()
+            if spotlight:
+                return PaneStack([spotlight, self.listing_obj], css_class='spacer')
         return self.listing_obj
 
     def title(self):
@@ -421,7 +451,9 @@ class UserController(ListingController):
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
-            return getattr(item, "promoted", None) is None
+            return (getattr(item, "promoted", None) is None and
+                    (self.where == "deleted" or
+                     not getattr(item, "deleted", False)))
         return keep
 
     def query(self):
@@ -457,7 +489,7 @@ class UserController(ListingController):
         if q is None:
             return self.abort404()
 
-        return q 
+        return q
 
     @validate(vuser = VExistingUname('username'))
     def GET_listing(self, where, vuser, **env):
@@ -468,7 +500,7 @@ class UserController(ListingController):
             return self.abort404()
 
         # hide spammers profile pages
-        if (not c.user_is_loggedin or 
+        if (not c.user_is_loggedin or
             (c.user._id != vuser._id and not c.user_is_admin)) \
                and vuser._spam:
             return self.abort404()
@@ -478,7 +510,7 @@ class UserController(ListingController):
             return self.abort404()
 
         check_cheating('user')
-            
+
         self.vuser = vuser
         self.render_params = {'user' : vuser}
         c.profilepage = True
@@ -664,7 +696,7 @@ class RedditsController(ListingController):
                 reddits._filter(Subreddit.c.lang == c.content_langs)
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
-                
+
         return reddits
     def GET_listing(self, where, **env):
         self.where = where

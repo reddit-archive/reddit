@@ -40,7 +40,7 @@ class MemcacheLock(object):
         self.locks = locks.locks = getattr(locks, 'locks', set())
 
         self.key = key
-        self.cache = cache.get_local_client()
+        self.cache = cache
         self.time = time
         self.timeout = timeout
         self.have_lock = False

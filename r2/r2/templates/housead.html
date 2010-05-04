@@ -24,7 +24,7 @@
   <body style="padding: 0; margin: 0;">
     <div id="ad">
       <a target="_top" href="${thing.linkurl}">
-        <img src="${thing.imgurl}" />
+        ${unsafe(thing.rendering)}
       </a>
     </div>
     <div id="adlink">

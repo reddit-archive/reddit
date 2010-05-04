@@ -64,11 +64,15 @@ class Builder(object):
         #TODO pull the author stuff into add_props for links and
         #comments and messages?
 
-        aids = set(l.author_id for l in items if hasattr(l, 'author_id'))
+        aids = set(l.author_id for l in items if hasattr(l, 'author_id')
+                   and l.author_id is not None)
 
         if aids:
             authors = Account._byID(aids, True) if aids else {}
-            cup_infos = Account.cup_info_multi(aids)
+            if c.user_is_admin:
+                cup_infos = Account.cup_info_multi(aids)
+            else:
+                cup_infos = {}
         else:
             authors = {}
             cup_infos = {}
@@ -198,7 +202,7 @@ class Builder(object):
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
-                    if hasattr(w, "author") and w.author._spam:
+                    if getattr(w, "author", None) and w.author._spam:
                         w.show_spam = "author"
 
                 elif getattr(item, 'reported', 0) > 0:

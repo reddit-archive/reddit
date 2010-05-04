@@ -27,7 +27,7 @@ from wrapped import Templated
 from datetime import datetime, timedelta
 from pylons import g
 from r2.lib.utils import tup
-from r2.lib.cache import Memcache
+from r2.lib.cache import PyMemcache as Memcache
 
 import subprocess, math
 

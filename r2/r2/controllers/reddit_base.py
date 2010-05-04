@@ -26,7 +26,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters, amqp
-from r2.lib.utils import http_utils, UniqueIterator
+from r2.lib.utils import http_utils, UniqueIterator, ip_and_slash16
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed
@@ -51,8 +51,6 @@ from r2.lib.tracking import encrypt, decrypt
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 cache_affecting_cookies = ('reddit_first','over18','_options')
-
-r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -368,15 +366,6 @@ def set_cnameframe():
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
 
-def set_colors():
-    theme_rx = re.compile(r'')
-    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
-    c.theme = None
-    if color_rx.match(request.get.get('bgcolor') or ''):
-        c.bgcolor = request.get.get('bgcolor')
-    if color_rx.match(request.get.get('bordercolor') or ''):
-        c.bordercolor = request.get.get('bordercolor')
-
 def set_recent_reddits():
     names = read_user_cookie('recent_reddits')
     c.recent_reddits = []
@@ -387,6 +376,15 @@ def set_recent_reddits():
                                                       return_dict = False)
         except NotFound:
             pass
+
+def set_colors():
+    theme_rx = re.compile(r'')
+    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
+    c.theme = None
+    if color_rx.match(request.get.get('bgcolor') or ''):
+        c.bgcolor = request.get.get('bgcolor')
+    if color_rx.match(request.get.get('bordercolor') or ''):
+        c.bordercolor = request.get.get('bordercolor')
 
 def ratelimit_agents():
     user_agent = request.user_agent
@@ -402,15 +400,10 @@ def throttled(key):
     return g.cache.get("throttle_" + key)
 
 def ratelimit_throttled():
-    ip = request.ip
+    ip, slash16 = ip_and_slash16(request)
 
-    m = r_subnet.match(ip)
-    if m is None:
-        g.log.error("ratelimit_throttled: couldn't parse IP %s" % ip)
-    else:
-        subnet = m.group(1) + '.x.x'
-        if throttled(ip) or throttled(subnet):
-            abort(503, 'service temporarily unavailable')
+    if throttled(ip) or throttled(slash16):
+        abort(503, 'service temporarily unavailable')
 
 
 #TODO i want to get rid of this function. once the listings in front.py are
@@ -556,11 +549,25 @@ class MinimalController(BaseController):
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
 
-        if g.enable_usage_stats:
+        if g.usage_sampling <= 0.0:
+            return
+
+        if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
+            if ('pylons.routes_dict' in request.environ and
+                'action' in request.environ['pylons.routes_dict']):
+                action = str(request.environ['pylons.routes_dict']['action'])
+            else:
+                action = "unknown"
+                log_text("unknown action",
+                         "no action for %r" % path_info,
+                         "warning")
+
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
                         end_time = datetime.now(g.tz),
-                        action = str(c.action) or "static")
+                        sampling_rate = g.usage_sampling,
+                        action = action)
+
 
 class RedditController(MinimalController):
 
@@ -633,9 +640,10 @@ class RedditController(MinimalController):
         set_content_type()
         set_iface_lang()
         set_content_lang()
-        set_colors()
         set_recent_reddits()
         set_recent_clicks()
+        # used for HTML-lite templates
+        set_colors()
 
         # set some environmental variables in case we hit an abort
         if not isinstance(c.site, FakeSubreddit):

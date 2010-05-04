@@ -51,7 +51,7 @@
 
   %if c.user != thing.user:
     <div>
-    ${toggle_button("fancy-toggle-button", _("+ friends"), _("- friends"), 
+    ${toggle_button("fancy-toggle-button", _("+ friends"), _("- friends"),
          "friend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
          "unfriend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
          css_class = "add", alt_css_class = "remove",

@@ -394,7 +394,7 @@ class Subreddit(Thing, Printable):
             if limit:
                 srs = srs[:limit]
             return srs
-            
+
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:
             return self.is_subscriber(user)
@@ -546,11 +546,30 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        q = Link._query(Link.c.author_id == c.user.friends,
-                        sort = queries.db_sort(sort))
-        if time != 'all':
-            q._filter(queries.db_times[time])
-        return q
+        if not c.user.friends:
+            return []
+
+        if g.use_query_cache:
+            # with the precomputer enabled, this Subreddit only supports
+            # being sorted by 'new'. it would be nice to have a
+            # cleaner UI than just blatantly ignoring their sort,
+            # though
+            sort = 'new'
+            time = 'all'
+
+            friends = Account._byID(c.user.friends,
+                                    return_dict=False)
+
+            crs = [queries.get_submitted(friend, sort, time)
+                   for friend in friends]
+            return queries.MergedCachedResults(crs)
+
+        else:
+            q = Link._query(Link.c.author_id == c.user.friends,
+                            sort = queries.db_sort(sort))
+            if time != 'all':
+                q._filter(queries.db_times[time])
+            return q
             
 class AllSR(FakeSubreddit):
     name = 'all'

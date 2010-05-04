@@ -31,7 +31,7 @@ def bench_cache_lifetime(minutes):
     "Attempts to find how long a given memcached key can be expected to live"
 
     from pylons import g
-    from r2.lib.cache import Memcache
+    from r2.lib.cache import PyMemcache as Memcache
 
     # we'll create an independent connection to memcached for this
     # test

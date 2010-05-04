@@ -52,6 +52,8 @@ def create_accounts(num):
             pass
 
 def create_links(num):
+    from r2.lib.db import queries
+
     accounts = list(Account._query(limit = num, data = True))
     subreddits = list(Subreddit._query(limit = num, data = True))
     for i in range(num):
@@ -60,6 +62,10 @@ def create_links(num):
         user = random.choice(accounts)
         sr = random.choice(subreddits)
         l = Link._submit(title, url, user, sr, '127.0.0.1')
+        queries.new_link(l)
+
+    queries.worker.join()
+        
 
 
 def by_url_cache():

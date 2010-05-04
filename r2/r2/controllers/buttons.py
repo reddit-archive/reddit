@@ -236,3 +236,5 @@ class ButtonsController(RedditController):
         return BoringPage(_("bookmarklets"),
                           show_sidebar = False, 
                           content=Bookmarklets()).render()
+
+

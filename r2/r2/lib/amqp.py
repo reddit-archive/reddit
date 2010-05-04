@@ -40,6 +40,7 @@ amqp_user = g.amqp_user
 amqp_pass = g.amqp_pass
 log = g.log
 amqp_virtual_host = g.amqp_virtual_host
+amqp_logging = g.amqp_logging
 
 connection = None
 channel = local()
@@ -155,7 +156,7 @@ def _add_item(routing_key, body, message_id = None):
             raise
 
 def add_item(routing_key, body, message_id = None):
-    if amqp_host:
+    if amqp_host and amqp_logging:
         log.debug("amqp: adding item %r to %r" % (body, routing_key))
 
     worker.do(_add_item, routing_key, body, message_id = message_id)

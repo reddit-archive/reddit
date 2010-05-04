@@ -192,17 +192,6 @@
 
 <%def name="sidebar(content=None)">
   ${content}
-
-  %if c.user_is_admin:
-    <%include file="admin_rightbox.html"/>
-  %endif
-
-  <%include file="ads.html"/>
-
-  ##cheating... we should move ads into a template of its own
-  %if c.user.pref_clickgadget and c.recent_clicks:
-    ${SideContentBox(_("Recently viewed links"), [ClickGadget(c.recent_clicks)])}
-  %endif
 </%def>
 
 

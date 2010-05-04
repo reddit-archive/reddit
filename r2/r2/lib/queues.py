@@ -64,16 +64,16 @@ class QueueMap(object):
 
 class RedditQueueMap(QueueMap):
     def queues(self):
-        self._q('prec_links', self_refer=True)
+        self._q('prec_links', self_refer=True, durable=False)
         self._q('scraper_q')
-        self._q('searchchanges_q', self_refer=True)
+        self._q('searchchanges_q', self_refer=True, durable=False)
         self._q('newcomments_q')
         self._q('commentstree_q')
         # this isn't in use until the spam_q plumbing is
         #self._q('newpage_q')
         self._q('register_vote_q', self_refer=True)
         self._q('log_q', self_refer=True)
-        self._q('usage_q', self_refer=True)
+        self._q('usage_q', self_refer=True, durable=False)
 
     def bindings(self):
         self.newlink_bindings()

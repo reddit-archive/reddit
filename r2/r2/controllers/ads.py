@@ -26,14 +26,14 @@ from validator import *
 
 class AdsController(RedditController):
 
-    @validate(VSponsor())
+    @validate(VAdmin())
     def GET_index(self):
         res = AdminPage(content = AdminAds(),
                         show_sidebar = False,
                         title = 'ads').render()
         return res
 
-    @validate(VSponsor(),
+    @validate(VAdmin(),
               ad = VAdByCodename('adcn'))
     def GET_assign(self, ad):
         if ad is None:
@@ -44,7 +44,7 @@ class AdsController(RedditController):
                         title='assign an ad to a community').render()
         return res
 
-    @validate(VSponsor(),
+    @validate(VAdmin(),
               ad = VAdByCodename('adcn'))
     def GET_srs(self, ad):
         if ad is None:

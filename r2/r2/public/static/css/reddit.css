@@ -390,6 +390,7 @@ ul.flat-vert {text-align: left;}
 .infotable .small { font-size: smaller; }
 .infotable td { padding-right: 1em; }
 .infotable a:hover { text-decoration: underline }
+.infotable a.pretty-button:hover { text-decoration: none }
 .infotable .state-button a {  background-color: #F0F0F0; color: gray; }
 .infotable .bold { font-weight: bold; }
 .infotable .invalid-user { background-color: pink}
@@ -473,6 +474,11 @@ ul.flat-vert {text-align: left;}
 .domain { color: #888; font-size:x-small; }
 .domain a { color: #888 }
 .domain a:hover { text-decoration: underline }
+
+.link-note {
+    color: #ff4444;
+    font-size:x-small;
+}
 
 .tagline { color:#888; font-size:x-small; 
 }
@@ -598,6 +604,9 @@ ul.flat-vert {text-align: left;}
 .promoted-list .unpromote-button a { color: gray; }
 
 
+.help-cover.promoted {
+    background-color: #EFF7FF;
+}
 
 .organic-listing .promoted {
     background-color: #EFF7FF;
@@ -677,6 +686,11 @@ ul.flat-vert {text-align: left;}
     margin-right: 5px;
 }
 
+
+.infobar.mellow {
+    background-color: #eff8ff;
+    border: 1px solid #bfe0ff;
+}
 
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
@@ -1077,6 +1091,8 @@ textarea.gray { color: gray; }
 .fancy-toggle-button .add { 
     background-image: url(/static/bg-button-add.png);
 }
+
+
 
 .commentbody.border { background-color: #ffc; padding-left: 5px}
 .commentbody.grayed {
@@ -1772,16 +1788,28 @@ textarea.gray { color: gray; }
 
 .num { font-weight: bold; font-size: larger }
 
+.button.thing { 
+    margin:0px;
+    padding:0px;
+}
+
+.button-body { 
+    background-color: transparent;
+}
 .button .blog {
     border: 1px solid #c7def7;
     color: gray;
     text-align: center;
-    margin: 1px;
+    margin: 0px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background-color:white;
 }
+
+.button .blog .r { color: gray;  }
 
 .button {color: #369;}
 .button a:hover { text-decoration: underline }
-
 
 .button .blog1 { font-size: x-small; }
 .button .blog1 .arrow { float:left; margin-left: 2px;  margin-right: 2px;  }
@@ -1800,17 +1828,32 @@ textarea.gray { color: gray; }
 .button .blog2 { font-size: small; }
 .button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog2 .bottomreddit { color: black; background-color: #c7def7; font-size: small; }
+.button .blog2 .score .submit { 
+    display: block;
+    font-size: x-small; 
+    line-height: 17px;
+}
 
-.button .blog3 { font-size: small; border: none; }
+.button .blog.blog3 { 
+    font-size: small; 
+    border: none; 
+    background-color: transparent;
+}
 .button .blog3 .left { float: left; width: 50%; }
 .button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
 .button .blog3 .right { float: right; margin-top: 5px; }
+.button .blog3 .score .submit { 
+    display: block;
+    font-size: x-small; 
+    line-height: 17px;
+}
 
 
 .blog5 .right { float: right; }
 .blog5 .left  { float: left; display:block; margin-top: 10px; }
 .blog5 .clearleft { clear: left; }
 .button .blog.blog5 { border: none; text-align: left; font-size: small; }
+.blog5 a.bling { float:left; }
 .blog5 .container { margin-left: 35px; margin-top: 2px; height: 50px;}
 .blog5 ul { display: inline; }
 .blog5 ul a { color: #515481; font-weight: bold; text-decoration: underline;  }
@@ -1846,11 +1889,6 @@ textarea.gray { color: gray; }
 .blog5 .arrow.downmod b { color: #9494FF; }
 
 .blog5 .right { margin-right: 5px; font-size: medium; font-style: italic;  }
-.blog5 .controversy3 { color: #BB2222;}
-.blog5 .controversy2 { color: #AB4242;}
-.blog5 .controversy1 { color: #976B6B;}
-.blog5 .controversy0 { color: #A8A8A8;}
-
 
 .optional {color: green}
 .instructions { font-size: larger;  }
@@ -3464,7 +3502,7 @@ dd { margin-left: 20px;  }
 
 .sidecontentbox {
     font-size: normal;
- }
+}
 
 .sidecontentbox .content {
     margin: 0;
@@ -3676,4 +3714,97 @@ a.adminbox:hover {
     margin-left: 0;
     border-right: solid #cdcdcd 1px;
     padding-right: 5px;
+}
+
+.pretty-button {
+    margin-left: 5px;
+    margin-bottom: 5px;
+
+    border: 1px solid #666;
+    padding: 1px 6px;
+    background: white none repeat-x scroll center left;
+
+    color: #111;
+    font-size: 10px;
+    font-weight: normal;
+
+    line-height: 20px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    outline-style: none;
+}
+
+a.pretty-button.negative {
+    color: black;
+    background-image: url(/static/bg-button-negative-unpressed.png);
+}
+
+a.pretty-button.negative.pressed {
+    color: white;
+    background-image: url(/static/bg-button-negative-pressed.png);
+}
+
+a.pretty-button.positive {
+    color: black;
+    background-image: url(/static/bg-button-positive-unpressed.png);
+}
+
+a.pretty-button.positive.pressed {
+    color: white;
+    background-image: url(/static/bg-button-positive-pressed.png);
+}
+
+/*
+.jury-box .pretty-button a.pressed {
+    margin: -1px 4px -1px 1px;
+    border-width: 2px;
+    border-color: black;
+    color: white;
+}
+*/
+.organic-listing .ontrial, .help-cover.juryduty {
+    background-color: #ffecf8;
+}
+
+.organic-listing .ontrial a.title {
+    color: #555;
+}
+
+.organic-listing .ontrial .midcol {
+    margin-top: 20px;
+}
+
+.we-need-help {
+    font-size: larger;
+    font-weight: bold;
+    line-height: 18px;
+}
+
+.organic-listing .how-to-classify {
+    font-weight: bold;
+}
+
+.jury-box .arrow-msg {
+    display: none;
+    color: red;
+    margin-top:5px;
+}
+
+.jury-box .thanks-for-voting {
+    margin-left: 1em;
+    display: none;
+    color: red;
+}
+
+.jury-box .thanks-for-voting a {
+    margin-left: 1em;
+}
+
+.sitetable .linkontrial {
+/*    border-top: solid 1px #ccc; */
+    padding-top: 5px;
+}
+
+.sitetable .we-need-help {
+    display: none;
 }

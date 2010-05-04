@@ -21,19 +21,24 @@
 ################################################################################
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
+from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url
+from r2.lib.utils.trial_utils import on_trial
 from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
 from r2.lib.memoize import memoize
-from r2.lib.filters import profanity_filter
+from r2.lib.filters import profanity_filter, _force_utf8
 from r2.lib import utils
+from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
+from datetime import datetime
+from hashlib import md5
 
 import random, re
 
@@ -49,7 +54,7 @@ class Link(Thing, Printable):
                      media_object = None,
                      has_thumbnail = False,
                      promoted = None,
-                     pending = False, 
+                     pending = False,
                      disable_comments = False,
                      selftext = '',
                      ip = '0.0.0.0')
@@ -61,11 +66,12 @@ class Link(Thing, Printable):
 
     @classmethod
     def by_url_key(cls, url):
-        b = base_url(url.lower())
-        try:
-            return b.encode('utf8')
-        except UnicodeDecodeError:
-            return str(b)
+        maxlen = 250
+        template = 'byurl(%s,%s)'
+        keyurl = _force_utf8(base_url(url.lower()))
+        hexdigest = md5(keyurl).hexdigest()
+        usable_len = maxlen-len(template)-len(hexdigest)
+        return template % (hexdigest, keyurl[:usable_len])
 
     @classmethod
     def _by_url(cls, url, sr):
@@ -287,6 +293,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
+        trials = on_trial(wrapped)
 
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
@@ -406,6 +413,8 @@ class Link(Thing, Printable):
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
+
+            item.on_trial = trials.get(item._fullname, False)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
@@ -574,14 +583,19 @@ class Comment(Thing, Printable):
 
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
                                      data=True,return_dict=False)
+        cids = dict((w._id, w) for w in wrapped)
+        parent_ids = set(cm.parent_id for cm in wrapped
+                         if getattr(cm, 'parent_id', None)
+                         and cm.parent_id not in cids)
+        parents = {}
+        if parent_ids:
+            parents = Comment._byID(parent_ids, data=True)
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
         can_reply_srs.add(promote.PromoteSR._id)
 
         min_score = user.pref_min_comment_score
-
-        cids = dict((w._id, w) for w in wrapped)
 
         profilepage = c.profilepage
         user_is_admin = c.user_is_admin
@@ -607,10 +621,10 @@ class Comment(Thing, Printable):
             if not hasattr(item, 'target'):
                 item.target = None
             if item.parent_id:
-                if cids.has_key(item.parent_id):
+                if item.parent_id in cids:
                     item.parent_permalink = '#' + utils.to36(item.parent_id)
                 else:
-                    parent = Comment._byID(item.parent_id)
+                    parent = parents[item.parent_id]
                     item.parent_permalink = parent.make_permalink(item.link, item.subreddit)
             else:
                 item.parent_permalink = None
@@ -1015,6 +1029,14 @@ class Inbox(MultiRelation('inbox',
                 res.append(i)
         return res
 
+class LinkOnTrial(Printable):
+    @classmethod
+    def add_props(cls, user, wrapped):
+        Link.add_props(user, wrapped)
+        for item in wrapped:
+            item.rowstyle = "link ontrial"
+        # Run this last
+        Printable.add_props(user, wrapped)
 
 class ModeratorInbox(Relation(Subreddit, Message)):
     #TODO: shouldn't dupe this
@@ -1046,4 +1068,3 @@ class ModeratorInbox(Relation(Subreddit, Message)):
                 i._commit()
                 res.append(i)
         return res
-

@@ -193,7 +193,7 @@ class AccountJsonTemplate(ThingJsonTemplate):
                                                 comment_karma = "comment_karma",
                                                 has_mail = "has_mail",
                                                 has_mod_mail = "has_mod_mail",
-                                                is_mod = "is_mod",
+                                                is_mod = "is_mod"
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -230,7 +230,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 selftext_html= "selftext_html",
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
-                                                subreddit_id = "subreddit_id")
+                                                subreddit_id = "subreddit_id",
+                                                permalink = "permalink"
+                                                )
 
     def thing_attr(self, thing, attr):
         from r2.lib.scraper import scrapers
@@ -392,10 +394,13 @@ class NullJsonTemplate(JsonTemplate):
 class ListingJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(children = "things",
                         after = "after",
-                        before = "before")
+                        before = "before",
+                        modhash = "modhash")
     
     def thing_attr(self, thing, attr):
-        if attr == "things":
+        if attr == "modhash":
+            return c.modhash
+        elif attr == "things":
             res = []
             for a in thing.things:
                 a.childlisting = False

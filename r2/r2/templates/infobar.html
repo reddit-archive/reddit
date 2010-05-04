@@ -23,4 +23,7 @@
 <%!
    from r2.lib.filters import safemarkdown
 %>
-<div class="infobar">${unsafe(safemarkdown(_(thing.message)))}</div>
+
+<div class="infobar ${thing.extra_class}">
+  ${unsafe(safemarkdown(thing.message))}
+</div>

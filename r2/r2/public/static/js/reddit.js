@@ -1206,6 +1206,25 @@ function fetch_parent(elem, parent_permalink, parent_id) {
     return false;
 }
 
+function juryvote(elem, dir) {
+   var thing_id = elem.thing_id();
+
+   if (elem.hasClass("pressed")) {
+      dir = 0;
+   }
+
+   elem.toggleClass("pressed");
+   elem.siblings(".pretty-button").removeClass("pressed");
+
+   d = {
+         id: thing_id,
+         dir: dir
+       };
+   $.request("juryvote", d, null, true);
+   elem.siblings(".thanks-for-voting").show();
+   return false;
+}
+
 /* The ready method */
 $(function() {
         /* set function to be called on thing creation/replacement,

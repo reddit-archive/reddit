@@ -27,6 +27,9 @@ from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
 
 from pylons import request
 from pylons.controllers.util import abort
+from r2.lib.cache import make_key
+
+import random
 
 class MediaembedController(MinimalController):
     @validate(link = VLink('link'))
@@ -52,6 +55,19 @@ class MediaembedController(MinimalController):
 
         return MediaEmbedBody(body = content).render()
 
+    def GET_comscore(self, reddit = None):
+        return ComScore().render(style="html")
+
+class AdController(MinimalController):
+    def request_key(self):
+        return make_key('request_key',
+                        c.lang,
+                        c.content_langs,
+                        request.host,
+                        c.cname,
+                        request.fullpath,
+                        random.choice(xrange(100)))
+
     def GET_ad(self, reddit_name = None):
         c.render_style = "html"
         return render_ad(reddit_name=reddit_name)
@@ -62,5 +78,3 @@ class MediaembedController(MinimalController):
         c.render_style = "html"
         return render_ad(codename=codename)
 
-    def GET_comscore(self, reddit = None):
-        return ComScore().render(style="html")

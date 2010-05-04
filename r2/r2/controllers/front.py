@@ -189,8 +189,11 @@ class FrontController(RedditController):
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
               sort         = VMenu('controller', CommentSortMenu),
-              num_comments = VMenu('controller', NumCommentsMenu))
-    def GET_comments(self, article, comment, context, sort, num_comments):
+              num_comments = VMenu('controller', NumCommentsMenu),
+              limit        = VInt('limit'),
+              depth        = VInt('depth'))
+    def GET_comments(self, article, comment, context, sort, num_comments,
+                     limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
             return self.abort404()
@@ -228,8 +231,18 @@ class FrontController(RedditController):
         user_num = c.user.pref_num_comments or g.num_comments
         num = g.max_comments if num_comments == 'true' else user_num
 
+        kw = {}
+        # allow depth to be reset (I suspect I'll turn the VInt into a
+        # validator on my next pass of .compact)
+        if depth is not None and 0 < depth < MAX_RECURSION:
+            kw['max_depth'] = depth
+        # allow the user's total count preferences to be overwritten
+        # (think of .embed as the use case together with depth=1)x
+        if limit is not None and 0 < limit < g.max_comments:
+            num = limit
+
         builder = CommentBuilder(article, CommentSortMenu.operator(sort), 
-                                 comment, context)
+                                 comment, context, **kw)
         listing = NestedListing(builder, num = num,
                                 parent_name = article._fullname)
 
@@ -261,6 +274,55 @@ class FrontController(RedditController):
                                                         default=num_comments)],
                            infotext = infotext).render()
         return res
+
+    @validate(VUser())
+    def GET_juryduty(self):
+        displayPane = PaneStack()
+
+        active_trials = {}
+        finished_trials = {}
+
+        juries = Jury.by_account(c.user)
+
+        trials = on_trial([j._thing2 for j in juries])
+
+        for j in juries:
+            defendant = j._thing2
+
+            if trials.get(defendant._fullname, False):
+                active_trials[defendant._fullname] = j._name
+            else:
+                finished_trials[defendant._fullname] = j._name
+
+        if active_trials:
+            fullnames = sorted(active_trials.keys(), reverse=True)
+
+            def my_wrap(thing):
+                w = Wrapped(thing)
+                w.hide_score = True
+                w.likes = None
+                w.trial_mode = True
+                w.render_class = LinkOnTrial
+                w.juryvote = active_trials[thing._fullname]
+                return w
+
+            listing = wrap_links(fullnames, wrapper=my_wrap)
+            displayPane.append(InfoBar(strings.active_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        if finished_trials:
+            fullnames = sorted(finished_trials.keys(), reverse=True)
+            listing = wrap_links(fullnames)
+            displayPane.append(InfoBar(strings.finished_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        displayPane.append(InfoBar(strings.more_info_link %
+                                       dict(link="/help/juryduty"),
+                                   extra_class="mellow"))
+
+        return Reddit(content = displayPane).render()
 
     @validate(VUser(),
               location = nop("location"))
@@ -320,7 +382,7 @@ class FrontController(RedditController):
         if is_moderator and location == 'edit':
             pane = PaneStack()
             if created == 'true':
-                pane.append(InfoBar(message = _('your reddit has been created')))
+                pane.append(InfoBar(message = strings.sr_created))
             pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable = is_moderator)

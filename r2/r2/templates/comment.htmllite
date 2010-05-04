@@ -23,7 +23,7 @@
 <%!
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
-   from r2.lib.template_helpers import get_domain
+   from r2.lib.template_helpers import get_domain, add_sr
 %>
 <%inherit file="printable.htmllite" />
 
@@ -50,9 +50,12 @@
 
 <small>
   <a href="http://${get_domain()}/user/${thing.author.name}">
-    <b>${thing.author.name}</b></a>
-  <span id="score_${thing._fullname}">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
-${thing.timesince}
+    <b>${thing.author.name}</b></a>&#32;
+  <span id="score_${thing._fullname}">
+     ${thing.score} ${ungettext("point", "points", thing.score)}
+  </span>&#32;
+  ${thing.timesince}
+  &#32;<a href="${add_sr(thing.permalink)}">permalink</a>
 </small><br/>
 ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
 

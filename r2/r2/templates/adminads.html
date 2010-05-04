@@ -35,7 +35,7 @@
   </ul>
 </%def>
 
-<%def name="adedit(fullname, codename='', imgurl='', linkurl='')">
+<%def name="adedit(fullname, codename='', imgurl='', raw_html='', linkurl='')">
  <form action="/post/editad" method="post" class="pretty-form medium-text"
        style="display:none"
        onsubmit="return post_form(this, 'editad');" id="adedit-${fullname}">
@@ -55,6 +55,14 @@
       <td>
         <input type="text" name="imgurl" value="${imgurl}" />
         ${error_field("NO_TEXT", "imgurl", "span")}
+      </td>
+    </tr>
+    <tr>
+      <td>raw html (overrides image)</td>
+      <td>
+        <textarea name="raw_html">
+          ${raw_html}
+        </textarea>
       </td>
     </tr>
     <tr>
@@ -84,7 +92,7 @@
       <td>${ad.codename}</td>
       %if ad.codename == "DART":
        <td class="centered">
-         <img src="${ad.imgurl}"/>
+         ${unsafe(ad.rendering())}
        </td>
        <td class="entry">
          ${adbuttons(ad.codename, ad.submit_link())}
@@ -92,15 +100,16 @@
       %else:
        <td>
          <a name="${ad.codename}" href="${ad.linkurl}">
-           <img src="${ad.imgurl}"/>
+           ${unsafe(ad.rendering())}
          </a>
        </td>
        <td class="entry">
          img:&#32;<a href="${ad.imgurl}">${ad.imgurl}</a><br/>
          link:&#32;<a href="${ad.linkurl}">${ad.linkurl}</a><br/>
+         raw html:&#32;${ad.raw_html}<br/>
          <br/>
          ${adbuttons(ad.codename, ad.submit_link())}
-         ${adedit(ad._fullname, ad.codename, ad.imgurl, ad.linkurl)}
+         ${adedit(ad._fullname, ad.codename, ad.imgurl, ad.raw_html, ad.linkurl)}
        </td>
       %endif
      </tr>

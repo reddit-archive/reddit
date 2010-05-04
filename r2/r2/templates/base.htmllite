@@ -58,9 +58,8 @@
        else:
           link = ('<a %s href="http://%s/">%s</a></h3>' % 
                  (style, get_domain(), name))
-       label = _("links from %(site)s").replace(" ", "&#32;");
      %>
-    ${unsafe(label % dict(site = link))}
+    ${self.titlebar(link)}
   </h4>
   %if c.cname:
   <p ${optionalstyle("margin: 0px 30px 5px 30px; color: gray;")}
@@ -84,3 +83,7 @@
     ${next.body()}
   </div>
 </div>
+
+<%def name="titlebar(site)">
+  ${unsafe(_("links from %(site)s").replace(" ", "&#32;") % dict(site=site))}
+</%def>

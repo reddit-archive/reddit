@@ -30,6 +30,7 @@ class Ad (Thing):
         codename = None,
         imgurl = None,
         linkurl = None,
+        raw_html = None,
         )
 
     @classmethod
@@ -46,10 +47,9 @@ class Ad (Thing):
         return [ d[id] for id in all ]
 
     @classmethod
-    def _new(cls, codename, imgurl, linkurl):
-        print "Creating new ad codename=%s imgurl=%s linkurl=%s" % (
-                                          codename, imgurl, linkurl)
-        a = Ad(codename=codename, imgurl=imgurl, linkurl=linkurl)
+    def _new(cls, codename, imgurl, raw_html, linkurl):
+        a = Ad(codename=codename, imgurl=imgurl, raw_html=raw_html,
+               linkurl=linkurl)
         a._commit()
         Ad._all_ads_cache(_update=True)
 
@@ -76,8 +76,15 @@ class Ad (Thing):
 
         return "http://%s/r/ads/submit?url=%s" % (d, url_escape(u))
 
+    def rendering(self):
+        if self.raw_html:
+            return self.raw_html
+        else:
+            return "<img src='%s' />" % self.imgurl
+
     def important_attrs(self):
-        return dict(imgurl=self.imgurl, linkurl=self.linkurl, submit_link=self.submit_link())
+        return dict(rendering=self.rendering(), linkurl=self.linkurl,
+                    submit_link=self.submit_link())
 
 class AdSR(Relation(Ad, Subreddit)):
     @classmethod

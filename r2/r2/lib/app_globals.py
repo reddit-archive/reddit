@@ -21,11 +21,12 @@
 ################################################################################
 from __future__ import with_statement
 from pylons import config
-import pytz, os, logging, sys, socket, re, subprocess
+import pytz, os, logging, sys, socket, re, subprocess, random
 from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import Memcache, Permacache, HardCache
-from r2.lib.cache import MemcacheChain, DoubleMemcacheChain, PermacacheChain, HardcacheChain
+from r2.lib.cache import PyMemcache, CMemcache
+from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
+from r2.lib.cache import CassandraCache, CassandraCacheChain
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -55,6 +56,7 @@ class Globals(object):
 
     float_props = ['min_promote_bid',
                    'max_promote_bid',
+                   'usage_sampling',
                    ]
 
     bool_props = ['debug', 'translator',
@@ -69,13 +71,15 @@ class Globals(object):
                   'db_create_tables',
                   'disallow_db_writes',
                   'exception_logging',
-                  'enable_usage_stats',
+                  'amqp_logging',
                   ]
 
     tuple_props = ['memcaches',
                    'rec_cache',
-                   'permacaches',
                    'rendercaches',
+                   'permacache_memcaches',
+                   'cassandra_seeds',
+                   'permacaches',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -129,24 +133,41 @@ class Globals(object):
         # to cache_chains (closed around by reset_caches) so that they
         # can properly reset their local components
 
-        localcache_cls = SelfEmptyingCache if self.running_as_script else LocalCache
+        localcache_cls = (SelfEmptyingCache if self.running_as_script
+                          else LocalCache)
+        num_mc_clients = 2 if self.running_as_script else 10
 
-        # we're going to temporarily run the old memcached behind the
-        # new one so the caches can start warmer
-        # mc = Memcache(self.memcaches, debug=self.debug)
-        mc = Permacache(self.memcaches)
-        rec_cache = Permacache(self.rec_cache)
-        rmc = Permacache(self.rendercaches)
-        pmc = Permacache(self.permacaches)
+        py_mc = PyMemcache(self.memcaches)
+        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients)
+        rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients)
+        rec_cache = None # we're not using this for now
+
+        pmc_chain = (localcache_cls(),)
+        if self.permacache_memcaches:
+            pmc_chain += (PyMemcache(self.permacache_memcaches),)
+        if self.cassandra_seeds:
+            self.cassandra_seeds = list(self.cassandra_seeds)
+            random.shuffle(self.cassandra_seeds)
+            pmc_chain += (CassandraCache('permacache', 'permacache',
+                                         self.cassandra_seeds),)
+        if self.permacaches:
+            pmc_chain += (PyMemcache(self.permacaches),)
+        if len(pmc_chain) == 1:
+            print 'Warning: proceding without a permacache'
+            
+        self.permacache = CassandraCacheChain(pmc_chain)
+
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
-        self.memcache = mc
-        self.cache = PermacacheChain((localcache_cls(), mc))
-        self.permacache = PermacacheChain((localcache_cls(), pmc))
-        self.rendercache = PermacacheChain((localcache_cls(), rmc))
+
+        self.memcache = py_mc # we'll keep using this one for locks
+                              # intermediately
+
+        self.cache = MemcacheChain((localcache_cls(), py_mc))
+        self.rendercache = MemcacheChain((localcache_cls(), rmc))
         self.rec_cache = rec_cache
 
-        self.make_lock = make_lock_factory(mc)
+        self.make_lock = make_lock_factory(self.memcache)
         cache_chains = [self.cache, self.permacache, self.rendercache]
 
         # set default time zone if one is not set
@@ -160,7 +181,8 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), mc, HardCache(self)),
+        self.hardcache = HardcacheChain((localcache_cls(), py_mc,
+                                         HardCache(self)),
                                         cache_negative_results = True)
         cache_chains.append(self.hardcache)
 

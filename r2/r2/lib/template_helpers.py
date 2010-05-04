@@ -253,7 +253,7 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
     # don't do anything if it is just an anchor
     if path.startswith('#') or path.startswith('javascript:'):
         return path
-    
+
     u = UrlParser(path)
     if sr_path and (nocname or not c.cname):
         u.path_add_subreddit(c.site)

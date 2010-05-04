@@ -561,6 +561,12 @@ class VVerifiedUser(VUser):
             raise VerifiedUserRequiredException
 
 class VSponsor(VVerifiedUser):
+    """
+    Not intended to be used as a check for c.user_is_sponsor, but
+    rather is the user allowed to use the sponsored link system and,
+    if there is a link passed in, is the user allowed to edit the link
+    in question.
+    """
     def user_test(self, thing):
         return (thing.author_id == c.user._id)
 

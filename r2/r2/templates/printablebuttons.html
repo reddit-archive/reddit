@@ -31,6 +31,11 @@
       ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
     </li>
   %endif
+  %if thing.show_indict:
+    <li>
+      ${ynbutton(_("indict"), _("indicted"), "indict")}
+    </li>
+  %endif
   %if thing.show_delete:
     <li>
       ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}

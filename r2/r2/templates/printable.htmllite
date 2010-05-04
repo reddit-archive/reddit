@@ -76,8 +76,10 @@ ${self.Child()}
       var reddit_bordercolor="FFFFFF";
     </script>
     <%
-       url = ("http://%s/button_content?t=4&id=%s" % 
-               (get_domain(cname = c.cname, subreddit = True), thing._fullname))
+       from r2.models import FakeSubreddit
+       url = ("http://%s/static/button/button4.html?t=4&id=%s&sr=%s" % 
+               (get_domain(cname = c.cname, subreddit = False), thing._fullname,
+               c.site.name if not isinstance(c.site, FakeSubreddit) else ""))
        if c.bgcolor:
           url += "&bgcolor=%s&bordercolor=%s" % (c.bgcolor, c.bgcolor)
        else:

@@ -75,6 +75,12 @@ string_dict = dict(
     
     friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),
 
+    sr_created = _('your reddit has been created'),
+
+    active_trials = _("these things are still on trial, so you can feel free to reclassify them:"),
+    finished_trials = _("these trials have concluded; it's too late to change your mind on them:"),
+    more_info_link = _("visit [%(link)s](%(link)s) for more information"),
+
     msg_add_friend = dict(
         friend = None,
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),

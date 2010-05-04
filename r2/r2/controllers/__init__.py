@@ -51,6 +51,7 @@ from usage import UsageController
 from errorlog import ErrorlogController
 from promotecontroller import PromoteController
 from mediaembed import MediaembedController
+from mediaembed import AdController
 
 from querycontroller import QueryController
 

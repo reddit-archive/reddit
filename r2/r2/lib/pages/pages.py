@@ -44,6 +44,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
+from r2.lib.utils import trunc_time
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import scrapers
@@ -169,8 +170,9 @@ class Reddit(Templated):
                         css_class = "icon-menu",  separator = '')]
 
     def sr_moderators(self, limit = 10):
-        accounts = [Account._byID(uid, True)
-                    for uid in c.site.moderators[:limit]]
+        accounts = Account._byID([uid
+                                  for uid in c.site.moderators[:limit]],
+                                 data=True, return_dict=False)
         return [WrappedUser(a) for a in accounts if not a._deleted]
 
     def rightbox(self):
@@ -184,11 +186,30 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox:
             ps.append(LoginFormWide())
 
+        if not isinstance(c.site, FakeSubreddit):
+            ps.append(SponsorshipBox())
+
+        no_ads_yet = True
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
-            ps.append(SponsorshipBox())
+            ps.append(Ads())
+            no_ads_yet = False
 
+        if self.submit_box:
+            ps.append(SideBox(_('Submit a link'),
+                              '/submit', 'submit',
+                              sr_path = True,
+                              subtitles = [strings.submit_box_text],
+                              show_cover = True))
+
+        if self.create_reddit_box:
+           ps.append(SideBox(_('Create your own reddit'),
+                              '/reddits/create', 'create',
+                              subtitles = rand_strings.get("create_reddit", 2),
+                              show_cover = True, nocname=True))
+
+        if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
             if moderators:
                 total = len(c.site.moderators)
@@ -208,22 +229,15 @@ class Reddit(Templated):
                 ps.append(SideContentBox(_('admin box'), self.sr_admin_menu()))
 
 
-        if self.submit_box:
-            ps.append(SideBox(_('Submit a link'),
-                              '/submit', 'submit',
-                              sr_path = True,
-                              subtitles = [strings.submit_box_text],
-                              show_cover = True))
-            
-        if self.create_reddit_box:
-           ps.append(SideBox(_('Create your own reddit'),
-                              '/reddits/create', 'create',
-                              subtitles = rand_strings.get("create_reddit", 2),
-                              show_cover = True, nocname=True))
+        if no_ads_yet:
+            ps.append(Ads())
 
-        #we should do this here, but unless we move the ads into a
-        #template of its own, it will render above the ad
-        #ps.append(ClickGadget())
+        if c.user_is_admin:
+            ps.append(Admin_Rightbox())
+
+        if c.user.pref_clickgadget and c.recent_clicks:
+            ps.append(SideContentBox(_("Recently viewed links"),
+                                     [ClickGadget(c.recent_clicks)]))
 
         return ps
 
@@ -941,8 +955,8 @@ class MenuArea(Templated):
 
 class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
-    def __init__(self, message = ''):
-        Templated.__init__(self, message = message)
+    def __init__(self, message = '', extra_class = ''):
+        Templated.__init__(self, message = message, extra_class = extra_class)
 
 
 class RedditError(BoringPage):
@@ -1324,10 +1338,13 @@ class ButtonEmbed(CachedTemplate):
     def __init__(self, button = None, width = 100,
                  height=100, referer = "", url = "", **kw):
         arg = "cnameframe=1&" if c.cname else ""
+        sr = c.site.name if not isinstance(c.site, FakeSubreddit) else ""
+        if sr:
+            arg += "sr=%s&" % sr
         Templated.__init__(self, button = button,
                            width = width, height = height,
                            referer=referer, url = url,
-                           domain = get_domain(),
+                           domain = get_domain(subreddit = False),
                            arg = arg,
                            **kw)
 
@@ -1462,12 +1479,15 @@ class AdminErrorLog(Templated):
         date_groupings = {}
         hexkeys_seen = {}
 
-        for ids in hcb.ids_by_category("error"):
+        idses = hcb.ids_by_category("error")
+        errors = g.hardcache.get_multi(prefix="error-", keys=idses)
+
+        for ids in idses:
             date, hexkey = ids.split("-")
 
             hexkeys_seen[hexkey] = True
 
-            d = g.hardcache.get("error-" + ids)
+            d = errors.get(ids, None)
 
             if d is None:
                 log_text("error=None", "Why is error-%s None?" % ids,
@@ -1480,16 +1500,22 @@ class AdminErrorLog(Templated):
         self.nicknames = {}
         self.statuses = {}
 
-        for hexkey in hexkeys_seen.keys():
-            nick = g.hardcache.get("error_nickname-%s" % hexkey, "???")
-            self.nicknames[hexkey] = nick
-            status = g.hardcache.get("error_status-%s" % hexkey, "normal")
-            self.statuses[hexkey] = status
+        nicks = g.hardcache.get_multi(prefix="error_nickname-",
+                                      keys=hexkeys_seen.keys())
+        stati = g.hardcache.get_multi(prefix="error_status-",
+                                      keys=hexkeys_seen.keys())
 
-        for ids in hcb.ids_by_category("logtext"):
+        for hexkey in hexkeys_seen.keys():
+            self.nicknames[hexkey] = nicks.get(hexkey, "???")
+            self.statuses[hexkey] = stati.get(hexkey, "normal")
+
+        idses = hcb.ids_by_category("logtext")
+        texts = g.hardcache.get_multi(prefix="logtext-", keys=idses)
+
+        for ids in idses:
             date, level, classification = ids.split("-", 2)
             textoccs = []
-            dicts = g.hardcache.get("logtext-" + ids)
+            dicts = texts.get(ids, None)
             if dicts is None:
                 log_text("logtext=None", "Why is logtext-%s None?" % ids,
                          "warning")
@@ -1584,35 +1610,77 @@ class AdminUsage(Templated):
         triples = set() # sorting key
         daily_stats = {}
 
-        for ids in hcb.ids_by_category("profile_count", limit=10000):
+        idses = hcb.ids_by_category("profile_count", limit=10000)
+        counts   = g.hardcache.get_multi(prefix="profile_count-", keys=idses)
+        elapseds = g.hardcache.get_multi(prefix="profile_elapsed-", keys=idses)
+
+        # The next three code paragraphs are for the case where we're
+        # rendering the current period and trying to decide what load class
+        # to use. For example, if today's number of hits equals yesterday's,
+        # and we're 23:59 into the day, that's totally normal. But if we're
+        # only 12 hours into the day, that's twice what we'd expect. So
+        # we're going to scale the current period by the percent of the way
+        # into the period that we are.
+        #
+        # If we're less than 5% of the way into the period, we skip this
+        # step. This both avoids Div0 errors and keeps us from extrapolating
+        # ridiculously from a tiny sample size.
+
+        now = c.start_time.astimezone(g.display_tz)
+        t_midnight = trunc_time(now, hours=24, mins=60)
+        t_hour = trunc_time(now, mins=60)
+        t_5min = trunc_time(now, mins=5)
+
+        offset_day  = (now - t_midnight).seconds / 86400.0
+        offset_hour = (now - t_hour).seconds     / 3600.0
+        offset_5min = (now - t_5min).seconds     / 300.0
+
+        this_day  = t_midnight.strftime("%Y/%m/%d_xx:xx")
+        this_hour =     t_hour.strftime("%Y/%m/%d_%H:xx")
+        this_5min =     t_5min.strftime("%Y/%m/%d_%H:%M")
+
+        for ids in idses:
             time, action = ids.split("-")
 
+            # coltype strings are carefully chosen to sort alphabetically
+            # in the order that they do
+
             if time.endswith("xx:xx"):
+                coltype = 'Day'
                 factor = 1.0
                 label = time[5:10] # MM/DD
-                day = True
+                if time == this_day and offset_day > 0.05:
+                    factor /= offset_day
             elif time.endswith(":xx"):
+                coltype = 'Hour'
                 factor = 24.0
                 label = time[11:] # HH:xx
+                if time == this_hour and offset_hour > 0.05:
+                    factor /= offset_hour
             else:
+                coltype = 'five-min'
                 factor = 288.0 # number of five-minute periods in a day
                 label = time[11:] # HH:MM
+                if time == this_5min and offset_5min > 0.05:
+                    factor /= offset_5min
+
+            count = counts.get(ids, None)
+            if count is None or count == 0:
+                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
+                continue
 
             # Elapsed in hardcache is in hundredths of a second.
             # Multiply it by 100 so from this point forward, we're
             # dealing with seconds -- as floats with two decimal
             # places of precision. Similarly, round the average
             # to two decimal places.
-            count = g.hardcache.get("profile_count-" + ids)
-            if count is None or count == 0:
-                log_text("usage count=None", "For %r, it's %r" % (ids, count), "error")
-                continue
-            elapsed = g.hardcache.get("profile_elapsed-" + ids, 0) / 100.0
+            elapsed = elapseds.get(ids, 0) / 100.0
             average = int(100.0 * elapsed / count) / 100.0
 
-            triples.add( (factor, time, label) )
+            # Again, the "triple" tuples are a sorting key for the columns
+            triples.add( (coltype, time, label) )
 
-            if factor == 1.0:
+            if coltype == 'Day':
                 daily_stats.setdefault(action, []).append(
                     (count, elapsed, average)
                     )
@@ -1626,10 +1694,26 @@ class AdminUsage(Templated):
         # Figure out what a typical day looks like. For each action,
         # look at the daily stats and record the median.
         for action in daily_stats.keys():
+            if len(daily_stats[action]) < 2:
+                # This is a new action. No point in guessing what normal
+                # load for it looks like.
+                continue
             med = {}
             med["count"]   = median([ x[0] for x in daily_stats[action] ])
             med["elapsed"] = median([ x[1] for x in daily_stats[action] ])
             med["average"] = median([ x[2] for x in daily_stats[action] ])
+
+            # For the purposes of load classes, round the baseline count up
+            # to 5000 times per day, the elapsed to 30 minutes per day, and
+            # the average to 0.10 seconds per request. This not only avoids
+            # division-by-zero problems but also means that if something
+            # went from taking 0.01 seconds per day to 0.08 seconds per day,
+            # we're not going to consider it an emergency.
+            med["count"]   = max(5000,   med["count"])
+            med["elapsed"] = max(1800.0, med["elapsed"])
+            med["average"] = max(0.10,  med["average"])
+
+#            print "Median count for %s is %r" % (action, med["count"])
 
             for d in self.actions[action].values():
                 ice_cold = False
@@ -1650,11 +1734,8 @@ class AdminUsage(Templated):
                         continue
 
                     if med[category] <= 0:
-                        # This shouldn't happen. If it does,
-                        # toggle commenting of the next three lines.
-                        raise ValueError("Huh. I guess this can happen.")
-#                        d["classes"][category] = "load9"
-#                        continue
+                        d["classes"][category] = "load9"
+                        continue
 
                     ratio = scaled / med[category]
                     if ratio > 5.0:
@@ -1681,17 +1762,17 @@ class AdminUsage(Templated):
         # Build a list called labels that gives the template a sorting
         # order for the columns.
         self.labels = []
-        # Keep track of how many times we've seen a granularity (i.e., factor)
+        # Keep track of how many times we've seen a granularity (i.e., coltype)
         # so we can hide any that come after the third
-        factor_counts = {}
+        coltype_counts = {}
         # sort actions by whatever will end up as the first column
         action_sorting_column = None
-        for factor, time, label in sorted(triples, reverse=True):
+        for coltype, time, label in sorted(triples, reverse=True):
             if action_sorting_column is None:
                 action_sorting_column = label
-            factor_counts.setdefault(factor, 0)
-            factor_counts[factor] += 1
-            self.labels.append( (label, factor_counts[factor] > 3) )
+            coltype_counts.setdefault(coltype, 0)
+            coltype_counts[coltype] += 1
+            self.labels.append( (label, coltype_counts[coltype] > 3) )
 
         self.action_order = sorted(self.actions.keys(), reverse=True,
                 key = lambda x:
@@ -1699,6 +1780,11 @@ class AdminUsage(Templated):
 
         Templated.__init__(self)
 
+class Ads(Templated):
+    pass
+
+class Admin_Rightbox(Templated):
+    pass
 
 class Embed(Templated):
     """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
@@ -2528,8 +2614,9 @@ class Dart_Ad(CachedTemplate):
         return responsive(res, False)
 
 class HouseAd(CachedTemplate):
-    def __init__(self, imgurl=None, linkurl=None, submit_link=None):
-        Templated.__init__(self, imgurl = imgurl, linkurl = linkurl,
+    def __init__(self, rendering, linkurl, submit_link):
+        Templated.__init__(self, rendering=rendering,
+                           linkurl = linkurl,
                            submit_link = submit_link)
 
     def render(self, *a, **kw):

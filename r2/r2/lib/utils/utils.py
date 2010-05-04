@@ -457,6 +457,21 @@ def timeuntil(d, resultion = 1, bare = True):
     from pylons import g
     return timetext(d - datetime.now(g.tz))
 
+# Truncate a time to a certain number of minutes
+# e.g, trunc_time(5:52, 30) == 5:30
+def trunc_time(time, mins, hours=None):
+    if hours is not None:
+        if hours < 1 or hours > 60:
+            raise ValueError("Hours %d is weird" % mins)
+        time = time.replace(hour = hours * (time.hour / hours))
+
+    if mins < 1 or mins > 60:
+        raise ValueError("Mins %d is weird" % mins)
+
+    return time.replace(minute = mins * (time.minute / mins),
+                        second = 0,
+                        microsecond = 0)
+
 
 def to_base(q, alphabet):
     if q < 0: raise ValueError, "must supply a positive integer"
@@ -472,7 +487,9 @@ def to36(q):
 
 def median(l):
     if l:
-        return l[len(l)/2]
+        s = sorted(l)
+        i = len(s) / 2
+        return s[i]
 
 def query_string(dict):
     pairs = []
@@ -1005,11 +1022,11 @@ def title_to_url(title, max_length = 50):
     return title
 
 def trace(fn):
-    from pylons import g
+    import sys
     def new_fn(*a,**kw):
         ret = fn(*a,**kw)
-        g.log.debug("Fn: %s; a=%s; kw=%s\nRet: %s"
-                    % (fn,a,kw,ret))
+        sys.stderr.write("Fn: %s; a=%s; kw=%s\nRet: %s\n"
+                         % (fn,a,kw,ret))
         return ret
     return new_fn
 
@@ -1050,10 +1067,14 @@ def link_from_url(path, filter_spam = False, multiple = True):
     except NotFound:
         return [] if multiple else None
 
-    links = tup(links)
+    return filter_links(tup(links), filter_spam = filter_spam,
+                        multiple = multiple)
 
+def filter_links(links, filter_spam = False, multiple = True):
     # run the list through a builder to remove any that the user
     # isn't allowed to see
+    from pylons import c
+    from r2.models import IDBuilder, Link, Subreddit, NotFound
     links = IDBuilder([link._fullname for link in links],
                       skip = False).get_items()[0]
     if not links:
@@ -1083,6 +1104,10 @@ def link_from_url(path, filter_spam = False, multiple = True):
 
 def link_duplicates(article):
     from r2.models import Link, NotFound
+
+    # don't bother looking it up if the link doesn't have a URL anyway
+    if getattr(article, 'is_self', False):
+        return []
 
     try:
         links = tup(Link._by_url(article.url, None))
@@ -1166,6 +1191,21 @@ def in_chunks(it, size=25):
     except StopIteration:
         if chunk:
             yield chunk
+
+r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
+def ip_and_slash16(req):
+    ip = req.ip
+
+    if ip is None:
+        raise ValueError("request.ip is None")
+
+    m = r_subnet.match(ip)
+    if m is None:
+        raise ValueError("Couldn't parse IP %s" % ip)
+
+    slash16 = m.group(1) + '.x.x'
+
+    return (ip, slash16)
 
 class Hell(object):
     def __str__(self):

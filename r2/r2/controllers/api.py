@@ -30,11 +30,12 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, link_from_url, timefromnow
-from r2.lib.utils import timeago, tup
+from r2.lib.utils import query_string, timefromnow
+from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
+from r2.lib.utils.trial_utils import indict, on_trial
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
@@ -78,16 +79,19 @@ class ApiController(RedditController):
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))
 
-    @validate(link = VUrl(['url']),
+    @validate(link1 = VUrl(['url']),
+              link2 = VByName('id'),
               count = VLimit('limit'))
-    def GET_info(self, link, count):
+    def GET_info(self, link1, link2, count):
         """
         Gets a listing of links which have the provided url.  
         """
-        if not link or 'url' not in request.params:
-            return abort(404, 'not found')
+        links = []
+        if link2:
+            links = filter_links(tup(link2), filter_spam = False)
+        elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
+            links = filter_links(tup(link1), filter_spam = False)
 
-        links = link_from_url(request.params.get('url'), filter_spam = False)
         if not links:
             return abort(404, 'not found')
 
@@ -577,6 +581,15 @@ class ApiController(RedditController):
             return
         Report.new(c.user, thing)
 
+    @noresponse(VAdmin(), VModhash(),
+                thing = VByName('id'))
+    def POST_indict(self, thing):
+        '''put something on trial'''
+        if not thing:
+            log_text("indict: no thing", level="warning")
+
+        indict(thing)
+
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
@@ -753,6 +766,42 @@ class ApiController(RedditController):
 
     @noresponse(VUser(),
                 VModhash(),
+                ip = ValidIP(),
+                dir = VInt('dir', min=-1, max=1),
+                thing = VByName('id'))
+    def POST_juryvote(self, dir, thing, ip):
+        if not thing:
+            log_text("juryvote: no thing", level="warning")
+            return
+
+        if not ip:
+            log_text("juryvote: no ip", level="warning")
+            return
+
+        if dir is None:
+            log_text("juryvote: no dir", level="warning")
+            return
+
+        j = Jury.by_account_and_defendant(c.user, thing)
+
+        if not on_trial([thing]).get(thing._fullname,False):
+            log_text("juryvote: not on trial", level="warning")
+            return
+
+        if not j:
+            log_text("juryvote: not on the jury", level="warning")
+            return
+
+        log_text("juryvote",
+                 "%s cast a %d juryvote on %r" % (c.user.name, dir, thing),
+                 level="info")
+
+        j._name = str(dir)
+        j._date = c.start_time
+        j._commit()
+
+    @noresponse(VUser(),
+                VModhash(),
                 vote_type = VVotehash(('vh', 'id')),
                 ip = ValidIP(),
                 dir = VInt('dir', min=-1, max=1),
@@ -774,24 +823,21 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
-        # in a lock to prevent duplicate votes from people
-        # double-clicking the arrows
-        with g.make_lock('vote_lock(%s,%s)' % (c.user._id36, thing._id36)):
-            dir = (True if dir > 0
-                   else False if dir < 0
-                   else None)
+        dir = (True if dir > 0
+               else False if dir < 0
+               else None)
 
-            organic = vote_type == 'organic'
-            queries.queue_vote(user, thing, dir, ip, organic, store = store,
-                               cheater = (errors.CHEATER, None) in c.errors)
-            if store:
-                #update relevant caches
-                if isinstance(thing, Link):
-                    set_last_modified(c.user, 'liked')
-                    set_last_modified(c.user, 'disliked')
+        organic = vote_type == 'organic'
+        queries.queue_vote(user, thing, dir, ip, organic, store = store,
+                           cheater = (errors.CHEATER, None) in c.errors)
+        if store:
+            # update relevant caches
+            if isinstance(thing, Link):
+                set_last_modified(c.user, 'liked')
+                set_last_modified(c.user, 'disliked')
 
-                # flag search indexer that something has changed
-                changed(thing)
+            # flag search indexer that something has changed
+            changed(thing)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1444,9 +1490,10 @@ class ApiController(RedditController):
                    colliding_ad=VAdByCodename(("codename", "fullname")),
                    codename = VLength("codename", max_length = 100),
                    imgurl = VLength("imgurl", max_length = 1000),
+                   raw_html = VLength("raw_html", max_length = 10000),
                    linkurl = VLength("linkurl", max_length = 1000))
     def POST_editad(self, form, jquery, ad, colliding_ad, codename,
-                    imgurl, linkurl):
+                    imgurl, raw_html, linkurl):
         if form.has_errors(("codename", "imgurl", "linkurl"),
                            errors.NO_TEXT):
             pass
@@ -1459,12 +1506,16 @@ class ApiController(RedditController):
             return
 
         if ad is None:
-            Ad._new(codename, imgurl, linkurl)
+            Ad._new(codename,
+                    imgurl=imgurl,
+                    raw_html=raw_html,
+                    linkurl=linkurl)
             form.set_html(".status", "saved. reload to see it.")
             return
 
         ad.codename = codename
         ad.imgurl = imgurl
+        ad.raw_html = raw_html
         ad.linkurl = linkurl
         ad._commit()
         form.set_html(".status", _('saved'))
@@ -1614,7 +1665,7 @@ class ApiController(RedditController):
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))
     def POST_fetch_links(self, form, jquery, links, show):
-        l = wrap_links(links, listing_cls = OrganicListing,
+        l = wrap_links(links, listing_cls = SpotlightListing,
                        num_margin = 0, mid_margin = 0)
         jquery(".content").replace_things(l, stubs = True)
 

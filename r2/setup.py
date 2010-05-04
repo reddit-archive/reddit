@@ -73,6 +73,15 @@ except ImportError:
     print "Installing the py-amqplib"
     easy_install(["http://addons.reddit.com/amqp/py-amqplib-0.6.1-devel.tgz"])
 
+# we're using a custom build of pylibmc at the moment, so we need to
+# be sure that we have the right version
+pylibmc_version = '1.0-reddit-01'
+try:
+    import pylibmc
+    assert pylibmc.__version__ == pylibmc_version
+except (ImportError, AssertionError):
+    print "Installing pylibmc"
+    easy_install(["http://github.com/downloads/ketralnis/pylibmc/pylibmc-1.0-reddit-01.tar.gz"])
 
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
@@ -118,7 +127,9 @@ setup(
                       "chardet",
                       "psycopg2",
                       "py_interface",
-                      "pycountry"],
+                      "pycountry",
+                      "thrift", # required by Cassandra
+                      ],
     packages=find_packages(),
     include_package_data=True,
     test_suite = 'nose.collector',
@@ -143,3 +154,12 @@ setup(
 )
 
 
+# the cassandra stuff we'll need. down here because it needs to be
+# done *after* thrift is installed
+try:
+    import cassandra, pycassa
+except ImportError:
+    # we'll need thrift too, but that is done by install_depends below
+    easy_install(['http://github.com/downloads/ieure/python-cassandra/Cassandra-0.5.0.tar.gz', # required by pycassa
+                  'http://github.com/downloads/ketralnis/pycassa/pycassa-0.1.1.tar.gz',
+                  ])

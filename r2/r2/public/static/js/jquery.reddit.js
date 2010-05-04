@@ -63,6 +63,15 @@ $.with_default = function(value, alt) {
     return $.defined(value) ? value : alt;
 };
 
+$.websafe = function(text) {
+    if(typeof(text) == "string") {
+        text = text.replace(/&/g, "&amp;")
+            .replace(/"/g, '&quot;') /* " */
+            .replace(/>/g, "&gt;").replace(/</g, "&lt;")
+    }
+    return (text || "");
+};
+
 $.unsafe = function(text) {
     /* inverts websafe filtering of reddit app. */
     if(typeof(text) == "string") {
@@ -191,7 +200,7 @@ $.request = function(op, parameters, worker_in, block, type,
     /* flag whether or not we are on a cname */
     if (reddit.cnameframe) 
         parameters.cnameframe = 1;
-    
+
     /* add the modhash if the user is logged in */
     if (reddit.logged) 
         parameters.uh = reddit.modhash;

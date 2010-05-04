@@ -125,7 +125,18 @@
   <tr>
     <th>${_("link options")}</th>
     <td class="prefright">
+%if c.user_is_loggedin and c.user.jury_betatester():
+      <p>
+        ${checkbox(_("show the spotlight box on the front page"), "organic")}
+        &#32;
+        <span class="little gray">
+          ${_("(it shows new and promoted links, and gives you a say in what's spam and what isn't.)")}
+        </span>
+      </p>
+%else:
       <p>${checkbox(_("show me new links on the front page"), "organic")}</p>
+%endif
+
       <p>${checkbox(_("show me links I've recently viewed"), "clickgadget")}</p>
       <p>${checkbox(_("compress the link display"), "compress")}</p>
       <p>${checkbox(_("don't show links after i've liked them"), "hide_ups")}</p>
@@ -142,7 +153,7 @@
         ${unsafe(_("display %(num)s links at once") % \
         dict(num=capture(link_options)))}
       </p>
-      <% 
+      <%
          input = capture(num_input, c.user.pref_min_link_score,
          'min_link_score')
          %>

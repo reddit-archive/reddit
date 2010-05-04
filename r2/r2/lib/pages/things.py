@@ -21,7 +21,8 @@
 ################################################################################
 from r2.lib.menus import Styled
 from r2.lib.wrapped import Wrapped
-from r2.models import LinkListing, make_wrapper, Link, IDBuilder, PromotedLink, Thing
+from r2.models import LinkListing, Link, PromotedLink
+from r2.models import make_wrapper, IDBuilder, Thing
 from r2.lib.utils import tup
 from r2.lib.strings import Score
 from r2.lib.promote import promo_edit_url, promo_traffic_url
@@ -31,7 +32,8 @@ from pylons import c, g
 class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
-                 show_distinguish = False, **kw):
+                 show_distinguish = False,
+                 show_indict = False, **kw):
         show_report = show_report and c.user_is_loggedin
         Styled.__init__(self, style = style,
                         fullname = thing._fullname,
@@ -40,6 +42,7 @@ class PrintableButtons(Styled):
                         show_reports = thing.show_reports,
                         show_delete = show_delete,
                         show_report = show_report,
+                        show_indict = show_indict,
                         show_distinguish = show_distinguish,
                         **kw)
         
@@ -55,6 +58,13 @@ class LinkButtons(PrintableButtons):
                      c.user.name == thing.author.name)
         # do we show the report button?
         show_report = not is_author and report
+
+        if c.user_is_admin:
+            show_report = False
+            show_indict = True
+        else:
+            show_indict = False
+
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
         # do we show the distinguish button? among other things,
@@ -89,6 +99,7 @@ class LinkButtons(PrintableButtons):
                                   hidden = thing.hidden, 
                                   show_delete = show_delete,
                                   show_report = show_report,
+                                  show_indict = show_indict,
                                   show_distinguish = show_distinguish,
                                   show_comments = comments,
                                   # promotion

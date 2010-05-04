@@ -461,8 +461,12 @@ class SearchQuery(object):
         self.spam = spam
         self.deleted = deleted
 
-        if timerange in ['hour','week','day','month','year']:
-            self.timerange = (timeago("1 %s" % timerange),"NOW")
+        if timerange in ['day','month','year']:
+            self.timerange = ('NOW-1%s/HOUR' % timerange.upper(),"NOW")
+        elif timerange == 'week':
+            self.timerange = ('NOW-7DAY/HOUR',"NOW")
+        elif timerange == 'hour':
+            self.timerange = ('NOW-1HOUR/MINUTE',"NOW")
         elif timerange == 'all' or timerange is None:
             self.timerange = None
         else:
@@ -487,7 +491,8 @@ class SearchQuery(object):
 
         return "<%s(%s)>" % (self.__class__.__name__, ", ".join(attrs))
 
-    def run(self, after = None, num = 1000, reverse = False):
+    def run(self, after = None, num = 1000, reverse = False,
+            _update = False):
         if not self.q:
             return pysolr.Results([],0)
 
@@ -561,18 +566,21 @@ class SearchQuery(object):
         q,solr_params = self.solr_params(self.q,boost)
 
         search = self.run_search(q, self.sort, solr_params,
-                                 reverse, after, num)
+                                 reverse, after, num,
+                                 _update = _update)
         return search
 
     @classmethod
-    def run_search(cls, q, sort, solr_params, reverse, after, num):
+    def run_search(cls, q, sort, solr_params, reverse, after, num,
+                   _update = False):
         "returns pysolr.Results(docs=[fullname()],hits=int())"
 
         if reverse:
             sort = swap_strings(sort,'asc','desc')
         after = after._fullname if after else None
 
-        search = cls.run_search_cached(q, sort, 0, num, solr_params)
+        search = cls.run_search_cached(q, sort, 0, num, solr_params,
+                                       _update = _update)
         search.docs = get_after(search.docs, after, num)
 
         return search

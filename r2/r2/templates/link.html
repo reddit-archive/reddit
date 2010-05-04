@@ -39,7 +39,9 @@
 
 <%def name="make_link(name, css_class)">
   <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
-     href="${thing.href_url}"
+     %if not (getattr(thing, "trial_mode", None) and thing.is_self):
+       href="${thing.href_url}"
+     %endif
      %if thing.nofollow:
        rel="nofollow"
      %endif
@@ -77,6 +79,15 @@
     </%call>
     &#32;
     ${self.domain()}
+
+    %if c.user_is_admin:
+        %if thing._deleted:
+            &#32;<span class="link-note">[link deleted]</span>
+        %endif
+        %if thing.on_trial:
+            &#32;<span class="link-note">[on trial]</span>
+        %endif
+    %endif
   </p>
 
   ##the expando button
@@ -146,6 +157,8 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.pref_compress:
       <div class="score-placeholder"></div>
+    %elif getattr(thing, "trial_mode", None):
+      <div class="score unvoted">&bull;</div> 
     %elif thing.hide_score:
       <div class="score likes">&bull;</div> 
       <div class="score unvoted">&bull;</div> 
@@ -187,9 +200,6 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
                               when = thing.timesince, 
                               author= WrappedUser(thing.author, thing.attribs, thing).render()))}
 
-  %if c.user_is_admin and thing._deleted:
-    &#32;[link deleted]
-  %endif
 </%def>
 
 <%def name="child()">
@@ -201,7 +211,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 </%def>
 
 <%def name="thumbnail()">
-  %if thing.thumbnail:
+  %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail')">
     <img src="${thing.thumbnail}" alt=""/>
   </%call>

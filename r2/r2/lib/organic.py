@@ -61,7 +61,7 @@ def insert_promoted(link_names, sr_ids, logged_in):
         else:
             return item.keep_item(item)
 
-    builder = IDBuilder(promoted_items, keep_fn = keep, 
+    builder = IDBuilder(promoted_items, keep_fn = keep,
                         skip = True,  num = max_promoted)
     promoted_items = builder.get_items()[0]
 
@@ -96,6 +96,13 @@ def cached_organic_links(user_id, langs):
     #only use links from reddits that you're subscribed to
     link_names = filter(lambda n: sr_count[n][1] in sr_ids, sr_count.keys())
     link_names.sort(key = lambda n: sr_count[n][0])
+
+    if not link_names and g.debug:
+        q = All.get_links('new', 'all')
+        q._limit = 100 # this decomposes to a _query
+        link_names = [x._fullname for x in q]
+        g.log.debug('Used inorganic links')
+
     #potentially add a up and coming link
     if random.choice((True, False)) and sr_ids:
         sr = Subreddit._byID(random.choice(sr_ids))
@@ -128,7 +135,7 @@ def cached_organic_links(user_id, langs):
 
 def organic_links(user):
     from r2.controllers.reddit_base import organic_pos
-    
+
     sr_ids = Subreddit.user_subreddits(user)
     # make sure that these are sorted so the cache keys are constant
     sr_ids.sort()
@@ -139,9 +146,11 @@ def organic_links(user):
         links = cached_organic_links(None, c.content_langs)
 
     pos = organic_pos()
-    # pos will be 0 if it wasn't specified
-    if links and pos != 0:
-        # make sure that we're not running off the end of the list
+
+    # Make sure that links[pos] exists. Or, if links is [], at least set pos=0
+    if not links:
+        pos = 0
+    elif pos != 0:
         pos = pos % len(links)
 
     return links, pos

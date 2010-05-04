@@ -20,6 +20,7 @@ from pylons import g
 query_cache = g.permacache
 log = g.log
 make_lock = g.make_lock
+worker = amqp.worker
 
 precompute_limit = 1000
 
@@ -140,17 +141,18 @@ class CachedResults(object):
             sr.last_batch_query = last_batch_query
             sr._commit()
 
-    def fetch(self):
+    def fetch(self, force=False):
         """Loads the query from the cache."""
-        self.fetch_multi([self])
+        self.fetch_multi([self], force=force)
 
     @classmethod
-    def fetch_multi(cls, crs):
-        unfetched = [cr for cr in crs if not cr._fetched]
+    def fetch_multi(cls, crs, force=False):
+        unfetched = [cr for cr in crs if not cr._fetched or force]
         if not unfetched:
             return
 
-        cached = query_cache.get_multi([cr.iden for cr in unfetched])
+        cached = query_cache.get_multi([cr.iden for cr in unfetched],
+                                       allow_local = not force)
         for cr in unfetched:
             cr.data = cached.get(cr.iden) or []
             cr._fetched = True
@@ -479,16 +481,18 @@ def add_queries(queries, insert_items = None, delete_items = None):
 
             with make_lock("add_query(%s)" % q.iden):
                 if insert_items and q.can_insert():
+                    q.fetch(force=True)
                     log.debug("Inserting %s into query %s" % (insert_items, q))
                     q.insert(insert_items)
                 elif delete_items and q.can_delete():
+                    q.fetch(force=True)
                     log.debug("Deleting %s from query %s" % (delete_items, q))
                     q.delete(delete_items)
                 else:
                     log.debug('Adding precomputed query %s' % q)
                     query_queue.add_query(q)
     # let the amqp worker handle this
-    amqp.worker.do(_add_queries)
+    worker.do(_add_queries)
 
 #can be rewritten to be more efficient
 def all_queries(fn, obj, *param_lists):
@@ -588,7 +592,7 @@ def new_vote(vote):
         # these less often; see the discussion above
         # batched_time_times
         for sort in batched_time_sorts:
-            for time in db_times.keys():
+            for time in (set(db_times.keys()) - batched_time_times):
                 q = make_batched_time_query(sr, sort, time)
                 results.append(q)
 
@@ -995,8 +999,7 @@ def process_votes(drain = False, limit = 100):
 
 def catch_up_batch_queries():
     # catch up on batched_time_times queries that haven't been run
-    # that should be, which should only happen to small
-    # subreddits. This should be cronned to run about once an
+    # that should be, This should be cronned to run about once an
     # hour. The more often, the more the work of rerunning the actual
     # queries is spread out, but every run has a fixed-cost of looking
     # at every single subreddit
@@ -1017,7 +1020,7 @@ def catch_up_batch_queries():
 
     # make sure that all of the jobs have been completed or processed
     # by the time we return
-    amqp.worker.join()
+    worker.join()
 
 try:
     from r2admin.lib.admin_queries import *

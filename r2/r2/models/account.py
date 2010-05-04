@@ -127,6 +127,16 @@ class Account(Thing):
             return (self.link_karma >= g.WIKI_KARMA and
                     self.comment_karma >= g.WIKI_KARMA)
 
+    def jury_betatester(self):
+        k = "juror-" + self.name
+        if not g.hardcache.get(k):
+            return False
+
+        if g.cache.get("jury-killswitch"):
+            return False
+
+        return True
+
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,
         comment_karma)"""
@@ -311,6 +321,8 @@ class Account(Thing):
     @classmethod
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]
+        # Is this dumb? Why call sgm() with miss_fn=None, rather than just
+        # calling g.hardcache.get_multi()?
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
 
