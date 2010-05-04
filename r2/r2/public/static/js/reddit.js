@@ -1206,6 +1206,30 @@ function fetch_parent(elem, parent_permalink, parent_id) {
     return false;
 }
 
+function big_mod_action(elem, dir) {
+   if ( ! elem.hasClass("pressed")) {
+      elem.addClass("pressed");
+
+      var thing_id = elem.thing_id();
+
+      d = {
+         id: thing_id
+      };
+
+      if (dir == -1) {
+        $.request("remove", d, null, true);
+        elem.siblings(".removed").show();
+        elem.siblings(".approved").hide();
+      } else if (dir == 1) {
+        $.request("approve", d, null, true);
+        elem.siblings(".removed").hide();
+        elem.siblings(".approved").show();
+      }
+   }
+   elem.siblings(".pretty-button").removeClass("pressed");
+   return false;
+}
+
 function juryvote(elem, dir) {
    var thing_id = elem.thing_id();
 
@@ -1231,7 +1255,10 @@ $(function() {
          * and call it on all things currently rendered in the
          * page. */
         $("body").set_thing_init(updateEventHandlers);
-        
+        $(".thumbnail img").lazyload({
+                threshold: 200,
+                placeholder: "/static/nothing.png"
+                }); 
         /* Set up gray inputs and textareas to clear on focus */
         $("textarea.gray, input.gray")
             .focus( function() {

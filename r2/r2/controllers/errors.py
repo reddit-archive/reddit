@@ -67,6 +67,7 @@ error_list = dict((
         ('BAD_EMAILS', _('the following emails are invalid: %(emails)s')),
         ('NO_EMAILS', _('please enter at least one email address')),
         ('TOO_MANY_EMAILS', _('please only share to %(num)s emails at a time.')),
+        ('OVERSOLD', _('that reddit has already been oversold on %(start)s to %(end)s. Please pick another reddit or date.')),
         ('BAD_DATE', _('please provide a date of the form mm/dd/yyyy')),
         ('BAD_DATE_RANGE', _('the dates need to be in order and not identical')),
         ('BAD_FUTURE_DATE', _('please enter a date at least %(day)s days in the future')),

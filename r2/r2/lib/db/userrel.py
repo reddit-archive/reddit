@@ -67,7 +67,8 @@ def UserRel(name, relation, disable_ids_fn = False, disable_reverse_ids_fn = Fal
     @memoize(ids_fn_name)
     def userrel_ids(self):
         q = relation._query(relation.c._thing1_id == self._id,
-                            relation.c._name == name)
+                            relation.c._name == name,
+                            sort = "_date")
         #removed set() here, shouldn't be required
         return [r._thing2_id for r in q]
 

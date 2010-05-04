@@ -99,7 +99,7 @@ def _make_transaction(trans_cls, amount, user, pay_id,
     return req.make_request()
 
 
-def auth_transaction(amount, user, payid, thing, test = None):
+def auth_transaction(amount, user, payid, thing, campaign, test = None):
     # use negative pay_ids to identify freebies, coupons, or anything
     # that doesn't require a CC.
     if payid < 0:
@@ -107,12 +107,13 @@ def auth_transaction(amount, user, payid, thing, test = None):
         # update previous freebie transactions if we can
         try:
             bid = Bid.one(thing_id = thing._id,
-                          pay_id = payid)
+                          transaction = trans_id,
+                          campaign = campaign)
             bid.bid = amount
             bid.auth()
         except NotFound:
-            bid = Bid._new(trans_id, user, payid, thing._id, amount)
-        return bid.transaction
+            bid = Bid._new(trans_id, user, payid, thing._id, amount, campaign)
+        return bid.transaction, ""
 
     elif int(payid) in PayID.get_ids(user):
         order = Order(invoiceNumber = "%dT%d" % (user._id, thing._id))
@@ -120,8 +121,12 @@ def auth_transaction(amount, user, payid, thing, test = None):
                                          amount, user, payid,
                                          order = order, test = test)
         if success:
-            Bid._new(res.trans_id, user, payid, thing._id, amount)
-            return res.trans_id
+            if test:
+                return auth_transaction(amount, user, -1, thing, campaign,
+                                        test = test)
+            else:
+                Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
+                return res.trans_id, ""
         elif res is None:
             # we are in test mode!
             return auth_transaction(amount, user, -1, thing, test = test)
@@ -132,45 +137,62 @@ def auth_transaction(amount, user, payid, thing, test = None):
                 Bid.one(res.trans_id)
             except NotFound:
                 Bid._new(res.trans_id, user, payid, thing._id, amount)
-            return res.trans_id
+        return res.trans_id, res.response_reason_text
 
 
 
-def void_transaction(user, trans_id, test = None):
-    bid =  Bid.one(trans_id)
+def void_transaction(user, trans_id, campaign, test = None):
+    bid =  Bid.one(transaction = trans_id, campaign = campaign)
     bid.void()
-    # verify that the transaction has the correct ownership
-    if bid.account_id == user._id and trans_id > 0:
+    if trans_id > 0:
         res = _make_transaction(ProfileTransVoid,
                                 None, user, None, trans_id = trans_id,
                                 test = test)
         return res
 
 
-def charge_transaction(user, trans_id, test = None):
-    bid =  Bid.one(trans_id)
-    bid.charged()
-    if trans_id < 0:
-        # freebies are automatically approved
-        return True
-    elif bid.account_id == user._id:
-        res = _make_transaction(ProfileTransPriorAuthCapture,
-                                bid.bid, user,
-                                bid.pay_id, trans_id = trans_id,
-                                test = test)
-        return bool(res)
+def is_charged_transaction(trans_id, campaign):
+    bid =  Bid.one(transaction = trans_id, campaign = campaign)
+    return bid.is_charged()
+
+def charge_transaction(user, trans_id, campaign, test = None):
+    bid =  Bid.one(transaction = trans_id, campaign = campaign)
+    if not bid.is_charged():
+        bid.charged()
+        if trans_id < 0:
+            # freebies are automatically authorized
+            return True
+        elif bid.account_id == user._id:
+            res = _make_transaction(ProfileTransPriorAuthCapture,
+                                    bid.bid, user,
+                                    bid.pay_id, trans_id = trans_id,
+                                    test = test)
+            return bool(res)
+
+    # already charged
+    return True
 
 
-def refund_transaction(amount, user, trans_id, test = None):
-    bid = Bid.one(trans_id)
-    if trans_id > 0:
-        # create a new bid to identify the refund
-        success, res = _make_transaction(ProfileTransRefund,
-                                         amount, user, bid.pay_id,
-                                         trans_id = trans_id,
-                                         test = test)
-        if success:
-            bid = Bid._new(res.trans_id, user, -1, bid.thing_id, amount)
-            bid.refund()
-            return bool(res.trans_id)
+#def refund_transaction(amount, user, trans_id, campaign, test = None):
+#    bid =  Bid.one(transaction = trans_id, campaign = campaign)
+#    if trans_id > 0:
+#        # create a new bid to identify the refund
+#        success, res = _make_transaction(ProfileTransRefund,
+#                                         amount, user, bid.pay_id,
+#                                         trans_id = trans_id,
+#                                         test = test)
+#        if success:
+#            bid = Bid._new(res.trans_id, user, -1, bid.thing_id, amount)
+#            bid.refund()
+#            return bool(res.trans_id)
 
+def get_transactions(*trans_keys):
+    from sqlalchemy import and_, or_
+
+    if trans_keys:
+        f = or_(*[and_(Bid.transaction == trans_id, Bid.campaign == camp)
+                  for trans_id, camp in trans_keys])
+        q = Bid.query()
+        q = q.filter(f)
+        return dict(((p.transaction, p.campaign), p) for p in q)
+    return {}

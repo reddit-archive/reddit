@@ -26,7 +26,7 @@
    from r2.lib.template_helpers import add_sr
 %>
 
-<%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links"/>
+<%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links, reddit_selector"/>
 <%namespace name="utils" file="utils.html"/>
 
 <h1>${_("submit to reddit")}</h1>
@@ -76,37 +76,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('reddit')}" id="reddit-field">
-    <div id="sr-autocomplete-area">
-      <input id="sr-autocomplete" name="sr" type="text"
-             autocomplete="off"
-             onkeyup="sr_name_up(event)"
-             onkeydown="return sr_name_down(event)"
-             onblur="hide_sr_name_list()"
-             value = "${thing.default_sr}" />
-      <ul id="sr-drop-down">
-        <li class="sr-name-row"
-            onmouseover="highlight_reddit(this)"
-            onmousedown="return sr_dropdown_mdown(this)"
-            onmouseup="sr_dropdown_mup(this)">nothin</li>
-      </ul>
-    </div>
-    <script type="text/javascript">
-      reddit.sr_cache = ${unsafe(thing.sr_searches)};
-    </script>
-    ${error_field("SUBREDDIT_NOEXIST", "sr", "div")}
-    ${error_field("SUBREDDIT_NOTALLOWED", "sr", "div")}
-    ${error_field("SUBREDDIT_REQUIRED", "sr", "div")}
-    
-    <div id="suggested-reddits">
-        <span class="">${_("popular choices")}&#32;</span>
-      <ul>
-        %for name in thing.subreddits:
-        <li>
-          <a href="#" tabindex="100" onclick="set_sr_name(this); return false">${name}</a>&#32;
-        </li>
-        %endfor
-      </ul>
-    </div>
+    ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
   </%utils:round_field>
 </div>
 

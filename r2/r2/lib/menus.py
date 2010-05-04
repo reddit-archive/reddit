@@ -159,7 +159,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      new_promo      = _('create promotion'),
                      my_current_promos = _('my promoted links'),
                      current_promos = _('all promoted links'),
-                     future_promos = _('unapproved'),
+                     future_promos  = _('unseen'),
+                     roadblock      = _('roadblock'),
                      graph          = _('analytics'),
                      live_promos    = _('live'),
                      unpaid_promos  = _('unpaid'),
@@ -310,8 +311,10 @@ class OffsiteButton(NavButton):
 
 class SubredditButton(NavButton):
     def __init__(self, sr):
+        from r2.models.subreddit import Mod
         self.path = sr.path
-        NavButton.__init__(self, sr.name, sr.path, False,
+        name = 'mod' if sr == Mod else sr.name
+        NavButton.__init__(self, name, sr.path, False,
                            isselected = (c.site == sr))
 
     def build(self, base_path = ''):

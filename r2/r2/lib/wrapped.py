@@ -343,6 +343,9 @@ class Templated(object):
     def _write_cache(self, keys):
         from pylons import g
 
+        if not keys:
+            return
+
         toset = dict((md5(key).hexdigest(), val)
                      for (key, val)
                      in keys.iteritems())

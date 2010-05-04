@@ -24,7 +24,6 @@ from listingcontroller import HotController
 from listingcontroller import SavedController
 from listingcontroller import NewController
 from listingcontroller import BrowseController
-from listingcontroller import RecommendedController
 from listingcontroller import MessageController
 from listingcontroller import RedditsController
 from listingcontroller import ByIDController as ByidController
@@ -35,6 +34,7 @@ from listingcontroller import CommentsController
 from listingcontroller import MyredditsController
 
 from feedback import FeedbackController
+from front import FormsController
 from front import FrontController
 from health import HealthController
 from buttons import ButtonsController

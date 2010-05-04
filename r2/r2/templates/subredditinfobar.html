@@ -73,16 +73,16 @@
 
   %if c.user_is_admin:
     %if thing.sr._spam:
-      ${state_button("unban", _("unban this reddit"),
-        "return change_state(this, 'unban');", _("unbanned"),
+      ${state_button("approve", _("approve this reddit"),
+        "return change_state(this, 'approve');", _("approved"),
         hidden_data = dict(id = thing.sr._fullname))}
       %if thing.sr._spam and hasattr(thing.sr, "banner"):
          &#32;(${strings.banned_by % thing.sr.banner})
       %endif
 
     %else:
-      ${state_button("ban", _("ban this reddit"),
-        "return change_state(this, 'ban');", _("banned"),
+      ${state_button("remove", _("ban this reddit"),
+        "return change_state(this, 'remove');", _("banned"),
         hidden_data = dict(id = thing.sr._fullname))}
     %endif
   %endif

@@ -37,7 +37,7 @@
   <input type="hidden" name="r"  value="${thing.site.name}" />
   <input type="hidden" name="op"  value="" />
   <input type="hidden" name="thumbbucket" 
-         value="http:/${g.s3_thumb_bucket}${c.site._fullname}" />
+         value="http://${g.s3_thumb_bucket}/${c.site._fullname}" />
 
   <h2>${_("stylesheet")}</h2>
   <div class="sheets">
@@ -206,7 +206,7 @@
         <li ${"style='display:none'" if img is None else ""}>
           <% 
              if img is not None:
-                 img = "http:/%s%s_%d.png" % \
+                 img = "http://%s/%s_%d.png" % \
                       (g.s3_thumb_bucket, c.site._fullname, img)
              else:
                  img = "/static/kill.png"                  

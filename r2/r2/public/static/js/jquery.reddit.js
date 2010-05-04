@@ -310,9 +310,13 @@ $.fn.all_things_by_id = function() {
     return this.thing().add( $.things(this.thing_id()) );
 };
 
-$.fn.thing_id = function() {
+$.fn.thing_id = function(class_filter) {
+    class_filter = $.with_default(class_filter, "thing");
     /* Returns the (reddit) ID of the current element's thing */
     var t = (this.hasClass("thing")) ? this : this.thing();
+    if(class_filter != "thing") {
+        t = t.find("." + class_filter + ":first");
+    }
     if(t.length) {
         var id = $.grep(t.get(0).className.split(' '),
                         function(i) { return i.match(/^id-/); }); 
@@ -330,6 +334,15 @@ $.things = function() {
     var sel = $.map(arguments, function(x) { return ".thing.id-" + x; })
        .join(", ");
     return $(sel);
+};
+
+$.fn.same_author = function() {
+    var aid = $(this).thing_id("author");
+    var ids = [];
+    $(".author.id-" + aid).each(function() {
+            ids.push(".thing.id-" + $(this).thing_id());
+        });
+    return $(ids.join(", "));
 };
 
 $.fn.things = function() {
@@ -387,7 +400,7 @@ $.listing = function(name) {
 var thing_init_func = function() { };
 $.fn.set_thing_init = function(func) {
     thing_init_func = func;
-    $(this).find(".thing").each(function() { func(this) });
+    $(this).find(".thing:not(.stub)").each(function() { func(this) });
 };
 
 
@@ -508,12 +521,19 @@ $.insert_things = function(things, append) {
         });
 };
 
-$.fn.delete_table_row = function() {
+$.fn.delete_table_row = function(callback) {
     var tr = this.parents("tr:first").get(0);
     var table = this.parents("table").get(0);
-    $(tr).fadeOut(function() {
-            table.deleteRow(tr.rowIndex);
-        });
+    if(tr) {
+        $(tr).fadeOut(function() {
+                table.deleteRow(tr.rowIndex);
+                if(callback) {
+                    callback();
+                }
+            });
+    } else if (callback) {
+        callback();
+    }
 };
 
 $.fn.insert_table_rows = function(rows, index) {

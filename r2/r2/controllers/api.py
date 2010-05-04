@@ -35,7 +35,7 @@ from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget
-from r2.lib.utils.trial_utils import indict, on_trial
+from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
@@ -52,6 +52,7 @@ from r2.lib.comment_tree import add_comment, delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
+from r2.lib.filters import safemarkdown
 
 from datetime import datetime, timedelta
 from md5 import md5
@@ -164,11 +165,12 @@ class ApiController(RedditController):
                                  default='comments'))
     def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
                     save, sr, ip, then):
-        #backwards compatability
-        if url == 'self':
-            kind = 'self'
 
         if isinstance(url, (unicode, str)):
+            #backwards compatability
+            if url.lower() == 'self':
+                url = kind = 'self'
+
             # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url = url)
 
@@ -217,6 +219,29 @@ class ApiController(RedditController):
         if form.has_error() or not title:
             return
 
+        if should_ratelimit:
+            filled_quota = c.user.quota_full('link')
+            if filled_quota is not None and not c.user._spam:
+                log_text ("over-quota",
+                          "%s just went over their per-%s quota" %
+                          (c.user.name, filled_quota), "info")
+
+                compose_link = ("/message/compose?to=%23" + sr.name +
+                                "&subject=Exemption+request")
+
+                verify_link = "/verify?reason=submit"
+
+                if c.user.email_verified:
+                    msg = strings.verified_quota_msg % dict(link=compose_link)
+                else:
+                    msg = strings.unverified_quota_msg % dict(link1=verify_link,
+                                                              link2=compose_link)
+
+                md = safemarkdown(msg)
+                form.set_html(".status", md)
+                return
+
+
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
                          c.user, sr, ip)
@@ -240,6 +265,7 @@ class ApiController(RedditController):
 
         #set the ratelimiter
         if should_ratelimit:
+            c.user.clog_quota('link', l)
             VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                  prefix = "rate_submit_")
 
@@ -363,6 +389,7 @@ class ApiController(RedditController):
         """
         if container and container.is_moderator(c.user):
             container.remove_moderator(c.user)
+            Subreddit.special_reddits(c.user, "moderator", _update=True)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -373,8 +400,8 @@ class ApiController(RedditController):
         """
         if container and container.is_contributor(c.user):
             container.remove_contributor(c.user)
+            Subreddit.special_reddits(c.user, "contributor", _update=True)
 
-    
     @noresponse(VUser(),
                 VModhash(),
                 nuser = VExistingUname('name'),
@@ -394,7 +421,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer','banned')
+            and (type in ('moderator','contributor','banned')
                  and not c.site.is_moderator(c.user))):
             abort(403, 'forbidden')
         # if we are (strictly) unfriending, the container had better
@@ -403,6 +430,9 @@ class ApiController(RedditController):
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
         fn(iuser or nuser)
+
+        if type in ("moderator", "contributor"):
+            Subreddit.special_reddits(iuser or nuser, type, _update=True)
 
 
 
@@ -424,7 +454,7 @@ class ApiController(RedditController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributer', 'banned')
+            and (type in ('moderator','contributor', 'banned')
                  and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
 
@@ -433,34 +463,39 @@ class ApiController(RedditController):
         if type == "friend" and container != c.user:
             abort(403,'forbidden')
 
-        elif not form.has_errors("name",
-                                 errors.USER_DOESNT_EXIST, errors.NO_USER):
-            new = fn(friend)
-            cls = dict(friend=FriendList,
-                       moderator=ModList,
-                       contributor=ContributorList,
-                       banned=BannedList).get(type)
-            form.set_inputs(name = "")
-            form.set_html(".status:first", _("added"))
-            if new and cls:
-                user_row = cls().user_row(friend)
-                jquery("#" + type + "-table").show(
-                    ).find("table").insert_table_rows(user_row)
+        elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
 
-                if type != 'friend':
-                    msg = strings.msg_add_friend.get(type)
-                    subj = strings.subj_add_friend.get(type)
-                    if msg and subj and friend.name != c.user.name:
-                        # fullpath with domain needed or the markdown link
-                        # will break
-                        d = dict(url = container.path, 
-                                 title = container.title)
-                        msg = msg % d
-                        subj = subj % d
-                        item, inbox_rel = Message._new(c.user, friend,
-                                                       subj, msg, ip)
+        new = fn(friend)
 
-                        queries.new_message(item, inbox_rel)
+        if type in ("moderator", "contributor"):
+            Subreddit.special_reddits(friend, type, _update=True)
+
+        cls = dict(friend=FriendList,
+                   moderator=ModList,
+                   contributor=ContributorList,
+                   banned=BannedList).get(type)
+        form.set_inputs(name = "")
+        form.set_html(".status:first", _("added"))
+        if new and cls:
+            user_row = cls().user_row(friend)
+            jquery("#" + type + "-table").show(
+                ).find("table").insert_table_rows(user_row)
+
+            if type != 'friend':
+                msg = strings.msg_add_friend.get(type)
+                subj = strings.subj_add_friend.get(type)
+                if msg and subj and friend.name != c.user.name:
+                    # fullpath with domain needed or the markdown link
+                    # will break
+                    d = dict(url = container.path,
+                             title = container.title)
+                    msg = msg % d
+                    subj = subj % d
+                    item, inbox_rel = Message._new(c.user, friend,
+                                                   subj, msg, ip)
+
+                    queries.new_message(item, inbox_rel)
 
 
     @validatedForm(VUser('curpass', default = ''),
@@ -536,8 +571,9 @@ class ApiController(RedditController):
         if not thing: return
         '''for deleting all sorts of things'''
         thing._deleted = True
-        if getattr(thing, "promoted", None) is not None:
-            promote.delete_promo(thing)
+        if (getattr(thing, "promoted", None) is not None and
+            not promote.is_promoted(thing)):
+            promote.reject_promotion(thing)
         thing._commit()
 
         # flag search indexer that something has changed
@@ -784,7 +820,7 @@ class ApiController(RedditController):
 
         j = Jury.by_account_and_defendant(c.user, thing)
 
-        if not on_trial([thing]).get(thing._fullname,False):
+        if not trial_info([thing]).get(thing._fullname,False):
             log_text("juryvote: not on trial", level="warning")
             return
 
@@ -793,7 +829,7 @@ class ApiController(RedditController):
             return
 
         log_text("juryvote",
-                 "%s cast a %d juryvote on %r" % (c.user.name, dir, thing),
+                 "%s cast a %d juryvote on %s" % (c.user.name, dir, thing._id36),
                  level="info")
 
         j._name = str(dir)
@@ -1143,23 +1179,20 @@ class ApiController(RedditController):
             jquery.refresh()
 
     @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
+                why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_ban(self, thing):
+    def POST_remove(self, why, thing):
+        end_trial(thing, why + "-removed")
         admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
+                why = VSrCanBan('id'),
                 thing = VByName('id'))
-    def POST_unban(self, thing):
-        admintools.unspam(thing, c.user.name)
-
-    @noresponse(VUser(), VModhash(),
-                VSrCanBan('id'),
-                thing = VByName('id'))
-    def POST_ignore(self, thing):
+    def POST_approve(self, why, thing):
         if not thing: return
-        Report.accept(thing, False)
+
+        end_trial(thing, why + "-approved")
+        admintools.unspam(thing, c.user.name)
 
     @validatedForm(VUser(), VModhash(),
                    VSrCanDistinguish('id'),
@@ -1714,12 +1747,15 @@ class ApiController(RedditController):
                    sponsorships = VByName('ids', thing_cls = Subreddit,
                                           multiple = True))
     def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
+        suffix = ""
+        if not isinstance(c.site, FakeSubreddit):
+            suffix = "-" + c.site.name
         def add_tracker(dest, where, what):
             jquery.set_tracker(
                 where,
-                tracking.PromotedLinkInfo.gen_url(fullname=what,
+                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
                                                   ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname = what,
+                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
                                                        dest = dest,
                                                        ip = request.ip)
                 )

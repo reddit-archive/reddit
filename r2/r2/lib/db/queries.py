@@ -1,5 +1,5 @@
-from r2.models import Account, Link, Comment, Vote, SaveHide
-from r2.models import Message, Inbox, Subreddit, ModeratorInbox
+from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
+from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db import query_queue
@@ -296,7 +296,9 @@ def make_results(query, filter = filter_identity):
         return query
 
 def merge_results(*results):
-    if g.use_query_cache:
+    if not results:
+        return QueryishList([])
+    elif g.use_query_cache:
         return MergedCachedResults(results)
     else:
         m = Merge(results, sort = results[0]._sort)
@@ -342,7 +344,12 @@ def get_spam_comments(sr):
     return make_results(q_c)
 
 def get_spam(sr):
-    return get_spam_links(sr)
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results = [ get_spam_links(sr) for sr in srs ]
+        return merge_results(*results)
+    else:
+        return get_spam_links(sr)
     #return merge_results(get_spam_links(sr),
     #                     get_spam_comments(sr))
 
@@ -361,9 +368,78 @@ def get_reported_comments(sr):
     return make_results(q_c)
 
 def get_reported(sr):
-    return get_reported_links(sr)
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results = [ get_reported_links(sr) for sr in srs ]
+        return merge_results(*results)
+    else:
+        return get_reported_links(sr)
     #return merge_results(get_reported_links(sr),
     #                     get_reported_comments(sr))
+
+# TODO: Wow, what a hack. I'm doing this in a hurry to make
+# /r/blah/about/trials and /r/blah/about/modqueue work. At some point
+# before the heat death of the universe, we should start precomputing
+# these things instead. That would require an "on_trial" attribute to be
+# maintained on Links, a precomputer that keeps track of such links,
+# and changes to:
+#   trial_utils.py:  trial_info(), end_trial(), indict()
+#   trial.py:        all_defendants_cache()
+class QueryishList(list):
+    prewrap_fn = None
+    _rules = None
+    _sort = None
+
+    @property
+    def sort(self):
+        return self._sort
+
+    def _cursor(self):
+        return self
+
+    def _filter(self):
+        return True
+
+    @property
+    def data(self):
+        return [ (t._fullname, 2145945600) for t in self ]
+                  # Jan 1 2038 ^^^^^^^^^^
+                  # so that trials show up before spam and reports
+
+    def fetchone(self):
+        if self:
+            return self.pop(0)
+        else:
+            raise StopIteration
+
+def get_trials_links(sr):
+    l = Trial.defendants_by_sr(sr)
+    s = QueryishList(l)
+    s._sort = [db_sort('new')]
+    return s
+
+def get_trials(sr):
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        return get_trials_links(srs)
+    else:
+        return get_trials_links(sr)
+
+def get_modqueue(sr):
+    results = []
+    if isinstance(sr, ModContribSR):
+        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        results.append(get_trials_links(srs))
+
+        for sr in srs:
+            results.append(get_reported_links(sr))
+            results.append(get_spam_links(sr))
+    else:
+        results.append(get_trials_links(sr))
+        results.append(get_reported_links(sr))
+        results.append(get_spam_links(sr))
+
+    return merge_results(*results)
 
 def get_domain_links(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
@@ -889,7 +965,7 @@ def run_commentstree():
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
-    key = "registered_vote_%s_%s" % (user._id, thing._fullname)
+    key = prequeued_vote_key(user, thing)
     g.cache.set(key, '1' if dir is True else '0' if dir is None else '-1')
     # queue the vote to be stored unless told not to
     if store:
@@ -900,18 +976,49 @@ def queue_vote(user, thing, dir, ip, organic = False,
         else:
             handle_vote(user, thing, dir, ip, organic)
 
+def prequeued_vote_key(user, item):
+    return 'registered_vote_%s_%s' % (user._id, item._fullname)
+
 def get_likes(user, items):
     if not user or not items:
         return {}
     keys = {}
     res = {}
-    for i in items:
-        keys['registered_vote_%s_%s' % (user._id, i._fullname)] = (user, i)
+    keys = dict((prequeued_vote_key(user, item), (user,item))
+                for item in items)
     r = g.cache.get_multi(keys.keys())
 
     # populate the result set based on what we fetched from the cache first
     for k, v in r.iteritems():
         res[keys[k]] = v
+
+    # performance hack: if their last vote came in before this thing
+    # was created, they can't possibly have voted on it
+    cantexist = {}
+    for item in items:
+        if (user, item) in res:
+            continue
+
+        last_vote_attr_name = 'last_vote_' + item.__class__.__name__
+        last_vote = getattr(user, last_vote_attr_name, None)
+        if not last_vote:
+            continue
+
+        try:
+            if last_vote < item._date:
+                res[(user, item)] = '0'
+                cantexist[prequeued_vote_key(user, item)] = '0'
+        except TypeError:
+            g.log.error("user %s has a broken %s? (%r)"
+                        % (user._id, last_vote_attr_name, last_vote))
+            # accounts for broken last_vote properties
+            pass
+
+    # this is a bit dodgy, but should save us from having to reload
+    # all of the votes on pages they've already loaded as soon as they
+    # cast a new vote
+    if cantexist:
+        g.cache.set_multi(cantexist)
 
     # now hit the vote db with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])

@@ -33,28 +33,18 @@
   <h1>${_("set up payment for this link")}</h1>
   <form method="POST" action="/post/pay" id="pay-form"
         class="pretty-form"
-        ##onsubmit="return post_form(this, 'update_pay', null, null, true)">
         onsubmit="return post_form(this, 'update_pay')">
-        <input type="hidden" name="startdate" 
-               value="${thing.link._date.strftime('%m/%d/%Y')}"/>
-        <input type="hidden" name="enddate" 
-               value="${thing.link.promote_until.strftime('%m/%d/%Y')}"/>
-   <p>
-    <% 
-       day = (thing.link.promote_until - thing.link._date).days
-     %>
-    The duration of this link is ${day} ${ungettext("day", "days", day)}
-    (${thing.link._date.strftime("%m/%d/%Y")} -
-    ${thing.link.promote_until.strftime("%m/%d/%Y")}).
-  </p>
-  <p id="bid-field">
-    <%
-       bid = unsafe("<input name='bid' maxlength='8' value='%.2f' type='text' size='4' onchange='update_bid(this)' onkeyup='update_bid(this)'/>" % thing.link.promote_bid)
-     %>
-    ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=bid))}
-    ${error_field("BAD_BID", "bid")}
+    <p>
+      The duration of this link is ${thing.campaign.duration} 
+      (from ${thing.campaign.start_date} to ${thing.campaign.end_date}).
+    </p>
+    <p id="bid-field">
+      <input type="hidden" name="indx" value="${thing.indx}" />
+      <input type="hidden" name="link" value="${thing.link._fullname}" />
+      ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=thing.campaign.bid))}
+      ${error_field("BAD_BID", "bid")}
     <span class="gray">
-      ${_('(total for the duration provided)')}
+      &#32;${_('(total for the duration provided)')}
     </span>
   </p>
   %if thing.profiles:
@@ -78,9 +68,6 @@
   <p class="info">
    ${_("NOTE: your card will not be charged until the link has been queued for promotion.")}
   </p>
-    %if thing.link:
-      <input type="hidden" name="link" value="${thing.link._fullname}" />
-    %endif
     <input type="hidden" name="customer_id" value="${thing.customer_id}" />
     
     ${profile_info(None, disabled=bool(thing.profiles))}

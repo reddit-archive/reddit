@@ -34,19 +34,15 @@ ${self.RenderPrintable()}
   %if thing.show_spam:
       <li><b>[
         %if c.user_is_admin:
-          ${"auto" if thing.autobanned else ""}banned 
+          ${"auto" if thing.autobanned else ""}${strings.banned} 
           ${("by %s" % thing.banner) if thing.banner else ""}
         %elif thing.moderator_banned and thing.banner:
           ${strings.banned_by % thing.banner}
         %else:
-          ${_("banned")}
+          ${strings.banned}
         %endif
       ]</li></b>
-  %elif thing.show_reports:
-      <li><b>[
-        ${strings.reports % thing.reported}
-      ]</b></li>
-  %endif  
+  %endif
 </%def>
 
 <%def name="thing_css_class(what)" buffered="True">
@@ -82,7 +78,7 @@ thing id-${what._fullname}
     ${self.ParentDiv()}
   </p>
   ${self.numcol()}
-  <% 
+  <%
      like_cls = "unvoted"
      if getattr(thing, "likes", None):
          like_cls = "likes"

@@ -32,13 +32,13 @@ def make_map(global_conf={}, app_conf={}):
 
     admin_routes.add(mc)
 
-    mc('/login',    controller='front', action='login')
-    mc('/logout',   controller='front', action='logout')
-    mc('/verify',    controller='front', action='verify')
-    mc('/adminon',  controller='front', action='adminon')
-    mc('/adminoff', controller='front', action='adminoff')
+    mc('/login',    controller='forms', action='login')
+    mc('/logout',   controller='forms', action='logout')
+    mc('/verify',   controller='forms', action='verify')
+    mc('/adminon',  controller='forms', action='adminon')
+    mc('/adminoff', controller='forms', action='adminoff')
     mc('/submit',   controller='front', action='submit')
-    mc('/validuser',   controller='front', action='validuser')
+    mc('/validuser',   controller='forms', action='validuser')
 
     mc('/over18',   controller='post', action='over18')
 
@@ -63,6 +63,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(where='subscriber|contributor|moderator'))
 
     mc('/buttons', controller='buttons', action='button_demo_page')
+    mc('/upgradebuttons', controller='buttons', action='upgrade_buttons')
     #the frame
     mc('/button_content', controller='buttons', action='button_content')
     #/button.js and buttonlite.js - the embeds
@@ -77,7 +78,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/i18n', controller='feedback', action='i18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
-
 
     mc('/admin/i18n', controller='i18n', action='list')
     mc('/admin/i18n/:action', controller='i18n')
@@ -103,10 +103,10 @@ def make_map(global_conf={}, app_conf={}):
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
 
-    mc('/prefs/:location', controller='front',
+    mc('/prefs/:location', controller='forms',
        action='prefs', location='options')
 
-    mc('/juryduty', controller='front', action='juryduty')
+    mc('/depmod', controller='forms', action='depmod')
 
     mc('/info/0:article/*rest', controller = 'front', 
        action='oldinfo', dest='comments', type='ancient')
@@ -126,8 +126,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/duplicates/:article/:title', controller = 'front',
        action = 'duplicates', title=None)
 
-    mc('/mail/optout', controller='front', action = 'optout')
-    mc('/mail/optin',  controller='front', action = 'optin')
+    mc('/mail/optout', controller='forms', action = 'optout')
+    mc('/mail/optin',  controller='forms', action = 'optin')
     mc('/stylesheet', controller = 'front', action = 'stylesheet')
     mc('/frame', controller='front', action = 'frame')
     mc('/framebuster/:blah', controller='front', action = 'framebuster')
@@ -136,12 +136,12 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/promoted/edit_promo/:link',
        controller='promote', action = 'edit_promo')
-    mc('/promoted/pay/:link',
+    mc('/promoted/pay/:link/:indx',
        controller='promote', action = 'pay')
     mc('/promoted/graph',
        controller='promote', action = 'graph')
     mc('/promoted/:action', controller='promote',
-       requirements = dict(action = "new_promo"))
+       requirements = dict(action = "edit_promo|new_promo|roadblock"))
     mc('/promoted/:sort', controller='promote', action = "listing")
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
@@ -151,7 +151,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/', controller='hot', action='listing')
 
-    listing_controllers = "hot|saved|new|recommended|randomrising|comments"
+    listing_controllers = "hot|saved|new|randomrising|comments"
 
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
@@ -168,8 +168,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/message/moderator/:subwhere', controller='message', action='listing',
        where = 'moderator')
 
+    mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
-       requirements=dict(action="password|random|framebuster"))
+       requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog"))
     mc('/help/*anything', controller='embed', action='help')
@@ -187,11 +188,11 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/d/:what', controller='api', action='bookmarklet')
 
-    mc('/resetpassword/:key', controller='front',
+    mc('/resetpassword/:key', controller='forms',
        action='resetpassword')
-    mc('/verification/:key', controller='front',
+    mc('/verification/:key', controller='forms',
        action='verify_email')
-    mc('/resetpassword', controller='front',
+    mc('/resetpassword', controller='forms',
        action='resetpassword')
 
     mc('/post/:action/:url_user', controller='post',
@@ -205,7 +206,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
     mc('/api/gadget/:type', controller = 'api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|new_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer"))
+       requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo|add_roadblock|rm_roadblock"))
     mc('/api/:action', controller='api')
 
     mc("/button_info", controller="api", action="info", limit = 1)

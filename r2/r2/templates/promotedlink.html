@@ -20,7 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.promote import promo_edit_url, STATUS
+   from r2.lib.promote import promo_edit_url
+   from r2.lib import promote
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
 %>
@@ -31,15 +32,14 @@
 
 <%def name="tagline()">
 <%
-   if thing.promote_status < STATUS.promoted and (c.user_is_sponsor or thing.is_author):
-     taglinetext = _("to be promoted on %(date)s by %(author)s") 
+   if (c.user_is_sponsor or thing.is_author) and not promote.is_promoted(thing):
+     taglinetext = _("to be promoted by %(author)s") 
    else:
-     taglinetext = _("promoted %(when)s ago by %(author)s") 
+     taglinetext = _("promoted by %(author)s") 
    taglinetext = taglinetext.replace(" ", "&#32;")
    author = WrappedUser(thing.author, thing.attribs, thing).render()
  %>
-${unsafe(taglinetext % dict(when = thing.timesince, 
-                            date = thing._date.strftime("%Y-%m-%d"), 
+${unsafe(taglinetext % dict(date = thing._date.strftime("%Y-%m-%d"), 
                             author= author))}
 </%def>
 
@@ -54,31 +54,25 @@ ${unsafe(taglinetext % dict(when = thing.timesince,
   ${parent.entry()}
   <p class="sponsored-tagline">
     %if thing.is_author or c.user_is_sponsor:
-      %if thing.promote_status == STATUS.unpaid:
-        ${_('unpaid sponsored link')} 
-      %elif thing.promote_status == STATUS.unseen:
-        ${_('unapproved sponsored link')} 
-      %elif thing.promote_status == STATUS.accepted:
-        ${_('accepted sponsored link')} 
-      %elif thing.promote_status == STATUS.rejected:
-        ${_('rejected sponsored link')} 
-      %elif thing.promote_status == STATUS.pending:
-        ${_('pending sponsored link')} 
-      %elif thing.promote_status == STATUS.promoted:
-        ${_('sponsored link')} 
-      %else:
-        ${_('finished sponsored link')} 
-      %endif
-      %if c.user_is_sponsor:
-         <% days = (thing.promote_until - thing._date).days %>
-         | $${thing.promote_bid} | ${days} ${ungettext("day", "days", days)}
+      %if not promote.is_promo(thing):
+        ${_('deleted sponsored link')}
+      %elif promote.is_unpaid(thing):
+        ${_('unpaid sponsored link')}
+      %elif promote.is_unapproved(thing):
+        ${_('unapproved sponsored link')}
+      %elif promote.is_rejected(thing):
+        ${_('rejected sponsored link')}
+      %elif promote.is_promoted(thing):
+        ${_('sponsored link')}
+      %elif promote.is_accepted(thing):
+        ${_('accepted sponsored link')}
       %endif
     %else:
-      ${_('sponsored link')} 
+      ${_('sponsored link')}
     %endif
   </p>
-  %if thing.promote_status == STATUS.promoted:
-    <img class="promote-pixel" id="promote_img_${thing._fullname}" 
+  %if promote.is_promoted(thing):
+    <img class="promote-pixel" id="promote_oimg_${thing._fullname}" 
          src="/static/pixel.png" alt=" " />
     <script type="text/javascript">
       reddit.tofetch.push("${thing._fullname}");

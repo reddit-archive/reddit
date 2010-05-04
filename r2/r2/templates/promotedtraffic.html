@@ -20,11 +20,14 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
+   from r2.lib.template_helpers import static
    import locale
    from r2.models.subreddit import DomainSR, FakeSubreddit
    def num(x):
       return locale.format('%d', x, True)
  %>
+<script src="${static('jquery.flot.js')}"  type="text/javascript"></script>
+
 <div class="promoted-traffic">
 
   <div class="instructions">
@@ -46,12 +49,10 @@ ${thing.viewers}
       </a>
   </h1>
   %if thing.imp_graph:
-    <img class="traffic-graph" src="${thing.imp_graph}"
-         alt="impressions graph"/>
+    ${thing.imp_graph}
   %endif
   %if thing.cli_graph:
-    <img class="traffic-graph" src="${thing.cli_graph}" 
-         alt="click graph"/>
+    ${thing.cli_graph}
   %endif
   <table class="traffic-table">
     <tr>
@@ -71,9 +72,11 @@ ${thing.viewers}
     </tr>
     %for x in thing.to_iter():
        <tr>
-         %for y in x:
-           <td>${y}</td>
-         %endfor
+         %if x[1] != '0' or x[2] != '0':
+           %for y in x:
+             <td>${y}</td>
+           %endfor
+         %endif
        </tr>
     %endfor
     %if thing.totals:

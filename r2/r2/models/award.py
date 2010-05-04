@@ -145,30 +145,30 @@ class Trophy(Relation(Account, Award)):
 
     @classmethod
     @memoize('trophy.by_account2')
-    def by_account_cache(cls, account):
-        q = Trophy._query(Trophy.c._thing1_id == account._id,
+    def by_account_cache(cls, account_id):
+        q = Trophy._query(Trophy.c._thing1_id == account_id,
                           sort = desc('_date'))
         q._limit = 500
         return [ t._id for t in q ]
 
     @classmethod
     def by_account(cls, account, _update=False):
-        rel_ids = cls.by_account_cache(account, _update=_update)
+        rel_ids = cls.by_account_cache(account._id, _update=_update)
         trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
                                     thing_data=True, return_dict = False)
         return trophies
 
     @classmethod
     @memoize('trophy.by_award2')
-    def by_award_cache(cls, award):
-        q = Trophy._query(Trophy.c._thing2_id == award._id,
+    def by_award_cache(cls, award_id):
+        q = Trophy._query(Trophy.c._thing2_id == award_id,
                           sort = desc('_date'))
         q._limit = 500
         return [ t._id for t in q ]
 
     @classmethod
     def by_award(cls, award, _update=False):
-        rel_ids = cls.by_award_cache(award, _update=_update)
+        rel_ids = cls.by_award_cache(award._id, _update=_update)
         trophies = Trophy._byID_rel(rel_ids, data=True, eager_load=True,
                                     thing_data=True, return_dict = False)
         return trophies

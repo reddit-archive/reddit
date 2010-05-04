@@ -109,20 +109,20 @@ class AppServiceMonitor(Templated):
 
     @classmethod
     def set_cache_lifetime(cls, data, key = "memcaches"):
-        g.rendercache.set(key + "_lifetime", data)
+        g.servicecache.set(key + "_lifetime", data)
 
     @classmethod
     def get_cache_lifetime(cls, average = None, key = "memcaches"):
-        d =  g.rendercache.get(key + "_lifetime", DataLogger())
+        d =  g.servicecache.get(key + "_lifetime", DataLogger())
         return d(average)
 
     @classmethod
     def from_cache(cls, host):
         key = cls.cache_key + str(host)
-        return g.rendercache.get(key)
+        return g.servicecache.get(key)
 
     def set_cache(self, h):
-        cache = g.rendercache
+        cache = g.servicecache
         # cache the whole object
         res = {}
         res[self.cache_key + str(h.host)] = h
@@ -137,7 +137,7 @@ class AppServiceMonitor(Templated):
 
     @classmethod
     def get_db_load(cls, names):
-        return g.rendercache.get_multi(names, prefix = cls.cache_key_small)
+        return g.servicecache.get_multi(names, prefix = cls.cache_key_small)
 
     def server_load(self, mach_name):
         h = self.from_cache(host) 
@@ -145,8 +145,10 @@ class AppServiceMonitor(Templated):
 
     def __iter__(self):
         if not self.hostlogs:
-            self.hostlogs = [self.from_cache(host) for host in self._hosts]
-            self.hostlogs = filter(None, self.hostlogs)
+            hosts = g.servicecache.get_multi(self._hosts,
+                                             prefix = self.cache_key)
+            self.hostlogs = [hosts[str(x)] for x in self._hosts
+                             if str(x) in hosts]
         return iter(self.hostlogs)
 
     def render(self, *a, **kw):

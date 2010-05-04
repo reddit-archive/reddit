@@ -24,33 +24,3 @@
 %>
 <%namespace file="printablebuttons.html" import="ynbutton" />
 <%namespace file="utils.html" import="plain_link" />
-
-%if thing.a.promoted:
-  %if hasattr(thing.a, "promoted_on"):
-    <tr>
-      <th>${_('promoted on')}</th>
-      <td>
-        ${thing.a.promoted_on.strftime(thing.datefmt)}
-      </td>
-  </tr>
-  %endif
-  %if hasattr(thing.a, "unpromoted_on"):
-    <tr>
-      <th>${_('unpromoted on')}</th>
-      <td>
-        ${thing.a.unpromoted_on.strftime(thing.datefmt)}
-      </td>
-  </tr>
-  %endif
-  %if thing.a.promote_until:
-    <tr>
-      <th>${_('promote until')}</th>
-      <td>
-        ${thing.a.promote_until.strftime(thing.datefmt)}
-        %if thing.a.promote_until < datetime.now(g.tz):
-          ${_('(this link has expired and is no longer being promoted)')}
-        %endif
-      </td>
-    </tr>
-  %endif
-%endif

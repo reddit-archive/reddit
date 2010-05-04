@@ -26,44 +26,10 @@
 <% domain = get_domain(False) %>
 
 <div class="instructions">
-  <h1>${_("put %(site)s buttons on your site") % dict(site=c.site.name)}</h1>
-    <p>${_('the reddit button is the smart way to get your content submitted to\
-      and discussed on reddit.  pick the button you like from below, and then\
-      copy/paste the code into your HTML editor.')}</p>
-
-    <h2>${_("commonly used buttons")}</h2>
-    <p>${_('use one of these buttons to quickly add reddit links to your site, or \
-      see below for more options.')}</p>
-    <ul class="buttons">
-      ${demo(capture(drawbadge, 1))}
-      ${demo(capture(drawbadge, 7))}
-      ${demo(capture(draw_point_button, 0))}
-      ${demo(capture(draw_point_button, 1))}
-      ${demo(capture(draw_interactive, 1))}
-    </ul>
-      
-
-    <h2>${_("buttons with points")}</h2>
-    <ul class="buttons">
-    %for x in xrange(0,6):
-       ${demo(capture(draw_point_button, x))}
-    %endfor
-    </ul>
-    <h2>${_("customizing the look of your buttons")}</h2>
-    <p>${_('the buttons with points have three additional options.')}</p>
-    <ul class="buttons" >
-      <li><strong>styled=off</strong><br />
-        ${_('no styles will be added, so you can style it yourself')}</li>
-      <li><strong>url=[URL]</strong><br />
-        ${_('specify a url to use instead of the current url')}</li>
-      <li><strong>newwindow=1</strong><br />
-        ${_('opens links in a new window')}</li>
-    </ul>
-    <p>${_('Example:')}</p>
-    <code>
-      ${point_option_example()}
-    </code>
-
+  <h1>You need to upgrade your buttons</h1>
+    <p>
+      You were redirected here because the site you came from has out of date buttons and were linking directly to our iframe contents rather than our JS (tsk tsk).  If you are the site administrator, use the code snippets below to fix it. 
+    </p>
 
     <h2>${_('simple interactive button')}</h2>
     <p>${_('put this code on your page:')}</p>
@@ -124,14 +90,6 @@
       </code>
     </div>
 
-    <h2>${_("more badges and buttons")}</h2>
-    <ul class="buttons">
-      %for x in xrange(1,15):
-        ${demo(capture(drawbadge, x))}
-      %endfor
-    </ul>
-
-
 </div>
 
 <script type="text/javascript">
@@ -144,14 +102,6 @@ $(function() {
  });
 });
 </script>
-
-<%def name="drawbadge(image)">
-  <a href="http://${domain}/submit" 
-    onclick="window.location = 'http://${domain}/submit?url=' + encodeURIComponent(window.location); return false">
-   <img src="http://${get_domain(subreddit=False)}/static/spreddit${image}.gif" 
-        alt="submit to reddit" border="0" />
-   </a>
-</%def>
 
 <%def name="demo(content)">
 <li class="button-demo">

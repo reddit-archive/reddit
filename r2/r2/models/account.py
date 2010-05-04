@@ -73,14 +73,14 @@ class Account(Thing):
                      share = {},
                      wiki_override = None,
                      email = "",
-                     email_verified = None,
+                     email_verified = False,
                      ignorereports = False,
                      pref_show_promote = None, 
                      )
 
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
-        
+
         #if no sr, return the sum
         if sr is None:
             total = 0
@@ -128,14 +128,10 @@ class Account(Thing):
                     self.comment_karma >= g.WIKI_KARMA)
 
     def jury_betatester(self):
-        k = "juror-" + self.name
-        if not g.hardcache.get(k):
-            return False
-
         if g.cache.get("jury-killswitch"):
             return False
-
-        return True
+        else:
+            return True
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, link_karma,
@@ -318,6 +314,61 @@ class Account(Thing):
     def cup_info(self):
         return g.hardcache.get("cup_info-%d" % self._id)
 
+    def quota_key(self, kind):
+        return "user_%s_quotas-%s" % (kind, self.name)
+
+    def clog_quota(self, kind, item):
+        key = self.quota_key(kind)
+        fnames = g.hardcache.get(key, [])
+        fnames.append(item._fullname)
+        g.hardcache.set(key, fnames, 86400 * 30)
+
+    def quota_baskets(self, kind):
+        from r2.models.admintools import filter_quotas
+        key = self.quota_key(kind)
+        fnames = g.hardcache.get(key)
+
+        if not fnames:
+            return None
+
+        unfiltered = Thing._by_fullname(fnames, data=True, return_dict=False)
+
+        baskets, new_quotas = filter_quotas(unfiltered)
+
+        if new_quotas is None:
+            pass
+        elif new_quotas == []:
+            g.hardcache.delete(key)
+        else:
+            g.hardcache.set(key, new_quotas, 86400 * 30)
+
+        return baskets
+
+    def quota_limits(self, kind):
+        if kind != 'link':
+            raise NotImplementedError
+
+        if self.email_verified:
+            return dict(hour=3, day=10, week=50, month=150)
+        else:
+            return dict(hour=1,  day=3,  week=5,   month=5)
+
+    def quota_full(self, kind):
+        limits = self.quota_limits(kind)
+        baskets = self.quota_baskets(kind)
+
+        if baskets is None:
+            return None
+
+        total = 0
+        filled_quota = None
+        for key in ('hour', 'day', 'week', 'month'):
+            total += len(baskets[key])
+            if total >= limits[key]:
+                filled_quota = key
+
+        return filled_quota
+
     @classmethod
     def cup_info_multi(cls, ids):
         ids = [ int(i) for i in ids ]
@@ -325,6 +376,14 @@ class Account(Thing):
         # calling g.hardcache.get_multi()?
         return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
 
+    @classmethod
+    def system_user(cls):
+        if not hasattr(g, "system_user"):
+            return None
+        try:
+            return cls._by_name(g.system_user)
+        except NotFound:
+            return None
 
 class FakeAccount(Account):
     _nodb = True

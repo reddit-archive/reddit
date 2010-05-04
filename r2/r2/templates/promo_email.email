@@ -30,9 +30,9 @@
  %>
 
 %if thing.kind == Email.Kind.NEW_PROMO:
-This email is to confirm reddit.com's receipt of your submitted self-serve ad. To set up payment for your ad, please go here:
+This email is to confirm reddit.com's receipt of your submitted self-serve ad.  At the moment you have no campaigns associated with this link.  To set up a campaign and payment if you haven't already, please visit the link's edit page:
 
-${g.payment_domain}promoted/pay/${thing.link._id36}
+   ${edit_url}
 
 Please note that we can't approve your ad until you have set up payment, and that your ad must be approved before it goes live on your selected dates.
 
@@ -43,13 +43,13 @@ If your ad is rejected your credit card will not be charged.  Don't take it pers
 http://www.reddit.com/help/selfservicepromotion
 
 %elif thing.kind == Email.Kind.BID_PROMO:
-This email is to confirm that your bid of $${"%.2f" % thing.link.promote_bid} for a self-serve ad on reddit.com has been accepted.  The credit card number you provided will be charged 24 hours prior to the date your self-serve ad is set to run. 
+This email is to confirm that your bid of $${"%.2f" % thing.bid} for a self-serve ad on reddit.com has been accepted.  The credit card number you provided will be charged 24 hours prior to the date your self-serve ad is set to run. 
 
-Having second thoughts about your bid? Want to be sure you're outbidding the competition?  You'll have until ${(thing.link._date - timedelta(1)).strftime("%Y-%m-%d")} to change your bid here:
+Having second thoughts about your bid? Want to be sure you're outbidding the competition?  You'll have until ${(thing.start_date - timedelta(1)).strftime("%Y-%m-%d")} to change your bid here:
 
    ${edit_url}
 %elif thing.kind == Email.Kind.ACCEPT_PROMO:
-This email is to confirm that your self-serve reddit.com ad has been approved by reddit!  The credit card you provided will not be charged until 24 hours prior to the date you have set your ad to run.  If you make any changes to your ad, they will have to be re-approved.  Keep in mind that after we have charged your credit card you will not be able to change your ad. 
+This email is to confirm that your self-serve reddit.com ad has been approved by reddit!  The credit card you provided will not be charged until 24 hours prior to the date you have set your ad to run.  If you make any changes to your ad, they will have to be re-approved.  
 
 It won't be long now until your ad is being displayed to hundreds of thousands of the Internet's finest surfers.
 
@@ -67,21 +67,21 @@ and we'll reconsider it for sumbission.
 %elif thing.kind == Email.Kind.QUEUED_PROMO:
 This email is to inform you that your self-serve ad on reddit.com is about to go live.  Feel free to reply to this email if you have any questions.
 
-%if thing.link.promote_trans_id > 0:
+%if thing.trans_id > 0:
  Your credit card has been successfully charged by reddit for the amount you bid.  Please use this email as your receipt.
 
 
 ================================================================================
-TRANSACTION #${thing.link.promote_trans_id}  
+TRANSACTION #${thing.trans_id}  
 DATE: ${datetime.now(g.tz).strftime("%Y-%m-%d")}
 ................................................................................
 
-AMOUNT CHARGED: $${"%.2f" % thing.link.promote_bid}
+AMOUNT CHARGED: $${"%.2f" % thing.bid}
 SPONSORSHIP PERMALINK: ${thing.link.make_permalink_slow(force_domain = True)}
 
 ================================================================================
 %else:
-Your promotion was a freebie in the amount of $${"%.2f" % thing.link.promote_bid}.  
+Your promotion was a freebie in the amount of $${"%.2f" % thing.bid}.  
 %endif
 %elif thing.kind == Email.Kind.LIVE_PROMO:
 This email is to inform you that your self-serve ad on reddit.com is now live and can be found at the following link:

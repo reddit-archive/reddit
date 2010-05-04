@@ -23,7 +23,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url
-from r2.lib.utils.trial_utils import on_trial
+from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
@@ -185,6 +185,12 @@ class Link(Thing, Printable):
     def _unhide(self, user):
         return self._unsomething(user, self._hidden, 'hide')
 
+    def link_domain(self):
+        if self.is_self:
+            return 'self'
+        else:
+            return domain(self.url)
+
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
 
@@ -229,9 +235,8 @@ class Link(Thing, Printable):
         s = Printable.wrapped_cache_key(wrapped, style)
         if wrapped.promoted is not None:
             s.extend([getattr(wrapped, "promote_status", -1),
-                      wrapped.disable_comments,
+                      getattr(wrapped, "disable_comments", False),
                       wrapped._date,
-                      wrapped.promote_until,
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])
         if style == "htmllite":
@@ -274,6 +279,7 @@ class Link(Thing, Printable):
     
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.lib.pages import make_link_child
         from r2.lib.count import incr_counts
         from r2.lib.media import thumbnail_url
         from r2.lib.utils import timeago
@@ -293,7 +299,7 @@ class Link(Thing, Printable):
 
         saved = Link._saved(user, wrapped) if user_is_loggedin else {}
         hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
-        trials = on_trial(wrapped)
+        trials = trial_info(wrapped)
 
         #clicked = Link._clicked(user, wrapped) if user else {}
         clicked = {}
@@ -326,6 +332,8 @@ class Link(Thing, Printable):
                 item.thumbnail = ""
             elif item.has_thumbnail:
                 item.thumbnail = thumbnail_url(item)
+            elif item.is_self:
+                item.thumbnail = g.self_thumb
             else:
                 item.thumbnail = g.default_thumb
 
@@ -345,7 +353,7 @@ class Link(Thing, Printable):
             # do we hide the score?
             if user_is_admin:
                 item.hide_score = False
-            elif item.promoted:
+            elif item.promoted and item.score <= 0:
                 item.hide_score = True
             elif user == item.author:
                 item.hide_score = False
@@ -367,7 +375,7 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
-                
+
             if c.user.pref_no_profanity:
                 item.title = profanity_filter(item.title)
 
@@ -382,21 +390,8 @@ class Link(Thing, Printable):
             if item.is_self:
                 item.domain_path = item.subreddit_path
 
-            #this is wrong, but won't be so wrong when we move this
-            #whole chunk of code into pages.py
-            from r2.lib.pages import MediaChild, SelfTextChild
-            item.link_child = None
-            item.editable = False
-            if item.media_object:
-                item.link_child = MediaChild(item, load = True)
-            elif item.selftext:
-                expand = getattr(item, 'expand_children', False)
-                item.link_child = SelfTextChild(item, expand = expand,
-                                                nofollow = item.nofollow)
-                #draw the edit button if the contents are pre-expanded
-                item.editable = (expand and
-                                 item.author == c.user and
-                                 not item._deleted)
+            # attach video or selftext as needed
+            item.link_child, item.editable = make_link_child(item)
 
             item.tblink = "http://%s/tb/%s" % (
                 get_domain(cname = cname, subreddit=False),
@@ -413,8 +408,6 @@ class Link(Thing, Printable):
                 item.mousedown_url = item.tblink
             else:
                 item.mousedown_url = None
-
-            item.on_trial = trials.get(item._fullname, False)
 
             item.fresh = not any((item.likes != None,
                                   item.saved,
@@ -437,6 +430,26 @@ class Link(Thing, Printable):
             if item.deleted and not c.user_is_admin:
                 item.author = DeletedUser()
                 item.as_deleted = True
+
+            item.trial_info = trials.get(item._fullname, None)
+
+            item.approval_checkmark = None
+
+            if item.can_ban:
+                verdict = getattr(item, "verdict", None)
+                if verdict in ('admin-approved', 'mod-approved'):
+                    approver = None
+                    if getattr(item, "ban_info", None):
+                        approver = item.ban_info.get("unbanner", None)
+
+                    if approver:
+                        item.approval_checkmark = _("approved by %s") % approver
+                    else:
+                        item.approval_checkmark = _("approved by a moderator")
+
+                if item.trial_info is not None:
+                    item.reveal_trial_info = True
+                    item.use_big_modbuttons = True
 
         if user_is_loggedin:
             incr_counts(wrapped)
@@ -593,7 +606,7 @@ class Comment(Thing, Printable):
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
-        can_reply_srs.add(promote.PromoteSR._id)
+        can_reply_srs.add(promote.get_promote_srid())
 
         min_score = user.pref_min_comment_score
 
@@ -789,7 +802,10 @@ class Message(Thing, Printable):
         sr_id = None
         # check to see if the recipient is a subreddit and swap args accordingly
         if to and isinstance(to, Subreddit):
+            to_subreddit = True
             to, sr = None, to
+        else:
+            to_subreddit = False
 
         if sr:
             sr_id = sr._id
@@ -816,9 +832,12 @@ class Message(Thing, Printable):
             sr = Subreddit._byID(sr_id)
 
         inbox_rel = []
-        # if there is a subreddit id, we have to add it to the moderator inbox
         if sr_id:
-            inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
+            # if there is a subreddit id, and it's either a reply or
+            # an initial message to an SR, add to the moderator inbox
+            # (i.e., don't do it for automated messages from the SR)
+            if parent or to_subreddit:
+                inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
             if author.name in g.admins:
                 m.distinguished = 'admin'
                 m._commit()

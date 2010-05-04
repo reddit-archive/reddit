@@ -23,6 +23,7 @@
 from pylons import g
 from r2.lib import utils
 from r2.lib.memoize import memoize
+import simplejson as json
 
 from urllib2 import Request, HTTPError, URLError, urlopen
 from httplib import InvalidURL
@@ -158,8 +159,8 @@ class MediaEmbed(object):
     scrolling = False
 
     def __init__(self, height, width, content, scrolling = False):
-        self.height    = height
-        self.width     = width
+        self.height    = int(height)
+        self.width     = int(width)
         self.content   = content
         self.scrolling = scrolling
 
@@ -317,10 +318,11 @@ def youtube_in_google(google_url):
 def make_scraper(url):
     domain = utils.domain(url)
     scraper = Scraper
-    for suffix, cls in scrapers.iteritems():
-        if domain.endswith(suffix):
-            scraper = cls
-            break
+    for suffix, clses in scrapers.iteritems():
+        for cls in clses:
+            if domain.endswith(suffix):
+                scraper = cls
+                break
     
     #sometimes youtube scrapers masquerade as google scrapers
     if scraper == GootubeScraper:
@@ -625,6 +627,216 @@ class CraigslistScraper(MediaScraper):
                           content = content,
                           scrolling = True)
 
+        
+########## oembed rich-media scrapers ##########
+
+class OEmbed(Scraper):
+    """
+    Oembed Scraper
+    ==============
+    Tries to use the oembed standard to create a media object.
+    
+    url_re: Regular Expression to match the incoming url against. 
+    api_endpoint: Url of the api end point you are using. 
+    api_params: Default Params to be sent with the outgoing request.
+    """
+    url_re = ''  
+    api_endpoint = ''
+    api_params = {}
+    
+    def __init__(self, url):
+        Scraper.__init__(self, url)
+        self.oembed = None
+        
+        #Fallback to the scraper if the url doesn't match
+        if not self.url_re.match(self.url):
+            self.__class__ = Scraper
+        
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.url)
+
+    def download(self):
+        self.api_params.update( { 'url':self.url})
+        query = urllib.urlencode(self.api_params)      
+        api_url = "%s?%s" % (self.api_endpoint, query)
+
+        self.content_type, self.content = fetch_url(api_url)
+
+        #Either a 404 or 500. 
+        if not self.content:
+            #raise ValueError('ISSUE CALLING %s' %api_url)
+            log.warn('oEmbed call (%s) failed to return content for %s'
+                    %(api_url, self.url))
+            return None
+
+        try:
+            self.oembed  = json.loads(self.content)
+        except ValueError, e:
+            log.error('oEmbed call (%s) return invalid json for %s' 
+                      %(api_url, self.url))
+            return None
+
+    def image_urls(self):
+        #if the original url was an image, use that
+        if self.oembed and self.oembed.get('type') =='photo':
+            yield self.oembed.get('url')
+        elif self.oembed and self.oembed.get('thumbnail_url'):
+            yield self.oembed.get('thumbnail_url')
+
+    def largest_image_url(self):
+        #Seems to be the default place to check if the download has happened.
+        if not self.oembed:
+            self.download()
+
+        #if the original url was of the photo type
+        if self.oembed and self.oembed.get('type') =='photo':
+            return self.oembed.get('url')
+        elif self.oembed and self.oembed.get('thumbnail_url'):
+            return self.oembed.get('thumbnail_url')
+
+    def media_object(self):
+        #Seems to be the default place to check if the download has happened.
+        if not self.oembed:
+            self.download()
+
+        if self.oembed and self.oembed.get('type') in ['video', 'rich']:
+            for domain in self.domains:
+                if self.url.find(domain) > -1:
+                    return dict(type=domain, oembed=self.oembed)
+        return None
+
+    @classmethod
+    def media_embed(cls, video_id = None, height = None, width = None, **kw):
+        content = None
+        oembed = kw.get('oembed')
+
+        # check if oembed is there and has html
+        if oembed and oembed.get('html'):
+            content = oembed.get('html')
+        if content and oembed.get('height') and oembed.get('width'):
+            return MediaEmbed(height = oembed['height'],
+                              width = oembed['width'],
+                              content = content)
+
+class EmbedlyOEmbed(OEmbed):
+    """
+    Embedly oEmbed Provider
+    =======================
+    documentation: http://api.embed.ly
+    """
+    domains = ['youtube.com', 'veoh.com', 'justin.tv', 'ustream.com',
+        'qik.com', 'revision3.com', 'dailymotion.com', 'collegehumor.com',
+        'twitvid.com', 'break.com', 'vids.myspace.com', 'metacafe.com',
+        'blip.tv', 'video.google.com','revver.com', 'video.yahoo.com',
+        'viddler.com', 'liveleak.com', 'animoto.com', 'yfrog.com',
+        'tweetphoto.com', 'flickr.com', 'twitpic.com', 'imgur.com', 
+        'posterous.com', 'twitgoo.com', 'photobucket.com', 'phodroid.com',
+        'xkcd.com', 'asofterword.com', 'qwantz.com', '23hq.com', 'hulu.com',
+        'movieclips.com', 'crackle.com', 'fancast.com', 'funnyordie.com', 
+        'vimeo.com', 'ted.com', 'omnisio.com', 'nfb.ca', 'thedailyshow.com',
+        'movies.yahoo.com', 'colbertnation.com', 'comedycentral.com', 
+        'theonion.com', 'wordpress.tv', 'traileraddict.com', 'soundcloud.com',
+        'slideshare.net', 'scribd.com', 'screenr.com', '5min.com', 
+        'howcast.com', 'my.opera.com', 'escapistmagazine.com', ]
+    
+    url_re = re.compile('^http://.+\.youtube\.com/watch.+|'+\
+        '^http://.+\.youtube\.com/v/.+|'+\
+        '^http://youtube\.com/watch.+|'+\
+        '^http://youtube\.com/v/.+|'+\
+        '^http://youtu\.be/.+|'+\
+        '^http://www\.veoh\.com/.*/watch/.+|'+\
+        '^http://www\.justin\.tv/clip/.+|'+\
+        '^http://www\.justin\.tv/.+|'+\
+        '^http://justin\.tv/clip/.+|'+\
+        '^http://justin\.tv/.+|'+\
+        '^http://www\.ustream\.tv/recorded/.+|'+\
+        '^http://www\.ustream\.tv/channel/.+|'+\
+        '^http://qik\.com/video/.+|'+\
+        '^http://qik\.com/.+|'+\
+        '^http://.*revision3\.com/.+|'+\
+        '^http://www.dailymotion\.com/video/.+|'+\
+        '^http://www.dailymotion\.com/.+/video/.+|'+\
+        '^http://dailymotion\.com/video/.+|'+\
+        '^http://dailymotion\.com/.+/video/.+|'+\
+        '^http://www\.collegehumor\.com/video:.+|'+\
+        '^http://www\.twitvid\.com/.+|'+\
+        '^http://www\.break\.com/.*/.+|'+\
+        '^http://vids\.myspace\.com/index\.cfm\?fuseaction=vids\.individual&videoid.+|'+\
+        '^http://www\.myspace\.com/index\.cfm\?fuseaction=.*&videoid.+|'+\
+        '^http://www\.metacafe\.com/watch/.+|'+\
+        '^http://blip\.tv/file/.+|'+\
+        '^http://.+\.blip\.tv/file/.+|'+\
+        '^http://video\.google\.com/videoplay\?.+|'+\
+        '^http://revver\.com/video/.+|'+\
+        '^http://www\.revver\.com/video/.+|'+\
+        '^http://video\.yahoo\.com/watch/.*/.+|'+\
+        '^http://video\.yahoo\.com/network/.+|'+\
+        '^http://.*viddler\.com/explore/.*/videos/.+|'+\
+        '^http://liveleak\.com/view\?.+|'+\
+        '^http://www\.liveleak\.com/view\?.+|'+\
+        '^http://animoto\.com/play/.+|'+\
+        '^http://yfrog\..*/.+|'+\
+        '^http://.+\.yfrog\..*/.+|'+\
+        '^http://tweetphoto\.com/.+|'+\
+        '^http://www\.flickr\.com/photos/.+|'+\
+        '^http://twitpic\.com/.+|'+\
+        '^http://.*imgur\.com/.+|'+\
+        '^http://.*\.posterous\.com/.+|'+\
+        '^http://twitgoo\.com/.+|'+\
+        '^http://i.*\.photobucket\.com/albums/.+|'+\
+        '^http://gi.*\.photobucket\.com/groups/.+|'+\
+        '^http://phodroid\.com/.*/.*/.+|'+\
+        '^http://xkcd\.com/.+|'+\
+        '^http://www\.asofterworld\.com/index\.php\?id=.+|'+\
+        '^http://www\.qwantz\.com/index\.php\?comic=.+|'+\
+        '^http://23hq\.com/.*/photo/.+|'+\
+        '^http://www\.23hq\.com/.*/photo/.+|'+\
+        '^http://www\.hulu\.com/watch/.+|'+\
+        '^http://movieclips\.com/watch/.*/.*/|'+\
+        '^http://movieclips\.com/watch/.*/.*/.*/.+|'+\
+        '^http://.*crackle\.com/c/.+|'+\
+        '^http://www\.fancast\.com/.*/videos|'+\
+        '^http://www\.funnyordie\.com/videos/.+|'+\
+        '^http://www\.vimeo\.com/groups/.*/videos/.+|'+\
+        '^http://www\.vimeo\.com/.+|'+\
+        '^http://vimeo\.com/groups/.*/videos/.+|'+\
+        '^http://vimeo\.com/.+|'+\
+        '^http://www\.ted\.com/.+|'+\
+        '^http://www\.omnisio\.com/.+|'+\
+        '^http://.*nfb\.ca/film/.+|'+\
+        '^http://www\.thedailyshow\.com/watch/.+|'+\
+        '^http://www\.thedailyshow\.com/full-episodes/.+|'+\
+        '^http://www\.thedailyshow\.com/collection/.*/.*/.+|'+\
+        '^http://movies\.yahoo\.com/.*movie/.*/video/.+|'+\
+        '^http://movies\.yahoo\.com/movie/.*/info|'+\
+        '^http://movies\.yahoo\.com/movie/.*/trailer|'+\
+        '^http://www\.colbertnation\.com/the-colbert-report-collections/.+|'+\
+        '^http://www\.colbertnation\.com/full-episodes/.+|'+\
+        '^http://www\.colbertnation\.com/the-colbert-report-videos/.+|'+\
+        '^http://www\.comedycentral\.com/videos/index\.jhtml\?.+|'+\
+        '^http://www\.theonion\.com/video/.+|'+\
+        '^http://theonion\.com/video/.+|'+\
+        '^http://wordpress\.tv/.*/.*/.*/.*/|'+\
+        '^http://www\.traileraddict\.com/trailer/.+|'+\
+        '^http://www\.traileraddict\.com/clip/.+|'+\
+        '^http://www\.traileraddict\.com/poster/.+|'+\
+        '^http://soundcloud\.com/.+|'+\
+        '^http://soundcloud\.com/.*/.+|'+\
+        '^http://soundcloud\.com/.*/sets/.+|'+\
+        '^http://soundcloud\.com/groups/.+|'+\
+        '^http://www\.slideshare\.net/.*/.+|'+\
+        '^http://.*\.scribd\.com/doc/.+|'+\
+        '^http://screenr\.com/.+|'+\
+        '^http://www\.5min\.com/Video/.+|'+\
+        '^http://www\.howcast\.com/videos/.+|'+\
+        '^http://my\.opera\.com/.*/albums/show\.dml\?id=.+|'+\
+        '^http://my\.opera\.com/.*/albums/showpic\.dml\?album=.+&picture=.+|'+\
+        '^http://escapistmagazine\.com/videos/.+|'+\
+        '^http://www\.escapistmagazine\.com/videos/.+', re.I
+    )
+    api_endpoint = 'http://api.embed.ly/v1/api/oembed'
+    api_params = {'format':'json', 'maxwidth':600 }
+ 
 class GenericScraper(MediaScraper):
     """a special scrapper not associated with any domains, used to
        write media objects to links by hand"""
@@ -662,13 +874,14 @@ class YoutubeEmbedDeepScraper(DeepScraper):
                 youtube_id = self.youtube_url_re.match(movie_embed['src']).group(2)
                 youtube_url = 'http://www.youtube.com/watch?v=%s"' % youtube_id
                 log.debug('found youtube embed %s' % youtube_url)
-                mo = YoutubeScraper(youtube_url).media_object()
+                mo = make_scraper(youtube_url).media_object()
                 mo['deep'] = scraper.url
                 return mo
 
 #scrapers =:= dict(domain -> ScraperClass)
 scrapers = {}
-for scraper in [ YoutubeScraper,
+for scraper in [ EmbedlyOEmbed,
+                 YoutubeScraper,
                  MetacafeScraper,
                  GootubeScraper,
                  VimeoScraper,
@@ -686,13 +899,19 @@ for scraper in [ YoutubeScraper,
                  EscapistScraper,
                  JustintvScraper,
                  SoundcloudScraper,
-                 #CraigslistScraper,
+                 CraigslistScraper,
                  GenericScraper,
                  ]:
     for domain in scraper.domains:
-        scrapers[domain] = scraper
+        scrapers.setdefault(domain, []).append(scraper)
 
 deepscrapers = [YoutubeEmbedDeepScraper]
+
+def get_media_embed(media_object):
+    for scraper in scrapers.get(media_object['type']):
+        res = scraper.media_embed(**media_object)
+        if res:
+            return res
 
 def convert_old_media_objects():
     q = Link._query(Link.c.media_object is not None,
@@ -728,10 +947,10 @@ test_urls = [
     'http://www.facebook.com/pages/Rick-Astley/5807213510?sid=c99aaf3888171e73668a38e0749ae12d', # regular thumbnail finder
     'http://www.flickr.com/photos/septuagesima/317819584/', # thumbnail with image_src
 
-    'http://www.youtube.com/watch?v=Yu_moia-oVI',
+    #'http://www.youtube.com/watch?v=Yu_moia-oVI',
     'http://www.metacafe.com/watch/sy-1473689248/rick_astley_never_gonna_give_you_up_official_music_video/',
     'http://video.google.com/videoplay?docid=5908758151704698048',
-    'http://vimeo.com/4495451',
+    #'http://vimeo.com/4495451',
     'http://www.break.com/usercontent/2008/11/Macy-s-Thankgiving-Day-Parade-Rick-Roll-611965.html',
     'http://www.theonion.com/content/video/sony_releases_new_stupid_piece_of',
     'http://www.collegehumor.com/video:1823712',
@@ -761,8 +980,291 @@ test_urls = [
 
     'http://listen.grooveshark.com/#/song/Never_Gonna_Give_You_Up/12616328',
     'http://tinysong.com/2WOJ', # also Grooveshark
-
-    'http://www.rickrolled.com/videos/video/rickrolld' # test the DeepScraper
+    'http://www.slideshare.net/doina/happy-easter-from-holland-slideshare',
+    'http://www.slideshare.net/stinson/easter-1284190',
+    'http://www.slideshare.net/angelspascual/easter-events',
+    'http://www.slideshare.net/sirrods/happy-easter-3626014',
+    'http://www.slideshare.net/sirrods/happy-easter-wide-screen',
+    'http://www.slideshare.net/carmen_serbanescu/easter-holiday',
+    'http://www.slideshare.net/Lithuaniabook/easter-1255880',
+    'http://www.slideshare.net/hues/easter-plants',
+    'http://www.slideshare.net/Gospelman/passover-week',
+    'http://www.slideshare.net/angelspascual/easter-around-the-world-1327542',
+    'http://www.scribd.com/doc/13994900/Easter',
+    'http://www.scribd.com/doc/27425714/Celebrating-Easter-ideas-for-adults-and-children',
+    'http://www.scribd.com/doc/28010101/Easter-Foods-No-Name',
+    'http://www.scribd.com/doc/28452730/Easter-Cards',
+    'http://www.scribd.com/doc/19026714/The-Easter-Season',
+    'http://www.scribd.com/doc/29183659/History-of-Easter',
+    'http://www.scribd.com/doc/15632842/The-Last-Easter',
+    'http://www.scribd.com/doc/28741860/The-Plain-Truth-About-Easter',
+    'http://www.scribd.com/doc/23616250/4-27-08-ITS-EASTER-AGAIN-ORTHODOX-EASTER-by-vanderKOK',
+    'http://screenr.com/t9d',
+    'http://screenr.com/yLS',
+    'http://screenr.com/gzS',
+    'http://screenr.com/IwU',
+    'http://screenr.com/FM7',
+    'http://screenr.com/Ejg',
+    'http://screenr.com/u4h',
+    'http://screenr.com/QiN',
+    'http://screenr.com/zts',
+    'http://www.5min.com/Video/How-to-Decorate-Easter-Eggs-with-Decoupage-142076462',
+    'http://www.5min.com/Video/How-to-Color-Easter-Eggs-Dye-142076281',
+    'http://www.5min.com/Video/How-to-Make-an-Easter-Egg-Diorama-142076482',
+    'http://www.5min.com/Video/How-to-Make-Sequined-Easter-Eggs-142076512',
+    'http://www.5min.com/Video/How-to-Decorate-Wooden-Easter-Eggs-142076558',
+    'http://www.5min.com/Video/How-to-Blow-out-an-Easter-Egg-142076367',
+    'http://www.5min.com/Video/Learn-About-Easter-38363995',
+    'http://www.howcast.com/videos/368909-Easter-Egg-Dying-How-To-Make-Ukrainian-Easter-Eggs',
+    'http://www.howcast.com/videos/368911-Easter-Egg-Dying-How-To-Color-Easter-Eggs-With-Food-Dyes',
+    'http://www.howcast.com/videos/368913-Easter-Egg-Dying-How-To-Make-Homemade-Easter-Egg-Dye',
+    'http://www.howcast.com/videos/220110-The-Meaning-Of-Easter',
+    'http://my.opera.com/nirvanka/albums/show.dml?id=519866',
+    'http://img402.yfrog.com/i/mfe.jpg/',
+    'http://img20.yfrog.com/i/dy6.jpg/',
+    'http://img145.yfrog.com/i/4mu.mp4/',
+    'http://img15.yfrog.com/i/mygreatmovie.mp4/',
+    'http://img159.yfrog.com/i/500x5000401.jpg/',
+    'http://tweetphoto.com/14784358',
+    'http://tweetphoto.com/16044847',
+    'http://tweetphoto.com/16718883',
+    'http://tweetphoto.com/16451148',
+    'http://tweetphoto.com/16133984',
+    'http://tweetphoto.com/8069529',
+    'http://tweetphoto.com/16207556',
+    'http://tweetphoto.com/7448361',
+    'http://tweetphoto.com/16069325',
+    'http://tweetphoto.com/4791033',
+    'http://www.flickr.com/photos/10349896@N08/4490293418/',
+    'http://www.flickr.com/photos/mneylon/4483279051/',
+    'http://www.flickr.com/photos/xstartxtodayx/4488996521/',
+    'http://www.flickr.com/photos/mommyknows/4485313917/',
+    'http://www.flickr.com/photos/29988430@N06/4487127638/',
+    'http://www.flickr.com/photos/excomedia/4484159563/',
+    'http://www.flickr.com/photos/sunnybrook100/4471526636/',
+    'http://www.flickr.com/photos/jaimewalsh/4489497178/',
+    'http://www.flickr.com/photos/29988430@N06/4486475549/',
+    'http://www.flickr.com/photos/22695183@N08/4488681694/',
+    'http://twitpic.com/1cnsf6',
+    'http://twitpic.com/1cgtti',
+    'http://twitpic.com/1coc0n',
+    'http://twitpic.com/1cm8us',
+    'http://twitpic.com/1cgks4',
+    'http://imgur.com/6pLoN',
+    'http://onegoodpenguin.posterous.com/golden-tee-live-2010-easter-egg',
+    'http://adland.posterous.com/?tag=royaleastershowauckland',
+    'http://apartmentliving.posterous.com/biggest-easter-egg-hunts-in-the-dc-area',
+    'http://twitgoo.com/1as',
+    'http://twitgoo.com/1p94',
+    'http://twitgoo.com/4kg2',
+    'http://twitgoo.com/6c9',
+    'http://twitgoo.com/1w5',
+    'http://twitgoo.com/6mu',
+    'http://twitgoo.com/1w3',
+    'http://twitgoo.com/1om',
+    'http://twitgoo.com/1mh',
+    'http://www.qwantz.com/index.php?comic=1686',
+    'http://www.qwantz.com/index.php?comic=773',
+    'http://www.qwantz.com/index.php?comic=1018',
+    'http://www.qwantz.com/index.php?comic=1019',
+    'http://www.23hq.com/mhg/photo/5498347',
+    'http://www.23hq.com/Greetingdesignstudio/photo/5464607',
+    'http://www.23hq.com/Greetingdesignstudio/photo/5464590',
+    'http://www.23hq.com/Greetingdesignstudio/photo/5464605',
+    'http://www.23hq.com/Greetingdesignstudio/photo/5464604',
+    'http://www.23hq.com/dvilles2/photo/5443192',
+    'http://www.23hq.com/Greetingdesignstudio/photo/5464606',
+    'http://www.youtube.com/watch?v=gghKdx558Qg',
+    'http://www.youtube.com/watch?v=yPid9BLQQcg',
+    'http://www.youtube.com/watch?v=uEo2vboUYUk',
+    'http://www.youtube.com/watch?v=geUhtoHbLu4',
+    'http://www.youtube.com/watch?v=Zk7dDekYej0',
+    'http://www.youtube.com/watch?v=Q3tgMosx_tI',
+    'http://www.youtube.com/watch?v=s9P8_vgmLfs',
+    'http://www.youtube.com/watch?v=1cmtN1meMmk',
+    'http://www.youtube.com/watch?v=AVzj-U5Ihm0',
+    'http://www.veoh.com/collection/easycookvideos/watch/v366931kcdgj7Hd',
+    'http://www.veoh.com/collection/easycookvideos/watch/v366991zjpANrqc',
+    'http://www.veoh.com/browse/videos/category/educational/watch/v7054535EZGFJqyX',
+    'http://www.veoh.com/browse/videos/category/lifestyle/watch/v18155013XBBtnYwq',
+    'http://www.justin.tv/easter7presents',
+    'http://www.justin.tv/easterfraud',
+    'http://www.justin.tv/cccog27909',
+    'http://www.justin.tv/clip/6e8c18f7050',
+    'http://www.justin.tv/venom24',
+    'http://qik.com/video/1622287',
+    'http://qik.com/video/1503735',
+    'http://qik.com/video/40504',
+    'http://qik.com/video/1445763',
+    'http://qik.com/video/743285',
+    'http://qik.com/video/1445299',
+    'http://qik.com/video/1443200',
+    'http://qik.com/video/1445889',
+    'http://qik.com/video/174242',
+    'http://qik.com/video/1444897',
+    'http://revision3.com/hak5/DualCore',
+    'http://revision3.com/popsiren/charm',
+    'http://revision3.com/tekzilla/eyefinity',
+    'http://revision3.com/diggnation/2005-10-06',
+    'http://revision3.com/hak5/netcat-virtualization-wordpress/',
+    'http://revision3.com/infected/forsaken',
+    'http://revision3.com/hak5/purepwnage',
+    'http://revision3.com/tekzilla/wowheadset',
+    'http://www.dailymotion.com/video/xcstzd_greek-wallets-tighten-during-easter_news',
+    'http://www.dailymotion.com/video/xcso4y_exclusive-easter-eggs-easter-basket_lifestyle',
+    'http://www.dailymotion.com/video/x2sgkt_evil-easter-bunny',
+    'http://www.dailymotion.com/video/xco7oc_invitation-to-2010-easter-services_news',
+    'http://www.dailymotion.com/video/xcss6b_big-cat-easter_animals',
+    'http://www.dailymotion.com/video/xcszw1_easter-bunny-visits-buenos-aires-zo_news',
+    'http://www.dailymotion.com/video/xcsfvs_forecasters-warn-of-easter-misery_news',
+    'http://www.collegehumor.com/video:1682246',
+    'http://www.twitvid.com/D9997',
+    'http://www.twitvid.com/902B9',
+    'http://www.twitvid.com/C33F8',
+    'http://www.twitvid.com/63F73',
+    'http://www.twitvid.com/BC0BA',
+    'http://www.twitvid.com/1C33C',
+    'http://www.twitvid.com/8A8E2',
+    'http://www.twitvid.com/51035',
+    'http://www.twitvid.com/5C733',
+    'http://www.break.com/game-trailers/game/just-cause-2/just-cause-2-lost-easter-egg?res=1',
+    'http://www.break.com/usercontent/2010/3/10/easter-holiday-2009-slideshow-1775624',
+    'http://www.break.com/index/a-very-sexy-easter-video.html',
+    'http://www.break.com/usercontent/2010/3/11/this-video-features-gizzi-erskine-making-easter-cookies-1776089',
+    'http://www.break.com/usercontent/2007/4/4/happy-easter-265717',
+    'http://www.break.com/usercontent/2007/4/17/extreme-easter-egg-hunting-276064',
+    'http://www.break.com/usercontent/2006/11/18/the-evil-easter-bunny-184789',
+    'http://www.break.com/usercontent/2006/4/16/hoppy-easter-kitty-91040',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=104063637',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=104004674',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=103928002',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=103999188',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=103920940',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=103981831',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=104004673',
+    'http://vids.myspace.com/index.cfm?fuseaction=vids.individual&videoid=104046456',
+    'http://www.metacafe.com/watch/105023/the_easter_bunny/',
+    'http://www.metacafe.com/watch/4376131/easter_lay/',
+    'http://www.metacafe.com/watch/2245996/how_to_make_ukraine_easter_eggs/',
+    'http://www.metacafe.com/watch/4374339/easter_eggs/',
+    'http://www.metacafe.com/watch/2605860/filled_easter_baskets/',
+    'http://www.metacafe.com/watch/2372088/easter_eggs/',
+    'http://www.metacafe.com/watch/3043671/www_goodnews_ws_easter_island/',
+    'http://www.metacafe.com/watch/1652057/easter_eggs/',
+    'http://www.metacafe.com/watch/1173632/ultra_kawaii_easter_bunny_party/',
+    'http://celluloidremix.blip.tv/file/3378272/',
+    'http://blip.tv/file/449469',
+    'http://blip.tv/file/199776',
+    'http://blip.tv/file/766967',
+    'http://blip.tv/file/770127',
+    'http://blip.tv/file/854925',
+    'http://www.blip.tv/file/22695?filename=Uncle_dale-THEEASTERBUNNYHATESYOU395.flv',
+    'http://iofa.blip.tv/file/3412333/',
+    'http://blip.tv/file/190393',
+    'http://blip.tv/file/83152',
+    'http://video.google.com/videoplay?docid=-5427138374898988918&q=easter+bunny&pl=true',
+    'http://video.google.com/videoplay?docid=7785441737970480237',
+    'http://video.google.com/videoplay?docid=2320995867449957036',
+    'http://video.google.com/videoplay?docid=-2586684490991458032&q=peeps&pl=true',
+    'http://video.google.com/videoplay?docid=5621139047118918034',
+    'http://video.google.com/videoplay?docid=4232304376070958848',
+    'http://video.google.com/videoplay?docid=-6612726032157145299',
+    'http://video.google.com/videoplay?docid=4478549130377875994&hl=en',
+    'http://video.google.com/videoplay?docid=9169278170240080877',
+    'http://video.google.com/videoplay?docid=2551240967354893096',
+    'http://video.yahoo.com/watch/7268801/18963438',
+    'http://video.yahoo.com/watch/2224892/7014048',
+    'http://video.yahoo.com/watch/7244748/18886014',
+    'http://video.yahoo.com/watch/4656845/12448951',
+    'http://video.yahoo.com/watch/363942/2249254',
+    'http://video.yahoo.com/watch/2232968/7046348',
+    'http://video.yahoo.com/watch/4530253/12135472',
+    'http://video.yahoo.com/watch/2237137/7062908',
+    'http://video.yahoo.com/watch/952841/3706424',
+    'http://www.viddler.com/explore/BigAppleChannel/videos/113/',
+    'http://www.viddler.com/explore/cheezburger/videos/379/',
+    'http://www.viddler.com/explore/warnerbros/videos/350/',
+    'http://www.viddler.com/explore/tvcgroup/videos/169/',
+    'http://www.viddler.com/explore/thebrickshow/videos/12/',
+    'http://www.liveleak.com/view?i=e0b_1239827917',
+    'http://www.liveleak.com/view?i=715_1239490211',
+    'http://www.liveleak.com/view?i=d30_1206233786&p=1',
+    'http://www.liveleak.com/view?i=d91_1239548947',
+    'http://www.liveleak.com/view?i=f58_1190741182',
+    'http://www.liveleak.com/view?i=44e_1179885621&c=1',
+    'http://www.liveleak.com/view?i=451_1188059885',
+    'http://www.liveleak.com/view?i=3f5_1267456341&c=1',
+    'http://www.hulu.com/watch/67313/howcast-how-to-make-braided-easter-bread',
+    'http://www.hulu.com/watch/133583/access-hollywood-glees-matthew-morrison-on-touring-and-performing-for-president-obama',
+    'http://www.hulu.com/watch/66319/saturday-night-live-easter-album',
+    'http://www.hulu.com/watch/80229/explorer-end-of-easter-island',
+    'http://www.hulu.com/watch/139020/nbc-today-show-lamb-and-ham-create-easter-feast',
+    'http://www.hulu.com/watch/84272/rex-the-runt-easter-island',
+    'http://www.hulu.com/watch/132203/everyday-italian-easter-pie',
+    'http://www.hulu.com/watch/23349/nova-secrets-of-lost-empires-ii-easter-island',
+    'http://movieclips.com/watch/dirty_harry_1971/do_you_feel_lucky_punk/',
+    'http://movieclips.com/watch/napoleon_dynamite_2004/chatting_online_with_babes/',
+    'http://movieclips.com/watch/dumb__dumber_1994/the_toilet_doesnt_flush/',
+    'http://movieclips.com/watch/jaws_1975/youre_gonna_need_a_bigger_boat/',
+    'http://movieclips.com/watch/napoleon_dynamite_2004/chatting_online_with_babes/61.495/75.413',
+    'http://movieclips.com/watch/super_troopers_2001/the_cat_game/12.838/93.018',
+    'http://movieclips.com/watch/this_is_spinal_tap_1984/these_go_to_eleven/79.703/129.713',
+    'http://crackle.com/c/Originals/What_s_the_deal_with_Easter_candy_/2303243',
+    'http://crackle.com/c/How_To/Dryer_Lint_Easter_Bunny_Trailer_Park_Craft/2223902',
+    'http://crackle.com/c/How_To/Pagan_Origin_of_Easter_Easter_Egg_Rabbit_Playb_/2225124',
+    'http://crackle.com/c/Funny/Happy_Easter/2225363',
+    'http://crackle.com/c/Funny/Crazy_and_Hilarious_Easter_Egg_Hunt/2225737',
+    'http://crackle.com/c/How_To/Learn_About_Greek_Orthodox_Easter/2262294',
+    'http://crackle.com/c/How_To/How_to_Make_Ukraine_Easter_Eggs/2262274',
+    'http://crackle.com/c/How_To/Symbolism_Of_Ukrainian_Easter_Eggs/2262267',
+    'http://crackle.com/c/Funny/Easter_Retard/931976',
+    'http://www.fancast.com/tv/It-s-the-Easter-Beagle,-Charlie-Brown/74789/1078053475/Peanuts:-Specials:-It-s-the-Easter-Beagle,-Charlie-Brown/videos',
+    'http://www.fancast.com/movies/Easter-Parade/97802/687440525/Easter-Parade/videos',
+    'http://www.fancast.com/tv/Saturday-Night-Live/10009/1083396482/Easter-Album/videos',
+    'http://www.fancast.com/movies/The-Proposal/147176/1140660489/The-Proposal:-Easter-Egg-Hunt/videos',
+    'http://www.funnyordie.com/videos/f6883f54ae/the-unsettling-ritualistic-origin-of-the-easter-bunny',
+    'http://www.funnyordie.com/videos/3ccb03863e/easter-tail-keaster-bunny',
+    'http://www.funnyordie.com/videos/17b1d36ad0/easter-bunny-from-leatherfink',
+    'http://www.funnyordie.com/videos/0c55aa116d/easter-exposed-from-bryan-erwin',
+    'http://www.funnyordie.com/videos/040dac4eff/easter-eggs',
+    'http://vimeo.com/10446922',
+    'http://vimeo.com/10642542',
+    'http://www.vimeo.com/10664068',
+    'http://vimeo.com/819176',
+    'http://www.vimeo.com/10525353',
+    'http://vimeo.com/10429123',
+    'http://www.vimeo.com/10652053',
+    'http://vimeo.com/10572216',
+    'http://www.ted.com/talks/jared_diamond_on_why_societies_collapse.html',
+    'http://www.ted.com/talks/nathan_myhrvold_on_archeology_animal_photography_bbq.html',
+    'http://www.ted.com/talks/johnny_lee_demos_wii_remote_hacks.html',
+    'http://www.ted.com/talks/robert_ballard_on_exploring_the_oceans.html',
+    'http://www.omnisio.com/v/Z3QxbTUdjhG/wall-e-collection-of-videos',
+    'http://www.omnisio.com/v/3ND6LTvdjhG/php-tutorial-4-login-form-updated',
+    'http://www.thedailyshow.com/watch/thu-december-14-2000/intro---easter',
+    'http://www.thedailyshow.com/watch/tue-april-18-2006/headlines---easter-charade',
+    'http://www.thedailyshow.com/watch/tue-april-18-2006/egg-beaters',
+    'http://www.thedailyshow.com/watch/tue-april-18-2006/moment-of-zen---scuba-diver-hiding-easter-eggs',
+    'http://www.thedailyshow.com/watch/tue-april-7-2009/easter---passover-highlights',
+    'http://www.thedailyshow.com/watch/tue-february-29-2000/headlines---leap-impact',
+    'http://www.thedailyshow.com/watch/thu-march-1-2007/tomb-with-a-jew',
+    'http://www.thedailyshow.com/watch/mon-april-24-2000/the-meaning-of-passover',
+    'http://www.colbertnation.com/the-colbert-report-videos/268800/march-31-2010/easter-under-attack---peeps-display-update',
+    'http://www.colbertnation.com/the-colbert-report-videos/268797/march-31-2010/intro---03-31-10',
+    'http://www.colbertnation.com/full-episodes/wed-march-31-2010-craig-mullaney',
+    'http://www.colbertnation.com/the-colbert-report-videos/60902/march-28-2006/the-word---easter-under-attack---marketing',
+    'http://www.colbertnation.com/the-colbert-report-videos/83362/march-07-2007/easter-under-attack---bunny',
+    'http://www.colbertnation.com/the-colbert-report-videos/61404/april-06-2006/easter-under-attack---recalled-eggs?videoId=61404',
+    'http://www.colbertnation.com/the-colbert-report-videos/223957/april-06-2009/colbert-s-easter-parade',
+    'http://www.colbertnation.com/the-colbert-report-videos/181772/march-28-2006/intro---3-28-06',
+    'http://www.traileraddict.com/trailer/despicable-me/easter-greeting',
+    'http://www.traileraddict.com/trailer/easter-parade/trailer',
+    'http://www.traileraddict.com/clip/the-proposal/easter-egg-hunt',
+    'http://www.traileraddict.com/trailer/despicable-me/international-teaser-trailer',
+    'http://www.traileraddict.com/trailer/despicable-me/today-show-minions',   
+    'http://revver.com/video/263817/happy-easter/',
+    'http://www.revver.com/video/1574939/easter-bunny-house/',
+    'http://revver.com/video/771140/easter-08/',
     ]
 
 def submit_all():
@@ -796,36 +1298,55 @@ def submit_all():
 
     return links
 
+def test_real(nlinks):
+    from r2.models import Link, desc
+    from r2.lib.utils import fetch_things2
+
+    counter = 0
+    q = Link._query(sort = desc("_date"))
+
+    print "<html><body><table border=\"1\">"
+    for l in fetch_things2(q):
+        if counter > nlinks:
+            break
+        if not l.is_self:
+            h = make_scraper(l.url)
+            mo = h.media_object()
+            print "scraper: %s" % mo
+            if mo:
+                print get_media_embed(mo).content
+        counter +=1
+    print "</table></body></html>"
+
+def test_url(url):
+    import sys
+    from r2.lib.filters import websafe
+    sys.stderr.write("%s\n" % url)
+    print "<tr>"
+    h = make_scraper(url)
+    print "<td>"
+    print "<b>", websafe(url), "</b>"
+    print "<br />"
+    print websafe(repr(h))
+    img = h.largest_image_url()
+    if img:
+        print "<td><img src=\"%s\" /></td>" % img
+    else:
+        print "<td>(no image)</td>"
+    mo = h.media_object()
+    print "<td>"
+    if mo:
+        print get_media_embed(mo).content
+    else:
+        print "None"
+    print "</td>"
+    print "</tr>"
+
 def test():
     """Take some example URLs and print out a nice pretty HTML table
        of their extracted thubmnails and media objects"""
-    import sys
-    from r2.lib.filters import websafe
-
     print "<html><body><table border=\"1\">"
     for url in test_urls:
-        sys.stderr.write("%s\n" % url)
-        print "<tr>"
-        h = make_scraper(url)
-        print "<td>"
-        print "<b>", websafe(url), "</b>"
-        print "<br />"
-        print websafe(repr(h))
-        img = h.largest_image_url()
-        if img:
-            print "<td><img src=\"%s\" /></td>" % img
-        else:
-            print "<td>(no image)</td>"
-        mo = h.media_object()
-        print "<td>"
-        if mo:
-            s = scrapers[mo['type']]
-            print websafe(repr(mo))
-            print "<br />"
-            print s.media_embed(**mo).content
-        else:
-            print "None"
-        print "</td>"
-        print "</tr>"
+        test_url(url)
     print "</table></body></html>"
 

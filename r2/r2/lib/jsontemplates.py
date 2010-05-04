@@ -231,20 +231,21 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 num_comments = "num_comments",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
+                                                is_self      = "is_self", 
                                                 permalink = "permalink"
                                                 )
 
     def thing_attr(self, thing, attr):
-        from r2.lib.scraper import scrapers
+        from r2.lib.scraper import get_media_embed
         if attr == "media_embed":
            if (thing.media_object and
                not isinstance(thing.media_object, basestring)):
-               scraper = scrapers[thing.media_object['type']]
-               media_embed = scraper.media_embed(**thing.media_object)
-               return dict(scrolling = media_embed.scrolling,
-                           width = media_embed.width,
-                           height = media_embed.height,
-                           content = media_embed.content)
+               media_embed = get_media_embed(thing.media_object)
+               if media_embed:
+                   return dict(scrolling = media_embed.scrolling,
+                               width = media_embed.width,
+                               height = media_embed.height,
+                               content = media_embed.content)
            return dict()
         elif attr == 'subreddit':
             return thing.subreddit.name
@@ -275,7 +276,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 likes        = "likes",
                                                 author       = "author", 
                                                 link_id      = "link_id",
-                                                sr_id        = "sr_id",
+                                                subreddit    = "subreddit",
+                                                subreddit_id = "subreddit_id",
                                                 parent_id    = "parent_id",
                                                 )
 
@@ -283,10 +285,10 @@ class CommentJsonTemplate(ThingJsonTemplate):
         from r2.models import Comment, Link, Subreddit
         if attr == 'link_id':
             return make_fullname(Link, thing.link_id)
-        elif attr == 'sr_id':
-            if hasattr(thing, attr):
-                return make_fullname(Subreddit, thing.sr_id)
-            return None
+        elif attr == 'subreddit':
+            return thing.subreddit.name
+        elif attr == 'subreddit_id':
+            return thing.subreddit._fullname
         elif attr == "parent_id":
             if getattr(thing, "parent_id", None):
                 return make_fullname(Comment, thing.parent_id)

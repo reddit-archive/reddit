@@ -24,6 +24,7 @@
    from pylons.i18n import _, ungettext
    from r2.lib.template_helpers import add_sr, get_domain
    from r2.models import FakeSubreddit
+   from r2.lib.filters import unsafe, safemarkdown
 %>
 <% 
    permalink = add_sr(thing.permalink, force_hostname = True)
@@ -50,6 +51,9 @@
       <% 
          domain = get_domain(cname = c.cname, subreddit = False) 
        %>
+      %if getattr(thing, 'selftext', None):
+        ${unsafe(safemarkdown(thing.selftext))}
+      %endif
       submitted by <a href="http://${domain}/user/${thing.author.name}">
          ${thing.author.name}
       </a>

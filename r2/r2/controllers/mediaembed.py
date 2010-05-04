@@ -22,7 +22,7 @@
 from validator import *
 from reddit_base import MinimalController
 
-from r2.lib.scraper import scrapers
+from r2.lib.scraper import get_media_embed
 from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
 
 from pylons import request
@@ -48,9 +48,7 @@ class MediaembedController(MinimalController):
 
         elif isinstance(link.media_object, dict):
             # otherwise it's the new style, which is a dict(type=type, **args)
-            media_object_type = link.media_object['type']
-            scraper = scrapers[media_object_type]
-            media_embed = scraper.media_embed(**link.media_object)
+            media_embed = get_media_embed(link.media_object)
             content = media_embed.content
 
         return MediaEmbedBody(body = content).render()

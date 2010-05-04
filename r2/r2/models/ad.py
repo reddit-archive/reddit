@@ -98,30 +98,30 @@ class AdSR(Relation(Ad, Subreddit)):
 
     @classmethod
     @memoize('adsr.by_ad')
-    def by_ad_cache(cls, ad):
-        q = AdSR._query(AdSR.c._thing1_id == ad._id,
+    def by_ad_cache(cls, ad_id):
+        q = AdSR._query(AdSR.c._thing1_id == ad_id,
                         sort = desc('_date'))
         q._limit = 500
         return [ t._id for t in q ]
 
     @classmethod
     def by_ad(cls, ad, _update=False):
-        rel_ids = cls.by_ad_cache(ad, _update=_update)
+        rel_ids = cls.by_ad_cache(ad._id, _update=_update)
         adsrs = AdSR._byID_rel(rel_ids, data=True, eager_load=True,
                                thing_data=True, return_dict = False)
         return adsrs
 
     @classmethod
     @memoize('adsr.by_sr')
-    def by_sr_cache(cls, sr):
-        q = AdSR._query(AdSR.c._thing2_id == sr._id,
+    def by_sr_cache(cls, sr_id):
+        q = AdSR._query(AdSR.c._thing2_id == sr_id,
                         sort = desc('_date'))
         q._limit = 500
         return [ t._id for t in q ]
 
     @classmethod
     def by_sr(cls, sr, _update=False):
-        rel_ids = cls.by_sr_cache(sr, _update=_update)
+        rel_ids = cls.by_sr_cache(sr._id, _update=_update)
         adsrs = AdSR._byID_rel(rel_ids, data=True, eager_load=True,
                                thing_data=True, return_dict = False)
         return adsrs

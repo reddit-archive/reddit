@@ -21,6 +21,7 @@
 ################################################################################
 from base64 import standard_b64decode as b64dec, \
      standard_b64encode as b64enc
+from pylons import request
 from Crypto.Cipher import AES
 from random import choice
 from pylons import g, c
@@ -138,6 +139,11 @@ class UserInfo(Info):
     def init_defaults(self):
         self.name = safe_str(c.user.name if c.user_is_loggedin else '')
         self.site = safe_str(c.site.name if c.site else '')
+        try:
+            action = request.environ['pylons.routes_dict'].get('action')
+            self.site += "-%s" % action
+        except Exception,e:
+            g.log.error(e)
         self.lang = safe_str(c.lang if c.lang else '')
         self.cname = safe_str(c.cname)
 

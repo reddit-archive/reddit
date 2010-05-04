@@ -31,6 +31,7 @@ from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_ima
 from r2.lib import amqp
 from r2.lib.contrib.nymph import optimize_png
 
+import os
 import tempfile
 import traceback
 
@@ -40,19 +41,26 @@ log = g.log
 
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
-    return 'http:/%s%s.png' % (s3_thumbnail_bucket, link._fullname)
+    return 'http://%s/%s.png' % (s3_thumbnail_bucket, link._fullname)
 
 def upload_thumb(link, image):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
-    f = tempfile.NamedTemporaryFile(suffix = '.png')
-    image.save(f)
+    f = tempfile.NamedTemporaryFile(suffix = '.png', delete=False)
+    try:
+        image.save(f)
+        f.close()
+        g.log.debug("optimizing %s in %s" % (link._fullname,f.name))
+        optimize_png(f.name, g.png_optimizer)
+        contents = open(f.name).read()
 
-    resource = s3_thumbnail_bucket + link._fullname + '.png'
-    log.debug('uploading to s3: %s' % link._fullname)
-    s3cp.send_file(optimize_png(f.name, g.png_optimizer),
-                   resource, 'image/png', 'public-read', None, False)
-    log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
+        s3fname = link._fullname + '.png'
+
+        log.debug('uploading to s3: %s' % link._fullname)
+        s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, 'image/png', never_expire=True)
+        log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
+    finally:
+        os.unlink(f.name)
 
 
 def update_link(link, thumbnail, media_object):

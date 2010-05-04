@@ -264,7 +264,7 @@ class DataThing(object):
         prefix = thing_prefix(cls.__name__)
 
         #write the data to the cache
-        cache.set_multi(to_save, prefix)
+        cache.set_multi(to_save, prefix=prefix)
 
     def _load(self):
         self._load_multi(self)
@@ -708,7 +708,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             self._name = 'un' + self._name
 
         @classmethod
-        def _fast_query(cls, thing1s, thing2s, name, data=True):
+        def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True):
             """looks up all the relationships between thing1_ids and thing2_ids
             and caches them"""
             prefix = thing_prefix(cls.__name__)
@@ -738,7 +738,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 q = cls._query(cls.c._thing1_id == t1_ids,
                                cls.c._thing2_id == t2_ids,
                                cls.c._name == names,
-                               eager_load = True,
+                               eager_load = eager_load,
                                data = data)
 
                 rel_ids = {}
@@ -747,7 +747,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     #relations with the same keys
                     #l = rel_ids.setdefault((rel._thing1_id, rel._thing2_id), [])
                     #l.append(rel._id)
-                    rel_ids[(rel._thing1._id, rel._thing2._id, rel._name)] = rel._id
+                    rel_ids[(rel._thing1_id, rel._thing2_id, rel._name)] = rel._id
                 
                 for p in pairs:
                     if p not in rel_ids:
@@ -1056,6 +1056,7 @@ class MergeCursor(MultiCursor):
             return [p for p in pairs if not p[2]]
 
         pairs = undone(safe_next(c) for c in cursors)
+
         while pairs:
             #only one query left, just dump it
             if len(pairs) == 1:
@@ -1193,7 +1194,7 @@ def MultiRelation(name, *relations):
             return Merge(queries)
 
         @classmethod
-        def _fast_query(cls, sub, obj, name, data=True):
+        def _fast_query(cls, sub, obj, name, data=True, eager_load=True):
             #divide into types
             def type_dict(items):
                 types = {}
@@ -1210,7 +1211,7 @@ def MultiRelation(name, *relations):
                 t1, t2 = types
                 if sub_dict.has_key(t1) and obj_dict.has_key(t2):
                     res.update(rel._fast_query(sub_dict[t1], obj_dict[t2], name,
-                                               data = True))
+                                               data = data, eager_load=eager_load))
 
             return res
 

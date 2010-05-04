@@ -20,13 +20,17 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
+   from r2.lib.template_helpers import static
    import datetime, locale
+   from r2.lib import promote
    def num(x):
       return locale.format('%d', x, True)
    def money(x):
       return "$%.2f" % x
  %>
 <h1>Sponsored link calendar</h1>
+
+<script src="${static('jquery.flot.js')}"  type="text/javascript"></script>
 
 %if not c.user_is_sponsor:
 <div class="instructions">
@@ -77,7 +81,7 @@
         %else:
           YOUR COMMIT
         %endif
-      </div>      
+      </div>
     </div>
   %for i in xrange(thing.total_size):
     <%
@@ -125,10 +129,15 @@
 <% 
    prev_end = 0
  %>
-%for link, start, end in thing.promote_blocks:
+%for link, bid, start, end, indx in thing.promote_blocks:
   <% 
      start += 1
      end += 1
+     sr = '' 
+     if indx in getattr(link, "campaigns", {}):
+         sr = link.campaigns[indx][promote.CAMPAIGN.sr]
+     if sr:
+        sr += ':'
    %>
  %if start != end:
   %if prev_end > start:
@@ -142,10 +151,9 @@
    %>  
   <div class="blob promotedlink ${link.rowstyle} rounded"
        title="${link.title}"  
-       onclick="$.redirect($(this).find('a').attr('href'));"
        style="width: ${width}%; margin-left: ${margin}%">
     <div class="bid">
-        $${int(link.promote_bid)}
+      ${sr}$${int(bid)}
     </div>
     <a class="title" 
        href="/promoted/edit_promo/${link._id36}"
@@ -162,16 +170,13 @@
   <h1>${_("total promotion traffic")}</h1>
   <div>
   %if thing.imp_graph:
-    <img class="traffic-graph" src="${thing.imp_graph}"
-         alt="impressions graph"/>
+     ${thing.imp_graph}
   %endif
   %if thing.cli_graph:
-     <img class="traffic-graph" src="${thing.cli_graph}" 
-          alt="click graph"/>
+     ${thing.cli_graph}
   %endif
   %if thing.money_graph:
-     <img class="traffic-graph" src="${thing.money_graph}" 
-          alt="money graph"/>
+     ${thing.money_graph}
   %endif
   </div>
 %endif
@@ -179,16 +184,13 @@
 <h1>${_("historical site performance")}</h1>
 <div>
 %if thing.cpm_graph:
-   <img class="traffic-graph" src="${thing.cpm_graph}" 
-        alt="CPM graph"/>
+   ${thing.cpm_graph}
 %endif
 %if thing.cpc_graph:
-   <img class="traffic-graph" src="${thing.cpc_graph}" 
-        alt="CPC graph"/>
+   ${thing.cpc_graph}
 %endif
 %if thing.cpc_graph and c.user_is_sponsor:
-   <img class="traffic-graph" src="${thing.ctr_graph}" 
-        alt="CTR graph"/>
+   ${thing.ctr_graph}
 %endif
 </div>
 
@@ -264,7 +266,8 @@
       <td>${num(nimp)}</td>
       <td>${num(ucli)}</td>
       <td>${num(ncli)}</td>
-      <td>${money(link.promote_bid)}</td>
+      <td>TODO</td>
+##      <td>${money(link.promote_bid)}</td>
       <td>${link._ups - link._downs}</td>
       <td style="text-align:left">
         <a class="title" href="${link.permalink}">${link.title}</a>

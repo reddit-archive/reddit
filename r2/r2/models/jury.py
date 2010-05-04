@@ -43,14 +43,14 @@ class Jury(MultiRelation('jury',
 
     @classmethod
     @memoize('jury.by_account')
-    def by_account_cache(cls, account):
-        q = cls._query(cls.c._thing1_id == account._id)
+    def by_account_cache(cls, account_id):
+        q = cls._query(cls.c._thing1_id == account_id)
         q._limit = 100
         return [ j._fullname for j in q ]
 
     @classmethod
     def by_account(cls, account, _update=False):
-        rel_ids = cls.by_account_cache(account, _update=_update)
+        rel_ids = cls.by_account_cache(account._id, _update=_update)
         juries = DataThing._by_fullname(rel_ids, data=True,
                                         return_dict = False)
         if juries:
@@ -59,14 +59,14 @@ class Jury(MultiRelation('jury',
 
     @classmethod
     @memoize('jury.by_defendant')
-    def by_defendant_cache(cls, defendant):
-        q = cls._query(cls.c._thing2_id == defendant._id)
+    def by_defendant_cache(cls, defendant_id):
+        q = cls._query(cls.c._thing2_id == defendant_id)
         q._limit = 1000
         return [ j._fullname for j in q ]
 
     @classmethod
     def by_defendant(cls, defendant, _update=False):
-        rel_ids = cls.by_defendant_cache(defendant, _update=_update)
+        rel_ids = cls.by_defendant_cache(defendant._id, _update=_update)
         juries = DataThing._by_fullname(rel_ids, data=True,
                                         return_dict = False)
         if juries:

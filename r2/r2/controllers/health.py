@@ -5,12 +5,12 @@ import time
 from pylons.controllers.util import abort
 from pylons import c, g
 
-from reddit_base import RedditController
+from reddit_base import MinimalController
 from r2.lib.amqp import worker
 
 from validator import *
 
-class HealthController(RedditController):
+class HealthController(MinimalController):
     def shutdown(self):
         thread_pool = c.thread_pool
         def _shutdown():

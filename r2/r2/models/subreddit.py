@@ -40,6 +40,9 @@ import random
 class SubredditExists(Exception): pass
 
 class Subreddit(Thing, Printable):
+    # Note: As of 2010/03/18, nothing actually overrides the static_path
+    # attribute, even on a cname. So c.site.static_path should always be
+    # the same as g.static_path.
     _defaults = dict(static_path = g.static_path,
                      stylesheet = None,
                      stylesheet_rtl = None,
@@ -68,6 +71,7 @@ class Subreddit(Thing, Printable):
 
     sr_limit = 50
 
+    # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
@@ -113,6 +117,14 @@ class Subreddit(Thing, Printable):
 
         if name == 'friends':
             return Friends
+        elif name == 'randnsfw':
+            return RandomNSFW
+        elif name == 'random':
+            return Random
+        elif name == 'mod':
+            return Mod
+        elif name == 'contrib':
+            return Contrib
         elif name == 'all':
             return All
         else:
@@ -211,7 +223,7 @@ class Subreddit(Thing, Printable):
         return self.is_special(user)
 
     def should_ratelimit(self, user, kind):
-        if c.user_is_admin:
+        if c.user_is_admin or self.is_special(user):
             return False
 
         if kind == 'comment':
@@ -219,8 +231,7 @@ class Subreddit(Thing, Printable):
         else:
             rl_karma = g.MIN_RATE_LIMIT_KARMA
 
-        return not (self.is_special(user) or
-                    user.karma(kind, self) >= rl_karma)
+        return user.karma(kind, self) < rl_karma
 
     def can_view(self, user):
         if c.user_is_admin:
@@ -271,6 +282,19 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_reported(self)
 
+    def get_trials(self):
+        from r2.lib.db import queries
+        return queries.get_trials(self)
+
+    def get_modqueue(self):
+        from r2.lib.db import queries
+        return queries.get_modqueue(self)
+
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        return queries.get_all_comments()
+
+
     @classmethod
     def add_props(cls, user, wrapped):
         names = ('subscriber', 'moderator', 'contributor')
@@ -308,7 +332,8 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False):
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
+                     over18_only = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -318,19 +343,24 @@ class Subreddit(Thing, Printable):
                                        data = True,
                                        read_cache = True,
                                        write_cache = True,
-                                       cache_time = 3600)
+                                       cache_time = 5 * 60)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
-        if not c.over18:
+        if not over18:
             pop_reddits._filter(Subreddit.c.over_18 == False)
+        elif over18_only:
+            pop_reddits._filter(Subreddit.c.over_18 == True)
 
         if filter_allow_top:
             pop_reddits._limit = 2 * limit
-            return filter(lambda sr: sr.allow_top == True,
-                          pop_reddits)[:limit]
+            pop_reddits = filter(lambda sr: sr.allow_top == True,
+                                 pop_reddits)[:limit]
 
-        return list(pop_reddits)
+        # reddits with negative author_id are system reddits and shouldn't be displayed
+        return [x for x in pop_reddits
+                if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
+
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -346,7 +376,8 @@ class Subreddit(Thing, Printable):
         auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
-                               filter_allow_top = True)
+                               filter_allow_top = True,
+                               over18 = c.over18)
         rv = []
         for i, s in enumerate(srs):
             if len(rv) >= limit:
@@ -369,6 +400,13 @@ class Subreddit(Thing, Printable):
         reddits. Randomly choose 50 of those reddits and cache it for
         a while so their front page doesn't jump around."""
         return random.sample(sr_ids, limit)
+
+    @classmethod
+    def random_reddit(cls, limit = 1000, over18 = False):
+        return random.choice(cls.top_lang_srs(c.content_langs, limit,
+                                              filter_allow_top = False,
+                                              over18 = over18,
+                                              over18_only = over18))
 
     @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
@@ -395,6 +433,26 @@ class Subreddit(Thing, Printable):
                 srs = srs[:limit]
             return srs
 
+    @classmethod
+    @memoize('subreddit.special_reddits')
+    def special_reddits_cache(cls, user_id, query_param):
+        reddits = SRMember._query(SRMember.c._name == query_param,
+                                  SRMember.c._thing2_id == user_id,
+                                  #hack to prevent the query from
+                                  #adding it's own date
+                                  sort = (desc('_t1_ups'), desc('_t1_date')),
+                                  eager_load = True,
+                                  thing_data = True,
+                                  limit = 100)
+
+        return [ sr._thing1_id for sr in reddits ]
+
+    # Used to pull all of the SRs a given user moderates or is a contributor
+    # to (which one is controlled by query_param)
+    @classmethod
+    def special_reddits(cls, user, query_param, _update=False):
+        return cls.special_reddits_cache(user._id, query_param, _update=_update)
+
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:
             return self.is_subscriber(user)
@@ -409,7 +467,7 @@ class Subreddit(Thing, Printable):
                 #this will call reverse_subscriber_ids after every
                 #addition. if it becomes a problem we should make an
                 #add_multiple_subscriber fn
-                if sr.add_subscriber(c.user):
+                if sr.add_subscriber(user):
                     sr._incr('_ups', 1)
             user.has_subscribed = True
             user._commit()
@@ -538,6 +596,22 @@ class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
 
+    @classmethod
+    @memoize("get_important_friends", 5*60)
+    def get_important_friends(cls, user_id, max_lookup = 500, limit = 100):
+        a = Account._byID(user_id, data = True)
+        # friends are returned chronologically by date, so pick the end of the list
+        # for the most recent additions
+        friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
+                                data = True)
+
+        # if we don't have a last visit for your friends, we don't care about them
+        friends = [x for x in friends if hasattr(x, "last_visit")]
+
+        # sort friends by most recent interactions
+        friends.sort(key = lambda x: getattr(x, "last_visit"), reverse = True)
+        return [x._id for x in friends[:limit]]
+
     def get_links(self, sort, time):
         from r2.lib.db import queries
         from r2.models import Link
@@ -546,7 +620,9 @@ class FriendsSR(FakeSubreddit):
         if not c.user_is_loggedin:
             raise UserRequiredException
 
-        if not c.user.friends:
+        friends = self.get_important_friends(c.user._id)
+
+        if not friends:
             return []
 
         if g.use_query_cache:
@@ -557,20 +633,54 @@ class FriendsSR(FakeSubreddit):
             sort = 'new'
             time = 'all'
 
-            friends = Account._byID(c.user.friends,
-                                    return_dict=False)
+            friends = Account._byID(friends, return_dict=False)
 
             crs = [queries.get_submitted(friend, sort, time)
                    for friend in friends]
             return queries.MergedCachedResults(crs)
 
         else:
-            q = Link._query(Link.c.author_id == c.user.friends,
-                            sort = queries.db_sort(sort))
+            q = Link._query(Link.c.author_id == friends,
+                            sort = queries.db_sort(sort),
+                            data = True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q
-            
+
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        from r2.models import Comment
+        from r2.controllers.errors import UserRequiredException
+
+        if not c.user_is_loggedin:
+            raise UserRequiredException
+
+        friends = self.get_important_friends(c.user._id)
+
+        if not friends:
+            return []
+
+        if g.use_query_cache:
+            # with the precomputer enabled, this Subreddit only supports
+            # being sorted by 'new'. it would be nice to have a
+            # cleaner UI than just blatantly ignoring their sort,
+            # though
+            sort = 'new'
+            time = 'all'
+
+            friends = Account._byID(friends,
+                                    return_dict=False)
+
+            crs = [queries.get_comments(friend, sort, time)
+                   for friend in friends]
+            return queries.MergedCachedResults(crs)
+
+        else:
+            q = Comment._query(Comment.c.author_id == friends,
+                               sort = desc('_date'),
+                               data = True)
+            return q
+
 class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all'
@@ -579,7 +689,10 @@ class AllSR(FakeSubreddit):
         from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(sort = queries.db_sort(sort))
+        q = Link._query(sort = queries.db_sort(sort),
+                        read_cache = True,
+                        write_cache = True,
+                        cache_time = 60)
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
@@ -641,6 +754,42 @@ class MultiReddit(DefaultSR):
     def rising_srs(self):
         return self.sr_ids
 
+class RandomReddit(FakeSubreddit):
+    name = 'random'
+
+class RandomNSFWReddit(FakeSubreddit):
+    name = 'randnsfw'
+
+class ModContribSR(DefaultSR):
+    name  = None
+    title = None
+    query_param = None
+    real_path = None
+
+    @property
+    def path(self):
+        return '/r/' + self.real_path
+
+    def sr_ids(self):
+        if c.user_is_loggedin:
+            return Subreddit.special_reddits(c.user, self.query_param)
+        else:
+            return []
+
+    def get_links(self, sort, time):
+        return self.get_links_sr_ids(self.sr_ids(), sort, time)
+
+class ModSR(ModContribSR):
+    name  = "communities you moderate"
+    title = "communities you moderate"
+    query_param = "moderator"
+    real_path = "mod"
+
+class ContribSR(ModContribSR):
+    name  = "contrib"
+    title = "communities you're a contributor on"
+    query_param = "contributor"
+    real_path = "contrib"
 
 class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'
@@ -677,8 +826,12 @@ class DomainSR(FakeSubreddit):
 
 Sub = SubSR()
 Friends = FriendsSR()
+Mod = ModSR()
+Contrib = ContribSR()
 All = AllSR()
 Default = DefaultSR()
+Random = RandomReddit()
+RandomNSFW = RandomNSFWReddit()
 
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (UserRel('moderator', SRMember),

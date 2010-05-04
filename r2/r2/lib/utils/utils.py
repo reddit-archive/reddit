@@ -30,6 +30,7 @@ import re, math, random
 
 from BeautifulSoup import BeautifulSoup
 
+from time import sleep
 from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
@@ -1206,6 +1207,113 @@ def ip_and_slash16(req):
     slash16 = m.group(1) + '.x.x'
 
     return (ip, slash16)
+
+def spaceout(items, targetseconds,
+             minsleep = 0, die = False,
+             estimate = None):
+    """Given a list of items and a function to apply to them, space
+       the execution out over the target number of seconds and
+       optionally stop when we're out of time"""
+    targetseconds = float(targetseconds)
+    state = [1.0]
+
+    if estimate is None:
+        try:
+            estimate = len(items)
+        except TypeError:
+            # if we can't come up with an estimate, the best we can do
+            # is just enforce the minimum sleep time (and the max
+            # targetseconds if die==True)
+            pass
+
+    mean = lambda lst: sum(float(x) for x in lst)/float(len(lst))
+    beginning = datetime.now()
+
+    for item in items:
+        start = datetime.now()
+        yield item
+        end = datetime.now()
+
+        took_delta = end - start
+        took = (took_delta.days * 60 * 24
+                + took_delta.seconds
+                + took_delta.microseconds/1000000.0)
+        state.append(took)
+        if len(state) > 10:
+            del state[0]
+
+        if die and end > beginning + timedelta(seconds=targetseconds):
+            # we ran out of time, ignore the rest of the iterator
+            break
+
+        if estimate is None:
+            if minsleep:
+                # we have no idea how many items we're going to get
+                sleep(minsleep)
+        else:
+            sleeptime = max((targetseconds / estimate) - mean(state),
+                            minsleep)
+            if sleeptime > 0:
+                sleep(sleeptime)
+
+def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
+    """An iterator that yields everything from `it', but prints progress
+       information along the way, including time-estimates if
+       possible"""
+    from datetime import datetime
+    import sys
+
+    now = start = datetime.now()
+    elapsed = start - start
+
+    # try to guess at the estimate if we can
+    if estimate is None:
+        try:
+            estimate = len(it)
+        except:
+            pass
+
+    print 'Starting at %s' % (start,)
+
+    seen = 0
+    for item in it:
+        seen += 1
+        if seen % verbosity == 0:
+            now = datetime.now()
+            elapsed = now - start
+            elapsed_seconds = elapsed.days * 86400 + elapsed.seconds
+
+            if estimate:
+                remaining = ((elapsed/seen)*estimate)-elapsed
+                completion = now + remaining
+                count_str = ('%d/%d %.2f%%'
+                             % (seen, estimate, float(seen)/estimate*100))
+                estimate_str = (' (%s remaining; completion %s)'
+                                % (remaining, completion))
+            else:
+                count_str = '%d' % seen
+                estimate_str = ''
+
+            if key:
+                key_str = ': %s' % key(item)
+            else:
+                key_str = ''
+
+            if persec and elapsed_seconds > 0:
+                persec_str = ' (%.2f/s)' % (seen/elapsed_seconds,)
+            else:
+                persec_str = ''
+
+            sys.stdout.write('%s%s, %s%s%s\n'
+                             % (count_str, persec_str,
+                                elapsed, estimate_str, key_str))
+            sys.stdout.flush()
+            this_chunk = 0
+        yield item
+
+    now = datetime.now()
+    elapsed = now - start
+    print 'Processed %d items in %s..%s (%s)' % (seen, start, now, elapsed)
 
 class Hell(object):
     def __str__(self):

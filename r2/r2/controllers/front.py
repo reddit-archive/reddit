@@ -51,6 +51,8 @@ from urllib import quote_plus
 
 class FrontController(RedditController):
 
+    allow_stylesheets = True
+
     @validate(article = VLink('article'),
               comment = VCommentID('comment'))
     def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
@@ -102,71 +104,6 @@ class FrontController(RedditController):
         else:
             return self.redirect(add_sr('/'))
 
-    def GET_password(self):
-        """The 'what is my password' page"""
-        return BoringPage(_("password"), content=Password()).render()
-
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_verify(self, dest):
-        if c.user.email_verified:
-            content = InfoBar(message = strings.email_verified)
-            if dest:
-                return self.redirect(dest)
-        else:
-            content = PaneStack(
-                [InfoBar(message = strings.verify_email),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-        return BoringPage(_("verify email"), content = content).render()
-
-    @validate(VUser(),
-              cache_evt = VCacheKey('email_verify', ('key',)),
-              key = nop('key'),
-              dest = VDestination(default = "/prefs/update"))
-    def GET_verify_email(self, cache_evt, key, dest):
-        if c.user_is_loggedin and c.user.email_verified:
-            cache_evt.clear()
-            return self.redirect(dest)
-        elif not (cache_evt.user and
-                key == passhash(cache_evt.user.name, cache_evt.user.email)):
-            content = PaneStack(
-                [InfoBar(message = strings.email_verify_failed),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-            return BoringPage(_("verify email"), content = content).render()
-        elif c.user != cache_evt.user:
-            # wrong user.  Log them out and try again. 
-            self.logout()
-            return self.redirect(request.fullpath)
-        else:
-            cache_evt.clear()
-            c.user.email_verified = True
-            c.user._commit()
-            Award.give_if_needed("verified_email", c.user)
-            return self.redirect(dest)
-
-    @validate(cache_evt = VCacheKey('reset', ('key',)),
-              key = nop('key'))
-    def GET_resetpassword(self, cache_evt, key):
-        """page hit once a user has been sent a password reset email
-        to verify their identity before allowing them to update their
-        password."""
-
-        #if another user is logged-in, log them out
-        if c.user_is_loggedin:
-            self.logout()
-            return self.redirect(request.path)
-
-        done = False
-        if not key and request.referer:
-            referer_path =  request.referer.split(g.domain)[-1]
-            done = referer_path.startswith(request.fullpath)
-        elif not getattr(cache_evt, "user", None):
-            return self.abort404()
-        return BoringPage(_("reset password"),
-                          content=ResetPassword(key=key, done=done)).render()
-
     @validate(VAdmin(),
               article = VLink('article'))
     def GET_details(self, article):
@@ -174,6 +111,13 @@ class FrontController(RedditController):
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
         return DetailsPage(link = article, expand_children=False).render()
+
+
+    def GET_selfserviceoatmeal(self
+):
+        return BoringPage(_("self service help"), 
+                          show_sidebar = False,
+                          content = SelfServiceOatmeal()).render()
 
 
     @validate(article = VLink('article'))
@@ -275,78 +219,6 @@ class FrontController(RedditController):
                            infotext = infotext).render()
         return res
 
-    @validate(VUser())
-    def GET_juryduty(self):
-        displayPane = PaneStack()
-
-        active_trials = {}
-        finished_trials = {}
-
-        juries = Jury.by_account(c.user)
-
-        trials = on_trial([j._thing2 for j in juries])
-
-        for j in juries:
-            defendant = j._thing2
-
-            if trials.get(defendant._fullname, False):
-                active_trials[defendant._fullname] = j._name
-            else:
-                finished_trials[defendant._fullname] = j._name
-
-        if active_trials:
-            fullnames = sorted(active_trials.keys(), reverse=True)
-
-            def my_wrap(thing):
-                w = Wrapped(thing)
-                w.hide_score = True
-                w.likes = None
-                w.trial_mode = True
-                w.render_class = LinkOnTrial
-                w.juryvote = active_trials[thing._fullname]
-                return w
-
-            listing = wrap_links(fullnames, wrapper=my_wrap)
-            displayPane.append(InfoBar(strings.active_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        if finished_trials:
-            fullnames = sorted(finished_trials.keys(), reverse=True)
-            listing = wrap_links(fullnames)
-            displayPane.append(InfoBar(strings.finished_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        displayPane.append(InfoBar(strings.more_info_link %
-                                       dict(link="/help/juryduty"),
-                                   extra_class="mellow"))
-
-        return Reddit(content = displayPane).render()
-
-    @validate(VUser(),
-              location = nop("location"))
-    def GET_prefs(self, location=''):
-        """Preference page"""
-        content = None
-        infotext = None
-        if not location or location == 'options':
-            content = PrefOptions(done=request.get.get('done'))
-        elif location == 'friends':
-            content = PaneStack()
-            infotext = strings.friends % Friends.path
-            content.append(FriendList())
-        elif location == 'update':
-            content = PrefUpdate()
-        elif location == 'feeds' and c.user.pref_private_feeds:
-            content = PrefFeeds()
-        elif location == 'delete':
-            content = PrefDelete()
-        else:
-            return self.abort404()
-
-        return PrefsPage(content = content, infotext=infotext).render()
-
     @validate(VUser(),
               name = nop('name'))
     def GET_newreddit(self, name):
@@ -360,22 +232,98 @@ class FrontController(RedditController):
 
     def GET_stylesheet(self):
         if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
-            self.check_modified(c.site,'stylesheet_contents')
+            c.allow_loggedin_cache = True
+            self.check_modified(c.site,'stylesheet_contents',
+                                private=False, max_age=7*24*60*60,
+                                must_revalidate=False)
             c.response_content_type = 'text/css'
             c.response.content =  c.site.stylesheet_contents
             return c.response
         else:
             return self.abort404()
 
-    @base_listing
-    @validate(location = nop('location'),
-              created = VOneOf('created', ('true','false'),
-                               default = 'false'))
-    def GET_editreddit(self, location, num, after, reverse, count, created):
-        """Edit reddit form."""
-        if isinstance(c.site, FakeSubreddit):
+    def _make_spamlisting(self, location, num, after, reverse, count):
+        if location == 'reports':
+            query = c.site.get_reported()
+        elif location == 'spam':
+            query = c.site.get_spam()
+        elif location == 'trials':
+            query = c.site.get_trials()
+        elif location == 'modqueue':
+            query = c.site.get_modqueue()
+        else:
+            raise ValueError
+
+        if isinstance(query, thing.Query):
+            builder_cls = QueryBuilder
+        elif isinstance (query, list):
+            builder_cls = QueryBuilder
+        else:
+            builder_cls = IDBuilder
+
+        def keep_fn(x):
+            # no need to bother mods with banned users, or deleted content
+            if x.hidden or x._deleted:
+                return False
+
+            if location == "reports":
+                return x.reported > 0 and not x._spam
+            elif location == "spam":
+                return x._spam
+            elif location == "trials":
+                return not getattr(x, "verdict", None)
+            elif location == "modqueue":
+                if x.reported > 0 and not x._spam:
+                    return True # reported but not banned
+                verdict = getattr(x, "verdict", None)
+                if verdict is None:
+                    return True # anything without a verdict (i.e., trials)
+                if x._spam and verdict != 'mod-removed':
+                    return True # spam, unless banned by a moderator
+                return False
+            else:
+                raise ValueError
+
+        builder = builder_cls(query,
+                              skip = True,
+                              num = num, after = after,
+                              keep_fn = keep_fn,
+                              count = count, reverse = reverse,
+                              wrap = ListingController.builder_wrapper)
+        listing = LinkListing(builder)
+        pane = listing.listing()
+
+        return pane
+
+    def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
+        extension_handling = False
+
+        if not c.user_is_loggedin:
+            return self.abort404()
+        if isinstance(c.site, ModSR):
+            level = 'mod'
+        elif isinstance(c.site, ContribSR):
+            level = 'contrib'
+        elif isinstance(c.site, AllSR):
+            level = 'all'
+        else:
+            raise ValueError
+
+        if ((level == 'mod' and
+             location in ('reports', 'spam', 'trials', 'modqueue'))
+            or
+            (level == 'all' and
+             location == 'trials')):
+            pane = self._make_spamlisting(location, num, after, reverse, count)
+            if c.user.pref_private_feeds:
+                extension_handling = "private"
+        else:
             return self.abort404()
 
+        return EditReddit(content = pane,
+                          extension_handling = extension_handling).render()
+
+    def _edit_normal_reddit(self, location, num, after, reverse, count, created):
         # moderator is either reddit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
         extension_handling = False
@@ -404,29 +352,8 @@ class FrontController(RedditController):
                 stylesheet_contents = ''
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
-        elif location in ('reports', 'spam') and is_moderator:
-            query = (c.site.get_reported() if location == 'reports'
-                     else c.site.get_spam())
-            builder_cls = (QueryBuilder if isinstance(query, thing.Query)
-                           else IDBuilder)
-            def keep_fn(x):
-                # no need to bother mods with banned users, or deleted content
-                if x.hidden or x._deleted:
-                    return False
-                if location == "reports" and not x._spam:
-                    return (x.reported > 0)
-                if location == "spam":
-                    return x._spam
-                return True
-
-            builder = builder_cls(query,
-                                  skip = True,
-                                  num = num, after = after,
-                                  keep_fn = keep_fn,
-                                  count = count, reverse = reverse,
-                                  wrap = ListingController.builder_wrapper)
-            listing = LinkListing(builder)
-            pane = listing.listing()
+        elif location in ('reports', 'spam', 'trials', 'modqueue') and is_moderator:
+            pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
@@ -438,6 +365,25 @@ class FrontController(RedditController):
 
         return EditReddit(content = pane,
                           extension_handling = extension_handling).render()
+
+    @base_listing
+    @validate(location = nop('location'),
+              created = VOneOf('created', ('true','false'),
+                               default = 'false'))
+    def GET_editreddit(self, location, num, after, reverse, count, created):
+        """Edit reddit form."""
+        if isinstance(c.site, ModContribSR):
+            return self._edit_modcontrib_reddit(location, num, after, reverse,
+                                                count, created)
+        elif isinstance(c.site, AllSR) and c.user_is_admin:
+            return self._edit_modcontrib_reddit(location, num, after, reverse,
+                                                count, created)
+        elif isinstance(c.site, FakeSubreddit):
+            return self.abort404()
+        else:
+            return self._edit_normal_reddit(location, num, after, reverse,
+                                            count, created)
+
 
     def GET_awards(self):
         """The awards page."""
@@ -605,63 +551,6 @@ class FrontController(RedditController):
 
         return builder.total_num, timing, res
 
-    @validate(dest = VDestination())
-    def GET_login(self, dest):
-        """The /login form.  No link to this page exists any more on
-        the site (all actions invoking it now go through the login
-        cover).  However, this page is still used for logging the user
-        in during submission or voting from the bookmarklets."""
-
-        if (c.user_is_loggedin and
-            not request.environ.get('extension') == 'embed'):
-            return self.redirect(dest)
-        return LoginPage(dest = dest).render()
-
-    @validate(VUser(),
-              VModhash(),
-              dest = VDestination())
-    def GET_logout(self, dest):
-        return self.redirect(dest)
-
-    @validate(VUser(),
-              VModhash(),
-              dest = VDestination())
-    def POST_logout(self, dest):
-        """wipe login cookie and redirect to referer."""
-        self.logout()
-        return self.redirect(dest)
-
-
-    @validate(VUser(),
-              dest = VDestination())
-    def GET_adminon(self, dest):
-        """Enable admin interaction with site"""
-        #check like this because c.user_is_admin is still false
-        if not c.user.name in g.admins:
-            return self.abort404()
-        self.login(c.user, admin = True)
-        return self.redirect(dest)
-
-    @validate(VAdmin(),
-              dest = VDestination())
-    def GET_adminoff(self, dest):
-        """disable admin interaction with site."""
-        if not c.user.name in g.admins:
-            return self.abort404()
-        self.login(c.user, admin = False)
-        return self.redirect(dest)
-
-    def GET_validuser(self):
-        """checks login cookie to verify that a user is logged in and
-        returns their user name"""
-        c.response_content_type = 'text/plain'
-        if c.user_is_loggedin:
-            perm = str(c.user.can_wiki())
-            c.response.content = c.user.name + "," + perm
-        else:
-            c.response.content = ''
-        return c.response
-
     @validate(VAdmin(),
               comment = VCommentByID('comment_id'))
     def GET_comment_by_id(self, comment):
@@ -711,22 +600,6 @@ class FrontController(RedditController):
                                            sent = sent, 
                                            msg_hash = msg_hash)).render()
 
-    @validate(msg_hash = nop('x'))
-    def GET_optout(self, msg_hash):
-        """handles /mail/optout to add an email to the optout mailing
-        list.  The actual email addition comes from the user posting
-        the subsequently rendered form and is handled in
-        ApiController.POST_optout."""
-        return self._render_opt_in_out(msg_hash, True)
-
-    @validate(msg_hash = nop('x'))
-    def GET_optin(self, msg_hash):
-        """handles /mail/optin to remove an email address from the
-        optout list. The actual email removal comes from the user
-        posting the subsequently rendered form and is handled in
-        ApiController.POST_optin."""
-        return self._render_opt_in_out(msg_hash, False)
-    
     def GET_frame(self):
         """used for cname support.  makes a frame and
         puts the proper url as the frame source"""
@@ -801,3 +674,223 @@ class FrontController(RedditController):
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
+
+class FormsController(RedditController):
+
+    def GET_password(self):
+        """The 'what is my password' page"""
+        return BoringPage(_("password"), content=Password()).render()
+
+    @validate(VUser(),
+              dest = VDestination(),
+              reason = nop('reason'))
+    def GET_verify(self, dest, reason):
+        if c.user.email_verified:
+            content = InfoBar(message = strings.email_verified)
+            if dest:
+                return self.redirect(dest)
+        else:
+            if reason == "submit":
+                infomsg = strings.verify_email_submit
+            else:
+                infomsg = strings.verify_email
+
+            content = PaneStack(
+                [InfoBar(message = infomsg),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+        return BoringPage(_("verify email"), content = content).render()
+
+    @validate(VUser(),
+              cache_evt = VCacheKey('email_verify', ('key',)),
+              key = nop('key'),
+              dest = VDestination(default = "/prefs/update"))
+    def GET_verify_email(self, cache_evt, key, dest):
+        if c.user_is_loggedin and c.user.email_verified:
+            cache_evt.clear()
+            return self.redirect(dest)
+        elif not (cache_evt.user and
+                key == passhash(cache_evt.user.name, cache_evt.user.email)):
+            content = PaneStack(
+                [InfoBar(message = strings.email_verify_failed),
+                 PrefUpdate(email = True, verify = True,
+                            password = False)])
+            return BoringPage(_("verify email"), content = content).render()
+        elif c.user != cache_evt.user:
+            # wrong user.  Log them out and try again. 
+            self.logout()
+            return self.redirect(request.fullpath)
+        else:
+            cache_evt.clear()
+            c.user.email_verified = True
+            c.user._commit()
+            Award.give_if_needed("verified_email", c.user)
+            return self.redirect(dest)
+
+    @validate(cache_evt = VCacheKey('reset', ('key',)),
+              key = nop('key'))
+    def GET_resetpassword(self, cache_evt, key):
+        """page hit once a user has been sent a password reset email
+        to verify their identity before allowing them to update their
+        password."""
+
+        #if another user is logged-in, log them out
+        if c.user_is_loggedin:
+            self.logout()
+            return self.redirect(request.path)
+
+        done = False
+        if not key and request.referer:
+            referer_path =  request.referer.split(g.domain)[-1]
+            done = referer_path.startswith(request.fullpath)
+        elif not getattr(cache_evt, "user", None):
+            return self.abort404()
+        return BoringPage(_("reset password"),
+                          content=ResetPassword(key=key, done=done)).render()
+
+    @validate(VUser())
+    def GET_depmod(self):
+        displayPane = PaneStack()
+
+        active_trials = {}
+        finished_trials = {}
+
+        juries = Jury.by_account(c.user)
+
+        trials = trial_info([j._thing2 for j in juries])
+
+        for j in juries:
+            defendant = j._thing2
+
+            if trials.get(defendant._fullname, False):
+                active_trials[defendant._fullname] = j._name
+            else:
+                finished_trials[defendant._fullname] = j._name
+
+        if active_trials:
+            fullnames = sorted(active_trials.keys(), reverse=True)
+
+            def my_wrap(thing):
+                w = Wrapped(thing)
+                w.hide_score = True
+                w.likes = None
+                w.trial_mode = True
+                w.render_class = LinkOnTrial
+                w.juryvote = active_trials[thing._fullname]
+                return w
+
+            listing = wrap_links(fullnames, wrapper=my_wrap)
+            displayPane.append(InfoBar(strings.active_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        if finished_trials:
+            fullnames = sorted(finished_trials.keys(), reverse=True)
+            listing = wrap_links(fullnames)
+            displayPane.append(InfoBar(strings.finished_trials,
+                                       extra_class="mellow"))
+            displayPane.append(listing)
+
+        displayPane.append(InfoBar(strings.more_info_link %
+                                       dict(link="/help/deputies"),
+                                   extra_class="mellow"))
+
+        return Reddit(content = displayPane).render()
+
+    @validate(VUser(),
+              location = nop("location"))
+    def GET_prefs(self, location=''):
+        """Preference page"""
+        content = None
+        infotext = None
+        if not location or location == 'options':
+            content = PrefOptions(done=request.get.get('done'))
+        elif location == 'friends':
+            content = PaneStack()
+            infotext = strings.friends % Friends.path
+            content.append(FriendList())
+        elif location == 'update':
+            content = PrefUpdate()
+        elif location == 'feeds' and c.user.pref_private_feeds:
+            content = PrefFeeds()
+        elif location == 'delete':
+            content = PrefDelete()
+        else:
+            return self.abort404()
+
+        return PrefsPage(content = content, infotext=infotext).render()
+
+
+    @validate(dest = VDestination())
+    def GET_login(self, dest):
+        """The /login form.  No link to this page exists any more on
+        the site (all actions invoking it now go through the login
+        cover).  However, this page is still used for logging the user
+        in during submission or voting from the bookmarklets."""
+
+        if (c.user_is_loggedin and
+            not request.environ.get('extension') == 'embed'):
+            return self.redirect(dest)
+        return LoginPage(dest = dest).render()
+
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def GET_logout(self, dest):
+        return self.redirect(dest)
+
+    @validate(VUser(),
+              VModhash(),
+              dest = VDestination())
+    def POST_logout(self, dest):
+        """wipe login cookie and redirect to referer."""
+        self.logout()
+        return self.redirect(dest)
+
+
+    @validate(VUser(),
+              dest = VDestination())
+    def GET_adminon(self, dest):
+        """Enable admin interaction with site"""
+        #check like this because c.user_is_admin is still false
+        if not c.user.name in g.admins:
+            return self.abort404()
+        self.login(c.user, admin = True)
+        return self.redirect(dest)
+
+    @validate(VAdmin(),
+              dest = VDestination())
+    def GET_adminoff(self, dest):
+        """disable admin interaction with site."""
+        if not c.user.name in g.admins:
+            return self.abort404()
+        self.login(c.user, admin = False)
+        return self.redirect(dest)
+
+    def GET_validuser(self):
+        """checks login cookie to verify that a user is logged in and
+        returns their user name"""
+        c.response_content_type = 'text/plain'
+        if c.user_is_loggedin:
+            perm = str(c.user.can_wiki())
+            c.response.content = c.user.name + "," + perm
+        else:
+            c.response.content = ''
+        return c.response
+
+    @validate(msg_hash = nop('x'))
+    def GET_optout(self, msg_hash):
+        """handles /mail/optout to add an email to the optout mailing
+        list.  The actual email addition comes from the user posting
+        the subsequently rendered form and is handled in
+        ApiController.POST_optout."""
+        return self._render_opt_in_out(msg_hash, True)
+
+    @validate(msg_hash = nop('x'))
+    def GET_optin(self, msg_hash):
+        """handles /mail/optin to remove an email address from the
+        optout list. The actual email removal comes from the user
+        posting the subsequently rendered form and is handled in
+        ApiController.POST_optin."""
+        return self._render_opt_in_out(msg_hash, False)
+

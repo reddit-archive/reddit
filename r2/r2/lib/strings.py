@@ -41,8 +41,8 @@ __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
 # StringHandler instance strings
 string_dict = dict(
 
-    banned_by = "banned by %s",
-    banned    = "banned",
+    banned_by = "removed by %s",
+    banned    = "removed",
     reports   = "reports: %d",
     
     # this accomodates asian languages which don't use spaces
@@ -77,8 +77,8 @@ string_dict = dict(
 
     sr_created = _('your reddit has been created'),
 
-    active_trials = _("these things are still on trial, so you can feel free to reclassify them:"),
-    finished_trials = _("these trials have concluded; it's too late to change your mind on them:"),
+    active_trials = _("we haven't yet decided whether these things are spam, so you have a chance to change your vote:"),
+    finished_trials = _("it's too late to change your vote on these things (the verdict has been issued):"),
     more_info_link = _("visit [%(link)s](%(link)s) for more information"),
 
     msg_add_friend = dict(
@@ -129,9 +129,12 @@ string_dict = dict(
     submit_text = _("""You are submitting a text-based post. Speak your mind. A title is required, but expanding further in the text field is not. Beginning your title with "vote up if" is violation of intergalactic law."""),
     iphone_first = _("You should consider using [reddit's free iphone app](http://itunes.com/apps/iredditfree)."),
     verify_email = _("we're going to need to verify your email address for you to proceed."),
+    verify_email_submit = _("you'll be able to submit more frequently once you verify your email address"),
     email_verified =  _("your email address has been verfied"),
     email_verify_failed = _("Verification failed.  Please try that again"),
-    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. [Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse.")
+    search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. [Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse."),
+    verified_quota_msg = _("You've submitted several links recently that haven't been doing very well. You'll have to wait a while before you can submit again, or [write to the moderators of this reddit](%(link)s) and ask for an exemption."),
+    unverified_quota_msg = _("You haven't [verified your email address](%(link1)s); until you do, your submitting privileges will be severely limited. Please try again in an hour or verify your email address. If you'd like an exemption from this rule, please [write to the moderators of this reddit](%(link2)s)."),
 )
 
 class StringHandler(object):

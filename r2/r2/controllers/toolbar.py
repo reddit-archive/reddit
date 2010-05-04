@@ -75,6 +75,9 @@ def auto_expand_panel(link):
         return c.user.pref_frame_commentspanel
 
 class ToolbarController(RedditController):
+
+    allow_stylesheets = True
+
     @validate(link1 = VByName('id'),
               link2 = VLink('id', redirect = False))
     def GET_goto(self, link1, link2):
@@ -89,7 +92,7 @@ class ToolbarController(RedditController):
         "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
-        elif link.is_self:
+        elif link.is_self or not link.subreddit_slow.can_view(c.user):
             return self.redirect(link.url)
 
         res = Frame(title = link.title,

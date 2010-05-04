@@ -62,7 +62,7 @@ def verify_email(user, dest):
     Award.take_away("verified_email", user)
     emaillink = ('http://' + g.domain + '/verification/' + key
                  + query_string(dict(dest=dest)))
-    print "Generated email verification link: " + emaillink
+    g.log.debug("Generated email verification link: " + emaillink)
     g.cache.set("email_verify_%s" %key, user._id, time=1800)
 
     _system_email(user.email,
@@ -118,7 +118,7 @@ def send_queued_mail(test = False):
     """sends mail from the mail queue to smtplib for delivery.  Also,
     on successes, empties the mail queue and adds all emails to the
     sent_mail list."""
-    from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail, Promo_Email
+    from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail
     now = datetime.datetime.now(g.tz)
     if not c.site:
         c.site = Default
@@ -164,17 +164,6 @@ def send_queued_mail(test = False):
             elif email.kind == Email.Kind.OPTIN:
                 email.body = Mail_Opt(msg_hash = email.msg_hash,
                                       leave = False).render(style = "email")
-            elif email.kind in (Email.Kind.ACCEPT_PROMO,
-                                Email.Kind.REJECT_PROMO,
-                                Email.Kind.QUEUED_PROMO,
-                                Email.Kind.LIVE_PROMO,
-                                Email.Kind.BID_PROMO,
-                                Email.Kind.FINISHED_PROMO,
-                                Email.Kind.NEW_PROMO):
-                email.body = Promo_Email(link = email.thing,
-                                    kind = email.kind,
-                                    body = email.body).render(style="email")
-
             # handle unknown types here
             elif not email.body:
                 email.set_sent(rejected = True)
@@ -208,8 +197,11 @@ def opt_in(msg_hash):
     return email, removed
 
 
-def _promo_email(thing, kind, body = ""):
+def _promo_email(thing, kind, body = "", **kw):
+    from r2.lib.pages import Promo_Email
     a = Account._byID(thing.author_id)
+    body = Promo_Email(link = thing, kind = kind,
+                       body = body, **kw).render(style = "email")
     return _system_email(a.email, body, kind, thing = thing,
                          reply_to = "selfservicesupport@reddit.com")
 
@@ -217,8 +209,9 @@ def _promo_email(thing, kind, body = ""):
 def new_promo(thing):
     return _promo_email(thing, Email.Kind.NEW_PROMO)
 
-def promo_bid(thing):
-    return _promo_email(thing, Email.Kind.BID_PROMO)
+def promo_bid(thing, bid, start_date):
+    return _promo_email(thing, Email.Kind.BID_PROMO, bid = bid, 
+                        start_date = start_date)
 
 def accept_promo(thing):
     return _promo_email(thing, Email.Kind.ACCEPT_PROMO)
@@ -226,8 +219,9 @@ def accept_promo(thing):
 def reject_promo(thing, reason = ""):
     return _promo_email(thing, Email.Kind.REJECT_PROMO, reason)
 
-def queue_promo(thing):
-    return _promo_email(thing, Email.Kind.QUEUED_PROMO)
+def queue_promo(thing, bid, trans_id):
+    return _promo_email(thing, Email.Kind.QUEUED_PROMO, bid = bid,
+                        trans_id = trans_id)
 
 def live_promo(thing):
     return _promo_email(thing, Email.Kind.LIVE_PROMO)

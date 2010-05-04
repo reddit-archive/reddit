@@ -183,7 +183,11 @@ def firsttime():
 
 def get_redditfirst(key,default=None):
     try:
-        cookie = simplejson.loads(c.cookies['reddit_first'].value)
+        val = c.cookies['reddit_first'].value
+        # on cookie presence, return as much
+        if default is None:
+            default = True
+        cookie = simplejson.loads(val)
         return cookie[key]
     except (ValueError,TypeError,KeyError),e:
         # it's not a proper json dict, or the cookie isn't present, or
@@ -259,7 +263,6 @@ def set_subreddit():
                 redirect_to("/reddits/create?name=%s" % sr_name)
             elif not c.error_page:
                 abort(404, "not found")
-
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and c.site == Default and domain:
         c.site = DomainSR(domain)
@@ -437,6 +440,8 @@ def base_listing(fn):
 
 class MinimalController(BaseController):
 
+    allow_stylesheets = False
+
     def request_key(self):
         # note that this references the cookie at request time, not
         # the current value of it
@@ -446,7 +451,7 @@ class MinimalController(BaseController):
         except CookieError:
             cookies_key = ''
 
-        return make_key('request_key',
+        return make_key('request_key_',
                         c.lang,
                         c.content_langs,
                         request.host,
@@ -470,6 +475,8 @@ class MinimalController(BaseController):
             ratelimit_agents()
             ratelimit_throttled()
 
+        c.allow_loggedin_cache = False
+
         # the domain has to be set before Cookies get initialized
         set_subreddit()
         c.errors = ErrorSet()
@@ -480,6 +487,7 @@ class MinimalController(BaseController):
         if not c.user_is_loggedin:
             r = g.rendercache.get(self.request_key())
             if r and request.method == 'GET':
+                r, c.cookies = r
                 response = c.response
                 response.headers = r.headers
                 response.content = r.content
@@ -517,37 +525,34 @@ class MinimalController(BaseController):
         if c.response_access_control:
             c.response.headers['Access-Control'] = c.response_access_control
 
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and not c.allow_loggedin_cache:
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
-
-        # send cookies
-        if not c.used_cache and c.cookies:
-            # if we used the cache, these cookies should be set by the
-            # cached response object instead
-            for k,v in c.cookies.iteritems():
-                if v.dirty:
-                    response.set_cookie(key     = k,
-                                        value   = quote(v.value),
-                                        domain  = v.domain,
-                                        expires = v.expires)
 
         #return
         #set content cache
         if (g.page_cache_time
             and request.method == 'GET'
-            and not c.user_is_loggedin
+            and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
             and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
             try:
                 g.rendercache.set(self.request_key(),
-                                  response,
+                                  (response, c.cookies),
                                   g.page_cache_time)
             except MemcachedError:
                 # the key was too big to set in the rendercache
                 g.log.debug("Ignored too-big render cache")
+
+        # send cookies
+        for k,v in c.cookies.iteritems():
+            if v.dirty:
+                response.set_cookie(key     = k,
+                                    value   = quote(v.value),
+                                    domain  = v.domain,
+                                    expires = v.expires)
 
         if g.usage_sampling <= 0.0:
             return
@@ -649,6 +654,15 @@ class RedditController(MinimalController):
         if not isinstance(c.site, FakeSubreddit):
             request.environ['REDDIT_NAME'] = c.site.name
 
+        # random reddit trickery -- have to do this after the content lang is set
+        if c.site == Random:
+            c.site = Subreddit.random_reddit()
+            redirect_to("/" + c.site.path.strip('/') + request.path)
+        elif c.site == RandomNSFW:
+            c.site = Subreddit.random_reddit(over18 = True)
+            redirect_to("/" + c.site.path.strip('/') + request.path)
+
+
         # check that the site is available:
         if c.site._spam and not c.user_is_admin and not c.error_page:
             abort(404, "not found")
@@ -664,7 +678,7 @@ class RedditController(MinimalController):
             return self.intermediate_redirect("/over18")
 
         #check whether to allow custom styles
-        c.allow_styles = True
+        c.allow_styles = self.allow_stylesheets
         if g.css_killswitch:
             c.allow_styles = False
         #if the preference is set and we're not at a cname
@@ -674,14 +688,22 @@ class RedditController(MinimalController):
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.allow_styles = False
 
-    def check_modified(self, thing, action):
-        if c.user_is_loggedin:
+    def check_modified(self, thing, action,
+                       private=True, max_age=0, must_revalidate=True):
+        if c.user_is_loggedin and not c.allow_loggedin_cache:
             return
 
         last_modified = utils.last_modified_date(thing, action)
         date_str = http_utils.http_date_str(last_modified)
         c.response.headers['last-modified'] = date_str
-        c.response.headers['cache-control'] = "private, max-age=0, must-revalidate"
+
+        cache_control = []
+        if private:
+            cache_control.append('private')
+        cache_control.append('max-age=%d' % max_age)
+        if must_revalidate:
+            cache_control.append('must-revalidate')
+        c.response.headers['cache-control'] = ', '.join(cache_control)
 
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:

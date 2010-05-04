@@ -20,11 +20,14 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
+   from r2.lib.template_helpers import static
    import locale
    from r2.models.subreddit import DomainSR, FakeSubreddit
    def num(x):
       return locale.format('%d', x, True)
  %>
+
+<script src="${static('jquery.flot.js')}"  type="text/javascript"></script>
 
 <%def name="daily_summary()">
   <% 
@@ -105,48 +108,77 @@
 
 <h1>Traffic for ${c.site.name}</h1>
 
+<p>
+  Below are the traffic stats for your reddit.  Each graph represents one of the following over the interval specified
+</p>
+<ul style="margin:7px">
+  <li>
+    <b>pageviews</b> &#32;are all hits to ${c.site.name}, including both listing pages and comment pages.
+  </li>
+  <li>
+    <b>uniques</b> &#32;are the total number of unique visitors (IP and U/A combo) that generate the above pageviews. This is independent of whether or not they are logged in.
+  </li>
+  <li>
+    <b>subscriptions</b> &#32;is the number of new subscriptions in a given day that have been generated. This number is less accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions (which are when a subscription is actually deleted from the db).
+  </li>
+</ul>
+<p>
+  Note: there are a couple of places outside of your reddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
+</p>
+
 %if not thing.has_data:
   <p class="error">
    ${_("There doesn't seem to be any traffic data at the moment.  Please check back later.")}
   </p>
 %else:
+  <table>
+    <tr>
+      <td>
+        ${thing.uniques_hour}
+      </td>
+      <td>
+        ${thing.impressions_hour}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        ${thing.uniques_day}
+      </td>
+      <td>
+        ${thing.impressions_day}
+      </td>
+    </tr>
+    %if c.default_sr:
+    <tr>
+      <td>
+          ${thing.uniques_month}
+      </td>
+      <td>
+        ${thing.impressions_month}
+      </td>
+    </tr>
+    %else:
+    <tr>
+      <td>
+        ${thing.subscriptions_day}
+      </td>
+      <td>
+      </td>
+    </tr>
+    %endif
+  </table>
 
   <div style="float:left">
-    <div>
-      <img class="traffic-graph" alt='hourly uniques'
-           src="${thing.uniques_hour}"/>
-    </div>
-    <div>
-      <img class="traffic-graph" alt='daily uniques'
-           src="${thing.uniques_day}"/>
-    </div>
-    %if c.default_sr:
-      <div>
-        <img class="traffic-graph" alt='monthly uniques'
-             src="${thing.uniques_month}"/>
-      </div>
-    %endif
     ${weekly_summary()}
-    %if c.default_sr:
-      ${daily_summary()}
-    %endif
+   %if c.default_sr:
+    ${daily_summary()}
+   %endif
   </div>
-  <div>
-    <img class="traffic-graph" alt='hourly impressions' 
-         src="${thing.impressions_hour}"/>
-  </div>
-  <div>
-    <img class="traffic-graph" alt='daily impressions' 
-         src="${thing.impressions_day}"/>
-  </div>
-    %if c.default_sr:
-      <div>
-        <img class="traffic-graph" alt='monthly impressions' 
-             src="${thing.impressions_month}"/>
-      </div>
-      <% data = thing.monthly_summary() %>
-      <table class="traffic-table">
-        <tr>
+
+  %if c.default_sr:
+    <% data = thing.monthly_summary() %>
+    <table class="traffic-table">
+      <tr>
           <th colspan="3">Monthly data</th>
         </tr>
         <tr>
@@ -207,8 +239,6 @@
         %endfor
       </table>
     %else:
-      <img class="traffic-graph" alt='daily subscriptions' 
-           src="${thing.subscriptions_day}"/>
       ${daily_summary()}
     %endif
 %endif

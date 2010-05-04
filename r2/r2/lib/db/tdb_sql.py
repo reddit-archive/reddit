@@ -330,7 +330,7 @@ def get_read_table(tables):
         ip_weights.extend((ip, .01) for ip in no_connections)
 
     #rebalance the weights
-    total_weight = sum(w[1] for w in ip_weights)
+    total_weight = sum(w[1] for w in ip_weights) or 1
     ip_weights = [(ip, weight / total_weight)
                   for ip, weight in ip_weights]
 

@@ -53,6 +53,7 @@ class Vote(MultiRelation('vote',
     def vote(cls, sub, obj, dir, ip, organic = False, cheater = False):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_counts
+        from r2.lib.db import queries
 
         sr = obj.subreddit_slow
         kind = obj.__class__.__name__.lower()
@@ -99,6 +100,18 @@ class Vote(MultiRelation('vote',
                 v.organic = organic
 
         v._commit()
+        g.cache.delete(queries.prequeued_vote_key(sub, obj))
+
+        lastvote_attr_name = 'last_vote_' + obj.__class__.__name__
+        try:
+            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
+        except TypeError:
+            # this temporarily works around an issue with timezones in
+            # a really hacky way. Remove me later
+            setattr(sub, lastvote_attr_name, None)
+            sub._commit()
+            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
+        sub._commit()
 
         up_change, down_change = score_changes(amount, oldamount)
 
@@ -122,7 +135,8 @@ class Vote(MultiRelation('vote',
     #TODO make this generic and put on multirelation?
     @classmethod
     def likes(cls, sub, obj):
-        votes = cls._fast_query(sub, obj, ('1', '-1'), data=False)
+        votes = cls._fast_query(sub, obj, ('1', '-1'),
+                                data=False, eager_load=False)
         votes = dict((tuple(k[:2]), v) for k, v in votes.iteritems() if v)
         return votes
 

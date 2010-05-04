@@ -24,6 +24,7 @@
    from r2.lib.template_helpers import get_domain
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
+   from r2.lib.template_helpers import static
 %>
  
 <%inherit  file="printable.html"/>
@@ -61,7 +62,7 @@
 <%def name="bottom_buttons()">
   <ul class="flat-list buttons">
     %if thing.nsfw:
-     <li class="rounded nsfw-stamp">
+     <li class="rounded nsfw-stamp stamp">
        <acronym title="${_('Adult content: Not Safe For Work')}">
          ${_("NSFW")}
        </acronym>
@@ -77,16 +78,21 @@
     <%call expr="make_link('title', 'title')">
       ${thing.title}
     </%call>
+    %if getattr(thing, "approval_checkmark", None):
+        <img class="approval-checkmark" title="${thing.approval_checkmark}"
+             src="${static('green-check.png')}"
+             onclick="alert('${thing.approval_checkmark}\n\n' +
+'${_("(no need to click for this info; just hover over the checkmark next time)")}')"
+           />
+    %endif
     &#32;
+
     ${self.domain()}
 
     %if c.user_is_admin:
-        %if thing._deleted:
-            &#32;<span class="link-note">[link deleted]</span>
-        %endif
-        %if thing.on_trial:
-            &#32;<span class="link-note">[on trial]</span>
-        %endif
+        %for link_note in thing.link_notes:
+           &#32;<span class="link-note">[${link_note}]</span>
+        %endfor
     %endif
   </p>
 
@@ -108,8 +114,9 @@
      expand = thing.link_child and thing.link_child.expand
   %>
 
-  ##if we're not on a permalink page we'll render the buttons on top
-  %if not expand:
+  ## if we're not on a permalink page we'll render the buttons on top
+  ## (unless it's also a jury duty listing)
+  %if not (expand or getattr(thing, "trial_mode", None)):
     ${bottom_buttons()}
   %endif
 
@@ -206,13 +213,15 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 </%def>
 
 <%def name="buttons(comments=True, delete=True, report=True, additional='')">
-  ${LinkButtons(thing, comments = comments, delete = delete, 
-                report = report)}
+  ${LinkButtons(thing, comments = comments, delete = delete,
+                report = report,
+               )}
 </%def>
 
 <%def name="thumbnail()">
   %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail')">
+    &#8203;
     <img src="${thing.thumbnail}" alt=""/>
   </%call>
   %endif

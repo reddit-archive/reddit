@@ -20,15 +20,17 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="pretty_button" />
+
 <%!
    from r2.lib.strings import strings
    from r2.lib.promote import STATUS
  %>
 
 <%def name="banbuttons()">
-  %if thing.show_report:
+  %if thing.show_delete:
     <li>
-      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
+      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
     </li>
   %endif
   %if thing.show_indict:
@@ -36,29 +38,26 @@
       ${ynbutton(_("indict"), _("indicted"), "indict")}
     </li>
   %endif
-  %if thing.show_delete:
-    <li>
-      ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
-    </li>
-  %endif
   %if thing.can_ban:
-    %if thing.show_spam:
-      <li>
-         ${self.state_button("unban", _("unban"), 
-            "return change_state(this, 'unban');", _("unbanned"))}
-      </li>
-     %else:
-      <li>
-         ${self.state_button("ban", _("ban"), 
-            "return change_state(this, 'ban');", _("banned"))}
-      </li>
-     %endif
-    %if thing.show_reports:
-      <li>
-        ${self.state_button("ignore", _("ignore"), \
-         "change_state(this, 'ignore');", _("ignored"))}
-      </li>
+    %if not getattr(thing.thing, "use_big_modbuttons", False):
+      %if not thing.show_spam:
+        <li>
+           ${self.state_button("remove", _("remove"),
+              "return change_state(this, 'remove');", _("removed"))}
+        </li>
+      %endif
+
+      %if thing.show_spam or thing.show_ignore:
+        <li>
+           ${self.state_button("approve", _("approve"),
+              "return change_state(this, 'approve');", _("approved"))}
+        </li>
+      %endif
     %endif
+  %elif thing.show_report:
+    <li>
+      ${ynbutton(_("report"), _("reported"), "report", "hide_thing")}
+    </li>
   %endif
 </%def>
 
@@ -100,10 +99,41 @@
   %endif
 </%def>
 
+<%def name="big_modbuttons(thing, kind)">
+  <span class="big-mod-buttons">
+    %if getattr(thing, "moderator_banned", None):
+      <!-- pass -->
+    %elif thing._spam:
+      ${pretty_button(_("confirm %(obj)s removal") % dict(obj=kind),
+      "big_mod_action", -1, "negative")}
+    %else:
+      ${pretty_button(_("remove %(obj)s") % dict(obj=kind),
+                      "big_mod_action", -1, "negative")}
+    %endif
+
+    %if getattr(thing, "approval_checkmark", None):
+      ${pretty_button(_("reapprove %(obj)s") % dict(obj=kind),
+      "big_mod_action",  1, "positive")}
+    %else:
+      ${pretty_button(_("approve %(obj)s") % dict(obj=kind),
+      "big_mod_action",  1, "positive")}
+    %endif
+
+    &#32;
+    <span class="removed" style="display:none">
+      ${_("removed")}
+    </span>
+    <span class="approved" style="display:none">
+      ${_("approved")}
+    </span>
+  </span>
+</%def>
+
 <%def name="linkbuttons()">
   %if thing.show_comments:
     <li class="first">
     ${self.comment_button("comment", thing.comment_label, thing.permalink,
+                          _sr_path = (thing.promoted is None), 
                           a_class = thing.commentcls, 
                           newwindow = thing.new_window)}
     </li>
@@ -136,57 +166,75 @@
     %endif
     </li>
   %endif
+
+  ${self.distinguish()}
   ${self.banbuttons()}
   %if thing.promoted is not None:
-    %if thing.promote_status != STATUS.finished or c.user_is_sponsor:
-      %if thing.user_is_sponsor or thing.is_author:
-        <li>
-          ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
-        </li>
-        %if thing.promote_status == STATUS.promoted:
-          <li>
-            ${ynbutton(_("unpromote"), _("unpromoted"), "unpromote")}
-          </li>
-        %elif c.user_is_sponsor and thing.promote_status != STATUS.rejected:
-          <li>
-            <form action="/post/reject" class="rejection-form"
-                  style="display:none"
-                  method="post" onsubmit="reject post_form(this, 'unpromote')">
-              <br/>
-              <input type="hidden" name="executed" value="rejected" />
-              <label>Reason:</label><br/>
-              <textarea name="reason" value="" ></textarea>
-              <br/>
-              <a href="#" 
-                 onclick="change_state(this, 'unpromote', complete_reject_promo)">
-                submit
-              </a>/
-            </form>
-            ${toggle_button("reject_promo", \
-                            _("reject"), _("cancel"), \
-                            "reject_promo", "cancel_reject_promo")}
-          </li>
-        %endif
-      %endif
-      %if thing.user_is_sponsor:
-        %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
-          <li>
-            ${ynbutton(_("accept"), _("accepted"), "promote")}
-          </li>
-        %elif thing.promotable and thing.promote_status in (STATUS.accepted, STATUS.pending):
-          <li>
-            ${ynbutton(_("promote"), _("promote"), "promote")}
-          </li>
-        %endif
-      %endif
-     %endif
-     %if (thing.user_is_sponsor or thing.is_author) and thing.promote_status >= STATUS.promoted:
+    %if thing.user_is_sponsor or thing.is_author:
        <li>
-         ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+         ${plain_link(_("edit"), thing.promo_url, _sr_path = False)}
        </li>
-     %endif
-   %endif
-  ${self.distinguish()}
+    %endif
+    %if c.user_is_sponsor:
+       <li>
+         <form action="/post/reject" class="rejection-form"
+               style="display:none"
+               method="post" onsubmit="reject post_form(this, 'unpromote')">
+           <br/>
+           <input type="hidden" name="executed" value="rejected" />
+           <label>Reason:</label><br/>
+           <textarea name="reason" value="" ></textarea>
+           <br/>
+           <a href="#" 
+              onclick="change_state(this, 'unpromote', complete_reject_promo)">
+             submit
+           </a>/
+         </form>
+         ${toggle_button("reject_promo", \
+                         _("reject"), _("cancel"), \
+                         "reject_promo", "cancel_reject_promo")}
+       </li>
+      %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
+        <li>
+          ${ynbutton(_("accept"), _("accepted"), "promote")}
+        </li>
+      %endif
+    %endif
+    %if thing.user_is_sponsor or thing.is_author:
+      <li>
+        ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
+      </li>
+    %endif
+  %endif
+
+  %if getattr(thing.thing, "reveal_trial_info", False):
+   <li class="rounded trial-stamp stamp"
+       title='${_('questionable submission; you should remove it or approve it')}'
+       >
+     ${_("deputy opinion:")}
+     &#32;
+     <span class="spam">
+       ${_("%d spam") % thing.thing.trial_info.get("spams", "?")}
+     </span>
+     &#32;
+     /
+     &#32;
+     <span class="kosher">
+       ${_("%d kosher") % thing.thing.trial_info.get("koshers", "?")}
+     </span>
+   </li>
+  %endif
+
+  %if thing.show_reports and not thing.show_spam:
+   <li class="rounded reported-stamp stamp">
+     ${strings.reports % thing.thing.reported}
+   </li>
+  %endif
+
+  %if getattr(thing.thing, "use_big_modbuttons", False):
+     ${big_modbuttons(thing.thing, "link")}
+  %endif
+
 </%def>
 
 <%def name="commentbuttons()">
@@ -224,6 +272,14 @@
         ${self.simple_button(_("reply {verb}"), "reply")}
       </li>
     %endif
+    %if thing.show_reports and not thing.show_spam:
+     <li class="rounded reported-stamp stamp">
+       ${strings.reports % thing.thing.reported}
+     </li>
+    %endif
+    %if getattr(thing.thing, "use_big_modbuttons", False):
+       ${big_modbuttons(thing.thing, "comment")}
+    %endif
   %endif
 </%def>
 
@@ -257,7 +313,7 @@
 <%def name="state_button(name, title, onclick, executed, clicked=False, a_class = '', fmt=None, fmt_param = '', hidden_data = {})">
 
   <%def name="_link()" buffered="True">
-    <a href="javascript:void()" 
+    <a href="javascript:void(0)"
        %if a_class:
          class="${a_class}" 
        %endif
@@ -350,14 +406,14 @@
    %if title:
      ${title}
    %else:
-    &nbsp;
+     &nbsp;
    %endif
  </a>
  <a class="option ${alt_css_class}" href="#">
    %if alt_title:
      ${alt_title}
    %else:
-    &nbsp;
+     &nbsp;
    %endif
  </a>
 </span>
@@ -365,8 +421,9 @@
 
 ### originally in commentbutton
 <%def name="comment_button(name, link_text, link,\
-            a_class='', title='', newwindow = False)">
+            _sr_path = True, a_class='', title='', newwindow = False)">
   ${plain_link(link_text, link, 
+               _sr_path = _sr_path,
                _class=a_class, title=title, 
                target='_blank' if newwindow else '_parent')}
 </%def>

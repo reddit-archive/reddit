@@ -22,8 +22,8 @@
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, Default, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR
-from r2.models import Link, Printable, Trophy, bidding, PromoteDates
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW
+from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -47,10 +47,11 @@ from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
 from r2.lib.utils import trunc_time
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
-from r2.lib.scraper import scrapers
+from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
+from r2.lib.memoize import memoize
 
-import sys, random, datetime, locale, calendar, simplejson, re
+import sys, random, datetime, locale, calendar, simplejson, re, time
 import graph, pycountry
 from itertools import chain
 from urllib import quote
@@ -277,12 +278,16 @@ class Reddit(Templated):
         """Sets the layout of the navigation topbar on a Reddit.  The result
         is a list of menus which will be rendered in order and
         displayed at the top of the Reddit."""
-        main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
-                        NamedButton('new'), 
-                        NamedButton('controversial'),
-                        NamedButton('top'),
-                        NamedButton('saved', False)
-                        ]
+        if c.site == Friends:
+            main_buttons = [NamedButton('new', dest='', aliases=['/hot']),
+                            NamedButton('comments')]
+        else:
+            main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
+                            NamedButton('new'), 
+                            NamedButton('controversial'),
+                            NamedButton('top'),
+                            NamedButton('saved', False)
+                            ]
 
         more_buttons = []
 
@@ -705,17 +710,18 @@ class LinkInfoPage(Reddit):
         self.link = self.link_listing.things[0]
 
         link_title = ((self.link.title) if hasattr(self.link, 'title') else '')
-        if comment:
-            if comment._deleted and not c.user_is_admin:
-                author = _("[deleted]")
-            else:
-                author = Account._byID(comment.author_id, data=True).name
 
-            params = {'author' : author, 'title' : _force_unicode(link_title)}
-            title = strings.permalink_title % params
-        else:
-            params = {'title':_force_unicode(link_title), 'site' : c.site.name}
-            title = strings.link_info_title % params
+        # defaults whether or not there is a comment
+        params = {'title':_force_unicode(link_title), 'site' : c.site.name}
+        title = strings.link_info_title % params
+
+        # only modify the title if the comment/author are neither deleted nor spam
+        if comment and not comment._deleted and not comment._spam:
+            author = Account._byID(comment.author_id, data=True)
+
+            if not author._deleted and not author._spam:
+                params = {'author' : author.name, 'title' : _force_unicode(link_title)}
+                title = strings.permalink_title % params
 
         self.subtitle = subtitle
 
@@ -903,17 +909,18 @@ class ProfilePage(Reddit):
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
-        rb.push(ProfileBar(self.user))
-        if c.user_is_admin:
-            from admin_pages import AdminSidebar
-            rb.append(AdminSidebar(self.user))
 
         tc = TrophyCase(self.user)
         helplink = ( "/help/awards", _("what's this?") )
         scb = SideContentBox(title=_("trophy case"),
                  helplink=helplink, content=[tc],
                  extra_class="trophy-area")
-        rb.append(scb)
+
+        rb.push(scb)
+        if c.user_is_admin:
+            from admin_pages import AdminSidebar
+            rb.push(AdminSidebar(self.user))
+        rb.push(ProfileBar(self.user))
 
         return rb
 
@@ -1026,7 +1033,7 @@ class SubredditTopBar(Templated):
         return SubredditMenu(drop_down_buttons,
                              title = _('my reddits'),
                              type = 'srdrop')
-        
+
     def subscribed_reddits(self):
         srs = [SubredditButton(sr) for sr in
                         sorted(self.my_reddits,
@@ -1036,28 +1043,44 @@ class SubredditTopBar(Templated):
                         ]
         return NavMenu(srs,
                        type='flatlist', separator = '-',
-                       _id = 'sr-bar')
+                       css_class = 'sr-bar')
 
     def popular_reddits(self, exclude=[]):
         exclusions = set(exclude)
         buttons = [SubredditButton(sr)
                    for sr in self.pop_reddits if sr not in exclusions]
-    
+
         return NavMenu(buttons,
                        type='flatlist', separator = '-',
-                       _id = 'sr-bar')
+                       css_class = 'sr-bar', _id = 'sr-bar')
 
+    def special_reddits(self):
+        reddits = [All, Random]
+        if getattr(c.site, "over_18", False):
+            reddits.append(RandomNSFW)
+        if c.user_is_loggedin:
+            if c.user.friends:
+                reddits.append(Friends)
+            if c.show_mod_mail:
+                reddits.append(Mod)
+        return NavMenu([SubredditButton(sr) for sr in reddits],
+                       type = 'flatlist', separator = '-',
+                       css_class = 'sr-bar')
+    
     def sr_bar (self):
+        sep = '<span class="separator">&nbsp;|&nbsp;</span>'
         menus = []
+        menus.append(self.special_reddits())
+        menus.append(RawString(sep))
+
 
         if not c.user_is_loggedin:
             menus.append(self.popular_reddits())
         else:
             if len(self.my_reddits) > g.sr_dropdown_threshold:
-                menus.append(self.my_reddits_dropdown())
+                menus = [self.my_reddits_dropdown()] + menus
 
             menus.append(self.subscribed_reddits())
-
             sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
             menus.append(RawString(sep))
 
@@ -1263,7 +1286,6 @@ class FrameToolbar(Wrapped):
                                          query_string(submit_url_options))
             else:
                 w.tblink = add_sr("/tb/"+w._id36)
-    
                 w.upstyle = "mod" if w.likes else ""
                 w.downstyle = "mod" if w.likes is False else ""
             if not c.user_is_loggedin:
@@ -1280,7 +1302,6 @@ class NewLink(Templated):
         tabs = (('link', ('link-desc', 'url-field')),
                 ('text', ('text-desc', 'text-field')))
         all_fields = set(chain(*(parts for (tab, parts) in tabs)))
-    
         buttons = []
         self.default_tabs = tabs[0][1]
         self.default_tab = tabs[0][0]
@@ -1289,7 +1310,6 @@ class NewLink(Templated):
             to_hide = ','.join('#' + p for p in all_fields if p not in parts)
             onclick = "return select_form_tab(this, '%s', '%s');"
             onclick = onclick % (to_show, to_hide)
-            
             if tab_name == self.default_tab:
                 self.default_show = to_show
                 self.default_hide = to_hide
@@ -1382,6 +1402,10 @@ class ButtonNoBody(Button):
     pass
 
 class ButtonDemoPanel(Templated):
+    """The page for showing the different styles of embedable voting buttons"""
+    pass
+
+class UpgradeButtons(Templated):
     """The page for showing the different styles of embedable voting buttons"""
     pass
 
@@ -2010,6 +2034,9 @@ class Cnameframe(Templated):
 class FrameBuster(Templated):
     pass
 
+class SelfServiceOatmeal(Templated):
+    pass
+
 class PromotePage(Reddit):
     create_reddit_box  = False
     submit_box         = False
@@ -2018,7 +2045,8 @@ class PromotePage(Reddit):
 
     def __init__(self, title, nav_menus = None, *a, **kw):
         buttons = [NamedButton('new_promo')]
-        if c.user_is_admin:
+        if c.user_is_sponsor:
+            buttons.append(NamedButton('roadblock'))
             buttons.append(NamedButton('current_promos', dest = ''))
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
@@ -2045,12 +2073,13 @@ class PromoteLinkForm(Templated):
     def __init__(self, sr = None, link = None, listing = '',
                  timedeltatext = '', *a, **kw):
         bids = []
-        if c.user_is_admin and link:
+        if c.user_is_sponsor and link:
+            self.author = Account._byID(link.author_id)
             try:
                 bids = bidding.Bid.lookup(thing_id = link._id)
                 bids.sort(key = lambda x: x.date, reverse = True)
             except NotFound:
-                bids = []
+                pass
 
         # reference "now" to what we use for promtions
         now = promote.promo_datetime_now()
@@ -2060,22 +2089,70 @@ class PromoteLinkForm(Templated):
                                     business_days = True) -
                    datetime.timedelta(1))
 
-        if link:
-            startdate = link._date
-            enddate   = link.promote_until
-        else:
-            startdate = mindate + datetime.timedelta(1)
-            enddate   = startdate + datetime.timedelta(1)
+        startdate = mindate + datetime.timedelta(1)
+        enddate   = startdate + datetime.timedelta(3)
 
         self.startdate = startdate.strftime("%m/%d/%Y")
         self.enddate   = enddate  .strftime("%m/%d/%Y")
+
         self.mindate   = mindate  .strftime("%m/%d/%Y")
 
-        Templated.__init__(self, sr = sr, link = link,
-                         datefmt = datefmt, bids = bids, 
-                         timedeltatext = timedeltatext,
-                         listing = listing,
-                         *a, **kw)
+        self.link = None
+        if link:
+            self.sr_searches = simplejson.dumps(popular_searches())
+            self.subreddits = (Subreddit.submit_sr_names(c.user) or
+                               Subreddit.submit_sr_names(None))
+            self.default_sr = self.subreddits[0] if self.subreddits \
+                              else g.default_sr
+            # have the promo code wrap the campaigns for rendering
+            self.link = promote.editable_add_props(link)
+
+        if not c.user_is_sponsor:
+            self.now = promote.promo_datetime_now().date()
+            start_date = promote.promo_datetime_now(offset = -14).date()
+            end_date = promote.promo_datetime_now(offset = 14).date()
+            self.promo_traffic = dict(load_traffic('day', 'promos'))
+            self.market, self.promo_counter = \
+                Promote_Graph.get_market(None, start_date, end_date)
+
+        Templated.__init__(self, sr = sr, 
+                           datefmt = datefmt,
+                           timedeltatext = timedeltatext,
+                           listing = listing, bids = bids, 
+                           *a, **kw)
+
+class PromoteLinkFormOld(PromoteLinkForm):
+    def __init__(self, **kw):
+        PromoteLinkForm.__init__(self, **kw)
+        self.bid = g.min_promote_bid
+        campaign = {}
+        if self.link:
+            campaign = self.link.campaigns[0]
+            self.startdate = campaign.start_date
+            self.enddate = campaign.end_date
+
+        self.bid = campaign.get("bid", g.min_promote_bid)
+        self.freebie = campaign.get("status",{}).get("free", False)
+        self.complete = campaign.get("status",{}).get("complete", False)
+        self.paid = campaign.get("status",{}).get("paid", False)
+
+class Roadblocks(Templated):
+    def __init__(self):
+        self.roadblocks = promote.get_roadblocks()
+        Templated.__init__(self)
+        # reference "now" to what we use for promtions
+        now = promote.promo_datetime_now()
+
+        startdate = now + datetime.timedelta(1)
+        enddate   = startdate + datetime.timedelta(1)
+
+        self.startdate = startdate.strftime("%m/%d/%Y")
+        self.enddate   = enddate  .strftime("%m/%d/%Y")
+        self.sr_searches = simplejson.dumps(popular_searches())
+        self.subreddits = (Subreddit.submit_sr_names(c.user) or
+                           Subreddit.submit_sr_names(None))
+        self.default_sr = self.subreddits[0] if self.subreddits \
+                          else g.default_sr
 
 class TabbedPane(Templated):
     def __init__(self, tabs):
@@ -2100,22 +2177,54 @@ class LinkChild(object):
     def content(self):
         return ''
 
+def make_link_child(item):
+    link_child = None
+    editable = False
+
+    # if the item has a media_object, try to make a MediaEmbed for rendering
+    if item.media_object:
+        media_embed = None
+        if isinstance(item.media_object, basestring):
+            media_embed = item.media_object
+        else:
+            media_embed = get_media_embed(item.media_object)
+            if media_embed:
+                media_embed =  MediaEmbed(media_domain = g.media_domain,
+                                          height = media_embed.height + 10,
+                                          width = media_embed.width + 10,
+                                          scrolling = media_embed.scrolling,
+                                          id36 = item._id36)
+            else:
+                g.log.debug("media_object without media_embed %s" % item)
+
+        if media_embed:
+            link_child = MediaChild(item, media_embed, load = True)
+
+    # if the item has selftext, add a selftext child
+    elif item.selftext:
+        expand = getattr(item, 'expand_children', False)
+        link_child = SelfTextChild(item, expand = expand,
+                                   nofollow = item.nofollow)
+        #draw the edit button if the contents are pre-expanded
+        editable = (expand and
+                    item.author == c.user and
+                    not item._deleted)
+
+    return link_child, editable
+
+
 class MediaChild(LinkChild):
     """renders when the user hits the expando button to expand media
        objects, like embedded videos"""
     css_style = "video"
+    def __init__(self, link, content, **kw):
+        self._content = content
+        LinkChild.__init__(self, link, **kw)
 
     def content(self):
-        if isinstance(self.link.media_object, basestring):
-            return self.link.media_object
-
-        scraper = scrapers[self.link.media_object['type']]
-        media_embed = scraper.media_embed(**self.link.media_object)
-        return MediaEmbed(media_domain = g.media_domain,
-                          height = media_embed.height+10,
-                          width = media_embed.width+10,
-                          scrolling = media_embed.scrolling,
-                          id36 = self.link._id36).render()
+        if isinstance(self._content, basestring):
+            return self._content
+        return self._content.render()
 
 class MediaEmbed(Templated):
     """The actual rendered iframe for a media child"""
@@ -2150,6 +2259,9 @@ class UserText(CachedTemplate):
         if extra_css:
             css_class += " " + extra_css
 
+        if text is None:
+            text = ''
+
         CachedTemplate.__init__(self,
                                 fullname = item._fullname if item else "", 
                                 text = text,
@@ -2183,26 +2295,32 @@ class PromotedTraffic(Traffic):
     multiy format) and a table of the data.
     """
     def __init__(self, thing):
+        # TODO: needs a fix for multiple campaigns
         self.thing = thing
-        d = thing._date.astimezone(g.tz) - promote.timezone_offset
-        d = d.replace(minute = 0, second = 0, microsecond = 0)
-        until = thing.promote_until - promote.timezone_offset
-        now = datetime.datetime.now(g.tz)
+        d = until = None
+        self.traffic = []
+        if thing.campaigns:
+            d = min(sd.date() if isinstance(sd, datetime.datetime) else sd
+                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
+                     if trans_id)
+            until = max(ed.date() if isinstance(ed, datetime.datetime) else ed
+                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
+                     if trans_id)
+            now = datetime.datetime.now(g.tz).date()
 
-        # the results are preliminary until 1 day after the promotion ends
-        self.preliminary = (until + datetime.timedelta(1) > now)
+            # the results are preliminary until 1 day after the promotion ends
+            self.preliminary = (until + datetime.timedelta(1) > now)
+            self.traffic = load_traffic('hour', "thing", thing._fullname,
+                                        start_time = d, stop_time = until)
 
-        self.traffic = load_traffic('hour', "thing", thing._fullname,
-                                    start_time = d, stop_time = until)
-
-        # load monthly totals if we have them, otherwise use the daily totals
-        self.totals =  load_traffic('month', "thing", thing._fullname)
-        if not self.totals:
-            self.totals = load_traffic('day', "thing", thing._fullname)
-        # generate a list of
-        # (uniq impressions, # impressions, uniq clicks, # clicks)
-        if self.totals:
-            self.totals = map(sum, zip(*zip(*self.totals)[1]))
+            # load monthly totals if we have them, otherwise use the daily totals
+            self.totals =  load_traffic('month', "thing", thing._fullname)
+            if not self.totals:
+                self.totals = load_traffic('day', "thing", thing._fullname)
+            # generate a list of
+            # (uniq impressions, # impressions, uniq clicks, # clicks)
+            if self.totals:
+                self.totals = map(sum, zip(*zip(*self.totals)[1]))
 
         imp = self.slice_traffic(self.traffic, 0, 1)
 
@@ -2213,21 +2331,20 @@ class PromotedTraffic(Traffic):
                 self.totals[1] = imp_total
 
             imp_total = locale.format('%d', imp_total, True)
-            chart = graph.LineGraph(imp)
-            self.imp_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("impressions (%s)" %
-                                                         imp_total))
-
+            
+            self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
+                                          title = ("recent impressions (%s total)" %
+                                                   imp_total))
             cli = self.slice_traffic(self.traffic, 2, 3)
             cli_total = sum(x[2] for x in cli)
             # ensure total consistency
             if self.totals:
                 self.totals[3] = cli_total
             cli_total = locale.format('%d', cli_total, True)
-            chart = graph.LineGraph(cli)
-            self.cli_graph = chart.google_chart(ylabels = ['uniques', 'total'],
-                                                title = ("clicks (%s)" %
-                                                         cli_total))
+            self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
+                                          title = ("recent clicks (%s total)" %
+                                                   cli_total))
+
         else:
             self.imp_graph = self.cli_graph = None
 
@@ -2286,21 +2403,17 @@ class RedditTraffic(Traffic):
             setattr(self, ival + "_data", data)
             for name, indx, color in slices:
                 data2 = self.slice_traffic(data, *indx)
-                chart = graph.LineGraph(data2, colors = [color, "B0B0B0"])
-                setattr(self, name + "_" + ival + "_chart", chart)
+                setattr(self, name + "_" + ival + "_chart", data2)
                 title = "%s by %s" % (name, ival)
-                res = chart.google_chart(ylabels = [name],
-                                         multiy = False, 
-                                         title = title)
+                res = TrafficGraph(data2, colors = [color], title = title)
                 setattr(self, name + "_" + ival, res)
         else:
             self.has_data = True
         if self.has_data:
             imp_by_day = [[] for i in range(7)]
             uni_by_day = [[] for i in range(7)]
-            dates  = self.uniques_day_chart.xdata
-            uniques = self.uniques_day_chart.ydata[0]
-            imps    = self.impressions_day_chart.ydata[0]
+            dates, imps    = zip(*self.impressions_day_chart)
+            dates, uniques = zip(*self.uniques_day_chart)
             self.uniques_mean     = sum(map(float, uniques))/len(uniques)
             self.impressions_mean = sum(map(float, imps))/len(imps)
             for i, d in enumerate(dates):
@@ -2400,6 +2513,42 @@ class RedditTraffic(Traffic):
                                         "%5.2f%%" % f))
         return res
 
+class TrafficGraph(Templated):
+    def __init__(self, data, width = 300, height = 175,
+                 bar_fmt = True, colors = ("FF4500", "336699"), title = '',
+                 ylabels = [], multiy = True):
+        # fallback on google charts
+        chart = graph.LineGraph(data[:72], colors = colors)
+        self.gc = chart.google_chart(ylabels = ylabels, multiy = multiy, title = title)
+
+        xdata = []
+        ydata = []
+        for d in data:
+            xdata.append(time.mktime(d[0].timetuple())*1000)
+            ydata.append(d[1:])
+        ydata = zip(*ydata)
+        self.colors = colors
+        self.title = title
+
+        if bar_fmt:
+            xdata = graph.DataSeries(xdata).toBarX()
+
+        if ydata and not isinstance(ydata[0], (list, tuple)):
+            if bar_fmt:
+                ydata = graph.DataSeries(ydata).toBarY()
+            self.data = [zip(xdata, ydata)]
+        else:
+            self.data = []
+            for ys in ydata:
+                if bar_fmt:
+                    ys = graph.DataSeries(ys).toBarY()
+                self.data.append(zip(xdata, ys))
+
+        self.width = width
+        self.height = height
+        Templated.__init__(self)
+
+
 class RedditAds(Templated):
     def __init__(self, **kw):
         self.sr_name = c.site.name
@@ -2423,48 +2572,87 @@ class RedditAds(Templated):
         Templated.__init__(self, **kw)
 
 class PaymentForm(Templated):
-    def __init__(self, **kw):
+    def __init__(self, link, indx, **kw):
         self.countries = pycountry.countries
+        self.link = promote.editable_add_props(link)
+        self.campaign = self.link.campaigns[indx]
+        self.indx = indx
         Templated.__init__(self, **kw)
 
 class Promote_Graph(Templated):
+    
+    @classmethod
+    @memoize('get_market', time = 60)
+    def get_market(cls, user_id, start_date, end_date):
+        market = {}
+        promo_counter = {}
+        def callback(link, bid, bid_day, starti, endi, indx):
+            for i in xrange(starti, endi):
+                if user_id is None or link.author_id == user_id:
+                    if (not promote.is_unpaid(link) and 
+                        not promote.is_rejected(link)):
+                        market[i] = market.get(i, 0) + bid_day
+                        promo_counter[i] = promo_counter.get(i, 0) + 1
+        cls.promo_iter(start_date, end_date, callback)
+        return market, promo_counter
+
+    @classmethod
+    def promo_iter(cls, start_date, end_date, callback):
+        size = (end_date - start_date).days
+        for link, indx, s, e in cls.get_current_promos(start_date, end_date):
+            if indx in link.campaigns:
+                sdate, edate, bid, sr, trans_id = link.campaigns[indx]
+                if isinstance(sdate, datetime.datetime):
+                    sdate = sdate.date()
+                if isinstance(edate, datetime.datetime):
+                    edate = edate.date()
+                starti = max((sdate - start_date).days, 0)
+                endi   = min((edate - start_date).days, size)
+                bid_day = bid / max((edate - sdate).days, 1)
+                callback(link, bid, bid_day, starti, endi, indx)
+
+    @classmethod
+    def get_current_promos(cls, start_date, end_date):
+        # grab promoted links
+        # returns a list of (thing_id, campaign_idx, start, end)
+        promos = PromotionWeights.get_schedule(start_date, end_date)
+        # sort based on the start date
+        promos.sort(key = lambda x: x[2])
+
+        # wrap the links
+        links = wrap_links([p[0] for p in promos])
+        # remove rejected/unpaid promos
+        links = dict((l._fullname, l) for l in links.things
+                     if promote.is_accepted(l) or promote.is_unapproved(l))
+        # filter promos accordingly
+        promos = [(links[thing_name], indx, s, e) 
+                  for thing_name, indx, s, e in promos
+                  if links.has_key(thing_name)]
+
+        return promos
+
     def __init__(self):
         self.now = promote.promo_datetime_now()
-        start_date = (self.now - datetime.timedelta(7)).date()
-        end_date   = (self.now + datetime.timedelta(7)).date()
+
+        start_date = promote.promo_datetime_now(offset = -7).date()
+        end_date = promote.promo_datetime_now(offset = 7).date()
 
         size = (end_date - start_date).days
 
-        # grab promoted links
-        promos = PromoteDates.for_date_range(start_date, end_date)
-        promos.sort(key = lambda x: x.start_date)
+        # these will be cached queries
+        market, promo_counter = self.get_market(None, start_date, end_date)
+        my_market = market
+        if not c.user_is_sponsor:
+            my_market = self.get_market(c.user._id, start_date, end_date)[0]
 
-        # wrap the links
-        links = wrap_links([p.thing_name for p in promos])
-        # remove rejected/unpaid promos
-        links = dict((l._fullname, l) for l in links.things
-                     if (l.promoted is not None and
-                         l.promote_status not in ( promote.STATUS.rejected,
-                                                   promote.STATUS.unpaid)) )
-        # filter promos accordingly
-        promos = filter(lambda p: links.has_key(p.thing_name), promos)
-
+        # determine the range of each link
         promote_blocks = []
-        market = {}
-        my_market = {}
-        promo_counter = {}
-        for p in promos:
-            starti = max((p.start_date - start_date).days, 0)
-            endi   = min((p.end_date   - start_date).days, size)
-            link = links[p.thing_name]
-            bid_day = link.promote_bid/max((p.end_date - p.start_date).days, 1)
-            for i in xrange(starti, endi):
-                market[i] = market.get(i, 0) + bid_day
-                if c.user_is_sponsor or link.author_id == c.user._id:
-                    my_market[i] = my_market.get(i, 0) + bid_day
-                promo_counter[i] = promo_counter.get(i, 0) + 1
-            if c.user_is_sponsor or link.author_id == c.user._id:
-                promote_blocks.append( (link, starti, endi) )
+        def block_maker(link, bid, bid_day, starti, endi, indx):
+            if ((c.user_is_sponsor or link.author_id == c.user._id)
+                and not promote.is_rejected(link)
+                and not promote.is_unpaid(link)):
+                promote_blocks.append( (link, bid, starti, endi, indx) )
+        self.promo_iter(start_date, end_date, block_maker)
 
         # now sort the promoted_blocks into the most contiguous chuncks we can
         sorted_blocks = []
@@ -2473,17 +2661,18 @@ class Promote_Graph(Templated):
             while True:
                 sorted_blocks.append(cur)
                 # get the future items (sort will be preserved)
-                future = filter(lambda x: x[1] >= cur[2], promote_blocks)
+                future = filter(lambda x: x[2] >= cur[3], promote_blocks)
                 if future:
                     # resort by date and give precidence to longest promo:
-                    cur = min(future, key = lambda x: (x[1], x[1]-x[2]))
+                    cur = min(future, key = lambda x: (x[2], x[2]-x[3]))
                     promote_blocks.remove(cur)
                 else:
                     break
 
         # load recent traffic as well:
         self.recent = {}
-        for k, v in load_summary("thing"):
+        #TODO 
+        for k, v in []:#load_summary("thing"):
             if k.startswith('t%d_' % Link._type_id):
                 self.recent[k] = v
 
@@ -2497,36 +2686,38 @@ class Promote_Graph(Templated):
 
         # graphs of money
         history = self.now - datetime.timedelta(60)
-        pool = bidding.PromoteDates.bid_history(history)
+
+        pool =PromotionWeights.bid_history(promote.promo_datetime_now(offset=-60),
+                                           promote.promo_datetime_now(offset=2))
         if pool:
             # we want to generate a stacked line graph, so store the
             # bids and the total including refunded amounts
-            chart = graph.LineGraph([(d, b, r) for (d, b, r) in pool],
-                                    colors = ("008800", "FF0000"))
             total_sale = sum(b for (d, b, r) in pool)
             total_refund = sum(r for (d, b, r) in pool)
-            self.money_graph = chart.google_chart(
-                ylabels = ['total ($)'],
-                title = ("monthly sales ($%.2f total, $%.2f credits)" %
-                         (total_sale, total_refund)),
-                multiy = False)
+            
+            self.money_graph = TrafficGraph([(d, b, r) for (d, b, r) in pool],
+                                            colors = ("008800", "FF0000"),
+                                            ylabels = ['total ($)'],
+                                            title = ("monthly sales ($%.2f total, $%.2f credits)" %
+                                                     (total_sale, total_refund)),
+                                            multiy = False)
 
             history = self.now - datetime.timedelta(30)
-            self.top_promoters = bidding.PromoteDates.top_promoters(history)
+            #TODO
+            self.top_promoters = []#bidding.PromoteDates.top_promoters(history)
         else:
             self.money_graph = None
             self.top_promoters = []
 
         # graphs of impressions and clicks
         self.promo_traffic = load_traffic('day', 'promos')
-        impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
 
+        impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
         pool = dict((d, b+r) for (d, b, r) in pool)
 
         if impressions:
-            chart = graph.LineGraph(impressions)
-            self.imp_graph = chart.google_chart(ylabels = ['total'],
-                                                title = "impressions")
+            self.imp_graph = TrafficGraph(impressions, ylabels = ['total'],
+                                          title = "impressions")
 
             clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
 
@@ -2539,27 +2730,22 @@ class Promote_Graph(Templated):
             CTR = [(d, (100 * float(k) / i if i else 0))
                    for (d, (i, k)) in self.promo_traffic]
 
-            chart = graph.LineGraph(clicks)
-            self.cli_graph = chart.google_chart(ylabels = ['total'],
-                                                title = "clicks")
-
+            self.cli_graph = TrafficGraph(clicks, ylabels = ['total'],
+                                          title = "clicks")
             mean_CPM = sum(x[1] for x in CPM) * 1. / max(len(CPM), 1)
-            chart = graph.LineGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
-                                    colors = ["336699"])
-            self.cpm_graph = chart.google_chart(ylabels = ['CPM ($)'],
-                                       title = "cost per 1k impressions " + 
-                                               "($%.2f average)" % mean_CPM)
+            self.cpm_graph = TrafficGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
+                                          colors = ["336699"], ylabels = ['CPM ($)'],
+                                          title = "cost per 1k impressions " + 
+                                          "($%.2f average)" % mean_CPM)
 
             mean_CPC = sum(x[1] for x in CPC) * 1. / max(len(CPC), 1)
-            chart = graph.LineGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
-                                    colors = ["336699"])
-            self.cpc_graph = chart.google_chart(ylabels = ['CPC ($0.01)'],
-                                                title = "cost per click " + 
-                                                "($%.2f average)" % (mean_CPC/100.))
+            self.cpc_graph = TrafficGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
+                                          colors = ["336699"], ylabels = ['CPC ($0.01)'],
+                                          title = "cost per click " + 
+                                          "($%.2f average)" % (mean_CPC/100.))
 
-            chart = graph.LineGraph(CTR, colors = ["336699"])
-            self.ctr_graph = chart.google_chart(ylabels = ['CTR (%)'],
-                                                title = "click through rate")
+            self.ctr_graph = TrafficGraph(CTR, colors = ["336699"], ylabels = ['CTR (%)'],
+                                          title = "click through rate")
 
         else:
             self.imp_graph = self.cli_graph = None

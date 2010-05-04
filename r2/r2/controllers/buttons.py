@@ -21,7 +21,7 @@
 ################################################################################
 from reddit_base import RedditController, MinimalController, make_key
 from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
-    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage
+    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, UpgradeButtons
 from r2.lib.pages.things import wrap_links
 from r2.models import *
 from r2.lib.utils import tup, query_string
@@ -124,40 +124,16 @@ class ButtonsController(RedditController):
                 return wrapper(None)
 
 
-    @validate(url = VSanitizedUrl('url'),
-              title = nop('title'),
-              css = nop('css'),
-              vote = VBoolean('vote', default=True),
-              newwindow = VBoolean('newwindow'),
-              width = VInt('width', 0, 800),
-              l = VByName('id'))
-    def GET_button_content(self, url, title, css, vote, newwindow, width, l):
-        # no buttons on domain listings
-        if isinstance(c.site, DomainSR):
-            c.site = Default
-            return self.redirect(request.path + query_string(request.GET))
-
-        #disable css hack 
-        if (css != 'http://blog.wired.com/css/redditsocial.css' and
-            css != 'http://www.wired.com/css/redditsocial.css'): 
-            css = None 
-
-        if l:
-            url = l.url
-            title = l.title 
-        kw = {}
-        if title:
-            kw = dict(title = title)
-        wrapper = make_wrapper(Button if vote else ButtonNoBody,
-                               url = url, 
-                               target = "_new" if newwindow else "_parent",
-                               vote = vote, bgcolor = c.bgcolor,
-                               width = width, css = css,
-                               button = self.buttontype(), **kw)
-
-        l = self.get_wrapped_link(url, l, wrapper)
-        return l.render()
-
+    def GET_button_content(self, *a, **kw):
+        return """
+        <html>
+        <head>
+        </head>
+        <body style='border:1px solid #336699;text-align:center;margin:0px'>
+           <a href='http://www.reddit.com/upgradebuttons' target='_top' style='color:red'>upgrade</a>
+        </body>
+        </html>
+        """
 
     @validate(buttontype = VInt('t', 1, 5),
               url = VSanitizedUrl("url"),
@@ -225,6 +201,14 @@ class ButtonsController(RedditController):
         return BoringPage(_("reddit buttons"),
                           show_sidebar = False, 
                           content=ButtonDemoPanel()).render()
+
+    def GET_upgrade_buttons(self):
+        # no buttons for domain listings -> redirect to top level
+        if isinstance(c.site, DomainSR):
+            return self.redirect('/buttons')
+        return BoringPage(_("reddit buttons"),
+                          show_sidebar = False, 
+                          content=UpgradeButtons()).render()
 
 
     def GET_widget_demo_page(self):

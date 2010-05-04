@@ -560,6 +560,19 @@ class VVerifiedUser(VUser):
         if not c.user.email_verified:
             raise VerifiedUserRequiredException
 
+class VSponsorAdmin(VVerifiedUser):
+    """
+    Validator which checks c.user_is_sponsor
+    """
+    def user_test(self, thing):
+        return (thing.author_id == c.user._id)
+
+    def run(self, link_id = None):
+        VVerifiedUser.run(self)
+        if c.user_is_sponsor:
+            return
+        abort(403, 'forbidden')
+
 class VSponsor(VVerifiedUser):
     """
     Not intended to be used as a check for c.user_is_sponsor, but
@@ -616,15 +629,17 @@ class VSrCanDistinguish(VByName):
 class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
-            return True
+            return 'admin'
         elif c.user_is_loggedin:
             item = VByName.run(self, thing_name)
             # will throw a legitimate 500 if this isn't a link or
             # comment, because this should only be used on links and
             # comments
             subreddit = item.subreddit_slow
-            if subreddit.can_ban(c.user):
-                return True
+            if subreddit.is_moderator(c.user):
+                return 'mod'
+            # elif subreddit.is_contributor(c.user):
+            #     return 'contributor'
         abort(403,'forbidden')
 
 class VSrSpecial(VByName):
@@ -747,8 +762,9 @@ class VSanitizedUrl(Validator):
         return utils.sanitize_url(url)
 
 class VUrl(VRequired):
-    def __init__(self, item, allow_self = True, *a, **kw):
+    def __init__(self, item, allow_self = True, lookup = True, *a, **kw):
         self.allow_self = allow_self
+        self.lookup = lookup
         VRequired.__init__(self, item, errors.NO_URL, *a, **kw)
 
     def run(self, url, sr = None):
@@ -769,6 +785,8 @@ class VUrl(VRequired):
         if url == 'self':
             if self.allow_self:
                 return url
+        elif not self.lookup:
+            return url
         elif url:
             try:
                 l = Link._by_url(url, sr)
@@ -786,7 +804,7 @@ class VExistingUname(VRequired):
         if name and name.startswith('~') and c.user_is_admin:
             try:
                 user_id = int(name[1:])
-                return Account._byID(user_id)
+                return Account._byID(user_id, True)
             except (NotFound, ValueError):
                 return self.error(errors.USER_DOESNT_EXIST)
 
@@ -868,16 +886,18 @@ class VFloat(VNumber):
         return float(val)
 
 class VBid(VNumber):
-    def __init__(self, bid, link_id):
+    def __init__(self, bid, link_id, sr):
         self.duration = 1
-        VNumber.__init__(self, (bid, link_id), min = g.min_promote_bid,
+        VNumber.__init__(self, (bid, link_id, sr),
+                         # targeting is a little more expensive
+                         min = g.min_promote_bid,
                          max = g.max_promote_bid, coerce = False,
                          error = errors.BAD_BID)
 
     def cast(self, val):
         return float(val)/self.duration
 
-    def run(self, bid, link_id):
+    def run(self, bid, link_id, sr = None):
         if link_id:
             try:
                 link = Thing._by_fullname(link_id, return_dict = False,
@@ -886,7 +906,14 @@ class VBid(VNumber):
             except NotFound:
                 pass
         if VNumber.run(self, bid):
-            return float(bid)
+            if sr:
+                if self.cast(bid) >= self.min * 1.5:
+                    return float(bid)
+                else:
+                    self.set_error(self.error, msg_params = dict(min=self.min * 1.5,
+                                                                 max=self.max))
+            else:
+                return float(bid)
 
 
 
@@ -953,7 +980,7 @@ class VRatelimit(Validator):
             expire_time = max(r.values())
             time = utils.timeuntil(expire_time)
 
-            print "rate-limiting %s from %s" % (self.prefix, r.keys())
+            g.log.debug("rate-limiting %s from %s" % (self.prefix, r.keys()))
 
             # when errors have associated field parameters, we'll need
             # to add that here
@@ -974,8 +1001,7 @@ class VRatelimit(Validator):
             to_set['user' + str(c.user._id36)] = expire_time
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
-
-        g.cache.set_multi(to_set, prefix, time = seconds)
+        g.cache.set_multi(to_set, prefix = prefix, time = seconds)
 
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's

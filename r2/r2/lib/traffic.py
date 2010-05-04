@@ -35,10 +35,11 @@ def load_traffic_uncached(interval, what, iden,
     On connection failure (or no data) returns an empy list. 
     """
     def format_date(d):
-        if d.tzinfo is None:
-            d = d.replace(tzinfo = g.tz)
-        else:
-            d = d.astimezone(g.tz)
+        if hasattr(d, "tzinfo"):
+            if d.tzinfo is None:
+                d = d.replace(tzinfo = g.tz)
+            else:
+                d = d.astimezone(g.tz)
         return ":".join(map(str, d.timetuple()[:6]))
     
     traffic_url = os.path.join(g.traffic_url, interval, what, iden)

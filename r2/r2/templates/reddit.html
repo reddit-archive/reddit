@@ -22,6 +22,7 @@
 
 <%! 
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
+   from r2.lib.filters import unsafe
    from r2.lib.pages import SearchForm, ClickGadget, SideContentBox
    from r2.lib import tracking
    from pylons import request
@@ -62,10 +63,20 @@
   %endif
 
   %if c.allow_styles and c.site.stylesheet_contents:
-     <link rel="stylesheet" 
-           href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
-           title="applied_subreddit_stylesheet"
-           type="text/css" />
+     <% inline_stylesheet = (
+          len(c.site.stylesheet_contents) < 1024
+          and '<' not in c.site.stylesheet_contents) %>
+     %if inline_stylesheet:
+       ## for very simple stylesheets, we can just include them inline
+       <style type="text/css" title="applied_subreddit_stylesheet">
+           ${unsafe(c.site.stylesheet_contents)}
+       </style>
+     %else:
+       <link rel="stylesheet"
+             href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
+             title="applied_subreddit_stylesheet"
+             type="text/css" />
+     %endif
   %endif
   %if getattr(thing, "additional_css", None):
     <link rel="stylesheet" href="${static(thing.additional_css)}" 
@@ -100,6 +111,7 @@
   <script src="${static('jquery.js')}"  type="text/javascript"></script>
   <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
   <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
+  <script src="${static('jquery.lazyload.js')}"  type="text/javascript"></script>
   <script src="${static('reddit.js')}" type="text/javascript"></script>
 </%def>
 

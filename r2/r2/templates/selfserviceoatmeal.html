@@ -20,32 +20,21 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%inherit file="message.html"/>
+<div class="oatmeal">
 
-<%def name="thing_css_class(what)" buffered="True">
-message ${parent.thing_css_class(what)} message-parent
-</%def>
+<a href="http://www.theoatmeal.com/">
+  <img src="http://static.reddit.com/0_header.png"/>
+</a>
+<img src="http://static.reddit.com/1_wtf.png"/>
+<img src="http://static.reddit.com/2_short.png"/>
+<img src="http://static.reddit.com/3_long.png"/>
+<a href="/promoted/new_promo">
+  <img src="http://static.reddit.com/4_create.png"/>
+</a>
+<img src="http://static.reddit.com/5_campaign.png"/>
+<img src="http://static.reddit.com/6_understand.png"/>
+<img src="http://static.reddit.com/7_targeting.png"/>
+<img src="http://static.reddit.com/8_wait.png"/>
+<img src="http://static.reddit.com/9_finished.png"/>
 
-<%def name="commentBody()">
-</%def>
-
-<%def name="tagline(collapse=False)">
-<span class="head">
-  <a style="font-size: smaller; font-weight: bold" 
-     id="more_${thing._fullname}" href="javascript:void(0)"
-     onclick="return moremessages(this)"
-     >
-    ${_("[+] load the full conversation.")}
-  </a>
-</span>
-</%def>
-
-<%def name="arrows()">
-</%def>
-
-<%def name="buttons()">
-</%def>
-
-<%def name="midcol(cls = '')">
-</%def>
-
+</div>

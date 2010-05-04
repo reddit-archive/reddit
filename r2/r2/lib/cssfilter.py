@@ -30,6 +30,7 @@ from pylons import g, c
 from pylons.i18n import _
 from mako import filters
 
+import os
 import tempfile
 from r2.lib import s3cp
 from md5 import md5
@@ -192,7 +193,7 @@ def valid_url(prop,value,report):
         # the label -> image number lookup is stored on the subreddit
         if c.site.images.has_key(name):
             num = c.site.images[name]
-            value._setCssText("url(http:/%s%s_%d.png?v=%s)"
+            value._setCssText("url(http://%s/%s_%d.png?v=%s)"
                               % (g.s3_thumb_bucket, c.site._fullname, num,
                                  randstr(36)))
         else:
@@ -390,29 +391,32 @@ def save_sr_image(sr, data, resource = None):
     """
     uploades image data to s3 as a PNG and returns its new url.  Urls
     will be of the form:
-      http:/${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
+      http://${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
     [Note: g.s3_thumb_bucket begins with a "/" so the above url is valid.]
     """
     hash = md5(data).hexdigest()
 
+    f = tempfile.NamedTemporaryFile(suffix = '.png',delete=False)
     try:
-        f = tempfile.NamedTemporaryFile(suffix = '.png')
         f.write(data)
-        f.flush()
+        f.close()
+
+        optimize_png(f.name, g.png_optimizer)
+        contents = open(f.name).read()
 
         if resource is not None:
             resource = "_%s" % resource
         else:
             resource = ""
-        resource = g.s3_thumb_bucket + sr._fullname + resource + ".png"
+        fname = resource = sr._fullname + resource + ".png"
 
-        s3cp.send_file(optimize_png(f.name, g.png_optimizer), resource,
-                       'image/png', 'public-read', None, False)
+        s3cp.send_file(g.s3_thumb_bucket, fname, contents, 'image/png')
+
     finally:
-        f.close()
+        os.unlink(f.name)
 
-    return 'http:/%s%s?v=%s' % (g.s3_thumb_bucket, 
-                                resource.split('/')[-1], hash)
+    return 'http://%s/%s?v=%s' % (g.s3_thumb_bucket, 
+                                  resource.split('/')[-1], hash)
 
  
 

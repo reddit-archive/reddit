@@ -21,36 +21,21 @@
 ################################################################################
 
 from pylons import c, g, request
-from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv
+from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 
-@memoize('trial_utils.all_defendants')
-def all_defendants_cache():
-    fnames = g.hardcache.backend.ids_by_category("trial")
-    return fnames
-
-def all_defendants(quench=False, _update=False):
-    from r2.models import Thing
-    all = all_defendants_cache(_update=_update)
-
-    defs = Thing._by_fullname(all, data=True).values()
-
-    if quench:
-        # Used for the spotlight, to filter out trials with over 30 votes;
-        # otherwise, hung juries would hog the spotlight for an hour as
-        # their vote counts continued to skyrocket
-
-        return filter (lambda d:
-                       not g.cache.get("quench_jurors-" + d._fullname),
-                       defs)
-    else:
-        return defs
+# Hardcache lifetime for a trial.
+# The regular hardcache reaper should never run on one of these,
+# since a mistrial should be declared if the trial is still open
+# after 24 hours. So the "3 days" expiration isn't really real.
+TRIAL_TIME = 3 * 86400
 
 def trial_key(thing):
     return "trial-" + thing._fullname
 
-def on_trial(things):
+def trial_info(things):
+    things = tup(things)
     keys = dict((trial_key(thing), thing._fullname)
                 for thing in things)
     vals = g.hardcache.get_multi(keys)
@@ -58,11 +43,18 @@ def on_trial(things):
                 for (key, val)
                 in vals.iteritems())
 
-def end_trial(thing):
-    g.hardcache.delete(trial_key(thing))
-    all_defendants(_update=True)
+def end_trial(thing, verdict=None):
+    from r2.models import Trial
+    if trial_info(thing):
+        g.hardcache.delete(trial_key(thing))
+        Trial.all_defendants(_update=True)
+
+    if verdict is not None:
+        thing.verdict = verdict
+        thing._commit()
 
 def indict(defendant):
+    from r2.models import Trial
     tk = trial_key(defendant)
 
     rv = False
@@ -75,17 +67,29 @@ def indict(defendant):
     elif g.hardcache.get(tk):
         result = "it's already on trial"
     else:
-        # The regular hardcache reaper should never run on one of these,
-        # since a mistrial should be declared if the trial is still open
-        # after 24 hours. So the "3 days" expiration isn't really real.
-        g.hardcache.set(tk, True, 3 * 86400)
-        all_defendants(_update=True)
+        # The spams/koshers dict is just a infrequently-updated cache; the
+        # official source of the data is the Jury relation.
+        g.hardcache.set(tk, dict(spams=0, koshers=0), TRIAL_TIME)
+        Trial.all_defendants(_update=True)
         result = "it's now indicted: %s" % tk
         rv = True
 
-    log_text("indict_result", "%r: %s" % (defendant, result), level="info")
+    log_text("indict_result", "%s: %s" % (defendant._id36, result), level="info")
 
     return rv
+
+# These are spam/kosher votes, not up/down votes
+def update_voting(defendant, koshers, spams):
+    tk = trial_key(defendant)
+    d = g.hardcache.get(tk)
+    if d is None:
+        log_text("update_voting() fail",
+                 "%s not on trial" % defendant._id36,
+                 level="error")
+    else:
+        d["koshers"] = koshers
+        d["spams"] = spams
+        g.hardcache.set(tk, d, TRIAL_TIME)
 
 # Check to see if a juror is eligible to serve on a jury for a given link.
 def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
@@ -113,7 +117,7 @@ def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
     return True
 
 def assign_trial(account, ip, slash16):
-    from r2.models import Jury, Subreddit
+    from r2.models import Jury, Subreddit, Trial
     from r2.lib.db import queries
 
     defendants_voted_upon = []
@@ -126,7 +130,7 @@ def assign_trial(account, ip, slash16):
     subscribed_sr_ids = Subreddit.user_subreddits(account, ids=True, limit=None)
 
     # Pull defendants, except ones which already have lots of juryvotes
-    defs = all_defendants(quench=True)
+    defs = Trial.all_defendants(quench=True)
 
     # Filter out defendants outside this user's subscribed SRs
     defs = filter (lambda d: d.sr_id in subscribed_sr_ids, defs)
@@ -144,8 +148,9 @@ def assign_trial(account, ip, slash16):
 
     likes = queries.get_likes(account, defs)
 
-    # Filter out things that the user has upvoted or downvoted
-    defs = filter (lambda d: likes.get((account, d)) is None, defs)
+    if not g.debug:
+        # Filter out things that the user has upvoted or downvoted
+        defs = filter (lambda d: likes.get((account, d)) is None, defs)
 
     # Prefer oldest trials
     defs.sort(key=lambda x: x._date)
@@ -166,25 +171,36 @@ def populate_spotlight():
         g.log.debug("not eligible")
         return None
 
+    if not g.cache.add("global-jury-key", True, 5):
+        g.log.debug("not yet time to add another juror")
+        return None
+
     ip, slash16 = ip_and_slash16(request)
 
     jcd = jury_cache_dict(c.user, ip, slash16)
 
     if jcd is None:
+        g.cache.delete("global-jury-key")
         return None
 
     if g.cache.get_multi(jcd.keys()) and not g.debug:
         g.log.debug("recent juror")
+        g.cache.delete("global-jury-key")
         return None
 
     trial = assign_trial(c.user, ip, slash16)
 
     if trial is None:
         g.log.debug("nothing available")
+        g.cache.delete("global-jury-key")
         return None
 
     for k, v in jcd.iteritems():
         g.cache.set(k, True, v)
+
+    log_text("juryassignment",
+             "%s was just assigned to the jury for %s" % (c.user.name, trial._id36),
+             level="info")
 
     return trial
 
@@ -192,7 +208,7 @@ def look_for_verdicts():
     from r2.models import Trial
 
     print "checking all trials for verdicts..."
-    for defendant in all_defendants():
-        print "Looking at %r" % defendant
+    for defendant in Trial.all_defendants():
+        print "Looking at reddit.com/comments/%s/x" % defendant._id36
         v = Trial(defendant).check_verdict()
         print "Verdict: %r" % v

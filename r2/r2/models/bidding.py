@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from sqlalchemy import Column, String, DateTime, Date, Float, Integer, \
+from sqlalchemy import Column, String, DateTime, Date, Float, Integer, Boolean,\
      func as safunc, and_, or_
 from sqlalchemy.exceptions import IntegrityError
 from sqlalchemy.schema import PrimaryKeyConstraint
@@ -139,7 +139,7 @@ class Sessionized(object):
             return val._fullname
         else:
             return val
-            
+
     @classmethod
     def _lookup(cls, multiple, *a, **kw):
         """
@@ -281,31 +281,54 @@ class Bid(Sessionized, Base):
     status        = Column(Integer, nullable = False,
                            default = STATUS.AUTH)
 
+    # make this a primary key as well so that we can have more than
+    # one freebie per campaign
+    campaign      = Column(Integer, default = 0, primary_key = True)
 
     @classmethod
-    def _new(cls, trans_id, user, pay_id, thing_id, bid):
+    def _new(cls, trans_id, user, pay_id, thing_id, bid, campaign = 0):
         bid = Bid(trans_id, user, pay_id, 
-                  thing_id, getattr(request, 'ip', '0.0.0.0'), bid = bid)
+                  thing_id, getattr(request, 'ip', '0.0.0.0'), bid = bid,
+                  campaign = campaign)
         bid._commit()
         return bid
+
+#    @classmethod
+#    def for_transactions(cls, transids):
+#        transids = filter(lambda x: x != 0, transids)
+#        if transids:
+#            q = cls.query()
+#            q = q.filter(or_(*[cls.transaction == i for i in transids]))
+#            return dict((p.transaction, p) for p in q)
+#        return {}
 
     def set_status(self, status):
         if self.status != status:
             self.status = status
             self._commit()
-        
+
     def auth(self):
         self.set_status(self.STATUS.AUTH)
 
+    def is_auth(self):
+        return (self.status == self.STATUS.AUTH)
+
     def void(self):
         self.set_status(self.STATUS.VOID)
-        
+
+    def is_void(self):
+        return (self.status == self.STATUS.VOID)
+
     def charged(self):
         self.set_status(self.STATUS.CHARGE)
+
+    def is_charged(self):
+        return (self.status == self.STATUS.CHARGE)
 
     def refund(self):
         self.set_status(self.STATUS.REFUND)
 
+#TODO: decommission and drop tables once the patch is working
 class PromoteDates(Sessionized, Base):
     __tablename__ = "promote_date"
 
@@ -436,6 +459,114 @@ class PromoteDates(Sessionized, Base):
 
         return res
 
+# eventual replacement for PromoteDates
+class PromotionWeights(Sessionized, Base):
+    __tablename__ = "promotion_weight"
+
+    thing_name = Column(String, primary_key = True,
+                        nullable = False, index = True)
+
+    promo_idx    = Column(BigInteger, index = True, autoincrement = False,
+                          primary_key = True)
+
+    sr_name    = Column(String, primary_key = True,
+                        nullable = True,  index = True)
+    date       = Column(Date(), primary_key = True,
+                        nullable = False, index = True)
+
+    # because we might want to search by account
+    account_id   = Column(BigInteger, index = True, autoincrement = False)
+
+    # bid and weight should always be the same, but they don't have to be
+    bid        = Column(Float, nullable = False)
+    weight     = Column(Float, nullable = False)
+
+    finished   = Column(Boolean)
+
+    @classmethod
+    def reschedule(cls, thing, idx, sr, start_date, end_date, total_weight,
+                   finished = False):
+        cls.delete_unfinished(thing, idx)
+        cls.add(thing, idx, sr, start_date, end_date, total_weight,
+                finished = finished)
+
+    @classmethod
+    def add(cls, thing, idx, sr, start_date, end_date, total_weight,
+            finished = False):
+        start_date = to_date(start_date)
+        end_date   = to_date(end_date)
+
+        # anything set by the user will be uniform weighting
+        duration = max((end_date - start_date).days, 1)
+        weight = total_weight / duration
+
+        d = start_date
+        while d < end_date:
+            cls._new(thing, idx, sr, d,
+                     thing.author_id, weight, weight, finished = finished)
+            d += datetime.timedelta(1)
+
+    @classmethod
+    def delete_unfinished(cls, thing, idx):
+        #TODO: do this the right (fast) way before release.  I don't
+        #have the inclination to figure out the proper delete method
+        #now
+        for item in cls.query(thing_name = thing._fullname,
+                              promo_idx = idx,
+                              finished = False):
+            item._delete()
+
+    @classmethod
+    def get_campaigns(cls, d):
+        d = to_date(d)
+        return list(cls.query(date = d))
+
+    @classmethod
+    def get_schedule(cls, start_date, end_date, author_id = None):
+        start_date = to_date(start_date)
+        end_date   = to_date(end_date)
+        q = cls.query()
+        q = q.filter(and_(cls.date >= start_date, cls.date < end_date))
+
+        if author_id is not None:
+            q.filter(author_id = author_id)
+
+        res = {}
+        for x in q.all():
+            res.setdefault((x.thing_name, x.promo_idx), []).append(x.date)
+
+        return [(k[0], k[1], min(v), max(v)) for k, v in res.iteritems()]
+
+    @classmethod
+    @memoize('promodates.bid_history', time = 10 * 60)
+    def bid_history(cls, start_date, end_date = None, account_id = None):
+        from r2.models import Link
+        start_date = to_date(start_date)
+        end_date   = to_date(end_date)
+        q = cls.query()
+        q = q.filter(and_(cls.date >= start_date, cls.date < end_date))
+        q = list(q)
+
+        links = Link._by_fullname([x.thing_name for x in q], data=True)
+
+        d = start_date
+        res = []
+        while d < end_date:
+            bid = 0
+            refund = 0
+            for i in q:
+                if d == i.date:
+                    camp = links[i.thing_name].campaigns[i.promo_idx]
+                    bid += i.bid
+                    refund += i.bid if camp[-1] <= 0 else 0
+            res.append([d, bid, refund])
+            d += datetime.timedelta(1)
+        return res
+
+def to_date(d):
+    if isinstance(d, datetime.datetime):
+        return d.date()
+    return d
 
 # do all the leg work of creating/connecting to tables
 Base.metadata.create_all()

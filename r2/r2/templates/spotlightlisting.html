@@ -23,20 +23,16 @@
 <%namespace file="printablebuttons.html" import="ynbutton"/>
 <% 
    from r2.lib.template_helpers import static
-   from r2.lib.promote import get_promoted
 %>
 
 <div id="siteTable_organic" class="organic-listing">
   <%
      lookup = dict((t._fullname, t) for t in thing.things)
      seen = set([])
-     promoted = set(get_promoted())
-     promoted = [o for o in thing.spotlight_links if o in promoted ]
    %>
   <script type="text/javascript">
     ## fortunately, python arrays print in JS-compatible form.
     var organic_links = ${thing.spotlight_links};
-    /*reddit_thing_info.fetch = ${promoted};*/
   </script>
   %for name in thing.spotlight_links:
     %if name in seen:
@@ -71,9 +67,9 @@
 
 <div class="help help-cover juryduty">
     <p>
-      ${_("Sometimes reddit needs input from the community to train its spam filter. This is your chance to help.")}
+      ${_("Sometimes reddit needs to ask the community to help fight spam. This is your chance to take part in that.")}
       &#32;
-      <a href="/help/juryduty">
+      <a href="/help/deputies">
         ${_("Click here for more info.")}
       </a>
     </p>

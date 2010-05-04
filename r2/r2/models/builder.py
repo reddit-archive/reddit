@@ -69,10 +69,7 @@ class Builder(object):
 
         if aids:
             authors = Account._byID(aids, True) if aids else {}
-            if c.user_is_admin:
-                cup_infos = Account.cup_info_multi(aids)
-            else:
-                cup_infos = {}
+            cup_infos = Account.cup_info_multi(aids)
         else:
             authors = {}
             cup_infos = {}
@@ -175,6 +172,15 @@ class Builder(object):
 
             w.deleted = item._deleted
 
+            w.link_notes = []
+
+            if c.user_is_admin:
+                if item._deleted:
+                    w.link_notes.append("deleted link")
+                if getattr(item, "verdict", None):
+                    if not item.verdict.endswith("-approved"):
+                        w.link_notes.append(w.verdict)
+
             w.rowstyle = getattr(w, 'rowstyle', "")
             w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
 
@@ -191,22 +197,31 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
+            w.reveal_trial_info = False
+            w.use_big_modbuttons = False
+
             if (c.user_is_admin
                 or (user
                     and hasattr(item,'sr_id')
                     and item.sr_id in can_ban_set)):
                 w.can_ban = True
+
+                ban_info = getattr(item, 'ban_info', {})
+                w.unbanner = ban_info.get('unbanner')
+
                 if item._spam:
                     w.show_spam = True
-                    ban_info = getattr(item, 'ban_info', {})
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    w.use_big_modbuttons = True
                     if getattr(w, "author", None) and w.author._spam:
                         w.show_spam = "author"
 
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
+                    w.use_big_modbuttons = True
+
 
         # recache the user object: it may be None if user is not logged in,
         # whereas now we are happy to have the UnloggedUser object
@@ -227,6 +242,8 @@ class Builder(object):
         """whether or not to skip any item regardless of whether the builder
         was contructed with skip=true"""
         user = c.user if c.user_is_loggedin else None
+        if hasattr(item, "promoted") and item.promoted is not None:
+            return False
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True
 
@@ -341,6 +358,7 @@ class QueryBuilder(Builder):
             #skip and count
             while new_items and (not self.num or num_have < self.num):
                 i = new_items.pop(0)
+
                 if not (self.must_skip(i) or self.skip and not self.keep_item(i)):
                     items.append(i)
                     num_have += 1
@@ -414,7 +432,6 @@ class IDBuilder(QueryBuilder):
 
         self.names, new_names = names[slice_size:], names[:slice_size]
         new_items = Thing._by_fullname(new_names, data = True, return_dict=False)
-
         return done, new_items
 
 class SearchBuilder(IDBuilder):
