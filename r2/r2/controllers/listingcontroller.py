@@ -238,6 +238,13 @@ class HotController(FixListing, ListingController):
             spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
             trial = populate_spotlight()
 
+            # Need to do this again, because if there was a duplicate removed,
+            # pos might be pointing outside the list.
+            if not spotlight_links:
+                pos = 0
+            elif pos != 0:
+                pos = pos % len(spotlight_links)
+
             if trial:
                 spotlight_links.insert(pos, trial._fullname)
 
@@ -268,9 +275,16 @@ class HotController(FixListing, ListingController):
                           num = organic.organic_length,
                           skip = True, keep_fn = keep_fn)
 
+            try:
+                vislink = spotlight_links[pos]
+            except IndexError:
+                g.log.error("spotlight_links = %r" % spotlight_links)
+                g.log.error("pos = %d" % pos)
+                raise
+
             s = SpotlightListing(b,
                               spotlight_links = spotlight_links,
-                              visible_link = spotlight_links[pos],
+                              visible_link = vislink,
                               max_num = self.listing_obj.max_num,
                               max_score = self.listing_obj.max_score).listing()
 
@@ -367,10 +381,10 @@ class NewController(ListingController):
         return keep
 
     def query(self):
+        res = None
         if self.sort == 'rising':
-            return get_rising(c.site)
-        else:
-            return c.site.get_links('new', 'all')
+            res = get_rising(c.site)
+        return res or c.site.get_links('new', 'all')
 
     @validate(sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):

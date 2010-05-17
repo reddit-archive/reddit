@@ -192,7 +192,6 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    sr = VSubmitSR('sr'),
                    url = VUrl(['url', 'sr']),
-                   banmsg = VOkayDomain('url'),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    selftext = VMarkdown('text'),
@@ -229,17 +228,23 @@ class ApiController(RedditController):
             if not should_ratelimit:
                 c.errors.remove((errors.RATELIMIT, 'ratelimit'))
 
+        banmsg = None
+
         if kind == 'link':
+            check_domain = True
+
             # check for no url, or clear that error field on return
             if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 pass
             elif form.has_errors("url", errors.ALREADY_SUB):
+                check_domain = False
                 form.redirect(url[0].already_submitted_link)
             # check for title, otherwise look it up and return it
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
-            banmsg = is_banned_domain(url)
+            if check_domain:
+                banmsg = is_banned_domain(url)
 
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
@@ -248,7 +253,6 @@ class ApiController(RedditController):
 
         else:
             form.has_errors('text', errors.TOO_LONG)
-            banmsg = None
 
         if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass
@@ -261,21 +265,24 @@ class ApiController(RedditController):
 
         if should_ratelimit:
             filled_quota = c.user.quota_full('link')
-            if filled_quota is not None and not c.user._spam:
-                log_text ("over-quota",
-                          "%s just went over their per-%s quota" %
-                          (c.user.name, filled_quota), "info")
-
-                compose_link = ("/message/compose?to=%23" + sr.name +
-                                "&subject=Exemption+request")
-
-                verify_link = "/verify?reason=submit"
-
-                if c.user.email_verified:
-                    msg = strings.verified_quota_msg % dict(link=compose_link)
+            if filled_quota is not None:
+                if c.user._spam:
+                    msg = strings.generic_quota_msg
                 else:
-                    msg = strings.unverified_quota_msg % dict(link1=verify_link,
-                                                              link2=compose_link)
+                    log_text ("over-quota",
+                              "%s just went over their per-%s quota" %
+                              (c.user.name, filled_quota), "info")
+
+                    compose_link = ("/message/compose?to=%23" + sr.name +
+                                    "&subject=Exemption+request")
+
+                    verify_link = "/verify?reason=submit"
+
+                    if c.user.email_verified:
+                        msg = strings.verified_quota_msg % dict(link=compose_link)
+                    else:
+                        msg = strings.unverified_quota_msg % dict(link1=verify_link,
+                                                                  link2=compose_link)
 
                 md = safemarkdown(msg)
                 form.set_html(".status", md)
@@ -480,9 +487,6 @@ class ApiController(RedditController):
 
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(victim, type, _update=True)
-
-        if type in ("moderator", "contributor"):
-            Subreddit.special_reddits(iuser or nuser, type, _update=True)
 
 
 
@@ -909,6 +913,9 @@ class ApiController(RedditController):
             g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
             store = False
 
+        if getattr(c.user, "suspicious", False):
+            g.log.info("%s cast a %d vote on %s", c.user.name, dir, thing._fullname)
+
         dir = (True if dir > 0
                else False if dir < 0
                else None)
@@ -1132,7 +1139,6 @@ class ApiController(RedditController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
-                   use_whitelist = VBoolean('use_whitelist'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    ip = ValidIP(),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
@@ -1520,15 +1526,20 @@ class ApiController(RedditController):
         # Anyone can leave.
         if action != 'sub' or sr.can_comment(c.user):
             self._subscribe(sr, action == 'sub')
-    
+
     def _subscribe(self, sr, sub):
         Subreddit.subscribe_defaults(c.user)
 
+        sub_key = "subscription-%s-%s" % (c.user.name, sr.name)
+
         if sub:
-            if sr.add_subscriber(c.user):
+            if not g.cache.add(sub_key, True):
+                g.log.warning("Double-subscribe for %s?" % sub_key)
+            elif sr.add_subscriber(c.user):
                 sr._incr('_ups', 1)
         else:
             if sr.remove_subscriber(c.user):
+                g.cache.delete(sub_key)
                 sr._incr('_ups', -1)
         changed(sr)
 
@@ -1538,7 +1549,6 @@ class ApiController(RedditController):
     def POST_disable_lang(self, tr):
         if tr:
             tr._is_enabled = False
-        
 
     @noresponse(VAdmin(),
                 tr = VTranslation("id"))

@@ -1284,21 +1284,25 @@ $(function() {
 
     });
 
-function friend(account_fullname) {
+function show_friend(account_fullname) {
+    var label = '<a class="friend" title="friend" href="/prefs/friends">F</a>';
     var ua = $(".author.id-" + account_fullname).addClass("friend")
-        .next(".userattrs");
-    var add_braces = (!ua.html());
-
-    ua.html(((add_braces) ? " [" : "") + 
-            '<a class="friend" title="friend" href="/prefs/friends">F</a>' + 
-            ((add_braces) ? "]" : ""));
+        .next(".userattrs").each(function() {
+                if (!$(this).html()) {
+                    $(this).html(" [" + label + "]");
+                } else if ($(this).find(".friend").length == 0) {
+                    $(this).find("a:last").debug().after(", " + label);
+                }
+            });
 }
 
-function unfriend(account_fullname) {
+function show_unfriend(account_fullname) {
     var ua = $(".author.id-" + account_fullname).removeClass("friend")
         .next(".userattrs");
-    ua.find("a.friend").remove();
-    if (ua.find("a").length == 0) {
-        ua.html("");
-    }
+    ua.each(function() {
+            $(this).find("a.friend").remove();
+            if ($(this).find("a").length == 0) {
+                $(this).html("");
+            }
+        });
 }

@@ -620,6 +620,15 @@ def set_live_promotions(x):
 def make_daily_promotions(offset = 0, test = False):
     old_links = set([])
     all_links, weighted = get_weighted_schedule(offset)
+    # over18 check
+    for sr, links in weighted.iteritems():
+        if sr:
+            sr = Subreddit._by_name(sr)
+            if sr.over_18:
+                for l in Link._by_fullname([l[0] for l in links], return_dict = False):
+                    l.over_18 = True
+                    l._commit()
+
     x = get_live_promotions()
     if x:
         old_links, old_weights = x

@@ -35,7 +35,6 @@ class PrintableButtons(Styled):
                  show_delete = False, show_report = True,
                  show_distinguish = False,
                  show_indict = False, is_link=False, **kw):
-        show_report = show_report and c.user_is_loggedin
         show_ignore = (thing.show_reports or
                        (thing.reveal_trial_info and not thing.show_spam))
         approval_checkmark = getattr(thing, "approval_checkmark", None)
@@ -112,7 +111,7 @@ class LinkButtons(PrintableButtons):
                                   editable = thing.editable, 
                                   hidden = thing.hidden, 
                                   show_delete = show_delete,
-                                  show_report = show_report,
+                                  show_report = show_report and c.user_is_loggedin,
                                   show_indict = show_indict,
                                   show_distinguish = show_distinguish,
                                   show_comments = comments,
@@ -126,7 +125,7 @@ class CommentButtons(PrintableButtons):
         # is the current user the author?
         is_author = thing.is_author
         # do we show the report button?
-        show_report = not is_author and report
+        show_report = not is_author and report and thing.can_reply
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
 

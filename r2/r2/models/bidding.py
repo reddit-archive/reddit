@@ -541,6 +541,7 @@ class PromotionWeights(Sessionized, Base):
     @memoize('promodates.bid_history', time = 10 * 60)
     def bid_history(cls, start_date, end_date = None, account_id = None):
         from r2.models import Link
+        from r2.lib import promote
         start_date = to_date(start_date)
         end_date   = to_date(end_date)
         q = cls.query()
@@ -556,9 +557,11 @@ class PromotionWeights(Sessionized, Base):
             refund = 0
             for i in q:
                 if d == i.date:
-                    camp = links[i.thing_name].campaigns[i.promo_idx]
-                    bid += i.bid
-                    refund += i.bid if camp[-1] <= 0 else 0
+                    l = links[i.thing_name]
+                    if not promote.is_rejected(l) and not promote.is_unpaid(l) and not l._deleted:
+                        camp = l.campaigns[i.promo_idx]
+                        bid += i.bid
+                        refund += i.bid if camp[-1] <= 0 else 0
             res.append([d, bid, refund])
             d += datetime.timedelta(1)
         return res

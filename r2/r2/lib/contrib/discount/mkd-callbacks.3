@@ -1,0 +1,71 @@
+.\"
+.Dd January 18, 2008
+.Dt MKD_CALLBACKS 3
+.Os Mastodon
+.Sh NAME
+.Nm mkd_callbacks 
+.Nd functions that modify link targets
+.Sh LIBRARY
+Markdown 
+.Pq libmarkdown , -lmarkdown
+.Sh SYNOPSIS
+.Fd #include <mkdio.h>
+.Ft char*
+.Fn (*mkd_callback_t) "const char*" "const int" "void*"
+.Ft void
+.Fn (*mkd_free_t) "char *" "void*"
+.Ft void
+.Fn mkd_e_url "MMIOT *document" "mkd_callback_t edit"
+.Ft void
+.Fn mkd_e_flags "MMIOT *document" "mkd_callback_t edit"
+.Ft void
+.Fn mkd_e_free "MMIOT *document" "mkd_free_t dealloc"
+.Ft void
+.Fn mkd_e_data  "MMIOT *document" "void *data"
+.Sh DESCRIPTION
+.Pp
+.Nm Discount
+provides a small set of data access functions to let a
+library user modify the targets given in a `[]' link, and to
+add additional flags to the generated link.
+.Pp
+The data access functions are passed a character pointer to
+the url being generated, the size of the url, and a data pointer
+pointing to a user data area (set by the
+.Fn mkd_e_data
+function.)     After the callback function is called (either
+.Fn mkd_e_url 
+or
+.Fn mkd_e_flags )
+the data freeing function (if supplied) is called and passed the
+character pointer and user data pointer.
+.Sh EXAMPLE
+The
+.Fn mkd_basename
+function (in the module basename.c) is implemented by means of
+mkd callbacks;  it modifies urls that start with a `/' so that
+they begin with a user-supplied url base by allocating a new
+string and filling it with the base + the url.  Discount plugs
+that url in in place of the original, then calls the basename
+free function (it only does this when
+.Fn mkd_e_url
+or
+.Fn mkd_e_flags
+returns nonzero) to deallocate this memory.
+.Pp
+Note that only one level of callbacks are supported; if you
+wish to do multiple callbacks, you need to write your own
+code to handle them all.
+.Sh SEE ALSO
+.Xr markdown 1 ,
+.Xr markdown 3 ,
+.Xr mkd-line 3 ,
+.Xr markdown 7 ,
+.Xr mkd-extensions 7 ,
+.Xr mmap 2 .
+.Pp
+basename.c
+.Pp
+http://daringfireball.net/projects/markdown/syntax
+.Sh BUGS
+Error handling is minimal at best.

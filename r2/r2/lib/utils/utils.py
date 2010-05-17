@@ -903,8 +903,9 @@ def fix_if_broken(thing, delete = True):
     from r2.models import Link, Comment
 
     # the minimum set of attributes that are required
-    attrs = {Link: ('author_id', 'sr_id'),
-             Comment: ('author_id', 'sr_id', 'body', 'link_id')}
+    attrs = dict((cls, cls._essentials)
+                 for cls
+                 in (Link, Comment, Subreddit))
 
     if thing.__class__ not in attrs:
         raise TypeError

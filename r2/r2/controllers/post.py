@@ -36,7 +36,7 @@ class PostController(ApiController):
     def set_options(self, all_langs, pref_lang, **kw):
         if c.errors.errors:
             print "fucker"
-            raise "broken"
+            return
 
         if all_langs == 'all':
             langs = 'all'

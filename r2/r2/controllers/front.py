@@ -523,7 +523,10 @@ class FrontController(RedditController):
         try:
             res = listing.listing()
         except SolrError, e:
-            errmsg = "SolrError: %r %r" % (e, query_obj)
+            try:
+                errmsg = "SolrError: %r %r" % (e, query_obj)
+            except UnicodeEncodeError:
+                errmsg = "SolrError involving unicode"
 
             if (str(e) == 'None'):
                 # Production error logs only get non-None errors

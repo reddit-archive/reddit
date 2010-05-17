@@ -68,7 +68,6 @@
   </%utils:round_field>
 </div>  
 
-%if thing.email:
 <div class="spacer">
   <%utils:round_field title="${_('email')}" description="${description}">
     <input type="text" name="email" value="${getattr(c.user, 'email', '')}"/>

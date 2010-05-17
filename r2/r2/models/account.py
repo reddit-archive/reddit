@@ -349,7 +349,7 @@ class Account(Thing):
         if kind != 'link':
             raise NotImplementedError
 
-        if self.email_verified:
+        if self.email_verified and not self._spam:
             return dict(hour=3, day=10, week=50, month=150)
         else:
             return dict(hour=1,  day=3,  week=5,   month=5)

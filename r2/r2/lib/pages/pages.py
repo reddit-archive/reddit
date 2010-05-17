@@ -860,7 +860,7 @@ class CommentPane(Templated):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion
                     continue
-                if getattr(t, "friend", False):
+                if getattr(t, "friend", False) and not t.author._deleted:
                     is_friend.add(t.author._fullname)
                 if t.likes:
                     likes.append(t._fullname)
@@ -2805,27 +2805,23 @@ class Promote_Graph(Templated):
             self.recent = self.recent.values()
             self.recent.sort(key = lambda x: x[0]._date)
 
-        # graphs of money
-        history = self.now - datetime.timedelta(60)
-
-        pool =PromotionWeights.bid_history(promote.promo_datetime_now(offset=-60),
+        pool =PromotionWeights.bid_history(promote.promo_datetime_now(offset=-30),
                                            promote.promo_datetime_now(offset=2))
         if pool:
             # we want to generate a stacked line graph, so store the
             # bids and the total including refunded amounts
-            total_sale = sum(b for (d, b, r) in pool)
+            total_sale = sum((b-r) for (d, b, r) in pool)
             total_refund = sum(r for (d, b, r) in pool)
             
             self.money_graph = TrafficGraph([(d, b, r) for (d, b, r) in pool],
                                             colors = ("008800", "FF0000"),
                                             ylabels = ['total ($)'],
-                                            title = ("monthly sales ($%.2f total, $%.2f credits)" %
+                                            title = ("monthly sales ($%.2f charged, $%.2f credits)" %
                                                      (total_sale, total_refund)),
                                             multiy = False)
 
-            history = self.now - datetime.timedelta(30)
             #TODO
-            self.top_promoters = []#bidding.PromoteDates.top_promoters(history)
+            self.top_promoters = []
         else:
             self.money_graph = None
             self.top_promoters = []
@@ -2843,13 +2839,13 @@ class Promote_Graph(Templated):
             clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
 
             CPM = [(d, (pool.get(d, 0) * 1000. / i) if i else 0)
-                   for (d, (i, k)) in self.promo_traffic]
+                   for (d, (i, k)) in self.promo_traffic if d in pool]
 
             CPC = [(d, (100 * pool.get(d, 0) / k) if k else 0)
-                   for (d, (i, k)) in self.promo_traffic]
+                   for (d, (i, k)) in self.promo_traffic if d in pool]
 
             CTR = [(d, (100 * float(k) / i if i else 0))
-                   for (d, (i, k)) in self.promo_traffic]
+                   for (d, (i, k)) in self.promo_traffic if d in pool]
 
             self.cli_graph = TrafficGraph(clicks, ylabels = ['total'],
                                           title = "clicks")

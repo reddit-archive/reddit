@@ -1,0 +1,11 @@
+#!/bin/sh 
+#
+# This is the app that reads new links as they come in and checks to
+# see if they have scrapable content (images to thumbnail and/or
+# media).
+
+
+export HOME=/home/reddit
+cd $HOME/reddit/r2
+exec 2>&1
+exec setuidgid reddit /usr/local/bin/paster run run.ini r2/lib/media.py -c "run()"

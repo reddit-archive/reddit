@@ -1,0 +1,7 @@
+#!/bin/sh                                                                       
+
+ulimit -n 32768
+
+cd ~reddit
+exec 2>&1
+exec /usr/sbin/haproxy -f /home/reddit/srv/haproxy/haproxy.conf

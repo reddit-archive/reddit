@@ -86,10 +86,10 @@ except (ImportError, AssertionError):
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
 
-discount_path = "r2/lib/contrib/discount-1.6.0"
+discount_path = "r2/lib/contrib/discount"
 discountmod = Extension('reddit-discount',
                         include_dirs = [discount_path],
-                        define_macros = [("VERSION", '"1.6.0"')],
+                        define_macros = [("VERSION", '"1.6.4"')],
                         sources = ([ "r2/lib/c/reddit-discount-wrapper.c" ]
                                    + map(lambda x: os.path.join(discount_path, x),
                                       ["Csio.c",
@@ -103,6 +103,8 @@ discountmod = Extension('reddit-discount',
                                        "resource.c",
                                        "toc.c",
                                        "version.c",
+                                       "emmatch.c",
+                                       "basename.c",
                                        "xml.c",
                                        "xmlpage.c"])))
 

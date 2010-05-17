@@ -141,10 +141,10 @@ def is_banned_IP(ip):
 def is_banned_domain(dom):
     return None
 
-def valid_thing(v, karma):
+def valid_thing(v, karma, *a, **kw):
     return not v._thing1._spam
 
-def valid_user(v, sr, karma):
+def valid_user(v, sr, karma, *a, **kw):
     return True
 
 # Returns whether this person is being suspicious

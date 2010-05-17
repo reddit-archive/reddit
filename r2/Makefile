@@ -50,15 +50,18 @@ RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
 MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5) $(MAINCSS:=.md5) $(RTLCSS:=.md5)
 
-ifdef PRIVATEREPOS
 INIUPDATE = $(wildcard *.update)
 INIS      = $(INIUPDATE:.update=.ini)
 
 %.ini:	%.update
-	ln -sf `pwd`/$< $(PRIVATEREPOS)/..
-	make -C $(PRIVATEREPOS)/.. $@
-	ln -sf $(PRIVATEREPOS)/../$@ .
+ifneq (,$(PRIVATEREPOS))
+	  ln -sf `pwd`/$< $(PRIVATEREPOS)/..
+	  make -C $(PRIVATEREPOS)/.. $@ 
+	  ln -sf $(PRIVATEREPOS)/../$@ . 
+else
+	  ./updateini.py example.ini $< > $@ || rm $@ 
 endif
+
 
 all:	$(JSTARGETS) $(CSSTARGETS) $(MD5S) $(RTLCSS) $(INIS)
 

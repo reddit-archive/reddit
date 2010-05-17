@@ -71,7 +71,7 @@ reddit_discount_wrap(const char * text, int nofollow, const char * target,
                      MKD_NO_EXT | MKD_AUTOLINK | MKD_SAFELINK);
 
   mkd_e_flags (mmiot, &cb_flagmaker);
-  mkd_e_context(mmiot, &opts);
+  mkd_e_data(mmiot, &opts);
 
   *size = mkd_document(mmiot, html);
   *v_mmiot = mmiot;

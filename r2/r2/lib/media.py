@@ -100,21 +100,20 @@ def force_thumbnail(link, image_data):
     update_link(link, thumbnail = True, media_object = None)
 
 def run():
-    def process_msgs(msgs, chan):
+    def process_link(msg):
         def _process_link(fname):
-            link = Link._by_fullname(fname, data=True, return_dict=False)
+            link = Link._by_fullname(fname, data=True)
             set_media(link)
 
-        for msg in msgs:
-            fname = msg.body
-            try:
-                TimeoutFunction(_process_link, 30)(fname)
-            except TimeoutFunctionException:
-                print "Timed out on %s" % fname
-            except KeyboardInterrupt:
-                raise
-            except:
-                print "Error fetching %s" % fname
-                print traceback.format_exc()
+        fname = msg.body
+        try:
+            TimeoutFunction(_process_link, 30)(fname)
+        except TimeoutFunctionException:
+            print "Timed out on %s" % fname
+        except KeyboardInterrupt:
+            raise
+        except:
+            print "Error fetching %s" % fname
+            print traceback.format_exc()
 
-    amqp.handle_items('scraper_q', process_msgs, limit=1)
+    amqp.consume_items('scraper_q', process_link)

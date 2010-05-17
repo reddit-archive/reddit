@@ -38,18 +38,15 @@ from pylons import g
 amqp_host = g.amqp_host
 amqp_user = g.amqp_user
 amqp_pass = g.amqp_pass
+amqp_exchange = 'reddit_exchange'
 log = g.log
 amqp_virtual_host = g.amqp_virtual_host
 amqp_logging = g.amqp_logging
 
-connection = None
-channel = local()
-have_init = False
-
 #there are two ways of interacting with this module: add_item and
-#handle_items. _add_item (the internal function for adding items to
-#amqp that are added using add_item) might block for an arbitrary
-#amount of time while trying to get a connection amqp.
+#handle_items/consume_items. _add_item (the internal function for
+#adding items to amqp that are added using add_item) might block for
+#an arbitrary amount of time while trying to get a connection to amqp.
 
 class Worker:
     def __init__(self):
@@ -77,76 +74,85 @@ class Worker:
 
 worker = Worker()
 
-def get_connection():
-    global connection
-    global have_init
+class ConnectionManager(local):
+    # There should be only two threads that ever talk to AMQP: the
+    # worker thread and the foreground thread (whether consuming queue
+    # items or a shell). This class is just a wrapper to make sure
+    # that they get separate connections
+    def __init__(self):
+        self.connection = None
+        self.channel = None
+        self.have_init = False
 
-    while not connection:
-        try:
-            connection = amqp.Connection(host = amqp_host,
-                                         userid = amqp_user,
-                                         password = amqp_pass,
-                                         virtual_host = amqp_virtual_host,
-                                         insist = False)
-        except (socket.error, IOError):
-            print 'error connecting to amqp %s @ %s' % (amqp_user, amqp_host)
-            time.sleep(1)
+    def get_connection(self):
+        while not self.connection:
+            try:
+                self.connection = amqp.Connection(host = amqp_host,
+                                                  userid = amqp_user,
+                                                  password = amqp_pass,
+                                                  virtual_host = amqp_virtual_host,
+                                                  insist = False)
+            except (socket.error, IOError):
+                print 'error connecting to amqp %s @ %s' % (amqp_user, amqp_host)
+                time.sleep(1)
 
-    # don't run init_queue until someone actually needs it. this
-    # allows the app server to start and serve most pages if amqp
-    # isn't running
-    if not have_init:
-        init_queue()
-        have_init = True
+        # don't run init_queue until someone actually needs it. this
+        # allows the app server to start and serve most pages if amqp
+        # isn't running
+        if not self.have_init:
+            self.init_queue()
+            self.have_init = True
 
-def get_channel(reconnect = False):
-    global connection
-    global channel
+        return self.connection
 
-    # Periodic (and increasing with uptime) errors appearing when
-    # connection object is still present, but appears to have been
-    # closed.  This checks that the the connection is still open.
-    if connection and connection.channels is None:
-        log.error("Error: amqp.py, connection object with no available channels.  Reconnecting...")
-        connection = None
+    def get_channel(self, reconnect = False):
+        # Periodic (and increasing with uptime) errors appearing when
+        # connection object is still present, but appears to have been
+        # closed.  This checks that the the connection is still open.
+        if self.connection and self.connection.channels is None:
+            log.error("Error: amqp.py, connection object with no available channels.  Reconnecting...")
+            self.connection = None
 
-    if not connection or reconnect:
-        channel.chan = None
-        connection = None
-        get_connection()
+        if not self.connection or reconnect:
+            self.connection = None
+            self.channel = None
+            self.get_connection()
 
-    if not getattr(channel, 'chan', None):
-        channel.chan = connection.channel()
-    return channel.chan
+        if not self.channel:
+            self.channel = self.connection.channel()
 
+        return self.channel
 
-def init_queue():
-    from r2.lib.queues import RedditQueueMap
+    def init_queue(self):
+        from r2.lib.queues import RedditQueueMap
 
-    exchange = 'reddit_exchange'
+        chan = self.get_channel()
 
-    chan = get_channel()
+        RedditQueueMap(amqp_exchange, chan).init()
 
-    RedditQueueMap(exchange, chan).init()
+connection_manager = ConnectionManager()
 
+DELIVERY_TRANSIENT = 1
+DELIVERY_DURABLE = 2
 
-def _add_item(routing_key, body, message_id = None):
+def _add_item(routing_key, body, message_id = None,
+              delivery_mode = DELIVERY_DURABLE):
     """adds an item onto a queue. If the connection to amqp is lost it
     will try to reconnect and then call itself again."""
     if not amqp_host:
         log.error("Ignoring amqp message %r to %r" % (body, routing_key))
         return
 
-    chan = get_channel()
+    chan = connection_manager.get_channel()
     msg = amqp.Message(body,
                        timestamp = datetime.now(),
-                       delivery_mode = 2)
+                       delivery_mode = delivery_mode)
     if message_id:
         msg.properties['message_id'] = message_id
 
     try:
         chan.basic_publish(msg,
-                           exchange = 'reddit_exchange',
+                           exchange = amqp_exchange,
                            routing_key = routing_key)
     except Exception as e:
         if e.errno == errno.EPIPE:
@@ -155,14 +161,52 @@ def _add_item(routing_key, body, message_id = None):
         else:
             raise
 
-def add_item(routing_key, body, message_id = None):
+def add_item(routing_key, body, message_id = None, delivery_mode = DELIVERY_DURABLE):
     if amqp_host and amqp_logging:
         log.debug("amqp: adding item %r to %r" % (body, routing_key))
 
-    worker.do(_add_item, routing_key, body, message_id = message_id)
+    worker.do(_add_item, routing_key, body, message_id = message_id,
+              delivery_mode = delivery_mode)
 
 def add_kw(routing_key, **kw):
     add_item(routing_key, pickle.dumps(kw))
+
+def consume_items(queue, callback, verbose=True):
+    """A lighter-weight version of handle_items that uses AMQP's
+       basic.consume instead of basic.get. Callback is only passed a
+       single items at a time. This is more efficient than
+       handle_items when the queue is likely to be occasionally empty
+       or if batching the received messages is not necessary."""
+    chan = connection_manager.get_channel()
+
+    def _callback(msg):
+        if verbose:
+            count_str = ''
+            if 'message_count' in msg.delivery_info:
+                # the count from the last message, if the count is
+                # available
+                count_str = '(%d remaining)' % msg.delivery_info['message_count']
+
+            print "%s: 1 item %s" % (queue, count_str)
+
+        g.reset_caches()
+        ret = callback(msg)
+        msg.channel.basic_ack(msg.delivery_tag)
+        sys.stdout.flush()
+        return ret
+
+    chan.basic_consume(queue=queue, callback=_callback)
+
+    try:
+        while chan.callbacks:
+            try:
+                chan.wait()
+            except KeyboardInterrupt:
+                chan.close()
+                break
+    finally:
+        if chan.is_open:
+            chan.close()
 
 def handle_items(queue, callback, ack = True, limit = 1, drain = False,
                  verbose=True, sleep_time = 1):
@@ -170,7 +214,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
 
-    chan = get_channel()
+    chan = connection_manager.get_channel()
     countdown = None
 
     while True:
@@ -212,8 +256,8 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
             callback(items, chan)
 
             if ack:
-                for item in items:
-                    chan.basic_ack(item.delivery_tag)
+                # ack *all* outstanding messages
+                chan.basic_ack(0, multiple=True)
 
             # flush any log messages printed by the callback
             sys.stdout.flush()
@@ -226,5 +270,24 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
 
 def empty_queue(queue):
     """debug function to completely erase the contents of a queue"""
-    chan = get_channel()
+    chan = connection_manager.get_channel()
     chan.queue_purge(queue)
+
+
+def _test_setup(test_q = 'test_q'):
+    from r2.lib.queues import RedditQueueMap
+    chan = connection_manager.get_channel()
+    rqm = RedditQueueMap(amqp_exchange, chan)
+    rqm._q(test_q, durable=False, auto_delete=True, self_refer=True)
+    return chan
+
+def test_consume(test_q = 'test_q'):
+    chan = _test_setup()
+    def _print(msg):
+        print msg.body
+    consume_items(test_q, _print)
+
+def test_produce(test_q = 'test_q', msg_body = 'hello, world!'):
+    _test_setup()
+    add_item(test_q, msg_body)
+    worker.join()

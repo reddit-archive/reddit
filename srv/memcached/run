@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec 2>&1
+/usr/bin/memcached  -m512 -p11211 -U11211 -C -c10000 -u reddit -Bauto

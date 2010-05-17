@@ -23,7 +23,7 @@ def randword():
 
 q = 'log_q'
 
-def run(limit=100, streamfile=None, verbose=False):
+def run(streamfile=None, verbose=False):
     if streamfile:
         stream_fp = open(streamfile, "a")
     else:
@@ -61,6 +61,7 @@ def run(limit=100, streamfile=None, verbose=False):
         pretty_lines = []
 
         make_lock_seen = False
+        flaky_db_seen = False
 
         for tpl in d['traceback']:
             tb.append(tpl)
@@ -70,6 +71,8 @@ def run(limit=100, streamfile=None, verbose=False):
             elif (text.startswith("with g.make_lock(") or
                   text.startswith("with make_lock(")):
                 make_lock_seen = True
+            elif (text.startswith("(ProgrammingError) server closed the connection")):
+                flaky_db_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
             pretty_lines.append ("    %s" % text)
@@ -80,6 +83,23 @@ def run(limit=100, streamfile=None, verbose=False):
             fingerprint = "memcache_suckitude"
         elif exc_type == "TimeoutExpired" and make_lock_seen:
             fingerprint = "make_lock_timeout"
+        elif exc_desc.startswith("(OperationalError) FATAL: the database " +
+                                 "system is in recovery mode"):
+            fingerprint = "recovering_db"
+        elif exc_desc.startswith("(OperationalError) could not connect " +
+                                 "to server"):
+            fingerprint = "unconnectable_db"
+        elif exc_desc.startswith("(OperationalError) server closed the " +
+                                 "connection unexpectedly"):
+            fingerprint = "flaky_db_op"
+        elif exc_type == "ProgrammingError" and flaky_db_seen:
+            fingerprint = "flaky_db_prog"
+            # SQLAlchemy includes the entire query in the exception
+            # description which can sometimes be gigantic, in the case of
+            # SELECTs. Get rid of it.
+            select_pos = exc_str.find("SELECT")
+            if select_pos > 0:
+                exc_str = exc_str[pos]
         elif exc_type == "NoServerAvailable":
             fingerprint = "cassandra_suckitude"
         else:
@@ -161,30 +181,29 @@ def run(limit=100, streamfile=None, verbose=False):
         limited_append(occurrences, d2)
         g.hardcache.set(occ_key, occurrences, 86400 * 7)
 
-    def myfunc(msgs, chan):
+    def myfunc(msg):
         daystring = datetime.now(g.display_tz).strftime("%Y/%m/%d")
 
-        for msg in msgs:
+        try:
+            d = pickle.loads(msg.body)
+        except TypeError:
+            streamlog ("wtf is %r" % msg.body, True)
+            return
+
+        if not 'type' in d:
+            streamlog ("wtf is %r" % d, True)
+        elif d['type'] == 'exception':
             try:
-                d = pickle.loads(msg.body)
-            except TypeError:
-                streamlog ("wtf is %r" % msg.body, True)
-                continue
+                log_exception(d, daystring)
+            except Exception as e:
+                print "Error in log_exception(): %r" % e
+        elif d['type'] == 'text':
+            try:
+                log_text(d, daystring)
+            except Exception as e:
+                print "Error in log_text(): %r" % e
+        else:
+            streamlog ("wtf is %r" % d['type'], True)
 
-            if not 'type' in d:
-                streamlog ("wtf is %r" % d, True)
-            elif d['type'] == 'exception':
-                try:
-                    log_exception(d, daystring)
-                except Exception as e:
-                    print "Error in log_exception(): %r" % e
-            elif d['type'] == 'text':
-                try:
-                    log_text(d, daystring)
-                except Exception as e:
-                    print "Error in log_text(): %r" % e
-            else:
-                streamlog ("wtf is %r" % d['type'], True)
-
-    amqp.handle_items(q, myfunc, limit=limit, drain=False, verbose=verbose)
+    amqp.consume_items(q, myfunc, verbose=verbose)
 

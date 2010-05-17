@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# in cases where the votes are written out to a queue, this process
+# flushes and processes the queue
+
+export HOME=/home/reddit
+cd $HOME/reddit/r2
+exec 2>&1
+exec setuidgid reddit /usr/local/bin/paster run run.ini -c "from r2.lib.db import queries; queries.process_votes(limit=100)"

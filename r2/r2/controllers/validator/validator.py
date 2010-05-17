@@ -782,6 +782,9 @@ class VUrl(VRequired):
         if not url:
             return self.error(errors.NO_URL)
         url = utils.sanitize_url(url)
+        if not url:
+            return self.error(errors.BAD_URL)
+
         if url == 'self':
             if self.allow_self:
                 return url
@@ -996,6 +999,8 @@ class VRatelimit(Validator):
         to_set = {}
         if seconds is None:
             seconds = g.RATELIMIT*60
+            if not seconds:
+                return
         expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time

@@ -743,7 +743,8 @@ def changed(things):
     things = tup(things)
     for thing in things:
         amqp.add_item('searchchanges_q', thing._fullname,
-                      message_id = thing._fullname)
+                      message_id = thing._fullname,
+                      delivery_mode = amqp.DELIVERY_TRANSIENT)
 
 def _by_srid(things):
     """Takes a list of things and returns them in a dict separated by
@@ -909,62 +910,48 @@ def run_new_comments():
     # this is done as a queue because otherwise the contention for the
     # lock on the query would be very high
 
-    def _run_new_comments(msgs, chan):
-        fnames = [msg.body for msg in msgs]
-        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+    def _run_new_comment(msg):
+        fname = msg.body
+        comment = Comment._by_fullname(fname)
 
         add_queries([get_all_comments()],
-                    insert_items = comments)
+                    insert_items = [comment])
 
-    amqp.handle_items('newcomments_q', _run_new_comments, limit=100)
+    amqp.consume_items('newcomments_q', _run_new_comment)
 
 def run_commentstree():
     """Add new incoming comments to their respective comments trees"""
 
-    def _run_commentstree(msgs, chan):
-        fnames = [msg.body for msg in msgs]
-        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+    def _run_commentstree(msg):
+        fname = msg.body
+        comment = Comment._by_fullname(fname, data=True)
 
-        links = Link._byID(set(cm.link_id for cm in comments),
-                           data=True,
-                           return_dict=True)
+        link = Link._byID(comment.link_id,
+                          data=True)
 
-        # add the comment to the comments-tree
-        for comment in comments:
-            l = links[comment.link_id]
-            try:
-                add_comment_tree(comment, l)
-            except KeyError:
-                # Hackity hack. Try to recover from a corrupted
-                # comment tree
-                print "Trying to fix broken comments-tree."
-                link_comments(l._id, _update=True)
-                add_comment_tree(comment, l)
+        try:
+            add_comment_tree(comment, link)
+        except KeyError:
+            # Hackity hack. Try to recover from a corrupted comment
+            # tree
+            print "Trying to fix broken comments-tree."
+            link_comments(link._id, _update=True)
+            add_comment_tree(comment, link)
 
-    amqp.handle_items('commentstree_q', _run_commentstree, limit=1)
-
+    amqp.consume_items('commentstree_q', _run_commentstree)
 
 #def run_new_links():
 #    """queue to add new links to the 'new' page. note that this isn't
 #       in use until the spam_q plumbing is"""
 #
-#    def _run_new_links(msgs, chan):
-#        fnames = [ msg.body for msg in msgs ]
-#        links = Link._by_fullname(fnames, data=True, return_dict=False)
+#    def _run_new_links(msg):
+#        link = Link._by_fullname(msg.body, data=True)
 #
-#        srs = Subreddit._byID([l.sr_id for l in links], return_dict=True)
+#        srs = Subreddit._byID(l.sr_id)
+#        results = [get_links(sr, 'new', 'all')]
+#        add_queries(results, insert_items = [link])
 #
-#        results = []
-#
-#        _sr = lambda l: l.sr_id
-#        for sr_id, sr_links in itertools.groupby(sorted(links, key=_sr),
-#                                                 key=_sr):
-#            sr = srs[sr_id]
-#            results = [get_links(sr, 'new', 'all')]
-#            add_queries(results, insert_items = sr_links)
-#
-#    amqp.handle_items('newpage_q', _run_new_links, limit=100)
-
+#    amqp.consume_items('newpage_q', _run_new_links, limit=100)
 
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
@@ -1054,31 +1041,21 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(drain = False, limit = 100):
+def process_votes(limit=None):
+    # limit is taken but ignored for backwards compatibility
 
-    def _handle_votes(msgs, chan):
-        to_do = []
-        uids = set()
-        tids = set()
-        for x in msgs:
-            r = pickle.loads(x.body)
-            uid, tid, dir, ip, organic, cheater = r
+    def _handle_vote(msg):
+        r = pickle.loads(msg.body)
 
-            print (uid, tid, dir, ip, organic, cheater)
+        uid, tid, dir, ip, organic, cheater = r
+        voter = Account._byID(uid, data=True)
+        votee = Thing._by_fullname(tid, data = True)
 
-            uids.add(uid)
-            tids.add(tid)
-            to_do.append((uid, tid, dir, ip, organic, cheater))
+        print (voter, votee, dir, ip, organic, cheater)
+        handle_vote(voter, votee, dir, ip, organic,
+                    cheater = cheater)
 
-        users = Account._byID(uids, data = True, return_dict = True)
-        things = Thing._by_fullname(tids, data = True, return_dict = True)
-
-        for uid, tid, dir, ip, organic, cheater in to_do:
-            handle_vote(users[uid], things[tid], dir, ip, organic,
-                        cheater = cheater)
-
-    amqp.handle_items('register_vote_q', _handle_votes, limit = limit,
-                      drain = drain)
+    amqp.consume_items('register_vote_q', _handle_vote)
 
 def catch_up_batch_queries():
     # catch up on batched_time_times queries that haven't been run
