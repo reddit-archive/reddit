@@ -708,9 +708,18 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             self._name = 'un' + self._name
 
         @classmethod
-        def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True):
-            """looks up all the relationships between thing1_ids and thing2_ids
-            and caches them"""
+        def _fast_query_timestamp_touch(cls, thing1):
+            assert thing1._loaded
+            timestamp_dict = getattr(thing1, 'fast_query_timestamp', {}).copy()
+            timestamp_dict[cls._type_name] = datetime.now(g.tz)
+            thing1.fast_query_timestamp = timestamp_dict
+            thing1._commit()
+
+        @classmethod
+        def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
+                        timestamp_optimize = False):
+            """looks up all the relationships between thing1_ids and
+               thing2_ids and caches them"""
             prefix = thing_prefix(cls.__name__)
 
             thing1_dict = dict((t._id, t) for t in tup(thing1s))
@@ -721,16 +730,46 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
             name = tup(name)
 
+            def can_skip_lookup(t1, t2, name):
+                # we can't possibly have voted on things that were
+                # created after the last time we voted. for relations
+                # that have an invariant like this we can avoid doing
+                # these lookups as long as the relation takes
+                # responsibility for keeping the timestamp up-to-date
+                thing1 = thing1_dict[t1]
+                thing2 = thing2_dict[t2]
+
+                # check to see if we have the history information
+                if not thing1._loaded:
+                    return False
+                if not hasattr(thing1, 'fast_query_timestamp'):
+                    return False
+
+                last_done = thing1.fast_query_timestamp.get(cls._type_name,None)
+
+                if not last_done:
+                    return False
+
+                if thing2._date > last_done:
+                    return True
+
+                return False
+
+            # permute all of the pairs
             pairs = set((x, y, n)
                         for x in thing1_ids
                         for y in thing2_ids
                         for n in name)
 
             def items_db(pairs):
+                rel_ids = {}
+
                 t1_ids = set()
                 t2_ids = set()
                 names = set()
                 for t1, t2, name in pairs:
+                    if timestamp_optimize and can_skip_lookup(t1, t2, name):
+                        continue
                     t1_ids.add(t1)
                     t2_ids.add(t2)
                     names.add(name)
@@ -741,21 +780,21 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                                eager_load = eager_load,
                                data = data)
 
-                rel_ids = {}
                 for rel in q:
                     #TODO an alternative for multiple
                     #relations with the same keys
                     #l = rel_ids.setdefault((rel._thing1_id, rel._thing2_id), [])
                     #l.append(rel._id)
                     rel_ids[(rel._thing1_id, rel._thing2_id, rel._name)] = rel._id
-                
+
                 for p in pairs:
                     if p not in rel_ids:
                         rel_ids[p] = None
-                        
+
                 return rel_ids
 
             res = sgm(cache, pairs, items_db, prefix)
+
             #convert the keys back into objects
 
             # populate up the local-cache in batch
@@ -1194,14 +1233,15 @@ def MultiRelation(name, *relations):
             return Merge(queries)
 
         @classmethod
-        def _fast_query(cls, sub, obj, name, data=True, eager_load=True):
+        def _fast_query(cls, sub, obj, name, data=True, eager_load=True,
+                        timestamp_optimize = False):
             #divide into types
             def type_dict(items):
                 types = {}
                 for i in items:
                     types.setdefault(i.__class__, []).append(i)
                 return types
-            
+
             sub_dict = type_dict(tup(sub))
             obj_dict = type_dict(tup(obj))
 
@@ -1211,7 +1251,8 @@ def MultiRelation(name, *relations):
                 t1, t2 = types
                 if sub_dict.has_key(t1) and obj_dict.has_key(t2):
                     res.update(rel._fast_query(sub_dict[t1], obj_dict[t2], name,
-                                               data = data, eager_load=eager_load))
+                                               data = data, eager_load=eager_load,
+                                               timestamp_optimize = timestamp_optimize))
 
             return res
 

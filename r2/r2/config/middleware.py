@@ -75,7 +75,11 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
                 if c.response.headers.has_key('x-sup-id'):
                     d['x-sup-id'] = c.response.headers['x-sup-id']
 
-        url = '/error/document/?%s' % (urllib.urlencode(d))
+        extension = environ.get("extension")
+        if extension:
+            url = '/error/document/.%s?%s' % (extension, urllib.urlencode(d))
+        else:
+            url = '/error/document/?%s' % (urllib.urlencode(d))
         return url
 
 class DebugMiddleware(object):
@@ -163,19 +167,32 @@ class ProfilingMiddleware(DebugMiddleware):
         from pstats import Stats
 
         tmpfile = tempfile.NamedTemporaryFile()
-        try:
-            file, line = prof_arg.split(':')
-            line, func = line.split('(')
-            func = func.strip(')')
-        except:
-            file = line = func = None
+        file = line = func = None
+        sort_order = 'time'
+        if prof_arg:
+            tokens = prof_arg.split(',')
+        else:
+            tokens = ()
+
+        for token in tokens:
+            if token == "cum":
+                sort_order = "cumulative"
+            elif token == "name":
+                sort_order = "name"
+            else:
+                try:
+                    file, line = prof_arg.split(':')
+                    line, func = line.split('(')
+                    func = func.strip(')')
+                except:
+                    file = line = func = None
 
         try:
             profile.runctx('execution_func()',
                            globals(), locals(), tmpfile.name)
             out = StringIO()
             stats = Stats(tmpfile.name, stream=out)
-            stats.sort_stats('time', 'calls')
+            stats.sort_stats(sort_order, 'calls')
 
             def parse_table(t, ncol):
                 table = []

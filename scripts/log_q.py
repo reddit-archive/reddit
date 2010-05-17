@@ -57,17 +57,33 @@ def run(limit=100, streamfile=None, verbose=False):
 
         tb = []
 
-        key_material = "exc_type"
+        key_material = exc_type
         pretty_lines = []
+
+        make_lock_seen = False
 
         for tpl in d['traceback']:
             tb.append(tpl)
             filename, lineno, funcname, text = tpl
+            if text is None:
+                pass
+            elif (text.startswith("with g.make_lock(") or
+                  text.startswith("with make_lock(")):
+                make_lock_seen = True
             key_material += "%s %s " % (filename, funcname)
             pretty_lines.append ("%s:%s: %s()" % (filename, lineno, funcname))
             pretty_lines.append ("    %s" % text)
 
-        fingerprint = md5(key_material).hexdigest()
+        if exc_desc.startswith("QueuePool limit of size"):
+            fingerprint = "QueuePool_overflow"
+        elif exc_desc.startswith("error 2 from memcached_get: HOSTNAME "):
+            fingerprint = "memcache_suckitude"
+        elif exc_type == "TimeoutExpired" and make_lock_seen:
+            fingerprint = "make_lock_timeout"
+        elif exc_type == "NoServerAvailable":
+            fingerprint = "cassandra_suckitude"
+        else:
+            fingerprint = md5(key_material).hexdigest()
 
         nickname_key = "error_nickname-" + fingerprint
         status_key = "error_status-" + fingerprint
@@ -160,13 +176,13 @@ def run(limit=100, streamfile=None, verbose=False):
             elif d['type'] == 'exception':
                 try:
                     log_exception(d, daystring)
-                except:
-                    print "Error in log_exception()"
+                except Exception as e:
+                    print "Error in log_exception(): %r" % e
             elif d['type'] == 'text':
                 try:
                     log_text(d, daystring)
-                except:
-                    print "Error in log_text()"
+                except Exception as e:
+                    print "Error in log_text(): %r" % e
             else:
                 streamlog ("wtf is %r" % d['type'], True)
 

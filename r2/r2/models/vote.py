@@ -102,16 +102,7 @@ class Vote(MultiRelation('vote',
         v._commit()
         g.cache.delete(queries.prequeued_vote_key(sub, obj))
 
-        lastvote_attr_name = 'last_vote_' + obj.__class__.__name__
-        try:
-            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
-        except TypeError:
-            # this temporarily works around an issue with timezones in
-            # a really hacky way. Remove me later
-            setattr(sub, lastvote_attr_name, None)
-            sub._commit()
-            setattr(sub, lastvote_attr_name, datetime.now(g.tz))
-        sub._commit()
+        v._fast_query_timestamp_touch(sub)
 
         up_change, down_change = score_changes(amount, oldamount)
 
@@ -136,7 +127,8 @@ class Vote(MultiRelation('vote',
     @classmethod
     def likes(cls, sub, obj):
         votes = cls._fast_query(sub, obj, ('1', '-1'),
-                                data=False, eager_load=False)
+                                data=False, eager_load=False,
+                                timestamp_optimize=True)
         votes = dict((tuple(k[:2]), v) for k, v in votes.iteritems() if v)
         return votes
 

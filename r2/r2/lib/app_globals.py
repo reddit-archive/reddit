@@ -36,6 +36,7 @@ class Globals(object):
 
     int_props = ['page_cache_time',
                  'solr_cache_time',
+                 'num_mc_clients',
                  'MIN_DOWN_LINK',
                  'MIN_UP_KARMA',
                  'MIN_DOWN_KARMA',
@@ -73,16 +74,17 @@ class Globals(object):
                   'disallow_db_writes',
                   'exception_logging',
                   'amqp_logging',
+                  'read_only_mode',
                   ]
 
     tuple_props = ['memcaches',
-                   'rec_cache',
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
                    'permacache_memcaches',
                    'cassandra_seeds',
-                   'permacaches',
+                   'url_caches',
+                   'url_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
@@ -138,55 +140,30 @@ class Globals(object):
 
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
-        num_mc_clients = 2# if self.running_as_script else 10
+        num_mc_clients = self.num_mc_clients
 
-        c_mc = CMemcache(self.memcaches, num_clients = num_mc_clients, legacy=True)
-        rmc = CMemcache(self.rendercaches, num_clients = num_mc_clients,
-                        noreply=True, no_block=True)
-        lrmc = None
-        if self.local_rendercache:
-            lrmc = CMemcache(self.local_rendercache,
-                             num_clients = num_mc_clients,
-                             noreply=True, no_block=True)
-        smc = CMemcache(self.servicecaches, num_clients = num_mc_clients)
-        rec_cache = None # we're not using this for now
+        self.cache_chains = []
 
-        pmc_chain = (localcache_cls(),)
-        if self.permacache_memcaches:
-            pmc_chain += (CMemcache(self.permacache_memcaches,
-                                    num_clients=num_mc_clients,
-                                    legacy=True),)
-        if self.cassandra_seeds:
-            self.cassandra_seeds = list(self.cassandra_seeds)
-            random.shuffle(self.cassandra_seeds)
-            pmc_chain += (CassandraCache('permacache', 'permacache',
-                                         self.cassandra_seeds),)
-        if self.permacaches:
-            pmc_chain += (CMemcache(self.permacaches,
-                                    num_clients=num_mc_clients,
-                                    legacy=True),)
-        if len(pmc_chain) == 1:
-            print 'Warning: proceding without a permacache'
+        self.permacache = self.init_cass_cache('permacache',
+                                          self.permacache_memcaches,
+                                          self.cassandra_seeds)
 
-        self.permacache = CassandraCacheChain(pmc_chain, cache_negative_results = True)
+        self.urlcache = self.init_cass_cache('urls',
+                                        self.url_caches,
+                                        self.url_seeds)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.memcache = c_mc # we'll keep using this one for locks
-                             # intermediately
+        self.cache = self.init_memcached(self.memcaches)
+        self.memcache = self.cache.caches[1] # used by lock.py
 
-        self.cache = MemcacheChain((localcache_cls(), c_mc))
-        if lrmc:
-            self.rendercache = MemcacheChain((localcache_cls(), lrmc, rmc))
-        else:
-            self.rendercache = MemcacheChain((localcache_cls(), rmc))
-        self.servicecache = MemcacheChain((localcache_cls(), smc))
-        self.rec_cache = rec_cache
+        self.rendercache = self.init_memcached(self.rendercaches,
+                                               noreply=True, no_block=True)
+
+        self.servicecache = self.init_memcached(self.servicecaches)
 
         self.make_lock = make_lock_factory(self.memcache)
-        cache_chains = [self.cache, self.permacache, self.rendercache,
-                        self.servicecache]
 
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
@@ -199,15 +176,17 @@ class Globals(object):
         self.dbm = self.load_db_params(global_conf)
 
         # can't do this until load_db_params() has been called
-        self.hardcache = HardcacheChain((localcache_cls(), c_mc,
+        self.hardcache = HardcacheChain((localcache_cls(),
+                                         self.memcache,
                                          HardCache(self)),
                                         cache_negative_results = True)
-        cache_chains.append(self.hardcache)
+        self.cache_chains.append(self.hardcache)
 
         # I know this sucks, but we need non-request-threads to be
         # able to reset the caches, so we need them be able to close
         # around 'cache_chains' without being able to call getattr on
         # 'g'
+        cache_chains = self.cache_chains[::]
         def reset_caches():
             for chain in cache_chains:
                 chain.reset()
@@ -317,7 +296,37 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app started %s at %s" % (self.short_version, datetime.now()))
+            self.log.error("reddit app %s:%s started %s at %s" % (self.reddit_host, self.reddit_pid,
+                                                                  self.short_version, datetime.now()))
+
+    def init_memcached(self, caches, **kw):
+        return self.init_cass_cache(None, caches, None, memcached_kw = kw)
+
+    def init_cass_cache(self, cluster, caches, cassandra_seeds,
+                   memcached_kw = {}, cassandra_kw = {}):
+        localcache_cls = (SelfEmptyingCache if self.running_as_script
+                          else LocalCache)
+
+        pmc_chain = (localcache_cls(),)
+
+        # if caches, append
+        if caches:
+            pmc_chain += (CMemcache(caches, num_clients=self.num_mc_clients,
+                                    **memcached_kw),)
+
+        # if seeds, append
+        if cassandra_seeds:
+            cassandra_seeds = list(cassandra_seeds)
+            random.shuffle(cassandra_seeds)
+            pmc_chain += (CassandraCache(cluster, cluster, cassandra_seeds,
+                                         **cassandra_kw),)
+            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
+        else:
+            mc =  MemcacheChain(pmc_chain)
+
+        self.cache_chains.append(mc)
+        return mc
+
 
     @staticmethod
     def to_bool(x):

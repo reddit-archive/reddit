@@ -20,6 +20,19 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%
+   boring_starters = ("{", "<")
+   boring_middles = ("Pylons", "r2/lib/base.py", "middleware.py")
+
+   def boring(line):
+      if any(line.startswith(b) for b in boring_starters):
+          return True
+      elif any(b in line for b in boring_middles):
+          return True
+      else:
+          return False
+%>
+
 <html>
   <head>
     <title>Code Profile</title>
@@ -69,7 +82,7 @@
         <td><pre>${s}</pre></td>
         %endfor
         <% line = t[-1] %>
-        %if line.startswith('{'):
+        %if boring(line):
         <td class="bltin">${line|h}</td>
         %else:
         <td class="a"><a href="${thing.path}?profile=${line|u}">${line|h}</a></td>

@@ -1156,10 +1156,6 @@ class ValidIP(Validator):
             self.set_error(errors.BANNED_IP)
         return request.ip
 
-class VOkayDomain(Validator):
-    def run(self, url):
-        return is_banned_domain(url)
-
 class VDate(Validator):
     """
     Date checker that accepts string inputs in %m/%d/%Y format.

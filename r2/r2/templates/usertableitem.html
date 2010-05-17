@@ -46,11 +46,15 @@
     ${plain_link(_("send message"), 
                  "/message/compose?to=%s" % (thing.user.name))}
       &nbsp;
-  %elif thing.name == "remove" and thing.editable:
-    ${ynbutton(_("remove"), "removed", thing.remove_action, 
-               callback="deleteRow",
-               hidden_data = dict(type = thing.type, 
-                                  id = thing.user._fullname, 
-                                  container = thing.container_name))}
+  %elif thing.name == "remove":
+    %if thing.editable:
+      ${ynbutton(_("remove"), "removed", thing.remove_action,
+                 callback="deleteRow",
+                 hidden_data = dict(type = thing.type,
+                                    id = thing.user._fullname,
+                                    container = thing.container_name))}
+    %else:
+      <span class="gray">${_("can't remove")}</span>
+    %endif
   %endif
 </%def>

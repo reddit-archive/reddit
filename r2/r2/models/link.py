@@ -80,7 +80,7 @@ class Link(Thing, Printable):
             sr = None
 
         url = cls.by_url_key(url)
-        link_ids = g.permacache.get(url)
+        link_ids = g.urlcache.get(url)
         if link_ids:
             links = Link._byID(link_ids, data = True, return_dict = False)
             links = [l for l in links if not l._deleted]
@@ -97,20 +97,20 @@ class Link(Thing, Printable):
     def set_url_cache(self):
         if self.url != 'self':
             key = self.by_url_key(self.url)
-            link_ids = g.permacache.get(key) or []
+            link_ids = g.urlcache.get(key) or []
             if self._id not in link_ids:
                 link_ids.append(self._id)
-            g.permacache.set(key, link_ids)
+            g.urlcache.set(key, link_ids)
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the
         cache with the new url."""
         if old_url != 'self':
             key = self.by_url_key(old_url)
-            link_ids = g.permacache.get(key) or []
+            link_ids = g.urlcache.get(key) or []
             while self._id in link_ids:
                 link_ids.remove(self._id)
-            g.permacache.set(key, link_ids)
+            g.urlcache.set(key, link_ids)
         self.set_url_cache()
 
     @property
@@ -142,15 +142,18 @@ class Link(Thing, Printable):
 
     @classmethod
     def _somethinged(cls, rel, user, link, name):
-        return rel._fast_query(tup(user), tup(link), name = name)
+        return rel._fast_query(tup(user), tup(link), name = name,
+                               timestamp_optimize = True)
 
     def _something(self, rel, user, somethinged, name):
         try:
             saved = rel(user, self, name=name)
             saved._commit()
-            return saved
         except CreationError, e:
             return somethinged(user, self)[(user, self, name)]
+
+        rel._fast_query_timestamp_touch(user)
+        return saved
 
     def _unsomething(self, user, somethinged, name):
         saved = somethinged(user, self)[(user, self, name)]
@@ -498,6 +501,7 @@ class Comment(Thing, Printable):
     _defaults = dict(reported = 0, parent_id = None, 
                      moderator_banned = False, new = False, 
                      banned_before_moderator = False)
+    _essentials = ('link_id', 'author_id')
 
     def _markdown(self):
         pass
@@ -583,9 +587,7 @@ class Comment(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
-
         #fetch parent links
-
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
 
@@ -642,7 +644,7 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = (item.sr_id in can_reply_srs)
+            item.can_reply = c.can_reply or (item.sr_id in can_reply_srs) 
 
 
             # not deleted on profile pages,
@@ -915,7 +917,7 @@ class Message(Thing, Printable):
 
         # load the inbox relations for the messages to determine new-ness
         # TODO: query cache?
-        inbox = Inbox._fast_query(c.user, 
+        inbox = Inbox._fast_query(c.user,
                                   [item.lookups[0] for item in wrapped],
                                   ['inbox', 'selfreply'])
 
@@ -923,15 +925,17 @@ class Message(Thing, Printable):
         inbox = dict((m._fullname, v)
                      for (u, m, n), v in inbox.iteritems() if v)
 
-        modinbox = ModeratorInbox._query(
-            ModeratorInbox.c._thing2_id == [item._id for item in wrapped],
-            data = True)
+        msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
+
+        modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
+                                              msgs,
+                                              ['inbox'] )
 
         # best to not have to eager_load the things
         def make_message_fullname(mid):
             return "t%s_%s" % (utils.to36(Message._type_id), utils.to36(mid))
         modinbox = dict((make_message_fullname(v._thing2_id), v)
-                        for v in modinbox)
+                     for (u, m, n), v in modinbox.iteritems() if v)
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
@@ -1036,10 +1040,15 @@ class Inbox(MultiRelation('inbox',
         return i
 
     @classmethod
-    def set_unread(cls, thing, unread):
+    def set_unread(cls, thing, unread, to = None):
         inbox_rel = cls.rel(Account, thing.__class__)
-        inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
-                                 eager_load = True)
+        if to:
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                     eager_load = True)
+        else:
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+                                     inbox_rel.c._thing1_id == to._id,
+                                     eager_load = True)
         res = []
         for i in inbox:
             if i:

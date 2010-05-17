@@ -1283,3 +1283,22 @@ $(function() {
         last_click();
 
     });
+
+function friend(account_fullname) {
+    var ua = $(".author.id-" + account_fullname).addClass("friend")
+        .next(".userattrs");
+    var add_braces = (!ua.html());
+
+    ua.html(((add_braces) ? " [" : "") + 
+            '<a class="friend" title="friend" href="/prefs/friends">F</a>' + 
+            ((add_braces) ? "]" : ""));
+}
+
+function unfriend(account_fullname) {
+    var ua = $(".author.id-" + account_fullname).removeClass("friend")
+        .next(".userattrs");
+    ua.find("a.friend").remove();
+    if (ua.find("a").length == 0) {
+        ua.html("");
+    }
+}

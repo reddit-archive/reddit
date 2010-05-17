@@ -21,51 +21,53 @@
 ################################################################################
 from r2.models import *
 from r2.lib.utils import fetch_things2
+from pylons import g
+from r2.lib.db import queries
+
 
 import string
 import random
 
-def populate(sr_name = 'reddit.com', sr_title = "reddit.com: what's new online",
-             num = 100):
-    create_accounts(num)
-
-    a = list(Account._query(limit = 1))[0]
-
+def populate(num_srs = 10, num_users = 10, num_links = 100):
     try:
-        sr = Subreddit._new(name = sr_name, title = sr_title,
-                            ip = '0.0.0.0', author_id = a._id)
-        sr._commit()
-    except SubredditExists:
-        pass
+        a = Account._by_name(g.system_user)
+    except NotFound:
+        a = register(g.system_user, "password")
 
-    create_links(num)
-    
-def create_accounts(num):
-    for i in range(num):
+    srs = []
+    for i in range(num_srs):
+        name = "reddit_test%d" % i
+        try:
+            sr = Subreddit._new(name = name, title = "everything about #%d"%i,
+                                ip = '0.0.0.0', author_id = a._id)
+            sr._downs = 10
+            sr.lang = "en"
+            sr._commit()
+        except SubredditExists:
+            sr = Subreddit._by_name(name)
+        srs.append(sr)
+
+    accounts = []
+    for i in range(num_users):
         name_ext = ''.join([ random.choice(string.letters)
                              for x
                              in range(int(random.uniform(1, 10))) ])
         name = 'test_' + name_ext
         try:
-            register(name, name)
+            a = register(name, name)
         except AccountExists:
-            pass
+            a = Account._by_name(name)
+        accounts.append(a)
 
-def create_links(num):
-    from r2.lib.db import queries
-
-    accounts = list(Account._query(limit = num, data = True))
-    subreddits = list(Subreddit._query(limit = num, data = True))
-    for i in range(num):
+    for i in range(num_links):
         id = random.uniform(1,100)
         title = url = 'http://google.com/?q=' + str(id)
         user = random.choice(accounts)
-        sr = random.choice(subreddits)
+        sr = random.choice(srs)
         l = Link._submit(title, url, user, sr, '127.0.0.1')
         queries.new_link(l)
 
     queries.worker.join()
-        
 
 
 def by_url_cache():

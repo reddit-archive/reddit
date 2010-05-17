@@ -34,8 +34,13 @@ class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
                  show_distinguish = False,
-                 show_indict = False, **kw):
+                 show_indict = False, is_link=False, **kw):
         show_report = show_report and c.user_is_loggedin
+        show_ignore = (thing.show_reports or
+                       (thing.reveal_trial_info and not thing.show_spam))
+        approval_checkmark = getattr(thing, "approval_checkmark", None)
+        show_approve = (thing.show_spam or show_ignore or
+                        (is_link and approval_checkmark is None))
 
         Styled.__init__(self, style = style,
                         thing = thing,
@@ -43,11 +48,10 @@ class PrintableButtons(Styled):
                         can_ban = thing.can_ban,
                         show_spam = thing.show_spam,
                         show_reports = thing.show_reports,
-                        show_ignore = thing.show_reports or
-                            (thing.reveal_trial_info and not thing.show_spam),
-                        approval_checkmark = getattr(thing,
-                                             "approval_checkmark", None),
+                        show_ignore = show_ignore,
+                        approval_checkmark = approval_checkmark,
                         show_delete = show_delete,
+                        show_approve = show_approve,
                         show_report = show_report,
                         show_indict = show_indict,
                         show_distinguish = show_distinguish,
@@ -64,7 +68,9 @@ class LinkButtons(PrintableButtons):
         is_author = (c.user_is_loggedin and thing.author and
                      c.user.name == thing.author.name)
         # do we show the report button?
-        show_report = not is_author and report
+        show_report = (not is_author and
+                       report and
+                       getattr(thing, "promoted", None) is None)
 
         if c.user_is_admin and thing.promoted is None:
             show_report = False
@@ -112,13 +118,13 @@ class LinkButtons(PrintableButtons):
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,
+                                  is_link = True,
                                   **kw)
 
 class CommentButtons(PrintableButtons):
     def __init__(self, thing, delete = True, report = True):
         # is the current user the author?
-        is_author = (c.user_is_loggedin and thing.author and
-                     c.user.name == thing.author.name)
+        is_author = thing.is_author
         # do we show the report button?
         show_report = not is_author and report
         # do we show the delete button?

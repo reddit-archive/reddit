@@ -129,7 +129,9 @@ class Reddit(Templated):
         #add the infobar
         self.infobar = None
         if self.show_firsttext and not infotext:
-            if c.firsttime == 'iphone':
+            if g.read_only_mode:
+                infotext = strings.read_only_msg
+            elif c.firsttime == 'iphone':
                 infotext = strings.iphone_first
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext
@@ -156,9 +158,9 @@ class Reddit(Templated):
         if c.site.type != 'public':
             buttons.append(NamedButton('contributors',
                                        css_class = 'reddit-contributors'))
-        elif (c.user_is_loggedin and c.site.use_whitelist and
+        elif (c.user_is_loggedin and
               (c.site.is_moderator(c.user) or c.user_is_admin)):
-            buttons.append(NavButton(menu.whitelist, "contributors",
+            buttons.append(NavButton(menu.contributors, "contributors",
                                      css_class = 'reddit-contributors'))
 
         buttons.extend([
@@ -184,7 +186,7 @@ class Reddit(Templated):
         if self.searchbox:
             ps.append(SearchForm())
 
-        if not c.user_is_loggedin and self.loginbox:
+        if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
         if not isinstance(c.site, FakeSubreddit):
@@ -456,7 +458,7 @@ class SubredditInfoBar(CachedTemplate):
     def nav(self):
         buttons = [NavButton(plurals.moderators, 'moderators')]
         if self.type != 'public':
-            buttons.append(NavButton(plurals.contributors, 'contributors'))
+            buttons.append(NavButton(getattr(plurals, "approved submitters"), 'contributors'))
 
         if self.is_moderator or self.is_admin:
             buttons.extend([
@@ -783,6 +785,107 @@ class LinkInfoPage(Reddit):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
+class CommentPane(Templated):
+    def cache_key(self):
+        return "_".join(map(str, ["commentpane", self.article._fullname,
+                                  self.article.num_comments,
+                                  self.sort, self.num, c.lang,
+                                  self.can_reply, c.render_style]))
+
+    def __init__(self, article, sort, comment, context, num, **kw):
+        # keys: lang, num, can_reply, render_style
+        # disable: admin
+
+        from r2.models import CommentBuilder, NestedListing
+        from r2.controllers.reddit_base import UnloggedUser
+
+        self.sort = sort
+        self.num = num
+        self.article = article
+
+        # don't cache on permalinks or contexts, and keep it to html
+        try_cache = not comment and not context and (c.render_style == "html")
+        self.can_reply = False
+        if try_cache and c.user_is_loggedin:
+            sr = article.subreddit_slow
+            c.can_reply = self.can_reply = sr.can_comment(c.user)
+            # don't cache if the current user can ban comments in the listing
+            try_cache = not sr.can_ban(c.user)
+            # don't cache for users with custom hide threshholds
+            try_cache = (c.user.pref_min_comment_score ==
+                         Account._defaults["pref_min_comment_score"])
+
+        def renderer():
+            builder = CommentBuilder(article, sort, comment, context, **kw)
+            listing = NestedListing(builder, num = num,
+                                    parent_name = article._fullname)
+            return listing.listing()
+
+        # generate the listing we would make for this user if caching is disabled.
+        my_listing = renderer()
+
+        # for now, disable the cache if the user happens to be an author of anything.
+        if try_cache:
+            for t in self.listing_iter(my_listing):
+                if getattr(t, "is_author", False):
+                    try_cache = False
+                    break
+
+        if try_cache:
+            # try to fetch the comment tree from the caceh
+            key = self.cache_key()
+            self.rendered = g.cache.get(key)
+            if not self.rendered:
+                # spoof an unlogged in user
+                user = c.user
+                logged_in = c.user_is_loggedin
+                try:
+                    c.user = UnloggedUser([c.lang])
+                    c.user_is_loggedin = False
+
+                    # render as if not logged in (but possibly with reply buttons)
+                    self.rendered = renderer().render()
+                    g.cache.set(key, self.rendered, time = 30)
+
+                finally:
+                    # undo the spoofing
+                    c.user = user
+                    c.user_is_loggedin = logged_in
+
+            # figure out what needs to be updated on the listing
+            likes = []
+            dislikes = []
+            is_friend = set()
+            for t in self.listing_iter(my_listing):
+                if not hasattr(t, "likes"):
+                    # this is for MoreComments and MoreRecursion
+                    continue
+                if getattr(t, "friend", False):
+                    is_friend.add(t.author._fullname)
+                if t.likes:
+                    likes.append(t._fullname)
+                if t.likes is False:
+                    dislikes.append(t._fullname)
+            self.rendered += ThingUpdater(likes = likes,
+                                          dislikes = dislikes,
+                                          is_friend = is_friend).render()
+            g.log.debug("using comment page cache")
+        else:
+            self.rendered = my_listing.render()
+
+    def listing_iter(self, l):
+        for t in l:
+            yield t
+            for x in self.listing_iter(getattr(t, "child", [])):
+                yield x
+
+    def render(self, *a, **kw):
+        return self.rendered
+
+class ThingUpdater(Templated):
+    pass
+
+
 class LinkInfoBar(Templated):
     """Right box for providing info about a link."""
     def __init__(self, a = None):
@@ -978,7 +1081,7 @@ class RedditError(BoringPage):
 class Reddit404(BoringPage):
     site_tracking = False
     def __init__(self):
-        ch=random.choice(['a','b','c','d','e'])
+        ch=random.choice(['a','b','c'])
         BoringPage.__init__(self, _("page not found"), loginbox=False,
                             show_sidebar = False, 
                             content=UnfoundPage(ch))
@@ -996,9 +1099,10 @@ class ErrorPage(Templated):
 class Profiling(Templated):
     """Debugging template for code profiling using built in python
     library (only used in middleware)"""
-    def __init__(self, header = '', table = [], caller = [], callee = [], path = ''):
+    def __init__(self, header = '', table = [], caller = [], callee = [],
+                 path = '', sort_order = ''):
         Templated.__init__(self, header = header, table = table, caller = caller,
-                         callee = callee, path = path)
+                           callee = callee, path = path)
 
 class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
@@ -1851,6 +1955,7 @@ class WrappedUser(CachedTemplate):
                                 karma = karma,
                                 ip_span = ip_span,
                                 context_deleted = context_deleted,
+                                fullname = user._fullname,
                                 user_deleted = user._deleted)
 
 # Classes for dealing with friend/moderator/contributor/banned lists
@@ -1883,6 +1988,7 @@ class UserList(Templated):
     _class         = ""
     destination    = "friend"
     remove_action  = "unfriend"
+    editable_fn    = None
 
     def __init__(self, editable = True):
         self.editable = editable
@@ -1892,8 +1998,13 @@ class UserList(Templated):
         """Convenience method for constructing a UserTableItem
         instance of the user with type, container_name, etc. of this
         UserList instance"""
+        editable = self.editable
+
+        if self.editable_fn and not self.editable_fn(user):
+            editable = False
+
         return UserTableItem(user, self.type, self.cells, self.container_name,
-                             self.editable, self.remove_action)
+                             editable, self.remove_action)
 
     @property
     def users(self, site = None):
@@ -1940,13 +2051,11 @@ class ContributorList(UserList):
 
     @property
     def form_title(self):
-        if c.site.type == "public":
-            return _("add to whitelist")
-        return _('add contributor')
+        return _("add approved submitter")
 
     @property
     def table_title(self):
-        return _("contributors to %(reddit)s") % dict(reddit = c.site.name)
+        return _("approved submitters for %(reddit)s") % dict(reddit = c.site.name)
 
     def user_ids(self):
         return c.site.contributors
@@ -1962,6 +2071,14 @@ class ModList(UserList):
     @property
     def table_title(self):
         return _("moderators to %(reddit)s") % dict(reddit = c.site.name)
+
+    def editable_fn(self, user):
+        if not c.user_is_loggedin:
+            return False
+        elif c.user_is_admin:
+            return True
+        else:
+            return c.site.can_demod(c.user, user)
 
     def user_ids(self):
         return c.site.moderators
@@ -2412,8 +2529,12 @@ class RedditTraffic(Traffic):
         if self.has_data:
             imp_by_day = [[] for i in range(7)]
             uni_by_day = [[] for i in range(7)]
-            dates, imps    = zip(*self.impressions_day_chart)
-            dates, uniques = zip(*self.uniques_day_chart)
+            if c.site.domain:
+                dates, imps, foo    = zip(*self.impressions_day_chart)
+                dates, uniques, foo = zip(*self.uniques_day_chart)
+            else:
+                dates, imps    = zip(*self.impressions_day_chart)
+                dates, uniques = zip(*self.uniques_day_chart)
             self.uniques_mean     = sum(map(float, uniques))/len(uniques)
             self.impressions_mean = sum(map(float, imps))/len(imps)
             for i, d in enumerate(dates):

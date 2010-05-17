@@ -71,13 +71,15 @@
            mail_img += ".png"
            mail_img_class = 'havemail'
            mail_img_title = "new mail!"
+           mail_path = "/message/unread/"
          else:
            mail_img += "gray.png"
            mail_img_class = 'nohavemail'
            mail_img_title = "no new mail"
+           mail_path = "/message/inbox/"
          mail_img = static(mail_img)
        %>
-      ${img_link(_("messages"), mail_img, path="/message/inbox/",
+      ${img_link(_("messages"), mail_img, path=mail_path,
                  alt = mail_img_title, title = mail_img_title, 
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
@@ -88,13 +90,15 @@
               mail_img += ".png"
               mail_img_class = 'havemail'
               mail_img_title = "new mail!"
+              mail_path = "/message/moderator/"
             else:
               mail_img += "gray.png"
               mail_img_class = 'nohavemail'
               mail_img_title = "no new mail"
+              mail_path = "/message/moderator/"
             mail_img = static(mail_img)
           %>
-         ${img_link(_("mod messages"), mail_img , path="/message/moderator/",
+         ${img_link(_("mod messages"), mail_img , path=mail_path,
                     alt = mail_img_title, title = mail_img_title, 
                     _id = "modmail", _class=mail_img_class)}
          ${separator("|")}

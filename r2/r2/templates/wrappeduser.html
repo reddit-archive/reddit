@@ -29,9 +29,10 @@
     <span>[deleted]</span>
   %else:
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
-               _class = thing.author_cls, _sr_path = False, target=target)}
+               _class = thing.author_cls + (" id-%s" % thing.fullname), 
+               _sr_path = False, target=target)}
+    <span class="userattrs">
     %if thing.attribs:
-      <span class="userattrs">
       &#32;[
       %for priority, abbv, css_class, label, attr_link, img in thing.attribs:
         %if attr_link:
@@ -56,8 +57,8 @@
         %endif
       %endfor
       ]
-      </span>
     %endif
+    </span>
   %endif
 %endif
 

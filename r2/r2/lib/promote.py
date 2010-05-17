@@ -310,7 +310,7 @@ def new_promotion(title, url, user, ip):
     l._commit()
 
     # set the status of the link, populating the query queue
-    if c.user_is_sponsor or getattr(user, "trusted_sponsor", False):
+    if c.user_is_sponsor or user.trusted_sponsor:
         set_status(l, STATUS.accepted)
     else:
         set_status(l, STATUS.unpaid)

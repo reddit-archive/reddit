@@ -46,7 +46,8 @@ def log_exception(e, e_type, e_value, e_traceback):
     d['traceback'] = traceback.extract_tb(e_traceback)
 
     d['exception_type'] = e.__class__.__name__
-    d['exception_desc'] = str(e)
+    s = str(e)
+    d['exception_desc'] = s[:10000]
 
     amqp.add_item(Q, pickle.dumps(d))
 

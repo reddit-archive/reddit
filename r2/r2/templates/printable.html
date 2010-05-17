@@ -122,11 +122,7 @@ thing id-${what._fullname}
    fullname = this._fullname
 %>
   <div class="arrow ${_class}" 
-       %if c.user_is_loggedin:
-         onclick="$(this).vote('${thing.votehash}', null, event)"
-       %else:
-         onclick="showcover(true, 'vote_${fullname}')"
-       %endif
+       onclick="$(this).vote('${thing.votehash}', null, event)"
        >
   </div>
 </%def>

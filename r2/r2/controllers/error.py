@@ -48,6 +48,8 @@ except Exception, e:
         import os
         os._exit(1)
 
+NUM_FAILIENS = 3
+
 redditbroke =  \
 '''<html>
   <head>
@@ -57,7 +59,7 @@ redditbroke =  \
     <div style="margin: auto; text-align: center">
       <p>
         <a href="/">
-          <img border="0" src="/static/youbrokeit.png" alt="you broke reddit" />
+          <img border="0" src="/static/youbrokeit%d.png" alt="you broke reddit" />
         </a>
       </p>
       <p>
@@ -65,7 +67,7 @@ redditbroke =  \
       </p>
   </body>
 </html>
-'''            
+'''
 
 toofast =  \
 '''<html>
@@ -85,7 +87,7 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
-    allowed_render_styles = ('html', 'xml', 'js', 'embed', '')
+    allowed_render_styles = ('html', 'xml', 'js', 'embed', '', 'api')
     def __before__(self):
         try:
             c.error_page = True
@@ -150,19 +152,27 @@ class ErrorController(RedditController):
             c.cookies = Cookies()
 
             code =  request.GET.get('code', '')
+            try:
+                code = int(code)
+            except ValueError:
+                code = 404
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', "")
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
-                return str(int(code))
+                c.response.content = str(int(code))
+                return c.response
+            elif c.render_style == "api":
+                c.response.content = "{error: %s}" % code
+                return c.response
             elif takedown and code == '404':
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
             elif code == '403':
                 return self.send403()
             elif code == '500':
-                return redditbroke % rand_strings.sadmessages
+                return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages)
             elif code == '503':
                 return self.send503()
             elif code == '304':
@@ -193,7 +203,7 @@ def handle_awful_failure(fail_text):
         import traceback
         g.log.error("FULLPATH: %s" % fail_text)
         g.log.error(traceback.format_exc())
-        return redditbroke % fail_text
+        return redditbroke % (rand.randint(1,NUM_FAILIENS), fail_text)
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."

@@ -57,9 +57,8 @@ class Subreddit(Thing, Printable):
                      valid_votes = 0,
                      show_media = False,
                      css_on_cname = True,
-                     use_whitelist = False,
                      domain = None,
-                     over_18 = False,
+                     over_18 = None,
                      mod_actions = 0,
                      sponsorship_text = "this reddit is sponsored by",
                      sponsorship_url = None,
@@ -215,9 +214,7 @@ class Subreddit(Thing, Printable):
         return (user
                 and (c.user_is_admin
                      or self.is_moderator(user)
-                     or ((self.type in ('restricted', 'private') or
-                          self.use_whitelist) and
-                         self.is_contributor(user))))
+                     or self.is_contributor(user)))
 
     def can_give_karma(self, user):
         return self.is_special(user)
@@ -242,6 +239,15 @@ class Subreddit(Thing, Printable):
         elif c.user_is_loggedin:
             #private requires contributorship
             return self.is_contributor(user) or self.is_moderator(user)
+
+    def can_demod(self, bully, victim):
+        # This works because the is_*() functions return the relation
+        # when True. So we can compare the dates on the relations.
+        bully_rel = self.is_moderator(bully)
+        victim_rel = self.is_moderator(victim)
+        if bully_rel is None or victim_rel is None:
+            return False
+        return bully_rel._date <= victim_rel._date
 
     @classmethod
     def load_subreddits(cls, links, return_dict = True):
@@ -787,7 +793,7 @@ class ModSR(ModContribSR):
 
 class ContribSR(ModContribSR):
     name  = "contrib"
-    title = "communities you're a contributor on"
+    title = "communities you're approved on"
     query_param = "contributor"
     real_path = "contrib"
 

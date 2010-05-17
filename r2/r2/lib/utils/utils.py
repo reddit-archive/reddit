@@ -1273,7 +1273,7 @@ def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
         except:
             pass
 
-    print 'Starting at %s' % (start,)
+    sys.stderr.write('Starting at %s\n' % (start,))
 
     seen = 0
     for item in it:
@@ -1300,20 +1300,19 @@ def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
                 key_str = ''
 
             if persec and elapsed_seconds > 0:
-                persec_str = ' (%.2f/s)' % (seen/elapsed_seconds,)
+                persec_str = ' (%.2f/s)' % (float(seen)/elapsed_seconds,)
             else:
                 persec_str = ''
 
-            sys.stdout.write('%s%s, %s%s%s\n'
+            sys.stderr.write('%s%s, %s%s%s\n'
                              % (count_str, persec_str,
                                 elapsed, estimate_str, key_str))
-            sys.stdout.flush()
             this_chunk = 0
         yield item
 
     now = datetime.now()
     elapsed = now - start
-    print 'Processed %d items in %s..%s (%s)' % (seen, start, now, elapsed)
+    sys.stderr.write('Processed %d items in %s..%s (%s)\n' % (seen, start, now, elapsed))
 
 class Hell(object):
     def __str__(self):

@@ -47,7 +47,7 @@
         </li>
       %endif
 
-      %if thing.show_spam or thing.show_ignore:
+      %if thing.show_approve:
         <li>
            ${self.state_button("approve", _("approve"),
               "return change_state(this, 'approve');", _("approved"))}

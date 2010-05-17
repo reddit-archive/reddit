@@ -101,9 +101,12 @@ class Trial(Storage):
             g.log.debug("not enough votes yet")
             return (None, koshers, spams)
 
-        # Stop showing this in the spotlight box once it has 30 votes
-        if total_votes >= 30:
+        # Stop showing this in the spotlight box once it has 20 votes
+        if total_votes >= 20:
             g.cache.set("quench_jurors-" + self.defendant._fullname, True)
+            quenching = True
+        else:
+            quenching = False
 
         # If a trial is less than an hour old, and votes are still trickling
         # in (i.e., there was one in the past five minutes), we're going to
@@ -127,9 +130,20 @@ class Trial(Storage):
             return ("guilty", koshers, spams)
         elif kosher_pct > 0.66:
             return ("innocent", koshers, spams)
+        elif not quenching:
+            g.log.debug("not yet quenching")
+            return (None, koshers, spams)
+        # At this point, we're not showing the link to any new jurors, and
+        # the existing jurors haven't changed or submitted votes for several
+        # minutes, so we're not really expecting to get many more votes.
+        # Thus, lower our standards for consensus.
+        elif kosher_pct < 0.3999:
+            return ("guilty", koshers, spams)
+        elif kosher_pct > 0.6001:
+            return ("innocent", koshers, spams)
         elif total_votes >= 100:
             # This should never really happen; quenching should kick in
-            # after 30 votes, so new jurors won't be assigned to the
+            # after 20 votes, so new jurors won't be assigned to the
             # trial. Just in case something goes wrong, close any trials
             # with more than 100 votes.
             return ("hung jury", koshers, spams)
@@ -173,7 +187,7 @@ class Trial(Storage):
         defs = Thing._by_fullname(all, data=True).values()
 
         if quench:
-            # Used for the spotlight, to filter out trials with over 30 votes;
+            # Used for the spotlight, to filter out trials with over 20 votes;
             # otherwise, hung juries would hog the spotlight for an hour as
             # their vote counts continued to skyrocket
 

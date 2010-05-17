@@ -127,7 +127,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      edit         = _("edit this reddit"),
                      moderators   = _("edit moderators"),
                      modmail      = _("moderator mail"),
-                     contributors = _("edit contributors"),
+                     contributors = _("edit approved submitters"),
                      banned       = _("ban users"),
                      banusers     = _("ban users"),
 

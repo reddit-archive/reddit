@@ -254,9 +254,12 @@ rate_limit = function() {
 }()
 
 
-$.fn.vote = function(vh, callback, event) {
+$.fn.vote = function(vh, callback, event, ui_only) {
     /* for vote to work, $(this) should be the clicked arrow */
-    if($(this).hasClass("arrow")) {
+    if (!reddit.logged) {
+        showcover(true, 'vote_' + $(this).thing_id());
+    }
+    else if($(this).hasClass("arrow")) {
         var dir = ( $(this).hasClass(up_cls) ? 1 :
                     ( $(this).hasClass(down_cls) ? -1 : 0) );
         var things = $(this).all_things_by_id();
@@ -267,7 +270,7 @@ $.fn.vote = function(vh, callback, event) {
         var u_before = (dir == 1) ? up_cls : upmod_cls;
         var u_after  = (dir == 1) ? upmod_cls : up_cls;
         arrows.filter("."+u_before).removeClass(u_before).addClass(u_after);
-    
+
         var d_before = (dir == -1) ? down_cls : downmod_cls;
         var d_after  = (dir == -1) ? downmod_cls : down_cls;
         arrows.filter("."+d_before).removeClass(d_before).addClass(d_after);
@@ -276,20 +279,22 @@ $.fn.vote = function(vh, callback, event) {
         if(reddit.logged) {
             things.each(function() {
                     var entry =  $(this).find(".entry:first, .midcol:first");
-                    if(dir > 0) 
+                    if(dir > 0)
                         entry.addClass('likes')
                             .removeClass('dislikes unvoted');
-                    else if(dir < 0) 
+                    else if(dir < 0)
                         entry.addClass('dislikes')
                             .removeClass('likes unvoted');
                     else
                         entry.addClass('unvoted')
                             .removeClass('likes dislikes');
                 });
-            var thing_id = things.filter(":first").thing_id();
-            /* IE6 hack */
-            vh += event ? "" : ("-" + thing_id); 
-            $.request("vote", {id: thing_id, dir : dir, vh : vh});
+            if(!$.defined(ui_only)) {
+                var thing_id = things.filter(":first").thing_id();
+                /* IE6 hack */
+                vh += event ? "" : ("-" + thing_id); 
+                $.request("vote", {id: thing_id, dir : dir, vh : vh});
+            }
         }
         /* execute any callbacks passed in.  */
         if(callback) 

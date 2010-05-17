@@ -204,7 +204,8 @@ class Builder(object):
                 or (user
                     and hasattr(item,'sr_id')
                     and item.sr_id in can_ban_set)):
-                w.can_ban = True
+                if getattr(item, "promoted", None) is None:
+                    w.can_ban = True
 
                 ban_info = getattr(item, 'ban_info', {})
                 w.unbanner = ban_info.get('unbanner')
@@ -498,7 +499,7 @@ class CommentBuilder(Builder):
 
     def get_items(self, num):
         r = link_comments(self.link._id)
-        cids, comment_tree, depth, num_children = r
+        cids, cid_tree, depth, num_children = r
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
@@ -506,7 +507,7 @@ class CommentBuilder(Builder):
                         % self.comment._id)
 
             r = link_comments(self.link._id, _update=True)
-            cids, comment_tree, depth, num_children = r
+            cids, cid_tree, depth, num_children = r
 
             if not self.comment._id in depth:
                 g.log.error("Update didn't help. This is gonna end in tears.")
@@ -520,9 +521,9 @@ class CommentBuilder(Builder):
         comment_dict = dict((cm._id, cm) for cm in comments)
 
         #convert tree into objects
-        for k, v in comment_tree.iteritems():
-            comment_tree[k] = [comment_dict[cid] for cid in comment_tree[k]]
-
+        comment_tree = {}
+        for k, v in cid_tree.iteritems():
+            comment_tree[k] = [comment_dict[cid] for cid in cid_tree[k]]
         items = []
         extra = {}
         top = None

@@ -77,12 +77,12 @@
   %if sr.type in ("restricted", "private") and not sr.moderator:
     <img class="sr-type-img"
        %if sr.contributor:
-         alt="${_('contributor')}"
-         title="${_('contributor')}"
+         alt="${_('approved submitter')}"
+         title="${_('approved submitter')}"
          src="/static/pencil.png"
        %else:
-         alt="${_('not contributor')}"
-         title="${_('not contributor')}"
+         alt="${_('not approved')}"
+         title="${_('not approved')}"
          src="/static/pencil-gray.png"
        %endif
     />

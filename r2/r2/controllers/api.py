@@ -71,6 +71,42 @@ def reject_vote(thing):
               (voteword, c.user.name, request.ip, thing.__class__.__name__,
                thing._id36, request.referer), "info")
 
+class ApiminimalController(RedditController):
+    """
+    Put API calls in here which won't come from logged in users (or
+    don't rely on the user being logged int)
+    """
+
+    @validatedForm(promoted = VByName('ids', thing_cls = Link,
+                                      multiple = True),
+                   sponsorships = VByName('ids', thing_cls = Subreddit,
+                                          multiple = True))
+    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
+        suffix = ""
+        if not isinstance(c.site, FakeSubreddit):
+            suffix = "-" + c.site.name
+        def add_tracker(dest, where, what):
+            jquery.set_tracker(
+                where,
+                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
+                                                  ip = request.ip),
+                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
+                                                       dest = dest,
+                                                       ip = request.ip)
+                )
+
+        if promoted:
+            # make sure that they are really promoted
+            promoted = [ l for l in promoted if l.promoted ]
+            for l in promoted:
+                add_tracker(l.url, l._fullname, l._fullname)
+
+        if sponsorships:
+            for s in sponsorships:
+                add_tracker(s.sponsorship_url, s._fullname,
+                            "%s_%s" % (s._fullname, s.sponsorship_name))
+
+
 class ApiController(RedditController):
     """
     Controller which deals with almost all AJAX site interaction.  
@@ -163,8 +199,9 @@ class ApiController(RedditController):
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'))
-    def POST_submit(self, form, jquery, url, banmsg, selftext, kind, title,
+    def POST_submit(self, form, jquery, url, selftext, kind, title,
                     save, sr, ip, then):
+        from r2.models.admintools import is_banned_domain
 
         if isinstance(url, (unicode, str)):
             #backwards compatability
@@ -202,13 +239,16 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
+            banmsg = is_banned_domain(url)
+
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
 #                form.set_html(".field-url.BAD_URL", banmsg)
 #                return
 
-        elif kind == 'self' and form.has_errors('text', errors.TOO_LONG):
-            pass
+        else:
+            form.has_errors('text', errors.TOO_LONG)
+            banmsg = None
 
         if form.has_errors("title", errors.TOO_LONG, errors.NO_TEXT):
             pass
@@ -358,6 +398,7 @@ class ApiController(RedditController):
             if email:
                 user.email = email
 
+            user.registration_ip = request.ip
             user.pref_lang = c.lang
             if c.content_langs == 'all':
                 user.pref_content_langs = 'all'
@@ -412,24 +453,33 @@ class ApiController(RedditController):
     def POST_unfriend(self, nuser, iuser, container, type):
         """
         Handles removal of a friend (a user-user relation) or removal
-        of a user's priviledges from a subreddit (a user-subreddit
+        of a user's privileges from a subreddit (a user-subreddit
         relation).  The user can either be passed in by name (nuser)
-        or buy fullname (iuser).  'container' will either be the
+        or by fullname (iuser).  'container' will either be the
         current user or the subreddit.
 
         """
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
+
+        victim = iuser or nuser
+
         if (not c.user_is_admin
             and (type in ('moderator','contributor','banned')
                  and not c.site.is_moderator(c.user))):
+            abort(403, 'forbidden')
+        if (type == 'moderator' and not
+            (c.user_is_admin or container.can_demod(c.user, victim))):
             abort(403, 'forbidden')
         # if we are (strictly) unfriending, the container had better
         # be the current user.
         if type == "friend" and container != c.user:
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
-        fn(iuser or nuser)
+        fn(victim)
+
+        if type in ("moderator", "contributor"):
+            Subreddit.special_reddits(victim, type, _update=True)
 
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(iuser or nuser, type, _update=True)
@@ -1099,7 +1149,7 @@ class ApiController(RedditController):
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
                            'show_media', 'type', 'lang', "css_on_cname",
-                           'allow_top', 'use_whitelist'))
+                           'allow_top'))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1182,8 +1232,9 @@ class ApiController(RedditController):
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
     def POST_remove(self, why, thing):
-        end_trial(thing, why + "-removed")
-        admintools.spam(thing, False, not c.user_is_admin, c.user.name)
+        if getattr(thing, "promoted", None) is None:
+            end_trial(thing, why + "-removed")
+            admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
@@ -1257,8 +1308,7 @@ class ApiController(RedditController):
             return
         # if the message has a recipient, try validating that
         # desitination first (as it is cheaper and more common)
-        if not hasattr(thing, "to_id") or c.user._id == thing.to_id:
-            queries.set_unread(thing, c.user, unread)
+        queries.set_unread(thing, c.user, unread)
         # if the message is for a subreddit, check that next
         if hasattr(thing, "sr_id"):
             sr = thing.subreddit_slow
@@ -1741,36 +1791,6 @@ class ApiController(RedditController):
         # this preference is allowed for non-logged-in users
         c.user.pref_frame_commentspanel = False
         c.user._commit()
-
-    @validatedForm(promoted = VByName('ids', thing_cls = Link,
-                                      multiple = True),
-                   sponsorships = VByName('ids', thing_cls = Subreddit,
-                                          multiple = True))
-    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
-        suffix = ""
-        if not isinstance(c.site, FakeSubreddit):
-            suffix = "-" + c.site.name
-        def add_tracker(dest, where, what):
-            jquery.set_tracker(
-                where,
-                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
-                                                  ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
-                                                       dest = dest,
-                                                       ip = request.ip)
-                )
-
-        if promoted:
-            # make sure that they are really promoted
-            promoted = [ l for l in promoted if l.promoted ]
-            for l in promoted:
-                add_tracker(l.url, l._fullname, l._fullname)
-
-        if sponsorships:
-            for s in sponsorships:
-                add_tracker(s.sponsorship_url, s._fullname,
-                            "%s_%s" % (s._fullname, s.sponsorship_name))
-
 
     @json_validate(query = VPrintable('query', max_length = 50))
     def POST_search_reddit_names(self, query):

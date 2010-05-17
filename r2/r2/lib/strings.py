@@ -84,7 +84,7 @@ string_dict = dict(
     msg_add_friend = dict(
         friend = None,
         moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
-        contributor = _("you have been added as a contributor to [%(title)s](%(url)s)."),
+        contributor = _("you have been added as an approved submitter to [%(title)s](%(url)s)."),
         banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
         traffic = _('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).')
         ),
@@ -92,7 +92,7 @@ string_dict = dict(
     subj_add_friend = dict(
         friend = None,
         moderator = _("you are a moderator"),
-        contributor = _("you are a contributor"),
+        contributor = _("you are an approved submitter"),
         banned = _("you've been banned"),
         traffic = _("you can view traffic on a promoted link")
         ),
@@ -100,7 +100,7 @@ string_dict = dict(
     sr_messages = dict(
         empty =  _('you have not subscribed to any reddits.'),
         subscriber =  _('below are the reddits you have subscribed to'),
-        contributor =  _('below are the reddits that you have contributor access to.'),
+        contributor =  _('below are the reddits that you are an approved submitter on.'),
         moderator = _('below are the reddits that you have moderator access to.')
         ),
     
@@ -135,6 +135,7 @@ string_dict = dict(
     search_failed = _("Our search machines are under too much load to handle your request right now. :( Sorry for the inconvenience. [Try again](%(link)s) in a little bit -- but please don't mash reload; that only makes the problem worse."),
     verified_quota_msg = _("You've submitted several links recently that haven't been doing very well. You'll have to wait a while before you can submit again, or [write to the moderators of this reddit](%(link)s) and ask for an exemption."),
     unverified_quota_msg = _("You haven't [verified your email address](%(link1)s); until you do, your submitting privileges will be severely limited. Please try again in an hour or verify your email address. If you'd like an exemption from this rule, please [write to the moderators of this reddit](%(link2)s)."),
+    read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
 )
 
 class StringHandler(object):
@@ -206,7 +207,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          # people
                          P_("reader",  "readers"),
                          P_("subscriber",  "subscribers"),
-                         P_("contributor", "contributors"),
+                         P_("approved submitter", "approved submitters"),
                          P_("moderator",   "moderators"),
                          
                          # time words

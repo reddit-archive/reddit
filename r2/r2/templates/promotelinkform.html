@@ -275,7 +275,7 @@
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
   %endif
 <%
-   trusted = c.user_is_sponsor or getattr(c.user, "trusted_sponsor", False)
+   trusted = c.user_is_sponsor or c.user.trusted_sponsor
  %>
 <%utils:line_field title="${_('title')}" id="title-field">
     <textarea name="title" rows="2" cols="1" 

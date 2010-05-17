@@ -63,16 +63,28 @@
 
         <br/>
 
-        %if hasattr(trophy, "description"):
-          on
-          ${trophy.description}
-        %endif
+        %if hasattr(trophy, "description") and not trophy.description.startswith("20"):
+          (
+          %if hasattr(trophy, "url"):
+           <a href="${trophy.url}">
+             ${trophy.description}
+           </a>
+          %else:
+             ${trophy.description}
+          %endif
+          )
+        %else:
+          %if hasattr(trophy, "description"):
+            on
+            ${trophy.description}
+          %endif
 
-        %if hasattr(trophy, "url"):
-         &#32;
-         <a href="${trophy.url}">
-           ${_("for this")}
-         </a>
+          %if hasattr(trophy, "url"):
+           &#32;
+           <a href="${trophy.url}">
+             ${_("for this")}
+           </a>
+          %endif
         %endif
       </div>
 

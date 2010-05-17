@@ -26,9 +26,9 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
     
     number = (len([x for x in hosts if x.services]) + 
               len([x for x in hosts if x.database]) +
-              sum(len(x.queue.queues) for x in hosts if x.queue)) + 3
+              sum(len(x.queue.queues) for x in hosts if x.queue)) + 9
 
-    im = Image.new("RGB", (width, number * row_size + 2))
+    im = Image.new("RGB", (width, number * row_size + 3))
     draw = ImageDraw.Draw(im)
     def draw_box(label, color, center = False):
         ypos = draw_box.ypos
@@ -49,13 +49,33 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
 
     draw_box(" ==== SERVICES ==== ", "#BBBBBB", center = True)
     for host in hosts:
-        if host.services:
+        if host.host.startswith('app'):
+            draw_box("  %s load: %s" % (host.host, host.load()),
+                     get_load_level(host))
+
+    draw_box(" ==== BUTTONS ==== ", "#BBBBBB", center = True)
+    for host in hosts:
+        if host.host.startswith('button'):
+            draw_box("  %s load: %s" % (host.host, host.load()),
+                     get_load_level(host))
+
+    draw_box(" ==== SEARCH ==== ", "#BBBBBB", center = True)
+    for host in hosts:
+        if host.host.startswith('search'):
+            draw_box("  %s load: %s" % (host.host, host.load()),
+                     get_load_level(host))
+
+    draw_box(" ==== CACHES ==== ", "#BBBBBB", center = True)
+    for host in hosts:
+        if host.host.startswith('cache') or host.host.startswith('pmc'):
             draw_box("  %s load: %s" % (host.host, host.load()),
                      get_load_level(host))
 
     draw_box(" ==== QUEUES ==== ", "#BBBBBB", center = True)
     for host in hosts:
         if host.queue:
+            draw_box("  %s load: %s" % (host.host, host.load()),
+                     get_load_level(host))
             for name, data in host.queue:
                 max_len = host.queue.max_length(name)
                 draw_box(" %16s: %5s / %5s" % (name, data(), max_len),

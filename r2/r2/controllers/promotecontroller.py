@@ -185,8 +185,7 @@ class PromoteController(ListingController):
             changed = False
             # live items can only be changed by a sponsor, and also
             # pay the cost of de-approving the link
-            trusted = c.user_is_sponsor or \
-                getattr(c.user, "trusted_sponsor", False)
+            trusted = c.user_is_sponsor or c.user.trusted_sponsor
             if not promote.is_promoted(l) or trusted:
                 if title and title != l.title:
                     l.title = title
@@ -198,6 +197,8 @@ class PromoteController(ListingController):
             # only trips if the title and url are changed by a non-sponsor
             if changed and not promote.is_unpaid(l):
                 promote.unapprove_promotion(l)
+            if trusted and promote.is_unapproved(l):
+                promote.accept_promotion(l)
 
             if c.user_is_sponsor:
                 l.maximum_clicks = max_clicks
@@ -455,7 +456,8 @@ class PromoteController(ListingController):
         if any(errors.values()):
             return UploadedImage("", "", "upload", errors = errors).render()
         else:
-            if not c.user_is_sponsor and not promote.is_unpaid(link):
+            if (not c.user_is_sponsor and not c.user.trusted_sponsor and
+                not promote.is_unpaid(link)):
                 promote.unapprove_promotion(link)
             return UploadedImage(_('saved'), thumbnail_url(link), "",
                                  errors = errors).render()

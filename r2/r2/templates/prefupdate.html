@@ -40,6 +40,27 @@
 <form action="/post/update" method="post" 
       onsubmit="return post_form(this, 'update')" id="pref-update">
 
+<%
+   if not c.user.email:
+     description = _("not set")
+     v_link = None
+   elif c.user.email_verified:
+     description = _("verified")
+     v_link = None
+   elif c.user.email_verified is False:
+     description = _("verification pending")
+     v_link = _("click to resend")
+   else:
+     description = _("unverified")
+     v_link = _("click to verify")
+
+   if v_link and not thing.verify:
+     description = "(%s;&#32;<a href='/verify'>%s</a>)" % (description, v_link)
+     description = unsafe(description)
+   else:
+     description = "(%s)" % description
+%>
+
 <div class="spacer">
   <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
     <input type="password" name="curpass" />
@@ -49,21 +70,11 @@
 
 %if thing.email:
 <div class="spacer">
-  <%
-     if c.user.email_verified:
-       description = _("verified")
-     elif c.user.email_verified is False:
-       description = _("verification pending")
-     else:
-       description = _("unverified")
-     description = "(%s)" % description
-     %>
   <%utils:round_field title="${_('email')}" description="${description}">
     <input type="text" name="email" value="${getattr(c.user, 'email', '')}"/>
     ${error_field("BAD_EMAILS", "email")}
   </%utils:round_field>
-</div>  
-%endif
+</div>
 
 %if thing.password:
 <div class="spacer">

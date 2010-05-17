@@ -201,8 +201,10 @@ class CachedResults(object):
     def insert(self, items):
         """Inserts the item into the cached data. This only works
            under certain criteria, see can_insert."""
+        self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
+
+    def _insert_tuples(self, t):
         self.fetch()
-        t = [ self.make_item_tuple(item) for item in tup(items) ]
 
         # insert the new items, remove the duplicates (keeping the one
         # being inserted over the stored value if applicable), and
@@ -676,6 +678,8 @@ def new_vote(vote):
 
         sr.last_valid_vote = datetime.now(g.tz)
         sr._commit()
+
+    vote._fast_query_timestamp_touch(user)
     
     #must update both because we don't know if it's a changed vote
     if vote._name == '1':
@@ -713,7 +717,7 @@ def set_unread(message, to, unread):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
             add_queries([get_unread_subreddit_messages(i._thing1)], **kw)
     else:
-        for i in Inbox.set_unread(message, unread):
+        for i in Inbox.set_unread(message, unread, to = to):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
             if i._name == 'selfreply':
                 add_queries([get_unread_selfreply(i._thing1)], **kw)
@@ -991,34 +995,6 @@ def get_likes(user, items):
     # populate the result set based on what we fetched from the cache first
     for k, v in r.iteritems():
         res[keys[k]] = v
-
-    # performance hack: if their last vote came in before this thing
-    # was created, they can't possibly have voted on it
-    cantexist = {}
-    for item in items:
-        if (user, item) in res:
-            continue
-
-        last_vote_attr_name = 'last_vote_' + item.__class__.__name__
-        last_vote = getattr(user, last_vote_attr_name, None)
-        if not last_vote:
-            continue
-
-        try:
-            if last_vote < item._date:
-                res[(user, item)] = '0'
-                cantexist[prequeued_vote_key(user, item)] = '0'
-        except TypeError:
-            g.log.error("user %s has a broken %s? (%r)"
-                        % (user._id, last_vote_attr_name, last_vote))
-            # accounts for broken last_vote properties
-            pass
-
-    # this is a bit dodgy, but should save us from having to reload
-    # all of the votes on pages they've already loaded as soon as they
-    # cast a new vote
-    if cantexist:
-        g.cache.set_multi(cantexist)
 
     # now hit the vote db with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])

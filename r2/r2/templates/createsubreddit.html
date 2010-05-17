@@ -130,9 +130,9 @@ function update_title(elem) {
       <table >
       ${radio_type("public", _("public"), _("anyone can view and submit"))}
       ${radio_type("restricted", _("restricted"), 
-             _("anyone can view, but only contributors can submit links"))}
+             _("anyone can view, but only some are approved to submit links"))}
       ${radio_type("private", _("private"),
-             _("only contributors can view and submit"))}
+             _("only approved members can view and submit"))}
       </table>
     </div>
   </%utils:line_field>
@@ -161,14 +161,6 @@ function update_title(elem) {
                  ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
           <label for="show_media">
             ${_("show thumbnail images of content")}
-          </label>
-        </li>
-        <li>
-          <input class="nomargin" type="checkbox" 
-                 name="use_whitelist" id="whitelist"
-                 ${thing.site and thing.site.use_whitelist and "checked='checked'" or ""}/>
-          <label for="whitelist">
-            ${_("enable whitelisting on this reddit")}
           </label>
         </li>
       </ul>

@@ -27,4 +27,4 @@ from cmd_utils import *
 try:
     from r2admin.lib.admin_utils import *
 except ImportError:
-    pass
+    from admin_utils import *

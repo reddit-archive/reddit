@@ -185,11 +185,6 @@ class FrontController(RedditController):
         if limit is not None and 0 < limit < g.max_comments:
             num = limit
 
-        builder = CommentBuilder(article, CommentSortMenu.operator(sort), 
-                                 comment, context, **kw)
-        listing = NestedListing(builder, num = num,
-                                parent_name = article._fullname)
-
         displayPane = PaneStack()
 
         # if permalink page, add that message first to the content
@@ -206,7 +201,8 @@ class FrontController(RedditController):
                                         cloneable = True))
 
         # finally add the comment listing
-        displayPane.append(listing.listing())
+        displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
+                                       comment, context, num, **kw))
 
         loc = None if c.focal_comment or context is not None else 'comments'
 
@@ -337,8 +333,10 @@ class FrontController(RedditController):
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
         elif (location == 'contributors' and
-              (c.site.type != 'public' or 
-               (c.user_is_loggedin and c.site.use_whitelist and
+              # On public reddits, only moderators can see the whitelist.
+              # On private reddits, all contributors can see each other.
+              (c.site.type != 'public' or
+               (c.user_is_loggedin and
                 (c.site.is_moderator(c.user) or c.user_is_admin)))):
                 pane = ContributorList(editable = is_moderator)
         elif (location == 'stylesheet'
@@ -855,7 +853,7 @@ class FormsController(RedditController):
         #check like this because c.user_is_admin is still false
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = True)
+        self.login(c.user, admin = True, rem = True)
         return self.redirect(dest)
 
     @validate(VAdmin(),
@@ -864,7 +862,7 @@ class FormsController(RedditController):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = False)
+        self.login(c.user, admin = False, rem = True)
         return self.redirect(dest)
 
     def GET_validuser(self):

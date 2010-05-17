@@ -43,6 +43,9 @@ class AdminTools(object):
         Report.accept(new_things, True)
 
         for t in all_things:
+            if getattr(t, "promoted", None) is not None:
+                g.log.debug("Refusing to mark promotion %r as spam" % t)
+                continue
             t._spam = True
             ban_info = copy(getattr(t, 'ban_info', {}))
             ban_info.update(auto = auto,
@@ -198,8 +201,6 @@ def filter_quotas(unfiltered):
             quotas_changed = True
             continue
 
-        score = item._downs - item._ups
-
         verdict = getattr(item, "verdict", None)
         approved = verdict and verdict in (
             'admin-approved', 'mod-approved')
@@ -211,9 +212,9 @@ def filter_quotas(unfiltered):
             pass
         elif item._deleted:
             pass
-        elif score <= 0:
+        elif item._score <= 0:
             pass
-        elif age < 86400 and score <= g.QUOTA_THRESHOLD and not approved:
+        elif age < 86400 and item._score <= g.QUOTA_THRESHOLD and not approved:
             pass
         else:
             quotas_changed = True

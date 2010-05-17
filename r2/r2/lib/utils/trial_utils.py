@@ -60,7 +60,7 @@ def indict(defendant):
     rv = False
     if defendant._deleted:
         result = "already deleted"
-    elif hasattr(defendant, "promoted") and defendant.promoted:
+    elif getattr(defendant, "promoted", None) is not None:
         result = "it's promoted"
     elif hasattr(defendant, "verdict") and defendant.verdict is not None:
         result = "it already has a verdict"

@@ -60,6 +60,7 @@ try:
 except ImportError:
     from api import ApiController
 
+from api import ApiminimalController
 from admin import AdminController
 from redirect import RedirectController
 

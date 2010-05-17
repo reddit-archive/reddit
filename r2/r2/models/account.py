@@ -62,6 +62,7 @@ class Account(Thing):
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
+                     trusted_sponsor = False,
                      reported = 0,
                      report_made = 0,
                      report_correct = 0,
@@ -395,6 +396,9 @@ def valid_cookie(cookie):
         uid, timestr, hash = cookie.split(',')
         uid = int(uid)
     except:
+        return (False, False)
+
+    if g.read_only_mode:
         return (False, False)
 
     try:

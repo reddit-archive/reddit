@@ -414,7 +414,8 @@ class RandomrisingController(ListingController):
             if isinstance(links, Query):
                 links._limit = 200
                 links = [x._fullname for x in links]
-        
+
+        links = list(links)
         random.shuffle(links)
 
         return links
@@ -577,7 +578,7 @@ class MessageController(ListingController):
             wouldkeep = item.keep_item(item)
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
-                and item.author_id == c.user._id):
+                and (item.author_id == c.user._id or not item.new)):
                 return False
             return wouldkeep
         return keep
@@ -729,7 +730,7 @@ class MyredditsController(ListingController):
     @property
     def menus(self):
         buttons = (NavButton(plurals.subscriber,  'subscriber'),
-                    NavButton(plurals.contributor, 'contributor'),
+                    NavButton(getattr(plurals, "approved submitter"), 'contributor'),
                     NavButton(plurals.moderator,   'moderator'))
 
         return [NavMenu(buttons, base_path = '/reddits/mine/',

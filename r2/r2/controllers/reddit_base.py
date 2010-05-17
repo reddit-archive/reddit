@@ -237,11 +237,12 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
+    c.site = Default
     if not sr_name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
-        sr = Subreddit._by_domain(sub_domain) if sub_domain else None
-        c.site = sr or Default
+        if sub_domain and not sub_domain.endswith(g.media_domain):
+            c.site = Subreddit._by_domain(sub_domain) or Default
     elif sr_name == 'r':
         #reddits
         c.site = Sub
@@ -258,9 +259,9 @@ def set_subreddit():
             else:
                 c.site = Subreddit._by_name(sr_name)
         except NotFound:
-            c.site = Default
-            if chksrname(sr_name):
-                redirect_to("/reddits/create?name=%s" % sr_name)
+            sr_name = chksrname(sr_name)
+            if sr_name:
+                redirect_to("/reddits/search?q=%s" % sr_name)
             elif not c.error_page:
                 abort(404, "not found")
     #if we didn't find a subreddit, check for a domain listing
@@ -288,7 +289,7 @@ def set_content_type():
             user = valid_feed(request.GET.get("user"),
                               request.GET.get("feed"),
                               request.path)
-            if user:
+            if user and not g.read_only_mode:
                 c.user = user
                 c.user_is_loggedin = True
 
@@ -573,6 +574,13 @@ class MinimalController(BaseController):
                         sampling_rate = g.usage_sampling,
                         action = action)
 
+    def abort404(self):
+        abort(404, "not found")
+
+    def abort403(self):
+        abort(403, "forbidden")
+
+
 
 class RedditController(MinimalController):
 
@@ -603,6 +611,8 @@ class RedditController(MinimalController):
 
         c.response_wrappers = []
         c.firsttime = firsttime()
+
+
         (c.user, maybe_admin) = \
             valid_cookie(c.cookies[g.login_cookie].value
                          if g.login_cookie in c.cookies
@@ -708,12 +718,6 @@ class RedditController(MinimalController):
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
-
-    def abort404(self):
-        abort(404, "not found")
-
-    def abort403(self):
-        abort(403, "forbidden")
 
     def sendpng(self, string):
         c.response_content_type = 'image/png'

@@ -380,3 +380,26 @@ def shorten_byurl_keys():
                    for (old_key, value)
                    in old.iteritems())
         g.permacache.set_multi(new)
+
+def prime_url_cache(f, verbosity = 10000):
+    import gzip, time
+    from pylons import g
+    handle = gzip.open(f, 'rb')
+    counter = 0
+    start_time = time.time()
+    for line in handle:
+        try:
+            tid, key, url, kind = line.split('|')
+            tid = int(tid)
+            if url.lower() != "self":
+                key = Link.by_url_key(url)
+                link_ids = g.urlcache.get(key) or []
+                if tid not in link_ids:
+                    link_ids.append(tid)
+                    g.urlcache.set(key, link_ids)
+        except ValueError:
+            print "FAIL: %s" % line
+        counter += 1
+        if counter % verbosity == 0:
+            print "%6d: %s" % (counter, line)
+            print "--> doing %5.2f / s" % (float(counter) / (time.time() - start_time))

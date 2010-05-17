@@ -271,7 +271,7 @@ class HardCache(CacheUtils):
         return category, ids
 
     def set(self, key, val, time=0):
-        if val is NoneResult:
+        if val == NoneResult:
             # NoneResult caching is for other parts of the chain
             return
 
@@ -296,7 +296,7 @@ class HardCache(CacheUtils):
 
     def set_multi(self, keys, prefix='', time=0):
         for k,v in keys.iteritems():
-            if v is not NoneResult:
+            if v != NoneResult:
                 self.set(prefix+str(k), v, time=time)
 
     def get(self, key, default=None):
@@ -434,7 +434,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val is NoneResult:
+                if self.cache_negative_results and val == NoneResult:
                     return default
                 else:
                     return val
@@ -475,14 +475,14 @@ class CacheChain(CacheUtils, local):
                 need = need - set(r.keys())
 
         if need and self.cache_negative_results:
-            d = dict( (key,NoneResult) for key in need)
+            d = dict((key, NoneResult) for key in need)
             for c in self.caches:
                 c.set_multi(d)
 
         if self.cache_negative_results:
             filtered_out = {}
             for k,v in out.iteritems():
-                if v is not NoneResult:
+                if v != NoneResult:
                     filtered_out[k] = v
             out = filtered_out
 
