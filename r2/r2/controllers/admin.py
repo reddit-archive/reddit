@@ -29,7 +29,7 @@ from r2.models import *
 from pylons.i18n import _
 
 def admin_profile_query(vuser, location, db_sort):
-    return None 
+    return None
 
 class AdminController(RedditController): pass
 

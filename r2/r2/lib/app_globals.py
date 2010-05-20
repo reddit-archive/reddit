@@ -243,7 +243,7 @@ class Globals(object):
         if self.debug:
             self.log.setLevel(logging.DEBUG)
         else:
-            self.log.setLevel(logging.WARNING)
+            self.log.setLevel(logging.INFO)
 
         # set log level for pycountry which is chatty
         logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)

@@ -274,6 +274,16 @@ def empty_queue(queue):
     chan.queue_purge(queue)
 
 
+def black_hole(queue):
+    """continually empty out a queue as new items are created"""
+    chan = connection_manager.get_channel()
+
+    def _ignore(msg):
+        print 'Ignoring msg: %r' % msg.body
+
+    consume_items(queue, _ignore)
+
+
 def _test_setup(test_q = 'test_q'):
     from r2.lib.queues import RedditQueueMap
     chan = connection_manager.get_channel()

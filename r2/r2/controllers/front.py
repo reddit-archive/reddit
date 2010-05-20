@@ -245,6 +245,7 @@ class FrontController(RedditController):
             query = c.site.get_spam()
         elif location == 'trials':
             query = c.site.get_trials()
+            num = 1000
         elif location == 'modqueue':
             query = c.site.get_modqueue()
         else:

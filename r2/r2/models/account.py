@@ -23,7 +23,8 @@ from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
-from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow, UrlParser
+from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
+from r2.lib.utils        import UrlParser, is_banned_email
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -345,11 +346,37 @@ class Account(Thing):
 
         return baskets
 
+    def canonical_email(self):
+        localpart, domain = str(self.email.lower()).split("@")
+
+        # a.s.d.f+something@gmail.com --> asdf@gmail.com
+        localpart.replace(".", "")
+        plus = localpart.find("+")
+        if plus > 0:
+            localpart = localpart[:plus]
+
+        return (localpart, domain)
+
+    def cromulent(self):
+        """Return whether the user has validated their email address and
+           passes some rudimentary 'not evil' checks."""
+
+        if not self.email_verified:
+            return False
+
+        t = self.canonical_email()
+
+        if is_banned_email(*t):
+            return False
+
+        # Otherwise, congratulations; you're cromulent!
+        return True
+
     def quota_limits(self, kind):
         if kind != 'link':
             raise NotImplementedError
 
-        if self.email_verified and not self._spam:
+        if self.cromulent():
             return dict(hour=3, day=10, week=50, month=150)
         else:
             return dict(hour=1,  day=3,  week=5,   month=5)
