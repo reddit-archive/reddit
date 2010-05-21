@@ -512,7 +512,9 @@ def reject_promotion(link, reason = None):
                 del weighted[k]
         set_live_promotions((links, weighted))
         promotion_log(link, "dequeued")
-    emailer.reject_promo(link, reason = reason)
+    # don't send a rejection email when the rejection was user initiated.
+    if not c.user or c.user._id != link.author_id:
+        emailer.reject_promo(link, reason = reason)
 
 
 def unapprove_promotion(link):

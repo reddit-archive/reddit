@@ -148,7 +148,6 @@
         ${thing.impressions_day}
       </td>
     </tr>
-    %if c.default_sr:
     <tr>
       <td>
           ${thing.uniques_month}
@@ -157,7 +156,7 @@
         ${thing.impressions_month}
       </td>
     </tr>
-    %else:
+    %if not c.default_sr:
     <tr>
       <td>
         ${thing.subscriptions_day}

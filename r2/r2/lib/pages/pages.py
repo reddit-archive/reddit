@@ -2500,9 +2500,7 @@ class RedditTraffic(Traffic):
     """
     def __init__(self):
         self.has_data = False
-        ivals = ["hour", "day"]
-        if c.default_sr:
-            ivals.append("month")
+        ivals = ["hour", "day", "month"]
 
         for ival in ivals:
             if c.default_sr:

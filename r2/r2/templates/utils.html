@@ -275,6 +275,7 @@ ${unsafe(txt)}
        function create_new_image(name) {}
 
        function completedUploadImage(status, img_src, name, errors, form_id) {
+           form_id = $.with_default(form_id, "${form_id}");
            var form = $("#" + form_id);
            if (status) 
                form.find(".img-status").show().html(status);

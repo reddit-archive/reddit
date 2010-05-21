@@ -24,6 +24,7 @@ from pylons import c, g, request
 from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
+import random as rand
 
 # Hardcache lifetime for a trial.
 # The regular hardcache reaper should never run on one of these,
@@ -92,15 +93,15 @@ def update_voting(defendant, koshers, spams):
         g.hardcache.set(tk, d, TRIAL_TIME)
 
 # Check to see if a juror is eligible to serve on a jury for a given link.
-def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
+def voir_dire(account, ip, slash16, defendants_assigned_to, defendant, sr):
     from r2.models import Link
 
     if defendant._deleted:
         g.log.debug("%s is deleted" % defendant)
         return False
 
-    if defendant._id in defendants_voted_upon:
-        g.log.debug("%s already jury-voted for %s" % (account.name, defendant))
+    if defendant._id in defendants_assigned_to:
+        g.log.debug("%s is already assigned to %s" % (account.name, defendant))
         return False
 
     if not isinstance(defendant, Link):
@@ -116,16 +117,13 @@ def voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
 
     return True
 
-def assign_trial(account, ip, slash16):
+def assign_trial(account, juries_already_on, ip, slash16):
     from r2.models import Jury, Subreddit, Trial
     from r2.lib.db import queries
 
-    defendants_voted_upon = []
     defendants_assigned_to = []
-    for jury in Jury.by_account(account):
+    for jury in juries_already_on:
         defendants_assigned_to.append(jury._thing2_id)
-        if jury._name != '0':
-            defendants_voted_upon.append(jury._thing2_id)
 
     subscribed_sr_ids = Subreddit.user_subreddits(account, ids=True, limit=None)
 
@@ -158,18 +156,29 @@ def assign_trial(account, ip, slash16):
     for defendant in defs:
         sr = srs[defendant.sr_id]
 
-        if voir_dire(account, ip, slash16, defendants_voted_upon, defendant, sr):
-            if defendant._id not in defendants_assigned_to:
-                j = Jury._new(account, defendant)
-
+        if voir_dire(account, ip, slash16, defendants_assigned_to, defendant, sr):
+            j = Jury._new(account, defendant)
             return defendant
 
     return None
 
 def populate_spotlight():
+    from r2.models import Jury
+
     if not (c.user_is_loggedin and c.user.jury_betatester()):
         g.log.debug("not eligible")
         return None
+
+    juries_already_on = Jury.by_account(c.user)
+    # If they're already on a jury, and haven't yet voted, re-show
+    # it every five or so times.
+    if rand.random() < 0.2:
+        unvoted = filter(lambda j: j._name == '0', juries_already_on)
+        defs = [u._thing2 for u in unvoted]
+        active_trials = trial_info(defs)
+        for d in defs:
+            if active_trials.get(d._fullname, False):
+                return d
 
     if not g.cache.add("global-jury-key", True, 5):
         g.log.debug("not yet time to add another juror")
@@ -188,7 +197,7 @@ def populate_spotlight():
         g.cache.delete("global-jury-key")
         return None
 
-    trial = assign_trial(c.user, ip, slash16)
+    trial = assign_trial(c.user, juries_already_on, ip, slash16)
 
     if trial is None:
         g.log.debug("nothing available")

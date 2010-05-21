@@ -56,7 +56,12 @@ class Report(MultiRelation('report',
             thing._load()
 
         # mark item as reported
-        thing._incr(cls._field)
+        try:
+            thing._incr(cls._field)
+        except (ValueError, TypeError):
+            g.log.error("%r has bad field %r = %r" % (thing, cls._field,
+                         getattr(thing, cls._field, "(nonexistent)")))
+            raise
 
         r._commit()
 

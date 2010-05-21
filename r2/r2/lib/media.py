@@ -41,9 +41,12 @@ log = g.log
 
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
-    return 'http://%s/%s.png' % (s3_thumbnail_bucket, link._fullname)
+    res =  'http://%s/%s.png' % (s3_thumbnail_bucket, link._fullname)
+    if hasattr(link, "thumbnail_version"):
+        res += "?v=%s" % link.thumbnail_version
+    return res
 
-def upload_thumb(link, image):
+def upload_thumb(link, image, never_expire = True):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
     f = tempfile.NamedTemporaryFile(suffix = '.png', delete=False)
@@ -57,7 +60,8 @@ def upload_thumb(link, image):
         s3fname = link._fullname + '.png'
 
         log.debug('uploading to s3: %s' % link._fullname)
-        s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, 'image/png', never_expire=True)
+        s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, 'image/png',
+                       never_expire=never_expire)
         log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
     finally:
         os.unlink(f.name)
@@ -93,10 +97,10 @@ def set_media(link, force = False):
 
     update_link(link, thumbnail, media_object)
 
-def force_thumbnail(link, image_data):
+def force_thumbnail(link, image_data, never_expire = True):
     image = str_to_image(image_data)
     image = prepare_image(image)
-    upload_thumb(link, image)
+    upload_thumb(link, image, never_expire = never_expire)
     update_link(link, thumbnail = True, media_object = None)
 
 def run():

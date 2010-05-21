@@ -24,7 +24,7 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
-from r2.lib.utils        import UrlParser, is_banned_email
+from r2.lib.utils        import UrlParser
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -346,8 +346,60 @@ class Account(Thing):
 
         return baskets
 
+    # Needs to take the *canonicalized* version of each email
+    # When true, returns the reason
+    @classmethod
+    def which_emails_are_banned(cls, canons):
+        banned = g.hardcache.get_multi(canons, prefix="email_banned-")
+
+        # Filter out all the ones that are simply banned by address.
+        # Of the remaining ones, create a dictionary like:
+        # d["abc.def.com"] = [ "bob@abc.def.com", "sue@abc.def.com" ]
+        rv = {}
+        canons_by_domain = {}
+        for canon in canons:
+            if banned.get(canon, False):
+                rv[canon] = "address"
+                continue
+            rv[canon] = None
+
+            at_sign = canon.find("@")
+            domain = canon[at_sign+1:]
+            canons_by_domain.setdefault(domain, [])
+            canons_by_domain[domain].append(canon)
+
+        # Now, build a list of subdomains to check for ban status; for
+        # abc@foo.bar.com, we need to check foo.bar.com and bar.com
+        canons_by_subdomain = {}
+        for domain, canons in canons_by_domain.iteritems():
+            parts = domain.rstrip(".").split(".")
+            while len(parts) >= 2:
+                whole = ".".join(parts)
+                canons_by_subdomain.setdefault(whole, [])
+                canons_by_subdomain[whole].extend(canons)
+                parts.pop(0)
+
+        banned_subdomains = {}
+        sub_dict = g.hardcache.get_multi(canons_by_subdomain.keys(),
+                                         prefix="domain-")
+        for subdomain, d in sub_dict.iteritems():
+            if d and d.get("no_email", None):
+                for canon in canons_by_subdomain[subdomain]:
+                    rv[canon] = "domain"
+
+        return rv
+
+    def has_banned_email(self):
+        canon = self.canonical_email()
+        which = self.which_emails_are_banned((canon,))
+        return which.get(canon, None)
+
     def canonical_email(self):
-        localpart, domain = str(self.email.lower()).split("@")
+        email = str(self.email.lower())
+        if email.count("@") != 1:
+            return "invalid@invalid.invalid"
+
+        localpart, domain = email.split("@")
 
         # a.s.d.f+something@gmail.com --> asdf@gmail.com
         localpart.replace(".", "")
@@ -355,7 +407,7 @@ class Account(Thing):
         if plus > 0:
             localpart = localpart[:plus]
 
-        return (localpart, domain)
+        return localpart + "@" + domain
 
     def cromulent(self):
         """Return whether the user has validated their email address and
@@ -364,9 +416,7 @@ class Account(Thing):
         if not self.email_verified:
             return False
 
-        t = self.canonical_email()
-
-        if is_banned_email(*t):
+        if self.has_banned_email():
             return False
 
         # Otherwise, congratulations; you're cromulent!

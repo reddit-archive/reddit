@@ -28,6 +28,7 @@ from r2.lib.pages.things import wrap_links
 from r2.lib.strings import strings
 from r2.lib.menus import *
 from r2.controllers import ListingController
+import sha
 
 from r2.controllers.reddit_base import RedditController
 
@@ -446,20 +447,22 @@ class PromoteController(ListingController):
               link = VByName('link_id'),
               file = VLength('file', 500*1024))
     def POST_link_thumb(self, link=None, file=None):
-        errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-        try:
-            force_thumbnail(link, file)
-        except cssfilter.BadImage:
-            # if the image doesn't clean up nicely, abort
-            errors["IMAGE_ERROR"] = _("bad image")
-
-        if any(errors.values()):
-            return UploadedImage("", "", "upload", errors = errors).render()
-        else:
-            if (not c.user_is_sponsor and not c.user.trusted_sponsor and
-                not promote.is_unpaid(link)):
-                promote.unapprove_promotion(link)
-            return UploadedImage(_('saved'), thumbnail_url(link), "",
-                                 errors = errors).render()
-
+        if link and (not promote.is_promoted(link) or
+                     c.user_is_sponsor or c.user.trusted_sponsor):
+            errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
+            try:
+                # thumnails for promoted links can change and therefore expire
+                force_thumbnail(link, file)
+            except cssfilter.BadImage:
+                # if the image doesn't clean up nicely, abort
+                errors["IMAGE_ERROR"] = _("bad image")
+            if any(errors.values()):
+                return UploadedImage("", "", "upload", errors = errors,
+                                     form_id = "image-upload").render()
+            else:
+                link.thumbnail_version = sha.new(file).hexdigest()
+                link._commit()
+                return UploadedImage(_('saved'), thumbnail_url(link), "",
+                                     errors = errors,
+                                     form_id = "image-upload").render()
 

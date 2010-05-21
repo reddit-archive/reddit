@@ -672,7 +672,7 @@ class FrontController(RedditController):
                            comment = None,
                            content = content).render()
 
-    @validate(VAdmin())
+    @validate(VSponsorAdmin())
     def GET_site_traffic(self):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()

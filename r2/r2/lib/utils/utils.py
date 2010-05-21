@@ -492,31 +492,6 @@ def median(l):
         i = len(s) / 2
         return s[i]
 
-# localpart and domain should be canonicalized
-# When true, returns the reason
-def is_banned_email(localpart, domain):
-    from pylons import g
-
-    key = "email_banned-%s@%s" % (localpart, domain)
-    if g.hardcache.get(key):
-        return "address"
-
-    # For abc@foo.bar.com, if foo.bar.com or bar.com is on the
-    # no-email list, treat the address as unverified.
-    parts = domain.rstrip(".").split(".")
-    while len(parts) >= 2:
-        whole = ".".join(parts)
-
-        d = g.hardcache.get("domain-" + whole)
-
-        if d and d.get("no_email", None):
-            return "domain"
-
-        parts.pop(0)
-
-    return None
-
-
 def query_string(dict):
     pairs = []
     for k,v in dict.iteritems():

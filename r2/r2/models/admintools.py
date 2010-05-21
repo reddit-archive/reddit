@@ -117,6 +117,47 @@ class AdminTools(object):
                 author = authors[aid]
                 author._incr('spammer', len(author_things) if spam else -len(author_things))
 
+
+    def email_attrs(self, account_ids, return_dict=True):
+        account_ids, single = tup(account_ids, True)
+
+        accounts = Account._byID(account_ids, return_dict=False)
+
+        rv = {}
+        canons = {}
+        aids_by_canon = {} # sounds terrifying
+
+        for a in accounts:
+            attrs = []
+            rv[a._id] = attrs
+
+            if not getattr(a, "email", None):
+                attrs.append(("gray", "no email specified", "X"))
+            else:
+                canon = a.canonical_email()
+                aids_by_canon.setdefault(canon, [])
+                aids_by_canon[canon].append(a._id)
+
+                verify_str = "verified email: " + canon
+                if getattr(a, "email_verified", None):
+                    attrs.append(("green", verify_str, "V"))
+                else:
+                    attrs.append(("gray", "un" + verify_str, "@"))
+
+        ban_reasons = Account.which_emails_are_banned(aids_by_canon.keys())
+
+        for canon, ban_reason in ban_reasons.iteritems():
+            if ban_reason:
+                for aid in aids_by_canon[canon]:
+                    rv[aid].append(("wrong", "banned email " + ban_reason, "B"))
+
+        if single:
+            return rv[account_ids[0]]
+        elif return_dict:
+            return rv
+        else:
+            return filter(None, (rv.get(i) for i in account_ids))
+
     def set_last_sr_ban(self, things):
         by_srid = {}
         for thing in things:

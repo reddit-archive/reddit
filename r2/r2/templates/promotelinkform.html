@@ -304,7 +304,7 @@
   </div>
 </%utils:line_field>
 
-%if thing.link:
+%if thing.link and (trusted or not promote.is_promoted(thing.link)):
   <%utils:line_field title="${_('look and feel')}"
                      description="images will be resized if large than 70 x 70 pixels">
     <div class="delete-field">

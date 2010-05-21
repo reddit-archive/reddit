@@ -493,7 +493,7 @@ ul.flat-vert {text-align: left;}
 .media-button .option { color: red; }
 .media-button .option.active {
     background: transparent none no-repeat scroll right center;
-    background-image: url(/static/reddit-button-play.gif);   /* SPRITE */
+    background-image: url(/static/reddit-button-play.png);   /* SPRITE */
     padding-right: 15px;
     color: #336699;
 }

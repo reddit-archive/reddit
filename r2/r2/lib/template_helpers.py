@@ -342,6 +342,21 @@ def add_attr(attrs, code, label=None, link=None):
             label = _('reddit admin, speaking officially')
         if not link:
             link = '/help/faq#Whomadereddit'
+    elif code in ('X', '@'):
+        priority = 5
+        cssclass = 'gray'
+        if not label:
+            raise ValueError ("Need a label")
+    elif code == 'V':
+        priority = 6
+        cssclass = 'green'
+        if not label:
+            raise ValueError ("Need a label")
+    elif code == 'B':
+        priority = 7
+        cssclass = 'wrong'
+        if not label:
+            raise ValueError ("Need a label")
     elif code.startswith ('trophy:'):
         img = (code[7:], '!', 11, 8)
         priority = 99

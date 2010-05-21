@@ -691,8 +691,8 @@ class VSubmitSR(Validator):
             return None
 
         try:
-            sr = Subreddit._by_name(sr_name)
-        except (NotFound, AttributeError):
+            sr = Subreddit._by_name(str(sr_name))
+        except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return None
 
@@ -772,8 +772,8 @@ class VUrl(VRequired):
             sr = c.site
         elif sr:
             try:
-                sr = Subreddit._by_name(sr)
-            except NotFound:
+                sr = Subreddit._by_name(str(sr))
+            except (NotFound, UnicodeEncodeError):
                 self.set_error(errors.SUBREDDIT_NOEXIST)
                 sr = None
         else:
