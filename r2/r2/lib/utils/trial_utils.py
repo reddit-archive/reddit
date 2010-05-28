@@ -164,12 +164,20 @@ def assign_trial(account, juries_already_on, ip, slash16):
 
 def populate_spotlight():
     from r2.models import Jury
+    from r2.lib.db.thing import NotFound
 
     if not (c.user_is_loggedin and c.user.jury_betatester()):
         g.log.debug("not eligible")
         return None
 
-    juries_already_on = Jury.by_account(c.user)
+    try:
+        juries_already_on = Jury.by_account(c.user)
+    except NotFound:
+        # This can happen if Jury.delete_old() just so happens to be cleaning
+        # up this user's old Jury rels while they're visiting the front page.
+        # In this unlucky case, just skip the 20% nagging below.
+        juries_already_on = []
+
     # If they're already on a jury, and haven't yet voted, re-show
     # it every five or so times.
     if rand.random() < 0.2:
@@ -214,10 +222,12 @@ def populate_spotlight():
     return trial
 
 def look_for_verdicts():
-    from r2.models import Trial
+    from r2.models import Trial, Jury
 
     print "checking all trials for verdicts..."
     for defendant in Trial.all_defendants():
         print "Looking at reddit.com/comments/%s/x" % defendant._id36
         v = Trial(defendant).check_verdict()
         print "Verdict: %r" % v
+
+    Jury.delete_old(verbose=True, limit=1000)

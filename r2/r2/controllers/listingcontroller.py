@@ -627,7 +627,8 @@ class MessageController(ListingController):
             skip = False
             if self.message:
                 if self.message.first_message:
-                    parent = Message._byID(self.message.first_message)
+                    parent = Message._byID(self.message.first_message,
+                                           data=True)
                 else:
                     parent = self.message
             elif c.user.pref_threaded_messages:

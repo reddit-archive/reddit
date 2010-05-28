@@ -29,7 +29,8 @@ from copy import copy, deepcopy
 import operators
 import tdb_sql as tdb
 import sorts
-from .. utils import iters, Results, tup, to36, Storage
+from .. utils import iters, Results, tup, to36, Storage, timefromnow
+from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromnow
 from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
@@ -79,6 +80,7 @@ class DataThing(object):
     _essentials = ()
     c = operators.Slots()
     __safe__ = False
+    _asked_for_data = False
 
     def __init__(self):
         safe_set_attr = SafeSetAttr(self)
@@ -88,6 +90,8 @@ class DataThing(object):
             self._t = {}
             self._created = False
             self._loaded = True
+            self._asked_for_data = True # You just created it; of course
+                                        # you're allowed to touch its data
 
     #TODO some protection here?
     def __setattr__(self, attr, val, make_dirty=True):
@@ -113,9 +117,17 @@ class DataThing(object):
         if attr.startswith('__'):
             raise AttributeError, attr
 
+        if not (attr.startswith('_')
+                or self._asked_for_data
+                or getattr(self, "_nodb", False)):
+            msg = ("getattr(%r) called on %r, " +
+                   "but you didn't say data=True") % (attr, self)
+            raise ValueError(msg)
+
         try:
             if hasattr(self, '_t'):
-                return self._t[attr]
+                rv = self._t[attr]
+                return rv
             else:
                 raise AttributeError, attr
         except KeyError:
@@ -262,6 +274,7 @@ class DataThing(object):
             #if there wasn't any data, keep the empty dict
             i._t.update(datas.get(i._id, i._t))
             i._loaded = True
+            i._asked_for_data = True
             to_save[i._id] = i
 
         prefix = thing_prefix(cls.__name__)
@@ -288,7 +301,9 @@ class DataThing(object):
                 if not self._loaded:
                     self._load()
             else:
-                raise ValueError, "cannot incr non int prop"
+                msg = ("cannot incr non int prop %r on %r -- it's not in %r or %r" %
+                       (prop, self, self._int_props, self._data_int_props))
+                raise ValueError, msg
 
         with g.make_lock('commit_' + self._fullname):
             self._sync_latest()
@@ -347,9 +362,18 @@ class DataThing(object):
 
 
         if data:
-            need = [v for v in bases.itervalues() if not v._loaded]
+            need = []
+            for v in bases.itervalues():
+                v._asked_for_data = True
+                if not v._loaded:
+                    need.append(v)
             if need:
                 cls._load_multi(need)
+### The following is really handy for debugging who's forgetting data=True:
+#       else:
+#           for v in bases.itervalues():
+#                if v._id in (1, 2, 123):
+#                    raise ValueError
 
         #e.g. add the sort prop
         if extra_props:
@@ -568,8 +592,8 @@ class Thing(DataThing):
 
     def __getattr__(self, attr):
         return DataThing.__getattr__(self, attr)
-            
-        
+
+
 
 class RelationMeta(type):
     def __init__(cls, name, bases, dct):
@@ -607,6 +631,33 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
         _get_item = staticmethod(tdb.get_rel)
         _incr_data = staticmethod(tdb.incr_rel_data)
         _type_prefix = Relation._type_prefix
+        _eagerly_loaded_data = False
+
+        # data means, do you load the reddit_data_rel_* fields (the data on the
+        # rel itself). eager_load means, do you load thing1 and thing2
+        # immediately. It calls _byID(xxx, data=thing_data).
+        @classmethod
+        def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
+                      eager_load=False, thing_data=False):
+
+            ids, single = tup(ids, True)
+
+            bases = cls._byID(ids, data=data, return_dict=True,
+                              extra_props=extra_props)
+
+            values = bases.values()
+
+            if values and eager_load:
+                for base in bases.values():
+                    base._eagerly_loaded_data = True
+                load_things(values, thing_data)
+
+            if single:
+                return bases[ids[0]]
+            elif return_dict:
+                return bases
+            else:
+                return filter(None, (bases.get(i) for i in ids))
 
         @classmethod
         def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
@@ -660,7 +711,7 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             def denormalize(denorm, src, dest):
                 if denorm:
                     setattr(dest, denorm[0], getattr(src, denorm[1]))
-                
+
             #denormalize
             if not self._created:
                 denormalize(denorm1, thing2, thing1)
@@ -668,16 +719,18 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         def __getattr__(self, attr):
             if attr == '_thing1':
-                return self._type1._byID(self._thing1_id)
+                return self._type1._byID(self._thing1_id,
+                                         self._eagerly_loaded_data)
             elif attr == '_thing2':
-                return self._type2._byID(self._thing2_id)
+                return self._type2._byID(self._thing2_id,
+                                         self._eagerly_loaded_data)
             elif attr.startswith('_t1'):
                 return getattr(self._thing1, attr[3:])
             elif attr.startswith('_t2'):
                 return getattr(self._thing2, attr[3:])
             else:
                 return DataThing.__getattr__(self, attr)
-                            
+
         def __repr__(self):
             return ('<%s %s: <%s %s> - <%s %s> %s>' %
                     (self.__class__.__name__, self._name,
@@ -712,15 +765,11 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
         @classmethod
         def _fast_query_timestamp_touch(cls, thing1):
-            assert thing1._loaded
-            timestamp_dict = getattr(thing1, 'fast_query_timestamp', {}).copy()
-            timestamp_dict[cls._type_name] = datetime.now(g.tz)
-            thing1.fast_query_timestamp = timestamp_dict
-            thing1._commit()
+            thing_utils.set_last_modified_for_cls(thing1, cls._type_name)
 
         @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
-                        timestamp_optimize = False):
+                        thing_data=False, timestamp_optimize = False):
             """looks up all the relationships between thing1_ids and
                thing2_ids and caches them"""
             prefix = thing_prefix(cls.__name__)
@@ -742,13 +791,8 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 thing1 = thing1_dict[t1]
                 thing2 = thing2_dict[t2]
 
-                # check to see if we have the history information
-                if not thing1._loaded:
-                    return False
-                if not hasattr(thing1, 'fast_query_timestamp'):
-                    return False
-
-                last_done = thing1.fast_query_timestamp.get(cls._type_name,None)
+                last_done = thing_utils.get_last_modified_for_cls(
+                    thing1, cls._type_name)
 
                 if not last_done:
                     return False
@@ -777,11 +821,15 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                     t2_ids.add(t2)
                     names.add(name)
 
-                q = cls._query(cls.c._thing1_id == t1_ids,
-                               cls.c._thing2_id == t2_ids,
-                               cls.c._name == names,
-                               eager_load = eager_load,
-                               data = data)
+                if t1_ids and t2_ids and names:
+                    q = cls._query(cls.c._thing1_id == t1_ids,
+                                   cls.c._thing2_id == t2_ids,
+                                   cls.c._name == names,
+                                   eager_load = eager_load,
+                                   thing_data = thing_data,
+                                   data = data)
+                else:
+                    q = []
 
                 for rel in q:
                     #TODO an alternative for multiple
@@ -983,7 +1031,7 @@ class Things(Query):
         self._rules += rules
         return self
 
-            
+
     def _cursor(self):
         #TODO why was this even here?
         #get_cols = bool(self._sort_param)
@@ -997,7 +1045,7 @@ class Things(Query):
             c = tdb.find_data(*params)
         else:
             c = tdb.find_things(*params)
-            
+
         #TODO simplfy this! get_cols is always false?
         #called on a bunch of rows to fetch their properties in batch
         def row_fn(rows):
@@ -1051,6 +1099,8 @@ class Relations(Query):
     def _make_rel(self, rows):
         rels = self._kind._byID(rows, self._data, False)
         if rels and self._eager_load:
+            for rel in rels:
+                rel._eagerly_loaded_data = True
             load_things(rels, self._thing_data)
         return rels
 
@@ -1237,7 +1287,7 @@ def MultiRelation(name, *relations):
 
         @classmethod
         def _fast_query(cls, sub, obj, name, data=True, eager_load=True,
-                        timestamp_optimize = False):
+                        thing_data=False, timestamp_optimize = False):
             #divide into types
             def type_dict(items):
                 types = {}
@@ -1255,6 +1305,7 @@ def MultiRelation(name, *relations):
                 if sub_dict.has_key(t1) and obj_dict.has_key(t2):
                     res.update(rel._fast_query(sub_dict[t1], obj_dict[t2], name,
                                                data = data, eager_load=eager_load,
+                                               thing_data = thing_data,
                                                timestamp_optimize = timestamp_optimize))
 
             return res

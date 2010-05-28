@@ -67,7 +67,8 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
 
     draw_box(" ==== CACHES ==== ", "#BBBBBB", center = True)
     for host in hosts:
-        if host.host.startswith('cache') or host.host.startswith('pmc'):
+        if (host.host.startswith('cache') or host.host.startswith('pmc') or
+            host.host.startswith('url')):
             draw_box("  %s load: %s" % (host.host, host.load()),
                      get_load_level(host))
 

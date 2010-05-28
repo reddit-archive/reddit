@@ -26,3 +26,19 @@ def set_last_modified(thing, action):
     from pylons import g
     key = last_modified_key(thing, action)
     g.permacache.set(key, make_last_modified())
+
+
+def set_last_modified_for_cls(user, cls_type_name):
+    if cls_type_name != "vote_account_link":
+        set_last_modified(user, "cls_" + cls_type_name)
+
+
+def get_last_modified_for_cls(user, cls_type_name):
+    # vote times are already stored in the permacache and updated by the
+    # query queue
+    if cls_type_name == "vote_account_link":
+        return max(last_modified_date(user, "liked"),
+                   last_modified_date(user, "disliked"))
+    # other types are not -- special key for them
+    elif cls_type_name in ("vote_account_comment", "savehide"):
+        return last_modified_date(user, "cls_" + cls_type_name)

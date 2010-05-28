@@ -161,21 +161,22 @@ class ErrorController(RedditController):
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
-                c.response.content = str(int(code))
+                if code not in (204, 304):
+                     c.response.content = str(code)
                 return c.response
             elif c.render_style == "api":
                 c.response.content = "{error: %s}" % code
                 return c.response
-            elif takedown and code == '404':
+            elif takedown and code == 404:
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
-            elif code == '403':
+            elif code == 403:
                 return self.send403()
-            elif code == '500':
+            elif code == 500:
                 return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages)
-            elif code == '503':
+            elif code == 503:
                 return self.send503()
-            elif code == '304':
+            elif code == 304:
                 if request.GET.has_key('x-sup-id'):
                     c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
                 return c.response

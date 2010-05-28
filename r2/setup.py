@@ -125,7 +125,7 @@ setup(
                       "flup",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
-                      "BeautifulSoup == 3.0.8", # last version to use the good parser
+                      "BeautifulSoup == 3.0.8.1", # last version to use the good parser
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",

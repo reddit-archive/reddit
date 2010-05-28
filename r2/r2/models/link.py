@@ -76,8 +76,8 @@ class Link(Thing, Printable):
 
     @classmethod
     def _by_url(cls, url, sr):
-        from subreddit import Default
-        if sr == Default:
+        from subreddit import FakeSubreddit
+        if isinstance(sr, FakeSubreddit):
             sr = None
 
         url = cls.by_url_key(url)
@@ -144,7 +144,7 @@ class Link(Thing, Printable):
     @classmethod
     def _somethinged(cls, rel, user, link, name):
         return rel._fast_query(tup(user), tup(link), name = name,
-                               timestamp_optimize = True)
+                               thing_data=True, timestamp_optimize = True)
 
     def _something(self, rel, user, somethinged, name):
         try:
@@ -536,9 +536,9 @@ class Comment(Thing, Printable):
         to = None
         name = 'inbox'
         if parent:
-            to = Account._byID(parent.author_id)
+            to = Account._byID(parent.author_id, True)
         elif link.is_self:
-            to = Account._byID(link.author_id)
+            to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
         c._commit()
@@ -862,7 +862,7 @@ class Message(Thing, Printable):
             # find the message originator
             elif sr_id and m.first_message:
                 first = Message._byID(m.first_message, True)
-                orig = Account._byID(first.author_id)
+                orig = Account._byID(first.author_id, True)
                 # if the originator is not a moderator...
                 if not sr.is_moderator(orig) and orig._id != author._id:
                     inbox_rel.append(Inbox._add(orig, m, 'inbox'))
@@ -925,7 +925,7 @@ class Message(Thing, Printable):
         # TODO: query cache?
         inbox = Inbox._fast_query(c.user,
                                   [item.lookups[0] for item in wrapped],
-                                  ['inbox', 'selfreply'])
+                                  ['inbox', 'selfreply'], thing_data=True)
 
         # we don't care about the username or the rel name
         inbox = dict((m._fullname, v)
@@ -934,8 +934,7 @@ class Message(Thing, Printable):
         msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
 
         modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
-                                              msgs,
-                                              ['inbox'] )
+                                              msgs, ['inbox'], thing_data=True)
 
         # best to not have to eager_load the things
         def make_message_fullname(mid):
@@ -1087,7 +1086,8 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         if not sr._loaded:
             sr._load()
 
-        moderators = Account._byID(sr.moderator_ids(), return_dict = False)
+        moderators = Account._byID(sr.moderator_ids(), data=True,
+                                   return_dict = False)
         for m in moderators:
             if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
                 m.modmsgtime = obj._date

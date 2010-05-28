@@ -26,7 +26,7 @@ from datetime import timedelta, datetime
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CL_ONE, CL_QUORUM
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -145,12 +145,16 @@ class Globals(object):
         self.cache_chains = []
 
         self.permacache = self.init_cass_cache('permacache',
-                                          self.permacache_memcaches,
-                                          self.cassandra_seeds)
+                                               self.permacache_memcaches,
+                                               self.cassandra_seeds,
+                                               read_consistency_level = CL_QUORUM,
+                                               write_consistency_level = CL_QUORUM)
 
         self.urlcache = self.init_cass_cache('urls',
-                                        self.url_caches,
-                                        self.url_seeds)
+                                             self.url_caches,
+                                             self.url_seeds,
+                                             read_consistency_level = CL_ONE,
+                                             write_consistency_level = CL_ONE)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
@@ -303,7 +307,9 @@ class Globals(object):
         return self.init_cass_cache(None, caches, None, memcached_kw = kw)
 
     def init_cass_cache(self, cluster, caches, cassandra_seeds,
-                   memcached_kw = {}, cassandra_kw = {}):
+                        memcached_kw = {}, cassandra_kw = {},
+                        read_consistency_level = CL_ONE,
+                        write_consistency_level = CL_QUORUM):
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
@@ -318,9 +324,13 @@ class Globals(object):
         if cassandra_seeds:
             cassandra_seeds = list(cassandra_seeds)
             random.shuffle(cassandra_seeds)
-            pmc_chain += (CassandraCache(cluster, cluster, cassandra_seeds,
-                                         **cassandra_kw),)
-            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True)
+            cas = (CassandraCache(cluster, cluster, cassandra_seeds,
+                                  read_consistency_level = read_consistency_level,
+                                  write_consistency_level = write_consistency_level,
+                                  **cassandra_kw),)
+            pmc_chain += cas
+            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True,
+                                      )
         else:
             mc =  MemcacheChain(pmc_chain)
 

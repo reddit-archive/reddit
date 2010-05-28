@@ -311,7 +311,8 @@ def merge_results(*results):
 def get_links(sr, sort, time, merge_batched=True):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
-                    sort = db_sort(sort))
+                    sort = db_sort(sort),
+                    data = True)
 
     if time != 'all':
         q._filter(db_times[time])
@@ -325,7 +326,7 @@ def get_links(sr, sort, time, merge_batched=True):
         and time in batched_time_times):
 
         byday = Link._query(Link.c.sr_id == sr._id,
-                            sort = db_sort(sort))
+                            sort = db_sort(sort), data=True)
         byday._filter(db_times['day'])
 
         res = merge_results(res,
@@ -472,6 +473,7 @@ def get_overview(user, sort, time):
 
 def user_rel_query(rel, user, name, filters = []):
     """General user relationship query."""
+
     q = rel._query(rel.c._thing1_id == user._id,
                    rel.c._t2_deleted == False,
                    rel.c._name == name,
@@ -510,7 +512,7 @@ def get_inbox_messages(user):
     return user_rel_query(inbox_message_rel, user, 'inbox')
 
 def get_unread_messages(user):
-    return user_rel_query(inbox_message_rel, user, 'inbox', 
+    return user_rel_query(inbox_message_rel, user, 'inbox',
                           filters = [inbox_message_rel.c.new == True])
 
 inbox_comment_rel = Inbox.rel(Account, Comment)
@@ -518,14 +520,14 @@ def get_inbox_comments(user):
     return user_rel_query(inbox_comment_rel, user, 'inbox')
 
 def get_unread_comments(user):
-    return user_rel_query(inbox_comment_rel, user, 'inbox', 
+    return user_rel_query(inbox_comment_rel, user, 'inbox',
                           filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox_selfreply(user):
     return user_rel_query(inbox_comment_rel, user, 'selfreply')
 
 def get_unread_selfreply(user):
-    return user_rel_query(inbox_comment_rel, user, 'selfreply', 
+    return user_rel_query(inbox_comment_rel, user, 'selfreply',
                           filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox(user):

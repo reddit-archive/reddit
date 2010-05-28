@@ -121,7 +121,7 @@ class AdminTools(object):
     def email_attrs(self, account_ids, return_dict=True):
         account_ids, single = tup(account_ids, True)
 
-        accounts = Account._byID(account_ids, return_dict=False)
+        accounts = Account._byID(account_ids, data=True, return_dict=False)
 
         rv = {}
         canons = {}

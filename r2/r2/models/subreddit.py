@@ -262,7 +262,8 @@ class Subreddit(Thing, Printable):
         if subreddits and c.user_is_loggedin:
             # dict( {Subreddit,Account,name} -> Relationship )
             SRMember._fast_query(subreddits.values(), (c.user,),
-                                 ('subscriber','contributor','moderator'))
+                                 ('subscriber','contributor','moderator'),
+                                 data=True, eager_load=True, thing_data=True)
 
         return subreddits if return_dict else subreddits.values()
 
@@ -698,7 +699,8 @@ class AllSR(FakeSubreddit):
         q = Link._query(sort = queries.db_sort(sort),
                         read_cache = True,
                         write_cache = True,
-                        cache_time = 60)
+                        cache_time = 60,
+                        data = True)
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
@@ -720,7 +722,7 @@ class DefaultSR(FakeSubreddit):
         if not sr_ids:
             return []
         else:
-            srs = Subreddit._byID(sr_ids, return_dict = False)
+            srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
 
         if g.use_query_cache:
             results = [queries.get_links(sr, sort, time)
@@ -728,7 +730,7 @@ class DefaultSR(FakeSubreddit):
             return queries.merge_results(*results)
         else:
             q = Link._query(Link.c.sr_id == sr_ids,
-                            sort = queries.db_sort(sort))
+                            sort = queries.db_sort(sort), data=True)
             if time != 'all':
                 q._filter(queries.db_times[time])
             return q

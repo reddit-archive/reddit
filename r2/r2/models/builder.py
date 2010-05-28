@@ -143,7 +143,7 @@ class Builder(object):
                 add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
                          link=modlink[item.sr_id])
 
-            if w.author and c.user_is_admin:
+            if False and w.author and c.user_is_admin:
                 for attr in email_attrses[w.author._id]:
                     add_attr(w.attribs, attr[2], label=attr[1])
 

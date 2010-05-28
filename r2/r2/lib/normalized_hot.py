@@ -84,6 +84,7 @@ def get_hot(srs, only_fullnames = False):
     from r2.lib.db.queries import CachedResults
 
     ret = []
+
     queries = [sr.get_links('hot', 'all') for sr in srs]
 
     # fetch these all in one go
@@ -116,7 +117,7 @@ def normalized_hot_cached(sr_ids):
     """Fetches the hot lists for each subreddit, normalizes the
        scores, and interleaves the results."""
     results = []
-    srs = Subreddit._byID(sr_ids, return_dict = False)
+    srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
     hots = get_hot(srs)
     for items in hots:
         if not items:

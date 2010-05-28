@@ -81,7 +81,7 @@ class Jury(MultiRelation('jury',
             return v[0]
 
     @classmethod
-    def delete_old(cls, age="3 days", limit=10000):
+    def delete_old(cls, age="3 days", limit=500, verbose=False):
         cutoff = timeago(age)
         q = cls._query(cls.c._date < cutoff)
         q._limit = limit
@@ -97,4 +97,6 @@ class Jury(MultiRelation('jury',
             Jury.by_account(a, _update=True)
 
         for d in defendants:
+            if verbose:
+                print "Deleting juries for defendant %s" % d._fullname
             Jury.by_defendant(d, _update=True)

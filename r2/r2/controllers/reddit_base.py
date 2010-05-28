@@ -253,7 +253,10 @@ def set_subreddit():
                 sr_names = sr_name.split('+')
                 real_path = sr_name
                 for sr_name in sr_names:
-                    srs.add(Subreddit._by_name(sr_name))
+                    sr = Subreddit._by_name(sr_name)
+                    if isinstance(sr, FakeSubreddit):
+                        abort(400)
+                    srs.add(sr)
                 sr_ids = [sr._id for sr in srs]
                 c.site = MultiReddit(sr_ids, real_path)
             else:
@@ -263,7 +266,7 @@ def set_subreddit():
             if sr_name:
                 redirect_to("/reddits/search?q=%s" % sr_name)
             elif not c.error_page:
-                abort(404, "not found")
+                abort(404)
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and c.site == Default and domain:
         c.site = DomainSR(domain)

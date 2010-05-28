@@ -116,10 +116,16 @@
       ${media_radio("on", _("show thumbnails next to links"))}
       ${media_radio("off", _("don't show thumbnails next to links"))}
       ${media_radio("subreddit", _("show thumbnails based on that reddit's media preferences"))}
+     ${checkbox(_("make safe(r) for work "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
+      &#32;
+      <span class="little gray">
+        ${_("(Don't show thumbnails next to anything labeled NSFW)")}
+      </span>
       %else:
       <p class="error">${_("to enable thumbnails, disable compressed link display")}</p>
       <input type="hidden" name="media" value="${c.user.pref_media}"/>
       %endif
+     <br/>
     </td>
   </tr>
   <tr>
@@ -225,8 +231,6 @@
     <td class="prefright">
       ${checkbox(_("i am over eighteen years old and willing to view adult content"), "over_18")}
       &#32;<span class="little gray">(${_("required to view some reddits")})</span>
-      <br/>
-        ${checkbox(_("make safe(r) for work."), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
       <br/>
         ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
       <br/>

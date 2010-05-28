@@ -185,7 +185,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 title        = "title",
                                                 url          = "path",
                                                 over18       = "over_18", 
-                                                description  = "description")
+                                                description  = "description",
+                                                display_name = "name")
 
 class AccountJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",

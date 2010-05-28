@@ -67,7 +67,7 @@ def shirt_request(link, color, style, size, quantity):
         # try to layout the text
         text = ShirtPane.make_text(link)
         if text:
-            author = Account._byID(link.author_id)
+            author = Account._byID(link.author_id, True)
             request_dict = dict(color = color, 
                                 quantity = quantity, 
                                 sessionId = sessionid, 

@@ -549,8 +549,8 @@ class CassandraCache(CacheUtils):
     """A cache that uses a Cassandra cluster. Uses a single keyspace
        and column family and only the column-name 'value'"""
     def __init__(self, keyspace, column_family, seeds,
-                 read_consistency_level = CL_ONE,
-                 write_consistency_level = CL_ONE):
+                 read_consistency_level = CL_QUORUM,
+                 write_consistency_level = CL_QUORUM):
         self.keyspace = keyspace
         self.column_family = column_family
         self.seeds = seeds
@@ -587,6 +587,10 @@ class CassandraCache(CacheUtils):
 
     def set(self, key, val,
             write_consistency_level = None, time = None):
+        if val == NoneResult:
+            # NoneResult caching is for other parts of the chain
+            return
+
         wcl = self._wcl(write_consistency_level)
         return self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl)
@@ -600,8 +604,9 @@ class CassandraCache(CacheUtils):
         wcl = self._wcl(write_consistency_level)
         ret = {}
         for key, val in keys.iteritems():
-            ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
-                                      write_consistency_level = wcl)
+            if val != NoneResult:
+                ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
+                                          write_consistency_level = wcl)
 
         return ret
 

@@ -678,7 +678,7 @@ class VSubmitParent(VByName):
             else:
                 link = parent
                 if isinstance(parent, Comment):
-                    link = Link._byID(parent.link_id)
+                    link = Link._byID(parent.link_id, data=True)
                 if c.user_is_loggedin and can_comment_link(link):
                     return parent
         #else

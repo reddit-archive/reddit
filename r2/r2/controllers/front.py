@@ -359,6 +359,8 @@ class FrontController(RedditController):
             pane = RedditTraffic()
         elif c.user_is_sponsor and location == 'ads':
             pane = RedditAds()
+        elif (not location or location == "about") and is_api():
+            return Reddit(content = Wrapped(c.site)).render()
         else:
             return self.abort404()
 

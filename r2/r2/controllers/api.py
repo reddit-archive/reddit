@@ -1270,7 +1270,8 @@ class ApiController(RedditController):
     def POST_save(self, thing):
         if not thing: return
         r = thing._save(c.user)
-        queries.new_savehide(r)
+        if r:
+            queries.new_savehide(r)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1339,7 +1340,8 @@ class ApiController(RedditController):
     def POST_hide(self, thing):
         if not thing: return
         r = thing._hide(c.user)
-        queries.new_savehide(r)
+        if r:
+            queries.new_savehide(r)
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1533,10 +1535,14 @@ class ApiController(RedditController):
         sub_key = "subscription-%s-%s" % (c.user.name, sr.name)
 
         if sub:
-            if not g.cache.add(sub_key, True):
-                g.log.warning("Double-subscribe for %s?" % sub_key)
-            elif sr.add_subscriber(c.user):
-                sr._incr('_ups', 1)
+            try:
+                if sr.add_subscriber(c.user):
+                    sr._incr('_ups', 1)
+            except CreationError:
+                # This only seems to happen when someone is pounding on the
+                # subscribe button or the DBs are really lagged; either way,
+                # some other proc has already handled this subscribe request.
+                return
         else:
             if sr.remove_subscriber(c.user):
                 g.cache.delete(sub_key)

@@ -806,6 +806,8 @@ class CommentPane(Templated):
         # don't cache on permalinks or contexts, and keep it to html
         try_cache = not comment and not context and (c.render_style == "html")
         self.can_reply = False
+        if c.user_is_admin:
+            try_cache = False
         if try_cache and c.user_is_loggedin:
             sr = article.subreddit_slow
             c.can_reply = self.can_reply = sr.can_comment(c.user)
@@ -832,7 +834,7 @@ class CommentPane(Templated):
                     break
 
         if try_cache:
-            # try to fetch the comment tree from the caceh
+            # try to fetch the comment tree from the cache
             key = self.cache_key()
             self.rendered = g.cache.get(key)
             if not self.rendered:
