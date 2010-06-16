@@ -33,6 +33,7 @@ def make_map(global_conf={}, app_conf={}):
     admin_routes.add(mc)
 
     mc('/login',    controller='forms', action='login')
+    mc('/register',    controller='forms', action='register')
     mc('/logout',   controller='forms', action='logout')
     mc('/verify',   controller='forms', action='verify')
     mc('/adminon',  controller='forms', action='adminon')
@@ -53,7 +54,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
-    mc('/reddits/login', controller='front', action='login')
+    mc('/reddits/login', controller='forms', action='login')
     mc('/reddits/:where', controller='reddits', action='listing',
        where = 'popular',
        requirements=dict(where="popular|new|banned"))
@@ -72,6 +73,7 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
+    mc('/iphonebookmarklet', controller='buttons', action='iphonebookmarklets')
 
     mc('/awards', controller='front', action='awards')
 
@@ -146,6 +148,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
 
+    mc('/health/threads', controller='health', action='threads')
     mc('/health', controller='health', action='health')
     mc('/shutdown', controller='health', action='shutdown')
 
@@ -235,6 +238,7 @@ def make_map(global_conf={}, app_conf={}):
     mc("/ads/r/:reddit_name", controller = "ad", action = "ad")
     mc("/ads/:codename", controller = "ad", action = "ad_by_codename")
 
+    mc("/try", controller = "forms", action = "try_compact")
     mc('/comscore-iframe/', controller='mediaembed', action='comscore')
     mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')
 

@@ -181,7 +181,7 @@ class ThingJsonTemplate(JsonTemplate):
                                    data = self.data(thing)))
 
 class SubredditJsonTemplate(ThingJsonTemplate):
-    _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "score",
+    _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "_ups",
                                                 title        = "title",
                                                 url          = "path",
                                                 over18       = "over_18", 

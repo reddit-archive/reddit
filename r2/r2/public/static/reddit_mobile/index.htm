@@ -1,0 +1,279 @@
+<!DOCTYPE html> <!--Html 5 ftw-->
+<html><head>
+<title>Reddit for smartphones</title>
+<style>
+html {
+	overflow: auto;
+}
+body {
+	background: #E6E6E6 /*hsl(0,0%,90%)*/;
+	font-family: 'Helvetica Neue', Helvetica, arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	color: #333 /*hsl(0,0%,20%)*/;
+	margin: 0;
+	position: absolute;
+	top: 0px; left: 0px; bottom: 0px;
+	right: 10px;
+	overflow-y: scroll;
+}
+#content {
+	margin: 100px auto 0px;
+	width: 900px;
+	background: #FAFAFA /*hsl(0, 0%, 98%)*/;
+	border: 1px solid #F3F3F3 /*hsl(0,0%,95%)*/; border-top: 1px solid white;
+	border-radius: 8px; -webkit-border-radius: 8px; -moz-border-radius: 8px; -o-border-radius: 8px;
+	position: relative;
+	-webkit-box-shadow: 2px 2px 5px hsla(0,0%,0%,.2), 0px -1px 0px hsl(0,0%,90%); -moz-box-shadow: 2px 2px 5px hsla(0,0%,0%,.2), 0px -1px 0px hsl(0,0%,90%);
+	box-shadow: 2px 2px 5px hsla(0,0%,0%,.2), 0px -1px 0px hsl(0,0%,90%);
+}
+#header {
+	font-size: 60px;
+	line-height: 60px;
+	position: absolute;
+	text-align: center;
+	width: 100%;
+	top: -120px;
+	font-family: 'Nobile', arial, serif;
+	color: #3D4C5C /*hsl(211, 20%, 30%)*/;
+	text-shadow: 0px 2px 0px hsla(0,0%,100%,.8);
+}
+#blurb {
+	text-align: center;
+	margin: 0px;
+	background-color: #F3F3F3 /*hsl(0, 0%, 95%)*/;
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(hsl(0, 0%, 95%)), to(hsl(0, 0%, 85%)));
+	background: -moz-linear-gradient(top, hsl(0, 0%, 95%), hsl(0, 0%, 85%));
+	text-shadow: hsla(0, 100%, 100%, 0.4) 0px 1px 0px;
+	border-bottom: 1px solid hsl(0,0%,80%);
+	-webkit-border-top-left-radius: 8px;
+	-webkit-border-top-right-radius: 8px;
+	-moz-border-radius-topleft: 8px;
+	-moz-border-radius-topright: 8px;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+#blurb p {
+	margin: 0px;
+}
+.smaller_blurb {
+	line-height: 1.3em;
+	font-size: 1.3em;
+}
+.bigger_blurb {
+	font-size: 1.7em;
+	line-height: 1.7em;
+}
+.inner {
+	padding: 10px;
+	border-top: 1px solid white /*hsl(0, 0%, 100%)*/;
+	border-bottom: 1px solid #CCC /*hsl(0,0%,80%)*/;
+}
+.left, .right {
+	clear: both;
+}
+.right {
+	text-align: right;
+}
+.left img {
+	float: left;
+	margin-right: 20px;
+	position: relative;
+	top: -25px;
+}
+.left.first img {
+	top: 0px;
+}
+.right img {
+	float: right;
+	margin-left: 20px;
+	position: relative;
+	top: -25px;
+}
+h2 {
+	font-size: 1.3em;
+	line-height: 1.3em;
+	margin: 0px 0px 5px;
+	text-shadow: hsla(0, 100%, 100%, 0.4) 0px 1px 0px;
+}
+ul {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+.description li {
+	line-height: 1em;
+	padding: 5px 0px;
+}
+img {
+	-webkit-box-shadow: 0px 5px 10px hsla(0,0%,0%,.3); -moz-box-shadow: 0px 5px 10px hsla(0,0%,0%,.3); box-shadow: 0px 5px 10px hsla(0,0%,0%,.3);;
+}
+.text {
+	padding-top: 35px;
+}
+.qrcode {
+	float: right;
+	margin-left: 20px;
+}
+.clear {
+	clear: both;
+}
+.sys_req {
+	padding-left: 50px;
+	list-style-type: disc;
+}
+.sys_req li {
+	line-height: 1em;
+	padding: 5px 0px;
+}
+dt {
+	font-size: 1em;
+	line-height: 1em;
+	font-weight: bold;
+	margin: 10px 0px 5px;
+	text-shadow: hsla(0, 100%, 100%, 0.4) 0px 1px 0px;
+}
+.designedby {
+	position: relative;
+	bottom: -20px;
+	right: 5px;
+	text-align: right;
+	color: #BFBFBF /*hsl(0,0%,75%)*/;
+	text-shadow: 0px 1px 0px hsla(0,0%,100%,.3);
+}
+.designedby a, .designedby a:link,.designedby a:visited {
+	text-decoration: none;
+	color: inherit;
+}
+.designedby a:hover {
+	color: #7F7F7F/*hsl(0,0%,50%)*/;
+}
+/* Custom scrollbar. Go cry in a corner */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment {
+    display: block;
+    height: 10px;
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+    background-color: hsl(0,0%,90%);
+}
+
+::-webkit-scrollbar-track-piece {
+    -webkit-border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    height: 50px;
+    background-color: hsl(0,0%,85%);
+	 border: 1px solid hsl(0,0%,80%);
+    -webkit-border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    width: 50px;
+    background-color: #ccc;
+    -webkit-border-radius: 3px;
+}
+
+</style>
+</head>
+<body>
+<div id="content"><!-- needs closing-->
+<h1 id="header">reddit. for your smartphone</h1>
+<div id="blurb">
+<p class="smaller_blurb">It's your favorite site on the internet, and you're addicted to it.</p>
+<p class="bigger_blurb">reddit mobile lets you satisfy your addiction from anywhere</p>
+</div>
+<div class="inner">
+	<div class="left first">
+		<img src="img/screen1_small.png" width="420" height="345" alt="screenshot" />
+		<div class="text">
+		<h2>It's the same reddit, but mobile</h2>
+		<ul class='description'>
+			<li>Same backend as reddit.com</li>
+			<li>Content and actions are shared across both sites.</li>
+			<li>No time-delay in updating</li>
+			<li>Feature parity. Core features get integrated faster.</li>
+		</ul>
+		</div>
+	</div>
+	<div class="right">
+		<img src="img/screen2_small.png" width="420" height="345" alt="popup bubble screenshot" />
+		<div class="text">
+		<h2>Clean, beautiful ui</h2>
+		<ul class="description">
+			<li>Custom ui designed for mobile devices</li>
+			<li>Bubbles tuck everything out of sight, but a click away.</li>
+			<li>Pure CSS, very few images</li>
+			<li>Fully featured, yet not cluttered</li>
+		</ul>
+		</div>
+	</div>
+   <div class="left">
+      <img src="img/screen3_small.png" width="420" height="345" alt="placeholder" />
+      <div class="text">
+      <h2>Powerful</h2>
+      <ul class="description">
+			<li>A no-compromises approach to a mobile reddit</li>
+			<li>Browser based for speed.</li>
+			<li>Vote, comment, reply, edit, and more</li>
+			<li>Share links using your device email app</li>
+			<li>Live scroll eliminates <strong>next</strong> links</li>
+      </ul>
+      </div>
+   </div>
+	<div class="right">
+      <img src="img/screen4_small.png" width="420" height="345" alt="placeholder" />
+      <div class="text">
+      <h2>Browser based</h2>
+      <ul class="description">
+			<li>Uses HTML 5 and CSS3 for a fast, attractive interface.</li>
+			<li>Customize your link settings to your liking</li>
+			<li>Use your browser's windows to open links in the background</li>
+			<li>Floating toolbar allows voting without page reload</li>
+      </ul>
+      </div>
+   </div>
+<div class="clear"></div>
+</div> <!-- end of .inner -->
+<div class="inner">
+	<img src="http://chart.apis.google.com/chart?chs=128x128&cht=qr&chl=http://i.reddit.com&chld=L|0" class="qrcode"  alt="qr code" />
+	<h2>How to get it</h2>
+	<p>reddit mobile is a web-app, meaning you dont have to download and install anything.</p><p>Simply point your phone to the following url, and you're good to go</p>
+	<p><a href="http://i.reddit.com">http://i.reddit.com</a></p>
+<div class="clear"></div>
+</div>
+<div class="inner">
+	<h2>System requirements</h2>
+	<p>reddit mobile has only one system requirement.</p>
+	<p>This requirement is a recent version of <strong>webkit</strong></p>
+	<p>If you run any of the following, you can use reddit mobile</p>
+	<ul class="sys_req">
+		<li>iPhone/iPod Touch</li>
+		<li>iPad</li>
+		<li>Android</li>
+		<li>webOS</li>
+		<li>Google Chrome</li>
+		<li>Safari</li>
+		<li>All other webkit platforms</li>
+	</ul>
+<div class="clear"></div>
+</div>
+<div class="inner" style="border-bottom: none;">
+	<h2>Faq</h2>
+	<p>This thing is kind of new. So you probably have questions. Hopefully this will answer some of them</p>
+	<dl>
+	<dt>Is this free?</dt>
+		<dd>Yes. Its completely free. Just like the main reddit.com. Eventually, you might see some ads, but they are going to be <strong>reddit</strong> ads, and not the annoying flashy ads you suffer through on other apps</dd>
+	<dt>Why doesn't it work on Opera/Firefox?</dt>
+		<dd>The beta is developed exclusively for webkit, due to the ease of cross-platform deployment. The final version should support multiple browsers</dd>
+	<dt>Why did you choose to do a web app instead of a <em>real</em> app?</dt>
+		<dd>There are many reasons for this. The quickest answer is: because its easier. Easier to maintain, update, test. CSS3 and HTML5 are <strong>very</strong> powerful development tools, and let us build this app without having to fight with too much code. Since its a webapp, it runs on reddit's own code, and is far easier to maintain.</dd>
+	</dl>
+</div>
+<div class="designedby">designed by <a href="http://paradoxdgn.com">paradox designs</a><!--so im a self-promotionist--></div>

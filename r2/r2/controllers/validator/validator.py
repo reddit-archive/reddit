@@ -151,7 +151,8 @@ def api_validate(response_function):
     def _api_validate(*simple_vals, **param_vals):
         def val(fn):
             def newfn(self, *a, **env):
-                c.render_style = api_type('html')
+                c.render_style = api_type(request.params.get("renderstyle",
+                                                             "html"))
                 c.response_content_type = 'application/json; charset=UTF-8'
                 # generate a response object
                 if request.params.get('api_type') == "json":
@@ -352,13 +353,17 @@ class VCount(Validator):
 
 class VLimit(Validator):
     def run(self, limit):
+        default = c.user.pref_numsites
+        if c.render_style in ("compact", api_type("compact")):
+            default = 25 # TODO: ini param?
+
         if limit is None:
-            return c.user.pref_numsites
+            return default
 
         try:
             i = int(limit)
         except ValueError:
-            return c.user.pref_numsites
+            return default
 
         return min(max(i, 1), 100)
 
@@ -846,7 +851,10 @@ class VUserWithEmail(VExistingUname):
 
 class VBoolean(Validator):
     def run(self, val):
-        return val != "off" and bool(val)
+        lv = str(val).lower()
+        if lv == 'off' or lv == '' or lv[0] in ("f", "n"):
+            return False
+        return bool(val)
 
 class VNumber(Validator):
     def __init__(self, param, min=None, max=None, coerce = True,

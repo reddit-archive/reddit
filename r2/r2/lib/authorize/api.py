@@ -209,8 +209,6 @@ class AuthorizeNetRequest(SimpleXMLObject):
                              xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd"))
 
     def make_request(self):
-        g.log.error("Authorize.net request:")
-        g.log.error(self.toXML())
         u = urlparse(g.authorizenetapi)
         try:
             conn = HTTPSConnection(u.hostname, u.port)
@@ -236,8 +234,6 @@ class AuthorizeNetRequest(SimpleXMLObject):
         return "<%(m)s></%(m)s>" % dict(m = m.groups()[0])
 
     def handle_response(self, res):
-        print "RESPONSE:"
-        print res
         res = self._autoclose_re.sub(self._autoclose_handler, res)
         res = BeautifulStoneSoup(res, markupMassage=False)
         if res.resultcode.contents[0] == u"Ok":

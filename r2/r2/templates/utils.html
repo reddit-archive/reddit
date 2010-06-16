@@ -353,6 +353,8 @@ ${unsafe(txt)}
       referer: "${request.referer or ""}",
       /* the user's voting hash */
       modhash: ${"'%s'" % c.modhash or "false"},
+      /* the current rendering style */
+      renderstyle: "${c.render_style}",
       /* current domain */
       cur_domain: "${get_domain(cname = c.frameless_cname, subreddit = False,
                                 no_www = True)}",

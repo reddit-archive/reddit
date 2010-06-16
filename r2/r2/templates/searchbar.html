@@ -20,31 +20,45 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace file="utils.html" import="pretty_button" />
+
 <%!
    from r2.lib.strings import strings
    from r2.lib.pages import SearchForm
 %>
 
 <% isize = 60 %>
+
+%if thing.prev_search and thing.elapsed_time > 0:
+  <div class="search-summary">
+    <%
+       label = _("about %(num)d results in %(second)s")
+       seconds = strings.float_label % \
+            dict(num=thing.elapsed_time,
+                 thing=ungettext('second', 'seconds', 2))
+     %>
+    <div class="result-count">
+      ${label % dict(num=thing.num_results, second=seconds)}
+    </div>
+    %if thing.show_feedback:
+    <div>
+      ${_("satisfied?")}
+      ${pretty_button("yes", "search_feedback", "'y'", "positive")}
+      ${pretty_button("no", "search_feedback", "'n'", "negative")}
+      <div class="thanks red" style="display: none">
+        ${_("thanks for your feedback!")}
+      </div>
+    </div>
+    %endif
+  </div>
+%endif
+
 <div class="searchpane raisedbox">
   <h4 style="color:gray">${thing.header}</h4>
-  
+
   <div id="previoussearch">
     ${SearchForm(prev_search = thing.prev_search,
                  search_params = thing.search_params)}
   </div>
-  
-  %if thing.prev_search and thing.elapsed_time > 0:
-    <div class="summary">
-      <%
-         label = _("about %(num)d results in %(second)s.")
-         seconds = strings.float_label % \
-              dict(num=thing.elapsed_time,
-                   thing=ungettext('second', 'seconds', 2))
-       %>
-      ${label % dict(num=thing.num_results, second=seconds)}
-    </div>
-    <div class="clearleft"></div>
-  %endif
 </div>
 

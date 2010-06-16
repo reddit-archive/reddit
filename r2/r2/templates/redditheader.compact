@@ -1,0 +1,97 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   from r2.lib.template_helpers import static
+ %>
+<%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
+
+<%
+    from r2.lib.menus import PageNameNav
+    toolbars = thing.toolbars
+    nav = "reddit mobile"
+    if toolbars and isinstance(toolbars[0], PageNameNav):
+        nav = toolbars[0]
+        toolbars = toolbars[1:]
+ %>
+
+<div id="topbar">
+  <span class="left">
+   ${plain_link("Home", "/", _sr_path=False, _class ='button')}
+  </span>
+  <h1>${nav}</h1>
+  <span class="right">
+    %if c.user_is_loggedin:
+      <%
+         mail_img ="mail"
+         if c.have_messages:
+           mail_img += ".png"
+           mail_img_class = 'havemail'
+         else:
+           mail_img += "gray.png"
+           mail_img_class = 'nohavemail'
+         mail_img = static(mail_img)
+       %>
+      ${img_link(_("messages"), mail_img, path="/message/inbox/",
+                 _id = "mail", _class="button " + mail_img_class)}
+    %endif
+    <a class="button" href="#" id="topmenu_toggle">
+      <span class="button_contents"></span>
+    </a>
+  </span>
+  <div id="top_menu">
+    %if c.user_is_loggedin:
+    <div class="menuitem">
+      ${plain_link(c.user.name, "/user/%s/" % c.user.name, _sr_path=False)}
+      &nbsp;(<b>${c.user.safe_karma}</b>)
+    </div>
+    <div class="menuitem">
+      ${plain_link("reddits", "/reddits/mine", _sr_path=False)}
+    </div>
+    <div class="menuitem">
+      ${plain_link("submit", "/submit", _sr_path=False)}
+    </div>
+    <div class="menuitem bottm-bar">
+      ${logout()}
+    </div>
+   %else:
+    <div class="menuitem">
+      ${plain_link("login", "/login", _sr_path=False)}
+    </div>
+    <div class="menuitem bottm-bar">
+      ${plain_link("register", "/register", _sr_path=False)}
+    </div>
+    <div class="menuitem">
+      ${plain_link("reddits", "/reddits/", _sr_path=False)}
+    </div>
+   %endif
+    <div class="menuitem">
+      ${plain_link("search", "/search")}
+    </div>
+  </div>
+</div>
+%if toolbars:
+  <div class="subtoolbar">
+    %for toolbar in toolbars:
+      ${toolbar}
+    %endfor
+  </div>
+%endif

@@ -1,0 +1,117 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+   from r2.lib.template_helpers import add_sr
+   import urllib
+   from r2.lib.filters import _force_unicode, _force_utf8
+   from r2.lib.template_helpers import add_sr
+ %>
+<%namespace file="printable.compact" import="delete_report_buttons"/>
+<%namespace file="printable.html" import="arrow, score"/>
+<%namespace file="link.html" import="tagline"/>
+<%namespace file="utils.html" import="plain_link" />
+
+<div class="thing link id-${thing._fullname}">
+  <span class="rank" style="width:${thing.numcolmargin};">
+    ${thing.num}
+  </span>
+  <% 
+     like_cls = "unvoted"
+     if getattr(thing, "likes", None):
+         like_cls = "likes"
+     elif getattr(thing, "likes", None) is False:
+         like_cls = "dislikes"
+   %>
+  <div class="midcol ${like_cls}">
+    ${arrow(thing, 1, thing.likes)}
+    ${arrow(thing, 0, thing.likes == False)}
+  </div>
+    %if not c.permalink_page:
+      <div class="commentcount">
+        ${plain_link(thing.comment_label, thing.permalink, _class=thing.commentcls)}
+      </div>
+    %endif
+  <div class="entry ${like_cls}">
+  %if thing.has_thumbnail and thing.thumbnail:
+   <a href="${thing.href_url}" class="thumbnail">
+    <img src="${thing.thumbnail}" alt=""/>
+   </a>
+  %endif
+    <p class="title">
+     %if thing.is_self:
+      <a href="${add_sr(thing.href_url)}">${thing.title}</a>
+     %else:
+      <a href="${thing.tblink}.compact">${thing.title}</a>
+     %endif
+    </p>
+    %if thing.link_child and not c.permalink_page and thing.link_child.css_style.strip(' ') != 'video':
+      <a href="javascript:void(0)" class="expando-button collapsed button 
+                  ${thing.link_child.css_style}">
+          Aa
+      </a>
+    %endif
+    <div class="tagline">
+      ${tagline()}
+    </div>
+    </div>
+    <a href="javascript:void(0)" class="triangle_link button">Options</a>
+    <%
+       expand = thing.link_child and thing.link_child.expand
+     %>
+  <div class="expando" ${"style='display: none'" if not expand else ""}>
+    %if thing.link_child:
+      ${thing.link_child.content()}
+    %endif
+  </div>
+  <div class="clear options_triangle_parent">
+    <% 
+       subject = "[reddit] I wanted to share this link with you"
+       body = """%(user)s shared a link with you from reddit (http://www.reddit.com/):
+
+%(link)s
+
+"%(title)s"
+
+there's also a discussion going on here:
+
+%(permalink)s
+""" % dict(user = c.user.name if c.user_is_Loggedin else "A reddit user",
+       link = _force_unicode(thing.url),
+       title = _force_unicode(thing.title),
+       permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True))
+       url = "http://reddit.com/%s" % thing._id36
+       title = _force_unicode(thing.title)
+       tweet = "%s %s" % (title[0:(139-len(url))], url)
+       %>
+      <div class="options_triangle hidden">
+        <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" class="group_button button">Email</a>
+        <a href="http://twitter.com/home?status=${tweet}" class="group_button button">Tweet</a>
+        <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)"  class="group_button button">Report</a>
+        %if not thing.is_self:
+         <span class="button group_button">
+           ${plain_link(thing.domain, thing.domain_path, _sr_path = False)}
+         </span>
+        %endif
+      </div>
+
+  </div>
+</div>

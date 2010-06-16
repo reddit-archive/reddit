@@ -118,7 +118,6 @@ function showcover(warning, reason) {
         $("#cover_disclaim, #cover_msg").hide();
     $(".login-popup:first").show()
         .find("form input[name=reason]").attr("value", (reason || ""));
-    
     return false;
 };
 
@@ -148,7 +147,9 @@ function change_state(elem, op, callback, keep) {
 
     simple_post_form(form, op, {id: id});
     /* call the callback first before we mangle anything */
-    if (callback) callback(form, op);
+    if (callback) {
+        callback(form.length ? form : elem, op);
+    }
     if(!$.defined(keep)) {
         form.html(form.attr("executed").value);
     }
@@ -168,7 +169,11 @@ function read_thing(elem) {
     if (!t.hasClass("thing")) {
         t = t.thing();
     }
-    $(t).removeClass("new");
+    if($(t).hasClass("new")) {
+        $(t).removeClass("new");
+    } else {
+        $(t).removeClass("unread");
+    }
     $.request("read_message", {"id": $(t).thing_id()});
 }
 
@@ -195,12 +200,8 @@ function click_thing(elem) {
 }
 
 function hide_thing(elem) {
-    var thing = $(elem).thing();
-    thing.hide();
-    if(thing.hasClass("hidden"))
-        thing.removeClass("hidden");
-    else
-        thing.addClass("hidden");
+    $(elem).thing().fadeOut(function(elem) { 
+            $(this).toggleClass("hidden") });
 };
 
 function toggle_label (elem, callback, cancelback) {
@@ -1011,7 +1012,7 @@ function edit_usertext(elem) {
 }
 
 function cancel_usertext(elem) {
-    var t = $(elem).thing();
+    var t = $(elem).thing().debug();
     t.find(".edit-usertext:first").parent("li").andSelf().show(); 
     hide_edit_usertext(t.find(".usertext:first"));
 }
@@ -1029,6 +1030,7 @@ function reply(elem) {
     form.show();
     //update the cancel button to call the toggle button's click
     form.find(".cancel").get(0).onclick = function() {form.hide()};
+    return false; 
 }
 
 function toggle_distinguish_span(elem) {
@@ -1255,10 +1257,6 @@ $(function() {
          * and call it on all things currently rendered in the
          * page. */
         $("body").set_thing_init(updateEventHandlers);
-        $(".thumbnail img").lazyload({
-                threshold: 200,
-                placeholder: "/static/nothing.png"
-                }); 
         /* Set up gray inputs and textareas to clear on focus */
         $("textarea.gray, input.gray")
             .focus( function() {
@@ -1305,4 +1303,22 @@ function show_unfriend(account_fullname) {
                 $(this).html("");
             }
         });
+}
+
+function search_feedback(elem, approval) {
+  f = $("form#search");
+  var q    = f.find("input[name=q]").val();
+  var sort = f.find("input[name=sort]").val();
+  var t    = f.find("input[name=t]").val();
+  var d = {
+    q: q,
+    sort: sort,
+    t: t,
+    approval: approval
+  };
+  $.request("searchfeedback", d, null, true);
+  elem.siblings(".pretty-button").removeClass("pressed");
+  elem.siblings(".thanks").show();
+  elem.addClass("pressed");
+  return false;
 }

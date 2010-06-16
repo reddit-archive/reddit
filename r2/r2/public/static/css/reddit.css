@@ -1337,13 +1337,25 @@ textarea.gray { color: gray; }
 
 .searchpane #search input[type=text] { }
 
-.searchpane .summary {
-    font-weight: bold; 
+.search-summary {
     float: right;
+    text-align: right;
+    margin: 6px 8px 0 0;
 }
 
-.searchpane .clearleft {
-    margin-bottom: 10px; 
+.search-summary .result-count {
+    font-weight: bold;
+}
+
+.searchfail {
+    color: #c00000;
+    font-size: larger;
+    line-height: 2em;
+}
+
+.searchfail a {
+    color: red;
+    text-decoration: underline;
 }
 
 .searchfail {
@@ -1509,6 +1521,255 @@ textarea.gray { color: gray; }
 .error-log .exception.interesting {
     border: dotted black 2px;
     background-color: #e0e0e8;
+}
+
+.error-log .exception.fixed {
+    border: solid #008800 1px;
+    background-color: #e8f6e8;
+}
+
+.error-log .exception span {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.error-log .exception span.normal {
+    margin-right: 0;
+    display: none;
+}
+
+.error-log .exception span.new, .error-log .edit-area label.new {
+    color: #ff6600;
+}
+
+.error-log .exception span.severe, .error-log .edit-area label.severe {
+    color: #ff0000;
+}
+
+.error-log .exception span.interesting, .error-log .edit-area label.interesting {
+    font-weight: normal;
+    font-style: italic;
+}
+
+.error-log .exception span.fixed, .error-log .edit-area label.fixed {
+    color: #008800;
+}
+
+.error-log .exception-name {
+    margin-right: 5px;
+}
+
+.error-log .nickname {
+    color: black;
+    font-weight: bold;
+    font-size: larger;
+}
+
+.error-log .exception.fixed .nickname {
+    text-decoration: line-through;
+}
+
+.error-log a:focus {
+    -moz-outline-style: none;
+}
+
+.error-log .edit-area {
+    border: solid black 1px;
+    background-color: #eee;
+}
+
+.error-log .edit-area label {
+    margin-right: 25px;
+}
+
+.error-log .edit-area input[type=radio] {
+    margin-right: 4px;
+}
+
+.error-log .edit-area input[type=text] {
+    width: 800px;
+}
+
+.error-log .edit-area table td, .error-log .edit-area table th {
+    padding: 5px 0 0 5px;
+}
+
+.error-log .save-button {
+    margin: 0 5px 5px 0;
+    font-size: small;
+    padding: 0;
+}
+
+.error-log .date {
+    font-size: 150%;
+    font-weight: bold;
+}
+
+.error-log .hexkey {
+    color: #997700;
+}
+
+.error-log .exception-name {
+    font-size: larger;
+    color: #000077;
+}
+
+.error-log .frequency {
+    font-size: larger;
+    float: right;
+    color: #886666;
+}
+
+.error-log .occurrences {
+    border: solid #003300 1px;
+    margin: 5px 0 2px;
+    padding: 2px;
+}
+
+.error-log .occurrence {
+    color: #003300;
+    font-family: monospace;
+    margin-right: 3em;
+    white-space: nowrap;
+}
+
+.error-log table.stacktrace th, .error-log table.stacktrace td {
+    border: solid 1px #aaa;
+}
+
+.error-log table.stacktrace td {
+    font-family: monospace;
+}
+
+.error-log table.stacktrace td.col-1 {
+    text-align: right;
+    padding-right: 10px;
+}
+
+.error-log .logtext.error {
+    color: black;
+    margin: 0 0 10px 0;
+}
+
+.error-log .logtext {
+    margin-bottom: 10px;
+    border: solid #555 2px;
+    background-color: #eeece6;
+    padding: 5px;
+    font-size: small;
+}
+
+.error-log .logtext * {
+    color: black;
+}
+
+.error-log .logtext.error .loglevel {
+    color: white;
+    background-color: red;
+}
+
+.error-log .logtext.warning .loglevel {
+    background-color: #ff6600;
+}
+
+.error-log .logtext.info .loglevel {
+    background-color: #00bbff;
+}
+
+.error-log .logtext.debug .loglevel {
+    background-color: #00ee00;
+}
+
+.error-log .logtext .loglevel {
+    padding: 0 5px;
+    margin-right: 5px;
+    border: solid black 1px;
+}
+.error-log .logtext table {
+    margin: 8px 5px 2px 0;
+    font-family: monospace;
+}
+
+.error-log .logtext table,
+.error-log .logtext table th,
+.error-log .logtext table td {
+  border: solid #aaa 1px;
+}
+.error-log .logtext table th, .error-log .logtext table td {
+    border: solid #aaa 1px;
+}
+
+.error-log .logtext table .occ {
+    text-align: right;
+}
+
+.error-log .logtext table .dotdotdot {
+    padding: 0;
+}
+.error-log .logtext table .dotdotdot a {
+    margin: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+}
+.error-log .logtext table .dotdotdot a:hover {
+    background-color: #bbb;
+    text-decoration: none;
+}
+
+.error-log .logtext .classification {
+    font-size: larger;
+    font-weight: bold;
+}
+.error-log .logtext .actual-text {
+    max-width: 600px;
+    overflow: hidden;
+}
+.error-log .logtext .occ {
+}
+
+.details {
+    font-size: x-small; 
+    margin-bottom: 10px; 
+}
+
+.details span { margin: 0 5px 0 5px; }
+.details th {
+    text-align: right; 
+    padding-right: 5px;
+    font-weight: bold;
+}
+.details td {
+    vertical-align: top;
+}
+
+.ring {
+    font-weight:bold;
+    background-color:red;
+    color:white;
+    text-align:center;
+    padding-left: 3px;
+    padding-right: 4px !important;
+    cursor: pointer;
+}
+
+.vote-note {
+    padding-left: 3px;
+    max-width: 150px;
+}
+.vote-a-notes {
+    color: red;
+}
+.vote-up {
+    color: orangered;
+}
+.vote-down {
+    color: #336699;
+}
+.vote-invalid {
+    color: #888888 !important;
+    font-style: italic;
 }
 
 .error-log .exception.fixed {
@@ -3601,7 +3862,7 @@ dd { margin-left: 20px;  }
 .calendar .blob .bid {
     text-align: right;
     font-weight: bold; 
-    padding: 5px 5px 0px 5px; ; 
+    padding: 5px 5px 0px 5px;  
 }
 
 .calendar .blob.link {

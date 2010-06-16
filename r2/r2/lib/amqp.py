@@ -29,7 +29,7 @@ import time
 import errno
 import socket
 import itertools
-import pickle
+import cPickle as pickle
 
 from amqplib import client_0_8 as amqp
 
@@ -48,6 +48,8 @@ amqp_logging = g.amqp_logging
 #adding items to amqp that are added using add_item) might block for
 #an arbitrary amount of time while trying to get a connection to amqp.
 
+reset_caches = g.reset_caches
+
 class Worker:
     def __init__(self):
         self.q = Queue()
@@ -57,6 +59,8 @@ class Worker:
 
     def _handle(self):
         while True:
+            reset_caches()
+
             fn = self.q.get()
             try:
                 fn()
@@ -202,9 +206,9 @@ def consume_items(queue, callback, verbose=True):
             try:
                 chan.wait()
             except KeyboardInterrupt:
-                chan.close()
                 break
     finally:
+        worker.join()
         if chan.is_open:
             chan.close()
 

@@ -25,6 +25,24 @@ import re, types
 
 from hashlib import md5
 
+class _TemplateUpdater(object):
+    # this class is just a hack to get around Cython's closure rules
+
+    __slots = ['d', 'start', 'end', 'template', 'pattern']
+
+    def __init__(self, d, start, end, template, pattern):
+        self.d = d
+        self.start, self.end = start, end
+        self.template = template
+        self.pattern = pattern
+
+    def update(self):
+        return self.pattern.sub(self._convert, self.template)
+
+    def _convert(self, m):
+        name = m.group("named")
+        return self.d.get(name, self.start + name + self.end)
+
 class StringTemplate(object):
     """
     Simple-minded string templating, where variables of the for $____
@@ -62,10 +80,9 @@ class StringTemplate(object):
         updated Template.
         """
         if d:
-            def convert(m):
-                name = m.group("named")
-                return d.get(name, self.start_delim + name + self.end_delim)
-            return self.__class__(self.pattern2.sub(convert, self.template))
+            updater = _TemplateUpdater(d, self.start_delim, self.end_delim,
+                                       self.template, self.pattern2)
+            return self.__class__(updater.update())
         return self
 
     def finalize(self, d = {}):
@@ -308,17 +325,21 @@ class Templated(object):
             # that we didn't find in the cache.
 
             # cache content that was newly rendered
-            self._write_cache(dict((k, v)
-                                   for k, (v, kw) in updates.values()
-                                   if k in to_cache))
+            _to_cache = {}
+            for k, (v, kw) in updates.values():
+                if k in to_cache:
+                    _to_cache[k] = v
+            self._write_cache(_to_cache)
     
             # edge case: this may be the primary tempalte and cachable
             if isinstance(res, CacheStub):
                 res = updates[res.name][1][0]
                 
             # now we can update the updates to make use of their kw args.
-            updates = dict((k, v.finalize(kw))
-                           for k, (foo, (v, kw)) in updates.iteritems())
+            _updates = {}
+            for k, (foo, (v, kw)) in updates.iteritems():
+                _updates[k] = v.finalize(kw)
+            updates = _updates
 
             # update the response to use these values
             # replace till we can't replace any more. 
@@ -346,20 +367,23 @@ class Templated(object):
         if not keys:
             return
 
-        toset = dict((md5(key).hexdigest(), val)
-                     for (key, val)
-                     in keys.iteritems())
+        toset = {}
+        for key, val in keys.iteritems():
+            toset[md5(key).hexdigest()] = val
+
         g.rendercache.set_multi(toset)
 
     def _read_cache(self, keys):
         from pylons import g
 
-        ekeys = dict((md5(key).hexdigest(), key)
-                     for key in keys)
+        ekeys = {}
+        for key in keys:
+            ekeys[md5(key).hexdigest()] = key
         found = g.rendercache.get_multi(ekeys)
-        return dict((ekeys[fkey], val)
-                    for (fkey, val)
-                    in found.iteritems())
+        ret = {}
+        for fkey, val in found.iteritems():
+            ret[ekeys[fkey]] = val
+        return ret
 
     def render(self, style = None, **kw):
         from r2.lib.filters import unsafe
@@ -393,8 +417,10 @@ def make_cachable(v, *a):
     elif isinstance(v, (tuple, list, set)):
         return repr([make_cachable(x, *a) for x in v])
     elif isinstance(v, dict):
-        return repr(dict((k, make_cachable(v[k], *a))
-                         for k in sorted(v.iterkeys())))
+        ret = {}
+        for k in sorted(v.iterkeys()):
+            ret[k] = make_cachable(v[k], *a)
+        return repr(ret)
     elif hasattr(v, "cache_key"):
         return v.cache_key(*a)
     else:
@@ -408,8 +434,11 @@ class CachedTemplate(Templated):
         Generates an iterator of attr names and their values for every
         attr on this element that should be used in generating the cache key.
         """
-        return ((k, self.__dict__[k]) for k in sorted(self.__dict__)
-                if (k not in self.cache_ignore and not k.startswith('_')))
+        ret = []
+        for k in sorted(self.__dict__):
+            if k not in self.cache_ignore and not k.startswith('_'):
+                ret.append((k, self.__dict__[k]))
+        return ret
 
     def cache_key(self, attr, style, *a):
         from pylons import c, g
@@ -433,7 +462,8 @@ class CachedTemplate(Templated):
         
         # lastly, add anything else that was passed in.
         keys.append(repr(auto_keys))
-        keys.extend(make_cachable(x) for x in a)
+        for x in a:
+            keys.append(make_cachable(x))
         
         return "<%s:[%s]>" % (self.__class__.__name__, u''.join(keys))
 
@@ -464,8 +494,8 @@ class Wrapped(CachedTemplate):
         # this shouldn't be too surprising
         self.cache_ignore = self.cache_ignore.union(
             set(['cachable', 'render', 'cache_ignore', 'lookups']))
-        if (not any(hasattr(l, "cachable") for l in lookups) and 
-            any(hasattr(l, "wrapped_cache_key") for l in lookups)):
+        if (not self._any_hasattr(lookups, 'cachable') and 
+            self._any_hasattr(lookups, 'wrapped_cache_key')):
             self.cachable = True
         if self.cachable:
             for l in lookups:
@@ -473,6 +503,11 @@ class Wrapped(CachedTemplate):
                     self.cache_ignore = self.cache_ignore.union(l.cache_ignore)
             
         Templated.__init__(self, **context)
+
+    def _any_hasattr(self, lookups, attr):
+        for l in lookups:
+            if hasattr(l, attr):
+                return True
 
     def __repr__(self):
         return "<Wrapped: %s,  %s>" % (self.__class__.__name__,

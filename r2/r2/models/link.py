@@ -248,6 +248,8 @@ class Link(Thing, Printable):
                        c.link_target])
         elif style == "xml":
             s.append(request.GET.has_key("nothumbs"))
+        elif style == "compact":
+            s.append(c.permalink_page)
         s.append(getattr(wrapped, 'media_object', {}))
         return s
 
@@ -312,6 +314,8 @@ class Link(Thing, Printable):
             show_media = False
             if not hasattr(item, "score_fmt"):
                 item.score_fmt = Score.number_only
+            if c.render_style == 'compact':
+                item.score_fmt = Score.points
             item.pref_compress = user.pref_compress
             if user.pref_compress and item.promoted is None:
                 item.render_css_class = "compressed link"
@@ -357,7 +361,8 @@ class Link(Thing, Printable):
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
-                item.url = item.make_permalink(item.subreddit, force_domain = True)
+                item.url = item.make_permalink(item.subreddit, 
+                                               force_domain = True)
 
             # do we hide the score?
             if user_is_admin:
@@ -395,7 +400,7 @@ class Link(Thing, Printable):
                                 subreddit = False))
                 if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
-            item.domain_path = "/domain/%s" % item.domain
+            item.domain_path = "/domain/%s/" % item.domain
             if item.is_self:
                 item.domain_path = item.subreddit_path
 

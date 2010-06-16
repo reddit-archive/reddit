@@ -64,9 +64,7 @@ class QueueMap(object):
 
 class RedditQueueMap(QueueMap):
     def queues(self):
-        self._q('prec_links', self_refer=True, durable=False)
         self._q('scraper_q')
-        self._q('searchchanges_q', self_refer=True, durable=False)
         self._q('newcomments_q')
         self._q('commentstree_q')
         # this isn't in use until the spam_q plumbing is
@@ -75,6 +73,11 @@ class RedditQueueMap(QueueMap):
         self._q('log_q', self_refer=True)
         self._q('usage_q', self_refer=True, durable=False)
 
+        self._q('solrsearch_changes')
+        self._q('indextank_changes', self_refer=True)
+        self._bind('search_changes', 'solrsearch_changes')
+        self._bind('search_changes', 'indextank_changes')
+
     def bindings(self):
         self.newlink_bindings()
         self.newcomment_bindings()
@@ -82,7 +85,7 @@ class RedditQueueMap(QueueMap):
 
     def newlink_bindings(self):
         self._bind('new_link', 'scraper_q')
-        # note that we don't add searchchanges_q here, because the
+        # note that we don't add search_changes here, because the
         # initial vote on that item will add it
 
         # this isn't in use until the spam_q plumbing is
@@ -93,7 +96,8 @@ class RedditQueueMap(QueueMap):
         self._bind('new_comment', 'commentstree_q')
 
     def newsubreddit_bindings(self):
-        self._bind('new_subreddit', 'searchchanges_q')
+        self._bind('new_subreddit', 'solrsearch_changes')
+        self._bind('new_subreddit', 'indextank_changes')
 
 try:
     from r2admin.lib.adminqueues import *

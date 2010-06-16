@@ -21,7 +21,8 @@
 ################################################################################
 from threading import local
 from hashlib import md5
-import pickle
+import cPickle as pickle
+from copy import copy
 
 import pylibmc
 from _pylibmc import MemcachedError
@@ -33,6 +34,9 @@ from r2.lib.contrib import memcache
 from r2.lib.utils import lstrips, in_chunks, tup
 from r2.lib.hardcachebackend import HardCacheBackend
 from r2.lib.utils import trace
+
+from r2.lib.sgm import sgm # get this into our namespace so that it's
+                           # importable from us
 
 class NoneResult(object): pass
 
@@ -98,65 +102,25 @@ class CMemcache(CacheUtils):
                  debug = False,
                  noreply = False,
                  no_block = False,
-                 num_clients = 10,
-                 legacy = False):
+                 num_clients = 10):
         self.servers = servers
-        self.legacy = legacy
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
         for x in xrange(num_clients):
-            client = pylibmc.Client(servers, binary=not self.legacy)
+            client = pylibmc.Client(servers, binary=True)
             behaviors = {
                 'no_block': no_block, # use async I/O
                 'cache_lookups': True, # cache DNS lookups
                 'tcp_nodelay': True, # no nagle
                 '_noreply': int(noreply),
                 'verify_key': int(debug),  # spend the CPU to verify keys
+                'ketama': True, # consistent hashing
                 }
-
-            # so that we can drop this in to share keys with
-            # python-memcached, we have a 'legacy' mode that MD5s the
-            # keys and uses the old CRC32-modula mapping
-            if self.legacy:
-                behaviors['hash'] = 'crc'
-            else:
-                behaviors['ketama'] = True # consistent hashing
 
             client.behaviors.update(behaviors)
             self.clients.put(client)
 
         self.min_compress_len = 512*1024
 
-    def hashkey(fn):
-        # decorator to MD5 the key for a single-action command when
-        # self.legacy is set
-        def _fn(self, key, *a, **kw):
-            if self.legacy:
-                key = md5(key).hexdigest()
-            return fn(self, key, *a, **kw)
-        return _fn
-
-    def hashmap(fn):
-        # same as hashkey, but for _multi commands taking a dictionary
-        def _fn(self, keys, *a, **kw):
-            if self.legacy:
-                prefix = kw.pop('prefix', '')
-                keys = dict((md5('%s%s' % (prefix, key)).hexdigest(), value)
-                            for (key, value)
-                            in keys.iteritems())
-            return fn(self, keys, *a, **kw)
-        return _fn
-
-    def hashkeys(fn):
-        # same as hashkey, but for _multi commands taking a list
-        def _fn(self, keys, *a, **kw):
-            if self.legacy:
-                prefix = kw.pop('prefix', '')
-                keys = [md5('%s%s' % (prefix, key)).hexdigest()
-                        for key in keys]
-            return fn(self, keys, *a, **kw)
-        return _fn
-
-    @hashkey
     def get(self, key, default = None):
         with self.clients.reserve() as mc:
             ret =  mc.get(key)
@@ -165,22 +129,8 @@ class CMemcache(CacheUtils):
             return ret
 
     def get_multi(self, keys, prefix = ''):
-        if self.legacy:
-            # get_multi can't use @hashkeys for md5ing the keys
-            # because we have to map the returns too
-            keymap = dict((md5('%s%s' % (prefix, key)).hexdigest(), key)
-                          for key in keys)
-            prefix = ''
-        else:
-            keymap = dict((str(key), key)
-                          for key in keys)
-
         with self.clients.reserve() as mc:
-            ret = mc.get_multi(keymap.keys(), key_prefix = prefix)
-
-        return dict((keymap[retkey], retval)
-                    for (retkey, retval)
-                    in ret.iteritems())
+            return mc.get_multi(keys, key_prefix = prefix)
 
     # simple_get_multi exists so that a cache chain can
     # single-instance the handling of prefixes for performance, but
@@ -190,13 +140,11 @@ class CMemcache(CacheUtils):
     # them, so here it is
     simple_get_multi = get_multi
 
-    @hashkey
     def set(self, key, val, time = 0):
         with self.clients.reserve() as mc:
             return mc.set(key, val, time = time,
                           min_compress_len = self.min_compress_len)
 
-    @hashmap
     def set_multi(self, keys, prefix='', time=0):
         new_keys = {}
         for k,v in keys.iteritems():
@@ -206,7 +154,6 @@ class CMemcache(CacheUtils):
                                 time = time,
                                 min_compress_len = self.min_compress_len)
 
-    @hashmap
     def add_multi(self, keys, prefix='', time=0):
         new_keys = {}
         for k,v in keys.iteritems():
@@ -215,25 +162,21 @@ class CMemcache(CacheUtils):
             return mc.add_multi(new_keys, key_prefix = prefix,
                                 time = time)
 
-    @hashkeys
     def incr_multi(self, keys, prefix='', delta=1):
         with self.clients.reserve() as mc:
             return mc.incr_multi(map(str, keys),
                                  key_prefix = prefix,
                                  delta=delta)
 
-    @hashkey
     def append(self, key, val, time=0):
         with self.clients.reserve() as mc:
             return mc.append(key, val, time=time)
 
-    @hashkey
     def incr(self, key, delta=1, time=0):
         # ignore the time on these
         with self.clients.reserve() as mc:
             return mc.incr(key, delta)
 
-    @hashkey
     def add(self, key, val, time=0):
         try:
             with self.clients.reserve() as mc:
@@ -241,12 +184,10 @@ class CMemcache(CacheUtils):
         except pylibmc.DataExists:
             return None
 
-    @hashkey
     def delete(self, key, time=0):
         with self.clients.reserve() as mc:
             return mc.delete(key)
 
-    @hashkeys
     def delete_multi(self, keys, prefix='', time=0):
         with self.clients.reserve() as mc:
             return mc.delete_multi(keys, time = time,
@@ -325,8 +266,10 @@ class LocalCache(dict, CacheUtils):
         return dict.__init__(self, *a, **kw)
 
     def _check_key(self, key):
+        if isinstance(key, unicode):
+            key = str(key) # try to convert it first
         if not isinstance(key, str):
-            raise TypeError('Key must be a string.')
+            raise TypeError('Key is not a string: %r' % (key,))
 
     def get(self, key, default=None):
         r = dict.get(self, key)
@@ -387,6 +330,9 @@ class LocalCache(dict, CacheUtils):
     def flush_all(self):
         self.clear()
 
+    def __repr__(self):
+        return "<LocalCache(%d)>" % (len(self),)
+
 class CacheChain(CacheUtils, local):
     def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
@@ -394,6 +340,7 @@ class CacheChain(CacheUtils, local):
 
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
+            ret = None
             for c in self.caches:
                 ret = getattr(c, fn_name)(*a, **kw)
             return ret
@@ -434,7 +381,7 @@ class CacheChain(CacheUtils, local):
                         break # so we don't set caches later in the chain
                     d.set(key, val)
 
-                if self.cache_negative_results and val == NoneResult:
+                if val == NoneResult:
                     return default
                 else:
                     return val
@@ -442,7 +389,7 @@ class CacheChain(CacheUtils, local):
         #didn't find anything
 
         if self.cache_negative_results:
-            for c in self.caches:
+            for c in self.caches[:-1]:
                 c.set(key, NoneResult)
 
         return default
@@ -476,20 +423,18 @@ class CacheChain(CacheUtils, local):
 
         if need and self.cache_negative_results:
             d = dict((key, NoneResult) for key in need)
-            for c in self.caches:
+            for c in self.caches[:-1]:
                 c.set_multi(d)
 
-        if self.cache_negative_results:
-            filtered_out = {}
-            for k,v in out.iteritems():
-                if v != NoneResult:
-                    filtered_out[k] = v
-            out = filtered_out
+        out = dict((k, v)
+                   for (k, v) in out.iteritems()
+                   if v != NoneResult)
 
         return out
 
     def __repr__(self):
-        return '<%s>' % (self.__class__.__name__,)
+        return '<%s %r>' % (self.__class__.__name__,
+                            self.caches)
 
     def debug(self, key):
         print "Looking up [%r]" % key
@@ -502,9 +447,6 @@ class CacheChain(CacheUtils, local):
         self.caches = (self.caches[0].__class__(),) +  self.caches[1:]
 
 class MemcacheChain(CacheChain):
-    pass
-
-class CassandraCacheChain(CacheChain):
     pass
 
 class HardcacheChain(CacheChain):
@@ -545,16 +487,70 @@ CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
 CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
 CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
 
+class CassandraCacheChain(CacheChain):
+    def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
+        if memcache:
+            caches = (localcache, memcache, cassa)
+        else:
+            caches = (localcache, cassa)
+
+        self.cassa = cassa
+        self.memcache = memcache
+        self.make_lock = lock_factory
+        CacheChain.__init__(self, caches, **kw)
+
+    def mutate(self, key, mutation_fn, default = None):
+        """Mutate a Cassandra key as atomically as possible"""
+        with self.make_lock('mutate_%s' % key):
+            # we have to do some of the the work of the cache chain
+            # here so that we can be sure that if the value isn't in
+            # memcached (an atomic store), we fetch it from Cassandra
+            # with CL_QUORUM (because otherwise it's not an atomic
+            # store). This requires us to know the structure of the
+            # chain, which means that changing the chain will probably
+            # require changing this function. (This has an edge-case
+            # where memcached was populated by a ONE read rather than
+            # a QUROUM one just before running this. We could avoid
+            # this by not using memcached at all for these mutations,
+            # which would require some more row-cache performace
+            # testing)
+            try:
+                value = None
+                if self.memcache:
+                    value = self.memcache.get(key)
+                if value is None:
+                    value = self.cassa.get(key,
+                                           read_consistency_level = CL_ONE)
+            except cassandra.ttypes.NotFoundException:
+                value = default
+
+            # due to an old bug in NoneResult caching, we still have
+            # some of these around
+            if value == NoneResult:
+                value = default
+
+            new_value = mutation_fn(copy(value)) # send in a copy in
+                                                 # case they mutate it
+                                                 # in-place
+
+            if value != new_value:
+                self.cassa.set(key, new_value,
+                               write_consistency_level = CL_QUORUM)
+            for ca in self.caches[:-1]:
+                # and update the rest of the chain; assumes that
+                # Cassandra is always the last entry
+                ca.set(key, new_value)
+        return new_value
+
 class CassandraCache(CacheUtils):
     """A cache that uses a Cassandra cluster. Uses a single keyspace
        and column family and only the column-name 'value'"""
-    def __init__(self, keyspace, column_family, seeds,
-                 read_consistency_level = CL_QUORUM,
+    def __init__(self, keyspace, column_family, client,
+                 read_consistency_level = CL_ONE,
                  write_consistency_level = CL_QUORUM):
         self.keyspace = keyspace
         self.column_family = column_family
-        self.seeds = seeds
-        self.client = pycassa.connect_thread_local(seeds)
+        self.client = client
         self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
                                        self.column_family,
                                        read_consistency_level = read_consistency_level,
@@ -592,8 +588,10 @@ class CassandraCache(CacheUtils):
             return
 
         wcl = self._wcl(write_consistency_level)
-        return self.cf.insert(key, {'value': pickle.dumps(val)},
+        ret = self.cf.insert(key, {'value': pickle.dumps(val)},
                               write_consistency_level = wcl)
+        self._warm([key])
+        return ret
 
     def set_multi(self, keys, prefix='',
                   write_consistency_level = None, time = None):
@@ -607,29 +605,20 @@ class CassandraCache(CacheUtils):
             if val != NoneResult:
                 ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
                                           write_consistency_level = wcl)
+        self._warm(keys.keys())
 
         return ret
+
+    def _warm(self, keys):
+        import random
+        if False and random.random() > 0.98:
+            print 'Warming', keys
+            self.cf.multiget(keys)
 
     def delete(self, key, write_consistency_level = None):
         wcl = self._wcl(write_consistency_level)
         self.cf.remove(key, write_consistency_level = wcl)
 
-# smart get multi:
-# For any keys not found in the cache, miss_fn() is run and the result is
-# stored in the cache. Then it returns everything, both the hits and misses.
-def sgm(cache, keys, miss_fn, prefix='', time=0):
-    keys = set(keys)
-    s_keys = dict((str(k), k) for k in keys)
-    r = cache.get_multi(s_keys.keys(), prefix=prefix)
-    if miss_fn and len(r.keys()) < len(keys):
-        need = set(s_keys.keys()) - set(r.keys())
-        #TODO i can't send a generator
-        nr = miss_fn([s_keys[i] for i in need])
-        nr = dict((str(k), v) for k,v in nr.iteritems())
-        r.update(nr)
-        cache.set_multi(nr, prefix=prefix, time = time)
-
-    return dict((s_keys[k], v) for k,v in r.iteritems())
 
 def test_cache(cache, prefix=''):
     #basic set/get
@@ -676,72 +665,6 @@ def test_cache(cache, prefix=''):
     cache.incr_multi(('%s5'%prefix, '%s6'%prefix), 1)
     assert cache.get('%s5'%prefix) == 5
     assert cache.get('%s6'%prefix) == 2
-
-def test_cache_compat(caches, prefix=''):
-    """Test that that the keyspaces of a list of cache objects are
-       compatible. Used to compare legacy-mode CMemcache to
-       PyMemcache"""
-    import random
-
-    def _gen():
-        keys = dict((str(random.random()), x) for x in xrange(1000))
-        prefixed = dict(('%s%s' % (prefix, key), value)
-                        for (key, value)
-                        in keys.iteritems())
-        return keys, prefixed
-
-    for cache in caches:
-        print 'with source == %r' % (cache,)
-
-        # single-ops
-        keys, prefixed = _gen()
-        for key, val in prefixed.iteritems():
-            for ocache in caches:
-                cache.set(key, val)
-                assert ocache.get(key) == val
-
-                # double-prefixed
-                ocache.set('%s%s' % (prefix, key), val)
-                assert cache.get('%s%s' % (prefix, key)) == val
-
-        # pre-prefixed
-        keys, prefixed = _gen()
-        cache.set_multi(prefixed)
-        for ocache in caches:
-            assert ocache.get_multi(prefixed.keys()) == prefixed
-            for key, val in prefixed.iteritems():
-                assert ocache.get(key) == val
-
-        # prefixed in place
-        keys, prefixed = _gen()
-        cache.set_multi(keys, prefix=prefix)
-        for ocache in caches:
-            assert ocache.get_multi(keys.keys()) == keys
-            for key, val in prefixed.iteritems():
-                assert ocache.get(key) == val
-
-        # prefixed on set
-        keys, prefixed = _gen()
-        cache.set_multi(keys, prefix=prefix)
-        for ocache in caches:
-            assert ocache.get_multi(prefixed.keys()) == keys
-            for key, val in prefixed.iteritems():
-                assert ocache.get(key) == val
-
-        # prefixed on get
-        keys, prefixed = _gen()
-        cache.set_multi(prefixed)
-        for ocache in caches:
-            assert ocache.get_multi(keys.keys(), prefix=prefix) == keys
-            for key, val in prefixed.iteritems():
-                assert ocache.get(key) == val
-
-        #delete
-        keys, prefixed = _gen()
-        for ocache in caches:
-            cache.set_multi(prefixed)
-            ocache.delete_multi(prefixed.keys())
-            assert cache.get_multi(prefixed.keys()) == {}
 
 def test_multi(cache):
     from threading import Thread

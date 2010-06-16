@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from reddit_base import RedditController, set_user_cookie
+from reddit_base import RedditController, MinimalController, set_user_cookie
 
 from pylons.i18n import _
 from pylons import c, request
@@ -34,13 +34,12 @@ from r2.lib.utils import query_string, timefromnow
 from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
-    ClickGadget
+    ClickGadget, UrlParser
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
 from r2.lib import spreadshirt
 from r2.lib.menus import CommentSortMenu
-from r2.lib.normalized_hot import expire_hot
 from r2.lib.captcha import get_iden
 from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
@@ -71,7 +70,7 @@ def reject_vote(thing):
               (voteword, c.user.name, request.ip, thing.__class__.__name__,
                thing._id36, request.referer), "info")
 
-class ApiminimalController(RedditController):
+class ApiminimalController(MinimalController):
     """
     Put API calls in here which won't come from logged in users (or
     don't rely on the user being logged int)
@@ -197,9 +196,10 @@ class ApiController(RedditController):
                    selftext = VMarkdown('text'),
                    kind = VOneOf('kind', ['link', 'self', 'poll']),
                    then = VOneOf('then', ('tb', 'comments'),
-                                 default='comments'))
+                                 default='comments'),
+                   extension = VLength("extension", 20))
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, ip, then):
+                    save, sr, ip, then, extension):
         from r2.models.admintools import is_banned_domain
 
         if isinstance(url, (unicode, str)):
@@ -238,7 +238,12 @@ class ApiController(RedditController):
                 pass
             elif form.has_errors("url", errors.ALREADY_SUB):
                 check_domain = False
-                form.redirect(url[0].already_submitted_link)
+                u = url[0].already_submitted_link
+                if extension:
+                    u = UrlParser(u)
+                    u.set_extension(extension)
+                    u = u.unparse()
+                form.redirect(u)
             # check for title, otherwise look it up and return it
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
@@ -324,7 +329,8 @@ class ApiController(RedditController):
         elif then == 'tb':
             form.attr('target', '_top')
             path = add_sr('/tb/%s' % l._id36)
-
+        if extension:
+            path += ".%s" % extension
         form.redirect(path)
 
     @validatedForm(VRatelimit(rate_ip = True,
@@ -636,7 +642,6 @@ class ApiController(RedditController):
         #expire the item from the sr cache
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
-            expire_hot(sr)
             queries.delete_links(thing)
 
         #comments have special delete tasks
@@ -1234,6 +1239,23 @@ class ApiController(RedditController):
         else:
             jquery.refresh()
 
+    @noresponse(q = VPrintable('q', max_length=500),
+                sort = VPrintable('sort', max_length=10),
+                t = VPrintable('t', max_length=10),
+                approval = VBoolean('approval'))
+    def POST_searchfeedback(self, q, sort, t, approval):
+        timestamp = c.start_time.strftime("%Y/%m/%d-%H:%M:%S")
+        if c.user_is_loggedin:
+            username = c.user.name
+        else:
+            username = None
+        d = dict(username=username, q=q, sort=sort, t=t)
+        hex = md5(repr(d)).hexdigest()
+        key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
+        d['timestamp'] = timestamp
+        d['approval'] = approval
+        g.hardcache.set(key, d, time=86400 * 7)
+
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
@@ -1530,25 +1552,21 @@ class ApiController(RedditController):
             self._subscribe(sr, action == 'sub')
 
     def _subscribe(self, sr, sub):
-        Subreddit.subscribe_defaults(c.user)
+        try:
+            Subreddit.subscribe_defaults(c.user)
 
-        sub_key = "subscription-%s-%s" % (c.user.name, sr.name)
-
-        if sub:
-            try:
+            if sub:
                 if sr.add_subscriber(c.user):
                     sr._incr('_ups', 1)
-            except CreationError:
-                # This only seems to happen when someone is pounding on the
-                # subscribe button or the DBs are really lagged; either way,
-                # some other proc has already handled this subscribe request.
-                return
-        else:
-            if sr.remove_subscriber(c.user):
-                g.cache.delete(sub_key)
-                sr._incr('_ups', -1)
-        changed(sr)
-
+            else:
+                if sr.remove_subscriber(c.user):
+                    sr._incr('_ups', -1)
+            changed(sr)
+        except CreationError:
+            # This only seems to happen when someone is pounding on the
+            # subscribe button or the DBs are really lagged; either way,
+            # some other proc has already handled this subscribe request.
+            return
 
     @noresponse(VAdmin(),
                 tr = VTranslation("id"))

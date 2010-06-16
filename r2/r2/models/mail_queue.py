@@ -124,7 +124,7 @@ def opt_out(metadata):
 
 class EmailHandler(object):
     def __init__(self, force = False):
-        engine = g.dbm.engines['email']
+        engine = g.dbm.get_engine('email')
         self.metadata = make_metadata(engine)
         self.queue_table = mail_queue(self.metadata)
         indices = [index_str(self.queue_table, "date", "date"),

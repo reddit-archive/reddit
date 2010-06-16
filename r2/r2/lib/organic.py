@@ -53,7 +53,7 @@ def cached_organic_links(*sr_ids):
     #potentially add an up and coming link
     if random.choice((True, False)) and sr_ids:
         sr = Subreddit._byID(random.choice(sr_ids))
-        fnames = get_hot([sr], True)[0]
+        fnames = get_hot([sr])
         if fnames:
             if len(fnames) == 1:
                 new_item = fnames[0]

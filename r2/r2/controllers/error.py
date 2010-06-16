@@ -87,7 +87,7 @@ class ErrorController(RedditController):
     This behaviour can be altered by changing the parameters to the
     ErrorDocuments middleware in your config/middleware.py file.
     """
-    allowed_render_styles = ('html', 'xml', 'js', 'embed', '', 'api')
+    allowed_render_styles = ('html', 'xml', 'js', 'embed', '', "compact", 'api')
     def __before__(self):
         try:
             c.error_page = True

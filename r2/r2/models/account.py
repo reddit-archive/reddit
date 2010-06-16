@@ -24,7 +24,7 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
-from r2.lib.utils        import UrlParser
+from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.cache        import sgm
 
 from pylons import g
@@ -40,6 +40,7 @@ class Account(Thing):
                                                'report_ignored', 'spammer',
                                                'reported')
     _int_prop_suffix = '_karma'
+    _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
                      pref_frame = False,
                      pref_frame_commentspanel = False,
@@ -63,6 +64,8 @@ class Account(Thing):
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
+                     mobile_compress = False,
+                     mobile_thumbnail = True,
                      trusted_sponsor = False,
                      reported = 0,
                      report_made = 0,
@@ -169,15 +172,15 @@ class Account(Thing):
 
         apply_updates(self)
 
-        prev_visit = getattr(self, 'last_visit', None)
+        #prev_visit = getattr(self, 'last_visit', None)
+        prev_visit = last_visit(self)
 
-        if prev_visit and current_time - prev_visit < timedelta(0, 3600):
+        if prev_visit and current_time - prev_visit < timedelta(1):
             return
 
-        g.log.debug ("Updating last visit for %s" % self.name)
-        self.last_visit = current_time
-
-        self._commit()
+        g.log.debug ("Updating last visit for %s from %s to %s" %
+                    (self.name, prev_visit, current_time))
+        set_last_visit(self)
 
     def make_cookie(self, timestr = None, admin = False):
         if not self._loaded:

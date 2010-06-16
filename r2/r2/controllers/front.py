@@ -180,6 +180,8 @@ class FrontController(RedditController):
         # validator on my next pass of .compact)
         if depth is not None and 0 < depth < MAX_RECURSION:
             kw['max_depth'] = depth
+        elif c.render_style == "compact":
+            kw['max_depth'] = 5
         # allow the user's total count preferences to be overwritten
         # (think of .embed as the use case together with depth=1)x
         if limit is not None and 0 < limit < g.max_comments:
@@ -316,6 +318,28 @@ class FrontController(RedditController):
                 extension_handling = "private"
         else:
             return self.abort404()
+        if isinstance(c.site, ModSR):
+            level = 'mod'
+        elif isinstance(c.site, ContribSR):
+            level = 'contrib'
+        elif isinstance(c.site, AllSR):
+            level = 'all'
+        else:
+            raise ValueError
+
+        if ((level == 'mod' and
+             location in ('reports', 'spam', 'trials', 'modqueue'))
+            or
+            (level == 'all' and
+             location == 'trials')):
+            pane = self._make_spamlisting(location, num, after, reverse, count)
+            if c.user.pref_private_feeds:
+                extension_handling = "private"
+        else:
+            return self.abort404()
+
+        return EditReddit(content = pane,
+                          extension_handling = extension_handling).render()
 
         return EditReddit(content = pane,
                           extension_handling = extension_handling).render()
@@ -837,6 +861,14 @@ class FormsController(RedditController):
             return self.redirect(dest)
         return LoginPage(dest = dest).render()
 
+
+    @validate(dest = VDestination())
+    def GET_register(self, dest):
+        if (c.user_is_loggedin and
+            not request.environ.get('extension') == 'embed'):
+            return self.redirect(dest)
+        return RegisterPage(dest = dest).render()
+
     @validate(VUser(),
               VModhash(),
               dest = VDestination())
@@ -898,3 +930,7 @@ class FormsController(RedditController):
         ApiController.POST_optin."""
         return self._render_opt_in_out(msg_hash, False)
 
+    @validate(dest = VDestination("dest"))
+    def GET_try_compact(self, dest):
+        c.render_style = "compact"
+        return TryCompact(dest = dest).render()

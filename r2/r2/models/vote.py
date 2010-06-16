@@ -19,18 +19,13 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.db.thing import MultiRelation, Relation, thing_prefix, cache
-from r2.lib.utils import tup, timeago
-from r2.lib.db.operators import ip_network
-from r2.lib.normalized_hot import expire_hot
+from r2.lib.db.thing import MultiRelation, Relation
+from r2.lib.db import tdb_cassandra
 
 from account import Account
 from link import Link, Comment
-from subreddit import Subreddit
 
-from datetime import timedelta, datetime
-
-from pylons import g, c
+from pylons import g
 
 
 def score_changes(amount, old_amount):
@@ -43,6 +38,62 @@ def score_changes(amount, old_amount):
     elif oa > 0 and a < 0: uc = -oa; dc = -a
     elif oa < 0 and a > 0: dc = oa; uc = a
     return uc, dc
+
+class CassandraVote(tdb_cassandra.Relation):
+    _use_db = False
+    _bool_props = ('valid_user', 'valid_thing', 'organic')
+    _str_props  = ('name', # one of '-1', '0', '1'
+                   'notes', 'ip')
+
+    @classmethod
+    def _rel(cls, thing1_cls, thing2_cls):
+        if (thing1_cls, thing2_cls) == (Account, Link):
+            return CassandraLinkVote
+        elif (thing1_cls, thing2_cls) == (Account, Comment):
+            return CassandraCommentVote
+
+class VotesByLink(tdb_cassandra.View):
+    _use_db = True
+    _type_prefix = 'VotesByLink'
+
+    # _view_of = LinkVote
+
+    @classmethod
+    def get_all(cls, link_id):
+        vbl = cls._byID(link_id)
+        return LinkVote._byID(vbl._t.values()).values()
+
+class CassandraLinkVote(CassandraVote):
+    _use_db = True
+    _type_prefix = 'r6'
+    _cf_name = 'LinkVote'
+
+    # these parameters aren't actually meaningful, they just help
+    # keep track
+    # _views = [VotesByLink]
+    _thing1_cls = Account
+    _thing2_cls = Link
+
+    def _on_create(self):
+        try:
+            vbl = VotesByLink._byID(self.thing1_id)
+        except tdb_cassandra.NotFound:
+            vbl = VotesByLink(_id=self.thing1_id)
+
+        vbl[self._id] = self._id
+        vbl._commit()
+
+        CassandraVote._on_create(self)
+
+class CassandraCommentVote(CassandraVote):
+    _use_db = True
+    _type_prefix = 'r5'
+    _cf_name = 'CommentVote'
+
+    # these parameters aren't actually meaningful, they just help
+    # keep track
+    _thing1_cls = Account
+    _thing2_cls = Comment
 
 class Vote(MultiRelation('vote',
                          Relation(Account, Link),
@@ -104,6 +155,8 @@ class Vote(MultiRelation('vote',
 
         v._fast_query_timestamp_touch(sub)
 
+        v._fast_query_timestamp_touch(sub)
+
         up_change, down_change = score_changes(amount, oldamount)
 
         if not (is_new and obj.author_id == sub._id and amount == 1):
@@ -120,6 +173,22 @@ class Vote(MultiRelation('vote',
         if is_new and v.valid_thing and kind == 'link':
             if sub._id != obj.author_id:
                 incr_counts([sr])
+
+        # now write it out to Cassandra. We'll write it out to both
+        # this way for a while
+        voter = v._thing1
+        votee = v._thing2
+        cvc = CassandraVote._rel(Account, votee.__class__)
+        try:
+            cv = cvc._fast_query(voter._id36, votee._id36)
+        except tdb_cassandra.NotFound:
+            cv = cvc(thing1_id = voter._id36, thing2_id = votee._id36)
+        cv.name = v._name
+        cv.valid_user, cv.valid_thing = v.valid_user, v.valid_thing
+        cv.ip = v.ip
+        if getattr(v, 'organic', False) or hasattr(cv, 'organic'):
+            cv.organic = v.organic
+        cv._commit()
 
         return v
 

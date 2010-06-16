@@ -171,10 +171,12 @@ def read_mod_cookie():
         set_user_cookie('mod', '')
 
 def firsttime():
-    if (request.user_agent and 'iphone' in request.user_agent.lower() and 
-        not get_redditfirst('iphone')):
-        set_redditfirst('iphone','first')
-        return 'iphone'
+    if (request.user_agent and
+        ('iphone' in request.user_agent.lower() or
+         'android' in request.user_agent.lower()) and 
+        not get_redditfirst('mobile_suggest')):
+        set_redditfirst('mobile_suggest','first')
+        return 'mobile_suggest'
     elif get_redditfirst('firsttime'):
         return False
     else:
@@ -295,6 +297,16 @@ def set_content_type():
             if user and not g.read_only_mode:
                 c.user = user
                 c.user_is_loggedin = True
+        if ext in ("mobile", "m") and not request.GET.get("keep_extension"):
+            try:
+                if request.cookies['reddit_mobility'] == "compact":
+                    c.extension = "compact"
+                    c.render_style = "compact"
+            except (ValueError, KeyError):
+                c.suggest_compact = True
+        if ext in ("mobile", "m", "compact"):
+            if request.GET.get("keep_extension"):
+                c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
 
 def get_browser_langs():
     browser_langs = []
@@ -348,7 +360,7 @@ def set_iface_lang():
         except h.LanguageError:
             #we don't have a translation for that language
             h.set_lang(g.lang, graceful_fail = True)
-            
+
     #TODO: add exceptions here for rtl languages
     if c.lang in ('ar', 'he', 'fa'):
         c.lang_rtl = True
@@ -463,6 +475,8 @@ class MinimalController(BaseController):
                         request.fullpath,
                         c.over18,
                         c.firsttime,
+                        c.extension,
+                        c.render_style, 
                         cookies_key)
 
     def cached_response(self):
@@ -485,6 +499,7 @@ class MinimalController(BaseController):
         set_subreddit()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+        set_content_type()
 
     def try_pagecache(self):
         #check content cache
@@ -539,7 +554,6 @@ class MinimalController(BaseController):
             and request.method == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and not c.dontcache
             and response.status_code != 503
             and response.content and response.content[0]):
             try:
@@ -583,6 +597,29 @@ class MinimalController(BaseController):
     def abort403(self):
         abort(403, "forbidden")
 
+    def sendpng(self, string):
+        c.response_content_type = 'image/png'
+        c.response.content = string
+        return c.response
+
+    def sendstring(self,string):
+        '''sends a string and automatically escapes &, < and > to make sure no code injection happens'''
+        c.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
+        c.response.content = filters.websafe_json(string)
+        return c.response
+
+    def update_qstring(self, dict):
+        merged = copy(request.get)
+        merged.update(dict)
+        return request.path + utils.query_string(merged)
+
+    def api_wrapper(self, kw):
+        data = simplejson.dumps(kw)
+        if request.method == "GET" and request.GET.get("callback"):
+            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
+                               websafe_json(data))
+        return self.sendstring(data)
+
 
 
 class RedditController(MinimalController):
@@ -597,6 +634,7 @@ class RedditController(MinimalController):
         c.cookies[g.login_cookie] = Cookie(value='')
 
     def pre(self):
+        c.response_wrappers = []
         MinimalController.pre(self)
 
         set_cnameframe()
@@ -605,33 +643,36 @@ class RedditController(MinimalController):
         if request.host != g.media_domain or g.media_domain == g.domain:
             try:
                 for k,v in request.cookies.iteritems():
-                    # we can unquote even if it's not quoted
-                    c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+                    # minimalcontroller can still set cookies
+                    if k not in c.cookies:
+                        # we can unquote even if it's not quoted
+                        c.cookies[k] = Cookie(value=unquote(v), dirty=False)
             except CookieError:
                 #pylons or one of the associated retarded libraries
                 #can't handle broken cookies
                 request.environ['HTTP_COOKIE'] = ''
 
-        c.response_wrappers = []
         c.firsttime = firsttime()
 
-
-        (c.user, maybe_admin) = \
-            valid_cookie(c.cookies[g.login_cookie].value
-                         if g.login_cookie in c.cookies
-                         else '')
-
-        if c.user:
-            c.user_is_loggedin = True
-        else:
-            c.user = UnloggedUser(get_browser_langs())
-            # patch for fixing mangled language preferences
-            if (not isinstance(c.user.pref_lang, basestring) or
-                not all(isinstance(x, basestring)
-                        for x in c.user.pref_content_langs)):
-                c.user.pref_lang = g.lang
-                c.user.pref_content_langs = [g.lang]
-                c.user._commit()
+        # the user could have been logged in via one of the feeds 
+        maybe_admin = False
+        if not c.user_is_loggedin:
+            (c.user, maybe_admin) = \
+                valid_cookie(c.cookies[g.login_cookie].value
+                             if g.login_cookie in c.cookies
+                             else '')
+    
+            if c.user:
+                c.user_is_loggedin = True
+            else:
+                c.user = UnloggedUser(get_browser_langs())
+                # patch for fixing mangled language preferences
+                if (not isinstance(c.user.pref_lang, basestring) or
+                    not all(isinstance(x, basestring)
+                            for x in c.user.pref_content_langs)):
+                    c.user.pref_lang = g.lang
+                    c.user.pref_content_langs = [g.lang]
+                    c.user._commit()
         if c.user_is_loggedin:
             if not c.user._loaded:
                 c.user._load()
@@ -655,7 +696,6 @@ class RedditController(MinimalController):
 
         #set_browser_langs()
         set_host_lang()
-        set_content_type()
         set_iface_lang()
         set_content_lang()
         set_recent_reddits()
@@ -721,27 +761,4 @@ class RedditController(MinimalController):
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
-
-    def sendpng(self, string):
-        c.response_content_type = 'image/png'
-        c.response.content = string
-        return c.response
-
-    def sendstring(self,string):
-        '''sends a string and automatically escapes &, < and > to make sure no code injection happens'''
-        c.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-        c.response.content = filters.websafe_json(string)
-        return c.response
-
-    def update_qstring(self, dict):
-        merged = copy(request.get)
-        merged.update(dict)
-        return request.path + utils.query_string(merged)
-
-    def api_wrapper(self, kw):
-        data = simplejson.dumps(kw)
-        if request.method == "GET" and request.GET.get("callback"):
-            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
-                               websafe_json(data))
-        return self.sendstring(data)
 

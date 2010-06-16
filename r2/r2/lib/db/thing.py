@@ -197,7 +197,7 @@ class DataThing(object):
 
     def _cache_myself(self):
         ck = self._cache_key()
-        if self.__class__.__name__ in ("Link", "Comment", "Subreddit") and not self._t:
+        if self.__class__.__name__ in ("Link", "Comment", "Subreddit") and not self._t and not self._deleted:
             raise ValueError("Refusing to cache {} for %r" % ck)
         cache.set(ck, self)
 
@@ -659,27 +659,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             else:
                 return filter(None, (bases.get(i) for i in ids))
 
-        @classmethod
-        def _byID_rel(cls, ids, data=False, return_dict=True, extra_props=None,
-                      eager_load=False, thing_data=False):
-
-            ids, single = tup(ids, True)
-
-            bases = cls._byID(ids, data=data, return_dict=True,
-                              extra_props=extra_props)
-
-            values = bases.values()
-
-            if values and eager_load:
-                load_things(values, thing_data)
-
-            if single:
-                return bases[ids[0]]
-            elif return_dict:
-                return bases
-            else:
-                return filter(None, (bases.get(i) for i in ids))
-
         def __init__(self, thing1, thing2, name, date = None, id = None, **attrs):
             DataThing.__init__(self)
 
@@ -988,27 +967,25 @@ class Query(object):
 
         names = lst = []
 
-        if not self._read_cache:
+        names = cache.get(self._iden()) if self._read_cache else None
+        if names is None and not self._write_cache:
+            # it wasn't in the cache, and we're not going to
+            # replace it, so just hit the db
             lst = _retrieve()
-        else:
-            names = cache.get(self._iden())
-            if names is None and not self._write_cache:
-                # it wasn't in the cache, and we're not going to
-                # replace it, so just hit the db
-                lst = _retrieve()
-            elif names is None and self._write_cache:
-                # it's not in the cache, and we have the power to
-                # update it, which we should do in a lock to prevent
-                # concurrent requests for the same data
-                with g.make_lock("lock_%s" % self._iden()):
-                    # see if it was set while we were waiting for our
-                    # lock
-                    names = cache.get(self._iden(), allow_local = False)
-                    if not names:
-                        lst = _retrieve()
-                        cache.set(self._iden(),
-                                  [ x._fullname for x in lst ],
-                                  self._cache_time)
+        elif names is None and self._write_cache:
+            # it's not in the cache, and we have the power to
+            # update it, which we should do in a lock to prevent
+            # concurrent requests for the same data
+            with g.make_lock("lock_%s" % self._iden()):
+                # see if it was set while we were waiting for our
+                # lock
+                names = cache.get(self._iden(), allow_local = False) \
+                                  if self._read_cache else None
+                if names is None:
+                    lst = _retrieve()
+                    cache.set(self._iden(),
+                              [ x._fullname for x in lst ],
+                              self._cache_time)
 
         if names and not lst:
             # we got our list of names from the cache, so we need to

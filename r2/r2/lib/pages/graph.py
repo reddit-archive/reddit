@@ -38,13 +38,14 @@ def make_date_axis_labels(series):
     _max = max(series)
     _min = min(series)
     delta = _max - _min
-    if delta < datetime.timedelta(0, 0.5 * 86400):
+    zero = datetime.timedelta(0)
+    if delta != zero and delta < datetime.timedelta(0, 0.5 * 86400):
         test   = lambda cur, prev: cur.hour != prev.hour and cur.hour % 3 == 0
         format = "%H:00"
-    elif delta < datetime.timedelta(2):
+    elif delta != zero and delta < datetime.timedelta(2):
         test   = lambda cur, prev: cur.hour != prev.hour and cur.hour % 6 == 0
         format = "%H:00"
-    elif delta < datetime.timedelta(7):
+    elif delta == zero or delta < datetime.timedelta(7):
         test = lambda cur, prev: cur.day != prev.day
         format = "%d %b"
     elif delta < datetime.timedelta(14):

@@ -36,10 +36,7 @@ def memoize(iden, time = 0):
 
             #if the keyword param _update == True, the cache will be
             #overwritten no matter what
-            update = False
-            if kw.has_key('_update'):
-                update = kw['_update']
-                del kw['_update']
+            update = kw.pop('_update', False)
 
             key = make_key(iden, *a, **kw)
 
@@ -48,17 +45,18 @@ def memoize(iden, time = 0):
             if res is None:
                 # not cached, we should calculate it.
                 with make_lock('memoize_lock(%s)' % key):
+                    # see if it was completed while we were waiting
+                    # for the lock
                     stored = None if update else cache.get(key)
-                    if stored is None:
+                    if stored is not None:
+                        # it was calculated while we were waiting
+                        res = stored
+                    else:
                         # okay now go and actually calculate it
                         res = fn(*a, **kw)
                         if res is None:
                             res = NoneResult
                         cache.set(key, res, time = time)
-                    else:
-                        # it was calculated while we were waiting on
-                        # the lock
-                        res = stored
 
             if res == NoneResult:
                 res = None

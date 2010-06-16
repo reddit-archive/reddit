@@ -25,6 +25,7 @@
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static
+   from r2.lib.strings import Score
 %>
  
 <%inherit  file="printable.html"/>
@@ -191,19 +192,21 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 
 <%def name="tagline()">
   <%
-    if thing.different_sr:
+    if thing.score_fmt == Score.points:
+      taglinetext = "<span>" + _("%(score)s submitted %(when)s ago") + "</span>"
+      if thing.different_sr:
+         taglinetext += " <span>" + _("by %(author)s to %(reddit)s") + "</span>"
+      else:
+         taglinetext += " <span>" + _("by %(author)s") + "</span>"
+    elif thing.different_sr:
       taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s")
     else:
       taglinetext = _("submitted %(when)s ago by %(author)s")
     taglinetext = taglinetext.replace(" ", "&#32;")
   %>
 
-  %if thing.pref_compress and not thing.hide_score:
-    ${self.score(thing, thing.likes, tag='span')}
-    &#32;
-  %endif
-
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
+                              score = capture(self.score, thing, thing.likes, tag='span'),
                               when = thing.timesince, 
                               author= WrappedUser(thing.author, thing.attribs, thing).render()))}
 

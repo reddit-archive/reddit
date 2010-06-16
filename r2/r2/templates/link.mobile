@@ -23,6 +23,7 @@
 <%! 
     from r2.models.subreddit import Default
     from pylons.i18n import _, ungettext
+    from r2.lib.template_helpers import add_sr
 %>
 
 <%namespace file="utils.html" import="plain_link" />
@@ -39,13 +40,20 @@
        # generates "comment" the imperative verb
        com_label = _("comment") 
  %>
-  <p class="link"><a href="${thing.url}" class="title"
-                     %if thing.nofollow:
-                       rel="nofollow"
-                     %endif
-                     >${thing.title}</a></p>
+  <p class="link">
+     %if thing.is_self:
+      <a href="${add_sr(thing.href_url)}">${thing.title}</a>
+     %else:
+      <a href="${thing.url}">${thing.title}</a>
+     %endif
+  </p>
   <p class="byline">${thing.score} ${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
   ${plain_link(com_label, thing.permalink)}</span>&nbsp;|&nbsp;${tagline()}</p>
+  %if thing.link_child and thing.link_child.expand:
+    <div class="expando">
+      ${thing.link_child.content()}
+    </div>
+  %endif
 </%def>
 
 <%def name="domain()" buffered="True">

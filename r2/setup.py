@@ -55,7 +55,7 @@ try:
 except ImportError:
     print "Installing the PyCaptcha Module"
     easy_install(["http://svn.navi.cx/misc/trunk/pycaptcha"])
-    
+
 # ditto for pylons
 try:
     import pylons
@@ -66,7 +66,17 @@ except ImportError:
     print "Installing Pylons 0.9.6.2 from the cheese shop"
     easy_install(["http://pypi.python.org/packages/source/P/Pylons/Pylons-0.9.6.2.tar.gz"])
 
-#install the devel version of py-amqplib until the cheesehop version is updated
+# Install our special version of paste that dies on first zombie sighting
+try:
+    import paste
+    vers = getattr(paste, "__version__", "(undefined)")
+    assert vers == '1.7.2-reddit-0.1', \
+           ("reddit is only compatible with its own magical version of paste, not '%s'" % vers)
+except (ImportError, AssertionError):
+    print "Installing reddit's magical version of paste"
+    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.1.tar.gz"])
+
+#install the devel version of py-amqplib until the cheeseshop version is updated
 try:
     import amqplib
 except ImportError:
@@ -108,6 +118,7 @@ discountmod = Extension('reddit-discount',
                                        "xml.c",
                                        "xmlpage.c"])))
 
+ext_modules = [filtermod, discountmod]
 
 setup(
     name='r2',
@@ -123,6 +134,7 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
+                      "cython==0.12.1",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup == 3.0.8.1", # last version to use the good parser
@@ -131,7 +143,7 @@ setup(
                       "psycopg2",
                       "py_interface",
                       "pycountry",
-                      "thrift", # required by Cassandra
+                      "python-cassandra",
                       ],
     packages=find_packages(),
     include_package_data=True,
@@ -142,7 +154,7 @@ setup(
                 'init_catalog':         babel.init_catalog,
                 'update_catalog':       babel.update_catalog,
                 },
-    ext_modules = [filtermod, discountmod],
+    ext_modules = ext_modules,
     entry_points="""
     [paste.app_factory]
     main=r2:make_app
@@ -156,13 +168,11 @@ setup(
     """,
 )
 
+easy_install(["http://github.com/downloads/vomjom/pycassa/pycassa-0.3.0.tar.gz"])
 
-# the cassandra stuff we'll need. down here because it needs to be
-# done *after* thrift is installed
-try:
-    import cassandra, pycassa
-except ImportError:
-    # we'll need thrift too, but that is done by install_depends below
-    easy_install(['http://github.com/downloads/ieure/python-cassandra/Cassandra-0.5.0.tar.gz', # required by pycassa
-                  'http://github.com/downloads/ketralnis/pycassa/pycassa-0.1.1.tar.gz',
-                  ])
+
+# running setup.py always fucks up the build directory, which we don't
+# need anyway.
+easy_install(["http://github.com/downloads/vomjom/pycassa/pycassa-0.3.0.tar.gz"])
+import shutil
+shutil.rmtree("build")

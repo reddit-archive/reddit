@@ -92,9 +92,11 @@ ${thing.captcha}
 </%utils:submit_form>
 
 <script type="text/javascript">
+  $(function() {
   var form = $("#newlink");
   if(form.length) {
-    var default_menu = form.find(".${thing.default_tab}:first");
+    var default_menu = form.find(".${thing.default_tab}-button:first");
     select_form_tab(default_menu, "${thing.default_show}", "${thing.default_hide}");
     }
+  });
 </script>

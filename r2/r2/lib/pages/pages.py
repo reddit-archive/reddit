@@ -128,10 +128,20 @@ class Reddit(Templated):
 
         #add the infobar
         self.infobar = None
+        # generate a canonical link for google
+        self.canonical_link = request.fullpath
+        if c.render_style != "html":
+            u = UrlParser(request.fullpath)
+            u.set_extension("")
+            u.hostname = g.domain
+            if g.domain_prefix:
+                u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
+            self.canonical_link = u.unparse()
         if self.show_firsttext and not infotext:
             if g.read_only_mode:
                 infotext = strings.read_only_msg
-            elif c.firsttime == 'iphone':
+            elif (c.firsttime == 'mobile_suggest' and
+                  c.render_style != 'compact'):
                 infotext = strings.iphone_first
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext
@@ -336,7 +346,8 @@ class RedditFooter(CachedTemplate):
                 ('buttons', [[(x.title, x.path) for x in y] for y in self.nav])]
 
     def __init__(self):
-        self.nav = [NavMenu([NamedButton("mobile", False, nocname=True),
+        self.nav = [NavMenu([OffsiteButton("mobile", 
+                                           "/static/reddit_mobile/index.htm"),
                          OffsiteButton("rss", dest = '/.rss'),
                          NamedButton("store", False, nocname=True),
                          NamedButton("awards", False, nocname=True),
@@ -359,8 +370,7 @@ class RedditFooter(CachedTemplate):
                          NamedButton("buttons", True),
                          NamedButton("code", False, nocname=True),
                          NamedButton("socialite", False),
-                         NamedButton("widget", True),
-                         NamedButton("iphone", False),],
+                         NamedButton("widget", True)],
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
                     NavMenu([NamedButton("blog", False, nocname=True),
@@ -599,8 +609,9 @@ class BoringPage(Reddit):
     def __init__(self, pagename, **context):
         self.pagename = pagename
         name = c.site.name or g.default_sr
-        Reddit.__init__(self, title = "%s: %s" % (name, pagename),
-                        **context)
+        if "title" not in context:
+            context['title'] = "%s: %s" % (name, pagename)
+        Reddit.__init__(self, **context)
 
     def build_toolbars(self):
         return [PageNameNav('nomenu', title = self.pagename)]
@@ -620,25 +631,43 @@ class FormPage(BoringPage):
 
 class LoginPage(BoringPage):
     enable_login_cover = False
+    short_title = "login"
 
     """a boring page which provides the Login/register form"""
     def __init__(self, **context):
-        context['loginbox'] = False
         self.dest = context.get('dest', '')
+        context['loginbox'] = False
         context['show_sidebar'] = False
-        BoringPage.__init__(self,  _("login or register"), **context)
+        if c.render_style == "compact":
+            title = self.short_title
+        else:
+            title = _("login or register")
+        BoringPage.__init__(self,  title, **context)
 
     def content(self):
         kw = {}
         for x in ('user_login', 'user_reg'):
             kw[x] = getattr(self, x) if hasattr(self, x) else ''
-        return Login(dest = self.dest, **kw)
+        return self.login_template(dest = self.dest, **kw)
+
+    @classmethod
+    def login_template(cls, **kw):
+        return Login(**kw)
+
+class RegisterPage(LoginPage):
+    short_title = "register"
+    @classmethod
+    def login_template(cls, **kw):
+        return Register(**kw)
 
 class Login(Templated):
     """The two-unit login and register form."""
     def __init__(self, user_reg = '', user_login = '', dest=''):
         Templated.__init__(self, user_reg = user_reg, user_login = user_login,
                            dest = dest, captcha = Captcha())
+
+class Register(Login):
+    pass
     
 class SearchPage(BoringPage):
     """Search results page"""
@@ -649,7 +678,8 @@ class SearchPage(BoringPage):
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   search_params = search_params)
+                                   search_params = search_params,
+                                   show_feedback = True)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -701,6 +731,7 @@ class LinkInfoPage(Reddit):
                  link_title = '', subtitle = None, duplicates = None,
                  *a, **kw):
 
+        c.permalink_page = True
         expand_children = kw.get("expand_children", not bool(comment))
 
         wrapper = default_thing_wrapper(expand_children=expand_children)
@@ -753,7 +784,8 @@ class LinkInfoPage(Reddit):
             if not self.link.is_self and self.duplicates:
                 buttons.append(info_button('duplicates',
                                            num = len(self.duplicates)))
-            if len(self.link.title) < 200 and g.spreadshirt_url:
+            if (len(self.link.title) < 200 and g.spreadshirt_url
+                and c.render_style == "html"):
                 buttons += [info_button('shirt')]
 
         if c.user_is_admin:
@@ -787,9 +819,16 @@ class LinkInfoPage(Reddit):
 
 class CommentPane(Templated):
     def cache_key(self):
+        num = self.article.num_comments
+        # bit of triage: we don't care about 10% changes in comment
+        # trees once they get to a certain length.  The cache is only a few
+        # min long anyway. 
+        if num > 1000:
+            num = (num / 100) * 100
+        elif num > 100:
+            num = (num / 10) * 10
         return "_".join(map(str, ["commentpane", self.article._fullname,
-                                  self.article.num_comments,
-                                  self.sort, self.num, c.lang,
+                                  num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
@@ -847,7 +886,7 @@ class CommentPane(Templated):
 
                     # render as if not logged in (but possibly with reply buttons)
                     self.rendered = renderer().render()
-                    g.cache.set(key, self.rendered, time = 30)
+                    g.cache.set(key, self.rendered, time = 120)
 
                 finally:
                     # undo the spoofing
@@ -1114,23 +1153,29 @@ class SubredditTopBar(Templated):
     """The horizontal strip at the top of most pages for navigating
     user-created reddits."""
     def __init__(self):
+        self._my_reddits = None
+        self._pop_reddits = None
         Templated.__init__(self)
 
-        self.my_reddits = Subreddit.user_subreddits(c.user, ids = False)
 
-        p_srs = Subreddit.default_subreddits(ids = False,
-                                             limit = Subreddit.sr_limit)
-        self.pop_reddits = [ sr for sr in p_srs if sr.name not in g.automatic_reddits ]
+    @property
+    def my_reddits(self):
+        if self._my_reddits is None:
+            self._my_reddits = Subreddit.user_subreddits(c.user, ids = False)
+        return self._my_reddits
 
+    @property
+    def pop_reddits(self):
+        if self._pop_reddits is None:
+            p_srs = Subreddit.default_subreddits(ids = False,
+                                                 limit = Subreddit.sr_limit)
+            self._pop_reddits = [ sr for sr in p_srs
+                                  if sr.name not in g.automatic_reddits ]
+        return self._pop_reddits
 
-# This doesn't actually work.
-#        self.reddits = c.recent_reddits
-#        for sr in pop_reddits:
-#            if sr not in c.recent_reddits:
-#                self.reddits.append(sr)
 
     def my_reddits_dropdown(self):
-        drop_down_buttons = []    
+        drop_down_buttons = []
         for sr in sorted(self.my_reddits, key = lambda sr: sr.name.lower()):
             drop_down_buttons.append(SubredditButton(sr))
         drop_down_buttons.append(NamedButton('edit', sr_path = False,
@@ -1197,11 +1242,11 @@ class SubredditTopBar(Templated):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
-    def __init__(self):
+    @property
+    def reddits(self):
         srs = Subreddit.user_subreddits(c.user, ids = False)
         srs.sort(key = lambda sr: sr.name.lower())
-        self.reddits = wrap_links(srs)
-        Templated.__init__(self)
+        return wrap_links(srs)
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
@@ -1304,13 +1349,14 @@ class SearchBar(Templated):
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
-                 search_params = {}, **kw):
+                 search_params = {}, show_feedback=False, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))
 
         self.prev_search  = prev_search
         self.elapsed_time = elapsed_time
+        self.show_feedback = show_feedback
 
         # All results are approximate unless there are fewer than 10.
         if num_results > 10:
@@ -1331,7 +1377,7 @@ class SearchFail(Templated):
         Templated.__init__(self)
 
 
-class Frame(Templated):
+class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
     top 30px of the page are dedicated to the toolbar, while the rest
     of the page will show the results of following the link."""
@@ -1420,7 +1466,7 @@ class NewLink(Templated):
                 self.default_show = to_show
                 self.default_hide = to_hide
 
-            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name))
+            buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
 
         self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
         self.default_tabs = tabs[0][1]
@@ -2982,3 +3028,17 @@ def render_ad(reddit_name=None, codename=None):
              "error")
 
     return Dart_Ad(reddit_name).render()
+
+class TryCompact(Reddit):
+    def __init__(self, dest, **kw):
+        dest = dest or "/"
+        u = UrlParser(dest)
+        u.set_extension("compact")
+        self.compact = u.unparse()
+
+        u.update_query(keep_extension = True)
+        self.like = u.unparse()
+
+        u.set_extension("mobile")
+        self.mobile = u.unparse()
+        Reddit.__init__(self, **kw)

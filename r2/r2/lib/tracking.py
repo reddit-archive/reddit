@@ -139,11 +139,17 @@ class UserInfo(Info):
     def init_defaults(self):
         self.name = safe_str(c.user.name if c.user_is_loggedin else '')
         self.site = safe_str(c.site.name if c.site else '')
-        try:
-            action = request.environ['pylons.routes_dict'].get('action')
+        action = ""
+        if c.render_style in ("mobile", "compact"):
+            action = c.render_style
+        else:
+            try:
+                action = request.environ['pylons.routes_dict'].get('action')
+            except Exception,e:
+                g.log.error(e)
+        if action:
             self.site += "-%s" % action
-        except Exception,e:
-            g.log.error(e)
+
         self.lang = safe_str(c.lang if c.lang else '')
         self.cname = safe_str(c.cname)
 

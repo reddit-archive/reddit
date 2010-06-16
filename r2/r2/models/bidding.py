@@ -37,7 +37,7 @@ from r2.lib.memoize import memoize
 import datetime
 
 
-engine = g.dbm.engines['authorize']
+engine = g.dbm.get_engine('authorize')
 # Allocate a session maker for communicating object changes with the back end  
 Session = sessionmaker(autocommit = True, autoflush = True, bind = engine)
 # allocate a SQLalchemy base class for auto-creation of tables based

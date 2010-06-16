@@ -1,3 +1,4 @@
+
 # The contents of this file are subject to the Common Public Attribution
 # License Version 1.0. (the "License"); you may not use this file except in
 # compliance with the License. You may obtain a copy of the License at
@@ -20,6 +21,11 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import sqlalchemy as sa
+import logging, traceback
+import time, random
+
+logger = logging.getLogger('dm_manager')
+logger.addHandler(logging.StreamHandler())
 
 def get_engine(name, db_host='', db_user='', db_pass='',
                pool_size = 5, max_overflow = 5):
@@ -38,18 +44,128 @@ class db_manager:
     def __init__(self):
         self.type_db = None
         self.relation_type_db = None
-        self.things = {}
-        self.relations = {}
-        self.engines = {}
+        self._things = {}
+        self._relations = {}
+        self._engines = {}
         self.avoid_master_reads = {}
+        self.dead = {}
 
     def add_thing(self, name, thing_dbs, avoid_master = False, **kw):
         """thing_dbs is a list of database engines. the first in the
         list is assumed to be the master, the rest are slaves."""
-        self.things[name] = thing_dbs
+        self._things[name] = thing_dbs
         self.avoid_master_reads[name] = avoid_master
 
     def add_relation(self, name, type1, type2, relation_dbs,
                      avoid_master = False, **kw):
-        self.relations[name] = (type1, type2, relation_dbs)
+        self._relations[name] = (type1, type2, relation_dbs)
         self.avoid_master_reads[name] = avoid_master
+
+    def setup_db(self, db_name, **params):
+        engine = get_engine(**params)
+        self._engines[db_name] = engine
+        self.test_engine(engine)
+
+    def things_iter(self):
+        for name, engines in self._things.iteritems():
+            yield name, [e for e in engines if e not in self.dead]
+
+    def rels_iter(self):
+        for name, (type1_name, type2_name, engines) in self._relations.iteritems():
+            engines = [e for e in engines if e not in self.dead]
+            yield name, (type1_name, type2_name, engines) 
+
+    def mark_dead(self, engine):
+        logger.error("db_manager: marking connection dead: %r" % engine)
+        self.dead[engine] = time.time()
+
+    def test_engine(self, engine):
+        try:
+            list(engine.execute("select 1"))
+            if engine in self.dead:
+                logger.error("db_manager: marking connection alive: %r" % engine)
+                del self.dead[engine]
+            return True
+        except Exception, e:
+            logger.error(traceback.format_exc())
+            logger.error("connection failure: %r" % engine)
+            self.mark_dead(engine)
+            return False
+
+    def get_engine(self, name):
+        return self._engines[name]
+
+    def get_read_table(self, tables):
+        from r2.lib.services import AppServiceMonitor
+        # short-cut for only one element
+        if len(tables) == 1:
+            return tables[0]
+
+        if self.dead:
+            tables = set(tables)
+            dead = set(t for t in tables if t[0].bind in self.dead)
+            for t in list(dead):
+                # TODO: tune the reconnect code.  We have about 1-2
+                # requests per second per app, so this should
+                # reconnect every 50-100 seconds.
+                if (random.randint(1,100) == 42 and 
+                    self.test_engine(t[0].bind)):
+                    dead.remove(t)
+            tables = tables - dead
+
+        #'t' is a list of engines itself. since we assume those engines
+        #are on the same machine, just take the first one. len(ips) may be
+        #< len(tables) if some tables are on the same host.
+        ips = dict((t[0].bind.url.host, t) for t in tables)
+        ip_loads = AppServiceMonitor.get_db_load(ips.keys())
+
+        total_load = 0
+        missing_loads = []
+        no_connections = []
+        have_loads = []
+
+        for ip in ips:
+            if ip not in ip_loads:
+                missing_loads.append(ip)
+            else:
+                load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
+
+                #prune high-connection machines
+                #if conns < .9 * max_conns:
+                max_load = max(load, avg_load)
+                total_load += max_load
+                have_loads.append((ip, max_load))
+                #else:
+                #    no_connections.append(ip)
+
+        if total_load:
+            avg_load = total_load / max(len(have_loads), 1)
+            ip_weights = [(ip, 1 - load / total_load) for ip, load in have_loads]
+        #if total_load is 0, which happens when have_loads is empty
+        else:
+            avg_load = 1.0
+            ip_weights = [(ip, 1.0 / len(have_loads)) for ip, load in have_loads]
+
+        if missing_loads or no_connections:
+            #add in the missing load numbers with an average weight
+            ip_weights.extend((ip, avg_load) for ip in missing_loads)
+
+            #add in the over-connected machines with a 1% weight
+            ip_weights.extend((ip, .01) for ip in no_connections)
+
+        #rebalance the weights
+        total_weight = sum(w[1] for w in ip_weights) or 1
+        ip_weights = [(ip, weight / total_weight)
+                      for ip, weight in ip_weights]
+
+        r = random.random()
+        for ip, load in ip_weights:
+            if r < load:
+                # print "db ip: %s" % str(ips[ip][0].metadata.bind.url.host)
+                return ips[ip]
+            r = r - load
+
+        #should never happen
+        print 'yer stupid'
+        return  random.choice(list(tables))
+

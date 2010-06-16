@@ -29,7 +29,7 @@ import os, re
 import cPickle as pickle
 from wrapped import Templated
 from utils import Storage
-from md5 import md5
+from hashlib import md5
 
 from logger import WithWriteLock, LoggedSlots
 

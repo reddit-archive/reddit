@@ -1,0 +1,104 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%!
+   from r2.lib.strings import strings
+   from r2.lib.pages import UserText
+   from r2.lib.template_helpers import add_sr
+%>
+
+<%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links, reddit_selector"/>
+<%namespace name="utils" file="utils.html"/>
+
+Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
+
+<%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
+                    action=${add_sr("/submit")},
+                    _class="submit content",
+                    _id="newlink">
+
+${thing.formtabs_menu}
+<div class="formtabs-content">
+
+<div class="spacer">
+    <div id="link-desc" class="infobar">${strings.submit_link}</div>
+    <div id="text-desc" class="infobar" style="display: none;">${strings.submit_text}</div>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('title')}" id="title-field">
+    <textarea name="title" rows="2" cols="1" wrap="hard">${thing.title}</textarea>
+    ${error_field("NO_TEXT", "title", "div")}
+    ${error_field("TOO_LONG", "title", "div")}
+  </%utils:round_field>
+</div>
+
+<input type="hidden" name="extension" value="compact" />
+<div class="spacer">
+  <%utils:round_field title="${_('url')}" id="url-field">
+    <input name="kind" value="link" type="hidden"/>
+    <input id="url" name="url" type="url" value="${thing.url}"/>
+    ${error_field("NO_URL", "url", "div")}
+    ${error_field("BAD_URL", "url", "div")}
+    ${error_field("ALREADY_SUB", "url", "div")}
+    <div>
+      <button type="button" tabindex="100" class="button" onclick="fetch_title()">${_("suggest title")}</button>
+      <div class="title-status" style="display: none;"></div>
+		<div style="clear: both;"><!--clear--></div>
+    </div>
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field" style="display: none;">
+    <input name="kind" value="self" type="hidden"/>
+
+    ${UserText(None, have_form = False, creating = True)}
+  </%utils:round_field>
+</div>
+
+<div class="spacer">
+  <%utils:round_field title="${_('reddit')}" id="reddit-field">
+    ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+  </%utils:round_field>
+</div>
+
+${thing.captcha}
+    
+</div>
+
+<div class="spacer">
+Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
+<button class="btn save button" name="submit" value="form" type="submit">${_("submit")}</button>
+  <span class="status"></span>
+  ${error_field("RATELIMIT", "ratelimit")}
+</div>
+<div style="clear: both;"><!--fffuuuuuuuu--></div>
+</%utils:submit_form>
+
+<script type="text/javascript">
+  var form = $("#newlink");
+  if(form.length) {
+    var default_menu = form.find(".${thing.default_tab}-button:first");
+    select_form_tab(default_menu, "${thing.default_show}", "${thing.default_hide}");
+    }
+</script>

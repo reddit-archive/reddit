@@ -26,9 +26,9 @@
 %>
 <%namespace file="utils.html" import="language_tool, language_checkboxes, plain_link"/>
 
-<%def name="checkbox(text, name, disabled = False, disabled_text = '')">
+<%def name="checkbox(text, name, disabled = False, disabled_text = '', prefix = 'pref_')">
     <input name="${name}" id="${name}" type="checkbox"
-               %if getattr(c.user, "pref_" + name):
+               %if getattr(c.user, prefix + name):
                  checked="checked"
                %endif
                %if disabled:

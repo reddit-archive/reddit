@@ -114,7 +114,7 @@
       </li>
     </ul>
       <p>
-        <button type="submit">
+        <button type="submit" class="button">
           ${register and _("create account") or _("login")}
         </button>
         <span class="status"></span>
@@ -143,9 +143,6 @@
       ${_("already have an account and just want to login?")}
     </p>
     ${lf(user = user_login, dest = dest)}
-    ##<p>
-    ##  ${plain_link(_("forgot your password?"), "/password")}
-    ##</p>
   </div>
   <div class="clear"></div>
 </%def>

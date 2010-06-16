@@ -1,0 +1,99 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+    from r2.lib.pages import WrappedUser
+    from r2.lib.template_helpers import add_sr
+%>
+<%namespace file="printable.compact" import="delete_report_buttons"/>
+<%namespace file="printable.html" import="arrow, score"/>
+<%namespace file="utils.html" import="plain_link" />
+<%namespace file="printablebuttons.html" import="simple_button"/>
+
+<div class="thing comment id-${thing._fullname}">
+  %if c.profilepage:
+    %if thing.link: 
+      %if thing.link.title:
+           %if thing.link.is_self:
+             <a href="${add_sr(thing.link.url)}" class="title">
+           %else:
+             <a href="/tb/${thing.link._id36}.compact" class="title">
+           %endif
+          ${thing.link.title}
+        </a>
+      %else:
+          ${thing.link.url}
+      %endif
+    %endif
+  %endif
+  <Div class="midcol">
+    ${arrow(thing, 1, thing.likes)}
+    ${arrow(thing, 0, thing.likes == False)}
+  </div>
+  <% 
+     like_cls = "unvoted"
+     if getattr(thing, "likes", None):
+         like_cls = "likes"
+     elif getattr(thing, "likes", None) is False:
+         like_cls = "dislikes"
+   %>
+  <div class="entry ${like_cls}">
+    <div class="tagline">
+      <div class="options_triangle_parent">
+        <div class="options_triangle hidden">
+         <%
+            is_author = (c.user_is_loggedin and thing.author and
+                         c.user.name == thing.author.name)
+           %>
+         %if c.user_is_loggedin:
+          <a href="javascript:void(0)" class="group_button button"
+             onclick="return reply(this)">Reply</a>
+         %endif
+          <a href="javascript:void(0)" class="group_button button"
+             onclick="return toggle_collapse(this)">Collapse</a>
+          ${plain_link(_("permalink"), thing.permalink, _class = "group_button button" )}
+          %if c.profilepage:
+            ${plain_link(_("context"), thing.permalink + "?context=3", _class = "group_button button")}
+          %elif thing.parent_permalink:
+            ${plain_link(_("parent"), thing.parent_permalink, _class = "group_button button")}
+          %endif
+          %if thing.is_author:
+            ${plain_link(_("edit"), "javascript:void(0)", 
+                         onclick="return edit_usertext(this)", _class = "group_button button")}
+          %endif
+       </div>
+     </div>
+     <a href="javascript:void(0)" class="triangle_link button">
+       <span class="button_contents"></span>
+     </a>
+     ${WrappedUser(thing.author, thing.attribs, thing,
+                   gray = collapse).render()}&#32;
+     ${score(thing, thing.likes, tag='span')}&#32;
+     ## thing.timesince is a cache stub
+     ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}&#32;
+    </div>
+    ${thing.usertext}
+  </div>
+  <div style="clear: both;"></div>
+  <div class="child">
+    ${thing.childlisting}
+  </div>
+</div>

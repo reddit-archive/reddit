@@ -29,7 +29,7 @@ smtp_server = g.smtp_server
 def Alert(restart_list = ['MEM','CPU'],
           alert_recipients = [nerds_email],
           alert_sender = nerds_email,
-          cpu_limit = 99, mem_limit = 8,
+          cpu_limit = 99, mem_limit = 5,
           smtpserver = smtp_server, test = False):
 
     p = re.compile("newreddit(\d+)")

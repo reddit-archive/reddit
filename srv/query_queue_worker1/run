@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export PYTHON_EGG_CACHE=/home/reddit/.python-eggs
-cd ~reddit/reddit/r2
-exec 2>&1
-exec setuidgid reddit /usr/local/bin/paster run run.ini r2/lib/db/query_queue.py -c "run()"

@@ -9,7 +9,7 @@
 #
 # Software distributed under the License is distributed on an "AS IS" basis,
 # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-# the specific language governing rights and limitations under the License.
+# the specific language governing rig and limitations under the License.
 #
 # The Original Code is Reddit.
 #
@@ -43,6 +43,7 @@ import sys, tempfile, urllib, re, os, sha, subprocess
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
+    from pylons import c
     if environ.get('pylons.error_call'):
         return None
     else:
@@ -65,7 +66,6 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
         #preserve x-sup-id when 304ing
         if code == 304:
-            from pylons import c
             #check to see if c is useable
             try:
                 c.test
@@ -311,6 +311,10 @@ class DomainMiddleware(object):
             # subdomains which change the extension
             elif sd == 'm':
                 environ['reddit-domain-extension'] = 'mobile'
+            elif sd == 'I':
+                environ['reddit-domain-extension'] = 'compact'
+            elif sd == 'i':
+                environ['reddit-domain-extension'] = 'compact'
             elif sd in ('api', 'rss', 'xml', 'json'):
                 environ['reddit-domain-extension'] = sd
             elif (len(sd) == 2 or (len(sd) == 5 and sd[2] == '-')) and self.lang_re.match(sd):
@@ -368,18 +372,22 @@ class DomainListingMiddleware(object):
 class ExtensionMiddleware(object):
     ext_pattern = re.compile(r'\.([^/]+)$')
 
-    extensions = {'rss' : ('xml', 'text/xml; charset=UTF-8'),
-                  'xml' : ('xml', 'text/xml; charset=UTF-8'),
-                  'js' : ('js', 'text/javascript; charset=UTF-8'),
-                  'wired' : ('wired', 'text/javascript; charset=UTF-8'),
-                  'embed' : ('htmllite', 'text/javascript; charset=UTF-8'),
-                  'mobile' : ('mobile', 'text/html; charset=UTF-8'),
-                  'png' : ('png', 'image/png'),
-                  'css' : ('css', 'text/css'),
-                  'csv' : ('csv', 'text/csv; charset=UTF-8'),
-                  'api' : (api_type(), 'application/json; charset=UTF-8'),
-                  'json' : (api_type(), 'application/json; charset=UTF-8'),
-                  'json-html' : (api_type('html'), 'application/json; charset=UTF-8')}
+    extensions = (('rss' , ('xml', 'text/xml; charset=UTF-8')),
+                  ('xml' , ('xml', 'text/xml; charset=UTF-8')),
+                  ('js' , ('js', 'text/javascript; charset=UTF-8')),
+                  ('wired' , ('wired', 'text/javascript; charset=UTF-8')),
+                  ('embed' , ('htmllite', 'text/javascript; charset=UTF-8')),
+                  ('mobile' , ('mobile', 'text/html; charset=UTF-8')),
+                  ('png' , ('png', 'image/png')),
+                  ('css' , ('css', 'text/css')),
+                  ('csv' , ('csv', 'text/csv; charset=UTF-8')),
+                  ('api' , (api_type(), 'application/json; charset=UTF-8')),
+                  ('json-html' , (api_type('html'), 'application/json; charset=UTF-8')),
+                  ('json-compact' , (api_type('compact'), 'application/json; charset=UTF-8')),
+                  ('compact' , ('compact', 'text/html; charset=UTF-8')),
+                  ('json' , (api_type(), 'application/json; charset=UTF-8')),
+                  ('i' , ('compact', 'text/html; charset=UTF-8')),
+                  )
 
     def __init__(self, app):
         self.app = app
@@ -387,7 +395,7 @@ class ExtensionMiddleware(object):
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
         domain_ext = environ.get('reddit-domain-extension')
-        for ext, val in self.extensions.iteritems():
+        for ext, val in self.extensions:
             if ext == domain_ext or path.endswith('.' + ext):
                 environ['extension'] = ext
                 environ['render_style'] = val[0]

@@ -30,7 +30,7 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize
-from r2.lib.utils import tup, interleave_lists
+from r2.lib.utils import tup, interleave_lists, last_modified_multi
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 
@@ -58,7 +58,7 @@ class Subreddit(Thing, Printable):
                      show_media = False,
                      css_on_cname = True,
                      domain = None,
-                     over_18 = False,
+                     over_18 = None,
                      mod_actions = 0,
                      sponsorship_text = "this reddit is sponsored by",
                      sponsorship_url = None,
@@ -66,7 +66,7 @@ class Subreddit(Thing, Printable):
                      sponsorship_name = None,
                      )
     _essentials = ('type', 'name')
-    _data_int_props = ('mod_actions',)
+    _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
 
     sr_limit = 50
 
@@ -339,8 +339,9 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
-                     over18_only = False):
+    def top_lang_srs_single(cls, lang, limit,
+                            filter_allow_top = False, over18 = True,
+                            over18_only = False, _update = False):
         """Returns the default list of subreddits for a given language, sorted
         by popularity"""
         pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
@@ -348,9 +349,9 @@ class Subreddit(Thing, Printable):
                                        sort=desc('_downs'),
                                        limit = limit,
                                        data = True,
-                                       read_cache = True,
+                                       read_cache = not _update,
                                        write_cache = True,
-                                       cache_time = 5 * 60)
+                                       cache_time = 60 * 60)
         if lang != 'all':
             pop_reddits._filter(Subreddit.c.lang == lang)
 
@@ -367,6 +368,23 @@ class Subreddit(Thing, Printable):
         # reddits with negative author_id are system reddits and shouldn't be displayed
         return [x for x in pop_reddits
                 if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
+
+    @classmethod
+    def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
+                     over18_only = False):
+        if lang != 'all':
+            lang = tup(lang)
+            res = []
+            for l in lang:
+                res.extend(cls.top_lang_srs_single(
+                    l, limit, filter_allow_top = filter_allow_top,
+                    over18 = over18, over18_only = over18_only))
+            res.sort(key = lambda sr: sr._downs, reverse = True)
+            return res[:limit]
+        return cls.top_lang_srs_single(
+            lang, limit, filter_allow_top = filter_allow_top,
+            over18 = over18, over18_only = over18_only)
+
 
 
     @classmethod
@@ -612,11 +630,13 @@ class FriendsSR(FakeSubreddit):
         friends = Account._byID(a.friends[-max_lookup:], return_dict = False,
                                 data = True)
 
-        # if we don't have a last visit for your friends, we don't care about them
-        friends = [x for x in friends if hasattr(x, "last_visit")]
+        # if we don't have a last visit for your friends, we don't
+        # care about them
+        last_visits = last_modified_multi(friends, "submitted")
+        friends = [x for x in friends if x in last_visits]
 
         # sort friends by most recent interactions
-        friends.sort(key = lambda x: getattr(x, "last_visit"), reverse = True)
+        friends.sort(key = lambda x: last_visits[x], reverse = True)
         return [x._id for x in friends[:limit]]
 
     def get_links(self, sort, time):

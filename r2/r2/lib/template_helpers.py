@@ -102,11 +102,11 @@ def replace_render(listing, item, render_func):
                         num_margin = "%.2fex" % (len(str(listing.max_num))*1.1)
                 else:
                     num_str = ''
-                    num_margin = "0px"
-    
+                    num_margin = "0px;display:none"
+
                 replacements["numcolmargin"] = num_margin
                 replacements["num"] = num_str
-    
+
             if hasattr(listing, "max_score"):
                 mid_margin = len(str(listing.max_score)) 
                 if hasattr(listing, "mid_margin"):
@@ -115,7 +115,7 @@ def replace_render(listing, item, render_func):
                     mid_margin = "15px"
                 else:
                     mid_margin = "%dex" % (mid_margin+1)
-    
+
                 replacements["midcolmargin"] = mid_margin
     
             #$votehash is only present when voting arrows are present
@@ -133,6 +133,8 @@ def replace_render(listing, item, render_func):
                 com_label = strings.number_label % dict(num=item.num_comments,
                                                         thing=com_label)
                 com_cls = 'comments'
+            if style == "compact":
+                com_label = unicode(item.num_comments)
             replacements['numcomments'] = com_label
             replacements['commentcls'] = com_cls
 
@@ -264,6 +266,9 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
 
     if c.render_style == 'mobile':
         u.set_extension('mobile')
+
+    elif c.render_style == 'compact':
+        u.set_extension('compact')
 
     return u.unparse()
 

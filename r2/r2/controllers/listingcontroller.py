@@ -319,7 +319,7 @@ class HotController(FixListing, ListingController):
               and not isinstance(c.site, FakeSubreddit)
               and self.after is None
               and self.count == 0):
-            return get_hot([c.site], only_fullnames = True)[0]
+            return get_hot([c.site])
         else:
             return c.site.get_links('hot', 'all')
 
@@ -590,6 +590,8 @@ class MessageController(ListingController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
+            if item._deleted or item._spam:
+                return False
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
                 and (item.author_id == c.user._id or not item.new)):
@@ -634,11 +636,13 @@ class MessageController(ListingController):
             elif c.user.pref_threaded_messages:
                 skip = (c.render_style == "html")
 
-            return message_cls(root, wrap = self.builder_wrapper,
+            return message_cls(root,
+                               wrap = self.builder_wrapper,
                                parent = parent,
                                skip = skip,
                                num = self.num,
                                after = self.after,
+                               keep_fn = self.keep_fn(),
                                reverse = self.reverse)
         return ListingController.builder(self)
 
@@ -733,6 +737,8 @@ class RedditsController(ListingController):
                 reddits._filter(Subreddit.c.lang == c.content_langs)
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
+
+        reddits._filter(Subreddit.c.author_id != -1)
 
         return reddits
     def GET_listing(self, where, **env):

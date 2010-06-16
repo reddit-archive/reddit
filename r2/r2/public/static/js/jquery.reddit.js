@@ -205,6 +205,8 @@ $.request = function(op, parameters, worker_in, block, type,
     if (reddit.logged) 
         parameters.uh = reddit.modhash;
 
+    parameters.renderstyle = reddit.renderstyle;
+
     if(have_lock) {
         op = api_loc + op;
         /*if( document.location.host == reddit.ajax_domain ) 
@@ -299,6 +301,9 @@ $.fn.vote = function(vh, callback, event, ui_only) {
         /* execute any callbacks passed in.  */
         if(callback) 
             callback(things, dir);
+    }
+    if(event) {
+        event.stopPropagation();
     }
 };
 
@@ -520,7 +525,7 @@ $.insert_things = function(things, append) {
             else
                 s = s.prepend($.unsafe(data.content)).children(".thing:first");
             s.find(".midcol").css("width", midcol);
-            s.find(".rank").css("width", midcol);
+            s.find(".rank").css("width", numcol);
             thing_init_func(s.hide().show());
             return s;
         });

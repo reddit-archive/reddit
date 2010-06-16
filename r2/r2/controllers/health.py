@@ -11,6 +11,15 @@ from r2.lib.amqp import worker
 from validator import *
 
 class HealthController(MinimalController):
+    def post(self):
+        pass
+
+    def try_pagecache(self):
+        pass
+
+    def pre(self):
+        pass
+
     def shutdown(self):
         thread_pool = c.thread_pool
         def _shutdown():
@@ -41,6 +50,31 @@ class HealthController(MinimalController):
             c.response_content_type = 'text/plain'
             c.response.content = "i'm still alive!"
             return c.response
+
+    @validate(secret=nop('secret'))
+    def GET_threads(self, secret):
+        if not g.shutdown_secret:
+            self.abort404()
+        if not secret or secret != g.shutdown_secret:
+            self.abort403()
+
+        c.dontcache = True
+
+        c.response_content_type = 'text/plain'
+
+        if g.shutdown:
+            c.response.content = "not bothering to check, due to shutdown"
+        else:
+            thread_pool = c.thread_pool
+            tt = thread_pool.track_threads()
+            s = ''
+            for k in ('idle', 'busy', 'hung', 'dying', 'zombie'):
+                s += "%s=%s " % (k, len(tt[k]))
+
+            s += "\n"
+            c.response.content = s
+
+        return c.response
 
     @validate(secret=nop('secret'))
     def GET_shutdown(self, secret):

@@ -2,8 +2,6 @@ from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
-from r2.lib.db import query_queue
-from r2.lib.normalized_hot import expire_hot
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
@@ -46,28 +44,11 @@ db_times = dict(all = None,
                 month = Thing.c._date >= timeago('1 month'),
                 year = Thing.c._date >= timeago('1 year'))
 
-# batched_time_sorts/batched_time_times: top and controversial
-# listings with a time-component are really expensive, and for the
-# ones that span more than a day they don't change much (if at all)
-# within that time. So we have some hacks to avoid re-running these
-# queries against the precomputer except up to once per day
-# * To get the results of the queries, we return the results of the
-#   (potentially stale) query, merged with the query by 'day' (see
-#   get_links)
-# * When we are adding the special queries to the queue, we add them
-#   with a preflight check to determine if they are runnable and a
-#   postflight action to make them not runnable again for 24 hours
-#   (see new_vote)
-# * We have a task called catch_up_batch_queries to be run at least
-#   once per day (ideally about once per hour) to find subreddits
-#   where these queries haven't been run in the last 24 hours but that
-#   have had at least one vote in that time
-# TODO:
-# * Do we need a filter on merged time-queries to keep items that are
-#   barely too old from making it into the listing? This probably only
-#   matters for 'week'
-batched_time_times = set(('year', 'month', 'week'))
-batched_time_sorts = set(('top', 'controversial'))
+# sorts for which there can be a time filter (by day, by week,
+# etc). All of these but 'all' are done in mr_top, who knows about the
+# structure of the stored CachedResults (so changes here may warrant
+# changes there)
+time_filtered_sorts = set(('top', 'controversial'))
 
 #we need to define the filter functions here so cachedresults can be pickled
 def filter_identity(x):
@@ -104,42 +85,9 @@ class CachedResults(object):
         self.data = []
         self._fetched = False
 
-        self.batched_time_srid = None
-
     @property
     def sort(self):
         return self.query._sort
-
-    def preflight_check(self):
-        if getattr(self, 'force_run', False):
-            return True
-
-        sr_id = getattr(self, 'batched_time_srid', None)
-        if not sr_id:
-            return True
-
-        # this is a special query that tries to run less often, see
-        # the discussion about batched_time_times
-        sr = Subreddit._byID(sr_id, data=True)
-
-        if (self.iden in getattr(sr, 'last_batch_query', {}) 
-            and sr.last_batch_query[self.iden] > utils.timeago('1 day')):
-            # this has been done in the last 24 hours, so we should skip it
-            return False
-
-        return True
-
-    def postflight(self):
-        sr_id = getattr(self, 'batched_time_srid', None)
-        if not sr_id:
-            return True
-
-        with make_lock('modify_sr_last_batch_query(%s)' % sr_id):
-            sr = Subreddit._byID(sr_id, data=True)
-            last_batch_query = getattr(sr, 'last_batch_query', {}).copy()
-            last_batch_query[self.iden] = datetime.now(g.tz)
-            sr.last_batch_query = last_batch_query
-            sr._commit()
 
     def fetch(self, force=False):
         """Loads the query from the cache."""
@@ -147,7 +95,7 @@ class CachedResults(object):
 
     @classmethod
     def fetch_multi(cls, crs, force=False):
-        unfetched = [cr for cr in crs if not cr._fetched or force]
+        unfetched = filter(lambda cr: force or not cr._fetched, crs)
         if not unfetched:
             return
 
@@ -195,8 +143,12 @@ class CachedResults(object):
         return False
 
     def can_delete(self):
-        """True if a item can be removed from the listing, always true for now."""
+        "True if a item can be removed from the listing, always true for now."
         return True
+
+    def _mutate(self, fn):
+        self.data = query_cache.mutate(self.iden, fn, default=[])
+        self._fetched=True
 
     def insert(self, items):
         """Inserts the item into the cached data. This only works
@@ -204,37 +156,54 @@ class CachedResults(object):
         self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
 
     def _insert_tuples(self, t):
-        self.fetch()
 
-        # insert the new items, remove the duplicates (keeping the one
-        # being inserted over the stored value if applicable), and
-        # sort the result
-        data = itertools.chain(t, self.data)
-        data = UniqueIterator(data, key = lambda x: x[0])
-        data = sorted(data, key=lambda x: x[1:], reverse=True)
-        data = list(data)
-        data = data[:precompute_limit]
+        def _mutate(data):
+            data = data or []
 
-        self.data = data
+            # short-circuit if we already know that no item to be
+            # added qualifies to be stored. Since we know that this is
+            # sorted descending by datum[1:], we can just check the
+            # last item and see if we're smaller than it is
+            if (len(data) >= precompute_limit
+                and all(x[1:] < data[-1][1:]
+                        for x in t)):
+                return data
 
-        query_cache.set(self.iden, self.data)
+            # insert the new items, remove the duplicates (keeping the
+            # one being inserted over the stored value if applicable),
+            # and sort the result
+            newfnames = set(x[0] for x in t)
+            data = filter(lambda x: x[0] not in newfnames, data)
+            data.extend(t)
+            data.sort(reverse=True, key=lambda x: x[1:])
+            if len(t) + len(data) > precompute_limit:
+                data = data[:precompute_limit]
+            return data
+
+        self._mutate(_mutate)
 
     def delete(self, items):
         """Deletes an item from the cached data."""
-        self.fetch()
         fnames = set(self.filter(x)._fullname for x in tup(items))
 
-        data = filter(lambda x: x[0] not in fnames,
-                      self.data)
+        def _mutate(data):
+            data = data or []
+            return filter(lambda x: x[0] not in fnames,
+                          data)
 
-        if data != self.data:
-            self.data = data
-            query_cache.set(self.iden, self.data)
-        
+        self._mutate(_mutate)
+
+    def _replace(self, tuples):
+        """Take pre-rendered tuples from mr_top and replace the
+           contents of the query outright. This should be considered a
+           private API"""
+        def _mutate(data):
+            return tuples
+        self._mutate(_mutate)
+
     def update(self):
-        """Runs the query and stores the result in the cache. It also stores
-        the columns relevant to the sort to make merging with other
-        results faster."""
+        """Runs the query and stores the result in the cache. This is
+           only run by hand."""
         self.data = [self.make_item_tuple(i) for i in self.query]
         self._fetched = True
         query_cache.set(self.iden, self.data)
@@ -265,13 +234,11 @@ class MergedCachedResults(object):
         # make sure they're all the same
         assert all(r.sort == self.sort for r in results[1:])
 
-        # if something is 'top' for the year *and* for today, it would
-        # appear in both listings, so we need to filter duplicates
-        all_items = UniqueIterator((item for cr in results
-                                    for item in cr.data),
-                                   key = lambda x: x[0])
-        all_items = sorted(all_items, cmp=self._thing_cmp)
-        self.data = list(all_items)
+        all_items = []
+        for cr in results:
+            all_items.extend(cr.data)
+        all_items.sort(cmp=self._thing_cmp)
+        self.data = all_items
 
     def _thing_cmp(self, t1, t2):
         for i, s in enumerate(self.sort):
@@ -303,8 +270,10 @@ def merge_results(*results):
     elif g.use_query_cache:
         return MergedCachedResults(results)
     else:
+        assert all((results[0]._sort == r._sort
+                    and results[0] == r.prewrap_fn)
+                   for r in results)
         m = Merge(results, sort = results[0]._sort)
-        #assume the prewrap_fn's all match
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
@@ -318,19 +287,6 @@ def get_links(sr, sort, time, merge_batched=True):
         q._filter(db_times[time])
 
     res = make_results(q)
-
-    # see the discussion above batched_time_times
-    if (merge_batched
-        and g.use_query_cache
-        and sort in batched_time_sorts
-        and time in batched_time_times):
-
-        byday = Link._query(Link.c.sr_id == sr._id,
-                            sort = db_sort(sort), data=True)
-        byday._filter(db_times['day'])
-
-        res = merge_results(res,
-                            make_results(byday))
 
     return res
 
@@ -553,26 +509,15 @@ def add_queries(queries, insert_items = None, delete_items = None):
     if not g.write_query_queue:
         return
 
-    def _add_queries():
-        for q in queries:
-            query_cache.reset()
-            if not isinstance(q, CachedResults):
-                continue
-
-            with make_lock("add_query(%s)" % q.iden):
-                if insert_items and q.can_insert():
-                    q.fetch(force=True)
-                    log.debug("Inserting %s into query %s" % (insert_items, q))
-                    q.insert(insert_items)
-                elif delete_items and q.can_delete():
-                    q.fetch(force=True)
-                    log.debug("Deleting %s from query %s" % (delete_items, q))
-                    q.delete(delete_items)
-                else:
-                    log.debug('Adding precomputed query %s' % q)
-                    query_queue.add_query(q)
-    # let the amqp worker handle this
-    worker.do(_add_queries)
+    for q in queries:
+        if insert_items and q.can_insert():
+            log.debug("Inserting %s into query %s" % (insert_items, q))
+            worker.do(q.insert, insert_items)
+        elif delete_items and q.can_delete():
+            log.debug("Deleting %s from query %s" % (delete_items, q))
+            worker.do(q.delete, delete_items)
+        else:
+            raise Exception("Cannot update query %r!" % (q,))
 
 #can be rewritten to be more efficient
 def all_queries(fn, obj, *param_lists):
@@ -611,10 +556,8 @@ def new_link(link):
     results.append(get_submitted(author, 'new', 'all'))
     if link._spam:
         results.append(get_spam_links(sr))
-
-    # only 'new' qualifies for insertion, which will be done in
-    # run_new_links
-    add_queries(results, insert_items = link)
+    else:
+        add_queries(results, insert_items = link)
 
     amqp.add_item('new_link', link._fullname)
 
@@ -636,7 +579,7 @@ def new_comment(comment, inbox_rels):
             add_comment_tree(comment, l)
 
     # note that get_all_comments() is updated by the amqp process
-    # r2.lib.db.queries.run_new_comments
+    # r2.lib.db.queries.run_new_comments (to minimise lock contention)
 
     if inbox_rels:
         for inbox_rel in tup(inbox_rels):
@@ -648,7 +591,6 @@ def new_comment(comment, inbox_rels):
                 add_queries([get_inbox_selfreply(inbox_owner)],
                             insert_items = inbox_rel)
             set_unread(comment, inbox_owner, True)
-
 
 
 def new_subreddit(sr):
@@ -665,21 +607,15 @@ def new_vote(vote):
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
-        # don't do 'new', because that was done by new_link
-        results = [get_links(sr, 'hot', 'all')]
-
-        # for top and controversial we do some magic to recompute
-        # these less often; see the discussion above
-        # batched_time_times
-        for sort in batched_time_sorts:
-            for time in (set(db_times.keys()) - batched_time_times):
-                q = make_batched_time_query(sr, sort, time)
-                results.append(q)
+        # don't do 'new', because that was done by new_link, and the
+        # time-filtered versions of top/controversial will be done by
+        # mr_top
+        results = [get_links(sr, 'hot', 'all'),
+                   get_links(sr, 'top', 'all'),
+                   get_links(sr, 'controversial', 'all'),
+                   ]
 
         add_queries(results, insert_items = item)
-
-        sr.last_valid_vote = datetime.now(g.tz)
-        sr._commit()
 
     vote._fast_query_timestamp_touch(user)
     
@@ -741,10 +677,9 @@ def new_savehide(rel):
         add_queries([get_hidden(user)], delete_items = rel)
 
 def changed(things):
-    """Indicate to solrsearch that a given item should be updated"""
-    things = tup(things)
-    for thing in things:
-        amqp.add_item('searchchanges_q', thing._fullname,
+    """Indicate to search that a given item should be updated in the index"""
+    for thing in tup(things):
+        amqp.add_item('search_changes', thing._fullname,
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
@@ -782,14 +717,12 @@ def del_or_ban(things, why):
                 add_queries([get_spam_links(sr)], insert_items = links)
             # rip it out of the listings. bam!
             results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all')]
+                       get_links(sr, 'new', 'all'),
+                       ]
 
-            for sort in batched_time_sorts:
+            for sort in time_filtered_sorts:
                 for time in db_times.keys():
-                    # this will go through delete_items, so handling
-                    # of batched_time_times isn't necessary and is
-                    # included only for consistancy
-                    q = make_batched_time_query(sr, sort, time)
+                    results.append(get_links(sr, sort, time))
 
             add_queries(results, delete_items = links)
 
@@ -813,14 +746,13 @@ def unban(things):
             add_queries([get_spam_links(sr)], delete_items = links)
             # put it back in the listings
             results = [get_links(sr, 'hot', 'all'),
-                       get_links(sr, 'new', 'all')]
-            for sort in batched_time_sorts:
-                for time in db_times.keys():
-                    # skip the preflight check because we need to redo
-                    # this query regardless
-                    q = make_batched_time_query(sr, sort, time,
-                                                preflight_check=False)
-                    results.append(q)
+                       get_links(sr, 'new', 'all'),
+                       get_links(sr, 'top', 'all'),
+                       get_links(sr, 'controversial', 'all'),
+                       ]
+
+            # the time-filtered listings will have to wait for the
+            # next mr_top run
 
             add_queries(results, insert_items = links)
 
@@ -865,16 +797,18 @@ def add_all_ban_report_srs():
                      ])
         
 def add_all_srs():
-    """Adds every listing query for every subreddit to the queue."""
+    """Recalculates every listing query for every subreddit. Very,
+       very slow."""
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
-        add_queries(all_queries(get_links, sr, ('hot', 'new'), ['all']))
-        add_queries(all_queries(get_links, sr, ('top', 'controversial'), db_times.keys()))
-        add_queries([get_spam_links(sr),
-                     #get_spam_comments(sr),
-                     get_reported_links(sr),
-                     #get_reported_comments(sr),
-                     ])
+        for q in all_queries(get_links, sr, ('hot', 'new'), ['all']):
+            q.update()
+        for q in all_queries(get_links, sr, time_filtered_sorts, db_times.keys()):
+            q.update()
+        get_spam_links(sr).update()
+        #get_spam_comments(sr).update()
+        get_reported_links(sr).update()
+        #get_reported_comments(sr).update()
 
 def update_user(user):
     if isinstance(user, str):
@@ -892,7 +826,8 @@ def update_user(user):
                get_hidden(user),
                get_submitted(user, 'new', 'all'),
                get_comments(user, 'new', 'all')]
-    add_queries(results)
+    for q in results:
+        q.update()
 
 def add_all_users():
     q = Account._query(sort = asc('_date'))
@@ -931,6 +866,8 @@ def run_commentstree():
         link = Link._byID(comment.link_id,
                           data=True)
 
+        print 'Processing %r from %r' % (comment, link)
+
         try:
             add_comment_tree(comment, link)
         except KeyError:
@@ -940,7 +877,7 @@ def run_commentstree():
             link_comments(link._id, _update=True)
             add_comment_tree(comment, link)
 
-    amqp.consume_items('commentstree_q', _run_commentstree)
+    amqp.consume_items('commentstree_q', _run_commentstree, verbose=False)
 
 #def run_new_links():
 #    """queue to add new links to the 'new' page. note that this isn't
@@ -1017,8 +954,6 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
     if isinstance(thing, Link):
         new_vote(v)
-        if v.valid_thing:
-            expire_hot(thing.subreddit_slow)
 
         #update the modified flags
         set_last_modified(user, 'liked')
@@ -1046,7 +981,10 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 def process_votes(limit=None):
     # limit is taken but ignored for backwards compatibility
 
-    def _handle_vote(msg):
+    def _handle_vote(msgs, chan):
+        assert(len(msgs) == 1)
+        msg = msgs[0]
+
         r = pickle.loads(msg.body)
 
         uid, tid, dir, ip, organic, cheater = r
@@ -1057,32 +995,7 @@ def process_votes(limit=None):
         handle_vote(voter, votee, dir, ip, organic,
                     cheater = cheater)
 
-    amqp.consume_items('register_vote_q', _handle_vote)
-
-def catch_up_batch_queries():
-    # catch up on batched_time_times queries that haven't been run
-    # that should be, This should be cronned to run about once an
-    # hour. The more often, the more the work of rerunning the actual
-    # queries is spread out, but every run has a fixed-cost of looking
-    # at every single subreddit
-    sr_q = Subreddit._query(sort=desc('_downs'),
-                            data=True)
-    dayago = utils.timeago('1 day')
-    for sr in fetch_things2(sr_q):
-        if hasattr(sr, 'last_valid_vote') and sr.last_valid_vote > dayago:
-            # if we don't know when the last vote was, it couldn't
-            # have been today
-            for sort in batched_time_sorts:
-                for time in batched_time_times:
-                    q = make_batched_time_query(sr, sort, time)
-                    if q.preflight_check():
-                        # we haven't run the batched_time_times in the
-                        # last day
-                        add_queries([q])
-
-    # make sure that all of the jobs have been completed or processed
-    # by the time we return
-    worker.join()
+    amqp.handle_items('register_vote_q', _handle_vote)
 
 try:
     from r2admin.lib.admin_queries import *

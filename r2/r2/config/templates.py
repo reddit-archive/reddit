@@ -27,6 +27,7 @@ tpm = tp_manager.tp_manager()
 def api(type, cls):
     tpm.add_handler(type, 'api', cls())
     tpm.add_handler(type, 'api-html', cls())
+    tpm.add_handler(type, 'api-compact', cls())
 
 # blanket fallback rule
 api('templated', NullJsonTemplate)

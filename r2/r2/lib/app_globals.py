@@ -23,10 +23,11 @@ from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 from datetime import timedelta, datetime
+import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CL_ONE, CL_QUORUM
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -78,12 +79,11 @@ class Globals(object):
                   ]
 
     tuple_props = ['memcaches',
+                   'permacache_memcaches',
                    'rendercaches',
                    'local_rendercache',
                    'servicecaches',
-                   'permacache_memcaches',
                    'cassandra_seeds',
-                   'url_caches',
                    'url_seeds',
                    'admins',
                    'sponsors',
@@ -144,30 +144,53 @@ class Globals(object):
 
         self.cache_chains = []
 
-        self.permacache = self.init_cass_cache('permacache',
-                                               self.permacache_memcaches,
-                                               self.cassandra_seeds,
-                                               read_consistency_level = CL_QUORUM,
-                                               write_consistency_level = CL_QUORUM)
+        self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
+        self.make_lock = make_lock_factory(self.memcache)
 
-        self.urlcache = self.init_cass_cache('urls',
-                                             self.url_caches,
-                                             self.url_seeds,
-                                             read_consistency_level = CL_ONE,
-                                             write_consistency_level = CL_ONE)
+        if not self.cassandra_seeds:
+            raise ValueError("cassandra_seeds not set in the .ini")
+        self.cassandra_seeds = list(self.cassandra_seeds)
+        random.shuffle(self.cassandra_seeds)
+        self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
+        perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
+                          if self.permacache_memcaches
+                          else None)
+        self.permacache = self.init_cass_cache('permacache', 'permacache',
+                                               self.cassandra,
+                                               self.make_lock,
+                                               memcache = perma_memcache,
+                                               localcache_cls = localcache_cls)
+        self.cache_chains.append(self.permacache)
+
+        self.url_seeds = list(self.url_seeds)
+        random.shuffle(self.url_seeds)
+        self.url_cassandra = pycassa.connect_thread_local(self.url_seeds)
+        self.urlcache = self.init_cass_cache('urls', 'urls',
+                                             self.url_cassandra,
+                                             self.make_lock,
+                                             write_consistency_level = CL_ONE,
+                                             localcache_cls = localcache_cls)
+        self.cache_chains.append(self.urlcache)
 
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.cache = self.init_memcached(self.memcaches)
-        self.memcache = self.cache.caches[1] # used by lock.py
+        self.cache = MemcacheChain((localcache_cls(), self.memcache))
+        self.cache_chains.append(self.cache)
 
-        self.rendercache = self.init_memcached(self.rendercaches,
-                                               noreply=True, no_block=True)
+        self.rendercache = MemcacheChain((localcache_cls(),
+                                          CMemcache(self.rendercaches,
+                                                    noreply=True, no_block=True,
+                                                    num_clients = num_mc_clients)))
+        self.cache_chains.append(self.rendercache)
 
-        self.servicecache = self.init_memcached(self.servicecaches)
+        self.servicecache = MemcacheChain((localcache_cls(),
+                                           CMemcache(self.servicecaches,
+                                                     num_clients = num_mc_clients)))
+        self.cache_chains.append(self.servicecache)
 
-        self.make_lock = make_lock_factory(self.memcache)
+        self.thing_cache = CacheChain((localcache_cls(),))
+        self.cache_chains.append(self.thing_cache)
 
         # set default time zone if one is not set
         tz = global_conf.get('timezone')
@@ -222,7 +245,7 @@ class Globals(object):
         if os.path.exists(static_files):
             for f in os.listdir(static_files):
                 if f.endswith('.md5'):
-                    key = f.strip('.md5')
+                    key = f[0:-4]
                     f = os.path.join(static_files, f)
                     with open(f, 'r') as handle:
                         md5 = handle.read().strip('\n')
@@ -300,43 +323,23 @@ class Globals(object):
             self.version = self.short_version = '(unknown)'
 
         if self.log_start:
-            self.log.error("reddit app %s:%s started %s at %s" % (self.reddit_host, self.reddit_pid,
-                                                                  self.short_version, datetime.now()))
+            self.log.error("reddit app %s:%s started %s at %s" %
+                           (self.reddit_host, self.reddit_pid,
+                            self.short_version, datetime.now()))
 
-    def init_memcached(self, caches, **kw):
-        return self.init_cass_cache(None, caches, None, memcached_kw = kw)
-
-    def init_cass_cache(self, cluster, caches, cassandra_seeds,
-                        memcached_kw = {}, cassandra_kw = {},
+    def init_cass_cache(self, keyspace, column_family, cassandra_client,
+                        lock_factory,
+                        memcache = None,
                         read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_QUORUM):
-        localcache_cls = (SelfEmptyingCache if self.running_as_script
-                          else LocalCache)
-
-        pmc_chain = (localcache_cls(),)
-
-        # if caches, append
-        if caches:
-            pmc_chain += (CMemcache(caches, num_clients=self.num_mc_clients,
-                                    **memcached_kw),)
-
-        # if seeds, append
-        if cassandra_seeds:
-            cassandra_seeds = list(cassandra_seeds)
-            random.shuffle(cassandra_seeds)
-            cas = (CassandraCache(cluster, cluster, cassandra_seeds,
-                                  read_consistency_level = read_consistency_level,
-                                  write_consistency_level = write_consistency_level,
-                                  **cassandra_kw),)
-            pmc_chain += cas
-            mc =  CassandraCacheChain(pmc_chain, cache_negative_results = True,
-                                      )
-        else:
-            mc =  MemcacheChain(pmc_chain)
-
-        self.cache_chains.append(mc)
-        return mc
-
+                        write_consistency_level = CL_QUORUM,
+                        localcache_cls = LocalCache):
+        return CassandraCacheChain(localcache_cls(),
+                                   CassandraCache(keyspace, column_family,
+                                                  cassandra_client,
+                                                  read_consistency_level = read_consistency_level,
+                                                  write_consistency_level = write_consistency_level),
+                                   memcache = memcache,
+                                   lock_factory = lock_factory)
 
     @staticmethod
     def to_bool(x):
@@ -358,12 +361,16 @@ class Globals(object):
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
             params = dict(zip(db_param_names, conf_params))
-            dbm.engines[db_name] = db_manager.get_engine(**params)
+            if params['db_user'] == "*":
+                params['db_user'] = self.db_user
+            if params['db_pass'] == "*":
+                params['db_pass'] = self.db_pass
+            dbm.setup_db(db_name, **params)
             self.db_params[db_name] = params
 
-        dbm.type_db = dbm.engines[gc['type_db']]
-        dbm.relation_type_db = dbm.engines[gc['rel_type_db']]
-        dbm.hardcache_db = dbm.engines[gc['hardcache_db']]
+        dbm.type_db = dbm.get_engine(gc['type_db'])
+        dbm.relation_type_db = dbm.get_engine(gc['rel_type_db'])
+        dbm.hardcache_db = dbm.get_engine(gc['hardcache_db'])
 
         def split_flags(p):
             return ([n for n in p if not n.startswith("!")],
@@ -377,12 +384,12 @@ class Globals(object):
                 kind = params[0]
                 if kind == 'thing':
                     engines, flags = split_flags(params[1:])
-                    dbm.add_thing(name, [dbm.engines[n] for n in engines],
+                    dbm.add_thing(name, [dbm.get_engine(n) for n in engines],
                                   **flags)
                 elif kind == 'relation':
                     engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.engines[n] for n in engines],
+                                     [dbm.get_engine(n) for n in engines],
                                      **flags)
         return dbm
 

@@ -45,7 +45,7 @@ ${self.RenderPrintable()}
   %endif
 </%def>
 
-<%def name="thing_css_class(what)" buffered="True">
+<%def name="thing_css_class(what)">
 thing id-${what._fullname}
 </%def>
 
@@ -127,7 +127,7 @@ thing id-${what._fullname}
   </div>
 </%def>
 
-<%def name="score(this, likes=None, scores = None, tag='span')">
+<%def name="score(this, likes=None, scores = None, tag='span')" >
   <%
      if scores is None:
         scores = this.display_score

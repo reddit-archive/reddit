@@ -24,9 +24,15 @@ from __future__ import with_statement
 from time import sleep
 from datetime import datetime
 from threading import local
+from traceback import format_stack
+import os
+import socket
 
 # thread-local storage for detection of recursive locks
 locks = local()
+
+reddit_host = socket.gethostname()
+reddit_pid  = os.getpid()
 
 class TimeoutExpired(Exception): pass
 
@@ -48,14 +54,24 @@ class MemcacheLock(object):
     def __enter__(self):
         start = datetime.now()
 
+        my_info = (reddit_host, reddit_pid, ''.join(format_stack()))
+
         #if this thread already has this lock, move on
         if self.key in self.locks:
             return
 
         #try and fetch the lock, looping until it's available
-        while not self.cache.add(self.key, 1, time = self.time):
+        while not self.cache.add(self.key, my_info, time = self.time):
             if (datetime.now() - start).seconds > self.timeout:
-                raise TimeoutExpired
+                info = self.cache.get(self.key)
+                if info:
+                    info = "%s %s\n%s" % info
+                else:
+                    info = "(nonexistent)"
+                msg = ("\nSome jerk is hogging %s:\n%s" %
+                                     (self.key, info))
+                msg += "^^^ that was the stack trace of the lock hog, not me."
+                raise TimeoutExpired(msg)
 
             sleep(.1)
 

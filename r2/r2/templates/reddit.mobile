@@ -19,12 +19,24 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%!
+   from r2.lib import tracking
+ %>
 <%inherit file="base.mobile"/>
 
 <%include file="redditheader.mobile"/>
 
+
+%if c.suggest_compact:
+  <script type="text/javascript">
+     window.location = "http://www.${g.domain}/try.compact?dest=/.mobile";
+  </script>
+%endif
+
 ${thing.content and thing.content() or ''}
+%if g.tracker_url and thing.site_tracking:
+  <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+%endif
 
 <%def name="Title()">
   %if thing.title:

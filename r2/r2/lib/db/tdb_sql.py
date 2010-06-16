@@ -195,7 +195,7 @@ def check_type(table, selector, insert_vals):
 
 #make the thing tables
 def build_thing_tables():
-    for name, engines in dbm.things.iteritems():
+    for name, engines in dbm.things_iter():
         type_id = check_type(type_table,
                              type_table.c.name == name,
                              dict(name = name))
@@ -227,7 +227,7 @@ build_thing_tables()
 
 #make relation tables
 def build_rel_tables():
-    for name, (type1_name, type2_name, engines) in dbm.relations.iteritems():
+    for name, (type1_name, type2_name, engines) in dbm.rels_iter():
         type1_id = types_name[type1_name].type_id
         type2_id = types_name[type2_name].type_id
         type_id = check_type(rel_type_table,
@@ -284,68 +284,6 @@ def get_write_table(tables):
     else:
         return tables[0]
 
-def get_read_table(tables):
-    # short-cut for only one element
-    if len(tables) == 1:
-        return tables[0]
-
-    #'t' is a list of engines itself. since we assume those engines
-    #are on the same machine, just take the first one. len(ips) may be
-    #< len(tables) if some tables are on the same host.
-    ips = dict((t[0].bind.url.host, t) for t in tables)
-    ip_loads = AppServiceMonitor.get_db_load(ips.keys())
-
-    total_load = 0
-    missing_loads = []
-    no_connections = []
-    have_loads = []
-
-    for ip in ips:
-        if ip not in ip_loads:
-            missing_loads.append(ip)
-        else:
-            load, avg_load, conns, avg_conns, max_conns = ip_loads[ip]
-
-            #prune high-connection machines
-            #if conns < .9 * max_conns:
-            max_load = max(load, avg_load)
-            total_load += max_load
-            have_loads.append((ip, max_load))
-            #else:
-            #    no_connections.append(ip)
-
-    if total_load:
-        avg_load = total_load / max(len(have_loads), 1)
-        ip_weights = [(ip, 1 - load / total_load) for ip, load in have_loads]
-    #if total_load is 0, which happens when have_loads is empty
-    else:
-        avg_load = 1.0
-        ip_weights = [(ip, 1.0 / len(have_loads)) for ip, load in have_loads]
-
-    if missing_loads or no_connections:
-        #add in the missing load numbers with an average weight
-        ip_weights.extend((ip, avg_load) for ip in missing_loads)
-
-        #add in the over-connected machines with a 1% weight
-        ip_weights.extend((ip, .01) for ip in no_connections)
-
-    #rebalance the weights
-    total_weight = sum(w[1] for w in ip_weights) or 1
-    ip_weights = [(ip, weight / total_weight)
-                  for ip, weight in ip_weights]
-
-    r = random.random()
-    for ip, load in ip_weights:
-        if r < load:
-            # print "db ip: %s" % str(ips[ip][0].metadata.bind.url.host)
-            return ips[ip]
-        else:
-            r = r - load
-
-    #should never happen
-    print 'yer stupid'
-    return  random.choice(tables)
-
 def get_table(kind, action, tables, avoid_master_reads = False):
     if action == 'write':
         #if this is a write, store the kind in the c.use_write_db dict
@@ -361,8 +299,9 @@ def get_table(kind, action, tables, avoid_master_reads = False):
             return get_write_table(tables)
         else:
             if avoid_master_reads and len(tables) > 1:
-                return get_read_table(tables[1:])
-            return get_read_table(tables)
+                return dbm.get_read_table(tables[1:])
+            return dbm.get_read_table(tables)
+
 
 
 def get_thing_table(type_id, action = 'read' ):
@@ -547,7 +486,12 @@ def fetch_query(table, id_col, thing_id):
     
     s = sa.select([table], sa.or_(*[id_col == tid
                                     for tid in thing_id]))
-    r = s.execute().fetchall()
+    try:
+        r = s.execute().fetchall()
+    except Exception, e:
+        dbm.mark_dead(table.bind)
+        # this thread must die so that others may live
+        raise
     return (r, single)
 
 #TODO specify columns to return?
@@ -765,7 +709,12 @@ def find_things(type_id, get_cols, sort, limit, constraints):
     if limit:
         s = s.limit(limit)
 
-    r = s.execute()
+    try:
+        r = s.execute()
+    except Exception, e:
+        dbm.mark_dead(table.bind)
+        # this thread must die so that others may live
+        raise
     return Results(r, lambda(row): row if get_cols else row.thing_id)
 
 def translate_data_value(alias, op):
@@ -842,7 +791,12 @@ def find_data(type_id, get_cols, sort, limit, constraints):
     if limit:
         s = s.limit(limit)
 
-    r = s.execute()
+    try:
+        r = s.execute()
+    except Exception, e:
+        dbm.mark_dead(t_table.bind)
+        # this thread must die so that others may live
+        raise
 
     return Results(r, lambda(row): row if get_cols else row.thing_id)
 
@@ -914,7 +868,12 @@ def find_rels(rel_type_id, get_cols, sort, limit, constraints):
     if limit:
         s = s.limit(limit)
 
-    r = s.execute()
+    try:
+        r = s.execute()
+    except Exception, e:
+        dbm.mark_dead(r_table.bind)
+        # this thread must die so that others may live
+        raise
     return Results(r, lambda (row): (row if get_cols else row.rel_id))
 
 if logging.getLogger('sqlalchemy').handlers:

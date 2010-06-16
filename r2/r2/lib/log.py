@@ -23,7 +23,7 @@
 from pylons import g
 from r2.lib import amqp
 from datetime import datetime
-import pickle
+import cPickle as pickle
 import traceback
 
 tz = g.display_tz
