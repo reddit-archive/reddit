@@ -690,21 +690,42 @@ class VSubmitParent(VByName):
         abort(403, "forbidden")
 
 class VSubmitSR(Validator):
-    def run(self, sr_name):
+    def __init__(self, srname_param, linktype_param = None):
+        self.require_linktype = False
+
+        if linktype_param:
+            self.require_linktype = True
+            Validator.__init__(self, (srname_param, linktype_param))
+        else:
+            Validator.__init__(self, srname_param)
+
+    def run(self, sr_name, link_type = None):
         if not sr_name:
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None
 
         try:
-            sr = Subreddit._by_name(str(sr_name))
+            sr = Subreddit._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
             self.set_error(errors.SUBREDDIT_NOEXIST)
-            return None
+            return
 
-        if sr and not (c.user_is_loggedin and sr.can_submit(c.user)):
+        if not c.user_is_loggedin or not sr.can_submit(c.user):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
-        else:
-            return sr
+            return
+
+        if self.require_linktype:
+            if link_type not in ('link', 'self'):
+                self.set_error(errors.INVALID_OPTION)
+                return
+            elif link_type == 'link' and sr.link_type == 'self':
+                self.set_error(errors.NO_LINKS)
+                return
+            elif link_type == 'self' and sr.link_type == 'link':
+                self.set_error(errors.NO_SELFS)
+                return
+
+        return sr
 
 pass_rx = re.compile(r"^.{3,20}$")
 

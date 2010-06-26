@@ -19,9 +19,12 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+   from r2.lib.utils import to36
+ %>
 
 <% 
-   cids = [cm._id36 for cm in thing.children]
+   cids = [to36(cm) for cm in thing.children]
 %>
 <div class="morechildren thing id-${thing._fullname}">
   <a style="font-size: smaller; font-weight: bold" class="button"

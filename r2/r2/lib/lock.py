@@ -87,6 +87,6 @@ class MemcacheLock(object):
             self.locks.remove(self.key)
 
 def make_lock_factory(cache):
-    def factory(key):
-        return MemcacheLock(key, cache)
+    def factory(key, **kw):
+        return MemcacheLock(key, cache, **kw)
     return factory

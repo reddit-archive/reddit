@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments
+from r2.lib.comment_tree import add_comment, link_comments, update_comment_vote
 
 import cPickle as pickle
 
@@ -657,7 +657,10 @@ def set_unread(message, to, unread):
     else:
         for i in Inbox.set_unread(message, unread, to = to):
             kw = dict(insert_items = i) if unread else dict(delete_items = i)
-            if i._name == 'selfreply':
+            if isinstance(message, Comment) and not unread:
+                add_queries([get_unread_comments(i._thing1)], **kw)
+                add_queries([get_unread_selfreply(i._thing1)], **kw)
+            elif i._name == 'selfreply':
                 add_queries([get_unread_selfreply(i._thing1)], **kw)
             elif isinstance(message, Comment):
                 add_queries([get_unread_comments(i._thing1)], **kw)
@@ -971,6 +974,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
     elif isinstance(thing, Comment):
         #update last modified
+        update_comment_vote(thing)
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'commented')

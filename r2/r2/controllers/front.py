@@ -83,7 +83,7 @@ class FrontController(RedditController):
 
     def GET_random(self):
         """The Serendipity button"""
-        sort = 'new' if rand.choice((True,False)) else 'hot'
+        sort = rand.choice(('new','hot'))
         links = c.site.get_links(sort, 'all')
         if isinstance(links, thing.Query):
             links._limit = g.num_serendipity
@@ -318,28 +318,6 @@ class FrontController(RedditController):
                 extension_handling = "private"
         else:
             return self.abort404()
-        if isinstance(c.site, ModSR):
-            level = 'mod'
-        elif isinstance(c.site, ContribSR):
-            level = 'contrib'
-        elif isinstance(c.site, AllSR):
-            level = 'all'
-        else:
-            raise ValueError
-
-        if ((level == 'mod' and
-             location in ('reports', 'spam', 'trials', 'modqueue'))
-            or
-            (level == 'all' and
-             location == 'trials')):
-            pane = self._make_spamlisting(location, num, after, reverse, count)
-            if c.user.pref_private_feeds:
-                extension_handling = "private"
-        else:
-            return self.abort404()
-
-        return EditReddit(content = pane,
-                          extension_handling = extension_handling).render()
 
         return EditReddit(content = pane,
                           extension_handling = extension_handling).render()
@@ -616,17 +594,6 @@ class FrontController(RedditController):
                                         subreddits = sr_names,
                                         captcha=captcha,
                                         then = then)).render()
-
-    def _render_opt_in_out(self, msg_hash, leave):
-        """Generates the form for an optin/optout page"""
-        email = Email.handler.get_recipient(msg_hash)
-        if not email:
-            return self.abort404()
-        sent = (has_opted_out(email) == leave)
-        return BoringPage(_("opt out") if leave else _("welcome back"),
-                          content = OptOut(email = email, leave = leave, 
-                                           sent = sent, 
-                                           msg_hash = msg_hash)).render()
 
     def GET_frame(self):
         """used for cname support.  makes a frame and
@@ -913,6 +880,17 @@ class FormsController(RedditController):
         else:
             c.response.content = ''
         return c.response
+
+    def _render_opt_in_out(self, msg_hash, leave):
+        """Generates the form for an optin/optout page"""
+        email = Email.handler.get_recipient(msg_hash)
+        if not email:
+            return self.abort404()
+        sent = (has_opted_out(email) == leave)
+        return BoringPage(_("opt out") if leave else _("welcome back"),
+                          content = OptOut(email = email, leave = leave, 
+                                           sent = sent, 
+                                           msg_hash = msg_hash)).render()
 
     @validate(msg_hash = nop('x'))
     def GET_optout(self, msg_hash):

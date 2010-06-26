@@ -6,20 +6,14 @@
     </style>
   </head>
   <body style="padding: 0; margin: 0;">
-    <script>
+    <script> 
       document.write(unescape("%3Cscript src='" + (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js' %3E%3C/script%3E"));
     </script>
     <script>
       COMSCORE.beacon({
         c1:2,
         c2:6035094,
-        c3:"",
-        c4:"",
-        c5:"",
-        c6:"",
-        c7:(encodeURIComponent || escape)(parent.location.href),
-        c15:"",
-        rn: Math.random()
+        options: { doc: parent.document }
       });
     </script>
     <noscript>

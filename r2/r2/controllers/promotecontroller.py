@@ -32,7 +32,7 @@ import sha
 
 from r2.controllers.reddit_base import RedditController
 
-from r2.lib.utils import timetext, make_offset_date
+from r2.lib.utils import make_offset_date
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib import cssfilter
 from datetime import datetime

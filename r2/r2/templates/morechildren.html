@@ -19,7 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%!
+   from r2.lib.utils import to36
+ %>
 <%inherit file="comment_skeleton.html"/>
 
 <%def name="collapsed()">
@@ -27,7 +29,7 @@
 
 <%def name="commentBody()">
 <% 
-   cids = [cm._id36 for cm in thing.children]
+   cids = [to36(cm) for cm in thing.children]
 %>
 <span class="morecomments">
 <a style="font-size: smaller; font-weight: bold" class="button"

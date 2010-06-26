@@ -259,21 +259,25 @@ class HotController(FixListing, ListingController):
                 left_side = max(-1, min(num_tl - 3, 8))
                 disp_links = [spotlight_links[(i + pos) % num_tl]
                               for i in xrange(-2, left_side)]
-            def keep_fn(item):
+
+            def trial_keep_fn(item):
                 if trial and trial._fullname == item._fullname:
                     return True
                 return organic.keep_fresh_links(item)
 
-            def wrap(item):
+            def trial_wrap(item):
                if item is trial:
                    w = Wrapped(item)
                    w.trial_mode = True
                    w.render_class = LinkOnTrial
                    return w
                return self.builder_wrapper(item)
-            b = IDBuilder(disp_links, wrap = wrap,
+
+            b = IDBuilder(disp_links,
+                          wrap = trial_wrap if trial else self.builder_wrapper,
                           num = organic.organic_length,
-                          skip = True, keep_fn = keep_fn)
+                          skip = True,
+                          keep_fn = trial_keep_fn if trial else organic.keep_fresh_links)
 
             try:
                 vislink = spotlight_links[pos]
@@ -282,11 +286,10 @@ class HotController(FixListing, ListingController):
                 g.log.error("pos = %d" % pos)
                 raise
 
-            s = SpotlightListing(b,
-                              spotlight_links = spotlight_links,
-                              visible_link = vislink,
-                              max_num = self.listing_obj.max_num,
-                              max_score = self.listing_obj.max_score).listing()
+            s = SpotlightListing(b, spotlight_links = spotlight_links,
+                                 visible_link = vislink,
+                                 max_num = self.listing_obj.max_num,
+                                 max_score = self.listing_obj.max_score).listing()
 
             if len(s.things) > 0:
                 # only pass through a listing if the links made it
@@ -304,15 +307,16 @@ class HotController(FixListing, ListingController):
                 if res.things:
                     return res
 
-
-
     def query(self):
         #no need to worry when working from the cache
         if g.use_query_cache or c.site == Default:
             self.fix_listing = False
 
         if c.site == Default:
-            sr_ids = Subreddit.user_subreddits(c.user)
+            sr_ids = Subreddit.user_subreddits(c.user,
+                                               limit=(Subreddit.sr_limit
+                                                      if c.user_is_loggedin
+                                                      else g.num_default_reddits))
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
@@ -393,6 +397,17 @@ class NewController(ListingController):
 
 class BrowseController(ListingController):
     where = 'browse'
+
+    def keep_fn(self):
+        """For merged time-listings, don't show items that are too old
+           (this can happen when mr_top hasn't run in a while)"""
+        if self.time != 'all' and c.default_sr:
+            oldest = timeago('1 %s' % (str(self.time),))
+            def keep(item):
+                return item._date > oldest and item.keep_item(item)
+            return keep
+        else:
+            return ListingController.keep_fn(self)
 
     @property
     def menus(self):
@@ -726,19 +741,27 @@ class RedditsController(ListingController):
     def query(self):
         if self.where == 'banned' and c.user_is_admin:
             reddits = Subreddit._query(Subreddit.c._spam == True,
-                                       sort = desc('_date'))
+                                       sort = desc('_date'),
+                                       write_cache = True,
+                                       read_cache = True,
+                                       cache_time = 5 * 60)
         else:
-            reddits = Subreddit._query()
+            reddits = None
             if self.where == 'new':
+                reddits = Subreddit._query( write_cache = True,
+                                            read_cache = True,
+                                            cache_time = 5 * 60)
                 reddits._sort = desc('_date')
             else:
+                reddits = Subreddit._query( write_cache = True,
+                                            read_cache = True,
+                                            cache_time = 60 * 60)
                 reddits._sort = desc('_downs')
-            if c.content_langs != 'all':
-                reddits._filter(Subreddit.c.lang == c.content_langs)
+            # Consider resurrecting when it is not the World Cup
+            #if c.content_langs != 'all':
+            #    reddits._filter(Subreddit.c.lang == c.content_langs)
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
-
-        reddits._filter(Subreddit.c.author_id != -1)
 
         return reddits
     def GET_listing(self, where, **env):

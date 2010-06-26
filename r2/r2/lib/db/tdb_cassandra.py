@@ -112,7 +112,7 @@ class ThingMeta(type):
             cls.cf = pycassa.ColumnFamily(cassandra, keyspace,
                                           cf_name,
                                           read_consistency_level = CL.ONE,
-                                          write_consistency_level = CL.ONE)
+                                          write_consistency_level = CL.QUORUM)
 
         cls._kind = name
 

@@ -23,17 +23,11 @@
     Module for communication reddit-level communication with IndexTank
 """
 
-from __future__ import with_statement
-
 from pylons import g, config
 
 from r2.models import *
-from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp, indextank
-from r2.lib.solrsearch import indexed_types
-import simplejson
-import sys,os,os.path
-import time
+from r2.lib.utils import in_chunks, progress
 
 indextank_indexed_types = (Link,)
 
@@ -41,6 +35,8 @@ index = indextank.IndexTank(api_key = g.INDEXTANK_API_KEY,
                             index_code = g.INDEXTANK_IDX_CODE)
 
 def maps_from_things(things):
+    """We only know how to do links for now"""
+
     maps = []
     author_ids = [ thing.author_id for thing in things ]
     accounts = Account._byID(author_ids, data = True, return_dict = True)
@@ -54,19 +50,20 @@ def maps_from_things(things):
                  timestamp = thing._date.strftime("%s"),
                  ups = thing._ups,
                  downs = thing._downs,
-                 num_comments = getattr(thing, "num_comments", 0))
+                 num_comments = getattr(thing, "num_comments", 0),
+                 sr_id = str(thing.sr_id))
         if thing.is_self and thing.selftext:
             d['selftext'] = thing.selftext
-        else:
+        elif not thing.is_self:
             d['url'] = thing.url
         maps.append(d)
     return maps
 
 def to_boosts(ups, downs, num_comments):
     result = {}
-    result[1] = ups
-    result[2] = downs
-    result[3] = num_comments
+    result[0] = ups
+    result[1] = downs
+    result[2] = num_comments
     return result
 
 def inject_maps(maps):
@@ -79,33 +76,47 @@ def inject_maps(maps):
 
         if ups not in (0, 1) or downs != 0 or num_comments > 0:
             ok, result = index.boost(fullname, boosts=boosts)
-            if ok:
-                print "Boost-updated %s in IndexTank" % fullname
-                continue
-            else:
-                print "Failed to update(%r, %r) with IndexTank" % (fullname, boosts)
-                f = open("/tmp/indextank-error.html", "w")
-                f.write(str(result))
-#                g.cache.set("stop-indextank", True)
+            if not ok:
+                raise Exception(result)
 
         ok, result = index.add(fullname, d, boosts)
-        if ok:
-            print "Added %s to IndexTank" % fullname
-        else:
-            print "Failed to add(%r, %r, %r) to IndexTank" % (fullname, d, boosts)
-            f = open("/tmp/indextank-error.html", "w")
-            f.write(str(result))
-            g.cache.set("stop-indextank", True)
+        if not ok:
+            raise Exception(result)
 
 def delete_thing(thing):
     ok, result = index.delete(thing._fullname)
-    if ok:
-        print "Deleted %s from IndexTank" % thing._fullname
-    else:
-        print "Failed to delete %s from IndexTank" % thing._fullname
-        f = open("/tmp/indextank-error.html", "w")
-        f.write(str(result))
-        g.cache.set("stop-indextank", True)
+    if not ok:
+        raise Exception(result)
+
+def inject(things):
+    things = [x for x in things if isinstance(x, indextank_indexed_types)]
+
+    update_things = [x for x in things if not x._spam and not x._deleted
+                     and x.promoted is None
+                     and getattr(x, 'sr_id') != -1]
+    delete_things = [x for x in things if x._spam or x._deleted]
+
+    if update_things:
+        maps = maps_from_things(update_things)
+        inject_maps(maps)
+    if delete_things:
+        for thing in delete_things:
+            delete_thing(thing)
+
+def rebuild_index(after_id = None):
+    cls = Link
+
+    # don't pull spam/deleted
+    q = cls._query(sort=desc('_date'), data=True)
+
+    if after_id:
+        q._after(cls._byID(after_id))
+
+    q = fetch_things2(q)
+
+    q = progress(q, verbosity=1000, estimate=10000000, persec=True)
+    for chunk in in_chunks(q):
+        inject(chunk)
 
 def run_changed(drain=False):
     """
@@ -113,23 +124,9 @@ def run_changed(drain=False):
         IndexTank
     """
     def _run_changed(msgs, chan):
-        if g.cache.get("stop-indextank"):
-            print "discarding %d msgs" % len(msgs)
-            return
-
         fullnames = set([x.body for x in msgs])
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
-        things = [x for x in things if isinstance(x, indextank_indexed_types)]
-
-        update_things = [x for x in things if not x._spam and not x._deleted]
-        delete_things = [x for x in things if x._spam or x._deleted]
-
-        if update_things:
-            maps = maps_from_things(update_things)
-            inject_maps(maps)
-        if delete_things:
-            for thing in delete_things:
-                delete_thing(thing)
+        inject(things)
 
     amqp.handle_items('indextank_changes', _run_changed, limit=1000,
                       drain=drain)

@@ -30,7 +30,8 @@ from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize
-from r2.lib.utils import tup, interleave_lists, last_modified_multi
+from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
+from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 
@@ -58,14 +59,17 @@ class Subreddit(Thing, Printable):
                      show_media = False,
                      css_on_cname = True,
                      domain = None,
-                     over_18 = None,
+                     over_18 = False,
                      mod_actions = 0,
                      sponsorship_text = "this reddit is sponsored by",
                      sponsorship_url = None,
                      sponsorship_img = None,
                      sponsorship_name = None,
+
+                     # do we allow self-posts, links only, or any?
+                     link_type = 'any', # one of ('link', 'self', 'any')
                      )
-    _essentials = ('type', 'name')
+    _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
 
     sr_limit = 50
@@ -96,42 +100,57 @@ class Subreddit(Thing, Printable):
                 return sr
 
     @classmethod
-    @memoize('subreddit._by_name')
-    def _by_name_cache(cls, name):
-        q = cls._query(lower(cls.c.name) == name.lower(),
-                       cls.c._spam == (True, False),
-                       limit = 1)
-        try:
-            l = list(q)
-        except UnicodeEncodeError:
-            print "Error looking up SR %r" % name
-            raise
-        if l:
-            return l[0]._id
-
-    @classmethod
-    def _by_name(cls, name, _update = False):
+    def _by_name(cls, names, _update = False):
         #lower name here so there is only one cache
-        name = name.lower()
+        names, single = tup(names, True)
 
-        if name == 'friends':
-            return Friends
-        elif name == 'randnsfw':
-            return RandomNSFW
-        elif name == 'random':
-            return Random
-        elif name == 'mod':
-            return Mod
-        elif name == 'contrib':
-            return Contrib
-        elif name == 'all':
-            return All
-        else:
-            sr_id = cls._by_name_cache(name, _update = _update)
-            if sr_id:
-                return cls._byID(sr_id, True)
+        to_fetch = {}
+        ret = {}
+
+        _specials = dict(friends = Friends,
+                         randnsfw = RandomNSFW,
+                         random = Random,
+                         mod = Mod,
+                         contrib = Contrib,
+                         all = All)
+
+        for name in names:
+            lname = name.lower()
+
+            if lname in _specials:
+                ret[name] = _specials[lname]
             else:
-                raise NotFound, 'Subreddit %s' % name
+                to_fetch[lname] = name
+
+        if to_fetch:
+            def _fetch(lnames):
+                q = cls._query(lower(cls.c.name) == lnames,
+                               cls.c._spam == (True, False),
+                               limit = len(lnames),
+                               data=True)
+                try:
+                    srs = list(q)
+                except UnicodeEncodeError:
+                    print "Error looking up SRs %r" % (lnames,)
+                    raise
+
+                return dict((sr.name.lower(), sr._id)
+                            for sr in srs)
+
+            srs = {}
+            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname')
+            if srids:
+                srs = cls._byID(srids.values(), data=True, return_dict=False)
+
+            for sr in srs:
+                ret[to_fetch[sr.name.lower()]] = sr
+
+        if ret and single:
+            return ret.values()[0]
+        elif not ret and single:
+            raise NotFound, 'Subreddit %s' % name
+        else:
+            return ret
 
     @classmethod
     @memoize('subreddit._by_domain')
@@ -339,53 +358,16 @@ class Subreddit(Thing, Printable):
         return s
 
     @classmethod
-    def top_lang_srs_single(cls, lang, limit,
-                            filter_allow_top = False, over18 = True,
-                            over18_only = False, _update = False):
-        """Returns the default list of subreddits for a given language, sorted
-        by popularity"""
-        pop_reddits = Subreddit._query(Subreddit.c.type == ('public',
-                                                            'restricted'),
-                                       sort=desc('_downs'),
-                                       limit = limit,
-                                       data = True,
-                                       read_cache = not _update,
-                                       write_cache = True,
-                                       cache_time = 60 * 60)
-        if lang != 'all':
-            pop_reddits._filter(Subreddit.c.lang == lang)
-
-        if not over18:
-            pop_reddits._filter(Subreddit.c.over_18 == False)
-        elif over18_only:
-            pop_reddits._filter(Subreddit.c.over_18 == True)
-
-        if filter_allow_top:
-            pop_reddits._limit = 2 * limit
-            pop_reddits = filter(lambda sr: sr.allow_top == True,
-                                 pop_reddits)[:limit]
-
-        # reddits with negative author_id are system reddits and shouldn't be displayed
-        return [x for x in pop_reddits
-                if getattr(x, "author_id", 0) is None or getattr(x, "author_id", 0) >= 0]
-
-    @classmethod
     def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
-                     over18_only = False):
-        if lang != 'all':
-            lang = tup(lang)
-            res = []
-            for l in lang:
-                res.extend(cls.top_lang_srs_single(
-                    l, limit, filter_allow_top = filter_allow_top,
-                    over18 = over18, over18_only = over18_only))
-            res.sort(key = lambda sr: sr._downs, reverse = True)
-            return res[:limit]
-        return cls.top_lang_srs_single(
-            lang, limit, filter_allow_top = filter_allow_top,
-            over18 = over18, over18_only = over18_only)
+                     over18_only = False, ids=False):
+        from r2.lib import sr_pops
+        lang = tup(lang)
 
+        sr_ids = sr_pops.pop_reddits(lang, over18, over18_only, filter_allow_top = filter_allow_top)
+        sr_ids = sr_ids[:limit]
 
+        return (sr_ids if ids
+                else Subreddit._byID(sr_ids, data=True, return_dict=False))
 
     @classmethod
     def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
@@ -396,27 +378,27 @@ class Subreddit(Thing, Printable):
         An optional kw argument 'limit' is defaulted to g.num_default_reddits
         """
 
-        # If we ever have much more than two of these, we should update
-        # _by_name to support lists of them
-        auto_srs = [ Subreddit._by_name(n) for n in g.automatic_reddits ]
+        # we'll let these be unordered for now
+        auto_srs = []
+        if g.automatic_reddits:
+            auto_srs = map(lambda sr: sr._id,
+                           Subreddit._by_name(g.automatic_reddits).values())
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
                                filter_allow_top = True,
-                               over18 = c.over18)
+                               over18 = c.over18, ids = True)
+
         rv = []
-        for i, s in enumerate(srs):
+        for sr in srs:
             if len(rv) >= limit:
                 break
-            if s in auto_srs:
+            if sr in auto_srs:
                 continue
-            rv.append(s)
+            rv.append(sr)
 
         rv = auto_srs + rv
 
-        if ids:
-            return [ sr._id for sr in rv ]
-        else:
-            return rv
+        return rv if ids else Subreddit._byID(rv, data=True,return_dict=False)
 
     @classmethod
     @memoize('random_reddits', time = 1800)
@@ -428,10 +410,13 @@ class Subreddit(Thing, Printable):
 
     @classmethod
     def random_reddit(cls, limit = 1000, over18 = False):
-        return random.choice(cls.top_lang_srs(c.content_langs, limit,
-                                              filter_allow_top = False,
-                                              over18 = over18,
-                                              over18_only = over18))
+        srs = cls.top_lang_srs(c.content_langs, limit,
+                               filter_allow_top = False,
+                               over18 = over18,
+                               over18_only = over18,
+                               ids=True)
+        return (Subreddit._byID(random.choice(srs))
+                if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
     def user_subreddits(cls, user, ids = True, limit = sr_limit):
@@ -448,15 +433,12 @@ class Subreddit(Thing, Printable):
             if limit and len(sr_ids) > limit:
                 sr_ids.sort()
                 sr_ids = cls.random_reddits(user.name, sr_ids, limit)
-            return sr_ids if ids else Subreddit._byID(sr_ids, True, False)
+            return sr_ids if ids else Subreddit._byID(sr_ids,
+                                                      data=True,
+                                                      return_dict=False)
         else:
-            # if there is a limit, we want *at most* limit subreddits.
-            # Allow the default_subreddit list to return the number it
-            # would normally and then slice.
-            srs = cls.default_subreddits(ids = ids)
-            if limit:
-                srs = srs[:limit]
-            return srs
+            limit = g.num_default_reddits if limit is None else limit
+            return cls.default_subreddits(ids = ids, limit = limit)
 
     @classmethod
     @memoize('subreddit.special_reddits')

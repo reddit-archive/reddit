@@ -76,6 +76,9 @@ error_list = dict((
         ('BAD_CARD', _('card problem: %(message)s')),
         ('TOO_LONG', _("this is too long (max: %(max_length)s)")),
         ('NO_TEXT', _('we need something here')),
+
+        ('NO_SELFS', _("that reddit doesn't allow text posts")),
+        ('NO_LINKS', _("that reddit only allows text posts")),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

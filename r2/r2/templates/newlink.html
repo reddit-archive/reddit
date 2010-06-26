@@ -29,19 +29,30 @@
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links, reddit_selector"/>
 <%namespace name="utils" file="utils.html"/>
 
-<h1>${_("submit to reddit")}</h1>
+%if c.on_default_sr:
+  <h1>${_("submit to reddit")}</h1>
+%else:
+  <h1>${_("submit to %(sr)s") % dict(sr=thing.default_sr)}</h1>
+%endif
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
                     action=${add_sr("/submit")},
                     _class="submit content",
                     _id="newlink">
 
+%if thing.show_link and thing.show_self:
 ${thing.formtabs_menu}
+%endif
+
 <div class="formtabs-content">
 
 <div class="spacer">
-    <div id="link-desc" class="infobar">${strings.submit_link}</div>
-    <div id="text-desc" class="infobar">${strings.submit_text}</div>
+    %if thing.show_link:
+        <div id="link-desc" class="infobar">${strings.submit_link}</div>
+    %endif
+    %if thing.show_self:
+        <div id="text-desc" class="infobar">${strings.submit_text}</div>
+    %endif
 </div>
 
 <div class="spacer">
@@ -52,6 +63,7 @@ ${thing.formtabs_menu}
   </%utils:round_field>
 </div>
 
+%if thing.show_link:
 <div class="spacer">
   <%utils:round_field title="${_('url')}" id="url-field">
     <input name="kind" value="link" type="hidden"/>
@@ -59,20 +71,28 @@ ${thing.formtabs_menu}
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("ALREADY_SUB", "url", "div")}
+    ${error_field("NO_LINKS", "sr")}
+    ${error_field("NO_SELFS", "sr")}
+
     <div>
       <button type="button" tabindex="100" onclick="fetch_title()">${_("suggest title")}</button>
       <span class="title-status"></span>
     </div>
   </%utils:round_field>
 </div>
+%endif
 
+%if thing.show_self:
 <div class="spacer">
   <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field">
     <input name="kind" value="self" type="hidden"/>
 
     ${UserText(None, have_form = False, creating = True)}
+
+    ${error_field("NO_SELFS", "sr")}
   </%utils:round_field>
 </div>
+%endif
 
 <div class="spacer">
   <%utils:round_field title="${_('reddit')}" id="reddit-field">
@@ -88,9 +108,11 @@ ${thing.captcha}
   <button class="btn" name="submit" value="form" type="submit">${_("submit")}</button>
   <span class="status"></span>
   ${error_field("RATELIMIT", "ratelimit")}
+  ${error_field("INVALID_OPTION", "sr")}
 </div>
 </%utils:submit_form>
 
+%if thing.show_self and thing.show_link:
 <script type="text/javascript">
   $(function() {
   var form = $("#newlink");
@@ -100,3 +122,4 @@ ${thing.captcha}
     }
   });
 </script>
+%endif

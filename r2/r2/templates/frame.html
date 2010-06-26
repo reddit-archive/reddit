@@ -21,7 +21,7 @@
 ################################################################################
 <%
    from r2.lib.template_helpers import add_sr
-   from r2.lib.utils import query_string
+   from r2.lib.utils import query_string, domain
    from r2.lib.filters import _force_unicode
  %>
 
@@ -29,6 +29,13 @@
 <html>
   <head>
     <title>${thing.title}</title>
+    %if thing.url:
+      <!-- quick hack to guess at proper favicons. this doesn't work
+           if they are using their own <link> to specify the favicon
+           instead of just having /favicon.ico exist. -->
+      <link rel="icon" href="http://${domain(thing.url)}/favicon.ico" type="image/x-icon">
+    %endif
+
   </head>
   <frameset framespacing="0" frameborder="0" border="0" rows="20px, 100%"
     %if not thing.fullname:

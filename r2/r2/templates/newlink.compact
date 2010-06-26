@@ -36,12 +36,23 @@ Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http
                     _class="submit content",
                     _id="newlink">
 
+%if thing.show_link and thing.show_self:
 ${thing.formtabs_menu}
+%endif
+
 <div class="formtabs-content">
 
 <div class="spacer">
+    %if thing.show_link:
     <div id="link-desc" class="infobar">${strings.submit_link}</div>
-    <div id="text-desc" class="infobar" style="display: none;">${strings.submit_text}</div>
+    %endif
+    %if thing.show_self:
+    <div id="text-desc" class="infobar"
+      %if thing.show_link:
+        style="display: none;"
+      %endif
+     >${strings.submit_text}</div>
+    %endif
 </div>
 
 <div class="spacer">
@@ -53,6 +64,8 @@ ${thing.formtabs_menu}
 </div>
 
 <input type="hidden" name="extension" value="compact" />
+
+%if thing.show_link:
 <div class="spacer">
   <%utils:round_field title="${_('url')}" id="url-field">
     <input name="kind" value="link" type="hidden"/>
@@ -60,6 +73,8 @@ ${thing.formtabs_menu}
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("ALREADY_SUB", "url", "div")}
+    ${error_field("NO_LINKS", "sr")}
+
     <div>
       <button type="button" tabindex="100" class="button" onclick="fetch_title()">${_("suggest title")}</button>
       <div class="title-status" style="display: none;"></div>
@@ -67,14 +82,21 @@ ${thing.formtabs_menu}
     </div>
   </%utils:round_field>
 </div>
+%endif
 
+%if thing.show_self:
 <div class="spacer">
-  <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field" style="display: none;">
+  <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field"
+   style="${'display: none;' if thing.show_link else ''}">
+
     <input name="kind" value="self" type="hidden"/>
 
     ${UserText(None, have_form = False, creating = True)}
+
+    ${error_field("NO_SELFS", "sr")}
   </%utils:round_field>
 </div>
+%endif
 
 <div class="spacer">
   <%utils:round_field title="${_('reddit')}" id="reddit-field">
@@ -95,6 +117,7 @@ Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http
 <div style="clear: both;"><!--fffuuuuuuuu--></div>
 </%utils:submit_form>
 
+%if thing.show_link and thing.show_self:
 <script type="text/javascript">
   var form = $("#newlink");
   if(form.length) {
@@ -102,3 +125,4 @@ Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http
     select_form_tab(default_menu, "${thing.default_show}", "${thing.default_hide}");
     }
 </script>
+%endif

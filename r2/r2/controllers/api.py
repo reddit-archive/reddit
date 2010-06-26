@@ -189,12 +189,12 @@ class ApiController(RedditController):
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
                    ip = ValidIP(),
-                   sr = VSubmitSR('sr'),
+                   sr = VSubmitSR('sr', 'kind'),
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    selftext = VMarkdown('text'),
-                   kind = VOneOf('kind', ['link', 'self', 'poll']),
+                   kind = VOneOf('kind', ['link', 'self']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'),
                    extension = VLength("extension", 20))
@@ -210,23 +210,39 @@ class ApiController(RedditController):
             # VUrl may have replaced 'url' by adding 'http://'
             form.set_inputs(url = url)
 
-        if not kind:
+        if not kind or form.has_errors('sr', errors.INVALID_OPTION):
             # this should only happen if somebody is trying to post
             # links in some automated manner outside of the regular
             # submission page, and hasn't updated their script
             return
 
-        if form.has_errors('sr', errors.SUBREDDIT_NOEXIST,
-                           errors.SUBREDDIT_NOTALLOWED,
-                           errors.SUBREDDIT_REQUIRED):
+        if (form.has_errors('sr',
+                            errors.SUBREDDIT_NOEXIST,
+                            errors.SUBREDDIT_NOTALLOWED,
+                            errors.SUBREDDIT_REQUIRED,
+                            errors.NO_SELFS,
+                            errors.NO_LINKS)
+            or not sr):
             # checking to get the error set in the form, but we can't
             # check for rate-limiting if there's no subreddit
             return
-        else:
-            should_ratelimit = sr.should_ratelimit(c.user, 'link')
-            #remove the ratelimit error if the user's karma is high
-            if not should_ratelimit:
-                c.errors.remove((errors.RATELIMIT, 'ratelimit'))
+
+        if sr.link_type == 'link' and kind == 'self':
+            # this could happen if they actually typed "self" into the
+            # URL box and we helpfully translated it for them
+            c.errors.add(errors.NO_SELFS, field='sr')
+
+            # and trigger that by hand for the form
+            form.has_errors('sr', errors.NO_SELFS)
+
+            return
+
+        should_ratelimit = sr.should_ratelimit(c.user, 'link')
+        #remove the ratelimit error if the user's karma is high
+        if not should_ratelimit:
+            c.errors.remove((errors.RATELIMIT, 'ratelimit'))
+
+        banmsg = None
 
         banmsg = None
 
@@ -1139,12 +1155,13 @@ class ApiController(RedditController):
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
                    domain = VCnameDomain("domain"),
-                   description = VMarkdown("description", max_length = 1000),
+                   description = VMarkdown("description", max_length = 5120),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
+                   link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    ip = ValidIP(),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
                    sponsor_name =VLength('sponsorship-name', max_length = 500),
@@ -1159,7 +1176,7 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'lang', "css_on_cname",
+                           'show_media', 'type', 'link_type', 'lang', "css_on_cname",
                            'allow_top'))
 
         #if a user is banned, return rate-limit errors

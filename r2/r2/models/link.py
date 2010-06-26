@@ -340,7 +340,10 @@ class Link(Thing, Printable):
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
-                item.thumbnail = ""
+                if show_media:
+                    item.thumbnail = "/static/nsfw.png"
+                else:
+                    item.thumbnail = ""
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
@@ -765,17 +768,17 @@ class MoreMessages(Printable):
 class MoreComments(Printable):
     cachable = False
     display = ""
-    
+
     @staticmethod
     def wrapped_cache_key(item, style):
         return False
-    
-    def __init__(self, link, depth, parent=None):
-        if parent:
-            self.parent_id = parent._id
-            self.parent_name = parent._fullname
-            self.parent_permalink = parent.make_permalink(link, 
-                                                          link.subreddit_slow)
+
+    def __init__(self, link, depth, parent_id = None):
+        if parent_id is not None:
+            id36 = utils.to36(parent_id)
+            self.parent_id = parent_id
+            self.parent_name = "t%s_%s" % (utils.to36(Comment._type_id), id36)
+            self.parent_permalink = link.make_permalink_slow() + id36
         self.link_name = link._fullname
         self.link_id = link._id
         self.depth = depth
@@ -784,11 +787,11 @@ class MoreComments(Printable):
 
     @property
     def _fullname(self):
-        return self.children[0]._fullname if self.children else 't0_blah'
+        return "t%s_%s" % (utils.to36(Comment._type_id), self._id36)
 
     @property
     def _id36(self):
-        return self.children[0]._id36 if self.children else 't0_blah'
+        return utils.to36(self.children[0]) if self.children else '_'
 
 
 class MoreRecursion(MoreComments):
@@ -926,26 +929,15 @@ class Message(Thing, Printable):
                                   if l.parent_id and l.was_comment),
                                 data = True, return_dict = True)
 
-        # load the inbox relations for the messages to determine new-ness
-        # TODO: query cache?
-        inbox = Inbox._fast_query(c.user,
-                                  [item.lookups[0] for item in wrapped],
-                                  ['inbox', 'selfreply'], thing_data=True)
+        # load the unread list to determine message newness
+        unread = set(queries.get_unread_inbox(user))
 
-        # we don't care about the username or the rel name
-        inbox = dict((m._fullname, v)
-                     for (u, m, n), v in inbox.iteritems() if v)
-
-        msgs = filter (lambda x: isinstance(x.lookups[0], Message), wrapped)
-
-        modinbox = ModeratorInbox._fast_query(m_subreddits.values(),
-                                              msgs, ['inbox'], thing_data=True)
-
-        # best to not have to eager_load the things
-        def make_message_fullname(mid):
-            return "t%s_%s" % (utils.to36(Message._type_id), utils.to36(mid))
-        modinbox = dict((make_message_fullname(v._thing2_id), v)
-                     for (u, m, n), v in modinbox.iteritems() if v)
+        msg_srs = set(m_subreddits[x.sr_id]
+                      for x in wrapped if x.sr_id is not None
+                      and isinstance(x.lookups[0], Message))
+        # load the unread mod list for the same reason
+        mod_unread = set(queries.merge_results(
+            *[queries.get_unread_subreddit_messages(sr) for sr in msg_srs]))
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
@@ -957,23 +949,16 @@ class Message(Thing, Printable):
             # new-ness is stored on the relation
             if item.author_id == c.user._id:
                 item.new = False
-            elif item._fullname in inbox:
-                item.new = getattr(inbox[item._fullname], "new", False)
+            elif item._fullname in unread:
+                item.new = True
                 # wipe new messages if preferences say so, and this isn't a feed
                 # and it is in the user's personal inbox
                 if (item.new and c.user.pref_mark_messages_read
                     and c.extension not in ("rss", "xml", "api", "json")):
-                    queries.set_unread(inbox[item._fullname]._thing2,
+                    queries.set_unread(item.lookups[0],
                                        c.user, False)
-            elif item._fullname in modinbox:
-                item.new = getattr(modinbox[item._fullname], "new", False)
             else:
-                item.recipient = (item.to_id == c.user._id)
-
-            # new-ness is stored on the relation
-            if item.author_id == c.user._id:
-                item.new = False
-
+                item.new = (item._fullname in mod_unread)
 
             item.score_fmt = Score.none
 

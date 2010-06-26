@@ -1,20 +1,9 @@
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments
+from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
-
-from operator import attrgetter
-
-class _ColSorter(object):
-    __slots__ = ['sort', 'x']
-
-    def __init__(self, sort):
-        self.sort = sort
-
-    def key(self, x):
-        return getattr(x, self.sort.col), x._date
 
 class _CommentBuilder(Builder):
     def __init__(self, link, sort, comment = None, context = None,
@@ -28,128 +17,136 @@ class _CommentBuilder(Builder):
         self.max_depth = max_depth
         self.continue_this_thread = continue_this_thread
 
-        if sort.col == '_date':
-            self.sort_key = attrgetter('_date')
-        else:
-            self.sort_key = _ColSorter(sort).key
+        self.sort = sort
         self.rev_sort = True if isinstance(sort, operators.desc) else False
 
     def get_items(self, num):
-        r = link_comments(self.link._id)
-        cids, cid_tree, depth, num_children = r
+        from r2.lib.lock import TimeoutExpired
+        cdef list cid
+        cdef dict cid_tree
+        cdef dict depth
+        cdef dict num_children
+        cdef dict parents
+        cdef dict sorter
+
+        r = link_comments_and_sort(self.link._id, self.sort.col)
+        cids, cid_tree, depth, num_children, parents, sorter = r
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
-            g.log.error("self.comment (%d) not in depth. Forcing update..."
+            g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
                         % self.comment._id)
 
-            r = link_comments(self.link._id, _update=True)
-            cids, cid_tree, depth, num_children = r
+            try:
+                r = link_comments(self.link._id, _update=True)
+                cids, cid_tree, depth, num_children = r
+            except TimeoutExpired:
+                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
+                raise
 
             if not self.comment._id in depth:
                 g.log.error("Update didn't help. This is gonna end in tears.")
 
-        if cids:
-            comments = set(Comment._byID(cids, data = True, 
-                                         return_dict = False))
-        else:
-            comments = set()
+        cdef list items = []
+        cdef dict extra = {}
+        cdef list dont_collapse = []
+        cdef list ignored_parent_ids = []
 
-        comment_dict = {}
-        for cm in comments:
-            comment_dict[cm._id] = cm
+        cdef int start_depth = 0
 
-        #convert tree into objects
-        comment_tree = {}
-        for k, v in cid_tree.iteritems():
-            comment_tree[k] = [comment_dict[cid] for cid in cid_tree[k]]
-        items = []
-        extra = {}
-        top = None
-        dont_collapse = []
-        ignored_parent_ids = []
-        #loading a portion of the tree
+        cdef list candidates = []
+        cdef int offset_depth = 0
 
-        start_depth = 0
-
-        candidates = []
+        # more comments links:
         if isinstance(self.comment, utils.iters):
-            candidates.extend(self.comment)
             for cm in self.comment:
-                dont_collapse.append(cm._id)
-            #assume the comments all have the same parent
-            # TODO: removed by Chris to get rid of parent being sent
-            # when morecomments is used.  
-            #if hasattr(candidates[0], "parent_id"):
-            #    parent = comment_dict[candidates[0].parent_id]
-            #    items.append(parent)
-            if (hasattr(candidates[0], "parent_id") and
-                candidates[0].parent_id is not None):
-                ignored_parent_ids.append(candidates[0].parent_id)
-                start_depth = depth[candidates[0].parent_id]
-        #if permalink
+                # deleted comments will be removed from the cids list
+                if cm._id in cids:
+                    dont_collapse.append(cm._id)
+                    candidates.append(cm._id)
+            # if nothing but deleted comments, the candidate list might be empty
+            if candidates:
+                pid = parents[candidates[0]]
+                if pid is not None:
+                    ignored_parent_ids.append(pid)
+                    start_depth = depth[pid]
+
+        # permalinks:
         elif self.comment:
-            top = self.comment
-            dont_collapse.append(top._id)
+            # we are going to messa round with the cid_tree's contents 
+            # so better copy it
+            cid_tree = cid_tree.copy()
+            top = self.comment._id
+            dont_collapse.append(top)
             #add parents for context
-            while self.context > 0 and top.parent_id:
+            pid = parents[top]
+            while self.context > 0 and pid is not None:
                 self.context -= 1
-                new_top = comment_dict[top.parent_id]
-                comment_tree[new_top._id] = [top]
-                num_children[new_top._id] = num_children[top._id] + 1
-                dont_collapse.append(new_top._id)
-                top = new_top
+                pid = parents[top]
+                cid_tree[pid] = [top]
+                num_children[pid] = num_children[top] + 1
+                dont_collapse.append(pid)
+                # top will be appended to candidates, so stop updating
+                # it if hit the top of the thread
+                if pid is not None:
+                    top = pid
             candidates.append(top)
+            # the reference depth is that of the focal element
+            if top is not None:
+                offset_depth = depth[top]
         #else start with the root comments
         else:
-            candidates.extend(comment_tree.get(top, ()))
-
-        #update the starting depth if required
-        if top and depth[top._id] > 0:
-            delta = depth[top._id]
-            for k, v in depth.iteritems():
-                depth[k] = v - delta
+            candidates.extend(cid_tree.get(None, ()))
 
         #find the comments
-        num_have = 0
-        candidates.sort(key = self.sort_key, reverse = self.rev_sort)
+        cdef int num_have = 0
+        if candidates:
+            candidates = [x for x in candidates if sorter.get(x) is not None]
+            # complain if we removed a candidate and now have nothing
+            # to return to the user
+            if not candidates:
+                g.log.error("_builder.pyx: empty candidate list: %r" %
+                            request.fullpath)
+                return []
+        candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
         while num_have < num and candidates:
             to_add = candidates.pop(0)
-            if to_add not in comments:
-                g.log.error("candidate %r comment missing from link %r" %
-                            (to_add, self.link))
+            if to_add not in cids:
                 continue
-            comments.remove(to_add)
-            if to_add._deleted and not comment_tree.has_key(to_add._id):
-                pass
-            elif depth[to_add._id] < self.max_depth + start_depth:
+            if (depth[to_add] - offset_depth) < self.max_depth + start_depth:
                 #add children
-                if comment_tree.has_key(to_add._id):
-                    candidates.extend(comment_tree[to_add._id])
-                    candidates.sort(key = self.sort_key, reverse = self.rev_sort)
+                if cid_tree.has_key(to_add):
+                    candidates.extend([x for x in cid_tree[to_add]
+                                       if sorter.get(x) is not None])
+                    candidates.sort(key = sorter.get, reverse = self.rev_sort)
                 items.append(to_add)
                 num_have += 1
             elif self.continue_this_thread:
                 #add the recursion limit
-                p_id = to_add.parent_id
-                w = Wrapped(MoreRecursion(self.link, 0,
-                                          comment_dict[p_id]))
+                p_id = parents[to_add]
+                w = Wrapped(MoreRecursion(self.link, 0, p_id))
                 w.children.append(to_add)
                 extra[p_id] = w
 
-        wrapped = self.wrap_items(items)
 
+        # items is a list of things we actually care about so load them
+        items = Comment._byID(items, data = True, return_dict = False)
+        cdef list wrapped = self.wrap_items(items)
+
+
+        # break here
+        # -----
         cids = {}
         for cm in wrapped:
             cids[cm._id] = cm
 
-        final = []
+        cdef list final = []
         #make tree
 
         for cm in wrapped:
             # don't show spam with no children
-            if cm.deleted and not comment_tree.has_key(cm._id):
+            if cm.deleted and not cid_tree.has_key(cm._id):
                 continue
             cm.num_children = num_children[cm._id]
             if cm.collapsed and cm._id in dont_collapse:
@@ -163,7 +160,6 @@ class _CommentBuilder(Builder):
             else:
                 final.append(cm)
 
-        #put the extras in the tree
         for p_id, morelink in extra.iteritems():
             if p_id not in cids:
                 if p_id in ignored_parent_ids:
@@ -178,26 +174,22 @@ class _CommentBuilder(Builder):
             return final
 
         #put the remaining comments into the tree (the show more comments link)
-        more_comments = {}
+        cdef dict more_comments = {}
         while candidates:
             to_add = candidates.pop(0)
             direct_child = True
             #ignore top-level comments for now
-            if not to_add.parent_id:
-                p_id = None
-            else:
-                #find the parent actually being displayed
-                #direct_child is whether the comment is 'top-level'
-                p_id = to_add.parent_id
-                while p_id and not cids.has_key(p_id):
-                    p = comment_dict[p_id]
-                    p_id = p.parent_id
-                    direct_child = False
+            p_id = parents[to_add]
+            #find the parent actually being displayed
+            #direct_child is whether the comment is 'top-level'
+            while p_id and not cids.has_key(p_id):
+                p_id = parents[p_id]
+                direct_child = False
 
             mc2 = more_comments.get(p_id)
             if not mc2:
-                mc2 = MoreChildren(self.link, depth[to_add._id],
-                                   parent = comment_dict.get(p_id))
+                mc2 = MoreChildren(self.link, depth.get(to_add,0) - offset_depth,
+                                   parent_id = p_id)
                 more_comments[p_id] = mc2
                 w_mc2 = Wrapped(mc2)
                 if p_id is None:
@@ -211,8 +203,8 @@ class _CommentBuilder(Builder):
                         parent.child.parent_name = parent._fullname
 
             #add more children
-            if comment_tree.has_key(to_add._id):
-                candidates.extend(comment_tree[to_add._id])
+            if cid_tree.has_key(to_add):
+                candidates.extend(cid_tree[to_add])
 
             if direct_child:
                 mc2.children.append(to_add)
@@ -238,8 +230,11 @@ class _MessageBuilder(Builder):
     def get_tree(self):
         raise NotImplementedError, "get_tree"
 
-    def _tree_filter(self, x):
+    def _tree_filter_reverse(self, x):
         return tree_sort_fn(x) >= self.after._id
+
+    def _tree_filter(self, x):
+        return tree_sort_fn(x) < self.after._id
 
     def get_items(self):
         tree = self.get_tree()
@@ -250,7 +245,7 @@ class _MessageBuilder(Builder):
                 if self.after:
                     if self.reverse:
                         tree = filter(
-                            self._tree_filter,
+                            self._tree_filter_reverse,
                             tree)
                         next = self.after._id
                         if len(tree) > self.num:

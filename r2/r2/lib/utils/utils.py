@@ -35,17 +35,10 @@ from datetime import datetime, timedelta
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
 from mako.filters import url_escape
+ 
+from r2.lib.utils._utils import *
         
 iters = (list, tuple, set)
-
-def tup(item, ret_is_single=False):
-    """Forces casting of item to a tuple (for a list) or generates a
-    single element tuple (for anything else)"""
-    #return true for iterables, except for strings, which is what we want
-    if hasattr(item, '__iter__'):
-        return (item, False) if ret_is_single else item
-    else:
-        return ((item,), True) if ret_is_single else (item,)
 
 def randstr(len, reallyrandom = False):
     """If reallyrandom = False, generates a random alphanumeric string
@@ -165,45 +158,16 @@ def storify(mapping, *requireds, **defaults):
     
     return stor
 
-def _strips(direction, text, remove):
-    if direction == 'l': 
-        if text.startswith(remove): 
-            return text[len(remove):]
-    elif direction == 'r':
-        if text.endswith(remove):   
-            return text[:-len(remove)]
-    else: 
-        raise ValueError, "Direction needs to be r or l."
-    return text
-
-def rstrips(text, remove):
-    """
-    removes the string `remove` from the right of `text`
-
-        >>> rstrips("foobar", "bar")
-        'foo'
-    
-    """
-    return _strips('r', text, remove)
-
-def lstrips(text, remove):
-    """
-    removes the string `remove` from the left of `text`
-    
-        >>> lstrips("foobar", "foo")
-        'bar'
-    
-    """
-    return _strips('l', text, remove)
-
-def strips(text, remove):
-    """removes the string `remove` from the both sides of `text`
-
-        >>> strips("foobarfoo", "foo")
-        'bar'
-    
-    """
-    return rstrips(lstrips(text, remove), remove)
+class Enum(Storage):
+    def __init__(self, *a):
+        self.name = tuple(a)
+        Storage.__init__(self, ((e, i) for i, e in enumerate(a)))
+    def __contains__(self, item):
+        if isinstance(item, int):
+            return item in self.values()
+        else:
+            return Storage.__contains__(self, item)
+            
 
 class Enum(Storage):
     def __init__(self, *a):
@@ -252,28 +216,6 @@ class Results():
                 return self.fn(row)
         else:
             raise StopIteration
-
-def string2js(s):
-    """adapted from http://svn.red-bean.com/bob/simplejson/trunk/simplejson/encoder.py"""
-    ESCAPE = re.compile(r'[\x00-\x19\\"\b\f\n\r\t]')
-    ESCAPE_ASCII = re.compile(r'([\\"/]|[^\ -~])')
-    ESCAPE_DCT = {
-        # escape all forward slashes to prevent </script> attack
-        '/': '\\/',
-        '\\': '\\\\',
-        '"': '\\"',
-        '\b': '\\b',
-        '\f': '\\f',
-        '\n': '\\n',
-        '\r': '\\r',
-        '\t': '\\t',
-    }
-    for i in range(20):
-        ESCAPE_DCT.setdefault(chr(i), '\\u%04x' % (i,))
-
-    def replace(match):
-        return ESCAPE_DCT[match.group(0)]
-    return '"' + ESCAPE.sub(replace, s) + '"'
 
 r_base_url = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^#]*[^#/])/?")
 def base_url(url):
@@ -371,92 +313,6 @@ def sanitize_url(url, require_scheme = False):
                     return
         return url
 
-def timeago(interval):
-    """Returns a datetime object corresponding to time 'interval' in
-    the past.  Interval is of the same form as is returned by
-    timetext(), i.e., '10 seconds'.  The interval must be passed in in
-    English (i.e., untranslated) and the format is
-
-    [num] second|minute|hour|day|week|month|year(s)
-    """
-    from pylons import g
-    return datetime.now(g.tz) - timeinterval_fromstr(interval)
-
-def timefromnow(interval):
-    "The opposite of timeago"
-    from pylons import g
-    return datetime.now(g.tz) + timeinterval_fromstr(interval)
-    
-def timeinterval_fromstr(interval):
-    "Used by timeago and timefromnow to generate timedeltas from friendly text"
-    parts = interval.strip().split(' ')
-    if len(parts) == 1:
-        num = 1
-        period = parts[0]
-    elif len(parts) == 2:
-        num, period = parts
-        num = int(num)
-    else:
-        raise ValueError, 'format should be ([num] second|minute|etc)'
-    period = rstrips(period, 's')
-
-    d = dict(second = 1,
-             minute = 60,
-             hour   = 60 * 60,
-             day    = 60 * 60 * 24,
-             week   = 60 * 60 * 24 * 7,
-             month  = 60 * 60 * 24 * 30,
-             year   = 60 * 60 * 24 * 365)[period]
-    delta = num * d
-    return timedelta(0, delta)
-
-def timetext(delta, resultion = 1, bare=True):
-    """
-    Takes a datetime object, returns the time between then and now
-    as a nicely formatted string, e.g "10 minutes"
-    Adapted from django which was adapted from
-    http://blog.natbat.co.uk/archive/2003/Jun/14/time_since
-    """
-    chunks = (
-      (60 * 60 * 24 * 365, lambda n: ungettext('year', 'years', n)),
-      (60 * 60 * 24 * 30, lambda n: ungettext('month', 'months', n)),
-      (60 * 60 * 24, lambda n : ungettext('day', 'days', n)),
-      (60 * 60, lambda n: ungettext('hour', 'hours', n)),
-      (60, lambda n: ungettext('minute', 'minutes', n)),
-      (1, lambda n: ungettext('second', 'seconds', n))
-    )
-    delta = max(delta, timedelta(0))
-    since = delta.days * 24 * 60 * 60 + delta.seconds
-    for i, (seconds, name) in enumerate(chunks):
-        count = math.floor(since / seconds)
-        if count != 0:
-            break
-
-    from r2.lib.strings import strings
-    if count == 0 and delta.seconds == 0 and delta != timedelta(0):
-        n = math.floor(delta.microseconds / 1000)
-        s = strings.time_label % dict(num=n, 
-                                      time=ungettext("millisecond", 
-                                                     "milliseconds", n))
-    else:
-        s = strings.time_label % dict(num=count, time=name(int(count)))
-        if resultion > 1:
-            if i + 1 < len(chunks):
-                # Now get the second item
-                seconds2, name2 = chunks[i + 1]
-                count2 = (since - (seconds * count)) / seconds2
-                if count2 != 0:
-                    s += ', %d %s' % (count2, name2(count2))
-    if not bare: s += ' ' + _('ago')
-    return s
-
-def timesince(d, resultion = 1, bare = True):
-    from pylons import g
-    return timetext(datetime.now(g.tz) - d)
-
-def timeuntil(d, resultion = 1, bare = True):
-    from pylons import g
-    return timetext(d - datetime.now(g.tz))
 
 # Truncate a time to a certain number of minutes
 # e.g, trunc_time(5:52, 30) == 5:30
@@ -474,17 +330,11 @@ def trunc_time(time, mins, hours=None):
                         microsecond = 0)
 
 
-def to_base(q, alphabet):
-    if q < 0: raise ValueError, "must supply a positive integer"
-    l = len(alphabet)
-    converted = []
-    while q != 0:
-        q, r = divmod(q, l)
-        converted.insert(0, alphabet[r])
-    return "".join(converted) or '0'
-
-def to36(q):
-    return to_base(q, '0123456789abcdefghijklmnopqrstuvwxyz')
+def median(l):
+    if l:
+        s = sorted(l)
+        i = len(s) / 2
+        return s[i]
 
 def median(l):
     if l:
@@ -1021,7 +871,7 @@ def title_to_url(title, max_length = 50):
         last_word = title.rfind('_')
         if (last_word > 0):
             title = title[:last_word]
-    return title
+    return title or "_"
 
 def trace(fn):
     import sys

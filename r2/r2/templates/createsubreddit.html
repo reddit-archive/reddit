@@ -40,15 +40,14 @@ function update_title(elem) {
 }
 </script>
 
-<%def name="radio_type(name, title, text)">
-  <% full_name = "type_" + name %>
+<%def name="radio_type(field_name, val_name, title, text, checked)">
+  <% full_name = field_name + "_" + val_name %>
   <tr>
     <td class="nowrap nopadding">
-      <input name="type" type="radio" id="${full_name}"
-             value="${name}" class="nomargin"
-             %if thing.site and name == thing.site.type \
-                 or not thing.site and name == "public":
-             checked="checked"
+      <input name="${field_name}" type="radio" id="${full_name}"
+             value="${val_name}" class="nomargin"
+             %if checked:
+               checked="checked"
              %endif
              />
       <label for="${full_name}">${title}</label>
@@ -128,11 +127,31 @@ function update_title(elem) {
   <%utils:line_field title="${_('type')}">
     <div class="delete-field">
       <table >
-      ${radio_type("public", _("public"), _("anyone can view and submit"))}
-      ${radio_type("restricted", _("restricted"), 
-             _("anyone can view, but only some are approved to submit links"))}
-      ${radio_type("private", _("private"),
-             _("only approved members can view and submit"))}
+      ${radio_type('type', "public", _("public"),
+                   _("anyone can view and submit"),
+                   (not thing.site or thing.site.type=='public'))}
+      ${radio_type('type', "restricted", _("restricted"),
+                   _("anyone can view, but only some are approved to submit links"),
+                   (thing.site and thing.site.type=='restricted'))}
+      ${radio_type('type', "private", _("private"),
+                   _("only approved members can view and submit"),
+                   (thing.site and thing.site.type=='private'))}
+      </table>
+    </div>
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('content options')}">
+    <div class="delete-field">
+      <table >
+        ${radio_type('link_type', "any", _("any"),
+                     _("any link type is allowed"),
+                     (not thing.site or thing.site.link_type=='any'))}
+        ${radio_type('link_type', "link", _("links only"),
+                     _("only links to external sites are allowed"),
+                     (thing.site and thing.site.link_type=='link'))}
+        ${radio_type('link_type', "self", _("text posts only"),
+                     _("only text/self posts are allowed"),
+                     (thing.site and thing.site.link_type=='self'))}
       </table>
     </div>
   </%utils:line_field>

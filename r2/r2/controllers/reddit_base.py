@@ -254,13 +254,20 @@ def set_subreddit():
                 srs = set()
                 sr_names = sr_name.split('+')
                 real_path = sr_name
-                for sr_name in sr_names:
-                    sr = Subreddit._by_name(sr_name)
-                    if isinstance(sr, FakeSubreddit):
+                srs = Subreddit._by_name(sr_names).values()
+                if len(srs) != len(sr_names):
+                    abort(404)
+                elif any(isinstance(sr, FakeSubreddit)
+                         for sr in srs):
+                    if All in srs:
+                        c.site = All
+                    elif Friend in srs:
+                        c.site = Friend
+                    else:
                         abort(400)
-                    srs.add(sr)
-                sr_ids = [sr._id for sr in srs]
-                c.site = MultiReddit(sr_ids, real_path)
+                else:
+                    sr_ids = [sr._id for sr in srs]
+                    c.site = MultiReddit(sr_ids, real_path)
             else:
                 c.site = Subreddit._by_name(sr_name)
         except NotFound:
@@ -483,6 +490,7 @@ class MinimalController(BaseController):
         return c.response
 
     def pre(self):
+
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
 
@@ -499,6 +507,8 @@ class MinimalController(BaseController):
         set_subreddit()
         c.errors = ErrorSet()
         c.cookies = Cookies()
+        # if an rss feed, this will also log the user in if a feed=
+        # GET param is included
         set_content_type()
 
     def try_pagecache(self):
@@ -656,15 +666,18 @@ class RedditController(MinimalController):
 
         # the user could have been logged in via one of the feeds 
         maybe_admin = False
+
+        # no logins for RSS feed unless valid_feed has already been called
         if not c.user_is_loggedin:
-            (c.user, maybe_admin) = \
-                valid_cookie(c.cookies[g.login_cookie].value
-                             if g.login_cookie in c.cookies
-                             else '')
-    
-            if c.user:
-                c.user_is_loggedin = True
-            else:
+            if c.extension != "rss":
+                (c.user, maybe_admin) = \
+                         valid_cookie(c.cookies[g.login_cookie].value
+                                      if g.login_cookie in c.cookies
+                                      else '')
+                if c.user:
+                    c.user_is_loggedin = True
+
+            if not c.user_is_loggedin:
                 c.user = UnloggedUser(get_browser_langs())
                 # patch for fixing mangled language preferences
                 if (not isinstance(c.user.pref_lang, basestring) or

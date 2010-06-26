@@ -452,18 +452,13 @@ class Account(Thing):
 
     @classmethod
     def cup_info_multi(cls, ids):
-        ids = [ int(i) for i in ids ]
-        # Is this dumb? Why call sgm() with miss_fn=None, rather than just
-        # calling g.hardcache.get_multi()?
-        return sgm(g.hardcache, ids, miss_fn=None, prefix="cup_info-")
+        return g.hardcache.get_multi(ids, prefix="cup_info-")
 
     @classmethod
     def system_user(cls):
-        if not hasattr(g, "system_user"):
-            return None
         try:
             return cls._by_name(g.system_user)
-        except NotFound:
+        except (NotFound, AttributeError):
             return None
 
 class FakeAccount(Account):

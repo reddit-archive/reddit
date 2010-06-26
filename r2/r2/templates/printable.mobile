@@ -19,6 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<%!
+    from r2.lib.pages import WrappedUser
+ %>
 
 <li>
   ${self.parent()}
@@ -43,7 +46,7 @@
 </%def>
 
 <%def name="author(friend = False, gray = False)" buffered="True">
-  %if thing.author._deleted:
+  %if WrappedUser(thing.author).user_deleted:
     <span>[deleted]</span>
   %else:
     <%

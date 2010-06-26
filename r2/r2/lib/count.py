@@ -38,6 +38,7 @@ def get_link_counts(period = count_period):
 
 def get_sr_counts(period = count_period):
     srs = Subreddit._query()
+
     return dict((l._fullname, (0, l.sr_id)) for l in links)
 
 def clear_sr_counts(names):

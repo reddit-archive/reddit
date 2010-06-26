@@ -46,7 +46,7 @@ def thumbnail_url(link):
         res += "?v=%s" % link.thumbnail_version
     return res
 
-def upload_thumb(link, image, never_expire = True):
+def upload_thumb(link, image, never_expire = True, reduced_redundancy=True):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
     f = tempfile.NamedTemporaryFile(suffix = '.png', delete=False)
@@ -61,7 +61,8 @@ def upload_thumb(link, image, never_expire = True):
 
         log.debug('uploading to s3: %s' % link._fullname)
         s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, 'image/png',
-                       never_expire=never_expire)
+                       never_expire=never_expire,
+                       reduced_redundancy=reduced_redundancy)
         log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
     finally:
         os.unlink(f.name)

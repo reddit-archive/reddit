@@ -31,9 +31,8 @@ import pycassa
 import cassandra.ttypes
 
 from r2.lib.contrib import memcache
-from r2.lib.utils import lstrips, in_chunks, tup
+from r2.lib.utils import in_chunks, prefix_keys
 from r2.lib.hardcachebackend import HardCacheBackend
-from r2.lib.utils import trace
 
 from r2.lib.sgm import sgm # get this into our namespace so that it's
                            # importable from us
@@ -52,19 +51,8 @@ class CacheUtils(object):
         for k,v in keys.iteritems():
             self.add(prefix+str(k), v)
 
-    def _prefix_keys(self, keys, prefix):
-        if len(prefix):
-            return dict((prefix+str(k), k) for k in keys)
-        else:
-            return dict((str(k), k) for k in keys)
-
-    def _unprefix_keys(self, results, key_map):
-        return dict((key_map[k], results[k]) for k in results.keys())
-
     def get_multi(self, keys, prefix=''):
-        key_map = self._prefix_keys(keys, prefix)
-        results = self.simple_get_multi(key_map.keys())
-        return self._unprefix_keys(results, key_map)
+        return prefix_keys(keys, prefix, self.simple_get_multi)
 
 class PyMemcache(CacheUtils, memcache.Client):
     """We still use our patched python-memcache to talk to the
@@ -395,10 +383,8 @@ class CacheChain(CacheUtils, local):
         return default
 
     def get_multi(self, keys, prefix='', allow_local = True):
-        key_map = self._prefix_keys(keys, prefix)
-        results = self.simple_get_multi(key_map.keys(),
-                                        allow_local = allow_local)
-        return self._unprefix_keys(results, key_map)
+        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local)
+        return prefix_keys(keys, prefix, l)
 
     def simple_get_multi(self, keys, allow_local = True):
         out = {}
@@ -520,7 +506,7 @@ class CassandraCacheChain(CacheChain):
                     value = self.memcache.get(key)
                 if value is None:
                     value = self.cassa.get(key,
-                                           read_consistency_level = CL_ONE)
+                                           read_consistency_level = CL_QUORUM)
             except cassandra.ttypes.NotFoundException:
                 value = default
 

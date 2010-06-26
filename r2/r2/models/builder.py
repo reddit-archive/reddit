@@ -64,16 +64,15 @@ class Builder(object):
         aids = set(l.author_id for l in items if hasattr(l, 'author_id')
                    and l.author_id is not None)
 
+        authors = {}
+        cup_infos = {}
+        email_attrses = {}
         if aids:
             authors = Account._byID(aids, True) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
-            email_attrses = admintools.email_attrs(aids, return_dict=True)
-        else:
-            authors = {}
-            cup_infos = {}
-            email_attrses = {}
+            if c.user_is_admin:
+                email_attrses = admintools.email_attrs(aids, return_dict=True)
 
-        # srids = set(l.sr_id for l in items if hasattr(l, "sr_id"))
         subreddits = Subreddit.load_subreddits(items)
 
         if not user:
