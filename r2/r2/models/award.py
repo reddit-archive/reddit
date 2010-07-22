@@ -65,7 +65,8 @@ class Award (Thing):
             raise NotFound, 'Award %s' % codename
 
     @classmethod
-    def give_if_needed(cls, codename, user, cup_info=None):
+    def give_if_needed(cls, codename, user,
+                       description=None, url=None, cup_info=None):
         """Give an award to a user, unless they already have it.
            Returns silently (except for g.log.debug) if the award
            doesn't exist"""
@@ -83,7 +84,8 @@ class Award (Thing):
                 g.log.debug("%s already has %s" % (user, codename))
                 return
 
-        Trophy._new(user, award, cup_info=cup_info)
+        Trophy._new(user, award, description=description,
+                    url=url, cup_info=cup_info)
         g.log.debug("Gave %s to %s" % (codename, user))
 
     @classmethod

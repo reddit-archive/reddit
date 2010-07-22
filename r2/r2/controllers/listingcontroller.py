@@ -25,7 +25,7 @@ from validator import *
 from r2.models import *
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu
+from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
 from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
@@ -36,6 +36,7 @@ from r2.lib.strings import Score
 from r2.lib import organic
 from r2.lib.jsontemplates import is_api
 from r2.lib.solrsearch import SearchQuery
+from r2.lib.indextank import IndextankQuery
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
@@ -85,7 +86,7 @@ class ListingController(RedditController):
         """list of menus underneat the header (e.g., sort, time, kind,
         etc) to be displayed on this listing page"""
         return []
-    
+
     @base_listing
     def build_listing(self, num, after, reverse, count):
         """uses the query() method to define the contents of the
@@ -123,7 +124,7 @@ class ListingController(RedditController):
             builder_cls = self.builder_cls
         elif isinstance(self.query_obj, Query):
             builder_cls = QueryBuilder
-        elif isinstance(self.query_obj, SearchQuery):
+        elif isinstance(self.query_obj, (SearchQuery,IndextankQuery)):
             builder_cls = SearchBuilder
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
@@ -235,7 +236,8 @@ class HotController(FixListing, ListingController):
             elif pos != 0:
                 pos = pos % len(spotlight_links)
 
-            spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
+            if c.user.pref_show_sponsors or not c.user.gold:
+                spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
             trial = populate_spotlight()
 
             # Need to do this again, because if there was a duplicate removed,
@@ -313,10 +315,16 @@ class HotController(FixListing, ListingController):
             self.fix_listing = False
 
         if c.site == Default:
+            if c.user_is_loggedin:
+                srlimit = Subreddit.sr_limit
+                over18 = c.user.has_subscribed and c.over18
+            else:
+                srlimit = g.num_default_reddits
+                over18 = False
+
             sr_ids = Subreddit.user_subreddits(c.user,
-                                               limit=(Subreddit.sr_limit
-                                                      if c.user_is_loggedin
-                                                      else g.num_default_reddits))
+                                               limit=srlimit,
+                                               over18=over18)
             return normalized_hot(sr_ids)
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
@@ -385,10 +393,10 @@ class NewController(ListingController):
         return keep
 
     def query(self):
-        res = None
         if self.sort == 'rising':
-            res = get_rising(c.site)
-        return res or c.site.get_links('new', 'all')
+            return get_rising(c.site)
+        else:
+            return c.site.get_links('new', 'all')
 
     @validate(sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):
@@ -485,6 +493,16 @@ class UserController(ListingController):
     render_cls = ProfilePage
     show_nums = False
 
+    @property
+    def menus(self):
+        res = []
+        if (self.vuser.gold and 
+            self.where in ('overview', 'submitted', 'comments')):
+            res.append(ProfileSortMenu(default = self.sort))
+            if self.sort not in ("hot", "new"):
+                res.append(TimeMenu(default = self.time))
+        return res
+
     def title(self):
         titles = {'overview': _("overview for %(user)s"),
                   'comments': _("comments by %(user)s"),
@@ -501,7 +519,12 @@ class UserController(ListingController):
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
-            return (getattr(item, "promoted", None) is None and
+            wouldkeep = True
+            if item._deleted:
+                return False
+            if self.time != 'all':
+                wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
+            return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
                      not getattr(item, "deleted", False)))
         return keep
@@ -510,17 +533,17 @@ class UserController(ListingController):
         q = None
         if self.where == 'overview':
             self.check_modified(self.vuser, 'overview')
-            q = queries.get_overview(self.vuser, 'new', 'all')
+            q = queries.get_overview(self.vuser, self.sort, self.time)
 
         elif self.where == 'comments':
             sup.set_sup_header(self.vuser, 'commented')
             self.check_modified(self.vuser, 'commented')
-            q = queries.get_comments(self.vuser, 'new', 'all')
+            q = queries.get_comments(self.vuser, self.sort, self.time)
 
         elif self.where == 'submitted':
             sup.set_sup_header(self.vuser, 'submitted')
             self.check_modified(self.vuser, 'submitted')
-            q = queries.get_submitted(self.vuser, 'new', 'all')
+            q = queries.get_submitted(self.vuser, self.sort, self.time)
 
         elif self.where in ('liked', 'disliked'):
             sup.set_sup_header(self.vuser, self.where)
@@ -541,13 +564,24 @@ class UserController(ListingController):
 
         return q
 
-    @validate(vuser = VExistingUname('username'))
-    def GET_listing(self, where, vuser, **env):
+    @validate(vuser = VExistingUname('username'),
+              sort = VMenu('t', ProfileSortMenu),
+              time = VMenu('t', TimeMenu))
+    def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
+        self.sort = sort
+        self.time = time
 
         # the validator will ensure that vuser is a valid account
         if not vuser:
             return self.abort404()
+
+        if not vuser.gold:
+            self.sort = 'new'
+            self.time = 'all'
+        if self.sort in  ('hot', 'new'):
+            self.time = 'all'
+
 
         # hide spammers profile pages
         if (not c.user_is_loggedin or

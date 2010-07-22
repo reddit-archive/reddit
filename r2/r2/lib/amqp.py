@@ -287,6 +287,54 @@ def black_hole(queue):
 
     consume_items(queue, _ignore)
 
+def dedup_queue(queue, rk = None, limit=None,
+                delivery_mode = DELIVERY_DURABLE):
+    """Hackily try to reduce the size of a queue by removing duplicate
+       messages. The consumers of the target queue must consider
+       identical messages to be idempotent. Preserves only message
+       bodies"""
+    chan = connection_manager.get_channel()
+
+    if rk is None:
+        rk = queue
+
+    bodies = set()
+
+    while True:
+        msg = chan.basic_get(queue)
+
+        if msg is None:
+            break
+
+        if msg.body not in bodies:
+            bodies.add(msg.body)
+
+        if limit is None:
+            limit = msg.delivery_info.get('message_count')
+            if limit is None:
+                default_max = 100*1000
+                print ("Message count was unavailable, defaulting to %d"
+                       % (default_max,))
+                limit = default_max
+            else:
+                print "Grabbing %d messages" % (limit,)
+        else:
+            limit -= 1
+            if limit <= 0:
+                break
+            elif limit % 1000 == 0:
+                print limit
+
+    print "Grabbed %d unique bodies" % (len(bodies),)
+
+    if bodies:
+        for body in bodies:
+            _add_item(rk, body, delivery_mode = delivery_mode)
+
+        worker.join()
+
+        chan.basic_ack(0, multiple=True)
+
 
 def _test_setup(test_q = 'test_q'):
     from r2.lib.queues import RedditQueueMap

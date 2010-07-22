@@ -30,7 +30,7 @@ from r2.models import *
 from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
-from r2.lib.utils import query_string, timefromnow
+from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
@@ -55,6 +55,8 @@ from r2.lib.filters import safemarkdown
 
 from datetime import datetime, timedelta
 from md5 import md5
+import urllib
+import urllib2
 
 def reject_vote(thing):
     voteword = request.params.get('dir')
@@ -244,8 +246,6 @@ class ApiController(RedditController):
 
         banmsg = None
 
-        banmsg = None
-
         if kind == 'link':
             check_domain = True
 
@@ -339,6 +339,7 @@ class ApiController(RedditController):
 
         #update the queries
         queries.new_link(l)
+        changed(l)
 
         if then == 'comments':
             path = add_sr(l.make_permalink_slow())
@@ -507,6 +508,9 @@ class ApiController(RedditController):
         fn = getattr(container, 'remove_' + type)
         fn(victim)
 
+        if type == "friend" and c.user.gold:
+            c.user.friend_rels_cache(_update=True)
+
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(victim, type, _update=True)
 
@@ -518,9 +522,10 @@ class ApiController(RedditController):
                    friend = VExistingUname('name'),
                    container = VByName('container'),
                    type = VOneOf('type', ('friend', 'moderator',
-                                          'contributor', 'banned')))
-    def POST_friend(self, form, jquery, ip, friend, 
-                    container, type):
+                                          'contributor', 'banned')),
+                   note = VLength('note', 300))
+    def POST_friend(self, form, jquery, ip, friend,
+                    container, type, note):
         """
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
@@ -543,6 +548,13 @@ class ApiController(RedditController):
             return
 
         new = fn(friend)
+
+        if type == "friend" and c.user.gold:
+            # Yes, the order of the next two lines is correct.
+            # First you recalculate the rel_ids, then you find
+            # the right one and update its data.
+            c.user.friend_rels_cache(_update=True)
+            c.user.add_friend_note(friend, note or '')
 
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(friend, type, _update=True)
@@ -573,6 +585,13 @@ class ApiController(RedditController):
 
                     queries.new_message(item, inbox_rel)
 
+
+    @validatedForm(VGold(),
+                   friend = VExistingUname('name'),
+                   note = VLength('note', 300))
+    def POST_friendnote(self, form, jquery, friend, note):
+        c.user.add_friend_note(friend, note)
+        form.set_html('.status', _("saved"))
 
     @validatedForm(VUser('curpass', default = ''),
                    VModhash(),
@@ -762,7 +781,9 @@ class ApiController(RedditController):
             if ((link.is_self and link.author_id == c.user._id)
                 or not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
-
+            parent_age = c.start_time - parent._date
+            if parent_age.days > g.REPLY_AGE_LIMIT:
+                c.errors.add(errors.TOO_OLD, field = "parent")
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -774,7 +795,8 @@ class ApiController(RedditController):
                                        errors.RATELIMIT) and
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT,
-                                       errors.DELETED_LINK)):
+                                       errors.DELETED_LINK,
+                                       errors.TOO_OLD)):
 
             if is_message:
                 to = Account._byID(parent.author_id)
@@ -950,9 +972,6 @@ class ApiController(RedditController):
                 set_last_modified(c.user, 'liked')
                 set_last_modified(c.user, 'disliked')
 
-            # flag search indexer that something has changed
-            changed(thing)
-
     @validatedForm(VUser(),
                    VModhash(),
                    # nop is safe: handled after auth checks below
@@ -991,7 +1010,7 @@ class ApiController(RedditController):
             c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
 
             set_last_modified(c.site,'stylesheet_contents')
-            changed(c.site)
+
             c.site._commit()
 
             form.set_html(".status", _('saved'))
@@ -1221,6 +1240,7 @@ class ApiController(RedditController):
                                      prefix = "create_reddit_")
 
             queries.new_subreddit(sr)
+            changed(sr)
 
         #editting an existing reddit
         elif sr.is_moderator(c.user) or c.user_is_admin:
@@ -1268,7 +1288,7 @@ class ApiController(RedditController):
             username = None
         d = dict(username=username, q=q, sort=sort, t=t)
         hex = md5(repr(d)).hexdigest()
-        key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
+        key = "indextankfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
         d['timestamp'] = timestamp
         d['approval'] = approval
         g.hardcache.set(key, d, time=86400 * 7)
@@ -1302,6 +1322,123 @@ class ApiController(RedditController):
         w = wrap_links(thing, wrapper)
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
+
+    @noresponse(paypal_secret = VPrintable('secret', 50),
+                payment_status = VPrintable('payment_status', 20),
+                txn_id = VPrintable('txn_id', 20),
+                paying_id = VPrintable('payer_id', 50),
+                payer_email = VPrintable('payer_email', 250),
+                item_number = VPrintable('item_number', 20),
+                mc_currency = VPrintable('mc_currency', 20),
+                mc_gross = VFloat('mc_gross'))
+    def POST_ipn(self, paypal_secret, payment_status, txn_id,
+                 paying_id, payer_email, item_number, mc_currency, mc_gross):
+
+        if paypal_secret != g.PAYPAL_SECRET:
+            log_text("invalid IPN secret",
+                     "%s guessed the wrong IPN secret" % request.ip,
+                     "warning")
+            raise ValueError
+
+        if request.POST:
+            parameters = request.POST.copy()
+        else:
+            parameters = request.GET.copy()
+
+        if payment_status is None:
+            payment_status = ''
+
+        psl = payment_status.lower()
+        if psl == '' and parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
+            return "Ok"
+        elif parameters.get('txn_type', '') == 'send_money' and mc_gross < 3.95:
+            # Temporary block while the last of the "legacy" PWYW subscriptions
+            # roll in
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+            return "Ok"
+        elif psl == 'completed':
+            pass
+        elif psl == 'refunded':
+            log_text("refund", "Just got notice of a refund.", "info")
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
+        elif psl == 'pending':
+            log_text("pending",
+                     "Just got notice of a Pending, whatever that is.", "info")
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
+        else:
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+
+            raise ValueError("Unknown IPN status: %r" % payment_status)
+
+        if mc_currency != 'USD':
+            raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
+
+        if g.cache.get("ipn-debug"):
+            g.cache.delete("ipn-debug")
+            for k, v in parameters.iteritems():
+                g.log.info("IPN: %r = %r" % (k, v))
+
+        parameters['cmd']='_notify-validate'
+        try:
+            safer = dict([k, v.encode('utf-8')] for k, v in parameters.items())
+            params = urllib.urlencode(safer)
+        except UnicodeEncodeError:
+            g.log.error("problem urlencoding %r" % (parameters,))
+            raise
+        req = urllib2.Request(g.PAYPAL_URL, params)
+        req.add_header("Content-type", "application/x-www-form-urlencoded")
+
+        response = urllib2.urlopen(req)
+        status = response.read()
+# TODO: stop not doing this
+#        if status != "VERIFIED":
+#            raise ValueError("Invalid IPN response: %r" % status)
+
+        pennies = int(mc_gross * 100)
+
+        if item_number and item_number == 'rgsub':
+            if pennies == 2999:
+                secret_prefix = "ys_"
+            elif pennies == 399:
+                secret_prefix = "m_"
+            else:
+                log_text("weird IPN subscription",
+                         "Got %d pennies via PayPal?" % pennies, "error")
+                secret_prefix = "w_"
+        else:
+            secret_prefix = "o_"
+
+        gold_secret = secret_prefix + randstr(10)
+
+        create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
+                              pennies, gold_secret, c.start_time)
+
+        url = "http://www.reddit.com/thanks/" + gold_secret
+
+        # No point in i18n, since we don't have access to the user's
+        # language info (or name) at this point
+        body = """
+Thanks for subscribing to reddit gold! We have received your PayPal
+transaction, number %s.
+
+Your secret subscription code is %s. You can use it to associate this
+subscription with your reddit account -- just visit
+%s
+        """ % (txn_id, gold_secret, url)
+
+        emailer.gold_email(body, payer_email, "reddit gold subscriptions")
+
+        g.log.info("Just got IPN for %d, secret=%s" % (pennies, gold_secret))
+
+        return "Ok"
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1496,6 +1633,60 @@ class ApiController(RedditController):
         return self.redirect("/static/css_submit.png")
 
 
+    @validatedForm(VUser(),
+                   code = VPrintable("code", 30),
+                   postcard_okay = VOneOf("postcard", ("yes", "no")),)
+    def POST_claimgold(self, form, jquery, code, postcard_okay):
+        if not code:
+            c.errors.add(errors.NO_TEXT, field = "code")
+            form.has_errors("code", errors.NO_TEXT)
+            return
+
+        if code.startswith("pc_"):
+            gold_type = 'postcard'
+            if postcard_okay is None:
+                jquery(".postcard").show()
+                form.set_html(".status", _("just one more question"))
+                return
+            else:
+                d = dict(user=c.user.name, okay=postcard_okay)
+                g.hardcache.set("postcard-" + code, d, 86400 * 30)
+        elif code.startswith("ys_"):
+            gold_type = 'yearly special'
+        elif code.startswith("m_"):
+            gold_type = 'monthly'
+        else:
+            gold_type = 'old'
+
+        pennies = claim_gold(code, c.user._id)
+        if pennies is None:
+            c.errors.add(errors.INVALID_CODE, field = "code")
+            log_text ("invalid gold claim",
+                      "%s just tried to claim %s" % (c.user.name, code),
+                      "info")
+        elif pennies == 0:
+            c.errors.add(errors.CLAIMED_CODE, field = "code")
+            log_text ("invalid gold reclaim",
+                      "%s just tried to reclaim %s" % (c.user.name, code),
+                      "info")
+        elif pennies > 0:
+            log_text ("valid gold claim",
+                      "%s just claimed %s" % (c.user.name, code),
+                      "info")
+            g.cache.set("recent-gold-" + c.user.name, True, 600)
+            c.user.creddits += pennies
+            c.user.gold_type = gold_type
+            admintools.engolden(c.user, postcard_okay)
+            form.set_html(".status", _("claimed!"))
+            jquery(".lounge").show()
+        else:
+            raise ValueError("pennies = %r?" % pennies)
+
+        # Activate any errors we just manually set
+        form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
+                        errors.NO_TEXT)
+
+
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):
         if form.has_errors('name', errors.USER_DOESNT_EXIST):
@@ -1568,7 +1759,8 @@ class ApiController(RedditController):
         if action != 'sub' or sr.can_comment(c.user):
             self._subscribe(sr, action == 'sub')
 
-    def _subscribe(self, sr, sub):
+    @classmethod
+    def _subscribe(cls, sr, sub):
         try:
             Subreddit.subscribe_defaults(c.user)
 
@@ -1578,7 +1770,7 @@ class ApiController(RedditController):
             else:
                 if sr.remove_subscriber(c.user):
                     sr._incr('_ups', -1)
-            changed(sr)
+            changed(sr, True)
         except CreationError:
             # This only seems to happen when someone is pounding on the
             # subscribe button or the DBs are really lagged; either way,

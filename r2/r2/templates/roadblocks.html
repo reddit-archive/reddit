@@ -1,0 +1,124 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+<%!
+  from r2.lib.template_helpers import static
+ %>
+<%namespace name="utils" file="utils.html"/>
+<%namespace file="promotelinkform.html" name="p" />
+<%namespace file="utils.html" 
+            import="error_field, checkbox, image_upload, reddit_selector" />
+
+<script type="text/javascript" src="${static('ui.core.js')}"></script>
+<script type="text/javascript" src="${static('ui.datepicker.js')}"></script>
+<script type="text/javascript" src="${static('sponsored.js')}"></script>
+
+
+<div class="pretty-form campaign">
+  <%utils:line_field title="${_('create a roadblock')}" id="campaign-field">
+    <%
+       start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
+       end_title = "Date when your sponsored link will end (at midnight UTC+5)"
+       targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wise "
+       newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
+     %>
+    <table class="preftable">
+      <tr>
+        <th>for date</th>
+        <td class="prefright">
+          ${error_field("BAD_DATE", "startdate", "div")}
+          ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
+          ${error_field("BAD_DATE", "enddate", "div")}
+          ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
+          ${error_field("BAD_DATE_RANGE", "enddate", "div")}
+        <%p:datepicker name="startdate", value="${thing.startdate}"
+                          minDateSrc="#date-min" initfuncname="init_startdate">
+        function(elem) {
+          var other = $("#enddate");
+          if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
+             var newd = new Date();
+             newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
+             $("#enddate").val((newd.getMonth()+1) + "/" + 
+                               newd.getDate() + "/" + newd.getFullYear());
+          }
+          $("#datepicker-enddate").datepicker("destroy");
+          update_bid(elem);
+        }
+        </%p:datepicker>
+        -
+        <%p:datepicker name="enddate", value="${thing.enddate}"
+                          minDateSrc="#startdate" initfuncname="init_enddate">
+          function(elem) { update_bid(elem); }
+        </%p:datepicker>
+       </td>
+       </tr>
+     </table>
+     <script type="text/javascript">
+       $(function() {
+          init_startdate();
+          init_enddate();
+       })
+     </script>
+     <div class="targeting">
+       ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
+     </div>
+     <div class="buttons">
+       <input type="hidden" name="indx" value="" />
+       <span class="status error"></span>
+       <button name="create"
+          onclick="return post_pseudo_form('.campaign', 'add_roadblock')">
+         create
+       </button>
+     </div>
+     <div class="clear"></div>
+    </div>
+  </%utils:line_field>
+</div>
+
+<%utils:line_field title="${_('existing roadblocks')}">
+<div  class='existing-campaigns'>
+  %if thing.roadblocks:
+  <table>
+    <tr>
+      <th>reddit</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th></th>
+    </tr>
+  %for reddit, startdate, enddate in thing.roadblocks:
+    <tr>
+      <td>${reddit}</td>
+      <td>${startdate.strftime("%Y-%m-%d")}</td>
+      <td>${enddate.strftime("%Y-%m-%d")}</td>
+      <td>
+        <form method="post" action="/post/rm_roadblock" onsubmit="return post_form(this, 'rm_roadblock')">
+          <input type="hidden" name="sr" value="${reddit}"/>
+          <input type="hidden" name="startdate" value='${startdate.strftime("%m/%d/%Y")}'/>
+          <input type="hidden" name="enddate" value='${enddate.strftime("%m/%d/%Y")}'/>
+          <button type="submit">remove</button>
+        </form>
+      </td>
+    </tr>
+  %endfor
+  </table>
+  %endif
+</div>
+</%utils:line_field>

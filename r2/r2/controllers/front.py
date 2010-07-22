@@ -36,7 +36,8 @@ from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
-from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery, LinkSearchQuery
+from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
+from r2.lib.indextank import IndextankQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -196,7 +197,11 @@ class FrontController(RedditController):
         # insert reply box only for logged in user
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
-            display = not bool(comment)
+            display = False
+            if not comment:
+                age = c.start_time - article._date
+                if age.days < g.REPLY_AGE_LIMIT:
+                    display = True
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
                                         display = display,
@@ -463,33 +468,15 @@ class FrontController(RedditController):
     verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
     @base_listing
     @validate(query = nop('q'),
-              time = VMenu('action', TimeMenu),
-              sort = VMenu('sort', SearchSortMenu),
-              langs = nop('langs'))
-    def GET_search(self, query, num, time, reverse, after, count, langs, sort):
+              sort = VMenu('sort', SearchSortMenu, remember=False))
+    def GET_search(self, query, num, reverse, after, count, sort):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
             if url:
                 return self.redirect("/submit" + query_string({'url':url}))
 
-        if langs and self.verify_langs_regex.match(langs):
-            langs = langs.split(',')
-        else:
-            langs = c.content_langs
-
-        subreddits = None
-        authors = None
-        if c.site == subreddit.Friends and c.user_is_loggedin and c.user.friends:
-            authors = c.user.friends
-        elif isinstance(c.site, MultiReddit):
-            subreddits = c.site.sr_ids
-        elif not isinstance(c.site, FakeSubreddit):
-            subreddits = [c.site._id]
-
-        q = LinkSearchQuery(q = query, timerange = time, langs = langs,
-                            subreddits = subreddits, authors = authors,
-                            sort = SearchSortMenu.operator(sort))
+        q = IndextankQuery(query, c.site, sort)
 
         num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
                                      count = count)
@@ -505,9 +492,8 @@ class FrontController(RedditController):
             infotext = None
 
         res = SearchPage(_('search results'), query, t, num, content=spane,
-                         nav_menus = [TimeMenu(default = time),
-                                      SearchSortMenu(default=sort)],
-                         search_params = dict(sort = sort, t = time),
+                         nav_menus = [SearchSortMenu(default=sort)],
+                         search_params = dict(sort = sort),
                          infotext = infotext).render()
 
         return res
@@ -912,3 +898,9 @@ class FormsController(RedditController):
     def GET_try_compact(self, dest):
         c.render_style = "compact"
         return TryCompact(dest = dest).render()
+
+    @validate(VUser(),
+              secret=VPrintable("secret", 50))
+    def GET_thanks(self, secret):
+        """The page to claim reddit gold trophies"""
+        return BoringPage(_("thanks"), content=Thanks(secret)).render()

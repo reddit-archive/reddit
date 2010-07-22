@@ -370,7 +370,7 @@ class Subreddit(Thing, Printable):
                 else Subreddit._byID(sr_ids, data=True, return_dict=False))
 
     @classmethod
-    def default_subreddits(cls, ids = True, limit = g.num_default_reddits):
+    def default_subreddits(cls, ids = True, over18 = False, limit = g.num_default_reddits):
         """
         Generates a list of the subreddits any user with the current
         set of language preferences and no subscriptions would see.
@@ -386,7 +386,7 @@ class Subreddit(Thing, Printable):
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
                                filter_allow_top = True,
-                               over18 = c.over18, ids = True)
+                               over18 = over18, ids = True)
 
         rv = []
         for sr in srs:
@@ -419,7 +419,7 @@ class Subreddit(Thing, Printable):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids = True, limit = sr_limit):
+    def user_subreddits(cls, user, ids = True, over18=False, limit = sr_limit):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -438,7 +438,7 @@ class Subreddit(Thing, Printable):
                                                       return_dict=False)
         else:
             limit = g.num_default_reddits if limit is None else limit
-            return cls.default_subreddits(ids = ids, limit = limit)
+            return cls.default_subreddits(ids = ids, over18=over18, limit = limit)
 
     @classmethod
     @memoize('subreddit.special_reddits')
@@ -832,6 +832,8 @@ class DomainSR(FakeSubreddit):
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
+        # TODO: once the lists are precomputed properly, this can be
+        # switched over to use the non-_old variety.
         return queries.get_domain_links(self.domain, sort, time)
 
 Sub = SubSR()

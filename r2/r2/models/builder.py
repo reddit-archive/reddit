@@ -67,11 +67,14 @@ class Builder(object):
         authors = {}
         cup_infos = {}
         email_attrses = {}
+        friend_rels = None
         if aids:
             authors = Account._byID(aids, True) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
+            if c.user.gold:
+                friend_rels = c.user.friend_rels()
 
         subreddits = Subreddit.load_subreddits(items)
 
@@ -125,8 +128,15 @@ class Builder(object):
                 if user and item.author_id in user.friends:
                     # deprecated old way:
                     w.friend = True
+
                     # new way:
-                    add_attr(w.attribs, 'F')
+                    label = None
+                    if friend_rels:
+                        rel = friend_rels[item.author_id]
+                        note = getattr(rel, "note", None)
+                        if note:
+                            label = "%s (%s)" % (_("friend"), note)
+                    add_attr(w.attribs, 'F', label)
 
             except AttributeError:
                 pass

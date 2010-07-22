@@ -59,8 +59,12 @@ def create_table(table, index_commands=None):
                 for i in index_commands:
                     t.bind.execute(i)
 
-def index_str(table, name, on, where = None):
-    index_str = 'create index idx_%s_' % name
+def index_str(table, name, on, where = None, unique = False):
+    if unique:
+        index_str = 'create unique index'
+    else:
+        index_str = 'create index'
+    index_str += ' idx_%s_' % name
     index_str += table.name
     index_str += ' on '+ table.name + ' (%s)' % on
     if where:

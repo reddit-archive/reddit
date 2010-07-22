@@ -29,6 +29,7 @@
 <%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
 
 <div id="header">
+  <a tabindex="1" href="#content" id="jumpToContent">${_('jump to content')}</a>
   ${thing.srtopbar}
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
@@ -127,6 +128,7 @@
   <div class="morelink nub"></div>
   <div class="mlh"></div>
   <div class="mlhn"></div>
+  <div class="sidebox gold"><div class="morelink"></div></div>
   <a class="pretty-button negative"></a>
   <a class="pretty-button negative pressed"></a>
   <a class="pretty-button positive"></a>

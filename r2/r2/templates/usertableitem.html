@@ -23,6 +23,10 @@
 <%namespace file="printablebuttons.html" import="ynbutton" />
 <%namespace file="utils.html" import="plain_link"/>
 
+<%!
+   from r2.lib.utils import timesince
+%>
+
 <tr>
   %for cell in thing.cells:
     <td>
@@ -33,17 +37,17 @@
     </td>
   %endfor
 </tr>
-  
+
 <%def name="cell_type()">
   %if thing.name == "user":
       <span class="user">
-         ${plain_link(thing.user.name, "/user/%s/" % thing.user.name, 
+         ${plain_link(thing.user.name, "/user/%s/" % thing.user.name,
                       _sr_path=False)}
          &nbsp;(<b>${thing.user.safe_karma}</b>)
       </span>
       &nbsp;
   %elif c.user_is_loggedin and thing.name == "sendmessage" and c.user != thing.user:
-    ${plain_link(_("send message"), 
+    ${plain_link(_("send message"),
                  "/message/compose?to=%s" % (thing.user.name))}
       &nbsp;
   %elif thing.name == "remove":
@@ -56,5 +60,20 @@
     %else:
       <span class="gray">${_("can't remove")}</span>
     %endif
+  %elif thing.name == "note":
+    <form action="/post/friendnote" id="friendnote-${thing.rel._fullname}"
+          method="post" class="pretty-form medium-text friend-note"
+          onsubmit="return post_form(this, 'friendnote');">
+      <input type="hidden" name="name" value="${thing.user.name}" />
+      <input type="text" maxlength="300" name="note" class="tiny"
+             onfocus="$(this).parent().addClass('edited')"
+             value="${getattr(thing.rel, 'note', '')}" />
+      <button onclick="$(this).parent().removeClass('edited')" type="submit">submit</button>
+      <span class="status"></span>
+    </form>
+  %elif thing.name == "age":
+      <span title="${thing.rel._date.strftime('%Y-%m-%d %H:%M:%S')}">
+        ${timesince(thing.rel._date)}
+      </span>
   %endif
 </%def>

@@ -7,7 +7,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments, update_comment_vote
+from r2.lib.comment_tree import add_comment, link_comments, update_comment_votes
 
 import cPickle as pickle
 
@@ -58,20 +58,6 @@ def filter_thing2(x):
     """A filter to apply to the results of a relationship query returns
     the object of the relationship."""
     return x._thing2
-
-def make_batched_time_query(sr, sort, time, preflight_check = True):
-    q = get_links(sr, sort, time, merge_batched=False)
-
-    if (g.use_query_cache
-        and sort in batched_time_sorts
-        and time in batched_time_times):
-
-        if not preflight_check:
-            q.force_run = True
-
-        q.batched_time_srid = sr._id
-
-    return q
 
 class CachedResults(object):
     """Given a query returns a list-like object that will lazily look up
@@ -271,13 +257,13 @@ def merge_results(*results):
         return MergedCachedResults(results)
     else:
         assert all((results[0]._sort == r._sort
-                    and results[0] == r.prewrap_fn)
+                    and results[0].prewrap_fn == r.prewrap_fn)
                    for r in results)
         m = Merge(results, sort = results[0]._sort)
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
-def get_links(sr, sort, time, merge_batched=True):
+def get_links(sr, sort, time):
     """General link query for a subreddit."""
     q = Link._query(Link.c.sr_id == sr._id,
                     sort = db_sort(sort),
@@ -400,8 +386,18 @@ def get_modqueue(sr):
 
     return merge_results(*results)
 
-def get_domain_links(domain, sort, time):
+def get_domain_links_old(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
+
+def get_domain_links(domain, sort, time):
+    from r2.lib.db import operators
+    q = Link._query(operators.domain(Link.c.url) == domain,
+                    sort = db_sort(sort),
+                    data = True)
+    if time != "all":
+        q._filter(db_times[time])
+
+    return make_results(q)
 
 def user_query(kind, user, sort, time):
     """General profile-page query."""
@@ -554,11 +550,14 @@ def new_link(link):
     # that
 
     results.append(get_submitted(author, 'new', 'all'))
+
+    for domain in utils.UrlParser(link.url).domain_permutations():
+        results.append(get_domain_links(domain, 'new', "all"))
+
     if link._spam:
         results.append(get_spam_links(sr))
-    else:
-        add_queries(results, insert_items = link)
 
+    add_queries(results, insert_items = link)
     amqp.add_item('new_link', link._fullname)
 
 
@@ -607,13 +606,27 @@ def new_vote(vote):
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
+        results = []
+        author = Account._byID(item.author_id)
+        if author.gold:
+            for sort in ('hot', 'top', 'controversial', 'new'):
+                if isinstance(item, Link):
+                    results.append(get_submitted(author, sort, 'all'))
+                if isinstance(item, Comment):
+                    results.append(get_comments(author, sort, 'all'))
+
+
         # don't do 'new', because that was done by new_link, and the
         # time-filtered versions of top/controversial will be done by
         # mr_top
-        results = [get_links(sr, 'hot', 'all'),
-                   get_links(sr, 'top', 'all'),
-                   get_links(sr, 'controversial', 'all'),
-                   ]
+        results.extend([get_links(sr, 'hot', 'all'),
+                        get_links(sr, 'top', 'all'),
+                        get_links(sr, 'controversial', 'all'),
+                        ])
+
+        for domain in utils.UrlParser(item.url).domain_permutations():
+            for sort in ("hot", "top", "controversial"):
+                results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item)
 
@@ -679,10 +692,14 @@ def new_savehide(rel):
     elif name == 'unhide':
         add_queries([get_hidden(user)], delete_items = rel)
 
-def changed(things):
+def changed(things, boost_only=False):
     """Indicate to search that a given item should be updated in the index"""
     for thing in tup(things):
-        amqp.add_item('search_changes', thing._fullname,
+        msg = {'fullname': thing._fullname}
+        if boost_only:
+            msg['boost_only'] = True
+
+        amqp.add_item('search_changes', pickle.dumps(msg),
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
@@ -974,7 +991,6 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
 
     elif isinstance(thing, Comment):
         #update last modified
-        update_comment_vote(thing)
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'commented')
@@ -982,24 +998,28 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(limit=None):
+def process_votes(limit=1000):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msgs, chan):
-        assert(len(msgs) == 1)
-        msg = msgs[0]
+        #assert(len(msgs) == 1)
+        comments = []
+        for msg in msgs:
+            r = pickle.loads(msg.body)
 
-        r = pickle.loads(msg.body)
+            uid, tid, dir, ip, organic, cheater = r
+            voter = Account._byID(uid, data=True)
+            votee = Thing._by_fullname(tid, data = True)
+            if isinstance(votee, Comment):
+                comments.append(votee)
 
-        uid, tid, dir, ip, organic, cheater = r
-        voter = Account._byID(uid, data=True)
-        votee = Thing._by_fullname(tid, data = True)
+            print (voter, votee, dir, ip, organic, cheater)
+            handle_vote(voter, votee, dir, ip, organic,
+                        cheater = cheater)
 
-        print (voter, votee, dir, ip, organic, cheater)
-        handle_vote(voter, votee, dir, ip, organic,
-                    cheater = cheater)
+        update_comment_votes(comments)
 
-    amqp.handle_items('register_vote_q', _handle_vote)
+    amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
 
 try:
     from r2admin.lib.admin_queries import *

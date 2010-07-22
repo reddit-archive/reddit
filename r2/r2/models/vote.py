@@ -151,11 +151,6 @@ class Vote(MultiRelation('vote',
                 v.organic = organic
 
         v._commit()
-        g.cache.delete(queries.prequeued_vote_key(sub, obj))
-
-        v._fast_query_timestamp_touch(sub)
-
-        v._fast_query_timestamp_touch(sub)
 
         v._fast_query_timestamp_touch(sub)
 
@@ -191,6 +186,8 @@ class Vote(MultiRelation('vote',
         if getattr(v, 'organic', False) or hasattr(cv, 'organic'):
             cv.organic = v.organic
         cv._commit()
+
+        queries.changed(votee, True)
 
         return v
 

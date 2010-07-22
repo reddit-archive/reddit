@@ -59,6 +59,11 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
             draw_box("  %s load: %s" % (host.host, host.load()),
                      get_load_level(host))
 
+    draw_box(" ==== MEDIA ==== ", "#BBBBBB", center = True)
+    for host in hosts:
+        if host.host.startswith('media'):
+            draw_box("  %s load: %s" % (host.host, host.load()),
+                     get_load_level(host))
     draw_box(" ==== SEARCH ==== ", "#BBBBBB", center = True)
     for host in hosts:
         if host.host.startswith('search'):

@@ -169,6 +169,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/message/moderator/:subwhere', controller='message', action='listing',
        where = 'moderator')
 
+    mc('/thanks', controller='forms', action="thanks", secret = '')
+    mc('/thanks/:secret', controller='forms', action="thanks")
+
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
@@ -202,6 +205,7 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
 
     mc('/api/distinguish/:how', controller='api', action="distinguish")
+    mc('/api/ipn/:secret', controller='api', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')

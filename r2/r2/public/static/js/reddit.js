@@ -335,7 +335,8 @@ function friend(user_name, container_name, type) {
             showcover();
         }
         else {
-            $.request("friend", 
+            encoded = encodeURIComponent(reddit.referer);
+            $.request("friend?note=" + encoded,
                       {name: user_name, container: container_name, type: type});
         }
     }
@@ -343,7 +344,7 @@ function friend(user_name, container_name, type) {
 
 function unfriend(user_name, container_name, type) {
     return function() {
-        $.request("unfriend", 
+        $.request("unfriend",
                   {name: user_name, container: container_name, type: type});
     }
 };

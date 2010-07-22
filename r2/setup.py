@@ -143,6 +143,7 @@ setup(
                       "psycopg2",
                       "py_interface",
                       "pycountry",
+                      "python-cassandra",
                       "thrift" # required by Cassandra
                       ],
     packages=find_packages(),
@@ -171,13 +172,7 @@ setup(
 
 # the cassandra stuff we'll need. down here because it needs to be
 # done *after* thrift is installed
-try:
-    import cassandra, pycassa
-except ImportError:
-    # we'll need thrift too, but that is done by install_depends below
-    easy_install(['http://github.com/downloads/ieure/python-cassandra/Cassandra-0.5.0.tar.gz', # required by pycassa
-                  'http://github.com/downloads/ketralnis/pycassa/pycassa-0.1.1.tar.gz',
-                  ])
+easy_install(["http://github.com/downloads/vomjom/pycassa/pycassa-0.3.0.tar.gz"])
 
 # running setup.py always fucks up the build directory, which we don't
 # need anyway.

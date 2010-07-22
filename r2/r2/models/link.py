@@ -22,7 +22,7 @@
 from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
      CreationError
 from r2.lib.db.operators import desc
-from r2.lib.utils import base_url, tup, domain, title_to_url
+from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
 from subreddit import Subreddit
@@ -64,6 +64,15 @@ class Link(Thing, Printable):
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
+
+    @classmethod
+    def by_url_key_new(cls, url):
+        maxlen = 250
+        template = 'byurl(%s,%s)'
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
+        hexdigest = md5(keyurl).hexdigest()
+        usable_len = maxlen-len(template)-len(hexdigest)
+        return template % (hexdigest, keyurl[:usable_len])
 
     @classmethod
     def by_url_key(cls, url):
@@ -224,10 +233,10 @@ class Link(Thing, Printable):
         #
         # skip the item if 18+ and the user has that preference set
         # ignore skip if we are visiting a nsfw reddit
-        #if ( (user and user.pref_no_profanity) or
-        #     (not user and g.filter_over18) ) and wrapped.subreddit != c.site:
-        #    return not bool(wrapped.subreddit.over_18 or 
-        #                    wrapped._nsfw.findall(wrapped.title))
+        if ( not c.user_is_loggedin and
+             (wrapped.subreddit != c.site or c.site.name == 'multi')):
+            return not bool(wrapped.subreddit.over_18 or 
+                            wrapped.over_18)
 
         return True
 
@@ -433,8 +442,6 @@ class Link(Thing, Printable):
                                   item._deleted,
                                   item._spam))
 
-            item.is_author = (user == item.author)
-
             # bits that we will render stubs (to make the cached
             # version more flexible)
             item.num = CachedVariable("num")
@@ -521,11 +528,16 @@ class Comment(Thing, Printable):
         pass
 
     def _delete(self):
+        from r2.lib.db.queries import changed
+
         link = Link._byID(self.link_id, data = True)
         link._incr('num_comments', -1)
+        changed(link, True)
 
     @classmethod
     def _new(cls, author, link, parent, body, ip):
+        from r2.lib.db.queries import changed
+
         c = Comment(_ups = 1,
                     body = body,
                     link_id = link._id,
@@ -550,6 +562,8 @@ class Comment(Thing, Printable):
             name = 'selfreply'
 
         c._commit()
+
+        changed(link, True) # only the number of comments has changed
 
         inbox_rel = None
         # only global admins can be message spammed.
@@ -658,7 +672,11 @@ class Comment(Thing, Printable):
             else:
                 item.parent_permalink = None
 
-            item.can_reply = c.can_reply or (item.sr_id in can_reply_srs) 
+            item.can_reply = False
+            if c.can_reply or (item.sr_id in can_reply_srs):
+                age = c.start_time - item._date
+                if age.days < g.REPLY_AGE_LIMIT:
+                    item.can_reply = True
 
 
             # not deleted on profile pages,

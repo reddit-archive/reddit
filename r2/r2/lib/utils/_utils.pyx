@@ -241,3 +241,26 @@ def flatten(list lists):
         ret.extend(l)
 
     return ret
+
+cdef list _l(l):
+    """Return a listified version of l, just returning l if it's
+       already listified"""
+    if isinstance(l, list):
+        return l
+    else:
+        return list(l)
+
+def get_after(list fullnames, fullname, int num, bool reverse=False):
+    cdef int i
+
+    if reverse:
+        fullnames = _l(reversed(fullnames))
+
+    if not fullname:
+        return fullnames[:num]
+
+    for i, item in enumerate(fullnames):
+        if item == fullname:
+            return fullnames[i+1:i+num+1]
+
+    return fullnames[:num]

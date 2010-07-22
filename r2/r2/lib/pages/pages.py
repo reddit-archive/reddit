@@ -206,7 +206,8 @@ class Reddit(Templated):
         #don't show the subreddit info bar on cnames
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             ps.append(SubredditInfoBar())
-            ps.append(Ads())
+            if c.user.pref_show_adbox or not c.user.gold:
+                ps.append(Ads())
             no_ads_yet = False
 
         if self.submit_box:
@@ -221,6 +222,15 @@ class Reddit(Templated):
                               '/reddits/create', 'create',
                               subtitles = rand_strings.get("create_reddit", 2),
                               show_cover = True, nocname=True))
+
+        if not c.user.gold and self.submit_box:
+            ps.append(SideBox(_('New subscriber features'),
+                              'http://blog.reddit.com/2010/07/three-new-features-for-reddit-gold.html',
+                              'gold',
+                              sr_path = False,
+                              subtitles = ["reddit gold just got better!",
+                                           "(read all about it on the blog)"],
+                              show_cover = False, nocname = True))
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
             moderators = self.sr_moderators()
@@ -243,7 +253,8 @@ class Reddit(Templated):
 
 
         if no_ads_yet:
-            ps.append(Ads())
+            if c.user.pref_show_adbox or not c.user.gold:
+                ps.append(Ads())
 
         if c.user_is_admin:
             ps.append(Admin_Rightbox())
@@ -1277,6 +1288,26 @@ class UploadedImage(Templated):
         Templated.__init__(self, status=status, img_src=img_src, name = name,
                            form_id = form_id)
 
+class Thanks(Templated):
+    """The page to claim reddit gold trophies"""
+    def __init__(self, secret=None):
+        if g.cache.get("recent-gold-" + c.user.name):
+            status = "recent"
+        elif c.user.gold:
+            status = "gold"
+        else:
+            status = "mundane"
+
+        if g.lounge_reddit:
+            lounge_url = "/r/" + g.lounge_reddit
+            lounge_html = (SC_OFF +
+                           markdown(strings.lounge_msg % dict(link=lounge_url))
+                           + SC_ON)
+        else:
+            lounge_html = None
+        Templated.__init__(self, status=status, secret=secret,
+                           lounge_html=lounge_html)
+
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
     def __init__(self, success=False):
@@ -1994,10 +2025,14 @@ class WrappedUser(CachedTemplate):
         attribs.sort()
         author_cls = 'author'
 
+        author_title = None
         if gray:
             author_cls += ' gray'
         for tup in attribs:
             author_cls += " " + tup[2]
+            # Hack: '(' should be in tup[3] iff this friend has a note
+            if tup[1] == 'F' and '(' in tup[3]:
+                author_title = tup[3]
 
         target = None
         ip_span = None
@@ -2014,6 +2049,7 @@ class WrappedUser(CachedTemplate):
         CachedTemplate.__init__(self,
                                 name = user.name,
                                 author_cls = author_cls,
+                                author_title = author_title,
                                 attribs = attribs,
                                 context_thing = context_thing,
                                 karma = karma,
@@ -2028,12 +2064,13 @@ class WrappedUser(CachedTemplate):
 class UserTableItem(Templated):
     """A single row in a UserList of type 'type' and of name
     'container_name' for a given user.  The provided list of 'cells'
-    will determine what order the different columns are rendered in.
-    Currently, this list can consist of 'user', 'sendmessage' and
-    'remove'."""
+    will determine what order the different columns are rendered in."""
     def __init__(self, user, type, cellnames, container_name, editable,
-                 remove_action):
-        self.user, self.type, self.cells = user, type, cellnames
+                 remove_action, rel=None):
+        self.user = user
+        self.type = type
+        self.cells = cellnames
+        self.rel = rel
         self.container_name = container_name
         self.editable       = editable
         self.remove_action  = remove_action
@@ -2094,6 +2131,15 @@ class FriendList(UserList):
     """Friend list on /pref/friends"""
     type = 'friend'
 
+    def __init__(self, editable = True):
+        if c.user.gold:
+            self.friend_rels = c.user.friend_rels()
+            self.cells = ('user', 'sendmessage', 'note', 'age', 'remove')
+            self._class = "gold-accent rounded"
+            self.table_headers = (_('user'), '', _('note'), _('friendship'), '')
+
+        UserList.__init__(self)
+
     @property
     def form_title(self):
         return _('add a friend')
@@ -2104,6 +2150,14 @@ class FriendList(UserList):
 
     def user_ids(self):
         return c.user.friends
+
+    def user_row(self, user):
+        if not getattr(self, "friend_rels", None):
+            return UserList.user_row(self, user)
+        else:
+            rel = self.friend_rels[user._id]
+            return UserTableItem(user, self.type, self.cells, self.container_name,
+                                 True, self.remove_action, rel)
 
     @property
     def container_name(self):
@@ -2122,7 +2176,12 @@ class ContributorList(UserList):
         return _("approved submitters for %(reddit)s") % dict(reddit = c.site.name)
 
     def user_ids(self):
-        return c.site.contributors
+        if c.site.name == g.lounge_reddit:
+            return [] # /r/lounge has too many subscribers to load without timing out,
+                      # and besides, some people might not want this list to be so
+                      # easily accessible.
+        else:
+            return c.site.contributors
 
 class ModList(UserList):
     """Moderator list for a reddit."""

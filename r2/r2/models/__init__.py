@@ -32,4 +32,5 @@ from trial import *
 from ad import *
 from bidding import *
 from mail_queue import Email, has_opted_out, opt_count
+from gold import *
 from admintools import *

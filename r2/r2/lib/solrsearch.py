@@ -39,8 +39,8 @@ from pylons import g, config
 from r2.models import *
 from r2.lib.contrib import pysolr
 from r2.lib.contrib.pysolr import SolrError
-from r2.lib.utils import timeago
-from r2.lib.utils import unicode_safe, tup
+from r2.lib.utils import timeago, UrlParser
+from r2.lib.utils import unicode_safe, tup, get_after, strordict_fullname
 from r2.lib.cache import SelfEmptyingCache
 from r2.lib import amqp
 
@@ -97,27 +97,6 @@ class ThingField(Field):
         return ("<ThingField: (%s,%s,%s,%s)>"
                 % (self.name,self.cls,self.id_attr,self.lu_attr_name))
 
-def domain_permutations(s):
-    """
-      Takes a domain like `www.reddit.com`, and returns a list of ways
-      that a user might search for it, like:
-      * www
-      * reddit
-      * com
-      * www.reddit.com
-      * reddit.com
-      * com
-    """
-    ret = []
-    r = s.split('.')
-
-    for x in xrange(len(r)):
-        ret.append('.'.join(r[x:len(r)]))
-    for x in r:
-        ret.append(x)
-
-    return set(ret)
-
 # Describes the fields of Thing objects and subclasses that are passed
 # to Solr for indexing. All must have a 'contents' field, since that
 # will be used for language-agnostic searching, and will be copied
@@ -160,9 +139,9 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            Field('sr_id'),
                            Field('url', tokenize = True),
                            #Field('domain',
-                           #      lambda l: domain_permutations(domain(l.url))),
+                           #      lambda l: UrlParser(l.url).domain_permutations()),
                            Field('site',
-                                 lambda l: domain_permutations(domain(l.url))),
+                                 lambda l: UrlParser(l.url).domain_permutations()),
                            #Field('is_self','is_self'),
                            ),
                Comment:   (Field('contents', 'body', tokenize = True),
@@ -670,17 +649,6 @@ class DomainSearchQuery(SearchQuery):
         return q, dict(fl='fullname',
                        qt='standard')
 
-def get_after(fullnames, fullname, num):
-    if not fullname:
-        return fullnames[:num]
-
-    for i, item in enumerate(fullnames):
-        if item == fullname:
-            return fullnames[i+1:i+num+1]
-
-    return fullnames[:num]
-
-
 def run_commit(optimize=False):
     with SolrConnection(commit=True, optimize=optimize) as s:
         pass
@@ -695,8 +663,10 @@ def run_changed(drain=False):
     """
     def _run_changed(msgs, chan):
         print "changed: Processing %d items" % len(msgs)
+        msgs = [strordict_fullname(msg.body)
+                for msg in msgs]
+        fullnames = set(msg['fullname'] for msg in msgs)
 
-        fullnames = set([x.body for x in msgs])
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
         things = [x for x in things if isinstance(x, indexed_types)]
 

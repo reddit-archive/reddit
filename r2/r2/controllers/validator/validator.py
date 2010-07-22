@@ -35,6 +35,7 @@ from r2.lib.authorize import Address, CreditCard
 
 from r2.controllers.errors import errors, UserRequiredException
 from r2.controllers.errors import VerifiedUserRequiredException
+from r2.controllers.errors import GoldRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
@@ -565,6 +566,12 @@ class VVerifiedUser(VUser):
         if not c.user.email_verified:
             raise VerifiedUserRequiredException
 
+class VGold(VUser):
+    def run(self):
+        VUser.run(self)
+        if not c.user.gold:
+            raise GoldRequiredException
+
 class VSponsorAdmin(VVerifiedUser):
     """
     Validator which checks c.user_is_sponsor
@@ -1028,8 +1035,6 @@ class VRatelimit(Validator):
         to_set = {}
         if seconds is None:
             seconds = g.RATELIMIT*60
-            if not seconds:
-                return
         expire_time = datetime.now(g.tz) + timedelta(seconds = seconds)
         if rate_user and c.user_is_loggedin:
             to_set['user' + str(c.user._id36)] = expire_time

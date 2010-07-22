@@ -27,7 +27,7 @@ import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -43,6 +43,7 @@ class Globals(object):
                  'MIN_DOWN_KARMA',
                  'MIN_RATE_LIMIT_KARMA',
                  'MIN_RATE_LIMIT_COMMENT_KARMA',
+                 'REPLY_AGE_LIMIT',
                  'WIKI_KARMA',
                  'HOT_PAGE_AGE',
                  'MODWINDOW',
@@ -93,6 +94,15 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames']
 
+    choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
+                                      'ONE':    CL_ONE,
+                                      'QUORUM': CL_QUORUM},
+                    'cassandra_wcl': {'ZERO':   CL_ZERO,
+                                      'ONE':    CL_ONE,
+                                      'QUORUM': CL_QUORUM},
+                    }
+
+
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
         Globals acts as a container for objects available throughout
@@ -130,6 +140,11 @@ class Globals(object):
                     v = self.to_bool(v)
                 elif k in self.tuple_props:
                     v = tuple(self.to_iter(v))
+                elif k in self.choice_props:
+                    if v not in self.choice_props[k]:
+                        raise ValueError("Unknown option for %r: %r not in %r"
+                                         % (k, v, self.choice_props[k]))
+                    v = self.choice_props[k][v]
                 setattr(self, k, v)
 
         self.running_as_script = global_conf.get('running_as_script', False)
@@ -149,6 +164,8 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
+        if not self.url_seeds:
+            raise ValueError("url_seeds not set in the .ini")
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
@@ -159,6 +176,8 @@ class Globals(object):
                                                self.cassandra,
                                                self.make_lock,
                                                memcache = perma_memcache,
+                                               read_consistency_level = self.cassandra_rcl,
+                                               write_consistency_level = self.cassandra_wcl,
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
@@ -168,6 +187,11 @@ class Globals(object):
         self.urlcache = self.init_cass_cache('urls', 'urls',
                                              self.url_cassandra,
                                              self.make_lock,
+                                             # until we've merged this
+                                             # with the regular
+                                             # cluster, this will
+                                             # always be CL_ONE
+                                             read_consistency_level = CL_ONE,
                                              write_consistency_level = CL_ONE,
                                              localcache_cls = localcache_cls)
         self.cache_chains.append(self.urlcache)
@@ -309,6 +333,11 @@ class Globals(object):
         if self.write_query_queue and not self.amqp_host:
             raise Exception("amqp_host must be defined to use the query queue")
 
+        # This requirement doesn't *have* to be a requirement, but there are
+        # bugs at the moment that will pop up if you violate it
+        if self.write_query_queue and not self.use_query_cache:
+            raise Exception("write_query_queue requires use_query_cache")
+
         # try to set the source control revision number
         try:
             popen = subprocess.Popen(["git", "log", "--date=short",
@@ -331,7 +360,7 @@ class Globals(object):
                         lock_factory,
                         memcache = None,
                         read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_QUORUM,
+                        write_consistency_level = CL_ONE,
                         localcache_cls = LocalCache):
         return CassandraCacheChain(localcache_cls(),
                                    CassandraCache(keyspace, column_family,

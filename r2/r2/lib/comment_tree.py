@@ -115,19 +115,22 @@ def add_comment_nolock(comment):
                      (cids, comment_tree, depth, num_children))
 
 
-
-def update_comment_vote(comment):
-    link_id = comment.link_id
-    # update the list of sorts
-    with g.make_lock(lock_key(link_id)):
-        for sort in ("_controversy", "_hot", "_confidence", "_score"):
-            key = sort_comments_key(link_id, sort)
-            r = g.permacache.get(key)
-            # don't bother recomputing a non-existant sort dict, as
-            # we'll catch it next time we have to render something
-            if r:
-                r[comment._id] = _get_sort_value(comment, sort)
-                g.permacache.set(key, r)
+def update_comment_votes(comments):
+    comments = tup(comments)
+    link_map = {}
+    for com in comments:
+        link_map.setdefault(com.link_id, []).append(com)
+    for link_id, coms in link_map.iteritems():
+        with g.make_lock(lock_key(link_id)):
+            for sort in ("_controversy", "_hot", "_confidence", "_score"):
+                key = sort_comments_key(link_id, sort)
+                r = g.permacache.get(key)
+                # don't bother recomputing a non-existant sort dict, as
+                # we'll catch it next time we have to render something
+                if r:
+                    for comment in coms:
+                        r[comment._id] = _get_sort_value(comment, sort)
+                    g.permacache.set(key, r)
 
 
 def delete_comment(comment):

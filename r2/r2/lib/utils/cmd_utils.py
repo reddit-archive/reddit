@@ -83,3 +83,16 @@ def bench_cache_lifetime_multi(attempts=10, minutes=60*24):
                % (x+1, attempts, this_attempt, minimum, maximum, mean))
 
     return (minimum, maximum, mean)
+
+def subs_contribs(sr_name = 'betateam'):
+    """Convert all subscribers of a given subreddit to
+       contributors. Useful for forming opt-in beta teams"""
+    from r2.models import Subreddit, SRMember
+
+    sr = Subreddit._by_name(sr_name)
+    q = SRMember._query(SRMember.c._thing1_id == sr._id)
+
+    for rel in rels:
+        if rel._name == 'subscriber':
+            sr.add_contributor(rel._thing2)
+            Subreddit.special_reddits(rel._thing2, 'contributor', _update=True)

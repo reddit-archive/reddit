@@ -66,7 +66,6 @@ def cache_lists():
             # because of permissions
             continue
 
-        g.log.debug(sr.name)
         for lang in 'all', sr.lang:
             over18s = ['allow_over18']
             if sr.over_18:
@@ -80,15 +79,14 @@ def cache_lists():
 
                 # keep the lists small while we work
                 if len(bylang[k]) > limit*2:
-                    g.log.debug('Shrinking %s' % (k,))
                     bylang[k] = _chop(bylang[k])
 
     for (lang, over18), srs in bylang.iteritems():
         srs = _chop(srs)
         sr_tuples = map(lambda sr: (sr._downs, sr.allow_top, sr._id), srs)
 
-        g.log.debug("For %s/%s setting %s" % (lang, over18,
-                                              map(lambda sr: sr.name, srs)))
+        print "For %s/%s setting %s" % (lang, over18,
+                                        map(lambda sr: sr.name, srs[:50]))
 
         g.permacache.set(cached_srs_key(lang, over18), sr_tuples)
 

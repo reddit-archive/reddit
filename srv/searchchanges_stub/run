@@ -1,8 +1,0 @@
-#!/bin/sh
-#
-# This stub needs to have an actual consumer hooked up to it if you would like to run search
-
-export HOME=/home/reddit
-cd $HOME/reddit/r2
-exec 2>&1
-exec setuidgid reddit /usr/local/bin/paster run run.ini -c "from r2.lib import amqp; amqp.consume_items('searchchanges_q', lambda x: 0)"

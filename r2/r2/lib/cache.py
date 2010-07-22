@@ -496,17 +496,20 @@ class CassandraCacheChain(CacheChain):
             # chain, which means that changing the chain will probably
             # require changing this function. (This has an edge-case
             # where memcached was populated by a ONE read rather than
-            # a QUROUM one just before running this. We could avoid
+            # a QUORUM one just before running this. We could avoid
             # this by not using memcached at all for these mutations,
             # which would require some more row-cache performace
             # testing)
+            rcl = wcl = self.cassa.write_consistency_level
+            if rcl == CL_ZERO:
+                rcl = CL_ONE
             try:
                 value = None
                 if self.memcache:
                     value = self.memcache.get(key)
                 if value is None:
                     value = self.cassa.get(key,
-                                           read_consistency_level = CL_QUORUM)
+                                           read_consistency_level = rcl)
             except cassandra.ttypes.NotFoundException:
                 value = default
 
@@ -521,12 +524,30 @@ class CassandraCacheChain(CacheChain):
 
             if value != new_value:
                 self.cassa.set(key, new_value,
-                               write_consistency_level = CL_QUORUM)
+                               write_consistency_level = wcl)
             for ca in self.caches[:-1]:
                 # and update the rest of the chain; assumes that
                 # Cassandra is always the last entry
                 ca.set(key, new_value)
         return new_value
+
+    def bulk_load(self, start='', end='', chunk_size = 100):
+        """Try to load everything out of Cassandra and put it into
+           memcached"""
+        cf = self.cassa.cf
+        for rows in in_chunks(cf.get_range(start=start,
+                                           finish=end,
+                                           columns=['value']),
+                              chunk_size):
+            print rows[0][0]
+            rows = dict((key, pickle.loads(cols['value']))
+                        for (key, cols)
+                        in rows
+                        if (cols
+                            # hack
+                            and len(key) < 250))
+            self.memcache.set_multi(rows)
+
 
 class CassandraCache(CacheUtils):
     """A cache that uses a Cassandra cluster. Uses a single keyspace
@@ -537,6 +558,8 @@ class CassandraCache(CacheUtils):
         self.keyspace = keyspace
         self.column_family = column_family
         self.client = client
+        self.read_consistency_level = read_consistency_level
+        self.write_consistency_level = write_consistency_level
         self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
                                        self.column_family,
                                        read_consistency_level = read_consistency_level,

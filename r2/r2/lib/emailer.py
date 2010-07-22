@@ -51,6 +51,13 @@ def _nerds_email(body, from_name, kind):
     Email.handler.add_to_queue(None, g.nerds_email, from_name, g.nerds_email,
                                kind, body = body)
 
+def _gold_email(body, to_address, from_name, kind):
+    """
+    For sending email to reddit gold subscribers
+    """
+    Email.handler.add_to_queue(None, to_address, from_name, g.goldthanks_email,
+                               kind, body = body)
+
 def verify_email(user, dest):
     """
     For verifying an email address
@@ -72,7 +79,7 @@ def verify_email(user, dest):
 
 def password_email(user):
     """
-    For reseting a user's password.
+    For resetting a user's password.
     """
     from r2.lib.pages import PasswordReset
     key = passhash(random.randint(0, 1000), user.email)
@@ -99,6 +106,9 @@ def i18n_email(email, body, name='', reply_to = ''):
     """Queues a ad_inq email to the feedback account."""
     return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
                            reply_to = reply_to)
+
+def gold_email(body, to_address, from_name=g.domain):
+    return _gold_email(body, to_address, from_name, Email.Kind.GOLDMAIL)
 
 def nerds_email(body, from_name=g.domain):
     """Queues a feedback email to the nerds running this site."""

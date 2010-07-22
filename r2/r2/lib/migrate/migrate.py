@@ -392,7 +392,7 @@ def prime_url_cache(f, verbosity = 10000):
             tid, key, url, kind = line.split('|')
             tid = int(tid)
             if url.lower() != "self":
-                key = Link.by_url_key(url)
+                key = Link.by_url_key_new(url)
                 link_ids = g.urlcache.get(key) or []
                 if tid not in link_ids:
                     link_ids.append(tid)

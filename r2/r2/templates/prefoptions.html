@@ -245,6 +245,19 @@
     </td>
   </tr>
   %endif
+  %if c.user.gold:
+  <tr class="gold-accent">
+    <th>${_("gold options")}</th>
+    <td class="prefright">
+        ${checkbox(_("show the right sidebar ad box"), "show_adbox")}
+        &#32;<span class="little gray">(${_("The attractive 300x250 one that usually only has reddit t-shirts in it.")})</span>
+        <br/>
+        ${checkbox(_("show sponsored links"), "show_sponsors")}
+        &#32;<span class="little gray">(${_("The blue advertisements that sometimes appear on the top of the page.")})</span>
+        <br/>
+    </td>
+  </tr>
+  %endif
   <tr>
     <td>
       <input type="submit" class="btn" value="${_('save options')}"/>

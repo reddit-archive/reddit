@@ -118,6 +118,9 @@ ul.flat-vert {text-align: left;}
 .pref-lang { font-weight: bold; }
 .pref { font-weight: bold; }
 
+#jumpToContent { position: absolute; left: 135px; top: 25px; font-weight: bold; margin-left: -1000px;}
+#jumpToContent:focus { margin-left: 0 !important; }
+
 #header {
 
     border-bottom: 1px solid #5f99cf;
@@ -374,6 +377,38 @@ ul.flat-vert {text-align: left;}
 .sidebox.create .spacer {
     background-image: url(/static/create-a-reddit.png);  /* SPRITE */
     background-repeat:no-repeat;
+}
+
+.sidebox.gold .spacer {
+    /* TODO: replace the following with the new logo */
+    background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
+    background-repeat:no-repeat;
+}
+
+.sidebox.gold .morelink {
+    border:none;
+    background-color:transparent;
+    background-image: url(/static/goldmorelink.png);  
+    background-position: 0 0;
+    background-repeat:no-repeat;
+    height:31px;
+}
+
+.sidebox.gold .morelink a, .sidebox.gold .morelink a:visited {
+    color:#9a7d2e;
+}
+
+.sidebox.gold .morelink:hover {
+    background-position: 0 -31px;
+}
+
+.sidebox.gold .morelink:hover a {
+    color:#ffffff;
+    margin-top:1px;
+}
+
+.sidebox.gold .morelink .nub {
+    display: none;
 }
 
 .sidebox.submit .spacer {
@@ -1108,11 +1143,6 @@ textarea.gray { color: gray; }
 .fancy-toggle-button .add { 
     background-image: url(/static/bg-button-add.png);
 }
-.fancy-toggle-button .add { 
-    background-image: url(/static/bg-button-add.png);
-}
-
-
 
 
 
@@ -1468,7 +1498,7 @@ textarea.gray { color: gray; }
 
 .usertable { margin-left: 10px;} 
 .usertable { font-size: larger }
-.usertable td { padding: 0 .7em }
+.usertable td, .usertable th { padding: 0 .7em }
 .usertable { white-space: nowrap }
 
 
@@ -1764,607 +1794,11 @@ textarea.gray { color: gray; }
 .vote-down {
     color: #336699;
 }
-
-.error-log .exception.interesting {
-    border: dotted black 2px;
-    background-color: #e0e0e8;
-}
-
-.error-log .exception.fixed {
-    border: solid #008800 1px;
-    background-color: #e8f6e8;
-}
-
-.error-log .exception span {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.error-log .exception span.normal {
-    margin-right: 0;
-    display: none;
-}
-
-.error-log .exception span.new, .error-log .edit-area label.new {
-    color: #ff6600;
-}
-
-.error-log .exception span.severe, .error-log .edit-area label.severe {
-    color: #ff0000;
-}
-
-.button {
-    border-collapse: collapse;
-    color: gray;
-    text-align: center;
-    margin: 1px;
- }
-
-.button #cover {
-    position: relative; 
- }
-
-.error-log .exception-name {
-    margin-right: 5px;
-}
-
-.button #popup {
-    position: absolute; 
-    width: 80%; 
-    z-index: 1001; 
-    background: white; 
-    padding: 1px; 
-    left: 0px; 
-    top: 0px; 
-    margin: 0px; 
-    border-color: #B2B2B2 black black #B2B2B2;
-    border-style: solid;
-    border-width: 1px;
-}
-
-.error-log .exception.fixed .nickname {
-    text-decoration: line-through;
-}
-
-.error-log a:focus {
-    -moz-outline-style: none;
-}
-
-.error-log .edit-area {
-    border: solid black 1px;
-    background-color: #eee;
-}
-
-.button.thing { 
-    margin:0px;
-    padding:0px;
-}
-
-.button-body { 
-    background-color: transparent;
-}
-.button .blog {
-    border: 1px solid #c7def7;
-    color: gray;
-    text-align: center;
-    margin: 0px;
-    -moz-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    background-color:white;
-}
-
-.button .blog .r { color: gray;  }
-.button .blog .score { white-space: nowrap; }
-
-.button {color: #369;}
-.button a:hover { text-decoration: underline }
-
-.button .blog1 { font-size: x-small; }
-.button .blog1 .arrow { float:left; margin-left: 2px;  margin-right: 2px;  }
-
-.error-log .save-button {
-    margin: 0 5px 5px 0;
-    font-size: small;
-    padding: 0;
-}
-.button .blog1 .score {
-    float: center;
-    margin-top: 2px;
-    margin-right: 5px; 
-}
-
-.button .blog2 { font-size: small; }
-.button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
-.button .blog2 .bottomreddit { color: black; background-color: #c7def7; font-size: small; }
-.button .blog2 .score .submit { 
-    display: block;
-    font-size: x-small; 
-    line-height: 17px;
-}
-
-.button .blog.blog3 { 
-    font-size: small; 
-    border: none; 
-    background-color: transparent;
-}
-.button .blog3 .left { float: left; width: 50%; }
-.button .blog2 .arrow { width: 15px; margin-left: auto; margin-right: auto;  }
-.button .blog3 .right { float: right; margin-top: 5px; }
-.button .blog3 .score .submit { 
-    display: block;
-    font-size: x-small; 
-    line-height: 17px;
-}
-
-.error-log .frequency {
-    font-size: larger;
-    float: right;
-    color: #886666;
-}
-
-.blog5 .right { float: right; }
-.blog5 .left  { float: left; display:block; margin-top: 10px; }
-.blog5 .clearleft { clear: left; }
-.button .blog.blog5 { border: none; text-align: left; font-size: small; }
-.blog5 a.bling { float:left; }
-.blog5 .container { margin-left: 35px; margin-top: 2px; height: 50px;}
-.blog5 ul { display: inline; }
-.blog5 ul a { color: #515481; font-weight: bold; text-decoration: underline;  }
-.blog5 li { display: inline; padding: 1px 10px 1px 10px; }
-.blog5 li.selected {  
-    background-color: #F8F8F1; 
-    color: #000; 
-    border-color: #CCC; 
-    border-style: solid solid none solid;
-    border-width: 1px;
-
-.error-log .occurrence {
-    color: #003300;
-    font-family: monospace;
-    margin-right: 3em;
-    white-space: nowrap;
-}
-.blog5 .votes {
-    height: 25px; 
-    background-color: #F8F8F1; 
-    border: 1px solid #CCC;
-    padding-top: 5px; 
-}
-.blog5 .arrow {
-    margin-right: 15px; 
-    margin-left: 5px; 
-    color: black; 
-    cursor: pointer;
-    display: inline; 
-    background-position: left center;
-    background-repeat: no-repeat; 
-    padding-left: 20px; 
-}
-
-.blog5 .right { margin-right: 5px; font-size: medium; font-style: italic;  }
-
-.optional {color: green}
-.instructions { font-size: larger;  }
-.instructions h1, .instructions h2, .instructions h3 { margin-top: 20px; margin-bottom: 20px;  }
-.instructions p { margin: 10px; max-width: 60em}
-.instructions pre { margin: 5px;  margin-right: 10px; }
-.instructions iframe { margin: 5px 10px 5px 0px; }
-.instructions input, .instructions select { margin: 0 .5em }
-.instructions a:focus { -moz-outline-style: none; }
-.instructions strong { font-weight: bold; }
-.instructions .buttons { margin-left: 1em; max-width: 50em; }
-.instructions .buttons li { margin-top: 1em; 
-                            border-bottom: 1px solid #e0e0e0;  
-                            padding-bottom: 1em;}      
-.instructions code {
-    display: block; 
-    font-family: monospace; 
-    font-size: small;
-}
-
-.self-service.instructions { 
-    margin-bottom: 50px; 
- }
-
-.self-service.instructions p{ 
-    margin-left: 20px; 
-}
-
-.self-service.instructions ul { 
-    list-style-type: circle; 
-    margin-left: 60px; 
-}
-
-.self-service.instructions li + li { 
-    padding-top: 10px; 
-}
-
-.self-service.instructions li.done { 
-    text-decoration: line-through;
-    list-style-image:url(/static/green-check.png);
-}
-
-.self-service.instructions li.unfinished { 
-    font-weight:bold;
-    list-style-image:url(/static/red-arrow.png);
-}
-
-
-.feedback.instructions dl { 
-    margin-left: 20px; 
-}
-
-.feedback.instructions dt { 
-    margin-top: 10px; 
-}
-
-.feedback.instructions dd { 
-    background: transparent none no-repeat scroll bottom left;
-    background-image: url(/static/red-arrow.png);
-    padding-left: 35px; 
-}
-
-
-.error-log .logtext.error .loglevel {
-    color: white;
-    background-color: red;
-}
-
-.error-log .logtext.warning .loglevel {
-    background-color: #ff6600;
-}
-
-.error-log .logtext.info .loglevel {
-    background-color: #00bbff;
-}
-
-.error-log .logtext.debug .loglevel {
-    background-color: #00ee00;
-}
-
-.error-log .logtext .loglevel {
-    padding: 0 5px;
-    margin-right: 5px;
-    border: solid black 1px;
-}
-.error-log .logtext table {
-    margin: 8px 5px 2px 0;
-    font-family: monospace;
-}
-
-.error-log .logtext table,
-.error-log .logtext table th,
-.error-log .logtext table td {
-  border: solid #aaa 1px;
-}
-.error-log .logtext table th, .error-log .logtext table td {
-    border: solid #aaa 1px;
-}
-
-.error-log .logtext table .occ {
-    text-align: right;
-}
-
-.error-log .logtext table .dotdotdot {
-    padding: 0;
-}
-.error-log .logtext table .dotdotdot a {
-    margin: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    background-color: #e0e0e0;
-}
-.error-log .logtext table .dotdotdot a:hover {
-    background-color: #bbb;
-    text-decoration: none;
-}
-
-.error-log .logtext .classification {
-    font-size: larger;
-    font-weight: bold;
-}
-.error-log .logtext .actual-text {
-    max-width: 600px;
-    overflow: hidden;
-}
-.error-log .logtext .occ {
-}
-
-.toolbar .right-side {
-    float: right;
-    background-color: #EFF7FF;
-    margin-top: -1px;
-    height: 19px;
-}
-
-.details span { margin: 0 5px 0 5px; }
-.details th {
-    text-align: right; 
-    padding-right: 5px;
-    font-weight: bold;
-}
-.details td {
-    vertical-align: top;
-}
-
-.ring {
-    font-weight:bold;
-    background-color:red;
-    color:white;
-    text-align:center;
-    padding-left: 3px;
-    padding-right: 4px !important;
-    cursor: pointer;
-}
-
-.toolbar a img, toolbar b img {
-    vertical-align: middle;
-    padding-top: 3px;
-    vertical-align: -3px;
-}
-
-.error-log .exception.fixed {
-    border: solid #008800 1px;
-    background-color: #e8f6e8;
-}
-
-.error-log .exception span {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.error-log .exception span.normal {
-    margin-right: 0;
-    display: none;
-}
-
-.error-log .exception span.new, .error-log .edit-area label.new {
-    color: #ff6600;
-}
-
-.error-log .exception span.severe, .error-log .edit-area label.severe {
-    color: #ff0000;
-}
-
-.error-log .exception span.interesting, .error-log .edit-area label.interesting {
-    font-weight: normal;
-    font-style: italic;
-}
-
-.error-log .exception span.fixed, .error-log .edit-area label.fixed {
-    color: #008800;
-}
-
-.error-log .exception-name {
-    margin-right: 5px;
-}
-
-.error-log .nickname {
-    color: black;
-    font-weight: bold;
-    font-size: larger;
-}
-
-.error-log .exception.fixed .nickname {
-    text-decoration: line-through;
-}
-
-.error-log a:focus {
-    -moz-outline-style: none;
-}
-
-.error-log .edit-area {
-    border: solid black 1px;
-    background-color: #eee;
-}
-
-.error-log .edit-area label {
-    margin-right: 25px;
-}
-
-.error-log .edit-area input[type=radio] {
-    margin-right: 4px;
-}
-
-.error-log .edit-area input[type=text] {
-    width: 800px;
-}
-
-.error-log .edit-area table td, .error-log .edit-area table th {
-    padding: 5px 0 0 5px;
-}
-
-.error-log .save-button {
-    margin: 0 5px 5px 0;
-    font-size: small;
-    padding: 0;
-}
-
-.error-log .date {
-    font-size: 150%;
-    font-weight: bold;
-}
-
-.error-log .hexkey {
-    color: #997700;
-}
-
-.error-log .exception-name {
-    font-size: larger;
-    color: #000077;
-}
-
-.error-log .frequency {
-    font-size: larger;
-    float: right;
-    color: #886666;
-}
-
-.error-log .occurrences {
-    border: solid #003300 1px;
-    margin: 5px 0 2px;
-    padding: 2px;
-}
-
-.error-log .occurrence {
-    color: #003300;
-    font-family: monospace;
-    margin-right: 3em;
-    white-space: nowrap;
-}
-
-.error-log table.stacktrace th, .error-log table.stacktrace td {
-    border: solid 1px #aaa;
-}
-
-.error-log table.stacktrace td {
-    font-family: monospace;
-}
-
-.error-log table.stacktrace td.col-1 {
-    text-align: right;
-    padding-right: 10px;
-}
-
-.error-log .logtext.error {
-    color: black;
-    margin: 0 0 10px 0;
-}
-
-.error-log .logtext {
-    margin-bottom: 10px;
-    border: solid #555 2px;
-    background-color: #eeece6;
-    padding: 5px;
-    font-size: small;
-}
-
-.error-log .logtext * {
-    color: black;
-}
-
-.error-log .logtext.error .loglevel {
-    color: white;
-    background-color: red;
-}
-
-.error-log .logtext.warning .loglevel {
-    background-color: #ff6600;
-}
-
-.error-log .logtext.info .loglevel {
-    background-color: #00bbff;
-}
-
-.error-log .logtext.debug .loglevel {
-    background-color: #00ee00;
-}
-
-.error-log .logtext .loglevel {
-    padding: 0 5px;
-    margin-right: 5px;
-    border: solid black 1px;
-}
-.error-log .logtext table {
-    margin: 8px 5px 2px 0;
-    font-family: monospace;
-}
-
-.error-log .logtext table,
-.error-log .logtext table th,
-.error-log .logtext table td {
-  border: solid #aaa 1px;
-}
-.error-log .logtext table th, .error-log .logtext table td {
-    border: solid #aaa 1px;
-}
-
-.error-log .logtext table .occ {
-    text-align: right;
-}
-
-.error-log .logtext table .dotdotdot {
-    padding: 0;
-}
-.error-log .logtext table .dotdotdot a {
-    margin: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    background-color: #e0e0e0;
-}
-.error-log .logtext table .dotdotdot a:hover {
-    background-color: #bbb;
-    text-decoration: none;
-}
-
-.error-log .logtext .classification {
-    font-size: larger;
-    font-weight: bold;
-}
-.error-log .logtext .actual-text {
-    max-width: 600px;
-    overflow: hidden;
-}
-.error-log .logtext .occ {
-}
-
-.details {
-    font-size: x-small; 
-    margin-bottom: 10px; 
-}
-
-.details span { margin: 0 5px 0 5px; }
-.details th {
-    text-align: right; 
-    padding-right: 5px;
-    font-weight: bold;
-}
-.details td {
-    vertical-align: top;
-}
-
-.ring {
-    font-weight:bold;
-    background-color:red;
-    color:white;
-    text-align:center;
-    padding-left: 3px;
-    padding-right: 4px !important;
-    cursor: pointer;
-}
-
-.vote-note {
-    padding-left: 3px;
-    max-width: 150px;
-}
-.vote-a-notes {
-    color: red;
-}
-.vote-up {
-    color: orangered;
-}
-.vote-down {
-    color: #336699;
-}
 .vote-invalid {
     color: #888888 !important;
     font-style: italic;
 }
 
-.toolbar .arrow.upmod   { 
-    background-image: url(/static/aminiupmod.gif); 
-}
-.toolbar .arrow.downmod { 
-    background-image: url(/static/aminidownmod.gif); 
-}
-.toolbar .arrow.up      { 
-    background-image: url(/static/aminiupgray.gif); 
-}
-.toolbar .arrow.down    { 
-    background-image: url(/static/aminidowngray.gif); 
-}
 
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
@@ -2644,6 +2078,8 @@ textarea.gray { color: gray; }
 .toolbar .right-side {
     float: right;
     background-color: #EFF7FF;
+    margin-top: -1px;
+    height: 19px;
 }
 
 .toolbar a, .toolbar b {
@@ -2675,6 +2111,7 @@ textarea.gray { color: gray; }
 .toolbar a img, toolbar b img {
     vertical-align: middle;
     padding-top: 3px;
+    vertical-align: -3px;
 }
 
 .toolbar .content {
@@ -3178,7 +2615,7 @@ ul#image-preview-list .description pre {
     margin-right: 10px;/* ...so we move it to the right side plus 5 more */
  }
 
-.srdrop .choice {margin-top: 3px;}
+.srdrop .choice {padding-top: 3px;}
 
 .srdrop .choice.top-option {
     font-style: italic;
@@ -3642,1019 +3079,6 @@ ul.tabmenu.formtab {
     padding: 5px; 
 }
 
-.pretty-form {
-    font-size: larger;
-    vertical-align: top; 
- }
-
-.existing-campaigns > table { 
-    font-size: x-small;
-    border: 1px solid #888;
-    background-color: #F8F8F8; 
-    width: 100%;
-    margin: 10px 0; 
-}
-
-.pretty-form .infobar {
-    width: 285px; 
-    margin: 5px;
- }
-
-.existing-campaigns td.bid.paid { 
-    background-image: url(/static/green-check.png);  
-}
-
-/* delete page */
-.delete-field {
-    background-color: white;
-    padding: 10px;
-}
-
-.delete-field td {
-    vertical-align: top;
-}
-
-/*pref page boxes*/
-.pretty-form.short-text input[type=text],
-.pretty-form.short-text textarea,
-.pretty-form.short-text input[type=password] {width: 2em }
-
-.existing-campaigns > table > tbody > tr > th { 
-    text-align: center;
-    font-weight: bold;
-    padding: 1px 5px;
-    border: 1px solid #888;
-}
-
-.campaign ul {  
-    font-size: x-small;
-    list-style-type: disc; 
-    margin: 0 20px; 
-}
-.existing-campaigns td > button { margin: 0px 5px 0px 0px;  }
-
-.campaign { width: 95%; }
-.campaign .bid-info { font-size: x-small; }
-.campaign .buttons { float:right; }
-.campaign td.prefright { 
-    padding: 4px;
-}
-.campaign .targeting {
-    margin-left: 25px; 
-}
-.campaign .targeting input{
-    width: 95%;
-}
-
-/* pref table - used for preferences and edit subreddit pages */
-.preftable th {
-    padding: 10px; 
-    font-weight: bold; 
-    vertical-align: top;
-    text-align: right;
-    white-space: nowrap;
-}
-
-/***traffic stuff***/
-.traffic-table {margin: 10px 20px; }
-.traffic-table a:hover { text-decoration: underline; }
-.traffic-table th { font-weight: bold; text-align: center;}
-.traffic-table th,
-.traffic-table td { padding: 0 5px; }
-.traffic-table td { text-align: right; }
-
-.traffic-table td.up   { color: #FF8B60; }
-.traffic-table td.down { color: #336699; }
-.traffic-table td.gray { color: gray; font-style: italic; }
-
-.traffic-table tr.max  { border: 2px solid #FF8B60; }
-.traffic-table tr.min  { border: 2px solid #336699; }
-.traffic-table tr.odd { background-color: #E0E0E0; }
-.traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
-
-.entry .buttons li.nsfw-stamp {
-    border: 1px solid #ff7777 !important;
-    padding: 0 4px;
-    background-color: white;
-}
-
-.nsfw-stamp acronym {
-    border: none;
-    color: black;
-    text-decoration: none;
-}
-
-.entry .buttons li.trial-stamp, .entry .buttons li.reported-stamp {
-    border: 1px solid black !important;
-    padding: 0 4px;
-    background-color: #f6e69f;
-}
-
-.entry .buttons li.trial-stamp .spam {
-    color: #e00;
-}
-
-.entry .buttons li.trial-stamp .kosher {
-    color: #090;
-}
-
-.suspicious { background-color: #f6e69f }
-.thing.spam { background-color: #FA8072 }
-
-.comment.spam > .child, .message.spam > .child {
-    background-color: white;
-}
-.comment.spam > .child {
-    margin-left: 0;
-    padding-left: 15px;
-}
-.message.spam > .child {
-    /* There's a thin pink "border" due to the parent's padding:7px,
-       which we could try to fix here some day. */
-}
-
-.banned-user {
-    overflow: hidden;
-    opacity: .7;
-    filter:alpha(opacity=70); /* IE patch */
-}
-
-.banned-user .title {
-    text-decoration: line-through;
-}
-
-.approval-checkmark {
-    cursor: pointer;
-    height: 0.8em;
-    vertical-align: baseline;
-    margin-left: 3px;
-}
-
-.traffic-graph {
-    padding: 10px; 
-    border: 1px solid #B0B0B0; 
-    margin-left: 10px;
-    margin-bottom: 10px;
-    display: inline-block;
-}
-.traffic-graph .title { 
-    text-align: center;
-}
-
-.promoted-traffic h1 { 
-    border: none;
-    margin-bottom: 10px; 
-}
-
-.promoted-traffic .usertable {  margin-left: 0px;  }
-
-.thumbnail {
-    float: left; 
-    margin: 0px 5px; 
-    overflow: hidden;
-    width: 70px; 
-}
-
-.award-square {
-    float: left;
-    padding: 10px 0px 30px 40px;
-    white-space: nowrap;
-    width: 300px;
-}
-
-.award-square.mini {
-    width: 100px;
-    white-space: normal;
-    text-align: center;
-}
-
-.award-square img {
-    float: left;
-    margin: 0 10px;
-    width: 70px;
-    height: 70px;
-}
-
-.award-square.mini img {
-    float: none;
-    margin-bottom: 7px;
-}
-
-.award-square .award-name {
-    color: black;
-    font-size: 22px;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-weight: bold;
-    line-height: 1em;
-}
-
-ul#image-preview-list {
-    margin: 20px 320px 20px 20px;
-    font-size:larger;
-}
-ul#image-preview-list li {
-    padding-bottom: 10px; 
-    margin-bottom: 20px; 
-    vertical-align: top; 
-    width: 45%; 
-    height: 100px; 
-    float: left;
-    position: relative; 
-}
-
-ul#image-preview-list .preview {
-    width: 100px;                                     
-    float: left;
-    display: block;
-    text-align: center;
-    max-height: 100px;
-    overflow: hidden;
-}
-ul#image-preview-list .preview img {
-    max-width: 100px; 
-    padding: auto;
-}
-ul#image-preview-list .description {
-    vertical-align: top;
-    margin-left: 105px; 
-}
-ul#image-preview-list .description pre {
-    display: inline;
-    padding: 5px;
-}
-
-.lined-table th {
-    text-align: center;
-    font-weight: bold;
-}
-
-.sponsorshipbox { 
-    max-width: 300px;
-}
-
-.sponsorshipbox span { 
-    color: gray;
-}
-
-.sponsorshipbox div { 
-    border: 1px solid #D0D0D0; 
-    width: 300px; 
-}
-
-#validation-errors {
-    margin-left: 40px; 
-    margin-top: 10px; 
-    list-style-type: disc;
-}
-
-.sidecontentbox a.helplink {
-    float: right;
-    margin-top: 4px;
-}
-
-.trophy-table {
-    width: 100%;
-}
-
-#preview-table {
-    padding-right: 15px;  
-}
-
-.trophy-info {
-    text-align: center;
-    vertical-align: top;
-}
-
-#preview-table > table > tbody > tr { padding-bottom: 10px;  }
-#preview-table > table > tbody > tr > td { padding: 5px; padding-right: 15px;}
-#preview-table > table > tbody > tr > th {
-    padding: 5px; padding-right: 15px;
-    font-weight: bold; 
-    vertical-align: top;
-    padding: 15px 0 15px;
-}
-
-#img-preview-container {
-    border-width: .2em;
-    border-style: dashed;
-    border-color: lightgray;
-    padding: 5px; 
-    margin: 5px; 
-    float: left;
-}
-
-.private-feeds.instructions .prefright { 
-    line-height: 2em;
-}
-
-.private-feeds.instructions .feedlink {
-    padding: 2px 5px;
-    font-weight: bold;
-    margin-right: 5px; 
-    border: 1px solid #0000FF;
-    color: white; 
-    padding-left: 22px; 
-    background: #336699 none no-repeat scroll top left;
-}
-
-.private-feeds.instructions .feedlink.rss-link {
-    background-image: url(/static/rss.png);
-}
-
-.private-feeds.instructions .feedlink.json-link {
-    background-color: #DDDDDD;
-    background-image: url(/static/json.png);
-    color: black; 
-}
-
-.trophy-info.left {
-    margin-right: 10px;
-}
-
-.trophy-info.right {
-}
-
-.trophy-name {
-    color: black !important;
-}
-
-.trophy-description {
-    color: #555555;
-    font-size: x-small;
-}
-
-.dust {
-    text-align: center;
-    margin: 45px auto;
-    color: #d0d0d0;
-}
-
-.removecup-button {
-    display: inline;
-}
-
-.cup-info-box {
-    border: dashed #eeaa33 2px;
-    padding: 5px;
-}
-
-.cup-info-box tt {
-    background-color: #f5f5aa;
-}
-
-.socialite.instructions .features {
-    padding-left: 15px;
-    max-width: 60em;
-}
-.ui-datepicker-inline .ui-datepicker-prev {float: left; }
-.ui-datepicker-inline .ui-datepicker-next {float: right; }
-
-.ui-datepicker-inline .ui-datepicker-prev span, 
-.ui-datepicker-inline .ui-datepicker-next span {
-    display: block;
-    height: 1.5em;
-    width: 1.5em;
-    text-align: center;
-    color: black;
-    border: 1px solid #369;
-    margin-right: 1px;
-    margin-bottom: 1px; 
-}
-.ui-datepicker-inline .ui-datepicker-prev:active, 
-.ui-datepicker-inline .ui-datepicker-next:active {
-    padding: 6px 4px 4px 6px; 
-}
-
-.socialite a.installbutton {
-    background: transparent none no-repeat scroll top right;
-    background-image: url(/static/socialite/installbutton-end.png);   /* SPRITE */
-    color: #FFF;
-    display: block;
-    cursor: pointer;
-    padding: 5px;
-}
-
-.socialite a.installbutton span {
-    background: transparent none no-repeat;
-    background-image: url(/static/socialite/installbutton.png);   /* SPRITE */
-    display: block;
-    width: 2em; 
-    height: 2em;
-    text-align: right;
-    vertical-align: middle; 
-    padding-right: 4px; 
-    color: black; 
-}
-
-.ui-datepicker-inline .ui-datepicker-calendar th span {
-    text-align: center; 
-    border: none; 
-}
-
-.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today a,
-.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today span
- {
-    border: 1px solid #DB8;
-    background-color: #FF8;
-    color: #888;
-}
-
-#sr-header-area {
-    padding: 3px 0px 3px 5px;
-    background-color: #f0f0f0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-transform: uppercase;
-    border-bottom: 1px solid gray;
-    font-size: 90%;
- }
-
-.ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-hover  {
-    border-color: red; 
-}
-
-.dropdown.srdrop .selected {
-    background: transparent none no-repeat scroll center right;
-    background-image: url(/static/droparrowgray.gif); 
-    display: inline-block;
-    vertical-align: bottom;
-    padding-right: 21px;
-    padding-left: 5px; /* have to use padding instead of margin cause of ie */
-    color: black;
-    font-weight: bold;
-    background-color: white;
-}
-
-.srdrop .choice {padding-top: 3px;}
-
-.bid-table th 
-{
-    text-align: center; 
-    font-weight: bold; 
-}
-
-.create-promotion .help { 
-    font-size: x-small;
-}
-
-.create-promotion .help p { 
-    margin: 5px;
-}
-
-.create-promotion .help a.help { 
-    font-weight: bold;
-    text-decoration: none;
-    float: right;
-    color: orangered;
-}
-
-.sr-bar .separator {color: gray; }
-.sr-bar a {color: black;} 
-
-.create-promo { float: left; width: 520px; margin-right: 20px;} 
-.create-promo .infobar { 
-    margin-right: 0; 
-    border-color: red;
-    color: black;
-    background: none; 
-    width: 100%;
-}
-.create-promo h2 { margin-top: 10px; color: black; }
-.create-promo ol { margin: 0px 30px 10px 30px; }
-.create-promo ol > li {
-    list-style-type: disc; 
-}
-.create-promo .rules { text-align: right; }
-
-.create-reddit h1,
-.create-promotion h1 { font-size: 200%; color: #999; xmargin:10px 0 0 5px;  }
-.create-promotion .sitetable { margin: 5px;  }
-.create-promotion .infobar { margin-left: 5px;  }
-.create-reddit h1 b { color: #666;  }
-
-.subscription-box li {
-    clear: left;
-    margin-bottom: 10px;
-}
-
-.subscription-box .fancy-toggle-button {
-    margin-right: 5px;
-    float: left;
-}
-
-.subscription-box .title {
-    font-size: medium;
-    color: blue;
-    margin-right: 5px;
-}
-
-.bidding-history table.bidding-history th { 
-    font-weight: bold;
-}
-.bidding-history div.graph { 
-    height: 8px;
-    background-color: #336699;
-}
-
-.pay-form tr.input-error th {
-    color: red;
-    font-weight: bold;
-    font-style: italic; 
-}
-.pay-form th { padding: 0px }
-
-.pay-form tr.input-error input,
-.pay-form tr.input-error textarea,
-.pay-form tr.input-error select { border: 1px solid red; }
-
-#sr-list-wrapper {
-    width: 454px;
-    height: 200px;
-    border: 1px solid gray;
-    border-top: none;
-    margin: 0 5px;
-    font-size: smaller;
-    position: relative;
-    padding-top: 120px; 
-    padding-bottom: 100px; 
-    margin: 20px 0; 
-}
-
-#sr-list-cover {
-    position: absolute;
-    background: gray none no-repeat scroll center center;
-    background-color: url(/static/throbber.gif); 
-    height: 100%;
-    width: 100%;
-    opacity: .7;
-    filter:alpha(opacity=70); /* IE patch */
-    z-index: 1000;
-    display: none;
-}
-
-#sr-list {
-    overflow: auto;
-    position: absolute;
-    height: 100%;
-    width: 100%;
-}
-
-.calendar div.grid div.header {
-    font-weight: bold; 
-    border-bottom: 2px solid gray;
-    text-align: center; 
-}
-
-.sr-description {
-    padding: 3px
- }
-
-.sr-row {
-    cursor: default;
- }
-
-.sr-row.sr-selected {
-    background: #EFF7FF none no-repeat scroll 0px 5px;
-    background-image: url(/static/rightarrow.png);    /* SPRITE */
-}
-
-.sr-arrow {
-    width: 10px;
-    height: 12px;
- }
-
-#sr-autocomplete-area {
-    position: relative;
-    z-index: 100;
- }
-
-#sr-drop-down {
-    position: absolute;
-    width: 498px;
-    border: 1px solid gray;
-    background: white;
-    display: none;
-    left: 0;
-}
-
-#sr-drop-down  table {
-    width: 100%;
-}
-
-.sr-name-row {
-    cursor: default;
- }
-
-.sr-name-row.sr-selected {
-    background-color: #369;
-    color: white;
-}
-
-/* title box */
-.titlebox {
-    font-size: larger;
-}
-
-.titlebox h1 {
-    font-family:arial,verdana,helvetica,sans-serif;
-    margin: 0px;
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 19px;
-}
-
-#suggested-reddits ul {
-
-.titlebox .fancy-toggle-button {
-    display: inline-block;
-    margin-right: 5px;
-}
-
-.titlebox .bottom {
-    border-top: 1px solid gray;
-    padding-top: 2px;
-    font-size: 80%;
-    color: gray;
-}
-
-.titlebox .age {float: right;}
-.titlebox .md { font-size: 90%; }
-.titlebox .account-notes {
-    font-weight: normal;
-    font-size: small;
-    margin-left: 5px;
-}
-
-.titlebox .account-notes .unusual {
-    background-color: #ffdddd;
-    border: solid red 1px;
-    padding: 1px 2px 2px;
-    margin-left: 5px;
-}
-
-.formtabs-content {
-    width: 520px;
-    border-top: 4px solid #5f99cf;
-    padding-top: 10px;
- }
-
-.formtabs-content .infobar {
-    margin: 0;
-    padding: 5px;
-    border: 1px solid gray;
-    font-size: larger;
-}
-
-.sidecontentbox .more { 
-    margin-top: 5px; 
-    text-align: right; 
-    font-size: smaller;
-}
-
-.sidecontentbox .more a { 
-    color: gray; 
-}
-
-ul.tabmenu.formtab {
-    display: block;
-}
-
-.tabmenu.formtab li {
-    margin: 0;
-    padding: 5px 0px 5px 20px;
-    font-size: smaller;
-    color: gray;
-    background: white none no-repeat scroll center left;
-}
-
-.tabmenu.formtab a {
-    font-weight: normal;
-    outline: none;
-    padding: 0px 12px;
-    vertical-align: bottom;
-
-.icon-menu a {
-    padding-left: 20px;
-    background: white none no-repeat scroll center left;
-} 
-.icon-menu li {margin: 5px 0;}
-
-.icon-menu .reddit-edit {
-    background-image: url(/static/reddit_edit.png); /* SPRITE */
-}
-.icon-menu .reddit-traffic {
-    background-image: url(/static/reddit_traffic.png); /* SPRITE */
-}
-.icon-menu .reddit-reported {
-    background-image: url(/static/reddit_reported.png); /* SPRITE */
-}
-.icon-menu .reddit-spam {
-    background-image: url(/static/reddit_spam.png); /* SPRITE */
-}
-.icon-menu .reddit-ban {
-    background-image: url(/static/reddit_ban.png); /* SPRITE */
-}
-.icon-menu .reddit-moderators {
-    background-image: url(/static/star.png); /* SPRITE */
-}
-.icon-menu .moderator-mail {
-    background-image: url(/static/mailgray.png); /* SPRITE */
-}
-.icon-menu .reddit-contributors {
-    background-image: url(/static/pencil.png); /* SPRITE */
-}
-
-.tabmenu.formtab .selected a {
-    color:white;
-    font-size: 130%;
-    background-color: #5f99cf;
-    border: none;
-}
-
-.linkinfo .score .number {
-    font-size: 22px;
-    font-weight: bold;
- }
-
-.linkinfo .score .word {
-    font-size: 15px;
-    font-weight: bold;
- }
-
-
-.linkinfo .upvotes {font-size: 80%; color: orangered;}
-.linkinfo .downvotes {font-size: 80%; color: #5f99cf; }
-
-.linkinfo table {margin-top: 5px;}
-
-.linkinfo td, .linkinfo th {
-    padding: 2px;
-    font-size: smaller;
-    border: 1px solid gray;
-}
-
-.expando-content {
-    display: none;
-}
-
-a.adminbox:hover {
-    text-decoration: none;
-    color: orangered;
-    border: solid 1px orangered;
-}
-
-.expando-button {
-    float: left;
-    height: 23px;
-    width: 23px;
-    margin: 2px 5px 2px 0;
-    background: white none no-repeat scroll center center;
-}
-
-.expando-button.selftext.collapsed {
-    background-image: url(/static/blog-collapsed.png); /* SPRITE */
-}
-.expando-button.selftext.collapsed:hover, .eb-sch {
-    background-image: url(/static/blog-collapsed-hover.png); /* SPRITE */
-}
-.expando-button.selftext.expanded, .eb-se {
-    margin-bottom: 5px;
-    background-image: url(/static/blog-expanded.png); /* SPRITE */
-}
-.expando-button.selftext.expanded:hover, .eb-seh {
-    background-image: url(/static/blog-expanded-hover.png); /* SPRITE */
-}
-
-.expando-button.video.collapsed {
-    background-image: url(/static/vid-collapsed.png); /* SPRITE */
-}
-
-.expando-button.video.collapsed:hover, .eb-vch {
-    background-image: url(/static/vid-collapsed-hover.png); /* SPRITE */
-}
-
-.expando-button.video.expanded, .eb-ve {
-    background-image: url(/static/vid-expanded.png); /* SPRITE */
-}
-.expando-button.video.expanded:hover, .eb-veh {
-    background-image: url(/static/vid-expanded-hover.png); /* SPRITE */
-}
-
-.centered {
-    text-align: center;
-    vertical-align: middle;
-}
-
-/******** self text stuff ****/
-.subreddit .usertext .md {
-    padding: 2px 5px;
-    background-color: #fafafa;
-    border: 1px solid #CCC;
-    -moz-border-radius: 7px;
-    -webkit-border-radius: 7px;
-}
-
-.link .usertext .md {
-    padding: 0 5px;
-    background-color: #fafafa;
-    border: 1px solid #369;
-    -moz-border-radius: 7px;
-    -webkit-border-radius: 7px;
-}
-
-
-.usertext {
-    font-size: small;
-    position: relative;
-}
-
-.usertext-edit {
-    margin-top: 5px;
-    padding: 0 1px; /* so the border of help/textbox don't get chopped off */
-    width: 500px;
-}
-
-.usertext-edit textarea {
-    width: 500px;
-    height: 100px;
-}
-
-.usage-table .empty.intersection {
-    text-align: center;
-    color: #ccc;
-}
-
-.usage-table .elapsed.intersection {
-    color: black;
-}
-
-.usertext button {
-    margin: 5px 5px 10px 0;
-}
-
-.usertext .help-toggle {
-    font-size: smaller;
-    float:right;
-    margin-top: 5px; 
-}
-
-.usertext .bottom-area {
-    /* this restricts children floats to the container */
-    overflow: hidden;
-    width: 100%;
-}
-
-.usertext table.markhelp {
-    background-color: white;
-    margin: 5px 0px; 
-    width: 100%;
-}
-
-a.pretty-button.negative {
-    color: black;
-    background-image: url(/static/bg-button-negative-unpressed.png);
-}
-
-a.pretty-button.negative.pressed {
-    color: white;
-    background-image: url(/static/bg-button-negative-pressed.png);
-}
-
-a.pretty-button.positive {
-    color: black;
-    background-image: url(/static/bg-button-positive-unpressed.png);
-}
-
-a.pretty-button.positive.pressed {
-    color: white;
-    background-image: url(/static/bg-button-positive-pressed.png);
-}
-
-/*
-.jury-box .pretty-button a.pressed {
-    margin: -1px 4px -1px 1px;
-    border-width: 2px;
-    border-color: black;
-    color: white;
-}
-*/
-.organic-listing .ontrial, .help-cover.juryduty {
-    background-color: #ffecf8;
-}
-
-.roundfield .usertext-edit {
-    width: 500px;
-}
-
-.organic-listing .ontrial .midcol {
-    margin-top: 20px;
-}
-
-.roundfield.captcha .capimage {
-    margin-bottom: 10px;
-}
-.roundfield label { font-size: smaller; padding-right: 2px;  }
-
-
-
-/*** linefield stuff *****/
-.linefield {
-    width: 514px;
-    padding: 7px 5px;
-    font-size: large;
-}
-
-.linefield .title {
-    background-color:#CEE3F8;
-    /*background-color:#EFF7FF;*/
-    color: #336699;
-    font-variant:small-caps;
-    font-weight:bold;
-    letter-spacing:-0.02em;
-    margin:0 10px;
-    padding:1px 10px;
-}
-.linefield .title + .gray {
-    font-size: x-small;
-}
-.linefield .delete-field {
-    padding: 0; 
-    font-size: smaller; 
-}
-
-.linefield span + span { 
-    margin-left: 10px; 
-}
-.linefield .info { 
-    font-style: italic;
-    color: red;
-    font-size: small;
-}
-
-.linefield .linefield-content {
-    border-color:#CEE3F8;
-    /*border-color:#EFF7FE;*/
-    border-style:solid none none;
-    border-width:4px medium medium;
-    padding:5px 7px;
-    vertical-align:top;
-}
-
-.linefield.usertext .usertext-edit {
-    font-size: small;
-}
-
-.linefield.usertext .edit-usertext {
-    font-size: x-small;
-    float: right;
-}
-
-.linefield .upload {
-    font-size: small;
-}
-.linefield .upload label {
-    font-size: small;
-}
-
-.linefield.usertext .infobar {
-    width: 100%;
-}
-
-.linefield.usertext .usertext-buttons {
-    display: none;
-}
-
-.linefield textarea,
-.linefield input[type=text],
-.linefield input[type=password] {
-    font-size: 100%;
-    width: 492px;
-    padding: 3px;
-    margin: 0;
-    border: 1px solid gray;
-}
-
-.linefield select { margin: 0; }
-
-.linefield 
-
-.linefield.captcha .capimage {
-    margin-bottom: 10px;
-}
-.linefield label { font-size: smaller; padding-right: 2px;  }
-.linefield span{ font-size: smaller; }
-
-.linefield input[type="text"].small-text { 
-    font-size: smaller;
-    width: 100%; 
-}
-
-.campaign { 
-    border: 1px solid #336699; 
-    background-color: #EFF7FF;
-    padding: 5px; 
-}
-
 .campaign .status { 
     font-size: x-small;
 }
@@ -4725,21 +3149,22 @@ a.pretty-button.positive.pressed {
     font-size: x-small; 
 }
 
-.organic-listing .how-to-classify {
-    font-weight: bold;
-}
+/***traffic stuff***/
+.traffic-table {margin: 10px 20px; }
+.traffic-table a:hover { text-decoration: underline; }
+.traffic-table th { font-weight: bold; text-align: center;}
+.traffic-table th,
+.traffic-table td { padding: 0 5px; }
+.traffic-table td { text-align: right; }
 
-.jury-box .arrow-msg {
-    display: none;
-    color: red;
-    margin-top:5px;
-}
+.traffic-table td.up   { color: #FF8B60; }
+.traffic-table td.down { color: #336699; }
+.traffic-table td.gray { color: gray; font-style: italic; }
 
-.jury-box .thanks-for-voting {
-    margin-left: 1em;
-    display: none;
-    color: red;
-}
+.traffic-table tr.max  { border: 2px solid #FF8B60; }
+.traffic-table tr.min  { border: 2px solid #336699; }
+.traffic-table tr.odd { background-color: #E0E0E0; }
+.traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
 
 .traffic-table .prelim { font-style: italic; }
 .traffic-table .totals { font-style: italic; border-top: 1px solid black; }
@@ -5600,4 +4025,81 @@ a.pretty-button.positive.pressed {
 .oatmeal img { 
     display: block;
     margin: 5px auto; 
+}
+
+.lounge { display: none }
+.lounge p { margin-top: 5px; }
+
+.postcard {
+    display: none;
+}
+
+.postcard-msg {
+    font-size: smaller;
+    background-color: white;
+    padding: 5px;
+}
+
+.gold-accent {
+    margin-top: 10px;
+    padding: 0 10px 5px;
+    background-color: #fffdcc;
+    border: solid 1px #e1b000;
+    color: #9a7d2e;
+    display: inline-block;
+}
+
+tr.gold-accent { 
+    display: table-row; 
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+tr.gold-accent + tr > td { 
+    padding-top: 10px; 
+}
+
+.friend-note button[type=submit] { 
+    display: none; 
+    font-size: x-small;
+    padding-top: 1px;
+    padding-bottom: 1px; 
+    margin: 0px;
+    margin-left: 5px;
+    width: 45px;
+}
+.friend-note.edited button[type=submit] { display: inline-block; }
+.friend-note.edited input[type=text] { width: 250px; margin-right: 0px; }
+
+
+.gold-accent h1, 
+.gold-accent th {
+    color: #6a4d00;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
+    font-variant: small-caps;
+}
+
+.gold-accent .pretty-form input[type=text] {
+    margin-top: 1px;
+    margin-bottom: 2px;
+    margin-left: 0;  /* or else friends with benefits'
+                        "note" td and th don't line up */
+}
+
+.gold-accent .pretty-form input[type=text]#name {
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.gold-accent .pretty-form button {
+    background-color: #fff088;
+    color: #6a4d00;
+    border: 1px solid #9a7d2e;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+}
+
+.tiny {
+    font-size: xx-small;
 }

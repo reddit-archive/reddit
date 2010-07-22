@@ -111,7 +111,6 @@
   <script src="${static('jquery.js')}"  type="text/javascript"></script>
   <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
   <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
-  <script src="${static('jquery.lazyload.js')}"  type="text/javascript"></script>
   <script src="${static('reddit.js')}" type="text/javascript"></script>
 </%def>
 
@@ -132,6 +131,7 @@
     %if thing.content:
       ##<div class="fixedwidth"><!--IE6sux--></div>
       ##<div class="clearleft"><!--IE6sux--></div>
+      <a name="content"></a>
       <div class="content">
         ${thing.content()}
       </div>

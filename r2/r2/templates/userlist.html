@@ -26,7 +26,7 @@
   %if thing.editable:
     <form action="/post/${thing.destination}"
           method="post" class="pretty-form medium-text"
-          onsubmit="return post_form(this, '${thing.destination}');" 
+          onsubmit="return post_form(this, '${thing.destination}');"
           id="${thing.type}">
       <h1>${thing.form_title}</h1>
 
@@ -47,6 +47,13 @@
     </h1>
 
     <table>
+      %if getattr(thing, "table_headers", None):
+        <tr>
+        %for header in thing.table_headers:
+           <th>${header}</th>
+        %endfor
+        </tr>
+      %endif
       %if thing.users:
         %for item in thing.users:
           ${item}
@@ -56,5 +63,6 @@
       %endif
     </table>
   </div>
+
 </div>
 

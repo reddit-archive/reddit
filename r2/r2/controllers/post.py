@@ -94,6 +94,8 @@ class PostController(ApiController):
               pref_threaded_messages = VBoolean("threaded_messages"),
               pref_collapse_read_messages = VBoolean("collapse_read_messages"),
               pref_private_feeds = VBoolean("private_feeds"),
+              pref_show_adbox = VBoolean("show_adbox"),
+              pref_show_sponsors = VBoolean("show_sponsors"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
@@ -109,6 +111,10 @@ class PostController(ApiController):
 
         if kw.get("pref_no_profanity") or c.user.pref_no_profanity:
             kw['pref_label_nsfw'] = True
+
+        if not c.user.gold:
+            kw['pref_show_adbox'] = True
+            kw['pref_show_sponsors'] = True
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")

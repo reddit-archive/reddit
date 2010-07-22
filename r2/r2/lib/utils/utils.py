@@ -169,17 +169,6 @@ class Enum(Storage):
             return Storage.__contains__(self, item)
             
 
-class Enum(Storage):
-    def __init__(self, *a):
-        self.name = tuple(a)
-        Storage.__init__(self, ((e, i) for i, e in enumerate(a)))
-    def __contains__(self, item):
-        if isinstance(item, int):
-            return item in self.values()
-        else:
-            return Storage.__contains__(self, item)
-            
-
 class Results():
     def __init__(self, sa_ResultProxy, build_fn, do_batch=False):
         self.rp = sa_ResultProxy
@@ -296,6 +285,8 @@ def sanitize_url(url, require_scheme = False):
         # if there is a scheme and no hostname, it is a bad url.
         if not u.hostname:
             return
+        if u.username is not None or u.password is not None:
+            return
         labels = u.hostname.split('.')
         for label in labels:
             try:
@@ -313,7 +304,6 @@ def sanitize_url(url, require_scheme = False):
                     return
         return url
 
-
 # Truncate a time to a certain number of minutes
 # e.g, trunc_time(5:52, 30) == 5:30
 def trunc_time(time, mins, hours=None):
@@ -329,12 +319,6 @@ def trunc_time(time, mins, hours=None):
                         second = 0,
                         microsecond = 0)
 
-
-def median(l):
-    if l:
-        s = sorted(l)
-        i = len(s) / 2
-        return s[i]
 
 def median(l):
     if l:
@@ -465,7 +449,7 @@ class UrlParser(object):
         # if there is a netloc, there had better be a scheme
         if self.netloc and not self.scheme:
             self.scheme = "http"
-            
+
         return urlunparse((self.scheme, self.netloc,
                            self.path.replace('//', '/'),
                            self.params, q, self.fragment))
@@ -481,7 +465,7 @@ class UrlParser(object):
     def get_subreddit(self):
         """checks if the current url refers to a subreddit and returns
         that subreddit object.  The cases here are:
-        
+
           * the hostname is unset or is g.domain, in which case it
             looks for /r/XXXX or /reddits.  The default in this case
             is Default.
@@ -521,7 +505,7 @@ class UrlParser(object):
                  self.hostname.endswith(subreddit.domain)))
 
     def path_add_subreddit(self, subreddit):
-        """ 
+        """
         Adds the subreddit's path to the path if another subreddit's
         prefix is not already present.
         """
@@ -540,7 +524,7 @@ class UrlParser(object):
         elif self.port:
             return self.hostname + ":" + str(self.port)
         return self.hostname
-    
+
     def mk_cname(self, require_frame = True, subreddit = None, port = None):
         """
         Converts a ?cnameframe url into the corresponding cnamed
@@ -550,7 +534,7 @@ class UrlParser(object):
         # make sure the url is indeed in a frame
         if require_frame and not self.query_dict.has_key(self.cname_get):
             return self
-        
+
         # fetch the subreddit and make sure it 
         subreddit = subreddit or self.get_subreddit()
         if subreddit and subreddit.domain:
@@ -570,7 +554,7 @@ class UrlParser(object):
             self.path = lstrips(self.path, subreddit.path)
             if not self.path.startswith('/'):
                 self.path = '/' + self.path
-        
+
         return self
 
     def is_in_frame(self):
@@ -588,6 +572,46 @@ class UrlParser(object):
 
     def __repr__(self):
         return "<URL %s>" % repr(self.unparse())
+
+    def domain_permutations(self, fragments=False, subdomains=True):
+        """
+          Takes a domain like `www.reddit.com`, and returns a list of ways
+          that a user might search for it, like:
+          * www
+          * reddit
+          * com
+          * www.reddit.com
+          * reddit.com
+          * com
+        """
+        ret = set()
+        if self.hostname:
+            r = self.hostname.split('.')
+
+            if subdomains:
+                for x in xrange(len(r)-1):
+                    ret.add('.'.join(r[x:len(r)]))
+
+            if fragments:
+                for x in r:
+                    ret.add(x)
+
+        return ret
+
+    @classmethod
+    def base_url(cls, url):
+        u = cls(url)
+
+        # strip off any www and lowercase the hostname:
+        netloc = u.netloc.lower()
+        if len(netloc.split('.')) > 2 and netloc.startswith("www."):
+            netloc = netloc[4:]
+
+        # http://code.google.com/web/ajaxcrawling/docs/specification.html
+        fragment = u.fragment if u.fragment.startswith("!") else ""
+
+        return urlunparse((u.scheme.lower(), netloc,
+                           u.path, u.params, u.query, fragment))
 
 
 def to_js(content, callback="document.write", escape=True):
@@ -1181,3 +1205,22 @@ class Bomb(object):
     @classmethod
     def __repr__(cls):
         raise Hell()
+
+def strordict_fullname(item, key='fullname'):
+    """Sometimes we migrate AMQP queues from simple strings to pickled
+    dictionaries. During the migratory period there may be items in
+    the queue of both types, so this function tries to detect which
+    the item is. It shouldn't really be used on a given queue for more
+    than a few hours or days"""
+    try:
+        d = pickle.loads(item)
+    except:
+        d = {key: item}
+
+    if (not isinstance(d, dict)
+        or key not in d
+        or not isinstance(d[key], str)):
+        raise ValueError('Error trying to migrate %r (%r)'
+                         % (item, d))
+
+    return d

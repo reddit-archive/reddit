@@ -300,7 +300,8 @@ class Email(object):
                 "FINISHED_PROMO",
                 "NEW_PROMO",
                 "HELP_TRANSLATE",
-                "NERDMAIL"
+                "NERDMAIL",
+                "GOLDMAIL",
                 )
 
     subjects = {
@@ -320,6 +321,7 @@ class Email(object):
         Kind.NEW_PROMO : _("[reddit] your promotion has been created"),
         Kind.HELP_TRANSLATE : _("[i18n] translation offer from '%(user)s'"),
         Kind.NERDMAIL : _("[reddit] hey, nerd!"),
+        Kind.GOLDMAIL : _("[reddit] reddit gold activation link")
         }
 
     def __init__(self, user, thing, email, from_name, date, ip, banned_ip,

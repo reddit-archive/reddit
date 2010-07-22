@@ -37,6 +37,8 @@ thing_cache = g.thing_cache
 keyspace = 'reddit'
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
+read_consistency_level = g.cassandra_rcl
+write_consistency_level = g.cassandra_wcl
 
 # descriptions of the CFs available on boot.
 boot_cfs = cassandra.describe_keyspace(keyspace)
@@ -111,8 +113,8 @@ class ThingMeta(type):
 
             cls.cf = pycassa.ColumnFamily(cassandra, keyspace,
                                           cf_name,
-                                          read_consistency_level = CL.ONE,
-                                          write_consistency_level = CL.QUORUM)
+                                          read_consistency_level = read_consistency_level,
+                                          write_consistency_level = write_consistency_level)
 
         cls._kind = name
 

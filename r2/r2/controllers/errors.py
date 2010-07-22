@@ -76,9 +76,11 @@ error_list = dict((
         ('BAD_CARD', _('card problem: %(message)s')),
         ('TOO_LONG', _("this is too long (max: %(max_length)s)")),
         ('NO_TEXT', _('we need something here')),
-
+        ('INVALID_CODE', _("we've never seen that code before")),
+        ('CLAIMED_CODE', _("that code has already been claimed -- perhaps by you?")),
         ('NO_SELFS', _("that reddit doesn't allow text posts")),
         ('NO_LINKS', _("that reddit only allows text posts")),
+        ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
@@ -136,3 +138,4 @@ class ErrorSet(object):
 
 class UserRequiredException(Exception): pass
 class VerifiedUserRequiredException(Exception): pass
+class GoldRequiredException(Exception): pass

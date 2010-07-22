@@ -85,8 +85,6 @@ class RedditQueueMap(QueueMap):
 
     def newlink_bindings(self):
         self._bind('new_link', 'scraper_q')
-        # note that we don't add search_changes here, because the
-        # initial vote on that item will add it
 
         # this isn't in use until the spam_q plumbing is
         #self._bind('new_link', 'newpage_q')
@@ -96,8 +94,7 @@ class RedditQueueMap(QueueMap):
         self._bind('new_comment', 'commentstree_q')
 
     def newsubreddit_bindings(self):
-        self._bind('new_subreddit', 'solrsearch_changes')
-        self._bind('new_subreddit', 'indextank_changes')
+        pass
 
 try:
     from r2admin.lib.adminqueues import *
