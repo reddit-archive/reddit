@@ -27,6 +27,7 @@
    from r2.lib.pages import WrappedUser
  %>
 
+<%namespace file="utils.html" import="plain_link"/>
 <%namespace file="subreddit.html" import="addremove_button" />
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
@@ -37,7 +38,7 @@
 </%def>
 
 <div class="titlebox">
-  <h1>${thing.sr.name}</h1>
+  <h1>${plain_link(thing.sr.name, thing.sr.path, _sr_path=False)}</h1>
 
   ${addremove_button(thing.sr)}
   ${unsafe(Score.readers(thing.subscribers))}
