@@ -35,7 +35,7 @@ from r2.models import *
 from errors import ErrorSet
 from validator import *
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsontemplates import api_type
+from r2.lib.jsontemplates import api_type, is_api
 
 from Cookie import CookieError
 from copy import copy
@@ -44,9 +44,10 @@ from datetime import datetime
 from hashlib import sha1, md5
 from urllib import quote, unquote
 import simplejson
-import locale
+import locale, socket
 
 from r2.lib.tracking import encrypt, decrypt
+from pylons import Response
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
@@ -239,12 +240,13 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
-    c.site = Default
+    default_sr = DefaultSR()
+    c.site = default_sr
     if not sr_name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         if sub_domain and not sub_domain.endswith(g.media_domain):
-            c.site = Subreddit._by_domain(sub_domain) or Default
+            c.site = Subreddit._by_domain(sub_domain) or default_sr
     elif sr_name == 'r':
         #reddits
         c.site = Sub
@@ -277,7 +279,7 @@ def set_subreddit():
             elif not c.error_page:
                 abort(404)
     #if we didn't find a subreddit, check for a domain listing
-    if not sr_name and c.site == Default and domain:
+    if not sr_name and isinstance(c.site, DefaultSR) and domain:
         c.site = DomainSR(domain)
 
     if isinstance(c.site, FakeSubreddit):
@@ -314,6 +316,13 @@ def set_content_type():
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
                 c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
+    # allow JSONP requests to generate callbacks, but do not allow
+    # the user to be logged in for these 
+    if (is_api() and request.method.upper() == "GET" and
+        request.GET.get("jsonp")):
+        c.allowed_callback = request.GET['jsonp']
+        c.user = UnloggedUser(get_browser_langs())
+        c.user_is_loggedin = False
 
 def get_browser_langs():
     browser_langs = []
@@ -668,7 +677,7 @@ class RedditController(MinimalController):
         maybe_admin = False
 
         # no logins for RSS feed unless valid_feed has already been called
-        if not c.user_is_loggedin:
+        if not c.user:
             if c.extension != "rss":
                 (c.user, maybe_admin) = \
                          valid_cookie(c.cookies[g.login_cookie].value
@@ -677,7 +686,7 @@ class RedditController(MinimalController):
                 if c.user:
                     c.user_is_loggedin = True
 
-            if not c.user_is_loggedin:
+            if not c.user:
                 c.user = UnloggedUser(get_browser_langs())
                 # patch for fixing mangled language preferences
                 if (not isinstance(c.user.pref_lang, basestring) or
@@ -775,3 +784,29 @@ class RedditController(MinimalController):
         if modified_since and modified_since >= last_modified:
             abort(304, 'not modified')
 
+    def search_fail(self, exception):
+        from r2.lib.contrib.pysolr import SolrError
+        from r2.lib.indextank import IndextankException
+        if isinstance(exception, SolrError):
+            errmsg = "SolrError: %r" % e
+
+            if (str(e) == 'None'):
+                # Production error logs only get non-None errors
+                g.log.debug(errmsg)
+            else:
+                g.log.error(errmsg)
+        elif isinstance(exception, (IndextankException, socket.error)):
+            g.log.error("IndexTank Error: %s" % repr(exception))
+
+        sf = pages.SearchFail()
+
+        us = filters.unsafe(sf.render())
+
+        errpage = pages.RedditError(_('search failed'), us)
+
+        c.response = Response()
+        c.response.status_code = 503
+        request.environ['usable_error_content'] = errpage.render()
+        request.environ['retry_after'] = 60
+
+        abort(503)

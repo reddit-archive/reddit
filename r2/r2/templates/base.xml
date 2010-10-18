@@ -33,7 +33,7 @@
     <image>
       <%
         if g.css_killswitch or not c.site.header:
-            header_img = DefaultSR.header
+            header_img = DefaultSR().header
         else:
             header_img = c.site.header
         if not header_img.startswith("http:"):

@@ -78,6 +78,7 @@ class PostController(ApiController):
               pref_hide_ups = VBoolean('hide_ups'),
               pref_hide_downs = VBoolean('hide_downs'),
               pref_over_18 = VBoolean('over_18'),
+              pref_research = VBoolean('research'),
               pref_numsites = VInt('numsites', 1, 100),
               pref_lang = VLang('lang'),
               pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
@@ -96,6 +97,7 @@ class PostController(ApiController):
               pref_private_feeds = VBoolean("private_feeds"),
               pref_show_adbox = VBoolean("show_adbox"),
               pref_show_sponsors = VBoolean("show_sponsors"),
+              pref_highlight_new_comments = VBoolean("highlight_new_comments"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
@@ -106,7 +108,7 @@ class PostController(ApiController):
         elif not kw.get('pref_show_promote'):
             kw['pref_show_promote'] = False
 
-        if not kw.get("pref_over_18") or not c.user.pref_over_18: 
+        if not kw.get("pref_over_18") or not c.user.pref_over_18:
             kw['pref_no_profanity'] = True
 
         if kw.get("pref_no_profanity") or c.user.pref_no_profanity:

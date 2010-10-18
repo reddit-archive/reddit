@@ -47,9 +47,9 @@ class CacheUtils(object):
             except ValueError:
                 pass
 
-    def add_multi(self, keys, prefix=''):
+    def add_multi(self, keys, prefix='', time=0):
         for k,v in keys.iteritems():
-            self.add(prefix+str(k), v)
+            self.add(prefix+str(k), v, time = time)
 
     def get_multi(self, keys, prefix=''):
         return prefix_keys(keys, prefix, self.simple_get_multi)
@@ -451,7 +451,6 @@ class HardcacheChain(CacheChain):
         auth_value = self.caches[-1].get(key)
 
         if auth_value is None:
-            self.caches[-1].set(key, 0, time)
             auth_value = 0
 
         try:

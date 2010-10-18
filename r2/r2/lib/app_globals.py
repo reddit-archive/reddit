@@ -22,12 +22,14 @@
 from __future__ import with_statement
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
+import signal
 from datetime import timedelta, datetime
 import pycassa
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
+from r2.lib.utils import thread_dump
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
@@ -51,11 +53,13 @@ class Globals(object):
                  'QUOTA_THRESHOLD',
                  'num_comments',
                  'max_comments',
+                 'max_comments_gold',
                  'num_default_reddits',
                  'num_query_queue_workers',
                  'max_sr_images',
                  'num_serendipity',
                  'sr_dropdown_threshold',
+                 'comment_visits_period',
                  ]
 
     float_props = ['min_promote_bid',
@@ -85,14 +89,15 @@ class Globals(object):
                    'local_rendercache',
                    'servicecaches',
                    'cassandra_seeds',
-                   'url_seeds',
                    'admins',
                    'sponsors',
                    'monitored_servers',
                    'automatic_reddits',
                    'agents',
                    'allowed_css_linked_domains',
-                   'authorized_cnames']
+                   'authorized_cnames',
+                   'hardcache_categories',
+                   'proxy_addr']
 
     choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
                                       'ONE':    CL_ONE,
@@ -149,6 +154,10 @@ class Globals(object):
 
         self.running_as_script = global_conf.get('running_as_script', False)
 
+        if hasattr(signal, 'SIGUSR1'):
+            # not all platforms have user signals
+            signal.signal(signal.SIGUSR1, thread_dump)
+
         # initialize caches. Any cache-chains built here must be added
         # to cache_chains (closed around by reset_caches) so that they
         # can properly reset their local components
@@ -164,8 +173,6 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-        if not self.url_seeds:
-            raise ValueError("url_seeds not set in the .ini")
         self.cassandra_seeds = list(self.cassandra_seeds)
         random.shuffle(self.cassandra_seeds)
         self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
@@ -181,21 +188,15 @@ class Globals(object):
                                                localcache_cls = localcache_cls)
         self.cache_chains.append(self.permacache)
 
-        self.url_seeds = list(self.url_seeds)
-        random.shuffle(self.url_seeds)
-        self.url_cassandra = pycassa.connect_thread_local(self.url_seeds)
-        self.urlcache = self.init_cass_cache('urls', 'urls',
-                                             self.url_cassandra,
+        self.urlcache = self.init_cass_cache('permacache', 'urls',
+                                             self.cassandra,
                                              self.make_lock,
-                                             # until we've merged this
-                                             # with the regular
-                                             # cluster, this will
-                                             # always be CL_ONE
-                                             read_consistency_level = CL_ONE,
+                                             # TODO: increase this to QUORUM
+                                             # once we switch to live
+                                             read_consistency_level = self.cassandra_rcl,
                                              write_consistency_level = CL_ONE,
                                              localcache_cls = localcache_cls)
         self.cache_chains.append(self.urlcache)
-
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
@@ -379,6 +380,8 @@ class Globals(object):
         return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
+        from r2.lib.services import get_db_load
+
         self.databases = tuple(self.to_iter(gc['databases']))
         self.db_params = {}
         if not self.databases:
@@ -394,12 +397,14 @@ class Globals(object):
                 params['db_user'] = self.db_user
             if params['db_pass'] == "*":
                 params['db_pass'] = self.db_pass
-            dbm.setup_db(db_name, **params)
+            ip = params['db_host']
+            ip_loads = get_db_load(self.servicecache, ip)
+            if ip not in ip_loads or ip_loads[ip][0] < 1000:
+                dbm.setup_db(db_name, g_override=self, **params)
             self.db_params[db_name] = params
 
         dbm.type_db = dbm.get_engine(gc['type_db'])
         dbm.relation_type_db = dbm.get_engine(gc['rel_type_db'])
-        dbm.hardcache_db = dbm.get_engine(gc['hardcache_db'])
 
         def split_flags(p):
             return ([n for n in p if not n.startswith("!")],
@@ -413,12 +418,12 @@ class Globals(object):
                 kind = params[0]
                 if kind == 'thing':
                     engines, flags = split_flags(params[1:])
-                    dbm.add_thing(name, [dbm.get_engine(n) for n in engines],
+                    dbm.add_thing(name, dbm.get_engines(engines),
                                   **flags)
                 elif kind == 'relation':
                     engines, flags = split_flags(params[3:])
                     dbm.add_relation(name, params[1], params[2],
-                                     [dbm.get_engine(n) for n in engines],
+                                     dbm.get_engines(engines),
                                      **flags)
         return dbm
 

@@ -106,7 +106,7 @@ filters_uwebsafe_json(PyObject * self, PyObject *args)
   input_buffer = PyUnicode_AS_UNICODE(com);
   len = PyUnicode_GetSize(com);
 
-  buffer = (Py_UNICODE*)malloc(5*len*sizeof(Py_UNICODE));
+  buffer = (Py_UNICODE*)malloc(6*len*sizeof(Py_UNICODE));
   for(ic = 0, ib = 0; ic < len; ic++, ib++) {
     c = input_buffer[ic];
     if (c == '&') {
@@ -151,7 +151,7 @@ filters_websafe(PyObject * self, PyObject *args)
   if (!PyArg_ParseTuple(args, "s", &input_buffer))
     return NULL;
   len = strlen(input_buffer);
-  buffer = (char*)malloc(5*len);
+  buffer = (char*)malloc(6*len);
   for(ic = 0, ib = 0; ic <= len; ic++, ib++) {
     c = input_buffer[ic];
     if (c == '&') {

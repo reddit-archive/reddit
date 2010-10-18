@@ -19,14 +19,14 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.utils import tup
+from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Report, Account, Subreddit
 
 from pylons import g
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from copy import copy
 
 class AdminTools(object):
@@ -173,32 +173,135 @@ class AdminTools(object):
                 sr._commit()
                 sr._incr('mod_actions', len(sr_things))
 
-    def engolden(self, account, was_postcard=False):
-        from r2.lib.db.queries import changed
+    def engolden(self, account, days):
         account.gold = True
-        if was_postcard:
-            description = "Postcard Brigade"
-        else:
-            description = "Charter Member"
-        Award.give_if_needed("reddit_gold", account,
-                             description=description,
-                             url="/help/gold")
+
+        now = datetime.now(g.display_tz)
+
+        existing_expiration = getattr(account, "gold_expiration", None)
+        if existing_expiration is None or existing_expiration < now:
+            existing_expiration = now
+        account.gold_expiration = existing_expiration + timedelta(days)
+
+        description = "Since " + now.strftime("%B %Y")
+        trophy = Award.give_if_needed("reddit_gold", account,
+                                     description=description,
+                                     url="/help/gold")
+        if trophy and trophy.description.endswith("Member Emeritus"):
+            trophy.description = description
+            trophy._commit()
         account._commit()
+
         account.friend_rels_cache(_update=True)
+
         if g.lounge_reddit:
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.add_contributor(account)
 
-    def degolden(self, account):
-        from r2.lib.db.queries import changed
-        account.gold = False
+    def degolden(self, account, severe=False):
+
+        if severe:
+            account.gold_charter = False
+            Award.take_away("charter_subscriber", account)
+
         Award.take_away("reddit_gold", account)
+        account.gold = False
         account._commit()
-        if g.lounge_reddit:
+
+        if g.lounge_reddit and not getattr(account, "gold_charter", False):
             sr = Subreddit._by_name(g.lounge_reddit)
             sr.remove_contributor(account)
 
 admintools = AdminTools()
+
+def cancel_subscription(subscr_id):
+    q = Account._query(Account.c.gold_subscr_id == subscr_id, data=True)
+    l = list(q)
+    if len(l) != 1:
+        g.log.warning("Found %d matches for canceled subscription %s"
+                      % (len(l), subscr_id))
+    for account in l:
+        account.gold_subscr_id = None
+        account._commit()
+        g.log.info("%s canceled their recurring subscription %s" %
+                   (account.name, subscr_id))
+
+def all_gold_users():
+    q = Account._query(Account.c.gold == True, data=True,
+                       sort="_id")
+    return fetch_things2(q)
+
+def accountid_from_paypalsubscription(subscr_id):
+    if subscr_id is None:
+        return None
+
+    q = Account._query(Account.c.gold_subscr_id == subscr_id,
+                       data=False)
+    l = list(q)
+    if l:
+        return l[0]._id
+    else:
+        return None
+
+def update_gold_users(verbose=False):
+    now = datetime.now(g.display_tz)
+    minimum = None
+    count = 0
+    expiration_dates = {}
+
+    for account in all_gold_users():
+        if not hasattr(account, "gold_expiration"):
+            g.log.error("%s has no gold_expiration" % account.name)
+            continue
+
+        delta = account.gold_expiration - now
+        days_left = delta.days
+
+        hc_key = "gold_expiration_notice-" + account.name
+
+        if days_left < 0:
+            if verbose:
+                print "%s just expired" % account.name
+            admintools.degolden(account)
+            send_system_message(account, "Your reddit gold subscription has expired. :(",
+               "Your subscription to reddit gold has expired. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you don't want to, please write to us and tell us where we let you down, so we can work on fixing the problem.\n\nThis is a system account whose mail we don't read very often, so please address all feedback to 912@reddit.com.")
+            continue
+
+        count += 1
+
+        if verbose:
+            exp_date = account.gold_expiration.strftime('%Y-%m-%d')
+            expiration_dates.setdefault(exp_date, 0)
+            expiration_dates[exp_date] += 1
+
+#           print "%s expires in %d days" % (account.name, days_left)
+            if minimum is None or delta < minimum[0]:
+                minimum = (delta, account)
+
+        if days_left <= 3 and not g.hardcache.get(hc_key):
+            if verbose:
+                print "%s expires soon: %s days" % (account.name, days_left)
+            if getattr(account, "gold_subscr_id", None):
+                if verbose:
+                    print "Not sending notice to %s (%s)" % (account.name,
+                                                     account.gold_subscr_id)
+            else:
+                if verbose:
+                    print "Sending notice to %s" % account.name
+                g.hardcache.set(hc_key, True, 86400 * 10)
+                send_system_message(account, "Your reddit gold subscription is about to expire!",
+                                    "Your subscription to reddit gold will be expiring soon. [Click here for details on how to renew, or to set up an automatically-renewing subscription.](http://www.reddit.com/help/gold) Or, if you think we suck, just let your subscription lapse and go back to being a regular user.\n\nBy the way, this is a system account whose mail we don't read very often, so if you need to reply, please write to 912@reddit.com.")
+
+    if verbose:
+        for exp_date in sorted(expiration_dates.keys()):
+            num_expiring = expiration_dates[exp_date]
+            print '%s %3d %s' % (exp_date, num_expiring, '*' * num_expiring)
+        print "%s goldmembers" % count
+        if minimum is None:
+            print "Nobody found."
+        else:
+            delta, account = minimum
+            print "Next expiration is %s, in %d days" % (account.name, delta.days)
 
 def is_banned_IP(ip):
     return False

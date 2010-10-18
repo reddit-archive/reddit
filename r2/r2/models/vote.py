@@ -184,7 +184,7 @@ class Vote(MultiRelation('vote',
         cv.valid_user, cv.valid_thing = v.valid_user, v.valid_thing
         cv.ip = v.ip
         if getattr(v, 'organic', False) or hasattr(cv, 'organic'):
-            cv.organic = v.organic
+            cv.organic = getattr(v, 'organic', False)
         cv._commit()
 
         queries.changed(votee, True)

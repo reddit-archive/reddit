@@ -146,8 +146,9 @@ def make_map(global_conf={}, app_conf={}):
     mc('/promoted/', controller='promoted', action = "listing",
        sort = "")
 
-    mc('/health/threads', controller='health', action='threads')
     mc('/health', controller='health', action='health')
+    mc('/health/:action', controller='health',
+       requirements=dict(action="threads|dump|sleep"))
     mc('/shutdown', controller='health', action='shutdown')
 
     mc('/', controller='hot', action='listing')
@@ -176,7 +177,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
-       requirements=dict(action="help|blog"))
+       requirements=dict(action="help|blog|faq"))
     mc('/help/*anything', controller='embed', action='help')
 
     mc('/goto', controller='toolbar', action='goto')

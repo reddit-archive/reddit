@@ -41,7 +41,7 @@ from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import randomized_promotion_list, get_promote_srid
-from r2.lib.contrib.pysolr import SolrError
+import socket
 
 from admin import admin_profile_query
 
@@ -156,29 +156,7 @@ class ListingController(RedditController):
             not c.user_is_sponsor):
             abort(403, 'forbidden')
         listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
-        try:
-            return listing.listing()
-        except SolrError, e:
-            errmsg = "SolrError: %r %r" % (e, self.builder_obj)
-
-            if (str(e) == 'None'):
-                # Production error logs only get non-None errors
-                g.log.debug(errmsg)
-            else:
-                g.log.error(errmsg)
-
-            sf = SearchFail()
-
-            us = unsafe(sf.render())
-
-            errpage = pages.RedditError(_('search failed'), us)
-
-            c.response = Response()
-            c.response.status_code = 503
-            request.environ['usable_error_content'] = errpage.render()
-            request.environ['retry_after'] = 60
-
-            abort(503)
+        return listing.listing()
 
     def title(self):
         """Page <title>"""
@@ -224,7 +202,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def spotlight(self):
-        if (c.site == Default
+        if (isinstance(c.site, DefaultSR)
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
@@ -300,7 +278,7 @@ class HotController(FixListing, ListingController):
                 return s
 
         # no organic box on a hot page, then show a random promoted link
-        elif c.site != Default:
+        elif not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors:
             link_ids = randomized_promotion_list(c.user, c.site)
             if link_ids:
                 res = wrap_links(link_ids, wrapper = self.builder_wrapper,
@@ -311,10 +289,10 @@ class HotController(FixListing, ListingController):
 
     def query(self):
         #no need to worry when working from the cache
-        if g.use_query_cache or c.site == Default:
+        if g.use_query_cache or isinstance(c.site, DefaultSR):
             self.fix_listing = False
 
-        if c.site == Default:
+        if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
                 srlimit = Subreddit.sr_limit
                 over18 = c.user.has_subscribed and c.over18
@@ -496,8 +474,7 @@ class UserController(ListingController):
     @property
     def menus(self):
         res = []
-        if (self.vuser.gold and 
-            self.where in ('overview', 'submitted', 'comments')):
+        if (self.where in ('overview', 'submitted', 'comments')):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
                 res.append(TimeMenu(default = self.time))
@@ -524,6 +501,11 @@ class UserController(ListingController):
                 return False
             if self.time != 'all':
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
+            if c.user == self.vuser:
+                if not item.likes and self.where == 'liked':
+                    return False
+                if item.likes is not False and self.where == 'disliked':
+                    return False
             return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
                      not getattr(item, "deleted", False)))
@@ -565,8 +547,8 @@ class UserController(ListingController):
         return q
 
     @validate(vuser = VExistingUname('username'),
-              sort = VMenu('t', ProfileSortMenu),
-              time = VMenu('t', TimeMenu))
+              sort = VMenu('sort', ProfileSortMenu, remember = False),
+              time = VMenu('t', TimeMenu, remember = False))
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
         self.sort = sort
@@ -576,9 +558,6 @@ class UserController(ListingController):
         if not vuser:
             return self.abort404()
 
-        if not vuser.gold:
-            self.sort = 'new'
-            self.time = 'all'
         if self.sort in  ('hot', 'new'):
             self.time = 'all'
 

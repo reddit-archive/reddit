@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from datetime import datetime
+from socket import gethostbyaddr
 
 from pylons import g
 
@@ -31,6 +32,7 @@ from r2.lib.utils import tup, Storage
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib import cache
 from uuid import uuid1
+from itertools import chain
 
 cassandra = g.cassandra
 thing_cache = g.thing_cache
@@ -56,7 +58,7 @@ CL = Storage(ZERO   = ConsistencyLevel.ZERO,
 # wire for a given row (this should be increased if we start working
 # with classes with lots of columns, like Account which has lots of
 # karma_ rows, or we should not do that)
-max_column_count = 100
+max_column_count = 10000
 
 class CassandraException(Exception):
     """Base class for Exceptions in tdb_cassandra"""
@@ -80,6 +82,10 @@ class NotFound(CassandraException):
        all. This is probably an end-user's fault."""
     pass
 
+def will_write():
+    if disallow_db_writes:
+        raise CassandraException("Not so fast! DB writes have been disabled")
+
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
@@ -88,7 +94,12 @@ class ThingMeta(type):
 
         if cls._use_db:
             if cls._type_prefix is None:
-                raise TdbException('_type_prefix not present for %r' % cls)
+                # default to the class name
+                cls._type_prefix = name
+
+            if '_' in cls._type_prefix:
+                raise TdbException("Cannot have _ in type prefix %r (for %r)"
+                                   % (cls._type_prefix, name))
 
             if cls._type_prefix in thing_types:
                 raise InvariantException("Redefining type #%s?" % (cls._type_prefix))
@@ -107,14 +118,17 @@ class ThingMeta(type):
                 # lines)
                 boot_cfs = cassandra.describe_keyspace(keyspace)
                 if name not in boot_cfs:
-                    raise ConfigurationException("ColumnFamily %s does not exist" % name)
+                    raise ConfigurationException("ColumnFamily %r does not exist" % (name,))
 
             thing_types[cls._type_prefix] = cls
 
-            cls.cf = pycassa.ColumnFamily(cassandra, keyspace,
-                                          cf_name,
-                                          read_consistency_level = read_consistency_level,
-                                          write_consistency_level = write_consistency_level)
+            cls._read_consistency_level = read_consistency_level
+            cls._write_consistency_level = write_consistency_level
+
+            cls._cf = pycassa.ColumnFamily(cassandra, keyspace,
+                                           cf_name,
+                                           read_consistency_level = read_consistency_level,
+                                           write_consistency_level = write_consistency_level)
 
         cls._kind = name
 
@@ -135,15 +149,19 @@ class ThingBase(object):
 
     _use_db = False
 
+    _value_type = None # if set, overrides all of the _props types
+                       # below. Used for Views. One of 'int', 'float',
+                       # 'bool', 'pickle', 'date', 'bytes', 'str'
+
     _int_props = ()
     _float_props = () # note that we can lose resolution on these
     _bool_props = ()
     _pickle_props = ()
     _date_props = () # note that we can lose resolution on these
     _bytes_props = ()
-
-    _str_props = () # at present we never actually read out of here,
-                    # so it's more of a comment
+    _str_props = () # at present we never actually read out of here
+                    # since it's the default if none of the previous
+                    # matches
 
     # the value that we assume a property to have if it is not found
     # in the DB. Note that we don't do type-checking here, so if you
@@ -188,7 +206,11 @@ class ThingBase(object):
         assert all(isinstance(_id, basestring) and str(_id) for _id in ids)
 
         def lookup(l_ids):
-            rows = cls.cf.multiget(l_ids, column_count=max_column_count)
+            # TODO: if we get back max_column_count columns for a
+            # given row, check a flag on the class as to whether to
+            # refetch for more of them. This could be important with
+            # large Views, for instance
+            rows = cls._cf.multiget(l_ids, column_count=max_column_count)
 
             l_ret = {}
             for t_id, row in rows.iteritems():
@@ -242,26 +264,45 @@ class ThingBase(object):
         if not self._id:
             raise TdbException('no cache key for uncommitted %r' % (self,))
 
-        return self._cache_prefix() + self._id
+        return self._cache_key_id(self._id)
+
+    @classmethod
+    def _cache_key_id(cls, t_id):
+        return cls._cache_prefix() + t_id
+
+    @classmethod
+    def _wcl(cls, wcl, default = None):
+        if wcl is not None:
+            return wcl
+        elif default is not None:
+            return default
+        return cls._write_consistency_level
+
+    def _rcl(cls, rcl, default = None):
+        if rcl is not None:
+            return rcl
+        elif default is not None:
+            return default
+        return cls._read_consistency_level
 
     @classmethod
     def _deserialize_column(cls, attr, val):
-        if attr in cls._int_props:
+        if attr in cls._int_props or (cls._value_type and cls._value_type == 'int'):
             try:
                 return int(val)
             except ValueError:
                 return long(val)
-        elif attr in cls._float_props:
+        elif attr in cls._float_props or (cls._value_type and cls._value_type == 'float'):
             return float(val)
-        elif attr in cls._bool_props:
+        elif attr in cls._bool_props or (cls._value_type and cls._value_type == 'bool'):
             # note that only the string "1" is considered true!
             return val == '1'
-        elif attr in cls._pickle_props:
+        elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
             return pickle.loads(val)
-        elif attr in cls._date_props or attr == cls._timestamp_prop:
+        elif attr in cls._date_props or attr == cls._timestamp_prop or (cls._value_type and cls._value_type == 'date'):
             as_float = float(val)
             return datetime.utcfromtimestamp(as_float).replace(tzinfo = tz)
-        elif attr in cls._bytes_props:
+        elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
             return val
 
         # otherwise we'll assume that it's a utf-8 string
@@ -269,17 +310,20 @@ class ThingBase(object):
 
     @classmethod
     def _serialize_column(cls, attr, val):
-        if attr in cls._int_props or attr in cls._float_props:
+        if (attr in chain(cls._int_props, cls._float_props) or
+            (cls._value_type and cls._value_type in ('float', 'int'))):
             return str(val)
-        elif attr in cls._bool_props:
+        elif attr in cls._bool_props or (cls._value_type and cls._value_type == 'bool'):
             # n.b. we "truncate" this to a boolean, so truthy but
             # non-boolean values are discarded
             return '1' if val else '0'
-        elif attr in cls._pickle_props:
+        elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
             return pickle.dumps(val)
-        elif attr in cls._date_props:
+        elif (attr in cls._date_props or attr == cls._timestamp_prop or
+              (cls._value_type and cls._value_type == 'date')):
+            # the _timestamp_prop is handled in _commit(), not here
             return cls._serialize_date(val)
-        elif attr in cls._bytes_props:
+        elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
             return val
 
         return unicode(val).encode('utf-8')
@@ -317,8 +361,7 @@ class ThingBase(object):
         return len(self._dirties) or not self._committed
 
     def _commit(self):
-        if disallow_db_writes:
-            raise CassandraException("Not so fast! DB writes have been disabled")
+        will_write()
 
         if not self._dirty:
             return
@@ -364,7 +407,7 @@ class ThingBase(object):
         if not updates:
             return
 
-        self.cf.insert(self._id, updates)
+        self._cf.insert(self._id, updates)
 
         self._orig.update(self._dirties)
         self._dirties.clear()
@@ -539,17 +582,56 @@ class Relation(ThingBase):
     @classmethod
     def _datekey(cls, date):
         # ick
-        return str(long(cls._serialize_date(cls.date)))
+        return str(long(cls._serialize_date(date)))
 
 class Query(object):
     """A query across a CF. Note that while you can query rows from a
      CF that has a RandomPartitioner, you won't get them in any sort
      of order, which makes 'after' unreliable"""
-    def __init__(self, cls, after=None, limit=100, chunk_size=100):
+    def __init__(self, cls, after=None, limit=100, chunk_size=100,
+                 _max_column_count = max_column_count):
         self.cls = cls
         self.after = after
         self.limit = limit
         self.chunk_size = chunk_size
+        self.max_column_count = _max_column_count
+
+    def __copy__(self):
+        return Query(self.cls, after=self.after, limit=self.limit,
+                     chunk_size=self.chunk_size,
+                     _max_column_count = self.max_column_count)
+    copy = __copy__
+
+    def _dump(self):
+        q = self.copy()
+        q.after = q.limit = None
+
+        for row in q:
+            print row
+            for col, val in row._t.iteritems():
+                print '\t%s: %r' % (col, val)
+
+    def _delete_all(self, write_consistency_level = None):
+        raise InvariantException("Nice try, FBI")
+
+        will_write()
+
+        q = self.copy()
+        q.after = q.limit = None
+
+        # since we're just deleting it, we only need enough columns to
+        # avoid reading ghost rows
+        q.max_column_count = 1
+
+        # I'm going to guess that if they are trying to flush out an
+        # entire CF, they aren't that worried about how long it takes
+        # to become consistent. So we'll default to the fastest way
+        wcl = q.cls._wcl(write_consistency_level, CL.ONE)
+
+        for row in q:
+            print row
+            q.cls._cf.remove(row._id, write_consistency_level = wcl)
+            thing_cache.delete(q.cls._cache_key_id(row._id))
 
     def __iter__(self):
         # n.b.: we aren't caching objects that we find this way in the
@@ -559,9 +641,13 @@ class Query(object):
         after = '' if self.after is None else self.after._id
         limit = self.limit
 
-        r = self.cls.cf.get_range(start=after, row_count=limit,
-                                  column_count = max_column_count)
+        r = self.cls._cf.get_range(start=after, row_count=limit,
+                                   column_count = self.max_column_count)
         for t_id, columns in r:
+            if not columns:
+                # a ghost row
+                continue
+
             t = self.cls._from_serialized_columns(t_id, columns)
             yield t
 
@@ -571,6 +657,12 @@ class View(ThingBase):
 
     _timestamp_prop = None
 
+    _value_type = 'str'
+
+    def _values(self):
+        """Retrieve the entire contents of the view"""
+        return self._t
+
     @staticmethod
     def _gen_uuid():
         """Convenience method for generating UUIDs for view
@@ -579,3 +671,67 @@ class View(ThingBase):
         
         return uuid1()
 
+    @classmethod
+    def _set_values(cls, row_key, col_values, write_consistency_level = None):
+        """Set a set of column values in a row of a View without
+           looking up the whole row first"""
+        # col_values =:= dict(col_name -> col_value)
+
+        will_write()
+
+        updates = dict((col_name, cls._serialize_column(col_name, col_val))
+                       for (col_name, col_val) in col_values.iteritems())
+
+        # with some quick tweaks to pycassa we could have a version
+        # that takes multiple row-keys too, if that ever becomes a
+        # problem
+        cls._cf.insert(row_key, updates, write_consistency_level = cls._wcl(write_consistency_level))
+
+        # can we be smarter here?
+        thing_cache.delete(cls._cache_key_id(row_key))
+
+def ring_report():
+    sizes = {}
+    nodes = {} # token -> node
+
+    ring = cassandra.describe_ring(keyspace)
+    ring.sort(key=lambda tr: long(tr.start_token))
+
+    for x, tr in enumerate(ring):
+        next = ring[x+1] if x < len(ring)-1 else ring[0]
+
+        # tr = ring1[x]
+        # next = ring1[x+1]
+
+        s = long(tr.start_token)
+        e = long(tr.end_token)
+
+        if e > s:
+            # a regular range
+            l = e-s
+        else:
+            # range that overlaps 0
+            l = e+2**127-s
+
+        for ep in tr.endpoints:
+            sizes.setdefault(ep, []).append(float(l)/2**127)
+
+        natural = set(tr.endpoints) - set(next.endpoints)
+        assert len(natural) == 1
+        natural = natural.pop()
+
+        nodes[e] = natural
+
+    totalsize = sum(map(sum, sizes.values()))
+    for token, ip in sorted(nodes.items(),
+                              key = lambda x: x[0]):
+        size = sizes[ip]
+        name = gethostbyaddr(ip)[0]
+
+        fmt_perc = lambda num: '%s%2.2f%%' % (' ' if num < 10 else '',
+                                              num)
+        maxtoklen = len(str(2**127))
+
+        print '%16s\t%s\t%s\t%s' % (ip, name,
+                                    fmt_perc(sum(size)/totalsize * 100),
+                                    str(token).rjust(maxtoklen))

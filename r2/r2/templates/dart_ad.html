@@ -14,15 +14,41 @@
       #adlink a:hover {text-decoration: underline}
     </style>
     <script language="javascript" type="text/javascript">
+      //<![CDATA[
       function rwt(a) {
         var ad = document.getElementById("ad")
         var s = ad.getElementsByTagName("embed")[0]
-        if (!s) s = ad.getElementsByTagName("iframe")[0]
+        if (!s) {
+          var iframes = ad.getElementsByTagName("iframe");
+          for(var i = 0; i < iframes.length; i++) {
+             /* if pubmatic. there will be a tracking beacon with a unique ID*/
+             if (iframes[i].getAttribute('name') == 'pbeacon') {
+               var url = iframes[i].src;
+               url = url.split('?');
+               if (url[1]) {
+                 var x = url[1].split('&');
+                 for(var j = 0; j < x.length; j++) {
+                    var y = x[j].split('=');
+                    if (y[0] == 'adId') {
+                      s = url[0] + "?" + x[j];
+                      a.href = "http://ads.reddit.com/submit?url=" + encodeURIComponent(s);
+                      return true;
+                    }
+                 }
+               }
+             } else if(iframes[i].offsetHeight > 100 && 
+                       iframes[i].offsetWidth > 100) {
+                s = iframes[i];
+                break;
+             }
+          }
+        }
         if (!s) s = ad.getElementsByTagName("img")[0]
         if (s) a.href = "http://ads.reddit.com/submit?url=" + encodeURIComponent(s.src);
         else a.target = ""
         return true;
       }
+      //]]>
     </script>
   </head>
   <body style="padding: 0; margin: 0;">

@@ -34,6 +34,7 @@ def load_traffic_uncached(interval, what, iden,
     Fetches pickled traffic from the traffic server and returns it as a list.
     On connection failure (or no data) returns an empy list. 
     """
+    from r2.lib import promote
     def format_date(d):
         if hasattr(d, "tzinfo"):
             if d.tzinfo is None:
@@ -44,8 +45,18 @@ def load_traffic_uncached(interval, what, iden,
     
     traffic_url = os.path.join(g.traffic_url, interval, what, iden)
     args = {}
+    if what == 'thing' and interval == 'hour':
+        if start_time:
+            if not isinstance(start_time, datetime.datetime):
+                start_time = datetime.datetime(*start_time.timetuple()[:3])
+            start_time -= promote.timezone_offset
+        if stop_time:
+            if not isinstance(stop_time, datetime.datetime):
+                stop_time = datetime.datetime(*stop_time.timetuple()[:3])
+            stop_time -= promote.timezone_offset
     if start_time:
         args['start_time'] = format_date(start_time)
+            
     if stop_time:
         args['stop_time'] = format_date(stop_time)
     if npoints:
@@ -61,7 +72,7 @@ def load_traffic_uncached(interval, what, iden,
     except socket.error:
         return []
 
-@memoize("cached_traffic", time = 60)
+#@memoize("cached_traffic", time = 60)
 def load_traffic(interval, what, iden = '', 
                  start_time = None, stop_time = None,
                  npoints = None):

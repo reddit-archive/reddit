@@ -33,7 +33,7 @@ try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
     from reddit_base import RedditController, Cookies
-    from r2.models.subreddit import Default, Subreddit
+    from r2.models.subreddit import DefaultSR, Subreddit
     from r2.models.link import Link
     from r2.lib import pages
     from r2.lib.strings import strings, rand_strings
@@ -110,7 +110,7 @@ class ErrorController(RedditController):
 
     def send403(self):
         c.response.status_code = 403
-        c.site = Default
+        c.site = DefaultSR()
         res = pages.RedditError(_("forbidden (%(domain)s)") %
                                 dict(domain=g.domain))
         return res.render()
@@ -122,10 +122,11 @@ class ErrorController(RedditController):
         if c.site._spam and not c.user_is_admin:
             subject = ("the subreddit /r/%s has been incorrectly banned" %
                        c.site.name)
-            message = (strings.banned_subreddit %
-                       dict(link = '/message/compose?to=%s&subject=%s' %
-                            (url_escape(g.admin_message_acct),
-                             url_escape(subject))))
+            lnk = ("/r/redditrequest/submit?url=%s&title=%s"
+                   % (url_escape("http://%s/r/%s" % (g.domain, c.site.name)),
+                      ("the subreddit /r/%s has been incorrectly banned" %
+                       c.site.name)))
+            message = strings.banned_subreddit % dict(link = lnk)
 
             res = pages.RedditError(_('this reddit has been banned'),
                                     unsafe(safemarkdown(message)))

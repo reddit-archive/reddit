@@ -50,10 +50,10 @@ def make_solution():
 
 def get_image(iden):
     key = make_key(iden)
-    solution = g.rendercache.get(key)
+    solution = g.cache.get(key)
     if not solution:
         solution = make_solution()
-        g.rendercache.set(key, solution, time = 300)
+        g.cache.set(key, solution, time = 300)
     return RandCaptcha(solution=solution).render()
 
 def valid_solution(iden, solution):
@@ -63,10 +63,10 @@ def valid_solution(iden, solution):
         or not solution
         or len(iden) != IDEN_LENGTH
         or len(solution) != SOL_LENGTH
-        or solution.upper() != g.rendercache.get(key)): 
+        or solution.upper() != g.cache.get(key)):
         solution = make_solution()
-        g.rendercache.set(key, solution, time = 300)
+        g.cache.set(key, solution, time = 300)
         return False
     else:
-        g.rendercache.delete(key)
+        g.cache.delete(key)
         return True

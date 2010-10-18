@@ -6,8 +6,8 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
-from r2.lib import amqp, sup
-from r2.lib.comment_tree import add_comment, link_comments, update_comment_votes
+from r2.lib import amqp, sup, filters
+from r2.lib.comment_tree import add_comments, update_comment_votes
 
 import cPickle as pickle
 
@@ -294,9 +294,8 @@ def get_spam(sr):
         results = [ get_spam_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
-        return get_spam_links(sr)
-    #return merge_results(get_spam_links(sr),
-    #                     get_spam_comments(sr))
+        return merge_results(get_spam_links(sr),
+                             get_spam_comments(sr))
 
 def get_reported_links(sr):
     q_l = Link._query(Link.c.reported != 0,
@@ -315,12 +314,13 @@ def get_reported_comments(sr):
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
         srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
-        results = [ get_reported_links(sr) for sr in srs ]
+        results = []
+        results.extend(get_reported_links(sr) for sr in srs)
+        results.extend(get_reported_comments(sr) for sr in srs)
         return merge_results(*results)
     else:
-        return get_reported_links(sr)
-    #return merge_results(get_reported_links(sr),
-    #                     get_reported_comments(sr))
+        return merge_results(get_reported_links(sr),
+                             get_reported_comments(sr))
 
 # TODO: Wow, what a hack. I'm doing this in a hurry to make
 # /r/blah/about/trials and /r/blah/about/modqueue work. At some point
@@ -378,11 +378,15 @@ def get_modqueue(sr):
 
         for sr in srs:
             results.append(get_reported_links(sr))
+            results.append(get_reported_comments(sr))
             results.append(get_spam_links(sr))
+            results.append(get_spam_comments(sr))
     else:
         results.append(get_trials_links(sr))
         results.append(get_reported_links(sr))
+        results.append(get_reported_comments(sr))
         results.append(get_spam_links(sr))
+        results.append(get_spam_comments(sr))
 
     return merge_results(*results)
 
@@ -391,7 +395,7 @@ def get_domain_links_old(domain, sort, time):
 
 def get_domain_links(domain, sort, time):
     from r2.lib.db import operators
-    q = Link._query(operators.domain(Link.c.url) == domain,
+    q = Link._query(operators.domain(Link.c.url) == filters._force_utf8(domain),
                     sort = db_sort(sort),
                     data = True)
     if time != "all":
@@ -498,7 +502,7 @@ def get_unread_inbox(user):
                          get_unread_messages(user),
                          get_unread_selfreply(user))
 
-def add_queries(queries, insert_items = None, delete_items = None):
+def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
        recomputed against the database."""
@@ -508,10 +512,16 @@ def add_queries(queries, insert_items = None, delete_items = None):
     for q in queries:
         if insert_items and q.can_insert():
             log.debug("Inserting %s into query %s" % (insert_items, q))
-            worker.do(q.insert, insert_items)
+            if foreground:
+                q.insert(insert_items)
+            else:
+                worker.do(q.insert, insert_items)
         elif delete_items and q.can_delete():
             log.debug("Deleting %s from query %s" % (delete_items, q))
-            worker.do(q.delete, delete_items)
+            if foreground:
+                q.delete(delete_items)
+            else:
+                worker.do(q.delete, delete_items)
         else:
             raise Exception("Cannot update query %r!" % (q,))
 
@@ -532,11 +542,6 @@ def all_queries(fn, obj, *param_lists):
 
     results = [fn(*p) for p in params]
     return results
-
-def display_jobs(jobs):
-    for r in jobs:
-        print r
-    print len(jobs)
 
 ## The following functions should be called after their respective
 ## actions to update the correct listings.
@@ -568,14 +573,13 @@ def new_comment(comment, inbox_rels):
         job.append(get_all_comments())
         add_queries(job, delete_items = comment)
     else:
-        #if comment._spam:
-        #    sr = Subreddit._byID(comment.sr_id)
-        #    job.append(get_spam_comments(sr))
+        if comment._spam:
+            sr = Subreddit._byID(comment.sr_id)
+            job.append(get_spam_comments(sr))
         add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
-            l = Link._byID(comment.link_id,data=True)
-            add_comment_tree(comment, l)
+            add_comment_tree([comment])
 
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments (to minimise lock contention)
@@ -597,7 +601,7 @@ def new_subreddit(sr):
     amqp.add_item('new_subreddit', sr._fullname)
 
 
-def new_vote(vote):
+def new_vote(vote, foreground=False):
     user = vote._thing1
     item = vote._thing2
 
@@ -608,12 +612,11 @@ def new_vote(vote):
         sr = item.subreddit_slow
         results = []
         author = Account._byID(item.author_id)
-        if author.gold:
-            for sort in ('hot', 'top', 'controversial', 'new'):
-                if isinstance(item, Link):
-                    results.append(get_submitted(author, sort, 'all'))
-                if isinstance(item, Comment):
-                    results.append(get_comments(author, sort, 'all'))
+        for sort in ('hot', 'top', 'controversial', 'new'):
+            if isinstance(item, Link):
+                results.append(get_submitted(author, sort, 'all'))
+            if isinstance(item, Comment):
+                results.append(get_comments(author, sort, 'all'))
 
 
         # don't do 'new', because that was done by new_link, and the
@@ -628,7 +631,7 @@ def new_vote(vote):
             for sort in ("hot", "top", "controversial"):
                 results.append(get_domain_links(domain, sort, "all"))
 
-        add_queries(results, insert_items = item)
+        add_queries(results, insert_items = item, foreground=foreground)
 
     vote._fast_query_timestamp_touch(user)
     
@@ -747,7 +750,7 @@ def del_or_ban(things, why):
             add_queries(results, delete_items = links)
 
         if comments:
-            # add_queries([get_spam_comments(sr)], insert_items = comments)
+            add_queries([get_spam_comments(sr)], insert_items = comments)
             add_queries([get_all_comments()], delete_items = comments)
 
     changed(things)
@@ -777,7 +780,7 @@ def unban(things):
             add_queries(results, insert_items = links)
 
         if comments:
-            #add_queries([get_spam_comments(sr)], delete_items = comments)
+            add_queries([get_spam_comments(sr)], delete_items = comments)
             add_queries([get_all_comments()], insert_items = comments)
 
     changed(things)
@@ -786,9 +789,9 @@ def new_report(thing):
     if isinstance(thing, Link):
         sr = Subreddit._byID(thing.sr_id)
         add_queries([get_reported_links(sr)], insert_items = thing)
-    #elif isinstance(thing, Comment):
-    #    sr = Subreddit._byID(thing.sr_id)
-    #    add_queries([get_reported_comments(sr)], insert_items = thing)
+    elif isinstance(thing, Comment):
+        sr = Subreddit._byID(thing.sr_id)
+        add_queries([get_reported_comments(sr)], insert_items = thing)
 
 def clear_reports(things):
     by_srid, srs = _by_srid(things)
@@ -811,9 +814,9 @@ def add_all_ban_report_srs():
     q = Subreddit._query(sort = asc('_date'))
     for sr in fetch_things2(q):
         add_queries([get_spam_links(sr),
-                     #get_spam_comments(sr),
+                     get_spam_comments(sr),
                      get_reported_links(sr),
-                     #get_reported_comments(sr),
+                     get_reported_comments(sr),
                      ])
         
 def add_all_srs():
@@ -826,9 +829,9 @@ def add_all_srs():
         for q in all_queries(get_links, sr, time_filtered_sorts, db_times.keys()):
             q.update()
         get_spam_links(sr).update()
-        #get_spam_comments(sr).update()
+        get_spam_comments(sr).update()
         get_reported_links(sr).update()
-        #get_reported_comments(sr).update()
+        get_reported_comments(sr).update()
 
 def update_user(user):
     if isinstance(user, str):
@@ -854,11 +857,14 @@ def add_all_users():
     for user in fetch_things2(q):
         update_user(user)
 
-def add_comment_tree(comment, link):
+def add_comment_tree(comments):
     #update the comment cache
-    add_comment(comment)
+    add_comments(comments)
     #update last modified
-    set_last_modified(link, 'comments')
+    links = Link._byID(list(set(com.link_id for com in tup(comments))),
+                       data = True, return_dict = False)
+    for link in links:
+        set_last_modified(link, 'comments')
 
 # amqp queue processing functions
 
@@ -876,41 +882,17 @@ def run_new_comments():
 
     amqp.consume_items('newcomments_q', _run_new_comment)
 
-def run_commentstree():
+def run_commentstree(limit=100):
     """Add new incoming comments to their respective comments trees"""
 
-    def _run_commentstree(msg):
-        fname = msg.body
-        comment = Comment._by_fullname(fname, data=True)
+    def _run_commentstree(msgs, chan):
+        comments = Comment._by_fullname([msg.body for msg in msgs],
+                                        data = True, return_dict = False)
+        print 'Processing %r' % (comments,)
 
-        link = Link._byID(comment.link_id,
-                          data=True)
+        add_comment_tree(comments)
 
-        print 'Processing %r from %r' % (comment, link)
-
-        try:
-            add_comment_tree(comment, link)
-        except KeyError:
-            # Hackity hack. Try to recover from a corrupted comment
-            # tree
-            print "Trying to fix broken comments-tree."
-            link_comments(link._id, _update=True)
-            add_comment_tree(comment, link)
-
-    amqp.consume_items('commentstree_q', _run_commentstree, verbose=False)
-
-#def run_new_links():
-#    """queue to add new links to the 'new' page. note that this isn't
-#       in use until the spam_q plumbing is"""
-#
-#    def _run_new_links(msg):
-#        link = Link._by_fullname(msg.body, data=True)
-#
-#        srs = Subreddit._byID(l.sr_id)
-#        results = [get_links(sr, 'new', 'all')]
-#        add_queries(results, insert_items = [link])
-#
-#    amqp.consume_items('newpage_q', _run_new_links, limit=100)
+    amqp.handle_items('commentstree_q', _run_commentstree, limit = limit)
 
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
@@ -955,7 +937,7 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic, cheater = False):
+def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
@@ -965,15 +947,15 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
         return
 
     # keep track of upvotes in the hard cache by subreddit
-    sr_id = getattr(thing, "sr_id", None)
-    if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
-        and v.valid_thing):
-        now = datetime.now(g.tz).strftime("%Y/%m/%d")
-        g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
-                        sr_id, time = 86400 * 7) # 1 week for now
+    #sr_id = getattr(thing, "sr_id", None)
+    #if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
+    #    and v.valid_thing):
+    #    now = datetime.now(g.tz).strftime("%Y/%m/%d")
+    #    g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
+    #                    sr_id, time = 86400 * 7) # 1 week for now
 
     if isinstance(thing, Link):
-        new_vote(v)
+        new_vote(v, foreground=foreground)
 
         #update the modified flags
         set_last_modified(user, 'liked')
@@ -998,13 +980,35 @@ def handle_vote(user, thing, dir, ip, organic, cheater = False):
             sup.add_update(user, 'commented')
 
 
-def process_votes(limit=1000):
+def process_votes_single(**kw):
     # limit is taken but ignored for backwards compatibility
 
-    def _handle_vote(msgs, chan):
+    def _handle_vote(msg):
         #assert(len(msgs) == 1)
+        r = pickle.loads(msg.body)
+
+        uid, tid, dir, ip, organic, cheater = r
+        voter = Account._byID(uid, data=True)
+        votee = Thing._by_fullname(tid, data = True)
+        if isinstance(votee, Comment):
+            update_comment_votes([votee])
+
+        # I don't know how, but somebody is sneaking in votes
+        # for subreddits
+        if isinstance(votee, (Link, Comment)):
+            print (voter, votee, dir, ip, organic, cheater)
+            handle_vote(voter, votee, dir, ip, organic,
+                        cheater = cheater, foreground=False)
+
+    amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
+
+def process_votes_multi(limit=100):
+    # limit is taken but ignored for backwards compatibility
+    def _handle_vote(msgs, chan):
         comments = []
+
         for msg in msgs:
+            tag = msg.delivery_tag
             r = pickle.loads(msg.body)
 
             uid, tid, dir, ip, organic, cheater = r
@@ -1013,13 +1017,33 @@ def process_votes(limit=1000):
             if isinstance(votee, Comment):
                 comments.append(votee)
 
+            if not isinstance(votee, (Link, Comment)):
+                # I don't know how, but somebody is sneaking in votes
+                # for subreddits
+                continue
+
             print (voter, votee, dir, ip, organic, cheater)
-            handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater)
+            try:
+                handle_vote(voter, votee, dir, ip, organic,
+                            cheater=cheater, foreground=False)
+            except Exception, e:
+                print 'Rejecting %r:%r because of %r' % (msg.delivery_tag, r,e)
+                chan.basic_reject(msg.delivery_tag, requeue=True)
 
         update_comment_votes(comments)
 
     amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
+
+process_votes = process_votes_single
+
+def process_comment_sorts(limit=500):
+    def _handle_sort(msgs, chan):
+        cids = list(set(int(msg.body) for msg in msgs))
+        comments = Comment._byID(cids, data = True, return_dict = False)
+        print comments
+        update_comment_votes(comments)
+
+    amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
 
 try:
     from r2admin.lib.admin_queries import *

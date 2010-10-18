@@ -64,7 +64,7 @@ class BaseController(WSGIController):
             and md5.new(true_client_ip + g.ip_hash).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
-        elif remote_addr == g.proxy_addr and forwarded_for:
+        elif remote_addr in g.proxy_addr and forwarded_for:
             request.ip = forwarded_for.split(',')[-1]
         else:
             request.ip = environ['REMOTE_ADDR']

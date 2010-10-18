@@ -218,7 +218,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 saved        = "saved",
                                                 clicked      = "clicked",
                                                 hidden       = "hidden",
-                                                over_18       = "over_18", 
+                                                over_18      = "over_18",
                                                 likes        = "likes",
                                                 domain       = "domain",
                                                 title        = "title",
@@ -233,7 +233,8 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
                                                 is_self      = "is_self", 
-                                                permalink = "permalink"
+                                                permalink    = "permalink",
+                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -280,6 +281,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
                                                 parent_id    = "parent_id",
+                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):

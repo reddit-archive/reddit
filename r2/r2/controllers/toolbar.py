@@ -89,14 +89,22 @@ class ToolbarController(RedditController):
 
     @validate(link = VLink('id'))
     def GET_tb(self, link):
+        from r2.lib.media import thumbnail_url
+
         "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
         elif link.is_self or not link.subreddit_slow.can_view(c.user):
             return self.redirect(link.url)
 
+        if link.has_thumbnail:
+            thumbnail = thumbnail_url(link)
+        else:
+            thumbnail = None
+
         res = Frame(title = link.title,
                     url = link.url,
+                    thumbnail = thumbnail,
                     fullname = link._fullname)
         return spaceCompress(res.render())
 

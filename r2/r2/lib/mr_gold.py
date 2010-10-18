@@ -1,4 +1,12 @@
 """
+Generate the data for the listings for the time-based Account
+queries. The format is eventually that of the CachedResults objects
+used by r2.lib.db.queries (with some intermediate steps), so changes
+there may warrant changes here
+"""
+
+# to run:
+"""
  psql -F"\t" -A -t -d newreddit -U ri -h $LINKDBHOST \
      -c "\\copy (select t.thing_id,
                         'link',
@@ -12,14 +20,13 @@
                         reddit_data_link d,
                         reddit_data_account a
                   where t.thing_id = d.thing_id
-                    and not t.deleted
+                    and not t.spam and not t.deleted
                     and d.key = 'author_id'
                     and a.thing_id = cast(d.value as int)
                     and a.key = 'gold'
                     and t.date > now() - interval '1 year'
-                ) to 'gold.joined'"
-
-cat gold.joined | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "write_permacache()"
+                ) to 'links.joined'"
+cat links.joined | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "time_listings()" | sort -T. -S200m | paster --plugin=r2 run $INI r2/lib/mr_gold.py -c "write_permacache()"
 """
 import sys
 
@@ -35,7 +42,8 @@ from r2.lib.jsontemplates import make_fullname # what a strange place
 def time_listings(times = ('year','month','week','day','hour', 'all')):
     oldests = dict((t, epoch_seconds(timeago('1 %s' % t)))
                    for t in times if t != 'all')
-    oldests['all'] = 0
+    if 'all' in times:
+        oldests['all'] = 0
 
     @mr_tools.dataspec_m_thing(('author_id', int),)
     def process(link):

@@ -72,8 +72,8 @@ thing id-${what._fullname}
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
  %>
-<div class="${self.thing_css_class(thing)} ${rowclass} ${cls}" ${thing.display}
-     onclick="click_thing(this)">
+<div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)}"
+     ${thing.display} onclick="click_thing(this)">
   <p class="parent">
     ${self.ParentDiv()}
   </p>

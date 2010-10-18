@@ -139,6 +139,11 @@ class AppServiceMonitor(Templated):
     def get_db_load(cls, names):
         return g.servicecache.get_multi(names, prefix = cls.cache_key_small)
 
+    @classmethod
+    def mark_db_down(cls, name):
+        g.servicecache.set(cls.cache_key_small + name,
+                           ( 10 ** 6, 10 ** 6, -1, -1, -1))
+
     def server_load(self, mach_name):
         h = self.from_cache(host) 
         return h.load.most_recent()
@@ -180,6 +185,15 @@ class AppServiceMonitor(Templated):
         return dict((k, (d2, ip))
                     for k, (d2,ip,name) in self._db_info.iteritems()
                     if host == name)
+
+
+def mark_db_down(servicecache, name):
+    servicecache.set(AppServiceMonitor.cache_key_small + name,
+                       ( 10 ** 6, 10 ** 6, -1, -1, -1))
+
+def get_db_load(servicecache, names):
+    return servicecache.get_multi(names,
+                                  prefix = AppServiceMonitor.cache_key_small)
 
 
 class DataLogger(object):

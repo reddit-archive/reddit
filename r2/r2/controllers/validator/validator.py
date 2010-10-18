@@ -181,6 +181,10 @@ def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     return self.api_wrapper({})
 
 @api_validate
+def textresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
+    return self_method(self, *a, **kw)
+
+@api_validate
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     r = self_method(self, *a, **kw)
     return self.api_wrapper(r)
@@ -373,7 +377,7 @@ class VCssMeasure(Validator):
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"^[\w]{3,20}$", re.UNICODE)
+subreddit_rx = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_]{2,20}$")
 
 def chksrname(x):
     #notice the space before reddit.com
@@ -447,6 +451,18 @@ class VMarkdown(VLength):
             s = sys.exc_info()
             # reraise the original error with the original stack trace
             raise s[1], None, s[2]
+
+class VSelfText(VMarkdown):
+
+    def set_max_length(self, val):
+        self._max_length = val
+
+    def get_max_length(self):
+        if c.site.link_type == "self":
+            return self._max_length * 3
+        return self._max_length
+
+    max_length = property(get_max_length, set_max_length)
 
 class VSubredditName(VRequired):
     def __init__(self, item, *a, **kw):
@@ -965,7 +981,7 @@ class VCssName(Validator):
     def run(self, name):
         if name and self.r_css_name.match(name):
             return name
-    
+
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):
@@ -979,11 +995,11 @@ class VMenu(Validator):
             pref = "%s_%s" % (where, self.nav.get_param)
             user_prefs = copy(c.user.sort_options) if c.user else {}
             user_pref = user_prefs.get(pref)
-    
+
             # check to see if a default param has been set
             if not sort:
                 sort = user_pref
-            
+
         # validate the sort
         if sort not in self.nav.options:
             sort = self.nav.default
@@ -996,7 +1012,7 @@ class VMenu(Validator):
             user._commit()
 
         return sort
-            
+
 
 class VRatelimit(Validator):
     def __init__(self, rate_user = False, rate_ip = False,

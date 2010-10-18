@@ -122,7 +122,7 @@ string_dict = dict(
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
-    banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please send a message to [our site admins](%(link)s) and be sure to include the **exact name of the reddit**."""),
+    banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please submit a link to our [request a reddit listing](%(link)s) and be sure to include the **exact name of the reddit**."""),
     comments_panel_text = _("""The following is a sample of what Reddit users had to say about this page. The full discussion is available [here](%(fd_link)s); you can also get there by clicking the link's title (in the middle of the toolbar, to the right of the comments button)."""),
 
     submit_link = _("""You are submitting a link. The key to a successful submission is interesting content and a descriptive title."""),
@@ -139,6 +139,8 @@ string_dict = dict(
     read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
     lounge_msg = _("please grab a drink and join us in [the lounge](%(link)s)"),
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
+    over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to reddit gold, it goes up to %(goldmax)d.)"),
+    over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
 )
 
 class StringHandler(object):

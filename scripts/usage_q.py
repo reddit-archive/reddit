@@ -58,6 +58,9 @@ def buckets(time):
 
 def run(limit=1000, verbose=False):
     def myfunc(msgs, chan):
+        if verbose:
+            print "processing a batch"
+
         incrs = {}
 
         for msg in msgs:

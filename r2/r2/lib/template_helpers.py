@@ -76,6 +76,20 @@ def class_dict():
     res = ', '.join(classes)
     return unsafe('{ %s }' % res)
 
+def calc_time_period(comment_time):
+    # Set in front.py:GET_comments()
+    previous_visits = c.previous_visits
+
+    if not previous_visits:
+        return ""
+
+    rv = ""
+    for i, visit in enumerate(previous_visits):
+        if comment_time > visit:
+            rv = "comment-period-%d" % i
+
+    return rv
+
 def replace_render(listing, item, render_func):
     def _replace_render(style = None, display = True):
         """
@@ -85,17 +99,17 @@ def replace_render(listing, item, render_func):
         """
         style = style or c.render_style or 'html'
         replacements = {}
-    
+
         child_txt = ( hasattr(item, "child") and item.child )\
             and item.child.render(style = style) or ""
         replacements["childlisting"] = child_txt
-        
-    
+
+
         #only LinkListing has a show_nums attribute
-        if listing: 
+        if listing:
             if hasattr(listing, "show_nums"):
                 if listing.show_nums:
-                    num_str = str(item.num) 
+                    num_str = str(item.num)
                     if hasattr(listing, "num_margin"):
                         num_margin = str(listing.num_margin)
                     else:
@@ -108,7 +122,7 @@ def replace_render(listing, item, render_func):
                 replacements["num"] = num_str
 
             if hasattr(listing, "max_score"):
-                mid_margin = len(str(listing.max_score)) 
+                mid_margin = len(str(listing.max_score))
                 if hasattr(listing, "mid_margin"):
                     mid_margin = str(listing.mid_margin)
                 elif mid_margin == 1:
@@ -117,7 +131,7 @@ def replace_render(listing, item, render_func):
                     mid_margin = "%dex" % (mid_margin+1)
 
                 replacements["midcolmargin"] = mid_margin
-    
+
             #$votehash is only present when voting arrows are present
             if c.user_is_loggedin:
                 replacements['votehash'] = vote_hash(c.user, item,
@@ -156,10 +170,22 @@ def replace_render(listing, item, render_func):
             else:
                 replacements['timesince'] = timesince(item._date)
 
+            replacements['time_period'] = calc_time_period(item._date)
+
+        # Set in front.py:GET_comments()
+        replacements['previous_visits_hex'] = c.previous_visits_hex
+
         renderer = render_func or item.render
         res = renderer(style = style, **replacements)
+
         if isinstance(res, (str, unicode)):
-            return unsafe(res)
+            rv = unsafe(res)
+            if g.debug:
+                for leftover in re.findall('<\$>(.+?)(?:<|$)', rv):
+                    print "replace_render didn't replace %s" % leftover
+
+            return rv
+
         return res
 
     return _replace_render
@@ -346,7 +372,7 @@ def add_attr(attrs, code, label=None, link=None):
         if not label:
             label = _('reddit admin, speaking officially')
         if not link:
-            link = '/help/faq#Whomadereddit'
+            link = '/help/faq#Whorunsreddit'
     elif code in ('X', '@'):
         priority = 5
         cssclass = 'gray'

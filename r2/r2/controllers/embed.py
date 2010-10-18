@@ -31,6 +31,8 @@ from BeautifulSoup import BeautifulSoup, Tag
 from urllib2 import HTTPError
 
 class EmbedController(RedditController):
+    allow_stylesheets = True
+
     def rendercontent(self, input, fp):
         soup = BeautifulSoup(input)
 
@@ -65,10 +67,14 @@ class EmbedController(RedditController):
                         content = Embed(content=output),
                         show_sidebar = None).render()
 
-    def renderurl(self):
+    def renderurl(self, override=None):
+        if override:
+            path = override
+        else:
+            path = request.path
 
         # Needed so http://reddit.com/help/ works
-        fp = request.path.rstrip("/")
+        fp = path.rstrip("/")
         u = "http://code.reddit.com/wiki" + fp + '?stripped=1'
 
         g.log.debug("Pulling %s for help" % u)
@@ -88,3 +94,9 @@ class EmbedController(RedditController):
         return self.redirect("http://blog.%s/" %
                              get_domain(cname = False, subreddit = False,
                                         no_www = True))
+
+    def GET_faq(self):
+        if c.default_sr:
+            return self.redirect('/help/faq')
+        else:
+            return self.renderurl('/help/faqs/' + c.site.name)

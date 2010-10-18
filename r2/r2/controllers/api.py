@@ -27,11 +27,10 @@ from pylons import c, request
 from validator import *
 
 from r2.models import *
-from r2.models.subreddit import Default as DefaultSR
 
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
-from r2.lib.utils import timeago, tup, filter_links
+from r2.lib.utils import timeago, tup, filter_links, levenshtein
 from r2.lib.pages import FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
@@ -47,7 +46,7 @@ from r2.lib.db import queries
 from r2.lib.db.queries import changed
 from r2.lib import promote
 from r2.lib.media import force_thumbnail, thumbnail_url
-from r2.lib.comment_tree import add_comment, delete_comment
+from r2.lib.comment_tree import delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
@@ -87,13 +86,14 @@ class ApiminimalController(MinimalController):
         if not isinstance(c.site, FakeSubreddit):
             suffix = "-" + c.site.name
         def add_tracker(dest, where, what):
+            if not dest.startswith("javascript:"):
+                dest = tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
+                                                              dest = dest,
+                                                              ip = request.ip)
             jquery.set_tracker(
                 where,
                 tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
-                                                  ip = request.ip),
-                tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
-                                                       dest = dest,
-                                                       ip = request.ip)
+                                                  ip = request.ip), dest
                 )
 
         if promoted:
@@ -130,10 +130,7 @@ class ApiController(RedditController):
         elif link1 and ('ALREADY_SUB', 'url')  in c.errors:
             links = filter_links(tup(link1), filter_spam = False)
 
-        if not links:
-            return abort(404, 'not found')
-
-        listing = wrap_links(links, num = count)
+        listing = wrap_links(filter(None, links or []), num = count)
         return BoringPage(_("API"), content = listing).render()
 
     @validatedForm(VCaptcha(),
@@ -195,7 +192,7 @@ class ApiController(RedditController):
                    url = VUrl(['url', 'sr']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
-                   selftext = VMarkdown('text'),
+                   selftext = VSelfText('text'),
                    kind = VOneOf('kind', ['link', 'self']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'),
@@ -264,7 +261,10 @@ class ApiController(RedditController):
             elif form.has_errors("title", errors.NO_TEXT):
                 pass
 
-            if check_domain:
+            if url is None:
+                g.log.warning("%s is trying to submit url=None (title: %r)"
+                              % (request.ip, title))
+            elif check_domain:
                 banmsg = is_banned_domain(url)
 
 # Uncomment if we want to let spammers know we're on to them
@@ -723,7 +723,7 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
-                   text = VMarkdown('text'))
+                   text = VSelfText('text'))
     def POST_editusertext(self, form, jquery, item, text):
         if (not form.has_errors("text",
                                 errors.NO_TEXT, errors.TOO_LONG) and
@@ -731,9 +731,13 @@ class ApiController(RedditController):
 
             if isinstance(item, Comment):
                 kind = 'comment'
+                old = item.body
                 item.body = text
             elif isinstance(item, Link):
                 kind = 'link'
+                if not getattr(item, "is_self", False):
+                    return abort(403, "forbidden")
+                old = item.selftext
                 item.selftext = text
 
             if item._deleted:
@@ -742,6 +746,12 @@ class ApiController(RedditController):
             if (item._date < timeago('3 minutes')
                 or (item._ups + item._downs > 2)):
                 item.editted = True
+
+            #try:
+            #    lv = levenshtein(old, text)
+            #    item.levenshtein = getattr(item, 'levenshtein', 0) + lv
+            #except:
+            #    pass
 
             item._commit()
 
@@ -1173,6 +1183,7 @@ class ApiController(RedditController):
                    sr = VByName('sr'),
                    name = VSubredditName("name"),
                    title = VLength("title", max_length = 100),
+                   header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
                    description = VMarkdown("description", max_length = 5120),
                    lang = VLang("lang"),
@@ -1195,7 +1206,8 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'link_type', 'lang', "css_on_cname",
+                           'show_media', 'type', 'link_type', 'lang',
+                           "css_on_cname", "header_title", 
                            'allow_top'))
 
         #if a user is banned, return rate-limit errors
@@ -1323,16 +1335,19 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
-    @noresponse(paypal_secret = VPrintable('secret', 50),
+# TODO: we're well beyond the point where this function should have been
+# broken up and moved to its own file
+    @textresponse(paypal_secret = VPrintable('secret', 50),
                 payment_status = VPrintable('payment_status', 20),
                 txn_id = VPrintable('txn_id', 20),
                 paying_id = VPrintable('payer_id', 50),
                 payer_email = VPrintable('payer_email', 250),
                 item_number = VPrintable('item_number', 20),
                 mc_currency = VPrintable('mc_currency', 20),
-                mc_gross = VFloat('mc_gross'))
-    def POST_ipn(self, paypal_secret, payment_status, txn_id,
-                 paying_id, payer_email, item_number, mc_currency, mc_gross):
+                mc_gross = VFloat('mc_gross'),
+                custom = VPrintable('custom', 50))
+    def POST_ipn(self, paypal_secret, payment_status, txn_id, paying_id,
+                 payer_email, item_number, mc_currency, mc_gross, custom):
 
         if paypal_secret != g.PAYPAL_SECRET:
             log_text("invalid IPN secret",
@@ -1349,17 +1364,8 @@ class ApiController(RedditController):
             payment_status = ''
 
         psl = payment_status.lower()
-        if psl == '' and parameters['txn_type'] == 'subscr_signup':
-            return "Ok"
-        elif psl == '' and parameters['txn_type'] == 'subscr_cancel':
-            return "Ok"
-        elif parameters.get('txn_type', '') == 'send_money' and mc_gross < 3.95:
-            # Temporary block while the last of the "legacy" PWYW subscriptions
-            # roll in
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
-            return "Ok"
-        elif psl == 'completed':
+
+        if psl == 'completed':
             pass
         elif psl == 'refunded':
             log_text("refund", "Just got notice of a refund.", "info")
@@ -1372,11 +1378,47 @@ class ApiController(RedditController):
             # TODO: something useful when this happens -- and don't
             # forget to verify first
             return "Ok"
+        elif psl == 'reversed':
+            log_text("canceled_reversal",
+                     "Just got notice of a PayPal reversal.", "info")
+            # TODO: something useful when this happens -- and don't
+            # forget to verify first
+            return "Ok"
+        elif psl == 'canceled_reversal':
+            log_text("canceled_reversal",
+                     "Just got notice of a PayPal 'canceled reversal'.", "info")
+            return "Ok"
+        elif psl == '':
+            pass
         else:
             for k, v in parameters.iteritems():
                 g.log.info("IPN: %r = %r" % (k, v))
 
             raise ValueError("Unknown IPN status: %r" % payment_status)
+
+        if parameters['txn_type'] == 'subscr_signup':
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_cancel':
+            cancel_subscription(parameters['subscr_id'])
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_failed':
+            log_text("failed_subscription",
+                     "Just got notice of a failed PayPal resub.", "info")
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_modify':
+            log_text("modified_subscription",
+                     "Just got notice of a modified PayPal sub.", "info")
+            return "Ok"
+        elif parameters['txn_type'] in ('new_case',
+            'recurring_payment_suspended_due_to_max_failed_payment'):
+            return "Ok"
+        elif parameters['txn_type'] == 'subscr_payment' and psl == 'completed':
+            subscr_id = parameters['subscr_id']
+        elif parameters['txn_type'] == 'web_accept' and psl == 'completed':
+            subscr_id = None
+        else:
+            raise ValueError("Unknown IPN txn_type / psl %r" %
+                             ((parameters['txn_type'], psl),))
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
@@ -1404,41 +1446,111 @@ class ApiController(RedditController):
 
         pennies = int(mc_gross * 100)
 
-        if item_number and item_number == 'rgsub':
+        days = None
+        if item_number and item_number in ('rgsub', 'rgonetime'):
             if pennies == 2999:
                 secret_prefix = "ys_"
+                days = 366
             elif pennies == 399:
                 secret_prefix = "m_"
+                days = 31
             else:
-                log_text("weird IPN subscription",
-                         "Got %d pennies via PayPal?" % pennies, "error")
-                secret_prefix = "w_"
+                raise ValueError("Got %d pennies via PayPal?" % pennies)
+                # old formula: days = 60 + int (31 * pennies / 250.0)
         else:
-            secret_prefix = "o_"
+            raise ValueError("Got item number %r via PayPal?" % item_number)
+
+        account_id = accountid_from_paypalsubscription(subscr_id)
+
+        if account_id:
+            try:
+                account = Account._byID(account_id)
+            except NotFound:
+                g.log.info("Just got IPN renewal for deleted account #%d"
+                           % account_id)
+                return "Ok"
+
+            create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, account_id,
+                                 c.start_time, subscr_id)
+            admintools.engolden(account, days)
+
+            g.log.info("Just applied IPN renewal for %s, %d days" %
+                       (account.name, days))
+            return "Ok"
+
+        if custom:
+            gold_dict = g.hardcache.get("gold_dict-" + custom)
+            if gold_dict is None:
+                raise ValueError("No gold_dict for %r" % custom)
+
+            buyer_name = gold_dict['buyer']
+            try:
+                buyer = Account._by_name(buyer_name)
+            except NotFound:
+                g.log.info("Just got IPN for unknown buyer %s" % buyer_name)
+                return "Ok" # nothing we can do until they complain
+
+            if gold_dict['kind'] == 'self':
+                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, buyer._id,
+                                 c.start_time, subscr_id)
+                admintools.engolden(buyer, days)
+
+                g.log.info("Just applied IPN for %s, %d days" %
+                           (buyer.name, days))
+
+#TODO: send a PM thanking them and showing them /r/lounge
+
+                g.hardcache.delete("gold_dict-" + custom)
+
+                return "Ok"
+            elif gold_dict['kind'] == 'gift':
+                recipient_name = gold_dict['recipient']
+                try:
+                    recipient = Account._by_name(recipient_name)
+                except NotFound:
+                    g.log.info("Just got IPN for unknown recipient %s"
+                               % recipient_name)
+                return "Ok" # nothing we can do until they complain
+                
+                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
+                                 pennies, days, None, recipient._id,
+                                 c.start_time, subscr_id)
+                admintools.engolden(recipient, days)
+
+                g.log.info("Just applied IPN from %s to %s, %d days" %
+                           (buyer.name, recipient.name, days))
+
+#TODO: send PMs to buyer and recipient
+
+            else:
+                raise ValueError("Invalid gold_dict[kind] %r" %
+                                 gold_dict['kind'])
 
         gold_secret = secret_prefix + randstr(10)
 
         create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
-                              pennies, gold_secret, c.start_time)
+                              pennies, days, gold_secret, c.start_time,
+                              subscr_id)
 
-        url = "http://www.reddit.com/thanks/" + gold_secret
+        notify_unclaimed_gold(txn_id, gold_secret, payer_email, "Paypal")
 
-        # No point in i18n, since we don't have access to the user's
-        # language info (or name) at this point
-        body = """
-Thanks for subscribing to reddit gold! We have received your PayPal
-transaction, number %s.
-
-Your secret subscription code is %s. You can use it to associate this
-subscription with your reddit account -- just visit
-%s
-        """ % (txn_id, gold_secret, url)
-
-        emailer.gold_email(body, payer_email, "reddit gold subscriptions")
-
-        g.log.info("Just got IPN for %d, secret=%s" % (pennies, gold_secret))
+        g.log.info("Just got IPN for %d days, secret=%s" % (days, gold_secret))
 
         return "Ok"
+
+    @textresponse(sn = VLength('serial-number', 100))
+    def POST_gcheckout(self, sn):
+        if sn:
+            g.log.error( "GOOGLE CHECKOUT: %s" % sn)
+            new_google_transaction(sn)
+            return '<notification-acknowledgment xmlns="http://checkout.google.com/schema/2" serial-number="%s" />' % sn
+        else:
+            g.log.error("GOOGLE CHCEKOUT: didn't work")
+            g.log.error(repr(list(request.POST.iteritems())))
+
+
 
     @noresponse(VUser(),
                 VModhash(),
@@ -1554,12 +1666,33 @@ subscription with your reddit account -- just visit
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
+                   pv_hex = VPrintable('pv_hex', 40),
                    mc_id = nop('id'))
-    def POST_morechildren(self, form, jquery,
-                          link, sort, children, mc_id):
+    def POST_morechildren(self, form, jquery, link, sort, children,
+                          pv_hex, mc_id):
         user = c.user if c.user_is_loggedin else None
+
+        mc_key = "morechildren-%s" % request.ip
+        try:
+            count = g.cache.incr(mc_key)
+        except:
+            g.cache.set(mc_key, 1, time=30)
+            count = 1
+
+        if count >= 10:
+            if user:
+                name = user.name
+            else:
+                name = "(unlogged user)"
+            g.log.warning("%s on %s hit morechildren %d times in 30 seconds"
+                          % (name, request.ip, count))
+            # TODO: redirect to rickroll or something
+
         if not link or not link.subreddit_slow.can_view(user):
             return abort(403,'forbidden')
+
+        if pv_hex:
+            c.previous_visits = g.cache.get(pv_hex)
 
         if children:
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
@@ -1591,6 +1724,9 @@ subscription with your reddit account -- just visit
             # morechildren link
             jquery.things(str(mc_id)).remove()
             jquery.insert_things(a, append = True)
+
+            if pv_hex:
+                jquery.rehighlight_new_comments()
 
 
     @validate(uh = nop('uh'), # VModHash() will raise, check manually
@@ -1642,45 +1778,35 @@ subscription with your reddit account -- just visit
             form.has_errors("code", errors.NO_TEXT)
             return
 
-        if code.startswith("pc_"):
-            gold_type = 'postcard'
-            if postcard_okay is None:
-                jquery(".postcard").show()
-                form.set_html(".status", _("just one more question"))
-                return
-            else:
-                d = dict(user=c.user.name, okay=postcard_okay)
-                g.hardcache.set("postcard-" + code, d, 86400 * 30)
-        elif code.startswith("ys_"):
-            gold_type = 'yearly special'
-        elif code.startswith("m_"):
-            gold_type = 'monthly'
-        else:
-            gold_type = 'old'
+        rv = claim_gold(code, c.user._id)
 
-        pennies = claim_gold(code, c.user._id)
-        if pennies is None:
+        if rv is None:
             c.errors.add(errors.INVALID_CODE, field = "code")
             log_text ("invalid gold claim",
                       "%s just tried to claim %s" % (c.user.name, code),
                       "info")
-        elif pennies == 0:
+        elif rv == "already claimed":
             c.errors.add(errors.CLAIMED_CODE, field = "code")
             log_text ("invalid gold reclaim",
                       "%s just tried to reclaim %s" % (c.user.name, code),
                       "info")
-        elif pennies > 0:
+        else:
+            days, subscr_id = rv
+            if days <= 0:
+                raise ValueError("days = %r?" % days)
+
             log_text ("valid gold claim",
                       "%s just claimed %s" % (c.user.name, code),
                       "info")
+
+            if subscr_id:
+                c.user.gold_subscr_id = subscr_id
+
+            admintools.engolden(c.user, days)
+
             g.cache.set("recent-gold-" + c.user.name, True, 600)
-            c.user.creddits += pennies
-            c.user.gold_type = gold_type
-            admintools.engolden(c.user, postcard_okay)
             form.set_html(".status", _("claimed!"))
             jquery(".lounge").show()
-        else:
-            raise ValueError("pennies = %r?" % pennies)
 
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,

@@ -31,7 +31,7 @@ from time import time
 max_items = 150 # the number of links to request from the hot page
                 # query when the precomputer is disabled
 
-cpdef list get_hot(list srs, bool only_fullnames = True):
+cpdef list get_hot(list srs, only_fullnames = True):
     """Get the fullnames for the hottest normalised hottest links in a
        subreddit. Use the query-cache to avoid some lookups if we
        can."""

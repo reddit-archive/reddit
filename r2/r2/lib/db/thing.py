@@ -197,8 +197,6 @@ class DataThing(object):
 
     def _cache_myself(self):
         ck = self._cache_key()
-        if self.__class__.__name__ in ("Link", "Comment", "Subreddit") and not self._t and not self._deleted:
-            raise ValueError("Refusing to cache {} for %r" % ck)
         cache.set(ck, self)
 
     def _sync_latest(self):

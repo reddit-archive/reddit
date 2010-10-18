@@ -37,7 +37,7 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
-from r2.lib.indextank import IndextankQuery
+from r2.lib.indextank import IndextankQuery, IndextankException
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -46,7 +46,7 @@ from listingcontroller import ListingController
 from pylons import c, request, request, Response
 
 import random as rand
-import re
+import re, socket
 import time as time_module
 from urllib import quote_plus
 
@@ -114,8 +114,7 @@ class FrontController(RedditController):
         return DetailsPage(link = article, expand_children=False).render()
 
 
-    def GET_selfserviceoatmeal(self
-):
+    def GET_selfserviceoatmeal(self):
         return BoringPage(_("self service help"), 
                           show_sidebar = False,
                           content = SelfServiceOatmeal()).render()
@@ -130,15 +129,44 @@ class FrontController(RedditController):
             return ShirtPage(link = article).render()
         return self.abort404()
 
+    def _comment_visits(self, article, user, new_visit=None):
+        hc_key = "comment_visits-%s-%s" % (user.name, article._id36)
+        old_visits = g.hardcache.get(hc_key, [])
+
+        append = False
+
+        if new_visit is None:
+            pass
+        elif len(old_visits) == 0:
+            append = True
+        else:
+            last_visit = max(old_visits)
+            time_since_last = new_visit - last_visit
+            if (time_since_last.days > 0
+                or time_since_last.seconds > g.comment_visits_period):
+                append = True
+            else:
+                # They were just here a few seconds ago; consider that
+                # the same "visit" as right now
+                old_visits.pop()
+
+        if append:
+            copy = list(old_visits) # make a copy
+            copy.append(new_visit)
+            if len(copy) > 10:
+                copy.pop(0)
+            g.hardcache.set(hc_key, copy, 86400 * 2)
+
+        return old_visits
+
+
     @validate(article      = VLink('article'),
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
               sort         = VMenu('controller', CommentSortMenu),
-              num_comments = VMenu('controller', NumCommentsMenu),
               limit        = VInt('limit'),
               depth        = VInt('depth'))
-    def GET_comments(self, article, comment, context, sort, num_comments,
-                     limit, depth):
+    def GET_comments(self, article, comment, context, sort, limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:
             return self.abort404()
@@ -158,10 +186,23 @@ class FrontController(RedditController):
         #check for 304
         self.check_modified(article, 'comments')
 
-        # if there is a focal comment, communicate down to
-        # comment_skeleton.html who that will be
+        # If there is a focal comment, communicate down to
+        # comment_skeleton.html who that will be. Also, skip
+        # comment_visits check
+        previous_visits = None
         if comment:
             c.focal_comment = comment._id36
+        elif (c.user_is_loggedin and c.user.gold and
+              c.user.pref_highlight_new_comments):
+            #TODO: remove this profiling if load seems okay
+            from datetime import datetime
+            before = datetime.now(g.tz)
+            previous_visits = self._comment_visits(article, c.user, c.start_time)
+            after = datetime.now(g.tz)
+            delta = (after - before)
+            msec = (delta.seconds * 1000 + delta.microseconds / 1000)
+            if msec >= 100:
+                g.log.warning("previous_visits code took %d msec" % msec)
 
         # check if we just came from the submit page
         infotext = None
@@ -170,11 +211,12 @@ class FrontController(RedditController):
 
         check_cheating('comments')
 
-        # figure out number to show based on the menu (when num_comments
-        # is 'true', the user wants to temporarily override their
-        # comments limit pref
-        user_num = c.user.pref_num_comments or g.num_comments
-        num = g.max_comments if num_comments == 'true' else user_num
+        if not c.user.pref_num_comments:
+            num = g.num_comments
+        elif c.user.gold:
+            num = min(c.user.pref_num_comments, g.max_comments_gold)
+        else:
+            num = min(c.user.pref_num_comments, g.max_comments)
 
         kw = {}
         # allow depth to be reset (I suspect I'll turn the VInt into a
@@ -183,12 +225,27 @@ class FrontController(RedditController):
             kw['max_depth'] = depth
         elif c.render_style == "compact":
             kw['max_depth'] = 5
-        # allow the user's total count preferences to be overwritten
-        # (think of .embed as the use case together with depth=1)x
-        if limit is not None and 0 < limit < g.max_comments:
-            num = limit
 
         displayPane = PaneStack()
+
+        # allow the user's total count preferences to be overwritten
+        # (think of .embed as the use case together with depth=1)
+
+        if limit and limit > 0:
+            num = limit
+
+        if c.user_is_loggedin and c.user.gold:
+            if num > g.max_comments_gold:
+                displayPane.append(InfoBar(message =
+                                           strings.over_comment_limit_gold
+                                           % g.max_comments_gold))
+                num = g.max_comments_gold
+        elif num > g.max_comments:
+            displayPane.append(InfoBar(message =
+                                       strings.over_comment_limit
+                                       % dict(max=g.max_comments,
+                                              goldmax=g.max_comments_gold)))
+            num = g.max_comments
 
         # if permalink page, add that message first to the content
         if comment:
@@ -207,28 +264,74 @@ class FrontController(RedditController):
                                         display = display,
                                         cloneable = True))
 
+        if previous_visits:
+            displayPane.append(CommentVisitsBox(previous_visits))
+            # Used in later "more comments" renderings
+            pv_hex = md5(repr(previous_visits)).hexdigest()
+            g.cache.set(pv_hex, previous_visits, time=g.comment_visits_period)
+            c.previous_visits_hex = pv_hex
+
+        # Used in template_helpers
+        c.previous_visits = previous_visits
+
+
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
                                        comment, context, num, **kw))
 
-        loc = None if c.focal_comment or context is not None else 'comments'
+        subtitle_buttons = []
+
+        if c.focal_comment or context is not None:
+            subtitle = None
+        elif article.num_comments == 0:
+            subtitle = _("no comments (yet)")
+        elif article.num_comments <= num:
+            subtitle = _("all %d comments") % article.num_comments
+        else:
+            subtitle = _("top %d comments") % num
+
+            if g.max_comments > num:
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments, gold=False)
+
+            if (c.user_is_loggedin and c.user.gold
+                and article.num_comments > g.max_comments):
+                self._add_show_comments_link(subtitle_buttons, article, num,
+                                             g.max_comments_gold, gold=True)
 
         res = LinkInfoPage(link = article, comment = comment,
-                           content = displayPane, 
-                           subtitle = _("comments"),
-                           nav_menus = [CommentSortMenu(default = sort), 
-                                        NumCommentsMenu(article.num_comments,
-                                                        default=num_comments)],
+                           content = displayPane,
+                           subtitle = subtitle,
+                           subtitle_buttons = subtitle_buttons,
+                           nav_menus = [CommentSortMenu(default = sort)],
                            infotext = infotext).render()
         return res
+
+    def _add_show_comments_link(self, array, article, num, max_comm, gold=False):
+        if num == max_comm:
+            return
+        elif article.num_comments <= max_comm:
+            link_text = _("show all %d") % article.num_comments
+        else:
+            link_text = _("show %d") % max_comm
+
+        limit_param = "?limit=%d" % max_comm
+
+        if gold:
+            link_class = "gold"
+        else:
+            link_class = ""
+
+        more_link = article.make_permalink_slow() + limit_param
+        array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
               name = nop('name'))
     def GET_newreddit(self, name):
-        """Create a reddit form"""
+        """Create a community form"""
         title = _('create a reddit')
         content=CreateSubreddit(name = name or '')
-        res = FormPage(_("create a reddit"), 
+        res = FormPage(_("create a community"),
                        content = content,
                        ).render()
         return res
@@ -267,7 +370,7 @@ class FrontController(RedditController):
 
         def keep_fn(x):
             # no need to bother mods with banned users, or deleted content
-            if x.hidden or x._deleted:
+            if getattr(x,'hidden',False) or x._deleted:
                 return False
 
             if location == "reports":
@@ -462,45 +565,45 @@ class FrontController(RedditController):
                              num_results = num,
                              # update if we ever add sorts
                              search_params = {},
-                             title = _("search results")).render()
+                             title = _("search results"),
+                             simple=True).render()
         return res
 
     verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
     @base_listing
     @validate(query = nop('q'),
-              sort = VMenu('sort', SearchSortMenu, remember=False))
-    def GET_search(self, query, num, reverse, after, count, sort):
+              sort = VMenu('sort', SearchSortMenu, remember=False),
+              restrict_sr = VBoolean('restrict_sr', default=False))
+    def GET_search(self, query, num, reverse, after, count, sort, restrict_sr):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
             if url:
                 return self.redirect("/submit" + query_string({'url':url}))
 
-        q = IndextankQuery(query, c.site, sort)
-
-        num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
-                                     count = count)
-
-        if not isinstance(c.site,FakeSubreddit) and not c.cname:
-            all_reddits_link = "%s/search%s" % (subreddit.All.path,
-                                                query_string({'q': query}))
-            d =  {'reddit_name':      c.site.name,
-                  'reddit_link':      "http://%s/"%get_domain(cname = c.cname),
-                  'all_reddits_link': all_reddits_link}
-            infotext = strings.searching_a_reddit % d
+        if not restrict_sr:
+            site = DefaultSR()
         else:
-            infotext = None
+            site = c.site
 
-        res = SearchPage(_('search results'), query, t, num, content=spane,
-                         nav_menus = [SearchSortMenu(default=sort)],
-                         search_params = dict(sort = sort),
-                         infotext = infotext).render()
+        try:
+            q = IndextankQuery(query, site, sort)
 
-        return res
+            num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
+                                         count = count)
+            res = SearchPage(_('search results'), query, t, num, content=spane,
+                             nav_menus = [SearchSortMenu(default=sort)],
+                             search_params = dict(sort = sort),
+                             simple=False, site=c.site, restrict_sr=restrict_sr).render()
+
+            return res
+        except (IndextankException, socket.error), e:
+            return self.search_fail(e)
+
 
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
-        thin wrapper for SearchBuilder."""
+           thin wrapper for SearchBuilder."""
 
         builder = SearchBuilder(query_obj,
                                 after = after, num = num, reverse = reverse,
@@ -513,32 +616,8 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except SolrError, e:
-            try:
-                errmsg = "SolrError: %r %r" % (e, query_obj)
-            except UnicodeEncodeError:
-                errmsg = "SolrError involving unicode"
-
-            if (str(e) == 'None'):
-                # Production error logs only get non-None errors
-                g.log.debug(errmsg)
-            else:
-                g.log.error(errmsg)
-
-            sf = SearchFail()
-            sb = SearchBar(prev_search = query_obj.q)
-
-            us = unsafe(sb.render() + sf.render())
-
-            errpage = pages.RedditError(_('search failed'), us)
-
-            c.response = Response()
-            c.response.status_code = 503
-            request.environ['usable_error_content'] = errpage.render()
-            request.environ['retry_after'] = 60
-
-            abort(503)
-
+        except (IndextankException, SolrError, socket.error), e:
+            return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 
         return builder.total_num, timing, res

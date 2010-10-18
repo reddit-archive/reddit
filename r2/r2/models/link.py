@@ -34,6 +34,7 @@ from r2.lib import utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
+from r2.lib.db import tdb_cassandra
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
@@ -58,6 +59,7 @@ class Link(Thing, Printable):
                      pending = False,
                      disable_comments = False,
                      selftext = '',
+                     noselfreply = False,
                      ip = '0.0.0.0')
     _essentials = ('sr_id',)
     _nsfw = re.compile(r"\bnsfw\b", re.I)
@@ -66,19 +68,10 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @classmethod
-    def by_url_key_new(cls, url):
-        maxlen = 250
-        template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
-        hexdigest = md5(keyurl).hexdigest()
-        usable_len = maxlen-len(template)-len(hexdigest)
-        return template % (hexdigest, keyurl[:usable_len])
-
-    @classmethod
     def by_url_key(cls, url):
         maxlen = 250
         template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(base_url(url.lower()))
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
         hexdigest = md5(keyurl).hexdigest()
         usable_len = maxlen-len(template)-len(hexdigest)
         return template % (hexdigest, keyurl[:usable_len])
@@ -249,6 +242,7 @@ class Link(Thing, Printable):
         if wrapped.promoted is not None:
             s.extend([getattr(wrapped, "promote_status", -1),
                       getattr(wrapped, "disable_comments", False),
+                      getattr(wrapped, "media_override", False),
                       wrapped._date,
                       c.user_is_sponsor,
                       wrapped.url, repr(wrapped.title)])
@@ -364,8 +358,11 @@ class Link(Thing, Printable):
 
             item.score = max(0, item.score)
 
-            item.domain = (domain(item.url) if not item.is_self
-                           else 'self.' + item.subreddit.name)
+            if getattr(item, "domain_override", None):
+                item.domain = item.domain_override
+            else:
+                item.domain = (domain(item.url) if not item.is_self
+                               else 'self.' + item.subreddit.name)
             item.urlprefix = ''
             item.saved = bool(saved.get((user, item, 'save')))
             item.hidden = bool(hidden.get((user, item, 'hide')))
@@ -383,6 +380,9 @@ class Link(Thing, Printable):
                 item.hide_score = True
             elif user == item.author:
                 item.hide_score = False
+# TODO: uncomment to let gold users see the score of upcoming links
+#            elif user.gold:
+#                item.hide_score = False
             elif item._date > timeago("2 hours"):
                 item.hide_score = True
             else:
@@ -557,7 +557,7 @@ class Comment(Thing, Printable):
         name = 'inbox'
         if parent:
             to = Account._byID(parent.author_id, True)
-        elif link.is_self:
+        elif link.is_self and not link.noselfreply:
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 
@@ -615,6 +615,8 @@ class Comment(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr
         from r2.lib import promote
+        from r2.lib.wrapped import CachedVariable
+
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True)
@@ -707,6 +709,7 @@ class Comment(Thing, Printable):
 
             item.editted = getattr(item, "editted", False)
 
+            item.render_css_class = "comment %s" % CachedVariable("time_period")
 
             #will get updated in builder
             item.num_children = 0
@@ -725,6 +728,13 @@ class Comment(Thing, Printable):
                                      extra_css = extra_css)
         # Run this last
         Printable.add_props(user, wrapped)
+
+class CommentSortsCache(tdb_cassandra.View):
+    """A cache of the sort-values of comments to avoid looking up all
+       of the comments in a big tree at render-time just to determine
+       the candidate order"""
+    _use_db = True
+    _value_type = 'float'
 
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in
@@ -792,6 +802,8 @@ class MoreComments(Printable):
         return False
 
     def __init__(self, link, depth, parent_id = None):
+        from r2.lib.wrapped import CachedVariable
+
         if parent_id is not None:
             id36 = utils.to36(parent_id)
             self.parent_id = parent_id
@@ -802,6 +814,7 @@ class MoreComments(Printable):
         self.depth = depth
         self.children = []
         self.count = 0
+        self.previous_visits_hex = CachedVariable("previous_visits_hex")
 
     @property
     def _fullname(self):

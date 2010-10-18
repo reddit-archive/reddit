@@ -41,7 +41,7 @@
         recipient
       </td>
       <td>
-        <input type="text" name="recipient" />
+        <input type="text" name="recipient" value="${thing.recipient}" />
         ${error_field("NO_USER", "recipient", "span")}
         ${error_field("USER_DOESNT_EXIST", "recipient", "span")}
       </td>
@@ -67,7 +67,7 @@
         hours to show cup
       </td>
       <td>
-        <input type="text" name="cup_hours" value="24" />
+        <input type="text" name="cup_hours" value="${thing.hours}" />
         ${error_field("BAD_NUMBER", "cup_hours", "span")}
       </td>
     </tr>

@@ -33,13 +33,15 @@
   ${thing.srtopbar}
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
+        header_title = c.site.header_title
         if c.site.header and c.allow_styles:
             header_img = c.site.header
         else:
-            header_img = DefaultSR.header
-
+            d = DefaultSR()
+            header_img = d.header
+            header_title = d.header_title
     %>
-    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img')}
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = header_title)}
 
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;

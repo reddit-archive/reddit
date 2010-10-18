@@ -98,6 +98,7 @@ class lower(query_func): pass
 class ip_network(query_func): pass
 class base_url(query_func): pass
 class domain(query_func): pass
+class year_func(query_func): pass
 
 class timeago(object):
     def __init__(self, interval):

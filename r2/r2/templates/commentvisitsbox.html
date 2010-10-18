@@ -20,32 +20,37 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%!
-   from r2.models.subreddit import DefaultSR
-   from r2.lib.template_helpers import add_sr, static
-%>
+<div class="rounded gold-accent comment-visits-box">
+  <div class="title">
+    ${_("You've been here before. To highlight comments that were posted since one of your visits, select it below:")}
+  </div>
 
-<form action="${add_sr('/search')}" id="search">
-  <input type="text" 
-         %if thing.prev_search:
-           value="${thing.prev_search}" style="color:black"
-         %else:
-           value="${_('search reddit')}" class="gray"
-         %endif
-         name="q"/>
-  %if not thing.simple:
-    %if not thing.site or isinstance(thing.site, DefaultSR):
-      <input type="hidden" name="restrict_sr" value="off" />
-    %else:
-      <br /><br />
-      <input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" />
-      <label for="restrict_sr">${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
-      <br /><br />
-    %endif
-    <input type="submit" />
-  %endif
-
-  %for k, v in thing.search_params.iteritems():
-    <input type="hidden" name="${k}" value="${v}" />
+  %for i, visit in enumerate(thing.visits):
+  <div>
+    <input id="comment-visits-${i}" name="comment-visits"
+           type="radio" value="${i}"
+           onclick="highlight_new_comments(this.value)"
+           %if i + 1 == len(thing.visits):
+             class="last-comment-visit"
+           %endif
+         />
+    <label for="comment-visits-${i}">
+      ${visit} ${_("ago")}
+    </label>
+  </div>
   %endfor
-</form>
+
+  <div>
+    <input id="comment-visits-none" name="comment-visits"
+           type="radio" value="-1"
+           onclick="highlight_new_comments(-1)" />
+    <label for="comment-visits-none">
+      ${_("no highlighting")}
+    </label>
+  </div>
+
+</div>
+
+<script type="text/javascript">
+  $(function() { $(".last-comment-visit").click() })
+</script>

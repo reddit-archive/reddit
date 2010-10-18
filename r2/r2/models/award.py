@@ -68,25 +68,25 @@ class Award (Thing):
     def give_if_needed(cls, codename, user,
                        description=None, url=None, cup_info=None):
         """Give an award to a user, unless they already have it.
-           Returns silently (except for g.log.debug) if the award
-           doesn't exist"""
+           Returns the trophy. Does nothing and prints nothing
+           (except for g.log.debug) if the award doesn't exist."""
 
         try:
             award = Award._by_codename(codename)
         except NotFound:
             g.log.debug("No award named '%s'" % codename)
-            return
+            return None
 
         trophies = Trophy.by_account(user)
 
         for trophy in trophies:
             if trophy._thing2.codename == codename:
                 g.log.debug("%s already has %s" % (user, codename))
-                return
+                return trophy
 
-        Trophy._new(user, award, description=description,
-                    url=url, cup_info=cup_info)
         g.log.debug("Gave %s to %s" % (codename, user))
+        return Trophy._new(user, award, description=description,
+                        url=url, cup_info=cup_info)
 
     @classmethod
     def take_away(cls, codename, user):

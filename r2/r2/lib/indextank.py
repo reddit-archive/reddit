@@ -30,6 +30,7 @@ from time import sleep
 from r2.models import *
 from r2.lib import amqp
 from r2.lib.contrib import indextank_clientv1
+from r2.lib.contrib.indextank_clientv1 import HttpException as IndextankException
 from r2.lib.utils import in_chunks, progress, get_after, UrlParser
 from r2.lib.utils import domain, strordict_fullname
 
@@ -63,6 +64,9 @@ class IndextankQuery(object):
                                  self.query, self.sr, self.sort)
 
     def run(self, after=None, reverse=False, num=1000, _update=False):
+        if not self.query:
+            return Results([], 0)
+
         results = self._run(_update=_update)
 
         docs, hits = results.docs, results.hits
@@ -83,9 +87,9 @@ class IndextankQuery(object):
         q = []
         q.append(self.query)
 
-        if self.sr == All or not self.sr or self.sr == Default:
+        if self.sr == All or not self.sr or isinstance(self.sr, DefaultSR):
             pass
-        #elif self.sr == Default:
+        #elif isinstance(self.sr, DefaultSR):
         #    q.append(self._req_fs(
         #            Subreddit.user_subreddits(c.user,over18=c.over18,
         #                                      ids=True, limit=None)))

@@ -53,10 +53,12 @@ a:focus { -moz-outline-style: none; }
 .rounded {  
     -moz-border-radius: 7px;
     -webkit-border-radius: 7px;
+    border-radius: 7px;
 }
 
 .rounded .morelink {
     -webkit-border-top-right-radius: 6px;
+    border-top-right-radius: 6px;
     -moz-border-radius-topright: 6px;
 }
 
@@ -149,6 +151,7 @@ ul.flat-vert {text-align: left;}
     padding: 4px;
     -moz-border-radius-topleft: 7px;
     -webkit-border-top-left-radius: 7px;
+    border-top-left-radius: 7px;
  }
 
 #mail img {position: relative; top: 2px}
@@ -692,6 +695,33 @@ ul.flat-vert {text-align: left;}
 
 .menuarea .spacer {display: inline; margin-right: 15px}
 
+.panestack-title {
+    margin: 10px 310px 0px 10px;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted gray;
+}
+
+.panestack-title .title {
+    font-size: 16px;
+    font-weight: normal;
+    margin: 10px 0;
+}
+
+.panestack-title a.title-button {
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.panestack-title a.title-button.gold {
+    background-color: #fff088;
+    color: #6a4d00;
+    border: 1px solid #9a7d2e;
+    padding: 1px 5px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
 .commentarea h1 {
     margin: 10px 310px 0px 10px;
     padding-bottom: 3px;
@@ -1091,6 +1121,7 @@ textarea.gray { color: gray; }
     width: 350px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
+    border-radius: 5px;
     margin-left: 5px;
     margin-bottom: 15px;
     padding: 7px;
@@ -1135,6 +1166,7 @@ textarea.gray { color: gray; }
     line-height: 20px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
 
 .fancy-toggle-button .remove { 
@@ -1856,6 +1888,7 @@ textarea.gray { color: gray; }
     margin: 0px;
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
+    border-radius: 4px;
     background-color:white;
 }
 
@@ -2869,6 +2902,7 @@ ul.tabmenu.formtab {
     border: 1px solid #CCC;
     -moz-border-radius: 7px;
     -webkit-border-radius: 7px;
+    border-radius: 7px;
 }
 
 .link .usertext .md {
@@ -2877,6 +2911,7 @@ ul.tabmenu.formtab {
     border: 1px solid #369;
     -moz-border-radius: 7px;
     -webkit-border-radius: 7px;
+    border-radius: 7px;
 }
 
 
@@ -2947,6 +2982,7 @@ ul.tabmenu.formtab {
     background-color: #cee3f8;
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
+    border-radius: 4px;
     padding: 5px 10px 10px 10px;
     font-size: large;
 }
@@ -3232,6 +3268,8 @@ ul.tabmenu.formtab {
 
 .award-square.mini .award-name {
     font-size: 18px;
+    min-height: 36px;
+    display: block;
 }
 
 .award-square .winner-info {
@@ -3355,6 +3393,7 @@ table.lined-table {
     display: none;
     -moz-border-radius: 6px;
     -webkit-border-radius: 6px;
+    border-radius: 6px;
     -moz-box-shadow: 3px 3px 3px #888;
     -webkit-box-shadow: 3px 3px 3px #888; 
  }
@@ -3792,6 +3831,7 @@ dd { margin-left: 20px;  }
     font-size: larger;
     -moz-border-radius:3px;
     -webkit-border-radius:3px;
+    border-radius:3px;
 }
 
 .linkinfo .score .number {
@@ -3944,6 +3984,7 @@ a.pretty-button:hover { text-decoration: none !important }
     line-height: 20px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    border-radius: 3px;
     outline-style: none;
 }
 
@@ -4030,16 +4071,6 @@ a.pretty-button.positive.pressed {
 .lounge { display: none }
 .lounge p { margin-top: 5px; }
 
-.postcard {
-    display: none;
-}
-
-.postcard-msg {
-    font-size: smaller;
-    background-color: white;
-    padding: 5px;
-}
-
 .gold-accent {
     margin-top: 10px;
     padding: 0 10px 5px;
@@ -4053,6 +4084,7 @@ tr.gold-accent {
     display: table-row; 
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
 
 tr.gold-accent + tr > td { 
@@ -4090,6 +4122,7 @@ tr.gold-accent + tr > td {
 .gold-accent .pretty-form input[type=text]#name {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
 
 .gold-accent .pretty-form button {
@@ -4098,8 +4131,39 @@ tr.gold-accent + tr > td {
     border: 1px solid #9a7d2e;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
+
+.gold-expiration-info {
+    margin: 3px 0 5px;
+}
+
+.gold-expiration-info .karma {
+    color: #583800;
+}
+
 
 .tiny {
     font-size: xx-small;
+}
+
+.gold-accent.comment-visits-box {
+    color: #583800;
+    margin: 0px 5px 15px;
+    padding: 7px 10px 7px 7px;
+    max-width: 550px;
+}
+
+.comment-visits-box .title {
+    font-weight: bold;
+}
+
+.comment-visits-box label {
+    margin-left: 5px;
+}
+
+.new-comment .usertext-body {
+    background-color: #e5efff;
+    border: solid 1px #cddaf3;
+    margin: -1px 0;
 }

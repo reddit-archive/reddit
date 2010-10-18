@@ -26,6 +26,7 @@ from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.cache        import sgm
+from r2.lib.log import log_text
 
 from pylons import g
 import time, sha
@@ -47,6 +48,7 @@ class Account(Thing):
                      pref_newwindow = False,
                      pref_clickgadget = 5,
                      pref_public_votes = False,
+                     pref_research = False,
                      pref_hide_ups = False,
                      pref_hide_downs = False,
                      pref_min_link_score = -4,
@@ -65,7 +67,8 @@ class Account(Thing):
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
                      pref_show_adbox = True,
-                     pref_show_sponsors = True, 
+                     pref_show_sponsors = True,
+                     pref_highlight_new_comments = True,
                      mobile_compress = False,
                      mobile_thumbnail = True,
                      trusted_sponsor = False,
@@ -84,6 +87,7 @@ class Account(Thing):
                      ignorereports = False,
                      pref_show_promote = None,
                      gold = False,
+                     gold_charter = False,
                      creddits = 0,
                      )
 
@@ -108,6 +112,10 @@ class Account(Thing):
                     return 0
 
     def incr_karma(self, kind, sr, amt):
+        if sr.name.startswith('_'):
+            g.log.info("Ignoring karma increase for subreddit %r" % (sr.name,))
+            return
+
         prop = '%s_%s_karma' % (sr.name, kind)
         if hasattr(self, prop):
             return self._incr(prop, amt)
@@ -249,9 +257,31 @@ class Account(Thing):
 
     def friend_rels(self, _update = False):
         rel_ids = self.friend_rels_cache(_update=_update)
-        rels = Friend._byID_rel(rel_ids, return_dict=False,
-                                eager_load = True, data = True,
-                                thing_data = True)
+        try:
+            rels = Friend._byID_rel(rel_ids, return_dict=False,
+                                    eager_load = True, data = True,
+                                    thing_data = True)
+            rels = list(rels)
+        except NotFound:
+            if _update:
+                raise
+            else:
+                log_text("friend-rels-bandaid 1",
+                         "Had to recalc friend_rels (1) for %s" % self.name,
+                         "warning")
+                return self.friend_rels(_update=True)
+
+        if not _update:
+            sorted_1 = sorted([r._thing2_id for r in rels])
+            sorted_2 = sorted(list(self.friends))
+            if sorted_1 != sorted_2:
+                g.log.error("FR1: %r" % sorted_1)
+                g.log.error("FR2: %r" % sorted_2)
+                log_text("friend-rels-bandaid 2",
+                         "Had to recalc friend_rels (2) for %s" % self.name,
+                         "warning")
+                self.friend_ids(_update=True)
+                return self.friend_rels(_update=True)
         return dict((r._thing2_id, r) for r in rels)
 
     def add_friend_note(self, friend, note):

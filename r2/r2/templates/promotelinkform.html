@@ -302,6 +302,16 @@
     </button>
     <span class="title-status"></span>
   </div>
+  %if c.user_is_sponsor:
+  <label style="display:block; text-align:right" for="domain">Override display domain:</label>
+  <input id="domain" name="domain" type="text" 
+         %if getattr(link, "domain_override", False):
+           value="${link.domain_override}"
+         %else:
+           class="gray" value="optional" 
+         %endif
+         />
+  %endif
 </%utils:line_field>
 
 %if thing.link and (trusted or not promote.is_promoted(thing.link)):
@@ -356,6 +366,39 @@
         %endif
       </div>
     </%utils:line_field>
+    %if c.user_is_sponsor or c.user.trusted_sponsor:
+    <%utils:line_field title="${_('media')}" id="commenting-field">
+      <div class="delete-field">
+        <label for="width">Dimensions:</label>&#32;
+        <input name="media-width" type='text' size='5' maxsize='5' 
+               id="width"
+               style="width:auto"
+                 %if thing.link.media_object:
+                   value='${thing.link.media_object.get("width", 0)}'
+                 %else:
+                   value="width" class="gray"
+                 %endif
+               />
+        x <input name="media-height" type='text' size='5' maxsize='5'
+                 style="width:auto"
+                 %if thing.link.media_object:
+                   value='${thing.link.media_object.get("height", 0)}'
+                 %else:
+                   value="height" class="gray"
+                 %endif
+                 />
+        <p>
+          <label for="media-embed">Embed Code</label>
+          <textarea id="media-embed" name="media-embed" rows="7" cols="1">
+            %if thing.link.media_object:
+              ${thing.link.media_object.get('content','')}
+            %endif
+          </textarea>
+        </p>
+          ${checkbox("media-override", "media override (adds an onclick to the link to generate a drop-down rather than a link out)", getattr(thing.link, "media_override", False) or False)}<br />
+      </div>
+    </%utils:line_field>
+    %endif
 %else:
    <div class="spacer">
      <div class="infobar">

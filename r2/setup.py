@@ -134,7 +134,7 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
-                      "cython==0.12.1",
+                      "cython==0.13",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup == 3.0.8.1", # last version to use the good parser
@@ -172,7 +172,7 @@ setup(
 
 # the cassandra stuff we'll need. down here because it needs to be
 # done *after* thrift is installed
-easy_install(["http://github.com/downloads/vomjom/pycassa/pycassa-0.3.0.tar.gz"])
+easy_install(["http://github.com/downloads/pycassa/pycassa/pycassa-0.3.0.tar.gz"])
 
 # running setup.py always fucks up the build directory, which we don't
 # need anyway.

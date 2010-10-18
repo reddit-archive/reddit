@@ -34,18 +34,9 @@ class _CommentBuilder(Builder):
 
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
-            g.log.error("Error - self.comment (%d) not in depth. Forcing update..."
+            g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
                         % self.comment._id)
-
-            try:
-                r = link_comments(self.link._id, _update=True)
-                cids, cid_tree, depth, num_children = r
-            except TimeoutExpired:
-                g.log.error("Error in _builder.pyx: timeout from tree reload (%r)" % self.link)
-                raise
-
-            if not self.comment._id in depth:
-                g.log.error("Update didn't help. This is gonna end in tears.")
+            self.comment = None
 
         cdef list items = []
         cdef dict extra = {}
@@ -73,7 +64,7 @@ class _CommentBuilder(Builder):
 
         # permalinks:
         elif self.comment:
-            # we are going to messa round with the cid_tree's contents 
+            # we are going to mess around with the cid_tree's contents
             # so better copy it
             cid_tree = cid_tree.copy()
             top = self.comment._id
@@ -161,12 +152,14 @@ class _CommentBuilder(Builder):
                 final.append(cm)
 
         for p_id, morelink in extra.iteritems():
-            if p_id not in cids:
+            try:
+                parent = cids[p_id]
+            except KeyError:
                 if p_id in ignored_parent_ids:
                     raise KeyError("%r not in cids because it was ignored" % p_id)
                 else:
                     raise KeyError("%r not in cids but it wasn't ignored" % p_id)
-            parent = cids[p_id]
+
             parent.child = empty_listing(morelink)
             parent.child.parent_name = parent._fullname
 

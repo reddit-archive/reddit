@@ -39,7 +39,9 @@ def trial_info(things):
     things = tup(things)
     keys = dict((trial_key(thing), thing._fullname)
                 for thing in things)
-    vals = g.hardcache.get_multi(keys)
+# TODO: disabling trial lookup for now, since there aren't any
+#    vals = g.hardcache.get_multi(keys)
+    vals = {}
     return dict((keys[key], val)
                 for (key, val)
                 in vals.iteritems())

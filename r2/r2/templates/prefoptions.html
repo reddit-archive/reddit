@@ -188,7 +188,12 @@
     <% s = c.user.pref_num_comments %>
     ${unsafe(_("display %(num)s comments by default") % \
     dict(num = input))}
-  &#32;<span class="little gray">(1 - ${g.max_comments})</span>
+    &#32;
+    <span class="little gray">
+      (1 - ${g.max_comments});
+      &#32;
+      ${_("the smaller the number, the faster your comments pages will load")}
+    </span>
     </td>
   </tr>
   <tr>
@@ -241,7 +246,8 @@
   <tr>
     <th>${_("privacy options")}</th>
     <td class="prefright">
-      ${checkbox(_("make my votes public"), "public_votes")}
+      ${checkbox(_("make my votes public"), "public_votes")}<br />
+      ${checkbox(_("allow my data to be used for research purposes"), "research")}
     </td>
   </tr>
   %endif
@@ -250,10 +256,16 @@
     <th>${_("gold options")}</th>
     <td class="prefright">
         ${checkbox(_("show the right sidebar ad box"), "show_adbox")}
-        &#32;<span class="little gray">(${_("The attractive 300x250 one that usually only has reddit t-shirts in it.")})</span>
+        &#32;<span class="little gray">(${_("the attractive 300x250 one that usually only has reddit t-shirts in it")})</span>
         <br/>
         ${checkbox(_("show sponsored links"), "show_sponsors")}
-        &#32;<span class="little gray">(${_("The blue advertisements that sometimes appear on the top of the page.")})</span>
+        &#32;<span class="little gray">(${_("the blue advertisements that sometimes appear on the top of the page")})</span>
+        <br/>
+        <br/>
+        ${checkbox(_("highlight new comments"), "highlight_new_comments")}
+        &#32;<span class="little gray">
+          (${_("we'll remember your visits for 48 hours and show you which comments you haven't seen yet")})
+        </span>
         <br/>
     </td>
   </tr>

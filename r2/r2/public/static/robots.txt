@@ -2,7 +2,20 @@
 User-agent: 008
 Disallow: /
 
+# MSNBot
+User-Agent: msnbot
+Crawl-Delay: 20
+
+User-Agent: bender
+Disallow: /my_shiny_metal_ass
+
+User-Agent: Gort
+Disallow: /earth
+
 User-Agent: *
+Disallow: /api
+Disallow: /post
+Disallow: /submit
 Disallow: /goto
 Disallow: /*after=
 Disallow: /*before=

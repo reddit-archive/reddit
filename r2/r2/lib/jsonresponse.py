@@ -189,7 +189,7 @@ class JQueryResponse(JsonResponse):
             if field_name:
                 selector += ".field-" + field_name
             message = c.errors[(error_name, field_name)].message
-            form.find(selector).show().html(message).end()
+            form.find(selector).show().text(message).end()
         return {"jquery": self.ops}
 
     # thing methods

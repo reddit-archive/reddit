@@ -442,12 +442,12 @@ function showcomment(elem) {
     return false;
 };
 
-function morechildren(form, link_id, children, depth) {
+function morechildren(form, link_id, children, depth, pv_hex) {
     $(form).html(reddit.status_msg.loading)
         .css("color", "red");
     var id = $(form).parents(".thing.morechildren:first").thing_id();
     $.request('morechildren', {link_id: link_id,
-                children: children, depth: depth, id: id});
+              children: children, depth: depth, id: id, pv_hex: pv_hex});
     return false;
 };
 
@@ -931,6 +931,7 @@ function expando_child(elem) {
         expando.html($.unsafe(child_cache[key]));
     }
     expando.show();
+    return false;
 }
 
 function unexpando_child(elem) {
@@ -1322,4 +1323,16 @@ function search_feedback(elem, approval) {
   elem.siblings(".thanks").show();
   elem.addClass("pressed");
   return false;
+}
+
+function highlight_new_comments(period) {
+  var i;
+  for (i = 0 ; i <= 9; i++) {
+    items = $(".comment-period-" + i);
+    if (period >= 0 && i >= period) {
+      items.addClass("new-comment");
+    } else {
+      items.removeClass("new-comment");
+    }
+  }
 }

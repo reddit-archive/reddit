@@ -55,6 +55,9 @@
      %if thing.mousedown_url:
        onmousedown="this.href='${thing.mousedown_url}'"
      %endif
+     %if thing.link_child and getattr(thing, "media_override", False):
+       onclick="return expando_child(this)"
+     %endif
      >
      ${caller.body()}
   </a>

@@ -22,8 +22,8 @@
 from email.MIMEText import MIMEText
 from pylons.i18n import _
 from pylons import c, g
-from r2.lib.utils import timeago, query_string
-from r2.models import passhash, Email, Default, has_opted_out, Account, Award
+from r2.lib.utils import timeago, query_string, randstr
+from r2.models import passhash, Email, DefaultSR, has_opted_out, Account, Award
 import os, random, datetime
 import traceback, sys, smtplib
 
@@ -82,7 +82,7 @@ def password_email(user):
     For resetting a user's password.
     """
     from r2.lib.pages import PasswordReset
-    key = passhash(random.randint(0, 1000), user.email)
+    key = passhash(randstr(64, reallyrandom = True), user.email)
     passlink = 'http://' + g.domain + '/resetpassword/' + key
     print "Generated password reset link: " + passlink
     g.cache.set("reset_%s" %key, user._id, time=1800)
@@ -131,7 +131,7 @@ def send_queued_mail(test = False):
     from r2.lib.pages import PasswordReset, Share, Mail_Opt, VerifyEmail
     now = datetime.datetime.now(g.tz)
     if not c.site:
-        c.site = Default
+        c.site = DefaultSR()
 
     clear = False
     if not test:
@@ -238,3 +238,15 @@ def live_promo(thing):
 
 def finished_promo(thing):
     return _promo_email(thing, Email.Kind.FINISHED_PROMO)
+
+
+def send_html_email(to_addr, from_addr, subject, html):
+    from r2.lib.filters import _force_utf8
+    msg = MIMEText(_force_utf8(html), "html")
+    msg["Subject"] = subject
+    msg["From"] = from_addr
+    msg["To"] = to_addr
+
+    session = smtplib.SMTP(g.smtp_server)
+    session.sendmail(from_addr, to_addr, msg.as_string())
+    session.quit()

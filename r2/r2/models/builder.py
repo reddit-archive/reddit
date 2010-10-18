@@ -29,10 +29,13 @@ from pylons.i18n import _
 
 import subreddit
 
+from r2.lib.comment_tree import moderator_messages, sr_conversation, conversation
+from r2.lib.comment_tree import user_messages, subreddit_messages
+
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
 from r2.lib.db import operators
-from r2.lib.comment_tree import *
+from r2.lib.filters import _force_unicode
 from copy import deepcopy
 
 import time
@@ -73,8 +76,8 @@ class Builder(object):
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
-            if c.user.gold:
-                friend_rels = c.user.friend_rels()
+            if user and user.gold:
+                friend_rels = user.friend_rels()
 
         subreddits = Subreddit.load_subreddits(items)
 
@@ -135,7 +138,8 @@ class Builder(object):
                         rel = friend_rels[item.author_id]
                         note = getattr(rel, "note", None)
                         if note:
-                            label = "%s (%s)" % (_("friend"), note)
+                            label = u"%s (%s)" % (_("friend"), 
+                                                  _force_unicode(note))
                     add_attr(w.attribs, 'F', label)
 
             except AttributeError:

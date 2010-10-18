@@ -24,7 +24,7 @@
 <%!
    from pylons.i18n import _
    from r2.lib.template_helpers import get_domain, style_line
-   from r2.models.subreddit import FakeSubreddit, Default
+   from r2.models.subreddit import FakeSubreddit, DefaultSR
 %>
 
 <div class="rembeddit"
@@ -72,7 +72,7 @@
           target="${c.link_target}"
         %endif
       >
-        ${Default.name}
+        ${DefaultSR.name}
       </a>
     </small>
   </p>

@@ -189,16 +189,6 @@
          } catch(err) {}
         </script>
     %endif
-    <%
-       fullpath = add_sr(request.fullpath, force_hostname = True,
-                    sr_path = (c.site != Sub))
-       # drop the scheme and the first /
-       fullpath = ':'.join(fullpath.split(':')[1:])[1:]
-     %>
-    <iframe id="comscore" class="to-pay-the-bills" frameborder="0"
-            style="width:1px; height:1px"
-            scrolling="no" src="/comscore-iframe${fullpath}">
-    </iframe>
   </body>
 </%def>
 

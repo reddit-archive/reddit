@@ -125,7 +125,8 @@ menu =   MenuHandler(hot          = _('hot'),
                      # reddits
                      home         = _("home"),
                      about        = _("about"),
-                     edit         = _("edit this reddit"),
+                     edit_subscriptions = _("edit subscriptions"),
+                     community_settings = _("community settings"),
                      moderators   = _("edit moderators"),
                      modmail      = _("moderator mail"),
                      contributors = _("edit approved submitters"),
@@ -382,14 +383,14 @@ class SimpleGetMenu(NavMenu):
     title     = ''
     default = None
     type = 'lightdrop'
-    
+
     def __init__(self, **kw):
         buttons = [NavButton(self.make_title(n), n, opt = self.get_param)
                    for n in self.options]
         kw['default'] = kw.get('default', self.default)
         kw['base_path'] = kw.get('base_path') or request.path
         NavMenu.__init__(self, buttons, type = self.type, **kw)
-    
+
     def make_title(self, attr):
         return menu[attr]
 
@@ -407,7 +408,7 @@ class SortMenu(SimpleGetMenu):
     def __init__(self, **kw):
         kw['title'] = _("sorted by")
         SimpleGetMenu.__init__(self, **kw)
-    
+
     @classmethod
     def operator(self, sort):
         if sort == 'hot':
@@ -496,42 +497,6 @@ class TimeMenu(SimpleGetMenu):
 class ControversyTimeMenu(TimeMenu):
     """time interval for controversial sort.  Make default time 'day' rather than 'all'"""
     default = 'day'
-
-class NumCommentsMenu(SimpleGetMenu):
-    """menu for toggling between the user's preferred number of
-    comments and the max allowed in the display, assuming the number
-    of comments in the listing exceeds one or both."""
-    get_param = 'all'
-    default   = 'false'
-    options   = ('true', 'false')
-
-    def __init__(self, num_comments, **context):
-        self.num_comments = num_comments
-        self.max_comments = g.max_comments
-        self.user_num = c.user.pref_num_comments
-        SimpleGetMenu.__init__(self, **context)
-
-    def make_title(self, attr):
-        if self.user_num > self.num_comments:
-            # no menus needed if the number of comments is smaller
-            # than any of the limits
-            return ""
-        elif self.num_comments > self.max_comments:
-            # if the number present is larger than the global max,
-            # label the menu as the user pref and the max number
-            return dict(true=str(self.max_comments), 
-                        false=str(self.user_num))[attr]
-        else:
-            # if the number is less than the global max, display "all"
-            # instead for the upper bound.
-            return dict(true=_("all"),
-                        false=str(self.user_num))[attr]
-        
-
-    def render(self, **kw):
-        if self.user_num > self.num_comments:
-            return ""
-        return SimpleGetMenu.render(self, **kw)
 
 class SubredditMenu(NavMenu):
     def find_selected(self):

@@ -344,6 +344,7 @@ def get_transactions(link):
 
 
 def new_campaign(link, dates, bid, sr):
+    indx = None
     with g.make_lock(campaign_lock(link)):
         # get a copy of the attr so that it'll be
         # marked as dirty on the next write.
@@ -358,7 +359,12 @@ def new_campaign(link, dates, bid, sr):
         link.campaigns = {}
         link.campaigns = campaigns
         link._commit()
-        return indx
+
+    author = Account._byID(link.author_id, True)
+    if getattr(author, "complimentary_promos", False):
+        free_campaign(link, indx, c.user)
+
+    return indx
 
 def free_campaign(link, index, user):
     auth_campaign(link, index, user, -1)
@@ -381,7 +387,14 @@ def edit_campaign(link, index, dates, bid, sr):
             #TODO cancel any existing charges if the bid has changed
             if prev_bid != bid:
                 void_campaign(link, index, c.user)
+    author = Account._byID(link.author_id, True)
+    if getattr(author, "complimentary_promos", False):
+        free_campaign(link, index, c.user)
 
+def complimentary(username, value = True):
+    a = Account._by_name(username, True)
+    a.complimentary_promos = value
+    a._commit()
 
 def delete_campaign(link, index):
     with g.make_lock(campaign_lock(link)):

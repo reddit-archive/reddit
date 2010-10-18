@@ -40,6 +40,7 @@ from r2.lib.jsontemplates import api_type
 from r2.lib.html_source import HTMLValidationParser
 from cStringIO import StringIO
 import sys, tempfile, urllib, re, os, sha, subprocess
+from httplib import HTTPConnection
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
@@ -308,6 +309,21 @@ class DomainMiddleware(object):
             # subdomains to disregard completely
             if sd in ('www', 'origin', 'beta', 'pay'):
                 continue
+            elif sd == 'blog':
+                r = Response()
+                try:
+                    conn = HTTPConnection(config['global_conf']['blog_host'])
+                    conn.request("GET", environ['PATH_INFO'], None,
+                                 {"Host": "blog.reddit.com"})
+                    res = conn.getresponse()
+                    r.status_code = res.status
+                    r.content = res.read()
+                    conn.close()
+                except:
+                    r.status_code = 500
+                    environ['HTTP_HOST'] = base_domain
+                    r.content = "failed to load blog"
+                return r(environ, start_response)
             # subdomains which change the extension
             elif sd == 'm':
                 environ['reddit-domain-extension'] = 'mobile'

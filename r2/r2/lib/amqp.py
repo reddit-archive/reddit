@@ -96,8 +96,8 @@ class ConnectionManager(local):
                                                   password = amqp_pass,
                                                   virtual_host = amqp_virtual_host,
                                                   insist = False)
-            except (socket.error, IOError):
-                print 'error connecting to amqp %s @ %s' % (amqp_user, amqp_host)
+            except (socket.error, IOError), e:
+                print 'error connecting to amqp %s @ %s (%r)' % (amqp_user, amqp_host, e)
                 time.sleep(1)
 
         # don't run init_queue until someone actually needs it. this
@@ -160,7 +160,7 @@ def _add_item(routing_key, body, message_id = None,
                            routing_key = routing_key)
     except Exception as e:
         if e.errno == errno.EPIPE:
-            get_channel(True)
+            connection_manager.get_channel(True)
             add_item(routing_key, body, message_id)
         else:
             raise

@@ -21,7 +21,6 @@
 ################################################################################
 
 <%! 
-    from r2.models.subreddit import Default
     from pylons.i18n import _, ungettext
     from r2.lib.template_helpers import add_sr
 %>

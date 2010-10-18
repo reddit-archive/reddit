@@ -53,22 +53,6 @@
   </%utils:round_field>
 </div>
 
-<div class="postcard">
-  <%utils:round_field title="${_('we\'ve got mail!')}">
-
-  <div class="postcard-msg rounded">
-    ${strings.postcard_msg}
-
-    <table>
-      ${radio_type("postcard", "yes", _("sure, that sounds awesome!"),
-      "", False)}
-      ${radio_type("postcard", "no", _("no, please shred it when you're done"),
-      "", False)}
-    </table>
-  </div>
-  </%utils:round_field>
-</div>
-
 <button type="submit" class="btn">${_("claim your prize")}</button>
 <span class="status"></span>
 

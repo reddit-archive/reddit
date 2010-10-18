@@ -147,7 +147,7 @@ timechunks = (
     (60,                 TimeText('minute', 'minutes')),
     (1,                  TimeText('second', 'seconds'))
     )
-cdef timetext(delta, resultion = 1, bare=True):
+cdef timetext(delta, precision=None, bare=True):
     """
     Takes a datetime object, returns the time between then and now
     as a nicely formatted string, e.g "10 minutes"
@@ -167,31 +167,37 @@ cdef timetext(delta, resultion = 1, bare=True):
     from r2.lib.strings import strings
     if count == 0 and delta.seconds == 0 and delta != timedelta(0):
         n = delta.microseconds // 1000
-        s = strings.time_label % dict(num=n, 
-                                      time=ungettext("millisecond", 
+        s = strings.time_label % dict(num=n,
+                                      time=ungettext("millisecond",
                                                      "milliseconds", n))
     else:
         s = strings.time_label % dict(num=count, time=name(int(count)))
-        if resultion > 1:
-            if i + 1 < len(timechunks):
-                # Now get the second item
-                seconds2, name2 = timechunks[i + 1]
-                count2 = (since - (seconds * count)) / seconds2
-                if count2 != 0:
-                    s += ', %d %s' % (count2, name2(count2))
+        if precision:
+            j = 0
+            while True:
+                j += 1
+                since -= seconds * count
+                if i + j >= len(timechunks):
+                    break
+                if timechunks[i + j][0] < precision:
+                    break
+                seconds, name = timechunks[i + j]
+                count = since // seconds
+                if count != 0:
+                    s += ', %d %s' % (count, name(count))
 
     if not bare:
         s += ' ' + _('ago')
 
     return s
 
-def timesince(d, resultion = 1, bare = True):
+def timesince(d, precision=None):
     from pylons import g
-    return timetext(datetime.now(g.tz) - d)
+    return timetext(datetime.now(g.tz) - d, precision)
 
-def timeuntil(d, resultion = 1, bare = True):
+def timeuntil(d, precision=None):
     from pylons import g
-    return timetext(d - datetime.now(g.tz))
+    return timetext(d - datetime.now(g.tz), precision)
 
 cpdef dict keymap(keys, callfn, mapfn = None, str prefix=''):
     """map a set of keys before a get_multi to return a dict using the
@@ -250,7 +256,7 @@ cdef list _l(l):
     else:
         return list(l)
 
-def get_after(list fullnames, fullname, int num, bool reverse=False):
+def get_after(list fullnames, fullname, int num, reverse=False):
     cdef int i
 
     if reverse:
@@ -264,3 +270,28 @@ def get_after(list fullnames, fullname, int num, bool reverse=False):
             return fullnames[i+1:i+num+1]
 
     return fullnames[:num]
+
+def levenshtein(first, second):
+    cdef unicode a=unicode(first)
+    cdef unicode b=unicode(second)
+    cdef long n, m
+    cdef list current, previous
+    cdef long add, delete, change
+
+    n, m = len(a), len(b)
+    if n > m:
+        # Make sure n <= m, to use O(min(n,m)) space
+        a,b = b,a
+        n,m = m,n
+
+    current = range(n+1)
+    for i in range(1,m+1):
+        previous, current = current, [i]+[0]*n
+        for j in range(1,n+1):
+            add, delete = previous[j]+1, current[j-1]+1
+            change = previous[j-1]
+            if a[j-1] != b[i-1]:
+                change = change + 1
+            current[j] = min(add, delete, change)
+
+    return current[n]

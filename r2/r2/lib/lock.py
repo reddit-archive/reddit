@@ -73,7 +73,7 @@ class MemcacheLock(object):
                 msg += "^^^ that was the stack trace of the lock hog, not me."
                 raise TimeoutExpired(msg)
 
-            sleep(.1)
+            sleep(.01)
 
         #tell this thread we have this lock so we can avoid deadlocks
         #of requests for the same lock in the same thread

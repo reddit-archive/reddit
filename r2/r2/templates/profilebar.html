@@ -97,16 +97,32 @@
     ${_("comment karma")}
   %endif
 
+  %if thing.gold_remaining:
+    <div class="rounded gold-accent gold-expiration-info">
+      <div class="gold-remaining"
+           %if thing.gold_expiration:
+             title="${thing.gold_expiration.strftime('%Y-%m-%d')}"
+           %endif
+           >
+        <span class="karma">
+          ${thing.gold_remaining}
+        </span>
+        &#32;
+        ${_("of reddit gold remaining")}
+      </div>
+    </div>
+  %endif
+
   <div class="bottom">
     %if thing.user != c.user:
       <img src="${static('mailgray.png')}"/>
       &#32;
       ${plain_link(_("send message"), "/message/compose/?to=%s" % thing.user.name)}
     %endif
-    
+
     <span class="age">
       ${_("redditor for %(time)s") % dict(time=timesince(thing.user._date))}
-    </span>  
+    </span>
   </div>
 
   <div class="clear"> </div>

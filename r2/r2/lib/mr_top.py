@@ -22,7 +22,7 @@ time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
 time psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST \
      -c "\\copy (select d.thing_id, 'data', 'link',
                         d.key, d.value
-                   from reddit_data_link d, reddit_data_link t
+                   from reddit_data_link d, reddit_thing_link t
                   where t.thing_id = d.thing_id
                     and not t.spam and not t.deleted
                     and (d.key = 'url' or d.key = 'sr_id')

@@ -26,7 +26,7 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
     
     number = (len([x for x in hosts if x.services]) + 
               len([x for x in hosts if x.database]) +
-              sum(len(x.queue.queues) for x in hosts if x.queue)) + 9
+              sum(len(x.queue.queues) for x in hosts if x.queue)) + 14
 
     im = Image.new("RGB", (width, number * row_size + 3))
     draw = ImageDraw.Draw(im)
@@ -43,7 +43,7 @@ def draw_load(row_size = 12, width = 200, out_file = "/tmp/load.png"):
 
     draw_box(" ==== DATABASES ==== ", "#BBBBBB", center = True)
     for host in hosts:
-        if host.database:
+        if host.database or host.host.startswith('vote'):
             draw_box("  %s load: %s" % (host.host, host.load()),
                      get_load_level(host))
 

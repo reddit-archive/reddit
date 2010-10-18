@@ -28,7 +28,6 @@ import sqlalchemy as sa
 from sqlalchemy.databases import postgres
 
 from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
-from r2.lib.services import AppServiceMonitor
 import operators
 from pylons import g, c
 dbm = g.dbm
