@@ -32,14 +32,13 @@
       url = thing.mousedown_url
    else:
       url = permalink
-   use_thumbs = thing.thumbnail and not request.GET.has_key("nothumbs")
+   use_thumbs = thing.has_thumbnail and not request.GET.has_key("nothumbs")
  %>
 <item>
   <title>${thing.title}</title>
   <link>${url}</link>
   <guid isPermaLink="true">${permalink}</guid>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
-  <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
     <%def name="description()" filter="h">
       %if use_thumbs:
