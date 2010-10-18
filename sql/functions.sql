@@ -36,8 +36,12 @@ create or replace function ip_network(ip text) returns text as $$
     select substring($1 from E'[\\d]+\.[\\d]+\.[\\d]+')
 $$ language sql immutable;
 
-create or replace function base_url(url texT) returns text as $$
+create or replace function base_url(url text) returns text as $$
     select substring($1 from E'(?i)(?:.+?://)?(?:www[\\d]*\\.)?([^#]*[^#/])/?')
+$$ language sql immutable;
+
+create or replace function domain(url text) returns text as $$
+    select substring($1 from E'(?i)(?:.+?://)?(?:www[\\d]*\\.)?([^#/]*)/?')
 $$ language sql immutable;
 
 create view active as
