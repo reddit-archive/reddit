@@ -313,7 +313,7 @@ class Subreddit(Thing, Printable):
 
     def get_all_comments(self):
         from r2.lib.db import queries
-        return queries.get_all_comments()
+        return queries.get_sr_comments(self)
 
 
     @classmethod
@@ -594,6 +594,10 @@ class FakeSubreddit(Subreddit):
     def is_banned(self, user):
         return False
 
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        return queries.get_all_comments()
+
 class FriendsSR(FakeSubreddit):
     name = 'friends'
     title = 'friends'
@@ -702,6 +706,10 @@ class AllSR(FakeSubreddit):
             q._filter(queries.db_times[time])
         return q
 
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        return queries.get_all_comments()
+
     def rising_srs(self):
         return None
 
@@ -799,6 +807,12 @@ class MultiReddit(_DefaultSR):
 
     def rising_srs(self):
         return self.sr_ids
+
+    def get_all_comments(self):
+        from r2.lib.db.queries import get_sr_comments, merge_results
+        srs = Subreddit._byID(self.sr_ids, return_dict=False)
+        results = [get_sr_comments(sr) for sr in srs]
+        return merge_results(*results)
 
 class RandomReddit(FakeSubreddit):
     name = 'random'

@@ -417,6 +417,12 @@ def get_all_comments():
     q = Comment._query(sort = desc('_date'))
     return make_results(q)
 
+def get_sr_comments(sr):
+    """the subreddit /r/foo/comments page"""
+    q = Comment._query(Comment.c.sr_id == sr._id,
+                       sort = desc('_date'))
+    return make_results(q)
+
 def get_comments(user, sort, time):
     return user_query(Comment, user, sort, time)
 
@@ -573,8 +579,8 @@ def new_comment(comment, inbox_rels):
         job.append(get_all_comments())
         add_queries(job, delete_items = comment)
     else:
+        sr = Subreddit._byID(comment.sr_id)
         if comment._spam:
-            sr = Subreddit._byID(comment.sr_id)
             job.append(get_spam_comments(sr))
         add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
@@ -751,7 +757,8 @@ def del_or_ban(things, why):
 
         if comments:
             add_queries([get_spam_comments(sr)], insert_items = comments)
-            add_queries([get_all_comments()], delete_items = comments)
+            add_queries([get_all_comments(),
+                         get_sr_comments(sr)], delete_items = comments)
 
     changed(things)
 
@@ -781,7 +788,8 @@ def unban(things):
 
         if comments:
             add_queries([get_spam_comments(sr)], delete_items = comments)
-            add_queries([get_all_comments()], insert_items = comments)
+            add_queries([get_all_comments(),
+                         get_sr_comments(sr)], insert_items = comments)
 
     changed(things)
 
@@ -802,12 +810,12 @@ def clear_reports(things):
         sr = srs[sr_id]
 
         links = [ x for x in sr_things if isinstance(x, Link) ]
-        #comments = [ x for x in sr_things if isinstance(x, Comment) ]
+        comments = [ x for x in sr_things if isinstance(x, Comment) ]
 
         if links:
             add_queries([get_reported_links(sr)], delete_items = links)
-        #if comments:
-        #    add_queries([get_reported_comments(sr)], delete_items = comments)
+        if comments:
+            add_queries([get_reported_comments(sr)], delete_items = comments)
 
 def add_all_ban_report_srs():
     """Adds the initial spam/reported pages to the report queue"""
@@ -875,9 +883,11 @@ def run_new_comments():
 
     def _run_new_comment(msg):
         fname = msg.body
-        comment = Comment._by_fullname(fname)
+        comment = Comment._by_fullname(fname,data=True)
+        sr = Subreddit._byID(comment.sr_id)
 
-        add_queries([get_all_comments()],
+        add_queries([get_all_comments(),
+                     get_sr_comments(sr)],
                     insert_items = [comment])
 
     amqp.consume_items('newcomments_q', _run_new_comment)
