@@ -28,7 +28,12 @@ from r2.lib.db import queries
 import string
 import random
 
-def populate(num_srs = 10, num_users = 10, num_links = 100):
+def random_word(min, max):
+    return ''.join([ random.choice(string.letters)
+                         for x
+                         in range(random.randint(min, max)) ])
+
+def populate(num_srs = 10, num_users = 1000, num_links = 100, num_comments = 20, num_votes = 50):
     try:
         a = Account._by_name(g.system_user)
     except NotFound:
@@ -66,6 +71,27 @@ def populate(num_srs = 10, num_users = 10, num_links = 100):
         sr = random.choice(srs)
         l = Link._submit(title, url, user, sr, '127.0.0.1')
         queries.new_link(l)
+
+        comments = [ None ]
+        for i in range(int(random.betavariate(2, 8) * 5 * num_comments)):
+            user = random.choice(accounts)
+            body = ' '.join([ random_word(1, 10)
+                              for x
+                              in range(int(200 * random.betavariate(2, 6))) ])
+            parent = random.choice(comments)
+            (c, inbox_rel) = Comment._new(user, l, parent, body, '127.0.0.1')
+            queries.new_comment(c, inbox_rel)
+            comments.append(c)
+            for i in range(int(random.betavariate(2, 8) * 10)):
+                another_user = random.choice(accounts)
+                v = Vote.vote(another_user, c, True, '127.0.0.1')
+                queries.new_vote(v)
+
+        like = random.randint(50,100)
+        for i in range(int(random.betavariate(2, 8) * 5 * num_votes)):
+           user = random.choice(accounts)
+           v = Vote.vote(user, l, random.randint(0, 100) <= like, '127.0.0.1')
+           queries.new_vote(v)
 
     queries.worker.join()
 
