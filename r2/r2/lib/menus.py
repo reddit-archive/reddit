@@ -101,6 +101,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      ad_inq       = _("inquire about advertising"),
                      random       = _('random'),
                      iphone       = _("iPhone app"),
+                     gold         = _('gold'),
 
                      #preferences
                      options      = _('options'),

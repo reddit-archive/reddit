@@ -1366,6 +1366,7 @@ textarea.gray { color: gray; }
 .status { margin-left: 5px; color: red; font-size: small;}
 .error { color: red; font-size: small; margin: 5px; }
 .red { color:red }
+.buygold { color: #c59534; font-weight: bold; }
 .line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
