@@ -319,6 +319,8 @@ def trunc_time(time, mins, hours=None):
                         second = 0,
                         microsecond = 0)
 
+def long_datetime(datetime):
+    return datetime.ctime() + " GMT"
 
 def median(l):
     if l:

@@ -24,9 +24,8 @@
    import locale
    from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
    from r2.lib.template_helpers import static
-   from r2.lib.utils import timesince
  %>
-<%namespace file="utils.html" import="submit_form, plain_link"/>
+<%namespace file="utils.html" import="submit_form, plain_link, timestamp"/>
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
 <div class="titlebox">
@@ -129,7 +128,7 @@
     %endif
 
     <span class="age">
-      ${_("redditor for %(time)s") % dict(time=timesince(thing.user._date))}
+      ${_("redditor for")}&#32;${timestamp(thing.user)}
     </span>
   </div>
 

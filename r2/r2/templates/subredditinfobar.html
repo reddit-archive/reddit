@@ -22,12 +22,11 @@
 
 <%!
    import locale
-   from r2.lib.utils import timesince
    from r2.lib.strings import strings, Score
    from r2.lib.pages import WrappedUser
  %>
 
-<%namespace file="utils.html" import="plain_link"/>
+<%namespace file="utils.html" import="plain_link, timestamp"/>
 <%namespace file="subreddit.html" import="addremove_button" />
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
@@ -70,7 +69,7 @@
     %endif
     
     <span class="age">
-      ${_("a community for %(time)s") % dict(time=timesince(thing.sr._date))}
+      ${_("a community for")}&#32;${timestamp(thing.sr)}
     </span>  
   </div>
 

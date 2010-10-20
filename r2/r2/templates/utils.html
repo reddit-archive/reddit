@@ -23,7 +23,7 @@
 <%!
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr
-   from r2.lib.utils import cols
+   from r2.lib.utils import cols, long_datetime, timesince
 %>
 <%def name="tags(**kw)">
 %for k, v in kw.iteritems():
@@ -474,6 +474,14 @@ ${unsafe(txt)}
         %endfor
       </ul>
     </div>
+</%def>
+
+<%def name="timestamp(thing, since=None)">
+  ## todo: use pubdate attribute once things are <article> tags.
+  ## note: comment and link templates will pass a CachedVariable stub as since.
+  <time title="${long_datetime(thing._date)}" datetime="${thing._date.isoformat()}">
+    ${unsafe(since or timesince(thing._date))}
+  </time>
 </%def>
 
 <%def name="percentage(slice, total)">

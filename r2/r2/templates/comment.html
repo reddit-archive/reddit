@@ -26,6 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 
+<%namespace file="utils.html" import="timestamp" />
 <%inherit file="comment_skeleton.html"/>
 
 #####################
@@ -95,8 +96,7 @@ ${parent.collapsed()}
     %if show:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
-    ## thing.timesince is a cache stub
-    ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}
+    ${timestamp(thing, thing.timesince)}&#32;${_("ago")}
     %if thing.editted:
       <em>*</em>&nbsp;
     %endif
