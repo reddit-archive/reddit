@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.filters import safemarkdown
+   from r2.lib.template_helpers import add_sr
 %>
 
 
@@ -32,12 +33,14 @@
   else:
     author = thing.author.name
     body = thing.body
+
+  permalink = add_sr(thing.permalink, force_hostname = True)
 %>
 
 <item>
-  <guid isPermaLink="true">${thing.permalink}</guid>
+  <guid isPermaLink="true">${permalink}</guid>
   <title>${author} ${_("on")} ${thing.link.title}</title>
-  <link>${thing.permalink}</link>
+  <link>${permalink}</link>
   <dc:date>${thing._date.isoformat()}-0700</dc:date>
   <description>${body|h}</description>
 </item>
