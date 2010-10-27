@@ -716,6 +716,28 @@ class ApiController(RedditController):
                 rels = filter(None, d.values()) or None
                 queries.new_comment(thing, rels)
 
+    @noresponse(VUser(),
+                VModhash(),
+                VSrCanAlter('id'),
+                thing = VByName('id'))
+    def POST_marknsfw(self, thing):
+        thing.over_18 = True
+        thing._commit()
+
+        # flag search indexer that something has changed
+        changed(thing)
+
+    @noresponse(VUser(),
+                VModhash(),
+                VSrCanAlter('id'),
+                thing = VByName('id'))
+    def POST_unmarknsfw(self, thing):
+        thing.over_18 = False
+        thing._commit()
+
+        # flag search indexer that something has changed
+        changed(thing)
+
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
     def POST_report(self, thing):

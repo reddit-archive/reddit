@@ -33,8 +33,8 @@ from pylons.i18n import _, ungettext
 class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
-                 show_distinguish = False,
-                 show_indict = False, is_link=False, **kw):
+                 show_distinguish = False, show_marknsfw = False,
+                 show_unmarknsfw = False, show_indict = False, is_link=False, **kw):
         show_ignore = (thing.show_reports or
                        (thing.reveal_trial_info and not thing.show_spam))
         approval_checkmark = getattr(thing, "approval_checkmark", None)
@@ -54,6 +54,8 @@ class PrintableButtons(Styled):
                         show_report = show_report,
                         show_indict = show_indict,
                         show_distinguish = show_distinguish,
+                        show_marknsfw = show_marknsfw,
+                        show_unmarknsfw = show_unmarknsfw,
                         **kw)
         
 class BanButtons(PrintableButtons):
@@ -76,6 +78,16 @@ class LinkButtons(PrintableButtons):
             show_indict = True
         else:
             show_indict = False
+
+        if (thing.can_ban or is_author) and not thing.nsfw:
+            show_marknsfw = True
+        else:
+            show_marknsfw = False
+
+        if (thing.can_ban or is_author) and thing.nsfw and not thing.nsfw_str:
+            show_unmarknsfw = True
+        else:
+            show_unmarknsfw = False
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
@@ -114,6 +126,8 @@ class LinkButtons(PrintableButtons):
                                   show_report = show_report and c.user_is_loggedin,
                                   show_indict = show_indict,
                                   show_distinguish = show_distinguish,
+                                  show_marknsfw = show_marknsfw,
+                                  show_unmarknsfw = show_unmarknsfw,
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,
