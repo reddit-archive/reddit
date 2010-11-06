@@ -230,7 +230,7 @@ class Reddit(Templated):
 
         if self.create_reddit_box and c.user_is_loggedin:
             delta = datetime.datetime.now(g.tz) - c.user._date
-            if delta.days > 30:
+            if delta.days >= g.min_membership_create_community:
                 ps.append(SideBox(_('Create your own community'),
                            '/reddits/create', 'create',
                            subtitles = rand_strings.get("create_reddit", 2),

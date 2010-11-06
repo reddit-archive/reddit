@@ -65,6 +65,7 @@ class Globals(object):
                  'num_serendipity',
                  'sr_dropdown_threshold',
                  'comment_visits_period',
+                  'min_membership_create_community',
                  ]
 
     float_props = ['min_promote_bid',
