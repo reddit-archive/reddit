@@ -147,6 +147,8 @@ class ListingController(RedditController):
             wouldkeep = item.keep_item(item)
             if getattr(item, "promoted", None) is not None:
                 return False
+            if item._deleted and not c.user_is_admin:
+                return False
             return wouldkeep
         return keep
 
@@ -398,7 +400,7 @@ class BrowseController(ListingController):
     @property
     def menus(self):
         return [ControversyTimeMenu(default = self.time)]
-    
+
     def query(self):
         return c.site.get_links(self.sort, self.time)
 
@@ -453,14 +455,14 @@ class ByIDController(ListingController):
 #class RecommendedController(ListingController):
 #    where = 'recommended'
 #    title_text = _('recommended for you')
-#    
+#
 #    @property
 #    def menus(self):
 #        return [RecSortMenu(default = self.sort)]
-#    
+#
 #    def query(self):
 #        return get_recommended(c.user._id, sort = self.sort)
-#        
+#
 #    @validate(VUser(),
 #              sort = VMenu("controller", RecSortMenu))
 #    def GET_listing(self, sort, **env):
@@ -497,7 +499,8 @@ class UserController(ListingController):
         # keep promotions off of profile pages.
         def keep(item):
             wouldkeep = True
-            if item._deleted:
+            # TODO: Consider a flag to disable this (and see below plus builder.py)
+            if item._deleted and not c.user_is_admin:
                 return False
             if self.time != 'all':
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
@@ -618,25 +621,26 @@ class MessageController(ListingController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
-            if item._deleted or item._spam:
+            # TODO: Consider a flag to disable this (and see above plus builder.py)
+            if (item._deleted or item._spam) and not c.user_is_admin:
                 return False
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
                 and (item.author_id == c.user._id or not item.new)):
                 return False
+
             return wouldkeep
         return keep
 
     @staticmethod
     def builder_wrapper(thing):
         if isinstance(thing, Comment):
-            p = thing.make_permalink_slow()
             f = thing._fullname
             w = Wrapped(thing)
             w.render_class = Message
             w.to_id = c.user._id
             w.was_comment = True
-            w.permalink, w._fullname = p, f
+            w._fullname = f
         else:
             w = ListingController.builder_wrapper(thing)
 

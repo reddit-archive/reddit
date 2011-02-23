@@ -114,7 +114,8 @@ class Reddit(Templated):
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, title = '', robots = None, 
-                 show_sidebar = True, footer = True, **context):
+                 show_sidebar = True, footer = True, srbar = True,
+                 **context):
         Templated.__init__(self, **context)
         self.title          = title
         self.robots         = robots
@@ -124,7 +125,7 @@ class Reddit(Templated):
         self.space_compress = space_compress
         # instantiate a footer
         self.footer         = RedditFooter() if footer else None
-        
+
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
 
@@ -151,7 +152,7 @@ class Reddit(Templated):
             self.infobar = InfoBar(message = infotext)
 
         self.srtopbar = None
-        if not c.cname and not is_api():
+        if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
 
         if c.user_is_loggedin and self.show_sidebar and not is_api():
@@ -162,7 +163,7 @@ class Reddit(Templated):
         self.toolbars = self.build_toolbars()
 
     def sr_admin_menu(self):
-        buttons = [NavButton('community_settings', css_class = 'reddit-edit',
+        buttons = [NavButton(menu.community_settings, css_class = 'reddit-edit',
                              dest = "edit"),
                    NamedButton('modmail', dest = "message/inbox",
                                css_class = 'moderator-mail'),
@@ -202,7 +203,8 @@ class Reddit(Templated):
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
-        ps.append(SponsorshipBox())
+        if c.user.pref_show_sponsorships or not c.user.gold:
+            ps.append(SponsorshipBox())
 
         no_ads_yet = True
         if isinstance(c.site, MultiReddit) and c.user_is_loggedin:
@@ -221,7 +223,8 @@ class Reddit(Templated):
         if self.submit_box:
             ps.append(SideBox(_('Submit a link'),
                               '/submit', 'submit',
-                              sr_path = True,
+                              sr_path = (isinstance(c.site,DefaultSR)
+                                         or not isinstance(c.site, FakeSubreddit)),
                               subtitles = [strings.submit_box_text],
                               show_cover = True))
 
@@ -233,13 +236,13 @@ class Reddit(Templated):
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
-        if False and not c.user.gold and self.submit_box:
-            ps.append(SideBox(_('New: Google Checkout!'),
-                              'http://blog.reddit.com/2010/08/reddit-gold-now-takes-google-checkout.html',
+        if False and self.submit_box:
+            ps.append(SideBox(_('reddit gold creddits: now for sale!'),
+                              'http://www.reddit.com/tb/efpn0',
                               'gold',
                               sr_path = False,
-                              subtitles = ["reddit gold just got better!",
-                                           "(read all about it on the blog)"],
+                              subtitles = ["check it out: you can now give gold",
+                                           "subscriptions to deserving redditors"],
                               show_cover = False, nocname = True))
 
         if not isinstance(c.site, FakeSubreddit) and not c.cname:
@@ -368,8 +371,6 @@ class RedditFooter(CachedTemplate):
 
     def __init__(self):
         self.nav = [NavMenu([
-                         OffsiteButton(_("gold"), nocname=True,
-                                       dest = '/help/gold', css_class = "buygold"),
                          OffsiteButton("mobile",
                                        "/static/reddit_mobile/index.htm"),
                          OffsiteButton("rss", dest = '/.rss'),
@@ -397,7 +398,10 @@ class RedditFooter(CachedTemplate):
                          NamedButton("widget", True)],
                         title = _('reddit tools'), type = 'flat_vert',
                         separator = ''),
-                    NavMenu([NamedButton("blog", False, nocname=True),
+                    NavMenu([
+                         NamedButton("blog", False, nocname=True),
+                         NamedButton("gold", False, nocname=True,
+                                     dest = '/help/gold', css_class = "buygold"),
                          NamedButton("promote", False, nocname=True,
                                      dest = '/promoted', css_class = "red"),
                          NamedButton("ad_inq", False, nocname=True)],
@@ -480,11 +484,11 @@ class SubredditInfoBar(CachedTemplate):
 
         # we want to cache on the number of subscribers
         self.subscribers = self.sr._ups
-        
+
         #so the menus cache properly
         self.path = request.path
         CachedTemplate.__init__(self)
-    
+
     def nav(self):
         buttons = [NavButton(plurals.moderators, 'moderators')]
         if self.type != 'public':
@@ -613,9 +617,12 @@ class MessageCompose(Templated):
     """Compose message form."""
     def __init__(self,to='', subject='', message='', success='', 
                  captcha = None):
+        from r2.models.admintools import admintools
+
         Templated.__init__(self, to = to, subject = subject,
-                         message = message, success = success, 
-                         captcha = captcha)
+                         message = message, success = success,
+                         captcha = captcha,
+                         admins = admintools.admin_list())
 
     
 class BoringPage(Reddit):
@@ -631,6 +638,7 @@ class BoringPage(Reddit):
         name = c.site.name or g.default_sr
         if "title" not in context:
             context['title'] = "%s: %s" % (name, pagename)
+
         Reddit.__init__(self, **context)
 
     def build_toolbars(self):
@@ -847,6 +855,9 @@ class LinkInfoPage(Reddit):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
+class LinkCommentSep(Templated):
+    pass
+
 class CommentPane(Templated):
     def cache_key(self):
         num = self.article.num_comments
@@ -1002,6 +1013,7 @@ class SubredditsPage(Reddit):
                                    header = _('search reddits'),
                                    search_params = {},
                                    simple=True,
+                                   subreddit_search=True
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
 
@@ -1127,16 +1139,36 @@ class ProfileBar(Templated):
         self.is_friend = None
         self.my_fullname = None
         self.gold_remaining = None
+        running_out_of_gold = False
+
         if c.user_is_loggedin:
-            if (user._id == c.user._id or c.user_is_admin) and getattr(user, "gold", None):
+            if ((user._id == c.user._id or c.user_is_admin)
+                and getattr(user, "gold", None)):
                 self.gold_expiration = getattr(user, "gold_expiration", None)
                 if self.gold_expiration is None:
                     self.gold_remaining = _("an unknown amount")
-                elif (self.gold_expiration - datetime.datetime.now(g.tz)).days < 1:
-                    self.gold_remaining = _("less than a day")
                 else:
-                    self.gold_remaining = timeuntil(self.gold_expiration,
-                                          precision=60 * 60 * 24 * 30) # months
+                    gold_days_left = (self.gold_expiration -
+                                      datetime.datetime.now(g.tz)).days
+                    if gold_days_left < 7:
+                        running_out_of_gold = True
+
+                    if gold_days_left < 1:
+                        self.gold_remaining = _("less than a day")
+                    else:
+                        self.gold_remaining = timeuntil(self.gold_expiration,
+                                        precision=60 * 60 * 24 * 30) # months
+            if user._id != c.user._id:
+                self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
+                self.giftmsg = _("buy %(user)s a month of reddit gold" %
+                                 dict(user=user.name))
+            elif running_out_of_gold:
+                self.goldlink = "/gold"
+                self.giftmsg = _("renew your reddit gold")
+            elif not c.user.gold:
+                self.goldlink = "/gold"
+                self.giftmsg = _("treat yourself to reddit gold")
+
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
 
@@ -1163,7 +1195,7 @@ class RedditError(BoringPage):
 class Reddit404(BoringPage):
     site_tracking = False
     def __init__(self):
-        ch=random.choice(['a','b','c'])
+        ch=random.choice(['a','b','c','d'])
         BoringPage.__init__(self, _("page not found"), loginbox=False,
                             show_sidebar = False, 
                             content=UnfoundPage(ch))
@@ -1330,7 +1362,9 @@ class UploadedImage(Templated):
 class Thanks(Templated):
     """The page to claim reddit gold trophies"""
     def __init__(self, secret=None):
-        if g.cache.get("recent-gold-" + c.user.name):
+        if secret and secret.startswith("cr_"):
+            status = "creddits"
+        elif g.cache.get("recent-gold-" + c.user.name):
             status = "recent"
         elif c.user.gold:
             status = "gold"
@@ -1346,6 +1380,109 @@ class Thanks(Templated):
             lounge_html = None
         Templated.__init__(self, status=status, secret=secret,
                            lounge_html=lounge_html)
+
+class Gold(Templated):
+    def __init__(self, goldtype, period, months, signed,
+                 recipient, recipient_name):
+
+        if c.user_is_admin:
+            user_creddits = 50
+        else:
+            user_creddits = c.user.gold_creddits
+
+        Templated.__init__(self, goldtype = goldtype, period = period,
+                           months = months, signed = signed,
+                           recipient_name = recipient_name,
+                           user_creddits = user_creddits,
+                           bad_recipient =
+                           bool(recipient_name and not recipient))
+
+class GoldPayment(Templated):
+    def __init__(self, goldtype, period, months, signed,
+                 recipient, giftmessage, passthrough):
+        pay_from_creddits = False
+
+        if period == "monthly" or 1 <= months < 12:
+            price = 3.99
+        else:
+            price = 29.99
+
+        if c.user_is_admin:
+            user_creddits = 50
+        else:
+            user_creddits = c.user.gold_creddits
+
+        if goldtype == "autorenew":
+            summary = strings.gold_summary_autorenew % dict(user=c.user.name)
+            if period == "monthly":
+                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYMONTH
+            elif period == "yearly":
+                paypal_buttonid = g.PAYPAL_BUTTONID_AUTORENEW_BYYEAR
+
+            quantity = None
+            google_id = None
+        elif goldtype == "onetime":
+            if months < 12:
+                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
+                quantity = months
+            else:
+                paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
+                quantity = months / 12
+                months = quantity * 12
+
+            summary = strings.gold_summary_onetime % dict(user=c.user.name,
+                                     amount=Score.somethings(months, "month"))
+
+            google_id = g.GOOGLE_ID
+        else:
+            if months < 12:
+                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
+                quantity = months
+            else:
+                paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
+                quantity = months / 12
+
+            if goldtype == "creddits":
+                months = quantity * 12
+                summary = strings.gold_summary_creddits % dict(
+                          amount=Score.somethings(months, "month"))
+            elif goldtype == "gift":
+                if signed:
+                    format = strings.gold_summary_signed_gift
+                else:
+                    format = strings.gold_summary_anonymous_gift
+
+                if months <= user_creddits:
+                    pay_from_creddits = True
+                elif months >= 12:
+                    # If you're not paying with creddits, you have to either
+                    # buy by month or spend a multiple of 12 months
+                    months = quantity * 12
+
+                summary = format % dict(
+                          amount=Score.somethings(months, "month"),
+                          recipient = recipient.name)
+            else:
+                raise ValueError("wtf is %r" % goldtype)
+
+            google_id = g.GOOGLE_ID
+
+        Templated.__init__(self, goldtype=goldtype, period=period,
+                           months=months, quantity=quantity, price=price,
+                           summary=summary, giftmessage=giftmessage,
+                           pay_from_creddits=pay_from_creddits,
+                           passthrough=passthrough,
+                           google_id=google_id,
+                           paypal_buttonid=paypal_buttonid)
+
+class GiftGold(Templated):
+    """The page to gift reddit gold trophies"""
+    def __init__(self, recipient):
+        if c.user_is_admin:
+            gold_creddits = 500
+        else:
+            gold_creddits = c.user.gold_creddits
+        Templated.__init__(self, recipient=recipient, gold_creddits=gold_creddits)
 
 class Password(Templated):
     """Form encountered when 'recover password' is clicked in the LoginFormWide."""
@@ -1386,7 +1523,7 @@ class PermalinkMessage(Templated):
 
 class PaneStack(Templated):
     """Utility class for storing and rendering a list of block elements."""
-    
+
     def __init__(self, panes=[], div_id = None, css_class=None, div=False,
                  title="", title_buttons = []):
         div = div or div_id or css_class or False
@@ -1401,7 +1538,7 @@ class PaneStack(Templated):
     def append(self, item):
         """Appends an element to the end of the current stack"""
         self.stack.append(item)
-    
+
     def push(self, item):
         """Prepends an element to the top of the current stack"""
         self.stack.insert(0, item)
@@ -1415,10 +1552,12 @@ class SearchForm(Templated):
     """The simple search form in the header of the page.  prev_search
     is the previous search."""
     def __init__(self, prev_search = '', search_params = {},
-                 site=None, simple=True, restrict_sr=False):
+                 site=None, simple=True, restrict_sr=False, 
+                 subreddit_search=False):
         Templated.__init__(self, prev_search = prev_search,
                            search_params = search_params, site=site,
-                           simple=simple, restrict_sr=restrict_sr)
+                           simple=simple, restrict_sr=restrict_sr, 
+                           subreddit_search=subreddit_search)
 
 
 class SearchBar(Templated):
@@ -1427,7 +1566,8 @@ class SearchBar(Templated):
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
-                 simple=False, restrict_sr=False, site=None,
+                 simple=False, restrict_sr=False, site=None, 
+                 subreddit_search=False,
                  **kw):
 
         # not listed explicitly in args to ensure it translates properly
@@ -1445,7 +1585,7 @@ class SearchBar(Templated):
 
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
-                           site=site)
+                           site=site, subreddit_search=subreddit_search)
 
 class SearchFail(Templated):
     """Search failure page."""
@@ -1472,13 +1612,13 @@ class Frame(Wrapped):
         Templated.__init__(self, url = url, title = title,
                            fullname = fullname, thumbnail = thumbnail)
 
-dorks_re = re.compile(r"https?://?([-\w.]*\.)?digg\.com/\w+\.\w+(/|$)")
 class FrameToolbar(Wrapped):
     """The reddit voting toolbar used together with Frame."""
 
     cachable = True
     extension_handling = False
     cache_ignore = Link.cache_ignore
+    site_tracking = True
     def __init__(self, link, title = None, url = None, expanded = False, **kw):
         if link:
             self.title = link.title
@@ -1496,7 +1636,6 @@ class FrameToolbar(Wrapped):
         self.site_description = c.site.description
         self.default_sr = c.default_sr
 
-        self.dorks = bool( dorks_re.match(self.url) )
         Wrapped.__init__(self, link)
         if link is None:
             self.add_props(c.user, [self])
@@ -1749,7 +1888,7 @@ class AdminErrorLog(Templated):
         date_groupings = {}
         hexkeys_seen = {}
 
-        idses = hcb.ids_by_category("error")
+        idses = hcb.ids_by_category("error", limit=5000)
         errors = g.hardcache.get_multi(prefix="error-", keys=idses)
 
         for ids in idses:
@@ -1764,7 +1903,7 @@ class AdminErrorLog(Templated):
                          "warning")
                 continue
 
-            tpl = (len(d['occurrences']), hexkey, d)
+            tpl = (d.get('times_seen', 1), hexkey, d)
             date_groupings.setdefault(date, []).append(tpl)
 
         self.nicknames = {}
@@ -2478,7 +2617,12 @@ def make_link_child(item):
         if isinstance(item.media_object, basestring):
             media_embed = item.media_object
         else:
-            media_embed = get_media_embed(item.media_object)
+            try:
+                media_embed = get_media_embed(item.media_object)
+            except TypeError:
+                g.log.warning("link %s has a bad media object" % item)
+                media_embed = None
+
             if media_embed:
                 media_embed =  MediaEmbed(media_domain = g.media_domain,
                                           height = media_embed.height + 10,
@@ -2859,7 +3003,8 @@ class RedditAds(Templated):
 
 class PaymentForm(Templated):
     def __init__(self, link, indx, **kw):
-        self.countries = pycountry.countries
+        self.countries = [pycountry.countries.get(name=n) 
+                          for n in g.allowed_pay_countries]
         self.link = promote.editable_add_props(link)
         self.campaign = self.link.campaigns[indx]
         self.indx = indx
@@ -3121,11 +3266,12 @@ class RawString(Templated):
        return unsafe(self.s)
 
 class Dart_Ad(CachedTemplate):
-    def __init__(self, tag = None):
+    def __init__(self, dartsite, tag):
         tag = tag or "homepage"
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
-        Templated.__init__(self, tag = tag, tracker_url = tracker_url)
+        Templated.__init__(self, tag = tag, dartsite = dartsite,
+                           tracker_url = tracker_url)
 
     def render(self, *a, **kw):
         res = CachedTemplate.render(self, *a, **kw)
@@ -3147,10 +3293,23 @@ class ComScore(CachedTemplate):
 def render_ad(reddit_name=None, codename=None):
     if not reddit_name:
         reddit_name = g.default_sr
+        if g.frontpage_dart:
+            return Dart_Ad("reddit.dart", reddit_name).render()
+
+    try:
+        sr = Subreddit._by_name(reddit_name)
+    except NotFound:
+        return Dart_Ad("reddit.dart", g.default_sr).render()
+
+    if sr.over_18:
+        dartsite = "reddit.dart.nsfw"
+    else:
+        dartsite = "reddit.dart"
+
 
     if codename:
         if codename == "DART":
-            return Dart_Ad(reddit_name).render()
+            return Dart_Ad(dartsite, reddit_name).render()
         else:
             try:
                 ad = Ad._by_codename(codename)
@@ -3159,17 +3318,11 @@ def render_ad(reddit_name=None, codename=None):
             attrs = ad.important_attrs()
             return HouseAd(**attrs).render()
 
-    try:
-        sr = Subreddit._by_name(reddit_name)
-    except NotFound:
-        return Dart_Ad(g.default_sr).render()
-
     ads = {}
 
     for adsr in AdSR.by_sr_merged(sr):
         ad = adsr._thing1
-        if not (ad.codename == "DART" and sr.over_18):
-            ads[ad.codename] = (ad, adsr.weight)
+        ads[ad.codename] = (ad, adsr.weight)
 
     total_weight = sum(t[1] for t in ads.values())
 
@@ -3185,7 +3338,7 @@ def render_ad(reddit_name=None, codename=None):
             winner = t[0]
 
             if winner.codename == "DART":
-                return Dart_Ad(reddit_name).render()
+                return Dart_Ad(dartsite, reddit_name).render()
             else:
                 attrs = winner.important_attrs()
                 return HouseAd(**attrs).render()
@@ -3197,7 +3350,7 @@ def render_ad(reddit_name=None, codename=None):
              (reddit_name, total_weight),
              "error")
 
-    return Dart_Ad(reddit_name).render()
+    return Dart_Ad(dartsite, reddit_name).render()
 
 class TryCompact(Reddit):
     def __init__(self, dest, **kw):

@@ -73,8 +73,7 @@ def reject_vote(thing):
 
 class ApiminimalController(MinimalController):
     """
-    Put API calls in here which won't come from logged in users (or
-    don't rely on the user being logged int)
+    Put API calls in here which don't rely on the user being logged in
     """
 
     @validatedForm(promoted = VByName('ids', thing_cls = Link,
@@ -104,8 +103,13 @@ class ApiminimalController(MinimalController):
 
         if sponsorships:
             for s in sponsorships:
-                add_tracker(s.sponsorship_url, s._fullname,
-                            "%s_%s" % (s._fullname, s.sponsorship_name))
+                if getattr(s, 'sponsorship_url', None):
+                    add_tracker(s.sponsorship_url, s._fullname,
+                                "%s_%s" % (s._fullname, s.sponsorship_name))
+
+    @validatedForm()
+    def POST_new_captcha(self, form, jquery, *a, **kw):
+        jquery("body").captcha(get_iden())
 
 
 class ApiController(RedditController):
@@ -169,9 +173,9 @@ class ApiController(RedditController):
                    body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
-        handles message composition under /message/compose.  
+        handles message composition under /message/compose.
         """
-        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST, 
+        if not (form.has_errors("to",  errors.USER_DOESNT_EXIST,
                                 errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
@@ -265,7 +269,7 @@ class ApiController(RedditController):
                 g.log.warning("%s is trying to submit url=None (title: %r)"
                               % (request.ip, title))
             elif check_domain:
-                banmsg = is_banned_domain(url)
+                banmsg = is_banned_domain(url, request.ip)
 
 # Uncomment if we want to let spammers know we're on to them
 #            if banmsg:
@@ -312,7 +316,7 @@ class ApiController(RedditController):
 
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
-                         c.user, sr, ip)
+                         c.user, sr, ip, spam=c.user._spam)
 
         if banmsg:
             admintools.spam(l, banner = "domain (%s)" % banmsg)
@@ -382,22 +386,24 @@ class ApiController(RedditController):
         form.redirect(dest)
 
 
-    @validatedForm(VRatelimit(rate_ip = True, prefix = 'login_',
-                              error = errors.WRONG_PASSWORD),
+    @validatedForm(VDelay("login"),
                    user = VLogin(['user', 'passwd']),
                    username = VLength('user', max_length = 100),
                    dest   = VDestination(),
                    rem    = VBoolean('rem'),
                    reason = VReason('reason'))
     def POST_login(self, form, jquery, user, username, dest, rem, reason):
+        if form.has_errors('vdelay', errors.RATELIMIT):
+            jquery(".recover-password").addClass("attention")
+            return
 
         if reason and reason[0] == 'redirect':
             dest = reason[1]
 
         if login_throttle(username, wrong_password = form.has_errors("passwd",
                                                      errors.WRONG_PASSWORD)):
-            VRatelimit.ratelimit(rate_ip = True, prefix = 'login_', seconds=1)
-
+            VDelay.record_violation("login", seconds=1, growfast=True)
+            jquery(".recover-password").addClass("attention")
             c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
 
         if not form.has_errors("passwd", errors.WRONG_PASSWORD):
@@ -681,9 +687,26 @@ class ApiController(RedditController):
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
+            parent_id = getattr(thing, 'parent_id', None)
+            link_id = thing.link_id
+            recipient = None
+
+            if parent_id:
+                parent_comment = Comment._byID(parent_id, data=True)
+                recipient = Account._byID(parent_comment.author_id)
+            else:
+                parent_link = Link._byID(link_id, data=True)
+                if parent_link.is_self:
+                    recipient = Account._byID(parent_link.author_id)
+
             thing._delete()
             delete_comment(thing)
-            queries.new_comment(thing, None)
+
+            if recipient:
+                inbox_class = Inbox.rel(Account, Comment)
+                d = inbox_class._fast_query(recipient, thing, ("inbox", "selfreply"))
+                rels = filter(None, d.values()) or None
+                queries.new_comment(thing, rels)
 
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
@@ -776,6 +799,8 @@ class ApiController(RedditController):
         #check the parent type here cause we need that for the
         #ratelimit checks
         if isinstance(parent, Message):
+            if not getattr(parent, "repliable", True):
+                abort(403, 'forbidden')
             is_message = True
             should_ratelimit = False
         else:
@@ -950,6 +975,8 @@ class ApiController(RedditController):
                 dir = VInt('dir', min=-1, max=1),
                 thing = VByName('id'))
     def POST_vote(self, dir, thing, ip, vote_type):
+        from r2.models.admintools import valid_vote
+
         ip = request.ip
         user = c.user
         store = True
@@ -961,9 +988,7 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        # TODO: temporary hack until we migrate the rest of the vote data
-        if thing._date < datetime(2009, 4, 17, 0, 0, 0, 0, g.tz):
-            g.log.debug("POST_vote: ignoring old vote on %s" % thing._fullname)
+        if not valid_vote(thing):
             store = False
 
         if getattr(c.user, "suspicious", False):
@@ -976,11 +1001,6 @@ class ApiController(RedditController):
         organic = vote_type == 'organic'
         queries.queue_vote(user, thing, dir, ip, organic, store = store,
                            cheater = (errors.CHEATER, None) in c.errors)
-        if store:
-            # update relevant caches
-            if isinstance(thing, Link):
-                set_last_modified(c.user, 'liked')
-                set_last_modified(c.user, 'disliked')
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -1335,223 +1355,6 @@ class ApiController(RedditController):
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
 
-# TODO: we're well beyond the point where this function should have been
-# broken up and moved to its own file
-    @textresponse(paypal_secret = VPrintable('secret', 50),
-                payment_status = VPrintable('payment_status', 20),
-                txn_id = VPrintable('txn_id', 20),
-                paying_id = VPrintable('payer_id', 50),
-                payer_email = VPrintable('payer_email', 250),
-                item_number = VPrintable('item_number', 20),
-                mc_currency = VPrintable('mc_currency', 20),
-                mc_gross = VFloat('mc_gross'),
-                custom = VPrintable('custom', 50))
-    def POST_ipn(self, paypal_secret, payment_status, txn_id, paying_id,
-                 payer_email, item_number, mc_currency, mc_gross, custom):
-
-        if paypal_secret != g.PAYPAL_SECRET:
-            log_text("invalid IPN secret",
-                     "%s guessed the wrong IPN secret" % request.ip,
-                     "warning")
-            raise ValueError
-
-        if request.POST:
-            parameters = request.POST.copy()
-        else:
-            parameters = request.GET.copy()
-
-        if payment_status is None:
-            payment_status = ''
-
-        psl = payment_status.lower()
-
-        if psl == 'completed':
-            pass
-        elif psl == 'refunded':
-            log_text("refund", "Just got notice of a refund.", "info")
-            # TODO: something useful when this happens -- and don't
-            # forget to verify first
-            return "Ok"
-        elif psl == 'pending':
-            log_text("pending",
-                     "Just got notice of a Pending, whatever that is.", "info")
-            # TODO: something useful when this happens -- and don't
-            # forget to verify first
-            return "Ok"
-        elif psl == 'reversed':
-            log_text("canceled_reversal",
-                     "Just got notice of a PayPal reversal.", "info")
-            # TODO: something useful when this happens -- and don't
-            # forget to verify first
-            return "Ok"
-        elif psl == 'canceled_reversal':
-            log_text("canceled_reversal",
-                     "Just got notice of a PayPal 'canceled reversal'.", "info")
-            return "Ok"
-        elif psl == '':
-            pass
-        else:
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
-
-            raise ValueError("Unknown IPN status: %r" % payment_status)
-
-        if parameters['txn_type'] == 'subscr_signup':
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_cancel':
-            cancel_subscription(parameters['subscr_id'])
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_failed':
-            log_text("failed_subscription",
-                     "Just got notice of a failed PayPal resub.", "info")
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_modify':
-            log_text("modified_subscription",
-                     "Just got notice of a modified PayPal sub.", "info")
-            return "Ok"
-        elif parameters['txn_type'] in ('new_case',
-            'recurring_payment_suspended_due_to_max_failed_payment'):
-            return "Ok"
-        elif parameters['txn_type'] == 'subscr_payment' and psl == 'completed':
-            subscr_id = parameters['subscr_id']
-        elif parameters['txn_type'] == 'web_accept' and psl == 'completed':
-            subscr_id = None
-        else:
-            raise ValueError("Unknown IPN txn_type / psl %r" %
-                             ((parameters['txn_type'], psl),))
-
-        if mc_currency != 'USD':
-            raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
-
-        if g.cache.get("ipn-debug"):
-            g.cache.delete("ipn-debug")
-            for k, v in parameters.iteritems():
-                g.log.info("IPN: %r = %r" % (k, v))
-
-        parameters['cmd']='_notify-validate'
-        try:
-            safer = dict([k, v.encode('utf-8')] for k, v in parameters.items())
-            params = urllib.urlencode(safer)
-        except UnicodeEncodeError:
-            g.log.error("problem urlencoding %r" % (parameters,))
-            raise
-        req = urllib2.Request(g.PAYPAL_URL, params)
-        req.add_header("Content-type", "application/x-www-form-urlencoded")
-
-        response = urllib2.urlopen(req)
-        status = response.read()
-# TODO: stop not doing this
-#        if status != "VERIFIED":
-#            raise ValueError("Invalid IPN response: %r" % status)
-
-        pennies = int(mc_gross * 100)
-
-        days = None
-        if item_number and item_number in ('rgsub', 'rgonetime'):
-            if pennies == 2999:
-                secret_prefix = "ys_"
-                days = 366
-            elif pennies == 399:
-                secret_prefix = "m_"
-                days = 31
-            else:
-                raise ValueError("Got %d pennies via PayPal?" % pennies)
-                # old formula: days = 60 + int (31 * pennies / 250.0)
-        else:
-            raise ValueError("Got item number %r via PayPal?" % item_number)
-
-        account_id = accountid_from_paypalsubscription(subscr_id)
-
-        if account_id:
-            try:
-                account = Account._byID(account_id)
-            except NotFound:
-                g.log.info("Just got IPN renewal for deleted account #%d"
-                           % account_id)
-                return "Ok"
-
-            create_claimed_gold ("P" + txn_id, payer_email, paying_id,
-                                 pennies, days, None, account_id,
-                                 c.start_time, subscr_id)
-            admintools.engolden(account, days)
-
-            g.log.info("Just applied IPN renewal for %s, %d days" %
-                       (account.name, days))
-            return "Ok"
-
-        if custom:
-            gold_dict = g.hardcache.get("gold_dict-" + custom)
-            if gold_dict is None:
-                raise ValueError("No gold_dict for %r" % custom)
-
-            buyer_name = gold_dict['buyer']
-            try:
-                buyer = Account._by_name(buyer_name)
-            except NotFound:
-                g.log.info("Just got IPN for unknown buyer %s" % buyer_name)
-                return "Ok" # nothing we can do until they complain
-
-            if gold_dict['kind'] == 'self':
-                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
-                                 pennies, days, None, buyer._id,
-                                 c.start_time, subscr_id)
-                admintools.engolden(buyer, days)
-
-                g.log.info("Just applied IPN for %s, %d days" %
-                           (buyer.name, days))
-
-#TODO: send a PM thanking them and showing them /r/lounge
-
-                g.hardcache.delete("gold_dict-" + custom)
-
-                return "Ok"
-            elif gold_dict['kind'] == 'gift':
-                recipient_name = gold_dict['recipient']
-                try:
-                    recipient = Account._by_name(recipient_name)
-                except NotFound:
-                    g.log.info("Just got IPN for unknown recipient %s"
-                               % recipient_name)
-                return "Ok" # nothing we can do until they complain
-                
-                create_claimed_gold ("P" + txn_id, payer_email, paying_id,
-                                 pennies, days, None, recipient._id,
-                                 c.start_time, subscr_id)
-                admintools.engolden(recipient, days)
-
-                g.log.info("Just applied IPN from %s to %s, %d days" %
-                           (buyer.name, recipient.name, days))
-
-#TODO: send PMs to buyer and recipient
-
-            else:
-                raise ValueError("Invalid gold_dict[kind] %r" %
-                                 gold_dict['kind'])
-
-        gold_secret = secret_prefix + randstr(10)
-
-        create_unclaimed_gold("P" + txn_id, payer_email, paying_id,
-                              pennies, days, gold_secret, c.start_time,
-                              subscr_id)
-
-        notify_unclaimed_gold(txn_id, gold_secret, payer_email, "Paypal")
-
-        g.log.info("Just got IPN for %d days, secret=%s" % (days, gold_secret))
-
-        return "Ok"
-
-    @textresponse(sn = VLength('serial-number', 100))
-    def POST_gcheckout(self, sn):
-        if sn:
-            g.log.error( "GOOGLE CHECKOUT: %s" % sn)
-            new_google_transaction(sn)
-            return '<notification-acknowledgment xmlns="http://checkout.google.com/schema/2" serial-number="%s" />' % sn
-        else:
-            g.log.error("GOOGLE CHCEKOUT: didn't work")
-            g.log.error(repr(list(request.POST.iteritems())))
-
-
-
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
@@ -1770,9 +1573,8 @@ class ApiController(RedditController):
 
 
     @validatedForm(VUser(),
-                   code = VPrintable("code", 30),
-                   postcard_okay = VOneOf("postcard", ("yes", "no")),)
-    def POST_claimgold(self, form, jquery, code, postcard_okay):
+                   code = VPrintable("code", 30))
+    def POST_claimgold(self, form, jquery, code):
         if not code:
             c.errors.add(errors.NO_TEXT, field = "code")
             form.has_errors("code", errors.NO_TEXT)
@@ -1802,16 +1604,20 @@ class ApiController(RedditController):
             if subscr_id:
                 c.user.gold_subscr_id = subscr_id
 
-            admintools.engolden(c.user, days)
+            if code.startswith("cr_"):
+                c.user.gold_creddits += int(days / 31)
+                c.user._commit()
+                form.set_html(".status", _("claimed! now go to someone's userpage and give them a present!"))
+            else:
+                admintools.engolden(c.user, days)
 
-            g.cache.set("recent-gold-" + c.user.name, True, 600)
-            form.set_html(".status", _("claimed!"))
-            jquery(".lounge").show()
+                g.cache.set("recent-gold-" + c.user.name, True, 600)
+                form.set_html(".status", _("claimed!"))
+                jquery(".lounge").show()
 
         # Activate any errors we just manually set
         form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
                         errors.NO_TEXT)
-
 
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):
@@ -1824,7 +1630,7 @@ class ApiController(RedditController):
             form.set_html(".status",
                           _("an email will be sent to that account's address shortly"))
 
-            
+
     @validatedForm(cache_evt = VCacheKey('reset', ('key',)),
                    password  = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, cache_evt, password):
@@ -1861,11 +1667,6 @@ class ApiController(RedditController):
         c.user.pref_frame = True
         c.user._commit()
 
-
-
-    @validatedForm()
-    def POST_new_captcha(self, form, jquery, *a, **kw):
-        jquery("body").captcha(get_iden())
 
     @noresponse(VAdmin(),
                 tr = VTranslation("lang"), 

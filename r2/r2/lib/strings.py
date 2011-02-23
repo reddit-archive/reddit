@@ -44,7 +44,7 @@ string_dict = dict(
     banned_by = "removed by %s",
     banned    = "removed",
     reports   = "reports: %d",
-    
+
     # this accomodates asian languages which don't use spaces
     number_label = _("%(num)d %(thing)s"),
 
@@ -57,7 +57,7 @@ string_dict = dict(
     # this accomodates asian languages which don't use spaces
     float_label = _("%(num)5.3f %(thing)s"),
 
-    # this is for Japanese which treats people counds differently
+    # this is for Japanese which treats people counts differently
     person_label = _("<span class='number'>%(num)s</span>&#32;<span class='word'>%(persons)s</span>"),
 
     firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
@@ -72,7 +72,7 @@ string_dict = dict(
     cover_disclaim = _("(don't worry, it only takes a few seconds)"),
 
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
-    
+
     friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),
 
     sr_created = _('your reddit has been created'),
@@ -96,14 +96,14 @@ string_dict = dict(
         banned = _("you've been banned"),
         traffic = _("you can view traffic on a promoted link")
         ),
-    
+
     sr_messages = dict(
         empty =  _('you have not subscribed to any reddits.'),
         subscriber =  _('below are the reddits you have subscribed to'),
         contributor =  _('below are the reddits that you are an approved submitter on.'),
         moderator = _('below are the reddits that you have moderator access to.')
         ),
-    
+
     sr_subscribe =  _('click the `+frontpage` or `-frontpage` buttons to choose which reddits appear on your front page.'),
 
     searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
@@ -137,10 +137,17 @@ string_dict = dict(
     verified_quota_msg = _("You've submitted several links recently that haven't been doing very well. You'll have to wait a while before you can submit again, or [write to the moderators of this reddit](%(link)s) and ask for an exemption."),
     unverified_quota_msg = _("You haven't [verified your email address](%(link1)s); until you do, your submitting privileges will be severely limited. Please try again in an hour or verify your email address. If you'd like an exemption from this rule, please [write to the moderators of this reddit](%(link2)s)."),
     read_only_msg = _("reddit is in \"emergency read-only mode\" right now. :( you won't be able to log in. we're sorry, and are working frantically to fix the problem."),
-    lounge_msg = _("please grab a drink and join us in [the lounge](%(link)s)"),
+    lounge_msg = _("Please grab a drink and join us in [the lounge](%(link)s)."),
     postcard_msg = _("You sent us a postcard! (Or something similar.) When we run out of room on our refrigerator, we might one day auction off the stuff that people sent in. Is it okay if we include your thing?"),
     over_comment_limit = _("Sorry, the maximum number of comments is %(max)d. (However, if you subscribe to reddit gold, it goes up to %(goldmax)d.)"),
     over_comment_limit_gold = _("Sorry, the maximum number of comments is %d."),
+    youve_got_gold = _("%(sender)s just sent you %(amount)s of reddit gold! Wasn't that nice?"),
+    giftgold_note = _("Here's a note that was included:\n\n----\n\n"),
+    gold_summary_autorenew = _("You're about to set up an ongoing, autorenewing subscription to reddit gold for yourself (%(user)s)."),
+    gold_summary_onetime = _("You're about to make a one-time purchase of %(amount)s of reddit gold for yourself (%(user)s)."),
+    gold_summary_creddits = _("You're about to purchase %(amount)s of reddit gold creddits. They work like gift certificates: each creddit you have will allow you to give one month of reddit gold to someone else."),
+    gold_summary_signed_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s, who will be told that it came from you."),
+    gold_summary_anonymous_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s. It will be an anonymous gift."),
 )
 
 class StringHandler(object):
@@ -156,7 +163,7 @@ class StringHandler(object):
             return self.__getattr__(attr)
         except AttributeError:
             raise KeyError
-    
+
     def __getattr__(self, attr):
         rval = self.string_dict[attr]
         if isinstance(rval, (str, unicode)):
@@ -202,19 +209,20 @@ class PluralManager(object):
 
 plurals = PluralManager([P_("comment",     "comments"),
                          P_("point",       "points"),
-                         
+
                          # things
                          P_("link",        "links"),
                          P_("comment",     "comments"),
                          P_("message",     "messages"),
                          P_("subreddit",   "subreddits"),
-                         
+                         P_("creddit",     "creddits"),
+
                          # people
                          P_("reader",  "readers"),
                          P_("subscriber",  "subscribers"),
                          P_("approved submitter", "approved submitters"),
                          P_("moderator",   "moderators"),
-                         
+
                          # time words
                          P_("milliseconds","milliseconds"),
                          P_("second",      "seconds"),
@@ -239,7 +247,7 @@ class Score(object):
 
     @staticmethod
     def safepoints(x):
-        return  strings.points_label % dict(num=max(x,0), 
+        return  strings.points_label % dict(num=max(x,0),
                                             point=plurals.N_points(x))
 
     @staticmethod
@@ -250,11 +258,17 @@ class Score(object):
 
     @staticmethod
     def subscribers(x):
-        return  Score._people(x, plurals.N_subscribers)
+        return Score._people(x, plurals.N_subscribers)
 
     @staticmethod
     def readers(x):
-        return  Score._people(x, plurals.N_readers)
+        return Score._people(x, plurals.N_readers)
+
+    @staticmethod
+    def somethings(x, word):
+        p = plurals.string_dict[word]
+        f = lambda x: ungettext(p[0], p[1], x)
+        return strings.number_label % dict(num=x, thing=f(x))
 
     @staticmethod
     def none(x):
@@ -288,7 +302,7 @@ class RandomString(object):
     def __init__(self, description, num):
         self.desc = description
         self.num = num
-    
+
     def get(self, quantity = 0):
         """Generates a list of 'quantity' random strings.  If quantity
         < self.num, the entries are guaranteed to be unique."""
@@ -310,7 +324,7 @@ class RandomString(object):
     def __iter__(self):
         for i in xrange(self.num):
             yield self._trans_string(i)
-                   
+
 
 class RandomStringManager(object):
     """class for keeping randomized translatable strings organized.

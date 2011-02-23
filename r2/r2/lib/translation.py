@@ -72,11 +72,11 @@ def set_lang(lang, graceful_fail = False, **kwargs):
         registry.replace(pylons.translator, translator)
 
 
-comment = re.compile(r'^\s*#')
-msgid = re.compile(r'^\s*msgid\s+"')
-msgid_pl = re.compile(r'^\s*msgid_plural\s+"')
-msgstr = re.compile(r'^\s*msgstr(\[\d\])?\s+"')
-str_only = re.compile(r'^\s*"')
+comment = re.compile(r'\A\s*#')
+msgid = re.compile(r'\A\s*msgid\s+"')
+msgid_pl = re.compile(r'\A\s*msgid_plural\s+"')
+msgstr = re.compile(r'\A\s*msgstr(\[\d\])?\s+"')
+str_only = re.compile(r'\A\s*"')
 
 substr = re.compile("(%(\([^\)]+\))?([\d\.]+)?[a-zA-Z])")
 

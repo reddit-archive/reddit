@@ -148,7 +148,7 @@
            <textarea ${disabled} id="input-${field}-${prof_id}" name="${field}">
              ${getattr(data, field, '')}
            </textarea>
-         %elif field == "country" and request.GET.get('country'):
+         %elif field == "country":
            ## TODO: pycountry does country name i18n
            <select name="${field}" ${disabled}>
              %for country in thing.countries:

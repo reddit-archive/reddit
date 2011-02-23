@@ -1,5 +1,5 @@
 /*
- * configuration for markdown, generated Mon May 17 13:43:31 PDT 2010
+ * configuration for markdown, generated Mon Oct 18 16:39:05 PDT 2010
  * by raldi@zork
  */
 #ifndef __AC_MARKDOWN_D
@@ -20,6 +20,8 @@
 #define HAVE_STRNCASECMP 1
 #define HAVE_FCHDIR 1
 #define TABSTOP 4
+#define SUPERSCRIPT 1
+#define RELAXED_EMPHASIS 1
 #define HAVE_MALLOC_H 1
 #define PATH_SED "/bin/sed"
 

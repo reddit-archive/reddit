@@ -24,7 +24,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.lib.filters import spaceCompress, safemarkdown
 import time, pytz
-from pylons import c
+from pylons import c, g
 
 def api_type(subtype = ''):
     return 'api-' + subtype if subtype else 'api'
@@ -184,9 +184,17 @@ class SubredditJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(subscribers  = "_ups",
                                                 title        = "title",
                                                 url          = "path",
-                                                over18       = "over_18", 
+                                                over18       = "over_18",
                                                 description  = "description",
                                                 display_name = "name")
+
+    def thing_attr(self, thing, attr):
+        # Don't reveal revenue information via /r/lounge's subscribers
+        if (attr == "_ups" and g.lounge_reddit
+            and thing.name == g.lounge_reddit):
+            return 0
+        else:
+            return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class AccountJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",

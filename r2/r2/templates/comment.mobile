@@ -38,22 +38,23 @@
 </%def>
 
 <%def name="entry()">
+<div class="comment">
+
 %if thing.deleted:
-
-<p>
-  ${_("[deleted]")} ${thing.timesince} ${_("ago")}
-</p>
-
+  <p>
+    ${_("[deleted]")} ${thing.timesince} ${_("ago")}
+  </p>
 %else:
 
 <p>
-<a href="/user/${thing.author.name}">
-    <b>${thing.author.name}</b></a>
-&nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
-${_("written")} ${thing.timesince} ${_("ago")}
+  <a href="/user/${thing.author.name}">
+      <b>${thing.author.name}</b></a>
+  &nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
+  ${_("written")} ${thing.timesince} ${_("ago")}
 </p>
 ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}
 
 %endif
+</div>
 
 </%def>

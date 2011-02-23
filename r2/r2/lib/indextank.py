@@ -26,11 +26,13 @@
 from pylons import g, config
 import cPickle as pickle
 from time import sleep
+from datetime import datetime
 
 from r2.models import *
+from r2.lib.db.sorts import epoch_seconds
 from r2.lib import amqp
 from r2.lib.contrib import indextank_clientv1
-from r2.lib.contrib.indextank_clientv1 import HttpException as IndextankException
+from r2.lib.contrib.indextank_clientv1 import HttpException as IndextankException, InvalidQuery as InvalidIndextankQuery
 from r2.lib.utils import in_chunks, progress, get_after, UrlParser
 from r2.lib.utils import domain, strordict_fullname
 
@@ -78,7 +80,7 @@ class IndextankQuery(object):
 
     def _req_fs(self, sr_ids, field='sr_id'):
         if len(sr_ids) == 1:
-            return '+%s:%d' % (field, sr_ids[0])
+            return '+%s:%s' % (field, sr_ids[0])
         else:
             return '+(%s)' % ' OR '.join(('%s:%s' % (field, sr_id))
                                          for sr_id in sr_ids)
@@ -96,6 +98,8 @@ class IndextankQuery(object):
         elif isinstance(self.sr, MultiReddit):
             q.append(self._req_fs(
                     self.sr.sr_ids))
+        elif isinstance(self.sr, DomainSR):
+            q.append('+site:%s' % (self.sr.domain))
         elif self.sr == Friends and c.user_is_loggedin and c.user.friends:
             friend_ids = c.user.friends[:100] # we're not about to
                                               # look up more than 100
@@ -222,10 +226,14 @@ def inject(things, boost_only=False):
 
     if update_things:
         maps = maps_from_things(update_things, boost_only = boost_only)
+
+    indexstart = epoch_seconds(datetime.now(g.tz))
+    if update_things:
         inject_maps(maps, boost_only=boost_only)
     if delete_things:
         for thing in delete_things:
             delete_thing(thing)
+    return epoch_seconds(datetime.now(g.tz)) - indexstart
 
 def rebuild_index(after_id = None, estimate=10000000):
     cls = Link
@@ -253,6 +261,8 @@ def run_changed(drain=False, limit=1000):
         IndexTank
     """
     def _run_changed(msgs, chan):
+        start = datetime.now(g.tz)
+
         changed = map(lambda x: strordict_fullname(x.body), msgs)
 
         boost = set()
@@ -282,18 +292,23 @@ def run_changed(drain=False, limit=1000):
 
         things = Thing._by_fullname(boost | add, data=True, return_dict=True)
 
-        print ("%d messages: %d docs, %d boosts (%d duplicates, %s remaining)"
-               % (len(changed),
-                  len(add),
-                  len(boost),
+        boost_time = add_time = 0.0
+        if boost:
+            boost_time = inject([things[fname] for fname in boost], boost_only=True)
+        if add:
+            add_time = inject([things[fname] for fname in add])
+
+        totaltime = epoch_seconds(datetime.now(g.tz)) - epoch_seconds(start)
+
+        print ("%s: %d messages: %d docs (%.2fs), %d boosts (%.2fs) in %.2fs (%d duplicates, %s remaining)"
+               % (start,
+                  len(changed),
+                  len(add), add_time,
+                  len(boost), boost_time,
+                  totaltime,
                   len(changed) - len(things),
                   msgs[-1].delivery_info.get('message_count', 'unknown'),
-               ))
-
-        if boost:
-            inject([things[fname] for fname in boost], boost_only=True)
-        if add:
-            inject([things[fname] for fname in add])
+                  ))
 
     amqp.handle_items('indextank_changes', _run_changed, limit=limit,
                       drain=drain, verbose=False)

@@ -39,11 +39,11 @@
     </a>
 
     <div class="rest">
-      %for g in groupings:
-        %if g[0] > 0:
-          ${exception(date, *g)}
+      %for gr in groupings:
+        %if gr[0] > 0:
+          ${exception(date, *gr)}
         %else:
-          ${text(date, *g)}
+          ${text(date, *gr)}
         %endif
       %endfor
     </div>

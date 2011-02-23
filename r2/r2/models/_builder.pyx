@@ -1,6 +1,6 @@
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn
+from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -122,7 +122,7 @@ class _CommentBuilder(Builder):
 
 
         # items is a list of things we actually care about so load them
-        items = Comment._byID(items, data = True, return_dict = False)
+        items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
         cdef list wrapped = self.wrap_items(items)
 
 
@@ -168,16 +168,27 @@ class _CommentBuilder(Builder):
 
         #put the remaining comments into the tree (the show more comments link)
         cdef dict more_comments = {}
+        cdef int iteration_count = 0
+        cdef int parentfinder_iteration_count
         while candidates:
+            if iteration_count > MAX_ITERATIONS:
+                raise Exception("bad comment tree for link %s" %
+                                self.link._id36)
+
             to_add = candidates.pop(0)
             direct_child = True
             #ignore top-level comments for now
             p_id = parents[to_add]
             #find the parent actually being displayed
             #direct_child is whether the comment is 'top-level'
+            parentfinder_iteration_count = 0
             while p_id and not cids.has_key(p_id):
+                if parentfinder_iteration_count > MAX_ITERATIONS:
+                    raise Exception("bad comment tree in link %s" %
+                                    self.link._id36)
                 p_id = parents[p_id]
                 direct_child = False
+                parentfinder_iteration_count += 1
 
             mc2 = more_comments.get(p_id)
             if not mc2:
@@ -203,6 +214,7 @@ class _CommentBuilder(Builder):
                 mc2.children.append(to_add)
 
             mc2.count += 1
+            iteration_count += 1
 
         return final
 
@@ -228,6 +240,20 @@ class _MessageBuilder(Builder):
 
     def _tree_filter(self, x):
         return tree_sort_fn(x) < self.after._id
+
+    def _viewable_message(self, m):
+        if (c.user_is_admin
+            or getattr(m, "author_id", 0) == c.user._id
+            or getattr(m, "to_id", 0)     == c.user._id):
+                return True
+
+        # m is wrapped at this time, so it should have an SR
+        subreddit = getattr(m, "subreddit", None)
+        if subreddit and subreddit.is_moderator(c.user):
+            return True
+
+        return False
+
 
     def get_items(self):
         tree = self.get_tree()
@@ -264,6 +290,9 @@ class _MessageBuilder(Builder):
         messages = Message._byID(message_ids, data = True, return_dict = False)
         wrapped = {}
         for m in self.wrap_items(messages):
+            if not self._viewable_message(m):
+                raise ValueError("%r is not viewable by %s; path is %s" %
+                                 (m, c.user.name, request.fullpath))
             wrapped[m._id] = m
 
         if prev:
@@ -304,6 +333,7 @@ class _MessageBuilder(Builder):
                         child.focal = True
                     else:
                         child.collapsed = child.is_collapsed
+
                     parent.child.things.append(child)
             parent.is_parent = True
             # the parent might be the focal message on a permalink page

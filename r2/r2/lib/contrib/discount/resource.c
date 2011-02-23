@@ -140,7 +140,7 @@ ___mkd_freeLineRange(Line *anchor, Line *stop)
 void
 mkd_cleanup(Document *doc)
 {
-    if ( doc ) {
+    if ( doc && (doc->magic == VALID_DOCUMENT) ) {
 	if ( doc->ctx ) {
 	    ___mkd_freemmiot(doc->ctx, 0);
 	    free(doc->ctx);

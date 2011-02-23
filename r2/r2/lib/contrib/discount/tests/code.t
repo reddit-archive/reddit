@@ -12,8 +12,12 @@ try 'format for code block html' \
 code
 </code></pre>'
 
+try 'mismatched backticks' '```tick``' '<p><code>`tick</code></p>'
+try 'mismatched backticks(2)' '``tick```' '<p>``tick```</p>'
 try 'unclosed single backtick' '`hi there' '<p>`hi there</p>'
 try 'unclosed double backtick' '``hi there' '<p>``hi there</p>'
+try 'triple backticks' '```hi there```' '<p><code>hi there</code></p>'
+try 'quadruple backticks' '````hi there````' '<p><code>hi there</code></p>'
 try 'remove space around code' '`` hi there ``' '<p><code>hi there</code></p>'
 try 'code containing backticks' '`` a```b ``' '<p><code>a```b</code></p>'
 try 'backslash before backtick' '`a\`' '<p><code>a\</code></p>'

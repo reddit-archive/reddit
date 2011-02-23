@@ -246,8 +246,25 @@
   <tr>
     <th>${_("privacy options")}</th>
     <td class="prefright">
-      ${checkbox(_("make my votes public"), "public_votes")}<br />
+      ${checkbox(_("make my votes public"), "public_votes")}
+      &#32;
+      <span class="little gray">
+        <%
+           link1 = "&#32;<a href='/user/%s/liked'>/user/%s/liked</a>&#32;" % (c.user.name, c.user.name)
+           link2 = "&#32;<a href='/user/%s/disliked'>/user/%s/disliked</a>" % (c.user.name, c.user.name)
+           %>
+        (${unsafe(_("let everyone see %(link1)s and %(link2)s") % dict(link1=link1, link2=link2))})
+      </span>
+      <br/>
       ${checkbox(_("allow my data to be used for research purposes"), "research")}
+      &#32;
+      <span class="little gray">
+       (
+         <a href="http://www.reddit.com/r/redditdev/comments/dtg4j/want_to_help_reddit_build_a_recommender_a_public/">
+           ${_("details")}
+         </a>
+       )
+      </span>
     </td>
   </tr>
   %endif
@@ -260,6 +277,9 @@
         <br/>
         ${checkbox(_("show sponsored links"), "show_sponsors")}
         &#32;<span class="little gray">(${_("the blue advertisements that sometimes appear on the top of the page")})</span>
+        <br/>
+        ${checkbox(_("show sponsorships"), "show_sponsorships")}
+        &#32;<span class="little gray">(${_("the 300x100 'sponsored by...' images that sometimes appear in sidebars")})</span>
         <br/>
         <br/>
         ${checkbox(_("highlight new comments"), "highlight_new_comments")}

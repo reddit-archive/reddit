@@ -136,10 +136,15 @@ class UserInfo(Info):
     _tracked = ['name', 'site', 'lang', 'cname']
     tracker_url = g.tracker_url
 
-    def init_defaults(self):
-        self.name = safe_str(c.user.name if c.user_is_loggedin else '')
-        self.site = safe_str(c.site.name if c.site else '')
-        action = ""
+    @staticmethod
+    def get_site():
+        return safe_str(c.site.name if c.site else '')
+
+    @staticmethod
+    def get_srpath():
+        name = UserInfo.get_site()
+
+        action = None
         if c.render_style in ("mobile", "compact"):
             action = c.render_style
         else:
@@ -147,11 +152,19 @@ class UserInfo(Info):
                 action = request.environ['pylons.routes_dict'].get('action')
             except Exception,e:
                 g.log.error(e)
-        if action:
-            self.site += "-%s" % action
 
+        if not action:
+            return name
+        return '-'.join((name, action))
+
+    def init_defaults(self):
+        self.name = safe_str(c.user.name if c.user_is_loggedin else '')
+        self.site = UserInfo.get_srpath()
         self.lang = safe_str(c.lang if c.lang else '')
         self.cname = safe_str(c.cname)
+
+class UserInfoNew(UserInfo):
+    tracker_url = g.newtracker_url
 
 class PromotedLinkInfo(Info):
     _tracked = []

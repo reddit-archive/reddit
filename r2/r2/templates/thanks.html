@@ -26,13 +26,19 @@
 
 <%! from r2.lib.strings import strings %>
 
-<form id="passform" action="/api/claimgold" method="post"
+<form id="thanks" action="/api/claimgold" method="post"
       class="content"
       onsubmit="return post_form(this, 'claimgold');">
+%if thing.status == "creddits":
+  <h1>${_("thanks for buying creddits!")}</h1>
+%else:
   <h1>${_("thanks for subscribing!")}</h1>
+%endif
 
-<p>
-%if thing.status == "mundane":
+<p class="blurb">
+%if thing.status == "creddits":
+  ${_("enter your confirmation code below to claim your gift creddits")}
+%elif thing.status == "mundane":
   ${_("enter your confirmation code below to activate reddit gold")}
 %else:
   %if thing.status == "recent":
@@ -41,7 +47,8 @@
     ${_("You're already a reddit gold subscriber.")}
   %endif
   &#32;
-  ${_("But if you just gave us even more money, enter the new confirmation code below and we'll add the extra credit to your account.")}</p>
+  ${_("But if you just gave us even more money, enter the new confirmation code below and we'll add the extra credit to your account.")}
+</p>
 %endif
 
 <div class="spacer">
@@ -53,7 +60,7 @@
   </%utils:round_field>
 </div>
 
-<button type="submit" class="btn">${_("claim your prize")}</button>
+<button type="submit" class="btn">${_("claim")}</button>
 <span class="status"></span>
 
 %if thing.lounge_html:

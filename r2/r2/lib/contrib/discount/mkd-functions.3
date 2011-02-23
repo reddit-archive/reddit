@@ -127,7 +127,7 @@ accepts the same flags that
 and
 .Fn mkd_string
 do; 
-.Bl -tag -width MKD_NOIMAGE -compact
+.Bl -tag -width MKD_NOSTRIKETHROUGH -compact
 .It Ar MKD_NOIMAGE
 Do not process `![]' and
 remove
@@ -159,6 +159,8 @@ function.
 .It Ar MKD_1_COMPAT
 MarkdownTest_1.0 compatability flag; trim trailing spaces from the
 first line of code blocks and disable implicit reference links.
+.It Ar MKD_NOSTRIKETHROUGH
+Disable strikethrough support.
 .El
 .Sh RETURN VALUES
 The functions

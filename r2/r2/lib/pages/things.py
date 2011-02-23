@@ -146,13 +146,15 @@ class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):
         was_comment = getattr(thing, 'was_comment', False)
         permalink = thing.permalink
+        can_reply = c.user_is_loggedin and getattr(thing, "repliable", True)
+
         PrintableButtons.__init__(self, "messagebuttons", thing,
                                   profilepage = c.profilepage,
                                   permalink = permalink,
                                   was_comment = was_comment,
                                   unread = thing.new,
                                   recipient = thing.recipient,
-                                  can_reply = c.user_is_loggedin,
+                                  can_reply = can_reply,
                                   parent_id = getattr(thing, "parent_id", None),
                                   show_report = True,
                                   show_delete = False)

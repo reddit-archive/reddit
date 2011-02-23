@@ -45,13 +45,15 @@
   <input name="passwd" type="password" maxlength="20" tabindex="2"/>
 
   ${error_field("WRONG_PASSWORD", "passwd", "div")}
+  ${error_field("RATELIMIT", "ratelimit")}
+  ${error_field("RATELIMIT", "vdelay")}
   <div class="status error"></div>
 
   <div id="remember-me">
     <button class="btn" type="submit" tabindex="4">${_("login")}</button>
     <input type="checkbox" name="rem" tabindex="3" id="rem-${op}" />
     <label for="rem-${op}">${_("remember me")}</label>
-    <a href="/password">${_("recover password")}</a>
+    <a class="recover-password" href="/password">${_("recover password")}</a>
     <div class="clear"></div>
   </div>
 </form>

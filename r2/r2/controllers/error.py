@@ -119,7 +119,7 @@ class ErrorController(RedditController):
         c.response.status_code = 404
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
-        if c.site._spam and not c.user_is_admin:
+        if c.site.spammy() and not c.user_is_admin:
             subject = ("the subreddit /r/%s has been incorrectly banned" %
                        c.site.name)
             lnk = ("/r/redditrequest/submit?url=%s&title=%s"

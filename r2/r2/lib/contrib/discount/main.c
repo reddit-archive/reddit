@@ -56,6 +56,8 @@ static struct {
     { "toc",     0, MKD_TOC      },
     { "autolink",0, MKD_AUTOLINK },
     { "safelink",0, MKD_SAFELINK },
+    { "del",     1, MKD_NOSTRIKETHROUGH },
+    { "strikethrough", 1, MKD_NOSTRIKETHROUGH },
     { "1.0",     0, MKD_1_COMPAT },
 } ;
 
@@ -113,6 +115,7 @@ main(int argc, char **argv)
     int flags = 0;
     int debug = 0;
     int toc = 0;
+    int with_html5 = 0;
     int use_mkd_line = 0;
     char *urlflags = 0;
     char *text = 0;
@@ -127,13 +130,16 @@ main(int argc, char **argv)
     pgm = basename(argv[0]);
     opterr = 1;
 
-    while ( (opt=getopt(argc, argv, "b:df:E:F:o:s:t:TV")) != EOF ) {
+    while ( (opt=getopt(argc, argv, "5b:df:E:F:o:s:t:TV")) != EOF ) {
 	switch (opt) {
+	case '5':   with_html5 = 1;
+		    break;
 	case 'b':   urlbase = optarg;
 		    break;
 	case 'd':   debug = 1;
 		    break;
-	case 'V':   printf("%s: discount %s\n", pgm, markdown_version);
+	case 'V':   printf("%s: discount %s%s\n", pgm, markdown_version,
+				with_html5 ? " +html5":"");
 		    exit(0);
 	case 'E':   urlflags = optarg;
 		    break;
@@ -166,6 +172,9 @@ main(int argc, char **argv)
     }
     argc -= optind;
     argv += optind;
+
+    if ( with_html5 )
+	mkd_with_html5_tags();
 
     if ( use_mkd_line )
 	rc = mkd_generateline( text, strlen(text), stdout, flags);

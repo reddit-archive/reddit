@@ -373,11 +373,11 @@ class VLimit(Validator):
         return min(max(i, 1), 100)
 
 class VCssMeasure(Validator):
-    measure = re.compile(r"^\s*[\d\.]+\w{0,3}\s*$")
+    measure = re.compile(r"\A\s*[\d\.]+\w{0,3}\s*\Z")
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_]{2,20}$")
+subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
 
 def chksrname(x):
     #notice the space before reddit.com
@@ -391,7 +391,7 @@ def chksrname(x):
 
 
 class VLength(Validator):
-    only_whitespace = re.compile(r"^\s*$", re.UNICODE)
+    only_whitespace = re.compile(r"\A\s*\Z", re.UNICODE)
 
     def __init__(self, param, max_length,
                  empty_error = errors.NO_TEXT,
@@ -514,7 +514,7 @@ def fullname_regex(thing_cls = None, multiple = False):
     pattern += r"_[0-9a-z]+"
     if multiple:
         pattern = r"(%s *,? *)+" % pattern
-    return re.compile(r"^" + pattern + r"$")
+    return re.compile(r"\A" + pattern + r"\Z")
 
 class VByName(Validator):
     splitter = re.compile('[ ,]+')
@@ -750,7 +750,7 @@ class VSubmitSR(Validator):
 
         return sr
 
-pass_rx = re.compile(r"^.{3,20}$")
+pass_rx = re.compile(r"\A.{3,20}\Z")
 
 def chkpass(x):
     return x if x and pass_rx.match(x) else None
@@ -764,10 +764,14 @@ class VPassword(Validator):
         else:
             return password.encode('utf8')
 
-user_rx = re.compile(r"^[\w-]{3,20}$", re.UNICODE)
+user_rx = re.compile(r"\A[\w-]{3,20}\Z", re.UNICODE)
 
 def chkuser(x):
+    if x is None:
+        return None
     try:
+        if any(ch.isspace() for ch in x):
+            return None
         return str(x) if user_rx.match(x) else None
     except TypeError:
         return None
@@ -879,6 +883,8 @@ class VMessageRecipent(VExistingUname):
                 s = Subreddit._by_name(name.strip('#'))
                 if isinstance(s, FakeSubreddit):
                     raise NotFound, "fake subreddit"
+                if s._spam:
+                    raise NotFound, "banned community"
                 return s
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST)
@@ -977,7 +983,7 @@ class VCssName(Validator):
     returns a name iff it consists of alphanumeric characters and
     possibly "-", and is below the length limit.
     """
-    r_css_name = re.compile(r"^[a-zA-Z0-9\-]{1,100}$")
+    r_css_name = re.compile(r"\A[a-zA-Z0-9\-]{1,100}\Z")
     def run(self, name):
         if name and self.r_css_name.match(name):
             return name
@@ -1057,6 +1063,55 @@ class VRatelimit(Validator):
         if rate_ip:
             to_set['ip' + str(request.ip)] = expire_time
         g.cache.set_multi(to_set, prefix = prefix, time = seconds)
+
+class VDelay(Validator):
+    def __init__(self, category, *a, **kw):
+        self.category = category
+        Validator.__init__(self, *a, **kw)
+
+    def run (self):
+        key = "VDelay-%s-%s" % (self.category, request.ip)
+        prev_violations = g.cache.get(key)
+        if prev_violations:
+            time = utils.timeuntil(prev_violations["expire_time"])
+            if prev_violations["expire_time"] > datetime.now(g.tz):
+                self.set_error(errors.RATELIMIT, {'time': time},
+                               field='vdelay')
+
+    @classmethod
+    def record_violation(self, category, seconds = None, growfast=False):
+        if seconds is None:
+            seconds = g.RATELIMIT*60
+
+        key = "VDelay-%s-%s" % (category, request.ip)
+        prev_violations = g.memcache.get(key)
+        if prev_violations is None:
+            prev_violations = dict(count=0)
+
+        num_violations = prev_violations["count"]
+
+        if growfast:
+            multiplier = 3 ** num_violations
+        else:
+            multiplier = 1
+
+        max_duration = 8 * 3600
+        duration = min(seconds * multiplier, max_duration)
+
+        expire_time = (datetime.now(g.tz) +
+                       timedelta(seconds = duration))
+
+        prev_violations["expire_time"] = expire_time
+        prev_violations["duration"] = duration
+        prev_violations["count"] += 1
+
+        with g.make_lock("lock-" + key, timeout=5, verbose=False):
+            existing = g.memcache.get(key)
+            if existing and existing["count"] > prev_violations["count"]:
+                g.log.warning("Tried to set %s to count=%d, but found existing=%d"
+                             % (key, prev_violations["count"], existing["count"]))
+            else:
+                g.cache.set(key, prev_violations, max_duration)
 
 class VCommentIDs(Validator):
     #id_str is a comma separated list of id36's
@@ -1182,7 +1237,7 @@ class ValidEmails(Validator):
 
 
 class VCnameDomain(Validator):
-    domain_re  = re.compile(r'^([\w\-_]+\.)+[\w]+$')
+    domain_re  = re.compile(r'\A([\w\-_]+\.)+[\w]+\Z')
 
     def run(self, domain):
         if (domain
@@ -1316,8 +1371,8 @@ class VDestination(Validator):
         return "/"
 
 class ValidAddress(Validator):
-    def __init__(self, param, usa_only = True):
-        self.usa_only = usa_only
+    def __init__(self, param, allowed_countries = ["United States"]):
+        self.allowed_countries = allowed_countries
         Validator.__init__(self, param)
 
     def set_error(self, msg, field):
@@ -1338,20 +1393,18 @@ class ValidAddress(Validator):
             self.set_error(_("please provide your state"), "state")
         elif not zipCode:
             self.set_error(_("please provide your zip or post code"), "zip")
-        elif (not self.usa_only and
-              (not country or not pycountry.countries.get(alpha2=country))):
+        elif not country:
             self.set_error(_("please pick a country"), "country")
         else:
-            if self.usa_only:
-                country = 'United States'
-            else:
-                country = pycountry.countries.get(alpha2=country).name
+            country = pycountry.countries.get(alpha2=country)
+            if country.name not in self.allowed_countries:
+                self.set_error(_("Our ToS don't cover your country (yet). Sorry."), "country")
             return Address(firstName = firstName,
                            lastName = lastName,
                            company = company or "",
                            address = address,
                            city = city, state = state,
-                           zip = zipCode, country = country,
+                           zip = zipCode, country = country.name,
                            phoneNumber = phoneNumber or "")
 
 class ValidCard(Validator):
@@ -1377,7 +1430,7 @@ class ValidCard(Validator):
                               cardCode = cardCode)
 
 class VTarget(Validator):
-    target_re = re.compile("^[\w_-]{3,20}$") 
+    target_re = re.compile("\A[\w_-]{3,20}\Z")
     def run(self, name):
         if name and self.target_re.match(name):
             return name

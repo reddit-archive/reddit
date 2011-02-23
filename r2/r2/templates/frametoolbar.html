@@ -51,10 +51,6 @@
     <a class="logo" target="_top" href="http://${get_domain(cname = thing.cname)}/">
       <img src="${static('logo-toolbar.png')}" alt="${thing.site_description or thing.site_name}"
            title="${thing.site_description or thing.site_name}"/>
-      %if thing.dorks:
-        <img src="${static('dorks-toolbar.png')}"
-             title="${_('caution: dorkbar detected')}"/>
-      %endif
     </a>
 
     %if thing._fullname:

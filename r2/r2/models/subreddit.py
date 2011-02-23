@@ -101,9 +101,9 @@ class Subreddit(Thing, Printable):
 
 
     _specials = {}
-    
+
     @classmethod
-    def _by_name(cls, names, _update = False):
+    def _by_name(cls, names, stale=False, _update = False):
         #lower name here so there is only one cache
         names, single = tup(names, True)
 
@@ -134,9 +134,9 @@ class Subreddit(Thing, Printable):
                             for sr in srs)
 
             srs = {}
-            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname')
+            srids = sgm(g.cache, to_fetch.keys(), _fetch, prefix='subreddit.byname', stale=stale)
             if srids:
-                srs = cls._byID(srids.values(), data=True, return_dict=False)
+                srs = cls._byID(srids.values(), data=True, return_dict=False, stale=stale)
 
             for sr in srs:
                 ret[to_fetch[sr.name.lower()]] = sr
@@ -181,6 +181,9 @@ class Subreddit(Thing, Printable):
     @property
     def subscribers(self):
         return self.subscriber_ids()
+
+    def spammy(self):
+        return self._spam
 
     def can_comment(self, user):
         if c.user_is_admin:
@@ -264,14 +267,14 @@ class Subreddit(Thing, Printable):
         return bully_rel._date <= victim_rel._date
 
     @classmethod
-    def load_subreddits(cls, links, return_dict = True):
+    def load_subreddits(cls, links, return_dict = True, stale=False):
         """returns the subreddits for a list of links. it also preloads the
         permissions for the current user."""
         srids = set(l.sr_id for l in links
                     if getattr(l, "sr_id", None) is not None)
         subreddits = {}
         if srids:
-            subreddits = cls._byID(srids, True)
+            subreddits = cls._byID(srids, data=True, stale=stale)
 
         if subreddits and c.user_is_loggedin:
             # dict( {Subreddit,Account,name} -> Relationship )
@@ -330,7 +333,14 @@ class Subreddit(Thing, Printable):
             item.contributor = bool(item.type != 'public' and
                                     (item.moderator or
                                      rels.get((item, user, 'contributor'))))
+
+            # Don't reveal revenue information via /r/lounge's subscribers
+            if (g.lounge_reddit and item.name == g.lounge_reddit
+                and not c.user_is_admin):
+                item._ups = 0
+
             item.score = item._ups
+
             # override "voting" score behavior (it will override the use of
             # item.score in builder.py to be ups-downs)
             item.likes = item.subscriber or None
@@ -354,7 +364,7 @@ class Subreddit(Thing, Printable):
 
     @classmethod
     def top_lang_srs(cls, lang, limit, filter_allow_top = False, over18 = True,
-                     over18_only = False, ids=False):
+                     over18_only = False, ids=False, stale=False):
         from r2.lib import sr_pops
         lang = tup(lang)
 
@@ -362,10 +372,11 @@ class Subreddit(Thing, Printable):
         sr_ids = sr_ids[:limit]
 
         return (sr_ids if ids
-                else Subreddit._byID(sr_ids, data=True, return_dict=False))
+                else Subreddit._byID(sr_ids, data=True, return_dict=False, stale=stale))
 
     @classmethod
-    def default_subreddits(cls, ids = True, over18 = False, limit = g.num_default_reddits):
+    def default_subreddits(cls, ids = True, over18 = False, limit = g.num_default_reddits,
+                           stale=True):
         """
         Generates a list of the subreddits any user with the current
         set of language preferences and no subscriptions would see.
@@ -377,11 +388,12 @@ class Subreddit(Thing, Printable):
         auto_srs = []
         if g.automatic_reddits:
             auto_srs = map(lambda sr: sr._id,
-                           Subreddit._by_name(g.automatic_reddits).values())
+                           Subreddit._by_name(g.automatic_reddits, stale=stale).values())
 
         srs = cls.top_lang_srs(c.content_langs, limit + len(auto_srs),
                                filter_allow_top = True,
-                               over18 = over18, ids = True)
+                               over18 = over18, ids = True,
+                               stale=stale)
 
         rv = []
         for sr in srs:
@@ -393,7 +405,7 @@ class Subreddit(Thing, Printable):
 
         rv = auto_srs + rv
 
-        return rv if ids else Subreddit._byID(rv, data=True,return_dict=False)
+        return rv if ids else Subreddit._byID(rv, data=True, return_dict=False, stale=stale)
 
     @classmethod
     @memoize('random_reddits', time = 1800)
@@ -414,7 +426,7 @@ class Subreddit(Thing, Printable):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids = True, over18=False, limit = sr_limit):
+    def user_subreddits(cls, user, ids = True, over18=False, limit = sr_limit, stale=False):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
@@ -430,10 +442,12 @@ class Subreddit(Thing, Printable):
                 sr_ids = cls.random_reddits(user.name, sr_ids, limit)
             return sr_ids if ids else Subreddit._byID(sr_ids,
                                                       data=True,
-                                                      return_dict=False)
+                                                      return_dict=False,
+                                                      stale=stale)
         else:
-            limit = g.num_default_reddits if limit is None else limit
-            return cls.default_subreddits(ids = ids, over18=over18, limit = limit)
+            return cls.default_subreddits(ids = ids, over18=over18,
+                                          limit=g.num_default_reddits,
+                                          stale=stale)
 
     @classmethod
     @memoize('subreddit.special_reddits')
@@ -597,6 +611,9 @@ class FakeSubreddit(Subreddit):
     def get_all_comments(self):
         from r2.lib.db import queries
         return queries.get_all_comments()
+
+    def spammy(self):
+        return False
 
 class FriendsSR(FakeSubreddit):
     name = 'friends'
@@ -797,6 +814,10 @@ class MultiReddit(_DefaultSR):
         _DefaultSR.__init__(self)
         self.real_path = path
         self.sr_ids = sr_ids
+
+    def spammy(self):
+        srs = Subreddit._byID(self.sr_ids, return_dict=False)
+        return any(sr._spam for sr in srs)
 
     @property
     def path(self):

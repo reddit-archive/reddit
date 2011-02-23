@@ -39,7 +39,7 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported')
+                                               'reported', 'gold_creddits')
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,
@@ -67,7 +67,8 @@ class Account(Thing):
                      pref_collapse_read_messages = False,
                      pref_private_feeds = True,
                      pref_show_adbox = True,
-                     pref_show_sponsors = True,
+                     pref_show_sponsors = True, # sponsored links
+                     pref_show_sponsorships = True,
                      pref_highlight_new_comments = True,
                      mobile_compress = False,
                      mobile_thumbnail = True,
@@ -88,7 +89,8 @@ class Account(Thing):
                      pref_show_promote = None,
                      gold = False,
                      gold_charter = False,
-                     creddits = 0,
+                     gold_creddits = 0,
+                     gold_creddit_escrow = 0,
                      )
 
     def karma(self, kind, sr = None):

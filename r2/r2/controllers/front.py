@@ -30,6 +30,7 @@ from r2.lib.jsontemplates import is_api
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
+from r2.lib.utils import randstr
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
@@ -37,7 +38,7 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
-from r2.lib.indextank import IndextankQuery, IndextankException
+from r2.lib.indextank import IndextankQuery, IndextankException, InvalidIndextankQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
@@ -45,6 +46,7 @@ import r2.lib.db.thing as thing
 from listingcontroller import ListingController
 from pylons import c, request, request, Response
 
+import string
 import random as rand
 import re, socket
 import time as time_module
@@ -251,6 +253,8 @@ class FrontController(RedditController):
         if comment:
             displayPane.append(PermalinkMessage(article.make_permalink_slow()))
 
+        displayPane.append(LinkCommentSep())
+
         # insert reply box only for logged in user
         if c.user_is_loggedin and can_comment_link(article) and not is_api():
             #no comment box for permalinks
@@ -273,7 +277,6 @@ class FrontController(RedditController):
 
         # Used in template_helpers
         c.previous_visits = previous_visits
-
 
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
@@ -569,7 +572,7 @@ class FrontController(RedditController):
                              simple=True).render()
         return res
 
-    verify_langs_regex = re.compile(r"^[a-z][a-z](,[a-z][a-z])*$")
+    verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
     @validate(query = nop('q'),
               sort = VMenu('sort', SearchSortMenu, remember=False),
@@ -587,19 +590,36 @@ class FrontController(RedditController):
             site = c.site
 
         try:
-            q = IndextankQuery(query, site, sort)
+            cleanup_message = None
+            try:
+                q = IndextankQuery(query, site, sort)
+                num, t, spane = self._search(q, num=num, after=after, 
+                                             reverse = reverse, count = count)
+            except InvalidIndextankQuery:
+                # delete special characters from the query and run again
+                special_characters = '+-&|!(){}[]^"~*?:\\'
+                translation = dict((ord(char), None) 
+                                   for char in list(special_characters))
+                cleaned = query.translate(translation)
 
-            num, t, spane = self._search(q, num = num, after = after, reverse = reverse,
-                                         count = count)
+                q = IndextankQuery(cleaned, site, sort)
+                num, t, spane = self._search(q, num=num, after=after, 
+                                             reverse = reverse, count = count)
+                cleanup_message = _('I couldn\'t understand your query, ' +
+                                    'so I simplified it and searched for ' + 
+                                    '"%(clean_query)s" instead.') % {
+                                        'clean_query': cleaned }
+		
             res = SearchPage(_('search results'), query, t, num, content=spane,
                              nav_menus = [SearchSortMenu(default=sort)],
-                             search_params = dict(sort = sort),
-                             simple=False, site=c.site, restrict_sr=restrict_sr).render()
+                             search_params = dict(sort = sort), 
+                             infotext=cleanup_message,
+                             simple=False, site=c.site, 
+                             restrict_sr=restrict_sr).render()
 
             return res
         except (IndextankException, socket.error), e:
             return self.search_fail(e)
-
 
     def _search(self, query_obj, num, after, reverse, count=0):
         """Helper function for interfacing with search.  Basically a
@@ -983,3 +1003,64 @@ class FormsController(RedditController):
     def GET_thanks(self, secret):
         """The page to claim reddit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
+
+    @validate(VUser(),
+              goldtype = VOneOf("goldtype",
+                                ("autorenew", "onetime", "creddits", "gift")),
+              period = VOneOf("period", ("monthly", "yearly")),
+              months = VInt("months"),
+              # variables below are just for gifts
+              signed = VBoolean("signed"),
+              recipient_name = VPrintable("recipient", max_length = 50),
+              giftmessage = VLength("giftmessage", 10000))
+    def GET_gold(self, goldtype, period, months,
+                 signed, recipient_name, giftmessage):
+        start_over = False
+        recipient = None
+        if goldtype == "autorenew":
+            if period is None:
+                start_over = True
+        elif goldtype in ("onetime", "creddits"):
+            if months is None or months < 1:
+                start_over = True
+        elif goldtype == "gift":
+            if months is None or months < 1:
+                start_over = True
+            try:
+                recipient = Account._by_name(recipient_name or "")
+            except NotFound:
+                start_over = True
+        else:
+            goldtype = ""
+            start_over = True
+
+        if start_over:
+            return BoringPage(_("reddit gold"),
+                              show_sidebar = False,
+                              content=Gold(goldtype, period, months, signed,
+                                           recipient, recipient_name)).render()
+        else:
+            payment_blob = dict(goldtype     = goldtype,
+                                account_id   = c.user._id,
+                                account_name = c.user.name,
+                                status       = "initialized")
+
+            if goldtype == "gift":
+                payment_blob["signed"] = signed
+                payment_blob["recipient"] = recipient_name
+                payment_blob["giftmessage"] = giftmessage
+
+            passthrough = randstr(15)
+
+            g.hardcache.set("payment_blob-" + passthrough,
+                            payment_blob, 86400 * 30)
+
+            g.log.info("just set payment_blob-%s" % passthrough)
+
+            return BoringPage(_("reddit gold"),
+                              show_sidebar = False,
+                              content=GoldPayment(goldtype, period, months,
+                                                  signed, recipient,
+                                                  giftmessage, passthrough)
+                              ).render()
+

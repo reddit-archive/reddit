@@ -104,6 +104,7 @@
           <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
           ${captchagen(iden, tabulate=True, label=False, size=30)}
           ${error_field("RATELIMIT", "ratelimit")}
+          ${error_field("RATELIMIT", "vdelay")}
         </li>
       %endif
       <li>
@@ -112,6 +113,13 @@
           ${_('remember me')}
         </label>
       </li>
+      %if not register:
+      <li>
+        <a class="recover-password" href="/password">
+          ${_("recover password")}
+        </a>
+      </li>
+      %endif
     </ul>
       <p>
         <button type="submit" class="button">

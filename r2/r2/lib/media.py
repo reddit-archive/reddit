@@ -93,6 +93,16 @@ def set_media(link, force = False):
     thumbnail = scraper.thumbnail()
     media_object = scraper.media_object()
 
+    if media_object:
+        # the scraper should be able to make a media embed out of the
+        # media object it just gave us. if not, null out the media object
+        # to protect downstream code
+        res = scraper.media_embed(**media_object)
+
+        if not res:
+            print "%s made a bad media obj for link %s" % (scraper, link._id36)
+            media_object = None
+
     if thumbnail:
         upload_thumb(link, thumbnail)
 

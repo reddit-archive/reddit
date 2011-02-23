@@ -25,23 +25,60 @@
    from r2.lib.template_helpers import add_sr, static
 %>
 
+<%def name="search_faq()">
+  <div id="moresearchinfo">
+  <p>use the following search parameters to narrow your results:</p>
+
+  <dl>
+      <dt>reddit:{name}</dt>
+      <dd>${_('find things posted in {name} only')}</dd>
+      <dt>author:{username}</dt>
+      <dd>${_('return things submitted by {username} only')}</dd>
+      <dt>site:{domain}</dt>
+      <dd>${_('get links to pages on {domain} only')}</dd>
+      <dt>url:{text}</dt>
+      <dd>${_('search for {text} in url')}</dd>
+      <dt>selftext:{text}</dt>
+      <dd>${_('search for {text} in self post contents')}</dd>
+      <dt>is_self:{yes|no}</dt>
+      <dd>${_('include or exclude self posts')}</dd>
+      <dt>over18:{yes|no}</dt>
+      <dd>${_('include or exclude results from nsfw reddits')}</dd>
+  </dl>
+
+  <p>e.g. <code>reddit:pics site:imgur.com dog</code></p>
+  <p><a href="http://www.reddit.com/help/search">${_('see the search faq for details.')}</a></p>
+  </div>
+
+  <p><a href="http://www.reddit.com/help/search" id="search_showmore">${_('advanced search: by author, community...')}</a></p>
+</%def>
+
 <form action="${add_sr('/search')}" id="search">
   <input type="text" 
          %if thing.prev_search:
            value="${thing.prev_search}" style="color:black"
-         %else:
-           value="${_('search reddit')}" class="gray"
          %endif
-         name="q"/>
-  %if not thing.simple:
+         name="q" placeholder="${_('search reddit')}" />
+  %if thing.subreddit_search:
+    
+  %elif thing.simple:
+  <div id="searchexpando" class="infobar">
+      % if not isinstance(c.site, DefaultSR):
+      <label><input type="checkbox" name="restrict_sr" />${_('limit my search to %(path)s') % dict(path=c.site.path.rstrip('/'))}</label>
+      % endif
+
+      ${search_faq()}
+
+  </div>
+  %else:
     %if not thing.site or isinstance(thing.site, DefaultSR):
       <input type="hidden" name="restrict_sr" value="off" />
     %else:
       <br /><br />
-      <input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" />
-      <label for="restrict_sr">${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
-      <br /><br />
+      <label><input type="checkbox" ${'checked="checked"' if thing.restrict_sr else ''} name="restrict_sr" />
+      ${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
     %endif
+    ${search_faq()}
     <input type="submit" />
   %endif
 

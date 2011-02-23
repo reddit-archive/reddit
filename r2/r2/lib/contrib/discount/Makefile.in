@@ -13,7 +13,8 @@ SAMPLE_PGMS=mkd2html makepage
 MKDLIB=libmarkdown.a
 OBJS=mkdio.o markdown.o dumptree.o generate.o \
      resource.o docheader.o version.o toc.o css.o \
-     xml.o Csio.o xmlpage.o basename.o emmatch.o @AMALLOC@
+     xml.o Csio.o xmlpage.o basename.o emmatch.o \
+     tags.o html5.o @AMALLOC@
 
 MAN3PAGES=mkd-callbacks.3 mkd-functions.3 markdown.3 mkd-line.3
 
@@ -79,9 +80,9 @@ test:	$(PGMS) echo cols
 	    sh $$x || exit 1; \
 	done
 
-cols:   tools/cols.c
+cols:   tools/cols.c config.h
 	$(CC) -o cols tools/cols.c
-echo:   tools/echo.c
+echo:   tools/echo.c config.h
 	$(CC) -o echo tools/echo.c
 	
 clean:

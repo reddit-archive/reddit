@@ -1,5 +1,5 @@
 BIN=/$objtype/bin
-CC='cc -D_BSD_EXTENSION'
+CC='cc -D_BSD_EXTENSION -D_C99_SNPRINTF_EXTENSION'
 
 markdown:
 	ape/psh -c 'cd .. && make'

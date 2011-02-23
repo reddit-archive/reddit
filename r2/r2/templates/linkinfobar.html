@@ -55,6 +55,14 @@
                                          thing.a.downvotes)))}
   </span>
 
+%if getattr(thing.a, "shortlink", None):
+  <div class="shortlink">
+    shortlink:
+    &#32;
+    <a href="http://${thing.a.shortlink}">${thing.a.shortlink}</a>
+  </div>
+%endif
+
   <table>
     %if c.user_is_admin:
       <%include file="adminlinkinfo.html"/>

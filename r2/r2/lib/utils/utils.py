@@ -255,9 +255,9 @@ def get_title(url):
 
     except:
         return None
-       
-valid_schemes = ('http', 'https', 'ftp', 'mailto')         
-valid_dns = re.compile('^[-a-zA-Z0-9]+$')
+
+valid_schemes = ('http', 'https', 'ftp', 'mailto')
+valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
 def sanitize_url(url, require_scheme = False):
     """Validates that the url is of the form
 
@@ -758,6 +758,8 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
         if len(items) < chunk_size:
             done = True
 
+        after = items[-1]
+
         if batch_fn:
             items = batch_fn(items)
 
@@ -766,7 +768,6 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
         else:
             for i in items:
                 yield i
-        after = items[-1]
 
         if not done:
             query._rules = deepcopy(orig_rules)
@@ -774,12 +775,12 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             items = list(query)
 
 def fix_if_broken(thing, delete = True):
-    from r2.models import Link, Comment, Subreddit
+    from r2.models import Link, Comment, Subreddit, Message
 
     # the minimum set of attributes that are required
     attrs = dict((cls, cls._essentials)
                  for cls
-                 in (Link, Comment, Subreddit))
+                 in (Link, Comment, Subreddit, Message))
 
     if thing.__class__ not in attrs:
         raise TypeError
@@ -790,6 +791,11 @@ def fix_if_broken(thing, delete = True):
             getattr(thing, attr)
         except AttributeError:
             # that failed; let's explicitly load it and try again
+
+            # we don't have g
+            print "You might want to try this:"
+            print "   g.memcache.delete('%s')" % thing._cache_key()
+
             thing._load()
             try:
                 getattr(thing, attr)
@@ -897,12 +903,15 @@ def title_to_url(title, max_length = 50):
             title = title[:last_word]
     return title or "_"
 
-def trace(fn):
+def dbg(s):
     import sys
+    sys.stderr.write('%s\n' % (s,))
+
+def trace(fn):
     def new_fn(*a,**kw):
         ret = fn(*a,**kw)
-        sys.stderr.write("Fn: %s; a=%s; kw=%s\nRet: %s\n"
-                         % (fn,a,kw,ret))
+        dbg("Fn: %s; a=%s; kw=%s\nRet: %s"
+            % (fn,a,kw,ret))
         return ret
     return new_fn
 
@@ -1068,7 +1077,7 @@ def in_chunks(it, size=25):
         if chunk:
             yield chunk
 
-r_subnet = re.compile("^(\d+\.\d+)\.\d+\.\d+$")
+r_subnet = re.compile("\A(\d+\.\d+)\.\d+\.\d+\Z")
 def ip_and_slash16(req):
     ip = req.ip
 
@@ -1131,10 +1140,11 @@ def spaceout(items, targetseconds,
             if sleeptime > 0:
                 sleep(sleeptime)
 
-def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
+def progress(it, verbosity=100, key=repr, estimate=None, persec=True):
     """An iterator that yields everything from `it', but prints progress
        information along the way, including time-estimates if
        possible"""
+    from itertools import islice
     from datetime import datetime
     import sys
 
@@ -1148,46 +1158,121 @@ def progress(it, verbosity=100, key=repr, estimate=None, persec=False):
         except:
             pass
 
+    def timedelta_to_seconds(td):
+        return td.days * (24*60*60) + td.seconds + (float(td.microseconds) / 1000000)
+    def format_timedelta(td, sep=''):
+        ret = []
+        s = timedelta_to_seconds(td)
+        if s < 0:
+            neg = True
+            s *= -1
+        else:
+            neg = False
+
+        if s >= (24*60*60):
+            days = int(s//(24*60*60))
+            ret.append('%dd' % days)
+            s -= days*(24*60*60)
+        if s >= 60*60:
+            hours = int(s//(60*60))
+            ret.append('%dh' % hours)
+            s -= hours*(60*60)
+        if s >= 60:
+            minutes = int(s//60)
+            ret.append('%dm' % minutes)
+            s -= minutes*60
+        if s >= 1:
+            seconds = int(s)
+            ret.append('%ds' % seconds)
+            s -= seconds
+
+        if not ret:
+            return '0s'
+
+        return ('-' if neg else '') + sep.join(ret)
+    def format_datetime(dt, show_date=False):
+        if show_date:
+            return dt.strftime('%Y-%m-%d %H:%M')
+        else:
+            return dt.strftime('%H:%M:%S')
+    def deq(dt1, dt2):
+        "Indicates whether the two datetimes' dates describe the same (day,month,year)"
+        d1, d2 = dt1.date(), dt2.date()
+        return (    d1.day   == d2.day
+                and d1.month == d2.month
+                and d1.year  == d2.year)
+
     sys.stderr.write('Starting at %s\n' % (start,))
 
+    # we're going to islice it so we need to start an iterator
+    it = iter(it)
+
     seen = 0
-    for item in it:
-        seen += 1
-        if seen % verbosity == 0:
-            now = datetime.now()
-            elapsed = now - start
-            elapsed_seconds = elapsed.days * 86400 + elapsed.seconds
+    while True:
+        this_chunk = 0
+        thischunk_started = datetime.now()
 
-            if estimate:
-                remaining = ((elapsed/seen)*estimate)-elapsed
-                completion = now + remaining
-                count_str = ('%d/%d %.2f%%'
-                             % (seen, estimate, float(seen)/estimate*100))
-                estimate_str = (' (%s remaining; completion %s)'
-                                % (remaining, completion))
-            else:
-                count_str = '%d' % seen
-                estimate_str = ''
+        # the simple bit: just iterate and yield
+        for item in islice(it, verbosity):
+            this_chunk += 1
+            seen += 1
+            yield item
 
-            if key:
-                key_str = ': %s' % key(item)
-            else:
-                key_str = ''
+        if this_chunk < verbosity:
+            # we're done, the iterator is empty
+            break
 
-            if persec and elapsed_seconds > 0:
-                persec_str = ' (%.2f/s)' % (float(seen)/elapsed_seconds,)
-            else:
-                persec_str = ''
+        now = datetime.now()
+        elapsed = now - start
+        thischunk_seconds = timedelta_to_seconds(now - thischunk_started)
 
-            sys.stderr.write('%s%s, %s%s%s\n'
-                             % (count_str, persec_str,
-                                elapsed, estimate_str, key_str))
-            this_chunk = 0
-        yield item
+        if estimate:
+            # the estimate is based on the total number of items that
+            # we've processed in the total amount of time that's
+            # passed, so it should smooth over momentary spikes in
+            # speed (but will take a while to adjust to long-term
+            # changes in speed)
+            remaining = ((elapsed/seen)*estimate)-elapsed
+            completion = now + remaining
+            count_str = ('%d/%d %.2f%%'
+                         % (seen, estimate, float(seen)/estimate*100))
+            completion_str = format_datetime(completion, not deq(completion,now))
+            estimate_str = (' (%s remaining; completion %s)'
+                            % (format_timedelta(remaining),
+                               completion_str))
+        else:
+            count_str = '%d' % seen
+            estimate_str = ''
+
+        if key:
+            key_str = ': %s' % key(item)
+        else:
+            key_str = ''
+
+        # unlike the estimate, the persec count is the number per
+        # second for *this* batch only, without smoothing
+        if persec and thischunk_seconds > 0:
+            persec_str = ' (%.1f/s)' % (float(this_chunk)/thischunk_seconds,)
+        else:
+            persec_str = ''
+
+        sys.stderr.write('%s%s, %s%s%s\n'
+                         % (count_str, persec_str,
+                            format_timedelta(elapsed), estimate_str, key_str))
 
     now = datetime.now()
     elapsed = now - start
-    sys.stderr.write('Processed %d items in %s..%s (%s)\n' % (seen, start, now, elapsed))
+    elapsed_seconds = timedelta_to_seconds(elapsed)
+    if persec and seen > 0 and elapsed_seconds > 0:
+        persec_str = ' (@%.1f/sec)' % (float(seen)/elapsed_seconds)
+    else:
+        persec_str = ''
+    sys.stderr.write('Processed %d%s items in %s..%s (%s)\n'
+                     % (seen,
+                        persec_str,
+                        format_datetime(start, not deq(start, now)),
+                        format_datetime(now, not deq(start, now)),
+                        format_timedelta(elapsed)))
 
 class Hell(object):
     def __str__(self):

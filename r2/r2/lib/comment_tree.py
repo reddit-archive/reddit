@@ -25,6 +25,8 @@ from r2.lib.utils import tup, to36
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
 
+MAX_ITERATIONS = 20000
+
 def comments_key(link_id):
     return 'comments_' + str(link_id)
 
@@ -308,10 +310,14 @@ def _load_link_comments(link_id):
     for cm_id in cids:
         num = 0
         todo = [cm_id]
+        iteration_count = 0
         while todo:
+            if iteration_count > MAX_ITERATIONS:
+                raise Exception("bad comment tree for link %s" % link_id)
             more = comment_tree.get(todo.pop(0), ())
             num += len(more)
             todo.extend(more)
+            iteration_count += 1
         num_children[cm_id] = num
 
     return cids, comment_tree, depth, num_children

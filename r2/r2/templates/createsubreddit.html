@@ -270,7 +270,7 @@ function update_title(elem) {
                  %if thing.site.sponsorship_name:
                      value="${thing.site.sponsorship_name}"
                  %else:
-                     value="${'name this campaign (for traffic)'}" class="gray"
+                     placeholder="${_('name this campaign (for traffic)')}" 
                  %endif
                  />
         </li>
@@ -279,7 +279,7 @@ function update_title(elem) {
                  %if thing.site.sponsorship_url:
                      value="${thing.site.sponsorship_url}"
                  %else:
-                     value="${'enter link url here'}" class="gray"
+                     placeholder="${_('enter link url here')}"
                  %endif
                  />
         </li>

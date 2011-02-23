@@ -1,2 +1,2 @@
 #! /bin/sh
-  ./configure.sh 
+  ./configure.sh  '--relaxed-emphasis' '--enable-superscript'

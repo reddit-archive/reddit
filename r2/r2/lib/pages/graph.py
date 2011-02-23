@@ -39,10 +39,11 @@ def make_date_axis_labels(series):
     _min = min(series)
     delta = _max - _min
     zero = datetime.timedelta(0)
-    if delta != zero and delta < datetime.timedelta(0, 0.5 * 86400):
+    has_hour = isinstance(_min, datetime.datetime)
+    if delta != zero and has_hour and delta < datetime.timedelta(0, 0.5*86400):
         test   = lambda cur, prev: cur.hour != prev.hour and cur.hour % 3 == 0
         format = "%H:00"
-    elif delta != zero and delta < datetime.timedelta(2):
+    elif delta != zero and has_hour and delta < datetime.timedelta(2):
         test   = lambda cur, prev: cur.hour != prev.hour and cur.hour % 6 == 0
         format = "%H:00"
     elif delta == zero or delta < datetime.timedelta(7):

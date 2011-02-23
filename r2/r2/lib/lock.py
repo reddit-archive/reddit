@@ -41,7 +41,7 @@ class MemcacheLock(object):
     attempt to grab a lock by 'adding' the lock name. If the response
     is True, we have the lock. If it's False, someone else has it."""
 
-    def __init__(self, key, cache, time = 30, timeout = 30):
+    def __init__(self, key, cache, time = 30, timeout = 30, verbose=True):
         # get a thread-local set of locks that we own
         self.locks = locks.locks = getattr(locks, 'locks', set())
 
@@ -50,6 +50,7 @@ class MemcacheLock(object):
         self.time = time
         self.timeout = timeout
         self.have_lock = False
+        self.verbose = verbose
 
     def __enter__(self):
         start = datetime.now()
@@ -63,14 +64,17 @@ class MemcacheLock(object):
         #try and fetch the lock, looping until it's available
         while not self.cache.add(self.key, my_info, time = self.time):
             if (datetime.now() - start).seconds > self.timeout:
-                info = self.cache.get(self.key)
-                if info:
-                    info = "%s %s\n%s" % info
+                if self.verbose:
+                    info = self.cache.get(self.key)
+                    if info:
+                        info = "%s %s\n%s" % info
+                    else:
+                        info = "(nonexistent)"
+                    msg = ("\nSome jerk is hogging %s:\n%s" %
+                                         (self.key, info))
+                    msg += "^^^ that was the stack trace of the lock hog, not me."
                 else:
-                    info = "(nonexistent)"
-                msg = ("\nSome jerk is hogging %s:\n%s" %
-                                     (self.key, info))
-                msg += "^^^ that was the stack trace of the lock hog, not me."
+                    msg = "Timed out waiting for %s" % self.key
                 raise TimeoutExpired(msg)
 
             sleep(.01)

@@ -144,9 +144,9 @@ class DataThing(object):
                     cl = "???"
 
                 if self._loaded:
-                    nl = "it IS loaded."
+                    nl = "it IS loaded"
                 else:
-                    nl = "it is NOT loaded."
+                    nl = "it is NOT loaded"
 
                 # The %d format is nicer since it has no "L" at the
                 # end, but if we can't do that, fall back on %r.
@@ -167,7 +167,14 @@ class DataThing(object):
                     print "Some dumbass forgot a comma."
                     essentials = essentials,
 
-                if attr in essentials:
+                deleted = object.__getattribute__(self, "_deleted")
+
+                if deleted:
+                    nl += " and IS deleted."
+                else:
+                    nl += " and is NOT deleted."
+
+                if attr in essentials and not deleted:
                     log_text ("essentials-bandaid-reload",
                           "%s not found; %s Forcing reload." % (descr, nl),
                           "warning")
@@ -331,7 +338,7 @@ class DataThing(object):
 
     #TODO error when something isn't found?
     @classmethod
-    def _byID(cls, ids, data=False, return_dict=True, extra_props=None):
+    def _byID(cls, ids, data=False, return_dict=True, extra_props=None, stale=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
 
@@ -345,7 +352,7 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cache, ids, items_db, prefix)
+        bases = sgm(cache, ids, items_db, prefix, stale=stale)
 
         #check to see if we found everything we asked for
         for i in ids:
@@ -406,7 +413,7 @@ class DataThing(object):
     @classmethod
     def _by_fullname(cls, names,
                      return_dict = True, 
-                     data=False, extra_props=None):
+                     **kw):
         names, single = tup(names, True)
 
         table = {}
@@ -431,8 +438,7 @@ class DataThing(object):
         # lookup ids for each type
         identified = {}
         for real_type, thing_ids in table.iteritems():
-            i = real_type._byID(thing_ids, data = data,
-                                extra_props = extra_props)
+            i = real_type._byID(thing_ids, **kw)
             identified[real_type] = i
 
         # interleave types in original order of the name
@@ -745,6 +751,26 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             thing_utils.set_last_modified_for_cls(thing1, cls._type_name)
 
         @classmethod
+        def _can_skip_lookup(cls, thing1, thing2):
+            # we can't possibly have voted on things that were created
+            # after the last time we voted. for relations that have an
+            # invariant like this we can avoid doing these lookups as
+            # long as the relation takes responsibility for keeping
+            # the timestamp up-to-date
+
+            last_done = thing_utils.get_last_modified_for_cls(
+                thing1, cls._type_name)
+
+            if not last_done:
+                return False
+
+            if thing2._date > last_done:
+                return True
+
+            return False
+
+
+        @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
                         thing_data=False, timestamp_optimize = False):
             """looks up all the relationships between thing1_ids and
@@ -759,26 +785,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
 
             name = tup(name)
 
-            def can_skip_lookup(t1, t2, name):
-                # we can't possibly have voted on things that were
-                # created after the last time we voted. for relations
-                # that have an invariant like this we can avoid doing
-                # these lookups as long as the relation takes
-                # responsibility for keeping the timestamp up-to-date
-                thing1 = thing1_dict[t1]
-                thing2 = thing2_dict[t2]
-
-                last_done = thing_utils.get_last_modified_for_cls(
-                    thing1, cls._type_name)
-
-                if not last_done:
-                    return False
-
-                if thing2._date > last_done:
-                    return True
-
-                return False
-
             # permute all of the pairs
             pairs = set((x, y, n)
                         for x in thing1_ids
@@ -792,7 +798,8 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 t2_ids = set()
                 names = set()
                 for t1, t2, name in pairs:
-                    if timestamp_optimize and can_skip_lookup(t1, t2, name):
+                    if timestamp_optimize and cls._can_skip_lookup(thing1_dict[t1],
+                                                                   thing2_dict[t2]):
                         continue
                     t1_ids.add(t1)
                     t2_ids.add(t2)
@@ -1049,9 +1056,9 @@ def load_things(rels, load_data=False):
     for rel in rels:
         t1_ids.add(rel._thing1_id)
         t2_ids.add(rel._thing2_id)
-    kind._type1._byID(t1_ids, load_data)
+    kind._type1._byID(t1_ids, data=load_data)
     if not kind._gay():
-        t2_items = kind._type2._byID(t2_ids, load_data)
+        t2_items = kind._type2._byID(t2_ids, data=load_data)
 
 class Relations(Query):
     #params are thing1, thing2, name, date

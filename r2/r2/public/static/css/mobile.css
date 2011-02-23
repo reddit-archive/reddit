@@ -2,7 +2,6 @@ body {
      font-family: verdana,arial,helvetica,sans-serif;
      margin: 0;
      padding: 0;
-     font-size: x-small;
      color: #888;
 }
 
@@ -23,17 +22,21 @@ ul {
    }
 
 .link {
+      padding: 5px 5px 5px 5px;
+      /*padding-top: 5px;
+      padding-bottom: 5px;
       margin-left: 2px;
+      display: inline;*/
       }
 
 .title {
-       color: blue;
-       font-size: small;
-       margin-right: .5em;
+       color: #369;
        }
 
 .byline {
 	margin: 0px 0px .5em 2px;
+        display: inline;
+        font-size: small;
         }
 
 .description {
@@ -45,22 +48,26 @@ ul {
         }
 
 .buttons {
-         font-weight: bold;
          }
 
+.comment .child {
+    border-left: 1px dotted #DDF;
+}
+
 .child {
-       margin-left: 2em;
+       padding-left: 1em;
+       margin-left: 1em;
+       border-left: 1px dotted #DDF;
        }
 
 .headerbar {
-           background:lightgray none repeat scroll 0%;
+           background-color: lightgrey;
 	   margin: 5px 0px 5px 2px;
 }
 
 .headerbar span {
            background-color: white;
            color: gray;
-           font-size: x-small;
            font-weight: bold;
            margin-left: 15px;
            padding: 0px 3px;
@@ -81,6 +88,7 @@ ul {
 
 .tabmenu {
     list-style-type: none;
+    display: inline;
 }
 
 .tabmenu li {

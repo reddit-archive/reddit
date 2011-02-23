@@ -35,6 +35,7 @@ r2/_builder.egg-info/
 r2/_normalized_hot.egg-info/
 r2/_sorts.egg-info/
 r2/r2/lib/_normalized_hot.c
+r2/r2/lib/mr_tools/_mr_tools.c
 r2/r2/lib/db/_sorts.c
 r2/r2/lib/sgm.c
 r2/r2/lib/utils/_utils.c

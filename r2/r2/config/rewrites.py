@@ -23,9 +23,9 @@ import re
 
 rewrites = (#these first two rules prevent the .embed rewrite from
             #breaking other js that should work
-            ("^/_(.*)", "/_$1"),
-            ("^/static/(.*\.js)", "/static/$1"),
+            ("\A/_(.*)", "/_$1"),
+            ("\A/static/(.*\.js)", "/static/$1"),
             #This next rewrite makes it so that all the embed stuff works.
-            ("^(.*)(?<!button)(?<!buttonlite)(\.js)$", "$1.embed"))
+            ("\A(.*)(?<!button)(?<!buttonlite)(\.js)\Z", "$1.embed"))
 
 rewrites = tuple((re.compile(r[0]), r[1]) for r in rewrites)

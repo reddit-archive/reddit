@@ -48,7 +48,7 @@ CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
     try:
-        sr = Subreddit._by_name(name)
+        sr = Subreddit._by_name(name, stale=True)
     except NotFound:
         sr = Subreddit._new(name = name,
                             title = "promoted links",
@@ -508,6 +508,9 @@ def accept_promotion(link):
         promotion_log(link, "requeued")
         #TODO: smarter would be nice, but this will have to do for now
         make_daily_promotions()
+    if link._spam:
+        link._spam = False
+        link._commit()
     emailer.accept_promo(link)
 
 def reject_promotion(link, reason = None):
@@ -691,6 +694,8 @@ def get_promotion_list(user, site):
     # site is specified, pick an ad from that site
     if not isinstance(site, FakeSubreddit):
         srids = set([site._id])
+    elif isinstance(site, MultiReddit):
+        srids = set(site.sr_ids)
     # site is Fake, user is not.  Pick based on their subscriptions.
     elif user and not isinstance(user, FakeAccount):
         srids = set(Subreddit.reverse_subscriber_ids(user) + [""])

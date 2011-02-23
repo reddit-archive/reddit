@@ -406,10 +406,10 @@ class PromoteController(ListingController):
                    customer_id = VInt("customer_id", min = 0),
                    pay_id = VInt("account", min = 0),
                    edit   = VBoolean("edit"),
-                   address = ValidAddress(["firstName", "lastName",
-                                           "company", "address",
-                                           "city", "state", "zip",
-                                           "country", "phoneNumber"]),
+                   address = ValidAddress(
+                    ["firstName", "lastName", "company", "address",
+                     "city", "state", "zip", "country", "phoneNumber"],
+                    allowed_countries = g.allowed_pay_countries),
                    creditcard = ValidCard(["cardNumber", "expirationDate",
                                            "cardCode"]))
     def POST_update_pay(self, form, jquery, link, indx, customer_id, pay_id,
@@ -423,13 +423,18 @@ class PromoteController(ListingController):
                 form.has_errors(["cardNumber", "expirationDate", "cardCode"],
                                 errors.BAD_CARD)):
                 pass
-            else:
+            elif g.authorizenetapi:
                 pay_id = edit_profile(c.user, address, creditcard, pay_id)
+            else:
+                pay_id = 1
         # if link is in use or finished, don't make a change
         if pay_id:
             # valid bid and created or existing bid id.
             # check if already a transaction
-            success, reason = promote.auth_campaign(link, indx, c.user, pay_id)
+            if g.authorizenetapi:
+                success, reason = promote.auth_campaign(link, indx, c.user, pay_id)
+            else:
+                success = True
             if success:
                 form.redirect(promote.promo_edit_url(link))
             else:
@@ -449,10 +454,14 @@ class PromoteController(ListingController):
         if indx not in getattr(article, "campaigns", {}):
             return self.abort404()
 
-        data = get_account_info(c.user)
-        content = PaymentForm(article, indx,
-                              customer_id = data.customerProfileId,
-                              profiles = data.paymentProfiles)
+        if g.authorizenetapi:
+            data = get_account_info(c.user)
+            content = PaymentForm(article, indx,
+                                  customer_id = data.customerProfileId,
+                                  profiles = data.paymentProfiles)
+        else:
+            content = PaymentForm(article, 0, customer_id = 0,
+                                  profiles = [])
         res =  LinkInfoPage(link = article,
                             content = content,
                             show_sidebar = False)

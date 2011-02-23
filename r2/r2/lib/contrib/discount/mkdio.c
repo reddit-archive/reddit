@@ -24,8 +24,10 @@ new_Document()
     Document *ret = calloc(sizeof(Document), 1);
 
     if ( ret ) {
-	if (( ret->ctx = calloc(sizeof(MMIOT), 1) ))
+	if (( ret->ctx = calloc(sizeof(MMIOT), 1) )) {
+	    ret->magic = VALID_DOCUMENT;
 	    return ret;
+	}
 	free(ret);
     }
     return 0;

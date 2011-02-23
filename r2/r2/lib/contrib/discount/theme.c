@@ -554,6 +554,9 @@ char **argv;
 
 	    if ( q )
 		*q = 0;
+	    else
+		q = output + strlen(output);
+
 	    strcat(q, ".html");
 	}
     }

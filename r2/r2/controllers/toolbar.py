@@ -34,11 +34,12 @@ from pylons import c, Response
 import string
 
 # strips /r/foo/, /s/, or both
-strip_sr          = re.compile('^/r/[a-zA-Z0-9_-]+')
-strip_s_path      = re.compile('^/s/')
-leading_slash     = re.compile('^/+')
-has_protocol      = re.compile('^https?:')
-need_insert_slash = re.compile('^https?:/[^/]')
+strip_sr          = re.compile('\A/r/[a-zA-Z0-9_-]+')
+strip_s_path      = re.compile('\A/s/')
+leading_slash     = re.compile('\A/+')
+has_protocol      = re.compile('\A[a-zA-Z_-]+:')
+allowed_protocol  = re.compile('\Ahttps?:')
+need_insert_slash = re.compile('\Ahttps?:/[^/]')
 def demangle_url(path):
     # there's often some URL mangling done by the stack above us, so
     # let's clean up the URL before looking it up
@@ -46,7 +47,10 @@ def demangle_url(path):
     path = strip_s_path.sub('', path)
     path = leading_slash.sub("", path)
 
-    if not has_protocol.match(path):
+    if has_protocol.match(path):
+        if not allowed_protocol.match(path):
+            return None
+    else:
         path = 'http://%s' % path
 
     if need_insert_slash.match(path):
@@ -203,12 +207,16 @@ class ToolbarController(RedditController):
         if link:
             res = link[0]
         elif url:
+            url = demangle_url(url)
+            if not url:  # also check for validity
+                return self.abort404()
+
             res = FrameToolbar(link = None,
                                title = None,
                                url = url,
                                expanded = False)
         else:
-            self.abort404()
+            return self.abort404()
         return spaceCompress(res.render())
 
     @validate(link = VByName('id'))

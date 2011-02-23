@@ -133,5 +133,7 @@ try 'two adjacent comments' "$COMMENTS" \
 
 <p>line 2</p>'
 
+try 'comment, no white space' '<!--foo-->' '<!--foo-->'
+
 summary $0
 exit $rc

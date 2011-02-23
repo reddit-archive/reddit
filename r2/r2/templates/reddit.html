@@ -119,7 +119,7 @@
 </%def>
 
 <%def name="bodyHTML()">
-  <body onclick="close_menus()">
+  <body>
     <%include file="redditheader.html"/>
   
     %if thing.show_sidebar:
@@ -170,25 +170,16 @@
       %endif
 
       %if g.tracker_url and thing.site_tracking:
-        <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+        <img alt="" src="${tracking.UserInfo.gen_url()}" id="oldpixel"/>
+      %endif
+
+      %if g.newtracker_url and thing.site_tracking:
+        <script type="text/javascript">
+            grab_tracking_pixel('${tracking.UserInfoNew.gen_url()}');
+        </script>
       %endif
     %endif
     ${framebuster()}
-    ##
-    ## 3rd party tracking stuff lives below here
-    ##
-    %if g.googleanalytics:
-        <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        </script>
-        <script type="text/javascript">
-          try {
-            var pageTracker = _gat._getTracker("${g.googleanalytics}");
-            pageTracker._trackPageview();
-         } catch(err) {}
-        </script>
-    %endif
   </body>
 </%def>
 

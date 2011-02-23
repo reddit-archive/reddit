@@ -4,6 +4,8 @@
  * The redistribution terms are provided in the COPYRIGHT file that must
  * be distributed with this source code.
  */
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -11,50 +13,14 @@
 #include <time.h>
 #include <ctype.h>
 
-#include "config.h"
-
 #include "cstring.h"
 #include "markdown.h"
 #include "amalloc.h"
-
-/* block-level tags for passing html blocks through the blender
- */
-struct kw {
-    char *id;
-    int  size;
-    int  selfclose;
-} ;
-
-#define KW(x)	{ x, sizeof(x)-1, 0 }
-#define SC(x)	{ x, sizeof(x)-1, 1 }
-
-static struct kw blocktags[] = { KW("!--"), KW("STYLE"), KW("SCRIPT"),
-				 KW("ADDRESS"), KW("BDO"), KW("BLOCKQUOTE"),
-				 KW("CENTER"), KW("DFN"), KW("DIV"), KW("H1"),
-				 KW("H2"), KW("H3"), KW("H4"), KW("H5"),
-				 KW("H6"), KW("LISTING"), KW("NOBR"),
-				 KW("UL"), KW("P"), KW("OL"), KW("DL"),
-				 KW("PLAINTEXT"), KW("PRE"), KW("TABLE"),
-				 KW("WBR"), KW("XMP"), SC("HR"), SC("BR"),
-				 KW("IFRAME"), KW("MAP") };
-#define SZTAGS	(sizeof blocktags / sizeof blocktags[0])
-#define MAXTAG	11 /* sizeof "BLOCKQUOTE" */
+#include "tags.h"
 
 typedef int (*stfu)(const void*,const void*);
 
 typedef ANCHOR(Paragraph) ParagraphRoot;
-
-
-/* case insensitive string sort (for qsort() and bsearch() of block tags)
- */
-static int
-casort(struct kw *a, struct kw *b)
-{
-    if ( a->size != b->size )
-	return a->size - b->size;
-    return strncasecmp(a->id, b->id, b->size);
-}
-
 
 /* case insensitive string sort for Footnote tags.
  */
@@ -135,19 +101,28 @@ ___mkd_tidy(Cstring *t)
 }
 
 
+static struct kw comment = { "!--", 3, 0 };
+
 static struct kw *
 isopentag(Line *p)
 {
     int i=0, len;
-    struct kw key, *ret;
+    char *line;
 
     if ( !p ) return 0;
 
+    line = T(p->text);
     len = S(p->text);
 
-    if ( len < 3 || T(p->text)[0] != '<' )
+    if ( len < 3 || line[0] != '<' )
 	return 0;
 
+    if ( line[1] == '!' && line[2] == '-' && line[3] == '-' )
+	/* comments need special case handling, because
+	 * the !-- doesn't need to end in a whitespace
+	 */
+	return &comment;
+    
     /* find how long the tag is so we can check to see if
      * it's a block-level tag
      */
@@ -156,13 +131,8 @@ isopentag(Line *p)
 		       && !isspace(T(p->text)[i]); ++i )
 	;
 
-    key.id = T(p->text)+1;
-    key.size = i-1;
-    
-    if ( ret = bsearch(&key, blocktags, SZTAGS, sizeof key, (stfu)casort))
-	return ret;
 
-    return 0;
+    return mkd_search_tags(T(p->text)+1, i-1);
 }
 
 
@@ -205,6 +175,25 @@ splitline(Line *t, int cutpoint)
 
 
 static Line *
+commentblock(Paragraph *p)
+{
+    Line *t, *ret;
+    char *end;
+
+    for ( t = p->text; t ; t = t->next) {
+	if ( end = strstr(T(t->text), "-->") ) {
+	    splitline(t, 3 + (end - T(t->text)) );
+	    ret = t->next;
+	    t->next = 0;
+	    return ret;
+	}
+    }
+    return t;
+
+}
+
+
+static Line *
 htmlblock(Paragraph *p, struct kw *tag)
 {
     Line *ret;
@@ -212,7 +201,10 @@ htmlblock(Paragraph *p, struct kw *tag)
     int c;
     int i, closing, depth=0;
 
-    if ( tag->selfclose || (tag->size >= MAXTAG) ) {
+    if ( tag == &comment )
+	return commentblock(p);
+    
+    if ( tag->selfclose ) {
 	ret = f.t->next;
 	f.t->next = 0;
 	return ret;
@@ -260,25 +252,6 @@ htmlblock(Paragraph *p, struct kw *tag)
 	}
     }
     return 0;
-}
-
-
-static Line *
-comment(Paragraph *p)
-{
-    Line *t, *ret;
-    char *end;
-
-    for ( t = p->text; t ; t = t->next) {
-	if ( end = strstr(T(t->text), "-->") ) {
-	    splitline(t, 3 + (end - T(t->text)) );
-	    ret = t->next;
-	    t->next = 0;
-	    return ret;
-	}
-    }
-    return t;
-
 }
 
 
@@ -384,26 +357,9 @@ ishr(Line *t)
 
 
 static int
-ishdr(Line *t, int *htyp)
+issetext(Line *t, int *htyp)
 {
     int i;
-
-
-    /* first check for etx-style ###HEADER###
-     */
-
-    /* leading run of `#`'s ?
-     */
-    for ( i=0; T(t->text)[i] == '#'; ++i)
-	;
-
-    /* ANY leading `#`'s make this into an ETX header
-     */
-    if ( i && (i < S(t->text) || i > 1) ) {
-	*htyp = ETX;
-	return 1;
-    }
-
     /* then check for setext-style HEADER
      *                             ======
      */
@@ -425,6 +381,31 @@ ishdr(Line *t, int *htyp)
 	}
     }
     return 0;
+}
+
+
+static int
+ishdr(Line *t, int *htyp)
+{
+    int i;
+
+
+    /* first check for etx-style ###HEADER###
+     */
+
+    /* leading run of `#`'s ?
+     */
+    for ( i=0; T(t->text)[i] == '#'; ++i)
+	;
+
+    /* ANY leading `#`'s make this into an ETX header
+     */
+    if ( i && (i < S(t->text) || i > 1) ) {
+	*htyp = ETX;
+	return 1;
+    }
+
+    return issetext(t, htyp);
 }
 
 
@@ -762,11 +743,12 @@ listitem(Paragraph *p, int indent)
 		t->next = 0;
 		return q;
 	    }
-	    /* indent as far as the initial line was indented. */
-	    indent = clip;
+	    /* indent at least 2, and at most as
+	     * as far as the initial line was indented. */
+	    indent = clip ? clip : 2;
 	}
 
-	if ( (q->dle < indent) && (ishr(q) || islist(q,&z)) && !ishdr(q,&z) ) {
+	if ( (q->dle < indent) && (ishr(q) || islist(q,&z)) && !issetext(q,&z) ) {
 	    q = t->next;
 	    t->next = 0;
 	    return q;
@@ -967,10 +949,7 @@ compile_document(Line *ptr, MMIOT *f)
 		T(source) = E(source) = 0;
 	    }
 	    p = Pp(&d, ptr, strcmp(tag->id, "STYLE") == 0 ? STYLE : HTML);
-	    if ( strcmp(tag->id, "!--") == 0 )
-		ptr = comment(p);
-	    else
-		ptr = htmlblock(p, tag);
+	    ptr = htmlblock(p, tag);
 	}
 	else if ( isfootnote(ptr) ) {
 	    /* footnotes, like cats, sleep anywhere; pull them
@@ -1073,15 +1052,15 @@ compile(Line *ptr, int toplevel, MMIOT *f)
 }
 
 
-static void
-initialize()
+void
+mkd_initialize()
 {
     static int first = 1;
 
     if ( first-- > 0 ) {
 	first = 0;
 	INITRNG(time(0));
-	qsort(blocktags, SZTAGS, sizeof blocktags[0], (stfu)casort);
+	mkd_prepare_tags();
     }
 }
 
@@ -1111,7 +1090,7 @@ mkd_compile(Document *doc, int flags)
     doc->ctx->footnotes = malloc(sizeof doc->ctx->footnotes[0]);
     CREATE(*doc->ctx->footnotes);
 
-    initialize();
+    mkd_initialize();
 
     doc->code = compile_document(T(doc->content), doc->ctx);
     qsort(T(*doc->ctx->footnotes), S(*doc->ctx->footnotes),

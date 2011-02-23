@@ -227,7 +227,8 @@ class AuthorizeNetRequest(SimpleXMLObject):
 
 
     def process_error(self, res):
-        raise AuthorizeNetException, res
+        msg = "Response %r from request %r" % (res, self.toXML())
+        raise AuthorizeNetException(msg)
 
     _autoclose_re = re.compile("<([^/]+)/>")
     def _autoclose_handler(self, m):

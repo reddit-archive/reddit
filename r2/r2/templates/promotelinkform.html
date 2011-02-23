@@ -376,7 +376,7 @@
                  %if thing.link.media_object:
                    value='${thing.link.media_object.get("width", 0)}'
                  %else:
-                   value="width" class="gray"
+                   placeholder="${_('width')}"
                  %endif
                />
         x <input name="media-height" type='text' size='5' maxsize='5'
@@ -384,7 +384,7 @@
                  %if thing.link.media_object:
                    value='${thing.link.media_object.get("height", 0)}'
                  %else:
-                   value="height" class="gray"
+                   placeholder="${_('height')}"
                  %endif
                  />
         <p>
@@ -454,17 +454,18 @@
       </tr>
       %for i in xrange(0, 28):
       <%
+         is_today = (i == 14)
          day = (thing.now + datetime.timedelta(i-14))
          CPC = CPM = imp_traffic = cli_traffic = "---"
          if thing.promo_traffic.has_key(day):
             imp_traffic, cli_traffic = thing.promo_traffic[day]
-            if thing.market.has_key(i):
+            if thing.market.has_key(i) and not is_today:
                CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
                CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
        %>
       <tr>
         <th>
-          ${unsafe("&raquo;" if i == 14 else '')}
+          ${unsafe("&raquo;" if is_today else '')}
           ${day.strftime("%m/%d/%Y")}</th>
         <td>${CPM}</td>
         <td>${CPC}</td>

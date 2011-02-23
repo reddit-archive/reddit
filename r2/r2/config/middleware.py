@@ -255,7 +255,7 @@ class SourceViewMiddleware(DebugMiddleware):
         return [res]
 
 class DomainMiddleware(object):
-    lang_re = re.compile(r"^\w\w(-\w\w)?$")
+    lang_re = re.compile(r"\A\w\w(-\w\w)?\Z")
 
     def __init__(self, app):
         self.app = app
@@ -371,7 +371,7 @@ class SubredditMiddleware(object):
         return self.app(environ, start_response)
 
 class DomainListingMiddleware(object):
-    domain_pattern = re.compile(r'^/domain/(([-\w]+\.)+[\w]+)')
+    domain_pattern = re.compile(r'\A/domain/(([-\w]+\.)+[\w]+)')
 
     def __init__(self, app):
         self.app = app
@@ -386,7 +386,7 @@ class DomainListingMiddleware(object):
         return self.app(environ, start_response)
 
 class ExtensionMiddleware(object):
-    ext_pattern = re.compile(r'\.([^/]+)$')
+    ext_pattern = re.compile(r'\.([^/]+)\Z')
 
     extensions = (('rss' , ('xml', 'text/xml; charset=UTF-8')),
                   ('xml' , ('xml', 'text/xml; charset=UTF-8')),

@@ -38,7 +38,9 @@
 </%def>
 
 <div class="titlebox">
-  <h1>${plain_link(thing.sr.name, thing.sr.path, _sr_path=False)}</h1>
+  <h1 class="hover redditname">
+    ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
+  </h1>
 
   ${addremove_button(thing.sr)}
   ${unsafe(Score.readers(thing.subscribers))}

@@ -39,20 +39,20 @@
        # generates "comment" the imperative verb
        com_label = _("comment") 
  %>
-  <p class="link">
+  <div class="link">
      %if thing.is_self:
-      <a href="${add_sr(thing.href_url)}">${thing.title}</a>
+       <a class="title" href="${add_sr(thing.href_url)}">${thing.title}</a>
      %else:
-      <a href="${thing.url}">${thing.title}</a>
+      <a class="title" href="${thing.url}">${thing.title}</a>
      %endif
-  </p>
-  <p class="byline">${thing.score} ${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
-  ${plain_link(com_label, thing.permalink)}</span>&nbsp;|&nbsp;${tagline()}</p>
-  %if thing.link_child and thing.link_child.expand:
-    <div class="expando">
-      ${thing.link_child.content()}
-    </div>
-  %endif
+    <p class="byline">&#32;${thing.score}${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
+    ${plain_link(com_label, thing.permalink)}</span>&nbsp;|${tagline()}</p>
+    %if thing.link_child and thing.link_child.expand:
+      <div class="expando">
+        ${thing.link_child.content()}
+      </div>
+    %endif
+  </div>
 </%def>
 
 <%def name="domain()" buffered="True">

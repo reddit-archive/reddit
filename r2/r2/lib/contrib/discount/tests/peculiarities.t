@@ -35,6 +35,35 @@ try 'ol with mixed item prefixes' \
 <li>B</li>
 </ol>'
 
+try 'nested lists and a header' \
+    '- A list item
+That goes over multiple lines
+
+     and paragraphs
+
+- Another list item
+
+    + with a
+    + sublist
+
+## AND THEN A HEADER' \
+'<ul>
+<li><p>A list item
+That goes over multiple lines</p>
+
+<p>   and paragraphs</p></li>
+<li><p>Another list item</p>
+
+<ul>
+<li>with a</li>
+<li>sublist</li>
+</ul>
+</li>
+</ul>
+
+
+<h2>AND THEN A HEADER</h2>'
+
 try 'forcing a <br/>' 'this  
 is' '<p>this<br/>
 is</p>'

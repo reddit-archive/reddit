@@ -91,7 +91,7 @@
        CPC = CPM = imp_traffic = cli_traffic = "---"
        if thing.promo_traffic.has_key(day):
            imp_traffic, cli_traffic = thing.promo_traffic[day]
-           if thing.market.has_key(i):
+           if thing.market.has_key(i) and day != today:
               CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
               CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
            imp_traffic = num(imp_traffic)

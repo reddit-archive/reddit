@@ -31,6 +31,7 @@ from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
 from httplib import HTTPSConnection
 from urlparse import urlparse
+from time import time
 import socket, base64
 from BeautifulSoup import BeautifulStoneSoup
 
@@ -47,7 +48,7 @@ gold_table = sa.Table('reddit_gold', METADATA,
                       # status can be: invalid, unclaimed, claimed
                       sa.Column('status', sa.String, nullable = False),
                       sa.Column('date', sa.DateTime(timezone=True),
-                                nullable = False, 
+                                nullable = False,
                                 default = sa.func.now()),
                       sa.Column('payer_email', sa.String, nullable = False),
                       sa.Column('paying_id', sa.String, nullable = False),
@@ -68,7 +69,7 @@ create_table(gold_table, indices)
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
                            pennies, days, secret, date,
                            subscr_id = None):
-    
+
     try:
         gold_table.insert().execute(trans_id=str(trans_id),
                                     subscr_id=subscr_id,
@@ -102,7 +103,17 @@ def notify_unclaimed_gold(txn_id, gold_secret, payer_email, source):
 
     # No point in i18n, since we don't have access to the user's
     # language info (or name) at this point
-    body = """
+    if gold_secret.startswith("cr_"):
+        body = """
+Thanks for buying reddit gold gift creddits! We have received your %s
+transaction, number %s.
+
+Your secret claim code is %s. To associate the
+creddits with your reddit account, just visit
+%s
+""" % (source, txn_id, gold_secret, url)
+    else:
+        body = """
 Thanks for subscribing to reddit gold! We have received your %s
 transaction, number %s.
 
@@ -116,16 +127,28 @@ subscription with your reddit account -- just visit
 
 def create_claimed_gold (trans_id, payer_email, paying_id,
                          pennies, days, secret, account_id, date,
-                         subscr_id = None):
+                         subscr_id = None, status="claimed"):
     gold_table.insert().execute(trans_id=trans_id,
                                 subscr_id=subscr_id,
-                                status="claimed",
+                                status=status,
                                 payer_email=payer_email,
                                 paying_id=paying_id,
                                 pennies=pennies,
                                 days=days,
                                 secret=secret,
                                 account_id=account_id,
+                                date=date)
+
+def create_gift_gold (giver_id, recipient_id, days, date, signed):
+    trans_id = "X%d%s-%s" % (int(time()), randstr(2), 'S' if signed else 'A')
+
+    gold_table.insert().execute(trans_id=trans_id,
+                                status="gift",
+                                paying_id=giver_id,
+                                payer_email='',
+                                pennies=0,
+                                days=days,
+                                account_id=recipient_id,
                                 date=date)
 
 # returns None if the ID was never valid
@@ -249,6 +272,15 @@ def process_google_transaction(trans_id):
 
     # get the financial details
     auth = trans.find("authorization-amount-notification")
+    
+    # creddits?
+    is_creddits = False
+    cart = trans.find("shopping-cart")
+    if cart:
+        for item in cart.findAll("item-name"):
+            if "creddit" in item.contents[0]:
+                is_creddits = True
+                break
 
     if not auth:
         # see if the payment was declinded
@@ -268,7 +300,13 @@ def process_google_transaction(trans_id):
         days = None
         try:
             pennies = int(float(auth.find("order-total").contents[0])*100)
-            if pennies == 2999:
+            if is_creddits:
+                secret = "cr_"
+                if pennies >= 2999:
+                    days = 12 * 31 * int(pennies / 2999)
+                else:
+                    days = 31 * int(pennies / 399)
+            elif pennies == 2999:
                 secret = "ys_"
                 days = 366
             elif pennies == 399:
@@ -280,9 +318,9 @@ def process_google_transaction(trans_id):
                     sa.and_(gold_table.c.status == 'uncharged',
                             gold_table.c.trans_id == 'g' + str(trans_id)),
                     values = { gold_table.c.status : "strange",
-                               gold_table.c.pennies : pennies, 
+                               gold_table.c.pennies : pennies,
                                gold_table.c.payer_email : email,
-                               gold_table.c.paying_id : payer_id  
+                               gold_table.c.paying_id : payer_id
                                }).execute()
                 return
         except ValueError:

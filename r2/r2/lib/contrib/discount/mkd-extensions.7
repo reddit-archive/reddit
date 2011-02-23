@@ -20,7 +20,7 @@ The new image syntax is
 	![alt text](image =/height/x/width/ "title")
 .fi
 .Ss pseudo-protocols
-Three pseudo-protocols have been added to links
+Five pseudo-protocols have been added to links
 .Bl -tag -width XXXXX
 .It Ar id:
 The 
@@ -48,9 +48,16 @@ is discarded.
 The
 .Ar "alt text"
 is marked up and written to the output, wrapped with
-.Em "<abbr title="abbr">
+.Em "<abbr title=abbr>"
 and
 .Em "</abbr>" .
+.It Ar lang:
+The
+.Ar "alt text"
+s marked up and written to the output, wrapped with
+.Em "<span lang=lang>"
+and
+.Em "</span>" .
 .El
 .Ss Pandoc headers
 If markdown was configured with
@@ -163,6 +170,18 @@ is at the start of a column, it tells
 to align the cell contents to the left;  if it's at the end, it
 aligns right, and if there's one at the start and at the
 end, it centers.
+.Ss strikethrough
+A strikethrough syntax is supported in much the same way that
+.Ar `
+is used to define a section of code.   If you enclose text with
+two or more tildes, such as
+.Em ~~erased text~~
+it will be written as
+.Em "<del>erased text</del>" .
+Like code sections, you may use as many 
+.Ar ~
+as you want, but there must be as many starting tildes as closing
+tildes.
 .Sh AUTHOR
 David Parsons
 .%T http://www.pell.portland.or.us/~orc/

@@ -181,6 +181,8 @@ def consume_items(queue, callback, verbose=True):
        single items at a time. This is more efficient than
        handle_items when the queue is likely to be occasionally empty
        or if batching the received messages is not necessary."""
+    from pylons import c
+
     chan = connection_manager.get_channel()
 
     def _callback(msg):
@@ -194,6 +196,8 @@ def consume_items(queue, callback, verbose=True):
             print "%s: 1 item %s" % (queue, count_str)
 
         g.reset_caches()
+        c.use_write_db = {}
+
         ret = callback(msg)
         msg.channel.basic_ack(msg.delivery_tag)
         sys.stdout.flush()
@@ -217,6 +221,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
     """Call callback() on every item in a particular queue. If the
        connection to the queue is lost, it will die. Intended to be
        used as a long-running process."""
+    from pylons import c
 
     chan = connection_manager.get_channel()
     countdown = None
@@ -238,6 +243,7 @@ def handle_items(queue, callback, ack = True, limit = 1, drain = False,
             countdown = 1 + msg.delivery_info['message_count']
 
         g.reset_caches()
+        c.use_write_db = {}
 
         items = []
 

@@ -133,8 +133,8 @@ def store_keys(key, maxes):
     if key.startswith('user-'):
         acc_str, keytype, account_id = key.split('-')
         account_id = int(account_id)
-        fn = queries.get_submitted if keytype == 'submitted' else queries.get_comments
-        q = fn(Account._byID(account_id), 'new', 'all')
+        fn = queries._get_submitted if keytype == 'submitted' else queries._get_comments
+        q = fn(account_id, 'new', 'all')
         q._replace([(fname, float(timestamp))
                     for (timestamp, fname)
                     in maxes])
@@ -148,7 +148,7 @@ def store_keys(key, maxes):
             # it
             sort = 'controversial'
 
-        q = queries.get_links(Subreddit._byID(sr_id), sort, time)
+        q = queries._get_links(sr_id, sort, time)
         q._replace([tuple([item[-1]] + map(float, item[:-1]))
                     for item in maxes])
     elif key.startswith('domain/'):

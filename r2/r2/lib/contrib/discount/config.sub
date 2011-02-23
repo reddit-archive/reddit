@@ -3,7 +3,7 @@ s;@CPPFLAGS@;;g
 s;@INSTALL@;/usr/bin/install;g
 s;@INSTALL_PROGRAM@;/usr/bin/install -s -m 755;g
 s;@INSTALL_DATA@;/usr/bin/install -m 444;g
-s;@INSTALL_DIR@;/home/raldi/reddit/r2/r2/lib/contrib/discount/config.md;g
+s;@INSTALL_DIR@;/tmp/discount-1.6.8/config.md;g
 s;@CC@;cc;g
 s;@AR@;/usr/bin/ar;g
 s;@RANLIB@;/usr/bin/ranlib;g
@@ -13,13 +13,13 @@ s:@BYTE@:unsigned char:g
 s;@THEME@;;g
 s;@TABSTOP@;4;g
 s;@AMALLOC@;;g
-s;@STRICT@;.\";g
+s;@STRICT@;;g
 s;@LIBS@;;g
 s;@CONFIGURE_FILES@;config.cmd config.sub config.h config.mak config.log config.md;g
 s;@GENERATED_FILES@;Makefile version.c markdown.1;g
 s;@CFLAGS@;-g;g
 s;@LDFLAGS@;-g;g
-s;@srcdir@;/home/raldi/reddit/r2/r2/lib/contrib/discount;g
+s;@srcdir@;/tmp/discount-1.6.8;g
 s;@prefix@;/usr/local;g
 s;@exedir@;/usr/local/bin;g
 s;@sbindir@;/usr/local/sbin;g

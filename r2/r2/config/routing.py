@@ -173,6 +173,8 @@ def make_map(global_conf={}, app_conf={}):
     mc('/thanks', controller='forms', action="thanks", secret = '')
     mc('/thanks/:secret', controller='forms', action="thanks")
 
+    mc('/gold', controller='forms', action="gold")
+
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
@@ -206,7 +208,11 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
 
     mc('/api/distinguish/:how', controller='api', action="distinguish")
-    mc('/api/ipn/:secret', controller='api', action='ipn')
+    # wherever this is, google has to agree.
+    mc('/api/gcheckout', controller='ipn', action='gcheckout')
+    mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
+    mc('/api/ipn/:secret', controller='ipn', action='ipn')
+    mc('/ipn/:secret',     controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
     mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
@@ -214,7 +220,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/api/:action', controller='promote',
        requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo|add_roadblock|rm_roadblock"))
     mc('/api/:action', controller='apiminimal',
-       requirements=dict(action="onload"))
+       requirements=dict(action="onload|new_captcha"))
     mc('/api/:action', controller='api')
 
     mc("/button_info", controller="api", action="info", limit = 1)

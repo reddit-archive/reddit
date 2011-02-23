@@ -361,6 +361,10 @@ class Templated(object):
         
         return res
 
+    def _cache_key(self, key):
+        return 'render_%s(%s)' % (self.__class__.__name__,
+                                  md5(key).hexdigest())
+
     def _write_cache(self, keys):
         from pylons import g
 
@@ -369,7 +373,7 @@ class Templated(object):
 
         toset = {}
         for key, val in keys.iteritems():
-            toset[md5(key).hexdigest()] = val
+            toset[self._cache_key(key)] = val
 
         g.rendercache.set_multi(toset)
 
@@ -378,7 +382,7 @@ class Templated(object):
 
         ekeys = {}
         for key in keys:
-            ekeys[md5(key).hexdigest()] = key
+            ekeys[self._cache_key(key)] = key
         found = g.rendercache.get_multi(ekeys)
         ret = {}
         for fkey, val in found.iteritems():

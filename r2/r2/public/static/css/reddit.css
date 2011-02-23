@@ -77,6 +77,14 @@ input[type=checkbox], input[type=radio] { margin-top: .4em; }
 
 label.disabled { color: gray; }
 .wrong {color: red; font-weight: normal} 
+.attention {
+    font-weight: bold;
+    border: solid 1px #ff6600;
+    padding: 3px;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border-radius: 7px;
+}
 
 .subform input.text { width: 25em }
 .subform textarea.text { width: 25em }
@@ -371,10 +379,19 @@ ul.flat-vert {text-align: left;}
 .raisedbox li {margin-bottom: 2px;}
 
 .sidebox .spacer {
+    position: relative;
     margin-top: 10px;
     padding: 5px 0 0 44px;
     min-height: 41px;
     background: white none no-repeat scroll top left;
+}
+
+.sidebox .spacer a {
+    position: absolute;
+    top: 0; left: 0px;
+    display: block;
+    height: 40px;
+    width: 40px;
 }
 
 .sidebox.create .spacer {
@@ -383,7 +400,6 @@ ul.flat-vert {text-align: left;}
 }
 
 .sidebox.gold .spacer {
-    /* TODO: replace the following with the new logo */
     background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
@@ -1366,7 +1382,7 @@ textarea.gray { color: gray; }
 .status { margin-left: 5px; color: red; font-size: small;}
 .error { color: red; font-size: small; margin: 5px; }
 .red { color:red }
-.buygold { color: #c59534; font-weight: bold; }
+.buygold { color: #9A7D2E; font-weight: bold; }
 .line-through { text-decoration: line-through }
 
 #noresults { margin-right: 310px;  }
@@ -1395,6 +1411,56 @@ textarea.gray { color: gray; }
     width: 305px;
 }
 
+#searchexpando {
+    display: none;
+    margin: 5px 0 0 0;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;
+    border-radius:3px;
+}
+
+#searchexpando input, #searchexpando p {
+    margin-bottom: 10px;
+}
+
+#searchexpando {
+    padding-top: 10px;
+}
+
+#searchexpando dl {
+    margin: 10px 0;
+}
+
+#searchexpando dt {
+    margin: 0;
+}
+
+#previoussearch p {
+    margin: 5px 0;
+}
+
+#moresearchinfo {
+    display: none;
+    padding-top: 5px;
+    max-width: 300px;
+    border: 0 solid orange;
+    margin-top: -5px;
+}
+
+label + #moresearchinfo {
+    border-width: 1px 0 0 0;
+    margin-top: 0px;
+}
+
+#previoussearch #moresearchinfo {
+    border-color: gray;
+    margin: 5px 0;
+}
+
+#search_hidemore {
+    float: right;
+    margin-left: 5px;
+}
 
 .searchparams { margin: 5px 20px 5px 20px
 }
@@ -1617,6 +1683,9 @@ textarea.gray { color: gray; }
 
 .error-log .exception-name {
     margin-right: 5px;
+    display: inline-block;
+    max-height: 50px;
+    overflow: hidden;
 }
 
 .error-log .nickname {
@@ -2257,6 +2326,9 @@ textarea.gray { color: gray; }
 
 /* default form styles */
 
+form .blurb {
+    margin-bottom: 5px;
+}
 
 form .spacer + .spacer {
     margin: 15px 0;
@@ -2268,8 +2340,8 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .pretty-form {
     font-size: larger;
-    vertical-align: top; 
- }
+    vertical-align: top;
+}
 
 .pretty-form p {margin: 3px ;}
 .pretty-form input[type=checkbox],
@@ -3714,6 +3786,10 @@ dd { margin-left: 20px;  }
     font-size: 19px;
 }
 
+.titlebox h1 a {
+    color: black;
+}
+
 .titlebox .karma {
     font-size: 18px;
     font-weight: bold;
@@ -3848,6 +3924,8 @@ dd { margin-left: 20px;  }
 
 .linkinfo .upvotes {font-size: 80%; color: orangered;}
 .linkinfo .downvotes {font-size: 80%; color: #5f99cf; }
+.linkinfo .shortlink {font-size: 80%; margin-top: 3px; }
+.linkinfo .shortlink a {font-size: 120%; font-family: monospace}
 
 .linkinfo table {margin-top: 5px;}
 
@@ -4105,7 +4183,7 @@ tr.gold-accent + tr > td {
 .friend-note.edited input[type=text] { width: 250px; margin-right: 0px; }
 
 
-.gold-accent h1, 
+.gold-accent h1,
 .gold-accent th {
     color: #6a4d00;
     font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
@@ -4143,6 +4221,16 @@ tr.gold-accent + tr > td {
     color: #583800;
 }
 
+.giftgold {
+    margin-bottom: 5px;
+}
+.giftgold a {
+    padding-left: 20px;
+    color: #9a7d2e;
+    font-weight: bold;
+    background-image: url(/static/giftgold.png);
+    background-repeat:no-repeat;
+}
 
 .tiny {
     font-size: xx-small;
@@ -4153,6 +4241,81 @@ tr.gold-accent + tr > td {
     margin: 0px 5px 15px;
     padding: 7px 10px 7px 7px;
     max-width: 550px;
+}
+
+.gold-form {
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua", Palatino,georgia,garamond,FreeSerif,serif;
+    min-height: 600px;
+    line-height: 22px;
+}
+
+.gold-form .roundfield {
+    border: 1px solid #E1B000;
+    background-color: #fffdcc;
+    color: #6a4d00;
+}
+
+.gold-form .roundfield-content .gray a {
+    margin-left: 0.8em;
+    font-size: small;
+}
+
+.gold-form .note {
+    font-size: 11px;
+    font-style: italic;
+    color: #222;
+    margin-top: 7px;
+}
+
+.gold-form .spacer {
+    margin-top: 20px !important;
+}
+
+.gold-subsection {
+    display: none;
+    position: absolute;
+}
+
+.gold-form textarea, .gold-form input[type=text] {
+    margin-top: 3px;
+}
+
+.gold-logo {
+    float: left;
+    margin-right: 15px;
+}
+
+.giftmessage {
+    border: solid #888 1px;
+    color: black;
+    background-color: white;
+    padding: 0 10px;
+    margin-bottom: 15px;
+    display: inline-block;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.gold-button {
+    padding-top: 2px;
+    margin-top: 8px;
+    margin-right: 8px;
+    color: #482800;
+    background-color: #efcc4c;
+    border-color: #fff088 #fff088 #6a3d00 #6a3d00;
+    font-size: 16px;
+    font-family: Palatino,georgia,garamond,FreeSerif,serif;
+    -webkit-appearance: none;
+    text-shadow: 0px 1px 0px hsla(0,0%,100%,.7);
+}
+
+.gold-dropdown {
+    color: #482800;
+    background-color: #fff088;
+    font-size: 16px;
+    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
+                  Palatino,georgia,garamond,FreeSerif,serif;
 }
 
 .comment-visits-box .title {
@@ -4167,4 +4330,8 @@ tr.gold-accent + tr > td {
     background-color: #e5efff;
     border: solid 1px #cddaf3;
     margin: -1px 0;
+}
+
+.role {
+    width: 800px;
 }

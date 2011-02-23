@@ -132,8 +132,8 @@ class CachedResults(object):
         "True if a item can be removed from the listing, always true for now."
         return True
 
-    def _mutate(self, fn):
-        self.data = query_cache.mutate(self.iden, fn, default=[])
+    def _mutate(self, fn, willread=True):
+        self.data = query_cache.mutate(self.iden, fn, default=[], willread=willread)
         self._fetched=True
 
     def insert(self, items):
@@ -142,7 +142,6 @@ class CachedResults(object):
         self._insert_tuples([self.make_item_tuple(item) for item in tup(items)])
 
     def _insert_tuples(self, t):
-
         def _mutate(data):
             data = data or []
 
@@ -185,7 +184,7 @@ class CachedResults(object):
            private API"""
         def _mutate(data):
             return tuples
-        self._mutate(_mutate)
+        self._mutate(_mutate, willread=False)
 
     def update(self):
         """Runs the query and stores the result in the cache. This is
@@ -243,6 +242,10 @@ class MergedCachedResults(object):
         for x in self.data:
             yield x[0]
 
+    def update(self):
+        for x in self.cached_results:
+            x.update()
+
 def make_results(query, filter = filter_identity):
     if g.use_query_cache:
         return CachedResults(query, filter)
@@ -264,8 +267,11 @@ def merge_results(*results):
         return m
 
 def get_links(sr, sort, time):
+    return _get_links(sr._id, sort, time)
+
+def _get_links(sr_id, sort, time):
     """General link query for a subreddit."""
-    q = Link._query(Link.c.sr_id == sr._id,
+    q = Link._query(Link.c.sr_id == sr_id,
                     sort = db_sort(sort),
                     data = True)
 
@@ -403,9 +409,9 @@ def get_domain_links(domain, sort, time):
 
     return make_results(q)
 
-def user_query(kind, user, sort, time):
+def user_query(kind, user_id, sort, time):
     """General profile-page query."""
-    q = kind._query(kind.c.author_id == user._id,
+    q = kind._query(kind.c.author_id == user_id,
                     kind.c._spam == (True, False),
                     sort = db_sort(sort))
     if time != 'all':
@@ -418,16 +424,25 @@ def get_all_comments():
     return make_results(q)
 
 def get_sr_comments(sr):
+    return _get_sr_comments(sr._id)
+
+def _get_sr_comments(sr_id):
     """the subreddit /r/foo/comments page"""
-    q = Comment._query(Comment.c.sr_id == sr._id,
+    q = Comment._query(Comment.c.sr_id == sr_id,
                        sort = desc('_date'))
     return make_results(q)
 
+def _get_comments(user_id, sort, time):
+    return user_query(Comment, user_id, sort, time)
+
 def get_comments(user, sort, time):
-    return user_query(Comment, user, sort, time)
+    return _get_comments(user._id, sort, time)
+
+def _get_submitted(user_id, sort, time):
+    return user_query(Link, user_id, sort, time)
 
 def get_submitted(user, sort, time):
-    return user_query(Link, user, sort, time)
+    return _get_submitted(user._id, sort, time)
 
 def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
@@ -574,18 +589,26 @@ def new_link(link):
 
 def new_comment(comment, inbox_rels):
     author = Account._byID(comment.author_id)
-    job = [get_comments(author, 'new', 'all')]
+    job = [get_comments(author, 'new', 'all'),
+           get_comments(author, 'top', 'all'),
+           get_comments(author, 'controversial', 'all')]
+
+    sr = Subreddit._byID(comment.sr_id)
+
     if comment._deleted:
+        job_key = "delete_items"
+        job.append(get_sr_comments(sr))
         job.append(get_all_comments())
-        add_queries(job, delete_items = comment)
     else:
-        sr = Subreddit._byID(comment.sr_id)
+        job_key = "insert_items"
         if comment._spam:
             job.append(get_spam_comments(sr))
-        add_queries(job, insert_items = comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
             add_comment_tree([comment])
+
+    job_dict = { job_key: comment }
+    add_queries(job, **job_dict)
 
     # note that get_all_comments() is updated by the amqp process
     # r2.lib.db.queries.run_new_comments (to minimise lock contention)
@@ -593,13 +616,22 @@ def new_comment(comment, inbox_rels):
     if inbox_rels:
         for inbox_rel in tup(inbox_rels):
             inbox_owner = inbox_rel._thing1
+            job_dict = { job_key: inbox_rel }
             if inbox_rel._name == "inbox":
-                add_queries([get_inbox_comments(inbox_owner)],
-                            insert_items = inbox_rel)
+                inbox_func  = get_inbox_comments
+                unread_func = get_unread_comments
+            elif inbox_rel._name == "selfreply":
+                inbox_func = get_inbox_selfreply
+                unread_func = get_unread_selfreply
             else:
-                add_queries([get_inbox_selfreply(inbox_owner)],
-                            insert_items = inbox_rel)
-            set_unread(comment, inbox_owner, True)
+                raise ValueError("wtf is " + inbox_rel._name)
+
+            add_queries([inbox_func(inbox_owner)], **job_dict)
+
+            if comment._deleted:
+                add_queries([unread_func(inbox_owner)], **job_dict)
+            else:
+                set_unread(comment, inbox_owner, True)
 
 
 def new_subreddit(sr):
@@ -611,12 +643,13 @@ def new_vote(vote, foreground=False):
     user = vote._thing1
     item = vote._thing2
 
-    if not isinstance(item, Link):
+    if not isinstance(item, (Link, Comment)):
         return
 
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
         results = []
+
         author = Account._byID(item.author_id)
         for sort in ('hot', 'top', 'controversial', 'new'):
             if isinstance(item, Link):
@@ -624,33 +657,35 @@ def new_vote(vote, foreground=False):
             if isinstance(item, Comment):
                 results.append(get_comments(author, sort, 'all'))
 
+        if isinstance(item, Link):
+            # don't do 'new', because that was done by new_link, and
+            # the time-filtered versions of top/controversial will be
+            # done by mr_top
+            results.extend([get_links(sr, 'hot', 'all'),
+                            get_links(sr, 'top', 'all'),
+                            get_links(sr, 'controversial', 'all'),
+                            ])
 
-        # don't do 'new', because that was done by new_link, and the
-        # time-filtered versions of top/controversial will be done by
-        # mr_top
-        results.extend([get_links(sr, 'hot', 'all'),
-                        get_links(sr, 'top', 'all'),
-                        get_links(sr, 'controversial', 'all'),
-                        ])
-
-        for domain in utils.UrlParser(item.url).domain_permutations():
-            for sort in ("hot", "top", "controversial"):
-                results.append(get_domain_links(domain, sort, "all"))
+            for domain in utils.UrlParser(item.url).domain_permutations():
+                for sort in ("hot", "top", "controversial"):
+                    results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item, foreground=foreground)
 
     vote._fast_query_timestamp_touch(user)
     
-    #must update both because we don't know if it's a changed vote
-    if vote._name == '1':
-        add_queries([get_liked(user)], insert_items = vote)
-        add_queries([get_disliked(user)], delete_items = vote)
-    elif vote._name == '-1':
-        add_queries([get_liked(user)], delete_items = vote)
-        add_queries([get_disliked(user)], insert_items = vote)
-    else:
-        add_queries([get_liked(user)], delete_items = vote)
-        add_queries([get_disliked(user)], delete_items = vote)
+    if isinstance(item, Link):
+        # must update both because we don't know if it's a changed
+        # vote
+        if vote._name == '1':
+            add_queries([get_liked(user)], insert_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
+        elif vote._name == '-1':
+            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], insert_items = vote, foreground = foreground)
+        else:
+            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
+            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
 
 def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
@@ -712,7 +747,7 @@ def changed(things, boost_only=False):
                       message_id = thing._fullname,
                       delivery_mode = amqp.DELIVERY_TRANSIENT)
 
-def _by_srid(things):
+def _by_srid(things,srs=True):
     """Takes a list of things and returns them in a dict separated by
        sr_id, in addition to the looked-up subreddits"""
     ret = {}
@@ -721,9 +756,11 @@ def _by_srid(things):
         if getattr(thing, 'sr_id', None) is not None:
             ret.setdefault(thing.sr_id, []).append(thing)
 
-    srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
-
-    return ret, srs
+    if srs:
+        _srs = Subreddit._byID(ret.keys(), return_dict=True) if ret else {}
+        return ret, _srs
+    else:
+        return ret
 
 def ban(things):
     del_or_ban(things, "ban")
@@ -876,21 +913,24 @@ def add_comment_tree(comments):
 
 # amqp queue processing functions
 
-def run_new_comments():
+def run_new_comments(limit=1000):
     """Add new incoming comments to the /comments page"""
     # this is done as a queue because otherwise the contention for the
     # lock on the query would be very high
 
-    def _run_new_comment(msg):
-        fname = msg.body
-        comment = Comment._by_fullname(fname,data=True)
-        sr = Subreddit._byID(comment.sr_id)
+    def _run_new_comments(msgs, chan):
+        fnames = [msg.body for msg in msgs]
 
-        add_queries([get_all_comments(),
-                     get_sr_comments(sr)],
-                    insert_items = [comment])
+        comments = Comment._by_fullname(fnames, data=True, return_dict=False)
+        add_queries([get_all_comments()],
+                    insert_items=comments)
 
-    amqp.consume_items('newcomments_q', _run_new_comment)
+        bysrid = _by_srid(comments, False)
+        for srid, sr_comments in bysrid.iteritems():
+            add_queries([_get_sr_comments(srid)],
+                        insert_items=sr_comments)
+
+    amqp.handle_items('newcomments_q', _run_new_comments, limit=limit)
 
 def run_commentstree(limit=100):
     """Add new incoming comments to their respective comments trees"""
@@ -904,6 +944,9 @@ def run_commentstree(limit=100):
 
     amqp.handle_items('commentstree_q', _run_commentstree, limit = limit)
 
+vote_link_q = 'vote_link_q'
+vote_comment_q = 'vote_comment_q'
+
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
     # set the vote in memcached so the UI gets updated immediately
@@ -912,7 +955,12 @@ def queue_vote(user, thing, dir, ip, organic = False,
     # queue the vote to be stored unless told not to
     if store:
         if g.amqp_host:
-            amqp.add_item('register_vote_q',
+            if isinstance(thing, Link):
+                qname = vote_link_q
+            elif isinstance(thing, Comment):
+                qname = vote_comment_q
+
+            amqp.add_item(qname,
                           pickle.dumps((user._id, thing._fullname,
                                         dir, ip, organic, cheater)))
         else:
@@ -924,26 +972,46 @@ def prequeued_vote_key(user, item):
 def get_likes(user, items):
     if not user or not items:
         return {}
-    keys = {}
+
     res = {}
-    keys = dict((prequeued_vote_key(user, item), (user,item))
-                for item in items)
-    r = g.cache.get_multi(keys.keys())
 
-    # populate the result set based on what we fetched from the cache first
-    for k, v in r.iteritems():
-        res[keys[k]] = v
+    # check the prequeued_vote_keys
+    keys = {}
+    for item in items:
+        if (user, item) in res:
+            continue
 
-    # now hit the vote db with the remainder
+        key = prequeued_vote_key(user, item)
+        keys[key] = (user, item)
+    if keys:
+        r = g.cache.get_multi(keys.keys())
+        for key, v in r.iteritems():
+            res[keys[key]] = (True if v == '1'
+                              else False if v == '-1'
+                              else None)
+
+    # avoid requesting items that they can't have voted on (we're
+    # still using the tdb_sql Thing API for this). TODO: we should do
+    # this before the prequeued_vote_keys lookup, so that in extreme
+    # cases we can avoid hitting the cache for them at all, but in the
+    # current state that precludes brand new comments from appearing
+    # to have been voted on
+    for item in items:
+        if (user, item) in res:
+            continue
+
+        # we can only vote on links and comments
+        if isinstance(item, (Link, Comment)):
+            rel = Vote.rel(user.__class__, item.__class__)
+            if rel._can_skip_lookup(user, item):
+                res[(user, item)] = None
+        else:
+            res[(user, item)] = None
+
+    # now hit Cassandra with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])
 
-    for k, v in likes.iteritems():
-        res[k] = v._name
-
-    # lastly, translate into boolean:
-    for k in res.keys():
-        res[k] = (True if res[k] == '1'
-                  else False if res[k] == '-1' else None)
+    res.update(likes)
 
     return res
 
@@ -956,19 +1024,10 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
-    # keep track of upvotes in the hard cache by subreddit
-    #sr_id = getattr(thing, "sr_id", None)
-    #if (sr_id and dir > 0 and getattr(thing, "author_id", None) != user._id
-    #    and v.valid_thing):
-    #    now = datetime.now(g.tz).strftime("%Y/%m/%d")
-    #    g.hardcache.add("subreddit_vote-%s_%s_%s" % (now, sr_id, user._id),
-    #                    sr_id, time = 86400 * 7) # 1 week for now
-
     if isinstance(thing, Link):
         new_vote(v, foreground=foreground)
 
         #update the modified flags
-        set_last_modified(user, 'liked')
         if user._id == thing.author_id:
             set_last_modified(user, 'overview')
             set_last_modified(user, 'submitted')
@@ -977,8 +1036,10 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
 
             #update sup listings
             if dir:
+                set_last_modified(user, 'liked')
                 sup.add_update(user, 'liked')
             elif dir is False:
+                set_last_modified(user, 'disliked')
                 sup.add_update(user, 'disliked')
 
     elif isinstance(thing, Comment):
@@ -990,7 +1051,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
             sup.add_update(user, 'commented')
 
 
-def process_votes_single(**kw):
+def process_votes_single(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
 
     def _handle_vote(msg):
@@ -1008,11 +1069,11 @@ def process_votes_single(**kw):
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater, foreground=False)
+                        cheater = cheater, foreground=True)
 
-    amqp.consume_items('register_vote_q', _handle_vote, verbose = False)
+    amqp.consume_items(qname, _handle_vote, verbose = False)
 
-def process_votes_multi(limit=100):
+def process_votes_multi(qname, limit=100):
     # limit is taken but ignored for backwards compatibility
     def _handle_vote(msgs, chan):
         comments = []
@@ -1042,18 +1103,9 @@ def process_votes_multi(limit=100):
 
         update_comment_votes(comments)
 
-    amqp.handle_items('register_vote_q', _handle_vote, limit = limit)
+    amqp.handle_items(qname, _handle_vote, limit = limit)
 
 process_votes = process_votes_single
-
-def process_comment_sorts(limit=500):
-    def _handle_sort(msgs, chan):
-        cids = list(set(int(msg.body) for msg in msgs))
-        comments = Comment._byID(cids, data = True, return_dict = False)
-        print comments
-        update_comment_votes(comments)
-
-    amqp.handle_items('commentsort_q', _handle_sort, limit = limit)
 
 try:
     from r2admin.lib.admin_queries import *

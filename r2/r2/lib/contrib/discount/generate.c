@@ -18,7 +18,7 @@
 #include "amalloc.h"
 
 typedef int (*stfu)(const void*,const void*);
-
+typedef void (*spanhandler)(MMIOT*,int);
 
 /* forward declarations */
 static void text(MMIOT *f);
@@ -164,16 +164,6 @@ Qprintf(MMIOT *f, char *fmt, ...)
 }
 
 
-/* Qcopy()
- */
-static void
-Qcopy(int count, MMIOT *f)
-{
-    while ( count-- > 0 )
-	Qchar(pull(f), f);
-}
-
-
 /* Qem()
  */
 static void
@@ -272,12 +262,12 @@ parenthetical(int in, int out, MMIOT *f)
     for ( indent=1,size=0; indent; size++ ) {
 	if ( (c = pull(f)) == EOF )
 	    return EOF;
-	else if ( c == in )
-	    ++indent;
-	else if ( (c == '\\') && (peek(f,1) == out) ) {
+	else if ( (c == '\\') && (peek(f,1) == out || peek(f,1) == in) ) {
 	    ++size;
 	    pull(f);
 	}
+	else if ( c == in )
+	    ++indent;
 	else if ( c == out )
 	    --indent;
     }
@@ -664,11 +654,11 @@ mangle(char *s, int len, MMIOT *f)
 /* nrticks() -- count up a row of tick marks
  */
 static int
-nrticks(int offset, MMIOT *f)
+nrticks(int offset, int tickchar, MMIOT *f)
 {
     int  tick = 0;
 
-    while ( peek(f, offset+tick) == '`' ) tick++;
+    while ( peek(f, offset+tick) == tickchar ) tick++;
 
     return tick;
 } /* nrticks */
@@ -677,36 +667,34 @@ nrticks(int offset, MMIOT *f)
 /* matchticks() -- match a certain # of ticks, and if that fails
  *                 match the largest subset of those ticks.
  *
- *                 if a subset was matched, modify the passed in
- *                 # of ticks so that the caller (text()) can
- *                 appropriately process the horrible thing.
+ *                 if a subset was matched, return the # of ticks
+ *		   that were matched.
  */
 static int
-matchticks(MMIOT *f, int *ticks)
+matchticks(MMIOT *f, int tickchar, int ticks, int *endticks)
 {
-    int size, tick, c;
+    int size, count, c;
     int subsize=0, subtick=0;
     
-    for (size = *ticks; (c=peek(f,size)) != EOF; ) {
-	if ( c == '`' )
-	    if ( (tick=nrticks(size,f)) == *ticks )
+    *endticks = ticks;
+    for (size = 0; (c=peek(f,size+ticks)) != EOF; size ++) {
+	if ( (c == tickchar) && ( count = nrticks(size+ticks,tickchar,f)) ) {
+	    if ( count == ticks )
 		return size;
-	    else {
-		if ( tick > subtick ) {
+	    else if ( count ) {
+		if ( (count > subtick) && (count < ticks) ) {
 		    subsize = size;
-		    subtick = tick;
+		    subtick = count;
 		}
-		size += tick;
+		size += count;
 	    }
-	else
-	    size++;
+	}
     }
     if ( subsize ) {
-	*ticks = subtick;
+	*endticks = subtick;
 	return subsize;
     }
     return 0;
-    
 } /* matchticks */
 
 
@@ -727,13 +715,24 @@ code(MMIOT *f, char *s, int length)
 } /* code */
 
 
+/*  delspan() -- write out a chunk of text, blocking with <del>...</del>
+ */
+static void
+delspan(MMIOT *f, int size)
+{
+    Qstring("<del>", f);
+    ___mkd_reparse(cursor(f)-1, size, 0, f);
+    Qstring("</del>", f);
+}
+
+
 /*  codespan() -- write out a chunk of text as code, trimming one
  *                space off the front and/or back as appropriate.
  */
 static void
 codespan(MMIOT *f, int size)
 {
-    int i=0, c;
+    int i=0;
 
     if ( size > 1 && peek(f, size-1) == ' ' ) --size;
     if ( peek(f,i) == ' ' ) ++i, --size;
@@ -1058,6 +1057,30 @@ smartypants(int c, int *flags, MMIOT *f)
 } /* smartypants */
 
 
+/* process a body of text encased in some sort of tick marks.   If it
+ * works, generate the output and return 1, otherwise just return 0 and
+ * let the caller figure it out.
+ */
+static int
+tickhandler(MMIOT *f, int tickchar, int minticks, spanhandler spanner)
+{
+    int endticks, size;
+    int tick = nrticks(0, tickchar, f);
+
+    if ( (tick >= minticks) && (size = matchticks(f,tickchar,tick,&endticks)) ) {
+	if ( endticks < tick ) {
+	    size += (tick - endticks);
+	    tick = endticks;
+	}
+
+	shift(f, tick);
+	(*spanner)(f,size);
+	shift(f, size+tick-1);
+	return 1;
+    }
+    return 0;
+}
+
 #define tag_text(f)	(f->flags & INSIDE_TAG)
 
 
@@ -1151,21 +1174,12 @@ text(MMIOT *f)
 		    }
 		    break;
 	
-	case '`':   if ( tag_text(f) )
+	case '~':   if ( (f->flags & (NOSTRIKETHROUGH|INSIDE_TAG|STRICT)) || !tickhandler(f,c,2,delspan) )
 			Qchar(c, f);
-		    else {
-			int size, tick = nrticks(0, f);
+		    break;
 
-			if ( size = matchticks(f, &tick) ) {
-			    shift(f, tick);
-			    codespan(f, size-tick);
-			    shift(f, size-1);
-			}
-			else {
-			    Qchar(c, f);
-			    Qcopy(tick-1, f);
-			}
-		    }
+	case '`':   if ( tag_text(f) || !tickhandler(f,c,1,codespan) )
+			Qchar(c, f);
 		    break;
 
 	case '\\':  switch ( c = pull(f) ) {
@@ -1333,8 +1347,8 @@ static int
 printblock(Paragraph *pp, MMIOT *f)
 {
     Line *t = pp->text;
-    static char *Begin[] = { "", "<p>", "<center>"  };
-    static char *End[]   = { "", "</p>","</center>" };
+    static char *Begin[] = { "", "<p>", "<p style=\"text-align:center;\">"  };
+    static char *End[]   = { "", "</p>","</p>" };
 
     while (t) {
 	if ( S(t->text) ) {

@@ -40,6 +40,8 @@
 
   %if thing.subtitles:
     <div class="spacer">
+      ${plain_link('', thing.link, _sr_path=thing.sr_path, 
+                   onclick=onclick, nocname=nocname)}
       %for subtitle in thing.subtitles:
         <div class="subtitle">${subtitle}</div>
       %endfor

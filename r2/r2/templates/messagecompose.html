@@ -36,7 +36,7 @@
 
 <script type="text/javascript">
 function admincheck(elem) {
-  var admins = ${unsafe(simplejson.dumps(list(g.admins)))};
+  var admins = ${unsafe(simplejson.dumps(thing.admins))};
 
   if (admins.indexOf(elem.value) >= 0) {
     $(".admin-to").text(elem.value);
@@ -72,7 +72,7 @@ function admincheck(elem) {
 </div>
 
 <div class="clippy"
-%if thing.to not in g.admins:
+%if thing.to not in thing.admins:
   style="display:none"
 %endif
 >

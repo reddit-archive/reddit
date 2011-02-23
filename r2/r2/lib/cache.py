@@ -27,11 +27,12 @@ from copy import copy
 import pylibmc
 from _pylibmc import MemcachedError
 
-import pycassa
-import cassandra.ttypes
+from pycassa import ColumnFamily
+from pycassa.cassandra.ttypes import ConsistencyLevel
+from pycassa.cassandra.ttypes import NotFoundException as CassandraNotFound
 
 from r2.lib.contrib import memcache
-from r2.lib.utils import in_chunks, prefix_keys
+from r2.lib.utils import in_chunks, prefix_keys, trace
 from r2.lib.hardcachebackend import HardCacheBackend
 
 from r2.lib.sgm import sgm # get this into our namespace so that it's
@@ -51,8 +52,8 @@ class CacheUtils(object):
         for k,v in keys.iteritems():
             self.add(prefix+str(k), v, time = time)
 
-    def get_multi(self, keys, prefix=''):
-        return prefix_keys(keys, prefix, self.simple_get_multi)
+    def get_multi(self, keys, prefix='', **kw):
+        return prefix_keys(keys, prefix, lambda k: self.simple_get_multi(k, **kw))
 
 class PyMemcache(CacheUtils, memcache.Client):
     """We still use our patched python-memcache to talk to the
@@ -382,11 +383,11 @@ class CacheChain(CacheUtils, local):
 
         return default
 
-    def get_multi(self, keys, prefix='', allow_local = True):
-        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local)
+    def get_multi(self, keys, prefix='', allow_local = True, **kw):
+        l = lambda ks: self.simple_get_multi(ks, allow_local = allow_local, **kw)
         return prefix_keys(keys, prefix, l)
 
-    def simple_get_multi(self, keys, allow_local = True):
+    def simple_get_multi(self, keys, allow_local = True, stale=None):
         out = {}
         need = set(keys)
         for c in self.caches:
@@ -462,15 +463,95 @@ class HardcacheChain(CacheChain):
         for c in self.caches:
             c.set(key, auth_value, time=time)
 
+        return auth_value
+
     @property
     def backend(self):
         # the hardcache is always the last item in a HardCacheChain
         return self.caches[-1].backend
 
-CL_ZERO = cassandra.ttypes.ConsistencyLevel.ZERO
-CL_ONE = cassandra.ttypes.ConsistencyLevel.ONE
-CL_QUORUM = cassandra.ttypes.ConsistencyLevel.QUORUM
-CL_ALL = cassandra.ttypes.ConsistencyLevel.ALL
+class StaleCacheChain(CacheChain):
+    """A cache chain of two cache chains. When allowed by `stale`,
+       answers may be returned by a "closer" but potentially older
+       cache. Probably doesn't play well with NoneResult cacheing"""
+    staleness = 30
+
+    def __init__(self, localcache, stalecache, realcache):
+        self.localcache = localcache
+        self.stalecache = stalecache
+        self.realcache = realcache
+        self.caches = (localcache, realcache) # for the other
+                                              # CacheChain machinery
+
+    def get(self, key, default=None, stale = False, **kw):
+        if kw.get('allow_local', True) and key in self.caches[0]:
+            return self.caches[0][key]
+
+        if stale:
+            stale_value = self._getstale([key]).get(key, None)
+            if stale_value is not None:
+                return stale_value # never return stale data into the
+                                   # LocalCache, or people that didn't
+                                   # say they'll take stale data may
+                                   # get it
+
+        value = CacheChain.get(self, key, **kw)
+        if value is None:
+            return default
+
+        if value is not None and stale:
+            self.stalecache.set(key, value, time=self.staleness)
+
+        return value
+
+    def simple_get_multi(self, keys, stale = False, **kw):
+        if not isinstance(keys, set):
+            keys = set(keys)
+
+        ret = {}
+
+        if kw.get('allow_local'):
+            for k in list(keys):
+                if k in self.localcache:
+                    ret[k] = self.localcache[k]
+                    keys.remove(k)
+
+        if keys and stale:
+            stale_values = self._getstale(keys)
+            # never put stale data into the localcache
+            for k, v in stale_values.iteritems():
+                ret[k] = v
+                keys.remove(k)
+
+        if keys:
+            values = self.realcache.simple_get_multi(keys)
+            if values and stale:
+                self.stalecache.set_multi(values, time=self.staleness)
+            self.localcache.update(values)
+            ret.update(values)
+
+        return ret
+
+    def _getstale(self, keys):
+        # this is only in its own function to make tapping it for
+        # debugging easier
+        return self.stalecache.simple_get_multi(keys)
+
+    def reset(self):
+        newcache = self.localcache.__class__()
+        self.localcache = newcache
+        self.caches = (newcache,) +  self.caches[1:]
+        if isinstance(self.realcache, CacheChain):
+            assert isinstance(self.realcache.caches[0], LocalCache)
+            self.realcache.caches = (newcache,) + self.realcache.caches[1:]
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__,
+                            (self.localcache, self.stalecache, self.realcache))
+
+CL_ONE = ConsistencyLevel.ONE
+CL_QUORUM = ConsistencyLevel.QUORUM
+CL_ALL = ConsistencyLevel.ALL
 
 class CassandraCacheChain(CacheChain):
     def __init__(self, localcache, cassa, lock_factory, memcache=None, **kw):
@@ -484,7 +565,7 @@ class CassandraCacheChain(CacheChain):
         self.make_lock = lock_factory
         CacheChain.__init__(self, caches, **kw)
 
-    def mutate(self, key, mutation_fn, default = None):
+    def mutate(self, key, mutation_fn, default = None, willread=True):
         """Mutate a Cassandra key as atomically as possible"""
         with self.make_lock('mutate_%s' % key):
             # we have to do some of the the work of the cache chain
@@ -500,28 +581,29 @@ class CassandraCacheChain(CacheChain):
             # which would require some more row-cache performace
             # testing)
             rcl = wcl = self.cassa.write_consistency_level
-            if rcl == CL_ZERO:
-                rcl = CL_ONE
-            try:
+            if willread:
+                try:
+                    value = None
+                    if self.memcache:
+                        value = self.memcache.get(key)
+                    if value is None:
+                        value = self.cassa.get(key,
+                                               read_consistency_level = rcl)
+                except cassandra.ttypes.NotFoundException:
+                    value = default
+
+                # due to an old bug in NoneResult caching, we still
+                # have some of these around
+                if value == NoneResult:
+                    value = default
+
+            else:
                 value = None
-                if self.memcache:
-                    value = self.memcache.get(key)
-                if value is None:
-                    value = self.cassa.get(key,
-                                           read_consistency_level = rcl)
-            except cassandra.ttypes.NotFoundException:
-                value = default
 
-            # due to an old bug in NoneResult caching, we still have
-            # some of these around
-            if value == NoneResult:
-                value = default
+            # send in a copy in case they mutate it in-place
+            new_value = mutation_fn(copy(value))
 
-            new_value = mutation_fn(copy(value)) # send in a copy in
-                                                 # case they mutate it
-                                                 # in-place
-
-            if value != new_value:
+            if not willread or value != new_value:
                 self.cassa.set(key, new_value,
                                write_consistency_level = wcl)
             for ca in self.caches[:-1]:
@@ -549,20 +631,19 @@ class CassandraCacheChain(CacheChain):
 
 
 class CassandraCache(CacheUtils):
-    """A cache that uses a Cassandra cluster. Uses a single keyspace
-       and column family and only the column-name 'value'"""
-    def __init__(self, keyspace, column_family, client,
+    """A cache that uses a Cassandra ColumnFamily. Uses only the
+       column-name 'value'"""
+    def __init__(self, column_family, client,
                  read_consistency_level = CL_ONE,
                  write_consistency_level = CL_QUORUM):
-        self.keyspace = keyspace
         self.column_family = column_family
         self.client = client
         self.read_consistency_level = read_consistency_level
         self.write_consistency_level = write_consistency_level
-        self.cf = pycassa.ColumnFamily(self.client, self.keyspace,
-                                       self.column_family,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+        self.cf = ColumnFamily(self.client,
+                               self.column_family,
+                               read_consistency_level = read_consistency_level,
+                               write_consistency_level = write_consistency_level)
 
     def _rcl(self, alternative):
         return (alternative if alternative is not None
@@ -578,7 +659,7 @@ class CassandraCache(CacheUtils):
             row = self.cf.get(key, columns=['value'],
                               read_consistency_level = rcl)
             return pickle.loads(row['value'])
-        except (cassandra.ttypes.NotFoundException, KeyError):
+        except (CassandraNotFound, KeyError):
             return default
 
     def simple_get_multi(self, keys, read_consistency_level = None):
@@ -590,29 +671,36 @@ class CassandraCache(CacheUtils):
                     for (key, row) in rows.iteritems())
 
     def set(self, key, val,
-            write_consistency_level = None, time = None):
+            write_consistency_level = None,
+            time = None):
         if val == NoneResult:
             # NoneResult caching is for other parts of the chain
             return
 
         wcl = self._wcl(write_consistency_level)
         ret = self.cf.insert(key, {'value': pickle.dumps(val)},
-                              write_consistency_level = wcl)
+                              write_consistency_level = wcl,
+                             ttl = time)
         self._warm([key])
         return ret
 
     def set_multi(self, keys, prefix='',
-                  write_consistency_level = None, time = None):
+                  write_consistency_level = None,
+                  time = None):
         if not isinstance(keys, dict):
+            # allow iterables yielding tuples
             keys = dict(keys)
-        keys = dict(('%s%s' % (prefix, key), val)
-                     for (key, val) in keys.iteritems())
+
         wcl = self._wcl(write_consistency_level)
         ret = {}
-        for key, val in keys.iteritems():
-            if val != NoneResult:
-                ret[key] = self.cf.insert(key, {'value': pickle.dumps(val)},
-                                          write_consistency_level = wcl)
+
+        with self.cf.batch(write_consistency_level = wcl):
+            for key, val in keys.iteritems():
+                if val != NoneResult:
+                    ret[key] = self.cf.insert('%s%s' % (prefix, key),
+                                              {'value': pickle.dumps(val)},
+                                              ttl = time)
+
         self._warm(keys.keys())
 
         return ret
@@ -739,3 +827,25 @@ def make_key(iden, *a, **kw):
     h.update(_conv(kw))
 
     return '%s(%s)' % (iden, h.hexdigest())
+
+def test_stale():
+    from pylons import g
+    ca = g.cache
+    assert isinstance(ca, StaleCacheChain)
+
+    ca.localcache.clear()
+
+    ca.stalecache.set('foo', 'bar', time=ca.staleness)
+    assert ca.stalecache.get('foo') == 'bar'
+    ca.realcache.set('foo', 'baz')
+    assert ca.realcache.get('foo') == 'baz'
+
+    assert ca.get('foo', stale=True) == 'bar'
+    ca.localcache.clear()
+    assert ca.get('foo', stale=False) == 'baz'
+    ca.localcache.clear()
+
+    assert ca.get_multi(['foo'], stale=True) == {'foo': 'bar'}
+    assert len(ca.localcache) == 0
+    assert ca.get_multi(['foo'], stale=False) == {'foo': 'baz'}
+    ca.localcache.clear()

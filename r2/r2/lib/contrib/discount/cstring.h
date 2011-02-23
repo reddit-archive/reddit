@@ -10,7 +10,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "amalloc.h"
+#ifndef __WITHOUT_AMALLOC
+# include "amalloc.h"
+#endif
 
 /* expandable Pascal-style string.
  */

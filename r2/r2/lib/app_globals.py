@@ -24,11 +24,11 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 import signal
 from datetime import timedelta, datetime
-import pycassa
+from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import CMemcache
+from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM, CL_ZERO
+from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
 from r2.lib.utils import thread_dump
 from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
@@ -37,7 +37,9 @@ from r2.lib.manager import db_manager
 
 class Globals(object):
 
-    int_props = ['page_cache_time',
+    int_props = ['db_pool_size',
+                 'db_pool_overflow_size',
+                 'page_cache_time',
                  'solr_cache_time',
                  'num_mc_clients',
                  'MIN_DOWN_LINK',
@@ -81,12 +83,13 @@ class Globals(object):
                   'exception_logging',
                   'amqp_logging',
                   'read_only_mode',
+                  'frontpage_dart',
                   ]
 
-    tuple_props = ['memcaches',
+    tuple_props = ['stalecaches',
+                   'memcaches',
                    'permacache_memcaches',
                    'rendercaches',
-                   'local_rendercache',
                    'servicecaches',
                    'cassandra_seeds',
                    'admins',
@@ -97,13 +100,12 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames',
                    'hardcache_categories',
-                   'proxy_addr']
+                   'proxy_addr',
+                   'allowed_pay_countries']
 
-    choice_props = {'cassandra_rcl': {'ZERO':   CL_ZERO,
-                                      'ONE':    CL_ONE,
+    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
-                    'cassandra_wcl': {'ZERO':   CL_ZERO,
-                                      'ONE':    CL_ONE,
+                    'cassandra_wcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
                     }
 
@@ -173,34 +175,33 @@ class Globals(object):
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
-        self.cassandra_seeds = list(self.cassandra_seeds)
-        random.shuffle(self.cassandra_seeds)
-        self.cassandra = pycassa.connect_thread_local(self.cassandra_seeds)
+        self.cassandra = PycassaConnectionPool('reddit',
+                                               server_list = self.cassandra_seeds,
+                                               # TODO: .ini setting
+                                               timeout=15, max_retries=3,
+                                               prefill=False)
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
                           if self.permacache_memcaches
                           else None)
-        self.permacache = self.init_cass_cache('permacache', 'permacache',
-                                               self.cassandra,
-                                               self.make_lock,
-                                               memcache = perma_memcache,
-                                               read_consistency_level = self.cassandra_rcl,
-                                               write_consistency_level = self.cassandra_wcl,
-                                               localcache_cls = localcache_cls)
+        self.permacache = CassandraCacheChain(localcache_cls(),
+                                              CassandraCache('permacache',
+                                                             self.cassandra,
+                                                             read_consistency_level = self.cassandra_rcl,
+                                                             write_consistency_level = self.cassandra_wcl),
+                                              memcache = perma_memcache,
+                                              lock_factory = self.make_lock)
+
         self.cache_chains.append(self.permacache)
 
-        self.urlcache = self.init_cass_cache('permacache', 'urls',
-                                             self.cassandra,
-                                             self.make_lock,
-                                             # TODO: increase this to QUORUM
-                                             # once we switch to live
-                                             read_consistency_level = self.cassandra_rcl,
-                                             write_consistency_level = CL_ONE,
-                                             localcache_cls = localcache_cls)
-        self.cache_chains.append(self.urlcache)
         # hardcache is done after the db info is loaded, and then the
         # chains are reset to use the appropriate initial entries
 
-        self.cache = MemcacheChain((localcache_cls(), self.memcache))
+        if self.stalecaches:
+            self.cache = StaleCacheChain(localcache_cls(),
+                                         CMemcache(self.stalecaches, num_clients=num_mc_clients),
+                                         self.memcache)
+        else:
+            self.cache = MemcacheChain((localcache_cls(), self.memcache))
         self.cache_chains.append(self.cache)
 
         self.rendercache = MemcacheChain((localcache_cls(),
@@ -327,6 +328,13 @@ class Globals(object):
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
 
+        for arg in sys.argv:
+            tokens = arg.split("=")
+            if len(tokens) == 2:
+                k, v = tokens
+                self.log.debug("Overriding g.%s to %s" % (k, v))
+                setattr(self, k, v)
+
         #the shutdown toggle
         self.shutdown = False
 
@@ -357,20 +365,6 @@ class Globals(object):
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
 
-    def init_cass_cache(self, keyspace, column_family, cassandra_client,
-                        lock_factory,
-                        memcache = None,
-                        read_consistency_level = CL_ONE,
-                        write_consistency_level = CL_ONE,
-                        localcache_cls = LocalCache):
-        return CassandraCacheChain(localcache_cls(),
-                                   CassandraCache(keyspace, column_family,
-                                                  cassandra_client,
-                                                  read_consistency_level = read_consistency_level,
-                                                  write_consistency_level = write_consistency_level),
-                                   memcache = memcache,
-                                   lock_factory = lock_factory)
-
     @staticmethod
     def to_bool(x):
         return (x.lower() == 'true') if x else None
@@ -388,7 +382,7 @@ class Globals(object):
             return
 
         dbm = db_manager.db_manager()
-        db_param_names = ('name', 'db_host', 'db_user', 'db_pass',
+        db_param_names = ('name', 'db_host', 'db_user', 'db_pass', 'db_port',
                           'pool_size', 'max_overflow')
         for db_name in self.databases:
             conf_params = self.to_iter(gc[db_name + '_db'])
@@ -397,6 +391,14 @@ class Globals(object):
                 params['db_user'] = self.db_user
             if params['db_pass'] == "*":
                 params['db_pass'] = self.db_pass
+            if params['db_port'] == "*":
+                params['db_port'] = self.db_port
+
+            if params['pool_size'] == "*":
+                params['pool_size'] = self.db_pool_size
+            if params['max_overflow'] == "*":
+                params['max_overflow'] = self.db_pool_overflow_size
+
             ip = params['db_host']
             ip_loads = get_db_load(self.servicecache, ip)
             if ip not in ip_loads or ip_loads[ip][0] < 1000:

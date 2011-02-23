@@ -138,15 +138,19 @@ def send_queued_mail(test = False):
         session = smtplib.SMTP(g.smtp_server)
     def sendmail(email):
         try:
+            mimetext = email.to_MIMEText()
+            if mimetext is None:
+                print ("Got None mimetext for email from %r and to %r"
+                       % (email.fr_addr, email.to_addr))
             if test:
-                print email.to_MIMEText().as_string()
+                print mimetext.as_string()
             else:
                 session.sendmail(email.fr_addr, email.to_addr,
-                                 email.to_MIMEText().as_string())
+                                 mimetext.as_string())
                 email.set_sent(rejected = False)
         # exception happens only for local recipient that doesn't exist
         except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused,
-                UnicodeDecodeError):
+                UnicodeDecodeError, AttributeError):
             # handle error and print, but don't stall the rest of the queue
             print "Handled error sending mail (traceback to follow)"
             traceback.print_exc(file = sys.stdout)
@@ -240,9 +244,9 @@ def finished_promo(thing):
     return _promo_email(thing, Email.Kind.FINISHED_PROMO)
 
 
-def send_html_email(to_addr, from_addr, subject, html):
+def send_html_email(to_addr, from_addr, subject, html, subtype="html"):
     from r2.lib.filters import _force_utf8
-    msg = MIMEText(_force_utf8(html), "html")
+    msg = MIMEText(_force_utf8(html), subtype)
     msg["Subject"] = subject
     msg["From"] = from_addr
     msg["To"] = to_addr

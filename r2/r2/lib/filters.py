@@ -27,6 +27,7 @@ from cStringIO import StringIO
 from xml.sax.handler import ContentHandler
 from lxml.sax import saxify
 import lxml.etree
+from BeautifulSoup import BeautifulSoup
 
 from pylons import g, c
 
@@ -160,7 +161,7 @@ markdown_ok_tags = {
     }
 markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
                          'pre', 'code', 'blockquote', 'center',
-                         'tbody', 'thead', "tr",
+                         'tbody', 'thead', 'tr', 'sup', 'del',
                          'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
 for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()

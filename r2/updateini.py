@@ -2,7 +2,7 @@
 
 import re, sys
 
-line_rx = re.compile('^([-_a-zA-Z0-9 ]*[-_a-zA-Z0-9]+)\s*=\s*(.*)')
+line_rx = re.compile('\A([-_a-zA-Z0-9 ]*[-_a-zA-Z0-9]+)\s*=\s*(.*)')
 
 def parse_line(line):
     m = line_rx.match(line)

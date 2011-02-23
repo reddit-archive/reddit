@@ -70,11 +70,11 @@ except ImportError:
 try:
     import paste
     vers = getattr(paste, "__version__", "(undefined)")
-    assert vers == '1.7.2-reddit-0.1', \
+    assert vers == '1.7.2-reddit-0.2', \
            ("reddit is only compatible with its own magical version of paste, not '%s'" % vers)
 except (ImportError, AssertionError):
     print "Installing reddit's magical version of paste"
-    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.1.tar.gz"])
+    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.2.tar.gz"])
 
 #install the devel version of py-amqplib until the cheeseshop version is updated
 try:
@@ -99,7 +99,7 @@ filtermod = Extension('Cfilters',
 discount_path = "r2/lib/contrib/discount"
 discountmod = Extension('reddit-discount',
                         include_dirs = [discount_path],
-                        define_macros = [("VERSION", '"1.6.4"')],
+                        define_macros = [("VERSION", '"1.6.8"')],
                         sources = ([ "r2/lib/c/reddit-discount-wrapper.c" ]
                                    + map(lambda x: os.path.join(discount_path, x),
                                       ["Csio.c",
@@ -111,6 +111,8 @@ discountmod = Extension('reddit-discount',
                                        "markdown.c",
                                        "mkdio.c",
                                        "resource.c",
+                                       "html5.c",
+                                       "tags.c",
                                        "toc.c",
                                        "version.c",
                                        "emmatch.c",
@@ -134,17 +136,16 @@ setup(
                       "pycrypto",
                       "Babel>=0.9.1",
                       "flup",
-                      "cython==0.13",
+                      "cython==0.14",
                       "simplejson", 
                       "SQLAlchemy==0.5.3",
-                      "BeautifulSoup == 3.0.8.1", # last version to use the good parser
+                      "BeautifulSoup",
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
                       "py_interface",
                       "pycountry",
-                      "python-cassandra",
-                      "thrift" # required by Cassandra
+                      "thrift05", "pycassa==1.0.5",
                       ],
     packages=find_packages(),
     include_package_data=True,
@@ -168,11 +169,6 @@ setup(
     restcontroller = pylons.commands:RestControllerCommand
     """,
 )
-
-
-# the cassandra stuff we'll need. down here because it needs to be
-# done *after* thrift is installed
-easy_install(["http://github.com/downloads/pycassa/pycassa/pycassa-0.3.0.tar.gz"])
 
 # running setup.py always fucks up the build directory, which we don't
 # need anyway.

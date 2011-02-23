@@ -61,7 +61,7 @@
         %endif
       </tr>
       %for x, (date, data) in enumerate(reversed(thing.day_data)):
-        <tr class="${'odd' if x % 2 else 'even'} ${'max' if data[0] == umax else 'min' if data[0] == umin else ''}"
+      <tr class="${'odd' if x % 2 else 'even'} ${'max' if data[0] == umax else 'min' if data[0] == umin else ''}">
           <td>${date.strftime("%Y-%m-%d")}</td>
           <%
              indx = range(5) if c.site.domain else \

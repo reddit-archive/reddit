@@ -45,7 +45,8 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap = Wrapped, keep_fn = None):
+    def __init__(self, wrap = Wrapped, keep_fn = None, stale = True):
+        self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
 
@@ -72,14 +73,14 @@ class Builder(object):
         email_attrses = {}
         friend_rels = None
         if aids:
-            authors = Account._byID(aids, True) if aids else {}
+            authors = Account._byID(aids, data=True, stale=self.stale) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
             if c.user_is_admin:
                 email_attrses = admintools.email_attrs(aids, return_dict=True)
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
-        subreddits = Subreddit.load_subreddits(items)
+        subreddits = Subreddit.load_subreddits(items, stale=self.stale)
 
         if not user:
             can_ban_set = set()
@@ -448,7 +449,7 @@ class IDBuilder(QueryBuilder):
             done = True
 
         self.names, new_names = names[slice_size:], names[:slice_size]
-        new_items = Thing._by_fullname(new_names, data = True, return_dict=False)
+        new_items = Thing._by_fullname(new_names, data = True, return_dict=False, stale=self.stale)
         return done, new_items
 
 class SearchBuilder(IDBuilder):
@@ -471,6 +472,7 @@ class SearchBuilder(IDBuilder):
         # doesn't use the default keep_item because we want to keep
         # things that were voted on, even if they've chosen to hide
         # them in normal listings
+        # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
         else:

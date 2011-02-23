@@ -56,7 +56,7 @@ error_list = dict((
         ('SUBREDDIT_NOTALLOWED', _("you aren't allowed to post there.")),
         ('SUBREDDIT_REQUIRED', _('you must specify a reddit')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
-        ('RATELIMIT', _('you are trying to submit too fast. try again in %(time)s.')),
+        ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
         ('EXPIRED', _('your session has expired')),
         ('DRACONIAN', _('you must accept the terms first')),
         ('BANNED_IP', "IP banned"),

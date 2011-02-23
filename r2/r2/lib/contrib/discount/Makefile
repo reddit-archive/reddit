@@ -13,7 +13,8 @@ SAMPLE_PGMS+= theme
 MKDLIB=libmarkdown.a
 OBJS=mkdio.o markdown.o dumptree.o generate.o \
      resource.o docheader.o version.o toc.o css.o \
-     xml.o Csio.o xmlpage.o basename.o emmatch.o 
+     xml.o Csio.o xmlpage.o basename.o emmatch.o \
+     tags.o html5.o 
 
 MAN3PAGES=mkd-callbacks.3 mkd-functions.3 markdown.3 mkd-line.3
 
@@ -28,11 +29,11 @@ install.everything: install install.samples install.man
 
 install.samples: $(SAMPLE_PGMS) install
 	/usr/bin/install -s -m 755 $(SAMPLE_PGMS) $(DESTDIR)/$(BINDIR)
-	/home/raldi/reddit/r2/r2/lib/contrib/discount/config.md $(DESTDIR)/$(MANDIR)/man1
+	/tmp/discount-1.6.8/config.md $(DESTDIR)/$(MANDIR)/man1
 	/usr/bin/install -m 444 theme.1 $(DESTDIR)/$(MANDIR)/man1
 
 install.man:
-	/home/raldi/reddit/r2/r2/lib/contrib/discount/config.md $(DESTDIR)/$(MANDIR)/man3
+	/tmp/discount-1.6.8/config.md $(DESTDIR)/$(MANDIR)/man3
 	/usr/bin/install -m 444 $(MAN3PAGES) $(DESTDIR)/$(MANDIR)/man3
 	for x in mkd_line mkd_generateline; do \
 	    ( echo '.\"' ; echo ".so man3/mkd-line.3" ) > $(DESTDIR)/$(MANDIR)/man3/$$x.3;\
@@ -43,9 +44,9 @@ install.man:
 	for x in mkd_compile mkd_css mkd_generatecss mkd_generatehtml mkd_cleanup mkd_doc_title mkd_doc_author mkd_doc_date; do \
 	    ( echo '.\"' ; echo ".so man3/mkd-functions.3" ) > $(DESTDIR)/$(MANDIR)/man3/$$x.3; \
 	done
-	/home/raldi/reddit/r2/r2/lib/contrib/discount/config.md $(DESTDIR)/$(MANDIR)/man7
+	/tmp/discount-1.6.8/config.md $(DESTDIR)/$(MANDIR)/man7
 	/usr/bin/install -m 444 markdown.7 mkd-extensions.7 $(DESTDIR)/$(MANDIR)/man7
-	/home/raldi/reddit/r2/r2/lib/contrib/discount/config.md $(DESTDIR)/$(MANDIR)/man1
+	/tmp/discount-1.6.8/config.md $(DESTDIR)/$(MANDIR)/man1
 	/usr/bin/install -m 444 markdown.1 $(DESTDIR)/$(MANDIR)/man1
 
 install.everything: install install.man
@@ -79,9 +80,9 @@ test:	$(PGMS) echo cols
 	    sh $$x || exit 1; \
 	done
 
-cols:   tools/cols.c
+cols:   tools/cols.c config.h
 	$(CC) -o cols tools/cols.c
-echo:   tools/echo.c
+echo:   tools/echo.c config.h
 	$(CC) -o echo tools/echo.c
 	
 clean:

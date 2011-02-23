@@ -68,52 +68,48 @@ class Link(Thing, Printable):
         Thing.__init__(self, *a, **kw)
 
     @classmethod
-    def by_url_key(cls, url):
-        maxlen = 250
-        template = 'byurl(%s,%s)'
-        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
-        hexdigest = md5(keyurl).hexdigest()
-        usable_len = maxlen-len(template)-len(hexdigest)
-        return template % (hexdigest, keyurl[:usable_len])
-
-    @classmethod
     def _by_url(cls, url, sr):
         from subreddit import FakeSubreddit
         if isinstance(sr, FakeSubreddit):
             sr = None
 
-        url = cls.by_url_key(url)
-        link_ids = g.urlcache.get(url)
-        if link_ids:
-            links = Link._byID(link_ids, data = True, return_dict = False)
-            links = [l for l in links if not l._deleted]
+        try:
+            lbu = LinksByUrl._byID(LinksByUrl._key_from_url(url))
+        except tdb_cassandra.NotFound:
+            # translate the tdb_cassandra.NotFound into the NotFound
+            # the caller is expecting
+            raise NotFound('Link "%s"' % url)
 
-            if links and sr:
-                for link in links:
-                    if sr._id == link.sr_id:
-                        return link
-            elif links:
-                return links
+        link_id36s = lbu._values()
 
-        raise NotFound, 'Link "%s"' % url
+        links = Link._byID36(link_id36s, data = True, return_dict = False)
+        links = [l for l in links if not l._deleted]
+
+        if links and sr:
+            for link in links:
+                if sr._id == link.sr_id:
+                    # n.b. returns the first one if there are multiple
+                    return link
+        elif links:
+            return links
+
+        raise NotFound('Link "%s"' % url)
 
     def set_url_cache(self):
         if self.url != 'self':
-            key = self.by_url_key(self.url)
-            link_ids = g.urlcache.get(key) or []
-            if self._id not in link_ids:
-                link_ids.append(self._id)
-            g.urlcache.set(key, link_ids)
+            LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
+                                   {self._id36: self._id36})
 
     def update_url_cache(self, old_url):
         """Remove the old url from the by_url cache then update the
         cache with the new url."""
         if old_url != 'self':
-            key = self.by_url_key(old_url)
-            link_ids = g.urlcache.get(key) or []
-            while self._id in link_ids:
-                link_ids.remove(self._id)
-            g.urlcache.set(key, link_ids)
+            try:
+                lbu = LinksByUrl._key_from_url(old_url)
+                del lbu[self._id36]
+                lbu._commit()
+            except tdb_cassandra.NotFound:
+                pass
         self.set_url_cache()
 
     @property
@@ -126,13 +122,13 @@ class Link(Thing, Printable):
         return submit_url
 
     @classmethod
-    def _submit(cls, title, url, author, sr, ip):
+    def _submit(cls, title, url, author, sr, ip, spam=False):
         from r2.models import admintools
 
         l = cls(_ups = 1,
                 title = title,
                 url = url,
-                _spam = author._spam,
+                _spam = spam,
                 author_id = author._id,
                 sr_id = sr._id,
                 lang = sr.lang,
@@ -169,9 +165,13 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'save')
 
     def _save(self, user):
+        # dual-write CassandraSaves
+        CassandraSave._save(user, self)
         return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
+        # dual-write CassandraSaves
+        CassandraSave._unsave(user, self)
         return self._unsomething(user, self._saved, 'save')
 
     @classmethod
@@ -186,9 +186,11 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'hide')
 
     def _hide(self, user):
+        CassandraHide._hide(user, self)
         return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
+        CassandraHide._unhide(user, self)
         return self._unsomething(user, self._hidden, 'hide')
 
     def link_domain(self):
@@ -306,12 +308,20 @@ class Link(Thing, Printable):
         cname = c.cname
         site = c.site
 
-        saved = Link._saved(user, wrapped) if user_is_loggedin else {}
-        hidden = Link._hidden(user, wrapped) if user_is_loggedin else {}
-        trials = trial_info(wrapped)
+        if user_is_loggedin:
+            saved_lu = []
+            for item in wrapped:
+                if not SaveHide._can_skip_lookup(user, item):
+                    saved_lu.append(item._id36)
 
-        #clicked = Link._clicked(user, wrapped) if user else {}
-        clicked = {}
+            saved  = CassandraSave._fast_query(user._id36, saved_lu)
+            hidden = CassandraHide._fast_query(user._id36, saved_lu)
+
+            clicked = {}
+        else:
+            saved = hidden = clicked = {}
+
+        trials = trial_info(wrapped)
 
         for item in wrapped:
             show_media = False
@@ -344,7 +354,7 @@ class Link(Thing, Printable):
                 item.thumbnail = thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
-                    item.thumbnail = "/static/nsfw.png"
+                    item.thumbnail = "/static/nsfw2.png"
                 else:
                     item.thumbnail = ""
             elif not show_media:
@@ -364,14 +374,23 @@ class Link(Thing, Printable):
                 item.domain = (domain(item.url) if not item.is_self
                                else 'self.' + item.subreddit.name)
             item.urlprefix = ''
-            item.saved = bool(saved.get((user, item, 'save')))
-            item.hidden = bool(hidden.get((user, item, 'hide')))
-            item.clicked = bool(clicked.get((user, item, 'click')))
+
+            if user_is_loggedin:
+                item.saved =  (user._id36, item._id36) in saved
+                item.hidden = (user._id36, item._id36) in hidden
+
+                item.clicked = bool(clicked.get((user, item, 'click')))
+            else:
+                item.saved = item.hidden = item.clicked = False
+
             item.num = None
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
-                item.url = item.make_permalink(item.subreddit, 
+                item.url = item.make_permalink(item.subreddit,
                                                force_domain = True)
+
+            if g.shortdomain:
+                item.shortlink = g.shortdomain + '/' + item._id36
 
             # do we hide the score?
             if user_is_admin:
@@ -488,6 +507,14 @@ class Link(Thing, Printable):
         on the wrapped link (as .subreddit), and that should be used
         when possible. """
         return Subreddit._byID(self.sr_id, True, return_dict = False)
+
+class LinksByUrl(tdb_cassandra.View):
+    _use_db = True
+
+    @classmethod
+    def _key_from_url(cls, url):
+        keyurl = _force_utf8(UrlParser.base_url(url.lower()))
+        return keyurl
 
 # Note that there are no instances of PromotedLink or LinkCompressed,
 # so overriding their methods here will not change their behaviour
@@ -619,7 +646,7 @@ class Comment(Thing, Printable):
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
-                           return_dict = True)
+                           return_dict = True, stale=True)
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
@@ -627,14 +654,14 @@ class Comment(Thing, Printable):
                 cm.sr_id = links[cm.link_id].sr_id
 
         subreddits = Subreddit._byID(set(cm.sr_id for cm in wrapped),
-                                     data=True,return_dict=False)
+                                     data=True, return_dict=False, stale=True)
         cids = dict((w._id, w) for w in wrapped)
         parent_ids = set(cm.parent_id for cm in wrapped
                          if getattr(cm, 'parent_id', None)
                          and cm.parent_id not in cids)
         parents = {}
         if parent_ids:
-            parents = Comment._byID(parent_ids, data=True)
+            parents = Comment._byID(parent_ids, data=True, stale=True)
 
         can_reply_srs = set(s._id for s in subreddits if s.can_comment(user)) \
                         if c.user_is_loggedin else set()
@@ -836,6 +863,7 @@ class Message(Thing, Printable):
                      new = False,  first_message = None, to_id = None,
                      sr_id = None, to_collapse = None, author_collapse = None)
     _data_int_props = Thing._data_int_props + ('reported', )
+    _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
 
     @classmethod
@@ -891,6 +919,7 @@ class Message(Thing, Printable):
             elif sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
+
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
         if to and (not m._spam or to.name in g.admins):
@@ -1001,6 +1030,7 @@ class Message(Thing, Printable):
                 item.to_collapse = False
                 item.author_collapse = False
                 item.link_title = link.title
+                item.permalink = item.lookups[0].make_permalink(link, sr=sr)
                 item.link_permalink = link.make_permalink(sr)
                 if item.parent_id:
                     item.subject = _('comment reply')
@@ -1046,6 +1076,76 @@ class Message(Thing, Printable):
 
 class SaveHide(Relation(Account, Link)): pass
 class Click(Relation(Account, Link)): pass
+
+class SimpleRelation(tdb_cassandra.Relation):
+    _use_db = False
+
+    @classmethod
+    def _create(cls, user, link, write_consistency_level = None):
+        n = cls(thing1_id = user._id36,
+                thing2_id = link._id36)
+        n._commit(write_consistency_level=write_consistency_level)
+        return n
+
+    @classmethod
+    def _uncreate(cls, user, link):
+        try:
+            cls._fast_query(user._id36, link._id36)._destroy()
+        except tdb_cassandra.NotFound:
+            pass
+
+class CassandraSave(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Save'
+
+    # thing1_cls = Account
+    # thing2_cls = Link
+
+    @classmethod
+    def _save(cls, *a, **kw):
+        return cls._create(*a, **kw)
+
+    @classmethod
+    def _unsave(cls, *a, **kw):
+        return cls._uncreate(*a, **kw)
+
+    def _on_create(self):
+        # it's okay if these indices get lost
+        wcl = tdb_cassandra.CL.ONE
+
+        SavesByAccount._set_values(self.thing1_id,
+                                   {self._id: self._id},
+                                   write_consistency_level=wcl)
+
+        return SimpleRelation._on_create(self)
+
+    def _on_destroy(self):
+        sba = SavesByAccount._byID(self.thing1_id)
+        del sba[self._id]
+        sba._commit()
+
+        return SimpleRelation._on_destroy(self)
+
+class CassandraHide(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Hide'
+    _ttl = 7*24*60*60
+
+    @classmethod
+    def _hide(cls, *a, **kw):
+        return cls._create(*a, **kw)
+
+    @classmethod
+    def _unhide(cls, *a, **kw):
+        return cls._uncreate(*a, **kw)
+
+class CassandraClick(SimpleRelation):
+    _use_db = True
+    _cf_name = 'Click'
+
+class SavesByAccount(tdb_cassandra.View):
+    _use_db = True
+    _cf_name = 'SavesByAccount'
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),

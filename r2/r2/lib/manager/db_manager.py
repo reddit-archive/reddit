@@ -27,14 +27,16 @@ import time, random
 logger = logging.getLogger('dm_manager')
 logger.addHandler(logging.StreamHandler())
 
-def get_engine(name, db_host='', db_user='', db_pass='',
+def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
                pool_size = 5, max_overflow = 5):
+    db_port = int(db_port)
+
     host = db_host if db_host else '' 
     if db_user:
         if db_pass:
-            host = "%s:%s@%s" % (db_user, db_pass, db_host)
+            host = "%s:%s@%s:%s" % (db_user, db_pass, db_host, db_port)
         else:
-            host = "%s@%s" % (db_user, db_host)
+            host = "%s@%s:%s" % (db_user, db_host,db_port)
     return sa.create_engine('postgres://%s/%s' % (host, name),
                             strategy='threadlocal',
                             pool_size = int(pool_size),

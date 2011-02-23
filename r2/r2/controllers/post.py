@@ -97,6 +97,7 @@ class PostController(ApiController):
               pref_private_feeds = VBoolean("private_feeds"),
               pref_show_adbox = VBoolean("show_adbox"),
               pref_show_sponsors = VBoolean("show_sponsors"),
+              pref_show_sponsorships = VBoolean("show_sponsorships"),
               pref_highlight_new_comments = VBoolean("highlight_new_comments"),
               all_langs = nop('all-langs', default = 'all'))
     def POST_options(self, all_langs, pref_lang, **kw):
@@ -117,6 +118,7 @@ class PostController(ApiController):
         if not c.user.gold:
             kw['pref_show_adbox'] = True
             kw['pref_show_sponsors'] = True
+            kw['pref_show_sponsorships'] = True
 
         self.set_options(all_langs, pref_lang, **kw)
         u = UrlParser(c.site.path + "prefs")

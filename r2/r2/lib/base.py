@@ -30,7 +30,7 @@ from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
 from r2.lib.log import log_exception
 
-import re, md5
+import re, hashlib
 from urllib import quote
 import urllib2
 import sys
@@ -61,7 +61,7 @@ class BaseController(WSGIController):
         if (g.ip_hash
             and true_client_ip
             and ip_hash
-            and md5.new(true_client_ip + g.ip_hash).hexdigest() \
+            and hashlib.md5(true_client_ip + g.ip_hash).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
         elif remote_addr in g.proxy_addr and forwarded_for:
@@ -133,17 +133,20 @@ class BaseController(WSGIController):
             # make sure to pass the port along if not 80
             if not kw.has_key('port'):
                 kw['port'] = request.port
-    
+
             # disentagle the cname (for urls that would have
             # cnameframe=1 in them)
             u.mk_cname(**kw)
-    
+
             # make sure the extensions agree with the current page
             if c.extension:
                 u.set_extension(c.extension)
 
         # unparse and encode it un utf8
-        return _force_unicode(u.unparse()).encode('utf8')
+        rv = _force_unicode(u.unparse()).encode('utf8')
+        if any(ch.isspace() for ch in rv):
+            raise ValueError("Space characters in redirect URL: [%r]" % rv)
+        return rv
 
 
     @classmethod
@@ -158,11 +161,11 @@ class BaseController(WSGIController):
         params = dict(dest = cls.format_output_url(request.fullpath))
         if c.extension == "widget" and request.GET.get("callback"):
             params['callback'] = request.GET.get("callback")
-        
+
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
         return cls.redirect(path)
-    
+
     @classmethod
     def redirect(cls, dest, code = 302):
         """

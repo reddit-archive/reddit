@@ -26,13 +26,13 @@
    from r2.models import FakeSubreddit
    from r2.lib.filters import unsafe, safemarkdown
 %>
-<% 
+<%
    permalink = add_sr(thing.permalink, force_hostname = True)
    if thing.mousedown_url:
       url = thing.mousedown_url
    else:
       url = permalink
-   use_thumbs = thing.has_thumbnail and not request.GET.has_key("nothumbs")
+   use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
  %>
 <item>
   <title>${thing.title}</title>

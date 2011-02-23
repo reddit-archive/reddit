@@ -50,6 +50,7 @@ from r2.lib.tracking import encrypt, decrypt
 from pylons import Response
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
+DELETE = 'Thu, 01-Jan-1970 00:00:01 GMT'
 
 cache_affecting_cookies = ('reddit_first','over18','_options')
 
@@ -240,6 +241,8 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
+    can_stale = request.method.upper() in ('GET','HEAD')
+
     default_sr = DefaultSR()
     c.site = default_sr
     if not sr_name:
@@ -256,7 +259,7 @@ def set_subreddit():
                 srs = set()
                 sr_names = sr_name.split('+')
                 real_path = sr_name
-                srs = Subreddit._by_name(sr_names).values()
+                srs = Subreddit._by_name(sr_names, stale=can_stale).values()
                 if len(srs) != len(sr_names):
                     abort(404)
                 elif any(isinstance(sr, FakeSubreddit)
@@ -271,7 +274,7 @@ def set_subreddit():
                     sr_ids = [sr._id for sr in srs]
                     c.site = MultiReddit(sr_ids, real_path)
             else:
-                c.site = Subreddit._by_name(sr_name)
+                c.site = Subreddit._by_name(sr_name, stale=can_stale)
         except NotFound:
             sr_name = chksrname(sr_name)
             if sr_name:
@@ -414,7 +417,7 @@ def set_recent_reddits():
 
 def set_colors():
     theme_rx = re.compile(r'')
-    color_rx = re.compile(r'^([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?$')
+    color_rx = re.compile(r'\A([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?\Z')
     c.theme = None
     if color_rx.match(request.get.get('bgcolor') or ''):
         c.bgcolor = request.get.get('bgcolor')
@@ -492,7 +495,7 @@ class MinimalController(BaseController):
                         c.over18,
                         c.firsttime,
                         c.extension,
-                        c.render_style, 
+                        c.render_style,
                         cookies_key)
 
     def cached_response(self):
@@ -503,7 +506,7 @@ class MinimalController(BaseController):
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
 
-        c.domain_prefix = request.environ.get("reddit-domain-prefix", 
+        c.domain_prefix = request.environ.get("reddit-domain-prefix",
                                               g.domain_prefix)
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
@@ -522,9 +525,9 @@ class MinimalController(BaseController):
 
     def try_pagecache(self):
         #check content cache
-        if not c.user_is_loggedin:
+        if request.method.upper() == 'GET' and not c.user_is_loggedin:
             r = g.rendercache.get(self.request_key())
-            if r and request.method == 'GET':
+            if r:
                 r, c.cookies = r
                 response = c.response
                 response.headers = r.headers
@@ -570,7 +573,7 @@ class MinimalController(BaseController):
         #return
         #set content cache
         if (g.page_cache_time
-            and request.method == 'GET'
+            and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
             and response.status_code != 503
@@ -610,6 +613,12 @@ class MinimalController(BaseController):
                         sampling_rate = g.usage_sampling,
                         action = action)
 
+        # this thread is probably going to be reused, but it could be
+        # a while before it is. So we might as well dump the cache in
+        # the mean time so that we don't have dead objects hanging
+        # around taking up memory
+        g.reset_caches()
+
     def abort404(self):
         abort(404, "not found")
 
@@ -634,7 +643,7 @@ class MinimalController(BaseController):
 
     def api_wrapper(self, kw):
         data = simplejson.dumps(kw)
-        if request.method == "GET" and request.GET.get("callback"):
+        if request.method.upper() == "GET" and request.GET.get("callback"):
             return "%s(%s)" % (websafe_json(request.GET.get("callback")),
                                websafe_json(data))
         return self.sendstring(data)
@@ -647,10 +656,10 @@ class RedditController(MinimalController):
     def login(user, admin = False, rem = False):
         c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(admin = admin),
                                            expires = NEVER if rem else None)
-        
+
     @staticmethod
     def logout(admin = False):
-        c.cookies[g.login_cookie] = Cookie(value='')
+        c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
 
     def pre(self):
         c.response_wrappers = []
@@ -699,7 +708,7 @@ class RedditController(MinimalController):
             if not c.user._loaded:
                 c.user._load()
             c.modhash = c.user.modhash()
-            if request.method.lower() == 'get':
+            if request.method.upper() == 'GET':
                 read_mod_cookie()
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
@@ -739,13 +748,13 @@ class RedditController(MinimalController):
 
 
         # check that the site is available:
-        if c.site._spam and not c.user_is_admin and not c.error_page:
+        if c.site.spammy() and not c.user_is_admin and not c.error_page:
             abort(404, "not found")
 
         # check if the user has access to this subreddit
         if not c.site.can_view(c.user) and not c.error_page:
             abort(403, "forbidden")
- 
+
         #check over 18
         if (c.site.over_18 and not c.over18 and
             request.path not in  ("/frame", "/over18")

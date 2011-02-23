@@ -1,0 +1,99 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="error_field, success_field"/>
+<%namespace name="utils" file="utils.html"/>
+<%namespace file="createsubreddit.html" import="radio_type"/>
+
+<%
+   from r2.lib.filters import unsafe, safemarkdown
+%>
+
+<div class="content gold-form">
+  <div class="spacer">
+
+    <%utils:round_field title="">
+      <img src="/static/reddit_gold-70.png" class="gold-logo"/>
+      <h1>${thing.summary}</h1>
+      %if thing.giftmessage:
+      <h1>${_("The following gift note will be attached:")}</h1>
+      <div class="giftmessage">
+        ${unsafe(safemarkdown(thing.giftmessage))}
+      </div>
+      <br/>
+      %endif
+
+      %if thing.pay_from_creddits:
+        <form id="giftgold" action="/api/spendcreddits" method="post"
+              class="content"
+              onsubmit="return post_form(this, 'spendcreddits');">
+          <input type="hidden" name="months" value="${thing.months}" />
+          <input type="hidden" name="passthrough" value="${thing.passthrough}" />
+          <button class="btn gold-button">${_("give")}</button>
+          <span class="status"></span>
+        </form>
+      %else:
+        ${_("Please select a payment method.")}
+        <br/>
+        %if thing.google_id:
+          <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}"
+                id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm"
+                target="_top" style="display:inline">
+            <input name="item_name_1" type="hidden" value="creddits"/>
+            <input name="item_description_1" type="hidden"
+                   %if thing.months != thing.quantity:
+                     value="${thing.quantity} year(s) of reddit gold"
+                   %else:
+                     value="${thing.quantity} month(s) of reddit gold"
+                   %endif
+                   />
+            <input name="item_quantity_1" type="hidden"
+                   value="${thing.quantity}"/>
+            <input name="item_price_1" type="hidden"
+                   value="${thing.price}"/>
+            <input type="hidden"
+                   name="shopping-cart.items.item-1.merchant-private-item-data"
+                   value="${thing.passthrough}"/>
+            <input name="item_currency_1" type="hidden" value="USD"/>
+            <input name="_charset_" type="hidden" value="utf-8"/>
+            <button class="btn gold-button">${_("Google Checkout")}</button>
+          </form>
+        %endif
+
+        <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
+              style="display:inline">
+          <input type="hidden" name="cmd" value="_s-xclick" />
+          <input type="hidden" name="custom" value="${thing.passthrough}" />
+          %if thing.quantity:
+            <input type="hidden" name="quantity" value="${thing.quantity}" />
+          %endif
+          <input type="hidden" name="hosted_button_id" value="${thing.paypal_buttonid}" />
+          <button type="submit" class="btn gold-button">${_("PayPal")}</button>
+        </form>
+
+        %if not thing.google_id:
+          <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</div>
+        %endif
+      %endif
+    </%utils:round_field>
+  </div>
+</div>
