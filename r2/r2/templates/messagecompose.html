@@ -86,7 +86,7 @@ function admincheck(elem) {
        &#32;
        <span class="admin-to">${thing.to}</span>
        &#32;
-       is the right man for the job.
+       is the right admin for the job.
 
        &#32;
        <a href="http://reddit.com/help/faq#WhichstaffmembershouldIwritetoifIhaveaproblemorquestion">
@@ -97,7 +97,8 @@ function admincheck(elem) {
        Also:
      </p>
      <ul>
-       <li>If you'd like to message the admins, send your message to the&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
+       <li>If you'd like to message all the admins at once, send your message to the
+ 	&#32;<a href="/message/compose?to=${g.admin_message_acct|u}">admin message list.</a></li>
 
        <li>If you think your posts are being caught in the spam filter,
          please write to
@@ -112,13 +113,21 @@ function admincheck(elem) {
        <li>If
          &#32;
          <span class="admin-to">${thing.to}</span>
-         &#32;<i>is</i>&#32; the moderator, and that's
-         actually the reason you're writing to him, please include specific
-         links to the submissions that you're having trouble with.</li>
+         &#32;<i>is</i>&#32; is a moderator of a specific subreddit you're
+         inquiring about, and that's actually the reason you're writing, please
+         message 
+         &#32;
+         <a href="http://reddit.com/help/faq#HowcanItellwhomoderatesagivenreddit">
+          all of the moderators of the reddit
+         </a>
+         &#32; (using the "message the mods" feature located at the top of the
+         mod box) with a direct link to the comment page of the submission or other
+         reason you're writing about.
 
-       <li>If you're concerned that something is wrong with your entire
-         account, please
-         &#32;<a href="/message/compose?to=${g.admin_message_acct|u}">send a private message to all of the admins.</a>&#32;(It'll be dealt with faster)</li>
+       <li>If you're concerned that something is wrong with your entire account,
+	 please send your message to the admin list by 
+         &#32;<a href="/message/compose?to=${g.admin_message_acct|u}">messaging 
+	all of the admins of ${g.admin_message_acct}</a>&#32;(It'll be dealt with faster).</li>
      </ul>
   </div>
 

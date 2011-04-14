@@ -20,44 +20,140 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.pages import Feedback
- %>
+from r2.lib.pages import Feedback
+%>
+<link rel="stylesheet" type="text/css" href="/static/selfserve_ads/style.css"/>
+<script src="/static/js/jquery.cycle.min.js" type="text/javascript"></script>
+<script src="/static/selfserve_ads/script.js" type="text/javascript"></script>
 
 <div class="self-service instructions">
-  <h1>use our self-serve advertising tool</h1>
+    <!-- 	Header with control buttons. -->
+    <h1 class="redditad-header">reddit advertising
+    </h1>
+    <!-- 	Outer column container, for CSS control (If the need arises) -->
+    <div class="column-container">
+        <div class="left-col column">
+            <div class="col-trigger">
+                <img src="/static/selfserve_ads/col1.png" width="220px" height="128px" alt="" class="image"/>
 
-  <p>reddit has created a system where you can buy sponsored links on the
-    front page using our&#32;<a href="http://blog.reddit.com/2009/11/now-for-as-little-as-20-you-can-buy.html">self-serve tool</a>.  Overall, we've been quite pleased to find a ridiculously successful (2% CTR to upwards of 10% CTR) means of advertising that doesn't diminish the user experience.</p>
+                <h2>Reach your audience</h2>
+                <ul>
+                    <li>Get your message to millions of viewers</li>
+                    <li>Target viewers on what THEY are interested in, not what their demographic is</li>
+                    <li>Use text, images, and video in your ads</li>
+                </ul>
+            </div>
+##            <div class="col-expando">
+##                <!-- 				Little triangle -->
+##                <div class="col-expando-tri-border"></div>
+##                <div class="col-expando-tri-body"></div>
+##                <span class="col-expando-close button">&#11013;</span>
+##
+##                <h2 class="col-expando-header">Expando-title</h2>
+##
+##                <div class="col-expando-content"></div>
+##            </div>
+        </div>
+        <div class="center-col-1 column">
+            <div class="col-trigger">
+                <img src="/static/selfserve_ads/col2.png" width="220px" height="128px" alt="" class="image"/>
 
-  <p>Even if your budget is only $20 a day, you can get in on the action. Here's how: we'll allow you to submit a sponsored link (set the title, upload an image), and set the start date and duration. Then, you can bid on how much you want to spend on that link (we've set a minimum of $20 per link per day, and $30/day for targeted ads). This bid is exactly how much you'll pay for the link once it starts running.</p>
+                <h2>Control your budget</h2>
+                <ul>
+                    <li>Bid-based system ensures you get a fair piece of the daily pie</li>
+                    <li>Low CPM, even with low bids</li>
+                </ul>
+            </div>
+##            <div class="col-expando">
+##                <!-- 				Little triangle -->
+##                <div class="col-expando-tri-border"></div>
+##                <div class="col-expando-tri-body"></div>
+##                <span class="col-expando-close button">&#11013;</span>
+##
+##                <div class="col-expando-content">
+##                </div>
+##            </div>
+        </div>
+        <div class="center-col-2 column">
+            <div class="col-trigger">
+                <img src="/static/selfserve_ads/col3.png" width="220px" height="128px" alt="" class="image"/>
 
-  <p>On each day, we tally up the total number of bids, and use the total to figure out how large a piece of the pie each sponsored link gets. For example, if you were to bid $20, and the total for the day is $200, you'll get 10% of sponsored link impressions for the day. </p>
+                <h2>Interact with customers</h2>
+                <ul>
+                    <li>reddit ads have comments, view what people think in real-time</li>
+                    <li>Up and Down vote system, see how much people enjoy your link, in one metric</li>
+                </ul>
+            </div>
+##            <div class="col-expando">
+##                <!-- 				Little triangle -->
+##                <div class="col-expando-tri-border"></div>
+##                <div class="col-expando-tri-body"></div>
+##                <span class="col-expando-close button">&#11013;</span>
+##
+##                <h2 class="col-expando-header">Expando-title</h2>
+##
+##                <div class="col-expando-content">
+##                </div>
+##            </div>
+        </div>
+        <div class="right-col column">
+            <div class="col-trigger">
+                <img src="/static/selfserve_ads/col4.png" width="220px" height="128px" alt="" class="image"/>
 
-  <p>
-    To begin all you will need is a valid credit card and a valid email address.  Simply follow these steps to get started:
+                <h2>Track your stats</h2>
+                <ul>
+                    <li>View graphs of your impressions and clicks</li>
+                    <li>Tables full of data</li>
+                    <li>All stats available for download</li>
+                </ul>
+            </div>
+##            <div class="col-expando">
+##                <!-- 				Little triangle -->
+##                <div class="col-expando-tri-border"></div>
+##                <div class="col-expando-tri-body"></div>
+##                <span class="col-expando-close button">&#11013;</span>
+##
+##                <h2 class="col-expando-header">Expando-title</h2>
 
-  </p>
-  <%
-     step1 = c.user_is_loggedin
-     step2 = c.user_is_loggedin and c.user.email_verified
-     %>
-  <ul>
-    <li class="${'done' if step1 else 'unfinished'}"> 
-      please&#32;<a href="/login?dest=${request.fullpath|u}">login or create an account</a>.  You will be redirected back here once you are done.</li>
-    <li class="${'done' if step2 else 'unfinished' if step1 else ''}"> 
-      please&#32;<a href="/verify?dest=${request.fullpath|u}">verify your email address</a>&#32; so that we'll be able to send you information about your promotion while it is running
-    </li>
-    <li class="${'unfinished' if step2 else ''}"> 
-      Go to the&#32;<a href="/promoted/new_promo">self-serve area</a>&#32;and create your sponsored link. 
-    </li>
-  </ul>
-<p>
-  If you are instead interested in purchasing a banner ad or other form of advertisement on the site,&#32<a href="#" onclick="$('#ad-inq-form').slideDown(function(){$(this).find('input[type=text]:first').focus();}); return false;">inquire here and fill out the form.</a> 
-</p>
+##                <div class="col-expando-content"></div>
+##            </div>
+        </div>
 
-<div id="ad-inq-form" style="display:none">
-  ${Feedback(title=_("inquire about advertising on reddit"), action = "ad_inq")}
-</div>
+        <div style="clear:both;"></div>
+        <div class="col-bottom-box">
+            <div class="ad-launch-buttons">
+                <a href="/promoted/new_promo" class="create-ad-button button">Create an ad</a>
+                <a href="#" class="manage-ads">manage existing ads</a>
+            </div>
+            <div class="bottom-box-title">Start advertising today!</div>
+            <p><a href="/selfserviceoatmeal">A comic that explains it all</a><br/>
+                Have questions? Read the&#32;<a href="/help/selfserve">FAQ</a>, or Send us an&#32; <a href="mailto:marketing(at)reddit.com?subject=Questions about reddit advertising&body=Don't forget to change the (at) in the url!">email</a>
+            <br/>
+            Need something&#32;<strong>BIGGER</strong>?&#32;
+            </p>
+            <div style="clear:both;"></div>
+        </div>
+        <div class="col-bottom-box" id="testimonial-parent">
+            <div class="testimonial-title">See what people are saying:</div>
+            ##Adding a new testimonial is very very simple
+            ##Javascript takes care of everything else
+            ##Try and keep each the same length, if at all possible, otherwise it looks odd on smaller ones
+            <div id="testimonial-holder">
+                <div class="testimonial"><q>My reddit ad (above) has yielded the highest ROI (by far) compared to the
+                    other ad platforms&hellip;</q>
+                    <cite>-<a
+                            href="http://www.gabrielweinberg.com/blog/2010/03/my-duck-duck-go-reddit-ad-by-the-numbers.html"
+                            target="blank" rel="nofollow">Gabriel Weinberg</a></cite>
+                </div>
+                <div class="testimonial"><q>Reddit is without a doubt the web's hottest social news
+                    community...Advertising here is reaching one of the web's most influential communities.</q>
+                    <cite>-<a
+                            href="http://www.b2cmarketinginsider.com/online-marketing/7-paid-promotional-tactics-you-should-test-016208"
+                            target="blank" rel="nofollow">B2C Marketing Insider</a></cite>
+                </div>
+            </div>
 
+        </div>
+    </div>
 </div>
  

@@ -102,7 +102,17 @@ def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
     else:
         over18_state = 'allow_over18'
 
-    keys = map(lambda lang: cached_srs_key(lang, over18_state), langs)
+    # we only care about base languages, not subtags here. so en-US -> en
+    unique_langs = []
+    seen_langs = set()
+    for lang in langs:
+        if '-' in lang:
+            lang = lang.split('-', 1)[0]
+        if lang not in seen_langs:
+            unique_langs.append(lang)
+            seen_langs.add(lang)
+
+    keys = map(lambda lang: cached_srs_key(lang, over18_state), unique_langs)
 
     # dict(lang_key -> [(_downs, allow_top, sr_id)])
     srs = g.permacache.get_multi(keys)

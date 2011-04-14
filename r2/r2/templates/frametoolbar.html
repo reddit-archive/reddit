@@ -181,8 +181,10 @@
       </a>
     </%def>
 
-    ${arrow("up",   thing.upstyle,   _("like"))}
-    ${arrow("down", thing.downstyle, _("dislike"))}
+    %if getattr(thing, "votable", True):
+      ${arrow("up",   thing.upstyle,   _("like"))}
+      ${arrow("down", thing.downstyle, _("dislike"))}
+    %endif
   </span>
 
 

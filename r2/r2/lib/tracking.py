@@ -163,9 +163,6 @@ class UserInfo(Info):
         self.lang = safe_str(c.lang if c.lang else '')
         self.cname = safe_str(c.cname)
 
-class UserInfoNew(UserInfo):
-    tracker_url = g.newtracker_url
-
 class PromotedLinkInfo(Info):
     _tracked = []
     tracker_url = g.adtracker_url

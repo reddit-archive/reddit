@@ -61,7 +61,7 @@ class Link(Thing, Printable):
                      selftext = '',
                      noselfreply = False,
                      ip = '0.0.0.0')
-    _essentials = ('sr_id',)
+    _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
     def __init__(self, *a, **kw):
@@ -478,6 +478,12 @@ class Link(Thing, Printable):
 
             item.approval_checkmark = None
 
+            item_age = datetime.now(g.tz) - item._date
+            if item_age.days > g.VOTE_AGE_LIMIT:
+                item.votable = False
+            else:
+                item.votable = True
+
             if item.can_ban:
                 verdict = getattr(item, "verdict", None)
                 if verdict in ('admin-approved', 'mod-approved'):
@@ -703,7 +709,7 @@ class Comment(Thing, Printable):
 
             item.can_reply = False
             if c.can_reply or (item.sr_id in can_reply_srs):
-                age = c.start_time - item._date
+                age = datetime.now(g.tz) - item._date
                 if age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 
@@ -745,6 +751,12 @@ class Comment(Thing, Printable):
 
             item.is_author = (user == item.author)
             item.is_focal  = (focal_comment == item._id36)
+
+            item_age = c.start_time - item._date
+            if item_age.days > g.VOTE_AGE_LIMIT:
+                item.votable = False
+            else:
+                item.votable = True
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText

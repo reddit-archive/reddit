@@ -30,27 +30,16 @@
 <%def name="numcol()">
 </%def>
 
-
 <%def name="entry()">
 <% fullname = thing._fullname %>
-<p>
+<p class="subreddit">
   ${plain_link(thing.title, thing.path, _class="title")}
-  <span class="domain">(${thing.path})</span> 
+  &#32;<span class="domain">(${thing.path})</span> 
 </p>
-%if thing.description:
-  <p class="description">
-    ${thing.description}
-  </p>
-%else:
-   <p class="description">
-  </p> 
-%endif
 </%def>
 
 <%def name="tagline()">
-  ${self.score(thing, thing.subscriber)}
 </%def>
-
 
 <%def name="child()">
 </%def>
@@ -59,7 +48,6 @@
   ${parent.delete_or_report_buttons(delete=False)}
   ${parent.buttons()}
 </%def>
-
 
 <%def name="leave_button(name, where)">
 ${self.yes_no_button("leave", name, _("leave"), 

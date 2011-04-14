@@ -47,12 +47,15 @@ class Globals(object):
                  'MIN_DOWN_KARMA',
                  'MIN_RATE_LIMIT_KARMA',
                  'MIN_RATE_LIMIT_COMMENT_KARMA',
+                 'VOTE_AGE_LIMIT',
                  'REPLY_AGE_LIMIT',
                  'WIKI_KARMA',
                  'HOT_PAGE_AGE',
                  'MODWINDOW',
                  'RATELIMIT',
                  'QUOTA_THRESHOLD',
+                 'LOGANS_RUN_LOW',
+                 'LOGANS_RUN_HIGH',
                  'num_comments',
                  'max_comments',
                  'max_comments_gold',
@@ -84,6 +87,7 @@ class Globals(object):
                   'amqp_logging',
                   'read_only_mode',
                   'frontpage_dart',
+                  'allow_wiki_editing',
                   ]
 
     tuple_props = ['stalecaches',
@@ -177,6 +181,7 @@ class Globals(object):
             raise ValueError("cassandra_seeds not set in the .ini")
         self.cassandra = PycassaConnectionPool('reddit',
                                                server_list = self.cassandra_seeds,
+                                               pool_size = len(self.cassandra_seeds),
                                                # TODO: .ini setting
                                                timeout=15, max_retries=3,
                                                prefill=False)
@@ -364,6 +369,18 @@ class Globals(object):
             self.log.error("reddit app %s:%s started %s at %s" %
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
+
+        if self.LOGANS_RUN_LOW:
+            minutes_to_live = random.randint(self.LOGANS_RUN_LOW,
+                                             self.LOGANS_RUN_HIGH)
+            self.logans_run_limit = datetime.now(self.tz) + timedelta(0,
+                                                 minutes_to_live * 60)
+            disptime = self.logans_run_limit.astimezone(self.display_tz)
+            self.log.info("Will shut down at %s (%d minutes from now)" %
+                (disptime.strftime("%H:%M:%S"), minutes_to_live))
+        else:
+            self.logans_run_limit = None
+
 
     @staticmethod
     def to_bool(x):

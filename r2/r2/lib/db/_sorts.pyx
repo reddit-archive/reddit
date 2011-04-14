@@ -41,15 +41,18 @@ cpdef double _confidence(int ups, int downs):
     """The confidence sort.
        http://www.evanmiller.org/how-not-to-sort-by-average-rating.html"""
     cdef float n = ups + downs
-    cdef float z
-    cdef float phat
 
     if n == 0:
         return 0
 
-    z = 1.0 #1.0 = 85%, 1.6 = 95%
-    phat = float(ups) / n
-    return sqrt(phat+z*z/(2*n)-z*((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+    cdef float z = 1.281551565545 # 80% confidence
+    cdef float p = float(ups) / n
+
+    left = p + 1/(2*n)*z*z
+    right = z*sqrt(p*(1-p)/n + z*z/(4*n*n))
+    under = 1+1/n*z*z
+
+    return (left - right) / under
 
 cdef int up_range = 400
 cdef int down_range = 100

@@ -152,6 +152,11 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            ThingField('subreddit',Subreddit,'sr_id','name'))}
                            #ThingField('reddit',Subreddit,'sr_id','name'))}
 
+def strip_control_characters(text):
+    if not isinstance(text, str):
+        return text
+    return ''.join((c for c in text if ord(c) >= 0x20))
+
 def tokenize_things(things,return_dict=False):
     """
         Here, we take a list of things, and return a list of
@@ -182,6 +187,7 @@ def tokenize_things(things,return_dict=False):
                         if field.__class__ == Field:
                             try:
                                 val = field.extract_from(thing)
+                                val = strip_control_characters(val)
                                 if val != None and val != '':
                                     t[field.name] = val
                             except AttributeError,e:
@@ -219,7 +225,7 @@ def tokenize_things(things,return_dict=False):
         for (thing,field) in batched_classes[cls]:
             try:
                 id = getattr(thing,field.id_attr)
-                ret[thing._fullname][field.name] = (
+                ret[thing._fullname][field.name] = strip_control_characters(
                     getattr(found_batch[id],field.lu_attr_name))
             except AttributeError,e:
                 print e

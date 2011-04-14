@@ -240,13 +240,15 @@ class FrontController(RedditController):
             if num > g.max_comments_gold:
                 displayPane.append(InfoBar(message =
                                            strings.over_comment_limit_gold
-                                           % g.max_comments_gold))
+                                           % max(0, g.max_comments_gold)))
                 num = g.max_comments_gold
         elif num > g.max_comments:
-            displayPane.append(InfoBar(message =
+            if limit:
+                displayPane.append(InfoBar(message =
                                        strings.over_comment_limit
-                                       % dict(max=g.max_comments,
-                                              goldmax=g.max_comments_gold)))
+                                       % dict(max=max(0, g.max_comments),
+                                              goldmax=max(0,
+                                                   g.max_comments_gold))))
             num = g.max_comments
 
         # if permalink page, add that message first to the content
@@ -960,7 +962,7 @@ class FormsController(RedditController):
         returns their user name"""
         c.response_content_type = 'text/plain'
         if c.user_is_loggedin:
-            perm = str(c.user.can_wiki())
+            perm = str(g.allow_wiki_editing and c.user.can_wiki())
             c.response.content = c.user.name + "," + perm
         else:
             c.response.content = ''
@@ -1063,4 +1065,5 @@ class FormsController(RedditController):
                                                   signed, recipient,
                                                   giftmessage, passthrough)
                               ).render()
+
 

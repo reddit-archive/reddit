@@ -46,7 +46,7 @@
   </p>
 %else:
 
-<p>
+<p class="byline">
   <a href="/user/${thing.author.name}">
       <b>${thing.author.name}</b></a>
   &nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 

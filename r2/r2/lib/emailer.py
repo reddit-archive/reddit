@@ -82,15 +82,26 @@ def password_email(user):
     For resetting a user's password.
     """
     from r2.lib.pages import PasswordReset
+
+    reset_count_key = "reset_count_%s" % user._id
+    g.cache.add(reset_count_key, 0, time=3600 * 12)
+    if g.cache.incr(reset_count_key) > 3:
+        return False
+
+    reset_count_global = "reset_count_global"
+    g.cache.add(reset_count_global, 0, time=3600)
+    if g.cache.incr(reset_count_global) > 1000:
+        raise ValueError("Somebody's beating the hell out of the password reset box")
+
     key = passhash(randstr(64, reallyrandom = True), user.email)
     passlink = 'http://' + g.domain + '/resetpassword/' + key
-    print "Generated password reset link: " + passlink
-    g.cache.set("reset_%s" %key, user._id, time=1800)
+    g.log.info("Generated password reset link: " + passlink)
+    g.cache.set("reset_%s" % key, user._id, time=1800)
     _system_email(user.email,
                   PasswordReset(user=user,
                                 passlink=passlink).render(style='email'),
                   Email.Kind.RESET_PASSWORD)
-
+    return True
 
 def feedback_email(email, body, name='', reply_to = ''):
     """Queues a feedback email to the feedback account."""

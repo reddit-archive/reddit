@@ -51,17 +51,21 @@
       </div>
     %endif
   <div class="entry ${like_cls}">
+  <%
+    if thing.is_self:
+        url = add_sr(thing.href_url)
+    elif thing.pref_frame:
+        url = thing.tblink + '.compact'
+    else:
+        url = thing.url
+  %>
   %if thing.has_thumbnail and thing.thumbnail:
-   <a href="${thing.href_url}" class="thumbnail">
-    <img src="${thing.thumbnail}" alt=""/>
-   </a>
+    <a href="${url}" class="thumbnail">
+      <img src="${thing.thumbnail}" alt=""/>
+     </a>
   %endif
     <p class="title">
-     %if thing.is_self:
-      <a href="${add_sr(thing.href_url)}">${thing.title}</a>
-     %else:
-      <a href="${thing.tblink}.compact">${thing.title}</a>
-     %endif
+    <a href="${url}">${thing.title}</a>
     </p>
     %if thing.link_child and not c.permalink_page and thing.link_child.css_style.strip(' ') != 'video':
       <a href="javascript:void(0)" class="expando-button collapsed button 
@@ -97,7 +101,7 @@ there's also a discussion going on here:
 """ % dict(user = c.user.name if c.user_is_Loggedin else "A reddit user",
        link = _force_unicode(thing.url),
        title = _force_unicode(thing.title),
-       permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True))
+       permalink = add_sr(thing.permalink, sr_path = False, force_hostname = True, retain_extension=False))
        url = "http://reddit.com/%s" % thing._id36
        title = _force_unicode(thing.title)
        tweet = "%s %s" % (title[0:(139-len(url))], url)

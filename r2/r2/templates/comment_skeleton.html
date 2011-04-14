@@ -42,7 +42,10 @@ ${self.tagline(True)}
 
 
 <%def name="entry()">
-<% collapse = thing.collapsed %>
+<%
+   from r2.lib.strings import strings
+   collapse = thing.collapsed
+%>
 
 <div class="collapsed" ${(not collapse and "style='display:none'" or "")}>
   ${self.collapsed()}
@@ -50,6 +53,9 @@ ${self.tagline(True)}
 <div class="noncollapsed" ${(collapse and "style='display:none'" or "")}>
   <p class="tagline">
     ${self.tagline()}
+%if not getattr(thing, "votable", True):
+    <div class="unvotable-message">${strings.unvotable_message}</div>
+%endif
   </p>
   ${self.commentBody()}
   <ul class="flat-list buttons">

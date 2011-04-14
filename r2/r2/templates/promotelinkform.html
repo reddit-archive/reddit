@@ -40,16 +40,15 @@
 </script>
 
 
-<%def name="datepicker(name, value, minDateSrc = '', maxDateSrc ='', initfuncname = '')">
+<%def name="datepicker(name, value, minDateSrc = '', maxDateSrc ='', initfuncname = '', min_date_offset=0)">
   <div class="date-input">
     <input name="${name}"
-           value="${value}" id="${name}" readonly="readonly" size="10" />
+           value="${value}" id="${name}" class="rounded styled-input" readonly="readonly" size="10" />
     <div id="datepicker-${name}" class="datepicker"></div>
     <script type="text/javascript">
       ${initfuncname} = function() {
           attach_calendar("#${name}", "${minDateSrc}", "${maxDateSrc}",
-             ${caller.body()}
-          )
+                          ${caller.body()}, ${min_date_offset})
       };
     </script>
   </div>
@@ -69,53 +68,20 @@
 
 <div class="create-promo">
 
-%if not thing.link:
-<div class="infotext rounded">
-  <p>
-    To create a sponsored link, simply provide a title and url as if you were submitting a link to reddit.  
-  </p>
-  <p>
-    Once your link is submitted, you will be able to set and edit the duration of the sponsored link, as well as set a thumbnail on the next page.
-  </p>
-  <p>
-    Questions? Have a look at our&#32;<a href="/help/selfserve">FAQ</a>&#32;or our&#32;<a href="/selfserviceoatmeal">walkthrough</a>.
-  </p>
-</div>
-%endif
-
 %if thing.link:
 <div class="pretty-form">
-  <%utils:line_field title="${_('campaign dashboard')}" id="campaign-field">
+  <%utils:line_field title="${_('campaign dashboard')}" id="campaign-field" css_class="rounded">
 
    <div class="help">
-      <a class="help" 
-         onclick="$(this).next().slideDown().end().fadeOut()" href="#">help</a>
-      <div class="infotext rounded" style="display:none">
+      <div class="infotext rounded" id="campaign-help">
         <p>This dashboard allows you to easily place ads on reddit.
-        You can target a specific community or just run on the main
-        page.  
-        </p>
-        <p>To get create a new campaign, simply set the start and end
-        date as well as the bid amount.</p>
-        <p>Targeting will let you specify whether the ad should run
-        site-wide or be targeted to a specific community.  If you
-        choose to enable targeting, only users who are subscribed to
-        that reddit will see your ad.  Your ad will also run on the
-        top of that community's front page.</p>
-        <p>You can rerun a sponsored link at any time, preserving
-        comment history and score. If you are running a large campaign
-        you only need to enter your ad's information once, and then
-        use the dashboard to copy your ad for each additional targeted
-        community
-        </p>
-        <p>
-          More questions? Have a look at our&#32;<a href="/help/selfserve">FAQ</a>&#32;or our&#32;<a href="/selfserviceoatmeal">walkthrough</a>.
-          </p>
-      </div>
+        You can target a specific community or simply run on the main
+        page.
+        </p></div>
       <div class="clear"></div>
    </div>
     <div id="campaign" style="${'display:none' if thing.link.campaigns else ''}"
-         class="campaign rounded" method="post" action="/api/add_campaign">
+         class="campaign infotext rounded" method="post" action="/api/add_campaign">
 
 
     <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
@@ -127,10 +93,46 @@
      %>
     <table class="preftable">
       <tr>
+        <th>duration</th>
+        <td class="prefright">
+		  <% 
+			mindate = thing.startdate
+			if c.user_is_sponsor:
+				mindate = thing.promote_date_today.strftime('%m/%d/%Y')
+	      %>
+          <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
+          <%self:datepicker name="startdate", value="${thing.startdate}"
+                            minDateSrc="#date-min" initfuncname="init_startdate">
+          function(elem) {
+            var other = $("#enddate");
+            if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
+               var newd = new Date();
+               newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
+               $("#enddate").val((newd.getMonth()+1) + "/" + 
+                                 newd.getDate() + "/" + newd.getFullYear());
+            }
+            $("#datepicker-enddate").datepicker("destroy");
+            update_bid(elem);
+          }
+          </%self:datepicker>
+          -
+          <%self:datepicker name="enddate", value="${thing.enddate}"
+                            minDateSrc="#startdate" initfuncname="init_enddate" min_date_offset="86400000">
+            function(elem) { update_bid(elem); }
+          </%self:datepicker>
+          
+          ${error_field("BAD_DATE", "startdate", "div")}
+          ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
+          ${error_field("BAD_DATE", "enddate", "div")}
+          ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
+          ${error_field("BAD_DATE_RANGE", "enddate", "div")}
+       </td>
+       </tr>
+      <tr>
         <th>total bid</th>
         <td class="prefright">
           ${error_field("BAD_BID", "bid", "div")}
-          $<input id="bid" name="bid" size="7" type="text"
+          $<input id="bid" name="bid" size="7" type="text" class="rounded styled-input"
                   style="width:auto"
                   onchange="update_bid(this)"
                   onkeyup="update_bid(this)"
@@ -140,35 +142,6 @@
           <span class="bid-info gray"></span>
         </td>
       </tr>
-      <tr>
-        <th>for date</th>
-        <td class="prefright">
-          ${error_field("BAD_DATE", "startdate", "div")}
-          ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
-          ${error_field("BAD_DATE", "enddate", "div")}
-          ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
-          ${error_field("BAD_DATE_RANGE", "enddate", "div")}
-        <%self:datepicker name="startdate", value="${thing.startdate}"
-                          minDateSrc="#date-min" initfuncname="init_startdate">
-        function(elem) {
-          var other = $("#enddate");
-          if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
-             var newd = new Date();
-             newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
-             $("#enddate").val((newd.getMonth()+1) + "/" + 
-                               newd.getDate() + "/" + newd.getFullYear());
-          }
-          $("#datepicker-enddate").datepicker("destroy");
-          update_bid(elem);
-        }
-        </%self:datepicker>
-        -
-        <%self:datepicker name="enddate", value="${thing.enddate}"
-                          minDateSrc="#startdate" initfuncname="init_enddate">
-          function(elem) { update_bid(elem); }
-        </%self:datepicker>
-       </td>
-       </tr>
        <tr>
          <th>
            targeting
@@ -179,13 +152,14 @@
                   onclick="return targeting_off(this)"
                   checked="checked" /> 
            <label for="no_targeting">no targeting (displays site-wide)</label>
-           <br/>
+           <p id="no_targeting_minimum" class="minimum-spend">minimum $20 / day</p>
            <input id="targeting" class="nomargin" 
                   type="radio"  value="one" name="targeting"
                   onclick="return targeting_on(this)" /> 
            <label for="targeting">
              enable targeting (runs on a specific reddit)
            </label>
+           <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
            <script type="text/javascript">
              $(function() 
                 { 
@@ -213,7 +187,7 @@
        <ul>
          <li>By targeting, your ad will only appear in front of users who subscribe to the reddit that you specify.</li>
          <li>Your ad will also appear at the top of the hot listing for that reddit</li>
-         <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign.</li>
+         <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign (its easy, you just fill this form out again).</li>
        </ul>
        ${error_field("OVERSOLD", "sr", "div")}
        ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
@@ -222,21 +196,21 @@
        <input type="hidden" name="indx" value="" />
        <span class="status error"></span>
        <button name="cancel"
-          onclick="return cancel_edit()">
+          onclick="return cancel_edit()" class="fancybutton">
          cancel
        </button>
        <button name="edit"
-          onclick="return post_pseudo_form('.campaign', 'edit_campaign')">
+          onclick="return post_pseudo_form('.campaign', 'edit_campaign')" class="fancybutton">
          edit
        </button>
        <button name="create"
-          onclick="return post_pseudo_form('.campaign', 'edit_campaign')">
+          onclick="return post_pseudo_form('.campaign', 'edit_campaign')" class="fancybutton">
          create
        </button>
      </div>
      <div class="clear"></div>
     </div>
-   <div class="existing-campaigns">
+   <div class="existing-campaigns infotext rounded">
       <table style="${'display:none' if not thing.link.campaigns else ''}">
         <tr>
           <th title="${start_title}">start</th>
@@ -245,7 +219,7 @@
           <th>bid</th>
           <th title="${targeting_title}">targeting</th>
           <th style="align:right">
-            <button class="new-campaign" 
+            <button class="new-campaign fancybutton" 
                     title="${newcamp_title}"
                     onclick="return create_campaign(this)">+ add new</button>
           </th>
@@ -277,46 +251,48 @@
 <%
    trusted = c.user_is_sponsor or c.user.trusted_sponsor
  %>
-<%utils:line_field title="${_('title')}" id="title-field">
+<%utils:line_field title="${_('title')}" id="title-field" css_class="rounded">
     <textarea name="title" rows="2" cols="1" 
            ${"disabled" if (promote.is_promoted(thing.link) and
                             not trusted)  else ""}
-              wrap="hard">${thing.link.title if thing.link else ''}</textarea>
+              wrap="hard" class="rounded">${thing.link.title if thing.link else ''}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
+    <div class="infotext rounded">
+        <p>A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them</p>
+        </div>
   </%utils:line_field>
 
-<%utils:line_field title="${_('url')}" id="url-field"
-   description="${_('NOTE: interdomain redirects are not allowed.')}">
+<%utils:line_field title="${_('url')}" id="url-field" css_class="rounded">
   <input name="kind" value="link" type="hidden"/>
   <input id="url" name="url" type="text" 
            ${"disabled" if (promote.is_promoted(thing.link) and
                             not trusted)  else ""}
-            value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"/>
+            value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}" class="rounded"/>
   ${error_field("NO_URL", "url", "div")}
   ${error_field("BAD_URL", "url", "div")}
   ${error_field("ALREADY_SUB", "url", "div")}
-  <div>
-    <button type="button" tabindex="100" onclick="fetch_title()">
-      ${_("suggest title")}
-    </button>
-    <span class="title-status"></span>
+  <div class="infotext rounded">
+      <p>Provide the URL of your ad.&#32;<em>No redirects please!</em></p>
   </div>
   %if c.user_is_sponsor:
   <label style="display:block; text-align:right" for="domain">Override display domain:</label>
   <input id="domain" name="domain" type="text" 
          %if getattr(link, "domain_override", False):
-           value="${link.domain_override}"
+           value="${link.domain_override}" class="rounded"
          %else:
-           class="gray" value="optional" 
+           class="gray rounded" value="optional" 
          %endif
          />
+ <div class="infotext rounded">
+     <p>Choose a different domain name to display on the site (the small grey text next to a link</p>
+ </div>
   %endif
 </%utils:line_field>
 
 %if thing.link and (trusted or not promote.is_promoted(thing.link)):
   <%utils:line_field title="${_('look and feel')}"
-                     description="images will be resized if large than 70 x 70 pixels">
+                     description="images will be resized if large than 70 x 70 pixels" css_class="rounded">
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
                            current_image="${thumb}"
@@ -335,7 +311,7 @@
       <div class="clearleft"></div>
     </div>
    </%utils:line_field>
-    <%utils:line_field title="${_('options')}" id="commenting-field">
+    <%utils:line_field title="${_('options')}" id="commenting-field" css_class="rounded">
       <div class="delete-field">
           <% 
              clicks = views = 0
@@ -365,9 +341,12 @@
                    views)} <br />
         %endif
       </div>
+      <div class="infotext rounded">
+          <p>Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.</p>
+      </div>
     </%utils:line_field>
     %if c.user_is_sponsor or c.user.trusted_sponsor:
-    <%utils:line_field title="${_('media')}" id="commenting-field">
+    <%utils:line_field title="${_('media')}" id="commenting-field" css_class="rounded">
       <div class="delete-field">
         <label for="width">Dimensions:</label>&#32;
         <input name="media-width" type='text' size='5' maxsize='5' 
@@ -400,15 +379,8 @@
     </%utils:line_field>
     %endif
 %else:
-   <div class="spacer">
-     <div class="infobar">
-       ${_("You'll be able to submit an image for the thumbnail once the promotion is submitted.")}
-     </div>
-   </div>
-   <div class="spacer">
      <div class="rules">
        By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/help/selfservicepromotion">Self Serve Advertising Rules.</a>
-     </div>
    </div>
 %endif
 
@@ -420,13 +392,13 @@
           text = _("save options")
       else:
           name = "create"
-          text = _("next ->")
+          text = _("next")
   %>
   ${error_field("RATELIMIT", "ratelimit")}
   &#32;
   <span class="status error"></span>
   ${error_field("RATELIMIT", "ratelimit")}
-  <button name="${name}" class="btn" type="button"
+  <button name="${name}" class="btn fancybutton" type="button"
           onclick="return post_pseudo_form('#promo-form', 'edit_promo')"
           >${text}</button>
 
@@ -436,7 +408,7 @@
 
 %if thing.link and not c.user_is_sponsor:
   <div class="bidding-history" style="padding-top: 0px;">
-    <%utils:line_field title="${_('promotion history')}">
+    <%utils:line_field title="${_('promotion history')}" css_class="rounded">
     <% 
        import datetime 
        pc_max = max(thing.promo_counter.values() or [1])
@@ -455,11 +427,12 @@
       %for i in xrange(0, 28):
       <%
          is_today = (i == 14)
+         the_future = (i >= 14)
          day = (thing.now + datetime.timedelta(i-14))
          CPC = CPM = imp_traffic = cli_traffic = "---"
          if thing.promo_traffic.has_key(day):
             imp_traffic, cli_traffic = thing.promo_traffic[day]
-            if thing.market.has_key(i) and not is_today:
+            if thing.market.has_key(i) and not the_future:
                CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
                CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
        %>
@@ -481,7 +454,7 @@
 %if thing.link and c.user_is_sponsor:
   <div class="spacer bidding-history">
    %if thing.bids:
-    <%utils:line_field title="${_('bidding history')}">
+    <%utils:line_field title="${_('bidding history')}" css_class="rounded">
     <% 
        from r2.models import Account, bidding
        accounts = Account._byID(set(x.account_id for x in thing.bids), True)
@@ -516,7 +489,7 @@
 
    <form id="promotion-history" method="post" action="/post/promote_note"
          onsubmit="post_form(this, 'promote_note'); $('#promote_note').val('');return false;">
-    <%utils:line_field title="${_('promotion history')}">
+    <%utils:line_field title="${_('promotion history')}" css_class="rounded">
       <div style="font-size:smaller; margin-bottom: 10px;">
         For correspondence, the email address of this author is&#32;
         <a href="mailto:${thing.author.email}">${thing.author.email}</a>.

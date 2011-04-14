@@ -31,6 +31,7 @@ from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.memoize import memoize
 from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
+from r2.lib.utils import timeago
 from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
@@ -714,7 +715,8 @@ class AllSR(FakeSubreddit):
         from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(sort = queries.db_sort(sort),
+        q = Link._query(Link.c.sr_id > 0,
+                        sort = queries.db_sort(sort),
                         read_cache = True,
                         write_cache = True,
                         cache_time = 60,
@@ -777,7 +779,7 @@ class DefaultSR(_DefaultSR):
 
     @property
     def _fullname(self):
-        return "default"
+        return "t5_6"
 
     @property
     def header(self):

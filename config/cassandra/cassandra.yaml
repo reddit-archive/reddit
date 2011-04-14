@@ -92,26 +92,7 @@ commitlog_sync_period_in_ms: 10000
 # the topology of the ring.  You must change this if you are running
 # multiple nodes!
 seeds:
-    - pmc01
-    - pmc02
-    - pmc03
-    - pmc04
-    - pmc05
-    - pmc06
-    - pmc07
-    - pmc08
-    - pmc09
-    - pmc10
-    - pmc11
-    - pmc12
-    - pmc13
-    - pmc14
-    - pmc15
-    - pmc16
-    - pmc17
-    - pmc18
-    - pmc19
-    - pmc20
+    - 127.0.0.1
 
 # Access mode.  mmapped i/o is substantially faster, but only practical on
 # a 64bit machine (which notably does not include EC2 "small" instances)
@@ -155,7 +136,7 @@ storage_port: 7000
 # address associated with the hostname (it might not be).
 #
 # Setting this to 0.0.0.0 is always wrong.
-listen_address:
+listen_address: 127.0.0.1
 
 # The address to bind the Thrift RPC service to -- clients connect
 # here. Unlike ListenAddress above, you *can* specify 0.0.0.0 here if
@@ -425,7 +406,7 @@ index_interval: 128
 keyspaces:
     - name: reddit
       replica_placement_strategy: org.apache.cassandra.locator.RackUnawareStrategy
-      replication_factor: 3
+      replication_factor: 1
       column_families:
       - column_type: Standard
         compare_with: BytesType

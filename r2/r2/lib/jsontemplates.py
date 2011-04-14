@@ -31,7 +31,7 @@ def api_type(subtype = ''):
 
 def is_api(subtype = ''):
     return c.render_style and c.render_style.startswith(api_type(subtype))
-    
+
 def get_api_subtype():
     if is_api() and c.render_style.startswith('api-'):
         return c.render_style[4:]

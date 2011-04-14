@@ -45,8 +45,15 @@
      %else:
       <a class="title" href="${thing.url}">${thing.title}</a>
      %endif
-    <p class="byline">&#32;${thing.score}${ungettext("point", "points", thing.score)}&nbsp;|&nbsp;<span class="buttons">
-    ${plain_link(com_label, thing.permalink)}</span>&nbsp;|${tagline()}</p>
+    <p class="byline">&#32;${thing.score}&#32;${ungettext("point", "points", thing.score)}
+    %if thing.num_comments or thing.is_self:
+       ## the comments link only shows the link, the selftext, and the
+       ## comments. since the mobile interface offers no way to leave
+       ## comments, so we can save space by not drawing the link if
+       ## are no comments or selftext
+       |&#32;<span class="buttons">${plain_link(com_label, thing.permalink)}</span>
+    %endif
+    &#32;|${tagline()}</p>
     %if thing.link_child and thing.link_child.expand:
       <div class="expando">
         ${thing.link_child.content()}
@@ -56,11 +63,15 @@
 </%def>
 
 <%def name="domain()" buffered="True">
-  <span class="domain">${thing.domain}</span> 
+  %if thing.is_self:
+    <a class="domain" href="${thing.subreddit.path}.mobile">${thing.subreddit.name}</a>
+  %else:
+    <a class="domain" href="/domain/${thing.domain}/.mobile">${thing.domain}</a>
+  %endif
 </%def>
 
 <%def name="subreddit()" buffered="True">
-  <a href="${thing.subreddit.path}" class="subreddit">
+  <a href="${thing.subreddit.path}.mobile" class="subreddit">
     ${thing.subreddit.name}
   </a>
 </%def>
@@ -71,10 +82,12 @@
     from r2.lib.utils import timeago
     from r2.models import FakeSubreddit
 
-    if isinstance(c.site, FakeSubreddit):
-      taglinetext = _("submitted %(when)s ago by %(author)s to %(reddit)s from %(domain)s") 
+    if isinstance(c.site, FakeSubreddit) and thing.is_self:
+        taglinetext = _("%(when)s ago by %(author)s to %(domain)s")
+    elif isinstance(c.site, FakeSubreddit):
+        taglinetext = _("%(when)s ago by %(author)s to %(reddit)s from %(domain)s")
     else:
-      taglinetext = _("submitted %(when)s ago by %(author)s from %(domain)s") 
+        taglinetext = _("%(when)s ago by %(author)s from %(domain)s")
     taglinetext = taglinetext.replace(" ", "&#32;")
   %>
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 

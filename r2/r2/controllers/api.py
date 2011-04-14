@@ -313,7 +313,6 @@ class ApiController(RedditController):
                 form.set_html(".status", md)
                 return
 
-
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
                          c.user, sr, ip, spam=c.user._spam)
@@ -819,6 +818,7 @@ class ApiController(RedditController):
             parent_age = c.start_time - parent._date
             if parent_age.days > g.REPLY_AGE_LIMIT:
                 c.errors.add(errors.TOO_OLD, field = "parent")
+
         #remove the ratelimit error if the user's karma is high
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -975,8 +975,6 @@ class ApiController(RedditController):
                 dir = VInt('dir', min=-1, max=1),
                 thing = VByName('id'))
     def POST_vote(self, dir, thing, ip, vote_type):
-        from r2.models.admintools import valid_vote
-
         ip = request.ip
         user = c.user
         store = True
@@ -988,7 +986,9 @@ class ApiController(RedditController):
             reject_vote(thing)
             store = False
 
-        if not valid_vote(thing):
+        thing_age = c.start_time - thing._date
+        if thing_age.days > g.VOTE_AGE_LIMIT:
+            g.log.debug("ignoring vote on old thing %s" % thing._fullname)
             store = False
 
         if getattr(c.user, "suspicious", False):
@@ -1626,9 +1626,11 @@ class ApiController(RedditController):
         elif form.has_errors('name', errors.NO_EMAIL_FOR_USER):
             return
         else:
-            emailer.password_email(user)
-            form.set_html(".status",
-                          _("an email will be sent to that account's address shortly"))
+            if emailer.password_email(user):
+                form.set_html(".status",
+                      _("an email will be sent to that account's address shortly"))
+            else:
+                form.set_html(".status", _("try again tomorrow"))
 
 
     @validatedForm(cache_evt = VCacheKey('reset', ('key',)),

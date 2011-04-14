@@ -57,7 +57,7 @@
        elif gray:
           author_cls += " gray"
        name = websafe(author.name)
-       href = unsafe('href="/user/%s/"' % name)
+       href = unsafe('href="/user/%s.mobile"' % name)
        if c.user_is_admin: name += " (%d)" % (author.link_karma)
     %>
     <a class="${author_cls}" ${href}>${name}</a>

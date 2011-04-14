@@ -148,6 +148,7 @@ string_dict = dict(
     gold_summary_creddits = _("You're about to purchase %(amount)s of reddit gold creddits. They work like gift certificates: each creddit you have will allow you to give one month of reddit gold to someone else."),
     gold_summary_signed_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s, who will be told that it came from you."),
     gold_summary_anonymous_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s. It will be an anonymous gift."),
+    unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
 )
 
 class StringHandler(object):

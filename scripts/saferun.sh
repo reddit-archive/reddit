@@ -30,13 +30,15 @@ fi
 
 PIDFILE=$1
 shift 1
-COMMAND=$@
+COMMAND=$1
+shift 1
 
 #check pid file for process
 if [ -a $PIDFILE ]; then
     c=$(ps -p $(cat $PIDFILE) | wc -l)
     if [ $c -eq 2 ]; then
         echo 'already running' 1>&2
+        ls -l $PIDFILE 1>&2
         exit 1
     fi
 fi
@@ -45,7 +47,7 @@ fi
 echo "$$" > $PIDFILE
 
 #run command
-$COMMAND
+$COMMAND "$@"
 
 #remove pid file
 rm $PIDFILE

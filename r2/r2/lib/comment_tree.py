@@ -80,6 +80,7 @@ def add_comments_nolock(link_id, comments):
                 for child in comment_tree[cur_cm]:
                     stack.append(child)
 
+    new_parents = {}
     for comment in comments:
         cm_id = comment._id
         p_id = comment.parent_id
@@ -103,6 +104,7 @@ def add_comments_nolock(link_id, comments):
 
         #if this comment had a parent, find the parent's parents
         if p_id:
+            new_parents[cm_id] = p_id
             for p_id in find_parents():
                 num_children[p_id] += 1
 
@@ -115,7 +117,18 @@ def add_comments_nolock(link_id, comments):
 
     for comment in comments:
         cm_id = comment._id
-        r[cm_id] = p_id
+#        print "In the olden days, I would have set %s -> %s" % (cm_id, p_id)
+
+    for cm_id, parent_id in new_parents.iteritems():
+#        print "Now, I set %s -> %s" % (cm_id, parent_id)
+        r[cm_id] = parent_id
+
+    for comment in comments:
+        cm_id = comment._id
+        if cm_id not in new_parents:
+            r[cm_id] = None
+#            print "And I set %s -> None" % cm_id
+
     g.permacache.set(key, r)
 
     g.permacache.set(comments_key(link_id),

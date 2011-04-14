@@ -39,7 +39,7 @@ class Account(Thing):
     _data_int_props = Thing._data_int_props + ('link_karma', 'comment_karma',
                                                'report_made', 'report_correct',
                                                'report_ignored', 'spammer',
-                                               'reported', 'gold_creddits')
+                                               'reported', 'gold_creddits', )
     _int_prop_suffix = '_karma'
     _essentials = ('name', )
     _defaults = dict(pref_numsites = 25,

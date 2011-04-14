@@ -520,16 +520,17 @@ class VByName(Validator):
     splitter = re.compile('[ ,]+')
     def __init__(self, param, thing_cls = None, multiple = False,
                  error = errors.NO_THING_ID, **kw):
-        self.re = fullname_regex(thing_cls, multiple)
+        self.re = fullname_regex(thing_cls)
         self.multiple = multiple
         self._error = error
         
         Validator.__init__(self, param, **kw)
     
     def run(self, items):
-        if items and self.re.match(items):
-            if self.multiple:
-                items = filter(None, self.splitter.split(items))
+        if items and self.multiple:
+            items = [item for item in self.splitter.split(items)
+                     if item and self.re.match(item)]
+        if items and (self.multiple or self.re.match(items)):
             try:
                 return Thing._by_fullname(items, return_dict = False,
                                           data=True)

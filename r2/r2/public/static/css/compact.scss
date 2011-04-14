@@ -13,6 +13,11 @@
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($from), to($to));
     background: -khtml-gradient(linear, 0% 0%, 0% 100%, from($from), to($to));
 }
+@mixin box-shadow($shadow) {
+    -webkit-box-shadow: $shadow;
+    -moz-box-shadow: $shadow;
+    box-shadow: $shadow;
+}
 
 @mixin border_box { 
     box-sizing: border-box;
@@ -61,7 +66,7 @@ textarea {
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
     background-color: #80A2C4;
     border: 1px solid #517191;
-    webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1);
+    @include box-shadow( "0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1)" );
 }
 .button:active, .button[selected], .button.active,
 /*Vote toolbar styles*/.button.upmod, .button.downmod
@@ -97,7 +102,7 @@ button.button {
    width: auto;
    text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
    border: 1px solid #517191;
-   -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1);
+   @include box-shadow( "0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) ");
 }
 .small_button:active, .small_button[selected], .small_button.active {
     @include vertical_gradient(#7E8994, #80A2C4);
@@ -121,10 +126,10 @@ button.button {
     border-left: 1px solid hsl(210, 28%, 44%);
 }
 .group_button:last-child {
-    -webkit-border-top-left-radius: 0px;
-    -webkit-border-bottom-left-radius: 0px;
-    -webkit-border-top-right-radius: 6px;
-    -webkit-border-bottom-right-radius: 6px;
+    -webkit-border-top-left-radius: 0px; -moz-border-radius-topleft: 0px;
+    -webkit-border-bottom-left-radius: 0px; -moz-border-radius-bottomleft: 0px;
+    -webkit-border-top-right-radius: 6px; -moz-border-radius-topright: 6px;
+    -webkit-border-bottom-right-radius: 6px; -moz-border-radius-bottomright: 6px;
     border-right: 1px solid hsl(210, 28%, 44%);
 }
 
@@ -166,7 +171,7 @@ button.button {
 
 .message .triangle_link .button_contents,
 .comment .triangle_link .button_contents {
-    background: url(/static/compact/mobilesprite.png) no-repeat -51px -2px;
+    background: url(/static/compact/mobilesprite2.png) no-repeat -51px -2px;
     display: inline-block;
     height: 16px;
     margin-bottom: -1px;
@@ -319,13 +324,13 @@ body[orient="landscape"] > #topbar > h1 {
 	margin-right: 5px;
 }
 #topbar > .right > .button > .button_contents {
-    background: url(/static/compact/mobilesprite.png) -51px -2px no-repeat;
+    background: url(/static/compact/mobilesprite2.png) -52px -3px no-repeat;
     width: 16px; height: 16px;
     display: inline-block;
     margin-bottom: -1px;
 }
 #topbar > .right > .button.active > .button_contents {
-    background-position: -66px -2px;
+    background-position: -52px -27px;
 }
 #topbar > .right > .button#mail img {
 	margin-bottom: 2px;
@@ -346,11 +351,11 @@ body[orient="landscape"] > #topbar > h1 {
     right: 5px; top: 44px;
     background-color: white;
     border: 1px solid rgba(27,47,94,.4); border-top: 0px;
-    -webkit-border-bottom-left-radius: 10px; 
-    -webkit-border-bottom-right-radius: 10px;
+    -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px;
+    -webkit-border-bottom-right-radius: 10px; -moz-border-radius-bottomright: 10px;
     border-bottom-left-radius: 10px; 
     border-bottom-right-radius: 10px;
-    -webkit-box-shadow: 0px 0px 8px rgba(0,0,0,.3);
+    @include box-shadow(0px 0px 8px rgba(0,0,0,.3) );
     z-index: 5;
     display: none;
 }
@@ -408,34 +413,28 @@ body[orient="landscape"] > #topbar > h1 {
     border: 1px solid #aaa;
     padding-top: 2px; 
     padding-bottom: 1px; 
-    -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.8);
+    @include box-shadow(0px 1px 1px rgba(255,255,255,.8));
 }
 /*Things*/
 /*Arrows*/
 .link .arrow, .comment .arrow {
     width: 24px; height: 24px;
-    background: hsl(0,0%, 75%);
     cursor: pointer;
     display: block;
     margin: 1px auto 0px;
-    -webkit-mask-image: url(/static/compact/mobilesprite.png); 
-    -webkit-mask-repeat: no-repeat;
+    background: url(/static/compact/mobilesprite2.png) no-repeat;
 }
 .link .arrow.up, .link .arrow.upmod, .comment .arrow.up, .comment .arrow.upmod {
-    -webkit-mask-position: -1px 0px; 
+    background-position: 0px 0px;
 }
 .link .arrow.down, .link .arrow.downmod, .comment .arrow.down, .comment .arrow.downmod {
-    -webkit-mask-position: -26px 0px;
+    background-position: 0px -24px;
 }
 .link .arrow.upmod, .comment .arrow.upmod { /*Vote up*/
-    @include vertical_gradient(hsl(0, 62%, 68%), hsl(0, 62%, 68%));
-    /* no color-stop outside of webkit */
-    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(hsl(0, 62%, 68%)), color-stop(0.7, hsl(0, 62%, 68%)), to(hsla(0, 62%, 68%, 0)));
+    background-position: -24px 0px;
 }
 .link .arrow.downmod, .comment .arrow.downmod { /*Vote down*/
-    @include vertical_gradient(hsl(240, 51%, 63%), hsl(240, 51%, 63%));
-    /* color stop not supported outside webkit */
-    background: -webkit-gradient(linear, 0% 100%, 0% 0%, from(hsl(240, 51%, 63%)), color-stop(0.7, hsl(240, 51%, 63%)), to(hsla(240, 51%, 63%, 0)));
+    background-position: -24px -24px;
 }
 /*Links*/
 .link {
@@ -626,7 +625,7 @@ body[orient="landscape"] > #topbar > h1 {
     @include rounded(10px);
     @include vertical_gradient(#BFD0E0, #80A2C4);
     border: 1px solid #517191;
-    -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1);
+    @include box-shadow( " 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) ");
 }
 .commentcount > .comments:active, 
 .commentcount > .comments[selected] {
@@ -638,7 +637,7 @@ body[orient="landscape"] > #topbar > h1 {
     font-size: 17px;
     margin: 10px 10px 5px;
     border-bottom: 1px solid rgba(0,0,0,.2);
-    -webkit-box-shadow: 0px 1px 1px rgba(255,255,255,.4);
+    @include box-shadow( 0px 1px 1px rgba(255,255,255,.4));
 }
 .commentarea > .menuarea {
 	display: none; /*TODO: Make dropdown menu*/
@@ -705,12 +704,12 @@ padding: 5px;
 }
 .markhelp th:first-child {
     -webkit-border-top-left-radius: 8px; 
-    moz-border-radius-topleft: 8px; 
+    -moz-border-radius-topleft: 8px;
     border-top-left-radius: 8px;
 }
 .markhelp th:last-child {
     -webkit-border-top-right-radius: 8px; 
-    moz-border-radius-topright: 8px; 
+    -moz-border-radius-topright: 8px;
     border-top-right-radius: 8px;
 }
 .markhelp tr:nth-child(odd) td {
@@ -722,12 +721,12 @@ padding: 5px;
 }
 .markhelp tr:last-child td:first-child {
     -webkit-border-bottom-left-radius: 8px; 
-    moz-border-radius-bottomleft: 8px; 
+    -moz-border-radius-bottomleft: 8px;
     border-bottom-left-radius: 8px;
 }
 .markhelp tr:last-child td:last-child {
     -webkit-border-bottom-right-radius: 8px; 
-    moz-border-radius-bottomright: 8px; 
+    -moz-border-radius-bottomright: 8px;
     border-bottom-right-radius: 8px;
 }
 /*Cloned comment reply */
@@ -766,7 +765,8 @@ padding: 5px;
 .child .comment { 
     margin: 4px; 
     margin-top: 0px;
-    -webkit-border-top-right-radius: 0px; 
+    -webkit-border-top-right-radius: 0px;
+    -moz-border-radius-topright: 0px;
 }
 
 .comment .md { margin-left: 25px;  }
@@ -811,7 +811,6 @@ padding: 5px;
 .message .correspondent {
     @include vertical_gradient(hsl(210, 75%, 89%), hsl(209, 47%, 74%));
     /* TODO */
-    background: hsl(210, 75%, 89%) -webkit-gradient(linear, 0% 0%, 0% 100%, from(hsl(210, 75%, 89%)), to(hsl(209, 47%, 74%)));
     margin-right: 10px;
     padding: 2px 5px;
     @include rounded(15px);
@@ -961,6 +960,7 @@ padding: 5px;
 	margin: 10px; margin-top: 0;
 	padding: 10px;
 	-webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px;
+    -moz-border-radius-bottomleft: 8px; -moz-border-radius-bottomright: 8px;
 }
 #compose-message label {
 	display: block;
@@ -998,7 +998,7 @@ padding: 5px;
    margin-top: 15px;
    border: rgb(81, 113, 145) 2px solid;
    background: white;
-   -webkit-box-shadow: 0px 0px 5px rgba(81, 113, 145,.6); 
+   @include box-shadow( 0px 0px 5px rgba(81, 113, 145,.6));
     @include rounded(5px);
    font-size: 1.5em; font-weight: bold
 }
@@ -1009,7 +1009,7 @@ padding: 5px;
    margin-left: 100%;
    border: rgb(81, 113, 145) 2px solid;
    background: white;
-   -webkit-box-shadow: 0px 0px 8px rgba(81, 113, 145,.6);
+   @include box-shadow( 0px 0px 8px rgba(81, 113, 145,.6));
     @include rounded(5px);
 }
 .thing_options_popup  a {
@@ -1074,6 +1074,7 @@ padding: 5px;
     border: 1px solid rgb(217,217,217);
     margin: 10px;
     -webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px;
+    -moz-border-radius-bottomleft: 8px; -moz-border-radius-bottomright: 8px;
     max-width: 350px;
     margin-left: auto;
     margin-right: auto; 
@@ -1121,9 +1122,9 @@ body.toolbar {
 	top: 5px;
 	border: 1px solid hsl(210, 47%, 60%); border-left: 0;
 	position: absolute;
-	-webkit-border-top-right-radius: 5px;
-	-webkit-border-bottom-right-radius: 5px;
-	-webkit-box-shadow: hsla(0, 0%, 0%, 0.15) 3px 3px 3px;
+	-webkit-border-top-right-radius: 5px; -webkit-border-bottom-right-radius: 5px;
+    -moz-border-radius-topright: 5px; -moz-border-radius-bottomright: 5px;
+	@include box-shadow( hsla(0, 0%, 0%, 0.15) 3px 3px 3px );
 }
 
 .toolbar .entry .score { 
@@ -1225,8 +1226,8 @@ body.toolbar {
 	background: white;
 	border: 1px solid hsl(0, 0%, 85%);
 	margin: 10px;
-	-webkit-border-bottom-left-radius: 8px;
-	-webkit-border-bottom-right-radius: 8px;
+	-webkit-border-bottom-left-radius: 8px;	-webkit-border-bottom-right-radius: 8px;
+    -moz-border-radius-bottomleft: 8px; -moz-border-radius-bottomright: 8px;
 }
 #newlink .save.button {
 	margin: 8px;
@@ -1234,7 +1235,9 @@ body.toolbar {
 /** Tab switcher **/
 #newlink .tabmenu {
 	display: -webkit-box;
+    display: -moz-box;
 	-webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
 	margin: 10px; padding: 0;
 	
 }
@@ -1256,12 +1259,12 @@ body.toolbar {
 	font-weight: bold;
 }
 #newlink .tabmenu li:first-child {
-	-webkit-border-bottom-left-radius: 5px;
-	-webkit-border-top-left-radius: 5px;
+	-webkit-border-bottom-left-radius: 5px;	-webkit-border-top-left-radius: 5px;
+    -moz-border-radius-bottomleft: 5px; -moz-border-radius-topleft: 5px;
 }
 #newlink .tabmenu li:last-child {
-	-webkit-border-bottom-right-radius: 5px;
-	-webkit-border-top-right-radius: 5px;
+	-webkit-border-bottom-right-radius: 5px; -webkit-border-top-right-radius: 5px;
+    -moz-border-radius-bottomright: 5px; -moz-border-radius-topright: 5px;
 	border-left-color: hsl(0, 0%, 80%);
 }
 #newlink li.selected {
@@ -1342,8 +1345,8 @@ body.toolbar {
 	position: absolute;
     @include vertical_gradient(hsl(0, 0%, 90%), hsl(0, 0%, 75%));
 	border: 1px solid hsl(0,0%,50%);
-	-webkit-border-bottom-left-radius: 5px 5px;
-	-webkit-border-bottom-right-radius: 5px 5px;
+	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
+    -moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;
 	border-top: 0px;
 	display: none;
 	left: 5px;
@@ -1363,8 +1366,8 @@ body.toolbar {
 	-webkit-text-stroke: 1px solid hsl(210, 28%, 44%);
 }
 #sr-drop-down li:last-child {
-	-webkit-border-bottom-left-radius: 5px;
-	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-bottom-left-radius: 5px;	-webkit-border-bottom-right-radius: 5px;
+    -moz-border-radius-bottomleft: 5px; -moz-border-radius-bottomright: 5px;	
 }
 
 /* markdown */

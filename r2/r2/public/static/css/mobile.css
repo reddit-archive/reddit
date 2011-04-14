@@ -16,7 +16,7 @@ p {
   }
 
 ul {
-   margin: 0px;
+   margin: 5px;
    padding: 0px;
    list-style: none;
    }
@@ -30,7 +30,7 @@ ul {
       }
 
 .title {
-       color: #369;
+       color: black;
        }
 
 .byline {
@@ -47,8 +47,14 @@ ul {
         color: #369;
         }
 
-.buttons {
-         }
+.comment .md, .subreddit .md {
+    color: black;
+}
+
+.link .md {
+    color: black;
+    margin: 5px 5px 10px 5px;
+}
 
 .comment .child {
     border-left: 1px dotted #DDF;

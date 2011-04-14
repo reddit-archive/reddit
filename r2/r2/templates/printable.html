@@ -120,8 +120,12 @@ thing id-${what._fullname}
    _class = _type + ("mod" if mod else "")
    fullname = this._fullname
 %>
-  <div class="arrow ${_class}" 
-       onclick="$(this).vote('${thing.votehash}', null, event)"
+  <div class="arrow ${_class}"
+       %if getattr(thing, "votable", True):
+         onclick="$(this).vote('${thing.votehash}', null, event)"
+       %else:
+         onclick="$(this).show_unvotable_message()"
+       %endif
        >
   </div>
 </%def>

@@ -1064,7 +1064,7 @@ class ProfilePage(Reddit):
     object of the user must be passed in as the first argument, along
     with the current sub-page (to determine the title to be rendered
     on the page)"""
-    
+
     searchbox         = False
     create_reddit_box = False
     submit_box        = False
@@ -1078,13 +1078,13 @@ class ProfilePage(Reddit):
         main_buttons = [NavButton(menu.overview, '/', aliases = ['/overview']),
                    NamedButton('comments'),
                    NamedButton('submitted')]
-        
+
         if votes_visible(self.user):
             main_buttons += [NamedButton('liked'),
                         NamedButton('disliked'),
                         NamedButton('hidden')]
 
-            
+
         toolbar = [PageNameNav('nomenu', title = self.user.name),
                    NavMenu(main_buttons, base_path = path, type="tabmenu")]
 
@@ -1092,7 +1092,7 @@ class ProfilePage(Reddit):
             from admin_pages import AdminProfileMenu
             toolbar.append(AdminProfileMenu(path))
         return toolbar
-    
+
 
     def rightbox(self):
         rb = Reddit.rightbox(self)
@@ -1104,6 +1104,7 @@ class ProfilePage(Reddit):
                  extra_class="trophy-area")
 
         rb.push(scb)
+
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
@@ -1397,6 +1398,7 @@ class Gold(Templated):
                            bad_recipient =
                            bool(recipient_name and not recipient))
 
+
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
                  recipient, giftmessage, passthrough):
@@ -1443,7 +1445,6 @@ class GoldPayment(Templated):
                 quantity = months / 12
 
             if goldtype == "creddits":
-                months = quantity * 12
                 summary = strings.gold_summary_creddits % dict(
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
@@ -2515,6 +2516,7 @@ class PromoteLinkForm(Templated):
         now = promote.promo_datetime_now()
 
         # min date is the day before the first possible start date.
+        self.promote_date_today = now
         mindate = (make_offset_date(now, g.min_promote_future,
                                     business_days = True) -
                    datetime.timedelta(1))

@@ -594,6 +594,11 @@ class MinimalController(BaseController):
                                     domain  = v.domain,
                                     expires = v.expires)
 
+        if g.logans_run_limit:
+            if c.start_time > g.logans_run_limit and not g.shutdown:
+                g.log.info("Time to restart. It's been an honor serving with you.")
+                g.shutdown = 'init'
+
         if g.usage_sampling <= 0.0:
             return
 
@@ -720,7 +725,7 @@ class RedditController(MinimalController):
                 c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
-            if not g.disallow_db_writes:
+            if request.path != '/validuser' and not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)
 
         c.over18 = over18()
@@ -819,3 +824,4 @@ class RedditController(MinimalController):
         request.environ['retry_after'] = 60
 
         abort(503)
+

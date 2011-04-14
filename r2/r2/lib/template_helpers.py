@@ -257,7 +257,7 @@ def dockletStr(context, type, browser):
 
 
 
-def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
+def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_extension=True):
     """
     Given a path (which may be a full-fledged url or a relative path),
     parses the path and updates it to include the subreddit path
@@ -290,11 +290,12 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False):
         u.hostname = get_domain(cname = (c.cname and not nocname),
                                 subreddit = False)
 
-    if c.render_style == 'mobile':
-        u.set_extension('mobile')
+    if retain_extension:
+        if c.render_style == 'mobile':
+            u.set_extension('mobile')
 
-    elif c.render_style == 'compact':
-        u.set_extension('compact')
+        elif c.render_style == 'compact':
+            u.set_extension('compact')
 
     return u.unparse()
 

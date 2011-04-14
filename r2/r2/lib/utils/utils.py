@@ -774,7 +774,7 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
             query._after(after)
             items = list(query)
 
-def fix_if_broken(thing, delete = True):
+def fix_if_broken(thing, delete = True, fudge_links = False):
     from r2.models import Link, Comment, Subreddit, Message
 
     # the minimum set of attributes that are required
@@ -785,6 +785,7 @@ def fix_if_broken(thing, delete = True):
     if thing.__class__ not in attrs:
         raise TypeError
 
+    tried_loading = False
     for attr in attrs[thing.__class__]:
         try:
             # try to retrieve the attribute
@@ -792,21 +793,35 @@ def fix_if_broken(thing, delete = True):
         except AttributeError:
             # that failed; let's explicitly load it and try again
 
-            # we don't have g
-            print "You might want to try this:"
-            print "   g.memcache.delete('%s')" % thing._cache_key()
+            if not tried_loading:
+                tried_loading = True
+                thing._load(check_essentials=False)
 
-            thing._load()
             try:
                 getattr(thing, attr)
             except AttributeError:
                 if not delete:
                     raise
-                # it still broke. We should delete it
-                print "%s is missing %r, deleting" % (thing._fullname, attr)
-                thing._deleted = True
+                if isinstance(thing, Link) and fudge_links:
+                    if attr == "sr_id":
+                        thing.sr_id = 6
+                        print "Fudging %s.sr_id to %d" % (thing._fullname,
+                                                          thing.sr_id)
+                    elif attr == "author_id":
+                        thing.author_id = 8244672
+                        print "Fudging %s.author_id to %d" % (thing._fullname,
+                                                              thing.author_id)
+                    else:
+                        print "Got weird attr %s; can't fudge" % attr
+
+                if not thing._deleted:
+                    print "%s is missing %r, deleting" % (thing._fullname, attr)
+                    thing._deleted = True
+
                 thing._commit()
-                break
+
+                if not fudge_links:
+                    break
 
 
 def find_recent_broken_things(from_time = None, to_time = None,
@@ -1324,3 +1339,4 @@ def thread_dump(*a):
             sys.stderr.write('\t\t%(filename)s(%(lineno)d): %(fnname)s\n'
                              % dict(filename=filename, lineno=lineno, fnname=fnname))
             sys.stderr.write('\t\t\t%(line)s\n' % dict(line=line))
+

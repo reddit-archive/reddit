@@ -307,6 +307,9 @@ $.fn.vote = function(vh, callback, event, ui_only) {
     }
 };
 
+$.fn.show_unvotable_message = function() {
+  $(this).thing().find(".entry:first .unvotable-message").css("display", "inline-block");
+};
 
 $.fn.thing = function() {
     /* Returns the first thing that is a parent of the current element */

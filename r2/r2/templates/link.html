@@ -25,7 +25,7 @@
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static
-   from r2.lib.strings import Score
+   from r2.lib.strings import Score, strings
 %>
  
 <%inherit  file="printable.html"/>
@@ -123,6 +123,10 @@
   %if not (expand or getattr(thing, "trial_mode", None)):
     ${bottom_buttons()}
   %endif
+
+%if not getattr(thing, "votable", True):
+  <div class="unvotable-message">${strings.unvotable_message}</div>
+%endif
 
   <div class="expando" ${"style='display: none'" if not expand else ""}>
     %if expand:

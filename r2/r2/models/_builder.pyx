@@ -15,6 +15,9 @@ class _CommentBuilder(Builder):
         self.context = context
         self.load_more = load_more
         self.max_depth = max_depth
+
+        # This is almost always True, except in the toolbar comments panel,
+        # where we never want to see "continue this thread" links
         self.continue_this_thread = continue_this_thread
 
         self.sort = sort
@@ -32,8 +35,20 @@ class _CommentBuilder(Builder):
         r = link_comments_and_sort(self.link._id, self.sort.col)
         cids, cid_tree, depth, num_children, parents, sorter = r
 
+        cdef dict debug_dict = dict(
+            link = self.link,
+            comment = self.comment,
+            context = self.context,
+            load_more = self.load_more,
+            max_depth = self.max_depth,
+            continue_this_thread = self.continue_this_thread,
+            sort = self.sort,
+            rev_sort = self.rev_sort,
+            lcs_rv = repr(r))
+
         if (not isinstance(self.comment, utils.iters)
             and self.comment and not self.comment._id in depth):
+            debug_dict["defocus_hack"] = "yes"
             g.log.error("Hack - self.comment (%d) not in depth. Defocusing..."
                         % self.comment._id)
             self.comment = None
@@ -50,6 +65,7 @@ class _CommentBuilder(Builder):
 
         # more comments links:
         if isinstance(self.comment, utils.iters):
+            debug_dict["was_instance"] = "yes"
             for cm in self.comment:
                 # deleted comments will be removed from the cids list
                 if cm._id in cids:
@@ -64,6 +80,7 @@ class _CommentBuilder(Builder):
 
         # permalinks:
         elif self.comment:
+            debug_dict["was_permalink"] = "yes"
             # we are going to mess around with the cid_tree's contents
             # so better copy it
             cid_tree = cid_tree.copy()
@@ -87,6 +104,7 @@ class _CommentBuilder(Builder):
                 offset_depth = depth[top]
         #else start with the root comments
         else:
+            debug_dict["was_root"] = "yes"
             candidates.extend(cid_tree.get(None, ()))
 
         #find the comments
@@ -101,6 +119,7 @@ class _CommentBuilder(Builder):
                 return []
         candidates.sort(key = sorter.get, reverse = self.rev_sort)
 
+        debug_dict["candidates_Before"] = repr(candidates)
         while num_have < num and candidates:
             to_add = candidates.pop(0)
             if to_add not in cids:
@@ -116,10 +135,16 @@ class _CommentBuilder(Builder):
             elif self.continue_this_thread:
                 #add the recursion limit
                 p_id = parents[to_add]
-                w = Wrapped(MoreRecursion(self.link, 0, p_id))
-                w.children.append(to_add)
-                extra[p_id] = w
-
+                if p_id is None:
+                    fmt = ("tree problem: Wanted to add 'continue this " +
+                           "thread' for %s, which has depth %d, but we " +
+                           "don't know the parent")
+                    g.log.info(fmt % (to_add, depth[to_add]))
+                else:
+                    w = Wrapped(MoreRecursion(self.link, 0, p_id))
+                    w.children.append(to_add)
+                    extra[p_id] = w
+        debug_dict["candidates_after"] = repr(candidates)
 
         # items is a list of things we actually care about so load them
         items = Comment._byID(items, data = True, return_dict = False, stale=self.stale)
@@ -131,6 +156,8 @@ class _CommentBuilder(Builder):
         cids = {}
         for cm in wrapped:
             cids[cm._id] = cm
+
+        debug_dict["cids"] = [utils.to36(i) for i in sorted(cids.keys())]
 
         cdef list final = []
         #make tree
@@ -151,6 +178,10 @@ class _CommentBuilder(Builder):
             else:
                 final.append(cm)
 
+        debug_dict["final"] = [cm._id36 for cm in final]
+        debug_dict["depth"] = depth
+        debug_dict["extra"] = extra
+
         for p_id, morelink in extra.iteritems():
             try:
                 parent = cids[p_id]
@@ -158,6 +189,11 @@ class _CommentBuilder(Builder):
                 if p_id in ignored_parent_ids:
                     raise KeyError("%r not in cids because it was ignored" % p_id)
                 else:
+                    if g.memcache.get("debug-comment-tree"):
+                        g.memcache.delete("debug-comment-tree")
+                        for k in sorted(debug_dict.keys()):
+                            g.log.info("tree debug: %s = %r" % (k,debug_dict[k]))
+                        g.log.info("tree debug: p_id = %r" % p_id)
                     raise KeyError("%r not in cids but it wasn't ignored" % p_id)
 
             parent.child = empty_listing(morelink)
@@ -291,8 +327,9 @@ class _MessageBuilder(Builder):
         wrapped = {}
         for m in self.wrap_items(messages):
             if not self._viewable_message(m):
-                raise ValueError("%r is not viewable by %s; path is %s" %
+                g.log.warning("%r is not viewable by %s; path is %s" %
                                  (m, c.user.name, request.fullpath))
+                continue
             wrapped[m._id] = m
 
         if prev:
@@ -302,6 +339,8 @@ class _MessageBuilder(Builder):
 
         final = []
         for parent, children in tree:
+            if parent not in wrapped:
+                continue
             parent = wrapped[parent]
             if children:
                 # if no parent is specified, check if any of the messages are

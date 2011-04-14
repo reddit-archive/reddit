@@ -4,15 +4,35 @@ function update_box(elem) {
 
 function update_bid(elem) {
     var form = $(elem).parents(".campaign");
+    var is_targeted = $("#targeting").attr("checked");
     var bid = parseFloat(form.find("*[name=bid]").val());
     var ndays = ((Date.parse(form.find("*[name=enddate]").val()) -
              Date.parse(form.find("*[name=startdate]").val())) / (86400*1000));
     ndays = Math.round(ndays);
+
+    var minimum_daily_bid = (is_targeted ? 30 : 20);
+    $(".minimum-spend").removeClass("error");
+    if (bid < ndays * minimum_daily_bid) {
+        $(".bid-info").addClass("error");
+        if (is_targeted) {
+            $("#targeted_minimum").addClass("error");
+        } else {
+            $("#no_targeting_minimum").addClass("error");
+        }
+
+        form.find("button[name=create], button[name=edit]")
+            .attr("disabled", "disabled")
+            .addClass("disabled");
+    } else {
+        $(".bid-info").removeClass("error");
+        form.find("button[name=create], button[name=edit]")
+            .removeAttr("disabled")
+            .removeClass("disabled");
+    }
+
     $(".bid-info").html("&nbsp; &rarr;" + 
                         "<b>$" + (bid/ndays).toFixed(2) +
          "</b> per day for <b>" + ndays + " day(s)</b>");
-    $("#duration span.gray")
-         .html( ndays == 1 ? "(1 day)" : "(" + ndays + " days)");
  }
 
 var dateFromInput = function(selector, offset) {
@@ -27,7 +47,7 @@ var dateFromInput = function(selector, offset) {
    }
 };
 
-function attach_calendar(where, min_date_src, max_date_src, callback) {
+function attach_calendar(where, min_date_src, max_date_src, callback, min_date_offset) {
      $(where).siblings(".datepicker").mousedown(function() {
             $(this).addClass("clicked active");
          }).click(function() {
@@ -43,7 +63,7 @@ function attach_calendar(where, min_date_src, max_date_src, callback) {
                $(this).datepicker(
                   {
                       defaultDate: dateFromInput(target),
-                          minDate: dateFromInput(min_date_src, 86400 * 1000),
+                          minDate: dateFromInput(min_date_src, min_date_offset),
                           maxDate: dateFromInput(max_date_src),
                           prevText: "&laquo;", nextText: "&raquo;",
                           altField: "#" + target.attr("id"),
@@ -66,12 +86,16 @@ function attach_calendar(where, min_date_src, max_date_src, callback) {
 
 function targeting_on(elem) {
     $(elem).parents(".campaign").find(".targeting")
-        .find("*[name=sr]").attr("disabled", "").end().show();
+        .find("*[name=sr]").attr("disabled", "").end().slideDown();
+
+    update_bid(elem);
 }
 
 function targeting_off(elem) {
     $(elem).parents(".campaign").find(".targeting")
-        .find("*[name=sr]").attr("disabled", "disabled").end().hide();
+        .find("*[name=sr]").attr("disabled", "disabled").end().slideUp();
+
+    update_bid(elem);
 }
 
 (function($) {
@@ -162,19 +186,19 @@ $.set_up_campaigns = function() {
                                      .click(function() { free_campaign(tr) }))
                     }
                     else if (!tr.hasClass("paid")) {
-                        $(bid_td).prepend($(pay).addClass("pay")
+                        $(bid_td).prepend($(pay).addClass("pay fancybutton")
                                      .click(function() { pay_campaign(tr) }));
                     } else if (tr.hasClass("free")) {
                         $(bid_td).addClass("free paid")
                             .prepend("<span class='info'>freebie</span>");
                     } else {
                         (bid_td).addClass("paid")
-                            .prepend($(repay).addClass("pay")
+                            .prepend($(repay).addClass("pay fancybutton")
                                      .click(function() { pay_campaign(tr) }));
                     }
-                    var e = $(edit).addClass("edit")
+                    var e = $(edit).addClass("edit fancybutton")
                         .click(function() { edit_campaign(tr); });
-                    var d = $(del).addClass("d")
+                    var d = $(del).addClass("d fancybutton")
                         .click(function() { del_campaign(tr); });
                     $(td).append(e).append(d);
                 }

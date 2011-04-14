@@ -97,6 +97,50 @@ label.disabled { color: gray; }
 .nomargin { margin: 0px }
 .nopadding { padding: 0px }
 
+/* Fancy buttons */
+
+
+.fancybutton {
+    padding: 5px 10px;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 54%, 89%)), to( hsl(210, 54%, 79%)));
+    background: -moz-linear-gradient(top, hsl(210, 54%, 89%), hsl(210, 54%, 79%));
+    background-color: #ADC9E6;
+    border: 1px solid #5E96CF;
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    color: #2E6399;
+    text-shadow: 0px 1px 0px hsla(0, 0%, 100%, .7);
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0, 0%, 100%, .8);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%, 100%, .8);
+    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8);
+    text-decoration: none;
+    font-weight: bold;
+}
+.fancybutton:hover {
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 54%, 93%)), to( hsl(210, 54%, 89%)));
+    background:-moz-linear-gradient(top, hsl(210, 54%, 93%), hsl(210, 54%, 89%));
+    background-color: #D4E3F2;
+}
+.fancybutton:focus, .fancybutton:active {
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, to( hsl(210, 54%, 89%)), from( hsl(210, 54%, 79%)));
+    background: -moz-linear-gradient(top, hsl(210, 54%, 79%), hsl(210, 54%, 89%));
+    background-color: #D4E3F2;
+    -webkit-box-shadow: inset 0px -1px 0px hsla(0,0%,100%,.7);
+    -moz-box-shadow: inset 0px -1px 0px hsla(0,0%,100%, .7);
+    box-shadow: inset 0px -1px 0px hsla(0,0%, 100%, .7);
+}
+
+.fancybutton.disabled, 
+.fancybutton.disabled:active {
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 24%, 93%)), to( hsl(210, 24%, 89%)));
+    background:-moz-linear-gradient(top, hsl(210, 24%, 93%), hsl(210, 24%, 89%));
+    background-color: #D4E3F2;
+    border-color: #999;
+    color: #999;
+}
 
 /* header / menus */
 
@@ -599,6 +643,9 @@ ul.flat-vert {text-align: left;}
 .infotext { 
     border: 1px solid #369;
     background-color: #EFF7FF;
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
+    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
 }
 
 .infotext p { 
@@ -933,13 +980,13 @@ a.star { text-decoration: none; color: #ff8b60 }
 .comment .collapsed { font-size: x-small; 
     color: gray; 
     font-style: italic; 
-    padding-left: 17px;
+    padding-left: 15px;
     padding-bottom: 10px; }
 .comment .collapsed a { color: gray; }
 .comment .expand {
     font-style: normal; 
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 0px;
+    margin-right: 3px;
     padding: 1px; }
 .comment .expand:hover {
     text-decoration: none;
@@ -1901,6 +1948,17 @@ label + #moresearchinfo {
     font-style: italic;
 }
 
+.unvotable-message {
+    border: solid 1px #ff6600;
+    margin-top: 4px;
+    padding: 1px 3px;
+
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+
+    display: none;
+}
 
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
@@ -2353,6 +2411,10 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     border: 1px solid gray;
     width: 300px; 
     padding: 2px;
+    
+    -webkit-box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
+    -moz-box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
+    box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
 }
 
 .pretty-form .infobar {
@@ -2369,6 +2431,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .pretty-form button  { margin: 3px 5px; }
 .pretty-form th { text-align: right }
 
+
 /* delete page */
 .delete-field {
     background-color: white;
@@ -2377,6 +2440,10 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .delete-field td {
     vertical-align: top;
+}
+
+.pretty-form .delete-field {
+    background: transparent;
 }
 
 /*pref page boxes*/
@@ -3095,16 +3162,15 @@ ul.tabmenu.formtab {
     width: 514px;
     padding: 7px 5px;
     font-size: large;
+    background-color: #CEE3F8;
+    margin-bottom: 10px;
 }
 
 .linefield .title {
-    background-color:#CEE3F8;
-    /*background-color:#EFF7FF;*/
-    color: #336699;
-    font-variant:small-caps;
+    /*background-color:#CEE3F8;
+    /*background-color:#EFF7FF;*!/
+    color: #336699;*/
     font-weight:bold;
-    letter-spacing:-0.02em;
-    margin:0 10px;
     padding:1px 10px;
 }
 .linefield .title + .gray {
@@ -3125,11 +3191,11 @@ ul.tabmenu.formtab {
 }
 
 .linefield .linefield-content {
-    border-color:#CEE3F8;
-    /*border-color:#EFF7FE;*/
+    /*border-color:#CEE3F8;
+    /*border-color:#EFF7FE;*!/
     border-style:solid none none;
-    border-width:4px medium medium;
-    padding:5px 7px;
+    border-width:4px medium medium;*/
+    padding:2px 7px 5px;
     vertical-align:top;
 }
 
@@ -3185,7 +3251,10 @@ ul.tabmenu.formtab {
 .campaign { 
     border: 1px solid #336699; 
     background-color: #EFF7FF;
-    padding: 5px; 
+    padding: 5px;
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
+    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.8), 0px 1px 0px hsla(0,0%,100%,.6);
 }
 
 .campaign .status { 
@@ -3194,10 +3263,9 @@ ul.tabmenu.formtab {
 
 .existing-campaigns > table { 
     font-size: x-small;
-    border: 1px solid #888;
-    background-color: #F8F8F8; 
     width: 100%;
-    margin: 10px 0; 
+    margin: 0px 0; 
+    border: none;
 }
 
 .existing-campaigns td.bid { 
@@ -3213,9 +3281,20 @@ ul.tabmenu.formtab {
     margin-right: 3px; 
 }
 
+.prefright p.minimum-spend {
+    padding-left: 1em;
+    font-size: small;
+    color: gray;
+}
+
+.prefright p.minimum-spend.error {
+    font-weight: bold;
+    color: red;
+}
+
 .existing-campaigns > table > tbody > tr > td { 
     text-align: right;
-    border: 1px solid #888;
+    border: 1px solid #369;
     padding: 1px 5px;
 }
 .existing-campaigns > table > tbody > tr#edit-campaign-tr > td { 
@@ -3226,29 +3305,51 @@ ul.tabmenu.formtab {
     text-align: center;
     font-weight: bold;
     padding: 1px 5px;
-    border: 1px solid #888;
+    border: solid #369;
+    border-width: 0px 1px 1px;
+}
+.existing-campaigns > table > tbody > tr > th:first-child,
+.existing-campaigns > table > tbody > tr > td:first-child {
+    border-left: none;
+}
+.existing-campaigns > table > tbody > tr > th:last-child,
+.existing-campaigns > table > tbody > tr > td:last-child {
+    border-right: none;
+}
+.existing-campaigns > table > tbody > tr:last-child > th,
+.existing-campaigns > table > tbody > tr:last-child > td {
+    border-bottom: none;
 }
 
 .campaign ul {  
     font-size: x-small;
     list-style-type: disc; 
-    margin: 0 20px; 
+    margin: 0 20px 10px; 
 }
 .existing-campaigns td > button { margin: 0px 5px 0px 0px;  }
 
-.campaign { width: 95%; }
 .campaign .bid-info { font-size: x-small; }
+.campaign .bid-info.error { color: red; }
 .campaign .buttons { float:right; }
 .campaign td.prefright { 
     padding: 4px;
+}
+.campaign #bid {
+    text-align: right;
 }
 .campaign .targeting {
     margin-left: 25px; 
 }
 .campaign .targeting input{
     width: 95%;
+    -webkit-border-radius: 7px;
+    -moz-border-radius: 7px;
+    border-radius: 7px;
 }
 
+.campaign #suggested-reddits ul {
+    margin:  0 20px 10px 0;
+}
 .campaign th { 
     font-size: small;
     padding: 4px; 
@@ -3257,6 +3358,13 @@ ul.tabmenu.formtab {
 .linefield .campaign input[type=text] { 
     font-size: x-small; 
 }
+
+.linefield-content .infotext {
+    margin-top: 5px;
+}
+    .linefield-content .infotext p {
+        margin:  5px;
+    }
 
 /***traffic stuff***/
 .traffic-table {margin: 10px 20px; }
@@ -3467,14 +3575,59 @@ table.lined-table {
     -moz-border-radius: 6px;
     -webkit-border-radius: 6px;
     border-radius: 6px;
-    -moz-box-shadow: 3px 3px 3px #888;
-    -webkit-box-shadow: 3px 3px 3px #888; 
+    -webkit-box-shadow: 0px 4px 6px 3px hsla(0, 0%, 0%, .2), inset 0px 1px 0px 0px hsla(0, 0%, 100%, .9);
+    -moz-box-shadow: 0px 4px 6px 3px hsla(0, 0%, 0%, .2), inset 0px 1px 0px 0px hsla(0, 0%, 100%, .9);
+    box-shadow: 0px 4px 6px 3px hsla(0, 0%, 0%, .2), inset 0px 1px 0px 0px hsla(0, 0%, 100%, .9);
+    text-shadow:  0px 1px 0px hsla(0,0%,100%,.8);
  }
+ /* @group CSS triangles*/
+ .datepicker::before {
+     content: ' ';
+     display: block;
+     width: 0;
+     height: 0;
+     border: 10px solid;
+     position: absolute;
+     top: -20px;
+     left: 17px;
+     border-color: transparent transparent #369;
+ }
+ .datepicker::after {
+     content: ' ';
+     display: block;
+     width: 0;
+     height: 0;
+     border: 10px solid;
+     position: absolute;
+     top: -18px;
+     left: 17px;
+     border-color: transparent transparent #E5F2FF;
+ }
+ /* @end CSS Triangles*/
+ 
 .datepicker.inuse { display: block; }
 
 .ui-datepicker-inline {
     font-size: x-small; 
     padding: 5px; 
+}
+.ui-corner-all {
+    -webkit-border-radius:6px;
+    -moz-border-radius:  6px;
+    border-radius: 6px;
+}
+.ui-datepicker-header {
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 54%, 89%)), to( hsl(210, 54%, 79%)));
+    background: -moz-linear-gradient(top, hsl(210, 54%, 89%), hsl(210, 54%, 79%));
+    background-color: #ADC9E6;
+    border:  1px solid #5E96CF;
+    color: #2E6399;
+    font-weight: bold;
+    font-size:  1.3em;
+    text-shadow: 0px 1px 0px hsla(0,0%,100%,.7);
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0,100%,100%,.8);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,100%,100%,.8);
+    box-shadow: inset 0px 1px 0px hsla(0,100%,100%,.8);
 }
 .ui-datepicker-inline .ui-datepicker-prev {float: left; }
 .ui-datepicker-inline .ui-datepicker-next {float: right; }
@@ -3482,20 +3635,15 @@ table.lined-table {
 .ui-datepicker-inline .ui-datepicker-prev span, 
 .ui-datepicker-inline .ui-datepicker-next span {
     display: block;
-    height: 1.5em;
-    width: 1.5em;
     text-align: center;
-    color: black;
-    border: 1px solid #369;
     margin-right: 1px;
-    margin-bottom: 1px; 
+    margin-bottom: 1px;
+    font-size: 1.5em;
 }
 .ui-datepicker-inline .ui-datepicker-prev:active, 
 .ui-datepicker-inline .ui-datepicker-next:active {
-    padding: 6px 4px 4px 6px; 
+    color: white;
 }
-
-
 
 .ui-datepicker-inline .ui-datepicker-prev.ui-state-disabled, 
 .ui-datepicker-inline .ui-datepicker-next.ui-state-disabled {
@@ -3506,31 +3654,50 @@ table.lined-table {
 .ui-datepicker-inline .ui-datepicker-next {
     display: block;
     cursor: pointer;
-    padding: 5px;
+    padding: 0px 5px;
 }
 
-.ui-datepicker-inline .ui-datepicker-title {text-align: center; padding: 5px; }
+.ui-datepicker-year {
+    margin-left:  none !important; //Undoes linefield span
+}
+
+.ui-datepicker-inline .ui-datepicker-title {text-align: center; padding: 5px; margin: 0em 2em;}
 .ui-datepicker-inline table {
-    clear: right; 
+    clear: right;
+    margin-top:  5px;
+    border: 1px solid hsl(210, 54%, 59%);
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar th,
 .ui-datepicker-inline .ui-datepicker-calendar td {
-    padding: 0px;}
+    padding: 0px;
+    border: 1px solid #5E96CF;
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
+    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
+    }
+.ui-datepicker-calendar th {
+    font-size: 1.1em;
+}
 
 .ui-datepicker-inline .ui-datepicker-calendar th span,
 .ui-datepicker-inline .ui-datepicker-calendar td span,
-.ui-datepicker-inline .ui-datepicker-calendar td a {
-    border: 1px outset #888; 
-    margin: 1px;
-    padding: 2px; 
+.ui-datepicker-inline .ui-datepicker-calendar td a { 
+    border:  0px;
+    margin: auto;
+    padding: 3px; 
     display: block;
-    width: 2em; 
+    width: 30px; 
     height: 2em;
-    text-align: right;
+    text-align: center;
     vertical-align: middle; 
-    padding-right: 4px; 
-    color: black; 
+    color: black;
+    background-color: #C8DBEF;
+    font-size: 1.5em;
+    font-weight: bold;
+    -webkit-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
+    -moz-box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
+    box-shadow: inset 0px 1px 0px hsla(0,0%,100%,.7);
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar th span {
@@ -3539,27 +3706,33 @@ table.lined-table {
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today a,
-.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today span
+.ui-datepicker-inline .ui-datepicker-calendar td.ui-datepicker-today span,
+.ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-active
  {
-    border: 1px solid #DB8;
-    background-color: #FF8;
-    color: #888;
+    color:  white;;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(210, 54%, 65%)), to( hsl(210, 54%, 45%)));
+    background: -moz-linear-gradient(top, hsl(210, 54%, 65%), hsl(210, 54%, 45%));
+    background-color: #4F8AC9;
+    -webkit-box-shadow: inset 0px 2px 3px hsla(0,0%,0%,.6);
+    -moz-box-shadow: inset 0px 2px 3px hsla(0,0%,0%,.6);
+    box-shadow: inset 0px 2px 3px hsla(0,0%,0%,.6);
+    text-shadow: 0px -1px 0px hsla(0,0%,0%,.8);
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar td span {
-    border-style: solid;
     color: #888;
-    background-color: #EEE;
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-hover  {
-    border-color: red; 
+    background: #6BB3FF; 
+    color: white;
+    text-shadow: 0px -1px 0px hsla(0,0%,0%,.6);
 }
 
 .ui-datepicker-inline .ui-datepicker-calendar td a.ui-state-active {
-    border: 1px solid red; 
-    background-color: #FCC;
-    font-weight: bold;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from( hsl(0, 54%, 75%)), to( hsl(0, 54%, 55%)));
+    background: -moz-linear-gradient(top, hsl(0,54%,75%), hsl(0,54%,55%));
+    background-color: #E19D9D;
 }
 
 .date-input {
@@ -3574,8 +3747,8 @@ table.lined-table {
 }
 .date-input .drop-choices {  
     position: absolute;
-    border: 1px solid #666;
-    background-color: white;
+    border: 1px solid #369;
+    background-color: #E5F2FF;
     margin: 10px 3px;
 }
 
@@ -3640,15 +3813,18 @@ table.lined-table {
 .create-promo ol > li {
     list-style-type: disc; 
 }
-.create-promo .rules { text-align: right; }
+.create-promo .rules { float:  left; margin-left:  15px; }
 
 .create-reddit h1,
 .create-promotion h1 { font-size: 200%; color: #999; xmargin:10px 0 0 5px;  }
 .create-promotion .sitetable { margin: 5px;  }
-.create-promotion .infobar { margin-left: 5px;  }
+.create-promotion .infobar { margin-left: 12px; width:  479px; background-color: #fbd8d8; margin-bottom: 10px;  }
 .create-reddit h1 b { color: #666;  }
 
-.create-promotion .create-promo .save-button { float:right;  }
+.create-promotion .create-promo .save-button { float:right; margin-right:  3px;  }
+    .create-promotion .create-promo .save-button button {
+        margin-top: 0px;
+    }
 
 .bidding-history { padding-top: 10px; }
 .bidding-history .linefield {
@@ -4087,6 +4263,7 @@ a.pretty-button.positive.pressed {
     background-image: url(/static/bg-button-positive-pressed.png);
 }
 
+
 /*
 .jury-box .pretty-button a.pressed {
     margin: -1px 4px -1px 1px;
@@ -4335,3 +4512,13 @@ tr.gold-accent + tr > td {
 .role {
     width: 800px;
 }
+/* Style that can override other styles. Applied as a class per-field */
+.styled-input {
+    border: 1px solid gray;
+    padding: 2px;
+    
+    -webkit-box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
+    -moz-box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
+    box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
+}
+

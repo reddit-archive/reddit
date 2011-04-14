@@ -1404,11 +1404,3 @@ function highlight_new_comments(period) {
     }
   }
 }
-
-function grab_tracking_pixel(url) {
-    var random_value = Math.round(Math.random() * 2147483647);
-    var cachebusted_url = url + "&r=" + random_value;
-    var img = new Image();
-    img.src = cachebusted_url;
-    document.getElementById("oldpixel").parentNode.appendChild(img);
-}
