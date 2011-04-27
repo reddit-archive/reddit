@@ -345,7 +345,7 @@ class _MessageBuilder(Builder):
             if children:
                 # if no parent is specified, check if any of the messages are
                 # uncollapsed, and truncate the thread
-                children = [wrapped[child] for child in children]
+                children = [wrapped[child] for child in children if child in wrapped]
                 parent.child = empty_listing()
                 # if the parent is new, uncollapsed, or focal we don't
                 # want it to become a moremessages wrapper.
