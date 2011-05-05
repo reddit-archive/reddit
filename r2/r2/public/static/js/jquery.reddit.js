@@ -763,8 +763,8 @@ $.cookie_write = function(c) {
     }
 };
 
-$.cookie_read = function(name) {
-    var nameEQ = cookie_name_prefix + name + '=';
+$.cookie_read = function(name, prefix) {
+    var nameEQ = (prefix || cookie_name_prefix) + name + '=';
     var ca=document.cookie.split(';');
     /* walk the list backwards so we always get the last cookie in the
        list */
