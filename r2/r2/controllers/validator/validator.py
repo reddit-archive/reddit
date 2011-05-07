@@ -141,7 +141,7 @@ def validate(*simple_vals, **param_vals):
     return val
 
 
-def api_validate(response_function):
+def api_validate(response_type=None):
     """
     Factory for making validators for API calls, since API calls come
     in two flavors: responsive and unresponsive.  The machinary
@@ -149,47 +149,49 @@ def api_validate(response_function):
     so this function abstracts away the kw validation and creation of
     a Json-y responder object.
     """
-    def _api_validate(*simple_vals, **param_vals):
-        def val(fn):
-            def newfn(self, *a, **env):
-                c.render_style = api_type(request.params.get("renderstyle",
-                                                             "html"))
-                c.response_content_type = 'application/json; charset=UTF-8'
-                # generate a response object
-                if request.params.get('api_type') == "json":
-                    responder = JsonResponse()
-                else:
-                    responder = JQueryResponse()
-                try:
-                    kw = _make_validated_kw(fn, simple_vals, param_vals, env)
-                    return response_function(self, fn, responder,
-                                             simple_vals, param_vals, *a, **kw)
-                except UserRequiredException:
-                    responder.send_failure(errors.USER_REQUIRED)
-                    return self.api_wrapper(responder.make_response())
-                except VerifiedUserRequiredException:
-                    responder.send_failure(errors.VERIFIED_USER_REQUIRED)
-                    return self.api_wrapper(responder.make_response())
-            return newfn
-        return val
-    return _api_validate
+    def wrap(response_function):
+        def _api_validate(*simple_vals, **param_vals):
+            def val(fn):
+                def newfn(self, *a, **env):
+                    c.render_style = api_type(request.params.get("renderstyle",
+                                                                 response_type))
+                    c.response_content_type = 'application/json; charset=UTF-8'
+                    # generate a response object
+                    if response_type is None or request.params.get('api_type') == "json":
+                        responder = JsonResponse()
+                    else:
+                        responder = JQueryResponse()
+                    try:
+                        kw = _make_validated_kw(fn, simple_vals, param_vals, env)
+                        return response_function(self, fn, responder,
+                                                 simple_vals, param_vals, *a, **kw)
+                    except UserRequiredException:
+                        responder.send_failure(errors.USER_REQUIRED)
+                        return self.api_wrapper(responder.make_response())
+                    except VerifiedUserRequiredException:
+                        responder.send_failure(errors.VERIFIED_USER_REQUIRED)
+                        return self.api_wrapper(responder.make_response())
+                return newfn
+            return val
+        return _api_validate
+    return wrap
     
 
-@api_validate
+@api_validate("html")
 def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     self_method(self, *a, **kw)
     return self.api_wrapper({})
 
-@api_validate
+@api_validate("html")
 def textresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     return self_method(self, *a, **kw)
 
-@api_validate
+@api_validate()
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     r = self_method(self, *a, **kw)
     return self.api_wrapper(r)
 
-@api_validate
+@api_validate("html")
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
                   *a, **kw):
     # generate a form object
