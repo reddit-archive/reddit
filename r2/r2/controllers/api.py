@@ -137,6 +137,14 @@ class ApiController(RedditController):
         listing = wrap_links(filter(None, links or []), num = count)
         return BoringPage(_("API"), content = listing).render()
 
+
+    @json_validate()
+    def GET_me(self):
+        if c.user_is_loggedin:
+            return Wrapped(c.user).render()
+        else:
+            return {}
+
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
                    email=ValidEmails('email', num = 1),

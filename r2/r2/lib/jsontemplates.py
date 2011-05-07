@@ -219,6 +219,12 @@ class AccountJsonTemplate(ThingJsonTemplate):
             return bool(Subreddit.reverse_moderator_ids(thing))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
+    def raw_data(self, thing):
+        data = ThingJsonTemplate.raw_data(self, thing)
+        if c.user_is_loggedin and thing._id == c.user._id:
+            data["modhash"] = c.modhash
+        return data
+
 class LinkJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
                                                 downs        = "downvotes",
