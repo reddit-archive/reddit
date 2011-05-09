@@ -177,10 +177,9 @@ class CMemcache(CacheUtils):
         with self.clients.reserve() as mc:
             return mc.delete(key)
 
-    def delete_multi(self, keys, prefix='', time=0):
+    def delete_multi(self, keys, prefix=''):
         with self.clients.reserve() as mc:
-            return mc.delete_multi(keys, time = time,
-                                   key_prefix = prefix)
+            return mc.delete_multi(keys, key_prefix=prefix)
 
     def __repr__(self):
         return '<%s(%r)>' % (self.__class__.__name__,
