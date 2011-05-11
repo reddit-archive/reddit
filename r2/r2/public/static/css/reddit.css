@@ -3321,7 +3321,7 @@ ul.tabmenu.formtab {
     border-bottom: none;
 }
 
-.campaign ul {  
+.targeting > ul {  
     font-size: x-small;
     list-style-type: disc; 
     margin: 0 20px 10px; 
