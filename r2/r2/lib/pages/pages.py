@@ -122,7 +122,7 @@ class Reddit(Templated):
         self.infotext       = infotext
         self.loginbox       = True
         self.show_sidebar   = show_sidebar
-        self.space_compress = space_compress
+        self.space_compress = space_compress and not g.template_debug
         # instantiate a footer
         self.footer         = RedditFooter() if footer else None
 
