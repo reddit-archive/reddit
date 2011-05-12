@@ -30,16 +30,6 @@
 
 <%namespace name="utils" file="utils.html"/>
 
-<script type="text/javascript">
-function update_title(elem) {
-  var form = $(elem).parents("form");
-  var title = $(form).find("input[name=title]");
-  var name  = $(form).find("input[name=name]");
-  if (title.attr("value") == "")
-    title.attr("value", name.attr("value"));
-}
-</script>
-
 <%def name="radio_type(field_name, val_name, title, text, checked)">
   <% full_name = field_name + "_" + val_name %>
   <tr>
