@@ -44,6 +44,7 @@ PRIVATEREPOS = $(shell python -c 'exec "try: import r2admin; print r2admin.__pat
 
 JSTARGETS  := $(foreach js,  $(js_targets),  $(static_dir)/$(js))
 CSSTARGETS := $(foreach css, $(css_targets), $(static_dir)/$(css))
+SPRITES    := $(static_dir)/sprite.png
 MAINCSS    := $(foreach css, $(main_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
@@ -66,7 +67,7 @@ else
 endif
 
 
-all:	$(JSTARGETS) $(CSSTARGETS) $(MD5S) $(RTLCSS) $(INIS) $(PYXSO_FILES)
+all:	$(JSTARGETS) $(CSSTARGETS) $(MAINCSS) $(MD5S) $(RTLCSS) $(INIS) $(PYXSO_FILES)
 
 .PHONY: 	js css md5 rtl clean all
 
@@ -105,4 +106,4 @@ md5:    	$(MD5S)
 rtl:		$(RTLCSS)
 
 clean:
-	rm $(JSTARGETS) $(CSSTARGETS) $(MD5S) $(INIS)
+	rm $(JSTARGETS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(MD5S) $(INIS)
