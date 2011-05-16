@@ -432,7 +432,7 @@ class ApiController(RedditController):
                 form.has_errors("passwd", errors.BAD_PASSWORD) or
                 form.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
                 form.has_errors('ratelimit', errors.RATELIMIT) or
-                form.has_errors('captcha', errors.BAD_CAPTCHA)):
+                (not g.disable_captcha and form.has_errors('captcha', errors.BAD_CAPTCHA))):
 
             user = register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")

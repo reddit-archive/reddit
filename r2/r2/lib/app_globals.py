@@ -89,6 +89,7 @@ class Globals(object):
                   'read_only_mode',
                   'frontpage_dart',
                   'allow_wiki_editing',
+                  'disable_captcha',
                   ]
 
     tuple_props = ['stalecaches',

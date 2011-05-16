@@ -36,9 +36,11 @@
   ${login_panel(login_form, 
                 user_reg = thing.user_reg, user_login = thing.user_login, 
                 dest=thing.dest)}
+  %if not g.disable_captcha:
   <script type="text/javascript">
     $.request("new_captcha");
   </script>
+  %endif
 %endif
 
 <%def name="login_form(register=False, user='', dest='', include_tos=True)">
@@ -101,8 +103,10 @@
           ${error_field("BAD_PASSWORD_MATCH", "passwd2", kind="span")}
         </li>
         <li>
+          %if not g.disable_captcha:
           <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
           ${captchagen(iden, tabulate=True, label=False, size=30)}
+          %endif
           ${error_field("RATELIMIT", "ratelimit")}
           ${error_field("RATELIMIT", "vdelay")}
         </li>
