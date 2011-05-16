@@ -92,13 +92,13 @@ reddit, reddit.com, vote, comment, submit
 <%def name="head()">
 %if g.tracker_url and thing.site_tracking:
 <script type="text/javascript">
-    $(function() {
+    (function() {
         var url = '${UserInfo.gen_url()}';
         var cachebuster = Math.round(Math.random() * 2147483647);
         var cachebusted_url = url + "&r=" + cachebuster;
         var img = new Image();
         img.src = cachebusted_url;
-    });
+    })();
 </script>
 %endif
 
