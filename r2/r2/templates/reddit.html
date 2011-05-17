@@ -63,7 +63,7 @@
   %endif
 
   %if hasattr(thing, "shortlink"):
-    <link rel="shorturl" href="${thing.shortlink}"/>
+    <link rel="shorturl" href="http://${thing.shortlink}"/>
   %endif
 
   %if c.allow_styles and c.site.stylesheet_contents:
