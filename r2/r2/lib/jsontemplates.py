@@ -202,7 +202,8 @@ class AccountJsonTemplate(ThingJsonTemplate):
                                                 comment_karma = "comment_karma",
                                                 has_mail = "has_mail",
                                                 has_mod_mail = "has_mod_mail",
-                                                is_mod = "is_mod"
+                                                is_mod = "is_mod",
+                                                is_gold = "gold"
                                                 )
 
     def thing_attr(self, thing, attr):
