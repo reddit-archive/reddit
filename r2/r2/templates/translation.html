@@ -32,7 +32,7 @@ $(function() {
         var id = $(this).attr("id");
         if (s.length < 20) {
            p.replaceWith("<input type='text' width='40'/>");
-           $(this).prev().attr("value", s);
+           $(this).prev().val(s);
         }
         else
            p.replaceWith("<textarea rows='4' cols='40'>" + s + "</textarea>");

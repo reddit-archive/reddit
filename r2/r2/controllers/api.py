@@ -862,7 +862,7 @@ class ApiController(RedditController):
 
             # clean up the submission form and remove it from the DOM (if reply)
             t = commentform.find("textarea")
-            t.attr('rows', 3).html("").attr("value", "")
+            t.attr('rows', 3).html("").val("")
             if isinstance(parent, (Comment, Message)):
                 commentform.remove()
                 jquery.things(parent._fullname).set_html(".reply-button:first",

@@ -37,7 +37,7 @@
      %>
     $(function() {
       var ad = $("#ad-frame");
-      if(ad.height() == 0 || ad.width() == 0) {
+      if(ad.height() == 0 || ad.width() == 0 || ad.offset().left == 0) {
         $(".footer").append("<img alt='' src='${unsafe(tracker_url)}&random=" +
                                     Math.random()*10000000000000000 + "'/>");
       }

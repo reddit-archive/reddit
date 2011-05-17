@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-# Jacascript files to be compressified
+# Javascript files to be compressified
 js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js ui.core.js ui.datepicker.js sponsored.js jquery.flot.js compact.js
 # CSS targets 
 main_css = reddit.css

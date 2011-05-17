@@ -60,6 +60,18 @@ def static(file):
         
     return os.path.join(c.site.static_path, file) + v
 
+def external(name):
+    """
+    Look up a named external URL from a static mapping. Helper for making
+    frequently used URLs consistent across templates.
+    """
+
+    resources = {
+        "jquery.js": "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js",
+    }
+
+    return resources[name]
+
 def generateurl(context, path, **kw):
     if kw:
         return path + '?' + '&'.join(["%s=%s"%(k, url_escape(v)) \

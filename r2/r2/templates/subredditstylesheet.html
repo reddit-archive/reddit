@@ -121,7 +121,7 @@
                   .clone(true).attr("id", "")
                   .find(".img-name").html(name).end()
                   .find(".img-url").html("url(%%" + name + "%%)").end()
-                  .find("form input[name=img_name]").attr("value", name).end()
+                  .find("form input[name=img_name]").val(name).end()
                   .find("img").attr("id", "img-preview-" + name).end();
               
               list.append(new_li);
@@ -173,11 +173,11 @@
             $("#submit-header-img").show();
             $(".img-status").html("");
             if(file_input.value) {
-                if(! $('#img-name').attr("value")) {
+                if(! $('#img-name').val()) {
                    var f = file_input.value
                         .replace(/.*[\/\\]/, "").split('.')[0]
                         .replace(/[ _]/g, "-");
-                    $('#img-name').attr("value", f);
+                    $('#img-name').val(f);
                 }
             }
         }
