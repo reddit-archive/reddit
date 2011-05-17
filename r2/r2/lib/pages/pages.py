@@ -797,6 +797,9 @@ class LinkInfoPage(Reddit):
 
         self.subtitle = subtitle
 
+        if self.link.shortlink:
+            self.shortlink = self.link.shortlink
+
         # if we're already looking at the 'duplicates' page, we can
         # avoid doing this lookup twice
         if duplicates is None:

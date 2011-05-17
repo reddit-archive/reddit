@@ -31,6 +31,9 @@
     <link rel="apple-touch-startup-image" 
           href="/static/compact/reddit_startimg.png" />
     <link rel="canonical" href="${thing.canonical_link}" />
+    %if hasattr(thing, "shortlink"):
+      <link rel="shorturl" href="${thing.shortlink}" />
+    %endif
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
     <title>${self.Title()}</title>

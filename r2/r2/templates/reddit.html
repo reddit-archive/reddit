@@ -62,6 +62,10 @@
       %endif
   %endif
 
+  %if hasattr(thing, "shortlink"):
+    <link rel="shorturl" href="${thing.shortlink}"/>
+  %endif
+
   %if c.allow_styles and c.site.stylesheet_contents:
      <% inline_stylesheet = (
           len(c.site.stylesheet_contents) < 1024
