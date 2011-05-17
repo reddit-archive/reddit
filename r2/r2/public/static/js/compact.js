@@ -142,7 +142,7 @@ function showcover() {
     $(".login-popup:first").fadeIn()
         .find(".popup").css("top", $(window).scrollTop() + 75).end()
         .find(".cover").css("height", $(document).height()).end()
-        .find("form input[name=reason]").attr("value", (reason || ""));
+        .find("form input[name=reason]").val(reason || "");
     return false;
 }
 
