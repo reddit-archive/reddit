@@ -797,7 +797,7 @@ class LinkInfoPage(Reddit):
 
         self.subtitle = subtitle
 
-        if self.link.shortlink:
+        if hasattr(self.link, "shortlink"):
             self.shortlink = self.link.shortlink
 
         # if we're already looking at the 'duplicates' page, we can
