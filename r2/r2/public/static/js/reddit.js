@@ -729,7 +729,7 @@ function last_click(thing, organic) {
               
               /* and ask the server to fill it in */
               $.request('fetch_links',
-                        {links: [current.what],
+                        {links: current.what,
                                 show: current.what,
                                 listing: olisting.attr('id')});
           }
