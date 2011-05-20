@@ -246,12 +246,12 @@ def get_title(url):
         if not bs:
             return
 
-        title_bs = bs.first('title')
+        title_bs = bs.html.head.title
 
-        if not title_bs or title_bs.children:
+        if not title_bs or not title_bs.string:
             return
 
-        return title_bs.text.encode('utf-8')
+        return title_bs.string.encode('utf-8')
 
     except:
         return None
