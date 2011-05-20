@@ -598,19 +598,21 @@ class FrontController(RedditController):
                 num, t, spane = self._search(q, num=num, after=after, 
                                              reverse = reverse, count = count)
             except InvalidIndextankQuery:
-                # delete special characters from the query and run again
-                special_characters = '+-&|!(){}[]^"~*?:\\'
-                translation = dict((ord(char), None) 
-                                   for char in list(special_characters))
-                cleaned = query.translate(translation)
+                # strip the query down to a whitelist
+                cleaned = re.sub("[^\w\s]+", "", query)
+                cleaned = cleaned.lower()
 
-                q = IndextankQuery(cleaned, site, sort)
-                num, t, spane = self._search(q, num=num, after=after, 
-                                             reverse = reverse, count = count)
-                cleanup_message = _('I couldn\'t understand your query, ' +
-                                    'so I simplified it and searched for ' + 
-                                    '"%(clean_query)s" instead.') % {
-                                        'clean_query': cleaned }
+                # if it was nothing but mess, we have to stop
+                if not cleaned.strip():
+                    num, t, spane = 0, 0, []
+                    cleanup_message = strings.completely_invalid_search_query
+                else:
+                    q = IndextankQuery(cleaned, site, sort)
+                    num, t, spane = self._search(q, num=num, after=after, 
+                                                 reverse=reverse, count=count)
+                    cleanup_message = strings.invalid_search_query % {
+                                          "clean_query": cleaned
+                                      }
 		
             res = SearchPage(_('search results'), query, t, num, content=spane,
                              nav_menus = [SearchSortMenu(default=sort)],
