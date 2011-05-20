@@ -802,9 +802,9 @@ class RedditController(MinimalController):
         from r2.lib.contrib.pysolr import SolrError
         from r2.lib.indextank import IndextankException
         if isinstance(exception, SolrError):
-            errmsg = "SolrError: %r" % e
+            errmsg = "SolrError: %r" % exception
 
-            if (str(e) == 'None'):
+            if (str(exception) == 'None'):
                 # Production error logs only get non-None errors
                 g.log.debug(errmsg)
             else:
