@@ -674,7 +674,7 @@ class FrontController(RedditController):
             raise UserRequiredException
 
         if not (c.default_sr or c.site.can_submit(c.user)):
-            self.abort(403, "forbidden")
+            abort(403, "forbidden")
 
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
