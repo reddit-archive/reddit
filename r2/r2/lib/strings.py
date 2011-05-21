@@ -175,6 +175,12 @@ class StringHandler(object):
             return dict((k, _(v)) for k, v in rval.iteritems())
         else:
             raise AttributeError
+    
+    def __iter__(self):
+        return iter(self.string_dict)
+
+    def keys(self):
+        return self.string_dict.keys()
 
 strings = StringHandler(**string_dict)
 

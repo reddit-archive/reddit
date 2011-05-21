@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import static, external
+   from r2.lib import js
  %>
 <%namespace file="utils.html" import="js_preamble"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -41,11 +42,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
-    <script src="${external('jquery.js')}"  type="text/javascript"></script>
-    <script src="${static('jquery.json.js')}" type="text/javascript"></script>
-    <script src="${static('jquery.reddit.js')}" type="text/javascript"></script>
-    <script src="${static('reddit.js')}" type="text/javascript"></script>
-    <script type="text/javascript" src="${static('compact.js')}"></script>
+    <script src="${external('jquery.js')}" type="text/javascript"></script>
+    ${unsafe(js.module['mobile'].use())}
     <script type="text/javascript">
       ${js_preamble()}
     </script> 

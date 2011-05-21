@@ -21,16 +21,14 @@
 ################################################################################
 <%!
   from r2.lib.template_helpers import static
+  from r2.lib import js
  %>
 <%namespace name="utils" file="utils.html"/>
 <%namespace file="promotelinkform.html" name="p" />
 <%namespace file="utils.html" 
             import="error_field, checkbox, image_upload, reddit_selector" />
 
-<script type="text/javascript" src="${static('ui.core.js')}"></script>
-<script type="text/javascript" src="${static('ui.datepicker.js')}"></script>
-<script type="text/javascript" src="${static('sponsored.js')}"></script>
-
+${unsafe(js.module['sponsored'].use())}
 
 <div class="pretty-form campaign">
   <%utils:line_field title="${_('create a roadblock')}" id="campaign-field">

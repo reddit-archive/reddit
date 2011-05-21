@@ -21,13 +21,14 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import static
+   from r2.lib import js
    import locale
    from r2.models.subreddit import DomainSR, FakeSubreddit
    def num(x):
       return locale.format('%d', x, True)
  %>
 
-<script src="${static('jquery.flot.js')}"  type="text/javascript"></script>
+${unsafe(js.module['flot'].use())}
 
 <%def name="daily_summary()">
   <% 

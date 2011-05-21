@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import static
+   from r2.lib import js
    import datetime, locale
    from r2.lib import promote
    def num(x):
@@ -30,7 +31,7 @@
  %>
 <h1>Sponsored link calendar</h1>
 
-<script src="${static('jquery.flot.js')}"  type="text/javascript"></script>
+${unsafe(js.module['flot'].use())}
 
 %if not c.user_is_sponsor:
 <div class="instructions">

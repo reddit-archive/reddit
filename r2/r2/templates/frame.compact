@@ -21,6 +21,7 @@
 ################################################################################
 <%
    from r2.lib.template_helpers import add_sr, static
+   from r2.lib import js
    from r2.lib.utils import query_string
    from r2.lib.filters import _force_unicode
  %>
@@ -29,12 +30,8 @@
 <html>
   <head>
     <title>${thing.title}</title>
-    <script type="text/javascript" src="${static('jquery.js')}"></script>
-    <script src="${static('jquery.json.js')}" type="text/javascript"></script>
-    <script src="${static('jquery.reddit.js')}" type="text/javascript"></script>
-    <script src="${static('jquery.lazyload.js')}" type="text/javascript"></script>
-    <script src="${static('reddit.js')}" type="text/javascript"></script>
-    <script type="text/javascript" src="${static('compact.js')}"></script>
+    <script src="${external('jquery.js')}" type="text/javascript"></script>
+    ${unsafe(js.module['mobile'].use())}
     <script type="text/javascript">
       ${js_preamble()}
     </script> 

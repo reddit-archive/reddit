@@ -21,20 +21,22 @@
 ################################################################################
 
 # Javascript files to be compressified
-js_targets  = jquery.js jquery.json.js jquery.reddit.js reddit.js ui.core.js ui.datepicker.js sponsored.js jquery.flot.js compact.js blogbutton.js
+js_sources           = jquery.json.js jquery.reddit.js reddit.js base.js ui.core.js ui.datepicker.js sponsored.js jquery.flot.js jquery.lazyload.js compact.js blogbutton.js
+js_targets           = button.js jquery.flot.js sponsored.js
+localized_js_targets = reddit.js mobile.js
+localized_js_outputs = $(localized_js_targets:.js=.*.js)
+
 # CSS targets 
 main_css = reddit.css
 css_targets = reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css compact.css 
 
-SED=sed
-CAT=cat
-CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
-
 package    = r2
 static_dir = $(package)/public/static
-contrib    = $(package)/lib/contrib
 
-JSCOMPRESS = $(contrib)/jsmin.py
+SED=sed
+CAT=cat
+JS_COMPRESS = paster run standalone $(package)/lib/js.py -c "build_reddit_js()"
+CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
 
 # If admin codebase is install, get its path so that we can build ini
 # files against the primary production.ini
@@ -42,17 +44,18 @@ PRIVATEREPOS = $(shell python -c 'exec "try: import r2admin; print r2admin.__pat
 
 #------
 
-JSTARGETS  := $(foreach js,  $(js_targets),  $(static_dir)/$(js))
-CSSTARGETS := $(foreach css, $(css_targets), $(static_dir)/$(css))
-SPRITES    := $(static_dir)/sprite.png
-MAINCSS    := $(foreach css, $(main_css), $(static_dir)/$(css))
+JSTARGETS   = $(foreach js,  $(js_targets) $(localized_js_targets),  $(static_dir)/$(js))
+JSOUTPUTS   = $(foreach js,  $(js_targets) $(localized_js_outputs),  $(static_dir)/$(js))
+JSSOURCES   = $(foreach js,  $(js_sources),  $(static_dir)/js/$(js))
+CSSTARGETS  = $(foreach css, $(css_targets), $(static_dir)/$(css))
+SPRITES     = $(static_dir)/sprite.png
+MAINCSS     = $(foreach css, $(main_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 
 PYX_FILES := $(shell find . -name \*.pyx)
 PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
-
-MD5S = $(JSTARGETS:=.md5) $(CSSTARGETS:=.md5) $(MAINCSS:=.md5) $(RTLCSS:=.md5)
+MD5S = $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(RTLCSS)
 
 INIUPDATE = $(wildcard *.update)
 INIS      = $(INIUPDATE:.update=.ini)
@@ -67,15 +70,17 @@ else
 endif
 
 
-all:	$(JSTARGETS) $(CSSTARGETS) $(MAINCSS) $(MD5S) $(RTLCSS) $(INIS) $(PYXSO_FILES)
+all:	pyx static $(INIS)
 
-.PHONY: 	js css md5 rtl clean all
+.PHONY: 	pyx js css rtl static md5 clean clean_static all
 
-$(MD5S): 	%.md5 : %
-	cat $< | openssl md5 > $@
+md5:
+	for name in $(MD5S) ; do \
+		cat $$name | openssl md5 > $$name.md5 ; \
+	done
 
-$(JSTARGETS): 	$(static_dir)/%.js : $(static_dir)/js/%.js
-	$(JSCOMPRESS) < $< > $@
+$(JSTARGETS): $(JSSOURCES)
+	$(JS_COMPRESS)
 
 $(CSSTARGETS): 	$(static_dir)/%.css : $(static_dir)/css/%.css
 	$(CAT) $< | $(CSS_COMPRESS) > $@
@@ -96,14 +101,18 @@ $(PYXSO_FILES): %.so : %.pyx
 	PYTHONPATH=tmp python pyx_setup.py develop -d tmp -b tmp $<
 	rm -r tmp
 
+pyx: 		$(PYXSO_FILES)
 
-js: 		$(JSTARGETS)
+static: 	js css rtl md5
 
-css: 		$(CSSTARGETS)
+js: 		pyx $(JSTARGETS)
 
-md5:    	$(MD5S)
+css: 		$(CSSTARGETS) $(MAINCSS)
 
 rtl:		$(RTLCSS)
 
-clean:
-	rm $(JSTARGETS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(MD5S) $(INIS)
+clean: clean_static
+	rm -f $(PYXSO_FILES)
+
+clean_static:
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(MD5S) $(INIS)

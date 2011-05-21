@@ -21,10 +21,11 @@
 ################################################################################
 <%!
   from r2.lib.template_helpers import static
+  from r2.lib import js
 %>
 <%namespace file="utils.html" import="error_field"/>
 
-<script type="text/javascript" src="${static('sponsored.js')}"></script>
+${unsafe(js.module['sponsored'].use())}
 <script type="text/javascript">
   $(function() { update_bid("#bid-field"); }); 
 </script>
