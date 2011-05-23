@@ -307,7 +307,7 @@ class DomainMiddleware(object):
         sr_redirect = None
         for sd in list(sub_domains):
             # subdomains to disregard completely
-            if sd in ('www', 'origin', 'beta', 'pay'):
+            if sd in ('www', 'origin', 'beta', 'pay', 'buttons'):
                 continue
             elif sd == 'blog':
                 r = Response()
