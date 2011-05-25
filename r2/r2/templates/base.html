@@ -109,6 +109,7 @@ reddit, reddit.com, vote, comment, submit
   _gaq.push(['_setAccount', '${g.googleanalytics}']);
   _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
   _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
+  _gaq.push(['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2]);
   _gaq.push(['_trackPageview']);
 
   (function() {

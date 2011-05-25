@@ -157,6 +157,10 @@ class UserInfo(Info):
             return name
         return '-'.join((name, action))
 
+    @staticmethod
+    def get_usertype():
+        return "loggedin" if c.user_is_loggedin else "guest"
+
     def init_defaults(self):
         self.name = safe_str(c.user.name if c.user_is_loggedin else '')
         self.site = UserInfo.get_srpath()
