@@ -235,7 +235,7 @@ def make_map(global_conf={}, app_conf={}):
        dest='http://store.reddit.com/index.html')
 
     mc('/code', controller='redirect', action='redirect',
-       dest='http://code.reddit.com/')
+       dest='http://github.com/reddit/')
 
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
