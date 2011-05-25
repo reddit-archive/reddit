@@ -24,6 +24,7 @@ from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 import signal
 from datetime import timedelta, datetime
+from urlparse import urlparse
 from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
@@ -272,6 +273,8 @@ class Globals(object):
         self.all_languages = all_languages
 
         self.paths = paths
+
+        self.secure_domains = set([urlparse(self.payment_domain).hostname])
 
         # load the md5 hashes of files under static
         static_files = os.path.join(paths.get('static_files'), 'static')
