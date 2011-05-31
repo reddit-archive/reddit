@@ -35,12 +35,13 @@ static_dir = $(package)/public/static
 
 SED=sed
 CAT=cat
+PYTHON=python2.6
 JS_COMPRESS = paster run standalone $(package)/lib/js.py -c "build_reddit_js()"
 CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
 
 # If admin codebase is install, get its path so that we can build ini
 # files against the primary production.ini
-PRIVATEREPOS = $(shell python -c 'exec "try: import r2admin; print r2admin.__path__[0]\nexcept:pass"')
+PRIVATEREPOS = $(shell $(PYTHON) -c 'exec "try: import r2admin; print r2admin.__path__[0]\nexcept:pass"')
 
 #------
 
@@ -86,7 +87,7 @@ $(CSSTARGETS): 	$(static_dir)/%.css : $(static_dir)/css/%.css
 	$(CAT) $< | $(CSS_COMPRESS) > $@
 
 $(MAINCSS):  $(static_dir)/%.css : $(static_dir)/css/%.css
-	python r2/lib/contrib/nymph.py $< | $(CSS_COMPRESS) > $@
+	$(PYTHON) r2/lib/contrib/nymph.py $< | $(CSS_COMPRESS) > $@
 
 $(RTLCSS):	%-rtl.css : %.css
 	$(SED) -e "s/left/>####</g" \
@@ -98,7 +99,7 @@ $(PYXSO_FILES): %.so : %.pyx
 	rm -f $(<:.pyx=.pyc)
 	cython $<
 	mkdir -p tmp
-	PYTHONPATH=tmp python pyx_setup.py develop -d tmp -b tmp $<
+	PYTHONPATH=tmp $(PYTHON) pyx_setup.py develop -d tmp -b tmp $<
 	rm -r tmp
 
 pyx: 		$(PYXSO_FILES)
