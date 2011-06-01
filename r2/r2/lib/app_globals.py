@@ -274,7 +274,7 @@ class Globals(object):
 
         self.paths = paths
 
-        self.secure_domains = set([urlparse(self.payment_domain).hostname])
+        self.secure_domains = set([urlparse(self.payment_domain).netloc])
 
         # load the md5 hashes of files under static
         static_files = os.path.join(paths.get('static_files'), 'static')
