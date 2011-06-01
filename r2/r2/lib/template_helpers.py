@@ -76,6 +76,9 @@ def external(name):
 
     return external_resources[name][c.secure]()
 
+def s3_https_if_secure(url):
+    return url if not c.secure else url.replace("http://", "https://s3.amazonaws.com/")
+
 def generateurl(context, path, **kw):
     if kw:
         return path + '?' + '&'.join(["%s=%s"%(k, url_escape(v)) \
