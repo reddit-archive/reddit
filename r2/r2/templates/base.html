@@ -90,7 +90,7 @@ reddit, reddit.com, vote, comment, submit
 </%def>
 
 <%def name="head()">
-%if g.tracker_url and thing.site_tracking:
+%if g.tracker_url and thing.site_tracking and not c.secure:
 <script type="text/javascript">
     (function() {
         var url = '${UserInfo.gen_url()}';
