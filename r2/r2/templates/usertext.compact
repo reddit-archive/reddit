@@ -47,10 +47,14 @@
   <input type="hidden" name="thing_id" value="${thing.fullname or ''}"/>
 
   %if not thing.creating:
+    % if not thing.expunged:
     <div class="usertext-body">
       ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
                                         target = thing.target))}
     </div>
+    % else:
+    <em>${_("[deleted]")}</em>&#32;
+    % endif
   %endif
 
   %if thing.editable or thing.creating:

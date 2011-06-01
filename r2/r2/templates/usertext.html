@@ -48,8 +48,12 @@
 
   %if not thing.creating:
     <div class="usertext-body">
+      % if not thing.expunged:
       ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
                                         target = thing.target))}
+      % else:
+      <em>${_("[deleted]")}</em>&#32;
+      % endif
     </div>
   %endif
 

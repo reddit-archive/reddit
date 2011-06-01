@@ -24,8 +24,12 @@
  %>
 
 %if thing.text:
+%if not thing.expunged:
 <div class="usertext-body">
     ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
                           target = thing.target))}
 </div>
+%else:
+<em>${_("[deleted]")}</em>&#32;
+%endif
 %endif
