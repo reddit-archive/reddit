@@ -1690,7 +1690,6 @@ class NewLink(Templated):
         if self.show_self and self.show_link:
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))
             buttons = []
-            self.default_tabs = tabs[0][1]
             self.default_tab = tabs[0][0]
             for tab_name, parts in tabs:
                 to_show = ','.join('#' + p for p in parts)
@@ -1704,7 +1703,6 @@ class NewLink(Templated):
                 buttons.append(JsButton(tab_name, onclick=onclick, css_class=tab_name + "-button"))
 
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
-            self.default_tabs = tabs[0][1]
 
         self.sr_searches = simplejson.dumps(popular_searches())
 
