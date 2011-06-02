@@ -219,7 +219,7 @@ function hide_thing(elem) {
 
 function toggle_label (elem, callback, cancelback) {
   $(elem).parent().find(".option").toggle();
-  $(elem).onclick = function() {
+  $(elem)[0].onclick = function() {
     return(toggle_label(elem, cancelback, callback));
   }
   if (callback) callback(elem);
