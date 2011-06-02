@@ -22,7 +22,7 @@
 <%inherit file="reddit.html"/>
 
 <%def name="bodyHTML()">
-  <body onclick="close_menus()" class="min-body">
+  <body class="min-body">
     %if thing.content:
       <div class="content">
         ${thing.content()}
