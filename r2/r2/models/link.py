@@ -224,14 +224,14 @@ class Link(Thing, Printable):
             if wrapped.hidden:
                 return False
 
-        # Uncomment to skip based on nsfw
-        #
-        # skip the item if 18+ and the user has that preference set
-        # ignore skip if we are visiting a nsfw reddit
-        if ( not c.user_is_loggedin and
-             (wrapped.subreddit != c.site or c.site.name == 'multi')):
-            return not bool(wrapped.subreddit.over_18 or 
-                            wrapped.over_18)
+        # hide NSFW links from non-logged users if they're not explicitly
+        # visiting an NSFW subreddit
+        if not c.user_is_loggedin and c.site != wrapped.subreddit:
+            is_nsfw = bool(wrapped.over_18)
+            is_from_nsfw_sr = bool(wrapped.subreddit.over_18)
+
+            if is_nsfw or is_from_nsfw_sr:
+                return False
 
         return True
 

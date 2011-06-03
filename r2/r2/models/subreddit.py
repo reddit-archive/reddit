@@ -583,6 +583,15 @@ class Subreddit(Thing, Printable):
             del l[name]
             self.images = l
 
+    def __eq__(self, other):
+        if type(self) != type(other):
+            return False
+
+        if isinstance(self, FakeSubreddit):
+            return self is other
+
+        return self._id == other._id
+
 class FakeSubreddit(Subreddit):
     over_18 = False
     _nodb = True
