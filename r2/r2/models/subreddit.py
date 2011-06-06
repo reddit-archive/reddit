@@ -592,6 +592,10 @@ class Subreddit(Thing, Printable):
 
         return self._id == other._id
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
 class FakeSubreddit(Subreddit):
     over_18 = False
     _nodb = True
