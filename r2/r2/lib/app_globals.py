@@ -25,6 +25,7 @@ import pytz, os, logging, sys, socket, re, subprocess, random
 import signal
 from datetime import timedelta, datetime
 from urlparse import urlparse
+import json
 from pycassa.pool import ConnectionPool as PycassaConnectionPool
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
@@ -278,18 +279,17 @@ class Globals(object):
 
         self.secure_domains = set([urlparse(self.payment_domain).netloc])
 
-        # load the md5 hashes of files under static
+        # load the unique hashed names of files under static
         static_files = os.path.join(self.paths.get('static_files'), 'static')
-        self.static_md5 = {}
-        if os.path.exists(static_files):
-            for f in os.listdir(static_files):
-                if f.endswith('.md5'):
-                    key = f[0:-4]
-                    f = os.path.join(static_files, f)
-                    with open(f, 'r') as handle:
-                        md5 = handle.read().strip('\n')
-                    self.static_md5[key] = md5
-
+        names_file_path = os.path.join(static_files, 'names.json')
+        if os.path.exists(names_file_path):
+            with open(names_file_path) as handle:
+                self.static_names = json.load(handle)
+            # Generate a reverse mapping dictionary so that we can check
+            # unique filenames in StaticURLHashMiddleware
+            self.static_names_rev = dict((v, k) for k, v in self.static_names.iteritems())
+        else:
+            self.static_names = {}
 
         #set up the logging directory
         log_path = self.log_path

@@ -31,7 +31,7 @@ import random
 from pylons import g, c
 from pylons.i18n import _, ungettext
 
-def static(file):
+def static(path):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -41,24 +41,28 @@ def static(file):
     mangles the path to point to the uncompressed versions.
     """
     
-    # stip of "/static/" if already present
-    fname = os.path.basename(file).split('?')[0]
-    # if uncompressed, we are in devel mode so randomize the hash
+    dirname, fname = os.path.split(path)
+    fname = fname.split('?')[0]
+    query = ""
+
+    # if uncompressed, randomize a url query to bust caches
     if g.uncompressedJS:
-        v = str(random.random()).split(".")[-1]
+        query = "?v=" + str(random.random()).split(".")[-1]
     else:
-        v = g.static_md5.get(fname, '')
-    if v: v = "?v=" + v
+        if fname in g.static_names:
+            fname = g.static_names[fname]
+            path = os.path.join(dirname, fname)
+
     # don't mangle paths
-    if os.path.dirname(file):
-        return file + v
+    if dirname:
+        return path + query
 
     if g.uncompressedJS:
-        extension = file.split(".")[1:]
+        extension = path.split(".")[1:]
         if extension and extension[-1] in ("js", "css"):
-            return os.path.join(c.site.static_path, extension[-1], file) + v
-        
-    return os.path.join(c.site.static_path, file) + v
+            return os.path.join(c.site.static_path, extension[-1], path) + query
+
+    return os.path.join(c.site.static_path, path) + query
 
 
 external_resources = {

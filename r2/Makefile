@@ -38,6 +38,7 @@ CAT=cat
 PYTHON=python2.6
 JS_COMPRESS = paster run standalone $(package)/lib/js.py -c "build_reddit_js()"
 CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
+UPDATE_NAMES = $(PYTHON) $(package)/lib/static.py
 
 # If admin codebase is install, get its path so that we can build ini
 # files against the primary production.ini
@@ -52,11 +53,12 @@ CSSTARGETS  = $(foreach css, $(css_targets), $(static_dir)/$(css))
 SPRITES     = $(static_dir)/sprite.png
 MAINCSS     = $(foreach css, $(main_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
+NAMES = $(static_dir)/names.json
 
 PYX_FILES := $(shell find . -name \*.pyx)
 PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
-MD5S = $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(RTLCSS)
+NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(RTLCSS)
 
 INIUPDATE = $(wildcard *.update)
 INIS      = $(INIUPDATE:.update=.ini)
@@ -71,14 +73,12 @@ else
 endif
 
 
-all:	pyx static $(INIS)
+all:	pyx static names $(INIS)
 
-.PHONY: 	pyx js css rtl static md5 clean clean_static all
+.PHONY: 	pyx js css rtl static names clean clean_static all
 
-md5:
-	for name in $(MD5S) ; do \
-		cat $$name | openssl md5 > $$name.md5 ; \
-	done
+$(NAMES): static
+	$(UPDATE_NAMES) $(NAMES) $(NAMED)
 
 $(JSTARGETS): $(JSSOURCES)
 	$(JS_COMPRESS)
@@ -104,13 +104,15 @@ $(PYXSO_FILES): %.so : %.pyx
 
 pyx: 		$(PYXSO_FILES)
 
-static: 	js css rtl md5
+static: 	js css rtl
 
 js: 		pyx $(JSTARGETS)
 
 css: 		$(CSSTARGETS) $(MAINCSS)
 
 rtl:		$(RTLCSS)
+
+names:		$(NAMES)
 
 clean: clean_static
 	rm -f $(PYXSO_FILES)

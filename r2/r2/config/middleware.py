@@ -22,7 +22,7 @@
 """Pylons middleware initialization"""
 from paste.cascade import Cascade
 from paste.registry import RegistryManager
-from paste.urlparser import StaticURLParser
+from paste.urlparser import URLParser, StaticURLParser
 from paste.deploy.converters import asbool
 from paste.gzipper import make_gzip_middleware
 
@@ -82,6 +82,25 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         else:
             url = '/error/document/?%s' % (urllib.urlencode(d))
         return url
+
+class StaticURLHashMiddleware(URLParser):
+    """Middleware for handling uniquely hashed static files.
+    
+    Filenames are matched against the g.static_names mapping, which is loaded
+    from names.json in the static dir. If a valid unique static filename is
+    requested, the hash is stripped from the filename before the request is
+    passed through to the StaticURLParser ``app``."""
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        g = config['pylons.g']
+        path_info = environ.get('PATH_INFO', '')
+        if path_info.startswith(g.static_path):
+            dirname, filename = os.path.split(path_info)
+            if filename in g.static_names_rev:
+                environ['PATH_INFO'] = os.path.join(dirname, g.static_names_rev[filename])
+        return self.app(environ, start_response)
 
 class DebugMiddleware(object):
     def __init__(self, app, keyword):
@@ -598,6 +617,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     # Static files
     javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
+    static_app = StaticURLHashMiddleware(static_app)
     app = Cascade([static_app, javascripts_app, app])
 
     app = make_gzip_middleware(app, app_conf)
