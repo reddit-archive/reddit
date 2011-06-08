@@ -175,7 +175,7 @@ class Vote(MultiRelation('vote',
             old_valid_thing = getattr(v, 'valid_thing', False)
             v.valid_thing = (valid_thing(v, karma, cheater = cheater)
                              and getattr(v,'valid_thing', False))
-            v.valid_user = (v.valid_user
+            v.valid_user = (getattr(v, 'valid_user', False)                   
                             and v.valid_thing
                             and valid_user(v, sr, karma))
         #new vote
@@ -222,7 +222,8 @@ class Vote(MultiRelation('vote',
             cv = cvc(thing1_id = voter._id36, thing2_id = votee._id36)
         cv.name = v._name
         cv.valid_user, cv.valid_thing = v.valid_user, v.valid_thing
-        cv.ip = v.ip
+        if hasattr(v, 'ip'):
+            cv.ip = v.ip
         if getattr(v, 'organic', False) or hasattr(cv, 'organic'):
             cv.organic = getattr(v, 'organic', False)
         cv._commit()
