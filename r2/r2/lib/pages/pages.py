@@ -897,7 +897,7 @@ class CommentPane(Templated):
             # don't cache if the current user can ban comments in the listing
             try_cache = not sr.can_ban(c.user)
             # don't cache for users with custom hide threshholds
-            try_cache = (c.user.pref_min_comment_score ==
+            try_cache &= (c.user.pref_min_comment_score ==
                          Account._defaults["pref_min_comment_score"])
 
         def renderer():
