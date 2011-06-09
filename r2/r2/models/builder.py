@@ -146,8 +146,7 @@ class Builder(object):
             except AttributeError:
                 pass
 
-            if (w.distinguished == 'admin' and
-                w.author and w.author.name in g.admins):
+            if (w.distinguished == 'admin' and w.author):
                 add_attr(w.attribs, 'A')
 
             if w.distinguished == 'moderator':
