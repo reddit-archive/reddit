@@ -145,7 +145,6 @@ button.button {
     margin:  35px -5px -1px;
     border-top:  1px solid hsl(210,35%,10%);
     display: none;
-    padding: 10px;
     @include box-orient(horizontal);
     @include box-align(center);
     @include box-pack(center);
@@ -157,11 +156,34 @@ button.button {
         color: white;
         text-decoration: none;
         font-size: 11px;
-        padding: {
-            left: 5px;
-            right: 5px;
+        padding: 10px;
+        width: 40px;
+        text-align: center;
+        border-right:  1px solid hsl(210,35%,10%);
+        border-left:  1px solid hsl(210,35%,30%);
+        @include transition(all, 100ms, ease-in);
+
+        &:active {
+            background-color: hsl(210,35%,30%);
+            border-left: 1px solid hsl(210,35%,40%);
         }
-        
+
+        &:hover {
+            background-color: hsl(210,25%,20%);
+            @include box-shadow(inset 0px 3px 8px hsla(0,0%,0%,.8));
+            border-left: 1px solid hsl(210,35%,40%);
+            padding: {
+                top: 15px;
+                bottom: 5px;
+            }
+        }
+
+        &:first-child {
+            border-left: none;
+        }
+        &:last-child {
+            border-right: none;
+        }
     }
 
     &.expanded {
