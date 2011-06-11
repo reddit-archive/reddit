@@ -49,8 +49,18 @@ class RunCommand(command.Command):
     parser.add_option('-c', '--command',
                       dest='command',
                       help="execute command in module")
+    parser.add_option("", "--proctitle",
+                      dest="proctitle",
+                      help="set the title seen by ps and top")
 
     def command(self):
+        try:
+            if self.options.proctitle:
+                import setproctitle
+                setproctitle.setproctitle("paster " + self.options.proctitle)
+        except ImportError:
+            pass
+
         here_dir = os.getcwd()
 
         if self.args[0].lower() == 'standalone':
