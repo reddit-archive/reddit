@@ -31,6 +31,7 @@ error_list = dict((
         ('BAD_CAPTCHA', _('care to try these again?')),
         ('BAD_USERNAME', _('invalid user name')),
         ('USERNAME_TAKEN', _('that username is already taken')),
+        ('USERNAME_TAKEN_DEL', _('that username is taken by a deleted account')),
         ('NO_THING_ID', _('id not specified')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),

@@ -803,7 +803,10 @@ class VUname(VRequired):
         else:
             try:
                 a = Account._by_name(user_name, True)
-                return self.error(errors.USERNAME_TAKEN)
+                if a._deleted:
+                   return self.error(errors.USERNAME_TAKEN_DEL)
+                else:
+                   return self.error(errors.USERNAME_TAKEN)
             except NotFound:
                 return user_name
 

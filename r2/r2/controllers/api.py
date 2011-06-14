@@ -427,6 +427,7 @@ class ApiController(RedditController):
     def POST_register(self, form, jquery, name, email,
                       password, dest, rem, reason):
         if not (form.has_errors("user", errors.BAD_USERNAME,
+                                errors.USERNAME_TAKEN_DEL,
                                 errors.USERNAME_TAKEN) or
                 form.has_errors("email", errors.BAD_EMAILS) or
                 form.has_errors("passwd", errors.BAD_PASSWORD) or
