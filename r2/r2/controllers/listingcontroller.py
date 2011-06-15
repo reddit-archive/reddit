@@ -106,6 +106,7 @@ class ListingController(RedditController):
                               show_sidebar = self.show_sidebar,
                               nav_menus = self.menus,
                               title = self.title(),
+                              robots = getattr(self, "robots", None),
                               **self.render_params).render()
         return res
 
@@ -580,6 +581,9 @@ class UserController(ListingController):
         self.vuser = vuser
         self.render_params = {'user' : vuser}
         c.profilepage = True
+
+        if vuser.pref_hide_from_robots:
+            self.robots = 'noindex,nofollow'
 
         return ListingController.GET_listing(self, **env)
 

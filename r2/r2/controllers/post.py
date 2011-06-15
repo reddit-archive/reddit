@@ -75,6 +75,7 @@ class PostController(ApiController):
               pref_organic = VBoolean('organic'),
               pref_newwindow = VBoolean('newwindow'),
               pref_public_votes = VBoolean('public_votes'),
+              pref_hide_from_robots = VBoolean('hide_from_robots'),
               pref_hide_ups = VBoolean('hide_ups'),
               pref_hide_downs = VBoolean('hide_downs'),
               pref_over_18 = VBoolean('over_18'),

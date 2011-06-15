@@ -48,6 +48,7 @@ class Account(Thing):
                      pref_newwindow = False,
                      pref_clickgadget = 5,
                      pref_public_votes = False,
+                     pref_hide_from_robots = False,
                      pref_research = False,
                      pref_hide_ups = False,
                      pref_hide_downs = False,

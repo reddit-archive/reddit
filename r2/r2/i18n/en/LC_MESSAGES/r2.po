@@ -1608,6 +1608,10 @@ msgstr "privacy options"
 msgid "make my votes public"
 msgstr "make my votes public"
 
+#: r2/templates/prefoptions.html:269
+msgid "don't allow search engines to index my user profile"
+msgstr "don't allow search engines to index my user profile"
+
 #: r2/templates/prefoptions.html:115
 msgid ""
 "i am over eighteen years old and willing to view adult content"

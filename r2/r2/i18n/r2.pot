@@ -2527,6 +2527,10 @@ msgstr ""
 msgid "make my votes public"
 msgstr ""
 
+#: r2/templates/prefoptions.html:269
+msgid "don't allow search engines to index my user profile"
+msgstr ""
+
 #: r2/templates/prefupdate.html:28
 msgid "update your email or password"
 msgstr ""
