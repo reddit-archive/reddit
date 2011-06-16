@@ -296,18 +296,6 @@ class Globals(object):
         else:
             self.static_names = {}
 
-        #set up the logging directory
-        log_path = self.log_path
-        process_iden = global_conf.get('scgi_port', 'default')
-        self.reddit_port = process_iden
-        if log_path:
-            if not os.path.exists(log_path):
-                os.makedirs(log_path)
-            for fname in os.listdir(log_path):
-                if fname.startswith(process_iden):
-                    full_name = os.path.join(log_path, fname)
-                    os.remove(full_name)
-
         #setup the logger
         self.log = logging.getLogger('reddit')
         self.log.addHandler(logging.StreamHandler())

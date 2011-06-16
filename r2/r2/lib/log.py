@@ -33,7 +33,7 @@ Q = 'log_q'
 def _default_dict():
     return dict(time=datetime.now(tz),
                 host=g.reddit_host,
-                port=g.reddit_port,
+                port="default",
                 pid=g.reddit_pid)
 
 # e_value and e should actually be the same thing.
