@@ -17,7 +17,7 @@ def generate_static_name(name, base=None, shorthash=None):
     name, ext = os.path.splitext(name)
     return name + '.' + shorthash + ext
 
-def update_static_names(names_file, files):
+def update_static_names(names_file, files, make_links=False):
     """Generate a unique file name mapping for ``files`` and write it to a
     JSON file at ``names_file``."""
     if os.path.exists(names_file):
@@ -33,5 +33,11 @@ def update_static_names(names_file, files):
     json_enc = json.JSONEncoder(indent=2, sort_keys=True)
     open(names_file, "w").write(json_enc.encode(names))
 
+    if make_links:
+        for name, staticname in names.iteritems():
+            os.symlink(name, os.path.join(base, staticname))
+
+    return names
+
 if __name__ == "__main__":
-    update_static_names(sys.argv[1], sys.argv[2:])
+    update_static_names(sys.argv[1], sys.argv[2:], make_links=True)

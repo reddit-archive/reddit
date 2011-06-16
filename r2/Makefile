@@ -59,6 +59,7 @@ PYX_FILES := $(shell find . -name \*.pyx)
 PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
 NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(RTLCSS)
+NAMELINKS = $(patsubst %.css,%.*.css,$(patsubst %.js,%.*.js,$(NAMED)))
 
 INIUPDATE = $(wildcard *.update)
 INIS      = $(INIUPDATE:.update=.ini)
@@ -118,4 +119,4 @@ clean: clean_static
 	rm -f $(PYXSO_FILES)
 
 clean_static:
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(MD5S) $(INIS)
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(NAMES) $(NAMELINKS) $(INIS)

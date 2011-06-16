@@ -617,7 +617,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     # Static files
     javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
-    static_app = StaticURLHashMiddleware(static_app)
+    #static_app = StaticURLHashMiddleware(static_app)
     app = Cascade([static_app, javascripts_app, app])
 
     app = make_gzip_middleware(app, app_conf)
