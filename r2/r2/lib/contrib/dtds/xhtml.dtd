@@ -1,0 +1,9 @@
+<!ENTITY % HTMLlat1 SYSTEM "xhtml-lat1.ent">
+%HTMLlat1;
+
+<!ENTITY % HTMLspecial SYSTEM "xhtml-special.ent">
+%HTMLspecial;
+
+<!ENTITY % HTMLsymbol SYSTEM "xhtml-symbol.ent">
+%HTMLsymbol;
+

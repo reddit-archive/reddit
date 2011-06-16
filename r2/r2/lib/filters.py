@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import cgi
+import os
 import urllib
 import re
 from cStringIO import StringIO
@@ -166,14 +167,25 @@ markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
 for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()
 
+markdown_xhtml_dtd_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'contrib/dtds/xhtml.dtd')
+
+markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
+
 def markdown_souptest(text, nofollow=False, target=None, lang=None):
     if not text:
         return text
 
     smd = safemarkdown(text, nofollow, target, lang)
 
-    s = StringIO(smd)
-    tree = lxml.etree.parse(s)
+    # Prepend a DTD reference so we can load up definitions of all the standard
+    # XHTML entities (&nbsp;, etc.).
+    smd_with_dtd = markdown_dtd + smd
+
+    s = StringIO(smd_with_dtd)
+    parser = lxml.etree.XMLParser(load_dtd=True)
+    tree = lxml.etree.parse(s, parser)
     handler = SouptestSaxHandler(markdown_ok_tags)
     saxify(tree, handler)
 
