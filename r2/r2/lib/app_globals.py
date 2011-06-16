@@ -285,9 +285,6 @@ class Globals(object):
         if os.path.exists(names_file_path):
             with open(names_file_path) as handle:
                 self.static_names = json.load(handle)
-            # Generate a reverse mapping dictionary so that we can check
-            # unique filenames in StaticURLHashMiddleware
-            self.static_names_rev = dict((v, k) for k, v in self.static_names.iteritems())
         else:
             self.static_names = {}
 
