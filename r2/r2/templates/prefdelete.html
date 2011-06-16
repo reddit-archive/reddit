@@ -25,18 +25,21 @@
 
 <% import random %>
 <%def name="areyousure(name)">
-  <% yes, no = random.choice(((_("yes"), _("no")), (_("no"), _("yes")))) %>
+  <% yes, no = random.choice((("yes", "no"), ("no", "yes"))) %>
+  <% syes = _(yes) %>
+  <% sno = _(no) %>
+  
 
   <div class="spacer">
     <%utils:round_field title="${_('are you sure?')}">
       <div class="rounded delete-field">
         <input name="${name}" id="${name}yes" type="radio" value="${yes}"/>
-        <label for="${name}yes">${yes}</label>
+        <label for="${name}yes">${syes}</label>
 
         <br/>
   
         <input name="${name}" id="${name}no" type="radio" value="${no}"/>
-        <label for="${name}no">${no}</label>
+        <label for="${name}no">${sno}</label>
       </div>
     </%utils:round_field>
   </div>  
