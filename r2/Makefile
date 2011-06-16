@@ -118,5 +118,8 @@ names:		$(NAMES)
 clean: clean_static
 	rm -f $(PYXSO_FILES) $(INIS)
 
-clean_static:
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(NAMES) $(NAMELINKS)
+clean_static: clean_names
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS)
+
+clean_names:
+	rm -f $(NAMES) $(NAMELINKS)
