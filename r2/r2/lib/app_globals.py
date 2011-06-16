@@ -110,7 +110,8 @@ class Globals(object):
                    'authorized_cnames',
                    'hardcache_categories',
                    'proxy_addr',
-                   'allowed_pay_countries']
+                   'allowed_pay_countries',
+                   'case_sensitive_domains']
 
     choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
                                       'QUORUM': CL_QUORUM},
