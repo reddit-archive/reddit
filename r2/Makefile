@@ -116,7 +116,7 @@ rtl:		$(RTLCSS)
 names:		$(NAMES)
 
 clean: clean_static
-	rm -f $(PYXSO_FILES)
+	rm -f $(PYXSO_FILES) $(INIS)
 
 clean_static:
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(NAMES) $(NAMELINKS) $(INIS)
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS) $(NAMES) $(NAMELINKS)
