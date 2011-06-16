@@ -122,4 +122,4 @@ clean_static: clean_names
 	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS)
 
 clean_names:
-	rm -f $(NAMES) $(NAMELINKS)
+	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
