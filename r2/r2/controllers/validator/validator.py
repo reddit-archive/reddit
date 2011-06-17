@@ -1154,13 +1154,14 @@ class CachedUser(object):
 
 class VCacheKey(Validator):
     def __init__(self, cache_prefix, param, *a, **kw):
+        self.cache = g.cache
         self.cache_prefix = cache_prefix
         Validator.__init__(self, param, *a, **kw)
 
     def run(self, key):
         c_user = CachedUser(self.cache_prefix, None, key)
         if key:
-            uid = g.cache.get(str(self.cache_prefix + "_" + key))
+            uid = self.cache.get(str(self.cache_prefix + "_" + key))
             if uid:
                 try:
                     c_user.user = Account._byID(uid, data = True)
@@ -1168,6 +1169,11 @@ class VCacheKey(Validator):
                     return
             return c_user
         self.set_error(errors.EXPIRED)
+
+class VHardCacheKey(VCacheKey):
+    def __init__(self, cache_prefix, param, *a, **kw):
+        VCacheKey.__init__(self, cache_prefix, param, *a, **kw)
+        self.cache = g.hardcache
 
 class VOneOf(Validator):
     def __init__(self, param, options = (), *a, **kw):

@@ -1665,12 +1665,12 @@ class ApiController(RedditController):
                 form.set_html(".status", _("try again tomorrow"))
 
 
-    @validatedForm(cache_evt = VCacheKey('reset', ('key',)),
+    @validatedForm(cache_evt = VHardCacheKey('email-reset', ('key',)),
                    password  = VPassword(['passwd', 'passwd2']))
     def POST_resetpassword(self, form, jquery, cache_evt, password):
         if form.has_errors('name', errors.EXPIRED):
             cache_evt.clear()
-            form.redirect('/password')
+            form.redirect('/password?expired=true')
         elif form.has_errors('passwd',  errors.BAD_PASSWORD):
             pass
         elif form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH):

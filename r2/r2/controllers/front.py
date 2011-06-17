@@ -815,7 +815,7 @@ class FormsController(RedditController):
             Award.give_if_needed("verified_email", c.user)
             return self.redirect(dest)
 
-    @validate(cache_evt = VCacheKey('reset', ('key',)),
+    @validate(cache_evt = VHardCacheKey('email-reset', ('key',)),
               key = nop('key'))
     def GET_resetpassword(self, cache_evt, key):
         """page hit once a user has been sent a password reset email
@@ -829,10 +829,10 @@ class FormsController(RedditController):
 
         done = False
         if not key and request.referer:
-            referer_path =  request.referer.split(g.domain)[-1]
+            referer_path = request.referer.split(g.domain)[-1]
             done = referer_path.startswith(request.fullpath)
         elif not getattr(cache_evt, "user", None):
-            return self.abort404()
+            return self.redirect("/password?expired=true")
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
 
