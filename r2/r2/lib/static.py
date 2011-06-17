@@ -35,7 +35,9 @@ def update_static_names(names_file, files, make_links=False):
 
     if make_links:
         for name, staticname in names.iteritems():
-            os.symlink(name, os.path.join(base, staticname))
+            link = os.path.join(base, staticname)
+            if not os.path.exists(link):
+                os.symlink(name, link)
 
     return names
 
