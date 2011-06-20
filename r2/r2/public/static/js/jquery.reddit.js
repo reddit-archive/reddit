@@ -331,7 +331,7 @@ $.fn.thing_id = function(class_filter) {
         t = t.find("." + class_filter + ":first");
     }
     if(t.length) {
-        var id = $.grep(t.get(0).className.split(' '),
+        var id = $.grep(t.get(0).className.match(/\S+/g),
                         function(i) { return i.match(/^id-/); }); 
         return (id.length) ? id[0].slice(3, id[0].length) : "";
     }
