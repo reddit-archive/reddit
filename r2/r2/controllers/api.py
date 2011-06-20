@@ -706,7 +706,6 @@ class ApiController(RedditController):
                 if parent_link.is_self:
                     recipient = Account._byID(parent_link.author_id)
 
-            thing._delete()
             delete_comment(thing)
 
             if recipient:

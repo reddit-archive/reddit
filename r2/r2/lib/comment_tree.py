@@ -24,6 +24,7 @@ from itertools import chain
 from r2.lib.utils import tup, to36
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
+from r2.models.link import Link
 
 MAX_ITERATIONS = 20000
 
@@ -57,7 +58,9 @@ def add_comments(comments):
             with g.make_lock(lock_key(link_id)):
                 add_comments_nolock(link_id, coms)
         except:
-            # TODO: bare except?
+            g.log.exception(
+                'add_comments_nolock failed for link %s, recomputing tree',
+                link_id)
 
             # calculate it from scratch
             link_comments(link_id, _update = True)
@@ -115,10 +118,6 @@ def add_comments_nolock(link_id, comments):
     if not r:
         r = _parent_dict_from_tree(comment_tree)
 
-    for comment in comments:
-        cm_id = comment._id
-#        print "In the olden days, I would have set %s -> %s" % (cm_id, p_id)
-
     for cm_id, parent_id in new_parents.iteritems():
 #        print "Now, I set %s -> %s" % (cm_id, parent_id)
         r[cm_id] = parent_id
@@ -128,6 +127,12 @@ def add_comments_nolock(link_id, comments):
         if cm_id not in new_parents:
             r[cm_id] = None
 #            print "And I set %s -> None" % cm_id
+
+    # update the link's comment count and schedule it for search reindexing
+    link = Link._byID(link_id, data = True)
+    link._incr('num_comments', len(comments))
+    from r2.lib.db.queries import changed
+    changed(link)
 
     g.permacache.set(key, r)
 
@@ -167,6 +172,12 @@ def delete_comment(comment):
                 del num_children[comment._id]
             g.permacache.set(comments_key(comment.link_id),
                              (cids, comment_tree, depth, num_children))
+
+        # update the link's comment count and schedule it for search reindexing
+        link = Link._byID(comment.link_id, data = True)
+        link._incr('num_comments', -1)
+        from r2.lib.db.queries import changed
+        changed(link)
 
 def _parent_dict_from_tree(comment_tree):
     parents = {}
@@ -265,7 +276,6 @@ def link_comments_and_sort(link_id, sort):
                 parents = _parent_dict_from_tree(cid_tree)
                 g.permacache.set(key, parents)
 
-
     return cids, cid_tree, depth, num_children, parents, sorter
 
 
@@ -283,11 +293,20 @@ def link_comments(link_id, _update=False):
         with g.make_lock(lock_key(link_id), timeout=180):
             r = _load_link_comments(link_id)
             # rebuild parent dict
-            cids, cid_tree, depth, num_children = r
+            cids, cid_tree, depth, num_children, num_comments = r
+            r = r[:-1]  # Remove num_comments from r; we don't need to cache it.
             g.permacache.set(parent_comments_key(link_id),
                              _parent_dict_from_tree(cid_tree))
 
             g.permacache.set(key, r)
+
+            # update the link's comment count and schedule it for search
+            # reindexing
+            link = Link._byID(link_id, data = True)
+            link.num_comments = num_comments
+            link._commit()
+            from r2.lib.db.queries import changed
+            changed(link)
 
         return r
 
@@ -333,7 +352,8 @@ def _load_link_comments(link_id):
             iteration_count += 1
         num_children[cm_id] = num
 
-    return cids, comment_tree, depth, num_children
+    num_comments = sum(1 for c in comments if not c._deleted)
+    return cids, comment_tree, depth, num_children, num_comments
 
 # message conversation functions
 def messages_key(user_id):
