@@ -19,6 +19,7 @@ development_*.ini
 staging.ini
 production.ini
 *.update
+r2/r2/public/static/names.json
 r2/r2/public/static/*.js
 r2/r2/public/static/*.css
 r2/r2/**/defunct/**
