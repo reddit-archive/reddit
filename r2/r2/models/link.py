@@ -287,6 +287,21 @@ class Link(Thing, Printable):
     def make_permalink_slow(self, force_domain = False):
         return self.make_permalink(self.subreddit_slow,
                                    force_domain = force_domain)
+
+    @staticmethod
+    def _should_expunge_selftext(link):
+        verdict = getattr(link, "verdict", "")
+        if verdict not in ("admin-removed", "mod-removed"):
+            return False
+        if not c.user_is_loggedin:
+            return True
+        if c.user_is_admin:
+            return False
+        if c.user == link.author:
+            return False
+        if link.can_ban:
+            return False
+        return True
     
     @classmethod
     def add_props(cls, user, wrapped):
@@ -499,6 +514,10 @@ class Link(Thing, Printable):
                 if item.trial_info is not None:
                     item.reveal_trial_info = True
                     item.use_big_modbuttons = True
+
+            item.expunged = False
+            if item.is_self:
+                item.expunged = Link._should_expunge_selftext(item)
 
         if user_is_loggedin:
             incr_counts(wrapped)

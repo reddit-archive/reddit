@@ -2672,29 +2672,11 @@ class MediaEmbed(Templated):
 class SelfTextChild(LinkChild):
     css_style = "selftext"
 
-    def _should_expunge_selftext(self):
-        verdict = getattr(self.link, "verdict", "")
-        if verdict not in ("admin-removed", "mod-removed"):
-            return False
-        if not c.user_is_loggedin:
-            return True
-        if c.user_is_admin:
-            return False
-        if c.user == self.link.author:
-            return False
-
-        sr = Subreddit._byID(self.link.sr_id, stale=True)
-        if sr.is_moderator(c.user):
-            return False
-
-        return True
-
     def content(self):
-        expunged = self._should_expunge_selftext()
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow,
-                     expunged=expunged)
+                     expunged=self.link.expunged)
         return u.render()
 
 class UserText(CachedTemplate):

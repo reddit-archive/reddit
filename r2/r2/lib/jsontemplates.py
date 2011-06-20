@@ -25,6 +25,7 @@ from mako.template import Template
 from r2.lib.filters import spaceCompress, safemarkdown
 import time, pytz
 from pylons import c, g
+from pylons.i18n import _
 
 def api_type(subtype = ''):
     return 'api-' + subtype if subtype else 'api'
@@ -269,9 +270,15 @@ class LinkJsonTemplate(ThingJsonTemplate):
         elif attr == 'subreddit_id':
             return thing.subreddit._fullname
         elif attr == 'selftext':
-            return thing.selftext
+            if not thing.expunged:
+                return thing.selftext
+            else:
+                return ''
         elif attr == 'selftext_html':
-            return safemarkdown(thing.selftext)
+            if not thing.expunged:
+                return safemarkdown(thing.selftext)
+            else:
+                return safemarkdown(_("[deleted]"))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def rendered_data(self, thing):
