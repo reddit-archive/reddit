@@ -678,6 +678,7 @@ class ApiController(RedditController):
     def POST_del(self, thing):
         if not thing: return
         '''for deleting all sorts of things'''
+        was_deleted = thing._deleted
         thing._deleted = True
         if (getattr(thing, "promoted", None) is not None and
             not promote.is_promoted(thing)):
@@ -706,7 +707,8 @@ class ApiController(RedditController):
                 if parent_link.is_self:
                     recipient = Account._byID(parent_link.author_id)
 
-            delete_comment(thing)
+            if not was_deleted:
+                delete_comment(thing)
 
             if recipient:
                 inbox_class = Inbox.rel(Account, Comment)
