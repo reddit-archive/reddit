@@ -278,7 +278,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
             if not thing.expunged:
                 return safemarkdown(thing.selftext)
             else:
-                return safemarkdown(_("[deleted]"))
+                return safemarkdown(_("[removed]"))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def rendered_data(self, thing):
