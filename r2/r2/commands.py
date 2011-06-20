@@ -51,16 +51,20 @@ class RunCommand(command.Command):
                       help="execute command in module")
 
     def command(self):
-        config_name = 'config:%s' % self.args[0]
         here_dir = os.getcwd()
 
-        conf = appconfig(config_name, relative_to=here_dir)
-        conf.global_conf['running_as_script'] = True
-        conf.update(dict(app_conf=conf.local_conf,
-                         global_conf=conf.global_conf))
-        paste.deploy.config.CONFIG.push_thread_config(conf)
+        if self.args[0].lower() == 'standalone':
+            load_environment(setup_globals=False)
+        else:
+            config_name = 'config:%s' % self.args[0]
 
-        load_environment(conf.global_conf, conf.local_conf)
+            conf = appconfig(config_name, relative_to=here_dir)
+            conf.global_conf['running_as_script'] = True
+            conf.update(dict(app_conf=conf.local_conf,
+                             global_conf=conf.global_conf))
+            paste.deploy.config.CONFIG.push_thread_config(conf)
+
+            load_environment(conf.global_conf, conf.local_conf)
 
         # Load locals and populate with objects for use in shell
         sys.path.insert(0, here_dir)

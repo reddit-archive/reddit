@@ -161,9 +161,28 @@ class Globals(object):
                                          % (k, v, self.choice_props[k]))
                     v = self.choice_props[k][v]
                 setattr(self, k, v)
+        
+        self.paths = paths
 
         self.running_as_script = global_conf.get('running_as_script', False)
+        
+        # turn on for language support
+        if not hasattr(self, 'lang'): self.lang = 'en'
+        self.languages, self.lang_name = \
+                        get_active_langs(default_lang= self.lang)
 
+        all_languages = self.lang_name.keys()
+        all_languages.sort()
+        self.all_languages = all_languages
+        
+        # set default time zone if one is not set
+        tz = global_conf.get('timezone', 'UTC')
+        self.tz = pytz.timezone(tz)
+        
+        dtz = global_conf.get('display_timezone', tz)
+        self.display_tz = pytz.timezone(dtz)
+
+    def setup(self, global_conf):
         if hasattr(signal, 'SIGUSR1'):
             # not all platforms have user signals
             signal.signal(signal.SIGUSR1, thread_dump)
@@ -227,13 +246,6 @@ class Globals(object):
         self.thing_cache = CacheChain((localcache_cls(),))
         self.cache_chains.append(self.thing_cache)
 
-        # set default time zone if one is not set
-        tz = global_conf.get('timezone')
-        dtz = global_conf.get('display_timezone', tz)
-
-        self.tz = pytz.timezone(tz)
-        self.display_tz = pytz.timezone(dtz)
-
         #load the database info
         self.dbm = self.load_db_params(global_conf)
 
@@ -264,20 +276,10 @@ class Globals(object):
 
         self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
 
-        # turn on for language support
-        self.languages, self.lang_name = \
-                        get_active_langs(default_lang= self.lang)
-
-        all_languages = self.lang_name.keys()
-        all_languages.sort()
-        self.all_languages = all_languages
-
-        self.paths = paths
-
         self.secure_domains = set([urlparse(self.payment_domain).netloc])
 
         # load the md5 hashes of files under static
-        static_files = os.path.join(paths.get('static_files'), 'static')
+        static_files = os.path.join(self.paths.get('static_files'), 'static')
         self.static_md5 = {}
         if os.path.exists(static_files):
             for f in os.listdir(static_files):
@@ -320,7 +322,7 @@ class Globals(object):
 
         #read in our CSS so that it can become a default for subreddit
         #stylesheets
-        stylesheet_path = os.path.join(paths.get('static_files'),
+        stylesheet_path = os.path.join(self.paths.get('static_files'),
                                        self.static_path.lstrip('/'),
                                        self.stylesheet)
         with open(stylesheet_path) as s:

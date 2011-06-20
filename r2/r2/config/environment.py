@@ -37,7 +37,7 @@ import r2.config as reddit_config
 
 from r2.templates import tmpl_dirs
 
-def load_environment(global_conf={}, app_conf={}):
+def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     map = make_map(global_conf, app_conf)
     # Setup our paths
     root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,7 +51,11 @@ def load_environment(global_conf={}, app_conf={}):
     config.init_app(global_conf, app_conf, package='r2',
                     template_engine='mako', paths=paths)
 
-    config['pylons.g'] = app_globals.Globals(global_conf, app_conf, paths)
+    g = config['pylons.g'] = app_globals.Globals(global_conf, app_conf, paths)
+    if setup_globals:
+        g.setup(global_conf)
+        reddit_config.cache = g.cache
+
     config['pylons.h'] = r2.lib.helpers
     config['routes.map'] = map
 
@@ -74,8 +78,6 @@ def load_environment(global_conf={}, app_conf={}):
     # Add your own template options config options here,
     # note that all config options will override
     # any Pylons config options
-    g = config['pylons.g']
-    reddit_config.cache = g.cache
 
     # Return our loaded config object
     #return config.Config(tmpl_options, map, paths)
