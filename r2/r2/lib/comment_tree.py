@@ -128,12 +128,6 @@ def add_comments_nolock(link_id, comments):
             r[cm_id] = None
 #            print "And I set %s -> None" % cm_id
 
-    # update the link's comment count and schedule it for search reindexing
-    link = Link._byID(link_id, data = True)
-    link._incr('num_comments', len(comments))
-    from r2.lib.db.queries import changed
-    changed(link)
-
     g.permacache.set(key, r)
 
     g.permacache.set(comments_key(link_id),
