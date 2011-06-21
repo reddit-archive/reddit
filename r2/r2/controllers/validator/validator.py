@@ -642,6 +642,14 @@ class VSrModerator(Validator):
                 or c.user_is_admin):
             abort(403, "forbidden")
 
+class VFlairManager(VSrModerator):
+    """Validates that a user is permitted to manage flair for a subreddit.
+       
+    Currently this is the same as VSrModerator. It's a separate class to act as
+    a placeholder if we ever need to give mods a way to delegate this aspect of
+    subreddit administration."""
+    pass
+
 class VSrCanDistinguish(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
@@ -1002,16 +1010,22 @@ class VBid(VNumber):
                 return float(bid)
 
 
-
 class VCssName(Validator):
     """
     returns a name iff it consists of alphanumeric characters and
     possibly "-", and is below the length limit.
     """
+
     r_css_name = re.compile(r"\A[a-zA-Z0-9\-]{1,100}\Z")
+
     def run(self, name):
-        if name and self.r_css_name.match(name):
-            return name
+        if name:
+            if self.r_css_name.match(name):
+                return name
+            else:
+                self.set_error(errors.BAD_CSS_NAME)
+        return ''
+
 
 class VMenu(Validator):
 

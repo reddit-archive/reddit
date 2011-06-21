@@ -32,7 +32,7 @@ from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
-    BannedList, BoringPage, FormPage, CssError, UploadedImage, \
+    FlairList, BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
@@ -1281,7 +1281,7 @@ class ApiController(RedditController):
                    css_on_cname = VBoolean("css_on_cname"),
                    )
     def POST_site_admin(self, form, jquery, name, ip, sr,
-                        sponsor_text, sponsor_url, sponsor_name,  **kw):
+                        sponsor_text, sponsor_url, sponsor_name, **kw):
         # the status button is outside the form -- have to reset by hand
         form.parent().set_html('.status', "")
 
@@ -1925,6 +1925,121 @@ class ApiController(RedditController):
         award.imgurl = imgurl
         award._commit()
         form.set_html(".status", _('saved'))
+
+    @validatedForm(VFlairManager(),
+                   VModhash(),
+                   user = VExistingUname("name"),
+                   text = VLength("text", max_length=64),
+                   css_class = VCssName("css_class"))
+    def POST_flair(self, form, jquery, user, text, css_class):
+        # Check validation.
+        if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
+        if form.has_errors('css_class', errors.BAD_CSS_NAME):
+            form.set_html(".status:first", _('invalid css class'))
+            return
+
+        # Make sure the flair relation is up-to-date, for listings.
+        if not c.site.is_flair(user):
+            c.site.add_flair(user)
+            new = True
+        else:
+            new = False
+
+        # Save the flair details in the account data.
+        setattr(user, 'flair_%s_text' % c.site._id, text)
+        setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+        user._commit()
+
+        if new:
+            user_row = FlairList().user_row(user)
+            jquery("#flair-table").show(
+                ).find("table").insert_table_rows(user_row)
+        else:
+            form.set_html('.status', _('saved'))
+            form.set_html(
+                '.user',
+                WrappedUser(user, force_show_flair=True).render(style='html'))
+
+    @validate(VFlairManager(),
+              VModhash(),
+              flair_csv = nop('flair_csv'))
+    def POST_flaircsv(self, flair_csv):
+        limit = 100  # max of 100 flair settings per call
+        flair_text_limit = 64  # max of 64 chars in flair text
+        results = FlairCsv()
+        infile = csv.reader(flair_csv.strip().split('\n'))
+        for i, row in enumerate(infile):
+            line_result = results.add_line()
+            line_no = i + 1
+            if line_no > limit:
+                line_result.error('row',
+                                  'limit of %d rows per call reached' % limit)
+                break
+
+            try:
+                name, text, css_class = row
+            except ValueError:
+                line_result.error('row', 'improperly formatted row, ignoring')
+                continue
+
+            user = VExistingUname('name').run(name)
+            if not user:
+                line_result.error('user',
+                                  "unable to resolve user `%s', ignoring"
+                                  % name)
+                continue
+
+            if not text and not css_class:
+                # this is equivalent to unflairing
+                text = None
+                css_class = None
+
+            if text and len(text) > flair_text_limit:
+                line_result.warn('text',
+                                 'truncating flair text to %d chars'
+                                 % flair_text_limit)
+                text = text[:flair_text_limit]
+
+            if css_class and not VCssName('css_class').run(css_class):
+                line_result.error('css',
+                                  "invalid css class `%s', ignoring"
+                                  % css_class)
+                continue
+
+            # all validation passed, enflair the user
+            if text or css_class:
+                mode = 'added'
+                c.site.add_flair(user)
+            else:
+                mode = 'removed'
+                c.site.remove_flair(user)
+            setattr(user, 'flair_%s_text' % c.site._id, text)
+            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+            user._commit()
+            line_result.status = '%s flair for user %s' % (mode, user.name)
+            line_result.ok = True
+
+        return BoringPage(_("API"), content = results).render()
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   flair_enabled = VBoolean("flair_enabled"))
+    def POST_setflairenabled(self, form, jquery, flair_enabled):
+        setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
+        c.user._commit()
+        jquery.refresh()
+
+    @noresponse(VFlairManager(),
+                VModhash(),
+                nuser = VExistingUname("name"),
+                iuser = VByName("id"))
+    def POST_unflair(self, nuser, iuser):
+        user = iuser or nuser
+        c.site.remove_flair(user)
+        setattr(user, 'flair_%s_text' % c.site._id, None)
+        setattr(user, 'flair_%s_css_class' % c.site._id, None)
+        user._commit()
 
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),

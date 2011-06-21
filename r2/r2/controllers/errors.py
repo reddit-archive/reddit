@@ -83,6 +83,7 @@ error_list = dict((
         ('NO_SELFS', _("that reddit doesn't allow text posts")),
         ('NO_LINKS', _("that reddit only allows text posts")),
         ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
+        ('BAD_CSS_NAME', _('invalid css name')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

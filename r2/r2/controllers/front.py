@@ -483,6 +483,8 @@ class FrontController(RedditController):
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
+        elif is_moderator and location == 'flair':
+            pane = FlairList()
         elif c.user_is_sponsor and location == 'ads':
             pane = RedditAds()
         elif (not location or location == "about") and is_api():

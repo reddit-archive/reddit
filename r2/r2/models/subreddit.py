@@ -188,6 +188,10 @@ class Subreddit(Thing, Printable):
     def subscribers(self):
         return self.subscriber_ids()
 
+    @property
+    def flair(self):
+        return self.flair_ids()
+
     def spammy(self):
         return self._spam
 
@@ -966,6 +970,30 @@ Subreddit.__bases__ += (UserRel('moderator', SRMember),
                         UserRel('subscriber', SRMember, disable_ids_fn = True),
                         UserRel('banned', SRMember))
 
+class Flair(Relation(Subreddit, Account)):
+    @classmethod
+    def store(cls, sr, account, text = None, css_class = None):
+        flair = Flair(sr, account, 'flair', text = text, css_class = css_class)
+        flair._commit()
+
+        setattr(account, 'flair_%s_text' % sr._id, text)
+        setattr(account, 'flair_%s_css_class' % sr._id, css_class)
+        account._commit()
+
+    @classmethod
+    @memoize('flair.all_flair_by_sr')
+    def all_flair_by_sr_cache(cls, sr_id):
+        q = cls._query(cls.c._thing1_id == sr_id)
+        return [t._id for t in q]
+
+    @classmethod
+    def all_flair_by_sr(cls, sr_id, _update=False):
+        relids = cls.all_flair_by_sr_cache(sr_id, _update=_update)
+        return cls._byID(relids).itervalues()
+
+Subreddit.__bases__ += (UserRel('flair', Flair,
+                                disable_ids_fn = True,
+                                disable_reverse_ids_fn = True),)
 
 class SubredditPopularityByLanguage(tdb_cassandra.View):
     _use_db = True

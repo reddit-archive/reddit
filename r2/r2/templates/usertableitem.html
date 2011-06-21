@@ -75,5 +75,21 @@
       <span title="${thing.rel._date.strftime('%Y-%m-%d %H:%M:%S')}">
         ${timesince(thing.rel._date)}
       </span>
+  %elif thing.name == "flair":
+    <form action="/post/flair" id="flair-${thing.rel._fullname}"
+          method="post" class="pretty-form medium-text flair-entry"
+          onsubmit="return post_form(this, 'flair');">
+      <input type="hidden" name="name" value="${thing.user.name}" />
+      <input type="text" maxlength="32" name="text" class="tiny"
+             onfocus="$(this).parent().addClass('edited')"
+             value="${getattr(thing.user, 'flair_text', '')}" />
+      <input type="text" maxlength="32" name="css_class" class="tiny"
+             onfocus="$(this).parent().addClass('edited')"
+             value="${getattr(thing.user, 'flair_css_class', '')}" />
+      <button onclick="$(this).parent().removeClass('edited')" type="submit">
+        submit
+      </button>
+      <span class="status"></span>
+    </form>
   %endif
 </%def>

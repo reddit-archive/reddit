@@ -22,6 +22,12 @@
 
 <%namespace file="utils.html" import="plain_link" />
 
+<%def name="_flair(user)">
+  %if user.has_flair:
+    <span class="flair ${user.flair_css_class}">${user.flair_text}</span>
+  %endif
+</%def>
+
 %if context_deleted and not c.user_is_admin:
   [deleted]
 %else:
@@ -31,8 +37,9 @@
     <span>${_(thing.thing.original_author.name)}</span>
   %else:
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
-               _class = thing.author_cls + (" id-%s" % thing.fullname),
-               _sr_path = False, target=target, title=thing.author_title)}
+                 _class = thing.author_cls + (" id-%s" % thing.fullname),
+                 _sr_path = False, target=target, title=thing.author_title)}
+    ${_flair(thing)}
     <span class="userattrs">
     %if thing.attribs:
       &#32;[

@@ -23,7 +23,7 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
-from r2.models import Link, Printable, Trophy, bidding, PromotionWeights
+from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment, Flair
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -185,6 +185,7 @@ class Reddit(Templated):
                 NamedButton('reports', css_class = 'reddit-reported'),
                 NamedButton('spam', css_class = 'reddit-spam'),
                 NamedButton('banned', css_class = 'reddit-ban'),
+                NamedButton('flair', css_class = 'reddit-flair'),
                 ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         css_class = "icon-menu",  separator = '')]
@@ -506,6 +507,7 @@ class SubredditInfoBar(CachedTemplate):
                     NavButton(menu.banusers, 'banned'),
                     NamedButton('traffic'),
                     NavButton(menu.community_settings, 'edit'),
+                    NavButton(menu.flair, 'flair'),
                     ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]
@@ -2241,12 +2243,24 @@ class Page_down(Templated):
         message = kw.get('message', _("This feature is currently unavailable. Sorry"))
         Templated.__init__(self, message = message)
 
+def wrapped_flair(user, subreddit):
+    if not hasattr(subreddit, '_id'):
+        return False, '', ''
+
+    get_flair_attr = lambda a, default=None: getattr(
+        user, 'flair_%s_%s' % (subreddit._id, a), default)
+
+    return (get_flair_attr('enabled', default=True), get_flair_attr('text'),
+            get_flair_attr('css_class'))
+
 class WrappedUser(CachedTemplate):
+    FLAIR_CSS_PREFIX = 'flair-'
+
     def __init__(self, user, attribs = [], context_thing = None, gray = False):
         attribs.sort()
         author_cls = 'author'
 
-        author_title = None
+        author_title = ''
         if gray:
             author_cls += ' gray'
         for tup in attribs:
@@ -2254,6 +2268,11 @@ class WrappedUser(CachedTemplate):
             # Hack: '(' should be in tup[3] iff this friend has a note
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
+
+        flair_text, flair_css_class = wrapped_flair(user, context_thing)
+        has_flair = bool(flair_text)
+        if flair_css_class:
+            flair_css_class = self.FLAIR_CSS_PREFIX + flair_css_class
 
         target = None
         ip_span = None
@@ -2269,6 +2288,9 @@ class WrappedUser(CachedTemplate):
 
         CachedTemplate.__init__(self,
                                 name = user.name,
+                                has_flair = has_flair,
+                                flair_text = flair_text,
+                                flair_css_class = flair_css_class,
                                 author_cls = author_cls,
                                 author_title = author_title,
                                 attribs = attribs,
@@ -2350,6 +2372,36 @@ class UserList(Templated):
     @property
     def container_name(self):
         return c.site._fullname
+
+class FlairList(UserList):
+    """List of users who are tagged with flair within a subreddit."""
+    type = 'flair'
+    destination = 'flair'
+    remove_action = 'unflair'
+
+    def __init__(self):
+        self.cells = ('user', 'flair', 'remove')
+        self.table_headers = (_('user'), _('flair text, css'), '')
+        UserList.__init__(self)
+
+    @property
+    def form_title(self):
+        return _('manage subreddit flair')
+
+    @property
+    def table_title(self):
+        return _('users with flair on %(reddit)s' % dict(reddit = c.site.name))
+
+    def user_ids(self):
+        return c.site.flair
+
+    def user_row(self, user):
+        get_flair_attr = lambda a: getattr(user,
+                                           'flair_%s_%s' % (c.site._id, a), '')
+        user.flair_text = get_flair_attr('text')
+        user.flair_css_class = get_flair_attr('css_class')
+        return UserTableItem(user, self.type, self.cells, self.container_name,
+                             True, self.remove_action, user)
 
 class FriendList(UserList):
     """Friend list on /pref/friends"""
