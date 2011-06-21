@@ -152,8 +152,8 @@ label.disabled { color: gray; }
 .flat-list li, .flat-list form {display: inline; white-space: nowrap; }
 .flat-list .selected a { color: orangered; }
 
-.link .flat-list { display: block; padding-bottom: 1px; }
-.link.compressed .flat-list { display: inline-block; }
+.link .flat-list { display: block; padding: 1px 0; }
+.link.compressed .flat-list { display: inline-block; padding: 0 0 1px 0; }
 
 ul.flat-vert {text-align: left;}
 .flat-vert .separator { margin: 0 }
@@ -2479,15 +2479,19 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 .over18 button { margin: 0 10px 0 10px; padding: 5px}
 
 .entry .buttons li.nsfw-stamp {
-    border: 1px solid #ff7777 !important;
-    padding: 0 4px;
-    background-color: white;
+    font-size: x-small;
 }
 
 .nsfw-stamp acronym {
-    border: none;
-    color: black;
+    color: red;
+    font-size: x-small;
+    font-weight: bold;
     text-decoration: none;
+    padding: 0 2px;
+    border: 1px solid #ff7777 !important;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
 }
 
 .entry .buttons li.trial-stamp, .entry .buttons li.reported-stamp {
