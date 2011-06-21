@@ -2483,12 +2483,12 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 }
 
 .nsfw-stamp acronym {
-    color: red;
+    color: #f55;
     font-size: x-small;
     font-weight: bold;
     text-decoration: none;
     padding: 0 2px;
-    border: 1px solid #ff7777 !important;
+    border: 1px solid #faa !important;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
