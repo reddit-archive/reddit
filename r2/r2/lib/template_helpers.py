@@ -64,22 +64,6 @@ def static(path):
 
     return os.path.join(c.site.static_path, path) + query
 
-
-external_resources = {
-    "jquery.js": {
-        True:  lambda: static("jquery.js"),
-        False: lambda: "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"
-    }
-}
-
-def external(name):
-    """
-    Look up a named external URL from a static mapping. Helper for making
-    frequently used URLs consistent across templates.
-    """
-
-    return external_resources[name][c.secure]()
-
 def s3_https_if_secure(url):
     return url if not c.secure else url.replace("http://", "https://s3.amazonaws.com/")
 

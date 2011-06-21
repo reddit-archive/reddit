@@ -31,7 +31,7 @@
  %>
 <h1>Sponsored link calendar</h1>
 
-${unsafe(js.module['flot'].use())}
+${unsafe(js.use('flot'))}
 
 %if not c.user_is_sponsor:
 <div class="instructions">

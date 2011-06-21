@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%
-   from r2.lib.template_helpers import add_sr, static, external
+   from r2.lib.template_helpers import add_sr, static
    from r2.lib import js
    from r2.lib.utils import query_string
    from r2.lib.filters import _force_unicode
@@ -30,8 +30,7 @@
 <html>
   <head>
     <title>${thing.title}</title>
-    <script src="${external('jquery.js')}" type="text/javascript"></script>
-    ${unsafe(js.module['mobile'].use())}
+    ${unsafe(js.use('jquery', 'mobile'))}
     <script type="text/javascript">
       ${js_preamble()}
     </script> 

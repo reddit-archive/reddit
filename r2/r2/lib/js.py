@@ -160,7 +160,24 @@ class LocalizedModule(Module):
             url = os.path.join(g.static_path, name + "." + get_lang()[0] + ext)
             return script_tag.format(src=static(url))
 
+class JQuery(Module):
+    def __init__(self, cdn_src=None):
+        self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery"
+    
+    def build(self, closure):
+        pass
+
+    def use(self):
+        from r2.lib.template_helpers import static
+        if c.secure:
+            return script_tag.format(src=static("jquery.js"))
+        else:
+            ext = ".js" if g.uncompressedJS else ".min.js"
+            return script_tag.format(src=self.cdn_src+ext)
+
 module = {}
+
+module["jquery"] = JQuery()
 
 module["reddit"] = LocalizedModule("reddit.js",
     "jquery.json.js",
@@ -187,6 +204,9 @@ module["sponsored"] = Module("sponsored.js",
 )
 
 module["flot"] = Module("jquery.flot.js")
+
+def use(*names):
+    return "\n".join(module[name].use() for name in names)
 
 def build_reddit_js():
     closure = ClosureCompiler("r2/lib/contrib/closure_compiler/compiler.jar")

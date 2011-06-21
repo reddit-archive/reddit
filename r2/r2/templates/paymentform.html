@@ -25,7 +25,7 @@
 %>
 <%namespace file="utils.html" import="error_field"/>
 
-${unsafe(js.module['sponsored'].use())}
+${unsafe(js.use('sponsored'))}
 <script type="text/javascript">
   $(function() { update_bid("#bid-field"); }); 
 </script>

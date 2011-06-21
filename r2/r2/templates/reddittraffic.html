@@ -28,7 +28,7 @@
       return locale.format('%d', x, True)
  %>
 
-${unsafe(js.module['flot'].use())}
+${unsafe(js.use('flot'))}
 
 <%def name="daily_summary()">
   <% 

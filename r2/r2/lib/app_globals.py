@@ -146,6 +146,8 @@ class Globals(object):
 
         """
 
+        global_conf.setdefault("debug", False)
+
         # slop over all variables to start with
         for k, v in  global_conf.iteritems():
             if not k.startswith("_") and not hasattr(self, k):
@@ -163,7 +165,7 @@ class Globals(object):
                                          % (k, v, self.choice_props[k]))
                     v = self.choice_props[k][v]
                 setattr(self, k, v)
-        
+
         self.paths = paths
 
         self.running_as_script = global_conf.get('running_as_script', False)

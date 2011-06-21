@@ -33,7 +33,7 @@
             import="error_field, checkbox, image_upload, reddit_selector" />
 <%namespace name="utils" file="utils.html"/>
 
-${unsafe(js.module['sponsored'].use())}
+${unsafe(js.use('sponsored'))}
 <script type="text/javascript">
   $(function() { update_bid("*[name=bid]"); }); 
 </script>

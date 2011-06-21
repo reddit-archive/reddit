@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.template_helpers import get_domain, static, external
+   from r2.lib.template_helpers import get_domain
    from r2.lib.utils import query_string
  %>
 <%inherit file="reddit.html"/>
@@ -31,8 +31,8 @@
 
 
 <%def name="javascript()">
-  <script src="${external('jquery.js')}"  type="text/javascript"></script>
-  <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
+  <% from r2.lib import js %>
+  ${unsafe(js.use('jquery', 'reddit'))}
   <script type="text/javascript">
     function showcover() { $("#cover").show(); }
   </script>

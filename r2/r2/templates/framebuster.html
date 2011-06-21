@@ -4,10 +4,8 @@
 <html>
   <head>
     <title>escappit</title>
-    <% from r2.lib.template_helpers import static, external %>
-    <script src="${external('jquery.js')}"  type="text/javascript"></script>
-    <script src="${static('jquery.json.js')}"  type="text/javascript"></script>
-    <script src="${static('jquery.reddit.js')}"  type="text/javascript"></script>
+    <% from r2.lib import js %>
+    ${unsafe(js.use('jquery', 'reddit'))}
   </head>
   <body>
     <script type="text/javascript">

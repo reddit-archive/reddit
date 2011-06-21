@@ -28,7 +28,7 @@
 <%namespace file="utils.html" 
             import="error_field, checkbox, image_upload, reddit_selector" />
 
-${unsafe(js.module['sponsored'].use())}
+${unsafe(js.use('sponsored'))}
 
 <div class="pretty-form campaign">
   <%utils:line_field title="${_('create a roadblock')}" id="campaign-field">
