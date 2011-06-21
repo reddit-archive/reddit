@@ -149,8 +149,7 @@ label.disabled { color: gray; }
 .selected { font-weight: bold; }
 
 .flat-list {list-style-type: none; display: inline;}
-.flat-list li {display: inline; }
-.flat-list form {display: inline; }
+.flat-list li, .flat-list form {display: inline; white-space: nowrap; }
 .flat-list .selected a { color: orangered; }
 
 .link .flat-list { display: block; padding-bottom: 1px; }
