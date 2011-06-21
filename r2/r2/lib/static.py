@@ -27,8 +27,9 @@ def update_static_names(names_file, files, make_links=False):
 
     base = os.path.dirname(names_file)
     for path in files:
-        name = os.path.relpath(path, base)
-        names[name] = generate_static_name(name, base)
+        if not os.path.islink(path):
+            name = os.path.relpath(path, base)
+            names[name] = generate_static_name(name, base)
 
     json_enc = json.JSONEncoder(indent=2, sort_keys=True)
     open(names_file, "w").write(json_enc.encode(names))

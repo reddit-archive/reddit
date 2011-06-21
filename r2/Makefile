@@ -78,7 +78,7 @@ all:	pyx static names $(INIS)
 
 .PHONY: 	pyx js css rtl static names clean clean_static all
 
-$(NAMES): static
+$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(SPRITES) $(MAINCSS)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
 
 $(JSTARGETS): $(JSSOURCES)
