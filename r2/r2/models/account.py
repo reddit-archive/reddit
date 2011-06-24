@@ -251,6 +251,10 @@ class Account(Thing):
     def friends(self):
         return self.friend_ids()
 
+    @property
+    def enemies(self):
+        return self.enemy_ids()
+
     # Used on the goldmember version of /prefs/friends
     @memoize('account.friend_rels')
     def friend_rels_cache(self):
@@ -312,6 +316,12 @@ class Account(Thing):
                           eager_load = True)
         for f in q:
             f._thing1.remove_friend(f._thing2)
+
+        q = Friend._query(Friend.c._thing2_id == self._id,
+                          Friend.c._name == 'enemy',
+                          eager_load=True)
+        for f in q:
+            f._thing1.remove_enemy(f._thing2)
 
     @property
     def subreddits(self):
@@ -622,7 +632,8 @@ def register(name, password):
 
 class Friend(Relation(Account, Account)): pass
 
-Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn = True),)
+Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn=True),
+                      UserRel('enemy', Friend, disable_reverse_ids_fn=True))
 
 class DeletedUser(FakeAccount):
     @property
@@ -644,3 +655,12 @@ class DeletedUser(FakeAccount):
             pass
         else:
             object.__setattr__(self, attr, val)
+
+class BlockedUser(DeletedUser):
+    @property
+    def name(self):
+        return '[blocked]'
+
+    @property
+    def _deleted(self):
+        return False

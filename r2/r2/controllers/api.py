@@ -31,7 +31,7 @@ from r2.models import *
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
-from r2.lib.pages import FriendList, ContributorList, ModList, \
+from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, \
     ClickGadget, UrlParser
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
@@ -184,7 +184,8 @@ class ApiController(RedditController):
         handles message composition under /message/compose.
         """
         if not (form.has_errors("to",  errors.USER_DOESNT_EXIST,
-                                errors.NO_USER, errors.SUBREDDIT_NOEXIST) or
+                                errors.NO_USER, errors.SUBREDDIT_NOEXIST,
+                                errors.USER_BLOCKED) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
@@ -492,7 +493,7 @@ class ApiController(RedditController):
                 nuser = VExistingUname('name'),
                 iuser = VByName('id'),
                 container = VByName('container'),
-                type = VOneOf('type', ('friend', 'moderator', 
+                type = VOneOf('type', ('friend', 'enemy', 'moderator', 
                                        'contributor', 'banned')))
     def POST_unfriend(self, nuser, iuser, container, type):
         """
@@ -517,7 +518,7 @@ class ApiController(RedditController):
             abort(403, 'forbidden')
         # if we are (strictly) unfriending, the container had better
         # be the current user.
-        if type == "friend" and container != c.user:
+        if type in ("friend", "enemy") and container != c.user:
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
         fn(victim)
@@ -527,8 +528,6 @@ class ApiController(RedditController):
 
         if type in ("moderator", "contributor"):
             Subreddit.special_reddits(victim, type, _update=True)
-
-
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -553,8 +552,8 @@ class ApiController(RedditController):
                  and not c.site.is_moderator(c.user))):
             abort(403,'forbidden')
 
-        # if we are (strictly) friending, the container had better
-        # be the current user.
+        # if we are (strictly) friending, the container
+        # had better be the current user.
         if type == "friend" and container != c.user:
             abort(403,'forbidden')
 
@@ -765,6 +764,36 @@ class ApiController(RedditController):
             return
         Report.new(c.user, thing)
 
+    @noresponse(VUser(), VModhash(),
+                thing=VByName('id'))
+    def POST_block(self, thing):
+        '''for blocking via inbox'''
+        if not thing:
+            return
+        # Users may only block someone who has
+        # actively harassed them (i.e., comment/link reply
+        # or PM). Check that 'thing' would have showed up in the
+        # user's inbox at some point
+        if isinstance(thing, Message):
+            if thing.to_id != c.user._id:
+                return
+        elif isinstance(thing, Comment):
+            parent_id = getattr(thing, 'parent_id', None)
+            link_id = thing.link_id
+            if parent_id:
+                parent_comment = Comment._byID(parent_id)
+                parent_author_id = parent_comment.author_id
+            else:
+                parent_link = Link._byID(link_id)
+                parent_author_id = parent_link.author_id
+            if parent_author_id != c.user._id:
+                return
+
+        block_acct = Account._byID(thing.author_id)
+        if block_acct.name in g.admins:
+            return
+        c.user.add_enemy(block_acct)
+
     @noresponse(VAdmin(), VModhash(),
                 thing = VByName('id'))
     def POST_indict(self, thing):
@@ -863,7 +892,8 @@ class ApiController(RedditController):
             not commentform.has_errors("parent",
                                        errors.DELETED_COMMENT,
                                        errors.DELETED_LINK,
-                                       errors.TOO_OLD)):
+                                       errors.TOO_OLD,
+                                       errors.USER_BLOCKED)):
 
             if is_message:
                 to = Account._byID(parent.author_id)

@@ -302,6 +302,11 @@
   %endif
   %if thing.recipient:
     ${self.banbuttons()}
+      %if thing.thing.author_id != c.user._id and thing.thing.author_id not in c.user.enemies:
+        <li>
+          ${ynbutton(_("block user"), _("blocked"), "block", "hide_thing")}
+        </li>
+      %endif
     <li class="unread">
      ${self.state_button("unread", _("mark unread"), \
         "return change_state(this, 'unread_message', unread_thing, true);", \

@@ -23,7 +23,7 @@
 <%namespace file="utils.html" import="error_field"/>
 <% from r2.lib.template_helpers import static %>
 <div class="${thing._class} usertable">
-  %if thing.editable:
+  %if thing.addable:
     <form action="/post/${thing.destination}"
           method="post" class="pretty-form medium-text"
           onsubmit="return post_form(this, '${thing.destination}');"

@@ -897,6 +897,7 @@ class FormsController(RedditController):
             content = PaneStack()
             infotext = strings.friends % Friends.path
             content.append(FriendList())
+            content.append(EnemyList())
         elif location == 'update':
             content = PrefUpdate()
         elif location == 'feeds' and c.user.pref_private_feeds:

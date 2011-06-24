@@ -91,7 +91,7 @@ ${parent.collapsed()}
   %endif
 
   %if collapse and thing.collapsed and show:
-    ${_("comment score below threshold")}
+    ${thing.collapsed_reason}
   %else:
     %if show:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;

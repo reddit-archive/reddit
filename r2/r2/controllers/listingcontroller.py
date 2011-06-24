@@ -625,6 +625,7 @@ class MessageController(ListingController):
     def keep_fn(self):
         def keep(item):
             wouldkeep = item.keep_item(item)
+
             # TODO: Consider a flag to disable this (and see above plus builder.py)
             if (item._deleted or item._spam) and not c.user_is_admin:
                 return False

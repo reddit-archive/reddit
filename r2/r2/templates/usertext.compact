@@ -83,6 +83,7 @@
         ${error_field("NO_TEXT", thing.name, "span")}
         ${error_field("DELETED_COMMENT", "parent", "span")}
         ${error_field("DELETED_LINK", "parent", "span")}
+        ${error_field("USER_BLOCKED", "parent", "span")}
         <a href="#" class="help-toggle button secondary_button">help</a>
       </div>
       <div class="markhelp-parent">

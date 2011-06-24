@@ -24,7 +24,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from r2.lib.utils.trial_utils import trial_info
-from account import Account, DeletedUser
+from account import Account, DeletedUser, BlockedUser
 from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
@@ -620,7 +620,10 @@ class Comment(Thing, Printable):
 
         inbox_rel = None
         # only global admins can be message spammed.
-        if to and (not c._spam or to.name in g.admins):
+        # Don't send the message if the recipient has blocked
+        # the author
+        if to and ((not c._spam and author._id not in to.enemies)
+            or to.name in g.admins):
             orangered = (to.name != author.name)
             inbox_rel = Inbox._add(to, c, name, orangered=orangered)
 
@@ -756,10 +759,16 @@ class Comment(Thing, Printable):
 
 
             # don't collapse for admins, on profile pages, or if deleted
-            item.collapsed = ((item.score < min_score) and
-                             not (profilepage or
-                                  item.deleted or
-                                  user_is_admin))
+            item.collapsed = False
+            if ((item.score < min_score) and not (profilepage or
+                item.deleted or user_is_admin)):
+                item.collapsed = True
+                item.collapsed_reason = _("comment score below threshold")
+            if c.user_is_loggedin and item.author_id in c.user.enemies:
+                if "grayed" not in extra_css:
+                    extra_css += " grayed"
+                item.collapsed = True
+                item.collapsed_reason = _("blocked user")
 
             item.editted = getattr(item, "editted", False)
 
@@ -959,7 +968,9 @@ class Message(Thing, Printable):
             # if the current "to" is not a sr moderator,
             # they need to be notified
             if not sr_id or not sr.is_moderator(to):
-                orangered = (to.name != author.name)
+                # Don't notify on PMs from blocked users, either
+                orangered = (to.name != author.name and
+                             author._id not in to.enemies)
                 inbox_rel.append(Inbox._add(to, m, 'inbox',
                                             orangered=orangered))
             # find the message originator
@@ -1090,6 +1101,13 @@ class Message(Thing, Printable):
                     item.is_collapsed = item.author_collapse
                 if c.user.pref_collapse_read_messages:
                     item.is_collapsed = (item.is_collapsed is not False)
+            if item.author_id in c.user.enemies:
+                item.is_collapsed = True
+                if not c.user_is_admin:
+                    item.author = BlockedUser()
+                    item.subject = _('[blocked]')
+                    item.body = _('[blocked]')
+
 
         # Run this last
         Printable.add_props(user, wrapped)

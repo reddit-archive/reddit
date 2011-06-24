@@ -711,11 +711,14 @@ class VSubmitParent(VByName):
         fullname = fullname or fullname2
         if fullname:
             parent = VByName.run(self, fullname)
-            if parent and parent._deleted:
-                if isinstance(parent, Link):
-                    self.set_error(errors.DELETED_LINK)
-                else:
-                    self.set_error(errors.DELETED_COMMENT)
+            if parent:
+                if c.user_is_loggedin and parent.author_id in c.user.enemies:
+                    self.set_error(errors.USER_BLOCKED)
+                if parent._deleted:
+                    if isinstance(parent, Link):
+                        self.set_error(errors.DELETED_LINK)
+                    else:
+                        self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
                 return parent
             else:
@@ -907,7 +910,11 @@ class VMessageRecipent(VExistingUname):
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST)
         else:
-            return VExistingUname.run(self, name)
+            account = VExistingUname.run(self, name)
+            if account._id in c.user.enemies:
+                self.set_error(errors.USER_BLOCKED)
+            else:
+                return account
 
 class VUserWithEmail(VExistingUname):
     def run(self, name):

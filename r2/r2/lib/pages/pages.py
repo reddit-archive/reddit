@@ -2283,8 +2283,11 @@ class UserList(Templated):
     remove_action  = "unfriend"
     editable_fn    = None
 
-    def __init__(self, editable = True):
+    def __init__(self, editable=True, addable=None):
         self.editable = editable
+        if addable is None:
+            addable = editable
+        self.addable = addable
         Templated.__init__(self)
 
     def user_row(self, user):
@@ -2351,9 +2354,26 @@ class FriendList(UserList):
             return UserTableItem(user, self.type, self.cells, self.container_name,
                                  True, self.remove_action, rel)
 
+
+class EnemyList(UserList):
+    """Blacklist on /pref/friends"""
+    type = 'enemy'
+    cells = ('user', 'remove')
+    
+    def __init__(self, editable=True, addable=False):
+        UserList.__init__(self, editable, addable)
+
+    @property
+    def table_title(self):
+        return _('blocked users')
+
+    def user_ids(self):
+        return c.user.enemies
+
     @property
     def container_name(self):
         return c.user._fullname
+
 
 class ContributorList(UserList):
     """Contributor list on a restricted/private reddit."""
