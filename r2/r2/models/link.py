@@ -621,7 +621,8 @@ class Comment(Thing, Printable):
         inbox_rel = None
         # only global admins can be message spammed.
         if to and (not c._spam or to.name in g.admins):
-            inbox_rel = Inbox._add(to, c, name)
+            orangered = (to.name != author.name)
+            inbox_rel = Inbox._add(to, c, name, orangered=orangered)
 
         return (c, inbox_rel)
 
@@ -958,7 +959,9 @@ class Message(Thing, Printable):
             # if the current "to" is not a sr moderator,
             # they need to be notified
             if not sr_id or not sr.is_moderator(to):
-                inbox_rel.append(Inbox._add(to, m, 'inbox'))
+                orangered = (to.name != author.name)
+                inbox_rel.append(Inbox._add(to, m, 'inbox',
+                                            orangered=orangered))
             # find the message originator
             elif sr_id and m.first_message:
                 first = Message._byID(m.first_message, True)
@@ -1187,6 +1190,7 @@ class Inbox(MultiRelation('inbox',
 
     @classmethod
     def _add(cls, to, obj, *a, **kw):
+        orangered = kw.pop("orangered", True)
         i = Inbox(to, obj, *a, **kw)
         i.new = True
         i._commit()
@@ -1195,7 +1199,7 @@ class Inbox(MultiRelation('inbox',
             to._load()
 
         #if there is not msgtime, or it's false, set it
-        if not hasattr(to, 'msgtime') or not to.msgtime:
+        if orangered and (not hasattr(to, 'msgtime') or not to.msgtime):
             to.msgtime = obj._date
             to._commit()
 
