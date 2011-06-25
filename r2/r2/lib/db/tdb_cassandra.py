@@ -33,6 +33,7 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib import cache
 from uuid import uuid1
 from itertools import chain
+import cPickle as pickle
 
 cassandra = g.cassandra
 thing_cache = g.thing_cache
