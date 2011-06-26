@@ -120,14 +120,16 @@ class ThingMeta(type):
 
             thing_types[cls._type_prefix] = cls
 
-            cls._read_consistency_level = read_consistency_level
-            cls._write_consistency_level = write_consistency_level
+            if not getattr(cls, "_read_consistency_level", None):
+                cls._read_consistency_level = read_consistency_level
+            if not getattr(cls, "_write_consistency_level", None):
+                cls._write_consistency_level = write_consistency_level
 
             try:
                 cls._cf = ColumnFamily(cassandra,
                                        cf_name,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+                                       read_consistency_level = cls._read_consistency_level,
+                                       write_consistency_level = cls._write_consistency_level)
             except NotFoundException:
                 if not db_create_tables:
                     raise
@@ -143,8 +145,8 @@ class ThingMeta(type):
                 # try again to look it up
                 cls._cf = ColumnFamily(cassandra,
                                        cf_name,
-                                       read_consistency_level = read_consistency_level,
-                                       write_consistency_level = write_consistency_level)
+                                       read_consistency_level = cls._read_consistency_level,
+                                       write_consistency_level = cls._write_consistency_level)
 
         cls._kind = name
 
