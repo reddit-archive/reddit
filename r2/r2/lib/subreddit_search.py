@@ -1,10 +1,15 @@
-from r2.models import *
+from r2.models import Subreddit
+from r2.lib.memoize import memoize
+from r2.lib.db.operators import desc
 from r2.lib import utils
+from r2.lib.db import tdb_cassandra
+from r2.lib.cache import CL_ONE
 
-from pylons import g
-
-sr_prefix = 'sr_search_'
-
+class SubredditsByPartialName(tdb_cassandra.View):
+    _use_db = True
+    _value_type = 'pickle'
+    _use_new_ring = True
+    _read_consistency_level = CL_ONE
 
 def load_all_reddits():
     query_cache = {}
@@ -21,11 +26,17 @@ def load_all_reddits():
             if len(names) < 10:
                 names.append(sr.name)
 
-    g.permacache.set_multi(query_cache, prefix = sr_prefix)
+    for name_prefix, subreddits in query_cache.iteritems():
+        SubredditsByPartialName._set_values(name_prefix, {'srs': subreddits})
 
 def search_reddits(query):
     query = str(query.lower())
-    return g.permacache.get(sr_prefix + query) or []
+
+    try:
+        result = SubredditsByPartialName._byID(query)
+        return result.srs
+    except tdb_cassandra.NotFound:
+        return []
 
 @memoize('popular_searches', time = 3600)
 def popular_searches():
