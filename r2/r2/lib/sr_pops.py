@@ -19,19 +19,21 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from pylons import g
 from r2.models import Subreddit
 from r2.lib.db.operators import desc
 from r2.lib import count
-from r2.lib.memoize import memoize
-from r2.lib.utils import fetch_things2, flatten, keymap
+from r2.lib.utils import fetch_things2, flatten
+from r2.lib.db import tdb_cassandra
+from r2.lib.cache import CL_ONE
+
+class SubredditPopularityByLanguage(tdb_cassandra.View):
+    _use_db = True
+    _value_type = 'pickle'
+    _use_new_ring = True
+    _read_consistency_level = CL_ONE
 
 # the length of the stored per-language list
 limit = 1000
-
-def cached_srs_key(lang, over18_state):
-    assert over18_state in ('no_over18', 'allow_over18', 'only_over18')
-    return str('sr_pop_%s_%s' % (lang, over18_state))
 
 def set_downs():
     sr_counts = count.get_sr_counts()
@@ -88,7 +90,7 @@ def cache_lists():
         print "For %s/%s setting %s" % (lang, over18,
                                         map(lambda sr: sr.name, srs[:50]))
 
-        g.permacache.set(cached_srs_key(lang, over18), sr_tuples)
+        SubredditPopularityByLanguage._set_values(lang, {over18: sr_tuples})
 
 def run():
     set_downs()
@@ -112,19 +114,18 @@ def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
             unique_langs.append(lang)
             seen_langs.add(lang)
 
-    keys = map(lambda lang: cached_srs_key(lang, over18_state), unique_langs)
-
     # dict(lang_key -> [(_downs, allow_top, sr_id)])
-    srs = g.permacache.get_multi(keys)
-
-    tups = flatten(srs.values())
+    bylang = SubredditPopularityByLanguage._byID(unique_langs,
+                                                 properties=[over18_state])
+    tups = flatten([lang_lists[over18_state] for lang_lists
+                                             in bylang.values()])
 
     if filter_allow_top:
         # remove the folks that have opted out of being on the front
         # page as appropriate
         tups = filter(lambda tpl: tpl[1], tups)
 
-    if len(srs) > 1:
+    if len(tups) > 1:
         # if there was only one returned, it's already sorted
         tups.sort(key = lambda tpl: tpl[0], reverse=True)
 
