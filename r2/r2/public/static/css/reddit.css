@@ -4041,7 +4041,7 @@ dd { margin-left: 20px;  }
 }
 
 .titlebox form.leavemoderator-button {
-    background-image: url(/static/star.png); /* SPRITE */
+    background-image: url(/static/shield.png); /* SPRITE */
 }
 .titlebox form.leavecontributor-button {
     background-image: url(/static/pencil.png); /* SPRITE */
@@ -4069,7 +4069,7 @@ dd { margin-left: 20px;  }
     background-image: url(/static/reddit_ban.png); /* SPRITE */
 }
 .icon-menu .reddit-moderators {
-    background-image: url(/static/star.png); /* SPRITE */
+    background-image: url(/static/shield.png); /* SPRITE */
 }
 .icon-menu .moderator-mail {
     background-image: url(/static/mailgray.png); /* SPRITE */
