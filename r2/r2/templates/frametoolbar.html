@@ -31,6 +31,7 @@
 
 <%def name="javascript_run()">
   ${parent.javascript_run()}
+  reddit.external_frame = true;
   toolbar = new toolbar_p("${panel_size('expanded')}", "${panel_size('collapsed')}");
 </%def>
 

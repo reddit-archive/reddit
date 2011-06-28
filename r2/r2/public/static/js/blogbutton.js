@@ -1,4 +1,6 @@
 $(function() {
+        reddit.external_frame = true;
+
         /* set default arrow behavior */
         var state = null;
         function color(x) {
