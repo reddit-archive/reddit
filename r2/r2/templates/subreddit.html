@@ -71,7 +71,7 @@
 ##this function is used by subscriptionbox.html
 <%def name="permission_icons(sr)">
   %if sr.moderator:
-    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="/static/star.png" />
+    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="/static/shield.png" />
   %endif
 
   %if sr.type in ("restricted", "private") and not sr.moderator:
