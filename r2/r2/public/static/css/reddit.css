@@ -4084,6 +4084,9 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-ban {
     background-image: url(/static/reddit_ban.png); /* SPRITE */
 }
+.icon-menu .reddit-flair {
+    background-image: url(/static/reddit_flair.png); /* SPRITE */
+}
 .icon-menu .reddit-moderators {
     background-image: url(/static/shield.png); /* SPRITE */
 }
