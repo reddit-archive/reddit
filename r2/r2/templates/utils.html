@@ -487,6 +487,24 @@ ${unsafe(txt)}
   </%call>
 </%def>
 
+<%def name="radio_type(field_name, val_name, title, text=None, checked=False)">
+  <% full_name = field_name + "_" + val_name %>
+  <tr>
+    <td class="nowrap nopadding">
+      <input name="${field_name}" type="radio" id="${full_name}"
+             value="${val_name}" class="nomargin"
+             %if checked:
+               checked="checked"
+             %endif
+             />
+      <label for="${full_name}">${title}</label>
+    </td>
+    %if text:
+      <td class="leftpad"><span class="gray">${text}</span></td>
+    %endif
+  </tr>
+</%def>
+
 <%def name="reddit_selector(default_sr, sr_searches, subreddits)">
     <div id="sr-autocomplete-area">
       <input id="sr-autocomplete" name="sr" type="text"

@@ -580,8 +580,7 @@ ul.flat-vert {text-align: left;}
     font-size:x-small;
 }
 
-.tagline { color:#888; font-size:x-small; 
-}
+.tagline { color:#888; font-size:x-small; }
 .tagline a {color: #369; text-decoration: none; }
 .tagline .friend    { color: orangered }
 .tagline .submitter { color: #0055df }
@@ -589,6 +588,51 @@ ul.flat-vert {text-align: left;}
 .tagline .admin { color: #ff0011; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
+
+a.author { margin-right: 0.5em; }
+
+.flair {
+    display: inline-block;
+    margin-right: .5em;
+    padding: 0 2px;
+    background: #f5f5f5;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+}
+
+.link .flair {
+    margin-top: -1px;
+}
+
+.flairlist .flair-jump {
+    margin-bottom: 1em;
+}
+
+.flairlist .flair-jump input[type="text"] { width:430px; }
+.flair-jump button { font-size:100%; }
+
+.flairlist.pretty-form { font-size:inherit; }
+
+.flairlisthome, .flairlist .nextprev {
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.flairlisthome { font-size: smaller; }
+
+.flaircell, .flairlist .header {
+    display: inline-block;
+    text-align: center;
+    width: 28ex;
+    margin-right: 4ex;
+}
+
+.flairrow .tagline { text-align: left; width:36ex; }
+.flairlist .header { text-align: center; }
+.flairlist .flaircell input[type="text"] { width: 28ex; }
+.flairrow button { display: none; }
+.flairrow .edited button { display: inline-block; }
 
 .media-button .option { color: red; }
 .media-button .option.active {
@@ -3188,13 +3232,14 @@ ul.tabmenu.formtab {
     /*background-color:#CEE3F8;
     /*background-color:#EFF7FF;*!/
     color: #336699;*/
+    color: blue;
     font-weight:bold;
     padding:1px 10px;
 }
 .linefield .title + .gray {
     font-size: x-small;
 }
-.linefield .delete-field {
+.linefield .small-field, .linefield .delete-field {
     padding: 0; 
     font-size: smaller; 
 }
@@ -3833,11 +3878,11 @@ table.lined-table {
 }
 .create-promo .rules { float:  left; margin-left:  15px; }
 
-.create-reddit h1,
-.create-promotion h1 { font-size: 200%; color: #999; xmargin:10px 0 0 5px;  }
+.fancy-settings h1, .create-promotion h1 { font-size: 200%; color: #999; margin:10px 5px; }
+.fancy-settings h2 { font-size: 200%; font-weight:normal; color: #999; margin:10px 5px; }
+.fancy-settings h1 strong { font-weight:bold; color: #666;  }
 .create-promotion .sitetable { margin: 5px;  }
 .create-promotion .infobar { margin-left: 12px; width:  479px; background-color: #fbd8d8; margin-bottom: 10px;  }
-.create-reddit h1 b { color: #666;  }
 
 .create-promotion .create-promo .save-button { float:right; margin-right:  3px;  }
     .create-promotion .create-promo .save-button button {
@@ -4063,6 +4108,14 @@ dd { margin-left: 20px;  }
     background-image: url(/static/pencil.png); /* SPRITE */
 }
 
+.titlebox form.flairtoggle {
+    padding: 0;
+}
+
+.titlebox .tagline {
+    margin: 5px 0 5px 20px;
+}
+
 .icon-menu a {
     padding-left: 20px;
     background: white none no-repeat scroll center left;
@@ -4086,6 +4139,9 @@ dd { margin-left: 20px;  }
 }
 .icon-menu .reddit-flair {
     background-image: url(/static/reddit_flair.png); /* SPRITE */
+    /* Work around a centering difference between this icon and reddit_ban.png */
+    margin-left: 1px;
+    padding-left: 19px;
 }
 .icon-menu .reddit-moderators {
     background-image: url(/static/shield.png); /* SPRITE */

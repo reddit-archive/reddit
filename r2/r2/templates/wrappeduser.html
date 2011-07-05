@@ -42,7 +42,7 @@
     ${_flair(thing)}
     <span class="userattrs">
     %if thing.attribs:
-      &#32;[
+      [
       %for priority, abbv, css_class, label, attr_link, img in thing.attribs:
         %if attr_link:
           <a class="${css_class}" title="${label}"

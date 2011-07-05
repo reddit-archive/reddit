@@ -539,3 +539,7 @@ body.toolbar { margin: 0px; padding: 0px; overflow: hidden; }
 .morechildren { margin: 5px 10px; }
 
 .morechildren a { display: block; text-align: center; max-width: 350px; color: white !important; }
+
+a.author { margin-right: 0.5em; }
+
+.flair { margin-right: 0.5em; }

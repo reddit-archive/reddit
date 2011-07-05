@@ -36,6 +36,27 @@
              hidden_data = dict(id = thing.sr._fullname))}
 </%def>
 
+<%def name="flair_control(user, sr)">
+  %if c.user_is_loggedin:
+    <%
+      wrapped_user = WrappedUser(user, subreddit=sr, force_show_flair=True)
+    %>
+    %if wrapped_user.has_flair:
+      <form class="toggle flairtoggle">
+        <input id="flair_enabled" type="checkbox" name="flair_enabled"
+            %if wrapped_user.flair_enabled:
+              checked="checked"
+            %endif
+            >
+        ${_("Show my flair on this reddit. It looks like:")}
+        <div class="tagline">
+          ${wrapped_user}
+        </div>
+      </form>
+    %endif
+  %endif
+</%def>
+
 <div class="titlebox">
   <h1 class="hover redditname">
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}

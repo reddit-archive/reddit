@@ -29,24 +29,8 @@
 <%namespace file="printablebuttons.html" import="toggle_button, simple_button" />
 
 <%namespace name="utils" file="utils.html"/>
-
-<%def name="radio_type(field_name, val_name, title, text, checked)">
-  <% full_name = field_name + "_" + val_name %>
-  <tr>
-    <td class="nowrap nopadding">
-      <input name="${field_name}" type="radio" id="${full_name}"
-             value="${val_name}" class="nomargin"
-             %if checked:
-               checked="checked"
-             %endif
-             />
-      <label for="${full_name}">${title}</label>
-    </td>
-    <td class="leftpad"><span class="gray">${text}</span></td>
-  </tr>
-</%def>
  
-<div class="create-reddit thing"
+<div class="create-reddit fancy-settings thing"
      %if thing.site:
        id="${thing.site._fullname}"
      %endif
@@ -54,7 +38,7 @@
 %if thing.site:
   <h1>${_("community settings")}
   %if thing.site:
-    | &#32;<b>${thing.site.name}</b>
+    | &#32;<strong>${thing.site.name}</strong>
   %endif
   </h1>
 %else:
@@ -116,32 +100,32 @@
 
   <%utils:line_field title="${_('type')}">
     <div class="delete-field">
-      <table >
-      ${radio_type('type', "public", _("public"),
-                   _("anyone can view and submit"),
-                   (not thing.site or thing.site.type=='public'))}
-      ${radio_type('type', "restricted", _("restricted"),
-                   _("anyone can view, but only some are approved to submit links"),
-                   (thing.site and thing.site.type=='restricted'))}
-      ${radio_type('type', "private", _("private"),
-                   _("only approved members can view and submit"),
-                   (thing.site and thing.site.type=='private'))}
+      <table>
+      ${utils.radio_type('type', "public", _("public"),
+                         _("anyone can view and submit"),
+                         (not thing.site or thing.site.type=='public'))}
+      ${utils.radio_type('type', "restricted", _("restricted"),
+                         _("anyone can view, but only some are approved to submit links"),
+                         (thing.site and thing.site.type=='restricted'))}
+      ${utils.radio_type('type', "private", _("private"),
+                         _("only approved members can view and submit"),
+                         (thing.site and thing.site.type=='private'))}
       </table>
     </div>
   </%utils:line_field>
 
   <%utils:line_field title="${_('content options')}">
     <div class="delete-field">
-      <table >
-        ${radio_type('link_type', "any", _("any"),
-                     _("any link type is allowed"),
-                     (not thing.site or thing.site.link_type=='any'))}
-        ${radio_type('link_type', "link", _("links only"),
-                     _("only links to external sites are allowed"),
-                     (thing.site and thing.site.link_type=='link'))}
-        ${radio_type('link_type', "self", _("text posts only"),
-                     _("only text/self posts are allowed"),
-                     (thing.site and thing.site.link_type=='self'))}
+      <table>
+        ${utils.radio_type('link_type', "any", _("any"),
+                           _("any link type is allowed"),
+                           (not thing.site or thing.site.link_type=='any'))}
+        ${utils.radio_type('link_type', "link", _("links only"),
+                           _("only links to external sites are allowed"),
+                           (thing.site and thing.site.link_type=='link'))}
+        ${utils.radio_type('link_type', "self", _("text posts only"),
+                           _("only text/self posts are allowed"),
+                           (thing.site and thing.site.link_type=='self'))}
       </table>
     </div>
   </%utils:line_field>
