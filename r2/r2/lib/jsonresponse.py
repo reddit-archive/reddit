@@ -241,4 +241,6 @@ class JQueryResponse(JsonResponse):
             obj = obj.attr(k, v)
         return obj
 
+    def refresh(self):
+        return self.top_node.transform(self, "refresh", [])
 

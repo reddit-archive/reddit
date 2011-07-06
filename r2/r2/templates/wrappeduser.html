@@ -22,8 +22,11 @@
 
 <%namespace file="utils.html" import="plain_link" />
 
-<%def name="_flair(user)">
-  %if user.has_flair:
+<%def name="flair(user, enabled=None)">
+  %if enabled is None:
+    <% enabled = user.flair_enabled %>
+  %endif
+  %if user.has_flair and enabled:
     <span class="flair ${user.flair_css_class}">${user.flair_text}</span>
   %endif
 </%def>
@@ -39,7 +42,7 @@
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
                  _class = thing.author_cls + (" id-%s" % thing.fullname),
                  _sr_path = False, target=target, title=thing.author_title)}
-    ${_flair(thing)}
+    ${flair(thing, enabled=thing.force_show_flair)}
     <span class="userattrs">
     %if thing.attribs:
       [

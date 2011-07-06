@@ -80,6 +80,8 @@
                       _("you are no longer an approved submitter"))}
   %endif
 
+  ${flair_control(c.user, thing.sr)}
+
   %if thing.sr.description:
     ${thing.sr.usertext}
   %endif

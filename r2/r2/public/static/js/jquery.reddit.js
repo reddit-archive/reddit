@@ -145,8 +145,9 @@ function handleResponse(action) {
                         else {
                             $.debug("unrecognized");
                         }
-                    }
-                    else {
+                    } else if (op == "refresh") {
+                        $.refresh();
+                    } else {
                         $.debug("unrecognized");
                     }
                 });

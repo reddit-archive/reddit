@@ -2256,7 +2256,8 @@ def wrapped_flair(user, subreddit):
 class WrappedUser(CachedTemplate):
     FLAIR_CSS_PREFIX = 'flair-'
 
-    def __init__(self, user, attribs = [], context_thing = None, gray = False):
+    def __init__(self, user, attribs = [], context_thing = None, gray = False,
+                 subreddit = None, force_show_flair = None):
         attribs.sort()
         author_cls = 'author'
 
@@ -2269,8 +2270,9 @@ class WrappedUser(CachedTemplate):
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
 
-        flair_text, flair_css_class = wrapped_flair(user, context_thing)
-        has_flair = bool(flair_text)
+        flair_enabled, flair_text, flair_css_class = wrapped_flair(
+                user, subreddit or c.site)
+        has_flair = bool(flair_text or flair_css_class)
         if flair_css_class:
             flair_css_class = self.FLAIR_CSS_PREFIX + flair_css_class
 
@@ -2288,7 +2290,9 @@ class WrappedUser(CachedTemplate):
 
         CachedTemplate.__init__(self,
                                 name = user.name,
+                                force_show_flair = force_show_flair,
                                 has_flair = has_flair,
+                                flair_enabled = flair_enabled,
                                 flair_text = flair_text,
                                 flair_css_class = flair_css_class,
                                 author_cls = author_cls,

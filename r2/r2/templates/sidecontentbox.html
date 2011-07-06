@@ -27,17 +27,17 @@
      </a>
   %endif
   <h1>${thing.title.upper()}</h1>
-  <div class="content">
+  <ul class="content">
     %for c in thing.content:
-      ${c}
+      <li>${c}</li>
     %endfor
 
     %if thing.more_href:
-      <div class="more">
+      <li class="more">
         <a href="${thing.more_href}">
           ${thing.more_text} &raquo;
         </a>
-      </div>
+      </li>
     %endif
-  </div>
+  </ul>
 </div>

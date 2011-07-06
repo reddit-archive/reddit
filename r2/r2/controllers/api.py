@@ -2041,6 +2041,14 @@ class ApiController(RedditController):
         setattr(user, 'flair_%s_css_class' % c.site._id, None)
         user._commit()
 
+    @validatedForm(VUser(),
+                   VModhash(),
+                   flair_enabled = VBoolean("flair_enabled"))
+    def POST_setflairenabled(self, form, jquery, flair_enabled):
+        setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
+        c.user._commit()
+        jquery.refresh()
+
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),
                    description = VLength("description", max_length=1000),

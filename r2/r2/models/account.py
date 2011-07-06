@@ -529,6 +529,9 @@ class Account(Thing):
         except (NotFound, AttributeError):
             return None
 
+    def flair_enabled_in_sr(self, sr_id):
+        return getattr(self, 'flair_%d_enabled' % sr_id, True)
+
 class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True
