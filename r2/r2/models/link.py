@@ -624,6 +624,8 @@ class Comment(Thing, Printable):
         # the author
         if to and ((not c._spam and author._id not in to.enemies)
             or to.name in g.admins):
+            # When replying to your own comment, record the inbox
+            # relation, but don't give yourself an orangered
             orangered = (to.name != author.name)
             inbox_rel = Inbox._add(to, c, name, orangered=orangered)
 
@@ -968,6 +970,8 @@ class Message(Thing, Printable):
             # if the current "to" is not a sr moderator,
             # they need to be notified
             if not sr_id or not sr.is_moderator(to):
+                # Record the inbox relation, but don't give the user
+                # an orangered, if they PM themselves.
                 # Don't notify on PMs from blocked users, either
                 orangered = (to.name != author.name and
                              author._id not in to.enemies)
