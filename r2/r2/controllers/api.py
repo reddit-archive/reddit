@@ -176,7 +176,7 @@ class ApiController(RedditController):
                    VUser(),
                    VModhash(),
                    ip = ValidIP(),
-                   to = VMessageRecipent('to'),
+                   to = VMessageRecipient('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
                    body = VMarkdown(['text', 'message']))
     def POST_compose(self, form, jquery, to, subject, body, ip):

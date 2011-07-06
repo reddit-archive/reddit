@@ -895,7 +895,7 @@ class VExistingUname(VRequired):
                 return self.error(errors.USER_DOESNT_EXIST)
         self.error()
 
-class VMessageRecipent(VExistingUname):
+class VMessageRecipient(VExistingUname):
     def run(self, name):
         if not name:
             return self.error()
