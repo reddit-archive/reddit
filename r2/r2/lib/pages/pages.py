@@ -2354,6 +2354,10 @@ class FriendList(UserList):
             return UserTableItem(user, self.type, self.cells, self.container_name,
                                  True, self.remove_action, rel)
 
+    @property
+    def container_name(self):
+        return c.user._fullname
+
 
 class EnemyList(UserList):
     """Blacklist on /pref/friends"""
