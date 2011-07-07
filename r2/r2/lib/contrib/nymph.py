@@ -102,4 +102,4 @@ def process_css(incss, out_file = 'sprite.png', css_path = "/static/"):
 
 if __name__ == '__main__':
     import sys
-    print process_css(sys.argv[-1])
+    print process_css(sys.argv[-1], sys.argv[-2])

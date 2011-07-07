@@ -28,7 +28,8 @@ localized_js_outputs = $(localized_js_targets:.js=.*.js)
 
 # CSS targets 
 main_css = reddit.css
-css_targets = reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css compact.css 
+compact_css = compact.css
+css_targets = reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
 
 package    = r2
 static_dir = $(package)/public/static
@@ -50,8 +51,9 @@ JSTARGETS   = $(foreach js,  $(js_targets) $(localized_js_targets),  $(static_di
 JSOUTPUTS   = $(foreach js,  $(js_targets) $(localized_js_outputs),  $(static_dir)/$(js))
 JSSOURCES   = $(foreach js,  $(js_sources),  $(static_dir)/js/$(js))
 CSSTARGETS  = $(foreach css, $(css_targets), $(static_dir)/$(css))
-SPRITES     = $(static_dir)/sprite.png
+SPRITES     = $(static_dir)/sprite-main.png $(static_dir)/sprite-compact.png
 MAINCSS     = $(foreach css, $(main_css), $(static_dir)/$(css))
+COMPACTCSS  = $(foreach css, $(compact_css), $(static_dir)/$(css))
 RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
 NAMES = $(static_dir)/names.json
 
@@ -78,7 +80,7 @@ all:	pyx static names $(INIS)
 
 .PHONY: 	pyx js css rtl static names clean clean_static all
 
-$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(SPRITES) $(MAINCSS)
+$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(MAINCSS) $(COMPACTCSS)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
 
 $(JSTARGETS): $(JSSOURCES)
@@ -87,8 +89,11 @@ $(JSTARGETS): $(JSSOURCES)
 $(CSSTARGETS): 	$(static_dir)/%.css : $(static_dir)/css/%.css
 	$(CAT) $< | $(CSS_COMPRESS) > $@
 
-$(MAINCSS):  $(static_dir)/%.css : $(static_dir)/css/%.css
-	$(PYTHON) r2/lib/contrib/nymph.py $< | $(CSS_COMPRESS) > $@
+$(MAINCSS): $(static_dir)/%.css : $(static_dir)/css/%.css
+	$(PYTHON) r2/lib/contrib/nymph.py sprite-main.png $< | $(CSS_COMPRESS) > $@
+
+$(COMPACTCSS): $(static_dir)/%.css : $(static_dir)/css/%.css
+	$(PYTHON) r2/lib/contrib/nymph.py sprite-compact.png $< | $(CSS_COMPRESS) > $@
 
 $(RTLCSS):	%-rtl.css : %.css
 	$(SED) -e "s/left/>####</g" \
@@ -109,7 +114,7 @@ static: 	js css rtl
 
 js: 		pyx $(JSTARGETS)
 
-css: 		$(CSSTARGETS) $(MAINCSS)
+css: 		$(CSSTARGETS) $(MAINCSS) $(COMPACTCSS)
 
 rtl:		$(RTLCSS)
 
@@ -119,7 +124,7 @@ clean: clean_static
 	rm -f $(PYXSO_FILES) $(INIS)
 
 clean_static: clean_names
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(SPRITES) $(MAINCSS)
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(SPRITES) $(COMPACTCSS)
 
 clean_names:
 	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
