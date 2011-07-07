@@ -44,7 +44,6 @@
 </%def>
 
 
-
 ## thing should be global
 <%def name="_id(arg)">
 id="${arg}_${thing and thing._fullname or ''}"
@@ -135,6 +134,28 @@ ${first_defined(kw[1:])}
   %>
 
   ${unsafe((fmt % link) if fmt else link)}
+</%def>
+
+<%def name="post_link(link_text, post_path, redir_path, params, _sr_path=True,
+                      nocname=False, fmt='', target='', **kw)">
+  <%
+    action = add_sr(post_path, sr_path=_sr_path, nocname=nocname)
+    href = add_sr(redir_path, sr_path=_sr_path, nocname=nocname)
+    if (not target or target == '_parent') and c.cname:
+        target = '_top'
+    if c.cname and redir_path.startswith('http://'):
+        target = '_top'
+    if target:
+        kw['target'] = target
+    onclick = "$(this).parent().submit(); return false;"
+    link = _a_buffered(link_text, href=href, onclick=onclick)
+  %>
+  <form method="POST" action="${action}">
+    %for k, v in params.iteritems():
+      <input type="hidden" name="${k}" value="${v}">
+    %endfor
+    ${unsafe((fmt % link) if fmt else link)}
+  </form>
 </%def>
 
 

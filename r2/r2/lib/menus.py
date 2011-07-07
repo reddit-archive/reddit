@@ -195,6 +195,8 @@ class NavMenu(Styled):
     a dropdown from a flatlist, while the optional _class, and _id attributes
     can be used to set individualized CSS."""
 
+    use_post = True
+
     def __init__(self, options, default = None, title = '', type = "dropdown",
                  base_path = '', separator = '|', **kw):
         self.options = options
@@ -270,8 +272,11 @@ class NavButton(Styled):
             p = {}
             base_path = ("%s/%s/" % (base_path, self.dest)).replace('//', '/')
 
+        self.action_params = p
+
         self.bare_path = _force_unicode(base_path.replace('//', '/')).lower()
         self.bare_path = self.bare_path.rstrip('/')
+        self.base_path = base_path
         
         # append the query string
         base_path += query_string(p)
@@ -349,8 +354,6 @@ class NamedButton(NavButton):
         except KeyError:
             return NavButton.selected_title(self)
 
-
-
 class JsButton(NavButton):
     """A button which fires a JS event and thus has no path and cannot
     be in the 'selected' state"""
@@ -369,24 +372,26 @@ class PageNameNav(Styled):
     subreddit name, the page name, etc.)"""
     pass
 
-class SimpleGetMenu(NavMenu):
+class SimplePostMenu(NavMenu):
     """Parent class of menus used for sorting and time sensitivity of
-    results.  More specifically, defines a type of menu which changes
-    the url by adding a GET parameter with name 'get_param' and which
-    defaults to 'default' (both of which are class-level parameters).
+    results. Defines a type of menu that uses hidden forms to POST the user's
+    selection to a handler that may commit the user's choice as a preference
+    change before redirecting to a URL that also includes the user's choice.
+    If other user's load this URL, they won't affect their own preferences, but
+    the given choice will apply for that page load.
 
-    The value of the GET parameter must be one of the entries in
+    The value of the POST/GET parameter must be one of the entries in
     'cls.options'.  This parameter is also used to construct the list
     of NavButtons contained in this Menu instance.  The goal here is
     to have a menu object which 'out of the box' is self validating."""
     options   = []
-    get_param = ''
+    name      = ''
     title     = ''
     default = None
     type = 'lightdrop'
 
     def __init__(self, **kw):
-        buttons = [NavButton(self.make_title(n), n, opt = self.get_param)
+        buttons = [NavButton(self.make_title(n), n, opt=self.name, style='post')
                    for n in self.options]
         kw['default'] = kw.get('default', self.default)
         kw['base_path'] = kw.get('base_path') or request.path
@@ -400,15 +405,15 @@ class SimpleGetMenu(NavMenu):
         """Converts the opt into a DB-esque operator used for sorting results"""
         return None
 
-class SortMenu(SimpleGetMenu):
+class SortMenu(SimplePostMenu):
     """The default sort menu."""
-    get_param = 'sort'
+    name      = 'sort'
     default   = 'hot'
     options   = ('hot', 'new', 'top', 'old', 'controversial')
 
     def __init__(self, **kw):
         kw['title'] = _("sorted by")
-        SimpleGetMenu.__init__(self, **kw)
+        SimplePostMenu.__init__(self, **kw)
 
     @classmethod
     def operator(self, sort):
@@ -449,15 +454,15 @@ class RecSortMenu(SortMenu):
     default   = 'new'
     options   = ('hot', 'new', 'top', 'controversial', 'relevance')
 
-class NewMenu(SimpleGetMenu):
-    get_param = 'sort'
+class NewMenu(SimplePostMenu):
+    name      = 'sort'
     default   = 'rising'
     options   = ('new', 'rising')
     type = 'flatlist'
 
     def __init__(self, **kw):
         kw['title'] = ""
-        SimpleGetMenu.__init__(self, **kw)
+        SimplePostMenu.__init__(self, **kw)
 
     @classmethod
     def operator(self, sort):
@@ -465,29 +470,29 @@ class NewMenu(SimpleGetMenu):
             return operators.desc('_date')
         
 
-class KindMenu(SimpleGetMenu):
-    get_param = 'kind'
+class KindMenu(SimplePostMenu):
+    name    = 'kind'
     default = 'all'
     options = ('links', 'comments', 'messages', 'all')
 
     def __init__(self, **kw):
         kw['title'] = _("kind")
-        SimpleGetMenu.__init__(self, **kw)
+        SimplePostMenu.__init__(self, **kw)
 
     def make_title(self, attr):
         if attr == "all":
             return _("all")
         return menu[attr]
 
-class TimeMenu(SimpleGetMenu):
+class TimeMenu(SimplePostMenu):
     """Menu for setting the time interval of the listing (from 'hour' to 'all')"""
-    get_param = 't'
+    name      = 't'
     default   = 'all'
     options   = ('hour', 'day', 'week', 'month', 'year', 'all')
 
     def __init__(self, **kw):
         kw['title'] = _("links from")
-        SimpleGetMenu.__init__(self, **kw)
+        SimplePostMenu.__init__(self, **kw)
 
     @classmethod
     def operator(self, time):
@@ -500,6 +505,8 @@ class ControversyTimeMenu(TimeMenu):
     default = 'day'
 
 class SubredditMenu(NavMenu):
+    use_post = False
+
     def find_selected(self):
         """Always return False so the title is always displayed"""
         return None

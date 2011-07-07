@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.html" import="plain_link, post_link" />
 
 <%def name="plain()">
   ${plain_link(thing.selected_title() if thing.selected else thing.title, 
@@ -36,4 +36,9 @@
                onclick = thing.onclick)}
 </%def>
 
-
+<%def name="post()">
+  ${post_link(thing.selected_title() if thing.selected else thing.title,
+              thing.base_path, thing.path, thing.action_params,
+              _sr_path=thing.sr_path, nocname=thing.nocname,
+              target=thing.target, _class=thing.css_class, _id=thing._id)}
+</%def>

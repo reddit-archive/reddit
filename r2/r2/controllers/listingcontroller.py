@@ -380,6 +380,12 @@ class NewController(ListingController):
             return c.site.get_links('new', 'all')
 
     @validate(sort = VMenu('controller', NewMenu))
+    def POST_listing(self, sort, **env):
+        # VMenu validator will save the value of sort before we reach this
+        # point. Now just redirect to GET mode.
+        return self.redirect(request.fullpath + query_string(dict(sort=sort)))
+
+    @validate(sort = VMenu('controller', NewMenu))
     def GET_listing(self, sort, **env):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
@@ -404,6 +410,15 @@ class BrowseController(ListingController):
 
     def query(self):
         return c.site.get_links(self.sort, self.time)
+
+    # TODO: this is a hack with sort.
+    @validate(sort = VOneOf('sort', ('top', 'controversial')),
+              time = VMenu('where', ControversyTimeMenu))
+    def POST_listing(self, sort, time, **env):
+        # VMenu validator will save the value of time before we reach this
+        # point. Now just redirect to GET mode.
+        return self.redirect(
+            request.fullpath + query_string(dict(sort=sort, time=time)))
 
     # TODO: this is a hack with sort.
     @validate(sort = VOneOf('sort', ('top', 'controversial')),

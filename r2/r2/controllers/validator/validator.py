@@ -1018,12 +1018,12 @@ class VMenu(Validator):
     def __init__(self, param, menu_cls, remember = True, **kw):
         self.nav = menu_cls
         self.remember = remember
-        param = (menu_cls.get_param, param)
+        param = (menu_cls.name, param)
         Validator.__init__(self, param, **kw)
 
     def run(self, sort, where):
         if self.remember:
-            pref = "%s_%s" % (where, self.nav.get_param)
+            pref = "%s_%s" % (where, self.nav.name)
             user_prefs = copy(c.user.sort_options) if c.user else {}
             user_pref = user_prefs.get(pref)
 
@@ -1035,8 +1035,9 @@ class VMenu(Validator):
         if sort not in self.nav.options:
             sort = self.nav.default
 
-        # commit the sort if changed
-        if self.remember and c.user_is_loggedin and sort != user_pref:
+        # commit the sort if changed and if this is a POST request
+        if (self.remember and c.user_is_loggedin and sort != user_pref
+            and request.method.upper() == 'POST'):
             user_prefs[pref] = sort
             c.user.sort_options = user_prefs
             user = c.user

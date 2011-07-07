@@ -168,6 +168,17 @@ class FrontController(RedditController):
               sort         = VMenu('controller', CommentSortMenu),
               limit        = VInt('limit'),
               depth        = VInt('depth'))
+    def POST_comments(self, article, comment, context, sort, limit, depth):
+        # VMenu validator will save the value of sort before we reach this
+        # point. Now just redirect to GET mode.
+        return self.redirect(request.fullpath + query_string(dict(sort=sort)))
+
+    @validate(article      = VLink('article'),
+              comment      = VCommentID('comment'),
+              context      = VInt('context', min = 0, max = 8),
+              sort         = VMenu('controller', CommentSortMenu),
+              limit        = VInt('limit'),
+              depth        = VInt('depth'))
     def GET_comments(self, article, comment, context, sort, limit, depth):
         """Comment page for a given 'article'."""
         if comment and comment.link_id != article._id:

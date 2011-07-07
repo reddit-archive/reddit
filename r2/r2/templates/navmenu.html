@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="plain_link, text_with_links, img_link, separator"/>
+<%namespace file="utils.html" import="plain_link, post_link, text_with_links, img_link, separator"/>
 
 <%def name="dropdown()">
   ## caching comment:
@@ -47,8 +47,14 @@
     <div class="drop-choices ${css_class}">
       %for option in thing:
         %if option != thing.selected:
-          ${plain_link(option.title, option.path, _sr_path = option.sr_path,
-                       _class = "choice" + " " + option.css_class)}
+          %if thing.use_post:
+            ${post_link(option.title, option.base_path, option.path,
+                        option.action_params, _sr_path=option.sr_path,
+                        _class="choice " + option.css_class)}
+          %else:
+            ${plain_link(option.title, option.path, _sr_path = option.sr_path,
+                         _class = "choice" + " " + option.css_class)}
+          %endif
         %endif
       %endfor
     </div>

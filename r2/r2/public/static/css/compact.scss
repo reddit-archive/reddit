@@ -395,7 +395,7 @@ body[orient="landscape"] > #topbar > h1 {
     text-overflow: ellipsis;
     overflow: hidden;
 }
-.subtoolbar > ul > li > a {
+.subtoolbar > ul > li a {
     color: rgb(76, 86, 108);
     font-weight: bold;
     text-decoration: none;
@@ -405,7 +405,7 @@ body[orient="landscape"] > #topbar > h1 {
     text-overflow: ellipsis;
     overflow: hidden;
 }
-.subtoolbar > ul > li.selected > a {
+.subtoolbar > ul > li.selected a {
     @include vertical_gradient(#ddd, #aaa);
     /* no color-stop outside of webkit */
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ddd), color-stop(.4,#ddd), to(#aaa));

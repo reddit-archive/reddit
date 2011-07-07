@@ -422,7 +422,7 @@ body[orient="landscape"] > #topbar > h1 {
   text-overflow: ellipsis;
   overflow: hidden; }
 
-.subtoolbar > ul > li > a {
+.subtoolbar > ul > li a {
   color: #4c566c;
   font-weight: bold;
   text-decoration: none;
@@ -433,7 +433,7 @@ body[orient="landscape"] > #topbar > h1 {
   text-overflow: ellipsis;
   overflow: hidden; }
 
-.subtoolbar > ul > li.selected > a {
+.subtoolbar > ul > li.selected a {
   background-color: #7f7f7f;
   background: -moz-linear-gradient(-90deg, #dddddd, #aaaaaa);
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#dddddd), to(#aaaaaa));
