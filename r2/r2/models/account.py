@@ -655,12 +655,3 @@ class DeletedUser(FakeAccount):
             pass
         else:
             object.__setattr__(self, attr, val)
-
-class BlockedUser(DeletedUser):
-    @property
-    def name(self):
-        return '[blocked]'
-
-    @property
-    def _deleted(self):
-        return False

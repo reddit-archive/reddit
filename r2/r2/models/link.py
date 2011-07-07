@@ -24,7 +24,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from r2.lib.utils.trial_utils import trial_info
-from account import Account, DeletedUser, BlockedUser
+from account import Account, DeletedUser
 from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
@@ -1105,12 +1105,11 @@ class Message(Thing, Printable):
                     item.is_collapsed = item.author_collapse
                 if c.user.pref_collapse_read_messages:
                     item.is_collapsed = (item.is_collapsed is not False)
-            if item.author_id in c.user.enemies:
+            if item.author_id in c.user.enemies and not item.was_comment:
                 item.is_collapsed = True
                 if not c.user_is_admin:
-                    item.author = BlockedUser()
-                    item.subject = _('[blocked]')
-                    item.body = _('[blocked]')
+                    item.subject = _('[message from blocked user]')
+                    item.body = _('[unblock user to see this message]')
 
 
         # Run this last

@@ -28,7 +28,7 @@
   %if thing.user_deleted:
     <span>[deleted]</span>
   %elif thing.name == '[blocked]':
-    <span>${_(thing.name)}</span>
+    <span>${_(thing.thing.original_author.name)}</span>
   %else:
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
                _class = thing.author_cls + (" id-%s" % thing.fullname),
