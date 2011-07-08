@@ -894,6 +894,7 @@ class Query(object):
         self._limit = kw.get('limit')
         self._data = kw.get('data')
         self._sort = kw.get('sort', ())
+        self._filter_primary_sort_only = kw.get('filter_primary_sort_only', False)
 
         self._filter(*rules)
     
@@ -934,8 +935,16 @@ class Query(object):
 
     def _dir(self, thing, reverse):
         ors = []
+
+        # this fun hack lets us simplify the query on /r/all 
+        # for postgres-9 compatibility. please remove it when
+        # /r/all is precomputed.
+        sorts = range(len(self._sort))
+        if self._filter_primary_sort_only:
+            sorts = [0]
+
         #for each sort add and a comparison operator
-        for i in range(len(self._sort)):
+        for i in sorts:
             s = self._sort[i]
 
             if isinstance(s, operators.asc):

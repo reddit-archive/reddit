@@ -774,7 +774,8 @@ class AllSR(FakeSubreddit):
                         read_cache = True,
                         write_cache = True,
                         cache_time = 60,
-                        data = True)
+                        data = True,
+                        filter_primary_sort_only=True)
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
