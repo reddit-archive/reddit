@@ -195,7 +195,7 @@ class NavMenu(Styled):
     a dropdown from a flatlist, while the optional _class, and _id attributes
     can be used to set individualized CSS."""
 
-    use_post = True
+    use_post = False
 
     def __init__(self, options, default = None, title = '', type = "dropdown",
                  base_path = '', separator = '|', **kw):
@@ -438,6 +438,7 @@ class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     default   = 'confidence'
     options   = ('hot', 'new', 'controversial', 'top', 'old', 'confidence')
+    use_post  = True
 
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
@@ -459,6 +460,7 @@ class NewMenu(SimplePostMenu):
     default   = 'rising'
     options   = ('new', 'rising')
     type = 'flatlist'
+    use_post  = True
 
     def __init__(self, **kw):
         kw['title'] = ""
@@ -505,8 +507,6 @@ class ControversyTimeMenu(TimeMenu):
     default = 'day'
 
 class SubredditMenu(NavMenu):
-    use_post = False
-
     def find_selected(self):
         """Always return False so the title is always displayed"""
         return None
