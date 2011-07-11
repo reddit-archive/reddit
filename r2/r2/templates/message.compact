@@ -88,7 +88,7 @@
         %if thing.was_comment:
             <a href="${thing.permalink}?context=3"><div class="context-icon"></div>Context</a>
         %endif
-        <a href="javascript:void(0)" onclick="change_state(this, 'unread_message', unread_thing, true)"><div class="unread-icon"></div>mark unread</a>
+        <a href="javascript:void(0)" onclick="change_state(this, 'unread_message', unread_thing, true)"><div class="unread-icon"></div>Unread</a>
        </div>
   </div>
   <div style="clear: both;"></div>
