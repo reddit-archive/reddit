@@ -41,7 +41,7 @@ class Spriter(object):
         self.actual_path = actual_path
 
     def _make_sprite(self, match):
-        path = match.group(1)
+        path = match.group(1).strip('"')
         path = re.sub("^" + self.css_path, self.actual_path, path)
         if os.path.exists(path):
             if path in self.im_lookup:
