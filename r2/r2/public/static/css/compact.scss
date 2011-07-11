@@ -294,15 +294,7 @@ body[orient="landscape"] > #topbar > h1 {
 #topbar > .right > .button:first-child {
 	margin-right: 5px;
 }
-#topbar > .right > .button > .button_contents {
-    background: url(/static/compact/mobilesprite2.png) -52px -3px no-repeat;
-    width: 16px; height: 16px;
-    display: inline-block;
-    margin-bottom: -1px;
-}
-#topbar > .right > .button.active > .button_contents {
-    background-position: -52px -27px;
-}
+
 #topbar > .right > .button#mail img {
 	margin-bottom: 2px;
 	display: inline-block;
@@ -316,6 +308,16 @@ body[orient="landscape"] > #topbar > h1 {
     backgrount-color: #C4A280;
     @include vertical_gradient(#E0D0BF, #C4A280);
     border: 1px solid #917151;
+}
+.topbar-options {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    background-image: url('/static/compact/menu-options.png'); /*SPRITE*/
+
+    &.active, &:hover, &:active {
+        background-image: url('/static/compact/menu-options-active.png'); /*SPRITE*/
+    }
 }
 #top_menu {
     position: absolute;
@@ -386,25 +388,30 @@ body[orient="landscape"] > #topbar > h1 {
 }
 /*Things*/
 /*Arrows*/
-.link .arrow, .comment .arrow {
-    width: 24px; height: 24px;
-    cursor: pointer;
-    display: block;
-    margin: 1px auto 0px;
-    background: url(/static/compact/mobilesprite2.png) no-repeat;
+.link , .comment, .message {
+    .arrow {
+        width: 28px; height: 28px;
+        cursor: pointer;
+        display: block;
+        margin: 1px auto 0px;
+
+        //Unvoted
+        &.up {
+            background-image: url('/static/compact/upvote.png'); /*SPRITE*/
+        }
+        &.down {
+            background-image: url('/static/compact/downvote.png'); /*SPRITE*/
+        }
+        //Voted
+        &.upmod {
+            background-image: url('/static/compact/upvote-active.png'); /*SPRITE*/
+        }
+        &.downmod {
+            background-image: url('/static/compact/downvote-active.png'); /*SPRITE*/
+        }
+    }
 }
-.link .arrow.up, .link .arrow.upmod, .comment .arrow.up, .comment .arrow.upmod {
-    background-position: 0px 0px;
-}
-.link .arrow.down, .link .arrow.downmod, .comment .arrow.down, .comment .arrow.downmod {
-    background-position: 0px -24px;
-}
-.link .arrow.upmod, .comment .arrow.upmod { /*Vote up*/
-    background-position: -24px 0px;
-}
-.link .arrow.downmod, .comment .arrow.downmod { /*Vote down*/
-    background-position: -24px -24px;
-}
+
 /*Links*/
 .link {
     min-height: 70px;
@@ -801,14 +808,7 @@ padding: 5px;
     display: none; 
 }
 
-.message > .midcol > .arrow {
-   cursor: pointer;
-   display: block;
-   height: 14px;
-   width: 15px;
-   margin: 1px auto 0;
-   background: url(/static/compact/arrows.png) no-repeat;
-}
+
 .message > .entry {
     margin: 4px;
 }

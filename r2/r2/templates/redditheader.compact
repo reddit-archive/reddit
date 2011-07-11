@@ -53,9 +53,7 @@
       ${img_link(_("messages"), mail_img, path="/message/inbox/",
                  _id = "mail", _class="button " + mail_img_class)}
     %endif
-    <a class="button" href="#" id="topmenu_toggle">
-      <span class="button_contents"></span>
-    </a>
+    <a class="topbar-options" href="#" id="topmenu_toggle"></a>
   </span>
   <div id="top_menu">
     %if c.user_is_loggedin:
