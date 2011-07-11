@@ -1342,3 +1342,19 @@ def thread_dump(*a):
                              % dict(filename=filename, lineno=lineno, fnname=fnname))
             sys.stderr.write('\t\t\t%(line)s\n' % dict(line=line))
 
+
+def constant_time_compare(actual, expected):
+    """
+    Returns True if the two strings are equal, False otherwise
+    
+    The time taken is dependent on the number of charaters provided
+    instead of the number of characters that match.
+    """
+    actual_len   = len(actual)
+    expected_len = len(expected)
+    result = actual_len ^ expected_len
+    if expected_len > 0:
+        for i in xrange(actual_len):
+            result |= ord(actual[i]) ^ ord(expected[i % expected_len])
+    return result == 0
+

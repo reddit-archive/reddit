@@ -25,6 +25,7 @@ from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser, set_last_visit, last_visit
+from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
 from r2.lib.log import log_text
 
@@ -550,9 +551,9 @@ def valid_cookie(cookie):
     except NotFound:
         return (False, False)
 
-    if cookie == account.make_cookie(timestr, admin = False):
+    if constant_time_compare(cookie, account.make_cookie(timestr, admin = False)):
         return (account, False)
-    elif cookie == account.make_cookie(timestr, admin = True):
+    elif constant_time_compare(cookie, account.make_cookie(timestr, admin = True)):
         return (account, True)
     return (False, False)
 
@@ -563,7 +564,7 @@ def valid_feed(name, feedhash, path):
         try:
             user = Account._by_name(name)
             if (user.pref_private_feeds and
-                feedhash == make_feedhash(user, path)):
+                constant_time_compare(feedhash, make_feedhash(user, path))):
                 return user
         except NotFound:
             pass
@@ -590,17 +591,21 @@ def valid_login(name, password):
 
 def valid_password(a, password):
     try:
-        if a.password == passhash(a.name, password, ''):
+        # A constant_time_compare isn't strictly required here
+        # but it is doesn't hurt
+        if constant_time_compare(a.password, passhash(a.name, password, '')):
             #add a salt
             a.password = passhash(a.name, password, True)
             a._commit()
             return a
         else:
             salt = a.password[:3]
-            if a.password == passhash(a.name, password, salt):
+            if constant_time_compare(a.password, passhash(a.name, password, salt)):
                 return a
     except AttributeError, UnicodeEncodeError:
         return False
+    # Python defaults to returning None
+    return False
 
 def passhash(username, password, salt = ''):
     if salt is True:
