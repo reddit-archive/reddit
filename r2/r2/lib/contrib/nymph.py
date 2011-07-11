@@ -40,8 +40,8 @@ class Spriter(object):
         self.css_path = css_path
         self.actual_path = actual_path
 
-    def make_sprite(self, line):
-        path, = self.spritable.findall(line)
+    def _make_sprite(self, match):
+        path = match.group(1)
         path = re.sub("^" + self.css_path, self.actual_path, path)
         if os.path.exists(path):
             if path in self.im_lookup:
@@ -55,11 +55,10 @@ class Spriter(object):
                 i = len(self.images) - 1
             return "\n".join([" background-image: url(%(sprite)s);",
                               " background-position: %dpx %spx;" %
-                              (-self.padding[0], "%(pos_" + str(i) + ")s"),
-                              ""])
-        return line
+                              (-self.padding[0], "%(pos_" + str(i) + ")s")])
+        return match.group(0)
 
-    def finish(self, out_file, out_string):
+    def _finish(self, out_file, tmpl_string):
         width = 2 * self.padding[0] + max(i.size[0] for i in self.images)
         height = sum((i.size[1] + 2 * self.padding[1]) for i in self.images)
 
@@ -85,20 +84,16 @@ class Spriter(object):
 
         d['sprite'] = os.path.join(self.css_path, "%s?v=%s" % (out_file, h))
 
-        return out_string % d
+        return tmpl_string % d
+
+    def process(self, out_file, in_css):
+        in_css = in_css.replace('%', '%%')
+        tmpl_string = self.spritable.sub(self._make_sprite, in_css)
+        return self._finish(out_file, tmpl_string)
 
 def process_css(incss, out_file = 'sprite.png', css_path = "/static/"):
     s = Spriter(css_path = css_path)
-    out = StringIO.StringIO()
-
-    with open(incss, 'r') as handle:
-        for line in handle:
-            if s.spritable.match(line):
-                out.write(s.make_sprite(line))
-            else:
-                out.write(line.replace('%', '%%'))
-
-    return s.finish(out_file, out.getvalue())
+    return s.process(out_file, open(incss, 'r').read())
 
 if __name__ == '__main__':
     import sys
