@@ -638,7 +638,7 @@ def register(name, password):
 class Friend(Relation(Account, Account)): pass
 
 Account.__bases__ += (UserRel('friend', Friend, disable_reverse_ids_fn=True),
-                      UserRel('enemy', Friend, disable_reverse_ids_fn=True))
+                      UserRel('enemy', Friend, disable_reverse_ids_fn=False))
 
 class DeletedUser(FakeAccount):
     @property
