@@ -213,10 +213,10 @@ class Link(Thing, Printable):
                 #return False
 
         if user and not c.ignore_hide_rules:
-            if user.pref_hide_ups and wrapped.likes == True:
+            if user.pref_hide_ups and wrapped.likes == True and self.author_id != user._id:
                 return False
 
-            if user.pref_hide_downs and wrapped.likes == False:
+            if user.pref_hide_downs and wrapped.likes == False and self.author_id != user._id:
                 return False
 
             if wrapped._score < user.pref_min_link_score:

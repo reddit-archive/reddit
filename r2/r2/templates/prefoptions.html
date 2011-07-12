@@ -145,8 +145,14 @@
 
       <p>${checkbox(_("show me links I've recently viewed"), "clickgadget")}</p>
       <p>${checkbox(_("compress the link display"), "compress")}</p>
-      <p>${checkbox(_("don't show links after i've liked them"), "hide_ups")}</p>
-      <p>${checkbox(_("don't show links after i've disliked them"), "hide_downs")}</p>
+      <p>${checkbox(_("don't show links after i've liked them"), "hide_ups")}
+         &#32;
+         <span class="little gray">${_("(except my own)")}</span>
+      </p>
+      <p>${checkbox(_("don't show links after i've disliked them"), "hide_downs")}
+         &#32;
+         <span class="little gray">${_("(except my own)")}</span>
+      </p>
       <%
          # stuff I can soon delete:
          _("display")
