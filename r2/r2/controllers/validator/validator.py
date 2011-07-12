@@ -911,7 +911,7 @@ class VMessageRecipient(VExistingUname):
                 self.set_error(errors.SUBREDDIT_NOEXIST)
         else:
             account = VExistingUname.run(self, name)
-            if account._id in c.user.enemies:
+            if account and account._id in c.user.enemies:
                 self.set_error(errors.USER_BLOCKED)
             else:
                 return account
