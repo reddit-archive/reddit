@@ -39,10 +39,15 @@
   %elif thing.name == '[blocked]':
     <span>${_(thing.thing.original_author.name)}</span>
   %else:
+    %if thing.flair_position == 'left':
+      ${flair(thing, enabled=thing.force_show_flair)}
+    %endif
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
                  _class = thing.author_cls + (" id-%s" % thing.fullname),
                  _sr_path = False, target=target, title=thing.author_title)}
-    ${flair(thing, enabled=thing.force_show_flair)}
+    %if thing.flair_position == 'right':
+      ${flair(thing, enabled=thing.force_show_flair)}
+    %endif
     <span class="userattrs">
     %if thing.attribs:
       [

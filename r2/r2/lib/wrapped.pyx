@@ -459,10 +459,11 @@ class CachedTemplate(Templated):
                 style, c.cname, c.lang, c.site.path,
                 getattr(c.user, "gold", False),
                 template_hash, g.markdown_backend]
-        # if viewing a single subreddit, take the user's flair preference
-        # into account.
+        # if viewing a single subreddit, take flair settings into account.
         if hasattr(c.site, '_id'):
-            keys.append(c.user.flair_enabled_in_sr(c.site._id))
+            keys.extend([
+                c.site.flair_enabled, c.site.flair_position,
+                c.user.flair_enabled_in_sr(c.site._id)])
         keys = [make_cachable(x, *a) for x in keys]
 
         # add all parameters sent into __init__, using their current value

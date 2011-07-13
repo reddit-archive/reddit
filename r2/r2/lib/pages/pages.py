@@ -43,7 +43,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median
+from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.subreddit_search import popular_searches
@@ -2243,15 +2243,17 @@ class Page_down(Templated):
         message = kw.get('message', _("This feature is currently unavailable. Sorry"))
         Templated.__init__(self, message = message)
 
-def wrapped_flair(user, subreddit):
-    if not hasattr(subreddit, '_id'):
-        return False, '', ''
+def wrapped_flair(user, subreddit, force_show_flair):
+    if (not hasattr(subreddit, '_id')
+        or not (force_show_flair or getattr(subreddit, 'flair_enabled', True))):
+        return False, 'right', '', ''
 
     get_flair_attr = lambda a, default=None: getattr(
         user, 'flair_%s_%s' % (subreddit._id, a), default)
 
-    return (get_flair_attr('enabled', default=True), get_flair_attr('text'),
-            get_flair_attr('css_class'))
+    return (get_flair_attr('enabled', default=True),
+            getattr(subreddit, 'flair_position', 'right'),
+            get_flair_attr('text'), get_flair_attr('css_class'))
 
 class WrappedUser(CachedTemplate):
     FLAIR_CSS_PREFIX = 'flair-'
@@ -2270,8 +2272,8 @@ class WrappedUser(CachedTemplate):
             if tup[1] == 'F' and '(' in tup[3]:
                 author_title = tup[3]
 
-        flair_enabled, flair_text, flair_css_class = wrapped_flair(
-                user, subreddit or c.site)
+        flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
+        flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(flair_text or flair_css_class)
         if flair_css_class:
             flair_css_class = self.FLAIR_CSS_PREFIX + flair_css_class
@@ -2293,6 +2295,7 @@ class WrappedUser(CachedTemplate):
                                 force_show_flair = force_show_flair,
                                 has_flair = has_flair,
                                 flair_enabled = flair_enabled,
+                                flair_position = flair_position,
                                 flair_text = flair_text,
                                 flair_css_class = flair_css_class,
                                 author_cls = author_cls,
@@ -2377,35 +2380,75 @@ class UserList(Templated):
     def container_name(self):
         return c.site._fullname
 
-class FlairList(UserList):
+class FlairPane(Templated):
+    def __init__(self, num, after, reverse, name, user):
+        # Make sure c.site isn't stale before rendering.
+        c.site = Subreddit._byID(c.site._id)
+        Templated.__init__(
+            self,
+            flair_list=FlairList(num, after, reverse, name, user),
+            flair_enabled=c.site.flair_enabled,
+            flair_position=c.site.flair_position)
+
+class FlairList(Templated):
     """List of users who are tagged with flair within a subreddit."""
-    type = 'flair'
-    destination = 'flair'
-    remove_action = 'unflair'
 
-    def __init__(self):
-        self.cells = ('user', 'flair', 'remove')
-        self.table_headers = (_('user'), _('flair text, css'), '')
-        UserList.__init__(self)
+    def __init__(self, num, after, reverse, name, user):
+        Templated.__init__(self, num=num, after=after, reverse=reverse,
+                           name=name, user=user)
 
     @property
-    def form_title(self):
-        return _('manage subreddit flair')
+    def flair(self):
+        if self.user:
+            return [FlairListRow(self.user)]
 
-    @property
-    def table_title(self):
-        return _('users with flair on %(reddit)s' % dict(reddit = c.site.name))
+        if self.name:
+            # user lookup was requested, but no user was found, so abort
+            return []
 
-    def user_ids(self):
-        return c.site.flair
+        # Fetch one item more than the limit, so we can tell if we need to link
+        # to a "next" page.
+        query = c.site.flair_id_query(self.num + 1, self.after, self.reverse)
+        flair_rows = list(query)
+        if len(flair_rows) > self.num:
+            next_page = flair_rows.pop()
+        else:
+            next_page = None
+        uids = [row._thing2_id for row in flair_rows]
+        users = Account._byID(uids, data=True)
+        result = [FlairListRow(users[row._thing2_id])
+                  for row in flair_rows if row._thing2_id in users]
+        links = []
+        if self.after:
+            links.append(
+                FlairNextLink(result[0].user._fullname,
+                              reverse=not self.reverse,
+                              needs_border=bool(next_page)))
+        if next_page:
+            links.append(
+                FlairNextLink(result[-1].user._fullname, reverse=self.reverse))
+        if self.reverse:
+            result.reverse()
+            links.reverse()
+            if len(links) == 2 and links[1].needs_border:
+                # if page was rendered after clicking "prev", we need to move
+                # the border to the other link.
+                links[0].needs_border = True
+                links[1].needs_border = False
+        return result + links
 
-    def user_row(self, user):
+class FlairListRow(Templated):
+    def __init__(self, user):
         get_flair_attr = lambda a: getattr(user,
                                            'flair_%s_%s' % (c.site._id, a), '')
-        user.flair_text = get_flair_attr('text')
-        user.flair_css_class = get_flair_attr('css_class')
-        return UserTableItem(user, self.type, self.cells, self.container_name,
-                             True, self.remove_action, user)
+        Templated.__init__(self, user=user,
+                           flair_text=get_flair_attr('text'),
+                           flair_css_class=get_flair_attr('css_class'))
+
+class FlairNextLink(Templated):
+    def __init__(self, after, reverse=False, needs_border=False):
+        Templated.__init__(self, after=after, reverse=reverse,
+                           needs_border=needs_border)
 
 class FriendList(UserList):
     """Friend list on /pref/friends"""

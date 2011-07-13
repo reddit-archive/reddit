@@ -27,11 +27,13 @@
 <div class="flairlist pretty-form">
   <%utils:line_field title="${_('jump to user (or add):')}" css_class="flair-jump">
     <form method="get">
+      <% name = thing.user.name if thing.user else thing.name %>
       <input type="text" maxlength="32" id="flair_jump_name" name="name"
-             value="${thing.user.name if thing.user else ''}">
+             value="${name}">
       <button type="submit">${_('go')}</button>
+      ${utils.error_field(('USER_DOESNT_EXIST', 'name'), 'name')}
     </form>
-    %if thing.user:
+    %if thing.user or thing.name:
         ${utils.plain_link(_('back to full list'), '/about/flair',
                            class_='flairlisthome')}
     %elif thing.after:
@@ -39,12 +41,15 @@
                            class_='flairlisthome')}
     %endif
   </%utils:line_field>
-  <div class="usertable">
-    <span class="header">&nbsp;</span>
-    <span class="header">${_('flair text')}</span>
-    <span class="header">${_('css class')}</span>
-    %for row in thing.flair:
-      ${unsafe(row.render())}
-    %endfor
-  </div>
+  <% flair = thing.flair %>
+  %if flair:
+    <div class="usertable">
+      <span class="header">&nbsp;</span>
+      <span class="header">${_('flair text')}</span>
+      <span class="header">${_('css class')}</span>
+      %for row in flair:
+          ${unsafe(row.render())}
+      %endfor
+    </div>
+  %endif
 </div>

@@ -28,7 +28,7 @@ from r2.lib.db.thing import Thing, Relation, NotFound
 from account import Account
 from printable import Printable
 from r2.lib.db.userrel import UserRel
-from r2.lib.db.operators import lower, or_, and_, desc
+from r2.lib.db.operators import lower, or_, and_, desc, asc
 from r2.lib.memoize import memoize
 from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
 from r2.lib.utils import timeago
@@ -72,6 +72,8 @@ class Subreddit(Thing, Printable):
                      sponsorship_name = None,
                      # do we allow self-posts, links only, or any?
                      link_type = 'any', # one of ('link', 'self', 'any')
+                     flair_enabled = True,
+                     flair_position = 'right', # one of ('left', 'right')
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
@@ -191,6 +193,19 @@ class Subreddit(Thing, Printable):
     @property
     def flair(self):
         return self.flair_ids()
+
+    def flair_id_query(self, limit, after, reverse=False):
+        extra_rules = [
+            Flair.c._thing1_id == self._id,
+            Flair.c._name == 'flair',
+          ]
+        if after:
+            if reverse:
+                extra_rules.append(Flair.c._thing2_id < after._id)
+            else:
+                extra_rules.append(Flair.c._thing2_id > after._id)
+        sort = (desc if reverse else asc)('_thing2_id')
+        return Flair._query(*extra_rules, sort=sort, limit=limit)
 
     def spammy(self):
         return self._spam

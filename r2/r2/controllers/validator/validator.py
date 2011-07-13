@@ -372,7 +372,7 @@ class VLimit(Validator):
         except ValueError:
             return default
 
-        return min(max(i, 1), 100)
+        return min(max(i, 1), self.max_limit)
 
 class VCssMeasure(Validator):
     measure = re.compile(r"\A\s*[\d\.]+\w{0,3}\s*\Z")
@@ -881,7 +881,7 @@ class VUrl(VRequired):
                 return url
         return self.error(errors.BAD_URL)
 
-class VExistingUname(VRequired):
+class VOptionalExistingUname(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
@@ -901,7 +901,13 @@ class VExistingUname(VRequired):
                 return Account._by_name(name)
             except NotFound:
                 return self.error(errors.USER_DOESNT_EXIST)
-        self.error()
+
+class VExistingUname(VOptionalExistingUname):
+    def run(self, name):
+        user = VOptionalExistingUname.run(self, name)
+        if not user:
+            self.error()
+        return user
 
 class VMessageRecipient(VExistingUname):
     def run(self, name):

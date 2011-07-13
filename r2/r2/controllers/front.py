@@ -43,6 +43,7 @@ from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
+from errors import errors
 from listingcontroller import ListingController
 from pylons import c, request, request, Response
 
@@ -446,7 +447,8 @@ class FrontController(RedditController):
         return EditReddit(content = pane,
                           extension_handling = extension_handling).render()
 
-    def _edit_normal_reddit(self, location, num, after, reverse, count, created):
+    def _edit_normal_reddit(self, location, num, after, reverse, count, created,
+                            name, user):
         # moderator is either reddit's moderator or an admin
         is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
         extension_handling = False
@@ -484,7 +486,7 @@ class FrontController(RedditController):
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
         elif is_moderator and location == 'flair':
-            pane = FlairList()
+            pane = FlairPane(num, after, reverse, name, user)
         elif c.user_is_sponsor and location == 'ads':
             pane = RedditAds()
         elif (not location or location == "about") and is_api():
@@ -498,9 +500,17 @@ class FrontController(RedditController):
     @base_listing
     @validate(location = nop('location'),
               created = VOneOf('created', ('true','false'),
-                               default = 'false'))
-    def GET_editreddit(self, location, num, after, reverse, count, created):
+                               default = 'false'),
+              name = nop('name'))
+    def GET_editreddit(self, location, num, after, reverse, count, created,
+                       name):
         """Edit reddit form."""
+        user = None
+        if name:
+            try:
+                user = Account._by_name(name)
+            except NotFound:
+                c.errors.add(errors.USER_DOESNT_EXIST, field='name')
         if isinstance(c.site, ModContribSR):
             return self._edit_modcontrib_reddit(location, num, after, reverse,
                                                 count, created)
@@ -511,7 +521,7 @@ class FrontController(RedditController):
             return self.abort404()
         else:
             return self._edit_normal_reddit(location, num, after, reverse,
-                                            count, created)
+                                            count, created, name, user)
 
 
     def GET_awards(self):

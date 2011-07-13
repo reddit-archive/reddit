@@ -33,7 +33,7 @@ from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     FlairList, BannedList, BoringPage, FormPage, CssError, UploadedImage, \
-    ClickGadget, UrlParser
+    ClickGadget, UrlParser, WrappedUser
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
@@ -1952,10 +1952,10 @@ class ApiController(RedditController):
         user._commit()
 
         if new:
-            user_row = FlairList().user_row(user)
-            jquery("#flair-table").show(
-                ).find("table").insert_table_rows(user_row)
+            jquery.redirect('?name=%s' % user.name)
         else:
+            jquery('input[name="text"]').data('saved', text)
+            jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
             form.set_html(
                 '.user',
@@ -2041,12 +2041,14 @@ class ApiController(RedditController):
         setattr(user, 'flair_%s_css_class' % c.site._id, None)
         user._commit()
 
-    @validatedForm(VUser(),
+    @validatedForm(VFlairManager(),
                    VModhash(),
-                   flair_enabled = VBoolean("flair_enabled"))
-    def POST_setflairenabled(self, form, jquery, flair_enabled):
-        setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
-        c.user._commit()
+                   flair_enabled = VBoolean("flair_enabled"),
+                   flair_position = VOneOf("flair_position", ("left", "right")))
+    def POST_flairconfig(self, form, jquery, flair_enabled, flair_position):
+        c.site.flair_enabled = flair_enabled
+        c.site.flair_position = flair_position
+        c.site._commit()
         jquery.refresh()
 
     @validatedForm(VAdmin(),
