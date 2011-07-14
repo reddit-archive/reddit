@@ -142,7 +142,7 @@ button.button {
 
 .link .options_expando, .comment .options_expando {
     background: hsl(210,35%,20%);
-    margin:  5px -5px -1px;
+    margin:  35px -5px -1px;
     border-top:  1px solid hsl(210,35%,10%);
     display: none;
     padding: 10px;
@@ -492,16 +492,21 @@ body[orient="landscape"] > #topbar > h1 {
     color: #25A; 
 }
 
-.link .domain.button  {
-    margin: 2px 5px;
-}
-.link .domain.button > a{
-    font-size: medium;
-    color: white;
+.link .domain {
+    color: hsl(0,0%,45%);
+    font-size: 9px;
+    margin: {
+        left: 5px;
+    }
+
+    a, a:hover {
+        color: inherit;
+
+    }
 }
 
 .link .tagline {
-    margin: 1px 0; 
+    margin: 2px 0 5px;
     padding: 0;
     padding-top: 2px; 
     font-size: 10px;
@@ -522,7 +527,7 @@ body[orient="landscape"] > #topbar > h1 {
     float: left;
     display: block;
     height: auto; line-height: inherit;
-    margin: 3px 5px 2px 0;
+    margin: 3px 10px 2px 0;
     width: 30px;
     height: 30px;
     background: url('/static/compact/selftext.png');
@@ -557,7 +562,7 @@ body[orient="landscape"] > #topbar > h1 {
 /* Comment count */
 .commentcount {
     float: right;
-    margin: 5px 1px 45px 5px;
+    margin: 5px 1px 5px 5px;
     width: 45px;
     text-align: right;
 }

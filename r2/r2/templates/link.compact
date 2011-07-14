@@ -66,6 +66,13 @@
   %endif
     <p class="title">
     <a href="${url}">${thing.title}</a>
+    <span class="domain">
+    %if thing.is_self:
+        (self)
+    %else:
+        (<a href="${thing.domain_path}">${thing.domain}</a>)
+    %endif
+    </span>
     </p>
     %if thing.link_child and not c.permalink_page and thing.link_child.css_style.strip(' ') != 'video':
       <a href="javascript:void(0)" class="expando-button collapsed
@@ -108,9 +115,7 @@ there's also a discussion going on here:
         <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" ><div class="email-icon"></div>Email</a>
         <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)" ><div class="report-icon"></div>Report</a>
         ${self.save_button()}
-        %if not thing.is_self:
-           <a href="${thing.domain_path}"><div class="domain-icon"></div>${thing.domain}</a>
-        %endif
+
       
 
   </div>
