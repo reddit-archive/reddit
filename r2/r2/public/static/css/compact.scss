@@ -134,34 +134,13 @@ button.button {
     }
 }
 
-
-
-.message .options_link, .comment .options_link {  
-    border-bottom-left-radius: 8px 8px;
-    border-bottom-right-radius: 0px 0px;
-    border-top-left-radius: 0px 0px;
-    border-top-right-radius: 8px 8px;
-    bottom: auto;
-    font-size: medium;
-    margin: 0px;
-    padding: 3px;
-    position: absolute;
-    right: -1px;
-    top: -1px;
-}
-
-.message .options_link .button_contents,
-.comment .options_link .button_contents {
-    background: url(/static/compact/mobilesprite2.png) no-repeat -51px -2px;
-    display: inline-block;
-    height: 16px;
-    margin-bottom: -1px;
-    width: 16px;
+.comment .options_link {
+    top: 10px;
 }
 
 /*Options expando*/
 
-.link .options_expando {
+.link .options_expando, .comment .options_expando {
     background: hsl(210,35%,20%);
     margin:  5px -5px -1px;
     border-top:  1px solid hsl(210,35%,10%);
@@ -176,6 +155,7 @@ button.button {
     a {
         display: block;
         color: white;
+        text-decoration: none;
         font-size: 11px;
         padding: {
             left: 5px;
@@ -188,8 +168,12 @@ button.button {
         @include display-box;
     }
 }
+.comment .options_expando {
+    margin: 10px -4px; //Overwrite the link styles
+}
 
-.email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon {
+.email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon,
+.collapse-icon, .context-icon, .parent-icon {
     display: block;
     width: 24px;
     height: 24px;
@@ -213,6 +197,24 @@ button.button {
 }
 .domain-icon {
     background: url('/static/compact/domain.png') no-repeat;
+}
+.edit-icon {
+    background: url('/static/compact/edit.png') no-repeat;
+}
+.reply-icon {
+    background: url('/static/compact/reply.png') no-repeat;
+}
+.permalink-icon {
+    background: url('/static/compact/permalink.png') no-repeat;
+}
+.collapse-icon {
+    background: url('/static/compact/collapse.png') no-repeat;
+}
+.context-icon {
+    background: url('/static/compact/context.png') no-repeat;
+}
+.parent-icon {
+    background: url('/static/compact/context.png') no-repeat;
 }
 
 /*Toolbar*/
@@ -535,7 +537,7 @@ body[orient="landscape"] > #topbar > h1 {
     margin: 5px 0; 
     margin-bottom: 30px;
     border: 1px solid #999;
-    @include vertical_gradient(#ddd, #aaa);
+    background: #ddd;
     padding: 5px;
     @include border-radius(8px);
     font-size: 11px;
@@ -717,7 +719,9 @@ padding: 5px;
 .comment.collapsed .child,
 .comment.collapsed .usertext,
 .comment.collapsed .midcol,
-.comment.collapsed .button
+.comment.collapsed .button,
+.comment.collapsed .options_link,
+.comment.collapsed .options_expando
 {
     display: none;
 }
@@ -923,45 +927,6 @@ padding: 5px;
 	height: 200px;
 }
 
-/* Comment options dropdown */
-.thing_options {
-   display: inline;
-   white-space: nowrap;
-}
-.thing_options_popup_container {
-   display: inline;
-}
-.thing_options_popup_container.hidden, .thing_suboption_popup_container.hidden {
-   display: none;
-}
-.thing_options_popup {
-   display: inline;
-   position: absolute;
-   z-index: 20;
-   margin-top: 15px;
-   border: rgb(81, 113, 145) 2px solid;
-   background: white;
-   @include box-shadow( 0px 0px 5px rgba(81, 113, 145,.6));
-    @include border-radius(5px);
-   font-size: 1.5em; font-weight: bold
-}
-.thing_suboption_popup {
-   display: inline;
-   position: absolute;
-   z-index: 20;
-   margin-left: 100%;
-   border: rgb(81, 113, 145) 2px solid;
-   background: white;
-   @include box-shadow( 0px 0px 8px rgba(81, 113, 145,.6));
-    @include border-radius(5px);
-}
-.thing_options_popup  a {
-    display: block;
-    padding: 5px;
-    padding-right: 15px;
-    color:  rgb(81, 113, 145);
-    text-decoration: none;
-}
 .comment > .entry .usertext-body {
     font-size: 11px;
 	 word-wrap: break-word;

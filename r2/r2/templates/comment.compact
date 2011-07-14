@@ -57,42 +57,34 @@
    %>
   <div class="entry ${like_cls}">
     <div class="tagline">
-      <div class="options_triangle_parent">
-        <div class="options_triangle hidden">
-         <%
-            is_author = (c.user_is_loggedin and thing.author and
-                         c.user.name == thing.author.name)
-           %>
-         %if c.user_is_loggedin:
-          <a href="javascript:void(0)" class="group_button button"
-             onclick="return reply(this)">Reply</a>
-         %endif
-          <a href="javascript:void(0)" class="group_button button"
-             onclick="return toggle_collapse(this)">Collapse</a>
-          ${plain_link(_("permalink"), thing.permalink, _class = "group_button button" )}
-          %if c.profilepage:
-            ${plain_link(_("context"), thing.permalink + "?context=3", _class = "group_button button")}
-          %elif thing.parent_permalink:
-            ${plain_link(_("parent"), thing.parent_permalink, _class = "group_button button")}
-          %endif
-          %if thing.is_author:
-            ${plain_link(_("edit"), "javascript:void(0)", 
-                         onclick="return edit_usertext(this)", _class = "group_button button")}
-          %endif
-       </div>
-     </div>
-     <a href="javascript:void(0)" class="triangle_link button">
-       <span class="button_contents"></span>
-     </a>
      ${WrappedUser(thing.author, thing.attribs, thing,
                    gray = collapse).render()}&#32;
      ${score(thing, thing.likes, tag='span')}&#32;
      ## thing.timesince is a cache stub
      ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}&#32;
     </div>
+    <a href="javascript:void(0)" class="options_link"></a>
     ${thing.usertext}
+        <div class="clear options_expando hidden">
+            <%
+                is_author = (c.user_is_loggedin and thing.author and c.user.name == thing.author.name)
+            %>
+            %if c.user_is_loggedin:
+                <a href="javascript:void(0);" onclick="return reply(this)"><div class="reply-icon"></div>Reply</a>
+            %endif
+            <a href="javascript:void(0);" onclick="return toggle_collapse(this)" class="collapse"><div class="collapse-icon"></div>Collapse</a>
+            <a href="${thing.permalink}"><div class="permalink-icon"></div>Permalink</a>
+            %if c.profilepage:
+                <a href="${thing.permalink}?context=3"><div class="context-icon"></div>Context</a>
+            %elif thing.parent_permalink:
+                <a href="${thing.parent_permalink}"><div class="parent-icon"></div>Parent</a>
+            %endif
+            %if thing.is_author:
+                <a href="javascript:void(0);" onclick="return edit_usertext(this)"><div class="edit-icon"></div>Edit</a>
+            %endif
+        </div>
   </div>
-  <div style="clear: both;"></div>
+  <div style="clear: both"></div>
   <div class="child">
     ${thing.childlisting}
   </div>

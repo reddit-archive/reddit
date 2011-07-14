@@ -91,6 +91,11 @@ $(function() {
         $(this).toggle();
         $(this).siblings(".save-button").toggle();
     });
+    //Hide options when we collapse
+    $('.options_expando .collapse').live("click", function() {
+        $(this).parent().removeClass('expanded');
+        $(this).parent().siblings('.options_link').removeClass("active");
+    });
     /* the iphone doesn't play nice with live() unless there is already a registered click function.  That's sad */
     $(".thing").click(function() {
     });
