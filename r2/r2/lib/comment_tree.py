@@ -309,6 +309,7 @@ def _load_link_comments(link_id):
     q = Comment._query(Comment.c.link_id == link_id,
                        Comment.c._deleted == (True, False),
                        Comment.c._spam == (True, False),
+                       optimize_rules=True,
                        data = True)
     comments = list(q)
     cids = [c._id for c in comments]

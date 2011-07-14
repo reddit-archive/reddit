@@ -585,20 +585,28 @@ class Thing(DataThing):
                    bases.deleted, bases.spam, id)
 
     @classmethod
-    def _query(cls, *rules, **kw):
+    def _query(cls, *all_rules, **kw):
         need_deleted = True
         need_spam = True
         #add default spam/deleted
-        for r in rules:
+        rules = []
+        optimize_rules = kw.pop('optimize_rules', False)
+        for r in all_rules:
             if not isinstance(r, operators.op):
                 continue
             if r.lval_name == '_deleted':
                 need_deleted = False
+                # if the caller is explicitly unfiltering based on this column,
+                # we don't need this rule at all. taking this out can save us a
+                # join that is very expensive on pg9.
+                if optimize_rules and r.rval == (True, False):
+                    continue
             elif r.lval_name == '_spam':
                 need_spam = False
-
-        if need_deleted or need_spam:
-            rules = list(rules)
+                # see above for explanation
+                if optimize_rules and r.rval == (True, False):
+                    continue
+            rules.append(r)
 
         if need_deleted:
             rules.append(cls.c._deleted == False)
