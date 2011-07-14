@@ -23,12 +23,12 @@
    from r2.lib.template_helpers import add_sr
    import urllib
    from r2.lib.filters import _force_unicode, _force_utf8
-   from r2.lib.template_helpers import add_sr
  %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="link.html" import="tagline"/>
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="printablebuttons.html" import="state_button" />
 
 <div class="thing link id-${thing._fullname}">
   <span class="rank" style="width:${thing.numcolmargin};">
@@ -68,16 +68,14 @@
     <a href="${url}">${thing.title}</a>
     </p>
     %if thing.link_child and not c.permalink_page and thing.link_child.css_style.strip(' ') != 'video':
-      <a href="javascript:void(0)" class="expando-button collapsed button 
-                  ${thing.link_child.css_style}">
-          Aa
-      </a>
+      <a href="javascript:void(0)" class="expando-button collapsed
+                  ${thing.link_child.css_style}"></a>
     %endif
     <div class="tagline">
       ${tagline()}
     </div>
     </div>
-    <a href="javascript:void(0)" class="triangle_link button">Options</a>
+    <a href="javascript:void(0)" class="options_link"></a>
     <%
        expand = thing.link_child and thing.link_child.expand
      %>
@@ -86,7 +84,7 @@
       ${thing.link_child.content()}
     %endif
   </div>
-  <div class="clear options_triangle_parent">
+  <div class="clear options_expando hidden">
     <% 
        subject = "[reddit] I wanted to share this link with you"
        body = """%(user)s shared a link with you from reddit (http://www.reddit.com/):
@@ -106,16 +104,40 @@ there's also a discussion going on here:
        title = _force_unicode(thing.title)
        tweet = "%s %s" % (title[0:(139-len(url))], url)
        %>
-      <div class="options_triangle hidden">
-        <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" class="group_button button">Email</a>
-        <a href="http://twitter.com/home?status=${tweet}" class="group_button button">Tweet</a>
-        <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)"  class="group_button button">Report</a>
+
+        <a href="mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}" ><div class="email-icon"></div>Email</a>
+        <a href="javascript:void(0)"  onclick="return change_state(this, 'report', hide_thing)" ><div class="report-icon"></div>Report</a>
+        ${self.save_button()}
         %if not thing.is_self:
-         <span class="button group_button">
-           ${plain_link(thing.domain, thing.domain_path, _sr_path = False)}
-         </span>
+           <a href="${thing.domain_path}"><div class="domain-icon"></div>${thing.domain}</a>
         %endif
-      </div>
+      
 
   </div>
 </div>
+
+<%def name="save_button()">
+    %if c.user_is_loggedin:
+        %if thing.saved:
+            <a href="#" class="unsave-button" onclick="change_state(this, 'unsave', unsave_thing, true)"><div class="unsave-icon"></div>Unsave</a>
+            <a href="#" class="save-button" style="display: none;" onclick="change_state(this, 'save', save_thing, true)"><div class="save-icon"></div>Save</a>
+        %else:
+            <a href="#" class="unsave-button" style="display: none" onclick="change_state(this, 'unsave', unsave_thing, true)"><div class="unsave-icon"></div>Unsave</a>
+            <a href="#" class="save-button" onclick="change_state(this, 'save', save_thing, true)"><div class="save-icon"></div>Save</a>
+        %endif
+    %endif
+
+
+
+<%doc>
+%if thing.is_loggedin:
+    %if thing.saved:
+       ${printablebuttons.state_button("unsave", _("unsave"), \
+          "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
+    %else:
+       ${printablebuttons.state_button("save", _("save"), \
+          "return change_state(this, 'save', save_thing);", _("saved"))}
+    %endif
+  %endif
+</%doc>
+</%def>

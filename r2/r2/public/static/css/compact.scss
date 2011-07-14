@@ -1,29 +1,13 @@
+//Requires Compass and Sass to compile properly
+//gem install haml
+//gem install compass
 /* mixins */
 
-@mixin rounded($radius) {
-    border-radius: $radius;
-    -moz-border-radius: $radius;
-    -webkit-border-radius: $radius;
-    -khtml-border-radius: $radius;
-}
+@import "compass/css3";
 
-@mixin vertical_gradient($from, $to) { 
+@mixin vertical_gradient($from, $to) {
     background-color: ($from + $to) / 2;
-    background: -moz-linear-gradient(-90deg, $from, $to);
-    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($from), to($to));
-    background: -khtml-gradient(linear, 0% 0%, 0% 100%, from($from), to($to));
-}
-@mixin box-shadow($shadow) {
-    -webkit-box-shadow: $shadow;
-    -moz-box-shadow: $shadow;
-    box-shadow: $shadow;
-}
-
-@mixin border_box { 
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    -khtml-box-sizing: border-box;
+    @include background(linear-gradient(top, $from, $to));
 }
 
 /* meat */
@@ -50,7 +34,7 @@ textarea {
 }
 /*UI stuff*/
 .button, .button:visited {
-    @include rounded(6px);
+    @include border-radius(6px);
     @include vertical_gradient(#BFD0E0, #80A2C4);
 
     height: 30px; line-height: 30px;
@@ -66,7 +50,7 @@ textarea {
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
     background-color: #80A2C4;
     border: 1px solid #517191;
-    @include box-shadow( "0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1)" );
+    @include box-shadow(inset 0px 1px 0px hsla(0,0%,100%,.75), 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) );
 }
 .button:active, .button[selected], .button.active,
 /*Vote toolbar styles*/.button.upmod, .button.downmod
@@ -87,7 +71,7 @@ button.button {
 }
 
 .small_button, .small_button:visited {
-    @include rounded(6px);
+    @include border-radius(6px);
     @include vertical_gradient(#BFD0E0, #80A2C4);
 
    line-height: 20px;
@@ -110,7 +94,7 @@ button.button {
 
 
 .group_button {
-    @include rounded(0);
+    @include border-radius(0);
     border-left: 1px solid hsl(211, 40%, 75%);
     border-right: 1px solid hsl(211, 28%, 37%);
 }
@@ -133,29 +117,26 @@ button.button {
     border-right: 1px solid hsl(210, 28%, 44%);
 }
 
-/*Options triangle popups*/
-.triangle_link {
+/*Options popups*/
+.options_link {
     font-size: x-small;
-    margin: none;
-    display: block;
-    float: right;
     clear: left;
     margin: 2px 0px 0px 10px;
-}
-
-.triangle_link.button { 
-    color: white;
-    margin-bottom: 2px;
-    padding: 3px;
-    line-height: normal;
-    height: auto;
+    display: inline-block;
+    width: 30px; height: 30px;
     position: absolute;
-    bottom: 2px;
-    right: 2px;
+    top: 35px;
+    right: 10px;
+    background: url('/static/compact/options.png') no-repeat;
+
+    &.active {
+        background:  url('/static/compact/options-active.png');
+    }
 }
 
 
-.message .triangle_link, .comment .triangle_link {  
+
+.message .options_link, .comment .options_link {  
     border-bottom-left-radius: 8px 8px;
     border-bottom-right-radius: 0px 0px;
     border-top-left-radius: 0px 0px;
@@ -169,8 +150,8 @@ button.button {
     top: -1px;
 }
 
-.message .triangle_link .button_contents,
-.comment .triangle_link .button_contents {
+.message .options_link .button_contents,
+.comment .options_link .button_contents {
     background: url(/static/compact/mobilesprite2.png) no-repeat -51px -2px;
     display: inline-block;
     height: 16px;
@@ -178,102 +159,62 @@ button.button {
     width: 16px;
 }
 
-.options_triangle_parent {
-    position: relative;
-}
-.options_triangle {
-   margin: 15px -5px 5px 0px;
-   position: absolute;
-   top: -3px;
-   z-index: 1000;
-   right: 0;
+/*Options expando*/
 
-	
-}
-.options_triangle:before {
-   content:"\00a0";
-   display:block; /* reduce the damage in FF3.0 */
-   position:absolute;
-   z-index:-2;
-   top:-29px;
-   right:15px;
-   width:0;
-   height:0;
-   border-width:15px 10px;
-   border-style:solid;
-   border-color:transparent transparent hsl(0, 0%, 60%);
-}
-.options_triangle:after {
-   content:"\00a0";
-   display:block; /* reduce the damage in FF3.0 */
-   position:absolute;
-   z-index:1001;
-   top:-28px;
-   right:15px;
-   width:0;
-   height:0;
-   border-width:15px 10px;
-   border-style:solid;
-   border-color:transparent transparent hsl(235,1%,94%);
-}
-.options_triangle.left-side:before {  
-   left:15px;
-}
-.options_triangle.left-side:after {
-   left:15px;
-}
-
-
-.options_triangle.hidden {
+.link .options_expando {
+    background: hsl(210,35%,20%);
+    margin:  5px -5px -1px;
+    border-top:  1px solid hsl(210,35%,10%);
     display: none;
+    padding: 10px;
+    @include box-orient(horizontal);
+    @include box-align(center);
+    @include box-pack(center);
+    @include box-shadow(inset 0px 3px 8px hsla(0,0%,0%,.8));
+    text-shadow: 0px -1px 0px hsla(0,0%,0%,.8);
+
+    a {
+        display: block;
+        color: white;
+        font-size: 11px;
+        padding: {
+            left: 5px;
+            right: 5px;
+        }
+        
+    }
+
+    &.expanded {
+        @include display-box;
+    }
 }
 
-.options_triangle.left-side { 
-    left: 0px;
-    right: auto; 
+.email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+    margin: {
+        left: auto;
+        right: auto;
+        bottom: 5px;
+    }
+}
+.email-icon {
+    background:  url('/static/compact/email.png') no-repeat;
+}
+.report-icon {
+    background: url('/static/compact/report.png') no-repeat;
+}
+.save-icon {
+    background: url('/static/compact/save.png') no-repeat;
+}
+.unsave-icon {
+    background: url('/static/compact/unsave.png') no-repeat;
+}
+.domain-icon {
+    background: url('/static/compact/domain.png') no-repeat;
 }
 
-.message .options_triangle,
-.comment .options_triangle {
-    width: auto;
-    right: -3px; 
-    top: -3px; 
-}
-.message .options_triangle:before { 
-    right: 7px;
-}
-.comment .options_triangle:before {
-    right: 7px;
-}
-
-.message .options_triangle:after { 
-    right: 7px;
-}
-.comment .options_triangle:after {
-    right: 7px;
-}
-/* Triangle buttons */
-.options_triangle .button {
-    @include vertical_gradient(hsl(235,1%,94%), hsl(236,2%,85%));
-    color: hsl(0,0%,30%);
-    text-shadow: hsla(0,0%,100%,.6) 0px 1px 0px;
-    border: 1px solid hsl(0,0%,60%);
-    border-left: 1px solid hsl(0, 0%, 85%);
-    border-right: 1px solid hsl(0, 0%, 50%);
-}
-.options_triangle .button:hover, .options_triangle .button:active, .options_triangle .button:focus {
-    @include vertical_gradient(hsl(210, 35%, 81%), hsl(210, 37%, 64%));
-    border-left: 1px solid hsl(211, 40%, 75%);
-    border-right: 1px solid hsl(212, 28%, 37%);
-    color: white;
-    text-shadow: hsla(0, 100%, 100%, 0.0976563) 0px 1px 1px, hsla(0, 0%, 0%, 0.398438) 0px -1px 1px;
-}
-.options_triangle .button:first-child {
-    border-left: 1px solid hsl(0,0%,60%);	
-}
-.options_triangle .button:last-child {
-    border-right: 1px solid hsl(0,0%,60%);
-}
 /*Toolbar*/
 #topbar {
     height: 45px;
@@ -281,7 +222,7 @@ button.button {
     background-color: #A8C4E0;
     @include vertical_gradient(#CEE3F8, #A8C4E0);
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
-    @include border_box;
+    @include box-sizing(border-box);
     padding: 0px 10px 10px;
 }
 #topbar > h1 {
@@ -378,7 +319,7 @@ body[orient="landscape"] > #topbar > h1 {
 
 /*Subtoolbar (eg hot)*/
 .subtoolbar {
-    @include border_box;
+    @include box-sizing(border-box);
     height: 32px;
     @include vertical_gradient(white, #ccc);
     border-bottom: 1px solid #bbb;
@@ -409,7 +350,7 @@ body[orient="landscape"] > #topbar > h1 {
     @include vertical_gradient(#ddd, #aaa);
     /* no color-stop outside of webkit */
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ddd), color-stop(.4,#ddd), to(#aaa));
-    @include rounded(8px);
+    @include border-radius(8px);
     border: 1px solid #aaa;
     padding-top: 2px; 
     padding-bottom: 1px; 
@@ -438,12 +379,12 @@ body[orient="landscape"] > #topbar > h1 {
 }
 /*Links*/
 .link {
-    min-height: 60px;
+    min-height: 70px;
     border-bottom: 1px solid #999; 
     border-top: 1px solid #ddd;
     padding: 5px 5px;
     padding-bottom: 0px; 
-    @include border_box;
+    @include box-sizing(border-box);
     background: rgba(255,255,255,.6);
     position: relative;
 }
@@ -577,16 +518,18 @@ body[orient="landscape"] > #topbar > h1 {
 /*Expando*/
 .link  .expando-button {
     float: left;
+    display: block;
     height: auto; line-height: inherit;
     margin: 3px 5px 2px 0;
-    color: white; 
+    width: 30px;
+    height: 30px;
+    background: url('/static/compact/selftext.png');
+
+    &.expanded {
+        background:  url('/static/compact/selftext-active.png');
+    }
 }
-.link > .expando-button.video {
-    font-size: 15px;
-}
-.link > .expando-button.expanded {
-    @include vertical_gradient(#7E8994, #80A2C4);
-}
+
 .link > .expando {
     clear: both;
     margin: 5px 0; 
@@ -594,7 +537,7 @@ body[orient="landscape"] > #topbar > h1 {
     border: 1px solid #999;
     @include vertical_gradient(#ddd, #aaa);
     padding: 5px;
-    @include rounded(8px);
+    @include border-radius(8px);
     font-size: 11px;
 }
 
@@ -612,7 +555,7 @@ body[orient="landscape"] > #topbar > h1 {
 /* Comment count */
 .commentcount {
     float: right;
-    margin: 5px 1px 5px 5px;
+    margin: 5px 1px 45px 5px;
     width: 45px;
     text-align: right;
 }
@@ -622,7 +565,7 @@ body[orient="landscape"] > #topbar > h1 {
     margin: 0; padding: 3px 10px;
     text-decoration: none;
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
-    @include rounded(10px);
+    @include border-radius(10px);
     @include vertical_gradient(#BFD0E0, #80A2C4);
     border: 1px solid #517191;
     @include box-shadow( " 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) ");
@@ -652,15 +595,15 @@ body[orient="landscape"] > #topbar > h1 {
     background: white;
     margin:  0 10px 5px;
     border: 1px solid rgb(217,217,217);
-    @include rounded(8px)
+    @include border-radius(8px)
 }
 .commentarea > .usertext textarea {
     margin: 0; padding: 5px;
     width: 100%;
     height: 100px;
     border: none;
-    @include border_box;
-    @include rounded(8px);
+    @include box-sizing(border-box);
+    @include border-radius(8px);
     border-bottom: 1px solid rgb(217,217,217);
 
 }
@@ -735,8 +678,8 @@ padding: 5px;
     border: 1px solid rgb(217,217,217);
     width: 100%;
     min-height: 100px;
-    @include rounded(5px);
-    @include border_box;
+    @include border-radius(5px);
+    @include box-sizing(border-box);
 }
 .child form.usertext.cloneable {
 	margin: 5px;
@@ -747,7 +690,7 @@ padding: 5px;
     background: white;
     border: 1px solid rgb(217,217,217);
     margin: 10px;
-    @include rounded(8px)
+    @include border-radius(8px)
 }
 .comment > .midcol {
     float: left;
@@ -796,7 +739,7 @@ padding: 5px;
     position: relative; 
     border: 1px solid rgb(217,217,217);
     margin: 10px;
-    @include rounded(8px)
+    @include border-radius(8px)
 }
 .message > .midcol {
     float: left;
@@ -813,7 +756,7 @@ padding: 5px;
     /* TODO */
     margin-right: 10px;
     padding: 2px 5px;
-    @include rounded(15px);
+    @include border-radius(15px);
 }
 .message .correspondent a {
     text-decoration: none;
@@ -870,7 +813,7 @@ padding: 5px;
 
 .subreddit { 
     background-color: white;
-    @include rounded(5px);
+    @include border-radius(5px);
     margin: 5px; 
 }
 
@@ -968,9 +911,9 @@ padding: 5px;
 	font-weight: bold;
 }
 #compose-message input[type="text"] {
-    @include border_box;
+    @include box-sizing(border-box);
     border: 1px solid rgb(117,117,117);
-    @include rounded(5px);
+    @include border-radius(5px);
     margin-bottom: 5px;
     padding: 5px;
     width: 100%;
@@ -999,7 +942,7 @@ padding: 5px;
    border: rgb(81, 113, 145) 2px solid;
    background: white;
    @include box-shadow( 0px 0px 5px rgba(81, 113, 145,.6));
-    @include rounded(5px);
+    @include border-radius(5px);
    font-size: 1.5em; font-weight: bold
 }
 .thing_suboption_popup {
@@ -1010,7 +953,7 @@ padding: 5px;
    border: rgb(81, 113, 145) 2px solid;
    background: white;
    @include box-shadow( 0px 0px 8px rgba(81, 113, 145,.6));
-    @include rounded(5px);
+    @include border-radius(5px);
 }
 .thing_options_popup  a {
     display: block;
@@ -1095,11 +1038,11 @@ padding: 5px;
 #login_login input[type="text"], #login_login input[type="password"], #login_reg input[type="text"], #login_reg input[type="password"] {
     width: 100%;
     margin: 0 0 5px;
-    @include rounded(5px);
+    @include border-radius(5px);
     border: 1px solid rgb(117,117,117); /*It was the coins fault!*/
     font-size:17px;
     padding: 5px;
-    @include border_box;
+    @include box-sizing(border-box);
 }
 #login_login > div > ul li input[type="checkbox"] + label, #login_reg > div > ul li input[type="checkbox"] + label {
 	display: inline;
@@ -1151,9 +1094,9 @@ body.toolbar {
 }
 /*Close toolbar button*/
 .toolbar .close {
-    @include border_box;
+    @include box-sizing(border-box);
     @include vertical_gradient(hsl(3, 68%, 77%), hsl(4, 33%, 48%));
-    @include rounded(30px);
+    @include border-radius(30px);
 
     border: 1px solid hsl(4, 33%, 40%) ;
     bottom: -13px;
@@ -1201,7 +1144,7 @@ body.toolbar {
     position: absolute;
     top: 75px;
     left: 0;
-    @include rounded(30px);
+    @include border-radius(30px);
     background-color: white;
     text-align: left;
     z-index: 1001;
@@ -1250,7 +1193,7 @@ body.toolbar {
 }
 #newlink .tabmenu li a {
 	width: 100%; height: 100%;
-    @include border_box;
+    @include box-sizing(border-box);
 	display: block;
 	padding: 5px;
 	color: hsl(0, 0%, 30%);
@@ -1289,16 +1232,16 @@ body.toolbar {
     padding: 0px 5px;
 }
 #newlink .roundfield-content textarea {
-    @include border_box;
+    @include box-sizing(border-box);
     width: 100%;
     height: 5em;
-    @include rounded(5px);
+    @include border-radius(5px);
 }
 #newlink .roundfield-content input[type="text"], #newlink .roundfield-content input[type="url"] {
-    @include border_box;
+    @include box-sizing(border-box);
 	width: 100%;
 	height: 2em;
-    @include rounded(5px);
+    @include border-radius(5px);
 }
 #newlink .title {
 	font-weight: bold;
@@ -1320,14 +1263,14 @@ body.toolbar {
     background: hsl(0, 0%, 90%);
     border: 1px solid hsl(0, 0%, 50%);
     padding: 8px;
-    @include rounded(8px);
+    @include border-radius(8px);
 }
 #suggested-reddits ul li {
 	display: inline;
 }
 #suggested-reddits ul li a {
     @include vertical_gradient(hsl(210, 35%, 81%), hsl(210, 37%, 64%));
-    @include rounded(10px);
+    @include border-radius(10px);
     display: inline-block;
     margin: 5px;
     padding: 3px 7px;
@@ -1401,7 +1344,7 @@ body.toolbar {
     background-color: white;
     padding: 10px;
     margin: 10px; 
-    @include rounded(10px);
+    @include border-radius(10px);
 }
 
 .instructions h1 { 
@@ -1417,7 +1360,7 @@ body.toolbar {
 .instructions img { 
     width: 290px;
     margin-left: 15px; 
-    @include rounded(10px);
+    @include border-radius(10px);
     border: 1px solid #888;
 }
 
@@ -1432,7 +1375,7 @@ body.toolbar {
     max-width: 280px;
     padding: 10px;
     background-color: white;
-    @include rounded(10px);
+    @include border-radius(10px);
     margin: 10px auto; 
 }
 
