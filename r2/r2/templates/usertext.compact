@@ -70,13 +70,15 @@
 
       <div class="bottom-area">
         <div class="usertext-buttons">
-          <button type="submit" class="save button">Save</button>
-          <button type="button" class="cancel button" style="display: none;"
+          <a href="#" class="help-toggle newbutton">help</a>
+          <button type="submit" class="save newbutton">Save</button>
+          <button type="button" class="cancel newbutton" style="display: none;"
             onclick="return cancel_usertext(this)">
             Cancel</button>
           %if thing.have_form:
             <span class="status"></span>
           %endif
+        <div style="clear: both"></div>
         </div>
         ${error_field("TOO_LONG", thing.name, "span")}
         ${error_field("RATELIMIT", "ratelimit", "span")}
@@ -84,7 +86,6 @@
         ${error_field("DELETED_COMMENT", "parent", "span")}
         ${error_field("DELETED_LINK", "parent", "span")}
         ${error_field("USER_BLOCKED", "parent", "span")}
-        <a href="#" class="help-toggle button secondary_button">help</a>
       </div>
       <div class="markhelp-parent">
       <table class="markhelp md">

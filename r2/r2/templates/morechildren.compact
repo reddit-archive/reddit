@@ -27,7 +27,7 @@
    cids = [to36(cm) for cm in thing.children]
 %>
 <div class="morechildren thing id-${thing._fullname}">
-  <a style="font-size: smaller; font-weight: bold" class="button"
+  <a style="font-size: smaller; font-weight: bold" class="newbutton"
      id="more_${thing._fullname}" href="javascript:void()" 
      onclick="return morechildren(this, '${thing.link_name}', '${",".join(cids)}', ${thing.depth})">
     ${_("load more comments")}

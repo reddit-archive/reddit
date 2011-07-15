@@ -37,7 +37,31 @@ a:visited {
 textarea {
     font-family: inherit;
 }
+/*Preloading*/
+#preload {
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+}
 /*UI stuff*/
+.newbutton {
+    @include appearance(none);
+    border-width: 8px;
+    @include border-image(url($static + 'border-button.png') 8 stretch);
+    color: white;
+    font: {
+        family: inherit;
+        size: 12px;
+        weight: bold;
+    }
+    text-decoration: none;
+    text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
+    background: none;
+
+    &:active, &:hover, &[selected], &.expanded, &.active {
+        @include border-image(url($static + 'border-button-active.png') 8 stretch);
+    }
+}
 .button, .button:visited {
     @include border-radius(6px);
     @include vertical_gradient(#BFD0E0, #80A2C4);
@@ -199,13 +223,20 @@ button.button {
     }
 }
 .comment, .message { //For the funky styles on comments/messages
-     .options_expando {
-        margin: 10px -4px; //Overwrite the link styles
+    .entry {
+        margin-right: 50px;
+    }
+    .child {
+        .options_link {
+            top: 8px; //Instead of 35px, for normal styles, we want 8px for these, as they are typically much smaller
+        }
+    }
+    .options_expando {
+        margin: 10px -50px 10px 0px; //Overwrite the link styles
     }
 }
 
-.email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon,
-.collapse-icon, .context-icon, .parent-icon, .unread-icon {
+.options_icons {
     display: block;
     width: 24px;
     height: 24px;
@@ -216,40 +247,56 @@ button.button {
     }
 }
 .email-icon {
+    @extend .options_icons;
     @include sprite($static + 'email.png');
 }
 .report-icon {
+    @extend .options_icons;
     @include sprite($static + 'report.png');
 }
 .save-icon {
+    @extend .options_icons;
     @include sprite($static + 'save.png');
 }
 .unsave-icon {
+    @extend .options_icons;
     @include sprite($static + 'unsave.png');
 }
 .domain-icon {
+    @extend .options_icons;
     @include sprite($static + 'domain.png');
 }
 .edit-icon {
+    @extend .options_icons;
     @include sprite($static + 'edit.png');
 }
 .reply-icon {
+    @extend .options_icons;
     @include sprite($static + 'reply.png');
 }
 .permalink-icon {
+     @extend .options_icons;
     @include sprite($static + 'permalink.png');
 }
 .collapse-icon {
+    @extend .options_icons;
     @include sprite($static + 'collapse.png');
 }
 .context-icon {
+    @extend .options_icons;
     @include sprite($static + 'context.png');
 }
 .parent-icon {
+    @extend .options_icons;
     @include sprite($static + 'context.png');
 }
 .unread-icon {
+    @extend .options_icons;
     @include sprite($static + 'unread.png');
+}
+.hide-icon {
+    @extend .options_icons;
+    @include sprite($static + 'hide.png');
 }
 
 /*Toolbar*/
@@ -522,9 +569,6 @@ body[orient="landscape"] > #topbar > h1 {
     display:inline;
 }
 
-.comment .options_triangle { 
-    top: 15px;
-}
 
 /** Vote up **/
 .link > .midcol.likes > .score {
@@ -636,24 +680,22 @@ body[orient="landscape"] > #topbar > h1 {
 /* Comment count */
 .commentcount {
     float: right;
-    margin: 5px 1px 5px 5px;
+    margin: 5px;
     width: 45px;
     text-align: right;
 }
 .commentcount > .comments {
+    border-width: 8px;
+    @include border-image(url($static + 'border-button.png') 8 stretch);
+
     color: white; font-family: inherit; font-size: 12px;
     font-weight: bold;
-    margin: 0; padding: 3px 10px;
     text-decoration: none;
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
-    @include border-radius(10px);
-    @include vertical_gradient(#BFD0E0, #80A2C4);
-    border: 1px solid #517191;
-    @include box-shadow( " 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) ");
-}
-.commentcount > .comments:active, 
-.commentcount > .comments[selected] {
-    @include vertical_gradient(#7E8994, #80A2C4);
+
+    &:active, &:hover, &[selected], &.preloaded {
+        @include border-image(url($static + 'border-button-active.png') 8 stretch);
+    }
 }
 /* Comment styles */
 .commentarea > h1 {
@@ -688,12 +730,12 @@ body[orient="landscape"] > #topbar > h1 {
     border-bottom: 1px solid rgb(217,217,217);
 
 }
-.cancel.button, 
-.save.button {
+.cancel,
+.save {
     float: right;
     padding: 0 5px !important;
 }
-.save.button {
+.save {
 	margin-left: 5px;
 }
 /* Errors */
@@ -708,8 +750,11 @@ body[orient="landscape"] > #topbar > h1 {
 	text-shadow: hsla(0, 0%, 0%, 0.15) 0px -1px 0px;
 }
 
-.help-toggle.expanded {
-    @include vertical_gradient(#7E8994, #80A2C4);
+.help-toggle {
+    float: left;
+    margin: {
+        top: 3px;
+    }
 }
 .bottom-area {
 padding: 5px;
@@ -777,9 +822,6 @@ padding: 5px;
     float: left;
     margin: 7px;
     overflow: hidden;
-}
-.comment > .entry {
-    margin: 4px;
 }
 .comment > .entry > .tagline {
     font-size: 11px;
@@ -850,9 +892,6 @@ padding: 5px;
 }
 
 
-.message > .entry {
-    margin: 4px;
-}
 .message > .entry > .tagline {
     font-size: 11px;
     padding-bottom: 2px; margin-bottom: 2px;
@@ -1210,7 +1249,7 @@ body.toolbar {
 	-webkit-border-bottom-left-radius: 8px;	-webkit-border-bottom-right-radius: 8px;
     -moz-border-radius-bottomleft: 8px; -moz-border-radius-bottomright: 8px;
 }
-#newlink .save.button {
+#newlink .save {
 	margin: 8px;
 }
 /** Tab switcher **/
@@ -1447,6 +1486,8 @@ body.toolbar {
     display: block;
     text-align: center;
     max-width: 350px;
+    @warn "Evntually this needs to be swapped out for a more future-proof solution to solve the red text on 'load more->loading; for the morechildren button";
+    color: white !important;
 }
 
 

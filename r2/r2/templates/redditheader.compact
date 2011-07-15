@@ -34,7 +34,9 @@
         nav = toolbars[0]
         toolbars = toolbars[1:]
  %>
-
+<div id="preload">
+    <div class="commentcount"><div class="comments"></div><div class="comments preloaded"></div></div>
+</div>
 <div id="topbar">
   <span class="left">
    <%
