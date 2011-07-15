@@ -1016,8 +1016,8 @@ padding: 5px;
 
 }
 /*Link colors*/
-.tagline .admin {
-    color: #F01;
+.tagline .submitter {
+    color: blue;
 }
 .tagline .friend {
     color: orange; /*Why not orangered? Because orangered can look very red on a mobile*/
@@ -1025,9 +1025,10 @@ padding: 5px;
 .tagline .moderator {
     color: #282;
 }
-.tagline .submitter {
-    color: blue;
+.tagline .admin {
+    color: #F01;
 }
+
 /*Loading spinner, yay CSS animation*/
 @-webkit-keyframes rotateThis {
   from {-webkit-transform:scale(0.75) rotate(0deg);}
