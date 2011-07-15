@@ -9,6 +9,11 @@
     background-color: ($from + $to) / 2;
     @include background(linear-gradient(top, $from, $to));
 }
+@mixin sprite($url) {
+    background-image: url($url); /*SPRITE*/
+}
+//Directory for compact static files
+$static: "/static/compact/";
 
 /* meat */
 
@@ -128,10 +133,10 @@ button.button {
     top: 35px;
     right: 10px;
     
-    background-image: url(/static/compact/options.png); /*SPRITE*/
+    @include sprite($static + 'options.png');
 
     &.active {
-        background-image:  url(/static/compact/options-active.png); /* SPRITE */
+        @include sprite($static + 'options-active.png');
     }
 }
 
@@ -211,40 +216,40 @@ button.button {
     }
 }
 .email-icon {
-    background-image:  url('/static/compact/email.png'); /* SPRITE */
+    @include sprite($static + 'email.png');
 }
 .report-icon {
-    background-image: url('/static/compact/report.png'); /* SPRITE */
+    @include sprite($static + 'report.png');
 }
 .save-icon {
-    background-image: url('/static/compact/save.png'); /* SPRITE */
+    @include sprite($static + 'save.png');
 }
 .unsave-icon {
-    background-image: url('/static/compact/unsave.png'); /* SPRITE */
+    @include sprite($static + 'unsave.png');
 }
 .domain-icon {
-    background-image: url('/static/compact/domain.png'); /* SPRITE */
+    @include sprite($static + 'domain.png');
 }
 .edit-icon {
-    background-image: url('/static/compact/edit.png'); /* SPRITE */
+    @include sprite($static + 'edit.png');
 }
 .reply-icon {
-    background-image: url('/static/compact/reply.png'); /* SPRITE */
+    @include sprite($static + 'reply.png');
 }
 .permalink-icon {
-    background-image: url('/static/compact/permalink.png'); /* SPRITE */
+    @include sprite($static + 'permalink.png');
 }
 .collapse-icon {
-    background-image: url('/static/compact/collapse.png'); /* SPRITE */
+    @include sprite($static + 'collapse.png');
 }
 .context-icon {
-    background-image: url('/static/compact/context.png'); /* SPRITE */
+    @include sprite($static + 'context.png');
 }
 .parent-icon {
-    background-image: url('/static/compact/context.png'); /* SPRITE */
+    @include sprite($static + 'context.png');
 }
 .unread-icon {
-    background-image: url('/static/compact/unread.png'); /* SPRITE */
+    @include sprite($static + 'unread.png');
 }
 
 /*Toolbar*/
@@ -296,29 +301,55 @@ body[orient="landscape"] > #topbar > h1 {
 #topbar > .right > .button:first-child {
 	margin-right: 5px;
 }
+#topbar > .right > #mail {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
 
-#topbar > .right > .button#mail img {
-	margin-bottom: 2px;
-	display: inline-block;
+    &.nohavemail {
+        @include sprite($static + 'nomail.png');
+
+        &:active, &:hover {
+            @include sprite($static + 'nomail-active.png');
+        }
+    }
+    &.havemail {
+        @include sprite($static + 'havemail.png');
+
+        &:active, &:hover {
+            @include sprite($static + 'havemail-active.png');
+        }
+    }
 }
-#topbar > .right > .button.havemail {
-    background-color: #C4A280;
-    @include vertical_gradient(#E0D0BF, #C4A280);
-    border: 1px solid #917151;
+#topbar > .right > #modmail {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+
+    &.nohavemail {
+        @include sprite($static + 'modmail.png');
+
+        &:active, &:hover {
+            @include sprite($static + 'modmail-active.png');
+        }
+    }
+    &.havemail {
+        @include sprite($static + 'newmodmail.png');
+
+        &:active, &:hover {
+            @include sprite($static + 'newmodmail-active.png');
+        }
+    }
 }
-#topbar > .right > .button.havemail:active, #topbar > .right > .button.havemail[selected], #topbar > .right > .button.havemail.active {
-    backgrount-color: #C4A280;
-    @include vertical_gradient(#E0D0BF, #C4A280);
-    border: 1px solid #917151;
-}
+
 .topbar-options {
     width: 30px;
     height: 30px;
     display: inline-block;
-    background-image: url('/static/compact/menu-options.png'); /*SPRITE*/
+    @include sprite($static + 'menu-options.png');
 
     &.active, &:hover, &:active {
-        background-image: url('/static/compact/menu-options-active.png'); /*SPRITE*/
+        @include sprite($static + 'menu-options-active.png');
     }
 }
 #top_menu {
@@ -565,10 +596,10 @@ body[orient="landscape"] > #topbar > h1 {
     margin: 3px 10px 2px 0;
     width: 30px;
     height: 30px;
-    background-image: url('/static/compact/selftext.png'); /* SPRITE */
+    @include sprite($static + 'selftext.png');
 
     &.expanded {
-        background-image:  url('/static/compact/selftext-active.png'); /* SPRITE */
+        @include sprite($static + 'selftext-active.png');
     }
 }
 
