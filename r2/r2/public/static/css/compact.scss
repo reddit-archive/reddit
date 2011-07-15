@@ -430,17 +430,17 @@ body[orient="landscape"] > #topbar > h1 {
 
         //Unvoted
         &.up {
-            background-image: url('/static/compact/upvote.png'); /*SPRITE*/
+            @include sprite($static + 'upvote.png');
         }
         &.down {
-            background-image: url('/static/compact/downvote.png'); /*SPRITE*/
+            @include sprite($static + 'downvote.png');
         }
         //Voted
         &.upmod {
-            background-image: url('/static/compact/upvote-active.png'); /*SPRITE*/
+            @include sprite($static + 'upvote-active.png');
         }
         &.downmod {
-            background-image: url('/static/compact/downvote-active.png'); /*SPRITE*/
+            @include sprite($static + 'downvote-active.png');
         }
     }
 }
