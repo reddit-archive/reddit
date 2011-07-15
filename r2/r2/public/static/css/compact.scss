@@ -127,10 +127,11 @@ button.button {
     position: absolute;
     top: 35px;
     right: 10px;
-    background: url('/static/compact/options.png') no-repeat;
+    
+    background-image: url(/static/compact/options.png); /*SPRITE*/
 
     &.active {
-        background:  url('/static/compact/options-active.png');
+        background-image:  url(/static/compact/options-active.png); /* SPRITE */
     }
 }
 
@@ -206,37 +207,37 @@ button.button {
     }
 }
 .email-icon {
-    background:  url('/static/compact/email.png') no-repeat;
+    background-image:  url('/static/compact/email.png'); /* SPRITE */
 }
 .report-icon {
-    background: url('/static/compact/report.png') no-repeat;
+    background-image: url('/static/compact/report.png'); /* SPRITE */
 }
 .save-icon {
-    background: url('/static/compact/save.png') no-repeat;
+    background-image: url('/static/compact/save.png'); /* SPRITE */
 }
 .unsave-icon {
-    background: url('/static/compact/unsave.png') no-repeat;
+    background-image: url('/static/compact/unsave.png'); /* SPRITE */
 }
 .domain-icon {
-    background: url('/static/compact/domain.png') no-repeat;
+    background-image: url('/static/compact/domain.png'); /* SPRITE */
 }
 .edit-icon {
-    background: url('/static/compact/edit.png') no-repeat;
+    background-image: url('/static/compact/edit.png'); /* SPRITE */
 }
 .reply-icon {
-    background: url('/static/compact/reply.png') no-repeat;
+    background-image: url('/static/compact/reply.png'); /* SPRITE */
 }
 .permalink-icon {
-    background: url('/static/compact/permalink.png') no-repeat;
+    background-image: url('/static/compact/permalink.png'); /* SPRITE */
 }
 .collapse-icon {
-    background: url('/static/compact/collapse.png') no-repeat;
+    background-image: url('/static/compact/collapse.png'); /* SPRITE */
 }
 .context-icon {
-    background: url('/static/compact/context.png') no-repeat;
+    background-image: url('/static/compact/context.png'); /* SPRITE */
 }
 .parent-icon {
-    background: url('/static/compact/context.png') no-repeat;
+    background-image: url('/static/compact/context.png'); /* SPRITE */
 }
 
 /*Toolbar*/
@@ -372,8 +373,6 @@ body[orient="landscape"] > #topbar > h1 {
 }
 .subtoolbar > ul > li.selected a {
     @include vertical_gradient(#ddd, #aaa);
-    /* no color-stop outside of webkit */
-    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ddd), color-stop(.4,#ddd), to(#aaa));
     @include border-radius(8px);
     border: 1px solid #aaa;
     padding-top: 2px; 
@@ -552,10 +551,10 @@ body[orient="landscape"] > #topbar > h1 {
     margin: 3px 10px 2px 0;
     width: 30px;
     height: 30px;
-    background: url('/static/compact/selftext.png');
+    background-image: url('/static/compact/selftext.png'); /* SPRITE */
 
     &.expanded {
-        background:  url('/static/compact/selftext-active.png');
+        background-image:  url('/static/compact/selftext-active.png'); /* SPRITE */
     }
 }
 
