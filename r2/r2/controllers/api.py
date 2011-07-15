@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, MinimalController, set_user_cookie
+from reddit_base import paginated_listing
 
 from pylons.i18n import _
 from pylons import c, request
@@ -2050,6 +2051,13 @@ class ApiController(RedditController):
         c.site.flair_position = flair_position
         c.site._commit()
         jquery.refresh()
+
+    @paginated_listing(max_page_size=1000)
+    @validate(VFlairManager(),
+              user = VOptionalExistingUname('name'))
+    def GET_flairlist(self, num, after, reverse, count, user):
+        flair = FlairList(num, after, reverse, user)
+        return BoringPage(_("API"), content = flair).render()
 
     @validatedForm(VAdmin(),
                    award = VByName("fullname"),

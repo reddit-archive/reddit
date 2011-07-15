@@ -455,3 +455,23 @@ class TrafficJsonTemplate(JsonTemplate):
                 res[ival] = [[time.mktime(date.timetuple())] + list(data)
                              for date, data in getattr(thing, ival+"_data")]
         return ObjectTemplate(res)
+
+class FlairListJsonTemplate(JsonTemplate):
+    def render(self, thing, *a, **kw):
+        def row_to_json(row):
+            if hasattr(row, 'user'):
+              return dict(user=row.user.name, flair_text=row.flair_text,
+                          flair_css_class=row.flair_css_class)
+            else:
+              # prev/next link
+              return dict(after=row.after, reverse=row.reverse)
+
+        json_rows = [row_to_json(row) for row in thing.flair]
+        result = dict(users=[row for row in json_rows if 'user' in row])
+        for row in json_rows:
+            if 'after' in row:
+                if row['reverse']:
+                    result['prev'] = row['after']
+                else:
+                    result['next'] = row['after']
+        return ObjectTemplate(result)

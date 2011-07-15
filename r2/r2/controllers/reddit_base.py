@@ -444,34 +444,41 @@ def ratelimit_throttled():
         abort(503, 'service temporarily unavailable')
 
 
+def paginated_listing(default_page_size=25, max_page_size=100):
+    def decorator(fn):
+        @validate(num=VLimit('limit', default=default_page_size,
+                             max_limit=max_page_size),
+                  after=VByName('after'),
+                  before=VByName('before'),
+                  count=VCount('count'),
+                  target=VTarget("target"),
+                  show=VLength('show', 3))
+        def new_fn(self, before, **env):
+            if c.render_style == "htmllite":
+                c.link_target = env.get("target")
+            elif "target" in env:
+                del env["target"]
+
+            if "show" in env and env['show'] == 'all':
+                c.ignore_hide_rules = True
+            kw = build_arg_list(fn, env)
+
+            #turn before into after/reverse
+            kw['reverse'] = False
+            if before:
+                kw['after'] = before
+                kw['reverse'] = True
+
+            return fn(self, **kw)
+        return new_fn
+    return decorator
+
 #TODO i want to get rid of this function. once the listings in front.py are
 #moved into listingcontroller, we shouldn't have a need for this
 #anymore
 def base_listing(fn):
-    @validate(num    = VLimit('limit'),
-              after  = VByName('after'),
-              before = VByName('before'),
-              count  = VCount('count'),
-              target = VTarget("target"),
-              show = VLength('show', 3))
-    def new_fn(self, before, **env):
-        if c.render_style == "htmllite":
-            c.link_target = env.get("target")
-        elif "target" in env:
-            del env["target"]
+    return paginated_listing()(fn)
 
-        if "show" in env and env['show'] == 'all':
-            c.ignore_hide_rules = True
-        kw = build_arg_list(fn, env)
-
-        #turn before into after/reverse
-        kw['reverse'] = False
-        if before:
-            kw['after'] = before
-            kw['reverse'] = True
-
-        return fn(self, **kw)
-    return new_fn
 
 class MinimalController(BaseController):
 
