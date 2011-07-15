@@ -260,18 +260,26 @@ button.button {
     @include vertical_gradient(#CEE3F8, #A8C4E0);
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
     @include box-sizing(border-box);
-    padding: 0px 10px 10px;
+    padding: 0px 10px 10px 0px;
+}
+#header-img {
+    width: 90px;
+    
 }
 #topbar > h1 {
     color: #444;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: bold;
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    width: 230px; 
-    margin: 10px auto 0 auto;
+    width: 100px;
+    margin: {
+        left: auto;
+        right: auto;
+        top: 26px;
+    }
     padding: 0;
     text-shadow: hsla(0, 100%, 100%, 0.5) 0px 1px 0px, hsla(0, 0%, 0%, 0.1) 0px -1px 0px;
 }
@@ -286,14 +294,14 @@ body[orient="landscape"] > #topbar > h1 {
 #topbar > .right  {
     position: absolute;
     right: 6px;
-    top: 5px;
+    bottom: 0px;
     padding: 0 5px;
 }
 #topbar > .left {
     position: absolute;
-    left: 6px;
-    top: 5px;
+    bottom: 2px;
     padding: 0 5px;
+    padding-left: 0px;
 }
 #topbar > .right > .button {
     padding-top: 8px; padding-bottom: 3px;

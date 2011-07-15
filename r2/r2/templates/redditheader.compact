@@ -20,14 +20,16 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, s3_https_if_secure
+   from r2.models.subreddit import DefaultSR
+   
  %>
 <%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
 
 <%
     from r2.lib.menus import PageNameNav
     toolbars = thing.toolbars
-    nav = "reddit mobile"
+    nav = "mobile"
     if toolbars and isinstance(toolbars[0], PageNameNav):
         nav = toolbars[0]
         toolbars = toolbars[1:]
@@ -35,23 +37,39 @@
 
 <div id="topbar">
   <span class="left">
-   ${plain_link("Home", "/", _sr_path=False, _class ='button')}
+   <%
+        header_title = c.site.header_title
+        if c.site.header and c.allow_styles:
+            header_img = c.site.header
+        else:
+            d = DefaultSR()
+            header_img = d.header
+            header_title = d.header_title
+    %>
+    ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title)}
   </span>
   <h1>${nav}</h1>
   <span class="right">
     %if c.user_is_loggedin:
       <%
-         mail_img ="mail"
          if c.have_messages:
-           mail_img += ".png"
            mail_img_class = 'havemail'
+           mail_path = '/message/unread/'
          else:
-           mail_img += "gray.png"
            mail_img_class = 'nohavemail'
-         mail_img = static(mail_img)
-       %>
-      ${img_link(_("messages"), mail_img, path="/message/inbox/",
-                 _id = "mail", _class="button " + mail_img_class)}
+           mail_path = '/message/inbox/'
+      %>
+      ${plain_link('', mail_path, _sr_path=False, _class=mail_img_class, _id='mail')}
+      %if c.show_mod_mail:
+        <%
+            mail_path = '/message/moderator/'
+            if c.have_mod_messages:
+                mail_img_class = 'havemail'
+            else:
+                mail_img_class = 'nohavemail'
+        %>
+        ${plain_link('', mail_path, _sr_path=False, _class=mail_img_class, _id='modmail')}
+      %endif
     %endif
     <a class="topbar-options" href="#" id="topmenu_toggle"></a>
   </span>
