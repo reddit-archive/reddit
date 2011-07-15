@@ -97,7 +97,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 #topbar > .right { position: absolute; right: 6px; bottom: 0px; padding: 0 5px; }
 
-#topbar > .left { position: absolute; bottom: 2px; padding: 0 5px; padding-left: 0px; }
+#topbar > .left { position: absolute; bottom: 2px; padding: 0 5px; padding-left: 0px; margin-left: 5px; }
 
 #topbar > .right > .button { padding-top: 8px; padding-bottom: 3px; }
 
