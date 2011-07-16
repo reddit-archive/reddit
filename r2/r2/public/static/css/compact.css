@@ -56,7 +56,7 @@ button.button { padding: 0 5px; }
 .comment .child .options_link, .message .child .options_link { top: 8px; }
 .comment .options_expando, .message .options_expando { margin: 10px -50px 10px 0px; }
 
-.options_icons, .email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon, .collapse-icon, .context-icon, .parent-icon, .unread-icon, .hide-icon { display: block; width: 24px; height: 24px; margin-left: auto; margin-right: auto; margin-bottom: 5px; }
+.options_icons, .email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon, .collapse-icon, .context-icon, .parent-icon, .unread-icon, .hide-icon, .unhide-icon { display: block; width: 24px; height: 24px; margin-left: auto; margin-right: auto; margin-bottom: 5px; }
 
 .email-icon { background-image: url("/static/compact/email.png"); /*SPRITE*/ }
 
@@ -83,6 +83,8 @@ button.button { padding: 0 5px; }
 .unread-icon { background-image: url("/static/compact/unread.png"); /*SPRITE*/ }
 
 .hide-icon { background-image: url("/static/compact/hide.png"); /*SPRITE*/ }
+
+.unhide-icon { background-image: url("/static/compact/unhide.png"); /*SPRITE*/ }
 
 /*Toolbar*/
 #topbar { height: 45px; position: absolute; top: 0; left: 0; right: 0; background-color: #A8C4E0; background-color: #7f7f7f; background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #cee3f8), color-stop(100%, #a8c4e0)); background: -webkit-linear-gradient(top, #cee3f8, #a8c4e0); background: -moz-linear-gradient(top, #cee3f8, #a8c4e0); background: -o-linear-gradient(top, #cee3f8, #a8c4e0); background: linear-gradient(top, #cee3f8, #a8c4e0); border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; padding: 0px 10px 10px 0px; }

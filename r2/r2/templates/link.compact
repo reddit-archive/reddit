@@ -115,14 +115,24 @@ there's also a discussion going on here:
 
         ${icon_button("Share", "email-icon", "mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}")}
         ${self.save_button()}
-        ${icon_button("Hide","hide-icon", onclick="change_state(this, 'hide', hide_thing)")}
+        ${self.hide_button()}
         ${icon_button("Report","report-icon",onclick="return change_state(this, 'report', hide_thing)")}
 
       
 
   </div>
 </div>
-
+<%def name="hide_button()">
+    %if c.user_is_loggedin:
+        %if thing.hidden:
+            ${icon_button("Hide","hide-icon", onclick="change_state(this, 'hide', hide_thing)", outer_class="hide-button", style="display: none;")}
+            ${icon_button("Unhide","unhide-icon", onclick="change_state(this, 'unhide', hide_thing)", outer_class="unhide-button")}
+        %else:
+            ${icon_button("Hide","hide-icon", onclick="change_state(this, 'hide', hide_thing)", outer_class="hide-button", herp="derp")}
+            ${icon_button("Unhide","unhide-icon", onclick="change_state(this, 'unhide', hide_thing)", outer_class="unhide-button", style="display: none;")}
+        %endif
+    %endif
+</%def>
 <%def name="save_button()">
     %if c.user_is_loggedin:
         %if thing.saved:

@@ -298,6 +298,10 @@ button.button {
     @extend .options_icons;
     @include sprite($static + 'hide.png');
 }
+.unhide-icon {
+    @extend .options_icons;
+    @include sprite($static + 'unhide.png');
+}
 
 /*Toolbar*/
 #topbar {
