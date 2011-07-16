@@ -25,6 +25,7 @@
 %>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.compact" import="icon_button" />
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
 <div class="thing message id-${thing._fullname} ${'unread' if thing.new else ''}">
@@ -82,13 +83,13 @@
             is_author = (c.user_is_loggedin and thing.author and c.user.name == thing.author.name)
         %>
         %if c.user_is_loggedin:
-            <a href="javascript:void(0);" onclick="return reply(this)"><div class="reply-icon"></div>Reply</a>
+            ${icon_button("Reply", "reply-icon", outer_class="reply-button", onclick="return reply(this)")}
         %endif
-        <a href="${thing.permalink}"><div class="permalink-icon"></div>Permalink</a>
+        ${icon_button("Permalink", "permalink-icon", thing.permalink)}
         %if thing.was_comment:
-            <a href="${thing.permalink}?context=3"><div class="context-icon"></div>Context</a>
+            ${icon_button("Context", "context-icon", thing.permalink + "?context=3")}
         %endif
-        <a href="javascript:void(0)" onclick="change_state(this, 'unread_message', unread_thing, true)"><div class="unread-icon"></div>Unread</a>
+        ${icon_button("Unread", "unread-icon", onclick="change_state(this, 'unread_message', unread_thing, true)" )}
        </div>
   </div>
   <div style="clear: both;"></div>

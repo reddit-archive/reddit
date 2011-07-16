@@ -26,6 +26,7 @@
 <%namespace file="printable.compact" import="delete_report_buttons"/>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
+<%namespace file="utils.compact" import="icon_button" />
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
 <div class="thing comment id-${thing._fullname}">
@@ -70,17 +71,17 @@
                 is_author = (c.user_is_loggedin and thing.author and c.user.name == thing.author.name)
             %>
             %if c.user_is_loggedin:
-                <a href="javascript:void(0);" onclick="return reply(this)"><div class="reply-icon"></div>Reply</a>
+                ${icon_button("Reply", "reply-icon", onclick="return reply(this)", outer_class="reply-button")}
             %endif
-            <a href="javascript:void(0);" onclick="return toggle_collapse(this)" class="collapse"><div class="collapse-icon"></div>Collapse</a>
-            <a href="${thing.permalink}"><div class="permalink-icon"></div>Permalink</a>
+            ${icon_button("Collapse", "collapse-icon", onclick="return toggle_collapse(this)")}
+            ${icon_button("Permalink", "permalink-icon", thing.permalink)}
             %if c.profilepage:
-                <a href="${thing.permalink}?context=3"><div class="context-icon"></div>Context</a>
+                ${icon_button("Context", "context-icon", thing.permalink + "?context=3")}
             %elif thing.parent_permalink:
-                <a href="${thing.parent_permalink}"><div class="parent-icon"></div>Parent</a>
+                ${icon_button("Parent", "parent-icon", thing.parent_permalink )}
             %endif
             %if thing.is_author:
-                <a href="javascript:void(0);" onclick="return edit_usertext(this)"><div class="edit-icon"></div>Edit</a>
+                ${icon_button("Edit", "edit-icon", onclick="return edit_usertext(this)")}
             %endif
         </div>
   </div>
