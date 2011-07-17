@@ -1400,6 +1400,7 @@ class ApiController(RedditController):
                 thing = VByName('id'))
     def POST_approve(self, why, thing):
         if not thing: return
+        if thing._deleted: return
 
         end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)

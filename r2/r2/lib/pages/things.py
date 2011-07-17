@@ -39,7 +39,7 @@ class PrintableButtons(Styled):
                        (thing.reveal_trial_info and not thing.show_spam))
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
-                        (is_link and approval_checkmark is None))
+                        (is_link and approval_checkmark is None)) and not thing._deleted
 
         Styled.__init__(self, style = style,
                         thing = thing,
