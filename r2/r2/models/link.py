@@ -225,15 +225,16 @@ class Link(Thing, Printable):
             if wrapped.hidden:
                 return False
 
-        # hide NSFW links from non-logged users if they're not explicitly
-        # visiting an NSFW subreddit
-        if not c.user_is_loggedin and c.site != wrapped.subreddit:
+        # hide NSFW links from non-logged users and under 18 logged users 
+        # if they're not explicitly visiting an NSFW subreddit
+        if ((not c.user_is_loggedin and c.site != wrapped.subreddit)
+            or (c.user_is_loggedin and not c.over18)):
             is_nsfw = bool(wrapped.over_18)
             is_from_nsfw_sr = bool(wrapped.subreddit.over_18)
 
             if is_nsfw or is_from_nsfw_sr:
                 return False
-
+                
         return True
 
     # none of these things will change over a link's lifetime
