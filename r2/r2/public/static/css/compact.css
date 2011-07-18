@@ -15,7 +15,7 @@ textarea { font-family: inherit; }
 
 /*UI stuff*/
 .newbutton { -moz-appearance: none; -webkit-appearance: none; appearance: none; border-width: 8px; -moz-border-image: url("/static/compact/border-button.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button.png") 8 stretch; -o-border-image: url("/static/compact/border-button.png") 8 stretch; border-image: url("/static/compact/border-button.png") 8 stretch; color: white; font-family: inherit; font-size: 12px; font-weight: bold; text-decoration: none; text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.1), 0px -1px 1px rgba(0, 0, 0, 0.4); background: none; }
-.newbutton:active, .newbutton:hover, .newbutton[selected], .newbutton.expanded, .newbutton.active { -moz-border-image: url("/static/compact/border-button-active.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button-active.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button-active.png") 8 stretch; -o-border-image: url("/static/compact/border-button-active.png") 8 stretch; border-image: url("/static/compact/border-button-active.png") 8 stretch; }
+.newbutton:active, .newbutton:hover, .newbutton[selected], .newbutton.expanded, .newbutton.active { -moz-border-image: url("/static/compact/border-button-active.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button-active.png") 8 stretch; -webkit-border-image: url("/static/compact/border-button-active.png") 8 stretch; -o-border-image: url("/static/compact/border-button-active.png") 8 stretch; border-image: url("/static/compact/border-button-active.png") 8 stretch; color: white; }
 
 .button, .button:visited { -moz-border-radius: 6px; -webkit-border-radius: 6px; -o-border-radius: 6px; -ms-border-radius: 6px; -khtml-border-radius: 6px; border-radius: 6px; background-color: #7f7f7f; background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #bfd0e0), color-stop(100%, #80a2c4)); background: -webkit-linear-gradient(top, #bfd0e0, #80a2c4); background: -moz-linear-gradient(top, #bfd0e0, #80a2c4); background: -o-linear-gradient(top, #bfd0e0, #80a2c4); background: linear-gradient(top, #bfd0e0, #80a2c4); height: 30px; line-height: 30px; color: white; font-family: inherit; font-size: 12px; font-weight: bold; margin: 0px; padding: 5px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; width: auto; text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.1), 0px -1px 1px rgba(0, 0, 0, 0.4); background-color: #80A2C4; border: 1px solid #517191; -moz-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.75), 0px 1px 1px rgba(255, 255, 255, 0.6), 0px -1px 1px rgba(0, 0, 0, 0.1); -webkit-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.75), 0px 1px 1px rgba(255, 255, 255, 0.6), 0px -1px 1px rgba(0, 0, 0, 0.1); -o-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.75), 0px 1px 1px rgba(255, 255, 255, 0.6), 0px -1px 1px rgba(0, 0, 0, 0.1); box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.75), 0px 1px 1px rgba(255, 255, 255, 0.6), 0px -1px 1px rgba(0, 0, 0, 0.1); }
 
@@ -55,6 +55,8 @@ button.button { padding: 0 5px; }
 .comment .entry, .message .entry { margin-right: 50px; }
 .comment .child .options_link, .message .child .options_link { top: 8px; }
 .comment .options_expando, .message .options_expando { margin: 10px -50px 10px 0px; }
+
+.message .options_expando { margin: 10px -55px 10px -5px; }
 
 .options_icons, .email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon, .collapse-icon, .context-icon, .parent-icon, .unread-icon, .hide-icon, .unhide-icon { display: block; width: 24px; height: 24px; margin-left: auto; margin-right: auto; margin-bottom: 5px; }
 
@@ -286,7 +288,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 .comment.collapsed .tagline { margin-left: 20px; font-style: italcs; color: #AAA; }
 
 /** messages and inbox */
-.message { background: white; position: relative; border: 1px solid #d9d9d9; margin: 10px; -moz-border-radius: 8px; -webkit-border-radius: 8px; -o-border-radius: 8px; -ms-border-radius: 8px; -khtml-border-radius: 8px; border-radius: 8px; }
+.message { background: white; position: relative; border: 1px solid #d9d9d9; margin: 10px; -moz-border-radius: 8px; -webkit-border-radius: 8px; -o-border-radius: 8px; -ms-border-radius: 8px; -khtml-border-radius: 8px; border-radius: 8px; padding: 5px; }
 
 .message > .midcol { float: left; margin: 10px; overflow: hidden; }
 

@@ -88,7 +88,7 @@
         ${error_field("USER_BLOCKED", "parent", "span")}
       </div>
       <div class="markhelp-parent">
-      <table class="markhelp md">
+      <table class="markhelp">
         <tr style="background-color: #ffff99; text-align: center">
           <td><em>${_( "you type:")}</em></td>
           <td><em>${_( "you see:")}</em></td>

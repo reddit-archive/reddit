@@ -60,6 +60,7 @@ textarea {
 
     &:active, &:hover, &[selected], &.expanded, &.active {
         @include border-image(url($static + 'border-button-active.png') 8 stretch);
+        color: white;
     }
 }
 .button, .button:visited {
@@ -233,6 +234,12 @@ button.button {
     }
     .options_expando {
         margin: 10px -50px 10px 0px; //Overwrite the link styles
+    }
+}
+.message {
+
+    .options_expando {
+        margin: 10px -55px 10px -5px;
     }
 }
 
@@ -869,7 +876,8 @@ padding: 5px;
     position: relative; 
     border: 1px solid rgb(217,217,217);
     margin: 10px;
-    @include border-radius(8px)
+    @include border-radius(8px);
+    padding: 5px;
 }
 .message > .midcol {
     float: left;
