@@ -973,6 +973,29 @@ class AllSR(FakeSubreddit):
         return None
 
 
+class AllMinus(AllSR):
+    name = 'minus'
+
+    def __init__(self, srs):
+        AllSR.__init__(self)
+        self.srs = srs
+        self.sr_ids = [sr._id for sr in srs]
+
+    @property
+    def title(self):
+        return 'all minus ' + ' '.join(sr.name for sr in self.srs)
+
+    @property
+    def path(self):
+        return '/r/all-' + '-'.join(sr.name for sr in self.srs)
+
+    def get_links(self, sort, time):
+        from r2.models import Link
+        from r2.lib.db.operators import not_
+        q = AllSR.get_links(self, sort, time)
+        q._filter(not_(Link.c.sr_id.in_(self.sr_ids)))
+        return q
+
 class _DefaultSR(FakeSubreddit):
     #notice the space before reddit.com
     name = ' reddit.com'

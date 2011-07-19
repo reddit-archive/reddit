@@ -78,6 +78,7 @@ from r2.lib.validator import (
 )
 from r2.models import (
     All,
+    AllMinus,
     check_request,
     DefaultSR,
     DomainSR,
@@ -338,6 +339,16 @@ def set_subreddit():
             else:
                 sr_ids = [sr._id for sr in srs]
                 c.site = MultiReddit(sr_ids, sr_name)
+    elif '-' in sr_name:
+        sr_names = sr_name.split('-')
+        if not sr_names[0].lower() == All.name.lower():
+            abort(404)
+        srs = Subreddit._by_name(sr_names[1:], stale=can_stale).values()
+        srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
+        if not srs:
+            c.site = All
+        else:
+            c.site = AllMinus(srs)
     else:
         try:
             c.site = Subreddit._by_name(sr_name, stale=can_stale)
