@@ -51,3 +51,4 @@ api('reddittraffic', TrafficJsonTemplate)
 api('takedownpane', TakedownJsonTemplate)
 
 api('flairlist', FlairListJsonTemplate)
+api('flaircsv', FlairCsvJsonTemplate)

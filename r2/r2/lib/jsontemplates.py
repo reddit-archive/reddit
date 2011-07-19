@@ -475,3 +475,7 @@ class FlairListJsonTemplate(JsonTemplate):
                 else:
                     result['next'] = row['after']
         return ObjectTemplate(result)
+
+class FlairCsvJsonTemplate(JsonTemplate):
+    def render(self, thing, *a, **kw):
+        return ObjectTemplate([l.__dict__ for l in thing.results_by_line])

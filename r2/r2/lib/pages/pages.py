@@ -2450,6 +2450,27 @@ class FlairNextLink(Templated):
         Templated.__init__(self, after=after, reverse=reverse,
                            needs_border=needs_border)
 
+class FlairCsv(Templated):
+    class LineResult:
+        def __init__(self):
+            self.errors = {}
+            self.warnings = {}
+            self.status = 'skipped'
+            self.ok = False
+
+        def error(self, field, desc):
+            self.errors[field] = desc
+
+        def warn(self, field, desc):
+            self.warnings[field] = desc
+
+    def __init__(self):
+        Templated.__init__(self, results_by_line=[])
+
+    def add_line(self):
+        self.results_by_line.append(self.LineResult())
+        return self.results_by_line[-1]
+
 class FriendList(UserList):
     """Friend list on /pref/friends"""
     type = 'friend'
