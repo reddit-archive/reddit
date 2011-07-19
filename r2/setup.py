@@ -146,7 +146,7 @@ setup(
                       "py_interface",
                       "pycountry",
                       "thrift05",
-                      "pycassa==1.0.8",
+                      "pycassa==1.1.0",
                       ],
     packages=find_packages(),
     include_package_data=True,
