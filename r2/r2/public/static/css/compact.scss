@@ -318,29 +318,42 @@ button.button {
     @include vertical_gradient(#CEE3F8, #A8C4E0);
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
     @include box-sizing(border-box);
-    padding: 0px 10px 10px 0px;
-}
-#header-img {
-    width: 90px;
+    padding: 0px 10px; //Left and right padding
+
+    @include display-box();
+    @include box-orient(horizontal); //Horizontal spread
+    @include box-pack(justify); //Divide the space up as best we can
+    @include box-align(center); //Put everything in the middle of the box
+
     
-}
-#topbar > h1 {
-    color: #444;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 100px;
-    margin: {
-        left: auto;
-        right: auto;
-        top: 26px;
+    #header-img {
+        width: 90px;
+
     }
-    padding: 0;
-    text-shadow: hsla(0, 100%, 100%, 0.5) 0px 1px 0px, hsla(0, 0%, 0%, 0.1) 0px -1px 0px;
+
+    .left {
+
+    }
+
+    & > h1 {
+        color: #444;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        margin: 0 10px;
+        padding: 0;
+		padding-top: 16px;
+        text-shadow: hsla(0, 100%, 100%, 0.5) 0px 1px 0px, hsla(0, 0%, 0%, 0.1) 0px -1px 0px;
+        @include box-flex(1); //This box will flex to fill avalible space
+    }
+    .right {
+
+    }
 }
+
 #topbar > h1 a {
     color: inherit;
     text-decoration: inherit;
@@ -349,19 +362,7 @@ body[orient="landscape"] > #topbar > h1 {
     margin-left: -125px;
     width: 250px;
 }
-#topbar > .right  {
-    position: absolute;
-    right: 6px;
-    bottom: 0px;
-    padding: 0 5px;
-}
-#topbar > .left {
-    position: absolute;
-    bottom: 2px;
-    padding: 0 5px;
-    padding-left: 0px;
-    margin-left: 5px;
-}
+
 #topbar > .right > .button {
     padding-top: 8px; padding-bottom: 3px;
 }

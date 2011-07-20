@@ -38,7 +38,7 @@
     <div class="commentcount"><div class="comments"></div><div class="comments preloaded"></div></div>
 </div>
 <div id="topbar">
-  <span class="left">
+  <div class="left">
    <%
         header_title = c.site.header_title
         if c.site.header and c.allow_styles:
@@ -49,9 +49,9 @@
             header_title = d.header_title
     %>
     ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title)}
-  </span>
+  </div>
   <h1>${nav}</h1>
-  <span class="right">
+  <div class="right">
     %if c.user_is_loggedin:
       <%
          if c.have_messages:
@@ -74,7 +74,7 @@
       %endif
     %endif
     <a class="topbar-options" href="#" id="topmenu_toggle"></a>
-  </span>
+  </div>
   <div id="top_menu">
     %if c.user_is_loggedin:
     <div class="menuitem">
