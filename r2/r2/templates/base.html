@@ -25,7 +25,7 @@
    from r2.models import Link, Comment, Subreddit
    from r2.lib.tracking import UserInfo
 %>
-<%namespace file="utils.html" import="js_preamble"/>
+<%namespace file="utils.html" import="js_preamble, googleanalytics"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
@@ -102,25 +102,7 @@ reddit, reddit.com, vote, comment, submit
 </script>
 %endif
 
-%if g.googleanalytics and thing.site_tracking:
-<script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', '${g.googleanalytics}']);
-  _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
-  _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
-  _gaq.push(['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2]);
-  _gaq.push(['_trackPageview']);
-  _gaq.push(['_trackPageLoadTime']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-%endif
+${googleanalytics('web')}
 </%def>
 
 

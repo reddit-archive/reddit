@@ -24,6 +24,7 @@
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr
    from r2.lib.utils import cols, long_datetime, timesince
+   from r2.lib.tracking import UserInfo
 %>
 <%def name="tags(**kw)">
 %for k, v in kw.iteritems():
@@ -393,6 +394,29 @@ ${unsafe(txt)}
       tofetch: [],
       trackers: {}
    };
+</%def>
+
+<%def name="googleanalytics(uitype)">
+  %if g.googleanalytics and thing.site_tracking:
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', '${g.googleanalytics}']);
+    _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
+    _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
+    _gaq.push(['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2]);
+    _gaq.push(['_setCustomVar', 4, 'uitype', '${uitype}', 3]);
+    _gaq.push(['_trackPageview']);
+    _gaq.push(['_trackPageLoadTime']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+  %endif
 </%def>
 
 <%def name="logout(top=False,dest=None,a_class='')">

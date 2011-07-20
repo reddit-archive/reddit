@@ -23,7 +23,7 @@
    from r2.lib.template_helpers import static
    from r2.lib import js
  %>
-<%namespace file="utils.html" import="js_preamble"/>
+<%namespace file="utils.html" import="js_preamble, googleanalytics"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}">
   <head>
@@ -46,6 +46,7 @@
     <script type="text/javascript">
       ${js_preamble()}
     </script> 
+    ${googleanalytics('mobile')}
   </head>
   ${self.bodyHTML()}
 </html>
