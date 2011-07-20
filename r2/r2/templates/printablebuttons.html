@@ -42,8 +42,7 @@
     %if not getattr(thing.thing, "use_big_modbuttons", False):
       %if not thing.show_spam:
         <li>
-           ${self.state_button("remove", _("remove"),
-              "return change_state(this, 'remove');", _("removed"))}
+           ${ynbutton(_("remove"), _("removed"), "remove")}
         </li>
       %endif
 
