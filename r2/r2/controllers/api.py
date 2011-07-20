@@ -1941,8 +1941,13 @@ class ApiController(RedditController):
             form.set_html(".status:first", _('invalid css class'))
             return
 
-        # Make sure the flair relation is up-to-date, for listings.
-        if not c.site.is_flair(user):
+        if not text and not css_class:
+            # empty text and css is equivalent to unflairing
+            text = css_class = None
+            c.site.remove_flair(user)
+            jquery('#flairrow_%s' % user._id36).hide()
+            new = False
+        elif not c.site.is_flair(user):
             c.site.add_flair(user)
             new = True
         else:
@@ -2031,17 +2036,6 @@ class ApiController(RedditController):
         setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
         c.user._commit()
         jquery.refresh()
-
-    @noresponse(VFlairManager(),
-                VModhash(),
-                nuser = VExistingUname("name"),
-                iuser = VByName("id"))
-    def POST_unflair(self, nuser, iuser):
-        user = iuser or nuser
-        c.site.remove_flair(user)
-        setattr(user, 'flair_%s_text' % c.site._id, None)
-        setattr(user, 'flair_%s_css_class' % c.site._id, None)
-        user._commit()
 
     @validatedForm(VFlairManager(),
                    VModhash(),
