@@ -19,7 +19,9 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%!
+	import string
+%>
 
 <%def name="icon_button(text, css_class, href='javascript:void(0)', outer_class='', **kw)">
     <a href="${href}"
@@ -32,4 +34,25 @@
     >
     <div class="${css_class}"></div>${text}
     </a>
+</%def>
+<%def name="toggle_button(togglename, toggled=False)">
+    <%
+    if toggled:
+        togglestyle = {"style": "display: none;"}
+        untogglestyle = {}
+    else:
+        togglestyle = {}
+        untogglestyle = {"style": "display: none;"}
+    endif
+    
+    if togglename == "hide":
+        untext = ""
+    else:
+        untext = "un"
+    endif
+    %>
+    ##Hide/Save
+    ${icon_button( string.capitalize(togglename), togglename + "-icon", onclick="change_state(this,'" + togglename + "', " + togglename + "_thing)", outer_class=togglename + "-button", **togglestyle)}
+    ##Unhide/Unsave
+    ${icon_button( "Un" + togglename, "un" + togglename + "-icon", onclick="change_state(this,'un" + togglename + "', " + untext + togglename + "_thing)", outer_class= "un" + togglename + "-button", **untogglestyle)}
 </%def>

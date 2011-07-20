@@ -28,7 +28,7 @@
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="link.html" import="tagline"/>
 <%namespace file="utils.html" import="plain_link" />
-<%namespace file="utils.compact" import="icon_button" />
+<%namespace file="utils.compact" import="icon_button, toggle_button" />
 <%namespace file="printablebuttons.html" import="state_button" />
 
 <div class="thing link id-${thing._fullname}">
@@ -124,23 +124,11 @@ there's also a discussion going on here:
 </div>
 <%def name="hide_button()">
     %if c.user_is_loggedin:
-        %if thing.hidden:
-            ${icon_button("Hide","hide-icon", onclick="change_state(this, 'hide', hide_thing)", outer_class="hide-button", style="display: none;")}
-            ${icon_button("Unhide","unhide-icon", onclick="change_state(this, 'unhide', hide_thing)", outer_class="unhide-button")}
-        %else:
-            ${icon_button("Hide","hide-icon", onclick="change_state(this, 'hide', hide_thing)", outer_class="hide-button", herp="derp")}
-            ${icon_button("Unhide","unhide-icon", onclick="change_state(this, 'unhide', hide_thing)", outer_class="unhide-button", style="display: none;")}
-        %endif
+            ${toggle_button("hide", thing.hidden)}
     %endif
 </%def>
 <%def name="save_button()">
     %if c.user_is_loggedin:
-        %if thing.saved:
-            ${icon_button("Unsave", "unsave-icon", onclick="change_state(this, 'unsave', unsave_thing, true)", outer_class="unsave-button")}
-            ${icon_button("Save", "save-icon", onclick="change_state(this, 'save', save_thing, true)", outer_class="save-button", style="display: none;")}
-        %else:
-            ${icon_button("Unsave", "unsave-icon", onclick="change_state(this, 'unsave', unsave_thing, true)", outer_class="unsave-button", style="display: none;")}
-            ${icon_button("Save", "save-icon", onclick="change_state(this, 'save', save_thing, true)", outer_class="save-button")}
-        %endif
+        ${toggle_button("save", thing.saved)}
     %endif
 </%def>
