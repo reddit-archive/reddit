@@ -28,8 +28,10 @@ localized_js_outputs = $(localized_js_targets:.js=.*.js)
 
 # CSS targets 
 main_css = reddit.css
+main_sprite = $(static_dir)/sprite-main.png
 compact_css = compact.css
-css_targets = reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
+compact_sprite = $(static_dir)/sprite-compact.png
+css_targets = $(main_css) $(compact_css) reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
 
 package    = r2
 static_dir = $(package)/public/static
@@ -51,16 +53,14 @@ JSTARGETS   = $(foreach js,  $(js_targets) $(localized_js_targets),  $(static_di
 JSOUTPUTS   = $(foreach js,  $(js_targets) $(localized_js_outputs),  $(static_dir)/$(js))
 JSSOURCES   = $(foreach js,  $(js_sources),  $(static_dir)/js/$(js))
 CSSTARGETS  = $(foreach css, $(css_targets), $(static_dir)/$(css))
-SPRITES     = $(static_dir)/sprite-main.png $(static_dir)/sprite-compact.png
-MAINCSS     = $(foreach css, $(main_css), $(static_dir)/$(css))
-COMPACTCSS  = $(foreach css, $(compact_css), $(static_dir)/$(css))
-RTLCSS      = $(CSSTARGETS:.css=-rtl.css) $(MAINCSS:.css=-rtl.css)
+SPRITES     = $(main_sprite) $(compact_sprite)
+RTLCSS      = $(CSSTARGETS:.css=-rtl.css)
 NAMES = $(static_dir)/names.json
 
 PYX_FILES := $(shell find . -name \*.pyx)
 PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
-NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(RTLCSS)
+NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 NAMELINKS = $(patsubst %.css,%.*.css,$(patsubst %.js,%.*.js,$(NAMED)))
 
 INIUPDATE = $(wildcard *.update)
@@ -80,20 +80,20 @@ all:	pyx static names $(INIS)
 
 .PHONY: 	pyx js css rtl static names clean clean_static all
 
-$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(MAINCSS) $(COMPACTCSS)
+$(NAMES): $(JSTARGETS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
 
 $(JSTARGETS): $(JSSOURCES)
 	$(JS_COMPRESS)
 
-$(CSSTARGETS): 	$(static_dir)/%.css : $(static_dir)/css/%.css
-	$(CAT) $< | $(CSS_COMPRESS) > $@
-
-$(MAINCSS): $(static_dir)/%.css : $(static_dir)/css/%.css
+$(main_sprite) $(static_dir)/$(main_css): $(static_dir)/css/$(main_css)
 	$(PYTHON) r2/lib/contrib/nymph.py sprite-main.png $< | $(CSS_COMPRESS) > $@
 
-$(COMPACTCSS): $(static_dir)/%.css : $(static_dir)/css/%.css
+$(compact_sprite) $(static_dir)/$(compact_css) : $(static_dir)/css/$(compact_css)
 	$(PYTHON) r2/lib/contrib/nymph.py sprite-compact.png $< | $(CSS_COMPRESS) > $@
+
+$(static_dir)/%.css : $(static_dir)/css/%.css
+	$(CAT) $< | $(CSS_COMPRESS) > $@
 
 $(RTLCSS):	%-rtl.css : %.css
 	$(SED) -e "s/left/>####</g" \
@@ -114,7 +114,7 @@ static: 	js css rtl
 
 js: 		pyx $(JSTARGETS)
 
-css: 		$(CSSTARGETS) $(MAINCSS) $(COMPACTCSS)
+css: 		$(CSSTARGETS) $(SPRITES)
 
 rtl:		$(RTLCSS)
 
@@ -124,7 +124,7 @@ clean: clean_static
 	rm -f $(PYXSO_FILES) $(INIS)
 
 clean_static: clean_names
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(MAINCSS) $(SPRITES) $(COMPACTCSS)
+	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 
 clean_names:
 	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
