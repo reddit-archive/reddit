@@ -87,7 +87,7 @@
         %endif
         ${icon_button("Permalink", "permalink-icon", thing.permalink)}
         %if thing.was_comment:
-            ${icon_button("Context", "context-icon", thing.permalink + "?context=3")}
+            ${icon_button("Context", "context-icon", thing.permalink + ".compact?context=3")}
         %endif
         ${icon_button("Unread", "unread-icon", onclick="change_state(this, 'unread_message', unread_thing, true)" )}
        </div>
