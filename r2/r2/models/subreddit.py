@@ -35,6 +35,9 @@ from r2.lib.utils import timeago
 from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
+from r2.lib.db import tdb_cassandra
+from r2.lib.cache import CL_ONE
+
 
 import os.path
 import random
@@ -944,3 +947,10 @@ Subreddit.__bases__ += (UserRel('moderator', SRMember),
                         UserRel('contributor', SRMember),
                         UserRel('subscriber', SRMember, disable_ids_fn = True),
                         UserRel('banned', SRMember))
+
+
+class SubredditPopularityByLanguage(tdb_cassandra.View):
+    _use_db = True
+    _value_type = 'pickle'
+    _use_new_ring = True
+    _read_consistency_level = CL_ONE

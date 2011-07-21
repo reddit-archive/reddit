@@ -19,18 +19,10 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.models import Subreddit
+from r2.models import Subreddit, SubredditPopularityByLanguage
 from r2.lib.db.operators import desc
 from r2.lib import count
 from r2.lib.utils import fetch_things2, flatten
-from r2.lib.db import tdb_cassandra
-from r2.lib.cache import CL_ONE
-
-class SubredditPopularityByLanguage(tdb_cassandra.View):
-    _use_db = True
-    _value_type = 'pickle'
-    _use_new_ring = True
-    _read_consistency_level = CL_ONE
 
 # the length of the stored per-language list
 limit = 1000
