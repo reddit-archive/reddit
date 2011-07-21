@@ -21,7 +21,7 @@ $static: "/static/compact/";
 body {
     background: rgb(197,204,211);
     font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
-    margin: 45px 0 0;
+    margin: 0;
     width: 100%; height: 100%;
     -webkit-font-smoothing: antialiased;
 }
@@ -312,8 +312,6 @@ button.button {
 
 /*Toolbar*/
 #topbar {
-    height: 45px;
-    position: absolute; top: 0; left: 0; right: 0;
     background-color: #A8C4E0;
     @include vertical_gradient(#CEE3F8, #A8C4E0);
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
