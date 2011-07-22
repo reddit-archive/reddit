@@ -110,18 +110,34 @@ def verify_ipn(parameters):
         raise ValueError("Invalid IPN response: %r" % status)
 
 
-def existing_subscription(subscr_id):
+def existing_subscription(subscr_id, paying_id):
     account_id = accountid_from_paypalsubscription(subscr_id)
 
+    should_set_subscriber = False
     if account_id is None:
-        return None
+        account_id = account_by_payingid(paying_id)
+        should_set_subscriber = True
+        if account_id is None:
+            return None
 
     try:
-        account = Account._byID(account_id)
+        account = Account._byID(account_id, data=True)
+
+        if account._deleted:
+            g.log.info("Just got IPN renewal for deleted account #%d"
+                       % account_id)
+            return "deleted account"
+
+        if should_set_subscriber:
+            if hasattr(account, "gold_subscr_id"):
+                g.log.warning("Attempted to set subscr_id (%s) for account (%d) " +
+                              "that already has one." % (subscr_id, account_id))
+                return None
+
+            account.gold_subscr_id = subscr_id
+            account._commit()
     except NotFound:
-        g.log.info("Just got IPN renewal for deleted account #%d"
-                   % account_id)
-        return "deleted account"
+        g.log.info("Just got IPN renewal for non-existent account #%d" % account_id)
 
     return account
 
@@ -377,7 +393,7 @@ class IpnController(RedditController):
         months, days = months_and_days_from_pennies(pennies)
 
         # Special case: autorenewal payment
-        existing = existing_subscription(subscr_id)
+        existing = existing_subscription(subscr_id, paying_id)
         if existing:
             if existing != "deleted account":
                 create_claimed_gold ("P" + txn_id, payer_email, paying_id,

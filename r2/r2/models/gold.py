@@ -151,6 +151,16 @@ def create_gift_gold (giver_id, recipient_id, days, date, signed):
                                 account_id=recipient_id,
                                 date=date)
 
+def account_by_payingid(paying_id):
+    s = sa.select([sa.distinct(gold_table.c.account_id)],
+                  gold_table.c.paying_id == paying_id)
+    res = s.execute().fetchall()
+
+    if len(res) != 1:
+        return None
+
+    return int(res[0][0])
+
 # returns None if the ID was never valid
 # returns "already claimed" if it's already been claimed
 # Otherwise, it's valid and the function claims it, returning a tuple with:
