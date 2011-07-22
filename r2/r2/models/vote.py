@@ -122,7 +122,7 @@ class CassandraLinkVote(CassandraVote):
 
         v_id = {self._id: self._id}
 
-        VotesByLink._set_values(self.thing1_id, v_id,
+        VotesByLink._set_values(self.thing2_id, v_id,
                                 write_consistency_level=wcl)
         VotesByDay._set_values(VotesByDay._id_for_day(self.date), v_id,
                                write_consistency_level=wcl)
