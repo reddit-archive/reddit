@@ -91,6 +91,7 @@ class Globals(object):
                   'read_only_mode',
                   'frontpage_dart',
                   'allow_wiki_editing',
+                  'heavy_load_mode',
                   'disable_captcha',
                   'disable_ads',
                   ]
@@ -187,6 +188,10 @@ class Globals(object):
         self.display_tz = pytz.timezone(dtz)
 
     def setup(self, global_conf):
+        # heavy load mode is read only mode with a different infobar
+        if self.heavy_load_mode:
+            self.read_only_mode = True
+
         if hasattr(signal, 'SIGUSR1'):
             # not all platforms have user signals
             signal.signal(signal.SIGUSR1, thread_dump)
