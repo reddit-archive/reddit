@@ -309,21 +309,6 @@ class DomainMiddleware(object):
             # subdomains to disregard completely
             if sd in ('www', 'origin', 'beta', 'pay', 'buttons'):
                 continue
-            elif sd == 'blog':
-                r = Response()
-                try:
-                    conn = HTTPConnection(config['global_conf']['blog_host'])
-                    conn.request("GET", environ['PATH_INFO'], None,
-                                 {"Host": "blog.reddit.com"})
-                    res = conn.getresponse()
-                    r.status_code = res.status
-                    r.content = res.read()
-                    conn.close()
-                except:
-                    r.status_code = 500
-                    environ['HTTP_HOST'] = base_domain
-                    r.content = "failed to load blog"
-                return r(environ, start_response)
             # subdomains which change the extension
             elif sd == 'm':
                 environ['reddit-domain-extension'] = 'mobile'
