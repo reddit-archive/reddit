@@ -34,7 +34,7 @@ NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 class S3Exception(Exception): pass
 
-def send_file(bucketname, filename, content, content_type = 'text/plain', never_expire = False, reduced_redundancy=False):
+def send_file(bucketname, filename, content, content_type = 'text/plain', never_expire = False, reduced_redundancy=True):
     # this function is pretty low-traffic, but if we start using it a
     # lot more we'll want to maintain a connection pool across the app
     # rather than connecting on every invocation
@@ -50,5 +50,5 @@ def send_file(bucketname, filename, content, content_type = 'text/plain', never_
         headers['Expires'] = NEVER
 
     k.set_contents_from_string(content, policy='public-read',
-                               headers=headers)
-                               # reduced_redundancy=reduced_redundancy)
+                               headers=headers,
+                               reduced_redundancy=reduced_redundancy)

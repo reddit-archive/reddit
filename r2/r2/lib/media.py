@@ -35,32 +35,43 @@ import os
 import tempfile
 import traceback
 
+import mimetypes
+
 s3_thumbnail_bucket = g.s3_thumb_bucket
 threads = 20
 log = g.log
 
+link_jpg_started = 113
+
+
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
-    res =  'http://%s/%s.png' % (s3_thumbnail_bucket, link._fullname)
-    if hasattr(link, "thumbnail_version"):
-        res += "?v=%s" % link.thumbnail_version
+    if (link._id >= link_jpg_started or hasattr(link, "thumbnail_version") or not g.old_s3_thumb_bucket):
+        res =  'http://%s.s3.amazonaws.com/%s.jpg' % (s3_thumbnail_bucket,link._fullname[::-1])
+        if hasattr(link, "thumbnail_version"):
+            res += "?v=%s" % link.thumbnail_version
+    else:
+         res =  'http://%s.s3.amazonaws.com/%s.png' % (g.old_s3_thumb_bucket,link._fullname)
+
     return res
 
-def upload_thumb(link, image, never_expire = True, reduced_redundancy=True):
+def upload_thumb(link, image, never_expire = True, reduced_redundancy=True, fileType = ".jpg"):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
-    f = tempfile.NamedTemporaryFile(suffix = '.png', delete=False)
+    mimeType = mimetypes.guess_type("file"+fileType)[0] # Requires a filename with the extension
+    f = tempfile.NamedTemporaryFile(suffix = fileType, delete=False)
     try:
         image.save(f)
         f.close()
-        g.log.debug("optimizing %s in %s" % (link._fullname,f.name))
-        optimize_png(f.name, g.png_optimizer)
+        if(fileType == ".png"):
+            g.log.debug("optimizing %s in %s" % (link._fullname,f.name))
+            optimize_png(f.name, g.png_optimizer)
         contents = open(f.name).read()
 
-        s3fname = link._fullname + '.png'
+        s3fname = link._fullname[::-1] + fileType
 
-        log.debug('uploading to s3: %s' % link._fullname)
-        s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, 'image/png',
+        log.debug('uploading to s3: %s' % link._fullname[::-1])
+        s3cp.send_file(g.s3_thumb_bucket, s3fname, contents, mimeType,
                        never_expire=never_expire,
                        reduced_redundancy=reduced_redundancy)
         log.debug('thumbnail %s: %s' % (link._fullname, thumbnail_url(link)))
@@ -108,10 +119,10 @@ def set_media(link, force = False):
 
     update_link(link, thumbnail, media_object)
 
-def force_thumbnail(link, image_data, never_expire = True):
+def force_thumbnail(link, image_data, never_expire = True, fileType=".jpg"):
     image = str_to_image(image_data)
     image = prepare_image(image)
-    upload_thumb(link, image, never_expire = never_expire)
+    upload_thumb(link, image, never_expire = never_expire, fileType = fileType)
     update_link(link, thumbnail = True, media_object = None)
 
 def run():

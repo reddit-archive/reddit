@@ -209,7 +209,7 @@ def valid_url(prop,value,report):
         if c.site.images.has_key(name):
             num = c.site.images[name]
             value._setCssText("url(http://%s/%s_%d.png?v=%s)"
-                              % (g.s3_thumb_bucket, c.site._fullname, num,
+                              % (g.s3_thumb_bucket, c.site._fullname[::-1], num,
                                  randstr(36)))
         else:
             # unknown image label -> error
@@ -434,7 +434,7 @@ def save_sr_image(sr, data, resource = None):
             resource = "_%s" % resource
         else:
             resource = ""
-        fname = resource = sr._fullname + resource + ".png"
+        fname = resource = sr._fullname[::-1] + resource + ".png"
 
         s3cp.send_file(g.s3_thumb_bucket, fname, contents, 'image/png')
 
