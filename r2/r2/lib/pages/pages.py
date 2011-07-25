@@ -1047,7 +1047,10 @@ class SubredditsPage(Reddit):
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
-        ps.append(SideContentBox(_("your front page reddits"), [SubscriptionBox()]))
+        subscribe_box = SubscriptionBox()
+        num_reddits = len(subscribe_box.srs)
+        ps.append(SideContentBox(_("your front page reddits (%s)") %
+                                 num_reddits, [subscribe_box]))
         return ps
 
 class MySubredditsPage(SubredditsPage):
@@ -1334,10 +1337,31 @@ class SubscriptionBox(Templated):
     the right pane."""
     def __init__(self, srs=None):
         if srs is None:
-            srs = Subreddit.user_subreddits(c.user, ids = False)
+            srs = Subreddit.user_subreddits(c.user, ids = False, limit=None)
         srs.sort(key = lambda sr: sr.name.lower())
         self.srs = srs
-        Templated.__init__(self, srs=srs)
+        self.goldlink = None
+        self.goldmsg = None
+        self.prelink = None
+        
+        if len(srs) > Subreddit.sr_limit and c.user_is_loggedin:
+            if not c.user.gold:
+                self.goldlink = "/gold"
+                self.goldmsg = _("raise it to %s") % Subreddit.gold_limit
+                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
+                                _("%s visible") % Subreddit.sr_limit]
+            else:
+                self.goldlink = "/help/gold#WhatdoIgetforjoining"
+                extra = min(len(srs) - Subreddit.sr_limit,
+                            Subreddit.gold_limit - Subreddit.sr_limit)
+                visible = min(len(srs), Subreddit.gold_limit)
+                bonus = {"bonus": extra}
+                self.goldmsg = _("%(bonus)s bonus reddits") % bonus
+                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
+                                _("%s visible") % visible]
+        
+        Templated.__init__(self, srs=srs, goldlink=self.goldlink,
+                           goldmsg=self.goldmsg)
 
     @property
     def reddits(self):

@@ -77,6 +77,8 @@ class Subreddit(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
 
     sr_limit = 50
+    gold_limit = 100
+    DEFAULT_LIMIT = object()
 
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
@@ -430,21 +432,32 @@ class Subreddit(Thing, Printable):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
-    def user_subreddits(cls, user, ids = True, over18=False, limit = sr_limit, stale=False):
+    def user_subreddits(cls, user, ids=True, over18=False, limit=DEFAULT_LIMIT,
+                        stale=False):
         """
         subreddits that appear in a user's listings. If the user has
         subscribed, returns the stored set of subscriptions.
+        
+        limit - if it's Subreddit.DEFAULT_LIMIT, limits to 50 subs
+                (100 for gold users)
+                if it's None, no limit is used
+                if it's an integer, then that many subs will be returned
 
         Otherwise, return the default set.
         """
+        # Limit the number of subs returned based on user status,
+        # if no explicit limit was passed
+        if limit is Subreddit.DEFAULT_LIMIT:
+            if user and user.gold:
+                # Goldies get extra subreddits
+                limit = Subreddit.gold_limit
+            else:
+                limit = Subreddit.sr_limit
+        
         # note: for user not logged in, the fake user account has
         # has_subscribed == False by default.
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
-
-            # Allow the goldies to see more subreddits
-            if user.gold:
-                limit = 100
 
             if limit and len(sr_ids) > limit:
                 sr_ids.sort()

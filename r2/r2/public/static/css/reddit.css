@@ -2836,6 +2836,22 @@ ul#image-preview-list .description pre {
     margin-right: 5px;
 }
 
+.subscription-box .column {
+    width: 50%;
+    float: left;
+}
+
+.subscription-box .box-top {
+    position: relative;
+    height: 20px;
+}
+
+.subscription-box .box-separator {
+    border-style: none none dotted none;
+    border-width: 1px;
+    margin-bottom: 5px;
+}
+
 .subscription-box h1{ text-align: center; }
  
 .toggle.deltranslator-button { display: inline; }

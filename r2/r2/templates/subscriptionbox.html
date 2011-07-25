@@ -23,13 +23,34 @@
 <%namespace file="subreddit.html" import="addremove_button, permission_icons"/>
 
 <div class="subscription-box">
-  <ul>
-  %for sr in thing.reddits:
-    <li>
-      ${addremove_button(sr)}
-      ${plain_link(sr.name, sr.path, _class="title")}
-      ${permission_icons(sr)}
-    </li>
-  %endfor
-  </ul>
+  % if thing.prelink or thing.goldlink:
+  <div class="box-top">
+    % if thing.prelink:
+    <span class="column centered">
+      <a href="${thing.prelink[0]}">${thing.prelink[1]}</a>
+    </span>
+    % endif
+    % if thing.goldlink:
+    <span class="giftgold column">
+    <a href="${thing.goldlink}">
+      ${thing.goldmsg}
+    </a>
+    </span>
+    % endif
+  </div>
+  % endif
+  <div class="clear">
+  % if thing.prelink or thing.goldlink:
+    <div class="box-separator"></div>
+  % endif
+    <ul>
+    %for sr in thing.reddits:
+      <li>
+        ${addremove_button(sr)}
+        ${plain_link(sr.name, sr.path, _class="title")}
+        ${permission_icons(sr)}
+      </li>
+    %endfor
+    </ul>
+  </div>
 </div>
