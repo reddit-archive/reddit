@@ -19,11 +19,11 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
+<?xml version="1.0" encoding="UTF-8"?>
 <%!
    from r2.models.subreddit import DefaultSR
    from r2.lib.template_helpers import get_domain, add_sr
 %>
-<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
      xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
