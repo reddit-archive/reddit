@@ -113,7 +113,7 @@ there's also a discussion going on here:
        tweet = "%s %s" % (title[0:(139-len(url))], url)
        %>
 
-        ${icon_button("Share", "email-icon", "mailto:?subject=${urllib.quote(_force_utf8(subject))}&body=${urllib.quote(_force_utf8(body))}")}
+        ${icon_button("Share", "email-icon", "mailto:?subject=" + urllib.quote(_force_utf8(subject)) + "&body=" + urllib.quote(_force_utf8(body)))}
         ${self.save_button()}
         ${self.hide_button()}
         ${icon_button("Report","report-icon",onclick="return change_state(this, 'report', hide_thing)")}
