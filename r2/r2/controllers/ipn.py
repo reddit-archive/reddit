@@ -111,6 +111,9 @@ def verify_ipn(parameters):
 
 
 def existing_subscription(subscr_id, paying_id):
+    if subscr_id is None:
+        return None
+
     account_id = accountid_from_paypalsubscription(subscr_id)
 
     should_set_subscriber = False
