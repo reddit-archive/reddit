@@ -85,7 +85,7 @@
         %if c.user_is_loggedin:
             ${icon_button("Reply", "reply-icon", outer_class="reply-button", onclick="return reply(this)")}
         %endif
-        ${icon_button("Permalink", "permalink-icon", thing.permalink)}
+        ${icon_button("Permalink", "permalink-icon", thing.permalink + ".compact")}
         %if thing.was_comment:
             ${icon_button("Context", "context-icon", thing.permalink + ".compact?context=3")}
         %endif

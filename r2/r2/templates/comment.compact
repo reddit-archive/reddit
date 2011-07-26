@@ -74,9 +74,9 @@
                 ${icon_button("Reply", "reply-icon", onclick="return reply(this)", outer_class="reply-button")}
             %endif
             ${icon_button("Collapse", "collapse-icon", onclick="return toggle_collapse(this)")}
-            ${icon_button("Permalink", "permalink-icon", thing.permalink)}
+            ${icon_button("Permalink", "permalink-icon", thing.permalink + ".compact")}
             %if c.profilepage:
-                ${icon_button("Context", "context-icon", thing.permalink + "?context=3")}
+                ${icon_button("Context", "context-icon", thing.permalink + ".compact?context=3")}
             %elif thing.parent_permalink:
                 ${icon_button("Parent", "parent-icon", thing.parent_permalink )}
             %endif
