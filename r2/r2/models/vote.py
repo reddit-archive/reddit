@@ -22,6 +22,7 @@
 from r2.lib.db.thing import MultiRelation, Relation
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import TdbException
+from r2.lib.utils._utils import flatten
 
 from account import Account
 from link import Link, Comment
@@ -70,9 +71,13 @@ class VotesByLink(tdb_cassandra.View):
     # _view_of = CassandraLinkVote
 
     @classmethod
-    def get_all(cls, link_id):
-        vbl = cls._byID(link_id)
-        return CassandraLinkVote._byID(vbl._values()).values()
+    def get_all(cls, *link_ids):
+        vbls = cls._byID(link_ids)
+        
+        lists = [vbl._values().keys() for vbl in vbls.values()]
+        vals = flatten(lists)
+        
+        return CassandraLinkVote._byID(vals).values()
 
 class VotesByDay(tdb_cassandra.View):
     _use_db = True
