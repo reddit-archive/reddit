@@ -2051,7 +2051,7 @@ class ApiController(RedditController):
     @validate(VFlairManager(),
               user = VOptionalExistingUname('name'))
     def GET_flairlist(self, num, after, reverse, count, user):
-        flair = FlairList(num, after, reverse, user)
+        flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
 
     @validatedForm(VAdmin(),
