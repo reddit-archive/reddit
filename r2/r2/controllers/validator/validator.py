@@ -360,14 +360,14 @@ class VCount(Validator):
 
 class VLimit(Validator):
     def __init__(self, param, default=25, max_limit=100, **kw):
-        self.default = default
+        self.default_limit = default
         self.max_limit = max_limit
         Validator.__init__(self, param, **kw)
 
     def run(self, limit):
         default = c.user.pref_numsites
         if c.render_style in ("compact", api_type("compact")):
-            default = self.default  # TODO: ini param?
+            default = self.default_limit  # TODO: ini param?
 
         if limit is None:
             return default
