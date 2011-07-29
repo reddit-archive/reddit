@@ -1350,6 +1350,11 @@ $(function() {
             $("#moresearchinfo").slideUp();
             event.preventDefault();
         });
+        
+        /* Select shortlink text on click */
+        $("#shortlink-text").click(function() {
+            $(this).select();
+        });
     });
 
 function show_friend(account_fullname) {

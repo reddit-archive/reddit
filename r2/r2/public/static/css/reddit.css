@@ -4175,7 +4175,18 @@ dd { margin-left: 20px;  }
 .linkinfo .upvotes {font-size: 80%; color: orangered;}
 .linkinfo .downvotes {font-size: 80%; color: #5f99cf; }
 .linkinfo .shortlink {font-size: 80%; margin-top: 3px; }
-.linkinfo .shortlink a {font-size: 120%; font-family: monospace}
+
+.linkinfo .shortlink input {
+    border: 1px solid gray;
+    font-family: monospace;
+    font-size: 140%;
+    padding: 3px 2px;
+    width: 175px;
+}
+
+.linkinfo .shortlink input:hover {
+    cursor: text;
+}
 
 .linkinfo table {margin-top: 5px;}
 
