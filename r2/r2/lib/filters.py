@@ -84,6 +84,9 @@ except ImportError:
 class _Unsafe(unicode): pass
 
 def _force_unicode(text):
+    if text == None:
+        return u''
+
     try:
         text = unicode(text, 'utf-8')
     except UnicodeDecodeError:

@@ -2811,18 +2811,19 @@ def make_link_child(item):
         if media_embed:
             link_child = MediaChild(item, media_embed, load = True)
 
-    # if the item has selftext, add a selftext child
-    elif item.selftext:
+    # if the item is_self, add a selftext child
+    elif item.is_self:
+        if not item.selftext: item.selftext = u''
+
         expand = getattr(item, 'expand_children', False)
-        link_child = SelfTextChild(item, expand = expand,
-                                   nofollow = item.nofollow)
-        #draw the edit button if the contents are pre-expanded
+
         editable = (expand and
                     item.author == c.user and
-                    not item._deleted)
+                    not item._deleted)    
+        link_child = SelfTextChild(item, expand = expand,
+                                   nofollow = item.nofollow)
 
     return link_child, editable
-
 
 class MediaChild(LinkChild):
     """renders when the user hits the expando button to expand media
