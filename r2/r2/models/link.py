@@ -279,7 +279,7 @@ class Link(Thing, Printable):
                                                     subreddit = False),p)
             else:
                 res = "http://%s/r/%s/%s" % (get_domain(cname = False,
-                                                    subreddit = not c.cname),sr.name,p)
+                                                    subreddit = False),sr.name,p)
         else:
             res = "/%s" % p
 
