@@ -1975,7 +1975,8 @@ class ApiController(RedditController):
         limit = 100  # max of 100 flair settings per call
         flair_text_limit = 64  # max of 64 chars in flair text
         results = FlairCsv()
-        infile = csv.reader(flair_csv.strip().split('\n'))
+        # encode to UTF-8, since csv module doesn't fully support unicode
+        infile = csv.reader(flair_csv.strip().encode('utf-8').split('\n'))
         for i, row in enumerate(infile):
             line_result = results.add_line()
             line_no = i + 1
