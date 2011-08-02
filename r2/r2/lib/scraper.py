@@ -1318,8 +1318,8 @@ class EmbedlyOEmbed(OEmbed):
         , re.I
     )
     
-    api_endpoint = 'http://api.embed.ly/v1/api/oembed'
-    api_params = {'format':'json', 'maxwidth':600 }
+    api_endpoint = 'http://api.embed.ly/1/oembed'
+    api_params = {'format':'json', 'maxwidth':600, 'key' : g.embedly_api_key }
  
 class GenericScraper(MediaScraper):
     """a special scrapper not associated with any domains, used to
