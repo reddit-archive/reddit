@@ -739,22 +739,23 @@ class EmbedlyOEmbed(OEmbed):
         'dipdive.com', 'discovery.com', 'dotsub.com', 'dribbble.com',
         'edition.cnn.com', 'emberapp.com', 'escapistmagazine.com',
         'espn.go.com', 'facebook.com', 'fancast.com', 'flickr.com', 'fora.tv',
-        'formspring.me', 'fotopedia.com', 'foxsports.com',
-        'freemusicarchive.org', 'funnyordie.com', 'gametrailers.com',
-        'gist.github.com', 'globalpost.com', 'godtube.com', 'gogoyoko.com',
-        'google.com', 'grindtv.com', 'grooveshark.com', 'guardian.co.uk',
+        'formspring.me', 'fotopedia.com', 'freemusicarchive.org',
+        'funnyordie.com', 'gametrailers.com', 'gist.github.com',
+        'globalpost.com', 'godtube.com', 'gogoyoko.com', 'google.com',
+        'graphicly.com', 'grindtv.com', 'grooveshark.com', 'guardian.co.uk',
         'hark.com', 'howcast.com', 'huffduffer.com', 'hulu.com',
         'hungrynation.tv', 'ifood.tv', 'img.ly', 'imgur.com', 'indenti.ca',
-        'indymogul.com', 'instagr.am', 'issuu.com', 'justin.tv',
-        'kickstarter.com', 'kinomap.com', 'kiva.org', 'koldcast.tv', 'last.fm',
-        'liveleak.com', 'livestream.com', 'lockerz.com', 'logotv.com',
-        'lonelyplanet.com', 'maps.google.com', 'meadd.com', 'mediamatters.org',
-        'meetup.com', 'metacafe.com', 'metacdn.com', 'mixcloud.com',
-        'mixergy.com', 'mlkshk.com', 'mobypicture.com', 'money.cnn.com',
-        'movies.yahoo.com', 'msnbc.com', 'my.opera.com', 'myloc.me',
-        'myvideo.de', 'nationalgeographic.com', 'nfb.ca', 'npr.org',
-        'nzonscreen.com', 'overstream.net', 'ow.ly', 'pastebin.com',
-        'pastie.org', 'phodroid.com', 'photobucket.com', 'photozou.jp',
+        'indymogul.com', 'instagr.am', 'issuu.com', 'itunes.apple.com',
+        'justin.tv', 'kickstarter.com', 'kinomap.com', 'kiva.org',
+        'koldcast.tv', 'last.fm', 'lightbox.com', 'liveleak.com',
+        'livestream.com', 'lockerz.com', 'logotv.com', 'lonelyplanet.com',
+        'maps.google.com', 'meadd.com', 'mediamatters.org', 'meetup.com',
+        'metacafe.com', 'metacdn.com', 'mixcloud.com', 'mixergy.com',
+        'mlkshk.com', 'mobypicture.com', 'money.cnn.com', 'movies.yahoo.com',
+        'msnbc.com', 'my.opera.com', 'myloc.me', 'myvideo.de',
+        'nationalgeographic.com', 'nfb.ca', 'npr.org', 'nzonscreen.com',
+        'overstream.net', 'ow.ly', 'pastebin.com', 'pastie.org',
+        'phodroid.com', 'photobucket.com', 'photozou.jp',
         'picasaweb.google.com', 'picplz.com', 'pikchur.com', 'ping.fm',
         'polldaddy.com', 'polleverywhere.com', 'posterous.com', 'prezi.com',
         'qik.com', 'quantcast.com', 'questionablecontent.net', 'qwantz.com',
@@ -771,14 +772,14 @@ class EmbedlyOEmbed(OEmbed):
         'timetoast.com', 'tinypic.com', 'tmiweekly.com', 'traileraddict.com',
         'trailerspy.com', 'trooptube.tv', 'trutv.com', 'tumblr.com',
         'twitgoo.com', 'twitlonger.com', 'twitpic.com', 'twitrpix.com',
-        'twitter.com', 'twitvid.com', 'ultrakawaii.com', 'uservoice.com',
-        'ustream.com', 'viddler.com', 'video.forbes.com', 'video.google.com',
-        'video.jardenberg.com', 'video.pbs.org', 'video.yahoo.com',
-        'videos.nymag.com', 'vids.myspace.com', 'vimeo.com', 'vodcars.com',
-        'washingtonpost.com', 'whitehouse.gov', 'whosay.com', 'wikimedia.org',
-        'wikipedia.org', 'wistia.com', 'wordpress.tv', 'worldstarhiphop.com',
-        'xiami.com', 'xkcd.com', 'xtranormal.com', 'yfrog.com', 'youku.com',
-        'youtube.com', 'zapiks.com', 'zero-inch.com']
+        'twitter.com', 'twitvid.com', 'ultrakawaii.com', 'urtak.com',
+        'uservoice.com', 'ustream.com', 'viddler.com', 'video.forbes.com',
+        'video.google.com', 'video.jardenberg.com', 'video.pbs.org',
+        'video.yahoo.com', 'videos.nymag.com', 'vids.myspace.com', 'vimeo.com',
+        'vodcars.com', 'washingtonpost.com', 'whitehouse.gov', 'whosay.com',
+        'wikimedia.org', 'wikipedia.org', 'wistia.com', 'wordpress.tv',
+        'worldstarhiphop.com', 'xiami.com', 'xkcd.com', 'xtranormal.com',
+        'yfrog.com', 'youku.com', 'youtube.com', 'zapiks.com', 'zero-inch.com']
 
     url_re = re.compile(
         'http:\\/\\/.*youtube\\.com\\/watch.*|' +
@@ -1110,6 +1111,9 @@ class EmbedlyOEmbed(OEmbed):
         'https:\\/\\/.*\\.crocodoc\\.com\\/.*|' +
         'http:\\/\\/www\\.wikipedia\\.org\\/wiki\\/.*|' +
         'http:\\/\\/www\\.wikimedia\\.org\\/wiki\\/File.*|' +
+        'https:\\/\\/urtak\\.com\\/u\\/.*|' +
+        'https:\\/\\/urtak\\.com\\/clr\\/.*|' +
+        'http:\\/\\/graphicly\\.com\\/.*\\/.*\\/.*|' +
         'http:\\/\\/.*yfrog\\..*\\/.*|' +
         'http:\\/\\/www\\.flickr\\.com\\/photos\\/.*|' +
         'http:\\/\\/flic\\.kr\\/.*|' +
@@ -1209,6 +1213,8 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/bnter\\.com\\/convo\\/.*|' +
         'http:\\/\\/mlkshk\\.com\\/p\\/.*|' +
         'http:\\/\\/lockerz\\.com\\/s\\/.*|' +
+        'http:\\/\\/lightbox\\.com\\/.*|' +
+        'http:\\/\\/www\\.lightbox\\.com\\/.*|' +
         'http:\\/\\/.*amazon\\..*\\/gp\\/product\\/.*|' +
         'http:\\/\\/.*amazon\\..*\\/.*\\/dp\\/.*|' +
         'http:\\/\\/.*amazon\\..*\\/dp\\/.*|' +
@@ -1223,6 +1229,8 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.shopstyle\\.com\\/action\\/apiVisitRetailer.*|' +
         'http:\\/\\/api\\.shopstyle\\.com\\/action\\/apiVisitRetailer.*|' +
         'http:\\/\\/www\\.shopstyle\\.com\\/action\\/viewLook.*|' +
+        'http:\\/\\/itunes\\.apple\\.com\\/.*|' +
+        'https:\\/\\/itunes\\.apple\\.com\\/.*|' +
         'http:\\/\\/soundcloud\\.com\\/.*|' +
         'http:\\/\\/soundcloud\\.com\\/.*\\/.*|' +
         'http:\\/\\/soundcloud\\.com\\/.*\\/sets\\/.*|' +
@@ -1297,8 +1305,6 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/www\\.msnbc\\.msn\\.com\\/id\\/.*\\/vp\\/.*|' +
         'http:\\/\\/www\\.msnbc\\.msn\\.com\\/id\\/.*\\/ns\\/.*|' +
         'http:\\/\\/today\\.msnbc\\.msn\\.com\\/id\\/.*\\/ns\\/.*|' +
-        'http:\\/\\/multimedia\\.foxsports\\.com\\/m\\/video\\/.*\\/.*|' +
-        'http:\\/\\/msn\\.foxsports\\.com\\/video.*|' +
         'http:\\/\\/www\\.globalpost\\.com\\/video\\/.*|' +
         'http:\\/\\/www\\.globalpost\\.com\\/dispatch\\/.*|' +
         'http:\\/\\/guardian\\.co\\.uk\\/.*\\/video\\/.*\\/.*\\/.*\\/.*|' +
