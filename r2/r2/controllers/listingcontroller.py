@@ -297,7 +297,7 @@ class HotController(FixListing, ListingController):
 
         if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
-                srlimit = Subreddit.sr_limit
+                srlimit = Subreddit.DEFAULT_LIMIT
                 over18 = c.user.has_subscribed and c.over18
             else:
                 srlimit = g.num_default_reddits
