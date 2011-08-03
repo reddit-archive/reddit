@@ -485,14 +485,23 @@ class SubredditInfoBar(CachedTemplate):
     def __init__(self, site = None):
         site = site or c.site
 
-        #hackity hack. do i need to add all the others props?
+        # hackity hack. do i need to add all the others props?
         self.sr = list(wrap_links(site))[0]
 
         # we want to cache on the number of subscribers
         self.subscribers = self.sr._ups
 
-        #so the menus cache properly
+        # so the menus cache properly
         self.path = request.path
+
+        # if user has flair, then it will be displayed in this bar
+        self.flair_user = None
+        if c.user_is_loggedin:
+            wrapped_user = WrappedUser(c.user, subreddit=self.sr,
+                                       force_show_flair=True)
+            if wrapped_user.has_flair:
+                self.flair_user = wrapped_user
+
         CachedTemplate.__init__(self)
 
     def nav(self):
