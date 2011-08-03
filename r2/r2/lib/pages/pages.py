@@ -2285,7 +2285,10 @@ class WrappedUser(CachedTemplate):
         flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(flair_text or flair_css_class)
         if flair_css_class:
-            flair_css_class = self.FLAIR_CSS_PREFIX + flair_css_class
+            # This is actually a list of CSS class *suffixes*. E.g., "a b c"
+            # should expand to "flair-a flair-b flair-c".
+            flair_css_class = ' '.join(self.FLAIR_CSS_PREFIX + c
+                                       for c in flair_css_class.split())
 
         target = None
         ip_span = None

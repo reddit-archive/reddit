@@ -1932,7 +1932,7 @@ class ApiController(RedditController):
                    VModhash(),
                    user = VExistingUname("name"),
                    text = VLength("text", max_length=64),
-                   css_class = VCssName("css_class"))
+                   css_class = VFlairCss("css_class"))
     def POST_flair(self, form, jquery, user, text, css_class):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):

@@ -1038,6 +1038,18 @@ class VCssName(Validator):
         return ''
 
 
+class VFlairCss(VCssName):
+    def run(self, css):
+        if not css:
+            return css
+        names = css.split()
+        for name in names:
+            if not self.r_css_name.match(name):
+                self.set_error(errors.BAD_CSS_NAME)
+                return ''
+        return css
+
+
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):
