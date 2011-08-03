@@ -75,7 +75,11 @@
     %endif
     </span>
     </p>
-    %if thing.link_child and not c.permalink_page and thing.link_child.css_style.strip(' ') != 'video':
+    <%
+      video_hide = thing.link_child and thing.link_child.css_style.strip(' ') == 'video'
+      selftext_hide = thing.is_self and not thing.selftext
+    %>
+    %if thing.link_child and not c.permalink_page and not video_hide and not selftext_hide:
       <a href="javascript:void(0)" class="expando-button collapsed
                   ${thing.link_child.css_style}"></a>
     %endif

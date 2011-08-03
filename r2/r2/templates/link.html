@@ -101,7 +101,8 @@
   </p>
 
   ##the expando button
-  %if thing.link_child and not thing.link_child.expand:
+  <% selftext_hide = thing.is_self and not thing.selftext %>
+  %if thing.link_child and not thing.link_child.expand and not selftext_hide:
     <div class="expando-button collapsed
                 ${thing.link_child.css_style}"
          onclick="expando_child(this)"></div>
