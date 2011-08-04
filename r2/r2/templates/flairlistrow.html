@@ -20,6 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace name="utils" file="utils.html"/>
+
 <%!
 from r2.lib.pages import WrappedUser
 %>
@@ -32,14 +34,16 @@ from r2.lib.pages import WrappedUser
       ${unsafe(WrappedUser(thing.user, force_show_flair=True).render())}
     </span>
     <span class="flaircell">
-      <input type="text" maxlength="32" name="text"
+      <input type="text" size="32" maxlength="64" name="text"
              value="${thing.flair_text}" />
     </span>
     <span class="flaircell">
-      <input type="text" maxlength="32" name="css_class"
+      <input type="text" size="32" maxlength="1000" name="css_class"
              value="${thing.flair_css_class}" />
     </span>
     <button type="submit">save</button>
     <span class="status"></span>
+    ${utils.error_field(('BAD_CSS_NAME', 'flair_css_class'), 'name')}
+    ${utils.error_field(('TOO_MUCH_FLAIR_CSS', 'flair_css_class'), 'name')}
   </form>
 </div>

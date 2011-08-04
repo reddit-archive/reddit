@@ -1931,7 +1931,7 @@ class ApiController(RedditController):
     @validatedForm(VFlairManager(),
                    VModhash(),
                    user = VExistingUname("name"),
-                   text = VLength("text", max_length=64),
+                   text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     def POST_flair(self, form, jquery, user, text, css_class):
         # Check validation.
@@ -1939,6 +1939,9 @@ class ApiController(RedditController):
             return
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
             form.set_html(".status:first", _('invalid css class'))
+            return
+        if form.has_errors('css_class', errors.TOO_MUCH_FLAIR_CSS):
+            form.set_html(".status:first", _('too many css classes'))
             return
 
         if not text and not css_class:
@@ -1973,7 +1976,6 @@ class ApiController(RedditController):
               flair_csv = nop('flair_csv'))
     def POST_flaircsv(self, flair_csv):
         limit = 100  # max of 100 flair settings per call
-        flair_text_limit = 64  # max of 64 chars in flair text
         results = FlairCsv()
         # encode to UTF-8, since csv module doesn't fully support unicode
         infile = csv.reader(flair_csv.strip().encode('utf-8').split('\n'))
@@ -2003,11 +2005,12 @@ class ApiController(RedditController):
                 text = None
                 css_class = None
 
-            if text and len(text) > flair_text_limit:
+            orig_text = text
+            text = VFlairText('text').run(orig_text)
+            if len(text) < len(orig_text):
                 line_result.warn('text',
                                  'truncating flair text to %d chars'
-                                 % flair_text_limit)
-                text = text[:flair_text_limit]
+                                 % len(text))
 
             if css_class and not VCssName('css_class').run(css_class):
                 line_result.error('css',

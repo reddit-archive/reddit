@@ -1038,18 +1038,6 @@ class VCssName(Validator):
         return ''
 
 
-class VFlairCss(VCssName):
-    def run(self, css):
-        if not css:
-            return css
-        names = css.split()
-        for name in names:
-            if not self.r_css_name.match(name):
-                self.set_error(errors.BAD_CSS_NAME)
-                return ''
-        return css
-
-
 class VMenu(Validator):
 
     def __init__(self, param, menu_cls, remember = True, **kw):
@@ -1503,3 +1491,30 @@ class VTarget(Validator):
     def run(self, name):
         if name and self.target_re.match(name):
             return name
+
+class VFlairCss(VCssName):
+    def __init__(self, param, max_css_classes=10, **kw):
+        self.max_css_classes = max_css_classes
+        VCssName.__init__(self, param, **kw)
+
+    def run(self, css):
+        if not css:
+            return css
+
+        names = css.split()
+        if len(names) > self.max_css_classes:
+            self.set_error(errors.TOO_MUCH_FLAIR_CSS)
+            return ''
+
+        for name in names:
+            if not self.r_css_name.match(name):
+                self.set_error(errors.BAD_CSS_NAME)
+                return ''
+
+        return css
+
+
+class VFlairText(VLength):
+    def __init__(self, param, max_length=64, **kw):
+        VLength.__init__(self, param, max_length, **kw)
+
