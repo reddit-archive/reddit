@@ -1,18 +1,29 @@
 $(function() {
-    function onedit() {
+    function showSaveButton(field) {
+        $(field).parent().parent().addClass("edited");
+        $(field).parent().parent().find(".status").html("");
+    }
+
+    function onEdit() {
         if ($(this).data("saved") != $(this).val()) {
-            $(this).parent().parent().addClass("edited");
-            $(this).parent().parent().find(".status").html("");
+            showSaveButton(this);
         }
     }
 
+    function onFocus() {
+        showSaveButton(this);
+    }
+
+    function onSubmit() {
+        $(this).removeClass("edited");
+        return post_form(this, "flair");
+    }
+
     /* Attach event handlers to the various flair forms that may be on page. */
-    $(".flairrow form").submit(function() { return post_form(this, 'flair'); });
-    $(".flaircell input").focus(onedit);
-    $(".flaircell input").keyup(onedit);
-    $(".flairrow button").click(function() {
-            $(this).parent().removeClass("edited");
-        });
+    $(".flairrow form").submit(onSubmit);
+    $(".flaircell input").focus(onFocus);
+    $(".flaircell input").keyup(onEdit);
+
     $(".flairtoggle").submit(function() {
             return post_form(this, 'setflairenabled');
         });
