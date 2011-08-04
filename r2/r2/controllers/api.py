@@ -1968,7 +1968,7 @@ class ApiController(RedditController):
             jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
             form.set_html(
-                '.user',
+                '.tagline',
                 WrappedUser(user, force_show_flair=True).render(style='html'))
 
     @validate(VFlairManager(),
