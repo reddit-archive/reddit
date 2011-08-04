@@ -2007,7 +2007,7 @@ class ApiController(RedditController):
 
             orig_text = text
             text = VFlairText('text').run(orig_text)
-            if len(text) < len(orig_text):
+            if text and orig_text and len(text) < len(orig_text):
                 line_result.warn('text',
                                  'truncating flair text to %d chars'
                                  % len(text))
