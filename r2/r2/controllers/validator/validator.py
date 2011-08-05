@@ -887,7 +887,8 @@ class VUrl(VRequired):
         return self.error(errors.BAD_URL)
 
 class VOptionalExistingUname(VRequired):
-    def __init__(self, item, *a, **kw):
+    def __init__(self, item, allow_deleted=False, *a, **kw):
+        self.allow_deleted = allow_deleted
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
     def run(self, name):
@@ -903,7 +904,7 @@ class VOptionalExistingUname(VRequired):
         name = chkuser(name)
         if name:
             try:
-                return Account._by_name(name)
+                return Account._by_name(name, allow_deleted=self.allow_deleted)
             except NotFound:
                 return self.error(errors.USER_DOESNT_EXIST)
 

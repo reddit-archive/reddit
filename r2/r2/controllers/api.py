@@ -1930,7 +1930,7 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name"),
+                   user = VExistingUname("name", allow_deleted=True),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     def POST_flair(self, form, jquery, user, text, css_class):
@@ -1993,7 +1993,7 @@ class ApiController(RedditController):
                 line_result.error('row', 'improperly formatted row, ignoring')
                 continue
 
-            user = VExistingUname('name').run(name)
+            user = VExistingUname('name', allow_deleted=True).run(name)
             if not user:
                 line_result.error('user',
                                   "unable to resolve user `%s', ignoring"
