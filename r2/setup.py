@@ -24,74 +24,22 @@
 
 from ez_setup import use_setuptools
 use_setuptools()
-from setuptools import find_packages#, setup
 
-try:
-    from babel.messages import frontend as babel
-except:
-    class null(): pass
-    babel = null()
-    babel.compile_catalog = None
-    babel.extract_messages = None
-    babel.init_catalog = None
-    babel.update_catalog = None
-
+from setuptools import find_packages
 from distutils.core import setup, Extension
-
-from setuptools.command.easy_install import main as easy_install
 import os
 
-# check the PIL is installed; since its package name isn't the same as
-# the distribution name, setuptools can't manage it as a dependency
+commands = {}
 try:
-    import Image
+    from babel.messages import frontend as babel
+    commands.update({
+        'compile_catalog': babel.compile_catalog,
+        'extract_messages': babel.extract_messages,
+        'init_catalog': babel.init_catalog,
+        'update_catalog': babel.update_catalog,
+    })
 except ImportError:
-    print "Installing the Python Imaging Library"
-    easy_install(["http://effbot.org/downloads/Imaging-1.1.6.tar.gz"])
-
-# same with the captcha library
-try:
-    import Captcha
-except ImportError:
-    print "Installing the PyCaptcha Module"
-    easy_install(["http://svn.navi.cx/misc/trunk/pycaptcha"])
-
-# ditto for pylons
-try:
-    import pylons
-    vers = pylons.__version__
-    assert vers.startswith('0.9.6.') or vers == '0.9.6', \
-           ("reddit is only compatible with pylons 0.9.6, not '%s'" % vers)
-except ImportError:
-    print "Installing Pylons 0.9.6.2 from the cheese shop"
-    easy_install(["http://pypi.python.org/packages/source/P/Pylons/Pylons-0.9.6.2.tar.gz"])
-
-# Install our special version of paste that dies on first zombie sighting
-try:
-    import paste
-    vers = getattr(paste, "__version__", "(undefined)")
-    assert vers == '1.7.2-reddit-0.2', \
-           ("reddit is only compatible with its own magical version of paste, not '%s'" % vers)
-except (ImportError, AssertionError):
-    print "Installing reddit's magical version of paste"
-    easy_install(["http://addons.reddit.com/paste/Paste-1.7.2-reddit-0.2.tar.gz"])
-
-#install the devel version of py-amqplib until the cheeseshop version is updated
-try:
-    import amqplib
-except ImportError:
-    print "Installing the py-amqplib"
-    easy_install(["http://addons.reddit.com/amqp/py-amqplib-0.6.1-devel.tgz"])
-
-# we're using a custom build of pylibmc at the moment, so we need to
-# be sure that we have the right version
-pylibmc_version = '1.1.1-reddit-0.1'
-try:
-    import pylibmc
-    assert pylibmc.__version__ == pylibmc_version
-except (ImportError, AssertionError):
-    print "Installing pylibmc"
-    easy_install(["https://github.com/downloads/reddit/pylibmc/pylibmc-1.1.1-reddit-0.1.tgz"])
+    pass
 
 filtermod = Extension('Cfilters',
                       sources = ['r2/lib/c/filters.c'])
@@ -119,44 +67,36 @@ discountmod = Extension('reddit-discount',
                                        "basename.c",
                                        "xml.c",
                                        "xmlpage.c"])))
-
 ext_modules = [filtermod, discountmod]
 
 setup(
     name='r2',
     version="",
-    #description="",
-    #author="",
-    #author_email="",
-    #url="",
     install_requires=["Routes<=1.8",
-                      "Pylons<=0.9.6.2",
+                      "Pylons==0.9.6.2",
+                      "webhelpers==0.6.4",
                       "boto >= 1.9b",
                       "pytz",
                       "pycrypto",
                       "Babel>=0.9.1",
-                      "flup",
-                      "cython==0.14",
-                      "simplejson", 
+                      "cython>=0.14",
                       "SQLAlchemy==0.5.3",
                       "BeautifulSoup",
                       "cssutils==0.9.5.1",
                       "chardet",
                       "psycopg2",
-                      "py_interface",
                       "pycountry",
-                      "thrift05",
                       "pycassa==1.1.0",
+                      "PIL",
+                      "pycaptcha",
+                      "amqplib",
+                      "pylibmc==1.1.1"
                       ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite = 'nose.collector',
     package_data={'r2': ['i18n/*/LC_MESSAGES/*.mo']},
-    cmdclass = {'compile_catalog':      babel.compile_catalog,
-                'extract_messages':     babel.extract_messages,
-                'init_catalog':         babel.init_catalog,
-                'update_catalog':       babel.update_catalog,
-                },
+    cmdclass = commands,
     ext_modules = ext_modules,
     entry_points="""
     [paste.app_factory]
@@ -170,8 +110,3 @@ setup(
     restcontroller = pylons.commands:RestControllerCommand
     """,
 )
-
-# running setup.py always fucks up the build directory, which we don't
-# need anyway.
-import shutil
-shutil.rmtree("build")
