@@ -24,7 +24,6 @@ from paste.cascade import Cascade
 from paste.registry import RegistryManager
 from paste.urlparser import URLParser, StaticURLParser
 from paste.deploy.converters import asbool
-from paste.gzipper import make_gzip_middleware
 
 from pylons import config, request, Response
 from pylons.error import error_template
@@ -535,9 +534,6 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = ExtensionMiddleware(app)
     app = DomainMiddleware(app)
 
-    #TODO: breaks on 404
-    #app = make_gzip_middleware(app, app_conf)
-
     if asbool(full_stack):
         # Handle Python exceptions
         app = ErrorHandler(app, global_conf, error_template=error_template,
@@ -554,8 +550,6 @@ def make_app(global_conf, full_stack=True, **app_conf):
     javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
     app = Cascade([static_app, javascripts_app, app])
-
-    app = make_gzip_middleware(app, app_conf)
 
     #add the rewrite rules
     app = RewriteMiddleware(app)
