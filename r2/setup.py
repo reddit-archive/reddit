@@ -90,8 +90,9 @@ setup(
                       "PIL",
                       "pycaptcha",
                       "amqplib",
-                      "pylibmc==1.1.1"
+                      "pylibmc==1.2.1-dev"
                       ],
+    dependency_links = ['https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev',],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
     test_suite = 'nose.collector',

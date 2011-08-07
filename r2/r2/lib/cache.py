@@ -98,10 +98,8 @@ class CMemcache(CacheUtils):
             client = pylibmc.Client(servers, binary=True)
             behaviors = {
                 'no_block': no_block, # use async I/O
-                'cache_lookups': True, # cache DNS lookups
                 'tcp_nodelay': True, # no nagle
                 '_noreply': int(noreply),
-                'verify_key': int(debug),  # spend the CPU to verify keys
                 'ketama': True, # consistent hashing
                 }
 
