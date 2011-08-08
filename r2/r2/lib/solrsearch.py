@@ -153,7 +153,7 @@ search_fields={Thing:     (Field('fullname', '_fullname'),
                            #ThingField('reddit',Subreddit,'sr_id','name'))}
 
 def strip_control_characters(text):
-    if not isinstance(text, str):
+    if not isinstance(text, basestring):
         return text
     return ''.join((c for c in text if ord(c) >= 0x20))
 
