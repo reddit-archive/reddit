@@ -1189,6 +1189,8 @@ class ProfileBar(Templated):
                     else:
                         self.gold_remaining = timeuntil(self.gold_expiration,
                                         precision=60 * 60 * 24 * 30) # months
+                if hasattr(user, "gold_subscr_id"):
+                    self.gold_subscr_id = user.gold_subscr_id
             if user._id != c.user._id:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
                 self.giftmsg = _("buy %(user)s a month of reddit gold" %

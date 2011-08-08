@@ -109,6 +109,18 @@
         &#32;
         ${_("of reddit gold remaining")}
       </div>
+      %if getattr(thing, "gold_subscr_id", None):
+        <%  
+          paypal_link = ("https://www.paypal.com/cgi-bin/webscr?cmd=_subscr-find&alias=%s" % g.goldthanks_email)
+         %>
+         <div>
+          <a href=${paypal_link}>
+            ${_("Recurring Paypal subscription")}
+          </a>
+          &#32;
+          ${thing.gold_subscr_id}
+        </div>
+      %endif
     </div>
   %endif
 
