@@ -50,6 +50,7 @@ from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
+from r2.lib.utils import trunc_string as _truncate
 
 import sys, random, datetime, locale, calendar, simplejson, re, time
 import graph, pycountry, time
@@ -59,6 +60,8 @@ from urllib import quote
 from things import wrap_links, default_thing_wrapper
 
 datefmt = _force_utf8(_('%d %b %Y'))
+
+MAX_DESCRIPTION_LENGTH = 150
 
 def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
@@ -113,11 +116,12 @@ class Reddit(Templated):
     additional_css     = None
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
-                 infotext = '', content = None, title = '', robots = None, 
+                 infotext = '', content = None, short_description='', title = '', robots = None, 
                  show_sidebar = True, footer = True, srbar = True,
                  **context):
         Templated.__init__(self, **context)
         self.title          = title
+        self.short_description = short_description
         self.robots         = robots
         self.infotext       = infotext
         self.loginbox       = True
@@ -802,7 +806,9 @@ class LinkInfoPage(Reddit):
         # defaults whether or not there is a comment
         params = {'title':_force_unicode(link_title), 'site' : c.site.name}
         title = strings.link_info_title % params
-
+        short_description = None
+        if link and link.selftext:
+            short_description = _truncate(link.selftext.strip(), MAX_DESCRIPTION_LENGTH)
         # only modify the title if the comment/author are neither deleted nor spam
         if comment and not comment._deleted and not comment._spam:
             author = Account._byID(comment.author_id, data=True)
@@ -810,6 +816,8 @@ class LinkInfoPage(Reddit):
             if not author._deleted and not author._spam:
                 params = {'author' : author.name, 'title' : _force_unicode(link_title)}
                 title = strings.permalink_title % params
+                short_description = _truncate(comment.body.strip(), MAX_DESCRIPTION_LENGTH) if comment.body else None
+                
 
         self.subtitle = subtitle
 
@@ -823,7 +831,7 @@ class LinkInfoPage(Reddit):
         else:
             self.duplicates = duplicates
 
-        Reddit.__init__(self, title = title, *a, **kw)
+        Reddit.__init__(self, title = title, short_description=short_description, *a, **kw)
 
     def build_toolbars(self):
         base_path = "/%s/%s/" % (self.link._id36, title_to_url(self.link.title))

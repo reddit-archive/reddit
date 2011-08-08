@@ -39,6 +39,7 @@
     <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
     <title>${self.Title()}</title>
     <meta name="title" content="${self.Title()}" />
+    <meta name="description" content="${thing.short_description or g.short_description}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
