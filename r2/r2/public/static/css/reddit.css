@@ -2077,6 +2077,9 @@ label + #moresearchinfo {
     width: 18px;
     float: left; 
 }
+.button .blog1 .headimgcell a {
+    display: inline-block;
+}
 .button .blog1 .score {
     float: center;
     margin-top: 2px;
