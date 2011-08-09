@@ -149,7 +149,7 @@ ${first_defined(kw[1:])}
     if target:
         kw['target'] = target
     onclick = "$(this).parent().submit(); return false;"
-    link = _a_buffered(link_text, href=href, onclick=onclick)
+    link = _a_buffered(link_text, href=href, onclick=onclick, **kw)
   %>
   <form method="POST" action="${action}">
     %for k, v in params.iteritems():
