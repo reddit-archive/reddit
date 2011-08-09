@@ -70,11 +70,6 @@ $(function() {
         var target = (querydict.newwindow)?"_blank":"_top";
         $("a").attr("target", target);
 
-        var w = $("body").width();
-        var h = $("body").height();
-        $(".button").width(w ? (w + "px") : "100%");
-        $(".button").height(h ? (h + "px") : "100%");
-
         var update_button = function(res) {
 	    try {
             var modhash = res.data.modhash;
