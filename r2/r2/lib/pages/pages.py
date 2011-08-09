@@ -2424,7 +2424,8 @@ class FlairList(Templated):
 
         # Fetch one item more than the limit, so we can tell if we need to link
         # to a "next" page.
-        query = c.site.flair_id_query(self.num + 1, self.after, self.reverse)
+        query = Flair.flair_id_query(c.site, self.num + 1, self.after,
+                                     self.reverse)
         flair_rows = list(query)
         if len(flair_rows) > self.num:
             next_page = flair_rows.pop()

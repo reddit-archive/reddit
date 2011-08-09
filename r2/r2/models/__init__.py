@@ -26,6 +26,7 @@ from builder import *
 from vote import *
 from report import *
 from subreddit import *
+from flair import *
 from award import *
 from jury import *
 from trial import *
