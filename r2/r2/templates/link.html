@@ -44,6 +44,9 @@
      %if not (getattr(thing, "trial_mode", None) and thing.is_self):
        href="${thing.href_url}"
      %endif
+     %if thing.domain:
+       domain="${thing.domain}"
+     %endif
      %if thing.nofollow:
        rel="nofollow"
      %endif
@@ -53,7 +56,7 @@
        target="_top"
      %endif
      %if thing.mousedown_url:
-       onmousedown="this.href='${thing.mousedown_url}'"
+       onmousedown="save_href($(this));this.href='${thing.mousedown_url}'"
      %endif
      %if thing.link_child and getattr(thing, "media_override", False):
        onclick="return expando_child(this)"

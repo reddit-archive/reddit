@@ -183,6 +183,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "jquery.json.js",
     "jquery.reddit.js",
     "base.js",
+    "analytics.js",
     "flair.js",
     "reddit.js",
 )

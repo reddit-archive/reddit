@@ -623,10 +623,11 @@ function updateEventHandlers(thing) {
                     text = title.html();
                 }
 
-                $(this).find("a.title").attr("href", tracker.click).end()
-                    .find("a.thumbnail").attr("href", tracker.click).end()
-                    .find("img.promote-pixel")
-                    .attr("src", tracker.show);
+                save_href($(this).find("a.title"))
+                    .attr("href", tracker.click).end();
+                save_href($(this).find("a.thumbnail"))
+                    .attr("href", tracker.click).end();
+                $(this).find("img.promote-pixel").attr("src", tracker.show);
 
                 if ($.browser.msie) {
                     if (text != title.html()) {
@@ -1408,4 +1409,11 @@ function highlight_new_comments(period) {
       items.removeClass("new-comment");
     }
   }
+}
+
+function save_href(link) {
+  if (!link.attr("srcurl")){
+    link.attr("srcurl", link.attr("href"));
+  }
+  return link;
 }

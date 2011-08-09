@@ -56,6 +56,11 @@ ${self.RenderPrintable()}
       cls = thing.render_class.__name__.lower()
    else:
       cls = thing.lookups[0].__class__.__name__.lower()
+   
+   if getattr(thing, "is_self", False):
+      selflink = "selflink"
+   else:
+      selflink = ""
 
    if thing.show_spam:
      rowclass = thing.rowstyle + " spam"
@@ -70,7 +75,7 @@ ${self.RenderPrintable()}
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
  %>
-<div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)}"
+<div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)} ${selflink}"
      ${thing.display} onclick="click_thing(this)">
   <p class="parent">
     ${self.ParentDiv()}
