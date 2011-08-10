@@ -93,6 +93,9 @@ nonstandard_values = {
     # http://www.w3.org/TR/css3-background/#the-box-shadow
     # (This description doesn't support multiple shadows)
     'box-shadow': 'none|(?:({box-shadow-pos}\s+)?{color}|({color}\s+?){box-shadow-pos})',
+    
+    'background': r'^[a-z-]*-gradient\(.*\)',
+    'background-image': r'^[a-z-]*-gradient\(.*\)',
 }
 custom_values.update(nonstandard_values);
 
