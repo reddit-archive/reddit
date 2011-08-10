@@ -75,7 +75,7 @@ custom_values = {
     'background-color': r'{color}',
     'border-color': r'{color}',
     'background-position': r'(({percentage}|{length}){0,3})?\s*(top|center|left)?\s*(left|center|right)?',
-    'opacity': r'{num}',
+    'opacity': r'^0?\.?[0-9]*|1\.0*|1|0',
     'filter': r'alpha\(opacity={num}\)',
 }
 
