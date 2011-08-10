@@ -89,9 +89,11 @@ button.button { padding: 0 5px; }
 .unhide-icon { background-image: url("/static/compact/unhide.png"); /*SPRITE*/ }
 
 /*Toolbar*/
-#topbar { background-color: #A8C4E0; background-color: #7f7f7f; background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #cee3f8), color-stop(100%, #a8c4e0)); background: -webkit-linear-gradient(top, #cee3f8, #a8c4e0); background: -moz-linear-gradient(top, #cee3f8, #a8c4e0); background: -o-linear-gradient(top, #cee3f8, #a8c4e0); background: linear-gradient(top, #cee3f8, #a8c4e0); border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; padding: 0px 10px; display: -moz-box; display: -webkit-box; display: box; -moz-box-orient: horizontal; -webkit-box-orient: horizontal; box-orient: horizontal; -moz-box-pack: justify; -webkit-box-pack: justify; box-pack: justify; -moz-box-align: center; -webkit-box-align: center; box-align: center; }
+#topbar { background-color: #A8C4E0; background-color: #7f7f7f; background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #cee3f8), color-stop(100%, #a8c4e0)); background: -webkit-linear-gradient(top, #cee3f8, #a8c4e0); background: -moz-linear-gradient(top, #cee3f8, #a8c4e0); background: -o-linear-gradient(top, #cee3f8, #a8c4e0); background: -ms-linear-gradient(top, #cee3f8, #a8c4e0); background: linear-gradient(top, #cee3f8, #a8c4e0); border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; padding: 0px 10px; height: 40px; position: relative; }
 #topbar #header-img { width: 90px; }
-#topbar > h1 { color: #444; font-size: 18px; font-weight: bold; text-align: center; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 10px; padding: 0; padding-top: 16px; text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px, rgba(0, 0, 0, 0.1) 0px -1px 0px; -moz-box-flex: 1; -webkit-box-flex: 1; box-flex: 1; }
+#topbar .left { position: absolute; left: 0; bottom: 3px; overflow: hidden; max-height: 40px; }
+#topbar .right { position: absolute; right: 10px; bottom: 1px; }
+#topbar > h1 { color: #444; font-size: 18px; font-weight: bold; text-align: center; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 10px; padding: 0; padding-top: 16px; text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px, rgba(0, 0, 0, 0.1) 0px -1px 0px; -moz-box-flex: 1; -webkit-box-flex: 1; -ms-box-flex: 1; box-flex: 1; }
 
 #topbar > h1 a { color: inherit; text-decoration: inherit; }
 

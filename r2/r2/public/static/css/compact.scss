@@ -317,20 +317,25 @@ button.button {
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
     @include box-sizing(border-box);
     padding: 0px 10px; //Left and right padding
+    height: 40px;
+    position: relative;
 
-    @include display-box();
-    @include box-orient(horizontal); //Horizontal spread
-    @include box-pack(justify); //Divide the space up as best we can
-    @include box-align(center); //Put everything in the middle of the box
-
-    
     #header-img {
         width: 90px;
 
     }
 
     .left {
-
+        position: absolute;
+        left:  0;
+        bottom: 3px;
+        overflow: hidden;
+        max-height: 40px;
+    }
+    .right {
+        position: absolute;
+        right: 10px;
+        bottom: 1px;
     }
 
     & > h1 {
@@ -343,12 +348,9 @@ button.button {
         overflow: hidden;
         margin: 0 10px;
         padding: 0;
-		padding-top: 16px;
+        padding-top: 16px;
         text-shadow: hsla(0, 100%, 100%, 0.5) 0px 1px 0px, hsla(0, 0%, 0%, 0.1) 0px -1px 0px;
         @include box-flex(1); //This box will flex to fill avalible space
-    }
-    .right {
-
     }
 }
 
@@ -1502,4 +1504,6 @@ body.toolbar {
     color: white !important;
 }
 
-
+a.author { margin-right: 0.5em; }
+ 
+.flair { margin-right: 0.5em; }
