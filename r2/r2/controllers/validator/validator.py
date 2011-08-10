@@ -1091,6 +1091,8 @@ class VRatelimit(Validator):
         Validator.__init__(self, *a, **kw)
 
     def run (self):
+        if g.disable_ratelimit:
+            return
         to_check = []
         if self.rate_user and c.user_is_loggedin:
             to_check.append('user' + str(c.user._id36))
@@ -1131,6 +1133,8 @@ class VDelay(Validator):
         Validator.__init__(self, *a, **kw)
 
     def run (self):
+        if g.disable_ratelimit:
+            return
         key = "VDelay-%s-%s" % (self.category, request.ip)
         prev_violations = g.cache.get(key)
         if prev_violations:
