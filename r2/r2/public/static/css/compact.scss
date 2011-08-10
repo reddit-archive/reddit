@@ -193,7 +193,7 @@ button.button {
             text-align: center;
             border-right:  1px solid hsl(210,35%,10%);
             border-left:  1px solid hsl(210,35%,30%);
-            @include transition(all, 100ms, ease-in);
+            @include transition(all 100ms ease-in);
 
             &:active {
                 background-color: hsl(210,35%,30%);
