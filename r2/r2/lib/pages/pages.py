@@ -2910,7 +2910,7 @@ class TabbedPane(Templated):
         for tab_name, title, pane in tabs:
             buttons.append(JsButton(title, onclick="return select_tab_menu(this, '%s');" % tab_name))
 
-        self.tabmenu = JsNavMenu(buttons, type = 'tabpane')
+        self.tabmenu = JsNavMenu(buttons, type = 'tabmenu')
         self.tabs = tabs
 
         Templated.__init__(self)

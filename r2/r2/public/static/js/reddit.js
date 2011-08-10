@@ -33,6 +33,16 @@ function close_menus(event) {
 
 function hover_open_menu(menu) { };
 
+function select_tab_menu(tab_link, tab_name) {
+    var target = "tabbedpane-" + tab_name;
+    var menu = $(tab_link).parent().parent().parent();
+    menu.find(".tabmenu li").removeClass("selected");
+    $(tab_link).parent().addClass("selected");
+    menu.find(".tabbedpane").each(function() {
+        this.style.display = (this.id == target) ? "block" : "none";
+      });
+}
+
 function update_user(form) {
   try {
     var user = $(form).find('input[name="user"]').val();
