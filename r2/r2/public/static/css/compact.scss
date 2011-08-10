@@ -1506,4 +1506,17 @@ body.toolbar {
 
 a.author { margin-right: 0.5em; }
  
-.flair { margin-right: 0.5em; }
+.flair {
+    margin: {
+        top: 2px;
+        right: 0.5em;
+    }
+    padding: 0px 2px;
+    display: inline-block;
+    background: whiteSmoke;
+    color: hsl(0, 0%, 33%);
+    border: 1px solid hsl(0, 0%, 87%);
+
+    @include border-radius(2px);
+    @include box-shadow(inset 0px 1px 0px hsla(0,0%,100%,.9));
+}
