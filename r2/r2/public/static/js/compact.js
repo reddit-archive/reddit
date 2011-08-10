@@ -92,12 +92,13 @@ $(function() {
         $(this).siblings(".save-button").toggle();
     });
     //Hide options when we collapse
-    $('.options_expando .collapse').live("click", function() {
+    $('.options_expando .collapse-button').live("click", function() {
         $(this).parent().removeClass('expanded');
+        $(this).parent().parent().parent().addClass("collapsed");
         $(this).parent().siblings('.options_link').removeClass("active");
     });
-    //Collapse when we click reply
-    $('.reply-button').live("click", function() {
+    //Collapse when we click reply, or edit
+    $('.reply-button, .edit-button').live("click", function() {
         $(this).parent().siblings('.options-link').click();
     });
     /* the iphone doesn't play nice with live() unless there is already a registered click function.  That's sad */

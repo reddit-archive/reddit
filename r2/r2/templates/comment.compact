@@ -73,15 +73,15 @@
             %if c.user_is_loggedin:
                 ${icon_button("Reply", "reply-icon", onclick="return reply(this)", outer_class="reply-button")}
             %endif
-            ${icon_button("Collapse", "collapse-icon", onclick="return toggle_collapse(this)")}
+            ${icon_button("Collapse", "collapse-icon", outer_class="collapse-button")}
             ${icon_button("Permalink", "permalink-icon", thing.permalink + ".compact")}
             %if c.profilepage:
                 ${icon_button("Context", "context-icon", thing.permalink + ".compact?context=3")}
             %elif thing.parent_permalink:
-                ${icon_button("Parent", "parent-icon", thing.parent_permalink )}
+                ${icon_button("Parent", "parent-icon", thing.parent_permalink + ".compact")}
             %endif
             %if thing.is_author:
-                ${icon_button("Edit", "edit-icon", onclick="return edit_usertext(this)")}
+                ${icon_button("Edit", "edit-icon", onclick="return edit_usertext(this)", outer_class="edit-button")}
             %endif
         </div>
   </div>
