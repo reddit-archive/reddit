@@ -62,6 +62,7 @@ class Subreddit(Thing, Printable):
                      reported = 0,
                      valid_votes = 0,
                      show_media = False,
+                     show_cname_sidebar = False,
                      css_on_cname = True,
                      domain = None,
                      over_18 = False,

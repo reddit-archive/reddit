@@ -1274,6 +1274,7 @@ class ApiController(RedditController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   show_cname_sidebar = VBoolean('show_cname_sidebar'),
                    type = VOneOf('type', ('public', 'private', 'restricted')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    ip = ValidIP(),
@@ -1290,7 +1291,7 @@ class ApiController(RedditController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
-                           'show_media', 'type', 'link_type', 'lang',
+                           'show_media', 'show_cname_sidebar', 'type', 'link_type', 'lang',
                            "css_on_cname", "header_title", 
                            'allow_top'))
 

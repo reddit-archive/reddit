@@ -169,6 +169,13 @@
           <label for="css_on_cname">
             ${_("make custom CSS styles apply only when accessed from the cname.")}
           </label>
+          <br/>
+          <input class="nomargin" type="checkbox"
+                 name="show_cname_sidebar" id="show_cname_sidebar"
+                 ${thing.site and thing.site.show_cname_sidebar and "checked='checked'" or ""}/>
+          <label for="show_cname_sidebar">
+            ${_("show sidebar when accessed from the cname.")}
+          </label>
       %endif
     </div>
     <div class="usertext-edit">

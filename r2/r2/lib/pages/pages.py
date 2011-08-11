@@ -221,8 +221,8 @@ class Reddit(Templated):
             if srs:
                 ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
 
-        if not isinstance(c.site, FakeSubreddit) and not c.cname:
-            #don't show the subreddit info bar on cnames
+        # don't show the subreddit info bar on cnames unless the option is set
+        if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
             if (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads:
                 ps.append(Ads())
