@@ -350,6 +350,8 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .comment > .entry .usertext-body { font-size: 11px; word-wrap: break-word; }
 
+.comment > .entry .usertext-edit { margin-left: 42px; }
+
 .comment > .metabuttons { float: right; margin: 10px; }
 
 /*Child comment specific styles*/
