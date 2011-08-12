@@ -82,10 +82,10 @@ custom_values = {
 nonstandard_values = {
     # http://www.w3.org/TR/css3-background/#border-top-right-radius
     'border-radius': r'(({length}|{percentage}){w}){1,2}',
-    'border-radius-topleft': r'(({length}|{percentage}){w}){1,2}',
-    'border-radius-topright': r'(({length}|{percentage}){w}){1,2}',
-    'border-radius-bottomleft': r'(({length}|{percentage}){w}){1,2}',
-    'border-radius-bottomright': r'(({length}|{percentage}){w}){1,2}',
+    'border-top-right-radius': r'(({length}|{percentage}){w}){1,2}',
+    'border-bottom-right-radius': r'(({length}|{percentage}){w}){1,2}',
+    'border-bottom-left-radius': r'(({length}|{percentage}){w}){1,2}',
+    'border-top-left-radius': r'(({length}|{percentage}){w}){1,2}',
     
     # http://www.w3.org/TR/css3-text/#text-shadow
     'text-shadow': r'none|({single-text-shadow}{w},{w})*{single-text-shadow}',
