@@ -64,6 +64,8 @@ custom_macros = {
 
     'bg-gradient': r'none|{color}|[a-z-]*-gradient\(.*\)',
     'bg-gradients': r'{bg-gradient}(?:,\s*{bg-gradient})*',
+
+    'border-radius': r'(({length}|{percentage}){w}){1,2}',
     
     'single-text-shadow': r'({color}\s+)?{length}\s+{length}(\s+{length})?|{length}\s+{length}(\s+{length})?(\s+{color})?',
 
@@ -85,11 +87,17 @@ custom_values = {
     'background-position': r'(({percentage}|{length}){0,3})?\s*(top|center|left)?\s*(left|center|right)?',
     
     # http://www.w3.org/TR/css3-background/#border-top-right-radius
-    'border-radius': r'(({length}|{percentage}){w}){1,2}',
-    'border-top-right-radius': r'(({length}|{percentage}){w}){1,2}',
-    'border-bottom-right-radius': r'(({length}|{percentage}){w}){1,2}',
-    'border-bottom-left-radius': r'(({length}|{percentage}){w}){1,2}',
-    'border-top-left-radius': r'(({length}|{percentage}){w}){1,2}',
+    'border-radius': r'{border-radius}',
+    'border-top-right-radius': r'{border-radius}',
+    'border-bottom-right-radius': r'{border-radius}',
+    'border-bottom-left-radius': r'{border-radius}',
+    'border-top-left-radius': r'{border-radius}',
+
+    # old mozilla style (for compatibility with existing stylesheets)
+    'border-radius-topright': r'{border-radius}',
+    'border-radius-bottomright': r'{border-radius}',
+    'border-radius-bottomleft': r'{border-radius}',
+    'border-radius-topleft': r'{border-radius}',
     
     # http://www.w3.org/TR/css3-text/#text-shadow
     'text-shadow': r'none|({single-text-shadow}{w},{w})*{single-text-shadow}',
