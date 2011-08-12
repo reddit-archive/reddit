@@ -77,9 +77,6 @@ custom_values = {
     'background-position': r'(({percentage}|{length}){0,3})?\s*(top|center|left)?\s*(left|center|right)?',
     'opacity': r'^0?\.?[0-9]*|1\.0*|1|0',
     'filter': r'alpha\(opacity={num}\)',
-}
-
-nonstandard_values = {
     # http://www.w3.org/TR/css3-background/#border-top-right-radius
     'border-radius': r'(({length}|{percentage}){w}){1,2}',
     'border-top-right-radius': r'(({length}|{percentage}){w}){1,2}',
@@ -97,7 +94,6 @@ nonstandard_values = {
     'background': r'^[a-z-]*-gradient\(.*\)',
     'background-image': r'^[a-z-]*-gradient\(.*\)',
 }
-custom_values.update(nonstandard_values);
 
 def _build_regex_prefix(prefixes):
     return re.compile("|".join("^-"+p+"-" for p in prefixes))
