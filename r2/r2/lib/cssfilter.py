@@ -232,17 +232,17 @@ def strip_browser_prefix(prop):
     return t[len(t) - 1]
 
 def valid_value(prop,value,report):
-    prop.name = strip_browser_prefix(prop.name) # Remove browser-specific prefixes eg: -moz-border-radius becomes border-radius
+    prop_name = strip_browser_prefix(prop.name) # Remove browser-specific prefixes eg: -moz-border-radius becomes border-radius
     if not (value.valid and value.wellformed):
         if (value.wellformed
-            and prop.name in cssproperties.cssvalues
-            and cssproperties.cssvalues[prop.name](prop.value)):
+            and prop_name in cssproperties.cssvalues
+            and cssproperties.cssvalues[prop_name](prop.value)):
             # it's actually valid. cssutils bug.
             pass
         elif (not value.valid
               and value.wellformed
-              and prop.name in custom_values
-              and custom_values[prop.name](prop.value)):
+              and prop_name in custom_values
+              and custom_values[prop_name](prop.value)):
             # we're allowing it via our own custom validator
             value.valid = True
 
@@ -255,7 +255,7 @@ def valid_value(prop,value,report):
                         prop.cssValue.valid = False
                         prop.valid = False
                         break
-        elif not (prop.name in cssproperties.cssvalues or prop.name in custom_values):
+        elif not (prop_name in cssproperties.cssvalues or prop_name in custom_values):
             error = (msgs['invalid_property']
                      % dict(cssprop = prop.name))
             report.append(ValidationError(error,value))
