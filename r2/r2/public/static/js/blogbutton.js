@@ -26,7 +26,7 @@ $(function() {
             }
         }
         function submit_url(url, sr, title) {
-            var submit = "http:///www.reddit.com";
+            var submit = "http://www.reddit.com";
             if (sr) {
                 submit += "/r/" + sr;
             }
