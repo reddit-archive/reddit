@@ -44,9 +44,6 @@
      %if not (getattr(thing, "trial_mode", None) and thing.is_self):
        href="${thing.href_url}"
      %endif
-     %if thing.domain:
-       domain="${thing.domain}"
-     %endif
      %if thing.nofollow:
        rel="nofollow"
      %endif

@@ -1417,3 +1417,23 @@ function save_href(link) {
   }
   return link;
 }
+
+function pure_domain(url) {
+    var domain = url.match(/:\/\/([^/]+)/)
+    if (domain) {
+        domain = domain[1].replace(/^www\./, '');
+    }
+    return domain;
+}
+
+function parse_domain(url) {
+    var domain = pure_domain(url);
+    if (!domain) {
+        /* Internal link? Get the SR name, if there is one */
+        var reddit = url.match(/\/r\/([^/]+)/)
+        if (reddit) {
+            domain = "self." + reddit[1].toLowerCase();
+        }
+    }
+    return domain;
+}
