@@ -22,6 +22,11 @@
 <%namespace file="utils.html" import="plain_link"/>
 <%namespace file="subreddit.html" import="addremove_button, permission_icons"/>
 
+<%
+  from r2.models import MultiReddit
+  is_multi = isinstance(c.site, MultiReddit)
+%>
+
 <div class="subscription-box">
   % if thing.prelink or thing.goldlink:
   <div class="box-top">
@@ -45,10 +50,21 @@
   % endif
     <ul>
     %for sr in thing.reddits:
+      <% is_spam = hasattr(sr, "_spam") and sr._spam %>
       <li>
-        ${addremove_button(sr)}
-        ${plain_link(sr.name, sr.path, _class="title")}
-        ${permission_icons(sr)}
+        %if is_multi and is_spam:
+          ${_("banned_on_multi")}
+          &#32;
+          ${sr.name}
+        %elif is_spam:
+          ${_("banned")}
+          &#32;
+          ${sr.name}
+        %else:
+          ${addremove_button(sr)}
+          ${plain_link(sr.name, sr.path, _class="title")}
+          ${permission_icons(sr)}
+        %endif
       </li>
     %endfor
     </ul>
