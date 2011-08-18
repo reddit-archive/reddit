@@ -53,13 +53,13 @@
       <% is_spam = hasattr(sr, "_spam") and sr._spam %>
       <li>
         %if is_multi and is_spam:
-          ${_("banned_on_multi")}
-          &#32;
-          ${sr.name}
+          <span class="fancy-toggle-button">
+            <span class="active banned">${_("banned")}</span>
+          </span>
+          <span class="title banned">${sr.name}</span>
         %elif is_spam:
-          ${_("banned")}
-          &#32;
-          ${sr.name}
+          ${addremove_button(sr)}
+          <span class="title banned">${sr.name}</span>
         %else:
           ${addremove_button(sr)}
           ${plain_link(sr.name, sr.path, _class="title")}

@@ -1281,6 +1281,10 @@ textarea.gray { color: gray; }
 .fancy-toggle-button .add { 
     background-image: url(/static/bg-button-add.png);
 }
+.fancy-toggle-button .banned {
+    background-color: #666;
+    padding: 1px 1.9em;
+}
 
 
 
@@ -2881,6 +2885,11 @@ ul#image-preview-list .description pre {
     font-size: medium;
     color: blue;
     margin-right: 5px;
+}
+
+.subscription-box .title.banned {
+    color: dimgray;
+    text-decoration: line-through;
 }
 
 .subscription-box .column {
