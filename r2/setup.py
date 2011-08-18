@@ -33,72 +33,80 @@ commands = {}
 try:
     from babel.messages import frontend as babel
     commands.update({
-        'compile_catalog': babel.compile_catalog,
-        'extract_messages': babel.extract_messages,
-        'init_catalog': babel.init_catalog,
-        'update_catalog': babel.update_catalog,
+        "compile_catalog": babel.compile_catalog,
+        "extract_messages": babel.extract_messages,
+        "init_catalog": babel.init_catalog,
+        "update_catalog": babel.update_catalog,
     })
 except ImportError:
     pass
 
-filtermod = Extension('Cfilters',
-                      sources = ['r2/lib/c/filters.c'])
-
 discount_path = "r2/lib/contrib/discount"
-discountmod = Extension('reddit-discount',
-                        include_dirs = [discount_path],
-                        define_macros = [("VERSION", '"1.6.8"')],
-                        sources = ([ "r2/lib/c/reddit-discount-wrapper.c" ]
-                                   + map(lambda x: os.path.join(discount_path, x),
-                                      ["Csio.c",
-                                       "css.c",
-                                       "docheader.c",
-                                       "dumptree.c",
-                                       "generate.c",
-                                       "main.c",
-                                       "markdown.c",
-                                       "mkdio.c",
-                                       "resource.c",
-                                       "html5.c",
-                                       "tags.c",
-                                       "toc.c",
-                                       "version.c",
-                                       "emmatch.c",
-                                       "basename.c",
-                                       "xml.c",
-                                       "xmlpage.c"])))
-ext_modules = [filtermod, discountmod]
 
 setup(
-    name='r2',
+    name="r2",
     version="",
-    install_requires=["Routes<=1.8",
-                      "Pylons==0.9.6.2",
-                      "webhelpers==0.6.4",
-                      "boto >= 1.9b",
-                      "pytz",
-                      "pycrypto",
-                      "Babel>=0.9.1",
-                      "cython>=0.14",
-                      "SQLAlchemy==0.5.3",
-                      "BeautifulSoup",
-                      "cssutils==0.9.5.1",
-                      "chardet",
-                      "psycopg2",
-                      "pycountry",
-                      "pycassa==1.1.0",
-                      "PIL",
-                      "pycaptcha",
-                      "amqplib",
-                      "pylibmc==1.2.1-dev"
-                      ],
-    dependency_links = ['https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev',],
-    packages=find_packages(exclude=['ez_setup']),
-    include_package_data=True,
-    test_suite = 'nose.collector',
-    package_data={'r2': ['i18n/*/LC_MESSAGES/*.mo']},
-    cmdclass = commands,
-    ext_modules = ext_modules,
+    install_requires=[
+        "Routes<=1.8",
+        "Pylons==0.9.6.2",
+        "webhelpers==0.6.4",
+        "boto >= 1.9b",
+        "pytz",
+        "pycrypto",
+        "Babel>=0.9.1",
+        "cython>=0.14",
+        "SQLAlchemy==0.5.3",
+        "BeautifulSoup",
+        "cssutils==0.9.5.1",
+        "chardet",
+        "psycopg2",
+        "pycountry",
+        "pycassa==1.1.0",
+        "PIL",
+        "pycaptcha",
+        "amqplib",
+        "pylibmc==1.2.1-dev",
+    ],
+    dependency_links=[
+        "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
+    ],
+    packages=find_packages(exclude=["ez_setup"]),
+    cmdclass=commands,
+    ext_modules=[
+        Extension(
+            "Cfilters",
+            sources=[
+                "r2/lib/c/filters.c",
+            ]
+        ),
+        Extension(
+            "reddit-discount",
+            include_dirs=[discount_path],
+            define_macros=[("VERSION", '"1.6.8"')],
+            sources=(
+                ["r2/lib/c/reddit-discount-wrapper.c"] +
+                [os.path.join(discount_path, x) for x in [
+                    "Csio.c",
+                    "css.c",
+                    "docheader.c",
+                    "dumptree.c",
+                    "generate.c",
+                    "main.c",
+                    "markdown.c",
+                    "mkdio.c",
+                    "resource.c",
+                    "html5.c",
+                    "tags.c",
+                    "toc.c",
+                    "version.c",
+                    "emmatch.c",
+                    "basename.c",
+                    "xml.c",
+                    "xmlpage.c",
+                ]]
+            )
+        )
+    ],
     entry_points="""
     [paste.app_factory]
     main=r2:make_app
