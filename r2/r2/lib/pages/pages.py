@@ -2580,7 +2580,7 @@ class ModList(UserList):
 
     @property
     def table_title(self):
-        return _("moderators to %(reddit)s") % dict(reddit = c.site.name)
+        return _("moderators of %(reddit)s") % dict(reddit = c.site.name)
 
     def editable_fn(self, user):
         if not c.user_is_loggedin:
