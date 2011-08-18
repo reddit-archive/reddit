@@ -172,6 +172,12 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
         except tdb_cassandra.NotFound:
             return []
 
+    @classmethod
+    def get_template(cls, sr_id, ft_id):
+        if ft_id not in cls.get_template_ids(sr_id):
+            return None
+        return FlairTemplate._byID(ft_id)
+
     def _index_keys(self):
         keys = set(self._dirties.iterkeys())
         keys |= frozenset(self._orig.iterkeys())

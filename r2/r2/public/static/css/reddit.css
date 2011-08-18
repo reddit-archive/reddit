@@ -644,6 +644,10 @@ ul.flat-vert {text-align: left;}
     border-radius: 2px;
 }
 
+.flair input {
+    font-size: xx-small;
+}
+
 .link .flair {
     margin-top: -1px;
 }
@@ -671,6 +675,8 @@ ul.flat-vert {text-align: left;}
     margin-right: 4ex;
 }
 
+.flaircell.narrow, .flairlist .header.narrow { width: 14ex; }
+
 .flairsample-left { text-align: right !important; }
 .flairsample-right { text-align: left !important; }
 
@@ -679,6 +685,26 @@ ul.flat-vert {text-align: left;}
 .flairlist .flaircell input[type="text"] { width: 28ex; }
 .flairrow button { display: none; }
 .flairrow .edited button { display: inline-block; }
+
+.flairselector { font-size: x-small; position: absolute; width: 400px; }
+
+.flairselector.drop-choices.active {
+    border: 1px solid gray;
+    display: block;
+}
+
+.flairselector ul { float: left; width: 200px; }
+
+.flairselector .selected, .flairselector.active li {
+    display: block;
+    font-weight: normal;
+    text-decoration: none !important;
+}
+
+.flairselector li { border: 1px solid white; cursor: pointer; }
+.flairselector li:hover { background-color: #bbb;  border: 1px solid #bbb; }
+.flairselector li a:hover { text-decoration: none; }
+.flairselector li.selected { border: dashed 1px black; }
 
 .media-button .option { color: red; }
 .media-button .option.active {

@@ -59,8 +59,8 @@
                       _("you are no longer an approved submitter"))}
   %endif
 
-  %if thing.flair_selector:
-    ${unsafe(thing.flair_selector.render())}
+  %if thing.flair_prefs:
+    ${thing.flair_prefs}
   %endif
 
   %if thing.sr.description:

@@ -493,9 +493,9 @@ class SubredditInfoBar(CachedTemplate):
         self.path = request.path
 
         if c.user_is_loggedin:
-            self.flair_selector = FlairSelector()
+            self.flair_prefs = FlairPrefs()
         else:
-            self.flair_selector = None
+            self.flair_prefs = None
 
         CachedTemplate.__init__(self)
 
@@ -2271,7 +2271,7 @@ class WrappedUser(CachedTemplate):
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
                  subreddit = None, force_show_flair = None,
-                 flair_template = None):
+                 flair_template = None, flair_text_editable = False):
         attribs.sort()
         author_cls = 'author'
 
@@ -2289,9 +2289,12 @@ class WrappedUser(CachedTemplate):
         has_flair = bool(flair_text or flair_css_class)
 
         if flair_template:
+            flair_template_id = flair_template._id
             flair_text = flair_template.text
             flair_css_class = flair_template.css_class
             has_flair = True
+        else:
+            flair_template_id = None
 
         if flair_css_class:
             # This is actually a list of CSS class *suffixes*. E.g., "a b c"
@@ -2318,7 +2321,9 @@ class WrappedUser(CachedTemplate):
                                 flair_enabled = flair_enabled,
                                 flair_position = flair_position,
                                 flair_text = flair_text,
+                                flair_text_editable = flair_text_editable,
                                 flair_css_class = flair_css_class,
+                                flair_template_id = flair_template_id,
                                 author_cls = author_cls,
                                 author_title = author_title,
                                 attribs = attribs,
@@ -2526,21 +2531,30 @@ class FlairTemplateEditor(Templated):
 class FlairTemplateSample(Templated):
     """Like a read-only version of FlairTemplateEditor."""
     def __init__(self, flair_template):
-        wrapped_user = WrappedUser(c.user, subreddit=c.site,
-                                   force_show_flair=True,
+        wrapped_user = WrappedUser(c.user, subreddit=c.site, force_show_flair=True,
                                    flair_template=flair_template)
         Templated.__init__(self, flair_template_id=flair_template._id,
                            wrapped_user=wrapped_user)
 
+class FlairPrefs(CachedTemplate):
+    def __init__(self):
+        sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
+        user_flair_enabled = getattr(c.user, 'flair_%s_enabled' % c.site._id,
+                                     True)
+        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+                                   force_show_flair=True)
+        CachedTemplate.__init__(self, sr_flair_enabled=sr_flair_enabled,
+                                user_flair_enabled=user_flair_enabled,
+                                wrapped_user=wrapped_user)
+
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
     def __init__(self):
-        get_flair_attr = lambda a, default=None: getattr(
-            c.user, 'flair_%s_%s' % (c.site._id, a), default)
-        user_flair_enabled = get_flair_attr('enabled', default=True)
-        text = get_flair_attr('text')
-        css_class = get_flair_attr('css_class')
-        sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
+        position = getattr(c.site, 'flair_position', 'right')
+
+        attr_pattern = 'flair_%s_%%s' % c.site._id
+        text = getattr(c.user, attr_pattern % 'text')
+        css_class = getattr(c.user, attr_pattern % 'css_class')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
         # TODO(intortus): Maintain sorting.
@@ -2559,10 +2573,9 @@ class FlairSelector(CachedTemplate):
         wrapped_user = WrappedUser(c.user, subreddit=c.site,
                                    force_show_flair=True)
 
-        Templated.__init__(self, user_flair_enabled=user_flair_enabled,
-                           text=text, css_class=css_class,
-                           sr_flair_enabled=sr_flair_enabled,
-                           choices=choices, matching_template=matching_template,
+        Templated.__init__(self, text=text, css_class=css_class,
+                           position=position, choices=choices,
+                           matching_template=matching_template,
                            wrapped_user=wrapped_user)
 
 

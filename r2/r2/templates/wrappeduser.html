@@ -27,7 +27,14 @@
     <% enabled = user.flair_enabled %>
   %endif
   %if user.has_flair and enabled:
-    <span class="flair ${user.flair_css_class}">${user.flair_text}</span>
+    <span class="flair ${user.flair_css_class}">
+      %if user.flair_text_editable:
+        <input class="editable_flair_text" type="text"
+               value="${user.flair_text}">
+      %else:
+        ${user.flair_text}
+      %endif
+    </span>
   %endif
 </%def>
 

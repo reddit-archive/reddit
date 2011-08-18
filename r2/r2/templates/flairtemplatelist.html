@@ -28,13 +28,17 @@
     empty_template._committed = True  # to disable unnecessary warning
 %>
 
-<div class="usertable">
+<div class="flairlist usertable">
+  <span class="header">&nbsp;</span>
+  <span class="header narrow">${_('user can edit?')}</span>
+  <span class="header">${_('flair text')}</span>
+  <span class="header">${_('css class')}</span>
   <div class="flairtemplatelist flairlist pretty-form">
     %for flair_template in thing.templates:
-      ${unsafe(flair_template.render())}
+      ${flair_template}
     %endfor
     <div id="empty-flair-template">
-      ${unsafe(FlairTemplateEditor(empty_template).render())}
+      ${FlairTemplateEditor(empty_template)}
     </div>
   </div>
 </div>

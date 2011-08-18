@@ -20,15 +20,18 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<ul>
-  %for choice in thing.choices:
-    <%
-      c = 'flairsample-%s' % thing.position
-      if choice.flair_template_id == thing.matching_template:
-          c += ' selected'
-    %>
-    <li class="${c}" id="${choice.flair_template_id}">
-      ${choice}
-    </li>
-  %endfor
-</ul>
+%if thing.sr_flair_enabled:
+  <form class="toggle flairtoggle">
+    <input type="hidden" name="flair_template_id">
+    <input id="flair_enabled" type="checkbox" name="flair_enabled"
+        %if thing.user_flair_enabled:
+          checked="checked"
+        %endif
+        >
+    ${_("Show my flair on this reddit. It looks like:")}
+    <div>${thing.wrapped_user}</div>
+    <a class="flairselectbtn" href="javascript://">select</a>
+    <div class="flairselector drop-choices"></div>
+  </form>
+%endif
+

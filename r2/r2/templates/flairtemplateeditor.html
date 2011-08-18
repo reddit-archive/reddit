@@ -33,6 +33,10 @@
         ${unsafe(thing.sample.render())}
       %endif
     </span>
+    <span class="flaircell narrow">
+      <input type="checkbox" name="text_editable"
+          ${'checked="checked"' if thing.text_editable else ''} />
+    </span>
     <span class="flaircell">
       <input type="text" size="32" maxlength="64" name="text"
              value="${thing.text}" />

@@ -35,7 +35,8 @@ from r2.lib.utils import timeago, tup, filter_links, levenshtein
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, ClickGadget, \
     UrlParser, WrappedUser
-from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor
+from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
+    FlairSelector
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
@@ -2026,9 +2027,10 @@ class ApiController(RedditController):
                    VModhash(),
                    flair_template_id = nop('id'),
                    text = VFlairText('text'),
-                   css_class = VFlairCss('css_class'))
+                   css_class = VFlairCss('css_class'),
+                   text_editable = VBoolean('text_editable'))
     def POST_flairtemplate(self, form, jquery, flair_template_id, text,
-                           css_class):
+                           css_class, text_editable):
         # Check validation.
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
             form.set_html(".status:first", _('invalid css class'))
@@ -2042,11 +2044,13 @@ class ApiController(RedditController):
             ft = FlairTemplate._byID(flair_template_id)
             ft.text = text
             ft.css_class = css_class
+            ft.text_editable = text_editable
             ft._commit()
             new = False
         else:
             ft = FlairTemplateBySubredditIndex.create_template(
-                c.site._id, text=text, css_class=css_class)
+                c.site._id, text=text, css_class=css_class,
+                text_editable=text_editable)
             new = True
 
         # TODO(intortus): ...
@@ -2062,6 +2066,43 @@ class ApiController(RedditController):
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
+
+    def POST_flairselector(self):
+        return FlairSelector().render()
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   flair_template_id = nop("flair_template_id"))
+    def POST_selectflair(self, form, jquery, flair_template_id):
+        flair_template = FlairTemplateBySubredditIndex.get_template(
+            c.site._id, flair_template_id)
+
+        if not flair_template:
+            # TODO: serve error to client
+            g.log.debug('invalid flair template (%s) for subreddit %s',
+                        flair_template_id, c.site._id)
+            return
+
+        text = flair_template.text
+        css_class = flair_template.css_class
+
+        c.site.add_flair(c.user)
+        setattr(c.user, 'flair_%s_text' % c.site._id, text)
+        setattr(c.user, 'flair_%s_css_class' % c.site._id, css_class)
+        c.user._commit()
+
+        g.log.debug('committed flair: %r, %r', text, css_class)
+
+        #jquery('input[name="text"]').data('saved', text).value(text)
+        #jquery('input[name="css_class"]').data('saved', css_class).value(
+            #css_class)
+
+        u = WrappedUser(c.user, force_show_flair=True,
+                        flair_text_editable=flair_template.text_editable)
+        flair = u.render(style='html')
+        jquery('#tabbedpane-grant .id-%s'
+               % c.user._fullname).parent().html(flair)
+        jquery('.flairtoggle .id-%s' % c.user._fullname).parent().html(flair)
 
     @validatedForm(VAdminOrAdminSecret("secret"),
                    award = VByName("fullname"),
