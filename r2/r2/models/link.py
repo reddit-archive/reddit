@@ -500,7 +500,7 @@ class Link(Thing, Printable):
             item.approval_checkmark = None
 
             item_age = datetime.now(g.tz) - item._date
-            if item_age.days > g.VOTE_AGE_LIMIT:
+            if item_age.days > g.VOTE_AGE_LIMIT and item.promoted is None:
                 item.votable = False
             else:
                 item.votable = True
