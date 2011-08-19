@@ -27,6 +27,7 @@ from random import choice
 from pylons import g, c
 from urllib import quote_plus, unquote_plus
 import sha
+import urllib
 
 key_len = 16
 pad_len = 32
@@ -198,7 +199,8 @@ class PromotedLinkClickInfo(PromotedLinkInfo):
         return PromotedLinkInfo.init_defaults(self, **kw)
 
     def tracking_url(self):
-        s = (PromotedLinkInfo.tracking_url(self) + '&url=' + self.dest)
+        s = (PromotedLinkInfo.tracking_url(self) + '&url=' +
+             urllib.quote_plus(self.dest))
         return s
 
 class AdframeInfo(PromotedLinkInfo):
