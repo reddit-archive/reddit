@@ -253,34 +253,32 @@ def set_subreddit():
     elif sr_name == 'r':
         #reddits
         c.site = Sub
+    elif '+' in sr_name:
+        sr_names = sr_name.split('+')
+        srs = set(Subreddit._by_name(sr_names, stale=can_stale).values())
+        if All in srs:
+            c.site = All
+        elif Friends in srs:
+            c.site = Friends
+        else:
+            srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
+            if len(srs) == 0:
+                c.site = MultiReddit([], sr_name)
+            elif len(srs) == 1:
+                c.site = srs.pop()    
+            else:
+                sr_ids = [sr._id for sr in srs]
+                c.site = MultiReddit(sr_ids, sr_name)
     else:
         try:
-            if '+' in sr_name:
-                srs = set()
-                sr_names = sr_name.split('+')
-                real_path = sr_name
-                srs = Subreddit._by_name(sr_names, stale=can_stale).values()
-                if len(srs) != len(sr_names):
-                    abort(404)
-                elif any(isinstance(sr, FakeSubreddit)
-                         for sr in srs):
-                    if All in srs:
-                        c.site = All
-                    elif Friend in srs:
-                        c.site = Friend
-                    else:
-                        abort(400)
-                else:
-                    sr_ids = [sr._id for sr in srs]
-                    c.site = MultiReddit(sr_ids, real_path)
-            else:
-                c.site = Subreddit._by_name(sr_name, stale=can_stale)
+            c.site = Subreddit._by_name(sr_name, stale=can_stale)
         except NotFound:
             sr_name = chksrname(sr_name)
             if sr_name:
                 redirect_to("/reddits/search?q=%s" % sr_name)
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
+
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and isinstance(c.site, DefaultSR) and domain:
         c.site = DomainSR(domain)
