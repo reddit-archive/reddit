@@ -177,14 +177,14 @@ button.button {
         margin:  35px -5px -1px;
         border-top:  1px solid hsl(210,35%,10%);
         display: none;
-        @include box-orient(horizontal);
-        @include box-align(center);
-        @include box-pack(center);
         @include box-shadow(inset 0px 3px 8px hsla(0,0%,0%,.8));
         text-shadow: 0px -1px 0px hsla(0,0%,0%,.8);
+        text-align: center;
+        height: 60px;
+        overflow: hidden;
 
         a {
-            display: block;
+            display: inline-block;
             color: white;
             text-decoration: none;
             font-size: 11px;
@@ -204,10 +204,6 @@ button.button {
                 background-color: hsl(210,25%,20%);
                 @include box-shadow(inset 0px 3px 8px hsla(0,0%,0%,.8));
                 border-left: 1px solid hsl(210,35%,40%);
-                padding: {
-                    top: 15px;
-                    bottom: 5px;
-                }
             }
 
             &:first-child {
@@ -219,7 +215,7 @@ button.button {
         }
 
         &.expanded {
-            @include display-box;
+            display: block;
         }
     }
 }
@@ -235,11 +231,14 @@ button.button {
     .options_expando {
         margin: 10px -50px 10px 0px; //Overwrite the link styles
     }
+    .md {
+        margin-right: 40px;
+    }
 }
 .message {
 
     .options_expando {
-        margin: 10px -55px 10px -5px;
+        margin: 25px -55px 10px -5px;
     }
 }
 

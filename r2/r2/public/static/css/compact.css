@@ -44,19 +44,20 @@ button.button { padding: 0 5px; }
 .comment .options_link { top: 10px; }
 
 /*Options expando*/
-.link .options_expando, .comment .options_expando, .message .options_expando { background: #213345; margin: 35px -5px -1px; border-top: 1px solid #111922; display: none; -moz-box-orient: horizontal; -webkit-box-orient: horizontal; -ms-box-orient: horizontal; box-orient: horizontal; -moz-box-align: center; -webkit-box-align: center; -ms-box-align: center; box-align: center; -moz-box-pack: center; -webkit-box-pack: center; -ms-box-pack: center; box-pack: center; -moz-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -webkit-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -o-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.8); }
-.link .options_expando a, .comment .options_expando a, .message .options_expando a { display: block; color: white; text-decoration: none; font-size: 11px; padding: 10px; width: 50px; height: 40px; text-align: center; border-right: 1px solid #111922; border-left: 1px solid #324c67; -moz-transition: all 100ms ease-in; -webkit-transition: all 100ms ease-in; -o-transition: all 100ms ease-in; transition: all 100ms ease-in; }
+.link .options_expando, .comment .options_expando, .message .options_expando { background: #213345; margin: 35px -5px -1px; border-top: 1px solid #111922; display: none; -moz-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -webkit-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -o-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.8); text-align: center; height: 60px; overflow: hidden; }
+.link .options_expando a, .comment .options_expando a, .message .options_expando a { display: inline-block; color: white; text-decoration: none; font-size: 11px; padding: 10px; width: 50px; height: 40px; text-align: center; border-right: 1px solid #111922; border-left: 1px solid #324c67; -moz-transition: all 100ms ease-in; -webkit-transition: all 100ms ease-in; -o-transition: all 100ms ease-in; transition: all 100ms ease-in; }
 .link .options_expando a:active, .comment .options_expando a:active, .message .options_expando a:active { background-color: #324c67; border-left: 1px solid #42668a; }
-.link .options_expando a:hover, .comment .options_expando a:hover, .message .options_expando a:hover { background-color: #263340; -moz-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -webkit-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -o-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); border-left: 1px solid #42668a; padding-top: 15px; padding-bottom: 5px; }
+.link .options_expando a:hover, .comment .options_expando a:hover, .message .options_expando a:hover { background-color: #263340; -moz-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -webkit-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); -o-box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); box-shadow: inset 0px 3px 8px rgba(0, 0, 0, 0.8); border-left: 1px solid #42668a; }
 .link .options_expando a:first-child, .comment .options_expando a:first-child, .message .options_expando a:first-child { border-left: none; }
 .link .options_expando a:last-child, .comment .options_expando a:last-child, .message .options_expando a:last-child { border-right: none; }
-.link .options_expando.expanded, .comment .options_expando.expanded, .message .options_expando.expanded { display: -moz-box; display: -webkit-box; display: -ms-box; display: box; }
+.link .options_expando.expanded, .comment .options_expando.expanded, .message .options_expando.expanded { display: block; }
 
 .comment .entry, .message .entry { margin-right: 50px; }
 .comment .child .options_link, .message .child .options_link { top: 8px; }
 .comment .options_expando, .message .options_expando { margin: 10px -50px 10px 0px; }
+.comment .md, .message .md { margin-right: 40px; }
 
-.message .options_expando { margin: 10px -55px 10px -5px; }
+.message .options_expando { margin: 25px -55px 10px -5px; }
 
 .options_icons, .email-icon, .report-icon, .save-icon, .unsave-icon, .domain-icon, .edit-icon, .reply-icon, .permalink-icon, .collapse-icon, .context-icon, .parent-icon, .unread-icon, .hide-icon, .unhide-icon { display: block; width: 24px; height: 24px; margin-left: auto; margin-right: auto; margin-bottom: 5px; }
 
