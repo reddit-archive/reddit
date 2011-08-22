@@ -458,7 +458,9 @@ class LimitUploadSize(object):
 
         return self.app(environ, start_response)
 
-
+# TODO CleanupMiddleware seems to exist because cookie headers are being duplicated
+# somewhere in the response processing chain. It should be removed as soon as we
+# find the underlying issue.
 class CleanupMiddleware(object):
     """
     Put anything here that should be called after every other bit of
@@ -475,9 +477,10 @@ class CleanupMiddleware(object):
             seen = set()
             for head, val in reversed(headers):
                 head = head.lower()
-                if head not in seen:
+                key = (head, val.split("=", 1)[0])
+                if key not in seen:
                     fixed.insert(0, (head, val))
-                    seen.add(head)
+                    seen.add(key)
             return start_response(status, fixed, exc_info)
         return self.app(environ, custom_start_response)
 
