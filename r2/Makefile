@@ -58,6 +58,7 @@ RTLCSS      = $(CSSTARGETS:.css=-rtl.css)
 NAMES = $(static_dir)/names.json
 
 PYX_FILES := $(shell find . -name \*.pyx)
+PYXC_FILES := $(PYX_FILES:.pyx=.c)
 PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
 NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
@@ -78,7 +79,7 @@ endif
 
 all:	pyx static names $(INIS)
 
-.PHONY: 	pyx js css rtl static names clean clean_static all
+.PHONY: 	pyx js css rtl static names clean clean_static clean_pyx all
 
 $(NAMES): $(JSTARGETS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
@@ -101,12 +102,11 @@ $(RTLCSS):	%-rtl.css : %.css
 	   -e "s/>####</right/g" \
 	   -e "s/\(margin\|padding\):\s*\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)\s\+\([^; ]\+\)/\1:\2 \5 \4 \3/g" $< > $@
 
-$(PYXSO_FILES): %.so : %.pyx
-	rm -f $(<:.pyx=.pyc)
+%.c: %.pyx
 	cython $<
-	mkdir -p tmp
-	PYTHONPATH=tmp $(PYTHON) pyx_setup.py develop -d tmp -b tmp $<
-	rm -r tmp
+
+$(PYXSO_FILES): $(PYXC_FILES)
+	python setup.py build_ext --inplace
 
 pyx: 		$(PYXSO_FILES)
 
@@ -120,8 +120,11 @@ rtl:		$(RTLCSS)
 
 names:		$(NAMES)
 
-clean: clean_static
-	rm -f $(PYXSO_FILES) $(INIS)
+clean: clean_static clean_pyx
+	rm -f $(INIS)
+
+clean_pyx:
+	rm -f $(PYXSO_FILES) $(PYXC_FILES)
 
 clean_static: clean_names
 	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)

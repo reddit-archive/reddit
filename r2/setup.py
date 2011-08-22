@@ -27,9 +27,11 @@ use_setuptools()
 
 from setuptools import find_packages
 from distutils.core import setup, Extension
+from Cython.Distutils import build_ext
 import os
+import fnmatch
 
-commands = {}
+commands = {"build_ext": build_ext}
 try:
     from babel.messages import frontend as babel
     commands.update({
@@ -40,6 +42,18 @@ try:
     })
 except ImportError:
     pass
+
+
+# add the cython modules
+pyx_extensions = []
+for root, directories, files in os.walk('.'):
+    for f in fnmatch.filter(files, '*.pyx'):
+        path = os.path.join(root, f)
+        module_name, _ = os.path.splitext(path)
+        module_name = os.path.normpath(module_name)
+        module_name = module_name.replace(os.sep, '.')
+        pyx_extensions.append(Extension(module_name, [path]))
+
 
 discount_path = "r2/lib/contrib/discount"
 
@@ -72,7 +86,7 @@ setup(
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,
-    ext_modules=[
+    ext_modules=pyx_extensions + [
         Extension(
             "Cfilters",
             sources=[
