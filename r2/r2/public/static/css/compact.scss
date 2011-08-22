@@ -6,8 +6,8 @@
 @import "compass/css3";
 
 @mixin vertical_gradient($from, $to) {
-    background-color: ($from + $to) / 2;
     @include background(linear-gradient(top, $from, $to));
+    background-color: mix($from, $to); //Takes 2 colors, and gives their combination. Looks good on gradual gradients, not on "exciting" gradients
 }
 @mixin sprite($url) {
     background-image: url($url); /*SPRITE*/
@@ -78,14 +78,12 @@ textarea {
     white-space: nowrap;
     width: auto;
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
-    background-color: #80A2C4;
     border: 1px solid #517191;
     @include box-shadow(inset 0px 1px 0px hsla(0,0%,100%,.75), 0px 1px 1px rgba(255,255,255,.6), 0px -1px 1px rgba(0,0,0,.1) );
 }
 .button:active, .button[selected], .button.active,
 /*Vote toolbar styles*/.button.upmod, .button.downmod
  {
-    background-color: #80A2C4;
     @include vertical_gradient(#7E8994, #80A2C4);
 }
 button.button {
@@ -311,7 +309,6 @@ button.button {
 
 /*Toolbar*/
 #topbar {
-    background-color: #A8C4E0;
     @include vertical_gradient(#CEE3F8, #A8C4E0);
     border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7;
     @include box-sizing(border-box);
