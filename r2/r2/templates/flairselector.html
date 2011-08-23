@@ -22,7 +22,7 @@
 
 <h2>${_("select flair")}</h2>
 <ul>
-  %if c.site.flair_self_assign_enabled:
+  %if thing.choices and c.site.flair_self_assign_enabled:
     %for choice in thing.choices:
       <%
         li_class = 'flairsample-%s' % thing.position
@@ -34,8 +34,6 @@
       </li>
     %endfor
   %else:
-    <li class="error">
-      ${_("flair selection unavailable")}
-    </li>
+    <li class="error">${_("flair selection unavailable")}</li>
   %endif
 </ul>

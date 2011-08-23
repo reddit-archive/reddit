@@ -2559,8 +2559,8 @@ class FlairSelector(CachedTemplate):
         position = getattr(c.site, 'flair_position', 'right')
 
         attr_pattern = 'flair_%s_%%s' % c.site._id
-        text = getattr(c.user, attr_pattern % 'text')
-        css_class = getattr(c.user, attr_pattern % 'css_class')
+        text = getattr(c.user, attr_pattern % 'text', '')
+        css_class = getattr(c.user, attr_pattern % 'css_class', '')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
         # TODO(intortus): Maintain sorting.
