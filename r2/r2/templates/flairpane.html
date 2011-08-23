@@ -35,7 +35,20 @@
               checked="checked"
             %endif
             />
-        <label for="sr_flair_enabled">${_("enable user flair in this subreddit")}</label>
+        <label for="sr_flair_enabled">
+            ${_("enable user flair in this subreddit")}
+        </label>
+        <br>
+        <input type="checkbox"
+            id="sr_flair_self_assign_enabled"
+            name="flair_self_assign_enabled"
+            %if thing.flair_self_assign_enabled:
+              checked="checked"
+            %endif
+            />
+        <label for="sr_flair_self_assign_enabled">
+            ${_("allow users to assign their own flair")}
+        </label>
       </%utils:line_field>
       <%utils:line_field title="${_('flair position')}">
         <table class="small-field">

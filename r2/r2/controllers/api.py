@@ -2006,13 +2006,17 @@ class ApiController(RedditController):
         c.user._commit()
         jquery.refresh()
 
-    @validatedForm(VFlairManager(),
-                   VModhash(),
-                   flair_enabled = VBoolean("flair_enabled"),
-                   flair_position = VOneOf("flair_position", ("left", "right")))
-    def POST_flairconfig(self, form, jquery, flair_enabled, flair_position):
+    @validatedForm(
+        VFlairManager(),
+        VModhash(),
+        flair_enabled = VBoolean("flair_enabled"),
+        flair_position = VOneOf("flair_position", ("left", "right")),
+        flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
+    def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
+                         flair_self_assign_enabled):
         c.site.flair_enabled = flair_enabled
         c.site.flair_position = flair_position
+        c.site.flair_self_assign_enabled = flair_self_assign_enabled
         c.site._commit()
         jquery.refresh()
 
@@ -2081,6 +2085,11 @@ class ApiController(RedditController):
             # TODO: serve error to client
             g.log.debug('invalid flair template (%s) for subreddit %s',
                         flair_template_id, c.site._id)
+            return
+
+        if not c.site.flair_self_assign_enabled:
+            # TODO: serve error to client
+            g.log.debug('flair self-assignment not permitted')
             return
 
         text = flair_template.text

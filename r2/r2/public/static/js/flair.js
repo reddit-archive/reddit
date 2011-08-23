@@ -67,7 +67,7 @@ $(function() {
                 .css("left",
                      ($(button).position().left + $(button).width() - width)
                      + "px");
-            $(".flairselector li").click(postFlairSelection);
+            $(".flairselector li:not(.error)").click(postFlairSelection);
         }
 
         $(".flairselector").html('<img src="/static/throbber.gif" />');

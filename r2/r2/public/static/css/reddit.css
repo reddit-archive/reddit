@@ -688,6 +688,13 @@ ul.flat-vert {text-align: left;}
 
 .flairselector { font-size: x-small; position: absolute; width: 400px; }
 
+.flairselector h2 {
+    background: #cee3f8;
+    padding-bottom: 2px;
+    margin-bottom: 3px;
+    text-align: center;
+}
+
 .flairselector.drop-choices.active {
     border: 1px solid gray;
     display: block;

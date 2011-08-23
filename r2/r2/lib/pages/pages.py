@@ -2421,7 +2421,8 @@ class FlairPane(Templated):
             self,
             tabs=TabbedPane(tabs),
             flair_enabled=c.site.flair_enabled,
-            flair_position=c.site.flair_position)
+            flair_position=c.site.flair_position,
+            flair_self_assign_enabled=c.site.flair_self_assign_enabled)
 
 class FlairList(Templated):
     """List of users who are tagged with flair within a subreddit."""
@@ -2541,11 +2542,16 @@ class FlairPrefs(CachedTemplate):
         sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
         user_flair_enabled = getattr(c.user, 'flair_%s_enabled' % c.site._id,
                                      True)
+        sr_flair_self_assign_enabled = getattr(
+            c.site, 'flair_self_assign_enabled', True)
         wrapped_user = WrappedUser(c.user, subreddit=c.site,
                                    force_show_flair=True)
-        CachedTemplate.__init__(self, sr_flair_enabled=sr_flair_enabled,
-                                user_flair_enabled=user_flair_enabled,
-                                wrapped_user=wrapped_user)
+        CachedTemplate.__init__(
+            self,
+            sr_flair_enabled=sr_flair_enabled,
+            sr_flair_self_assign_enabled=sr_flair_self_assign_enabled,
+            user_flair_enabled=user_flair_enabled,
+            wrapped_user=wrapped_user)
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""

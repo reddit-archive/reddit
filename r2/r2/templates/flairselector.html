@@ -20,15 +20,22 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<h2>${_("select flair")}</h2>
 <ul>
-  %for choice in thing.choices:
-    <%
-      c = 'flairsample-%s' % thing.position
-      if choice.flair_template_id == thing.matching_template:
-          c += ' selected'
-    %>
-    <li class="${c}" id="${choice.flair_template_id}">
-      ${choice}
+  %if c.site.flair_self_assign_enabled:
+    %for choice in thing.choices:
+      <%
+        li_class = 'flairsample-%s' % thing.position
+        if choice.flair_template_id == thing.matching_template:
+            li_class += ' selected'
+      %>
+      <li class="${li_class}" id="${choice.flair_template_id}">
+        ${choice}
+      </li>
+    %endfor
+  %else:
+    <li class="error">
+      ${_("flair selection unavailable")}
     </li>
-  %endfor
+  %endif
 </ul>
