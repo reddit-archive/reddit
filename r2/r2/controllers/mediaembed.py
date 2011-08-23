@@ -66,9 +66,9 @@ class AdController(MinimalController):
                         request.fullpath,
                         random.choice(xrange(100)))
 
-    def GET_ad(self, reddit_name = None):
+    def GET_ad(self, reddit_name = None, keyword=None):
         c.render_style = "html"
-        return render_ad(reddit_name=reddit_name)
+        return render_ad(reddit_name=reddit_name, keyword=keyword)
 
     def GET_ad_by_codename(self, codename = None):
         if not codename:

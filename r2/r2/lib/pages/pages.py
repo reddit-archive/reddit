@@ -824,6 +824,9 @@ class LinkInfoPage(Reddit):
         if hasattr(self.link, "shortlink"):
             self.shortlink = self.link.shortlink
 
+        if hasattr(self.link, "dart_keyword"):
+            c.custom_dart_keyword = self.link.dart_keyword
+
         # if we're already looking at the 'duplicates' page, we can
         # avoid doing this lookup twice
         if duplicates is None:
@@ -3470,12 +3473,13 @@ class RawString(Templated):
        return unsafe(self.s)
 
 class Dart_Ad(CachedTemplate):
-    def __init__(self, dartsite, tag):
+    def __init__(self, dartsite, tag, custom_keyword=None):
         tag = tag or "homepage"
+        keyword = custom_keyword or tag
         tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
                                           ip = request.ip)
         Templated.__init__(self, tag = tag, dartsite = dartsite,
-                           tracker_url = tracker_url)
+                           tracker_url = tracker_url, keyword=keyword)
 
     def render(self, *a, **kw):
         res = CachedTemplate.render(self, *a, **kw)
@@ -3494,22 +3498,24 @@ class HouseAd(CachedTemplate):
 class ComScore(CachedTemplate):
     pass
 
-def render_ad(reddit_name=None, codename=None):
+def render_ad(reddit_name=None, codename=None, keyword=None):
     if not reddit_name:
         reddit_name = g.default_sr
         if g.frontpage_dart:
-            return Dart_Ad("reddit.dart", reddit_name).render()
+            return Dart_Ad("reddit.dart", reddit_name, keyword).render()
 
     try:
         sr = Subreddit._by_name(reddit_name)
     except NotFound:
-        return Dart_Ad("reddit.dart", g.default_sr).render()
+        return Dart_Ad("reddit.dart", g.default_sr, keyword).render()
 
     if sr.over_18:
         dartsite = "reddit.dart.nsfw"
     else:
         dartsite = "reddit.dart"
 
+    if keyword:
+        return Dart_Ad(dartsite, reddit_name, keyword).render()
 
     if codename:
         if codename == "DART":

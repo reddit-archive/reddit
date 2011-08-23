@@ -244,7 +244,7 @@ def make_map(global_conf={}, app_conf={}):
 
     # Used for showing ads
     mc("/ads/", controller = "ad", action = "ad")
-    mc("/ads/r/:reddit_name", controller = "ad", action = "ad")
+    mc("/ads/r/:reddit_name/:keyword", controller = "ad", action = "ad", keyword=None)
     mc("/ads/:codename", controller = "ad", action = "ad_by_codename")
 
     mc("/try", controller = "forms", action = "try_compact")
