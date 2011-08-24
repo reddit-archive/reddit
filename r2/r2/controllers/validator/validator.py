@@ -223,11 +223,8 @@ class nop(Validator):
 
 class VLang(Validator):
     def run(self, lang):
-        if lang:
-            lang = str(lang.split('[')[1].strip(']'))
-            if lang in g.all_languages:
-                return lang
-        #else
+        if lang in g.all_languages:
+            return lang
         return g.lang
 
 class VRequired(Validator):

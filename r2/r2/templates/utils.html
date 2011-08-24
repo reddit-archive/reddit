@@ -201,7 +201,7 @@ ${unsafe(txt)}
   </option>
   %endif
   %for x in langs:
-  <option ${x == default_lang  and "selected='selected'" or ""}>
+  <option ${x == default_lang  and "selected='selected'" or ""} value="${x}">
     ${g.lang_name[x]} [${x}]
   </option>
   %endfor
