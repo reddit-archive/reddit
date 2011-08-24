@@ -1645,9 +1645,8 @@ label + #moresearchinfo {
     text-align: left;
     z-index: 1001;
     padding: 10px;
-    border-color: #B2B2B2 black black #B2B2B2;
-    border-style: solid;
-    border-width: 1px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    border-radius: 10px;
 }
 
 .popup h1 {
