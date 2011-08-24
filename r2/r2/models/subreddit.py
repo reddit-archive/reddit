@@ -536,7 +536,7 @@ class Subreddit(Thing, Printable):
         sorted/rearranged version of user_subreddits()."""
         srs = cls.user_subreddits(user, ids = False)
         names = [s.name for s in srs if s.can_submit(user)]
-        names.sort()
+        names.sort(key=str.lower)
 
         #add the current site to the top (default_sr)
         if g.default_sr in names:
