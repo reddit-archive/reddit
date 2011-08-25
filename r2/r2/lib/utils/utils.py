@@ -275,11 +275,14 @@ def sanitize_url(url, require_scheme = False):
     if url.lower() == 'self':
         return url
 
-    u = urlparse(url)
-    # first pass: make sure a scheme has been specified
-    if not require_scheme and not u.scheme:
-        url = 'http://' + url
+    try:
         u = urlparse(url)
+        # first pass: make sure a scheme has been specified
+        if not require_scheme and not u.scheme:
+            url = 'http://' + url
+            u = urlparse(url)
+    except ValueError:
+        return
 
     if u.scheme and u.scheme in valid_schemes:
         # if there is a scheme and no hostname, it is a bad url.
