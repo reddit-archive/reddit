@@ -29,6 +29,26 @@ $(function() {
         return false;
     }
 
+    function selectFlairInSelector(e) {
+        $(".flairselector li").removeClass("selected");
+        $(this).addClass("selected");
+        var form = $(this).parent().parent().siblings("form").get(0);
+        $(form).children('input[name="flair_template_id"]').val(this.id);
+        var customizer = $(form).children(".customizer");
+        if ($(this).hasClass("texteditable")) {
+            customizer.addClass("texteditable");
+            var input = customizer.children("input");
+            input.val($.trim($(this).children(".flair").text())).select();
+            input.keyup(function() {
+                $(".flairselection .flair").text($(input).val());
+            });
+        } else {
+            customizer.removeClass("texteditable");
+        }
+        $(".flairselection").html($(this).first().children().clone());
+        return false;
+    }
+
     function postFlairSelection(e) {
         $(this).parent().parent().siblings("input").val(this.id);
         post_form(this.parentNode.parentNode.parentNode, "selectflair");
@@ -39,9 +59,11 @@ $(function() {
         var button = this;
 
         function columnize(col) {
+            var min_cols = 2;
             var max_col_height = 10;
             var length = $(col).children().length;
-            var num_cols = Math.ceil(length / max_col_height);
+            var num_cols =
+                Math.max(min_cols, Math.ceil(length / max_col_height));
             var height = Math.ceil(length / num_cols);
             var num_short_cols = num_cols * height - length;
 
@@ -67,7 +89,11 @@ $(function() {
                 .css("left",
                      ($(button).position().left + $(button).width() - width)
                      + "px");
-            $(".flairselector li:not(.error)").click(postFlairSelection);
+            $(".flairselector li:not(.error)").click(selectFlairInSelector);
+            $(".flairselector").click(function(e) { return false; });
+            $(".flairselector form")
+                .click(function(e) { e.stopPropagation(); });
+            $(".flairselector form").submit(postFlairSelection);
         }
 
         $(".flairselector").html('<img src="/static/throbber.gif" />');

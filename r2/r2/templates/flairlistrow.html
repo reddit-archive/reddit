@@ -41,7 +41,7 @@ from r2.lib.pages import WrappedUser
       <input type="text" size="32" maxlength="1000" name="css_class"
              value="${thing.flair_css_class}" />
     </span>
-    <button type="submit">save</button>
+    <button type="submit">${_('save')}</button>
     <span class="status"></span>
     ${utils.error_field(('BAD_CSS_NAME', 'flair_css_class'), 'name')}
     ${utils.error_field(('TOO_MUCH_FLAIR_CSS', 'flair_css_class'), 'name')}

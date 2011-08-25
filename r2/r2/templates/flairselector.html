@@ -26,6 +26,8 @@
     %for choice in thing.choices:
       <%
         li_class = 'flairsample-%s' % thing.position
+        if choice.flair_text_editable:
+            li_class += ' texteditable'
         if choice.flair_template_id == thing.matching_template:
             li_class += ' selected'
       %>
@@ -37,3 +39,12 @@
     <li class="error">${_("flair selection unavailable")}</li>
   %endif
 </ul>
+<form action="/post/selectflair" method="post">
+  <div class="flairselection"></div>
+  <input type="hidden" name="flair_template_id">
+  <div class="customizer">
+    ${_("customize text")}
+    <input type="text" size="16" maxlength="64" name="text">
+  </div>
+  <button type="submit">${_('save')}</button>
+</form>

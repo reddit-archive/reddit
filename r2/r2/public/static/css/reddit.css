@@ -713,6 +713,15 @@ ul.flat-vert {text-align: left;}
 .flairselector li a:hover { text-decoration: none; }
 .flairselector li.selected { border: dashed 1px black; }
 
+.flairselector form {
+    clear: both;
+    text-align: center;
+}
+
+.flairselector .customizer { display: none; }
+.flairselector .customizer.texteditable { display: inline-block; }
+.flairselector .customizer input { display: block; }
+
 .media-button .option { color: red; }
 .media-button .option.active {
     background: transparent none no-repeat scroll right center;

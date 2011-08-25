@@ -2563,7 +2563,6 @@ class FlairSelector(CachedTemplate):
         css_class = getattr(c.user, attr_pattern % 'css_class', '')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
-        # TODO(intortus): Maintain sorting.
         templates = FlairTemplate._byID(ids).values()
         for template in templates:
             if template.covers((text, css_class)):
@@ -2572,9 +2571,23 @@ class FlairSelector(CachedTemplate):
         else:
              matching_template = None
 
-        choices = [WrappedUser(c.user, subreddit=c.site, force_show_flair=True,
-                               flair_template=template)
-                   for template in templates]
+        all_text_editable = bool(c.user_is_admin or c.site.is_moderator(c.user))
+
+        choices = [
+            WrappedUser(
+                c.user, subreddit=c.site, force_show_flair=True,
+                flair_template=template,
+                flair_text_editable=all_text_editable or template.text_editable)
+            for template in templates]
+
+        # If one of the templates is already selected, modify its text to match
+        # the user's current flair.
+        if matching_template:
+            for choice in choices:
+                if choice.flair_template_id == matching_template:
+                    if choice.flair_text_editable:
+                        choice.flair_text = text
+                    break
 
         wrapped_user = WrappedUser(c.user, subreddit=c.site,
                                    force_show_flair=True)

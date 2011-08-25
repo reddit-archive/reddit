@@ -2076,8 +2076,9 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   flair_template_id = nop("flair_template_id"))
-    def POST_selectflair(self, form, jquery, flair_template_id):
+                   flair_template_id = nop("flair_template_id"),
+                   text = VFlairText("text"))
+    def POST_selectflair(self, form, jquery, flair_template_id, text):
         flair_template = FlairTemplateBySubredditIndex.get_template(
             c.site._id, flair_template_id)
 
@@ -2092,7 +2093,14 @@ class ApiController(RedditController):
             g.log.debug('flair self-assignment not permitted')
             return
 
-        text = flair_template.text
+        # Ignore given text if user doesn't have permission to customize it.
+        if (not c.site.is_moderator(c.user) and not c.user_is_admin
+            and not flair_template.text_editable):
+            text = None
+
+        if not text:
+            text = flair_template.text
+
         css_class = flair_template.css_class
 
         c.site.add_flair(c.user)
