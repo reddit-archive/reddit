@@ -30,6 +30,7 @@ from r2.models.oauth2 import OAuth2Client
 from r2.models import ModAction
 from r2.models import Thing
 from r2.config import cache
+from r2.lib.menus import CommentSortMenu
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
 from r2.lib.jsontemplates import is_api
@@ -951,7 +952,7 @@ class LinkInfoPage(Reddit):
                                            num = len(self.duplicates)))
 
         if c.user_is_admin:
-            buttons += [info_button('details')]
+            buttons.append(NamedButton("details", dest="/details/"+self.link._fullname))
 
         # should we show a traffic tab (promoted and author or sponsor)
         if (self.link.promoted is not None and
@@ -2914,10 +2915,25 @@ class TrafficViewerList(UserList):
 class DetailsPage(LinkInfoPage):
     extension_handling= False
 
-    def content(self):
-        # TODO: a better way?
+    def __init__(self, thing, *args, **kwargs):
         from admin_pages import Details
-        return self.content_stack((self.link_listing, Details(link = self.link)))
+
+        if isinstance(thing, Link):
+            link = thing
+            comment = None
+            content = Details(thing=thing)
+        elif isinstance(thing, Comment):
+            comment = thing
+            link = Link._byID(comment.link_id)
+            content = PaneStack()
+            content.append(PermalinkMessage(link.make_permalink_slow()))
+            content.append(LinkCommentSep())
+            content.append(CommentPane(link, CommentSortMenu.operator('new'),
+                                   comment, None, 1))
+            content.append(Details(thing=thing))
+
+        kwargs['content'] = content
+        LinkInfoPage.__init__(self, link, comment, *args, **kwargs)
 
 class Cnameframe(Templated):
     """The frame page."""

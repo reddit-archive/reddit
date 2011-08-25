@@ -113,13 +113,12 @@ class FrontController(RedditController):
 
     @prevent_framing_and_css()
     @validate(VAdmin(),
-              article = VLink('article'))
-    def GET_details(self, article):
-        """The (now depricated) details page.  Content on this page
+              thing = VByName('article'))
+    def GET_details(self, thing):
+        """The (now deprecated) details page.  Content on this page
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
-        return DetailsPage(link = article, expand_children=False).render()
-
+        return DetailsPage(thing=thing, expand_children=False).render()
 
     def GET_selfserviceoatmeal(self):
         return BoringPage(_("self service help"), 

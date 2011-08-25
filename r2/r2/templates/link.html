@@ -239,7 +239,6 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
                               score = capture(self.score, thing, thing.likes, tag='span'),
                               when = capture(thing_timestamp, thing, thing.timesince),
                               author = WrappedUser(thing.author, thing.attribs, thing).render()))}
-
 </%def>
 
 <%def name="child()">

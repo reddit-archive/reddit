@@ -1221,7 +1221,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 /* comments */
 
-.comment { margin-left: 10px; }
+.comment, .content .details { margin-left: 10px; }
 .comment .edit-body { display: none; visibility: hidden; }
 .comment .midcol { margin-left: 0px; }
 .comment .title { font-size: small; margin-top: 10px;}
