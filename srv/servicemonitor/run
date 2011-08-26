@@ -1,5 +1,0 @@
-#!/bin/sh
-
-cd ~reddit/reddit/r2
-exec 2>&1
-exec /usr/local/bin/paster run run.ini -c "import supervise_watcher; supervise_watcher.Run(['reddit', 'cassandra'], srv_params=dict(exe='/usr/bin/svstat'))"
