@@ -162,6 +162,20 @@ class ThingJsonTemplate(JsonTemplate):
         """
         if attr == "author":
             return thing.author.name
+        if attr == "author_flair_text":
+            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+                return getattr(thing.author,
+                               'flair_%s_text' % (thing.subreddit._id),
+                               None)
+            else:
+                return None
+        if attr == "author_flair_css_class":
+            if thing.author.flair_enabled_in_sr(thing.subreddit._id):
+                return getattr(thing.author,
+                               'flair_%s_css_class' % (thing.subreddit._id),
+                               None)
+            else:
+                return None
         elif attr == "created":
             return time.mktime(thing._date.timetuple())
         elif attr == "created_utc":
@@ -240,6 +254,10 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 title        = "title",
                                                 url          = "url",
                                                 author       = "author",
+                                                author_flair_text =
+                                                    "author_flair_text",
+                                                author_flair_css_class =
+                                                    "author_flair_css_class",
                                                 thumbnail    = "thumbnail",
                                                 media        = "media_object",
                                                 media_embed  = "media_embed",
@@ -299,6 +317,10 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 body_html    = "body_html",
                                                 likes        = "likes",
                                                 author       = "author", 
+                                                author_flair_text =
+                                                    "author_flair_text",
+                                                author_flair_css_class =
+                                                    "author_flair_css_class",
                                                 link_id      = "link_id",
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
