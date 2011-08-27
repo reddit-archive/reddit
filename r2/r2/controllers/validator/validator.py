@@ -189,6 +189,8 @@ def textresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw
 
 @api_validate()
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
+    if c.extension != 'json':
+        abort(404)
     r = self_method(self, *a, **kw)
     return self.api_wrapper(r)
 
