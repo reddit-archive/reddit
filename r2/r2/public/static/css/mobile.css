@@ -147,3 +147,4 @@ ul {
 .md img { display: none }
 .md ol, .md ul { margin: 10px 2em; }
 .md pre { margin: 10px; }
+.flair { color: #545454; background-color: #F5F5F5; border: 1px solid #DEDEDE; }

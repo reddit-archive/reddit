@@ -23,6 +23,7 @@
 <%!
    from pylons.i18n import _, ungettext
    from r2.lib.filters import safemarkdown
+   from r2.lib.pages import WrappedUser
 %>
 <%inherit file="printable.mobile" />
 
@@ -47,8 +48,22 @@
 %else:
 
 <p class="byline">
+  <%
+       author = thing.author
+       if WrappedUser(author).has_flair and WrappedUser(author).flair_enabled:
+          flair = WrappedUser(author).flair_text
+          flair_left = WrappedUser(author).flair_position == 'left'
+       else:
+          flair = False
+  %>
+  %if flair and flair_left:
+    <span class="flair">${flair}</span>
+  %endif
   <a href="/user/${thing.author.name}">
       <b>${thing.author.name}</b></a>
+  %if flair and not flair_left:
+    <span class="flair">${flair}</span>
+  %endif
   &nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
   ${_("written")} ${thing.timesince} ${_("ago")}
 </p>

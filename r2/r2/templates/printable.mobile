@@ -59,8 +59,19 @@
        name = websafe(author.name)
        href = unsafe('href="/user/%s.mobile"' % name)
        if c.user_is_admin: name += " (%d)" % (author.link_karma)
+       if WrappedUser(author).has_flair and WrappedUser(author).flair_enabled:
+          flair = WrappedUser(author).flair_text
+          flair_left = WrappedUser(author).flair_position == 'left'
+       else:
+          flair = False
     %>
+  %if flair and flair_left:
+    <span class="flair">${flair}</span>
+  %endif
     <a class="${author_cls}" ${href}>${name}</a>
+  %if flair and not flair_left:
+    <span class="flair">${flair}</span>
+  %endif
  %endif
 </%def>
 
