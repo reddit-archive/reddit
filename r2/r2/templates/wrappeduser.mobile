@@ -27,11 +27,15 @@ else:
   flair = False
 %>
 
-%if flair and flair_left:
-<span class="flair">${flair}</span>
-%endif
-<a href="/user/${thing.name}">0<
-<b>${thing.name}</b></a>
-%if flair and not flair_left:
-<span class="flair">${flair}</span>
+%if WrappedUser(thing.author).user_deleted:
+  <span>[deleted]</span>
+%else:
+  %if flair and flair_left:
+    <span class="flair">${flair}</span>
+  %endif
+  <a href="/user/${thing.name}" class="${thing.author_cls}">
+  <b>${thing.name}</b></a>
+  %if flair and not flair_left:
+    <span class="flair">${flair}</span>
+  %endif
 %endif

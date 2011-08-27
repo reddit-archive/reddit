@@ -46,22 +46,7 @@
 </%def>
 
 <%def name="author(friend = False, gray = False)" buffered="True">
-  %if WrappedUser(thing.author).user_deleted:
-    <span>[deleted]</span>
-  %else:
-    <%
-       author = thing.author
-       author_cls = "author"
-       if friend:
-          author_cls += " friend"
-       elif gray:
-          author_cls += " gray"
-       name = websafe(author.name)
-       href = unsafe('href="/user/%s.mobile"' % name)
-       if c.user_is_admin: name += " (%d)" % (author.link_karma)
-    %>
   ${WrappedUser(thing.author, thing.attribs, thing, gray = collapse).render()}
- %endif
 </%def>
 
 <%def name="score(this, likes=None, inline=True, label = True, _id = True)">
