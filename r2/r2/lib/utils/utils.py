@@ -233,7 +233,7 @@ def path_component(s):
 def get_title(url):
     """Fetches the contents of url and extracts (and utf-8 encodes)
        the contents of <title>"""
-    if not url or not url.startswith('http://'):
+    if not url or not (url.startswith('http://') or url.startswith('https://')):
         return None
 
     try:
