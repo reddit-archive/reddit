@@ -179,7 +179,9 @@ class ErrorController(RedditController):
                 return self.send503()
             elif code == 304:
                 if request.GET.has_key('x-sup-id'):
-                    c.response.headers['x-sup-id'] = request.GET.get('x-sup-id')
+                    x_sup_id = request.GET.get('x-sup-id')
+                    if '\r\n' not in x_sup_id:
+                        c.response.headers['x-sup-id'] = x_sup_id
                 return c.response
             elif c.site:
                 return self.send404()
