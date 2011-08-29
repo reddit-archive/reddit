@@ -63,7 +63,7 @@ class PostController(ApiController):
 
 
     @validate(pref_lang = VLang('lang'),
-              all_langs = nop('all-langs', default = 'all'))
+              all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
     def POST_unlogged_options(self, all_langs, pref_lang):
         self.set_options( all_langs, pref_lang)
         return self.redirect(request.referer)
@@ -101,7 +101,7 @@ class PostController(ApiController):
               pref_show_sponsors = VBoolean("show_sponsors"),
               pref_show_sponsorships = VBoolean("show_sponsorships"),
               pref_highlight_new_comments = VBoolean("highlight_new_comments"),
-              all_langs = nop('all-langs', default = 'all'))
+              all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))
     def POST_options(self, all_langs, pref_lang, **kw):
         #temporary. eventually we'll change pref_clickgadget to an
         #integer preference
