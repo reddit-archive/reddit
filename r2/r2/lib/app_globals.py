@@ -313,14 +313,6 @@ class Globals(object):
             print ("Warning: g.media_domain == g.domain. " +
                    "This may give untrusted content access to user cookies")
 
-        #read in our CSS so that it can become a default for subreddit
-        #stylesheets
-        stylesheet_path = os.path.join(self.paths.get('static_files'),
-                                       self.static_path.lstrip('/'),
-                                       self.stylesheet)
-        with open(stylesheet_path) as s:
-            self.default_stylesheet = s.read()
-
         self.profanities = None
         if self.profanity_wordlist and os.path.exists(self.profanity_wordlist):
             with open(self.profanity_wordlist, 'r') as handle:
