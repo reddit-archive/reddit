@@ -27,7 +27,7 @@ else:
   flair = False
 %>
 
-%if WrappedUser(thing.author).user_deleted:
+%if thing.user_deleted:
   <span>[deleted]</span>
 %else:
   %if flair and flair_left:
