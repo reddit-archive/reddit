@@ -206,6 +206,12 @@ class Results():
         else:
             raise StopIteration
 
+def strip_www(domain):
+    if domain.count('.') >= 2 and domain.startswith("www."):
+        return domain[4:]
+    else:
+        return domain
+
 r_base_url = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^#]*[^#/])/?")
 def base_url(url):
     res = r_base_url.findall(url)
@@ -611,9 +617,7 @@ class UrlParser(object):
         u = cls(url)
 
         # strip off any www and lowercase the hostname:
-        netloc = u.netloc.lower()
-        if len(netloc.split('.')) > 2 and netloc.startswith("www."):
-            netloc = netloc[4:]
+        netloc = strip_www(u.netloc.lower())
 
         # http://code.google.com/web/ajaxcrawling/docs/specification.html
         fragment = u.fragment if u.fragment.startswith("!") else ""

@@ -22,7 +22,7 @@
 from __future__ import with_statement
 
 from r2.models import *
-from r2.lib.utils import sanitize_url, domain, randstr
+from r2.lib.utils import sanitize_url, strip_www, randstr
 from r2.lib.strings import string_dict
 from r2.lib.pages.things import wrap_links
 
@@ -37,6 +37,7 @@ from md5 import md5
 from r2.lib.contrib.nymph import optimize_png
 
 import re
+from urlparse import urlparse
 
 import cssutils
 from cssutils import CSSParser
@@ -177,6 +178,7 @@ class ValidationError(Exception):
 local_urls = re.compile(r'\A/static/[a-z./-]+\Z')
 # substitutable urls will be css-valid labels surrounded by "%%"
 custom_img_urls = re.compile(r'%%([a-zA-Z0-9\-]+)%%')
+valid_url_schemes = ('http', 'https')
 def valid_url(prop,value,report):
     """
     checks url(...) arguments in CSS, ensuring that the contents are
@@ -214,13 +216,19 @@ def valid_url(prop,value,report):
             report.append(ValidationError(msgs['broken_url']
                                           % dict(brokenurl = value.cssText),
                                           value))
-    # allowed domains are ok
-    elif domain(url) in g.allowed_css_linked_domains:
-        pass
     else:
-        report.append(ValidationError(msgs['broken_url']
-                                      % dict(brokenurl = value.cssText),
-                                      value))
+        try:
+            u = urlparse(url)
+            valid_scheme = u.scheme and u.scheme in valid_url_schemes
+            valid_domain = strip_www(u.netloc) in g.allowed_css_linked_domains
+        except ValueError:
+            u = False
+
+        # allowed domains are ok
+        if not (u and valid_scheme and valid_domain):
+            report.append(ValidationError(msgs['broken_url']
+                                          % dict(brokenurl = value.cssText),
+                                          value))
     #elif sanitize_url(url) != url:
     #    report.append(ValidationError(msgs['broken_url']
     #                                  % dict(brokenurl = value.cssText),
