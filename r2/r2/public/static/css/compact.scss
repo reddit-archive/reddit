@@ -229,9 +229,6 @@ button.button {
     .options_expando {
         margin: 10px -50px 10px 0px; //Overwrite the link styles
     }
-    .md {
-        margin-right: 40px;
-    }
 }
 .message {
 
@@ -844,7 +841,6 @@ padding: 5px;
     -moz-border-radius-topright: 0px;
 }
 
-.comment .md { margin-left: 25px;  }
 
 .comment.collapsed .child,
 .comment.collapsed .usertext,

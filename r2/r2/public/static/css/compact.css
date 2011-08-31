@@ -55,7 +55,6 @@ button.button { padding: 0 5px; }
 .comment .entry, .message .entry { margin-right: 50px; }
 .comment .child .options_link, .message .child .options_link { top: 8px; }
 .comment .options_expando, .message .options_expando { margin: 10px -50px 10px 0px; }
-.comment .md, .message .md { margin-right: 40px; }
 
 .message .options_expando { margin: 25px -55px 10px -5px; }
 
@@ -275,8 +274,6 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 .comment > .entry > .tagline { font-size: 11px; padding-bottom: 2px; }
 
 .child .comment { margin: 4px; margin-top: 0px; -webkit-border-top-right-radius: 0px; -moz-border-radius-topright: 0px; }
-
-.comment .md { margin-left: 25px; }
 
 .comment.collapsed .child, .comment.collapsed .usertext, .comment.collapsed .midcol, .comment.collapsed .button, .comment.collapsed .options_link, .comment.collapsed .options_expando { display: none; }
 
