@@ -94,6 +94,8 @@ $(function() {
             $(".flairselector form")
                 .click(function(e) { e.stopPropagation(); });
             $(".flairselector form").submit(postFlairSelection);
+
+            $(".flairselector li.selected").each(selectFlairInSelector);
         }
 
         $(".flairselector").html('<img src="/static/throbber.gif" />');
