@@ -22,6 +22,7 @@
 
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
+<% from r2.controllers.validator import MAX_PASSWORD_LENGTH %>
 
 <h1>
 %if thing.email and thing.password:
@@ -63,7 +64,7 @@
 
 <div class="spacer">
   <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
-    <input type="password" name="curpass" />
+    <input type="password" name="curpass" maxlength="${MAX_PASSWORD_LENGTH}"/>
     ${error_field("WRONG_PASSWORD", "curpass")}
   </%utils:round_field>
 </div>  
@@ -78,14 +79,14 @@
 %if thing.password:
 <div class="spacer">
   <%utils:round_field title="${_('new password')}">
-    <input type="password" name="newpass"/>
+    <input type="password" name="newpass" maxlength="${MAX_PASSWORD_LENGTH}"/>
     ${error_field("BAD_PASSWORD", "newpass")}
   </%utils:round_field>
 </div>  
 
 <div class="spacer">
   <%utils:round_field title="${_('verify password')}">
-    <input type="password" name="verpass"/>
+    <input type="password" name="verpass" maxlength="${MAX_PASSWORD_LENGTH}"/>
     ${error_field("BAD_PASSWORD_MATCH", "verpass")}
   </%utils:round_field>
 </div>  

@@ -795,14 +795,13 @@ class VSubmitSR(Validator):
 
         return sr
 
-pass_rx = re.compile(r"\A.{3,20}\Z")
-
-def chkpass(x):
-    return x if x and pass_rx.match(x) else None
+MIN_PASSWORD_LENGTH = 3
+MAX_PASSWORD_LENGTH = 256
 
 class VPassword(Validator):
     def run(self, password, verify):
-        if not chkpass(password):
+        if not (password and
+                MIN_PASSWORD_LENGTH < len(password) < MAX_PASSWORD_LENGTH):
             self.set_error(errors.BAD_PASSWORD)
         elif verify != password:
             self.set_error(errors.BAD_PASSWORD_MATCH)

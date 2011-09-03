@@ -22,6 +22,7 @@
 <%!
    from r2.lib.template_helpers import add_sr
    from r2.lib.utils import UrlParser
+   from r2.controllers.validator import MAX_PASSWORD_LENGTH
    import random
 %>
 
@@ -41,7 +42,7 @@
   %endif
   <input type="hidden" name="op" value="${op}" />
   <input name="user" placeholder="username" type="text" maxlength="20" tabindex="1"/>
-  <input name="passwd" placeholder="password" type="password" maxlength="20" tabindex="1"/>
+  <input name="passwd" placeholder="password" type="password" maxlength="${MAX_PASSWORD_LENGTH}" tabindex="1"/>
 
   <div class="status"></div>
 
