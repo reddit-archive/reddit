@@ -21,8 +21,8 @@
 ################################################################################
 
 <h2>${_("select flair")}</h2>
-<ul>
-  %if thing.choices and c.site.flair_self_assign_enabled:
+%if thing.choices and c.site.flair_self_assign_enabled:
+  <ul>
     %for choice in thing.choices:
       <%
         li_class = 'flairsample-%s' % thing.position
@@ -35,16 +35,17 @@
         ${choice}
       </li>
     %endfor
-  %else:
-    <li class="error">${_("flair selection unavailable")}</li>
-  %endif
-</ul>
-<form action="/post/selectflair" method="post">
-  <div class="flairselection"></div>
-  <input type="hidden" name="flair_template_id">
-  <div class="customizer">
-    ${_("customize text")}
-    <input type="text" size="16" maxlength="64" name="text">
-  </div>
-  <button type="submit">${_('save')}</button>
-</form>
+  </ul>
+  <form action="/post/selectflair" method="post">
+    <div class="flairselection"></div>
+    <input type="hidden" name="flair_template_id">
+    <div class="customizer">
+      ${_("customize text")}
+      <input type="text" size="16" maxlength="64" name="text">
+    </div>
+    <button type="submit">${_('save')}</button>
+    <span class="status"></span>
+  </form>
+%else:
+  <div class="error">${_("flair selection unavailable")}</div>
+%endif
