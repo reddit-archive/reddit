@@ -602,11 +602,6 @@ class MinimalController(BaseController):
                                     domain  = v.domain,
                                     expires = v.expires)
 
-        if g.logans_run_limit:
-            if c.start_time > g.logans_run_limit and not g.shutdown:
-                g.log.info("Time to restart. It's been an honor serving with you.")
-                g.shutdown = 'init'
-
         if g.usage_sampling <= 0.0:
             return
 
