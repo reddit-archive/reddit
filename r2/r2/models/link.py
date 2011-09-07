@@ -676,13 +676,18 @@ class Comment(Thing, Printable):
 
     @classmethod
     def add_props(cls, user, wrapped):
-        from r2.lib.template_helpers import add_attr
+        from r2.lib.template_helpers import add_attr, get_domain
         from r2.lib import promote
         from r2.lib.wrapped import CachedVariable
+        from r2.lib.pages import WrappedUser
 
         #fetch parent links
         links = Link._byID(set(l.link_id for l in wrapped), data = True,
                            return_dict = True, stale=True)
+
+        # fetch authors
+        authors = Account._byID(set(l.author_id for l in links.values()), data=True, 
+                                return_dict=True, stale=True)
 
         #get srs for comments that don't have them (old comments)
         for cm in wrapped:
@@ -709,6 +714,8 @@ class Comment(Thing, Printable):
         user_is_admin = c.user_is_admin
         user_is_loggedin = c.user_is_loggedin
         focal_comment = c.focal_comment
+        cname = c.cname
+        site = c.site
 
         for item in wrapped:
             # for caching:
@@ -763,6 +770,16 @@ class Comment(Thing, Printable):
             if focal_comment == item._id36:
                 extra_css += " border"
 
+            if profilepage:
+                item.link_author = WrappedUser(authors[item.link.author_id])
+
+                item.subreddit_path = item.subreddit.path
+                if cname:
+                    item.subreddit_path = ("http://" + 
+                         get_domain(cname = (site == item.subreddit),
+                                    subreddit = False))
+                    if site != item.subreddit:
+                        item.subreddit_path += item.subreddit.path
 
             # don't collapse for admins, on profile pages, or if deleted
             item.collapsed = False

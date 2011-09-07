@@ -26,7 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 
-<%namespace file="utils.html" import="timestamp" />
+<%namespace file="utils.html" import="plain_link, timestamp" />
 <%inherit file="comment_skeleton.html"/>
 
 #####################
@@ -54,6 +54,14 @@ ${parent.midcol(not thing.collapsed, cls = cls)}
           ${thing.link.url}
       %endif
     %endif
+    &#32;
+    ${_("by")}
+    &#32;
+    ${thing.link_author.render()}
+    ${_("in")}
+    &#32;
+    ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
+               cname = False, _class = "subreddit hover")}
   %endif
 </%def>
 
