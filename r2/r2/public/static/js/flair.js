@@ -112,6 +112,8 @@ $(function() {
                              makeOnSubmit('flairtemplate'));
     $(".flairlist").delegate("form.flair-entry", "submit",
                              makeOnSubmit('flair'));
+    $(".flairlist").delegate("form.clearflairtemplates", "submit",
+                             makeOnSubmit('clearflairtemplates'));
     $(".flairlist").delegate(".flaircell input", "focus", onFocus);
     $(".flairlist").delegate(".flaircell input", "keyup", onEdit);
     $(".flairlist").delegate(".flaircell input", "change", onEdit);

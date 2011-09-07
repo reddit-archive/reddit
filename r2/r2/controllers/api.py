@@ -2035,6 +2035,11 @@ class ApiController(RedditController):
                    text_editable = VBoolean('text_editable'))
     def POST_flairtemplate(self, form, jquery, flair_template_id, text,
                            css_class, text_editable):
+        if text is None:
+            text = ''
+        if css_class is None:
+            css_class = ''
+
         # Check validation.
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
             form.set_html(".status:first", _('invalid css class'))
@@ -2070,6 +2075,11 @@ class ApiController(RedditController):
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
+
+    @validatedForm(VFlairManager(), VModhash())
+    def POST_clearflairtemplates(self, form, jquery):
+        FlairTemplateBySubredditIndex.clear(c.site._id)
+        jquery.refresh()
 
     def POST_flairselector(self):
         return FlairSelector().render()

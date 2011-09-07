@@ -146,29 +146,26 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
         return idx
 
     @classmethod
-    def _get_or_create_template(cls, sr_id, text, css_class, text_editable):
+    def by_sr(cls, sr_id, create=False):
         try:
-            idx = cls._byID(to36(sr_id))
+            return cls._byID(to36(sr_id))
         except tdb_cassandra.NotFound:
-            idx = cls._new(sr_id)
-
-        existing_ft_ids = list(idx)
+            if create:
+                return cls._new(sr_id)
+            raise
 
     @classmethod
     def create_template(cls, sr_id, text='', css_class='', text_editable=False):
+        idx = cls.by_sr(sr_id, create=True)
         ft = FlairTemplate._new(text=text, css_class=css_class,
                                 text_editable=text_editable)
-        try:
-            idx = cls._byID(to36(sr_id))
-        except tdb_cassandra.NotFound:
-            idx = cls._new(sr_id)
         idx.insert(ft._id)
         return ft
 
     @classmethod
     def get_template_ids(cls, sr_id):
         try:
-            return list(cls._byID(to36(sr_id)))
+            return list(cls.by_sr(sr_id))
         except tdb_cassandra.NotFound:
             return []
 
@@ -177,6 +174,20 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
         if ft_id not in cls.get_template_ids(sr_id):
             return None
         return FlairTemplate._byID(ft_id)
+
+    @classmethod
+    def clear(cls, sr_id):
+        try:
+            idx = cls.by_sr(sr_id)
+        except tdb_cassandra.NotFound:
+            # Everything went better than expected.
+            pass
+
+        for k in idx._index_keys():
+            del idx[k]
+            # TODO: delete the dangling reference this leaves behind
+
+        idx._commit()
 
     def _index_keys(self):
         keys = set(self._dirties.iterkeys())

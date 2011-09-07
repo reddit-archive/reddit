@@ -617,6 +617,17 @@ class ThingBase(object):
     def __setitem__(self, key, value):
         return self.__setattr__(key, value)
 
+    def __delitem__(self, key):
+        try:
+            del self._dirties[key]
+        except KeyError:
+            pass
+        try:
+            del self._column_ttls[key]
+        except KeyError:
+            pass
+        self._deletes.add(key)
+
     def _get(self, key, default = None):
         try:
             return self.__getattr__(key)
@@ -910,19 +921,6 @@ class View(ThingBase):
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
-
-    def __delitem__(self, key):
-        # only implemented on Views right now, but at present there's
-        # no technical reason for this
-        try:
-            del self._dirties[key]
-        except KeyError:
-            pass
-        try:
-            del self._column_ttls[key]
-        except KeyError:
-            pass
-        self._deletes.add(key)
 
 def schema_report():
     manager = get_manager()
