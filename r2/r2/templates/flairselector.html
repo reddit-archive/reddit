@@ -22,20 +22,22 @@
 
 <h2>${_("select flair")}</h2>
 %if thing.choices and c.site.flair_self_assign_enabled:
-  <ul>
-    %for choice in thing.choices:
-      <%
-        li_class = 'flairsample-%s' % thing.position
-        if choice.flair_text_editable:
-            li_class += ' texteditable'
-        if choice.flair_template_id == thing.matching_template:
-            li_class += ' selected'
-      %>
-      <li class="${li_class}" id="${choice.flair_template_id}">
-        ${choice}
-      </li>
-    %endfor
-  </ul>
+  <div>
+    <ul>
+      %for choice in thing.choices:
+        <%
+          li_class = 'flairsample-%s' % thing.position
+          if choice.flair_text_editable:
+              li_class += ' texteditable'
+          if choice.flair_template_id == thing.matching_template:
+              li_class += ' selected'
+        %>
+        <li class="${li_class}" id="${choice.flair_template_id}">
+          ${choice}
+        </li>
+      %endfor
+    </ul>
+  </div>
   <form action="/post/selectflair" method="post">
     <div class="flairselection"></div>
     <input type="hidden" name="flair_template_id">

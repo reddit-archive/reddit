@@ -59,11 +59,14 @@ $(function() {
         var button = this;
 
         function columnize(col) {
-            var min_cols = 2;
+            var min_cols = 1;
+            var max_cols = 3;
             var max_col_height = 10;
             var length = $(col).children().length;
             var num_cols =
-                Math.max(min_cols, Math.ceil(length / max_col_height));
+                Math.max(
+                    min_cols,
+                    Math.min(max_cols, Math.ceil(length / max_col_height)));
             var height = Math.ceil(length / num_cols);
             var num_short_cols = num_cols * height - length;
 
@@ -77,7 +80,7 @@ $(function() {
                 var tail = $(col).children().slice(start).detach();
                 $(col).after($("<ul>").append(tail));
             }
-            return num_cols * 200;
+            return num_cols * 200 + 50;
         }
 
         function handleResponse(r) {

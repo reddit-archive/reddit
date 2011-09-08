@@ -2563,7 +2563,8 @@ class FlairSelector(CachedTemplate):
         css_class = getattr(c.user, attr_pattern % 'css_class', '')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
-        templates = FlairTemplate._byID(ids).values()
+        template_dict = FlairTemplate._byID(ids)
+        templates = [template_dict[i] for i in ids]
         for template in templates:
             if template.covers((text, css_class)):
                 matching_template = template._id

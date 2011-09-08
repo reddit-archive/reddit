@@ -702,6 +702,11 @@ ul.flat-vert {text-align: left;}
 
 .flairselector .error { text-align: center; }
 
+.flairselector > div {
+    height: 200px;
+    overflow: auto;
+}
+
 .flairselector ul { float: left; width: 200px; }
 
 .flairselector .selected, .flairselector.active li {
