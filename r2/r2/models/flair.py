@@ -133,6 +133,8 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
     flair templates within the subreddit.
     """
 
+    MAX_FLAIR_TEMPLATES = 256
+
     _int_props = ('sr_id',)
     _use_db = True
     _use_new_ring = True
@@ -157,6 +159,10 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
     @classmethod
     def create_template(cls, sr_id, text='', css_class='', text_editable=False):
         idx = cls.by_sr(sr_id, create=True)
+
+        if len(idx._index_keys()) >= cls.MAX_FLAIR_TEMPLATES:
+            raise OverflowError
+
         ft = FlairTemplate._new(text=text, css_class=css_class,
                                 text_editable=text_editable)
         idx.insert(ft._id)

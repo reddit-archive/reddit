@@ -2057,9 +2057,14 @@ class ApiController(RedditController):
             ft._commit()
             new = False
         else:
-            ft = FlairTemplateBySubredditIndex.create_template(
-                c.site._id, text=text, css_class=css_class,
-                text_editable=text_editable)
+            try:
+                ft = FlairTemplateBySubredditIndex.create_template(
+                    c.site._id, text=text, css_class=css_class,
+                    text_editable=text_editable)
+            except OverflowError:
+                form.set_html(".status:first", _('max flair templates reached'))
+                return
+
             new = True
 
         # TODO(intortus): ...
