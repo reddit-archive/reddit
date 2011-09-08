@@ -149,6 +149,8 @@ class CommentButtons(PrintableButtons):
                                   is_author = is_author, 
                                   profilepage = c.profilepage,
                                   permalink = thing.permalink,
+                                  new_window = c.user.pref_newwindow,
+                                  full_comment_path = thing.full_comment_path,
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
