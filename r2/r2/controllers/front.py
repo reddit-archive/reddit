@@ -786,6 +786,11 @@ class FrontController(RedditController):
         return BoringPage("traffic",
                           content = RedditTraffic()).render()
 
+    @validate(VUser())
+    def GET_account_activity(self):
+        return AccountActivityPage().render()
+
+
 class FormsController(RedditController):
 
     def GET_password(self):
@@ -1095,5 +1100,4 @@ class FormsController(RedditController):
                                                   signed, recipient,
                                                   giftmessage, passthrough)
                               ).render()
-
 

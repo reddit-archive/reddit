@@ -1,0 +1,55 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be consistent
+## with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is Reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is CondeNet, Inc.
+##
+## All portions of the code written by CondeNet are Copyright (c) 2006-2010
+## CondeNet, Inc. All Rights Reserved.
+################################################################################
+
+<%namespace file="utils.html" import="timestamp"/>
+<%
+    from r2.lib.strings import strings
+    ip_format = {'address': request.ip}
+%>
+
+<div id="account-activity" class="instructions">
+<h1>${_("Recent activity on your account")}</h1>
+
+<p>${strings.account_activity_blurb}</p>
+
+<p>${strings.your_current_ip_is % ip_format}</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>${_("IP address")}</th>
+            <th>${_("Location")}</th>
+            <th>${_("Last Visit")}</th>
+        </tr>
+    </thead>
+    <tbody>
+        % for ip, last_visit, location in thing.ips[:10]:
+        <tr>
+            <td>${ip}</td>
+            <td>${location.get('country_name', '')}</td>
+            <td>${timestamp(last_visit)}&#32;${_('ago')}</td>
+        </tr>
+        % endfor
+    </tbody>
+</table>
+</div>
+

@@ -510,7 +510,23 @@ ul.flat-vert {text-align: left;}
     font-size: 110%;
 }
 
+.account-activity-box {
+    text-align: center;
+}
 
+#account-activity table {
+    margin: 2em 0 0 2em;
+    width: 45em;
+    font-size: larger;
+}
+
+#account-activity th {
+    font-weight: bold;
+}
+
+#account-activity td {
+    padding: .5em 0;
+}
 
 .infotable { margin-top: 5px; margin-bottom: 10px; }
 .infotable .small { font-size: smaller; }

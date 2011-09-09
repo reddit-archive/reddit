@@ -57,6 +57,14 @@ import graph, pycountry, time
 from itertools import chain
 from urllib import quote
 
+# the ip tracking code is currently deeply tied with spam prevention stuff
+# this will be open sourced as soon as it can be decoupled
+try:
+    from r2admin.lib.ip_events import ips_by_account_id
+except ImportError:
+    def ips_by_account_id(account_id):
+        return []
+
 from things import wrap_links, default_thing_wrapper
 
 datefmt = _force_utf8(_('%d %b %Y'))
@@ -284,6 +292,10 @@ class Reddit(Templated):
             ps.append(SideContentBox(_("Recently viewed links"),
                                      [ClickGadget(c.recent_clicks)]))
 
+        if c.user_is_loggedin:
+            activity_link = AccountActivityBox()
+            ps.append(activity_link)
+
         return ps
 
     def render(self, *a, **kw):
@@ -369,6 +381,10 @@ class Reddit(Templated):
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack((self.infobar, self.nav_menu, self._content))
+
+class AccountActivityBox(Templated):
+    def __init__(self):
+        super(AccountActivityBox, self).__init__()
 
 class RedditHeader(Templated):
     def __init__(self):
@@ -1068,6 +1084,7 @@ def votes_visible(user):
     return ((c.user_is_loggedin and c.user.name == user.name) or
             user.pref_public_votes or
             c.user_is_admin)
+
 
 class ProfilePage(Reddit):
     """Container for a user's profile page.  As such, the Account
@@ -3549,3 +3566,15 @@ class TryCompact(Reddit):
         u.set_extension("mobile")
         self.mobile = u.unparse()
         Reddit.__init__(self, **kw)
+
+class AccountActivityPage(BoringPage):
+    def __init__(self):
+        super(AccountActivityPage, self).__init__(_("account activity"))
+
+    def content(self):
+        return UserIPHistory()
+
+class UserIPHistory(Templated):
+    def __init__(self):
+        self.ips = ips_by_account_id(c.user._id)
+        super(UserIPHistory, self).__init__()

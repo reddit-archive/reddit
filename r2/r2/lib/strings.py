@@ -154,6 +154,9 @@ string_dict = dict(
     gold_summary_signed_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s, who will be told that it came from you."),
     gold_summary_anonymous_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s. It will be an anonymous gift."),
     unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
+    account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices."),
+    your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
+
 )
 
 class StringHandler(object):
