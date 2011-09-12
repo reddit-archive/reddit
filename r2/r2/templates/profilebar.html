@@ -25,7 +25,7 @@
    from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
    from r2.lib.template_helpers import static
  %>
-<%namespace file="utils.html" import="submit_form, plain_link, timestamp"/>
+<%namespace file="utils.html" import="submit_form, plain_link, thing_timestamp"/>
 <%namespace file="printablebuttons.html" import="toggle_button"/>
 
 <div class="titlebox">
@@ -140,7 +140,7 @@
     %endif
 
     <span class="age">
-      ${_("redditor for")}&#32;${timestamp(thing.user)}
+      ${_("redditor for")}&#32;${thing_timestamp(thing.user)}
     </span>
   </div>
 

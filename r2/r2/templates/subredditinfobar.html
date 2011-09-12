@@ -26,7 +26,7 @@
    from r2.lib.pages import WrappedUser
  %>
 
-<%namespace file="utils.html" import="plain_link, timestamp"/>
+<%namespace file="utils.html" import="plain_link, thing_timestamp"/>
 <%namespace file="subreddit.html" import="addremove_button" />
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
@@ -87,7 +87,7 @@
     %endif
     
     <span class="age">
-      ${_("a community for")}&#32;${timestamp(thing.sr)}
+      ${_("a community for")}&#32;${thing_timestamp(thing.sr)}
     </span>  
   </div>
 

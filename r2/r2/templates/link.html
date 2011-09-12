@@ -29,7 +29,7 @@
 %>
  
 <%inherit  file="printable.html"/>
-<%namespace file="utils.html" import="plain_link, timestamp" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp" />
 <%namespace file="printablebuttons.html" import="toggle_button" />
  
 <%def name="numcol()">
@@ -215,7 +215,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 
   ${unsafe(taglinetext % dict(reddit = self.subreddit(), 
                               score = capture(self.score, thing, thing.likes, tag='span'),
-                              when = capture(timestamp, thing, thing.timesince),
+                              when = capture(thing_timestamp, thing, thing.timesince),
                               author = WrappedUser(thing.author, thing.attribs, thing).render()))}
 
 </%def>
