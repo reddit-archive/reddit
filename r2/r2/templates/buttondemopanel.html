@@ -23,7 +23,7 @@
    from r2.lib.template_helpers import get_domain
  %>
 
-<% domain = get_domain(False) %>
+<% domain = get_domain(cname=False, subreddit=False) %>
 
 <div class="instructions">
   <h1>${_("put %(site)s buttons on your site") % dict(site=c.site.name)}</h1>
