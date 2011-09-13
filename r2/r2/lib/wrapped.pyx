@@ -459,8 +459,9 @@ class CachedTemplate(Templated):
                 style, c.cname, c.lang, c.site.path,
                 getattr(c.user, "gold", False),
                 template_hash, g.markdown_backend]
+
         # if viewing a single subreddit, take flair settings into account.
-        if hasattr(c.site, '_id'):
+        if c.user_is_loggedin and hasattr(c.site, '_id'):
             keys.extend([
                 c.site.flair_enabled, c.site.flair_position,
                 c.user.flair_enabled_in_sr(c.site._id)])
