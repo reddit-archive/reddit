@@ -293,8 +293,6 @@ def set_content_type():
 
     if e.has_key('extension'):
         c.extension = ext = e['extension']
-        if ext == 'api' or ext.startswith('json'):
-            c.response_access_control = 'allow <*>'
         if ext in ('embed', 'wired', 'widget'):
             def to_js(content):
                 return utils.to_js(content,callback = request.params.get(
@@ -543,8 +541,6 @@ class MinimalController(BaseController):
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
                 # make sure to carry over the content type
                 c.response_content_type = r.headers['content-type']
-                if r.headers.has_key('access-control'):
-                    c.response_access_control = r.headers['access-control']
                 c.used_cache = True
                 # response wrappers have already been applied before cache write
                 c.response_wrappers = []
@@ -560,8 +556,6 @@ class MinimalController(BaseController):
         response.content = content
         if c.response_content_type:
             response.headers['Content-Type'] = c.response_content_type
-        if c.response_access_control:
-            c.response.headers['Access-Control'] = c.response_access_control
 
         if c.user_is_loggedin and not c.allow_loggedin_cache:
             response.headers['Cache-Control'] = 'no-cache'
