@@ -621,12 +621,6 @@ class MinimalController(BaseController):
         c.response.content = string
         return c.response
 
-    def sendstring(self,string):
-        '''sends a string and automatically escapes &, < and > to make sure no code injection happens'''
-        c.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
-        c.response.content = filters.websafe_json(string)
-        return c.response
-
     def update_qstring(self, dict):
         merged = copy(request.get)
         merged.update(dict)
@@ -634,10 +628,8 @@ class MinimalController(BaseController):
 
     def api_wrapper(self, kw):
         data = simplejson.dumps(kw)
-        if request.method.upper() == "GET" and request.GET.get("callback"):
-            return "%s(%s)" % (websafe_json(request.GET.get("callback")),
-                               websafe_json(data))
-        return self.sendstring(data)
+        c.response.content = filters.websafe_json(data)
+        return c.response
 
 
 
