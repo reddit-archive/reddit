@@ -30,9 +30,6 @@ from r2.lib.pages import WrappedUser
   <form action="/post/flair" id="flair-${thing.user._id36}" method="post"
         class="medium-text flair-entry">
     <input type="hidden" name="name" value="${thing.user.name}" />
-    <span class="tagline flaircell">
-      ${unsafe(WrappedUser(thing.user, force_show_flair=True).render())}
-    </span>
     <span class="flaircell">
       <input type="text" size="32" maxlength="64" name="text"
              value="${thing.flair_text}" />
@@ -46,4 +43,12 @@ from r2.lib.pages import WrappedUser
     ${utils.error_field(('BAD_CSS_NAME', 'flair_css_class'), 'name')}
     ${utils.error_field(('TOO_MUCH_FLAIR_CSS', 'flair_css_class'), 'name')}
   </form>
+  <span class="tagline flaircell">
+    ${unsafe(WrappedUser(thing.user, force_show_flair=True).render())}
+    <form>
+      <input type="hidden" name="name" value="${thing.user.name}">
+    </form>
+    <a class="flairselectbtn" href="javascript://">select</a>
+    <div class="flairselector drop-choices"></div>
+  </span>
 </div>

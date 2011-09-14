@@ -35,17 +35,20 @@ $(function() {
         var form = $(this).parent().parent().siblings("form").get(0);
         $(form).children('input[name="flair_template_id"]').val(this.id);
         var customizer = $(form).children(".customizer");
+        var input = customizer.children("input");
+        input.val($.trim($(this).children(".flair").text())).select();
+        input.keyup(function() {
+            $(".flairselection .flair").text($(input).val());
+        });
         if ($(this).hasClass("texteditable")) {
             customizer.addClass("texteditable");
-            var input = customizer.children("input");
-            input.val($.trim($(this).children(".flair").text())).select();
-            input.keyup(function() {
-                $(".flairselection .flair").text($(input).val());
-            });
+            input.removeAttr("disabled");
         } else {
             customizer.removeClass("texteditable");
+            input.attr("disabled", "disabled");
         }
         $(".flairselection").html($(this).first().children().clone());
+        $(".flairselector button").removeAttr("disabled");
         return false;
     }
 
@@ -57,6 +60,7 @@ $(function() {
 
     function openFlairSelector() {
         var button = this;
+        var selector = $(button).siblings(".flairselector").get(0);
 
         function columnize(col) {
             var min_cols = 1;
@@ -77,36 +81,39 @@ $(function() {
                 }
                 var start = length - h;
                 length -= h;
-                var tail = $(col).children().slice(start).detach();
+                var tail = $(col).children().slice(start).remove();
                 $(col).after($("<ul>").append(tail));
             }
             return num_cols * 200 + 50;
         }
 
         function handleResponse(r) {
-            $(".flairselector").html(r);
+            $(selector).html(r);
 
             var width = columnize($(".flairselector ul"));
+            var left = Math.max(
+                100, $(button).position().left + $(button).width() - width);
 
-            $(".flairselector").width(width)
-                .css("left",
-                     ($(button).position().left + $(button).width() - width)
-                     + "px");
-            $(".flairselector li:not(.error)").click(selectFlairInSelector);
-            $(".flairselector").click(function(e) { return false; });
-            $(".flairselector form")
+            $(selector).width(width).css("left", left + "px");
+            $(selector).find("li:not(.error)").click(selectFlairInSelector);
+            $(selector).click(function(e) { return false; });
+            $(selector).find("form")
                 .click(function(e) { e.stopPropagation(); });
-            $(".flairselector form").submit(postFlairSelection);
-
-            $(".flairselector li.selected").each(selectFlairInSelector);
+            $(selector).find("form").submit(postFlairSelection);
+            $(selector).find(".customizer input").attr("disabled", "disabled");
+            $(selector).find("button").attr("disabled", "disabled");
+            $(selector).find("li.selected").each(selectFlairInSelector);
         }
 
-        $(".flairselector").html('<img src="/static/throbber.gif" />');
-        $(".flairselector").addClass("active").width(18)
+        $(selector).html('<img src="/static/throbber.gif" />');
+        $(selector).addClass("active").width(18)
             .css("left",
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
-        $.request("flairselector", {}, handleResponse, true, "html");
+
+        var name = $(selector).siblings("form").find("input").val();
+        $.request("flairselector", {"name": name}, handleResponse, true,
+                  "html");
         return false;
     }
 

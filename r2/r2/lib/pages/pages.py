@@ -2555,12 +2555,15 @@ class FlairPrefs(CachedTemplate):
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
-    def __init__(self):
+    def __init__(self, user=None):
+        if user is None:
+            user = c.user
+
         position = getattr(c.site, 'flair_position', 'right')
 
         attr_pattern = 'flair_%s_%%s' % c.site._id
-        text = getattr(c.user, attr_pattern % 'text', '')
-        css_class = getattr(c.user, attr_pattern % 'css_class', '')
+        text = getattr(user, attr_pattern % 'text', '')
+        css_class = getattr(user, attr_pattern % 'css_class', '')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
         template_dict = FlairTemplate._byID(ids)
@@ -2576,7 +2579,7 @@ class FlairSelector(CachedTemplate):
 
         choices = [
             WrappedUser(
-                c.user, subreddit=c.site, force_show_flair=True,
+                user, subreddit=c.site, force_show_flair=True,
                 flair_template=template,
                 flair_text_editable=all_text_editable or template.text_editable)
             for template in templates]
@@ -2590,7 +2593,7 @@ class FlairSelector(CachedTemplate):
                         choice.flair_text = text
                     break
 
-        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+        wrapped_user = WrappedUser(user, subreddit=c.site,
                                    force_show_flair=True)
 
         Templated.__init__(self, text=text, css_class=css_class,

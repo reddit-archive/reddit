@@ -14,6 +14,9 @@ function close_menus(event) {
         .removeClass("inuse");
     $(".drop-choices.active").removeClass("active");
 
+    // Clear any flairselectors that may have been opened.
+    $(".flairselector").empty();
+
     /* hide the search expando if the user clicks elsewhere on the page */ 
     if ($(event.target).closest("#search").length == 0) {
         $("#moresearchinfo").slideUp();

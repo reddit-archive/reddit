@@ -1929,12 +1929,15 @@ class ApiController(RedditController):
         if new:
             jquery.redirect('?name=%s' % user.name)
         else:
+            flair = (
+                WrappedUser(user, force_show_flair=True).render(style='html'))
+            jquery('#tabbedpane-grant .id-%s'
+                   % user._fullname).parent().html(flair)
+            jquery('.flairtoggle .id-%s'
+                   % user._fullname).parent().html(flair)
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
-            form.set_html(
-                '.tagline',
-                WrappedUser(user, force_show_flair=True).render(style='html'))
 
     @validate(VFlairManager(),
               VModhash(),
@@ -2086,14 +2089,21 @@ class ApiController(RedditController):
         FlairTemplateBySubredditIndex.clear(c.site._id)
         jquery.refresh()
 
-    def POST_flairselector(self):
-        return FlairSelector().render()
+    @validate(VUser(),
+              user = VOptionalExistingUname('name'))
+    def POST_flairselector(self, user):
+        if user and not (c.user_is_admin or c.site.is_moderator(c.user)):
+            # ignore user parameter if c.user is not mod/admin
+            user = None
+        return FlairSelector(user).render()
 
     @validatedForm(VUser(),
                    VModhash(),
+                   user = VOptionalExistingUname('name'),
                    flair_template_id = nop("flair_template_id"),
                    text = VFlairText("text"))
-    def POST_selectflair(self, form, jquery, flair_template_id, text):
+    def POST_selectflair(self, form, jquery, user, flair_template_id, text):
+        # TODO: ignore user parameter if c.user is not mod/admin
         flair_template = FlairTemplateBySubredditIndex.get_template(
             c.site._id, flair_template_id)
 
@@ -2118,23 +2128,21 @@ class ApiController(RedditController):
 
         css_class = flair_template.css_class
 
-        c.site.add_flair(c.user)
-        setattr(c.user, 'flair_%s_text' % c.site._id, text)
-        setattr(c.user, 'flair_%s_css_class' % c.site._id, css_class)
-        c.user._commit()
+        c.site.add_flair(user)
+        setattr(user, 'flair_%s_text' % c.site._id, text)
+        setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+        user._commit()
 
-        g.log.debug('committed flair: %r, %r', text, css_class)
-
-        #jquery('input[name="text"]').data('saved', text).value(text)
-        #jquery('input[name="css_class"]').data('saved', css_class).value(
-            #css_class)
-
-        u = WrappedUser(c.user, force_show_flair=True,
+        # Push some client-side updates back to the browser.
+        u = WrappedUser(user, force_show_flair=True,
                         flair_text_editable=flair_template.text_editable)
         flair = u.render(style='html')
-        jquery('#tabbedpane-grant .id-%s'
-               % c.user._fullname).parent().html(flair)
-        jquery('.flairtoggle .id-%s' % c.user._fullname).parent().html(flair)
+        jquery('#tabbedpane-grant .id-%s' % user._fullname).parent().html(flair)
+        jquery('.flairtoggle .id-%s' % user._fullname).parent().html(flair)
+        jquery('#flairrow_%s input[name="text"]' % user._id36).data(
+            'saved', text).val(text)
+        jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
+            'saved', css_class).val(css_class)
 
     @validatedForm(VAdminOrAdminSecret("secret"),
                    award = VByName("fullname"),

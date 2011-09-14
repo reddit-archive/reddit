@@ -701,12 +701,6 @@ ul.flat-vert {text-align: left;}
 }
 
 .flairselector .error { text-align: center; }
-
-.flairselector > div {
-    height: 200px;
-    overflow: auto;
-}
-
 .flairselector ul { float: left; width: 200px; }
 
 .flairselector .selected, .flairselector.active li {
@@ -725,9 +719,11 @@ ul.flat-vert {text-align: left;}
     text-align: center;
 }
 
-.flairselector .customizer { display: none; }
-.flairselector .customizer.texteditable { display: inline-block; }
+.flairoptionpane { height: 200px; overflow: auto; }
+
+.flairselector .customizer { display: inline-block; }
 .flairselector .customizer input { display: block; }
+.flairselector .customizer button { display: inline !important; }
 
 .media-button .option { color: red; }
 .media-button .option.active {
