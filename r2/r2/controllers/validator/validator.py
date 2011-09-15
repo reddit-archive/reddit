@@ -32,6 +32,7 @@ from r2.lib.jsontemplates import api_type
 from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
+from r2.lib.utils import constant_time_compare
 
 from r2.controllers.errors import errors, UserRequiredException
 from r2.controllers.errors import VerifiedUserRequiredException
@@ -580,6 +581,12 @@ class VAdmin(Validator):
     def run(self):
         if not c.user_is_admin:
             abort(404, "page not found")
+
+class VAdminOrAdminSecret(VAdmin):
+    def run(self, secret):
+        if secret and constant_time_compare(secret, g.ADMINSECRET):
+            return
+        super(VAdminOrAdminSecret, self).run()
 
 class VVerifiedUser(VUser):
     def run(self):
