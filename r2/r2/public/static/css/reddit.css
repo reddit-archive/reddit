@@ -1019,7 +1019,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .comment .midcol { width: 15px; }
 
-.comment .author { font-weight: bold; }
+.comment .entry .author { font-weight: bold; }
 .comment .collapsed { font-size: x-small; 
     color: gray; 
     font-style: italic; 
