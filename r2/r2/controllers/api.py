@@ -2059,7 +2059,7 @@ class ApiController(RedditController):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
 
-    @validatedForm(VAdmin(),
+    @validatedForm(VAdminOrAdminSecret("secret"),
                    award = VByName("fullname"),
                    description = VLength("description", max_length=1000),
                    url = VLength("url", max_length=1000),
