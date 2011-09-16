@@ -32,12 +32,12 @@
 </%def>
 
 %if context_deleted and not c.user_is_admin:
-  [deleted]
+  <span class="author">[deleted]</span>
 %else:
   %if thing.user_deleted:
-    <span>[deleted]</span>
+    <span class="author">[deleted]</span>
   %elif thing.name == '[blocked]':
-    <span>${_(thing.thing.original_author.name)}</span>
+    <span class="author">${_(thing.thing.original_author.name)}</span>
   %else:
     %if thing.flair_position == 'left':
       ${flair(thing, enabled=thing.force_show_flair)}
