@@ -1328,14 +1328,15 @@ textarea.gray { color: gray; }
 
 /* footer */
 .footer-parent {
+    font-size: larger;
     padding-top: 40px; 
+    padding-bottom: 20px;
     clear: both;
     text-align: center;
 }
 
 .footer {
     color: gray;
-    font-size: larger;
     padding: 5px;
     margin: 15px;
     border:1px solid #F0F0F0;
@@ -1347,7 +1348,7 @@ textarea.gray { color: gray; }
     margin: 10px;
     padding-left: 10px;
     border-left: 1px solid #E0E0E0;
-    height: 150px;
+    height: 9em;
  }
 
 .footer .col:first-child {border: none;}
