@@ -659,8 +659,8 @@ class VFlairManager(VSrModerator):
     subreddit administration."""
     pass
 
-class VSrCanDistinguish(VByName):
-    def run(self, thing_name):
+class VCanDistinguish(VByName):
+    def run(self, thing_name, how):
         if c.user_is_admin:
             return True
         elif c.user_is_loggedin:
@@ -670,8 +670,11 @@ class VSrCanDistinguish(VByName):
                 # comment, because this should only be used on links and
                 # comments
                 subreddit = item.subreddit_slow
-                if subreddit.can_distinguish(c.user):
+                if how in ("yes", "no") and subreddit.can_distinguish(c.user):
                     return True
+                elif how in ("special", "no") and c.user_special_distinguish:
+                    return True
+
         abort(403,'forbidden')
 
 class VSrCanAlter(VByName):

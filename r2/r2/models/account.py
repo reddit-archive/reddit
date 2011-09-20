@@ -388,6 +388,13 @@ class Account(Thing):
     def cup_info(self):
         return g.hardcache.get("cup_info-%d" % self._id)
 
+    def special_distinguish(self):
+        if self._t.get("special_distinguish_name"):
+            return dict((k, self._t.get("special_distinguish_"+k, None))
+                        for k in ("name", "kind", "symbol", "cssclass", "label", "link"))
+        else:
+            return None
+
     def quota_key(self, kind):
         return "user_%s_quotas-%s" % (kind, self.name)
 

@@ -62,7 +62,7 @@
             <% (src, alt, width, height) = img %>
             <img src="${src}" alt="${alt}" width="${width}" height="${height}"/>
           %else:
-            ${abbv}
+            ${unsafe(abbv)}
           %endif
           </a>
         %else:

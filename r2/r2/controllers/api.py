@@ -1409,9 +1409,9 @@ class ApiController(RedditController):
         admintools.unspam(thing, c.user.name)
 
     @validatedForm(VUser(), VModhash(),
-                   VSrCanDistinguish('id'),
+                   VCanDistinguish(('id', 'how')),
                    thing = VByName('id'),
-                   how = VOneOf('how', ('yes','no','admin')))
+                   how = VOneOf('how', ('yes','no','admin','special')))
     def POST_distinguish(self, form, jquery, thing, how):
         if not thing:return
         thing.distinguished = how

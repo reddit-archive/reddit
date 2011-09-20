@@ -66,9 +66,9 @@
   %endif
 </%def>
 
-<%def name="distinguish_setter(value)">
+<%def name="distinguish_setter(name, value=None)">
   <a href="javascript:void(0)"
-     onclick="return set_distinguish(this, '${value}')">${_(value)}</a>
+     onclick="return set_distinguish(this, '${value or name}')">${_(name)}</a>
 </%def>
 
 <%def name="distinguish()">
@@ -81,15 +81,26 @@
       <span class="option error">
          ${_("distinguish this?")}
 
+         ## Note: can_ban is logically equivalent to can_distinguish at this time.
+         %if thing.can_ban:
          &#32;
          ${distinguish_setter('yes')}
-         &#32;/&#32;
+         &#32;/
+         %endif
+         
+         &#32;
          ${distinguish_setter('no')}
          &#32;
 
          %if c.user_is_admin:
          /&#32;
          ${distinguish_setter('admin')}
+         &#32;
+         %endif
+         
+         %if c.user_special_distinguish:
+         /&#32;
+         ${distinguish_setter(c.user_special_distinguish['name'], 'special')}
          &#32;
          %endif
 

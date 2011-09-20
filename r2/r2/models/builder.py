@@ -124,8 +124,8 @@ class Builder(object):
             if hasattr(item, "distinguished"):
                 if item.distinguished == 'yes':
                     w.distinguished = 'moderator'
-                elif item.distinguished == 'admin':
-                    w.distinguished = 'admin'
+                elif item.distinguished in ('admin', 'special'):
+                    w.distinguished = item.distinguished
 
             try:
                 w.author = authors.get(item.author_id)
@@ -152,6 +152,13 @@ class Builder(object):
             if w.distinguished == 'moderator':
                 add_attr(w.attribs, 'M', label=modlabel[item.sr_id],
                          link=modlink[item.sr_id])
+            
+            if w.distinguished == 'special':
+                args = w.author.special_distinguish()
+                args.pop('name')
+                if not args.get('kind'):
+                    args['kind'] = 'special'
+                add_attr(w.attribs, **args)
 
             if False and w.author and c.user_is_admin:
                 for attr in email_attrses[w.author._id]:

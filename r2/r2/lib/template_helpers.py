@@ -348,56 +348,59 @@ def panel_size(state):
 # Appends to the list "attrs" a tuple of:
 # <priority (higher trumps lower), letter,
 #  css class, i18n'ed mouseover label, hyperlink (opt), img (opt)>
-def add_attr(attrs, code, label=None, link=None):
+def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     from r2.lib.template_helpers import static
 
     img = None
+    symbol = symbol or kind
 
-    if code == 'F':
+    if kind == 'F':
         priority = 1
         cssclass = 'friend'
         if not label:
             label = _('friend')
         if not link:
             link = '/prefs/friends'
-    elif code == 'S':
+    elif kind == 'S':
         priority = 2
         cssclass = 'submitter'
         if not label:
             label = _('submitter')
         if not link:
             raise ValueError ("Need a link")
-    elif code == 'M':
+    elif kind == 'M':
         priority = 3
         cssclass = 'moderator'
         if not label:
             raise ValueError ("Need a label")
         if not link:
             raise ValueError ("Need a link")
-    elif code == 'A':
+    elif kind == 'A':
         priority = 4
         cssclass = 'admin'
         if not label:
             label = _('reddit admin, speaking officially')
         if not link:
             link = '/help/faq#Whorunsreddit'
-    elif code in ('X', '@'):
+    elif kind in ('X', '@'):
         priority = 5
         cssclass = 'gray'
         if not label:
             raise ValueError ("Need a label")
-    elif code == 'V':
+    elif kind == 'V':
         priority = 6
         cssclass = 'green'
         if not label:
             raise ValueError ("Need a label")
-    elif code == 'B':
+    elif kind == 'B':
         priority = 7
         cssclass = 'wrong'
         if not label:
             raise ValueError ("Need a label")
-    elif code.startswith ('trophy:'):
-        img = (code[7:], '!', 11, 8)
+    elif kind == 'special':
+        priority = 98
+    elif kind.startswith ('trophy:'):
+        img = (kind[7:], '!', 11, 8)
         priority = 99
         cssclass = 'recent-trophywinner'
         if not label:
@@ -405,6 +408,6 @@ def add_attr(attrs, code, label=None, link=None):
         if not link:
             raise ValueError ("Need a link")
     else:
-        raise ValueError ("Got weird code [%s]" % code)
+        raise ValueError ("Got weird kind [%s]" % kind)
 
-    attrs.append( (priority, code, cssclass, label, link, img) )
+    attrs.append( (priority, symbol, cssclass, label, link, img) )

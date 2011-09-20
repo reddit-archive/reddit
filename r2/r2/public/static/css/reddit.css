@@ -586,6 +586,7 @@ ul.flat-vert {text-align: left;}
 .tagline .submitter { color: #0055df }
 .tagline .moderator, .green { color: #228822 }
 .tagline .admin { color: #ff0011; }
+.tagline .alum { color: #BE1337; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 
