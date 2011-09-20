@@ -277,9 +277,6 @@ class Reddit(Templated):
             if c.user.pref_show_adbox or not c.user.gold:
                 ps.append(Ads())
 
-        if c.user_is_admin:
-            ps.append(Admin_Rightbox())
-
         if c.user.pref_clickgadget and c.recent_clicks:
             ps.append(SideContentBox(_("Recently viewed links"),
                                      [ClickGadget(c.recent_clicks)]))
@@ -2226,9 +2223,6 @@ class AdminUsage(Templated):
         Templated.__init__(self)
 
 class Ads(Templated):
-    pass
-
-class Admin_Rightbox(Templated):
     pass
 
 class Embed(Templated):
