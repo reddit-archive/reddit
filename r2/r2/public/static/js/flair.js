@@ -120,7 +120,9 @@ $(function() {
     // Attach event handlers to the various flair forms that may be on page.
     $(".flairlist").delegate(".flairtemplate form", "submit",
                              makeOnSubmit('flairtemplate'));
-    $(".flairlist").delegate("form.flair-entry", "submit",
+    $(".flairlist").delegate("form.clearflairtemplates", "submit",
+                             makeOnSubmit('clearflairtemplates'));
+    $(".flairlist").delegate(".flairgrant form", "submit",
                              makeOnSubmit('flair'));
     $(".flairlist").delegate("form.clearflairtemplates", "submit",
                              makeOnSubmit('clearflairtemplates'));

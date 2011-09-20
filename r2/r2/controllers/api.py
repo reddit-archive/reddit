@@ -2032,7 +2032,7 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   flair_template_id = nop('id'),
+                   flair_template_id = nop('flair_template_id'),
                    text = VFlairText('text'),
                    css_class = VFlairCss('css_class'),
                    text_editable = VBoolean('text_editable'))
@@ -2070,7 +2070,6 @@ class ApiController(RedditController):
 
             new = True
 
-        # TODO(intortus): ...
         # Push changes back to client.
         if new:
             jquery('#empty-flair-template').before(
@@ -2079,10 +2078,13 @@ class ApiController(RedditController):
             empty_template._committed = True  # to disable unnecessary warning
             jquery('#empty-flair-template').html(
                 FlairTemplateEditor(empty_template).render(style='html'))
+            form.set_html('.status', _('saved'))
         else:
+            form.set_html('.flaircell:first',
+                          FlairTemplateEditor(ft).render(style='html'))
+            form.set_html('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
-            form.set_html('.status', _('saved'))
 
     @validatedForm(VFlairManager(), VModhash())
     def POST_clearflairtemplates(self, form, jquery):

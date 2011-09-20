@@ -24,9 +24,10 @@
 
 <div class="flairtemplate flairrow">
   <form action="/post/flairtemplate"
+        ${'id=%s' % thing.id if thing.id else ''}
         method="post" class="medium-text flair-entry">
     %if thing.id:
-      <input type="hidden" name="id" value="${thing.id}" />
+      <input type="hidden" name="flair_template_id" value="${thing.id}" />
     %endif
     <span class="flaircell flairsample-${thing.position} tagline">
       %if thing.text or thing.css_class:
