@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd /home/reddit/reddit/r2
+exec 2>&1
+exec setuidgid reddit /usr/local/bin/paster serve run.ini http_port=8002
