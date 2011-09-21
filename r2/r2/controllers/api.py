@@ -1938,6 +1938,23 @@ class ApiController(RedditController):
             jquery('input[name="css_class"]').data('saved', css_class)
             form.set_html('.status', _('saved'))
 
+    @validatedForm(VFlairManager(),
+                  VModhash(),
+                  user = VExistingUname("name", allow_deleted=True))
+    def POST_deleteflair(self, form, jquery, user):
+        # Check validation.
+        if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
+        c.site.remove_flair(user)
+        setattr(user, 'flair_%s_text' % c.site._id, None)
+        setattr(user, 'flair_%s_css_class' % c.site._id, None)
+        user._commit()
+
+        jquery('#flairrow_%s' % user._id36).remove()
+        unflair = WrappedUser(
+            user, include_flair_selector=True).render(style='html')
+        jquery('.tagline .id-%s' % user._fullname).parent().html(unflair)
+
     @validate(VFlairManager(),
               VModhash(),
               flair_csv = nop('flair_csv'))
