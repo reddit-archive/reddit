@@ -632,7 +632,7 @@ ul.flat-vert {text-align: left;}
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
 
-.author { margin-right: 0.5em; }
+a.author { margin-right: 0.5em; }
 
 .flair {
     display: inline-block;
@@ -1126,7 +1126,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .comment .midcol { width: 15px; }
 
-.comment .entry .author { font-weight: bold; }
+.comment .author { font-weight: bold; }
 .comment .collapsed { font-size: x-small; 
     color: gray; 
     font-style: italic; 

@@ -28,11 +28,7 @@
         %endif
         >
     ${_("Show my flair on this reddit. It looks like:")}
-    <div>${thing.wrapped_user}</div>
   </form>
-  %if thing.sr_flair_self_assign_enabled:
-    <a class="flairselectbtn" href="javascript://">select</a>
-    <div class="flairselector drop-choices"></div>
-  %endif
+  <div class="tagline">${thing.wrapped_user}</div>
 %endif
 

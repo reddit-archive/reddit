@@ -2271,7 +2271,11 @@ class WrappedUser(CachedTemplate):
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
                  subreddit = None, force_show_flair = None,
-                 flair_template = None, flair_text_editable = False):
+                 flair_template = None, flair_text_editable = False,
+                 include_flair_selector = False):
+        if not subreddit:
+            subreddit = c.site
+
         attribs.sort()
         author_cls = 'author'
 
@@ -2302,6 +2306,11 @@ class WrappedUser(CachedTemplate):
             flair_css_class = ' '.join(self.FLAIR_CSS_PREFIX + c
                                        for c in flair_css_class.split())
 
+        if include_flair_selector:
+            if (not getattr(c.site, 'flair_self_assign_enabled', True)
+                and not (c.user_is_admin or c.site.is_moderator(c.user))):
+                include_flair_selector = False
+
         target = None
         ip_span = None
         context_deleted = None
@@ -2324,6 +2333,7 @@ class WrappedUser(CachedTemplate):
                                 flair_text_editable = flair_text_editable,
                                 flair_css_class = flair_css_class,
                                 flair_template_id = flair_template_id,
+                                include_flair_selector = include_flair_selector,
                                 author_cls = author_cls,
                                 author_title = author_title,
                                 attribs = attribs,
@@ -2545,7 +2555,8 @@ class FlairPrefs(CachedTemplate):
         sr_flair_self_assign_enabled = getattr(
             c.site, 'flair_self_assign_enabled', True)
         wrapped_user = WrappedUser(c.user, subreddit=c.site,
-                                   force_show_flair=True)
+                                   force_show_flair=True,
+                                   include_flair_selector=True)
         CachedTemplate.__init__(
             self,
             sr_flair_enabled=sr_flair_enabled,

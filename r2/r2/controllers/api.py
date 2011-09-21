@@ -1929,11 +1929,10 @@ class ApiController(RedditController):
         if new:
             jquery.redirect('?name=%s' % user.name)
         else:
-            flair = (
-                WrappedUser(user, force_show_flair=True).render(style='html'))
-            jquery('#tabbedpane-grant .id-%s'
-                   % user._fullname).parent().html(flair)
-            jquery('.flairtoggle .id-%s'
+            flair = WrappedUser(
+                user, force_show_flair=True,
+                include_flair_selector=True).render(style='html')
+            jquery('.tagline .flairselectable.id-%s'
                    % user._fullname).parent().html(flair)
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
@@ -2137,10 +2136,11 @@ class ApiController(RedditController):
 
         # Push some client-side updates back to the browser.
         u = WrappedUser(user, force_show_flair=True,
-                        flair_text_editable=flair_template.text_editable)
+                        flair_text_editable=flair_template.text_editable,
+                        include_flair_selector=True)
         flair = u.render(style='html')
-        jquery('#tabbedpane-grant .id-%s' % user._fullname).parent().html(flair)
-        jquery('.flairtoggle .id-%s' % user._fullname).parent().html(flair)
+        jquery('.tagline .flairselectable.id-%s'
+               % user._fullname).parent().html(flair)
         jquery('#flairrow_%s input[name="text"]' % user._id36).data(
             'saved', text).val(text)
         jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(

@@ -136,7 +136,7 @@ $(function() {
     });
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 
-    $(".flairselectbtn").click(openFlairSelector);
+    $(".tagline").delegate(".flairselectbtn", "click", openFlairSelector);
 
     $(".flairselector .dropdown").click(toggleFlairSelector);
 });

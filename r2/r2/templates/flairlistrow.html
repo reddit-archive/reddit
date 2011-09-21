@@ -44,11 +44,10 @@ from r2.lib.pages import WrappedUser
     ${utils.error_field(('TOO_MUCH_FLAIR_CSS', 'flair_css_class'), 'name')}
   </form>
   <span class="tagline flaircell">
-    ${unsafe(WrappedUser(thing.user, force_show_flair=True).render())}
     <form>
       <input type="hidden" name="name" value="${thing.user.name}">
     </form>
-    <a class="flairselectbtn" href="javascript://">select</a>
-    <div class="flairselector drop-choices"></div>
+    ${unsafe(WrappedUser(thing.user, force_show_flair=True,
+                         include_flair_selector=True).render())}
   </span>
 </div>

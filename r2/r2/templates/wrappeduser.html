@@ -42,11 +42,20 @@
     %if thing.flair_position == 'left':
       ${flair(thing, enabled=thing.force_show_flair)}
     %endif
+    <%
+      classes = [thing.author_cls, 'id-%s' % thing.fullname]
+      if thing.include_flair_selector:
+          classes.append('flairselectable')
+    %>
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
-                 _class = thing.author_cls + (" id-%s" % thing.fullname),
+                 _class = ' '.join(classes),
                  _sr_path = False, target=target, title=thing.author_title)}
     %if thing.flair_position == 'right':
       ${flair(thing, enabled=thing.force_show_flair)}
+    %endif
+    %if thing.include_flair_selector:
+      (<a class="flairselectbtn" href="javascript://">select</a>)
+      <div class="flairselector drop-choices"></div>
     %endif
     <span class="userattrs">
     %if thing.attribs:
