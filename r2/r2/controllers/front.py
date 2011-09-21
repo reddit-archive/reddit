@@ -599,7 +599,7 @@ class FrontController(RedditController):
 
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
-    @validate(query = nop('q'),
+    @validate(query = VLength('q', max_length=512),
               sort = VMenu('sort', SearchSortMenu, remember=False),
               restrict_sr = VBoolean('restrict_sr', default=False))
     def GET_search(self, query, num, reverse, after, count, sort, restrict_sr):
