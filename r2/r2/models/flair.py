@@ -191,7 +191,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
 
         for k in idx._index_keys():
             del idx[k]
-            # TODO: delete the dangling reference this leaves behind
+            # TODO: delete the orphaned FlairTemplate row
 
         idx._commit()
 
@@ -226,3 +226,15 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
         # Assign to position and commit.
         setattr(self, self._make_index_key(position), ft_id)
         self._commit()
+
+    def delete_by_id(self, ft_id):
+        for key in self._index_keys():
+            ft = getattr(self, key)
+            if ft == ft_id:
+                # TODO: delete the orphaned FlairTemplate row
+                g.log.debug('deleting ft %s (%s)', ft, key)
+                del self[key]
+                self._commit()
+                return True
+        g.log.debug("couldn't find %s to delete", ft_id)
+        return False

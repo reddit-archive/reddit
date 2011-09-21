@@ -2085,6 +2085,14 @@ class ApiController(RedditController):
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
 
+    @validatedForm(VFlairManager(),
+                   VModhash(),
+                   flair_template_id = nop("flair_template_id"))
+    def POST_deleteflairtemplate(self, form, jquery, flair_template_id):
+        idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
+        if idx.delete_by_id(flair_template_id):
+            jquery('#%s' % flair_template_id).parent().remove()
+
     @validatedForm(VFlairManager(), VModhash())
     def POST_clearflairtemplates(self, form, jquery):
         FlairTemplateBySubredditIndex.clear(c.site._id)

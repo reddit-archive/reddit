@@ -10,6 +10,14 @@ $(function() {
         }
     }
 
+    function onDelete(action) {
+        return post_form(this.parentNode, action);
+    }
+
+    function makeOnDelete(action) {
+        return function() { return onDelete.call(this, action); };
+    }
+
     function onFocus() {
         showSaveButton(this);
     }
@@ -129,6 +137,10 @@ $(function() {
     $(".flairlist").delegate(".flaircell input", "focus", onFocus);
     $(".flairlist").delegate(".flaircell input", "keyup", onEdit);
     $(".flairlist").delegate(".flaircell input", "change", onEdit);
+    $(".flairlist").delegate(".flairtemplate .flairdeletebtn", "click",
+                             makeOnDelete("deleteflairtemplate"));
+    $(".flairlist").delegate(".flairgrant .flairdeletebtn", "click",
+                             makeOnDelete("deleteflair"));
 
     // Event handlers for sidebar flair prefs.
     $(".flairtoggle").submit(function() {

@@ -50,5 +50,8 @@
     <span class="status"></span>
     ${utils.error_field('BAD_CSS_NAME', 'css_class')}
     ${utils.error_field('TOO_MUCH_FLAIR_CSS', 'css_class')}
+    %if thing.id:
+      <a class="flairdeletebtn" href="javascript://">X</a>
+    %endif
   </form>
 </div>

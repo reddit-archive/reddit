@@ -686,6 +686,15 @@ a.author { margin-right: 0.5em; }
 .flairrow button { display: none; }
 .flairrow .edited button { display: inline-block; }
 
+.flairdeletebtn {
+    color: black;
+    font-weight: bold;
+    opacity: 0.2;
+    text-decoration: none;
+}
+
+.flairrow:hover .flairdeletebtn { opacity: 1.0; }
+
 .flairselector { font-size: x-small; position: absolute; width: 400px; }
 
 .flairselector h2 {
