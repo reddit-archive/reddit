@@ -54,6 +54,7 @@ from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
+from r2.lib.scraper import str_to_image
 
 import csv
 from datetime import datetime, timedelta
@@ -1129,11 +1130,13 @@ class ApiController(RedditController):
             return self.abort(403,'forbidden')
         if sponsor and c.user_is_admin:
             c.site.sponsorship_img = None
+            c.site.sponsorship_size = None
             c.site._commit()
         elif c.site.header:
             # reset the header image on the page
             jquery('#header-img').attr("src", DefaultSR.header)
             c.site.header = None
+            c.site.header_size = None
             c.site._commit()
         # hide the button which started this
         form.find('.delete-img').hide()
@@ -1161,7 +1164,7 @@ class ApiController(RedditController):
               img_type = VImageType('img_type'),
               form_id = VLength('formid', max_length = 100), 
               header = VInt('header', max=1, min=0),
-              sponsor = VInt('sponsor', max=1, min=0))
+              sponsor = VSubredditSponsorship('sponsor'))
     def POST_upload_sr_img(self, file, header, sponsor, name, form_id, img_type):
         """
         Called on /about/stylesheet when an image needs to be replaced
@@ -1183,8 +1186,7 @@ class ApiController(RedditController):
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
         add_image_to_sr = False
-        if sponsor and not c.user_is_admin:
-            return self.abort(403, 'forbidden')
+        size = None
         
         if not sponsor and not header:
             add_image_to_sr = True
@@ -1193,33 +1195,32 @@ class ApiController(RedditController):
                 # this may also fail if a sponsored image was added and the user is not an admin
                 errors['BAD_CSS_NAME'] = _("bad image name")
         
-        if c.site.images:
+        if c.site.images and add_image_to_sr:
             if c.site.images.has_key(name):
-                errors['IMAGE_ERROR'] = (_("An image with that name already exists"))
+                errors['IMAGE_ERROR'] = _("An image with that name already exists")
             elif c.site.get_num_images() >= g.max_sr_images:
-                errors['IMAGE_ERROR'] = (_("too many images (you only get %d)") % g.max_sr_images)
+                errors['IMAGE_ERROR'] = _("too many images (you only get %d)") % g.max_sr_images
 
         if any(errors.values()):
-            return UploadedImage("", "", "", errors = errors).render()
-        else: 
-            # with the image num, save the image an upload to s3.  the
-            # header image will be of the form "${c.site._fullname}.png"
-            # while any other image will be ${c.site._fullname}_${resource}.png
+            return UploadedImage("", "", "", errors=errors).render()
+        else:
             try:
-                new_url = cssfilter.save_sr_image(c.site, file, suffix = '.' + img_type)
+                new_url = cssfilter.save_sr_image(c.site, file, suffix ='.' + img_type)
             except cssfilter.BadImage:
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
-                return UploadedImage("", "", "", errors = errors).render()
-            
+                return UploadedImage("", "", "", errors=errors).render()
+            size = str_to_image(file).size
             if header:
                 c.site.header = new_url
+                c.site.header_size = size
             elif sponsor and c.user_is_admin:
                 c.site.sponsorship_img = new_url
-
-            c.site.add_image(name, url = new_url)
+                c.site.sponsorship_size = size
+            if add_image_to_sr:
+                c.site.add_image(name, url = new_url)
             c.site._commit()
             return UploadedImage(_('saved'), new_url, name, 
-                                 errors = errors, form_id = form_id).render()
+                                 errors=errors, form_id=form_id).render()
 
 
     @validatedForm(VUser(),

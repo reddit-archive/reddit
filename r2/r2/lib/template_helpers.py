@@ -67,6 +67,7 @@ def static(path):
     return os.path.join(c.site.static_path, path) + query
 
 def s3_https_if_secure(url):
+    # In the event that more media sources (other than s3) are added, this function should be corrected
     if not c.secure:
         return url
     replace = "https://"

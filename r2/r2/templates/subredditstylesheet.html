@@ -97,7 +97,7 @@
 
   <%call expr="image_upload('/api/upload_sr_img', '', 
                               onchange='return file_changed(this)',
-                              label = _('image file'), ask_type = True)">
+                              label = _('image file'), ask_type=True)">
     
     <br/>
     <label for="img-name">${_("new image name:")}</label>
@@ -209,7 +209,7 @@
     /* ]]> */
     </script>
     <ul id="image-preview-list" class="image-list">
-      <%def name="make_li(name='', img = None, prototype=False)">
+      <%def name="make_li(name='', img=None, prototype=False)">
         <li ${"style='display:none'" if img is None else ""}>
           <% 
              if img is not None:
@@ -248,7 +248,7 @@
         </%def>
       ${make_li(prototype=True)}
       %for name, img_num in c.site.get_images():
-         ${make_li(name = name, img = img_num)}
+         ${make_li(name=name, img=img_num)}
       %endfor
     </ul>
 

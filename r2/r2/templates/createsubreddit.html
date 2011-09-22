@@ -216,7 +216,7 @@
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.header}"
                                label="${_('upload header image')}"
-                               ask_type="True">
+                               ask_type="${True}">
             <br/>
             <button id="delete-img" class="delete-img"
                     %if not thing.site.header:
@@ -270,8 +270,8 @@
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.sponsorship_img}"
                                label="${_('upload sponsorship image')}"
-                               form_id="sponsor-upload"
-                               ask_type="True">
+                               form_id="sponsor-upload",
+                               ask_type="${True}">
             <br/>
             <button id="delete-sponsor" class="delete-img"
                    %if not thing.site.sponsorship_img:

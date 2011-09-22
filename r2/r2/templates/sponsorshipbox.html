@@ -30,7 +30,13 @@
   <span>${c.site.sponsorship_text}</span>
   <div>
     <a class="title" href="${c.site.sponsorship_url}">
-       <img alt="sponsor" src="${s3_https_if_secure(c.site.sponsorship_img)}" />
+    <%
+        if not hasattr(c.site, 'sponsorship_size'):
+            size_str = ''
+        else:
+            size_str = "width='%d' height='%d'" % (c.site.sponsorship_size[0], c.site.sponsorship_size[1])
+    %>
+       <img alt="sponsor" ${size_str} src="${s3_https_if_secure(c.site.sponsorship_img)}" />
     </a>
   </div>
 </div>

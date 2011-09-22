@@ -234,7 +234,13 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
   %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail')">
     &#8203;
-    <img src="${s3_https_if_secure(thing.thumbnail)}" alt=""/>
+    <%
+        if not hasattr(thing, 'thumbnail_size'):
+            size_str = ""
+        else:
+            size_str = "width = '%d' height = '%d'" % (thing.thumbnail_size[0], thing.thumbnail_size[1])
+    %>
+    <img src="${s3_https_if_secure(thing.thumbnail)}" ${size_str} alt=""/>
   </%call>
   %endif
 </%def>

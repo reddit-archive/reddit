@@ -100,7 +100,7 @@ ${first_defined(kw[1:])}
 </script>
 </%def>
 
-<%def name="img_link(link_text, img, path, _id='', target='', img_id = None, width = None, height = None, **kw)">
+<%def name="img_link(link_text, img, path, _id='', target='', img_id=None, size=None, **kw)">
   <% 
      if (not target or target == '_parent') and c.cname:
          target = '_top'
@@ -109,9 +109,14 @@ ${first_defined(kw[1:])}
 
      path = add_sr(path, sr_path = False)
      kw['target'] = target
+     
+     if size is None:
+         size_str = ""
+     else:
+         size_str = "width='%d' height='%d'" % (size[0], size[1])
   %>
   <%call expr="_a(href=path, _id=_id, **kw)">
-    <img src="${img}" ${tags(id = img_id, width = width, height = height)} alt="${link_text}" />
+    <img ${("id='%s'" % img_id) if img_id else ''} src="${img}" ${size_str} alt="${link_text}"/>
   </%call>
 </%def>
 
@@ -285,7 +290,7 @@ ${unsafe(txt)}
           %endif
           <input type="hidden" name="formid" value="${form_id}" />
           <br/>
-          %if ask_type == True:
+          %if ask_type:
             <label for="img_type">${_("Type: ")}</label>
             <label><input type="radio" name="img_type" value="jpg" />JPEG</label>
             &nbsp;&nbsp;

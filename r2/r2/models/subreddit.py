@@ -56,6 +56,7 @@ class Subreddit(Thing, Printable):
                      stylesheet_hash     = '0',
                      firsttext = strings.firsttext,
                      header = None,
+                     header_size = None,
                      header_title = "",
                      allow_top = False, # overridden in "_new"
                      description = '',
@@ -560,10 +561,10 @@ class Subreddit(Thing, Printable):
                 yield (name, img)
     
     def get_num_images(self):
-        if self.images.has_key('/empties/'):
-            return len(images) - 1
+        if '/empties/' in self.images:
+            return len(self.images) - 1
         else:
-            return len(images)
+            return len(self.images)
     
     def add_image(self, name, url, max_num = None):
         """
@@ -578,7 +579,7 @@ class Subreddit(Thing, Printable):
         The Subreddit will be _dirty if a new image has been added to
         its images list, and no _commit is called.
         """
-        if(max_num is not None and self.get_num_images() >= max_num):
+        if max_num is not None and self.get_num_images() >= max_num:
             raise ValueError, "too many images"
         
         if not self.images.has_key(name):

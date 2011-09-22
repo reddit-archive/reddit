@@ -315,7 +315,7 @@ class Link(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.pages import make_link_child
         from r2.lib.count import incr_counts
-        from r2.lib.media import thumbnail_url as get_thumbnail_url
+        from r2.lib import media
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain
         from r2.models.subreddit import FakeSubreddit
@@ -375,7 +375,7 @@ class Link(Thing, Printable):
 
             # always show a promo author their own thumbnail
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
-                item.thumbnail = get_thumbnail_url(item)
+                item.thumbnail = media.thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
                     item.thumbnail = "/static/nsfw2.png"
@@ -384,7 +384,7 @@ class Link(Thing, Printable):
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
-                item.thumbnail = get_thumbnail_url(item)
+                item.thumbnail = media.thumbnail_url(item)
             elif item.is_self:
                 item.thumbnail = g.self_thumb
             else:

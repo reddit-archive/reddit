@@ -52,10 +52,9 @@ MEDIA_FILENAME_LENGTH = 12
 
 def thumbnail_url(link):
     """Given a link, returns the url for its thumbnail based on its fullname"""
-    res = str()
     if link.has_thumbnail:
         if hasattr(link, "thumbnail_url"):
-            res = link.thumbnail_url
+            return link.thumbnail_url
         else:
             bucket = g.s3_old_thumb_bucket
             baseurl = "http://%s" % (bucket)
@@ -64,8 +63,9 @@ def thumbnail_url(link):
             res = '%s/%s.png' % (baseurl,link._fullname)
             if hasattr(link, "thumbnail_version"):
                 res += "?v=%s" % link.thumbnail_version
-
-    return res
+            return res
+    else:
+        return ''
 
 def filename_to_s3_bucket(file_name):
     num = ord(file_name[-1]) % len(g.s3_media_buckets)
@@ -86,12 +86,12 @@ def get_filename_from_content(contents):
     sha = hashlib.sha1(contents).digest()
     return base64.urlsafe_b64encode(sha[0:MEDIA_FILENAME_LENGTH])
 
-def upload_media(image, never_expire = True, file_type = ".jpg"):
+def upload_media(image, never_expire=True, file_type='.jpg'):
     """Given a link and an image, uploads the image to s3 into an image
     based on the link's fullname"""
     url = str()
     mime_type = mimetypes.guess_type("file" + file_type)[0] # Requires a filename with the extension
-    f = tempfile.NamedTemporaryFile(suffix = file_type, delete = False)
+    f = tempfile.NamedTemporaryFile(suffix=file_type, delete=False)
     try:
         img = image
         if isinstance(img, basestring):
@@ -99,29 +99,32 @@ def upload_media(image, never_expire = True, file_type = ".jpg"):
         
         if not img.mode == 'RGBA': # Indexed images will not convert properly
             img = img.convert('RGBA')
+
         if file_type == ".jpg":
             # PIL does not play nice when converting alpha channels to jpg
             background = Image.new('RGBA', img.size, (255, 255, 255))
             background.paste(img, img)
             img = background.convert('RGB')
         img.save(f, quality=85, optimize=True)
-
+        
         if file_type == ".png":
             optimize_png(f.name, g.png_optimizer)
         contents = open(f.name).read()
         file_name = get_filename_from_content(contents)
         if g.media_store == "s3":
-            url = s3_upload_media(contents, file_name = file_name, mime_type = mime_type, file_type = file_type, never_expire = True)
+            url = s3_upload_media(contents, file_name=file_name, mime_type=mime_type, file_type=file_type, never_expire=True)
     finally:
         os.unlink(f.name)
     return url
 
 
-def update_link(link, thumbnail, media_object):
+def update_link(link, thumbnail, media_object, thumbnail_size=None):
     """Sets the link's has_thumbnail and media_object attributes iin the
     database."""
     if thumbnail:
         link.thumbnail_url = thumbnail
+        link.thumbnail_size = thumbnail_size
+        g.log.debug("Updated link with thumbnail: %s" % link.thumbnail_url)
         
     if media_object:
         link.media_object = media_object
@@ -151,17 +154,17 @@ def set_media(link, force = False):
         if not res:
             print "%s made a bad media obj for link %s" % (scraper, link._id36)
             media_object = None
+    
+    thumbnail_url = upload_media(thumbnail) if thumbnail else None
+    thumbnail_size = thumbnail.size if thumbnail else None
 
-    if thumbnail:
-        thumbnail = upload_media(thumbnail)
+    update_link(link, thumbnail_url, media_object, thumbnail_size=thumbnail_size)
 
-    update_link(link, thumbnail, media_object)
-
-def force_thumbnail(link, image_data, never_expire = True, file_type=".jpg"):
+def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     image = str_to_image(image_data)
     image = prepare_image(image)
-    thumb_url = upload_media(image, never_expire = never_expire, file_type = file_type)
-    update_link(link, thumbnail = thumb_url, media_object = None)
+    thumb_url = upload_media(image, never_expire=never_expire, file_type=file_type)
+    update_link(link, thumbnail=thumb_url, media_object=None, thumbnail_size=image.size)
 
 def run():
     def process_link(msg):

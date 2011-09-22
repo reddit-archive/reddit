@@ -43,12 +43,14 @@
         header_title = c.site.header_title
         if c.site.header and c.allow_styles:
             header_img = c.site.header
+            header_size = c.site.header_size
         else:
             d = DefaultSR()
             header_img = d.header
+            header_size = None
             header_title = d.header_title
     %>
-    ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title)}
+    ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title, size = header_size)}
   </div>
   <h1>${nav}</h1>
   <div class="right">
