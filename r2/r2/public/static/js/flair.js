@@ -40,7 +40,7 @@ $(function() {
     function selectFlairInSelector(e) {
         $(".flairselector li").removeClass("selected");
         $(this).addClass("selected");
-        var form = $(this).parent().parent().siblings("form").get(0);
+        var form = $(this).parent().parent().siblings("form")[0];
         $(form).children('input[name="flair_template_id"]').val(this.id);
         var customizer = $(form).children(".customizer");
         var input = customizer.children("input");
@@ -66,9 +66,11 @@ $(function() {
         return false;
     }
 
-    function openFlairSelector() {
+    function openFlairSelector(e) {
+        close_menus(e);
+
         var button = this;
-        var selector = $(button).siblings(".flairselector").get(0);
+        var selector = $(button).siblings(".flairselector")[0];
 
         function columnize(col) {
             var min_cols = 1;
@@ -102,19 +104,35 @@ $(function() {
             var left = Math.max(
                 100, $(button).position().left + $(button).width() - width);
 
-            $(selector).width(width).css("left", left + "px");
-            $(selector).find("li:not(.error)").click(selectFlairInSelector);
-            $(selector).click(function(e) { return false; });
-            $(selector).find("form")
-                .click(function(e) { e.stopPropagation(); });
-            $(selector).find("form").submit(postFlairSelection);
-            $(selector).find(".customizer input").attr("disabled", "disabled");
-            $(selector).find("button").attr("disabled", "disabled");
-            $(selector).find("li.selected").each(selectFlairInSelector);
+            $(selector)
+                .width(width)
+                .css("left", left + "px")
+                .click(false)
+                .find(".flairselection")
+                    .click(false)
+                .end()
+                .find("form")
+                    // don't bubble clicks in the form up to the .click(false)
+                    .click(function(e) { e.stopPropagation(); })
+                    .submit(postFlairSelection)
+                .end()
+                .find(".customizer input")
+                    .attr("disabled", "disabled")
+                .end()
+                .find("button")
+                    .attr("disabled", "disabled")
+                .end()
+                .find("li.selected")
+                    .each(selectFlairInSelector)
+                .end()
+                .find("li:not(.error)")
+                    .click(selectFlairInSelector)
+                .end();
         }
 
-        $(selector).html('<img src="/static/throbber.gif" />');
-        $(selector).addClass("active").width(18)
+        $(selector)
+            .html('<img src="/static/throbber.gif" />')
+            .addClass("active").width(18)
             .css("left",
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
@@ -126,21 +144,20 @@ $(function() {
     }
 
     // Attach event handlers to the various flair forms that may be on page.
-    $(".flairlist").delegate(".flairtemplate form", "submit",
-                             makeOnSubmit('flairtemplate'));
-    $(".flairlist").delegate("form.clearflairtemplates", "submit",
-                             makeOnSubmit('clearflairtemplates'));
-    $(".flairlist").delegate(".flairgrant form", "submit",
-                             makeOnSubmit('flair'));
-    $(".flairlist").delegate("form.clearflairtemplates", "submit",
-                             makeOnSubmit('clearflairtemplates'));
-    $(".flairlist").delegate(".flaircell input", "focus", onFocus);
-    $(".flairlist").delegate(".flaircell input", "keyup", onEdit);
-    $(".flairlist").delegate(".flaircell input", "change", onEdit);
-    $(".flairlist").delegate(".flairtemplate .flairdeletebtn", "click",
-                             makeOnDelete("deleteflairtemplate"));
-    $(".flairlist").delegate(".flairgrant .flairdeletebtn", "click",
-                             makeOnDelete("deleteflair"));
+    $(".flairlist")
+        .delegate(".flairtemplate form", "submit",
+                  makeOnSubmit('flairtemplate'))
+        .delegate("form.clearflairtemplates", "submit",
+                  makeOnSubmit('clearflairtemplates'))
+        .delegate(".flairgrant .usertable form", "submit",
+                  makeOnSubmit('flair'))
+        .delegate(".flaircell input", "focus", onFocus)
+        .delegate(".flaircell input", "keyup", onEdit)
+        .delegate(".flaircell input", "change", onEdit)
+        .delegate(".flairtemplate .flairdeletebtn", "click",
+                  makeOnDelete("deleteflairtemplate"))
+        .delegate(".flairgrant .flairdeletebtn", "click",
+                  makeOnDelete("deleteflair"));
 
     // Event handlers for sidebar flair prefs.
     $(".flairtoggle").submit(function() {
