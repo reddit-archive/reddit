@@ -25,6 +25,7 @@ from pylons.controllers.util import abort
 from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
+from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
@@ -1504,3 +1505,13 @@ class VFlairText(VLength):
     def __init__(self, param, max_length=64, **kw):
         VLength.__init__(self, param, max_length, **kw)
 
+class VFlairTemplateByID(VRequired):
+    def __init__(self, param, **kw):
+        VRequired.__init__(self, param, None, **kw)
+
+    def run(self, flair_template_id):
+        try:
+            return FlairTemplateBySubredditIndex.get_template(
+                c.site._id, flair_template_id)
+        except tdb_cassandra.NotFound:
+            return None

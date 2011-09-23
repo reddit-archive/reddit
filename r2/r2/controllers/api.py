@@ -2048,11 +2048,11 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   flair_template_id = nop('flair_template_id'),
+                   flair_template = VFlairTemplateByID('flair_template_id'),
                    text = VFlairText('text'),
                    css_class = VFlairCss('css_class'),
                    text_editable = VBoolean('text_editable'))
-    def POST_flairtemplate(self, form, jquery, flair_template_id, text,
+    def POST_flairtemplate(self, form, jquery, flair_template, text,
                            css_class, text_editable):
         if text is None:
             text = ''
@@ -2068,16 +2068,15 @@ class ApiController(RedditController):
             return
 
         # Load flair template thing.
-        if flair_template_id:
-            ft = FlairTemplate._byID(flair_template_id)
-            ft.text = text
-            ft.css_class = css_class
-            ft.text_editable = text_editable
-            ft._commit()
+        if flair_template:
+            flair_template.text = text
+            flair_template.css_class = css_class
+            flair_template.text_editable = text_editable
+            flair_template._commit()
             new = False
         else:
             try:
-                ft = FlairTemplateBySubredditIndex.create_template(
+                flair_template = FlairTemplateBySubredditIndex.create_template(
                     c.site._id, text=text, css_class=css_class,
                     text_editable=text_editable)
             except OverflowError:
@@ -2089,7 +2088,7 @@ class ApiController(RedditController):
         # Push changes back to client.
         if new:
             jquery('#empty-flair-template').before(
-                FlairTemplateEditor(ft).render(style='html'))
+                FlairTemplateEditor(flair_template).render(style='html'))
             empty_template = FlairTemplate()
             empty_template._committed = True  # to disable unnecessary warning
             jquery('#empty-flair-template').html(
@@ -2097,18 +2096,19 @@ class ApiController(RedditController):
             form.set_html('.status', _('saved'))
         else:
             form.set_html('.flaircell:first',
-                          FlairTemplateEditor(ft).render(style='html'))
+                          FlairTemplateEditor(flair_template)
+                              .render(style='html'))
             form.set_html('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   flair_template_id = nop("flair_template_id"))
-    def POST_deleteflairtemplate(self, form, jquery, flair_template_id):
+                   flair_template = VFlairTemplateByID('flair_template_id'))
+    def POST_deleteflairtemplate(self, form, jquery, flair_template):
         idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
-        if idx.delete_by_id(flair_template_id):
-            jquery('#%s' % flair_template_id).parent().remove()
+        if idx.delete_by_id(flair_template._id):
+            jquery('#%s' % flair_template._id).parent().remove()
 
     @validatedForm(VFlairManager(), VModhash())
     def POST_clearflairtemplates(self, form, jquery):
@@ -2126,17 +2126,12 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    user = VOptionalExistingUname('name'),
-                   flair_template_id = nop("flair_template_id"),
+                   flair_template = VFlairTemplateByID('flair_template_id'),
                    text = VFlairText("text"))
-    def POST_selectflair(self, form, jquery, user, flair_template_id, text):
-        # TODO: ignore user parameter if c.user is not mod/admin
-        flair_template = FlairTemplateBySubredditIndex.get_template(
-            c.site._id, flair_template_id)
-
+    def POST_selectflair(self, form, jquery, user, flair_template, text):
         if not flair_template:
             # TODO: serve error to client
-            g.log.debug('invalid flair template (%s) for subreddit %s',
-                        flair_template_id, c.site._id)
+            g.log.debug('invalid flair template for subreddit %s', c.site._id)
             return
 
         if not c.site.flair_self_assign_enabled:
@@ -2148,6 +2143,7 @@ class ApiController(RedditController):
         if (not c.site.is_moderator(c.user) and not c.user_is_admin
             and not flair_template.text_editable):
             text = None
+            user = c.user
 
         if not text:
             text = flair_template.text
