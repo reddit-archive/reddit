@@ -14,3 +14,12 @@
 .message .midcol { 
     width: 15px; 
 }
+
+.tabmenu {
+    display: inline;
+    zoom: 1;
+}
+
+#mail {
+    top: 0;
+}

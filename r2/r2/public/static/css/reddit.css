@@ -213,8 +213,7 @@ ul.flat-vert {text-align: left;}
     text-indent: -9999px;
     overflow: hidden;
     width: 15px;
-    height: 12px;
-    margin-bottom: -2px;
+    height: 10px;
 }
 #mail.havemail {
     background-image: url(/static/mail.png);  /* SPRITE */
@@ -336,8 +335,6 @@ ul.flat-vert {text-align: left;}
     white-space: nowrap;
     display: inline-block;
     margin-top: 5px;
-    *display: inline;
-    zoom: 1;
 }
 
 .tabmenu li {
