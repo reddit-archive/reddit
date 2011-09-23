@@ -98,7 +98,7 @@ ${first_defined(kw[1:])}
 </script>
 </%def>
 
-<%def name="img_link(link_text, img, path, _id='', target='', img_id = None, **kw)">
+<%def name="img_link(link_text, img, path, _id='', target='', img_id = None, width = None, height = None, **kw)">
   <% 
      if (not target or target == '_parent') and c.cname:
          target = '_top'
@@ -109,7 +109,7 @@ ${first_defined(kw[1:])}
      kw['target'] = target
   %>
   <%call expr="_a(href=path, _id=_id, **kw)">
-    <img ${("id='%s'" % img_id) if img_id else ''} src="${img}" alt="${link_text}"/>
+    <img src="${img}" ${tags(id = img_id, width = width, height = height)} alt="${link_text}" />
   </%call>
 </%def>
 

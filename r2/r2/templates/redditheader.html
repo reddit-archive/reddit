@@ -34,14 +34,21 @@
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
     <%
         header_title = c.site.header_title
+        d = DefaultSR()
         if c.site.header and c.allow_styles:
             header_img = c.site.header
         else:
-            d = DefaultSR()
             header_img = d.header
             header_title = d.header_title
+
+        if header_img == d.header:
+            header_img_width, header_img_height = 120, 40
+        else:
+            header_img_width, header_img_height = None, None
     %>
-    ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title)}
+    ${img_link(c.site.name, s3_https_if_secure(header_img), '/',
+               _id = "header-img-a", img_id = 'header-img', title = header_title,
+               width = header_img_width, height = header_img_height)}
 
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;
