@@ -200,16 +200,43 @@ ul.flat-vert {text-align: left;}
     bottom: 0px;
     background-color: #EFF7FF;
     padding: 4px;
+    line-height: 12px;
     -moz-border-radius-topleft: 7px;
     -webkit-border-top-left-radius: 7px;
     border-top-left-radius: 7px;
  }
 
-#mail img {position: relative; top: 2px}
-#modmail img {position: relative; top: 4px; margin-top: -6px; }
+#mail {
+    position: relative;
+    top: 2px;
+    display: inline-block;
+    text-indent: -9999px;
+    overflow: hidden;
+    width: 15px;
+    height: 12px;
+    margin-bottom: -2px;
+}
+#mail.havemail {
+    background-image: url(/static/mail.png);  /* SPRITE */
+}
+#mail.nohavemail {
+    background-image: url(/static/mailgray.png);  /* SPRITE */
+}
+#modmail {
+    position: relative;
+    top: -2px;
+    display: inline-block;
+    text-indent: -9999px;
+    overflow: hidden;
+    width: 16px;
+    height: 16px;
+    margin-bottom: -6px;
+}
+#modmail.havemail {
+    background-image: url(/static/modmail.png);  /* SPRITE */
+}
 #modmail.nohavemail {
-    opacity: .7;
-    filter:alpha(opacity=70); /* IE patch */
+    background-image: url(/static/modmailgray.png);  /* SPRITE */
 }
 .user {color: gray;}
 
@@ -371,7 +398,7 @@ ul.flat-vert {text-align: left;}
     border: 1px solid #c4dbf1;
 
     background: white none repeat-x scroll center left;
-    background-image: url(/static/gradient-button.png);
+    background-image: url(/static/gradient-button.png);  /* SPRITE stretch-x */
 
     font-size:150%;
     font-weight:bold;
@@ -383,7 +410,7 @@ ul.flat-vert {text-align: left;}
 
 .morelink:hover, .mlh {
     border-color: #879eb4;
-    background-image: url(/static/gradient-button-hover.png);
+    background-image: url(/static/gradient-button-hover.png);  /* SPRITE stretch-x */
 }
 
 .morelink a {
@@ -727,13 +754,29 @@ ul.flat-vert {text-align: left;}
     vertical-align: top;
 }
 
-.organic-listing .nextprev img {
-    margin: 5px 5px 2px 0px; border: solid 1px #B3B3B3;
+.organic-listing .nextprev .arrow {
+    width: 21px;
+    height: 21px;
+    margin: 5px 5px 2px 0px;
+    border: solid 1px #B3B3B3;
+    display: inline-block;
+    position: relative;
+    /* This is a really weird value, but it needs to be low to hide text without affecting layout in IE. */
+    text-indent: 50px;
 }
-.organic-listing .nextprev img:hover {
-    cursor: pointer;  border: solid 1px #336699;
+.organic-listing .nextprev .arrow.prev {
+    background-image: url(/static/prev_organic.png); /* SPRITE */
 }
-.organic-listing .nextprev img:active { margin: 6px 4px 1px 1px;}
+.organic-listing .nextprev .arrow.next {
+    background-image: url(/static/next_organic.png); /* SPRITE */
+}
+.organic-listing .nextprev .arrow:hover {
+    cursor: pointer;
+    border: solid 1px #336699;
+}
+.organic-listing .nextprev .arrow:active {
+    top: 1px;
+}
 
 .link.promotedlink {
     /*background-color: lightgreen; */

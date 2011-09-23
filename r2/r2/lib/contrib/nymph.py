@@ -28,13 +28,14 @@ def optimize_png(fname, optimizer = "/usr/bin/env optipng"):
 
 
 class Spriter(object):
-    spritable = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *\*/")
+    spritable = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE (stretch-x)? *\*/")
 
-    def __init__(self, padding = (4, 4),
+    def __init__(self, padding = (0, 4),
                  css_path = '/static/', actual_path = "r2/public/static/"):
         self.images = []
         self.im_lookup = {}
         self.ypos = [0]
+        self.stretch = []
         self.padding = padding
 
         self.css_path = css_path
@@ -43,12 +44,14 @@ class Spriter(object):
     def _make_sprite(self, match):
         path = match.group(1).strip('"')
         path = re.sub("^" + self.css_path, self.actual_path, path)
+        stretch_x = match.group(2) == "stretch-x"
         if os.path.exists(path):
             if path in self.im_lookup:
                 i = self.im_lookup[path]
             else:
                 im = Image.open(path)
                 self.images.append(im)
+                self.stretch.append(stretch_x)
                 self.im_lookup[path] = len(self.images) - 1
                 self.ypos.append(self.ypos[-1] + im.size[1] +
                                  2 * self.padding[1])
@@ -66,6 +69,8 @@ class Spriter(object):
                            color = (0,0,0,0))
 
         for i, image in enumerate(self.images):
+            if self.stretch[i]:
+                image = image.resize((width - self.padding[0]*2, image.size[1]))
             master.paste(image,
                          (self.padding[0], self.padding[1] + self.ypos[i]))
 

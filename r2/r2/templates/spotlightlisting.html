@@ -46,10 +46,8 @@
   %endfor
 
   <div class="nextprev">
-    <img src="${static('prev_organic.png')}" alt="prev"
-         onclick="return get_organic(this, false)"/>
-    <img src="${static('next_organic.png')}" alt="next" 
-         onclick="return get_organic(this, true)" />
+    <button class="arrow prev" onclick="get_organic(this, false)">prev</button>
+    <button class="arrow next" onclick="get_organic(this, true)">next</button>
   </div>
   
   <div class="help">

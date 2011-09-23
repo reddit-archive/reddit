@@ -69,40 +69,32 @@
       ${separator("|")}
 
       <%
-         mail_img ="mail"
          if c.have_messages:
-           mail_img += ".png"
            mail_img_class = 'havemail'
            mail_img_title = "new mail!"
            mail_path = "/message/unread/"
          else:
-           mail_img += "gray.png"
            mail_img_class = 'nohavemail'
            mail_img_title = "no new mail"
            mail_path = "/message/inbox/"
-         mail_img = static(mail_img)
        %>
-      ${img_link(_("messages"), mail_img, path=mail_path,
-                 alt = mail_img_title, title = mail_img_title, 
+      ${plain_link(_("messages"), path=mail_path,
+                 title = mail_img_title,
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
       %if c.show_mod_mail:
          <%
-            mail_img ="modmail"
             if c.have_mod_messages:
-              mail_img += ".png"
               mail_img_class = 'havemail'
-              mail_img_title = "new mail!"
+              mail_img_title = "new mod mail!"
               mail_path = "/message/moderator/"
             else:
-              mail_img += "gray.png"
               mail_img_class = 'nohavemail'
-              mail_img_title = "no new mail"
+              mail_img_title = "no new mod mail"
               mail_path = "/message/moderator/"
-            mail_img = static(mail_img)
           %>
-         ${img_link(_("mod messages"), mail_img , path=mail_path,
-                    alt = mail_img_title, title = mail_img_title, 
+         ${plain_link(_("mod messages"), path=mail_path,
+                    title = mail_img_title,
                     _id = "modmail", _class=mail_img_class)}
          ${separator("|")}
       %endif
