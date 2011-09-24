@@ -86,7 +86,7 @@
            mail_path = "/message/inbox/"
        %>
       ${plain_link(_("messages"), path=mail_path,
-                 title = mail_img_title,
+                 title = mail_img_title, _sr_path = False,
                  _id = "mail", _class=mail_img_class)}
       ${separator("|")}
       %if c.show_mod_mail:
@@ -101,7 +101,7 @@
               mail_path = "/message/moderator/"
           %>
          ${plain_link(_("mod messages"), path=mail_path,
-                    title = mail_img_title,
+                    title = mail_img_title, _sr_path = False,
                     _id = "modmail", _class=mail_img_class)}
          ${separator("|")}
       %endif
