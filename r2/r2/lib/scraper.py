@@ -779,7 +779,8 @@ class EmbedlyOEmbed(OEmbed):
         'vodcars.com', 'washingtonpost.com', 'whitehouse.gov', 'whosay.com',
         'wikimedia.org', 'wikipedia.org', 'wistia.com', 'wordpress.tv',
         'worldstarhiphop.com', 'xiami.com', 'xkcd.com', 'xtranormal.com',
-        'yfrog.com', 'youku.com', 'youtube.com', 'zapiks.com', 'zero-inch.com']
+        'yfrog.com', 'youku.com', 'youtu.be', 'youtube.com', 'zapiks.com',
+        'zero-inch.com']
 
     url_re = re.compile(
         'http:\\/\\/.*youtube\\.com\\/watch.*|' +
