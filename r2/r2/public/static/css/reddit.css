@@ -1387,10 +1387,10 @@ textarea.gray { color: gray; }
 
 .footer .col {
     float: left;
-    margin: 10px;
-    padding-left: 10px;
+    margin: 10px 0;
+    padding: 0 15px;
     border-left: 1px solid #E0E0E0;
-    height: 9em;
+    height: 8.5em;
  }
 
 .footer .col:first-child {border: none;}
