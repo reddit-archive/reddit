@@ -698,85 +698,50 @@ $.rehighlight_new_comments = function() {
 }
 
 /* namespace globals for cookies -- default prefix and domain */
-var default_cookie_domain;
+var default_cookie_domain
 $.default_cookie_domain = function(domain) {
-    if($.defined(domain))
-        default_cookie_domain = domain;
-    return default_cookie_domain;
-};
+    if (domain) {
+        default_cookie_domain = domain
+    }
+}
 
-var cookie_name_prefix = "_";
+var cookie_name_prefix = "_"
 $.cookie_name_prefix = function(name) {
-    if($.defined(name))
-        cookie_name_prefix = name + "_";
-    return cookie_name_prefix;
-};
-
-
-/* cookie functions */
-$.cookie_test = function() {
-    /* tries to write a cookie and sees if it is allowed by making
-     * sure it can read back what it wrote */
-    var m = (Math.random() + "").split('.')[1];
-    var name = "test";
-    $.cookie_write({name: name, data: m})
-    if ($.cookie_read(name).data == m) {
-        $.cookie_erase(name);
-        return true;
+    if (name) {
+        cookie_name_prefix = name + "_"
     }
-};
+}
 
-$.cookie_erase = function(data) {
-    data.data = "";
-    data.expires = -1;
-    $.cookie_write(data);
-};
-
+/* old reddit-specific cookie functions */
 $.cookie_write = function(c) {
-    if(c.name) {
-        var data = $.with_default(c.data, "");
-        data = (typeof(data) == 'string') ? data : $.toJSON(data);
-        data = cookie_name_prefix + c.name+'='+ escape(data);
-        if($.defined(c.expires)) {
-            var expires = c.expires;
-            /* interpret numbers as number of days */
-            if(typeof(expires) == "number") {
-                var date = new Date();
-                date.setTime(date.getTime()+(expires*24*60*60*1000));
-                expires = date;
-            }
-            /* Dates will have a conversion function */
-            if($.defined(expires.toGMTString)) 
-                expires = expires.toGMTString();
-            data += '; expires=' + expires;
+    if (c.name) {
+        var options = {}
+        options.expires = c.expires
+        options.domain = c.domain || default_cookie_domain
+        options.path = c.path || '/'
+
+        var key = cookie_name_prefix + c.name,
+            value = c.data
+
+        if (value === null || value == '') {
+            value = null
+        } else if (typeof(value) != 'string') {
+            value = JSON.stringify(value)
         }
-        var domain = $.with_default(c.domain, default_cookie_domain);
-        if($.defined(domain))
-            data += '; domain=' + domain;
-        data += '; path=' + $.with_default(c.path, '/');
-        document.cookie=data;
+
+        $.cookie(key, value, options)
     }
-};
+}
 
 $.cookie_read = function(name, prefix) {
-    var nameEQ = (prefix || cookie_name_prefix) + name + '=';
-    var ca=document.cookie.split(';');
-    /* walk the list backwards so we always get the last cookie in the
-       list */
-    var data = '';
-    for(var i = ca.length-1; i >= 0; i--) { 
-        var c = ca[i]; 
-        while(c.charAt(0)==' ') c=c.substring(1,c.length);
-        if(c.indexOf(nameEQ)==0) {
-          /* we can unescape even if it's not escaped */
-          data = unescape(c.substring(nameEQ.length,c.length));
-          try {
-              data = $.secureEvalJSON(data);
-          } catch(e) {};
-          break;
-        }
-    }
-    return {name: name, data: data};
-};
+    var prefixedName = (prefix || cookie_name_prefix) + name,
+        data = $.cookie(prefixedName)
+
+    try {
+        data = JSON.parse(data)
+    } catch(e) {}
+
+    return {name: name, data: data}
+}
 
 })(jQuery);

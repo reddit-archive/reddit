@@ -182,7 +182,9 @@ module = {}
 module["jquery"] = JQuery()
 
 module["reddit"] = LocalizedModule("reddit.js",
-    "lib/jquery.json.js",
+    "lib/json2.js",
+    "lib/jquery.cookie.js",
+    "lib/jquery.url.js",
     "jquery.reddit.js",
     "base.js",
     "analytics.js",
@@ -197,6 +199,7 @@ module["mobile"] = LocalizedModule("mobile.js",
 )
 
 module["button"] = Module("button.js",
+    "lib/jquery.cookie.js",
     "jquery.reddit.js",
     "blogbutton.js"
 )
