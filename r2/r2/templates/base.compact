@@ -43,10 +43,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
-    ${unsafe(js.use('jquery', 'mobile'))}
     <script type="text/javascript">
       ${js_preamble()}
     </script> 
+    ${unsafe(js.use('jquery', 'mobile'))}
     ${googleanalytics('mobile')}
   </head>
   ${self.bodyHTML()}
