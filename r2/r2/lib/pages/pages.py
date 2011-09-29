@@ -153,8 +153,11 @@ class Reddit(Templated):
             elif (c.firsttime == 'mobile_suggest' and
                   c.render_style != 'compact'):
                 infotext = strings.iphone_first
+            elif g.announcement_message:
+                infotext = g.announcement_message
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext
+
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
