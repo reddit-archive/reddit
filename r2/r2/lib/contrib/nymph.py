@@ -28,7 +28,7 @@ def optimize_png(fname, optimizer = "/usr/bin/env optipng"):
 
 
 class Spriter(object):
-    spritable = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE (stretch-x)? *\*/")
+    spritable = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *(stretch-x)? *\*/")
 
     def __init__(self, padding = (0, 4),
                  css_path = '/static/', actual_path = "r2/public/static/"):
