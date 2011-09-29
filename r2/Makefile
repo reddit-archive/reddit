@@ -21,7 +21,8 @@
 ################################################################################
 
 # Javascript files to be compressified
-js_sources           = jquery.json.js jquery.reddit.js reddit.js base.js ui.core.js ui.datepicker.js sponsored.js jquery.flot.js jquery.lazyload.js compact.js blogbutton.js flair.js analytics.js
+js_libs              = $(addprefix lib/,json2.js ui.core.js ui.datepicker.js jquery.flot.js jquery.lazyload.js)
+js_sources           = $(js_libs) jquery.reddit.js reddit.js base.js sponsored.js compact.js blogbutton.js flair.js analytics.js
 js_targets           = button.js jquery.flot.js sponsored.js
 localized_js_targets = reddit.js mobile.js
 localized_js_outputs = $(localized_js_targets:.js=.*.js)

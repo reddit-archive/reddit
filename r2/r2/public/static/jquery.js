@@ -1,1 +1,1 @@
-js/jquery.js
+js/lib/jquery.js

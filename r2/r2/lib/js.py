@@ -162,6 +162,7 @@ class LocalizedModule(Module):
 
 class JQuery(Module):
     def __init__(self, cdn_src=None):
+        Module.__init__(self, "jquery.js")
         self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery"
     
     def build(self, closure):
@@ -170,7 +171,8 @@ class JQuery(Module):
     def use(self):
         from r2.lib.template_helpers import static
         if c.secure or c.user.pref_local_js:
-            return script_tag.format(src=static("jquery.js"))
+            path = os.path.join(g.static_path, self.name)
+            return script_tag.format(src=static(path))
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)
@@ -180,7 +182,7 @@ module = {}
 module["jquery"] = JQuery()
 
 module["reddit"] = LocalizedModule("reddit.js",
-    "jquery.json.js",
+    "lib/jquery.json.js",
     "jquery.reddit.js",
     "base.js",
     "analytics.js",
@@ -190,7 +192,7 @@ module["reddit"] = LocalizedModule("reddit.js",
 
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
-    "jquery.lazyload.js",
+    "lib/jquery.lazyload.js",
     "compact.js"
 )
 
@@ -200,12 +202,14 @@ module["button"] = Module("button.js",
 )
 
 module["sponsored"] = Module("sponsored.js",
-    "ui.core.js",
-    "ui.datepicker.js",
+    "lib/ui.core.js",
+    "lib/ui.datepicker.js",
     "sponsored.js"
 )
 
-module["flot"] = Module("jquery.flot.js")
+module["flot"] = Module("jquery.flot.js",
+    "lib/jquery.flot.js"
+)
 
 def use(*names):
     return "\n".join(module[name].use() for name in names)
