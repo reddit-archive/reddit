@@ -472,76 +472,6 @@ function moremessages(elem) {
 
 /* stylesheet and CSS stuff */
 
-function update_reddit_count(site) {
-    if (!site || !reddit.logged) return;
-    
-    var decay_factor = .9; //precentage to keep
-    var decay_period = 86400; //num of seconds between updates
-    var num_recent = 10; //num of recent reddits to report
-    var num_count = 100; //num of reddits to actually count
-    
-    var date_key = '_date';
-    var cur_date = new Date();
-    var count_cookie = 'reddit_counts';
-    var recent_cookie = 'recent_reddits';
-    var reddit_counts = $.cookie_read(count_cookie).data;
-    
-    //init the reddit_counts dict
-    if (!$.defined(reddit_counts) ) {
-        reddit_counts = {};
-        reddit_counts[date_key] = cur_date.toString();
-    }
-    var last_reset = new Date(reddit_counts[date_key]);
-    var decay = cur_date - last_reset > decay_period * 1000;
-
-    //incrmenet the count on the current reddit
-    reddit_counts[site] = $.with_default(reddit_counts[site], 0) + 1;
-
-    //collect the reddit names (for sorting) and decay the view counts
-    //if necessary
-    var names = [];
-    $.each(reddit_counts, function(sr_name, value) {
-            if(sr_name != date_key) {
-                if (decay && sr_name != site) {
-                    //compute the new count val
-                    var val = Math.floor(decay_factor * reddit_counts[sr_name]);
-                    if (val > 0) 
-                        reddit_counts[sr_name] = val;
-                    else 
-                        delete reddit_counts[sr_name];
-                }
-                if (reddit_counts[sr_name]) 
-                    names.push(sr_name);
-            }
-        });
-
-    //sort the names by the view counts
-    names.sort(function(n1, n2) {
-            return reddit_counts[n2] - reddit_counts[n1];
-        });
-
-    //update the last decay date
-    if (decay) reddit_counts[date_key] = cur_date.toString();
-
-    //build the list of names to report as "recent"
-    var recent_reddits = "";
-    for (var i = 0; i < names.length; i++) {
-        var sr_name = names[i];
-        if (i < num_recent) {
-            recent_reddits += names[i] + ',';
-        } else if (i >= num_count && sr_name != site) {
-            delete reddit_counts[sr_name];
-        }
-    }
-
-    //set the two cookies: one for the counts, one for the final
-    //recent list
-    $.cookie_write({name: count_cookie, data: reddit_counts});
-    if (recent_reddits) 
-        $.cookie_write({name: recent_cookie, data: recent_reddits});
-};
-
-
 function add_thing_to_cookie(thing, cookie_name) {
     var id = $(thing).thing_id();
 
@@ -606,10 +536,6 @@ function updateEventHandlers(thing) {
     /* click on a title.. */
     $(thing).filter(".link")
         .find("a.title, a.comments").mousedown(function() {
-            /* the site is either stored in the sr dict, or we are on
-             * an sr and it is the current one */
-            var sr = reddit.sr[$(this).thing_id()] || reddit.cur_site;
-            update_reddit_count(sr);
             /* mark as clicked */
             $(this).addClass("click");
             /* set the click cookie. */
@@ -1286,10 +1212,6 @@ $(function() {
         /* set up the cookie domain */
         $.default_cookie_domain(reddit.cur_domain.split(':')[0]);
         
-        /* Count the rendering of this reddit */
-        if(reddit.cur_site)  
-           update_reddit_count(reddit.cur_site);
-
         /* visually mark the last-clicked entry */
         last_click();
 

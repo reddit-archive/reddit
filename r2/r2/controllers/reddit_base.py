@@ -405,17 +405,6 @@ def set_cnameframe():
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
 
-def set_recent_reddits():
-    names = read_user_cookie('recent_reddits')
-    c.recent_reddits = []
-    if names:
-        names = filter(None, names.strip('[]').split(','))
-        try:
-            c.recent_reddits = Subreddit._by_fullname(names, data = True,
-                                                      return_dict = False)
-        except NotFound:
-            pass
-
 def set_colors():
     theme_rx = re.compile(r'')
     color_rx = re.compile(r'\A([a-fA-F0-9]){3}(([a-fA-F0-9]){3})?\Z')
@@ -739,7 +728,6 @@ class RedditController(MinimalController):
         set_host_lang()
         set_iface_lang()
         set_content_lang()
-        set_recent_reddits()
         set_recent_clicks()
         # used for HTML-lite templates
         set_colors()
