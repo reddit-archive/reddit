@@ -56,6 +56,7 @@ cache_affecting_cookies = ('reddit_first','over18','_options')
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
+        name = name.encode('utf-8')
         self[name] = Cookie(value, *k, **kw)
 
 class Cookie(object):
@@ -467,6 +468,32 @@ def paginated_listing(default_page_size=25, max_page_size=100):
 def base_listing(fn):
     return paginated_listing()(fn)
 
+def cross_domain(origins, **options):
+    """Set up cross domain validation and hoisting for a request handler."""
+    origins = filter(None, origins)
+    def cross_domain_wrap(fn):
+        def cross_domain_handler(self, *args, **kwargs):
+            if request.params.get("hoist") == "cookie":
+                # Cookie polling response
+                if g.origin in origins:
+                    name = request.environ["pylons.routes_dict"]["action_name"]
+                    resp = fn(self, *args, **kwargs)
+                    c.cookies.add('hoist_%s' % name, ''.join(resp.content))
+                    c.response_content_type = 'text/html'
+                    resp.content = ''
+                    return resp
+                else:
+                    abort(403)
+            else:
+                self.check_cors()
+                return fn(self, *args, **kwargs)
+
+        cross_domain_handler.cors_perms = {
+            "allowed_origins": origins,
+            "allow_credentials": bool(options.get("allow_credentials"))
+        }
+        return cross_domain_handler
+    return cross_domain_wrap
 
 class MinimalController(BaseController):
 
@@ -615,6 +642,34 @@ class MinimalController(BaseController):
 
     def abort403(self):
         abort(403, "forbidden")
+
+    def check_cors(self):
+        origin = request.headers.get("Origin")
+        if not origin:
+            return
+
+        method = request.method
+        if method == 'OPTIONS':
+            # preflight request
+            method = request.headers.get("Access-Control-Request-Method")
+            if not method:
+                self.abort403()
+
+        action = request.environ["pylons.routes_dict"]["action_name"]
+
+        handler = getattr(self, method + "_" + action, None)
+        cors = handler and getattr(handler, "cors_perms", None)
+
+        if cors and origin in cors["allowed_origins"]:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            if cors.get("allow_credentials"):
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+        else:
+            self.abort403()
+
+    def OPTIONS(self):
+        """Return empty responses for CORS preflight requests"""
+        self.check_cors()
 
     def sendpng(self, string):
         c.response_content_type = 'image/png'

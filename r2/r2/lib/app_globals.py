@@ -284,6 +284,7 @@ class Globals(object):
 
         self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
 
+        self.origin = "http://" + self.domain
         self.secure_domains = set([urlparse(self.payment_domain).netloc])
 
         # load the unique hashed names of files under static

@@ -93,9 +93,15 @@ class BaseController(WSGIController):
             meth = request.method.upper()
             if meth == 'HEAD':
                 meth = 'GET'
-            request.environ['pylons.routes_dict']['action'] = \
-                    meth + '_' + action
 
+            if meth != 'OPTIONS':
+                handler_name = meth + '_' + action
+            else:
+                handler_name = meth
+
+            request.environ['pylons.routes_dict']['action_name'] = action
+            request.environ['pylons.routes_dict']['action'] = handler_name
+                    
         c.response = Response()
         try:
             res = WSGIController.__call__(self, environ, start_response)
