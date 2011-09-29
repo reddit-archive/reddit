@@ -107,7 +107,7 @@ ${thing.formtabs_menu}
 ${thing.captcha}
     
 </div>
-
+<input name="resubmit" value="${thing.resubmit}" type="hidden"/>
 <div class="spacer">
 Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
 <button class="btn save button" name="submit" value="form" type="submit">${_("submit")}</button>

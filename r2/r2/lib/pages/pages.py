@@ -1753,7 +1753,7 @@ class FrameToolbar(Wrapped):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', subreddits = (),
-                 then = 'comments'):
+                 then = 'comments', resubmit=False):
 
         self.show_link = self.show_self = False
 
@@ -1784,6 +1784,7 @@ class NewLink(Templated):
 
         self.sr_searches = simplejson.dumps(popular_searches())
 
+        self.resubmit = resubmit
         if c.default_sr:
             self.default_sr = None
         else:

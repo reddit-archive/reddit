@@ -677,7 +677,8 @@ class FrontController(RedditController):
               then = VOneOf('then', ('tb','comments'), default = 'comments'))
     def GET_submit(self, url, title, then):
         """Submit form."""
-        if url and not request.get.get('resubmit'):
+        resubmit = request.get.get('resubmit')
+        if url and not resubmit:
             # check to see if the url has already been submitted
             links = link_from_url(url)
             if links and len(links) == 1:
@@ -706,6 +707,7 @@ class FrontController(RedditController):
                                         title=title or '',
                                         subreddits = sr_names,
                                         captcha=captcha,
+                                        resubmit=resubmit,
                                         then = then)).render()
 
     def GET_frame(self):

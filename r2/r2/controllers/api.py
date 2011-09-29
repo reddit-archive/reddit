@@ -175,7 +175,7 @@ class ApiController(RedditController):
                               prefix = "rate_submit_"),
                    ip = ValidIP(),
                    sr = VSubmitSR('sr', 'kind'),
-                   url = VUrl(['url', 'sr']),
+                   url = VUrl(['url', 'sr', 'resubmit']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
                    selftext = VSelfText('text'),
