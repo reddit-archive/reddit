@@ -1986,7 +1986,7 @@ label + #moresearchinfo {
 .bottommenu { color: gray; font-size: smaller; clear: both}
 .bottommenu a { color: gray; text-decoration: underline;   }
 .bottommenu.serverinfo { text-align:right; padding:5px; }
-.bottommenu.serverinfo .icon { color:#a0a0a0; font:1.5em serif; padding:0 4px; }
+.bottommenu.serverinfo .icon { color:#a0a0a0; font:1.5em serif; padding:0 2px; }
 .bottommenu.serverinfo .content { display:none; }
 .bottommenu.serverinfo:hover .content { display:inline; }
 
