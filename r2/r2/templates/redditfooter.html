@@ -35,7 +35,7 @@
       </div>
       %endfor
   </div>
-  %if g.domain != "reddit.com":
+  %if not g.domain.endswith("reddit.com"):
     <!-- http://code.reddit.com/LICENSE see Exhibit B -->
     <a href="http://www.reddit.com/code/" style="text-align:center;display:block">
       <img src="${s3_https_if_secure("http://sp.reddit.com/powered_by_reddit.png")}"
