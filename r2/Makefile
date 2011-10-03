@@ -127,7 +127,7 @@ clean_pyx:
 	rm -f $(PYXSO_FILES) $(PYXC_FILES)
 
 clean_static: clean_names
-	rm -f $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
+	rm -f $(JSTARGETS) $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 
 clean_names:
 	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
