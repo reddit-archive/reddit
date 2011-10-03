@@ -22,20 +22,15 @@
 
 %if c.site.sponsorship_url and c.site.sponsorship_img:
 <%
+   from r2.models.subreddit import FakeSubreddit
    name = c.site._fullname
 %>
-<div class="thing sponsorshipbox id-${name}">
+<div class="thing sponsorshipbox id-${name}" data-fullname="${name}" data-sponsorship="${c.site.sponsorship_name}">
   <span>${c.site.sponsorship_text}</span>
   <div>
     <a class="title" href="${c.site.sponsorship_url}">
        <img alt="sponsor" src="${c.site.sponsorship_img}" />
     </a>
   </div>
-  <img class="promote-pixel"
-       id="promote_img_${name}"
-       src="/static/pixel.png" alt=" " />
-  <script type="text/javascript">
-    reddit.tofetch.push("${name}");
-  </script>
 </div>
 %endif

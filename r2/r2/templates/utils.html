@@ -21,6 +21,7 @@
 ################################################################################
 
 <%!
+   from r2.models import FakeSubreddit
    from r2.lib.filters import spaceCompress, unsafe
    from r2.lib.template_helpers import add_sr
    from r2.lib.utils import cols, long_datetime, timesince
@@ -391,8 +392,10 @@ ${unsafe(txt)}
         submitting: "${_('submitting...')}",
         loading: "${_('loading...')}"
       },
-      tofetch: [],
-      trackers: {}
+      is_fake: ${'true' if isinstance(c.site, FakeSubreddit) else 'false'},
+      tracking_domain: '${g.tracking_domain}',
+      adtracker_url: '${g.adtracker_url}',
+      clicktracker_url: '${g.clicktracker_url}'
    };
 </%def>
 

@@ -603,44 +603,6 @@ function updateEventHandlers(thing) {
     thing = $(thing);
     var listing = thing.parent();
 
-    $(thing).filter(".promotedlink, .sponsorshipbox")
-        .bind("onshow", function() {
-            var id = $(this).thing_id();
-            if($.inArray(id, reddit.tofetch) != -1) {
-                $.request("onload", {ids: reddit.tofetch.join(",")});
-                reddit.tofetch = [];
-            }
-            var tracker = reddit.trackers[id]; 
-            if($.defined(tracker)) {
-                var title = $(this).find("a.title");
-                var text;
-                if ($.browser.msie) {
-                    /* bugfix for IE7-8; links with text that look like
-                     * a url of some sort (including the @ character)
-                     * have their text changed when href is set.
-                     * see http://jsfiddle.net/JU2Vj/1/ for a distilled
-                     * reproduction of the bug */
-                    text = title.html();
-                }
-
-                save_href($(this).find("a.title"))
-                    .attr("href", tracker.click).end();
-                save_href($(this).find("a.thumbnail"))
-                    .attr("href", tracker.click).end();
-                $(this).find("img.promote-pixel").attr("src", tracker.show);
-
-                if ($.browser.msie) {
-                    if (text != title.html()) {
-                        title.html(text);
-                    }
-                }
-
-                delete reddit.trackers[id];
-            }
-        })
-        /* pre-trigger new event if already shown */
-        .filter(":visible").trigger("onshow");
-
     /* click on a title.. */
     $(thing).filter(".link")
         .find("a.title, a.comments").mousedown(function() {

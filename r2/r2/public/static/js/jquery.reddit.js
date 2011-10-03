@@ -579,12 +579,6 @@ $.fn.insert_table_rows = function(rows, index) {
     return this;
 };
 
-$.set_tracker = function(id, show_track, click_track) {
-    /* hook for api to pass back tracker information */
-    reddit.trackers[id] = {show: show_track, click: click_track};
-    $.things(id).filter(":visible").show();
-};
-
 
 $.fn.captcha = function(iden) {
     /*  */

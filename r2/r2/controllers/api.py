@@ -78,37 +78,6 @@ class ApiminimalController(MinimalController):
     Put API calls in here which don't rely on the user being logged in
     """
 
-    @validatedForm(promoted = VByName('ids', thing_cls = Link,
-                                      multiple = True),
-                   sponsorships = VByName('ids', thing_cls = Subreddit,
-                                          multiple = True))
-    def POST_onload(self, form, jquery, promoted, sponsorships, *a, **kw):
-        suffix = ""
-        if not isinstance(c.site, FakeSubreddit):
-            suffix = "-" + c.site.name
-        def add_tracker(dest, where, what):
-            if not dest.startswith("javascript:"):
-                dest = tracking.PromotedLinkClickInfo.gen_url(fullname =what + suffix,
-                                                              dest = dest,
-                                                              ip = request.ip)
-            jquery.set_tracker(
-                where,
-                tracking.PromotedLinkInfo.gen_url(fullname=what + suffix,
-                                                  ip = request.ip), dest
-                )
-
-        if promoted:
-            # make sure that they are really promoted
-            promoted = [ l for l in promoted if l.promoted ]
-            for l in promoted:
-                add_tracker(l.url, l._fullname, l._fullname)
-
-        if sponsorships:
-            for s in sponsorships:
-                if getattr(s, 'sponsorship_url', None):
-                    add_tracker(s.sponsorship_url, s._fullname,
-                                "%s_%s" % (s._fullname, s.sponsorship_name))
-
     @validatedForm()
     def POST_new_captcha(self, form, jquery, *a, **kw):
         jquery("body").captcha(get_iden())
@@ -1279,7 +1248,7 @@ class ApiController(RedditController):
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    ip = ValidIP(),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
-                   sponsor_name =VLength('sponsorship-name', max_length = 500),
+                   sponsor_name =VLength('sponsorship-name', max_length = 64),
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )

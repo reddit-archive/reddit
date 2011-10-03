@@ -71,12 +71,5 @@ ${unsafe(taglinetext % dict(date = thing._date.strftime("%Y-%m-%d"),
       ${_('sponsored link')}
     %endif
   </p>
-  %if promote.is_promoted(thing):
-    <img class="promote-pixel" id="promote_oimg_${thing._fullname}" 
-         src="/static/pixel.png" alt=" " />
-    <script type="text/javascript">
-      reddit.tofetch.push("${thing._fullname}");
-    </script>
-  %endif
 </%def>
 
