@@ -93,6 +93,8 @@ $(function() {
             $(col).width(col_width);
 
             if (num_cols > 1) {
+                $(col).css('float', 'left');  // force IE7 to lay out properly
+
                 var num_short_cols = num_cols * height - length;
 
                 for (var i = 1; i < num_cols; i++) {
@@ -104,7 +106,9 @@ $(function() {
                     length -= h;
                     var tail = $(col).children().slice(start).remove();
                     $(tail).width(col_width);
-                    $(col).after($("<ul>").append(tail));
+                    $(col).after($("<ul>")
+                        .css('float', 'left')  // force IE7 to lay out properly
+                        .append(tail));
                 }
             }
 
