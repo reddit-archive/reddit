@@ -671,6 +671,9 @@ ul.flat-vert {text-align: left;}
     margin-right: 4ex;
 }
 
+.flairsample-left { text-align: right !important; }
+.flairsample-right { text-align: left !important; }
+
 .flairrow .tagline { text-align: left; width:36ex; }
 .flairlist .header { text-align: center; }
 .flairlist .flaircell input[type="text"] { width: 28ex; }

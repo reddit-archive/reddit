@@ -33,8 +33,9 @@ from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links, levenshtein
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
-    FlairList, FlairCsv, BannedList, BoringPage, FormPage, CssError, \
-    UploadedImage, ClickGadget, UrlParser, WrappedUser
+    BannedList, BoringPage, FormPage, CssError, UploadedImage, ClickGadget, \
+    UrlParser, WrappedUser
+from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 
@@ -2020,6 +2021,47 @@ class ApiController(RedditController):
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
+
+    @validatedForm(VFlairManager(),
+                   VModhash(),
+                   flair_template_id = nop('id'),
+                   text = VFlairText('text'),
+                   css_class = VFlairCss('css_class'))
+    def POST_flairtemplate(self, form, jquery, flair_template_id, text,
+                           css_class):
+        # Check validation.
+        if form.has_errors('css_class', errors.BAD_CSS_NAME):
+            form.set_html(".status:first", _('invalid css class'))
+            return
+        if form.has_errors('css_class', errors.TOO_MUCH_FLAIR_CSS):
+            form.set_html(".status:first", _('too many css classes'))
+            return
+
+        # Load flair template thing.
+        if flair_template_id:
+            ft = FlairTemplate._byID(flair_template_id)
+            ft.text = text
+            ft.css_class = css_class
+            ft._commit()
+            new = False
+        else:
+            ft = FlairTemplateBySubredditIndex.create_template(
+                c.site._id, text=text, css_class=css_class)
+            new = True
+
+        # TODO(intortus): ...
+        # Push changes back to client.
+        if new:
+            jquery('#empty-flair-template').before(
+                FlairTemplateEditor(ft).render(style='html'))
+            empty_template = FlairTemplate()
+            empty_template._committed = True  # to disable unnecessary warning
+            jquery('#empty-flair-template').html(
+                FlairTemplateEditor(empty_template).render(style='html'))
+        else:
+            jquery('input[name="text"]').data('saved', text)
+            jquery('input[name="css_class"]').data('saved', css_class)
+            form.set_html('.status', _('saved'))
 
     @validatedForm(VAdminOrAdminSecret("secret"),
                    award = VByName("fullname"),

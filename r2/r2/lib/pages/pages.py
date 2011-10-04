@@ -23,7 +23,8 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
-from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment, Flair
+from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
+from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -491,13 +492,10 @@ class SubredditInfoBar(CachedTemplate):
         # so the menus cache properly
         self.path = request.path
 
-        # if user has flair, then it will be displayed in this bar
-        self.flair_user = None
         if c.user_is_loggedin:
-            wrapped_user = WrappedUser(c.user, subreddit=self.sr,
-                                       force_show_flair=True)
-            if wrapped_user.has_flair:
-                self.flair_user = wrapped_user
+            self.flair_selector = FlairSelector()
+        else:
+            self.flair_selector = None
 
         CachedTemplate.__init__(self)
 
@@ -2272,7 +2270,8 @@ class WrappedUser(CachedTemplate):
     FLAIR_CSS_PREFIX = 'flair-'
 
     def __init__(self, user, attribs = [], context_thing = None, gray = False,
-                 subreddit = None, force_show_flair = None):
+                 subreddit = None, force_show_flair = None,
+                 flair_template = None):
         attribs.sort()
         author_cls = 'author'
 
@@ -2288,6 +2287,12 @@ class WrappedUser(CachedTemplate):
         flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
         flair_enabled, flair_position, flair_text, flair_css_class = flair
         has_flair = bool(flair_text or flair_css_class)
+
+        if flair_template:
+            flair_text = flair_template.text
+            flair_css_class = flair_template.css_class
+            has_flair = True
+
         if flair_css_class:
             # This is actually a list of CSS class *suffixes*. E.g., "a b c"
             # should expand to "flair-a flair-b flair-c".
@@ -2400,9 +2405,16 @@ class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):
         # Make sure c.site isn't stale before rendering.
         c.site = Subreddit._byID(c.site._id)
+
+        tabs = [
+            ('templates', _('edit flair templates'), FlairTemplateList()),
+            ('grant', _('grant flair'), FlairList(num, after, reverse, name,
+                                                  user)),
+        ]
+
         Templated.__init__(
             self,
-            flair_list=FlairList(num, after, reverse, name, user),
+            tabs=TabbedPane(tabs),
             flair_enabled=c.site.flair_enabled,
             flair_position=c.site.flair_position)
 
@@ -2487,6 +2499,72 @@ class FlairCsv(Templated):
     def add_line(self):
         self.results_by_line.append(self.LineResult())
         return self.results_by_line[-1]
+
+class FlairTemplateList(Templated):
+    @property
+    def templates(self):
+        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        fts = FlairTemplate._byID(ids)
+        return [FlairTemplateEditor(fts[i]) for i in ids]
+
+class FlairTemplateEditor(Templated):
+    def __init__(self, flair_template):
+        Templated.__init__(self,
+                           id=flair_template._id,
+                           text=flair_template.text,
+                           css_class=flair_template.css_class,
+                           text_editable=flair_template.text_editable,
+                           sample=FlairTemplateSample(flair_template),
+                           position=getattr(c.site, 'flair_position', 'right'))
+
+    def render(self, *a, **kw):
+        res = Templated.render(self, *a, **kw)
+        if not g.template_debug:
+            res = spaceCompress(res)
+        return res
+
+class FlairTemplateSample(Templated):
+    """Like a read-only version of FlairTemplateEditor."""
+    def __init__(self, flair_template):
+        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+                                   force_show_flair=True,
+                                   flair_template=flair_template)
+        Templated.__init__(self, flair_template_id=flair_template._id,
+                           wrapped_user=wrapped_user)
+
+class FlairSelector(CachedTemplate):
+    """Provide user with flair options according to subreddit settings."""
+    def __init__(self):
+        get_flair_attr = lambda a, default=None: getattr(
+            c.user, 'flair_%s_%s' % (c.site._id, a), default)
+        user_flair_enabled = get_flair_attr('enabled', default=True)
+        text = get_flair_attr('text')
+        css_class = get_flair_attr('css_class')
+        sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
+
+        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        # TODO(intortus): Maintain sorting.
+        templates = FlairTemplate._byID(ids).values()
+        for template in templates:
+            if template.covers((text, css_class)):
+                matching_template = template._id
+                break
+        else:
+             matching_template = None
+
+        choices = [WrappedUser(c.user, subreddit=c.site, force_show_flair=True,
+                               flair_template=template)
+                   for template in templates]
+
+        wrapped_user = WrappedUser(c.user, subreddit=c.site,
+                                   force_show_flair=True)
+
+        Templated.__init__(self, user_flair_enabled=user_flair_enabled,
+                           text=text, css_class=css_class,
+                           sr_flair_enabled=sr_flair_enabled,
+                           choices=choices, matching_template=matching_template,
+                           wrapped_user=wrapped_user)
+
 
 class FriendList(UserList):
     """Friend list on /pref/friends"""

@@ -87,6 +87,10 @@ class FlairTemplate(tdb_cassandra.Thing):
 
     @classmethod
     def _new(cls, text='', css_class='', text_editable=False):
+        if text is None:
+            text = ''
+        if css_class is None:
+            css_class = ''
         ft = cls(text=text, css_class=css_class, text_editable=text_editable)
         ft._commit()
         return ft
@@ -96,6 +100,29 @@ class FlairTemplate(tdb_cassandra.Thing):
         if not self._id:
             self._id = str(uuid.uuid1())
         return tdb_cassandra.Thing._commit(self, *a, **kw)
+
+    def covers(self, other_template):
+        """Returns true if other_template is a subset of this one.
+
+        The value for other_template may be another FlairTemplate, or a tuple
+        of (text, css_class). The latter case is treated like a FlairTemplate
+        that doesn't permit editable text.
+
+        For example, if self permits editable text, then this method will return
+        True as long as just the css_classes match. On the other hand, if self
+        doesn't permit editable text but other_template does, this method will
+        return False.
+        """
+        if isinstance(other_template, FlairTemplate):
+            text_editable = other_template.text_editable
+            text, css_class = other_template.text, other_template.css_class
+        else:
+            text_editable = False
+            text, css_class = other_template
+
+        if self.css_class != css_class:
+            return False
+        return self.text_editable or (not text_editable and self.text == text)
 
 
 class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):

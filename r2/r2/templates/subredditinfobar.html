@@ -36,22 +36,6 @@
              hidden_data = dict(id = thing.sr._fullname))}
 </%def>
 
-<%def name="flair_control(flair_user)">
-  %if flair_user:
-    <form class="toggle flairtoggle">
-      <input id="flair_enabled" type="checkbox" name="flair_enabled"
-          %if flair_user.flair_enabled:
-            checked="checked"
-          %endif
-          >
-      ${_("Show my flair on this reddit. It looks like:")}
-      <div class="tagline">
-        ${flair_user}
-      </div>
-    </form>
-  %endif
-</%def>
-
 <div class="titlebox">
   <h1 class="hover redditname">
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
@@ -75,7 +59,9 @@
                       _("you are no longer an approved submitter"))}
   %endif
 
-  ${flair_control(thing.flair_user)}
+  %if thing.flair_selector:
+    ${unsafe(thing.flair_selector.render())}
+  %endif
 
   %if thing.sr.description:
     ${thing.sr.usertext}

@@ -14,18 +14,26 @@ $(function() {
         showSaveButton(this);
     }
 
-    function onSubmit() {
+    function onSubmit(action) {
         $(this).removeClass("edited");
-        return post_form(this, "flair");
+        return post_form(this, action);
     }
 
-    /* Attach event handlers to the various flair forms that may be on page. */
-    $(".flairrow form").submit(onSubmit);
-    $(".flaircell input").focus(onFocus);
-    $(".flaircell input").keyup(onEdit);
+    function makeOnSubmit(action) {
+        return function() { return onSubmit.call(this, action); };
+    }
 
+    // Attach event handlers to the various flair forms that may be on page.
+    $(".flairlist").delegate(".flairtemplate form", "submit",
+                             makeOnSubmit('flairtemplate'));
+    $(".flairlist").delegate("form.flair-entry", "submit",
+                             makeOnSubmit('flair'));
+    $(".flairlist").delegate(".flaircell input", "focus", onFocus);
+    $(".flairlist").delegate(".flaircell input", "keyup", onEdit);
+
+    // Event handlers for sidebar flair prefs.
     $(".flairtoggle").submit(function() {
-            return post_form(this, 'setflairenabled');
-        });
+        return post_form(this, 'setflairenabled');
+    });
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 });
