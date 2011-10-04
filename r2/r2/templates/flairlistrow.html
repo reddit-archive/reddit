@@ -39,15 +39,12 @@ from r2.lib.pages import WrappedUser
              value="${thing.flair_css_class}" />
     </span>
     <button type="submit">${_('save')}</button>
+    <a class="flairdeletebtn" href="javascript://">X</a>
     <span class="status"></span>
     ${utils.error_field(('BAD_CSS_NAME', 'flair_css_class'), 'name')}
     ${utils.error_field(('TOO_MUCH_FLAIR_CSS', 'flair_css_class'), 'name')}
-    <a class="flairdeletebtn" href="javascript://">X</a>
   </form>
   <span class="tagline flaircell">
-    <form>
-      <input type="hidden" name="name" value="${thing.user.name}">
-    </form>
     ${unsafe(WrappedUser(thing.user, force_show_flair=True,
                          include_flair_selector=True).render())}
   </span>

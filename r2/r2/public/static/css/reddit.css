@@ -356,6 +356,7 @@ ul.flat-vert {text-align: left;}
     z-index: 100;
 }
 
+.tabpane-content { border: 1px solid #5f99cf; padding: 4px 4px 4px 4px; }
 
 #search input[type=text] {
     border: 1px solid gray;
@@ -683,7 +684,7 @@ a.author { margin-right: 0.5em; }
 .flairrow .tagline { text-align: left; width:36ex; }
 .flairlist .header { text-align: center; }
 .flairlist .flaircell input[type="text"] { width: 28ex; }
-.flairrow button { display: none; }
+.flairrow > form button { display: none; }
 .flairrow .edited button { display: inline-block; }
 
 .flairdeletebtn {
@@ -695,7 +696,14 @@ a.author { margin-right: 0.5em; }
 
 .flairrow:hover .flairdeletebtn { opacity: 1.0; }
 
-.flairselector { font-size: x-small; position: absolute; width: 400px; }
+.flairselector {
+    box-shadow: 4px 4px 4px #ccc;
+    font-size: x-small;
+    position: absolute;
+    width: 400px;
+}
+
+.flairselector img { margin: none; }
 
 .flairselector h2 {
     background: #cee3f8;
@@ -710,7 +718,12 @@ a.author { margin-right: 0.5em; }
 }
 
 .flairselector .error { text-align: center; }
-.flairselector ul { float: left; width: 200px; }
+.flairselector ul {
+    display: inline-block;
+    max-width: 200px;
+    overflow: hidden;
+    vertical-align: top;
+}
 
 .flairselector .selected, .flairselector.active li {
     display: block;
@@ -724,11 +737,18 @@ a.author { margin-right: 0.5em; }
 .flairselector li.selected { border: dashed 1px black; }
 
 .flairselector form {
+    border-top: solid 1px gray;
     clear: both;
+    padding-top: 4px;
     text-align: center;
 }
 
-.flairoptionpane { height: 200px; overflow: auto; }
+.flairoptionpane {
+    margin-bottom: 4px;
+    max-height: 200px;
+    overflow: auto;
+    text-align: center;
+}
 
 .flairselector .customizer { display: inline-block; }
 .flairselector .customizer input { display: block; }

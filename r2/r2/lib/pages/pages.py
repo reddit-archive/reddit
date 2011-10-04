@@ -2422,9 +2422,9 @@ class FlairPane(Templated):
         c.site = Subreddit._byID(c.site._id)
 
         tabs = [
-            ('templates', _('edit flair templates'), FlairTemplateList()),
             ('grant', _('grant flair'), FlairList(num, after, reverse, name,
                                                   user)),
+            ('templates', _('edit flair templates'), FlairTemplateList()),
         ]
 
         Templated.__init__(

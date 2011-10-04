@@ -75,6 +75,7 @@ $(function() {
         function columnize(col) {
             var min_cols = 1;
             var max_cols = 3;
+            var min_col_width = 150;
             var max_col_height = 10;
             var length = $(col).children().length;
             var num_cols =
@@ -82,29 +83,45 @@ $(function() {
                     min_cols,
                     Math.min(max_cols, Math.ceil(length / max_col_height)));
             var height = Math.ceil(length / num_cols);
-            var num_short_cols = num_cols * height - length;
+            var col_width = Math.max(min_col_width, $(col).width());
 
-            for (var i = 1; i < num_cols; i++) {
-                var h = height;
-                if (i <= num_short_cols) {
-                    h--;
+            // Fix the width of the ul before splitting it into columns. This
+            // This prevents it from shrinking if its widest element gets moved
+            // into one of the other generated columns.
+            $(col).width(col_width);
+
+            if (num_cols > 1) {
+                var num_short_cols = num_cols * height - length;
+
+                for (var i = 1; i < num_cols; i++) {
+                    var h = height;
+                    if (i <= num_short_cols) {
+                        h--;
+                    }
+                    var start = length - h;
+                    length -= h;
+                    var tail = $(col).children().slice(start).remove();
+                    $(tail).width(col_width);
+                    $(col).after($("<ul>").append(tail));
                 }
-                var start = length - h;
-                length -= h;
-                var tail = $(col).children().slice(start).remove();
-                $(col).after($("<ul>").append(tail));
             }
-            return num_cols * 200 + 50;
+
+            // return new width; add a little padding to each column, plus
+            // some extra padding in case a vertical scrollbar appears
+            return num_cols * (col_width + 5) + 50;
         }
 
         function handleResponse(r) {
             $(selector).html(r);
 
-            var width = columnize($(".flairselector ul"));
+            var ul = $(".flairselector ul");
+            var width = Math.max(
+                200, ul.length ? columnize(ul) : $(".error").width() + 20);
             var left = Math.max(
                 100, $(button).position().left + $(button).width() - width);
 
             $(selector)
+                .height("auto")
                 .width(width)
                 .css("left", left + "px")
                 .click(false)
@@ -132,7 +149,12 @@ $(function() {
 
         $(selector)
             .html('<img src="/static/throbber.gif" />')
-            .addClass("active").width(18)
+            .addClass("active")
+            .height(18).width(18)
+            .css("padding-left", 4)
+            .css("padding-top", 4)
+            .css("padding-bottom", 4)
+            .css("padding-right", 4)
             .css("left",
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");

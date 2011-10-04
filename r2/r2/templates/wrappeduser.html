@@ -56,6 +56,7 @@
     %if thing.include_flair_selector:
       (<a class="flairselectbtn" href="javascript://">${_('edit')}</a>)
       <div class="flairselector drop-choices"></div>
+      <form><input type="hidden" name="name" value="${thing.name}"></form>
     %endif
     <span class="userattrs">
     %if thing.attribs:
