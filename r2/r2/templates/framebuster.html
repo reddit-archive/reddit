@@ -5,6 +5,9 @@
   <head>
     <title>escappit</title>
     <% from r2.lib import js %>
+    <script type="text/javascript">
+      ${js_preamble()}
+    </script>
     ${unsafe(js.use('jquery', 'reddit'))}
   </head>
   <body>
