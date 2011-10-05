@@ -82,7 +82,7 @@ r.login.hoist = {
                 } catch(e) {
                     data = null
                 }
-                $.cookie(cookieName, null, {domain:r.config.cur_domain})
+                $.cookie(cookieName, null, {domain:r.config.cur_domain, path:'/'})
                 clearInterval(interval)
                 callback(data)
             }
