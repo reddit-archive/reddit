@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.lib.pages import *
+from reddit_base import cross_domain
 from api import ApiController
 from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
@@ -172,38 +173,27 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
+    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
         ApiController.POST_login(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
-        errors = list(c.errors)
-        if errors:
-            for e in errors:
-                if not e[0].endswith("_login"):
-                    msg = c.errors[e].message
-                    c.errors.remove(e)
-                    c.errors.add(e[0], msg)
-
+        if c.errors:
             return LoginPage(user_login = request.post.get('user'),
                              dest = dest).render()
 
         return self.redirect(dest)
 
+    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
         ApiController.POST_register(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
-        errors = list(c.errors)
-        if errors:
-            for e in errors:
-                if not e[0].endswith("_reg"):
-                    msg = c.errors[e].message
-                    c.errors.remove(e)
-                    c.errors.add(e[0], msg)
+        if c.errors:
             return LoginPage(user_reg = request.post.get('user'),
                              dest = dest).render()
 

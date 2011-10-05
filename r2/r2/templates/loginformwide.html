@@ -29,7 +29,7 @@
 
 <% op = "login-main" %>
 <form method="post"
-      action="${add_sr(g.https_endpoint + '/post/' + op, nocname = True)}"
+      action="${add_sr(g.https_endpoint + '/post/login', nocname = True)}"
       id="login_${op}"
       class="login-form login-form-side">
   %if thing.cname:

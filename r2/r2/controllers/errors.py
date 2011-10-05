@@ -127,6 +127,9 @@ class ErrorSet(object):
     def __iter__(self):
         for x in self.errors:
             yield x
+
+    def __len__(self):
+        return len(self.errors)
         
     def add(self, error_name, msg_params = {}, field = None):
         msg = error_list[error_name]
