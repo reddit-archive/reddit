@@ -75,10 +75,11 @@ ${first_defined(kw[1:])}
 </%def>
 
 <%def name="error_field(error_name, field_name, kind='span')">
+  <% error_key = (error_name, field_name) %>
   <${kind} class="error ${error_name} field-${field_name}" 
-           style="${'' if error_name in c.errors else 'display:none'}">
-   %if error_name in c.errors:
-     ${c.errors[error_name].message}
+  style="${'' if error_key in c.errors else 'display:none'}">
+   %if error_key in c.errors:
+     ${c.errors[error_key].message}
    %endif
   </${kind}>
 </%def>
