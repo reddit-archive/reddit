@@ -23,13 +23,15 @@ r.login = {
             })
         } else {
             var iframe = $('<iframe>'),
-                postForm = form.$el.clone(true)
+                postForm = form.$el.clone(true),
+                frameName = ('resp'+Math.random()).replace('.', '')
 
             iframe
                 .css('display', 'none')
+                .attr('name', frameName)
                 .appendTo('body')
 
-            var frameName = iframe[0].contentWindow.name = ('resp'+Math.random()).replace('.', '')
+            iframe[0].contentWindow.name = frameName
 
             postForm
                 .unbind()
