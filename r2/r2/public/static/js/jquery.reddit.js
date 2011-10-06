@@ -259,10 +259,7 @@ rate_limit = function() {
 
 $.fn.vote = function(vh, callback, event, ui_only) {
     /* for vote to work, $(this) should be the clicked arrow */
-    if (!reddit.logged) {
-        showcover(true, 'vote_' + $(this).thing_id());
-    }
-    else if($(this).hasClass("arrow")) {
+    if (reddit.logged && $(this).hasClass("arrow")) {
         var dir = ( $(this).hasClass(up_cls) ? 1 :
                     ( $(this).hasClass(down_cls) ? -1 : 0) );
         var things = $(this).all_things_by_id();
@@ -302,9 +299,6 @@ $.fn.vote = function(vh, callback, event, ui_only) {
         /* execute any callbacks passed in.  */
         if(callback) 
             callback(things, dir);
-    }
-    if(event) {
-        event.stopPropagation();
     }
 };
 
@@ -584,8 +578,7 @@ $.fn.captcha = function(iden) {
     /*  */
     var c = this.find(".capimage");
     if(iden) {
-        c.attr("src", "http://" + reddit.ajax_domain 
-               + "/captcha/" + iden + ".png")
+        c.attr("src", "/captcha/" + iden + ".png")
             .parents("form").find('input[name="iden"]').val(iden);
     }
     return c;

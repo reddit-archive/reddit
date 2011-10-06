@@ -46,18 +46,12 @@
 <%def name="login_form(register=False, user='', dest='', include_tos=True)">
   <% op = "reg" if register else "login" %>
   <form id="login_${op}" method="post" 
-        action="${add_sr('/post/' + op, nocname = True)}" 
-        %if not c.frameless_cname or c.authorized_cname:
-          onsubmit="return post_user(this, '${"register" if register else "login"}');"
-        %else:
-          onsubmit="return update_user(this);"
-        %endif
-        target="_top">
+        action="${add_sr(g.https_endpoint + '/post/' + op, nocname = True)}"
+        class="user-form ${'register-form' if register else 'login-form'}">
     %if c.cname:
        <input type="hidden" name="${UrlParser.cname_get}" 
               value="${random.random()}" />
     %endif
-    <input type="hidden" name="reason" value="" />
     <input type="hidden" name="op" value="${op}" />
     %if dest:
       <input type="hidden" name="dest" value="${dest}" />
@@ -126,10 +120,11 @@
       </li>
       %endif
     </ul>
-      <p>
+      <p class="submit">
         <button type="submit" class="button">
           ${register and _("create account") or _("login")}
         </button>
+        <span class="throbber"></span>
         <span class="status"></span>
       </p>
     </div>
@@ -138,7 +133,7 @@
 
 
 <%def name="login_panel(lf, user_reg = '', user_login = '', dest='')">
-  <div class="loginform divide">
+  <div class="login-form-section divide">
     <h3>${_("create a new account")}</h3>
     <p class="tagline">
       ${_("all it takes is a username and password")}
@@ -150,7 +145,7 @@
       </span>
     </p>
   </div>
-  <div class="loginform">
+  <div class="login-form-section">
     <h3>${_("login")}</h3>
     <p class="tagline">
       ${_("already have an account and just want to login?")}

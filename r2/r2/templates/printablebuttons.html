@@ -424,12 +424,11 @@
        callback, cancelback = cancelback, callback
        title, alt_title = alt_title, title
        css_class, alt_css_class = alt_css_class, css_class
+   extra_class = "login-required" if login_required else ""
  %>
 <span class="${class_name} toggle" style="${style}">
- <a class="option active ${css_class}" href="#" tabindex="100"
-    %if login_required and not c.user_is_loggedin:
-      onclick="return showcover('', '${callback}_' + $(this).thing_id());"
-    %else:
+ <a class="option active ${css_class} ${extra_class}" href="#" tabindex="100"
+    %if not login_required or c.user_is_loggedin:
       onclick="return toggle(this, ${callback}, ${cancelback})"
     %endif
     >

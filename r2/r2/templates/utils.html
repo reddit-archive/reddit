@@ -365,7 +365,8 @@ ${unsafe(txt)}
   <%
      from r2.lib.template_helpers import get_domain
    %>
-   var reddit = {
+   r = {};
+   r.config = reddit = {
       /* is the user logged in */
       logged: ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"},
       /* the subreddit's name (for posts) */
@@ -383,6 +384,8 @@ ${unsafe(txt)}
                                 no_www = True)}",
       /* where do ajax request go? */
       ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
+      extension: '${c.extension}',
+      https_endpoint: "${g.https_endpoint}",
       /* debugging? */
       debug: ${"true" if g.debug else "false"}, 
       vl: {},

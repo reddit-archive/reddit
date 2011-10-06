@@ -54,7 +54,7 @@
          "friend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
          "unfriend('%s', '%s', 'friend')" % (thing.user.name, thing.my_fullname),
          css_class = "add", alt_css_class = "remove",
-         reverse = thing.is_friend)}
+         reverse = thing.is_friend, login_required=True)}
     </div>
   %endif
 

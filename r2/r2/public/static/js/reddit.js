@@ -123,17 +123,6 @@ function showlang() {
     return false;
 };
 
-function showcover(warning, reason) {
-    $.request("new_captcha");
-    if (warning) 
-        $("#cover_disclaim, #cover_msg").show();
-    else
-        $("#cover_disclaim, #cover_msg").hide();
-    $(".login-popup:first").show()
-        .find('form input[name="reason"]').val(reason || "");
-    return false;
-};
-
 function hidecover(where) {
     $(where).parents(".cover-overlay").hide();
     return false;
@@ -322,9 +311,7 @@ function linkstatus(form) {
 
 function subscribe(reddit_name) {
     return function() { 
-        if (!reddit.logged)  {
-            showcover();
-        } else {
+        if (reddit.logged) {
             $.things(reddit_name).find(".entry").addClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "sub"});
         }
@@ -333,9 +320,7 @@ function subscribe(reddit_name) {
 
 function unsubscribe(reddit_name) {
     return function() { 
-        if (!reddit.logged)  {
-            showcover();
-        } else {
+        if (reddit.logged) {
             $.things(reddit_name).find(".entry").removeClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "unsub"});
         }
@@ -344,10 +329,7 @@ function unsubscribe(reddit_name) {
 
 function friend(user_name, container_name, type) {
     return function() {
-        if (!reddit.logged)  {
-            showcover();
-        }
-        else {
+        if (reddit.logged) {
             encoded = encodeURIComponent(reddit.referer);
             $.request("friend?note=" + encoded,
                       {name: user_name, container: container_name, type: type});

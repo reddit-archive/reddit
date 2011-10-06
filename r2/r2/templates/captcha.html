@@ -79,10 +79,8 @@ ${rounded_captcha()}
      <td>
      %endif
           <input class="captcha cap-text" id="captcha_"
-               name="captcha" type="text" size="${size}" />
-        <script type="text/javascript">
-          emptyInput($('input.captcha'), "${_('type the letters from the image above')}");
-        </script>
+                 name="captcha" type="text" size="${size}"
+                 placeholder="type the letters from the image above" />
      %if tabular:
      </td>
      <td>

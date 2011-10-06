@@ -377,6 +377,10 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .loading img { -webkit-animation-name: rotateThis; -webkit-animation-duration: .5s; -webkit-animation-iteration-count: infinite; -webkit-animation-timing-function: linear; }
 
+.throbber { display: none; margin: 0 2px; background: url("/static/compact/throbber.gif") no-repeat; width: 18px; height: 18px; }
+
+.working .throbber { display: inline-block; }
+
 /* Login and Register */
 #login_login, #login_reg { background: white; border: 1px solid #d9d9d9; margin: 10px; -webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px; -moz-border-radius-bottomleft: 8px; -moz-border-radius-bottomright: 8px; max-width: 350px; margin-left: auto; margin-right: auto; }
 
@@ -389,6 +393,8 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 #login_login input[type="text"], #login_login input[type="password"], #login_reg input[type="text"], #login_reg input[type="password"] { width: 100%; margin: 0 0 5px; -moz-border-radius: 5px; -webkit-border-radius: 5px; -o-border-radius: 5px; -ms-border-radius: 5px; -khtml-border-radius: 5px; border-radius: 5px; border: 1px solid #757575; /*It was the coins fault!*/ font-size: 17px; padding: 5px; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; }
 
 #login_login > div > ul li input[type="checkbox"] + label, #login_reg > div > ul li input[type="checkbox"] + label { display: inline; }
+
+.user-form .submit * { vertical-align: middle; }
 
 /* toolbar specific stuf here */
 body.toolbar { margin: 0px; padding: 0px; overflow: hidden; }

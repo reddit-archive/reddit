@@ -65,7 +65,8 @@
                   "subscribe('%s')" % sr._fullname, 
                   "unsubscribe('%s')" % sr._fullname, 
                   css_class = "add", alt_css_class = "remove",
-                  reverse = sr.subscriber)}
+                  reverse = sr.subscriber,
+                  login_required = True)}
 </%def>
 
 ##this function is used by subscriptionbox.html

@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from reddit_base import RedditController, MinimalController, set_user_cookie
-from reddit_base import paginated_listing
+from reddit_base import cross_domain, paginated_listing
 
 from pylons.i18n import _
 from pylons import c, request, response
@@ -110,7 +110,7 @@ class ApiController(RedditController):
 
 
     @json_validate()
-    def GET_me(self):
+    def GET_me(self, responder):
         if c.user_is_loggedin:
             return Wrapped(c.user).render()
         else:
@@ -353,60 +353,53 @@ class ApiController(RedditController):
             else:
                 form.set_html(".title-status", _("no title found"))
         
-    def _login(self, form, user, dest='', rem = None):
+    def _login(self, responder, user, rem = None):
         """
         AJAX login handler, used by both login and register to set the
         user cookie and send back a redirect.
         """
         self.login(user, rem = rem)
-        form._send_data(modhash = user.modhash())
-        form._send_data(cookie  = user.make_cookie())
-        dest = dest or request.referer or '/'
-        form.redirect(dest)
 
+        if request.params.get("hoist") != "cookie":
+            responder._send_data(modhash = user.modhash())
+            responder._send_data(cookie  = user.make_cookie())
 
+    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validatedForm(VDelay("login"),
                    user = VLogin(['user', 'passwd']),
                    username = VLength('user', max_length = 100),
-                   dest   = VDestination(),
-                   rem    = VBoolean('rem'),
-                   reason = VReason('reason'))
-    def POST_login(self, form, jquery, user, username, dest, rem, reason):
-        if form.has_errors('vdelay', errors.RATELIMIT):
-            jquery(".recover-password").addClass("attention")
+                   rem    = VBoolean('rem'))
+    def POST_login(self, form, responder, user, username, rem):
+        if responder.has_errors('vdelay', errors.RATELIMIT):
             return
 
-        if reason and reason[0] == 'redirect':
-            dest = reason[1]
-
-        if login_throttle(username, wrong_password = form.has_errors("passwd",
+        if login_throttle(username, wrong_password = responder.has_errors("passwd",
                                                      errors.WRONG_PASSWORD)):
             VDelay.record_violation("login", seconds=1, growfast=True)
-            jquery(".recover-password").addClass("attention")
             c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
 
-        if not form.has_errors("passwd", errors.WRONG_PASSWORD):
-            self._login(form, user, dest, rem)
+        if not responder.has_errors("passwd", errors.WRONG_PASSWORD):
+            self._login(responder, user, rem)
 
+    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
                    email = ValidEmails("email", num = 1),
                    password = VPassword(['passwd', 'passwd2']),
-                   dest = VDestination(),
-                   rem = VBoolean('rem'),
-                   reason = VReason('reason'))
-    def POST_register(self, form, jquery, name, email,
-                      password, dest, rem, reason):
-        if not (form.has_errors("user", errors.BAD_USERNAME,
+                   rem = VBoolean('rem'))
+    def POST_register(self, form, responder, name, email,
+                      password, rem):
+        bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
+        if not (responder.has_errors("user", errors.BAD_USERNAME,
                                 errors.USERNAME_TAKEN_DEL,
                                 errors.USERNAME_TAKEN) or
-                form.has_errors("email", errors.BAD_EMAILS) or
-                form.has_errors("passwd", errors.BAD_PASSWORD) or
-                form.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
-                form.has_errors('ratelimit', errors.RATELIMIT) or
-                (not g.disable_captcha and form.has_errors('captcha', errors.BAD_CAPTCHA))):
-
+                responder.has_errors("email", errors.BAD_EMAILS) or
+                responder.has_errors("passwd", errors.BAD_PASSWORD) or
+                responder.has_errors("passwd2", errors.BAD_PASSWORD_MATCH) or
+                responder.has_errors('ratelimit', errors.RATELIMIT) or
+                (not g.disable_captcha and bad_captcha)):
+            
             user = register(name, password)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
@@ -427,14 +420,7 @@ class ApiController(RedditController):
             user._commit()
 
             c.user = user
-            if reason:
-                if reason[0] == 'redirect':
-                    dest = reason[1]
-                elif reason[0] == 'subscribe':
-                    for sr, sub in reason[1].iteritems():
-                        self._subscribe(sr, sub)
-
-            self._login(form, user, dest, rem)
+            self._login(responder, user, rem)
 
     @noresponse(VUser(),
                 VModhash(),

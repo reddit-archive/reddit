@@ -63,7 +63,7 @@
       %if thing.enable_login_cover and not g.read_only_mode:
       <span class="user">
         ${text_with_js(_("want to join? %(register)s in seconds"),
-                          register=(_("register"), "return showcover(false);"))}
+                          register=(_("register"), "r.login.ui.popup.show(); return false"))}
       </span>
       ${separator("|")}
       %endif

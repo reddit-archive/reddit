@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from pylons import c, request, g
+from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.lib import utils, captcha, promote
@@ -154,14 +154,15 @@ def api_validate(response_type=None):
         def _api_validate(*simple_vals, **param_vals):
             def val(fn):
                 def newfn(self, *a, **env):
-                    c.render_style = api_type(request.params.get("renderstyle",
-                                                                 response_type))
-                    c.response_content_type = 'application/json; charset=UTF-8'
+                    c.render_style = api_type(request.params.get("renderstyle", response_type))
                     # generate a response object
-                    if response_type is None or request.params.get('api_type') == "json":
-                        responder = JsonResponse()
-                    else:
+                    if response_type == "html" and not request.params.get('api_type') == "json":
                         responder = JQueryResponse()
+                    else:
+                        responder = JsonResponse()
+
+                    c.response_content_type = responder.content_type
+
                     try:
                         kw = _make_validated_kw(fn, simple_vals, param_vals, env)
                         return response_function(self, fn, responder,
@@ -191,8 +192,11 @@ def textresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw
 def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **kw):
     if c.extension != 'json':
         abort(404)
-    r = self_method(self, *a, **kw)
-    return self.api_wrapper(r)
+
+    val = self_method(self, responder, *a, **kw)
+    if not val:
+        val = responder.make_response()
+    return self.api_wrapper(val)
 
 @api_validate("html")
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
@@ -1233,38 +1237,6 @@ class VOneOf(Validator):
             return self.default
         else:
             return val
-
-class VReason(Validator):
-    def run(self, reason):
-        if not reason:
-            return
-
-        if reason.startswith('redirect_'):
-            dest = reason[9:]
-            if (not dest.startswith(c.site.path) and 
-                not dest.startswith("http:")):
-                dest = (c.site.path + dest).replace('//', '/')
-            return ('redirect', dest)
-        if reason.startswith('vote_'):
-            fullname = reason[5:]
-            t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.make_permalink_slow())
-        elif reason.startswith('share_'):
-            fullname = reason[6:]
-            t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.make_permalink_slow())
-        elif reason.startswith('reply_'):
-            fullname = reason[6:]
-            t = Thing._by_fullname(fullname, data=True)
-            return ('redirect', t.make_permalink_slow())
-        elif reason.startswith('sr_change_'):
-            sr_list = reason[10:].split(',')
-            fullnames = dict(i.split(':') for i in sr_list)
-            srs = Subreddit._by_fullname(fullnames.keys(), data = True,
-                                         return_dict = False)
-            sr_onoff = dict((sr, fullnames[sr._fullname] == 1) for sr in srs)
-            return ('subscribe', sr_onoff)
-
 
 class ValidEmails(Validator):
     """Validates a list of email addresses passed in as a string and

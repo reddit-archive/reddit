@@ -28,33 +28,31 @@
 <%namespace file="utils.html" import="error_field"/>
 
 <% op = "login-main" %>
-<form method="post" 
-      id="login_${op}" action="${add_sr('/post/login', nocname = True)}" 
-      %if thing.auth_cname:
-        onsubmit="return post_user(this, 'login');"
-      %else:
-        onsubmit="return update_user(this);"
-      %endif
-      class="login-form-side">
+<form method="post"
+      action="${add_sr(g.https_endpoint + '/post/' + op, nocname = True)}"
+      id="login_${op}"
+      class="login-form login-form-side">
   %if thing.cname:
     <input type="hidden" name="${UrlParser.cname_get}" 
            value="${random.random()}" />
   %endif
   <input type="hidden" name="op" value="${op}" />
-  <input name="user" type="text" maxlength="20" tabindex="1"/>
-  <input name="passwd" type="password" maxlength="20" tabindex="2"/>
+  <input name="user" placeholder="username" type="text" maxlength="20" tabindex="1"/>
+  <input name="passwd" placeholder="password" type="password" maxlength="20" tabindex="2"/>
 
-  ${error_field("WRONG_PASSWORD", "passwd", "div")}
-  ${error_field("RATELIMIT", "ratelimit")}
-  ${error_field("RATELIMIT", "vdelay")}
-  <div class="status error"></div>
+  <div class="status"></div>
 
   <div id="remember-me">
-    <button class="btn" type="submit" tabindex="4">${_("login")}</button>
     <input type="checkbox" name="rem" tabindex="3" id="rem-${op}" />
     <label for="rem-${op}">${_("remember me")}</label>
-    <a class="recover-password" href="/password">${_("recover password")}</a>
-    <div class="clear"></div>
+    <a class="recover-password" href="/password">${_("reset password")}</a>
   </div>
+
+  <div class="submit">
+    <span class="throbber"></span>
+    <button class="btn" type="submit" tabindex="4">${_("login")}</button>
+  </div>
+  
+  <div class="clear"></div>
 </form>
 

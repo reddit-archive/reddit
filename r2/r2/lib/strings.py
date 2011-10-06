@@ -44,6 +44,8 @@ string_dict = dict(
     banned_by = "removed by %s",
     banned    = "removed",
     reports   = "reports: %d",
+    
+    submitting = _("submitting..."),
 
     # this accomodates asian languages which don't use spaces
     number_label = _("%(num)d %(thing)s"),

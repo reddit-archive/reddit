@@ -23,25 +23,16 @@
 <%namespace file="utils.html" import="plain_link"/>
 
 <div class="sidebox ${thing.css_class}">
-  <%
-     if not c.user_is_loggedin and thing.show_cover:
-         onclick="return(showcover(true, 'redirect_%s'));" % thing.link
-     else:
-         onclick = None
-
-     nocname = thing.nocname
-  %>
-
   <div class="morelink">
-    ${plain_link(thing.title,thing.link, _sr_path = thing.sr_path,
-                 onclick=onclick, nocname=nocname)}
+    ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
+                 _class='login-required', nocname=thing.nocname)}
     <div class="nub"> </div>
   </div>
 
   %if thing.subtitles:
     <div class="spacer">
-      ${plain_link('', thing.link, _sr_path=thing.sr_path, 
-                   onclick=onclick, nocname=nocname)}
+      ${plain_link('', thing.link, _sr_path=thing.sr_path,
+                   _class='login-required', nocname=thing.nocname)}
       %for subtitle in thing.subtitles:
         <div class="subtitle">${subtitle}</div>
       %endfor

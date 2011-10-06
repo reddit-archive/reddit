@@ -1412,21 +1412,36 @@ textarea.gray { color: gray; }
     border: 1px solid gray;
 }
 
-.login-form-side input {
-    border: 1px solid gray;
-    width: 138px;
+.login-form-side input[type=text],
+.login-form-side input[type=password] {
+    border: 1px solid #999;
+    width: 137px;
     height: 17px;
     margin: 5px 0px 0px 5px;
     top: 5px;
     padding: 1px;
  }
 
-.login-form-side .error {
-    margin: 5px;
+.login-form-side input[type=password] {
+    width: 138px;
 }
 
-#remember-me {
-    margin: 5px;
+.login-form-side #remember-me,
+.login-form-side .submit {
+    margin: 4px;
+}
+
+.login-form-side .submit input[type=button] {
+    margin:1px;
+}
+
+.login-form-side #remember-me {
+    float: left;
+    line-height: 24px;
+}
+
+.login-form-side #remember-me * {
+    vertical-align:middle;
 }
 
 /*the checkbox*/
@@ -1436,6 +1451,7 @@ textarea.gray { color: gray; }
     width: auto;
     border: none;
     margin-right: 5px;
+    margin-top: 0;
 }
 
 .login-form-side label {
@@ -1444,13 +1460,31 @@ textarea.gray { color: gray; }
     white-space: nowrap;
 }
 
-.login-form-side button {
+.login-form-side .recover-password {
+    margin-left: 1em;
+}
+
+.login-form-side .status { display:none; }
+
+.login-form-side .submit {
     float: right;
 }
 
+.login-form-side .submit *, .user-form .submit * {
+    vertical-align: middle;
+}
 
-.status { margin-left: 5px; color: red; font-size: small;}
-.error { color: red; font-size: small; margin: 5px; }
+.throbber {
+    display: none;
+    margin: 0 2px;
+    background: url(/static/throbber.gif) no-repeat;
+    width: 18px;
+    height: 18px;
+}
+.working .throbber { display: inline-block; }
+
+.status { margin: 5px 0 0 5px; font-size: small;}
+.error { color: red; font-size: small; }
 .red { color:red }
 .buygold { color: #9A7D2E; font-weight: bold; }
 .line-through { text-decoration: line-through }
@@ -1572,16 +1606,16 @@ label + #moresearchinfo {
 .legal {color: #808080; font-family: serif; font-size: small; margin-top: 20px; }
 .legal a {text-decoration: underline}
 
-.divide { border-right: 2px solid #D3D3D3;  }
+.divide { border-right: 2px solid #D3D3D3; margin-right: -2px; }
 
-.loginform {
+.login-form-section {
     float: left; 
-    width: 45%; 
-    padding-left: 15px; 
-    padding-right: 15px; 
+    width: 46%;
+    padding-left: 2%;
+    padding-right: 2%;
 }
 
-.loginform h3 {
+.login-form-section h3 {
     margin-bottom: 0;
     margin-top: 10px;
     font-size: large;
@@ -1589,26 +1623,31 @@ label + #moresearchinfo {
     font-variant: small-caps;
     color: #404040;
 }
-.loginform p {
+.login-form-section p {
     text-align: left;
     margin-bottom: 10px; 
     color: #606060;
     margin-bottom: 20px; 
 }
-.loginform label {
+
+.user-form label {
     display: block; 
     font-weight: bold;
     color: #606060; 
 }
 
-.loginform .remember { display:inline; margin-left: 5px;  }
-.loginform ul { margin: 5px; }
-.loginform li { margin-top: 5px; }
-.loginform p .btn { margin-top: 5px }
-.loginform input.logtxt { width: 125px; }
+.user-form .error {
+    margin-left: 5px;
+}
 
-.loginform input[type=text],
-.loginform input[type=password] {
+.user-form .remember { display:inline; margin-left: 5px;  }
+.user-form ul { margin: 5px; }
+.user-form li { margin-top: 5px; }
+.user-form p .btn { margin-top: 5px }
+.user-form input.logtxt { width: 125px; }
+
+.user-form input[type=text],
+.user-form input[type=password] {
     width: 125px;
     border: 1px solid #A0A0A0;
     margin-top: 2px; 
@@ -1616,9 +1655,13 @@ label + #moresearchinfo {
     padding: 1px;
 }
 
-.loginform #captcha {
+.user-form #captcha {
     width: 250px;
  }
+
+.user-form .submit {
+    margin-top: 10px;
+}
 
 #passform h1 {margin-bottom: 0px}
 #passform p {margin-bottom: 5px; font-size: small}
@@ -1662,6 +1705,11 @@ label + #moresearchinfo {
     margin-top: 0px;
     color: black;
     font-weight: normal;
+}
+
+.popup .close-popup {
+    text-align: center;
+    margin-top: 10px;
 }
 
 .usertable { margin-left: 10px;} 

@@ -44,6 +44,9 @@ class JsonResponse(object):
     in the api func's validators, as well as blobs of data set by the
     api func.
     """
+
+    content_type = 'application/json; charset=UTF-8'
+
     def __init__(self):
         self._clear()
 
@@ -67,7 +70,7 @@ class JsonResponse(object):
         res = {}
         if self._data:
             res['data'] = self._data
-        res['errors'] = [(e[0], c.errors[e].message) for e in self._errors]
+        res['errors'] = [(e[0], c.errors[e].message, e[1]) for e in self._errors]
         return {"json": res}
 
     def set_error(self, error_name, field_name):

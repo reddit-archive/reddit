@@ -1097,6 +1097,16 @@ padding: 5px;
   -webkit-animation-iteration-count:infinite;
   -webkit-animation-timing-function:linear;
 }
+
+.throbber {
+    display: none;
+    margin: 0 2px;
+    background: url($static + 'throbber.gif') no-repeat;
+    width: 18px;
+    height: 18px;
+}
+.working .throbber { display: inline-block; }
+
 /* Login and Register */
 #login_login, #login_reg {
     background: white;
@@ -1133,6 +1143,11 @@ padding: 5px;
 #login_login > div > ul li input[type="checkbox"] + label, #login_reg > div > ul li input[type="checkbox"] + label {
 	display: inline;
 }
+
+.user-form .submit * {
+    vertical-align: middle;
+}
+
 /* toolbar specific stuf here */
 body.toolbar {
 	margin: 0px;
