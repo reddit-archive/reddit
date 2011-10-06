@@ -284,7 +284,7 @@ class Globals(object):
 
         self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
 
-        self.origin = "http://" + self.domain
+        self.origin = "http://" + (self.domain_prefix + "." if self.domain_prefix else "") + self.domain
         self.secure_domains = set([urlparse(self.payment_domain).netloc])
         if self.https_endpoint:
             self.secure_domains.add(urlparse(self.https_endpoint).netloc)
