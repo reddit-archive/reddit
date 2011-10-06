@@ -289,6 +289,8 @@ class Globals(object):
         if self.https_endpoint:
             self.secure_domains.add(urlparse(self.https_endpoint).netloc)
 
+        self.trusted_origins = [self.origin, self.https_endpoint] + ['http://' + cname for cname in self.authorized_cnames]
+
         # load the unique hashed names of files under static
         static_files = os.path.join(self.paths.get('static_files'), 'static')
         names_file_path = os.path.join(static_files, 'names.json')

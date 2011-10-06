@@ -44,9 +44,12 @@
 %endif
 
 <%def name="login_form(register=False, user='', dest='', include_tos=True)">
-  <% op = "reg" if register else "login" %>
+  <%
+    op = "reg" if register else "login"
+    base = g.https_endpoint if not c.cname else ''
+  %>
   <form id="login_${op}" method="post" 
-        action="${add_sr(g.https_endpoint + '/post/' + op, nocname = True)}"
+        action="${add_sr(base + '/post/' + op, nocname=not c.authorized_cname)}"
         class="user-form ${'register-form' if register else 'login-form'}">
     %if c.cname:
        <input type="hidden" name="${UrlParser.cname_get}" 

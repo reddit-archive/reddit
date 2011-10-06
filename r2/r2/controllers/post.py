@@ -173,10 +173,9 @@ class PostController(ApiController):
                                            msg_hash = msg_hash)).render()
 
 
-    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validate(dest = VDestination(default = "/"))
     def POST_login(self, dest, *a, **kw):
-        ApiController.POST_login(self, *a, **kw)
+        ApiController._handle_login(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 
@@ -186,10 +185,9 @@ class PostController(ApiController):
 
         return self.redirect(dest)
 
-    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validate(dest = VDestination(default = "/"))
     def POST_reg(self, dest, *a, **kw):
-        ApiController.POST_register(self, *a, **kw)
+        ApiController._handle_register(self, *a, **kw)
         c.render_style = "html"
         c.response_content_type = ""
 

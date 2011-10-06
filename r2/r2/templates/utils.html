@@ -365,6 +365,7 @@ ${unsafe(txt)}
 <%def name="js_preamble()">
   <%
      from r2.lib.template_helpers import get_domain
+     use_https_endpoint = request.host == g.domain or request.host.endswith("." + g.domain)
    %>
    r = {};
    r.config = reddit = {
@@ -386,7 +387,7 @@ ${unsafe(txt)}
       /* where do ajax request go? */
       ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
       extension: '${c.extension}',
-      https_endpoint: "${g.https_endpoint}",
+      https_endpoint: '${g.https_endpoint if use_https_endpoint else ""}',
       /* debugging? */
       debug: ${"true" if g.debug else "false"}, 
       vl: {},

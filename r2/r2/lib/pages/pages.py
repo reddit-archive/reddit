@@ -454,7 +454,7 @@ class LoginFormWide(CachedTemplate):
     """generates a login form suitable for the 300px rightbox."""
     def __init__(self):
         self.cname = c.cname
-        self.auth_cname = not c.frameless_cname or c.authorized_cname
+        self.auth_cname = c.authorized_cname
         CachedTemplate.__init__(self)
 
 class SubredditInfoBar(CachedTemplate):

@@ -27,9 +27,12 @@
 
 <%namespace file="utils.html" import="error_field"/>
 
-<% op = "login-main" %>
+<%
+  op = "login-main"
+  base = g.https_endpoint if not thing.cname else ''
+%>
 <form method="post"
-      action="${add_sr(g.https_endpoint + '/post/login', nocname = True)}"
+      action="${add_sr(base + '/post/login', nocname=not thing.auth_cname)}"
       id="login_${op}"
       class="login-form login-form-side">
   %if thing.cname:

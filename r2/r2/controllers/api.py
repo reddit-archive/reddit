@@ -364,12 +364,19 @@ class ApiController(RedditController):
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
 
-    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
+    @cross_domain(g.trusted_origins, allow_credentials=True)
+    def POST_login(self, *args, **kwargs):
+        return self._handle_login(*args, **kwargs)
+
+    @cross_domain(g.trusted_origins, allow_credentials=True)
+    def POST_register(self, *args, **kwargs):
+        return self._handle_register(*args, **kwargs)
+
     @validatedForm(VDelay("login"),
                    user = VLogin(['user', 'passwd']),
                    username = VLength('user', max_length = 100),
                    rem    = VBoolean('rem'))
-    def POST_login(self, form, responder, user, username, rem):
+    def _handle_login(self, form, responder, user, username, rem):
         if responder.has_errors('vdelay', errors.RATELIMIT):
             return
 
@@ -381,14 +388,13 @@ class ApiController(RedditController):
         if not responder.has_errors("passwd", errors.WRONG_PASSWORD):
             self._login(responder, user, rem)
 
-    @cross_domain([g.origin, g.https_endpoint], allow_credentials=True)
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
                    email = ValidEmails("email", num = 1),
                    password = VPassword(['passwd', 'passwd2']),
                    rem = VBoolean('rem'))
-    def POST_register(self, form, responder, name, email,
+    def _handle_register(self, form, responder, name, email,
                       password, rem):
         bad_captcha = responder.has_errors('captcha', errors.BAD_CAPTCHA)
         if not (responder.has_errors("user", errors.BAD_USERNAME,
