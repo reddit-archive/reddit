@@ -48,7 +48,7 @@
       </div>
       %endif
     %endif
-    %if g.tracker_url and thing.site_tracking:
+    %if g.tracker_url and thing.site_tracking and not c.secure:
       <img alt="" src="${tracking.UserInfo.gen_url()}"/>
     %endif
 </body>
