@@ -1398,7 +1398,7 @@ class VDestination(Validator):
 
             u = UrlParser(dest)
 
-            if u.is_reddit_url():
+            if u.is_reddit_url(c.site):
                 return dest
 
         ip = getattr(request, "ip", "[unknown]")
