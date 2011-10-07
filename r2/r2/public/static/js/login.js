@@ -131,7 +131,7 @@ r.login.ui = {
                 }
             }
 
-            this.popup.show(true, dest && function() {
+            this.popup.showLogin(true, dest && function() {
                 window.location = dest
             })
 
@@ -187,6 +187,10 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
         } else {
             r.ui.Form.prototype._handleResult.call(this, result)
         }
+    },
+
+    focus: function() {
+        this.$el.find('input[name="user"]').focus()
     }
 })
 
@@ -199,7 +203,8 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
         r.login.post(this, 'register', $.proxy(this, 'handleResult'))
     },
 
-    _handleResult: r.ui.LoginForm.prototype._handleResult
+    _handleResult: r.ui.LoginForm.prototype._handleResult,
+    focus: r.ui.LoginForm.prototype.focus
 })
 
 r.ui.LoginPopup = function(el) {
@@ -215,5 +220,15 @@ r.ui.LoginPopup.prototype = $.extend(new r.ui.Base(), {
         this.$el
             .find(".cover-msg").toggle(!!notice).end()
             .show()
+    },
+
+    showLogin: function() {
+        this.show.apply(this, arguments)
+        this.loginForm.focus()
+    },
+
+    showRegister: function() {
+        this.show.apply(this, arguments)
+        this.registerForm.focus()
     }
 })
