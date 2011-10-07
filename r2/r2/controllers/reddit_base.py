@@ -664,8 +664,6 @@ class MinimalController(BaseController):
             response.headers["Access-Control-Allow-Origin"] = origin
             if cors.get("allow_credentials"):
                 response.headers["Access-Control-Allow-Credentials"] = "true"
-        else:
-            self.abort403()
 
     def OPTIONS(self):
         """Return empty responses for CORS preflight requests"""
