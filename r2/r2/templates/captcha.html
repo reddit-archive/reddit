@@ -53,7 +53,7 @@ ${rounded_captcha()}
   </%utils:round_field>
 </%def>
 
-<%def name="captchagen(iden, error='', tabulate=False, tabular = True, size=60, label=True, show_error = True)">
+<%def name="captchagen(iden, error='', tabulate=False, tabular = True, size=60, label=True, show_error = True, tabindex = None)">
 %if tabulate:
 <table>
 %endif
@@ -80,7 +80,11 @@ ${rounded_captcha()}
      %endif
           <input class="captcha cap-text" id="captcha_"
                  name="captcha" type="text" size="${size}"
-                 placeholder="type the letters from the image above" />
+                 placeholder="type the letters from the image above"
+                 %if tabindex:
+                   tabindex="${tabindex}"
+                 %endif
+                 />
      %if tabular:
      </td>
      <td>

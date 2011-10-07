@@ -47,6 +47,7 @@
   <%
     op = "reg" if register else "login"
     base = g.https_endpoint if not c.cname else ''
+    tabindex = 3 if register else 2
   %>
   <form id="login_${op}" method="post" 
         action="${add_sr(base + '/post/' + op, nocname=not c.authorized_cname)}"
@@ -64,7 +65,7 @@
         <li>
           <label for="user_${op}">${_('username')}:</label>
           <input value="${user}" name="user" id="user_${op}" 
-                 type="text" maxlength="20"/>
+                 type="text" maxlength="20" tabindex="${tabindex}"/>
           %if register:
             ${error_field("BAD_USERNAME", "user", kind="span")}
             ${error_field("USERNAME_TAKEN", "user", kind="span")}
@@ -77,7 +78,7 @@
             ${_('email')}: &nbsp;<i>(${_('optional')})
           </i></label>
           <input value="" name="email" id="email_${op}" 
-                 type="text" maxlength="50"/>
+                 type="text" maxlength="50" tabindex="${tabindex}"/>
           %if register:
             ${error_field("BAD_EMAILS", "email", kind="span")}
           %endif
@@ -86,7 +87,7 @@
         <li>
           <label for="passwd_${op}">${_('password')}:</label>
           <input id="passwd_${op}" name="passwd" type="password" 
-                 maxlength="20"/>
+                 maxlength="20" tabindex="${tabindex}"/>
           %if register:
             ${error_field("BAD_PASSWORD", "passwd", kind="span")}
           %else:
@@ -97,13 +98,13 @@
         <li>
           <label for="passwd2_${op}">${_('verify password')}:</label>
           <input name="passwd2" id="passwd2_${op}" 
-                 type="password" maxlength="20" />
+                 type="password" maxlength="20" tabindex="${tabindex}"/>
           ${error_field("BAD_PASSWORD_MATCH", "passwd2", kind="span")}
         </li>
         <li>
           %if not g.disable_captcha:
           <% iden = hasattr(thing, "captcha") and thing.captcha.iden or '' %>
-          ${captchagen(iden, tabulate=True, label=False, size=30)}
+          ${captchagen(iden, tabulate=True, label=False, size=30, tabindex=tabindex)}
           %endif
           ${error_field("RATELIMIT", "ratelimit")}
           ${error_field("RATELIMIT", "vdelay")}
@@ -124,7 +125,7 @@
       %endif
     </ul>
       <p class="submit">
-        <button type="submit" class="button">
+        <button type="submit" class="button" tabindex="${tabindex}">
           ${register and _("create account") or _("login")}
         </button>
         <span class="throbber"></span>
