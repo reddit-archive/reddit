@@ -2124,7 +2124,7 @@ class ApiController(RedditController):
         c.user._commit()
 
     @json_validate(query = VPrintable('query', max_length = 50))
-    def POST_search_reddit_names(self, query):
+    def POST_search_reddit_names(self, responder, query):
         names = []
         if query:
             names = search_reddits(query)
