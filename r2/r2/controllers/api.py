@@ -1676,7 +1676,8 @@ class ApiController(RedditController):
             g.hardcache.delete("%s_%s" % (cache_evt.cache_prefix, cache_evt.key))
             print "%s did a password reset for %s via %s" % (
                 request.ip, cache_evt.user.name, cache_evt.key)
-            self._login(jquery, cache_evt.user, '/')
+            self._login(jquery, cache_evt.user)
+            jquery.redirect('/')
             cache_evt.clear()
 
 
