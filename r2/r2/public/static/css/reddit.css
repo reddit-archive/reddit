@@ -1419,6 +1419,17 @@ textarea.gray { color: gray; }
     font-size: larger;
 }
 
+.load0 { background-color: #FFFFFF; } /* white */
+.load1 { background-color: #f0f5FF; } /* pale blue */
+.load2 { background-color: #E2ECFF; } /* blue */
+.load3 { background-color: #d6f5cb; } /* pale green */
+.load4 { background-color: #CAFF98; } /* green */
+.load5 { background-color: #e4f484; } /* yellowgreen */
+.load6 { background-color: #FFEA71; } /* orange */
+.load7 { background-color: #ffdb81; } /* orangerose */
+.load8 { background-color: #FF9191; } /* pink */
+.load9 { background-color: #FF0000; color: #FFFFFF } /* red */
+
 /* login form */
 
 .orangered { color: orangered; }
