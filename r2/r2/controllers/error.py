@@ -120,13 +120,17 @@ class ErrorController(RedditController):
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         if c.site.spammy() and not c.user_is_admin:
-            subject = ("the subreddit /r/%s has been incorrectly banned" %
-                       c.site.name)
-            lnk = ("/r/redditrequest/submit?url=%s&title=%s"
-                   % (url_escape("http://%s/r/%s" % (g.domain, c.site.name)),
-                      ("the subreddit /r/%s has been incorrectly banned" %
-                       c.site.name)))
-            message = strings.banned_subreddit % dict(link = lnk)
+            ban_info = getattr(c.site, "ban_info", {})
+            if "message" in ban_info:
+                message = ban_info["message"]
+            else:
+                subject = ("the subreddit /r/%s has been incorrectly banned" %
+                           c.site.name)
+                lnk = ("/r/redditrequest/submit?url=%s&title=%s"
+                       % (url_escape("http://%s/r/%s" % (g.domain, c.site.name)),
+                          ("the subreddit /r/%s has been incorrectly banned" %
+                           c.site.name)))
+                message = strings.banned_subreddit % dict(link = lnk)
 
             res = pages.RedditError(_('this reddit has been banned'),
                                     unsafe(safemarkdown(message)))
