@@ -24,8 +24,8 @@ r.analytics = {
                 if (sponsorship)
                     fullname += '_' + sponsorship
 
-                if (!reddit.is_fake)
-                    fullname += '-' + reddit.post_site
+                if (!r.config.is_fake)
+                    fullname += '-' + r.config.post_site
 
                 thing.data('trackingName', fullname)
 
@@ -34,7 +34,7 @@ r.analytics = {
             })
 
         $.ajax({
-            url: 'http://' + reddit.tracking_domain + '/fetch-trackers',
+            url: 'http://' + r.config.tracking_domain + '/fetch-trackers',
             type: 'get',
             dataType: 'jsonp',
             data: { 'ids': fullnames },
@@ -64,7 +64,7 @@ r.analytics = {
             hash = this.trackers[fullname]
 
         var pixel = new Image()
-        pixel.src = reddit.adtracker_url + '?' + $.param({
+        pixel.src = r.config.adtracker_url + '?' + $.param({
             'id': fullname,
             'hash': hash,
             'r': Math.round(Math.random() * 2147483647) // cachebuster
@@ -77,7 +77,7 @@ r.analytics = {
         var link = thing.find('a.title'),
             old_html = link.html(),
             dest = link.attr('href'),
-            click_url = reddit.clicktracker_url + '?' + $.param({
+            click_url = r.config.clicktracker_url + '?' + $.param({
             'id': fullname,
             'hash': hash,
             'url': dest
@@ -97,8 +97,3 @@ r.analytics = {
         thing.data('trackerFired', true)
     }
 }
-
-$(function() {
-    // TODO: move this into r.base when it exists
-    r.analytics.init()
-})
