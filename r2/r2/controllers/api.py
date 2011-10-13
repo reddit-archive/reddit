@@ -565,8 +565,14 @@ class ApiController(RedditController):
                              title = container.title)
                     msg = msg % d
                     subj = subj % d
-                    item, inbox_rel = Message._new(c.user, friend,
-                                                   subj, msg, ip)
+                    if type == 'banned':
+                        from_sr = True
+                        sr = container
+                    else:
+                        from_sr = False
+                        sr = None
+                    item, inbox_rel = Message._new(c.user, friend, subj, msg,
+                                                   ip, from_sr=from_sr, sr=sr)
 
                     queries.new_message(item, inbox_rel)
 

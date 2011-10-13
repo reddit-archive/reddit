@@ -52,7 +52,9 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
   <span class="head">
   <%
    taglinetext = ''
-   if thing.to_id == c.user._id or thing.to_id is None:
+   if getattr(thing, "hide_author", False):
+        taglinetext = _("subreddit message %(author)s sent %(when)s ago")
+   elif thing.to_id == c.user._id or thing.to_id is None:
         taglinetext = _("from %(author)s sent %(when)s ago")
    elif thing.author_id == c.user._id:
         taglinetext = _("to %(dest)s sent %(when)s ago")
@@ -62,7 +64,10 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
    taglinetext = taglinetext.replace(' ', '&nbsp;')
    author = WrappedUser(thing.author, thing.attribs, thing).render()
    if thing.sr_id:
-     updated_author = _("%(author)s via %(subreddit)s").replace(' ', '&nbsp;')
+     if getattr(thing, "hide_author", False):
+         updated_author = _("via %(subreddit)s")
+     else:
+         updated_author = _("%(author)s via %(subreddit)s").replace(' ', '&nbsp;')
      subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path, 
                                           thing.subreddit.name)
      author = updated_author % dict(author = author, subreddit = subreddit)

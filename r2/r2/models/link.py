@@ -930,16 +930,16 @@ class Message(Thing, Printable):
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
 
     @classmethod
-    def _new(cls, author, to, subject, body, ip, parent = None, sr = None):
-        m = Message(subject = subject,
-                    body = body,
-                    author_id = author._id,
-                    new = True, 
-                    ip = ip)
+    def _new(cls, author, to, subject, body, ip, parent=None, sr=None,
+             from_sr=False):
+        m = Message(subject=subject, body=body, author_id=author._id, new=True,
+                    ip=ip, from_sr=from_sr)
         m._spam = author._spam
         sr_id = None
         # check to see if the recipient is a subreddit and swap args accordingly
         if to and isinstance(to, Subreddit):
+            if from_sr:
+                raise CreationError("Cannot send from SR to SR")
             to_subreddit = True
             to, sr = None, to
         else:
@@ -957,7 +957,9 @@ class Message(Thing, Printable):
                 sr_id = parent.sr_id
 
         if not to and not sr_id:
-            raise CreationError, "Message created with neither to nor sr_id"
+            raise CreationError("Message created with neither to nor sr_id")
+        if from_sr and not sr_id:
+            raise CreationError("Message sent from_sr without setting sr")
 
         m.to_id = to._id if to else None
         if sr_id is not None:
@@ -965,7 +967,6 @@ class Message(Thing, Printable):
 
         m._commit()
 
-        inbox_rel = None
         if sr_id and not sr:
             sr = Subreddit._byID(sr_id)
 
@@ -974,7 +975,7 @@ class Message(Thing, Printable):
             # if there is a subreddit id, and it's either a reply or
             # an initial message to an SR, add to the moderator inbox
             # (i.e., don't do it for automated messages from the SR)
-            if parent or to_subreddit:
+            if parent or to_subreddit and not from_sr:
                 inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
             if author.name in g.admins:
                 m.distinguished = 'admin'
@@ -1074,7 +1075,7 @@ class Message(Thing, Printable):
                 item.recipient = (item.author_id != c.user._id)
             else:
                 item.recipient = (item.to_id == c.user._id)
-
+            
             # new-ness is stored on the relation
             if item.author_id == c.user._id:
                 item.new = False
@@ -1112,6 +1113,13 @@ class Message(Thing, Printable):
                     item.message_style = "post-reply"
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
+            
+            item.hide_author = False
+            if getattr(item, "from_sr", False):
+                if not (item.subreddit.is_moderator(c.user) or
+                        c.user_is_admin):
+                    item.author = item.subreddit
+                    item.hide_author = True
 
             item.is_collapsed = None
             if not item.new:

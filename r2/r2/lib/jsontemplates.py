@@ -415,6 +415,8 @@ class MessageJsonTemplate(ThingJsonTemplate):
             return None
         elif attr == "body_html":
             return safemarkdown(thing.body)
+        elif attr == "author" and getattr(thing, "hide_author", False):
+            return None
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def rendered_data(self, wrapped):
