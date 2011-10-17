@@ -52,8 +52,7 @@ def randstr(len, reallyrandom = False):
                    for i in range(len))
 
 def is_authorized_cname(domain, cnames):
-    return any((domain == cname or domain.endswith('.' + cname))
-               for cname in cnames)
+    return any(is_subdomain(domain, cname) for cname in cnames)
 
 class Storage(dict):
     """
@@ -211,6 +210,10 @@ def strip_www(domain):
         return domain[4:]
     else:
         return domain
+
+def is_subdomain(subdomain, base):
+    """Check if a domain is equal to or a subdomain of a base domain."""
+    return subdomain == base or subdomain.endswith('.' + base)
 
 r_base_url = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^#]*[^#/])/?")
 def base_url(url):
@@ -513,10 +516,10 @@ class UrlParser(object):
         """
         from pylons import g
         return (not self.hostname or
-                self.hostname.endswith(g.domain) or
+                is_subdomain(self.hostname, g.domain) or
                 is_authorized_cname(self.hostname, g.authorized_cnames) or
                 (subreddit and subreddit.domain and
-                 self.hostname.endswith(subreddit.domain)))
+                 is_subdomain(self.hostname, subreddit.domain)))
 
     def path_add_subreddit(self, subreddit):
         """
