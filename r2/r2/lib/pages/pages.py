@@ -1755,8 +1755,8 @@ class NewLink(Templated):
 
         self.on_default_sr = c.default_sr
 
-        if isinstance(c.site, FakeSubreddit):
-            self.default_sr = subreddits[0] if subreddits else g.default_sr
+        if c.default_sr:
+            self.default_sr = None
         else:
             self.default_sr = c.site.name
 

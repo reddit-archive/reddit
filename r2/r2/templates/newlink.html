@@ -29,11 +29,7 @@
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links, reddit_selector"/>
 <%namespace name="utils" file="utils.html"/>
 
-%if c.on_default_sr:
-  <h1>${_("submit to reddit")}</h1>
-%else:
-  <h1>${_("submit to %(sr)s") % dict(sr=thing.default_sr)}</h1>
-%endif
+<h1>${_("submit to %(sr)s") % dict(sr=thing.default_sr if not thing.on_default_sr else _("reddit"))}</h1>
 
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
                     action=${add_sr("/submit")},
