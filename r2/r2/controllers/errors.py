@@ -56,7 +56,7 @@ error_list = dict((
         ('SUBREDDIT_EXISTS', _('that reddit already exists')),
         ('SUBREDDIT_NOEXIST', _('that reddit doesn\'t exist')),
         ('SUBREDDIT_NOTALLOWED', _("you aren't allowed to post there.")),
-        ('SUBREDDIT_REQUIRED', _('you must specify a reddit')),
+        ('SUBREDDIT_REQUIRED', _('you must specify a subreddit')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
         ('EXPIRED', _('your session has expired')),
