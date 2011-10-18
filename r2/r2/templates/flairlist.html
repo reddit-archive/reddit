@@ -22,9 +22,7 @@
 
 <%namespace name="utils" file="utils.html"/>
 
-<h2>users with flair</h2>
-
-<div class="flairgrant flairlist pretty-form">
+<div class="flairgrant flairlist">
   <%utils:line_field title="${_('jump to user (or add):')}" css_class="flair-jump">
     <form method="get">
       <% name = thing.user.name if thing.user else thing.name %>
@@ -44,7 +42,7 @@
   <% flair = thing.flair %>
   %if flair:
     <div class="usertable">
-      <span class="header">&nbsp;</span>
+      <span class="header tagline">&nbsp;</span>
       <span class="header">${_('flair text')}</span>
       <span class="header">${_('css class')}</span>
       %for row in flair:

@@ -29,10 +29,12 @@
 %>
 
 <div class="flairlist usertable">
-  <span class="header">&nbsp;</span>
-  <span class="header narrow">${_('user can edit?')}</span>
-  <span class="header">${_('flair text')}</span>
-  <span class="header">${_('css class')}</span>
+  <div class="flairrow">
+    <span class="header tagline">&nbsp;</span>
+    <span class="header narrow">${_('user can edit?')}</span>
+    <span class="header">${_('flair text')}</span>
+    <span class="header">${_('css class')}</span>
+  </div>
   <div class="flairtemplatelist flairlist pretty-form">
     %for flair_template in thing.templates:
       ${flair_template}

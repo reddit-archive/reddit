@@ -2095,9 +2095,8 @@ class ApiController(RedditController):
                 FlairTemplateEditor(empty_template).render(style='html'))
             form.set_html('.status', _('saved'))
         else:
-            form.set_html('.flaircell:first',
-                          FlairTemplateEditor(flair_template)
-                              .render(style='html'))
+            jquery('#%s' % flair_template._id).html(
+                FlairTemplateEditor(flair_template).render(style='html'))
             form.set_html('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)

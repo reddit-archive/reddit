@@ -653,6 +653,8 @@ a.author { margin-right: 0.5em; }
     margin-top: -1px;
 }
 
+.flair-settings { margin-bottom: 16px; }
+
 .flairlist .flair-jump {
     margin-bottom: 1em;
 }
@@ -672,28 +674,29 @@ a.author { margin-right: 0.5em; }
 .flaircell, .flairlist .header {
     display: inline-block;
     text-align: center;
-    width: 28ex;
+    width: 30ex;
     margin-right: 4ex;
 }
+
+.flair-entry { display: inline-block; }
 
 .flaircell.narrow, .flairlist .header.narrow { width: 14ex; }
 
 .flairsample-left { text-align: right !important; }
 .flairsample-right { text-align: left !important; }
 
-.flairrow .tagline { text-align: left; width:36ex; }
-.flairlist .header { text-align: center; }
+.flairrow .tagline {
+    display: inline-block;
+    margin-bottom: 8px;
+    margin-left: 6px;
+    text-align: left;
+    width: 36ex;
+}
 .flairlist .flaircell input[type="text"] { width: 28ex; }
 .flairrow > form button { display: none; }
 .flairrow .edited button { display: inline-block; }
 
-.flairdeletebtn {
-    color: black;
-    font-weight: bold;
-    opacity: 0.2;
-    text-decoration: none;
-}
-
+.flairrow .flairdeletebtn { display: inline; }
 .flairrow:hover .flairdeletebtn { opacity: 1.0; }
 
 .flairselector {
