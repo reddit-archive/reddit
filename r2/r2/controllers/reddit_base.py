@@ -26,7 +26,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters, amqp
-from r2.lib.utils import http_utils, UniqueIterator, ip_and_slash16
+from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, ip_and_slash16
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed
@@ -468,14 +468,26 @@ def paginated_listing(default_page_size=25, max_page_size=100):
 def base_listing(fn):
     return paginated_listing()(fn)
 
-def cross_domain(origins, **options):
+def is_trusted_origin(origin):
+    try:
+        origin = urlparse(origin)
+    except ValueError:
+        return False
+    
+    return any(is_subdomain(origin.hostname, domain) for domain in g.trusted_domains)
+
+def cross_domain(origin_check=is_trusted_origin, **options):
     """Set up cross domain validation and hoisting for a request handler."""
-    origins = filter(None, origins)
     def cross_domain_wrap(fn):
+        cors_perms = {
+            "origin_check": origin_check,
+            "allow_credentials": bool(options.get("allow_credentials"))
+        }
+
         def cross_domain_handler(self, *args, **kwargs):
             if request.params.get("hoist") == "cookie":
                 # Cookie polling response
-                if g.origin in origins:
+                if cors_perms["origin_check"](g.origin):
                     name = request.environ["pylons.routes_dict"]["action_name"]
                     resp = fn(self, *args, **kwargs)
                     c.cookies.add('hoist_%s' % name, ''.join(resp.content))
@@ -488,10 +500,7 @@ def cross_domain(origins, **options):
                 self.check_cors()
                 return fn(self, *args, **kwargs)
 
-        cross_domain_handler.cors_perms = {
-            "allowed_origins": origins,
-            "allow_credentials": bool(options.get("allow_credentials"))
-        }
+        cross_domain_handler.cors_perms = cors_perms
         return cross_domain_handler
     return cross_domain_wrap
 
@@ -660,7 +669,7 @@ class MinimalController(BaseController):
         handler = getattr(self, method + "_" + action, None)
         cors = handler and getattr(handler, "cors_perms", None)
 
-        if cors and origin in cors["allowed_origins"]:
+        if cors and cors["origin_check"](origin):
             response.headers["Access-Control-Allow-Origin"] = origin
             if cors.get("allow_credentials"):
                 response.headers["Access-Control-Allow-Credentials"] = "true"

@@ -364,11 +364,11 @@ class ApiController(RedditController):
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
 
-    @cross_domain(g.trusted_origins, allow_credentials=True)
+    @cross_domain(allow_credentials=True)
     def POST_login(self, *args, **kwargs):
         return self._handle_login(*args, **kwargs)
 
-    @cross_domain(g.trusted_origins, allow_credentials=True)
+    @cross_domain(allow_credentials=True)
     def POST_register(self, *args, **kwargs):
         return self._handle_register(*args, **kwargs)
 
