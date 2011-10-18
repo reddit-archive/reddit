@@ -39,7 +39,7 @@ static_dir = $(package)/public/static
 
 SED=sed
 CAT=cat
-PYTHON=python2.6
+PYTHON=python
 JS_COMPRESS = paster run standalone $(package)/lib/js.py -c "build_reddit_js()"
 CSS_COMPRESS = $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
 UPDATE_NAMES = $(PYTHON) $(package)/lib/static.py
