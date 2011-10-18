@@ -44,16 +44,18 @@ $(function() {
         $(form).children('input[name="flair_template_id"]').val(this.id);
         var customizer = $(form).children(".customizer");
         var input = customizer.children("input");
-        input.val($.trim($(this).children(".flair").text())).select();
-        input.keyup(function() {
-            $(".flairselection .flair").text($(input).val());
-        });
         if ($(this).hasClass("texteditable")) {
             customizer.addClass("texteditable");
             input.removeAttr("disabled");
+            input.css("display", "block");
+            input.val($.trim($(this).children(".flair").text())).select();
+            input.keyup(function() {
+                $(".flairselection .flair").text($(input).val());
+            });
         } else {
             customizer.removeClass("texteditable");
             input.attr("disabled", "disabled");
+            input.css("display", "none");
         }
         $(".flairselection").html($(this).first().children().clone());
         $(".flairselector button").removeAttr("disabled");

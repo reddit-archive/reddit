@@ -751,7 +751,7 @@ a.author { margin-right: 0.5em; }
 }
 
 .flairselector .customizer { display: inline-block; }
-.flairselector .customizer input { display: block; }
+.flairselector .customizer input { display: none; }
 .flairselector .customizer button { display: inline !important; }
 
 .media-button .option { color: red; }
