@@ -95,6 +95,8 @@ class Globals(object):
                   's3_media_direct',
                   'disable_captcha',
                   'disable_ads',
+                  'static_pre_gzipped',
+                  'static_secure_pre_gzipped',
                   ]
 
     tuple_props = ['stalecaches',

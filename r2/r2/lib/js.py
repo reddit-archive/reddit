@@ -91,8 +91,7 @@ class Module(Source):
         if g.uncompressedJS:
             return "".join(source.use() for source in self.sources)
         else:
-            url = os.path.join(g.static_path, self.name)
-            return script_tag.format(src=static(url))
+            return script_tag.format(src=static(self.name))
 
 class StringsSource(Source):
     """A virtual source consisting of localized strings from r2.lib.strings."""
@@ -157,7 +156,7 @@ class LocalizedModule(Module):
             return embed + StringsSource().use()
         else:
             name, ext = os.path.splitext(self.name)
-            url = os.path.join(g.static_path, name + "." + get_lang()[0] + ext)
+            url = name + "." + get_lang()[0] + ext
             return script_tag.format(src=static(url))
 
 class JQuery(Module):
@@ -171,8 +170,7 @@ class JQuery(Module):
     def use(self):
         from r2.lib.template_helpers import static
         if c.secure or c.user.pref_local_js:
-            path = os.path.join(g.static_path, self.name)
-            return script_tag.format(src=static(path))
+            return script_tag.format(src=static(self.name))
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)

@@ -30,10 +30,36 @@ import simplejson
 import os.path
 from copy import copy
 import random
+import urlparse
 from pylons import g, c
 from pylons.i18n import _, ungettext
 
-def static(path):
+def is_encoding_acceptable(encoding_to_check):
+    """"Check if a content encoding is acceptable to the user agent.
+
+    An encoding is determined acceptable if the encoding (or the special '*' encoding)
+    is specified in the Accept-Encoding header with a quality value > 0.
+    """
+    header = request.headers.get('Accept-Encoding', '')
+    encodings = header.split(',')
+
+    for value in encodings:
+        if ';' not in value:
+            name = value.strip()
+        else:
+            coding_name, quality = value.split(';')
+            if '=' not in quality:
+                continue
+            q, value = quality.split('=')
+            if float(value) == 0:
+                continue
+            name = coding_name.strip()
+
+        if name in (encoding_to_check, '*'):
+            return True
+    return False
+
+def static(path, allow_gzip=True):
     """
     Simple static file maintainer which automatically paths and
     versions files being served out of static.
@@ -42,29 +68,56 @@ def static(path):
     version of the file is set to be random to prevent caching and it
     mangles the path to point to the uncompressed versions.
     """
-    
-    dirname, fname = os.path.split(path)
-    fname = fname.split('?')[0]
-    query = ""
+    dirname, filename = os.path.split(path)
+    extension = os.path.splitext(filename)[1]
+    is_text = extension in ('.js', '.css')
+    can_gzip = is_text and is_encoding_acceptable('gzip')
+    should_gzip = allow_gzip and can_gzip
 
-    # if uncompressed, randomize a url query to bust caches
-    if g.uncompressedJS:
-        query = "?v=" + str(random.random()).split(".")[-1]
+    path_components = []
+    actual_filename = None
+
+    if not c.secure and g.static_domain:
+        scheme = 'http'
+        domain = g.static_domain
+        query = None
+        suffix = '.gz' if should_gzip and g.static_pre_gzipped else ''
+    elif c.secure and g.static_secure_domain:
+        scheme = 'https'
+        domain = g.static_secure_domain
+        query = None
+        suffix = '.gz' if should_gzip and g.static_secure_pre_gzipped else ''
     else:
-        if fname in g.static_names:
-            fname = g.static_names[fname]
-            path = os.path.join(dirname, fname)
+        path_components.append(c.site.static_path)
+        query = None
 
-    # don't mangle paths
-    if dirname:
-        return path + query
+        if g.uncompressedJS:
+            query = 'v=' + str(random.randint(1, 1000000))
 
-    if g.uncompressedJS:
-        extension = path.split(".")[1:]
-        if extension and extension[-1] in ("js", "css"):
-            return os.path.join(c.site.static_path, extension[-1], path) + query
+            # unminified static files are in type-specific subdirectories
+            if not dirname and is_text:
+                path_components.append(extension[1:])
 
-    return os.path.join(c.site.static_path, path) + query
+            actual_filename = filename
+
+        scheme = None
+        domain = None
+        suffix = ''
+
+    path_components.append(dirname)
+    if not actual_filename:
+        actual_filename = g.static_names.get(filename, filename)
+    path_components.append(actual_filename + suffix)
+
+    actual_path = os.path.join(*path_components)
+    return urlparse.urlunsplit((
+        scheme,
+        domain,
+        actual_path,
+        query,
+        None
+    ))
+
 
 def s3_https_if_secure(url):
     # In the event that more media sources (other than s3) are added, this function should be corrected
