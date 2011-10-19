@@ -213,7 +213,7 @@ def strip_www(domain):
 
 def is_subdomain(subdomain, base):
     """Check if a domain is equal to or a subdomain of a base domain."""
-    return subdomain == base or subdomain.endswith('.' + base)
+    return subdomain == base or (subdomain is not None and subdomain.endswith('.' + base))
 
 r_base_url = re.compile("(?i)(?:.+?://)?(?:www[\d]*\.)?([^#]*[^#/])/?")
 def base_url(url):
