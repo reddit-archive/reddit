@@ -2586,14 +2586,15 @@ class FlairSelector(CachedTemplate):
         else:
              matching_template = None
 
-        all_text_editable = bool(c.user_is_admin or c.site.is_moderator(c.user))
+        admin = bool(c.user_is_admin or c.site.is_moderator(c.user))
 
-        choices = [
-            WrappedUser(
-                user, subreddit=c.site, force_show_flair=True,
-                flair_template=template,
-                flair_text_editable=all_text_editable or template.text_editable)
-            for template in templates]
+        if c.site.flair_self_assign_enabled or admin:
+            choices = [
+                WrappedUser(
+                    user, subreddit=c.site, force_show_flair=True,
+                    flair_template=template,
+                    flair_text_editable=admin or template.text_editable)
+                for template in templates]
 
         # If one of the templates is already selected, modify its text to match
         # the user's current flair.

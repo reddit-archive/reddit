@@ -21,7 +21,7 @@
 ################################################################################
 
 <h2>${_("select flair")}</h2>
-%if thing.choices and c.site.flair_self_assign_enabled:
+%if thing.choices:
   <div class="flairoptionpane">
     <ul>
       %for choice in thing.choices:
