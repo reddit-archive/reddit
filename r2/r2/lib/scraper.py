@@ -760,8 +760,8 @@ class EmbedlyOEmbed(OEmbed):
         'polldaddy.com', 'polleverywhere.com', 'posterous.com', 'prezi.com',
         'qik.com', 'quantcast.com', 'questionablecontent.net', 'qwantz.com',
         'qwiki.com', 'radionomy.com', 'radioreddit.com', 'rdio.com',
-        'redux.com', 'revision3.com', 'revver.com', 'saynow.com',
-        'schooltube.com', 'sciencestage.com', 'scrapblog.com',
+        'recordsetter.com','redux.com', 'revision3.com', 'revver.com',
+        'saynow.com', 'schooltube.com', 'sciencestage.com', 'scrapblog.com',
         'screencast.com', 'screenr.com', 'scribd.com', 'sendables.jibjab.com',
         'share.ovi.com', 'shitmydadsays.com', 'shopstyle.com', 'skitch.com',
         'slideshare.net', 'smugmug.com', 'snotr.com', 'socialcam.com',
@@ -1321,7 +1321,8 @@ class EmbedlyOEmbed(OEmbed):
         'http:\\/\\/planetgreen\\.discovery\\.com\\/videos\\/.*|' +
         'http:\\/\\/science\\.discovery\\.com\\/videos\\/.*|' +
         'http:\\/\\/tlc\\.discovery\\.com\\/videos\\/.*|' +
-        'http:\\/\\/video\\.forbes\\.com\\/fvn\\/.*|'
+        'http:\\/\\/video\\.forbes\\.com\\/fvn\\/.*|' + 
+        'http:\\/\\/recordsetter\\.com\\/*\\/*\\/*'
         , re.I
     )
     
