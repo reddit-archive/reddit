@@ -2571,7 +2571,7 @@ class FlairTemplateSample(Templated):
 
 class FlairPrefs(CachedTemplate):
     def __init__(self):
-        sr_flair_enabled = getattr(c.site, 'flair_enabled', True)
+        sr_flair_enabled = getattr(c.site, 'flair_enabled', False)
         user_flair_enabled = getattr(c.user, 'flair_%s_enabled' % c.site._id,
                                      True)
         sr_flair_self_assign_enabled = getattr(
