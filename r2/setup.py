@@ -80,6 +80,7 @@ setup(
         "pycaptcha",
         "amqplib",
         "pylibmc==1.2.1-dev",
+        "py-bcrypt",
     ],
     dependency_links=[
         "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",

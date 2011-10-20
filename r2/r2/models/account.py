@@ -27,12 +27,14 @@ from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser, set_last_visit, last_visit
 from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
+from r2.lib import filters
 from r2.lib.log import log_text
 
 from pylons import g
 import time, sha
 from copy import copy
 from datetime import datetime, timedelta
+import bcrypt
 
 class AccountExists(Exception): pass
 
@@ -601,22 +603,40 @@ def valid_login(name, password):
     return valid_password(a, password)
 
 def valid_password(a, password):
-    try:
-        # A constant_time_compare isn't strictly required here
-        # but it is doesn't hurt
-        if constant_time_compare(a.password, passhash(a.name, password, '')):
-            #add a salt
-            a.password = passhash(a.name, password, True)
-            a._commit()
-            return a
-        else:
-            salt = a.password[:3]
-            if constant_time_compare(a.password, passhash(a.name, password, salt)):
-                return a
-    except AttributeError, UnicodeEncodeError:
+    # bail out early if the account or password's invalid
+    if not hasattr(a, 'name') or not hasattr(a, 'password') or not password:
         return False
-    # Python defaults to returning None
-    return False
+
+    # standardize on utf-8 encoding
+    password = filters._force_utf8(password)
+
+    # this is really easy if it's a sexy bcrypt password
+    if a.password.startswith('$2a$'):
+        expected_hash = bcrypt.hashpw(password, a.password)
+        if constant_time_compare(a.password, expected_hash):
+            return a
+        return False
+
+    # alright, so it's not bcrypt. how old is it?
+    # if the length of the stored hash is 43 bytes, the sha-1 hash has a salt
+    # otherwise it's sha-1 with no salt.
+    salt = ''
+    if len(a.password) == 43:
+        salt = a.password[:3]
+    expected_hash = passhash(a.name, password, salt)
+
+    if not constant_time_compare(a.password, expected_hash):
+        return False
+
+    # since we got this far, it's a valid password but in an old format
+    # let's upgrade it
+    a.password = bcrypt_password(password)
+    a._commit()
+    return a
+
+def bcrypt_password(password):
+    salt = bcrypt.gensalt(log_rounds=g.bcrypt_work_factor)
+    return bcrypt.hashpw(password, salt)
 
 def passhash(username, password, salt = ''):
     if salt is True:
@@ -625,7 +645,7 @@ def passhash(username, password, salt = ''):
     return salt + sha.new(tohash).hexdigest()
 
 def change_password(user, newpassword):
-    user.password = passhash(user.name, newpassword, True)
+    user.password = bcrypt_password(newpassword)
     user._commit()
     return True
 
@@ -636,7 +656,7 @@ def register(name, password):
         raise AccountExists
     except NotFound:
         a = Account(name = name,
-                    password = passhash(name, password, True))
+                    password = bcrypt_password(password))
         # new accounts keep the profanity filter settings until opting out
         a.pref_no_profanity = True
         a._commit()

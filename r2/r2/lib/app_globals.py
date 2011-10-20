@@ -66,6 +66,7 @@ class Globals(object):
                  'sr_dropdown_threshold',
                  'comment_visits_period',
                   'min_membership_create_community',
+                 'bcrypt_work_factor',
                  ]
 
     float_props = ['min_promote_bid',
