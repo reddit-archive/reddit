@@ -2138,11 +2138,13 @@ class ApiController(RedditController):
             g.log.debug('flair self-assignment not permitted')
             return
 
-        # Ignore given text if user doesn't have permission to customize it.
-        if (not c.site.is_moderator(c.user) and not c.user_is_admin
-            and not flair_template.text_editable):
-            text = None
+        if not c.site.is_moderator(c.user) and not c.user_is_admin:
+            # Ignore user choice if not an admin or mod.
             user = c.user
+
+            # Ignore given text if user doesn't have permission to customize it.
+            if not flair_template.text_editable:
+                text = None
 
         if not text:
             text = flair_template.text
