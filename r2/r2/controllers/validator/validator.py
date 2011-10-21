@@ -796,12 +796,10 @@ class VSubmitSR(Validator):
         return sr
 
 MIN_PASSWORD_LENGTH = 3
-MAX_PASSWORD_LENGTH = 256
 
 class VPassword(Validator):
     def run(self, password, verify):
-        if not (password and
-                MIN_PASSWORD_LENGTH < len(password) < MAX_PASSWORD_LENGTH):
+        if not (password and len(password) >= MIN_PASSWORD_LENGTH):
             self.set_error(errors.BAD_PASSWORD)
         elif verify != password:
             self.set_error(errors.BAD_PASSWORD_MATCH)

@@ -24,7 +24,6 @@
    from r2.lib.template_helpers import add_sr
    from r2.lib.strings import strings
    from r2.lib.utils import UrlParser
-   from r2.controllers.validator import MAX_PASSWORD_LENGTH
    import random
  %>
 <%namespace file="captcha.html" import="captchagen"/>
@@ -88,7 +87,7 @@
         <li>
           <label for="passwd_${op}">${_('password')}:</label>
           <input id="passwd_${op}" name="passwd" type="password" 
-                 maxlength="${MAX_PASSWORD_LENGTH}" tabindex="${tabindex}"/>
+                 tabindex="${tabindex}"/>
           %if register:
             ${error_field("BAD_PASSWORD", "passwd", kind="span")}
           %else:
@@ -99,7 +98,7 @@
         <li>
           <label for="passwd2_${op}">${_('verify password')}:</label>
           <input name="passwd2" id="passwd2_${op}" 
-                 type="password" maxlength="${MAX_PASSWORD_LENGTH}" tabindex="${tabindex}"/>
+                 type="password" tabindex="${tabindex}"/>
           ${error_field("BAD_PASSWORD_MATCH", "passwd2", kind="span")}
         </li>
         <li>
