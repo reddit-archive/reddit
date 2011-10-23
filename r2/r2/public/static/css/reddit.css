@@ -216,10 +216,10 @@ ul.flat-vert {text-align: left;}
     height: 10px;
 }
 #mail.havemail {
-    background-image: url(/static/mail.png);  /* SPRITE */
+    background-image: url(../mail.png);  /* SPRITE */
 }
 #mail.nohavemail {
-    background-image: url(/static/mailgray.png);  /* SPRITE */
+    background-image: url(../mailgray.png);  /* SPRITE */
 }
 #modmail {
     position: relative;
@@ -232,10 +232,10 @@ ul.flat-vert {text-align: left;}
     margin-bottom: -6px;
 }
 #modmail.havemail {
-    background-image: url(/static/modmail.png);  /* SPRITE */
+    background-image: url(../modmail.png);  /* SPRITE */
 }
 #modmail.nohavemail {
-    background-image: url(/static/modmailgray.png);  /* SPRITE */
+    background-image: url(../modmailgray.png);  /* SPRITE */
 }
 .user {color: gray;}
 
@@ -288,7 +288,7 @@ ul.flat-vert {text-align: left;}
 
 .dropdown.heavydrop .selected{
     background: white none no-repeat scroll center right;
-    background-image: url(/static/droparrow.gif);
+    background-image: url(../droparrow.gif);
     border: 1px solid gray;
     padding: 2px;
     padding-right: 23px;
@@ -299,7 +299,7 @@ ul.flat-vert {text-align: left;}
 .dropdown.lightdrop .selected {
     position: relative;
     background: transparent none no-repeat scroll center right;
-    background-image: url(/static/droparrowgray.gif);
+    background-image: url(../droparrowgray.gif);
     padding-right: 21px;
     text-decoration: underline;
     color: gray; 
@@ -313,7 +313,7 @@ ul.flat-vert {text-align: left;}
 .dropdown.tabdrop .selected {
     position: relative;
     background: white none no-repeat scroll center right;
-    background-image: url(/static/droparrowgray.gif);
+    background-image: url(../droparrowgray.gif);
     padding: 2px 21px 1px 5px;
     margin-left: 3px;
     border: 1px solid #5f99cf;
@@ -398,7 +398,7 @@ ul.flat-vert {text-align: left;}
     border: 1px solid #c4dbf1;
 
     background: white none repeat-x scroll center left;
-    background-image: url(/static/gradient-button.png);  /* SPRITE stretch-x */
+    background-image: url(../gradient-button.png);  /* SPRITE stretch-x */
 
     font-size:150%;
     font-weight:bold;
@@ -410,7 +410,7 @@ ul.flat-vert {text-align: left;}
 
 .morelink:hover, .mlh {
     border-color: #879eb4;
-    background-image: url(/static/gradient-button-hover.png);  /* SPRITE stretch-x */
+    background-image: url(../gradient-button-hover.png);  /* SPRITE stretch-x */
 }
 
 .morelink a {
@@ -430,11 +430,11 @@ ul.flat-vert {text-align: left;}
     height: 31px;
     width: 24px;
     background: white none no-repeat scroll center left;
-    background-image: url(/static/gradient-nub.png);  /* SPRITE */
+    background-image: url(../gradient-nub.png);  /* SPRITE */
 }
 
 .morelink:hover .nub, .mlhn {
-    background-image: url(/static/gradient-nub-hover.png);  /* SPRITE */
+    background-image: url(../gradient-nub-hover.png);  /* SPRITE */
 }
 
 /* raised box */
@@ -465,19 +465,19 @@ ul.flat-vert {text-align: left;}
 }
 
 .sidebox.create .spacer {
-    background-image: url(/static/create-a-reddit.png);  /* SPRITE */
+    background-image: url(../create-a-reddit.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
 
 .sidebox.gold .spacer {
-    background-image: url(/static/reddit_gold-40.png);  /* SPRITE */
+    background-image: url(../reddit_gold-40.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
 
 .sidebox.gold .morelink {
     border:none;
     background-color:transparent;
-    background-image: url(/static/goldmorelink.png);  
+    background-image: url(../goldmorelink.png);  
     background-position: 0 0;
     background-repeat:no-repeat;
     height:31px;
@@ -501,7 +501,7 @@ ul.flat-vert {text-align: left;}
 }
 
 .sidebox.submit .spacer {
-    background-image: url(/static/submit-alien.png);  /* SPRITE */
+    background-image: url(../submit-alien.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
 
@@ -588,16 +588,16 @@ ul.flat-vert {text-align: left;}
 }
 
 .arrow.upmod { 
-    background-image: url(/static/aupmod.gif);  /* SPRITE */
+    background-image: url(../aupmod.gif);  /* SPRITE */
 }
 .arrow.downmod { 
-    background-image: url(/static/adownmod.gif);  /* SPRITE */
+    background-image: url(../adownmod.gif);  /* SPRITE */
 }
 .arrow.up { 
-    background-image: url(/static/aupgray.gif);  /* SPRITE */
+    background-image: url(../aupgray.gif);  /* SPRITE */
 }
 .arrow.down { 
-    background-image: url(/static/adowngray.gif);  /* SPRITE */
+    background-image: url(../adowngray.gif);  /* SPRITE */
 }
 
 .midcol {
@@ -762,7 +762,7 @@ a.author { margin-right: 0.5em; }
 .media-button .option { color: red; }
 .media-button .option.active {
     background: transparent none no-repeat scroll right center;
-    background-image: url(/static/reddit-button-play.png);   /* SPRITE */
+    background-image: url(../reddit-button-play.png);   /* SPRITE */
     padding-right: 15px;
     color: #336699;
 }
@@ -862,10 +862,10 @@ a.author { margin-right: 0.5em; }
     text-indent: 50px;
 }
 .organic-listing .nextprev .arrow.prev {
-    background-image: url(/static/prev_organic.png); /* SPRITE */
+    background-image: url(../prev_organic.png); /* SPRITE */
 }
 .organic-listing .nextprev .arrow.next {
-    background-image: url(/static/next_organic.png); /* SPRITE */
+    background-image: url(../next_organic.png); /* SPRITE */
 }
 .organic-listing .nextprev .arrow:hover {
     cursor: pointer;
@@ -1190,7 +1190,7 @@ textarea.gray { color: gray; }
 .deepthread {
     padding-right: 30px;
     background: transparent none no-repeat scroll center right;
-    background-image: url(/static/continue-thread.png);  
+    background-image: url(../continue-thread.png);  
 }
 .deepthread a { font-size: larger; color: #336699 }
 .deepthread a:hover { text-decoration: underline}
@@ -1382,7 +1382,7 @@ textarea.gray { color: gray; }
 
 .clippy-bubble ul {
     list-style-type: disc;
-    list-style-image: url(/static/clippy-bullet.png);
+    list-style-image: url(../clippy-bullet.png);
     padding-left: 15px;
 }
 
@@ -1417,10 +1417,10 @@ textarea.gray { color: gray; }
 }
 
 .fancy-toggle-button .remove { 
-    background-image: url(/static/bg-button-remove.png);
+    background-image: url(../bg-button-remove.png);
 }
 .fancy-toggle-button .add { 
-    background-image: url(/static/bg-button-add.png);
+    background-image: url(../bg-button-add.png);
 }
 .fancy-toggle-button .banned {
     background-color: #666;
@@ -1586,7 +1586,7 @@ textarea.gray { color: gray; }
 .throbber {
     display: none;
     margin: 0 2px;
-    background: url(/static/throbber.gif) no-repeat;
+    background: url(../throbber.gif) no-repeat;
     width: 18px;
     height: 18px;
 }
@@ -2332,12 +2332,12 @@ label + #moresearchinfo {
 
 .self-service.instructions li.done { 
     text-decoration: line-through;
-    list-style-image:url(/static/green-check.png);
+    list-style-image:url(../green-check.png);
 }
 
 .self-service.instructions li.unfinished { 
     font-weight:bold;
-    list-style-image:url(/static/red-arrow.png);
+    list-style-image:url(../red-arrow.png);
 }
 
 
@@ -2351,7 +2351,7 @@ label + #moresearchinfo {
 
 .feedback.instructions dd { 
     background: transparent none no-repeat scroll bottom left;
-    background-image: url(/static/red-arrow.png);
+    background-image: url(../red-arrow.png);
     padding-left: 35px; 
 }
 
@@ -2493,16 +2493,16 @@ label + #moresearchinfo {
 }
 
 .toolbar .arrow.upmod   { 
-    background-image: url(/static/aminiupmod.gif); 
+    background-image: url(../aminiupmod.gif); 
 }
 .toolbar .arrow.downmod { 
-    background-image: url(/static/aminidownmod.gif); 
+    background-image: url(../aminidownmod.gif); 
 }
 .toolbar .arrow.up      { 
-    background-image: url(/static/aminiupgray.gif); 
+    background-image: url(../aminiupgray.gif); 
 }
 .toolbar .arrow.down    { 
-    background-image: url(/static/aminidowngray.gif); 
+    background-image: url(../aminidowngray.gif); 
 }
 
 .toolbar-status-bar {
@@ -2514,7 +2514,7 @@ label + #moresearchinfo {
 }
 .toolbar-status-bar .login-arrow-left {
     overflow: auto;
-    background-image: url(/static/tb-loginarrow-left.png);
+    background-image: url(../tb-loginarrow-left.png);
     background-position: top right;
 }
 .toolbar-status-bar .login-arrow-right {
@@ -2886,12 +2886,12 @@ ul#image-preview-list .description pre {
 }
 
 .private-feeds.instructions .feedlink.rss-link {
-    background-image: url(/static/rss.png);
+    background-image: url(../rss.png);
 }
 
 .private-feeds.instructions .feedlink.json-link {
     background-color: #DDDDDD;
-    background-image: url(/static/json.png);
+    background-image: url(../json.png);
     color: black; 
 }
 
@@ -2911,7 +2911,7 @@ ul#image-preview-list .description pre {
 
 .dropdown.srdrop .selected {
     background: transparent none no-repeat scroll center right;
-    background-image: url(/static/droparrowgray.gif); 
+    background-image: url(../droparrowgray.gif); 
     display: inline-block;
     vertical-align: bottom;
     padding-right: 21px;
@@ -3010,7 +3010,7 @@ ul#image-preview-list .description pre {
 #sr-list-cover {
     position: absolute;
     background: gray none no-repeat scroll center center;
-    background-color: url(/static/throbber.gif); 
+    background-color: url(../throbber.gif); 
     height: 100%;
     width: 100%;
     opacity: .7;
@@ -3045,7 +3045,7 @@ ul#image-preview-list .description pre {
 
 .sr-row.sr-selected {
     background: #EFF7FF none no-repeat scroll 0px 5px;
-    background-image: url(/static/rightarrow.png);    /* SPRITE */
+    background-image: url(../rightarrow.png);    /* SPRITE */
 }
 
 .sr-arrow {
@@ -3161,32 +3161,32 @@ ul.tabmenu.formtab {
 }
 
 .expando-button.selftext.collapsed {
-    background-image: url(/static/blog-collapsed.png); /* SPRITE */
+    background-image: url(../blog-collapsed.png); /* SPRITE */
 }
 .expando-button.selftext.collapsed:hover, .eb-sch {
-    background-image: url(/static/blog-collapsed-hover.png); /* SPRITE */
+    background-image: url(../blog-collapsed-hover.png); /* SPRITE */
 }
 .expando-button.selftext.expanded, .eb-se {
     margin-bottom: 5px;
-    background-image: url(/static/blog-expanded.png); /* SPRITE */
+    background-image: url(../blog-expanded.png); /* SPRITE */
 }
 .expando-button.selftext.expanded:hover, .eb-seh {
-    background-image: url(/static/blog-expanded-hover.png); /* SPRITE */
+    background-image: url(../blog-expanded-hover.png); /* SPRITE */
 }
 
 .expando-button.video.collapsed {
-    background-image: url(/static/vid-collapsed.png); /* SPRITE */
+    background-image: url(../vid-collapsed.png); /* SPRITE */
 }
 
 .expando-button.video.collapsed:hover, .eb-vch {
-    background-image: url(/static/vid-collapsed-hover.png); /* SPRITE */
+    background-image: url(../vid-collapsed-hover.png); /* SPRITE */
 }
 
 .expando-button.video.expanded, .eb-ve {
-    background-image: url(/static/vid-expanded.png); /* SPRITE */
+    background-image: url(../vid-expanded.png); /* SPRITE */
 }
 .expando-button.video.expanded:hover, .eb-veh {
-    background-image: url(/static/vid-expanded-hover.png); /* SPRITE */
+    background-image: url(../vid-expanded-hover.png); /* SPRITE */
 }
 
 
@@ -3430,7 +3430,7 @@ ul.tabmenu.formtab {
 }
 
 .existing-campaigns td.bid.paid { 
-    background-image: url(/static/green-check.png);  
+    background-image: url(../green-check.png);  
 }
 
 .existing-campaigns td.bid .info{ 
@@ -4192,10 +4192,10 @@ dd { margin-left: 20px;  }
 }
 
 .titlebox form.leavemoderator-button {
-    background-image: url(/static/shield.png); /* SPRITE */
+    background-image: url(../shield.png); /* SPRITE */
 }
 .titlebox form.leavecontributor-button {
-    background-image: url(/static/pencil.png); /* SPRITE */
+    background-image: url(../pencil.png); /* SPRITE */
 }
 
 .titlebox form.flairtoggle {
@@ -4213,34 +4213,34 @@ dd { margin-left: 20px;  }
 .icon-menu li {margin: 5px 0;}
 
 .icon-menu .reddit-edit {
-    background-image: url(/static/reddit_edit.png); /* SPRITE */
+    background-image: url(../reddit_edit.png); /* SPRITE */
 }
 .icon-menu .reddit-traffic {
-    background-image: url(/static/reddit_traffic.png); /* SPRITE */
+    background-image: url(../reddit_traffic.png); /* SPRITE */
 }
 .icon-menu .reddit-reported {
-    background-image: url(/static/reddit_reported.png); /* SPRITE */
+    background-image: url(../reddit_reported.png); /* SPRITE */
 }
 .icon-menu .reddit-spam {
-    background-image: url(/static/reddit_spam.png); /* SPRITE */
+    background-image: url(../reddit_spam.png); /* SPRITE */
 }
 .icon-menu .reddit-ban {
-    background-image: url(/static/reddit_ban.png); /* SPRITE */
+    background-image: url(../reddit_ban.png); /* SPRITE */
 }
 .icon-menu .reddit-flair {
-    background-image: url(/static/reddit_flair.png); /* SPRITE */
+    background-image: url(../reddit_flair.png); /* SPRITE */
     /* Work around a centering difference between this icon and reddit_ban.png */
     margin-left: 1px;
     padding-left: 19px;
 }
 .icon-menu .reddit-moderators {
-    background-image: url(/static/shield.png); /* SPRITE */
+    background-image: url(../shield.png); /* SPRITE */
 }
 .icon-menu .moderator-mail {
-    background-image: url(/static/mailgray.png); /* SPRITE */
+    background-image: url(../mailgray.png); /* SPRITE */
 }
 .icon-menu .reddit-contributors {
-    background-image: url(/static/pencil.png); /* SPRITE */
+    background-image: url(../pencil.png); /* SPRITE */
 }
 
 .linkinfo {
@@ -4423,22 +4423,22 @@ a.pretty-button:hover { text-decoration: none !important }
 
 a.pretty-button.negative {
     color: black;
-    background-image: url(/static/bg-button-negative-unpressed.png);
+    background-image: url(../bg-button-negative-unpressed.png);
 }
 
 a.pretty-button.negative.pressed {
     color: white;
-    background-image: url(/static/bg-button-negative-pressed.png);
+    background-image: url(../bg-button-negative-pressed.png);
 }
 
 a.pretty-button.positive {
     color: black;
-    background-image: url(/static/bg-button-positive-unpressed.png);
+    background-image: url(../bg-button-positive-unpressed.png);
 }
 
 a.pretty-button.positive.pressed {
     color: white;
-    background-image: url(/static/bg-button-positive-pressed.png);
+    background-image: url(../bg-button-positive-pressed.png);
 }
 
 
@@ -4583,7 +4583,7 @@ tr.gold-accent + tr > td {
     padding-left: 20px;
     color: #9a7d2e;
     font-weight: bold;
-    background-image: url(/static/giftgold.png);
+    background-image: url(../giftgold.png);
     background-repeat:no-repeat;
 }
 
@@ -4725,7 +4725,7 @@ tr.gold-accent + tr > td {
 
 .oauth2-authorize {
     position: relative;
-    background: url(/static/snoo-tray.png) no-repeat;
+    background: url(../snoo-tray.png) no-repeat;
     width: 415px;
     height: 235px;
     margin: 40px auto 0;

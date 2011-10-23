@@ -96,18 +96,18 @@ div.popup {
 .usertext .bottom-area .usertext-buttons {display: inline;  }
 
 .arrow.upmod { 
-    background-image: url(/static/aupmod.gif); 
+    background-image: url(aupmod.gif); 
     background-position: 0 0;
 }
 .arrow.downmod { 
-    background-image: url(/static/adownmod.gif); 
+    background-image: url(adownmod.gif); 
     background-position: 0 0;
 }
 .arrow.up { 
-    background-image: url(/static/aupgray.gif); 
+    background-image: url(aupgray.gif); 
     background-position: 0 0;
 }
 .arrow.down { 
-    background-image: url(/static/adowngray.gif); 
+    background-image: url(adowngray.gif); 
     background-position: 0 0;
 }
