@@ -162,7 +162,7 @@ class LocalizedModule(Module):
 
 class JQuery(Module):
     def __init__(self, cdn_src=None):
-        Module.__init__(self, "jquery.js")
+        Module.__init__(self, os.path.join("js", "lib", "jquery.js"))
         self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery"
     
     def build(self, closure):
