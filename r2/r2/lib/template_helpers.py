@@ -302,8 +302,14 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
         u.path_add_subreddit(c.site)
 
     if not u.hostname or force_hostname:
-        u.hostname = get_domain(cname = (c.cname and not nocname),
-                                subreddit = False)
+        if c.secure:
+            u.hostname = request.host
+        else:
+            u.hostname = get_domain(cname = (c.cname and not nocname),
+                                    subreddit = False)
+    
+    if c.secure:
+        u.scheme = "https"
 
     if retain_extension:
         if c.render_style == 'mobile':
