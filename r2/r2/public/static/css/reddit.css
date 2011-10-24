@@ -4755,3 +4755,140 @@ tr.gold-accent + tr > td {
     box-shadow: inset 0px 1px 1px hsla(0,0%,0%,.3), 0px 1px 0px hsla(0,0%,100%,.6);
 }
 
+.infobar.client-info {
+    position: relative;
+    margin: 10px 2%;
+    width: 94%;
+    height: 48px;
+}
+
+.infobar.client-info .icon img {
+    position: absolute;
+    left: 10px;
+    width: 48px;
+    height: 48px;
+}
+
+.infobar.client-info .md {
+    line-height: 48px;
+    margin-left: 56px;
+}
+
+.infobar.client-info .md p {
+    margin: 0;
+}
+
+.oauth2-authorize {
+    position: relative;
+    background: url(/static/snoo-tray.png) no-repeat;
+    width: 415px;
+    height: 235px;
+    margin: 40px auto 0;
+    padding-left: 280px;
+    padding-top: 18px;
+}
+
+.oauth2-authorize h1 a {
+    display: block;
+    font-weight: bold;
+    font-size: 1.5em;
+    letter-spacing: -.04em;
+}
+
+.oauth2-authorize .icon {
+    position: absolute;
+    left: 160px;
+    top: 77px;
+}
+
+.oauth2-authorize .access,
+.infobar.client-info {
+    background: #f7f7f7;
+    border: 1px solid #b3b3b3;
+}
+
+.oauth2-authorize .access {
+    position: relative;
+    margin: 0 -12px;
+    padding: 10px 15px;
+    font-size: 1.5em;
+    line-height: 1.5em;
+}
+
+.oauth2-authorize .access:before {
+    position: absolute;
+    display: block;
+    content: '';
+    border-width: 9px;
+    border-style: solid solid outset; /* mitigates firefox drawing a thicker arrow */
+    border-color: transparent #b3b3b3 transparent transparent;
+    left: -19px;
+    top: 13px;
+}
+
+.oauth2-authorize .access:after {
+    position: absolute;
+    display: block;
+    content: '';
+    border: 9px solid;
+    border-color: transparent #f7f7f7 transparent transparent;
+    left: -18px;
+    top: 13px;
+}
+
+.oauth2-authorize h2 {
+    font-size: 1em;
+    font-weight: normal;
+    color: black;
+}
+
+.oauth2-authorize ul {
+    list-style-type: disc;
+    padding-left: 25px;
+}
+
+.oauth2-authorize .notice {
+    color: #333;
+    font-size: .85em;
+    margin: .5em 0;
+}
+
+.oauth2-authorize .fancybutton {
+    margin: 0;
+    margin-right: 1em;
+    cursor: pointer;
+}
+
+.oauth2-authorize .fancybutton.allow {
+    color: white;
+    background: #ff4500;
+    border-color: #541700;
+    box-shadow: inset 0px 1px 0px rgba(255, 255, 255, .25);
+    text-shadow: 0px 1px 0px rgba(0, 0, 0, .7);
+}
+
+.oauth2-authorize .fancybutton.allow:hover {
+    background: #ff571a;
+}
+
+.oauth2-authorize .fancybutton.allow:active {
+    background: #eb3f00;
+    box-shadow: inset 0px -1px 0px rgba(255, 255, 255, .25);
+}
+
+.oauth2-authorize .fancybutton.decline {
+    color: black;
+    background: #eee;
+    border-color: #555;
+    box-shadow: inset 0px 1px 0px rgba(255, 255, 255, .5);
+    text-shadow: 0px 1px 0px rgba(255, 255, 255, .7);
+}
+
+.oauth2-authorize .fancybutton.decline:hover {
+    background: #f7f7f7;
+}
+
+.oauth2-authorize .fancybutton.decline:active {
+    background: #e4e4e4;
+    box-shadow: inset 0px -1px 0px white;
+}

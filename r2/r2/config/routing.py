@@ -224,6 +224,10 @@ def make_map(global_conf={}, app_conf={}):
        requirements=dict(action="new_captcha"))
     mc('/api/:action', controller='api')
 
+    mc("/api/v1/:action", controller="oauth2frontend", requirements=dict(action="authorize"))
+    mc("/api/v1/:action", controller="oauth2access", requirements=dict(action="access_token"))
+    mc("/api/v1/:action", controller="apiv1")
+
     mc("/button_info", controller="api", action="info", limit = 1)
 
     mc('/captcha/:iden', controller='captcha', action='captchaimg')

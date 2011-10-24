@@ -25,6 +25,7 @@ from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
+from r2.models.oauth2 import OAuth2Client
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -683,11 +684,20 @@ class LoginPage(BoringPage):
             title = _("login or register")
         BoringPage.__init__(self,  title, **context)
 
+        if self.dest:
+            u = UrlParser(self.dest)
+            # Display a preview message for OAuth2 client authorizations
+            if u.path == '/api/v1/authorize':
+                client_id = u.query_dict.get("client_id")
+                self.client = client_id and OAuth2Client.get_token(client_id)
+                self.infobar = self.client and ClientInfoBar(self.client, strings.oauth_login_msg)
+
     def content(self):
         kw = {}
         for x in ('user_login', 'user_reg'):
             kw[x] = getattr(self, x) if hasattr(self, x) else ''
-        return self.login_template(dest = self.dest, **kw)
+        login_content = self.login_template(dest = self.dest, **kw)
+        return self.content_stack((self.infobar, login_content))
 
     @classmethod
     def login_template(cls, **kw):
@@ -707,7 +717,19 @@ class Login(Templated):
 
 class Register(Login):
     pass
-    
+
+class OAuth2AuthorizationPage(BoringPage):
+    def __init__(self, client, redirect_uri, scope, state):
+        content = OAuth2Authorization(client=client,
+                                      redirect_uri=redirect_uri,
+                                      scope=scope,
+                                      state=state)
+        BoringPage.__init__(self, _("request for permission"),
+                show_sidebar=False, content=content)
+
+class OAuth2Authorization(Templated):
+    pass
+
 class SearchPage(BoringPage):
     """Search results page"""
     searchbox = False
@@ -1213,6 +1235,12 @@ class InfoBar(Templated):
     def __init__(self, message = '', extra_class = ''):
         Templated.__init__(self, message = message, extra_class = extra_class)
 
+class ClientInfoBar(InfoBar):
+    """Draws the message the top of a login page before OAuth2 authorization"""
+    def __init__(self, client, *args, **kwargs):
+        kwargs.setdefault("extra_class", "client-info")
+        InfoBar.__init__(self, *args, **kwargs)
+        self.client = client
 
 class RedditError(BoringPage):
     site_tracking = False

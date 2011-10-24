@@ -73,6 +73,8 @@ string_dict = dict(
     cover_msg      = _("you'll need to login or register to do that"),
     cover_disclaim = _("(don't worry, it only takes a few seconds)"),
 
+    oauth_login_msg = _("Log in or register to connect your reddit account with [%(app_name)s](%(app_about_url)s)."),
+
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
     friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),

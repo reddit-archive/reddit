@@ -201,6 +201,7 @@ class ThingBase(object):
     # updated columns will be present.) This is an expected convention
     # and is not enforced.
     _ttl = None
+    _warn_on_partial_ttl = True
 
     # A per-class dictionary of default TTLs that new columns of this
     # class should have
@@ -463,7 +464,7 @@ class ThingBase(object):
         if self._id is None:
             raise TdbException("Can't commit %r without an ID" % (self,))
 
-        if self._committed and self._ttl:
+        if self._committed and self._ttl and self._warn_on_partial_ttl:
             log.warning("Using a full-TTL object %r in a mutable fashion"
                         % (self,))
 

@@ -504,6 +504,10 @@ def cross_domain(origin_check=is_trusted_origin, **options):
         return cross_domain_handler
     return cross_domain_wrap
 
+def require_https():
+    if not c.secure:
+        abort(403)
+
 class MinimalController(BaseController):
 
     allow_stylesheets = False
@@ -539,6 +543,8 @@ class MinimalController(BaseController):
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
                                               g.domain_prefix)
+        c.secure = request.host in g.secure_domains
+
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
             ratelimit_agents()
@@ -697,7 +703,6 @@ class MinimalController(BaseController):
         return c.response
 
 
-
 class RedditController(MinimalController):
 
     @staticmethod
@@ -728,7 +733,6 @@ class RedditController(MinimalController):
                 #can't handle broken cookies
                 request.environ['HTTP_COOKIE'] = ''
 
-        c.secure = request.host in g.secure_domains
         c.firsttime = firsttime()
 
         # the user could have been logged in via one of the feeds 

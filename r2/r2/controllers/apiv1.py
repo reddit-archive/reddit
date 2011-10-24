@@ -19,20 +19,15 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from account import *
-from link import *
-from listing import *
-from builder import *
-from vote import *
-from report import *
-from subreddit import *
-from flair import *
-from award import *
-from jury import *
-from trial import *
-from ad import *
-from bidding import *
-from mail_queue import Email, has_opted_out, opt_count
-from gold import *
-from admintools import *
-from oauth2 import *
+from pylons import c
+from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.lib.jsontemplates import IdentityJsonTemplate
+
+class APIv1Controller(OAuth2ResourceController):
+   def try_pagecache(self):
+      pass
+
+   @require_oauth2_scope("identity")
+   def GET_me(self):
+      resp = IdentityJsonTemplate().data(c.oauth_user)
+      return self.api_wrapper(resp)

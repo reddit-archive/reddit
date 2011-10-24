@@ -211,15 +211,18 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
-class AccountJsonTemplate(ThingJsonTemplate):
+class IdentityJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
                                                 link_karma = "safe_karma",
                                                 comment_karma = "comment_karma",
-                                                has_mail = "has_mail",
-                                                has_mod_mail = "has_mod_mail",
-                                                is_mod = "is_mod",
                                                 is_gold = "gold"
                                                 )
+
+class AccountJsonTemplate(IdentityJsonTemplate):
+    _data_attrs_ = IdentityJsonTemplate.data_attrs(has_mail = "has_mail",
+                                                  has_mod_mail = "has_mod_mail",
+                                                  is_mod = "is_mod",
+                                                  )
 
     def thing_attr(self, thing, attr):
         from r2.models import Subreddit
