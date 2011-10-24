@@ -113,6 +113,9 @@
 <%def name="javascript()">
   <% from r2.lib import js %>
   ${unsafe(js.use('jquery', 'reddit'))}
+  % if c.deny_frames:
+    <script>if (window != top) top.location = window.location</script>
+  % endif
 </%def>
 
 <%def name="javascript_run()">

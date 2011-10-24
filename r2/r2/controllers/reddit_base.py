@@ -597,6 +597,9 @@ class MinimalController(BaseController):
             response.headers['Cache-Control'] = 'no-cache'
             response.headers['Pragma'] = 'no-cache'
 
+        if c.deny_frames:
+            response.headers["X-Frame-Options"] = "DENY"
+
         #return
         #set content cache
         if (g.page_cache_time
