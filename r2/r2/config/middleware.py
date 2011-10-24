@@ -32,6 +32,7 @@ from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
+from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import rstrips, is_authorized_cname
 from r2.lib.jsontemplates import api_type
 
@@ -371,35 +372,16 @@ class DomainListingMiddleware(object):
 
 class ExtensionMiddleware(object):
     ext_pattern = re.compile(r'\.([^/]+)\Z')
-
-    extensions = (('rss' , ('xml', 'text/xml; charset=UTF-8')),
-                  ('xml' , ('xml', 'text/xml; charset=UTF-8')),
-                  ('js' , ('js', 'text/javascript; charset=UTF-8')),
-                  ('wired' , ('wired', 'text/javascript; charset=UTF-8')),
-                  ('embed' , ('htmllite', 'text/javascript; charset=UTF-8')),
-                  ('mobile' , ('mobile', 'text/html; charset=UTF-8')),
-                  ('png' , ('png', 'image/png')),
-                  ('css' , ('css', 'text/css')),
-                  ('csv' , ('csv', 'text/csv; charset=UTF-8')),
-                  ('api' , (api_type(), 'application/json; charset=UTF-8')),
-                  ('json-html' , (api_type('html'), 'application/json; charset=UTF-8')),
-                  ('json-compact' , (api_type('compact'), 'application/json; charset=UTF-8')),
-                  ('compact' , ('compact', 'text/html; charset=UTF-8')),
-                  ('json' , (api_type(), 'application/json; charset=UTF-8')),
-                  ('i' , ('compact', 'text/html; charset=UTF-8')),
-                  )
-
+    
     def __init__(self, app):
         self.app = app
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
         domain_ext = environ.get('reddit-domain-extension')
-        for ext, val in self.extensions:
+        for ext, val in extension_mapping.iteritems():
             if ext == domain_ext or path.endswith('.' + ext):
-                environ['extension'] = ext
-                environ['render_style'] = val[0]
-                environ['content_type'] = val[1]
+                set_extension(environ, ext)
                 #strip off the extension
                 if path.endswith('.' + ext):
                     environ['PATH_INFO'] = path[:-(len(ext) + 1)]
