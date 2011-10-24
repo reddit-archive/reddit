@@ -2133,12 +2133,12 @@ class ApiController(RedditController):
             g.log.debug('invalid flair template for subreddit %s', c.site._id)
             return
 
-        if not c.site.flair_self_assign_enabled:
-            # TODO: serve error to client
-            g.log.debug('flair self-assignment not permitted')
-            return
-
         if not c.site.is_moderator(c.user) and not c.user_is_admin:
+            if not c.site.flair_self_assign_enabled:
+                # TODO: serve error to client
+                g.log.debug('flair self-assignment not permitted')
+                return
+
             # Ignore user choice if not an admin or mod.
             user = c.user
 
