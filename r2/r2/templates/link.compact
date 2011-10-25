@@ -21,6 +21,7 @@
 ################################################################################
 <%!
    from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import s3_https_if_secure
    import urllib
    from r2.lib.filters import _force_unicode, _force_utf8
  %>
@@ -62,7 +63,7 @@
   %>
   %if thing.has_thumbnail and thing.thumbnail:
     <a href="${url}" class="thumbnail">
-      <img src="${thing.thumbnail}" alt=""/>
+      <img src="${s3_https_if_secure(thing.thumbnail)}" alt=""/>
      </a>
   %endif
     <p class="title">

@@ -36,6 +36,10 @@ from r2.lib import s3cp
 from md5 import md5
 from r2.lib.contrib.nymph import optimize_png
 
+from r2.lib.media import upload_media
+
+from r2.lib.template_helpers import s3_https_if_secure
+
 import re
 from urlparse import urlparse
 
@@ -207,10 +211,16 @@ def valid_url(prop,value,report):
         name = custom_img_urls.match(url).group(1)
         # the label -> image number lookup is stored on the subreddit
         if c.site.images.has_key(name):
-            num = c.site.images[name]
-            value._setCssText("url(http://%s/%s_%d.png?v=%s)"
-                              % (g.s3_thumb_bucket, c.site._fullname[::-1], num,
-                                 randstr(36)))
+            url = c.site.images[name]
+            if isinstance(url, int): # legacy url, needs to be generated
+                bucket = g.s3_old_thumb_bucket
+                baseurl = "http://%s" % (bucket)
+                if g.s3_media_direct:
+                    baseurl = "http://%s/%s" % (s3_direct_url, bucket)
+                url = "%s/%s_%d.png"\
+                                  % (baseurl, c.site._fullname, url)
+            url = s3_https_if_secure(url)
+            value._setCssText("url(%s)"%url)
         else:
             # unknown image label -> error
             report.append(ValidationError(msgs['broken_url']
@@ -390,60 +400,13 @@ def rendered_link(links, media, compress):
 def rendered_comment(comments):
     return wrap_links(comments, num = 1).render(style = "html")
 
-class BadImage(Exception): pass
+class BadImage(Exception):
+    def __init__(self, error = None):
+        self.error = error
 
-def clean_image(data,format):
-    import Image
-    from StringIO import StringIO
-
+def save_sr_image(sr, data, suffix = '.png'):
     try:
-        in_file = StringIO(data)
-        out_file = StringIO()
-
-        im = Image.open(in_file)
-        im = im.resize(im.size)
-
-        im.save(out_file,format)
-        ret = out_file.getvalue()
-    except IOError,e:
+        return upload_media(data, file_type = suffix)
+    except Exception as e:
         raise BadImage(e)
-    finally:
-        out_file.close()
-        in_file.close()
-
-    return ret
-    
-def save_sr_image(sr, data, resource = None):
-    """
-    uploades image data to s3 as a PNG and returns its new url.  Urls
-    will be of the form:
-      http://${g.s3_thumb_bucket}/${sr._fullname}[_${num}].png?v=${md5hash}
-    [Note: g.s3_thumb_bucket begins with a "/" so the above url is valid.]
-    """
-    hash = md5(data).hexdigest()
-
-    f = tempfile.NamedTemporaryFile(suffix = '.png',delete=False)
-    try:
-        f.write(data)
-        f.close()
-
-        optimize_png(f.name, g.png_optimizer)
-        contents = open(f.name).read()
-
-        if resource is not None:
-            resource = "_%s" % resource
-        else:
-            resource = ""
-        fname = resource = sr._fullname[::-1] + resource + ".png"
-
-        s3cp.send_file(g.s3_thumb_bucket, fname, contents, 'image/png')
-
-    finally:
-        os.unlink(f.name)
-
-    return 'http://%s/%s?v=%s' % (g.s3_thumb_bucket, 
-                                  resource.split('/')[-1], hash)
-
- 
-
 

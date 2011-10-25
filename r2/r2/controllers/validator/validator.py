@@ -1236,6 +1236,21 @@ class VOneOf(Validator):
         else:
             return val
 
+class VImageType(Validator):
+    def run(self, img_type):
+        if not img_type in ('png', 'jpg'):
+            return 'png'
+        return img_type
+
+class VSubredditSponsorship(VInt):
+    max = 1
+    min = 0
+    def run(self, val):
+        s = super(VSubredditSponsorship, self).run(val)
+        if s and not c.user_is_admin:
+            abort(403, "forbidden")
+        return s
+
 class ValidEmails(Validator):
     """Validates a list of email addresses passed in as a string and
     delineated by whitespace, ',' or ';'.  Also validates quantity of

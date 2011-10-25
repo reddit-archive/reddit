@@ -64,7 +64,7 @@ setup(
         "Routes<=1.8",
         "Pylons==0.9.6.2",
         "webhelpers==0.6.4",
-        "boto >= 1.9b",
+        "boto >= 2.0",
         "pytz",
         "pycrypto",
         "Babel>=0.9.1",

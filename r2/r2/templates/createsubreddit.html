@@ -215,7 +215,9 @@
         <li>
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.header}"
-                               label="${_('upload header image')}">
+                               label="${_('upload header image')}"
+                               ask_type="True">
+            <br/>
             <button id="delete-img" class="delete-img"
                     %if not thing.site.header:
                        style="display: none;"
@@ -268,7 +270,9 @@
           <%utils:image_upload post_target="/api/upload_sr_img" 
                                current_image="${thing.site.sponsorship_img}"
                                label="${_('upload sponsorship image')}"
-                               form_id="sponsor-upload">
+                               form_id="sponsor-upload"
+                               ask_type="True">
+            <br/>
             <button id="delete-sponsor" class="delete-img"
                    %if not thing.site.sponsorship_img:
                       style="display: none;"
@@ -276,6 +280,7 @@
                    onclick="return post_form(this.form, 'delete_sr_header');">
               ${_('delete')}
             </button>
+            
             <div class="clearleft"></div>
             <input type="hidden" name="uh" value="${c.modhash}" />
             <input type="hidden" name="r"  value="${c.site.name}" />

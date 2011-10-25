@@ -482,7 +482,7 @@ class PromoteController(ListingController):
             errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
             try:
                 # thumnails for promoted links can change and therefore expire
-                force_thumbnail(link, file, fileType=".jpg")
+                force_thumbnail(link, file, file_type=".jpg")
             except cssfilter.BadImage:
                 # if the image doesn't clean up nicely, abort
                 errors["IMAGE_ERROR"] = _("bad image")
@@ -490,7 +490,6 @@ class PromoteController(ListingController):
                 return UploadedImage("", "", "upload", errors = errors,
                                      form_id = "image-upload").render()
             else:
-                link.thumbnail_version = sha.new(file).hexdigest()
                 link._commit()
                 return UploadedImage(_('saved'), thumbnail_url(link), "",
                                      errors = errors,

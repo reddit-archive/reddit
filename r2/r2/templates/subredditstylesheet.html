@@ -22,6 +22,7 @@
 <%!
   from r2.lib.filters import keep_space
   from r2.lib.template_helpers import add_sr
+  from r2.lib.media import s3_direct_url
 
 %>
 <%namespace file="utils.html" import="error_field, image_upload"/>
@@ -36,8 +37,6 @@
     
   <input type="hidden" name="r"  value="${thing.site.name}" />
   <input type="hidden" name="op"  value="" />
-  <input type="hidden" name="thumbbucket" 
-         value="http://${g.s3_thumb_bucket}/${c.site._fullname}" />
 
   <h2>${_("stylesheet")}</h2>
   <div class="sheets">
@@ -98,7 +97,7 @@
 
   <%call expr="image_upload('/api/upload_sr_img', '', 
                               onchange='return file_changed(this)',
-                              label = _('image file'))">
+                              label = _('image file'), ask_type = True)">
     
     <br/>
     <label for="img-name">${_("new image name:")}</label>
@@ -214,8 +213,14 @@
         <li ${"style='display:none'" if img is None else ""}>
           <% 
              if img is not None:
-                 img = "http://%s/%s_%d.png" % \
-                      (g.s3_thumb_bucket, c.site._fullname, img)
+                 if isinstance(img, int):
+                    bucket = g.s3_old_thumb_bucket
+                    baseurl = "http://%s" % (bucket)
+                    if g.s3_media_direct:
+                        baseurl = "http://%s/%s" % (s3_direct_url, bucket)
+                        
+                    img = "%s/%s_%d.png" % \
+                    (baseurl, c.site._fullname, img)
              else:
                  img = "/static/kill.png"                  
              %>

@@ -268,7 +268,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
-                         onchange = '', label = '', form_id = 'image-upload')">
+                         onchange = '', label = '', form_id = 'image-upload', ask_type = False)">
   <form id="${form_id}" enctype="multipart/form-data"
         class="image-upload"
         target="upload-iframe"
@@ -284,6 +284,14 @@ ${unsafe(txt)}
             <input type="hidden" name="r"  value="${c.site.name}" />
           %endif
           <input type="hidden" name="formid" value="${form_id}" />
+          <br/>
+          %if ask_type == True:
+            <label for="img_type">${_("Type: ")}</label>
+            <label><input type="radio" name="img_type" value="jpg" />JPEG</label>
+            &nbsp;&nbsp;
+            <label><input type="radio" name="img_type" checked value="png" />PNG</label>
+            <br/>
+          %endif
           <input type="file" name="file" id="file" 
                  onchange="$(this).next().show(); ${onchange}"/>
           <button id="submit-img" class="submit-img"
@@ -294,6 +302,7 @@ ${unsafe(txt)}
           </button>
 
           <span style="display: none;" class="error img-status"></span>
+          ${error_field("IMAGE_ERROR", "span")}
           <script type="text/javascript">
        function on_image_success(img) {}
        function create_new_image(name) {}
@@ -317,8 +326,6 @@ ${unsafe(txt)}
                   form.find("img.img-preview:first");
               if(!$.defined(img) || img.length == 0) 
                   img = create_new_image(name);
-              if(img_src.indexOf("?") == -1)
-                  img_src += "?v=" + Math.random();
               if(img)
                   img.attr("src", "").attr("src", img_src);
               img.show().parent().show();

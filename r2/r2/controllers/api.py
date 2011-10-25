@@ -1158,10 +1158,11 @@ class ApiController(RedditController):
               VModhash(),
               file = VLength('file', max_length=1024*500),
               name = VCssName("name"),
+              img_type = VImageType('img_type'),
               form_id = VLength('formid', max_length = 100), 
               header = VInt('header', max=1, min=0),
               sponsor = VInt('sponsor', max=1, min=0))
-    def POST_upload_sr_img(self, file, header, sponsor, name, form_id):
+    def POST_upload_sr_img(self, file, header, sponsor, name, form_id, img_type):
         """
         Called on /about/stylesheet when an image needs to be replaced
         or uploaded, as well as on /about/edit for updating the
@@ -1181,43 +1182,42 @@ class ApiController(RedditController):
         # default error list (default values will reset the errors in
         # the response if no error is raised)
         errors = dict(BAD_CSS_NAME = "", IMAGE_ERROR = "")
-        try:
-            cleaned = cssfilter.clean_image(file,'PNG')
-            if header:
-                # there is one and only header, and it is unnumbered
-                resource = None 
-            elif sponsor and c.user_is_admin:
-                resource = "sponsor"
-            elif not name:
-                # error if the name wasn't specified or didn't satisfy
-                # the validator
+        add_image_to_sr = False
+        if sponsor and not c.user_is_admin:
+            return self.abort(403, 'forbidden')
+        
+        if not sponsor and not header:
+            add_image_to_sr = True
+            if not name:
+                # error if the name wasn't specified and the image was not for a sponsored link or header
+                # this may also fail if a sponsored image was added and the user is not an admin
                 errors['BAD_CSS_NAME'] = _("bad image name")
-            else:
-                resource = c.site.add_image(name, max_num = g.max_sr_images)
-                c.site._commit()
-
-        except cssfilter.BadImage:
-            # if the image doesn't clean up nicely, abort
-            errors["IMAGE_ERROR"] = _("bad image")
-        except ValueError:
-            # the add_image method will raise only on too many images
-            errors['IMAGE_ERROR'] = (
-                _("too many images (you only get %d)") % g.max_sr_images)
+        
+        if c.site.images:
+            if c.site.images.has_key(name):
+                errors['IMAGE_ERROR'] = (_("An image with that name already exists"))
+            elif c.site.get_num_images() >= g.max_sr_images:
+                errors['IMAGE_ERROR'] = (_("too many images (you only get %d)") % g.max_sr_images)
 
         if any(errors.values()):
-            return  UploadedImage("", "", "", errors = errors).render()
+            return UploadedImage("", "", "", errors = errors).render()
         else: 
             # with the image num, save the image an upload to s3.  the
             # header image will be of the form "${c.site._fullname}.png"
             # while any other image will be ${c.site._fullname}_${resource}.png
-            new_url = cssfilter.save_sr_image(c.site, cleaned,
-                                              resource = resource)
+            try:
+                new_url = cssfilter.save_sr_image(c.site, file, suffix = '.' + img_type)
+            except cssfilter.BadImage:
+                errors['IMAGE_ERROR'] = _("Invalid image or general image error")
+                return UploadedImage("", "", "", errors = errors).render()
+            
             if header:
                 c.site.header = new_url
             elif sponsor and c.user_is_admin:
                 c.site.sponsorship_img = new_url
-            c.site._commit()
 
+            c.site.add_image(name, url = new_url)
+            c.site._commit()
             return UploadedImage(_('saved'), new_url, name, 
                                  errors = errors, form_id = form_id).render()
 

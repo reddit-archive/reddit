@@ -92,6 +92,7 @@ class Globals(object):
                   'frontpage_dart',
                   'allow_wiki_editing',
                   'heavy_load_mode',
+                  's3_media_direct',
                   'disable_captcha',
                   'disable_ads',
                   ]
@@ -111,6 +112,7 @@ class Globals(object):
                    'authorized_cnames',
                    'hardcache_categories',
                    'proxy_addr',
+                   's3_media_buckets',
                    'allowed_pay_countries',
                    'case_sensitive_domains']
 

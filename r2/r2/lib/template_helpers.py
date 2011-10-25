@@ -23,6 +23,8 @@ from r2.models import *
 from filters import unsafe, websafe
 from r2.lib.utils import vote_hash, UrlParser, timesince
 
+from r2.lib.media import s3_direct_url
+
 from mako.filters import url_escape
 import simplejson
 import os.path
@@ -65,7 +67,12 @@ def static(path):
     return os.path.join(c.site.static_path, path) + query
 
 def s3_https_if_secure(url):
-    return url if not c.secure else url.replace("http://", "https://s3.amazonaws.com/")
+    if not c.secure:
+        return url
+    replace = "https://"
+    if not url.startswith("http://%s" % s3_direct_url):
+         replace = "https://%s/" % s3_direct_url
+    return url.replace("http://", replace)
 
 def generateurl(context, path, **kw):
     if kw:

@@ -55,7 +55,6 @@ class Link(Thing, Printable):
                      moderator_banned = False,
                      banned_before_moderator = False,
                      media_object = None,
-                     has_thumbnail = False,
                      promoted = None,
                      pending = False,
                      disable_comments = False,
@@ -67,7 +66,11 @@ class Link(Thing, Printable):
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
-
+    
+    @property
+    def has_thumbnail(self):
+        return self._t.get('has_thumbnail', hasattr(self, 'thumbnail_url'))
+    
     @classmethod
     def _by_url(cls, url, sr):
         from subreddit import FakeSubreddit
@@ -312,7 +315,7 @@ class Link(Thing, Printable):
     def add_props(cls, user, wrapped):
         from r2.lib.pages import make_link_child
         from r2.lib.count import incr_counts
-        from r2.lib.media import thumbnail_url
+        from r2.lib.media import thumbnail_url as get_thumbnail_url
         from r2.lib.utils import timeago
         from r2.lib.template_helpers import get_domain
         from r2.models.subreddit import FakeSubreddit
@@ -372,7 +375,7 @@ class Link(Thing, Printable):
 
             # always show a promo author their own thumbnail
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
-                item.thumbnail = thumbnail_url(item)
+                item.thumbnail = get_thumbnail_url(item)
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
                     item.thumbnail = "/static/nsfw2.png"
@@ -381,7 +384,7 @@ class Link(Thing, Printable):
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
-                item.thumbnail = thumbnail_url(item)
+                item.thumbnail = get_thumbnail_url(item)
             elif item.is_self:
                 item.thumbnail = g.self_thumb
             else:

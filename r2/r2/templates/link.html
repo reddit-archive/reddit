@@ -22,6 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import get_domain
+   from r2.lib.template_helpers import s3_https_if_secure
    from r2.lib.pages.things import LinkButtons
    from r2.lib.pages import WrappedUser
    from r2.lib.template_helpers import static
@@ -233,7 +234,7 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
   %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail')">
     &#8203;
-    <img src="${thing.thumbnail}" alt=""/>
+    <img src="${s3_https_if_secure(thing.thumbnail)}" alt=""/>
   </%call>
   %endif
 </%def>
