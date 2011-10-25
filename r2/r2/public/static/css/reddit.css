@@ -645,6 +645,8 @@ a.author { margin-right: 0.5em; }
     border-radius: 2px;
 }
 
+.collapsed .flair { display: none; }
+
 .flair input {
     font-size: xx-small;
 }
