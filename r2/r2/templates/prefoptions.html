@@ -230,11 +230,13 @@
     <th>${_("display options")}</th>
     <td class="prefright">
       ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
-    %if c.user.pref_show_promote is not None:
       <br/>
-      ${checkbox(_("show promote tab on front page"), 
-        "show_promote")}
-    %endif
+      ${checkbox(_("show user flair"), "show_flair")}
+      %if c.user.pref_show_promote is not None:
+        <br/>
+        ${checkbox(_("show promote tab on front page"), 
+          "show_promote")}
+      %endif
     </td>
   </tr>
   <tr>

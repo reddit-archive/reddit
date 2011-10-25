@@ -492,7 +492,7 @@ class SubredditInfoBar(CachedTemplate):
         # so the menus cache properly
         self.path = request.path
 
-        if c.user_is_loggedin:
+        if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()
         else:
             self.flair_prefs = None
@@ -891,7 +891,8 @@ class CommentPane(Templated):
             num = (num / 10) * 10
         return "_".join(map(str, ["commentpane", self.article._fullname,
                                   num, self.sort, self.num, c.lang,
-                                  self.can_reply, c.render_style]))
+                                  self.can_reply, c.render_style,
+                                  c.user.pref_show_flair]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
         # keys: lang, num, can_reply, render_style
@@ -2290,7 +2291,8 @@ class WrappedUser(CachedTemplate):
 
         flair = wrapped_flair(user, subreddit or c.site, force_show_flair)
         flair_enabled, flair_position, flair_text, flair_css_class = flair
-        has_flair = bool(flair_text or flair_css_class)
+        has_flair = bool(
+            c.user.pref_show_flair and (flair_text or flair_css_class))
 
         if flair_template:
             flair_template_id = flair_template._id

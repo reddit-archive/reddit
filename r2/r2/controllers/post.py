@@ -90,6 +90,7 @@ class PostController(ApiController):
               pref_num_comments = VInt('num_comments', 1, g.max_comments,
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
+              pref_show_flair = VBoolean('show_flair'),
               pref_no_profanity = VBoolean('no_profanity'),
               pref_label_nsfw = VBoolean('label_nsfw'),
               pref_show_promote = VBoolean('show_promote'),
