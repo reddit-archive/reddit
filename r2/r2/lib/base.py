@@ -118,6 +118,11 @@ class BaseController(WSGIController):
     def pre(self): pass
     def post(self): pass
 
+    def _get_action_handler(self, name=None, method=None):
+        name = name or request.environ["pylons.routes_dict"]["action_name"]
+        method = method or request.method
+        action = method + "_" + name
+        return getattr(self, action, None)
 
     @classmethod
     def format_output_url(cls, url, **kw):
