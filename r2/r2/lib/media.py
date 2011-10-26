@@ -94,18 +94,25 @@ def upload_media(image, never_expire=True, file_type='.jpg'):
     f = tempfile.NamedTemporaryFile(suffix=file_type, delete=False)
     try:
         img = image
+        do_convert = True
         if isinstance(img, basestring):
             img = str_to_image(img)
-        
-        if not img.mode == 'RGBA': # Indexed images will not convert properly
-            img = img.convert('RGBA')
+            if img.format == "PNG" and file_type == ".png":
+                img.verify()
+                f.write(image)
+                f.close()
+                do_convert = False
 
-        if file_type == ".jpg":
-            # PIL does not play nice when converting alpha channels to jpg
-            background = Image.new('RGBA', img.size, (255, 255, 255))
-            background.paste(img, img)
-            img = background.convert('RGB')
-        img.save(f, quality=85, optimize=True)
+        if do_convert:
+            img = img.convert('RGBA')
+            if file_type == ".jpg":
+                # PIL does not play nice when converting alpha channels to jpg
+                background = Image.new('RGBA', img.size, (255, 255, 255))
+                background.paste(img, img)
+                img = background.convert('RGB')
+                img.save(f, quality=85) # Bug in the JPG encoder with the optimize flag, even if set to false
+            else:
+                img.save(f, optimize=True)
         
         if file_type == ".png":
             optimize_png(f.name, g.png_optimizer)
