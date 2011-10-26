@@ -811,7 +811,7 @@ class DefaultSR(_DefaultSR):
     def __init__(self):
         _DefaultSR.__init__(self)
         try:
-            self._base = Subreddit._by_name(g.default_sr)
+            self._base = Subreddit._by_name(g.default_sr, stale=True)
         except NotFound:
             self._base = None
 

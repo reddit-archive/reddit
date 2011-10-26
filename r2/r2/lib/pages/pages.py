@@ -3625,7 +3625,7 @@ def render_ad(reddit_name=None, codename=None, keyword=None):
             return Dart_Ad("reddit.dart", reddit_name, keyword).render()
 
     try:
-        sr = Subreddit._by_name(reddit_name)
+        sr = Subreddit._by_name(reddit_name, stale=True)
     except NotFound:
         return Dart_Ad("reddit.dart", g.default_sr, keyword).render()
 
