@@ -1896,7 +1896,7 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name", allow_deleted=True),
+                   user = VExistingUname("name"),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     def POST_flair(self, form, jquery, user, text, css_class):
@@ -1940,8 +1940,8 @@ class ApiController(RedditController):
             form.set_html('.status', _('saved'))
 
     @validatedForm(VFlairManager(),
-                  VModhash(),
-                  user = VExistingUname("name", allow_deleted=True))
+                   VModhash(),
+                   user = VExistingUname("name"))
     def POST_deleteflair(self, form, jquery, user):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
@@ -1978,7 +1978,7 @@ class ApiController(RedditController):
                 line_result.error('row', 'improperly formatted row, ignoring')
                 continue
 
-            user = VExistingUname('name', allow_deleted=True).run(name)
+            user = VExistingUname('name').run(name)
             if not user:
                 line_result.error('user',
                                   "unable to resolve user `%s', ignoring"
