@@ -23,7 +23,9 @@
 <%namespace file="utils.html" import="error_field, success_field, radio_type"/>
 <%namespace name="utils" file="utils.html"/>
 
-<%! from r2.lib.strings import strings, Score %>
+<%!
+  from r2.lib.strings import strings, Score
+%>
 
 <script type="text/javascript">
   $(function() {
@@ -78,8 +80,7 @@
 </%def>
 
 <div class="gold-form">
-  <h1>
-    <img src="/static/giftgold.png" /> &#32;
+  <h1 class="goldgift">
     ${_("reddit gold")} (<a href="/help/gold">help</a>)
   </h1>
 

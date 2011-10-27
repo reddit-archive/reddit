@@ -185,6 +185,16 @@ ul.flat-vert {text-align: left;}
 
 #header-img {margin-top: 2px; margin-right: 5px;}
 
+#header-img.default-header {
+    text-indent: -9999px;
+    background-image: url(../reddit.com.header.png); /* SPRITE */
+    height: 40px;
+    width: 120px;
+    display: inline-block;
+    vertical-align: bottom;
+    margin-bottom: 3px;
+}
+
 #header-top {
     position: absolute;
     right: 5px;
@@ -1187,11 +1197,15 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 textarea.gray { color: gray; }
 
-.deepthread {
-    padding-right: 30px;
-    background: transparent none no-repeat scroll center right;
-    background-image: url(../continue-thread.png);  
+.deepthread:after {
+    background-image: url(../continue-thread.png);  /* SPRITE */
+    content: " ";
+    display: inline-block;
+    width: 25px;
+    height: 9px;
+    margin: 5px 0 0 5px;
 }
+
 .deepthread a { font-size: larger; color: #336699 }
 .deepthread a:hover { text-decoration: underline}
 
@@ -1417,10 +1431,10 @@ textarea.gray { color: gray; }
 }
 
 .fancy-toggle-button .remove { 
-    background-image: url(../bg-button-remove.png);
+    background-image: url(../bg-button-remove.png); /* SPRITE stretch-x */
 }
 .fancy-toggle-button .add { 
-    background-image: url(../bg-button-add.png);
+    background-image: url(../bg-button-add.png); /* SPRITE stretch-x */
 }
 .fancy-toggle-button .banned {
     background-color: #666;
@@ -2349,10 +2363,14 @@ label + #moresearchinfo {
     margin-top: 10px; 
 }
 
-.feedback.instructions dd { 
-    background: transparent none no-repeat scroll bottom left;
-    background-image: url(../red-arrow.png);
-    padding-left: 35px; 
+.feedback.instructions dd:before { 
+    background-image: url(../red-arrow.png); /* SPRITE */
+    height: 15px;
+    width: 30px;
+    display: block;
+    content: " ";
+    float: left;
+    margin: 2px 5px 0 0;
 }
 
 
@@ -2769,6 +2787,21 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     margin: 0px 5px; 
     overflow: hidden;
     width: 70px; 
+}
+
+.thumbnail.nsfw {
+    height: 70px;
+    background-image: url(../nsfw2.png); /* SPRITE */
+}
+
+.thumbnail.self {
+    height: 50px;
+    background-image: url(../self_default2.png); /* SPRITE */
+}
+
+.thumbnail.default {
+    height: 50px;
+    background-image: url(../noimage.png); /* SPRITE */
 }
 
 
@@ -4201,7 +4234,9 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-flair:before,
 .icon-menu .reddit-moderators:before,
 .icon-menu .moderator-mail:before,
-.icon-menu .reddit-contributors:before {
+.icon-menu .reddit-contributors:before,
+.giftgold a:before,
+.gold-form h1.goldgift:before {
     height: 16px;
     width: 16px;
     display: block;
@@ -4445,22 +4480,22 @@ a.pretty-button:hover { text-decoration: none !important }
 
 a.pretty-button.negative {
     color: black;
-    background-image: url(../bg-button-negative-unpressed.png);
+    background-image: url(../bg-button-negative-unpressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.negative.pressed {
     color: white;
-    background-image: url(../bg-button-negative-pressed.png);
+    background-image: url(../bg-button-negative-pressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.positive {
     color: black;
-    background-image: url(../bg-button-positive-unpressed.png);
+    background-image: url(../bg-button-positive-unpressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.positive.pressed {
     color: white;
-    background-image: url(../bg-button-positive-pressed.png);
+    background-image: url(../bg-button-positive-pressed.png); /* SPRITE stretch-x */
 }
 
 
@@ -4602,11 +4637,16 @@ tr.gold-accent + tr > td {
     margin-bottom: 5px;
 }
 .giftgold a {
-    padding-left: 20px;
     color: #9a7d2e;
     font-weight: bold;
-    background-image: url(../giftgold.png);
-    background-repeat:no-repeat;
+}
+.giftgold a:before,
+.gold-form h1.goldgift:before {
+    background-image: url(../giftgold.png); /* SPRITE */
+}
+
+.gold-form h1:before {
+    margin-top: 3px;
 }
 
 .tiny {

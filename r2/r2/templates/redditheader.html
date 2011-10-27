@@ -42,13 +42,15 @@
             header_img = d.header
             header_size = d.header_size
             header_title = d.header_title
-        if header_size is None and header_img == d.header:
-            header_size = (120, 40)
     %>
     
-    ${img_link(c.site.name, s3_https_if_secure(header_img),
-        '/', _id="header-img-a", img_id='header-img',
-        title=header_title, size=header_size)}
+    % if header_img != g.default_header_url:
+        ${img_link(c.site.name, s3_https_if_secure(header_img),
+            '/', _id="header-img-a", img_id='header-img',
+            title=header_title, size=header_size)}
+    % else:
+        <a href="/" id="header-img" class="default-header" title="${header_title}">${g.domain}</a>
+    % endif
     
     ##keeps the height of the header from varying when there isnt any content
     &nbsp;

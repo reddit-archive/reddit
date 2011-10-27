@@ -371,35 +371,28 @@ class Link(Thing, Printable):
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
             
-            item.rendered_thumbnail_size = (70, 50)
-            
             item.is_author = (user == item.author)
 
+            item.thumbnail_sprited = False
             # always show a promo author their own thumbnail
             if item.promoted and (user_is_admin or item.is_author) and item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
-                if(hasattr(item, 'thumbnail_size')):
-                    item.rendered_thumbnail_size = item.thumbnail_size
-                else:
-                    item.rendered_thumbnail_size = None
             elif user.pref_no_profanity and item.over_18 and not c.site.over_18:
                 if show_media:
-                    item.thumbnail = "/static/nsfw2.png"
-                    item.rendered_thumbnail_size = (70, 70)
+                    item.thumbnail = "nsfw"
+                    item.thumbnail_sprited = True
                 else:
                     item.thumbnail = ""
             elif not show_media:
                 item.thumbnail = ""
             elif item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
-                if hasattr(item, 'thumbnail_size'):
-                    item.rendered_thumbnail_size = item.thumbnail_size
-                else:
-                    item.rendered_thumbnail_size = None
             elif item.is_self:
-                item.thumbnail = g.self_thumb
+                item.thumbnail = "self"
+                item.thumbnail_sprited = True
             else:
-                item.thumbnail = g.default_thumb
+                item.thumbnail = "default"
+                item.thumbnail_sprited = True
 
             item.score = max(0, item.score)
 
