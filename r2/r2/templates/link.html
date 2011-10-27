@@ -235,10 +235,10 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
   <%call expr="make_link('thumbnail', 'thumbnail')">
     &#8203;
     <%
-        if not hasattr(thing, 'thumbnail_size'):
+        if not hasattr(thing, 'rendered_thumbnail_size') or thing.rendered_thumbnail_size is None:
             size_str = ""
         else:
-            size_str = "width = '%d' height = '%d'" % (thing.thumbnail_size[0], thing.thumbnail_size[1])
+            size_str = "width='%d' height='%d'" % (thing.rendered_thumbnail_size[0], thing.rendered_thumbnail_size[1])
     %>
     <img src="${s3_https_if_secure(thing.thumbnail)}" ${size_str} alt=""/>
   </%call>
