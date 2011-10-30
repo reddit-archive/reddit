@@ -67,6 +67,7 @@ PYXSO_FILES := $(PYX_FILES:.pyx=.so)
 
 NAMED = $(JSOUTPUTS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 NAMELINKS = $(patsubst %.css,%.*.css,$(patsubst %.js,%.*.js,$(NAMED)))
+GZIPPED     = $(foreach file, $(filter %.js %.css, $(wildcard $(NAMELINKS))) $(static_dir)/js/lib/jquery.js, $(file).gz)
 
 INIUPDATE = $(wildcard *.update)
 INIS      = $(INIUPDATE:.update=.ini)
@@ -83,7 +84,7 @@ endif
 
 all:	pyx static names $(INIS)
 
-.PHONY: 	pyx js css rtl static names i18n clean clean_static clean_pyx all
+.PHONY: 	pyx js css rtl static names i18n clean clean_static clean_pyx all gzip clean_gzip
 
 $(NAMES): $(JSTARGETS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
@@ -92,9 +93,11 @@ $(JSTARGETS): $(JSSOURCES)
 	$(JS_COMPRESS)
 
 $(main_sprite) $(static_dir)/$(main_css): $(static_dir)/css/$(main_css)
+	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
 	$(PYTHON) r2/lib/contrib/nymph.py sprite-main.png $< | $(CSS_COMPRESS) > $@
 
 $(compact_sprite) $(static_dir)/$(compact_css) : $(static_dir)/css/$(compact_css)
+	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
 	$(PYTHON) r2/lib/contrib/nymph.py sprite-compact.png $< | $(CSS_COMPRESS) > $@
 
 $(static_dir)/%.css : $(static_dir)/css/%.css
@@ -130,7 +133,12 @@ i18n:
 	paster run run.ini r2/lib/strings.py -c "print_rand_strings()" > r2/lib/rand_strings.py
 	python setup.py extract_messages -o $(I18NPATH)/r2.pot
 
-clean: clean_static clean_pyx
+gzip: $(GZIPPED)
+
+%.gz: %
+	gzip -c $< > $@
+
+clean: clean_static clean_pyx clean_gzip
 	rm -f $(INIS) r2/lib/rand_strings.py
 
 clean_pyx:
@@ -141,3 +149,6 @@ clean_static: clean_names
 
 clean_names:
 	rm -f $(NAMES) $(NAMELINKS) $(static_dir)/*.md5
+
+clean_gzip:
+	rm -f $(static_dir)/*.css.gz $(static_dir)/*.js.gz $(static_dir)/js/lib/*.gz
