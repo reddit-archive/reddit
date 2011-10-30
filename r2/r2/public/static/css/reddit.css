@@ -464,12 +464,12 @@ ul.flat-vert {text-align: left;}
     width: 40px;
 }
 
-.sidebox.create .spacer {
+.sidebox.create .spacer a {
     background-image: url(../create-a-reddit.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
 
-.sidebox.gold .spacer {
+.sidebox.gold .spacer a {
     background-image: url(../reddit_gold-40.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
@@ -4185,16 +4185,36 @@ dd { margin-left: 20px;  }
 
 .titlebox form.toggle {
     margin: 0;
-    padding: 5px 0px 5px 20px;
+    padding: 5px 0px;
     font-size: smaller;
     color: gray;
     background: white none no-repeat scroll center left;
 }
 
-.titlebox form.leavemoderator-button {
+.titlebox form.leavemoderator-button:before,
+.titlebox form.leavecontributor-button:before,
+.icon-menu .reddit-edit:before,
+.icon-menu .reddit-traffic:before,
+.icon-menu .reddit-reported:before,
+.icon-menu .reddit-spam:before,
+.icon-menu .reddit-ban:before,
+.icon-menu .reddit-flair:before,
+.icon-menu .reddit-moderators:before,
+.icon-menu .moderator-mail:before,
+.icon-menu .reddit-contributors:before {
+    height: 16px;
+    width: 16px;
+    display: block;
+    content: " ";
+    float: left;
+    margin-right: 5px;
+}
+
+.titlebox form.leavemoderator-button:before {
     background-image: url(../shield.png); /* SPRITE */
 }
-.titlebox form.leavecontributor-button {
+
+.titlebox form.leavecontributor-button:before {
     background-image: url(../pencil.png); /* SPRITE */
 }
 
@@ -4207,39 +4227,41 @@ dd { margin-left: 20px;  }
 }
 
 .icon-menu a {
-    padding-left: 20px;
     background: white none no-repeat scroll center left;
 } 
 .icon-menu li {margin: 5px 0;}
 
-.icon-menu .reddit-edit {
+.icon-menu .reddit-edit:before {
     background-image: url(../reddit_edit.png); /* SPRITE */
 }
-.icon-menu .reddit-traffic {
+.icon-menu .reddit-traffic:before {
     background-image: url(../reddit_traffic.png); /* SPRITE */
 }
-.icon-menu .reddit-reported {
+.icon-menu .reddit-reported:before {
     background-image: url(../reddit_reported.png); /* SPRITE */
 }
-.icon-menu .reddit-spam {
+.icon-menu .reddit-spam:before {
     background-image: url(../reddit_spam.png); /* SPRITE */
 }
-.icon-menu .reddit-ban {
+.icon-menu .reddit-ban:before {
     background-image: url(../reddit_ban.png); /* SPRITE */
 }
-.icon-menu .reddit-flair {
+.icon-menu .reddit-flair:before {
     background-image: url(../reddit_flair.png); /* SPRITE */
     /* Work around a centering difference between this icon and reddit_ban.png */
     margin-left: 1px;
-    padding-left: 19px;
 }
-.icon-menu .reddit-moderators {
+.icon-menu .reddit-moderators:before {
     background-image: url(../shield.png); /* SPRITE */
 }
-.icon-menu .moderator-mail {
+.icon-menu .moderator-mail:before {
     background-image: url(../mailgray.png); /* SPRITE */
+    width: 15px;
+    height: 10px;
+    margin-top: 4px;
+    margin-left: 1px;
 }
-.icon-menu .reddit-contributors {
+.icon-menu .reddit-contributors:before {
     background-image: url(../pencil.png); /* SPRITE */
 }
 

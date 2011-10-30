@@ -34,7 +34,6 @@ import os
 import tempfile
 from r2.lib import s3cp
 from md5 import md5
-from r2.lib.contrib.nymph import optimize_png
 
 from r2.lib.media import upload_media
 

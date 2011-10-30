@@ -29,7 +29,7 @@ from r2.lib.utils import TimeoutFunction, TimeoutFunctionException
 from r2.lib.db.operators import desc
 from r2.lib.scraper import make_scraper, str_to_image, image_to_str, prepare_image
 from r2.lib import amqp
-from r2.lib.contrib.nymph import optimize_png
+from r2.lib.nymph import optimize_png
 
 import Image
 

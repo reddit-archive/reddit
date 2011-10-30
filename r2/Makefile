@@ -94,11 +94,11 @@ $(JSTARGETS): $(JSSOURCES)
 
 $(main_sprite) $(static_dir)/$(main_css): $(static_dir)/css/$(main_css)
 	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
-	$(PYTHON) r2/lib/contrib/nymph.py sprite-main.png $< | $(CSS_COMPRESS) > $@
+	$(PYTHON) r2/lib/nymph.py $< $(static_dir)/sprite-main.png | $(CSS_COMPRESS) > $@
 
 $(compact_sprite) $(static_dir)/$(compact_css) : $(static_dir)/css/$(compact_css)
 	rm -f $@ # delete symlink so we don't just overwrite the old mangled file
-	$(PYTHON) r2/lib/contrib/nymph.py sprite-compact.png $< | $(CSS_COMPRESS) > $@
+	$(PYTHON) r2/lib/nymph.py $< $(static_dir)/sprite-compact.png | $(CSS_COMPRESS) > $@
 
 $(static_dir)/%.css : $(static_dir)/css/%.css
 	$(CAT) $< | $(CSS_COMPRESS) > $@
