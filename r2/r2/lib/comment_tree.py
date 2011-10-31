@@ -258,7 +258,7 @@ def link_comments_and_sort(link_id, sort):
                     % link_id)
         parents = {}
 
-    if not parents:
+    if not parents and len(cids) > 0:
         with g.make_lock(lock_key(link_id)):
             # reload from the cache so the sorter and parents are
             # maximally consistent
