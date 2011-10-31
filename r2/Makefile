@@ -32,7 +32,7 @@ main_css = reddit.css
 main_sprite = $(static_dir)/sprite-main.png
 compact_css = compact.css
 compact_sprite = $(static_dir)/sprite-compact.png
-css_targets = $(main_css) $(compact_css) reddit-ie6-hax.css reddit-ie7-hax.css mobile.css spreadshirt.css
+css_targets = $(main_css) $(compact_css) reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
 
 package    = r2
 static_dir = $(package)/public/static

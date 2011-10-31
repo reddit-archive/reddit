@@ -93,58 +93,6 @@ div.popup {
     top: expression( ( 40 + ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );
 }
 
-.shirt .shirt-container .red {
-    background-image: url(/static/spreadshirt/red.gif);
-}
-.shirt .shirt-container .white {
-    background-image: url(/static/spreadshirt/white.gif);
-}
-.shirt .shirt-container .navy {
-    background-image: url(/static/spreadshirt/navy.gif);
-}
-.shirt .shirt-container .heather {
-    background-image: url(/static/spreadshirt/heather.gif);
-}
-.shirt .shirt-container .black {
-    background-image: url(/static/spreadshirt/black.gif);
-}
-
-.shirt .shirt-container .main .caption #layout {
-    height: 5em;
-    background-image: url(/static/spreadshirt/spreadshirt-arrows.gif);
-}
-
-.shirt .shirt-container .main.navy  .caption #layout,
-.shirt .shirt-container .main.black .caption #layout { 
-    background-image:url(/static/spreadshirt/spreadshirt-arrows-white.gif);
-}
-.shirt .shirt-container .main.red   .caption #layout {
-    background-image:url(/static/spreadshirt/spreadshirt-arrows-red.gif);
-}
-
-.shirt .shirt-container .main .caption .byline {
-    background-image: url(/static/spreadshirt/spreadshirt-header.gif);
-}
-.shirt .shirt-container .main.navy  .caption .byline,
-.shirt .shirt-container .main.black .caption .byline { 
-    background-image:url(/static/spreadshirt/spreadshirt-header-white.gif);
-}
-.shirt .shirt-container .main.red   .caption .byline {
-    background-image:url(/static/spreadshirt/spreadshirt-header-red.gif);
-}
-
-.shirt .shirt-container .main .caption.big .byline {
-    background-image: none;
-}
-
-.shirt .shirt-container .main.navy  .caption.big .byline,
-.shirt .shirt-container .main.black .caption.big .byline { 
-    background-image: none;
-}
-.shirt .shirt-container .main.red   .caption.big .byline {
-    background-image: non; 
-}
-
 .usertext .bottom-area .usertext-buttons {display: inline;  }
 
 .arrow.upmod { 

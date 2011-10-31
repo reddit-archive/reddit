@@ -127,9 +127,6 @@ class FrontController(RedditController):
     def GET_shirt(self, article):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
-        if g.spreadshirt_url:
-            from r2.lib.spreadshirt import ShirtPage
-            return ShirtPage(link = article).render()
         return self.abort404()
 
     def _comment_visits(self, article, user, new_visit=None):

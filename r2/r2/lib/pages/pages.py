@@ -2280,11 +2280,6 @@ class Embed(Templated):
         Templated.__init__(self, content = content)
 
 
-class Page_down(Templated):
-    def __init__(self, **kw):
-        message = kw.get('message', _("This feature is currently unavailable. Sorry"))
-        Templated.__init__(self, message = message)
-
 def wrapped_flair(user, subreddit, force_show_flair):
     if (not hasattr(subreddit, '_id')
         or not (force_show_flair or getattr(subreddit, 'flair_enabled', True))):
