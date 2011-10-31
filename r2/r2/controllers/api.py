@@ -2000,7 +2000,7 @@ class ApiController(RedditController):
                                  'truncating flair text to %d chars'
                                  % len(text))
 
-            if css_class and not VCssName('css_class').run(css_class):
+            if css_class and not VFlairCss('css_class').run(css_class):
                 line_result.error('css',
                                   "invalid css class `%s', ignoring"
                                   % css_class)
