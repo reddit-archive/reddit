@@ -23,3 +23,17 @@
 #mail {
     top: 0;
 }
+
+#header-img.default-header {
+	display: block;
+	float: left;
+}
+
+#header-bottom-left .tabmenu {
+	position: absolute;
+	bottom: -1px;
+}
+
+#header-bottom-right {
+	clear: both;
+}
