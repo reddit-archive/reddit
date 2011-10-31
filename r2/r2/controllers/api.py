@@ -1896,7 +1896,8 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name"),
+                   user = VExistingUname("name", allow_deleted=True,
+                                         prefer_existing=True),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     def POST_flair(self, form, jquery, user, text, css_class):
@@ -1941,7 +1942,8 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name"))
+                   user = VExistingUname("name", allow_deleted=True,
+                                         prefer_existing=True))
     def POST_deleteflair(self, form, jquery, user):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
@@ -1978,7 +1980,8 @@ class ApiController(RedditController):
                 line_result.error('row', 'improperly formatted row, ignoring')
                 continue
 
-            user = VExistingUname('name').run(name)
+            user = VExistingUname('name', allow_deleted=True,
+                                  prefer_existing=True).run(name)
             if not user:
                 line_result.error('user',
                                   "unable to resolve user `%s', ignoring"
@@ -2042,7 +2045,8 @@ class ApiController(RedditController):
 
     @paginated_listing(max_page_size=1000)
     @validate(VFlairManager(),
-              user = VOptionalExistingUname('name'))
+              user = VOptionalExistingUname('name', allow_deleted=True,
+                                            prefer_existing=True))
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()

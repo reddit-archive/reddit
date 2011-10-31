@@ -898,26 +898,37 @@ class VUrl(VRequired):
         return self.error(errors.BAD_URL)
 
 class VOptionalExistingUname(VRequired):
-    def __init__(self, item, allow_deleted=False, *a, **kw):
+    def __init__(self, item, allow_deleted=False, prefer_existing=False,
+                 *a, **kw):
         self.allow_deleted = allow_deleted
+        self.prefer_existing = prefer_existing
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
 
     def run(self, name):
+        if self.prefer_existing:
+            result = self._lookup(name, False)
+            if not result and self.allow_deleted:
+                result = self._lookup(name, True)
+        else:
+            result = self._lookup(name, self.allow_deleted)
+        return result or self.error(errors.USER_DOESNT_EXIST)
+
+    def _lookup(self, name, allow_deleted):
         if name and name.startswith('~') and c.user_is_admin:
             try:
                 user_id = int(name[1:])
                 return Account._byID(user_id, True)
             except (NotFound, ValueError):
-                return self.error(errors.USER_DOESNT_EXIST)
+                return None
 
         # make sure the name satisfies our user name regexp before
         # bothering to look it up.
         name = chkuser(name)
         if name:
             try:
-                return Account._by_name(name, allow_deleted=self.allow_deleted)
+                return Account._by_name(name, allow_deleted=allow_deleted)
             except NotFound:
-                return self.error(errors.USER_DOESNT_EXIST)
+                return None
 
 class VExistingUname(VOptionalExistingUname):
     def run(self, name):
