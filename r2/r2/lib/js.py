@@ -190,6 +190,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "analytics.js",
     "flair.js",
     "reddit.js",
+    "utils.js",
 )
 
 module["mobile"] = LocalizedModule("mobile.js",

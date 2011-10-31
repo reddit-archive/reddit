@@ -154,7 +154,7 @@ $(function() {
         }
 
         $(selector)
-            .html('<img class="flairthrobber" src="/static/throbber.gif" />')
+            .html('<img class="flairthrobber" src="' + r.utils.staticURL('throbber.gif') + '" />')
             .addClass("active")
             .height(18).width(18)
             .css("padding-left", 4)

@@ -164,7 +164,7 @@ function show_edit_usertext(form) {
 }
 
 function fetch_more() {
-    $("#siteTable").after($("<div class='loading'><img src='/static/reddit_loading.png'/></div>"));
+    $("#siteTable").after($("<div class='loading'><img src='" + r.utils.staticURL('reddit_loading.png') + "'/></div>"));
 
 
     var o = document.location;

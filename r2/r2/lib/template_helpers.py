@@ -160,7 +160,8 @@ def js_config():
         "is_fake": isinstance(c.site, FakeSubreddit),
         "tracking_domain": g.tracking_domain,
         "adtracker_url": g.adtracker_url,
-        "clicktracker_url": g.clicktracker_url
+        "clicktracker_url": g.clicktracker_url,
+        "static_root": static(''),
     }
     return config
 
