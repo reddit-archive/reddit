@@ -945,6 +945,8 @@ class CommentPane(Templated):
                 logged_in = c.user_is_loggedin
                 try:
                     c.user = UnloggedUser([c.lang])
+                    # Preserve the viewing user's flair preference.
+                    c.user.pref_show_flair = user.pref_show_flair
                     c.user_is_loggedin = False
 
                     # render as if not logged in (but possibly with reply buttons)
