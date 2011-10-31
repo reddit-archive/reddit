@@ -20,7 +20,7 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%
-   from r2.lib.template_helpers import add_sr
+   from r2.lib.template_helpers import add_sr, static
    from r2.lib.utils import query_string, domain
    from r2.lib.filters import _force_unicode
  %>
@@ -39,7 +39,7 @@
           %if thing.thumbnail:
              href="${thing.thumbnail}"
           %else:
-             href="http://www.reddit.com/static/apple-touch-icon.png"
+             href="${static('apple-touch-icon.png')}"
           %endif
     />
 

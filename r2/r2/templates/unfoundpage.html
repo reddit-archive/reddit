@@ -20,7 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<% from r2.lib.template_helpers import static %>
+
 <div style="text-align: center;">
-<img src="/static/reddit404${thing.choice}.png" alt="reddit is sad" />
+<img src="${static('reddit404' + thing.choice + '.png')}" alt="reddit is sad" />
 <p class="error">${_("the page you requested does not exist")}</p>
 </div>

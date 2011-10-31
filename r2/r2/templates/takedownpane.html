@@ -22,13 +22,14 @@
 
 <%!
     from r2.lib.filters import unsafe, safemarkdown, keep_space
+    from r2.lib.template_helpers import static
 %>
 
 <div class="infobar red">
 %if getattr(thing.link, "takedown_img", True):
-  <img src="/static/gagged-alien.png"/>
+  <img src="${static('gagged-alien.png')}"/>
 %else:
-  <img src="/static/noimage.png"/>
+  <img src="${static('noimage.png')}"/>
 %endif
 ${unsafe(safemarkdown(thing.explanation, nofollow=True))}
 <div class="clearleft"></div>

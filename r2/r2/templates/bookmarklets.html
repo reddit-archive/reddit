@@ -22,6 +22,8 @@
 
 <%namespace module="r2.lib.template_helpers" import="dockletStr"/>
 
+<% from r2.lib.template_helpers import static %>
+
 <div class="instructions">
   <script type="text/javascript">
     function dragme() {window.alert("drag this link to your bookmark bar")};function favme() {window.alert('right-click this link and choose "Add to Favorites"')}
@@ -41,7 +43,7 @@
     ${_("to your bookmark bar.")}
   </p>
   <p>
-    <img border="0" src="/static/firefox.png" alt="firefox screenshot" />
+    <img border="0" src="${static('firefox.png')}" alt="firefox screenshot" />
   </p>
   <p>
     See also our Firefox add-on, &#32;<a href="/socialite">Socialite</a>.
@@ -57,7 +59,7 @@
     ${_('then choose "Add to Favorites" and add to the "Links" folder.')}
   </p>
   <p>
-    <img border="0" src="/static/ie.png" alt="ie screenshot" />
+    <img border="0" src="${static('ie.png')}" alt="ie screenshot" />
   </p>
   <h2>${_("in Safari")}</h2>
   <p>
@@ -70,7 +72,7 @@
     ${_("to your bookmark bar.")}
   </p>
   <p>
-    <img border="0" src="/static/safari.png" alt="safari screenshot"/>
+    <img border="0" src="${static('safari.png')}" alt="safari screenshot"/>
   </p>
   <p style="color: #FF4500">
     ${_("voila! now you have all the functionality of %(site)s in your toolbar.") % dict(site=c.site.name)}

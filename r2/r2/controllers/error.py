@@ -37,6 +37,7 @@ try:
     from r2.models.link import Link
     from r2.lib import pages
     from r2.lib.strings import strings, rand_strings
+    from r2.lib.template_helpers import static
 except Exception, e:
     if g.debug:
         # if debug mode, let the error filter up to pylons to be handled
@@ -59,7 +60,7 @@ redditbroke =  \
     <div style="margin: auto; text-align: center">
       <p>
         <a href="/">
-          <img border="0" src="/static/youbrokeit%d.png" alt="you broke reddit" />
+          <img border="0" src="%s" alt="you broke reddit" />
         </a>
       </p>
       <p>
@@ -183,7 +184,9 @@ class ErrorController(RedditController):
                 return self.send403()
             elif code == 500:
                 randmin = {'admin': rand.choice(self.admins)}
-                return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages % randmin)
+                failien_name = 'youbrokeit%d.png' % rand.randint(1, NUM_FAILIENS)
+                failien_url = static(failien_name)
+                return redditbroke % (failien_url, rand_strings.sadmessages % randmin)
             elif code == 503:
                 return self.send503()
             elif code == 304:

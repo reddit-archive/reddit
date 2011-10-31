@@ -25,13 +25,14 @@
 
 <%
    from r2.lib.filters import unsafe, safemarkdown
+   from r2.lib.template_helpers import static
 %>
 
 <div class="content gold-form">
   <div class="spacer">
 
     <%utils:round_field title="">
-      <img src="/static/reddit_gold-70.png" class="gold-logo"/>
+      <img src="${static('reddit_gold-70.png')}" class="gold-logo"/>
       <h1>${thing.summary}</h1>
       %if thing.giftmessage:
       <h1>${_("The following gift note will be attached:")}</h1>

@@ -40,17 +40,22 @@
 <div id="topbar">
   <div class="left">
    <%
-        header_title = c.site.header_title
+        d = DefaultSR()
         if c.site.header and c.allow_styles:
             header_img = c.site.header
             header_size = c.site.header_size
+            header_title = c.site.header_title
         else:
-            d = DefaultSR()
             header_img = d.header
             header_size = None
             header_title = d.header_title
+
+        if header_img == g.default_header_url:
+            header_img = static(header_img)
+        else:
+            header_img = s3_https_if_secure(header_img)
     %>
-    ${img_link(c.site.name, s3_https_if_secure(header_img), '/', _id = "header-img-a", img_id = 'header-img', title = header_title, size = header_size)}
+    ${img_link(c.site.name, header_img, '/', _id = "header-img-a", img_id = 'header-img', title = header_title, size = header_size)}
   </div>
   <h1>${nav}</h1>
   <div class="right">

@@ -21,10 +21,11 @@
 ################################################################################
 <%!
 from r2.lib.pages import Feedback
+from r2.lib.template_helpers import static
 %>
-<link rel="stylesheet" type="text/css" href="/static/selfserve_ads/style.css"/>
-<script src="/static/js/lib/jquery.cycle.min.js" type="text/javascript"></script>
-<script src="/static/selfserve_ads/script.js" type="text/javascript"></script>
+<link rel="stylesheet" type="text/css" href="${static('selfserve_ads/style.css', allow_gzip=False)}"/>
+<script src="${static('js/lib/jquery.cycle.min.js', allow_gzip=False)}" type="text/javascript"></script>
+<script src="${static('selfserve_ads/script.js', allow_gzip=False)}" type="text/javascript"></script>
 
 <div class="self-service instructions">
     <!-- 	Header with control buttons. -->
@@ -34,7 +35,7 @@ from r2.lib.pages import Feedback
     <div class="column-container">
         <div class="left-col column">
             <div class="col-trigger">
-                <img src="/static/selfserve_ads/col1.png" width="220px" height="128px" alt="" class="image"/>
+                <img src="${static('selfserve_ads/col1.png')}" width="220px" height="128px" alt="" class="image"/>
 
                 <h2>Reach your audience</h2>
                 <ul>
@@ -46,7 +47,7 @@ from r2.lib.pages import Feedback
         </div>
         <div class="center-col-1 column">
             <div class="col-trigger">
-                <img src="/static/selfserve_ads/col2.png" width="220px" height="128px" alt="" class="image"/>
+                <img src="${static('selfserve_ads/col2.png')}" width="220px" height="128px" alt="" class="image"/>
 
                 <h2>Control your budget</h2>
                 <ul>
@@ -57,7 +58,7 @@ from r2.lib.pages import Feedback
         </div>
         <div class="center-col-2 column">
             <div class="col-trigger">
-                <img src="/static/selfserve_ads/col3.png" width="220px" height="128px" alt="" class="image"/>
+                <img src="${static('selfserve_ads/col3.png')}" width="220px" height="128px" alt="" class="image"/>
 
                 <h2>Interact with customers</h2>
                 <ul>
@@ -68,7 +69,7 @@ from r2.lib.pages import Feedback
         </div>
         <div class="right-col column">
             <div class="col-trigger">
-                <img src="/static/selfserve_ads/col4.png" width="220px" height="128px" alt="" class="image"/>
+                <img src="${static('selfserve_ads/col4.png')}" width="220px" height="128px" alt="" class="image"/>
 
                 <h2>Track your stats</h2>
                 <ul>

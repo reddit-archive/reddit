@@ -26,6 +26,7 @@
 <%!
    import simplejson
    from r2.lib.pages import UserText
+   from r2.lib.template_helpers import static
 %>
 
 <h1>${_("send a message")}</h1>
@@ -77,7 +78,7 @@ function admincheck(elem) {
   style="display:none"
 %endif
 >
-   <img src="/static/alien-clippy.png" />
+   <img src="${static('alien-clippy.png')}" />
 
    <div class="clippy-bubble">
      <p class="clippy-headline">It looks like you're writing to an admin!</p>

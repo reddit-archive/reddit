@@ -24,7 +24,7 @@
    import json
    from r2.models import FakeSubreddit
    from r2.lib.filters import spaceCompress, unsafe
-   from r2.lib.template_helpers import add_sr, js_config
+   from r2.lib.template_helpers import add_sr, js_config, static
    from r2.lib.utils import cols, long_datetime, timesince
    from r2.lib.tracking import UserInfo
 %>
@@ -342,7 +342,7 @@ ${unsafe(txt)}
                  %if current_image:
                    src="${current_image}"
                  %else:
-                   src="/static/kill.png"
+                   src="${static('kill.png')}"
                  %endif
                  /><br />
           </div>

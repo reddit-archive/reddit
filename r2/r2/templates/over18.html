@@ -20,11 +20,13 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<% from r2.lib.template_helpers import static %>
+
 <div class="content over18" style="text-align: center">
   <p class="error">
     ${_("you must be at least eighteen to view this reddit")}
   </p>
-  <img src="/static/over18.png" alt="jedberg alien" />
+  <img src="${static('over18.png')}" alt="jedberg alien" />
   
   <form method="post" action="" class="pretty-form"
       ${"target='_top'" if c.cname else ""}>

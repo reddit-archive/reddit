@@ -21,7 +21,7 @@
 ################################################################################
 <%!
   from r2.lib.filters import keep_space
-  from r2.lib.template_helpers import add_sr
+  from r2.lib.template_helpers import add_sr, static
   from r2.lib.media import s3_direct_url
 
 %>
@@ -222,7 +222,7 @@
                     img = "%s/%s_%d.png" % \
                     (baseurl, c.site._fullname, img)
              else:
-                 img = "/static/kill.png"                  
+                 img = static('kill.png')
              %>
           <a href="${img}" class="preview">
             <img id="img-preview-${name}" src="${img}" 

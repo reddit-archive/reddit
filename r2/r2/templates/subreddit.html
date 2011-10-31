@@ -21,6 +21,7 @@
 ################################################################################
 
 <%!
+   from r2.lib.template_helpers import static
    from r2.lib.strings import strings
    from r2.lib.utils import timesince
    %>
@@ -72,7 +73,7 @@
 ##this function is used by subscriptionbox.html
 <%def name="permission_icons(sr)">
   %if sr.moderator:
-    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="/static/shield.png" />
+    <img class="sr-type-img" title="${_('moderator')}" alt="${_('moderator')}" src="${static('shield.png')}" />
   %endif
 
   %if sr.type in ("restricted", "private") and not sr.moderator:
@@ -80,21 +81,21 @@
        %if sr.contributor:
          alt="${_('approved submitter')}"
          title="${_('approved submitter')}"
-         src="/static/pencil.png"
+         src="${static('pencil.png')}"
        %else:
          alt="${_('not approved')}"
          title="${_('not approved')}"
-         src="/static/pencil-gray.png"
+         src="${static('pencil-gray.png')}"
        %endif
     />
   %endif 
 
   %if sr.type == "private":
-    <img class="sr-type-img" title="${_('private')}" alt="${_('private')}" src="/static/eye.png" />
+    <img class="sr-type-img" title="${_('private')}" alt="${_('private')}" src="${static('eye.png')}" />
   %endif
 
   %if sr.over_18:
-    <img class="sr-type-img" title="${_('over18')}" alt="${_('over18')}" src="/static/over18_icon.png" />
+    <img class="sr-type-img" title="${_('over18')}" alt="${_('over18')}" src="${static('over18_icon.png')}" />
   %endif
 
 </%def>
