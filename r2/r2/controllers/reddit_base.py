@@ -525,6 +525,7 @@ class MinimalController(BaseController):
                         c.lang,
                         c.content_langs,
                         request.host,
+                        c.secure,
                         c.cname,
                         request.fullpath,
                         c.over18,
