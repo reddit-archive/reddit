@@ -1196,9 +1196,7 @@ class ApiController(RedditController):
                 errors['BAD_CSS_NAME'] = _("bad image name")
         
         if c.site.images and add_image_to_sr:
-            if c.site.images.has_key(name):
-                errors['IMAGE_ERROR'] = _("An image with that name already exists")
-            elif c.site.get_num_images() >= g.max_sr_images:
+            if c.site.get_num_images() >= g.max_sr_images:
                 errors['IMAGE_ERROR'] = _("too many images (you only get %d)") % g.max_sr_images
 
         if any(errors.values()):

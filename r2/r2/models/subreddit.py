@@ -43,7 +43,6 @@ import os.path
 import random
 
 class SubredditExists(Exception): pass
-class ImageExists(Exception): pass
 
 class Subreddit(Thing, Printable):
     # Note: As of 2010/03/18, nothing actually overrides the static_path
@@ -582,15 +581,12 @@ class Subreddit(Thing, Printable):
         if max_num is not None and self.get_num_images() >= max_num:
             raise ValueError, "too many images"
         
-        if not self.images.has_key(name):
-            # copy and blank out the images list to flag as _dirty
-            l = self.images
-            self.images = None
-            # update the dictionary and rewrite to images attr
-            l[name] = url
-            self.images = l
-        else:
-            raise ImageExists, "image already exists"
+        # copy and blank out the images list to flag as _dirty
+        l = self.images
+        self.images = None
+        # update the dictionary and rewrite to images attr
+        l[name] = url
+        self.images = l
 
     def del_image(self, name):
         """
