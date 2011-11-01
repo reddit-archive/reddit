@@ -36,6 +36,7 @@ from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
+from r2.lib.stats import Stats
 
 class Globals(object):
 
@@ -72,6 +73,7 @@ class Globals(object):
     float_props = ['min_promote_bid',
                    'max_promote_bid',
                    'usage_sampling',
+                   'statsd_sample_rate',
                    ]
 
     bool_props = ['debug', 'translator',
@@ -366,6 +368,9 @@ class Globals(object):
             self.log.error("reddit app %s:%s started %s at %s" %
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
+
+        self.stats = Stats(global_conf.get('statsd_addr'),
+                           global_conf.get('statsd_sample_rate'))
 
 
     @staticmethod

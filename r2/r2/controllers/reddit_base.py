@@ -25,7 +25,7 @@ from pylons.controllers.util import abort, redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
-from r2.lib import pages, utils, filters, amqp
+from r2.lib import pages, utils, filters, amqp, stats
 from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, ip_and_slash16
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
@@ -631,22 +631,20 @@ class MinimalController(BaseController):
                                     domain  = v.domain,
                                     expires = v.expires)
 
-        if g.usage_sampling <= 0.0:
-            return
+        end_time = datetime.now(g.tz)
 
+        if ('pylons.routes_dict' in request.environ and
+            'action' in request.environ['pylons.routes_dict']):
+            action = str(request.environ['pylons.routes_dict']['action'])
+        else:
+            action = "unknown"
+            log_text("unknown action", "no action for %r" % path_info,
+                     "warning")
         if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
-            if ('pylons.routes_dict' in request.environ and
-                'action' in request.environ['pylons.routes_dict']):
-                action = str(request.environ['pylons.routes_dict']['action'])
-            else:
-                action = "unknown"
-                log_text("unknown action",
-                         "no action for %r" % path_info,
-                         "warning")
 
             amqp.add_kw("usage_q",
                         start_time = c.start_time,
-                        end_time = datetime.now(g.tz),
+                        end_time = end_time,
                         sampling_rate = g.usage_sampling,
                         action = action)
 
@@ -655,6 +653,10 @@ class MinimalController(BaseController):
         # the mean time so that we don't have dead objects hanging
         # around taking up memory
         g.reset_caches()
+
+        # push data to statsd
+        g.stats.transact(action, (end_time - c.start_time).total_seconds())
+        
 
     def abort404(self):
         abort(404, "not found")
