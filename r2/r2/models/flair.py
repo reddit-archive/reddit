@@ -33,6 +33,9 @@ from r2.lib.utils import to36
 from account import Account
 from subreddit import Subreddit
 
+USER_FLAIR = 'USER_FLAIR'
+LINK_FLAIR = 'LINK_FLAIR'
+
 class Flair(Relation(Subreddit, Account)):
     @classmethod
     def store(cls, sr, account, text = None, css_class = None):
@@ -126,7 +129,7 @@ class FlairTemplate(tdb_cassandra.Thing):
 
 
 class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
-    """A list of FlairTemplate IDs for a subreddit.
+    """Lists of FlairTemplate IDs for a subreddit.
 
     The FlairTemplate references are stored as an arbitrary number of attrs.
     The lexicographical ordering of these attr names gives the ordering for
@@ -139,10 +142,13 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
     _use_db = True
     _connection_pool = 'main'
 
-    _key_prefix = 'ft_'
+    _key_prefixes = {
+        USER_FLAIR: 'ft_',
+        LINK_FLAIR: 'link_ft_',
+    }
 
     @classmethod
-    def _new(cls, sr_id):
+    def _new(cls, sr_id, flair_type=USER_FLAIR):
         idx = cls(_id=to36(sr_id), sr_id=sr_id)
         idx._commit()
         return idx
@@ -157,63 +163,71 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
             raise
 
     @classmethod
-    def create_template(cls, sr_id, text='', css_class='', text_editable=False):
+    def create_template(cls, sr_id, text='', css_class='', text_editable=False,
+                        flair_type=USER_FLAIR):
         idx = cls.by_sr(sr_id, create=True)
 
-        if len(idx._index_keys()) >= cls.MAX_FLAIR_TEMPLATES:
+        if len(idx._index_keys(flair_type)) >= cls.MAX_FLAIR_TEMPLATES:
             raise OverflowError
 
         ft = FlairTemplate._new(text=text, css_class=css_class,
                                 text_editable=text_editable)
-        idx.insert(ft._id)
+        idx.insert(ft._id, flair_type=flair_type)
         return ft
 
     @classmethod
-    def get_template_ids(cls, sr_id):
+    def get_template_ids(cls, sr_id, flair_type=USER_FLAIR):
         try:
-            return list(cls.by_sr(sr_id))
+            return list(cls.by_sr(sr_id).iter_template_ids(flair_type))
         except tdb_cassandra.NotFound:
             return []
 
     @classmethod
-    def get_template(cls, sr_id, ft_id):
-        if ft_id not in cls.get_template_ids(sr_id):
-            return None
-        return FlairTemplate._byID(ft_id)
+    def get_template(cls, sr_id, ft_id, flair_type=None):
+        if flair_type:
+            flair_types = [flair_type]
+        else:
+            flair_types = [USER_FLAIR, LINK_FLAIR]
+        for flair_type in flair_types:
+            if ft_id in cls.get_template_ids(sr_id, flair_type=flair_type):
+                return FlairTemplate._byID(ft_id)
+        return None
 
     @classmethod
-    def clear(cls, sr_id):
+    def clear(cls, sr_id, flair_type=USER_FLAIR):
         try:
             idx = cls.by_sr(sr_id)
         except tdb_cassandra.NotFound:
             # Everything went better than expected.
             return
 
-        for k in idx._index_keys():
+        for k in idx._index_keys(flair_type):
             del idx[k]
             # TODO: delete the orphaned FlairTemplate row
 
         idx._commit()
 
-    def _index_keys(self):
+    def _index_keys(self, flair_type):
         keys = set(self._dirties.iterkeys())
         keys |= frozenset(self._orig.iterkeys())
         keys -= self._deletes
-        return [k for k in keys if k.startswith(self._key_prefix)]
+        key_prefix = self._key_prefixes[flair_type]
+        return [k for k in keys if k.startswith(key_prefix)]
 
     @classmethod
-    def _make_index_key(cls, position):
-        return '%s%08d' % (cls._key_prefix, position)
+    def _make_index_key(cls, position, flair_type):
+        return '%s%08d' % (cls._key_prefixes[flair_type], position)
 
-    def __iter__(self):
-        return (getattr(self, key) for key in sorted(self._index_keys()))
+    def iter_template_ids(self, flair_type):
+        return (getattr(self, key)
+                for key in sorted(self._index_keys(flair_type)))
 
-    def insert(self, ft_id, position=None):
+    def insert(self, ft_id, position=None, flair_type=USER_FLAIR):
         """Insert template reference into index at position.
 
         A position value of None means to simply append.
         """
-        ft_ids = list(self)
+        ft_ids = self.iter_template_ids(flair_type)
         if position is None:
             position = len(ft_ids)
         if position < 0 or position > len(ft_ids):
@@ -221,14 +235,25 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
         ft_ids.insert(position, ft_id)
 
         # Rewrite ALL the things.
-        for k in self._index_keys():
+        for k in self._index_keys(flair_type):
             del self[k]
         for i, ft_id in enumerate(ft_ids):
-            setattr(self, self._make_index_key(i), ft_id)
+            setattr(self, self._make_index_key(i, flair_type), ft_id)
         self._commit()
 
-    def delete_by_id(self, ft_id):
-        for key in self._index_keys():
+    def delete_by_id(self, ft_id, flair_type=None):
+        if flair_type:
+            flair_types = [flair_type]
+        else:
+            flair_types = [USER_FLAIR, LINK_FLAIR]
+        for flair_type in flair_types:
+            if self._delete_by_id(ft_id, flair_type):
+                return True
+        g.log.debug("couldn't find %s to delete", ft_id)
+        return False
+
+    def _delete_by_id(self, ft_id, flair_type):
+        for key in self._index_keys(flair_type):
             ft = getattr(self, key)
             if ft == ft_id:
                 # TODO: delete the orphaned FlairTemplate row
@@ -236,5 +261,4 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
                 del self[key]
                 self._commit()
                 return True
-        g.log.debug("couldn't find %s to delete", ft_id)
         return False
