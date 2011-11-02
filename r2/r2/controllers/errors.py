@@ -88,6 +88,7 @@ error_list = dict((
         ('TOO_OLD', _("that's a piece of history now; it's too late to reply to it")),
         ('BAD_CSS_NAME', _('invalid css name')),
         ('TOO_MUCH_FLAIR_CSS', _('too many flair css classes')),
+        ('BAD_FLAIR_TARGET', _('not a valid flair target')),
         ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
         ('CONFIRM', _("please confirm the form")),

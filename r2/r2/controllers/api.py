@@ -2122,8 +2122,7 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name", allow_deleted=True,
-                                         prefer_existing=True),
+                   user = VFlairAccount("name"),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     @api_doc(api_section.flair)
@@ -2173,8 +2172,7 @@ class ApiController(RedditController):
 
     @validatedForm(VFlairManager(),
                    VModhash(),
-                   user = VExistingUname("name", allow_deleted=True,
-                                         prefer_existing=True))
+                   user = VFlairAccount("name"))
     @api_doc(api_section.flair)
     def POST_deleteflair(self, form, jquery, user):
         # Check validation.
@@ -2216,8 +2214,7 @@ class ApiController(RedditController):
                 line_result.error('row', 'improperly formatted row, ignoring')
                 continue
 
-            user = VExistingUname('name', allow_deleted=True,
-                                  prefer_existing=True).run(name)
+            user = VFlairAccount('name').run(name)
             if not user:
                 line_result.error('user',
                                   "unable to resolve user `%s', ignoring"
@@ -2296,8 +2293,7 @@ class ApiController(RedditController):
 
     @paginated_listing(max_page_size=1000)
     @validate(VFlairManager(),
-              user = VOptionalExistingUname('name', allow_deleted=True,
-                                            prefer_existing=True))
+              user = VFlairAccount('name'))
     @api_doc(api_section.flair)
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
@@ -2381,7 +2377,7 @@ class ApiController(RedditController):
                          details='flair_clear_template')
 
     @validate(VUser(),
-              user = VOptionalExistingUname('name'))
+              user = VFlairAccount('name'))
     def POST_flairselector(self, user):
         if user and not (c.user_is_admin or c.site.is_moderator(c.user)):
             # ignore user parameter if c.user is not mod/admin
@@ -2390,9 +2386,9 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   user = VOptionalExistingUname('name'),
+                   user = VFlairAccount('name'),
                    flair_template = VFlairTemplateByID('flair_template_id'),
-                   text = VFlairText("text"))
+                   text = VFlairText('text'))
     @api_doc(api_section.flair)
     def POST_selectflair(self, form, jquery, user, flair_template, text):
         if not flair_template:
