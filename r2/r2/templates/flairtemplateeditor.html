@@ -29,6 +29,7 @@
     %if thing.id:
       <input type="hidden" name="flair_template_id" value="${thing.id}" />
     %endif
+    <input type="hidden" name="flair_type" value="${thing.flair_type}" />
     <span class="flaircell flairsample-${thing.position} tagline">
       %if thing.text or thing.css_class:
         ${unsafe(thing.sample.render())}

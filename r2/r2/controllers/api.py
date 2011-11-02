@@ -2304,10 +2304,12 @@ class ApiController(RedditController):
                    flair_template = VFlairTemplateByID('flair_template_id'),
                    text = VFlairText('text'),
                    css_class = VFlairCss('css_class'),
-                   text_editable = VBoolean('text_editable'))
+                   text_editable = VBoolean('text_editable'),
+                   flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
+                                       default=USER_FLAIR))
     @api_doc(api_section.flair)
     def POST_flairtemplate(self, form, jquery, flair_template, text,
-                           css_class, text_editable):
+                           css_class, text_editable, flair_type):
         if text is None:
             text = ''
         if css_class is None:
@@ -2332,7 +2334,8 @@ class ApiController(RedditController):
             try:
                 flair_template = FlairTemplateBySubredditIndex.create_template(
                     c.site._id, text=text, css_class=css_class,
-                    text_editable=text_editable)
+                    text_editable=text_editable,
+                    flair_type=flair_type)
             except OverflowError:
                 form.set_html(".status:first", _('max flair templates reached'))
                 return
@@ -2342,15 +2345,18 @@ class ApiController(RedditController):
         # Push changes back to client.
         if new:
             jquery('#empty-flair-template').before(
-                FlairTemplateEditor(flair_template).render(style='html'))
+                FlairTemplateEditor(flair_template, flair_type)
+                .render(style='html'))
             empty_template = FlairTemplate()
             empty_template._committed = True  # to disable unnecessary warning
             jquery('#empty-flair-template').html(
-                FlairTemplateEditor(empty_template).render(style='html'))
+                FlairTemplateEditor(empty_template, flair_type)
+                .render(style='html'))
             form.set_html('.status', _('saved'))
         else:
             jquery('#%s' % flair_template._id).html(
-                FlairTemplateEditor(flair_template).render(style='html'))
+                FlairTemplateEditor(flair_template, flair_type)
+                .render(style='html'))
             form.set_html('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)

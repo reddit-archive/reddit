@@ -25,6 +25,7 @@ from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
+from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models.oauth2 import OAuth2Client
 from r2.models import ModAction
 from r2.models import Thing
@@ -2497,7 +2498,10 @@ class FlairPane(Templated):
         tabs = [
             ('grant', _('grant flair'), FlairList(num, after, reverse, name,
                                                   user)),
-            ('templates', _('edit flair templates'), FlairTemplateList()),
+            ('templates', _('user flair templates'),
+             FlairTemplateList(USER_FLAIR)),
+            ('link_templates', _('link flair templates'),
+             FlairTemplateList(LINK_FLAIR)),
         ]
 
         Templated.__init__(
@@ -2590,21 +2594,27 @@ class FlairCsv(Templated):
         return self.results_by_line[-1]
 
 class FlairTemplateList(Templated):
+    def __init__(self, flair_type):
+        Templated.__init__(self, flair_type=flair_type)
+
     @property
     def templates(self):
-        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        ids = FlairTemplateBySubredditIndex.get_template_ids(
+                c.site._id, flair_type=self.flair_type)
         fts = FlairTemplate._byID(ids)
-        return [FlairTemplateEditor(fts[i]) for i in ids]
+        return [FlairTemplateEditor(fts[i], self.flair_type) for i in ids]
 
 class FlairTemplateEditor(Templated):
-    def __init__(self, flair_template):
+    def __init__(self, flair_template, flair_type):
         Templated.__init__(self,
                            id=flair_template._id,
                            text=flair_template.text,
                            css_class=flair_template.css_class,
                            text_editable=flair_template.text_editable,
-                           sample=FlairTemplateSample(flair_template),
-                           position=getattr(c.site, 'flair_position', 'right'))
+                           sample=FlairTemplateSample(flair_template,
+                                                      flair_type),
+                           position=getattr(c.site, 'flair_position', 'right'),
+                           flair_type=flair_type)
 
     def render(self, *a, **kw):
         res = Templated.render(self, *a, **kw)
@@ -2614,11 +2624,16 @@ class FlairTemplateEditor(Templated):
 
 class FlairTemplateSample(Templated):
     """Like a read-only version of FlairTemplateEditor."""
-    def __init__(self, flair_template):
-        wrapped_user = WrappedUser(c.user, subreddit=c.site, force_show_flair=True,
-                                   flair_template=flair_template)
+    def __init__(self, flair_template, flair_type):
+        if flair_type is USER_FLAIR:
+            wrapped_user = WrappedUser(c.user, subreddit=c.site,
+                                       force_show_flair=True,
+                                       flair_template=flair_template)
+        else:
+            wrapped_user = Link(flair_text=flair_template.text,
+                                flair_css_class=flair_template.css_class)
         Templated.__init__(self, flair_template_id=flair_template._id,
-                           wrapped_user=wrapped_user)
+                           wrapped_user=wrapped_user, flair_type=flair_type)
 
 class FlairPrefs(CachedTemplate):
     def __init__(self):
