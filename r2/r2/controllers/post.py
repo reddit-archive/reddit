@@ -135,12 +135,12 @@ class PostController(ApiController):
         return BoringPage(_("over 18?"),
                           content = Over18()).render()
 
-    @validate(over18 = nop('over18'),
-              uh = nop('uh'),
+    @validate(VModhash(fatal=False),
+              over18 = nop('over18'),
               dest = VDestination(default = '/'))
-    def POST_over18(self, over18, uh, dest):
+    def POST_over18(self, over18, dest):
         if over18 == 'yes':
-            if c.user_is_loggedin and c.user.valid_hash(uh):
+            if c.user_is_loggedin and not c.errors:
                 c.user.pref_over_18 = True
                 c.user._commit()
             else:
