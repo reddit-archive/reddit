@@ -577,6 +577,10 @@ class VUser(Validator):
 
 class VModhash(Validator):
     default_param = 'uh'
+    def __init__(self, param=None, fatal=True, *a, **kw):
+        Validator.__init__(self, param, *a, **kw)
+        self.fatal = fatal
+
     def run(self, uh):
         pass
 
