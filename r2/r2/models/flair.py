@@ -213,18 +213,18 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
 
         A position value of None means to simply append.
         """
-        keys = self._index_keys()
+        ft_ids = list(self)
         if position is None:
-            position = len(keys)
-        if position < 0 or position > len(keys):
+            position = len(ft_ids)
+        if position < 0 or position > len(ft_ids):
             raise IndexError(position)
+        ft_ids.insert(position, ft_id)
 
-        # Move items after position to the right by one.
-        for i in xrange(len(keys), position, -1):
-            setattr(self, self._make_index_key(i), getattr(self, keys[i - 1]))
-
-        # Assign to position and commit.
-        setattr(self, self._make_index_key(position), ft_id)
+        # Rewrite ALL the things.
+        for k in self._index_keys():
+            del self[k]
+        for i, ft_id in enumerate(ft_ids):
+            setattr(self, self._make_index_key(i), ft_id)
         self._commit()
 
     def delete_by_id(self, ft_id):
