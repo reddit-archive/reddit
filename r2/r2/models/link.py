@@ -61,7 +61,9 @@ class Link(Thing, Printable):
                      disable_comments = False,
                      selftext = '',
                      noselfreply = False,
-                     ip = '0.0.0.0')
+                     ip = '0.0.0.0',
+                     flair_text = None,
+                     flair_css_class = None)
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
@@ -255,6 +257,8 @@ class Link(Thing, Printable):
         elif style == "compact":
             s.append(c.permalink_page)
         s.append(getattr(wrapped, 'media_object', {}))
+        s.append(wrapped.flair_text)
+        s.append(wrapped.flair_css_class)
         return s
 
     def make_permalink(self, sr, force_domain = False):

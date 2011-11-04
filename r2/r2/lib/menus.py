@@ -130,7 +130,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      contributors = _("edit approved submitters"),
                      banned       = _("ban users"),
                      banusers     = _("ban users"),
-                     flair        = _("edit user flair"),
+                     flair        = _("edit flair"),
                      log          = _("moderation log"),
                      modqueue     = _("moderation queue"),
 

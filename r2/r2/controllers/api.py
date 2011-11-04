@@ -2383,21 +2383,34 @@ class ApiController(RedditController):
                          details='flair_clear_template')
 
     @validate(VUser(),
-              user = VFlairAccount('name'))
-    def POST_flairselector(self, user):
+              user = VFlairAccount('name'),
+              link = VFlairLink('link'))
+    def POST_flairselector(self, user, link):
+        if link:
+            return FlairSelector(link=link).render()
         if user and not (c.user_is_admin or c.site.is_moderator(c.user)):
             # ignore user parameter if c.user is not mod/admin
             user = None
-        return FlairSelector(user).render()
+        return FlairSelector(user=user).render()
 
     @validatedForm(VUser(),
                    VModhash(),
                    user = VFlairAccount('name'),
-                   flair_template = VFlairTemplateByID('flair_template_id'),
+                   link = VFlairLink('link'),
+                   flair_template_id = nop('flair_template_id'),
                    text = VFlairText('text'))
     @api_doc(api_section.flair)
-    def POST_selectflair(self, form, jquery, user, flair_template, text):
-        if not flair_template:
+    def POST_selectflair(self, form, jquery, user, link, flair_template_id,
+                         text):
+        if link:
+            flair_type = LINK_FLAIR
+        else:
+            flair_type = USER_FLAIR
+
+        try:
+            flair_template = FlairTemplateBySubredditIndex.get_template(
+                c.site._id, flair_template_id, flair_type=flair_type)
+        except NotFound:
             # TODO: serve error to client
             g.log.debug('invalid flair template for subreddit %s', c.site._id)
             return
@@ -2420,26 +2433,33 @@ class ApiController(RedditController):
 
         css_class = flair_template.css_class
 
-        c.site.add_flair(user)
-        setattr(user, 'flair_%s_text' % c.site._id, text)
-        setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
-        user._commit()
+        if flair_type == USER_FLAIR:
+            c.site.add_flair(user)
+            setattr(user, 'flair_%s_text' % c.site._id, text)
+            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+            user._commit()
 
-        if (c.site.is_moderator(c.user) or c.user_is_admin) and c.user != user:
-            ModAction.create(c.site, c.user, action='editflair', target=user, 
-                             details='flair_edit')
+            if ((c.site.is_moderator(c.user) or c.user_is_admin)
+                and c.user != user):
+                ModAction.create(c.site, c.user, action='editflair',
+                                 target=user, details='flair_edit')
 
-        # Push some client-side updates back to the browser.
-        u = WrappedUser(user, force_show_flair=True,
-                        flair_text_editable=flair_template.text_editable,
-                        include_flair_selector=True)
-        flair = u.render(style='html')
-        jquery('.tagline .flairselectable.id-%s'
-               % user._fullname).parent().html(flair)
-        jquery('#flairrow_%s input[name="text"]' % user._id36).data(
-            'saved', text).val(text)
-        jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
-            'saved', css_class).val(css_class)
+            # Push some client-side updates back to the browser.
+            u = WrappedUser(user, force_show_flair=True,
+                            flair_text_editable=flair_template.text_editable,
+                            include_flair_selector=True)
+            flair = u.render(style='html')
+            jquery('.tagline .flairselectable.id-%s'
+                % user._fullname).parent().html(flair)
+            jquery('#flairrow_%s input[name="text"]' % user._id36).data(
+                'saved', text).val(text)
+            jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
+                'saved', css_class).val(css_class)
+        elif flair_type == LINK_FLAIR:
+            # TODO: record mod action
+            link.flair_text = text
+            link.flair_css_class = css_class
+            link._commit()
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award=VByName("fullname"),

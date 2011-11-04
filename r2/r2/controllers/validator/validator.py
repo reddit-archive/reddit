@@ -1660,10 +1660,24 @@ class VFlairAccount(VRequired):
             return None
 
     def run(self, name):
+        if not name:
+            return self.error()
         return (
             self._lookup(name, False)
             or self._lookup(name, True)
             or self.error())
+
+class VFlairLink(VRequired):
+    def __init__(self, item, *a, **kw):
+        VRequired.__init__(self, item, errors.BAD_FLAIR_TARGET, *a, **kw)
+
+    def run(self, name):
+        if not name:
+            return self.error()
+        try:
+            return Link._by_fullname(name, data=True)
+        except NotFound:
+            return self.error()
 
 class VFlairCss(VCssName):
     def __init__(self, param, max_css_classes=10, **kw):

@@ -29,5 +29,10 @@ from r2.models import USER_FLAIR, LINK_FLAIR
 %if thing.flair_type is USER_FLAIR:
   ${thing.wrapped_user}
 %elif thing.flair_type is LINK_FLAIR:
-  ${entry(thing.wrapped_user)}
+  <p class="title">
+    <span class="flair ${thing.flair_template.css_class}">
+      ${thing.flair_template.text}
+    </span>
+    <a class="title loggedin" href="javascript://">Link sample</a>
+  </p>
 %endif

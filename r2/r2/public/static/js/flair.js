@@ -165,9 +165,10 @@ $(function() {
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
 
-        var name = $(selector).siblings("form").find("input").val();
-        $.request("flairselector", {"name": name}, handleResponse, true,
-                  "html");
+        var target = $(selector).siblings("form").find("input");
+        var params = {};
+        params[target.attr("name")] = target.val();
+        $.request("flairselector", params, handleResponse, true, "html");
         return false;
     }
 
@@ -194,6 +195,7 @@ $(function() {
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 
     $(".tagline").delegate(".flairselectbtn", "click", openFlairSelector);
+    $(".entry").delegate(".flairselectbtn", "click", openFlairSelector);
 
     $(".flairselector .dropdown").click(toggleFlairSelector);
 });

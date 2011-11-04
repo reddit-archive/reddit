@@ -34,7 +34,8 @@ class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
-                 show_unmarknsfw = False, show_indict = False, is_link=False, **kw):
+                 show_unmarknsfw = False, show_indict = False, is_link=False,
+                 show_flair = False, **kw):
         show_ignore = (thing.show_reports or
                        (thing.reveal_trial_info and not thing.show_spam))
         approval_checkmark = getattr(thing, "approval_checkmark", None)
@@ -56,6 +57,7 @@ class PrintableButtons(Styled):
                         show_distinguish = show_distinguish,
                         show_marknsfw = show_marknsfw,
                         show_unmarknsfw = show_unmarknsfw,
+                        show_flair = show_flair,
                         **kw)
         
 class BanButtons(PrintableButtons):
@@ -88,6 +90,9 @@ class LinkButtons(PrintableButtons):
             show_unmarknsfw = True
         else:
             show_unmarknsfw = False
+
+        # add "or is_author" to allow submitters to edit flair on their links
+        show_flair = thing.can_ban
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
@@ -128,6 +133,7 @@ class LinkButtons(PrintableButtons):
                                   show_distinguish = show_distinguish,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
+                                  show_flair = show_flair,
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,

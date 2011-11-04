@@ -680,7 +680,11 @@ a.author { margin-right: 0.5em; }
     font-size: xx-small;
 }
 
-.link .flair {
+.title .flair {
+    font-size: small;
+}
+
+.link .tagline .flair {
     margin-top: -1px;
 }
 

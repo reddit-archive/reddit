@@ -78,8 +78,15 @@
   </ul>
  </%def>
 
+<%def name="flair()">
+  %if thing.flair_text or thing.flair_css_class:
+    <span class="flair ${thing.flair_css_class}">${thing.flair_text}</span>
+  %endif
+</%def>
+
 <%def name="entry()">
   <p class="title">
+    <%call expr="flair()" />
     <%call expr="make_link('title', 'title')">
       ${thing.title}
     </%call>

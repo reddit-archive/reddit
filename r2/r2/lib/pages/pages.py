@@ -2630,9 +2630,9 @@ class FlairTemplateSample(Templated):
                                        force_show_flair=True,
                                        flair_template=flair_template)
         else:
-            wrapped_user = Link(flair_text=flair_template.text,
-                                flair_css_class=flair_template.css_class)
-        Templated.__init__(self, flair_template_id=flair_template._id,
+            wrapped_user = None
+        Templated.__init__(self,
+                           flair_template=flair_template,
                            wrapped_user=wrapped_user, flair_type=flair_type)
 
 class FlairPrefs(CachedTemplate):
@@ -2654,17 +2654,25 @@ class FlairPrefs(CachedTemplate):
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
-    def __init__(self, user=None):
+    def __init__(self, user=None, link=None):
         if user is None:
             user = c.user
+        if link:
+            flair_type = LINK_FLAIR
+            target = link
+            attr_pattern = 'flair_%s'
+        else:
+            flair_type = USER_FLAIR
+            target = user
+            attr_pattern = 'flair_%s_%%s' % c.site._id
 
         position = getattr(c.site, 'flair_position', 'right')
 
-        attr_pattern = 'flair_%s_%%s' % c.site._id
-        text = getattr(user, attr_pattern % 'text', '')
-        css_class = getattr(user, attr_pattern % 'css_class', '')
+        text = getattr(target, attr_pattern % 'text', '')
+        css_class = getattr(target, attr_pattern % 'css_class', '')
 
-        ids = FlairTemplateBySubredditIndex.get_template_ids(c.site._id)
+        ids = FlairTemplateBySubredditIndex.get_template_ids(
+            c.site._id, flair_type)
         template_dict = FlairTemplate._byID(ids)
         templates = [template_dict[i] for i in ids]
         for template in templates:

@@ -66,6 +66,13 @@
   %if thing.show_unmarknsfw:
     <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw")}</li>
   %endif
+  %if thing.show_flair:
+    <li>
+      <a class="flairselectbtn" href="javascript://">${_('flair')}</a>
+      <div class="flairselector drop-choices"></div>
+      <form><input type="hidden" name="link" value="${thing.thing._fullname}"></form>
+    </li>
+  %endif
 </%def>
 
 <%def name="distinguish_setter(name, value=None)">
