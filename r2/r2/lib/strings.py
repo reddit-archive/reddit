@@ -27,7 +27,7 @@ random strings which can be different in each language, though the
 hooks to the UI are the same.
 """
 
-import helpers as h
+import r2.lib.helpers as h
 from pylons import g
 from pylons.i18n import _, ungettext
 import random, locale
@@ -379,3 +379,9 @@ rand_strings = RandomStringManager()
 
 rand_strings.add('sadmessages',   "Funny 500 page message", 10)
 rand_strings.add('create_reddit', "Reason to create a reddit", 20)
+
+
+def print_rand_strings():
+    for name, rand_string in rand_strings:
+        for string in rand_string:
+            print "_('" + string + "')"

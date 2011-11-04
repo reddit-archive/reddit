@@ -48,6 +48,9 @@ UPDATE_NAMES = $(PYTHON) $(package)/lib/static.py
 # files against the primary production.ini
 PRIVATEREPOS = $(shell $(PYTHON) -c 'exec "try: import r2admin; print r2admin.__path__[0]\nexcept:pass"')
 
+# If reddit-i18n repo is found, use that for r2.pot generation
+I18NPATH = $(shell $(PYTHON) -c 'exec "try: import reddit_i18n; print reddit_i18n.__path__[0]\nexcept ImportError: print \"r2/i18n\""')
+
 #------
 
 JSTARGETS   = $(foreach js,  $(js_targets) $(localized_js_targets),  $(static_dir)/$(js))
@@ -80,7 +83,7 @@ endif
 
 all:	pyx static names $(INIS)
 
-.PHONY: 	pyx js css rtl static names clean clean_static clean_pyx all
+.PHONY: 	pyx js css rtl static names i18n clean clean_static clean_pyx all
 
 $(NAMES): $(JSTARGETS) $(CSSTARGETS) $(RTLCSS) $(SPRITES)
 	$(UPDATE_NAMES) $(NAMES) $(NAMED)
@@ -121,8 +124,14 @@ rtl:		$(RTLCSS)
 
 names:		$(NAMES)
 
+# Not part of 'all' target as it doesn't need to be run for the site to work,
+# only when r2.pot needs updating
+i18n:
+	paster run run.ini r2/lib/strings.py -c "print_rand_strings()" > r2/lib/rand_strings.py
+	python setup.py extract_messages -o $(I18NPATH)/r2.pot
+
 clean: clean_static clean_pyx
-	rm -f $(INIS)
+	rm -f $(INIS) r2/lib/rand_strings.py
 
 clean_pyx:
 	rm -f $(PYXSO_FILES) $(PYXC_FILES)

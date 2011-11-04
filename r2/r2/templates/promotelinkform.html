@@ -39,6 +39,10 @@ ${unsafe(js.use('sponsored'))}
 </script>
 
 
+## Create a datepicker for a form. min/maxDateSrc are the id of the
+## element containing the min/max date - the '#' is added automatically
+## here (as a workaround for babel message extraction not handling it
+## properly if passed in when the function is called
 <%def name="datepicker(name, value, minDateSrc = '', maxDateSrc ='', initfuncname = '', min_date_offset=0)">
   <div class="date-input">
     <input name="${name}"
@@ -46,7 +50,7 @@ ${unsafe(js.use('sponsored'))}
     <div id="datepicker-${name}" class="datepicker"></div>
     <script type="text/javascript">
       ${initfuncname} = function() {
-          attach_calendar("#${name}", "${minDateSrc}", "${maxDateSrc}",
+          attach_calendar("#${name}", "#${minDateSrc}", "#${maxDateSrc}",
                           ${caller.body()}, ${min_date_offset})
       };
     </script>
@@ -101,7 +105,7 @@ ${unsafe(js.use('sponsored'))}
 	      %>
           <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
           <%self:datepicker name="startdate", value="${thing.startdate}"
-                            minDateSrc="#date-min" initfuncname="init_startdate">
+                            minDateSrc="date-min" initfuncname="init_startdate">
           function(elem) {
             var other = $("#enddate");
             if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
@@ -116,7 +120,7 @@ ${unsafe(js.use('sponsored'))}
           </%self:datepicker>
           -
           <%self:datepicker name="enddate", value="${thing.enddate}"
-                            minDateSrc="#startdate" initfuncname="init_enddate" min_date_offset="86400000">
+                            minDateSrc="startdate" initfuncname="init_enddate" min_date_offset="86400000">
             function(elem) { update_bid(elem); }
           </%self:datepicker>
           

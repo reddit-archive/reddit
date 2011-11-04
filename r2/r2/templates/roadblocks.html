@@ -48,7 +48,7 @@ ${unsafe(js.use('sponsored'))}
           ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
           ${error_field("BAD_DATE_RANGE", "enddate", "div")}
         <%p:datepicker name="startdate", value="${thing.startdate}"
-                          minDateSrc="#date-min" initfuncname="init_startdate">
+                          minDateSrc="date-min" initfuncname="init_startdate">
         function(elem) {
           var other = $("#enddate");
           if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
@@ -63,7 +63,7 @@ ${unsafe(js.use('sponsored'))}
         </%p:datepicker>
         -
         <%p:datepicker name="enddate", value="${thing.enddate}"
-                          minDateSrc="#startdate" initfuncname="init_enddate">
+                          minDateSrc="startdate" initfuncname="init_enddate">
           function(elem) { update_bid(elem); }
         </%p:datepicker>
        </td>

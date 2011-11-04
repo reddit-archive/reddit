@@ -53,7 +53,7 @@ NUM_FAILIENS = 3
 redditbroke =  \
 '''<html>
   <head>
-    <title>Reddit broke!</title>
+    <title>reddit broke!</title>
   </head>
   <body>
     <div style="margin: auto; text-align: center">
@@ -88,6 +88,9 @@ class ErrorController(RedditController):
     ErrorDocuments middleware in your config/middleware.py file.
     """
     allowed_render_styles = ('html', 'xml', 'js', 'embed', '', "compact", 'api')
+    # List of admins to blame (skip the first admin, "reddit")
+    # If list is empty, just blame "an admin"
+    admins = g.admins[1:] or ["an admin"]
     def __before__(self):
         try:
             c.error_page = True
@@ -163,6 +166,7 @@ class ErrorController(RedditController):
                 code = 404
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', "")
+            
             if srname:
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
@@ -178,7 +182,8 @@ class ErrorController(RedditController):
             elif code == 403:
                 return self.send403()
             elif code == 500:
-                return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages)
+                randmin = {'admin': rand.choice(self.admins)}
+                return redditbroke % (rand.randint(1,NUM_FAILIENS), rand_strings.sadmessages % randmin)
             elif code == 503:
                 return self.send503()
             elif code == 304:
