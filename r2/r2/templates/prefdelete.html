@@ -19,41 +19,59 @@
 ## All portions of the code written by CondeNet are Copyright (c) 2006-2010
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
+<%!
+   from r2.lib.filters import safemarkdown
+%>
 <%namespace file="utils.html" import="error_field"/>
 <%namespace name="utils" file="utils.html"/>
 
-<% import random %>
-<%def name="areyousure(name)">
-  <% yes, no = random.choice((("yes", "no"), ("no", "yes"))) %>
-  <% syes = _(yes) %>
-  <% sno = _(no) %>
-  
+<h1>${_("delete your reddit account")}</h1>
 
-  <div class="spacer">
-    <%utils:round_field title="${_('are you sure?')}">
-      <div class="rounded delete-field">
-        <input name="${name}" id="${name}yes" type="radio" value="${yes}"/>
-        <label for="${name}yes">${syes}</label>
+<form action="/post/delete" method="post"
+  onsubmit="${"return post_form(this, 'delete_user', function(x) {return '%s'})" % _("deleting...")}" id="pref-delete">
 
-        <br/>
-  
-        <input name="${name}" id="${name}no" type="radio" value="${no}"/>
-        <label for="${name}no">${sno}</label>
-      </div>
-    </%utils:round_field>
-  </div>  
-</%def>
+<div class="spacer">
+  <%utils:round_field title="${_('sorry to see you go!')}">
+    <div class="rounded white-field">
+      ${unsafe(safemarkdown(_(
+        " * if you're having a problem on reddit, please consider [contacting us](/feedback) about it before deleting your account.\n"
+        " * deleting your account will not delete the content of posts and comments you've made on reddit. to do so, please delete them individually."
+      )))}
+    </div>
+  </%utils:round_field>
+</div>
 
-<h1>${_("delete your reddit account? hope you have a good reason.")}</h1>
+<div class="spacer">
+  <%utils:round_field title="${_('why are you deleting this account?')}" description="(${_('optional')})">
+    <textarea name="delete_message" id="delete-message"></textarea>
+    ${error_field("TOO_LONG", "delete_message")}
+  </%utils:round_field>
+</div>
 
-<form action="/post/delete" method="post" 
-      onsubmit="${"return post_form(this, 'delete_user', function(x) {return '%s'})" % _("deleting...")}" id="pref-delete">
+<div class="spacer">
+  <%utils:round_field title="${_('account credentials')}" description="(${_('for security purposes')})" css_class="credentials">
+    <label for="delete-password">${_("username")}</label>
+    ${error_field("NOT_USER", "user")}
+    <input name="user" id="delete_user" type="text" />
+    <label for="delete-password">${_("password")}</label>
+    ${error_field("WRONG_PASSWORD", "passwd")}
+    <input name="passwd" id="delete_password" type="password" />
+  </%utils:round_field>
+</div>  
 
-${areyousure("areyousure1")}
-${areyousure("areyousure2")}
-${areyousure("areyousure3")}
+<div class="spacer">
+  <%utils:round_field title="${_('confirmation')}">
+    <div class="rounded white-field">
+      <input name="confirm" id="confirm-delete" type="checkbox"/>
+      <label for="confirm-delete">${_("I understand that deleted accounts are not recoverable.")}</label>
+    </div>
+    ${error_field("CONFIRM", "confirm")}
+  </%utils:round_field>
+</div>
 
-<input type="submit" class="btn" value="${_('delete')}"/>
-<span class="status"></span>
+<div class="spacer">
+  <button type="submit" class="btn">${_("delete account")}</button>
+  <span class="status"></span>
+  ${error_field("RATELIMIT", "vdelay")}
+</div>
 </form>

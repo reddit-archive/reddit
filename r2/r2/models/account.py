@@ -302,7 +302,8 @@ class Account(Thing):
         rel.note = note
         rel._commit()
 
-    def delete(self):
+    def delete(self, delete_message=None):
+        self.delete_message = delete_message
         self._deleted = True
         self._commit()
 

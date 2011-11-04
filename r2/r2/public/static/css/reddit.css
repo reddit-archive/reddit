@@ -2619,7 +2619,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 
 /* delete page */
-.delete-field {
+.white-field, .delete-field {
     background-color: white;
     padding: 10px;
 }
@@ -2630,6 +2630,29 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 .pretty-form .delete-field {
     background: transparent;
+}
+
+#pref-delete textarea#delete-message {
+    font-size: smaller;
+    height: 5em;
+}
+
+#pref-delete .md ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#pref-delete .md ul li {
+    margin: .5em 0;
+}
+
+#pref-delete .credentials input {
+    margin: .2em 0;
+}
+
+#pref-delete .credentials .error,
+#pref-delete .error.RATELIMIT {
+    margin-left: 5px;
 }
 
 /*pref page boxes*/

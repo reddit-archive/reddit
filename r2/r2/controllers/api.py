@@ -624,19 +624,27 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   areyousure1 = VOneOf('areyousure1', ('yes', 'no')),
-                   areyousure2 = VOneOf('areyousure2', ('yes', 'no')),
-                   areyousure3 = VOneOf('areyousure3', ('yes', 'no')))
-    def POST_delete_user(self, form, jquery,
-                         areyousure1, areyousure2, areyousure3):
+                   delete_message = VLength("delete_message", max_length=500),
+                   username = VRequired("user", errors.NOT_USER),
+                   user = VThrottledLogin(["user", "passwd"]),
+                   confirm = VBoolean("confirm"))
+    def POST_delete_user(self, form, jquery, delete_message, username, user, confirm):
         """
-        /prefs/delete.  Make sure there are three yes's.
+        /prefs/delete. Check the username/password and confirmation.
         """
-        if areyousure1 == areyousure2 == areyousure3 == 'yes':
-            c.user.delete()
-            form.redirect('/?deleted=true')
-        else:
-            form.set_html('.status', _("see? you don't really want to leave"))
+        if username != c.user.name:
+            c.errors.add(errors.NOT_USER, field="user")
+
+        if not confirm:
+            c.errors.add(errors.CONFIRM, field="confirm")
+
+        if not (form.has_errors('vdelay', errors.RATELIMIT) or
+                form.has_errors("user", errors.NOT_USER) or
+                form.has_errors("passwd", errors.WRONG_PASSWORD) or
+                form.has_errors("delete_message", errors.TOO_LONG) or
+                form.has_errors("confirm", errors.CONFIRM)):
+            c.user.delete(delete_message)
+            form.redirect("/?deleted=true")
 
     @noresponse(VUser(),
                 VModhash(),

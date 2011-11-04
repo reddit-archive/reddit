@@ -35,6 +35,7 @@ error_list = dict((
         ('USER_BLOCKED', _("you can't send to a user that you have blocked")),
         ('NO_THING_ID', _('id not specified')),
         ('NOT_AUTHOR', _("you can't do that")),
+        ('NOT_USER', _("you are not logged in as that user")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),
@@ -87,6 +88,7 @@ error_list = dict((
         ('TOO_MUCH_FLAIR_CSS', _('too many flair css classes')),
         ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
+        ('CONFIRM', _("please confirm the form")),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
