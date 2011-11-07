@@ -855,9 +855,29 @@ class VLogin(VRequired):
                 password = password.encode('utf8')
             user = valid_login(user_name, password)
         if not user:
-            return self.error()
+            self.error()
+            return False
         return user
 
+class VThrottledLogin(VLogin):
+    def __init__(self, *args, **kwargs):
+        VLogin.__init__(self, *args, **kwargs)
+        self.vdelay = VDelay("login")
+        self.vlength = VLength("user", max_length=100)
+        
+    def run(self, username, password):
+        username = self.vlength.run(username)
+
+        self.vdelay.run()
+        if (errors.RATELIMIT, "vdelay") in c.errors:
+            return False
+
+        user = VLogin.run(self, username, password)
+        if login_throttle(username, wrong_password=not user):
+            VDelay.record_violation("login", seconds=1, growfast=True)
+            c.errors.add(errors.WRONG_PASSWORD, field=self.param[1])
+        else:
+            return user
 
 class VSanitizedUrl(Validator):
     def run(self, url):

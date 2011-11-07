@@ -375,20 +375,11 @@ class ApiController(RedditController):
     def POST_register(self, *args, **kwargs):
         return self._handle_register(*args, **kwargs)
 
-    @validatedForm(VDelay("login"),
-                   user = VLogin(['user', 'passwd']),
-                   username = VLength('user', max_length = 100),
-                   rem    = VBoolean('rem'))
-    def _handle_login(self, form, responder, user, username, rem):
-        if responder.has_errors('vdelay', errors.RATELIMIT):
-            return
-
-        if login_throttle(username, wrong_password = responder.has_errors("passwd",
-                                                     errors.WRONG_PASSWORD)):
-            VDelay.record_violation("login", seconds=1, growfast=True)
-            c.errors.add(errors.WRONG_PASSWORD, field = "passwd")
-
-        if not responder.has_errors("passwd", errors.WRONG_PASSWORD):
+    @validatedForm(user = VThrottledLogin(['user', 'passwd']),
+                   rem = VBoolean('rem'))
+    def _handle_login(self, form, responder, user, rem):
+        if not (responder.has_errors("vdelay", errors.RATELIMIT) or
+                responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)
 
     @validatedForm(VCaptcha(),
