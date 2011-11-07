@@ -29,7 +29,7 @@ from pylons import g
 
 make_lock = g.make_lock
 
-def memoize(iden, time = 0):
+def memoize(iden, time = 0, stale=False):
     def memoize_fn(fn):
         from r2.lib.memoize import NoneResult
         def new_fn(*a, **kw):
@@ -40,7 +40,7 @@ def memoize(iden, time = 0):
 
             key = make_key(iden, *a, **kw)
 
-            res = None if update else cache.get(key)
+            res = None if update else cache.get(key, stale=stale)
 
             if res is None:
                 # not cached, we should calculate it.
