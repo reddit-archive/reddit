@@ -23,6 +23,7 @@ from r2.models import Subreddit, SubredditPopularityByLanguage
 from r2.lib.db.operators import desc
 from r2.lib import count
 from r2.lib.utils import fetch_things2, flatten
+from r2.lib.memoize import memoize
 
 # the length of the stored per-language list
 limit = 1000
@@ -88,6 +89,8 @@ def run():
     set_downs()
     cache_lists()
 
+# this relies on c.content_langs being sorted to increase cache hit rate
+@memoize('sr_pops.pop_reddits', time=3600, stale=True)
 def pop_reddits(langs, over18, over18_only, filter_allow_top = False):
     if not over18:
         over18_state = 'no_over18'
