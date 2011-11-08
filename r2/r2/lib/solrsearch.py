@@ -687,5 +687,6 @@ def run_changed(drain=False):
                 for i in delete_things:
                     s.delete(id=i._fullname)
 
+    @g.stats.amqp_processor
     amqp.handle_items('solrsearch_changes', _run_changed, limit=1000,
                       drain=drain)
