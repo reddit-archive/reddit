@@ -655,8 +655,8 @@ class MinimalController(BaseController):
         g.reset_caches()
 
         # push data to statsd
-        g.stats.transact(action, (end_time - c.start_time).total_seconds())
-        
+        g.stats.transact('web.%s' % action,
+                         (end_time - c.start_time).total_seconds())
 
     def abort404(self):
         abort(404, "not found")
