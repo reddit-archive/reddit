@@ -918,6 +918,7 @@ def run_new_comments(limit=1000):
     # this is done as a queue because otherwise the contention for the
     # lock on the query would be very high
 
+    @g.stats.amqp_processor
     def _run_new_comments(msgs, chan):
         fnames = [msg.body for msg in msgs]
 
@@ -935,6 +936,7 @@ def run_new_comments(limit=1000):
 def run_commentstree(limit=100):
     """Add new incoming comments to their respective comments trees"""
 
+    @g.stats.amqp_processor
     def _run_commentstree(msgs, chan):
         comments = Comment._by_fullname([msg.body for msg in msgs],
                                         data = True, return_dict = False)
@@ -1054,6 +1056,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
 def process_votes_single(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
 
+    @g.stats.amqp_processor
     def _handle_vote(msg):
         #assert(len(msgs) == 1)
         r = pickle.loads(msg.body)
@@ -1075,6 +1078,7 @@ def process_votes_single(qname, limit=0):
 
 def process_votes_multi(qname, limit=100):
     # limit is taken but ignored for backwards compatibility
+    @g.stats.amqp_processor
     def _handle_vote(msgs, chan):
         comments = []
 
