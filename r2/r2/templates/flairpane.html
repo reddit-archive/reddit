@@ -50,7 +50,7 @@
             ${_("allow users to assign their own flair")}
         </label>
       </%utils:line_field>
-      <%utils:line_field title="${_('flair position')}">
+      <%utils:line_field title="${_('user flair position')}">
         <table class="small-field">
           ${utils.radio_type('flair_position', "left", _("left"),
                              _("position flair to the left of the username"),
@@ -58,6 +58,16 @@
           ${utils.radio_type('flair_position', "right", _("right"),
                              _("position flair to the right of the username"),
                              thing.flair_position == 'right')}
+        </table>
+      </%utils:line_field>
+      <%utils:line_field title="${_('link flair position')}">
+        <table class="small-field">
+          ${utils.radio_type('link_flair_position', "left", _("left"),
+                             _("position flair to the left of the link"),
+                             thing.link_flair_position == 'left')}
+          ${utils.radio_type('link_flair_position', "right", _("right"),
+                             _("position flair to the right of the link"),
+                             thing.link_flair_position == 'right')}
         </table>
       </%utils:line_field>
       <div class="save-button">

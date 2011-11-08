@@ -165,9 +165,11 @@ $(function() {
                  ($(button).position().left + $(button).width() - 18) + "px")
             .css("top", $(button).position().top + "px");
 
-        var target = $(selector).siblings("form").find("input");
         var params = {};
-        params[target.attr("name")] = target.val();
+        $(selector).siblings("form").find("input").each(
+            function(idx, inp) {
+                params[inp.name] = inp.value;
+            });
         $.request("flairselector", params, handleResponse, true, "html");
         return false;
     }

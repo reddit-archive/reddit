@@ -2509,6 +2509,7 @@ class FlairPane(Templated):
             tabs=TabbedPane(tabs),
             flair_enabled=c.site.flair_enabled,
             flair_position=c.site.flair_position,
+            link_flair_position=c.site.link_flair_position,
             flair_self_assign_enabled=c.site.flair_self_assign_enabled)
 
 class FlairList(Templated):
@@ -2654,7 +2655,7 @@ class FlairPrefs(CachedTemplate):
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
-    def __init__(self, user=None, link=None):
+    def __init__(self, user=None, link=None, site=None):
         if user is None:
             user = c.user
         if link:
@@ -2665,14 +2666,16 @@ class FlairSelector(CachedTemplate):
             flair_type = USER_FLAIR
             target = user
             attr_pattern = 'flair_%s_%%s' % c.site._id
+        if site is None:
+            site = c.site
 
-        position = getattr(c.site, 'flair_position', 'right')
+        position = getattr(site, 'flair_position', 'right')
 
         text = getattr(target, attr_pattern % 'text', '')
         css_class = getattr(target, attr_pattern % 'css_class', '')
 
         ids = FlairTemplateBySubredditIndex.get_template_ids(
-            c.site._id, flair_type)
+            site._id, flair_type)
         template_dict = FlairTemplate._byID(ids)
         templates = [template_dict[i] for i in ids]
         for template in templates:
@@ -2682,12 +2685,12 @@ class FlairSelector(CachedTemplate):
         else:
              matching_template = None
 
-        admin = bool(c.user_is_admin or c.site.is_moderator(c.user))
+        admin = bool(c.user_is_admin or site.is_moderator(c.user))
 
-        if c.site.flair_self_assign_enabled or admin:
+        if site.flair_self_assign_enabled or admin:
             choices = [
                 WrappedUser(
-                    user, subreddit=c.site, force_show_flair=True,
+                    user, subreddit=site, force_show_flair=True,
                     flair_template=template,
                     flair_text_editable=admin or template.text_editable)
                 for template in templates]
@@ -2701,8 +2704,7 @@ class FlairSelector(CachedTemplate):
                         choice.flair_text = text
                     break
 
-        wrapped_user = WrappedUser(user, subreddit=c.site,
-                                   force_show_flair=True)
+        wrapped_user = WrappedUser(user, subreddit=site, force_show_flair=True)
 
         Templated.__init__(self, text=text, css_class=css_class,
                            position=position, choices=choices,

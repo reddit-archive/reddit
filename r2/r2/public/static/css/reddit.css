@@ -681,7 +681,7 @@ a.author { margin-right: 0.5em; }
 }
 
 .title .flair {
-    font-size: small;
+    font-size: x-small;
 }
 
 .link .tagline .flair {
@@ -802,7 +802,13 @@ a.author { margin-right: 0.5em; }
 
 .embededmedia { margin-top: 5px; margin-left: 60px; }
 
-.thing .title { color: blue; padding: 0px; overflow: hidden; }
+.thing .title {
+    color: blue;
+    margin-right: .4em;
+    padding: 0px;
+    overflow: hidden;
+}
+
 .thing .title:visited { color: #551a8b }
 .thing .title.click { color: #551a8b } 
 

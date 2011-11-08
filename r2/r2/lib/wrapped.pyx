@@ -464,6 +464,7 @@ class CachedTemplate(Templated):
         if c.user and hasattr(c.site, '_id'):
             keys.extend([
                 c.site.flair_enabled, c.site.flair_position,
+                c.site.link_flair_position,
                 c.user.flair_enabled_in_sr(c.site._id),
                 c.user.pref_show_flair])
         keys = [make_cachable(x, *a) for x in keys]

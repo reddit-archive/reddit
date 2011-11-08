@@ -86,10 +86,15 @@
 
 <%def name="entry()">
   <p class="title">
-    <%call expr="flair()" />
+    %if c.site.link_flair_position == 'left':
+      <%call expr="flair()" />
+    %endif
     <%call expr="make_link('title', 'title')">
       ${thing.title}
     </%call>
+    %if c.site.link_flair_position == 'right':
+      <%call expr="flair()" />
+    %endif
     %if getattr(thing, "approval_checkmark", None):
         <img class="approval-checkmark" title="${thing.approval_checkmark}"
              src="${static('green-check.png')}"

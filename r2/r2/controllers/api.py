@@ -2272,10 +2272,11 @@ class ApiController(RedditController):
         VModhash(),
         flair_enabled = VBoolean("flair_enabled"),
         flair_position = VOneOf("flair_position", ("left", "right")),
+        link_flair_position = VOneOf("link_flair_position", ("left", "right")),
         flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
     @api_doc(api_section.flair)
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
-                         flair_self_assign_enabled):
+                         link_flair_position, flair_self_assign_enabled):
         if c.site.flair_enabled != flair_enabled:
             c.site.flair_enabled = flair_enabled
             ModAction.create(c.site, c.user, action='editflair',
@@ -2284,6 +2285,10 @@ class ApiController(RedditController):
             c.site.flair_position = flair_position
             ModAction.create(c.site, c.user, action='editflair',
                              details='flair_position')
+        if c.site.link_flair_position != link_flair_position:
+            c.site.link_flair_position = link_flair_position
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='link_flair_position')
         if c.site.flair_self_assign_enabled != flair_self_assign_enabled:
             c.site.flair_self_assign_enabled = flair_self_assign_enabled
             ModAction.create(c.site, c.user, action='editflair',
@@ -2387,7 +2392,11 @@ class ApiController(RedditController):
               link = VFlairLink('link'))
     def POST_flairselector(self, user, link):
         if link:
-            return FlairSelector(link=link).render()
+            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
+                site = c.site
+            else:
+                site = Subreddit._byID(link.sr_id, data=True)
+            return FlairSelector(link=link, site=site).render()
         if user and not (c.user_is_admin or c.site.is_moderator(c.user)):
             # ignore user parameter if c.user is not mod/admin
             user = None
@@ -2404,19 +2413,24 @@ class ApiController(RedditController):
                          text):
         if link:
             flair_type = LINK_FLAIR
+            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
+                site = c.site
+            else:
+                site = Subreddit._byID(link.sr_id, data=True)
         else:
             flair_type = USER_FLAIR
+            site = c.site
 
         try:
             flair_template = FlairTemplateBySubredditIndex.get_template(
-                c.site._id, flair_template_id, flair_type=flair_type)
+                site._id, flair_template_id, flair_type=flair_type)
         except NotFound:
             # TODO: serve error to client
-            g.log.debug('invalid flair template for subreddit %s', c.site._id)
+            g.log.debug('invalid flair template for subreddit %s', site._id)
             return
 
-        if not c.site.is_moderator(c.user) and not c.user_is_admin:
-            if not c.site.flair_self_assign_enabled:
+        if not site.is_moderator(c.user) and not c.user_is_admin:
+            if not site.flair_self_assign_enabled:
                 # TODO: serve error to client
                 g.log.debug('flair self-assignment not permitted')
                 return
@@ -2434,9 +2448,9 @@ class ApiController(RedditController):
         css_class = flair_template.css_class
 
         if flair_type == USER_FLAIR:
-            c.site.add_flair(user)
-            setattr(user, 'flair_%s_text' % c.site._id, text)
-            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+            site.add_flair(user)
+            setattr(user, 'flair_%s_text' % site._id, text)
+            setattr(user, 'flair_%s_css_class' % site._id, css_class)
             user._commit()
 
             if ((c.site.is_moderator(c.user) or c.user_is_admin)
