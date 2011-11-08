@@ -25,15 +25,13 @@
    from r2.lib.utils import query_string
    from r2.lib.filters import _force_unicode
  %>
-<%namespace file="utils.html" import="js_preamble"/>
+<%namespace file="utils.html" import="js_setup"/>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/html4/frameset.dtd">
 <html>
   <head>
     <title>${thing.title}</title>
     ${unsafe(js.use('jquery', 'mobile'))}
-    <script type="text/javascript">
-      ${js_preamble()}
-    </script> 
+    ${js_setup()}
     <link rel="stylesheet" href="${static('compact.css')}"
           type="text/css" media="screen" />
   </head>

@@ -374,46 +374,47 @@ ${unsafe(txt)}
 </%def>
 
 
-<%def name="js_preamble()">
-  <%
+<%def name="js_setup()">
+   <%
      from r2.lib.template_helpers import get_domain
      use_https_endpoint = request.host == g.domain or request.host.endswith("." + g.domain)
    %>
-   r = {};
-   r.config = reddit = {
-      /* is the user logged in */
-      logged: ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"},
-      /* the subreddit's name (for posts) */
-      post_site: "${c.site.name if not c.default_sr else ''}",
-      /* are we in an iframe */
-      cnameframe: ${"true" if (c.cname and not c.authorized_cname) else "false"},
-      /* this page's referer */
-      referer: "${request.referer or ""}",
-      /* the user's voting hash */
-      modhash: ${"'%s'" % c.modhash or "false"},
-      /* the current rendering style */
-      renderstyle: "${c.render_style}",
-      /* current domain */
-      cur_domain: "${get_domain(cname = c.frameless_cname, subreddit = False,
-                                no_www = True)}",
-      /* where do ajax request go? */
-      ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
-      extension: '${c.extension}',
-      https_endpoint: '${g.https_endpoint if use_https_endpoint else ""}',
-      /* debugging? */
-      debug: ${"true" if g.debug else "false"}, 
-      vl: {},
-      sr: {},
-      status_msg: {
-        fetching: "${_('fetching title...')}",
-        submitting: "${_('submitting...')}",
-        loading: "${_('loading...')}"
-      },
-      is_fake: ${'true' if isinstance(c.site, FakeSubreddit) else 'false'},
-      tracking_domain: '${g.tracking_domain}',
-      adtracker_url: '${g.adtracker_url}',
-      clicktracker_url: '${g.clicktracker_url}'
-   };
+   <script type="text/javascript" id="config">
+     r.setup({
+        /* is the user logged in */
+        logged: ${c.user_is_loggedin and ("'%s'" % c.user.name) or "false"},
+        /* the subreddit's name (for posts) */
+        post_site: "${c.site.name if not c.default_sr else ''}",
+        /* are we in an iframe */
+        cnameframe: ${"true" if (c.cname and not c.authorized_cname) else "false"},
+        /* this page's referer */
+        referer: "${request.referer or ""}",
+        /* the user's voting hash */
+        modhash: ${"'%s'" % c.modhash or "false"},
+        /* the current rendering style */
+        renderstyle: "${c.render_style}",
+        /* current domain */
+        cur_domain: "${get_domain(cname = c.frameless_cname, subreddit = False,
+                                  no_www = True)}",
+        /* where do ajax request go? */
+        ajax_domain: "${get_domain(cname=c.authorized_cname, subreddit = False)}",
+        extension: '${c.extension}',
+        https_endpoint: '${g.https_endpoint if use_https_endpoint else ""}',
+        /* debugging? */
+        debug: ${"true" if g.debug else "false"},
+        vl: {},
+        sr: {},
+        status_msg: {
+          fetching: "${_('fetching title...')}",
+          submitting: "${_('submitting...')}",
+          loading: "${_('loading...')}"
+        },
+        is_fake: ${'true' if isinstance(c.site, FakeSubreddit) else 'false'},
+        tracking_domain: '${g.tracking_domain}',
+        adtracker_url: '${g.adtracker_url}',
+        clicktracker_url: '${g.clicktracker_url}'
+     })
+   </script>
 </%def>
 
 <%def name="googleanalytics(uitype)">

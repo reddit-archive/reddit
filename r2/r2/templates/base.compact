@@ -24,7 +24,7 @@
    from r2.lib.template_helpers import static
    from r2.lib import js
 %>
-<%namespace file="utils.html" import="js_preamble, googleanalytics"/>
+<%namespace file="utils.html" import="js_setup, googleanalytics"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}">
   <head>
     <link rel="apple-touch-icon" 
@@ -43,10 +43,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
-    <script type="text/javascript">
-      ${js_preamble()}
-    </script> 
     ${unsafe(js.use('jquery', 'mobile'))}
+    ${js_setup()}
     ${googleanalytics('mobile')}
   </head>
   ${self.bodyHTML()}

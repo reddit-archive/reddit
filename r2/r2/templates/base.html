@@ -26,7 +26,7 @@
    from r2.models import Link, Comment, Subreddit
    from r2.lib.tracking import UserInfo
 %>
-<%namespace file="utils.html" import="js_preamble, googleanalytics"/>
+<%namespace file="utils.html" import="js_setup, googleanalytics"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
       xml:lang="${c.lang}" ${c.lang_rtl and unsafe('dir="rtl"') or ''}>
   <head>
@@ -39,15 +39,9 @@
     <meta name="viewport" content="width=800, initial-scale=1" />
     ${self.robots()}
     
-    ##these are globals, so they should be run first
-    ##things that need are referenced by the reddit, the buttons, and
-    ##the frame should go here
-    <script type="text/javascript">
-      ${js_preamble()}
-    </script> 
-    
     ${self.stylesheet()}
     ${self.javascript()}
+    ${js_setup()}
     
     ##things here may depend on globals, or included js, so we run them last
     <script type="text/javascript">
