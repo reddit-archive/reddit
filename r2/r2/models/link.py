@@ -1002,7 +1002,11 @@ class Comment(Thing, Printable):
                 extra_css += " border"
 
             if profilepage:
-                item.link_author = WrappedUser(authors[item.link.author_id])
+                if not item.link._deleted or user_is_admin:
+                    link_author = authors[item.link.author_id]
+                else:
+                    link_author = DeletedUser()
+                item.link_author = WrappedUser(link_author)
 
                 item.subreddit_path = item.subreddit.path
                 if cname:
