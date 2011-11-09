@@ -21,7 +21,7 @@
 ################################################################################
 from r2.models import *
 from filters import unsafe, websafe
-from r2.lib.utils import vote_hash, UrlParser, timesince
+from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
 from r2.lib.media import s3_direct_url
 
@@ -74,6 +74,42 @@ def s3_https_if_secure(url):
     if not url.startswith("http://%s" % s3_direct_url):
          replace = "https://%s/" % s3_direct_url
     return url.replace("http://", replace)
+
+def js_config():
+    config = {
+        # is the user logged in?
+        "logged": c.user_is_loggedin and c.user.name,
+        # the subreddit's name (for posts)
+        "post_site": c.site.name if not c.default_sr else "",
+        # are we in an iframe?
+        "cnameframe": bool(c.cname and not c.authorized_cname),
+        # this page's referer
+        "referer": request.referer or "",
+        # the user's voting hash
+        "modhash": c.modhash or False,
+        # the current rendering style
+        "renderstyle": c.render_style,
+        # current domain
+        "cur_domain": get_domain(cname=c.frameless_cname, subreddit=False, no_www=True),
+        # where do ajax requests go?
+        "ajax_domain": get_domain(cname=c.authorized_cname, subreddit=False),
+        "extension": c.extension,
+        "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
+        # debugging?
+        "debug": g.debug,
+        "vl": {},
+        "sr": {},
+        "status_msg": {
+          "fetching": _("fetching title..."),
+          "submitting": _("submitting..."),
+          "loading": _("loading...")
+        },
+        "is_fake": isinstance(c.site, FakeSubreddit),
+        "tracking_domain": g.tracking_domain,
+        "adtracker_url": g.adtracker_url,
+        "clicktracker_url": g.clicktracker_url
+    }
+    return config
 
 def generateurl(context, path, **kw):
     if kw:
