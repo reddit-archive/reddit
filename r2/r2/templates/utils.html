@@ -182,19 +182,6 @@ ${first_defined(kw[1:])}
 ${unsafe(txt)}
 </%def>
 
-<%def name="text_with_js(txt, _sr_path = False, **kw)">
-<%
-   for key, (text, js) in kw.iteritems():
-      kw[key]=spaceCompress(capture(plain_link, text, "#", 
-                onclick = js, _sr_path=_sr_path))
-   txt = txt % kw
-   txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")
-
-%>
-${unsafe(txt)}
-</%def>
-
-
 <%def name="language_tool(name='lang', allow_blank = False, 
                           default_lang = g.lang,
                           show_regions = False, 

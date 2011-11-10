@@ -24,7 +24,7 @@
    from r2.models.subreddit import DefaultSR
    
  %>
-<%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
+<%namespace file="utils.html" import="plain_link, img_link, separator, logout"/>
 
 <%
     from r2.lib.menus import PageNameNav
