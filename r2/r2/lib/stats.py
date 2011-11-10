@@ -1,9 +1,14 @@
+import random
 import time
 
 from r2.lib import cache
 from r2.lib import utils
 
 class Stats:
+    # Sample rate for recording cache hits/misses, relative to the global
+    # sample_rate.
+    CACHE_SAMPLE_RATE = 0.01
+
     def __init__(self, addr, sample_rate):
         if addr:
             import statsd
@@ -38,7 +43,7 @@ class Stats:
 
     def cache_count(self, name, delta=1):
         counter = self.get_counter('cache')
-        if counter:
+        if counter and random.random() < self.CACHE_SAMPLE_RATE:
             counter.increment(name, delta=delta)
 
     def amqp_processor(self, processor):
