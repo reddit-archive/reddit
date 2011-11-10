@@ -1,5 +1,6 @@
 import time
 
+from r2.lib import cache
 from r2.lib import utils
 
 class Stats:
@@ -29,6 +30,17 @@ class Stats:
         if timer:
             timer.send(action, service_time_sec)
 
+    def get_counter(self, name):
+        if self.connection:
+            return self.statsd.counter.Counter(name, self.connection)
+        else:
+            return None
+
+    def cache_count(self, name, delta=1):
+        counter = self.get_counter('cache')
+        if counter:
+            counter.increment(name, delta=delta)
+
     def amqp_processor(self, processor):
         """Decorator for recording stats for amqp queue consumers/handlers."""
         def wrap_processor(msgs, *args):
@@ -44,3 +56,21 @@ class Stats:
                     self.transact('amqp.%s' % msg.delivery_info['routing_key'],
                                   service_time)
         return wrap_processor
+
+class CacheStats:
+    def __init__(self, parent, cache_name):
+        self.parent = parent
+        self.cache_name = cache_name
+        self.hit_stat_name = '%s.hit' % self.cache_name
+        self.miss_stat_name = '%s.miss' % self.cache_name
+        self.total_stat_name = '%s.total' % self.cache_name
+
+    def cache_hit(self, delta=1):
+        if delta:
+            self.parent.cache_count(self.hit_stat_name, delta=delta)
+            self.parent.cache_count(self.total_stat_name, delta=delta)
+
+    def cache_miss(self, delta=1):
+        if delta:
+            self.parent.cache_count(self.miss_stat_name, delta=delta)
+            self.parent.cache_count(self.total_stat_name, delta=delta)

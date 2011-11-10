@@ -323,6 +323,7 @@ class CacheChain(CacheUtils, local):
     def __init__(self, caches, cache_negative_results=False):
         self.caches = caches
         self.cache_negative_results = cache_negative_results
+        self.stats = None
 
     def make_set_fn(fn_name):
         def fn(self, *a, **kw):
@@ -361,6 +362,9 @@ class CacheChain(CacheUtils, local):
             val = c.get(key)
 
             if val is not None:
+                if self.stats:
+                    self.stats.cache_hit()
+
                 #update other caches
                 for d in self.caches:
                     if c is d:
@@ -373,6 +377,8 @@ class CacheChain(CacheUtils, local):
                     return val
 
         #didn't find anything
+        if self.stats:
+            self.stats.cache_miss()
 
         if self.cache_negative_results:
             for c in self.caches[:-1]:
@@ -413,6 +419,10 @@ class CacheChain(CacheUtils, local):
         out = dict((k, v)
                    for (k, v) in out.iteritems()
                    if v != NoneResult)
+
+        if self.stats:
+            self.stats.cache_hit(len(out))
+            self.stats.cache_miss(len(need))
 
         return out
 
