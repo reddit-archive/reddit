@@ -171,8 +171,10 @@ ${first_defined(kw[1:])}
 <%def name="text_with_links(txt, _sr_path = False, nocname=False, **kw)">
 <%
    from r2.lib.filters import _force_unicode
-   for key, (text, href) in kw.iteritems():
-      kw[key]=spaceCompress(capture(plain_link, text, href, _sr_path=_sr_path, nocname=nocname))
+   for key, link_args in kw.iteritems():
+      link_args.setdefault("_sr_path", _sr_path)
+      link_args.setdefault("nocname", nocname)
+      kw[key]=spaceCompress(capture(plain_link, **link_args))
    txt = _force_unicode(txt) % kw
    txt = txt.replace(" <", "&#32;<").replace("> ", ">&#32;")
 

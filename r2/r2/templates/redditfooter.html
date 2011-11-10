@@ -46,10 +46,10 @@
     ${text_with_links(
             _("Use of this site constitutes acceptance of our "
               "%(user_agreement)s and %(privacy_policy)s"), nocname=True,
-      user_agreement= (_("User Agreement {Genitive}"),
-                       "http://reddit.com/help/useragreement"),
-      privacy_policy = (_("Privacy Policy {Genitive}"),
-                        "http://reddit.com/help/privacypolicy"))}.
+      user_agreement = dict(link_text=_("User Agreement {Genitive}"),
+                            path="http://reddit.com/help/useragreement"),
+      privacy_policy = dict(link_text=_("Privacy Policy {Genitive}"),
+                            path="http://reddit.com/help/privacypolicy"))}.
     &copy; ${_("%(year)d reddit inc. All rights reserved.") % \
     dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
