@@ -43,7 +43,10 @@ api('morechildren',  MoreCommentJsonTemplate)
 api('reddit',        RedditJsonTemplate)
 api('panestack',     PanestackJsonTemplate)
 api('listing',       ListingJsonTemplate)
-api('usertableitem', UserItemJsonTemplate)
+api('modlist',       UserListJsonTemplate)
+api('contributorlist', UserListJsonTemplate)
+api('bannedlist',    UserListJsonTemplate)
+api('friendlist',    UserListJsonTemplate)
 api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
@@ -52,3 +55,5 @@ api('takedownpane', TakedownJsonTemplate)
 
 api('flairlist', FlairListJsonTemplate)
 api('flaircsv', FlairCsvJsonTemplate)
+
+tpm.add_handler('usertableitem', 'api-html', UserItemHTMLJsonTemplate())

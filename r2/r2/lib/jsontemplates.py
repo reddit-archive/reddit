@@ -91,7 +91,7 @@ class TableRowTemplate(JsonTemplate):
                                    css_class = self.css_class(thing),
                                    cells = self.cells(thing)))
 
-class UserItemJsonTemplate(TableRowTemplate):
+class UserItemHTMLJsonTemplate(TableRowTemplate):
     def cells(self, thing):
         cells = []
         for cell in thing.cells:
@@ -467,6 +467,23 @@ class ListingJsonTemplate(ThingJsonTemplate):
     
     def kind(self, wrapped):
         return "Listing"
+
+class UserListJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(children = "users")
+
+    def thing_attr(self, thing, attr):
+        if attr == "users":
+            res = []
+            for a in thing.users:
+                res.append(a.user.name)
+            return res
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
+
+    def rendered_data(self, thing):
+        return self.thing_attr(thing, "users")
+
+    def kind(self, wrapped):
+        return "UserList"
 
 class OrganicListingJsonTemplate(ListingJsonTemplate):
     def kind(self, wrapped):
