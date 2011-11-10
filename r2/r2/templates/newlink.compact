@@ -26,7 +26,7 @@
    from r2.lib.template_helpers import add_sr
 %>
 
-<%namespace file="utils.html" import="error_field, submit_form, plain_link, text_with_links, reddit_selector"/>
+<%namespace file="utils.html" import="error_field, submit_form, plain_link, reddit_selector"/>
 <%namespace name="utils" file="utils.html"/>
 
 Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
