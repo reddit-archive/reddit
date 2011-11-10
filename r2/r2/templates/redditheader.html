@@ -21,12 +21,12 @@
 ################################################################################
 
 <%!
-   from r2.lib.template_helpers import static, s3_https_if_secure
+   from r2.lib.template_helpers import static, s3_https_if_secure, add_sr
    from r2.models import Sub, FakeSubreddit
    from r2.models.subreddit import DefaultSR
    from r2.lib.pages import SearchForm
 %>
-<%namespace file="utils.html" import="plain_link, text_with_js, img_link, separator, logout"/>
+<%namespace file="utils.html" import="plain_link, img_link, text_with_links, separator, logout"/>
 
 <div id="header">
   <a tabindex="1" href="#content" id="jumpToContent">${_('jump to content')}</a>
@@ -62,8 +62,12 @@
     %if not c.user_is_loggedin:
       %if thing.enable_login_cover and not g.read_only_mode:
       <span class="user">
-        ${text_with_js(_("want to join? %(register)s in seconds"),
-                          register=(_("register"), "r.login.ui.popup.showRegister(); return false"))}
+        <%
+          base = g.https_endpoint if not c.cname else ""
+          login_url = add_sr(base + "/login", sr_path=False)
+        %>
+        ${text_with_links(_("want to join? %(login_or_register)s in seconds"),
+            login_or_register = dict(link_text=_("login or register"), path=login_url, _class="login-required"))}
       </span>
       ${separator("|")}
       %endif
