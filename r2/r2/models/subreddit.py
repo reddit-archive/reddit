@@ -819,10 +819,13 @@ class DefaultSR(_DefaultSR):
     def header(self):
         return (self._base and self._base.header) or _DefaultSR.header
 
-
     @property
     def header_title(self):
         return (self._base and self._base.header_title) or ""
+
+    @property
+    def header_size(self):
+        return (self._base and self._base.header_size) or None
 
     @property
     def stylesheet_contents(self):
