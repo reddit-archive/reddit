@@ -47,6 +47,7 @@ api('modlist',       UserListJsonTemplate)
 api('contributorlist', UserListJsonTemplate)
 api('bannedlist',    UserListJsonTemplate)
 api('friendlist',    UserListJsonTemplate)
+api('usertableitem', UserTableItemJsonTemplate)
 api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)

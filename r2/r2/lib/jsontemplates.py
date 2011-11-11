@@ -475,7 +475,8 @@ class UserListJsonTemplate(ThingJsonTemplate):
         if attr == "users":
             res = []
             for a in thing.users:
-                res.append(a.user.name)
+                r = a.render()
+                res.append(r)
             return res
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
@@ -484,6 +485,16 @@ class UserListJsonTemplate(ThingJsonTemplate):
 
     def kind(self, wrapped):
         return "UserList"
+
+class UserTableItemJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(id = "_fullname",
+                        name = "name")
+
+    def thing_attr(self, thing, attr):
+        return ThingJsonTemplate.thing_attr(self, thing.user, attr)
+
+    def render(self, thing, *a, **kw):
+        return ObjectTemplate(self.data(thing))
 
 class OrganicListingJsonTemplate(ListingJsonTemplate):
     def kind(self, wrapped):
