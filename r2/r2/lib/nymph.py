@@ -130,7 +130,7 @@ def _generate_sprite(images, sprite_path):
 
     # generate the image
     sprite_dimensions = (sprite_width, sprite_height)
-    background_color = (255, 255, 255, 0)  # transparent "white"
+    background_color = (255, 69, 0, 0)  # transparent orangered
     sprite = Image.new('RGBA', sprite_dimensions, background_color)
 
     for image in images:
