@@ -35,9 +35,3 @@ class FeedbackController(RedditController):
         return FormPage('feedback',
                         content = FeedbackBlurb(),
                         loginbox = False).render()
-
-    def GET_i18n(self):
-        title = _("help translate reddit into your language")
-        return FormPage(_('help translate'),
-                        content = Feedback(title=title, action='i18n'),
-                        loginbox = False).render()

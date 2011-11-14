@@ -78,7 +78,8 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/awards', controller='front', action='awards')
 
-    mc('/i18n', controller='feedback', action='i18n')
+    mc('/i18n', controller='redirect', action='redirect',
+       dest='http://www.reddit.com/r/r18n')
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
 
