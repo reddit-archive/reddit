@@ -73,7 +73,7 @@ class Module(Source):
             self.sources.append(source)
 
     def get_source(self):
-        return "\n".join(s.get_source() for s in self.sources)
+        return ";".join(s.get_source() for s in self.sources)
     
     @property
     def path(self):
