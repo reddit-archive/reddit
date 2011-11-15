@@ -30,9 +30,9 @@ from r2.lib.static import generate_static_name
 sprite_line = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *(stretch-x)? *\*/")
 
 
-def optimize_png(filename):
+def optimize_png(filename, optimizer='/usr/bin/env optipng'):
     with open(os.path.devnull, 'w') as devnull:
-        subprocess.check_call(['/usr/bin/env', 'optipng', filename], stdout=devnull)
+        subprocess.check_call(' '.join((optimizer, filename)), shell=True, stdout=devnull)
 
 
 def _extract_css_info(match):
