@@ -20,9 +20,6 @@ def upload(static_root, bucket_name):
         for file in files:
             absolute_path = os.path.join(root, file)
 
-            if os.path.islink(absolute_path):
-                continue
-
             key_name = os.path.relpath(absolute_path, start=static_root)
 
             type, encoding = mimetypes.guess_type(file)
