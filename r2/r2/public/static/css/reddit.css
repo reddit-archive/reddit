@@ -345,6 +345,7 @@ ul.flat-vert {text-align: left;}
     white-space: nowrap;
     display: inline-block;
     margin-top: 5px;
+    vertical-align: bottom;
 }
 
 .tabmenu li {
