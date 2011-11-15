@@ -256,6 +256,7 @@ ul.flat-vert {text-align: left;}
     font-variant: small-caps;
     line-height: 100%;
     font-size: 1.2em;
+    vertical-align: bottom;
 }
 .pagename a {color: black; }
 .redditname { }
