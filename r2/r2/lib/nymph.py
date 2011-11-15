@@ -27,6 +27,7 @@ import subprocess
 
 from r2.lib.static import generate_static_name
 
+SPRITE_PADDING = 1
 sprite_line = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *(stretch-x)? *\*/")
 
 
@@ -74,7 +75,7 @@ class SpriteBin(object):
 
     def add_image(self, image):
         image.sprite_location = (self.offset, self.bounding_box[1])
-        self.offset += image.width
+        self.offset += image.width + SPRITE_PADDING
 
 
 def _load_spritable_images(css_filename):
@@ -107,7 +108,7 @@ def _generate_sprite(images, sprite_path):
             if image.stretch:
                 image.stretch_to_width(sprite_width)
             image.sprite_location = (0, sprite_height)
-            sprite_height += image.height
+            sprite_height += image.height + SPRITE_PADDING
         else:
             small_images.append(image)
 
@@ -123,7 +124,7 @@ def _generate_sprite(images, sprite_path):
         else:
             # or give up and create a new bin
             bin = SpriteBin((0, sprite_height, sprite_width, sprite_height + image.height))
-            sprite_height += image.height
+            sprite_height += image.height + SPRITE_PADDING
             bins.append(bin)
 
         bin.add_image(image)
