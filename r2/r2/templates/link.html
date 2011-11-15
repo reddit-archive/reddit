@@ -233,7 +233,6 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 <%def name="thumbnail()">
   %if thing.thumbnail and not getattr(thing, "trial_mode", None):
   <%call expr="make_link('thumbnail', 'thumbnail ' + (thing.thumbnail if thing.thumbnail_sprited else ''))">
-    &#8203;
     % if not thing.thumbnail_sprited:
         <%
             if hasattr(thing, 'thumbnail_size'):
