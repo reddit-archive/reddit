@@ -512,7 +512,7 @@ ul.flat-vert {text-align: left;}
     display: none;
 }
 
-.sidebox.submit .spacer {
+.sidebox.submit .spacer a {
     background-image: url(../submit-alien.png);  /* SPRITE */
     background-repeat:no-repeat;
 }
