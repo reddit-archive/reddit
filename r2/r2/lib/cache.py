@@ -439,6 +439,10 @@ class CacheChain(CacheUtils, local):
                    if v != NoneResult)
 
         if self.stats:
+            if not misses:
+                # If this chain contains no permanent caches, then we need to
+                # count the misses here.
+                misses = len(need)
             self.stats.cache_hit(hits)
             self.stats.cache_miss(misses)
 
