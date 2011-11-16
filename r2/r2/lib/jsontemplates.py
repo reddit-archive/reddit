@@ -369,11 +369,15 @@ class CommentJsonTemplate(ThingJsonTemplate):
 
 class MoreCommentJsonTemplate(CommentJsonTemplate):
     _data_attrs_ = dict(id           = "_id36",
-                        name         = "_fullname")
+                        name         = "_fullname",
+                        children     = "children")
+
     def kind(self, wrapped):
         return "more"
 
     def thing_attr(self, thing, attr):
+        if attr == 'children':
+            return [to36(x) for x in thing.children]
         if attr in ('body', 'body_html'):
             return ""
         return CommentJsonTemplate.thing_attr(self, thing, attr)
