@@ -27,7 +27,7 @@ class Printable(object):
     is_special = False
     can_ban = False
     deleted = False
-    rowstyle = 'even'
+    rowstyle = ''
     collapsed = False
     author = None
     margin = 0
