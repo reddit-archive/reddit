@@ -23,6 +23,7 @@
   from r2.lib.filters import keep_space
   from r2.lib.template_helpers import add_sr, static
   from r2.lib.media import s3_direct_url
+  import os
 
 %>
 <%namespace file="utils.html" import="error_field, image_upload"/>
@@ -141,10 +142,12 @@
         }
         function showDefaultStylesheet(btn) {
             var default_stylesheet = $('#default_stylesheet');
+            /* make sure to load the default stylesheet contents from the local domain so it doesn't get caught by cross-domain rules. */
+            var stylesheet_url = '${add_sr(os.path.join(c.site.static_path, g.static_names.get("reddit.css", "reddit.css")), nocname=True, sr_path=False)}';
 
             if (!default_stylesheet.data('loaded')) {
               default_stylesheet.text('loading...');
-              $.get(document.styleSheets[0].href, function(css) {
+              $.get(stylesheet_url, function(css) {
                 default_stylesheet.val(css);
                 default_stylesheet.data('loaded', true);
               })
