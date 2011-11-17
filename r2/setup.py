@@ -81,9 +81,11 @@ setup(
         "amqplib",
         "pylibmc==1.2.1-dev",
         "py-bcrypt",
+        "snudown",
     ],
     dependency_links=[
         "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
+        "https://nodeload.github.com/reddit/snudown/tarball/v1.0.0#egg=snudown-1.0.0",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,

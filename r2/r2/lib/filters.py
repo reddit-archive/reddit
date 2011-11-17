@@ -23,6 +23,7 @@ import cgi
 import os
 import urllib
 import re
+import snudown
 from cStringIO import StringIO
 
 from xml.sax.handler import ContentHandler
@@ -131,6 +132,19 @@ def edit_comment_filter(text = ''):
         text = unicode(text)
     return url_escape(text)
 
+valid_link_schemes = (
+    '/',
+    'http://',
+    'https://',
+    'ftp://',
+    'mailto:',
+    'steam://',
+    'irc://',
+    'news://',
+    'mumble://',
+    'ssh://',
+)
+
 class SouptestSaxHandler(ContentHandler):
     def __init__(self, ok_tags):
         self.ok_tags = ok_tags
@@ -148,12 +162,7 @@ class SouptestSaxHandler(ContentHandler):
 
             if qname == 'a' and name == 'href':
                 lv = val.lower()
-                if not (lv.startswith('http://')
-                        or lv.startswith('https://')
-                        or lv.startswith('ftp://')
-                        or lv.startswith('mailto:')
-                        or lv.startswith('news:')
-                        or lv.startswith('/')):
+                if not any(lv.startswith(scheme) for scheme in valid_link_schemes):
                     raise ValueError('HAX: Unsupported link scheme %r' % val)
 
 markdown_ok_tags = {
@@ -200,8 +209,6 @@ def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
     from r2.lib.c_markdown import c_markdown
     from r2.lib.py_markdown import py_markdown
 
-    from contrib.markdown import markdown
-
     if c.user.pref_no_profanity:
         text = profanity_filter(text)
 
@@ -214,7 +221,9 @@ def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
     if lang is None:
         lang = g.markdown_backend
 
-    if lang == "c":
+    if lang == "snudown":
+        text = snudown.markdown(_force_utf8(text), nofollow, target)
+    elif lang == "c":
         text = c_markdown(text, nofollow, target)
     elif lang == "py":
         text = py_markdown(text, nofollow, target)
