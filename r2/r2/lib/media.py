@@ -174,7 +174,7 @@ def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     update_link(link, thumbnail=thumb_url, media_object=None, thumbnail_size=image.size)
 
 def run():
-    @g.stats.amqp_processor
+    @g.stats.amqp_processor('scraper_q')
     def process_link(msg):
         def _process_link(fname):
             link = Link._by_fullname(fname, data=True)

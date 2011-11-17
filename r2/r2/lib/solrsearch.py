@@ -667,7 +667,7 @@ def run_changed(drain=False):
         last run. Note: unlike many queue-using functions, this one is
         run from cron and totally drains the queue before terminating
     """
-    @g.stats.amqp_processor
+    @g.stats.amqp_processor('solrsearch_changes')
     def _run_changed(msgs, chan):
         print "changed: Processing %d items" % len(msgs)
         msgs = [strordict_fullname(msg.body)
