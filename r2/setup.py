@@ -96,33 +96,6 @@ setup(
                 "r2/lib/c/filters.c",
             ]
         ),
-        Extension(
-            "reddit-discount",
-            include_dirs=[discount_path],
-            define_macros=[("VERSION", '"1.6.8"')],
-            sources=(
-                ["r2/lib/c/reddit-discount-wrapper.c"] +
-                [os.path.join(discount_path, x) for x in [
-                    "Csio.c",
-                    "css.c",
-                    "docheader.c",
-                    "dumptree.c",
-                    "generate.c",
-                    "main.c",
-                    "markdown.c",
-                    "mkdio.c",
-                    "resource.c",
-                    "html5.c",
-                    "tags.c",
-                    "toc.c",
-                    "version.c",
-                    "emmatch.c",
-                    "basename.c",
-                    "xml.c",
-                    "xmlpage.c",
-                ]]
-            )
-        )
     ],
     entry_points="""
     [paste.app_factory]

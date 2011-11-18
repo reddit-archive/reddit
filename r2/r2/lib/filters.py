@@ -208,8 +208,6 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
 def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
-    from r2.lib.c_markdown import c_markdown
-
     if c.user.pref_no_profanity:
         text = profanity_filter(text)
 
@@ -224,8 +222,6 @@ def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
 
     if lang == "snudown":
         text = snudown.markdown(_force_utf8(text), nofollow, target)
-    elif lang == "c":
-        text = c_markdown(text, nofollow, target)
     else:
         raise ValueError("weird lang [%s]" % lang)
 
