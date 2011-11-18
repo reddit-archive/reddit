@@ -445,7 +445,7 @@ class CachedTemplate(Templated):
         return ret
 
     def cache_key(self, attr, style, *a):
-        from pylons import c, g
+        from pylons import c
 
         # if template debugging is on, there will be no hash and we
         # can make the caching process-local.
@@ -458,7 +458,7 @@ class CachedTemplate(Templated):
         keys = [c.user_is_loggedin, c.user_is_admin, c.domain_prefix,
                 style, c.secure, c.cname, c.lang, c.site.path,
                 getattr(c.user, "gold", False),
-                template_hash, g.markdown_backend]
+                template_hash]
 
         # if viewing a single subreddit, take flair settings into account.
         if c.user and hasattr(c.site, '_id'):

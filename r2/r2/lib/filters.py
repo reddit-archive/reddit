@@ -187,11 +187,11 @@ markdown_xhtml_dtd_path = os.path.join(
 
 markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
 
-def markdown_souptest(text, nofollow=False, target=None, lang=None):
+def markdown_souptest(text, nofollow=False, target=None):
     if not text:
         return text
 
-    smd = safemarkdown(text, nofollow, target, lang)
+    smd = safemarkdown(text, nofollow, target)
 
     # Prepend a DTD reference so we can load up definitions of all the standard
     # XHTML entities (&nbsp;, etc.).
@@ -207,7 +207,7 @@ def markdown_souptest(text, nofollow=False, target=None, lang=None):
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
-def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
+def safemarkdown(text, nofollow=False, target=None, wrap=True):
     if c.user.pref_no_profanity:
         text = profanity_filter(text)
 
@@ -217,13 +217,7 @@ def safemarkdown(text, nofollow=False, target=None, lang=None, wrap=True):
     if c.cname and not target:
         target = "_top"
 
-    if lang is None:
-        lang = g.markdown_backend
-
-    if lang == "snudown":
-        text = snudown.markdown(_force_utf8(text), nofollow, target)
-    else:
-        raise ValueError("weird lang [%s]" % lang)
+    text = snudown.markdown(_force_utf8(text), nofollow, target)
 
     if wrap:
         return SC_OFF + MD_START + text + MD_END + SC_ON
