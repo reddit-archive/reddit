@@ -29,7 +29,7 @@ from subreddit import Subreddit
 from printable import Printable
 from r2.config import cache
 from r2.lib.memoize import memoize
-from r2.lib.filters import profanity_filter, _force_utf8
+from r2.lib.filters import _force_utf8
 from r2.lib import utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
@@ -448,9 +448,6 @@ class Link(Thing, Printable):
                 item.nofollow = True
             else:
                 item.nofollow = False
-
-            if c.user.pref_no_profanity:
-                item.title = profanity_filter(item.title)
 
             item.subreddit_path = item.subreddit.path
             if cname:
@@ -1123,9 +1120,6 @@ class Message(Thing, Printable):
                     item.message_style = "post-reply"
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
-
-            if c.user.pref_no_profanity:
-                item.subject = profanity_filter(item.subject)
 
             item.is_collapsed = None
             if not item.new:

@@ -327,16 +327,6 @@ class Globals(object):
             print ("Warning: g.media_domain == g.domain. " +
                    "This may give untrusted content access to user cookies")
 
-        self.profanities = None
-        if self.profanity_wordlist and os.path.exists(self.profanity_wordlist):
-            with open(self.profanity_wordlist, 'r') as handle:
-                words = []
-                for line in handle:
-                    words.append(line.strip(' \n\r'))
-                if words:
-                    self.profanities = re.compile(r"\b(%s)\b" % '|'.join(words),
-                                              re.I | re.U)
-
         self.reddit_host = socket.gethostname()
         self.reddit_pid  = os.getpid()
 

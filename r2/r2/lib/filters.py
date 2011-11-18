@@ -208,9 +208,6 @@ def markdown_souptest(text, nofollow=False, target=None):
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
 def safemarkdown(text, nofollow=False, target=None, wrap=True):
-    if c.user.pref_no_profanity:
-        text = profanity_filter(text)
-
     if not text:
         return None
 
@@ -234,16 +231,3 @@ def keep_space(text):
 
 def unkeep_space(text):
     return text.replace('&#32;', ' ').replace('&#10;', '\n').replace('&#09;', '\t')
-
-
-def profanity_filter(text):
-    def _profane(m):
-        x = m.group(1)
-        return ''.join(u"\u2731" for i in xrange(len(x)))
-
-    if g.profanities:
-        try:
-            return g.profanities.sub(_profane, text)
-        except UnicodeDecodeError:
-            return text
-    return text
