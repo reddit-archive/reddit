@@ -37,7 +37,6 @@ from pylons.controllers.util import abort
 from r2.lib import promote
 from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
-from r2.lib.contrib.markdown import markdown
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
@@ -53,6 +52,7 @@ from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate
+from r2.lib.filters import safemarkdown
 
 import sys, random, datetime, locale, calendar, simplejson, re, time
 import graph, pycountry, time
@@ -1453,9 +1453,7 @@ class Thanks(Templated):
 
         if g.lounge_reddit:
             lounge_url = "/r/" + g.lounge_reddit
-            lounge_html = (SC_OFF +
-                           markdown(strings.lounge_msg % dict(link=lounge_url))
-                           + SC_ON)
+            lounge_html = safemarkdown(strings.lounge_msg % dict(link=lounge_url))
         else:
             lounge_html = None
         Templated.__init__(self, status=status, secret=secret,
@@ -1670,10 +1668,7 @@ class SearchBar(Templated):
 class SearchFail(Templated):
     """Search failure page."""
     def __init__(self, **kw):
-        md = SC_OFF + markdown(strings.search_failed % dict(
-            link="javascript:tryagain\(\)")) + SC_ON
-
-        self.errmsg = md
+        self.errmsg = strings.search_failed
 
         Templated.__init__(self)
 

@@ -20,23 +20,6 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<script type="text/javascript">
-  var searchfail_timeout = new Date();
-
-  function tryagain() {
-    elapsed = new Date() - searchfail_timeout;
-
-    seconds = elapsed / 1000;
-
-    if (seconds < 10) {
-      alert("Please don't pound our servers! " +
-            "Give them a few minutes to cool off.");
-    } else {
-      window.location.reload();
-    }
-  }
-</script>
-
 <div class="searchfail">
   ${unsafe(thing.errmsg)}
 </div>
