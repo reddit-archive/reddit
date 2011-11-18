@@ -134,12 +134,14 @@ def edit_comment_filter(text = ''):
 
 valid_link_schemes = (
     '/',
+    '#',
     'http://',
     'https://',
     'ftp://',
     'mailto:',
     'steam://',
     'irc://',
+    'ircs://',
     'news://',
     'mumble://',
     'ssh://',
