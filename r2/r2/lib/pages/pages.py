@@ -1098,7 +1098,7 @@ class SubredditsPage(Reddit):
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
-        subscribe_box = SubscriptionBox()
+        subscribe_box = SubscriptionBox(make_multi=True)
         num_reddits = len(subscribe_box.srs)
         ps.append(SideContentBox(_("your front page reddits (%s)") %
                                  num_reddits, [subscribe_box]))
@@ -1395,7 +1395,7 @@ class SubredditTopBar(CachedTemplate):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
-    def __init__(self, srs=None):
+    def __init__(self, srs=None, make_multi=False):
         if srs is None:
             srs = Subreddit.user_subreddits(c.user, ids = False, limit=None)
         srs.sort(key = lambda sr: sr.name.lower())
@@ -1403,7 +1403,14 @@ class SubscriptionBox(Templated):
         self.goldlink = None
         self.goldmsg = None
         self.prelink = None
-        
+
+        # Construct MultiReddit path
+        if make_multi:
+            mr_path = '/r/' + '+'.join([sr.name for sr in srs])
+            subscription_multi_path = mr_path 
+        else:
+            subscription_multi_path = None
+
         if len(srs) > Subreddit.sr_limit and c.user_is_loggedin:
             if not c.user.gold:
                 self.goldlink = "/gold"
@@ -1419,9 +1426,10 @@ class SubscriptionBox(Templated):
                 self.goldmsg = _("%(bonus)s bonus reddits") % bonus
                 self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
                                 _("%s visible") % visible]
-        
+
         Templated.__init__(self, srs=srs, goldlink=self.goldlink,
-                           goldmsg=self.goldmsg)
+                           goldmsg=self.goldmsg, 
+                           subscription_multi_path=subscription_multi_path)
 
     @property
     def reddits(self):
