@@ -88,6 +88,9 @@ def _force_unicode(text):
     if text == None:
         return u''
 
+    if isinstance(text, unicode):
+        return text
+
     try:
         text = unicode(text, 'utf-8')
     except UnicodeDecodeError:
