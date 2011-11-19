@@ -3015,6 +3015,7 @@ class SelfTextChild(LinkChild):
         u = UserText(self.link, self.link.selftext,
                      editable = c.user == self.link.author,
                      nofollow = self.nofollow,
+                     target="_top" if c.cname else None,
                      expunged=self.link.expunged)
         return u.render()
 

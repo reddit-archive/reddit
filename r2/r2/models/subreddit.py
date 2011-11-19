@@ -339,6 +339,7 @@ class Subreddit(Thing, Printable):
         names = ('subscriber', 'moderator', 'contributor')
         rels = (SRMember._fast_query(wrapped, [user], names) if c.user_is_loggedin else {})
         defaults = Subreddit.default_subreddits()
+        target = "_top" if c.cname else None
         for item in wrapped:
             if not user or not user.has_subscribed:
                 item.subscriber = item._id in defaults
@@ -365,7 +366,7 @@ class Subreddit(Thing, Printable):
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
-            item.usertext = UserText(item, item.description)
+            item.usertext = UserText(item, item.description, target=target)
 
 
         Printable.add_props(user, wrapped)

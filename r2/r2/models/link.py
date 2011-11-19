@@ -738,7 +738,7 @@ class Comment(Thing, Printable):
                 add_attr(item.attribs, 'S',
                          link = item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
-                item.target = None
+                item.target = "_top" if cname else None
             if item.parent_id:
                 if item.parent_id in cids:
                     item.parent_permalink = '#' + utils.to36(item.parent_id)

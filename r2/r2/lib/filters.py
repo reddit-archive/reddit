@@ -194,7 +194,7 @@ def markdown_souptest(text, nofollow=False, target=None):
     if not text:
         return text
 
-    smd = safemarkdown(text, nofollow, target)
+    smd = safemarkdown(text, nofollow=nofollow, target=target)
 
     # Prepend a DTD reference so we can load up definitions of all the standard
     # XHTML entities (&nbsp;, etc.).
@@ -210,11 +210,14 @@ def markdown_souptest(text, nofollow=False, target=None):
 
 #TODO markdown should be looked up in batch?
 #@memoize('markdown')
-def safemarkdown(text, nofollow=False, target=None, wrap=True):
+def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     if not text:
         return None
 
-    if c.cname and not target:
+    # this lets us skip the c.cname lookup (which is apparently quite
+    # slow) if target was explicitly passed to this function.
+    target = kwargs.get("target", None)
+    if "target" not in kwargs and c.cname:
         target = "_top"
 
     text = snudown.markdown(_force_utf8(text), nofollow, target)
