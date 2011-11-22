@@ -4,7 +4,15 @@ import os.path
 from subprocess import Popen, PIPE
 import re
 import json
-from pylons import g, c
+
+from r2.lib.i18n import get_available_languages
+
+if __name__ != "__main__":
+    from pylons import g, c
+    STATIC_ROOT = g.paths["static_files"]
+else:
+    REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    STATIC_ROOT = os.path.join(REDDIT_ROOT, "public")
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>\n'
@@ -35,11 +43,19 @@ class Source(object):
     """An abstract collection of JavaScript code."""
     def get_source(self):
         """Return the full JavaScript source code."""
-        return NotImplementedError
+        raise NotImplementedError
     
     def use(self):
         """Return HTML to insert the JavaScript source inside a template."""
-        return NotImplementedError
+        raise NotImplementedError
+
+    @property
+    def dependencies(self):
+        raise NotImplementedError
+
+    @property
+    def outputs(self):
+        raise NotImplementedError
 
 class FileSource(Source):
     """A JavaScript source file on disk."""
@@ -52,7 +68,7 @@ class FileSource(Source):
     @property
     def path(self):
         """The path to the source file on the filesystem."""
-        return os.path.join(g.paths["static_files"], "static/js", self.name)
+        return os.path.join(STATIC_ROOT, "static", "js", self.name)
 
     def use(self):
         from r2.lib.template_helpers import static
@@ -60,6 +76,10 @@ class FileSource(Source):
         if g.uncompressedJS:
             path.insert(1, "js")
         return script_tag.format(src=static(os.path.join(*path)))
+
+    @property
+    def dependencies(self):
+        return [self.path]
 
 class Module(Source):
     """A module of JS code consisting of a collection of sources."""
@@ -78,7 +98,7 @@ class Module(Source):
     @property
     def path(self):
         """The destination path of the module file on the filesystem."""
-        return os.path.join(g.paths["static_files"], "static", self.name)
+        return os.path.join(STATIC_ROOT, "static", self.name)
 
     def build(self, closure):
         print >> sys.stderr, "Compiling {0}...".format(self.name),
@@ -92,6 +112,17 @@ class Module(Source):
             return "".join(source.use() for source in self.sources)
         else:
             return script_tag.format(src=static(self.name))
+
+    @property
+    def dependencies(self):
+        deps = []
+        for source in self.sources:
+            deps.extend(source.dependencies)
+        return deps
+
+    @property
+    def outputs(self):
+        return [self.path]
 
 class StringsSource(Source):
     """A virtual source consisting of localized strings from r2.lib.strings."""
@@ -132,6 +163,12 @@ class LocalizedModule(Module):
     A StringsSource is created and included which contains localized versions
     of the strings referenced in the module.
     """
+
+    @staticmethod
+    def languagize_path(path, lang):
+        path_name, path_ext = os.path.splitext(path)
+        return path_name + "." + lang + path_ext
+
     def build(self, closure):
         Module.build(self, closure)
 
@@ -139,11 +176,16 @@ class LocalizedModule(Module):
         string_keys = re.findall("r\.strings\.([\w$_]+)", reddit_source)
 
         print >> sys.stderr, "Creating language-specific files:"
-        path_name, path_ext = os.path.splitext(self.path)
-        for lang in g.languages:
+        for lang in get_available_languages():
             strings = StringsSource(lang, string_keys)
             source = strings.get_source()
-            lang_path = path_name + "." + lang + path_ext
+            lang_path = LocalizedModule.languagize_path(self.path, lang)
+
+            # make sure we're not rewriting a different mangled file
+            # via symlink
+            if os.path.islink(lang_path):
+                os.unlink(lang_path)
+
             with open(lang_path, "w") as out:
                 print >> sys.stderr, "  " + lang_path
                 out.write(reddit_source+source)
@@ -155,9 +197,14 @@ class LocalizedModule(Module):
         if g.uncompressedJS:
             return embed + StringsSource().use()
         else:
-            name, ext = os.path.splitext(self.name)
-            url = name + "." + get_lang()[0] + ext
+            url = LocalizedModule.languagize_path(self.name, get_lang()[0])
             return script_tag.format(src=static(url))
+
+    @property
+    def outputs(self):
+        languages = get_available_languages()
+        for lang in languages:
+            yield LocalizedModule.languagize_path(self.path, lang)
 
 class JQuery(Module):
     def __init__(self, cdn_src=None):
@@ -174,6 +221,14 @@ class JQuery(Module):
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)
+
+    @property
+    def dependencies(self):
+        return []
+
+    @property
+    def outputs(self):
+        return []
 
 module = {}
 
@@ -218,10 +273,31 @@ module["flot"] = Module("jquery.flot.js",
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
-def build_reddit_js():
-    closure = ClosureCompiler("r2/lib/contrib/closure_compiler/compiler.jar")
-    for name in module:
-        module[name].build(closure)
+commands = {}
+def build_command(fn):
+    commands[fn.__name__] = fn
+    return fn
 
-if __name__=="__main__":
-    build_reddit_js()
+@build_command
+def enumerate_modules():
+    for m in module:
+        print m
+
+@build_command
+def dependencies(name):
+    for dep in module[name].dependencies:
+        print dep
+
+@build_command
+def enumerate_outputs():
+    for m in module.itervalues():
+        for output in m.outputs:
+            print output
+
+@build_command
+def build_module(name):
+    closure = ClosureCompiler("r2/lib/contrib/closure_compiler/compiler.jar")
+    module[name].build(closure)
+
+if __name__ == "__main__":
+    commands[sys.argv[1]](*sys.argv[2:])
