@@ -41,6 +41,20 @@ class Stats:
         else:
             return None
 
+    def action_count(self, counter_name, name, delta=1):
+        counter = self.get_counter(counter_name)
+        if counter:
+            from pylons import request
+            counter.increment('%s.%s' % (request.environ["pylons.routes_dict"]["action"], name), delta=delta)
+
+    def action_event_count(self, event_name, state=None, delta=1, true_name="success", false_name="fail"):
+        counter_name = 'event.%s' % event_name
+        if state == True:
+            self.action_count(counter_name, true_name, delta=delta)
+        elif state == False:
+            self.action_count(counter_name, false_name, delta=delta)
+        self.action_count(counter_name, 'total', delta=delta)
+
     def cache_count(self, name, delta=1):
         counter = self.get_counter('cache')
         if counter and random.random() < self.CACHE_SAMPLE_RATE:
