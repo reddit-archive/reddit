@@ -25,6 +25,9 @@
 <%def name="subreddit()">
   <span class="hover pagename redditname">
     ${plain_link(c.site.name, c.site.path, _sr_path=False)}
+    % if hasattr(thing, "title"):
+      : ${thing.title}
+    % endif
   </span>
 </%def>
 

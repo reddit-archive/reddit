@@ -654,7 +654,10 @@ class BoringPage(Reddit):
         Reddit.__init__(self, **context)
 
     def build_toolbars(self):
-        return [PageNameNav('nomenu', title = self.pagename)]
+        if not isinstance(c.site, DefaultSR) and not c.cname:
+            return [PageNameNav('subreddit', title = self.pagename)]
+        else:
+            return [PageNameNav('nomenu', title = self.pagename)]
 
 class HelpPage(BoringPage):
     def build_toolbars(self):
