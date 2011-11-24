@@ -1781,12 +1781,10 @@ class NewLink(Templated):
 
         self.sr_searches = simplejson.dumps(popular_searches())
 
-        self.on_default_sr = c.default_sr
-
         if c.default_sr:
             self.default_sr = None
         else:
-            self.default_sr = c.site.name
+            self.default_sr = c.site
 
         Templated.__init__(self, captcha = captcha, url = url,
                          title = title, subreddits = subreddits,
