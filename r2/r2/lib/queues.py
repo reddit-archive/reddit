@@ -73,17 +73,19 @@ class RedditQueueMap(QueueMap):
         self._q('vote_link_q', self_refer=True)
         self._q('vote_comment_q', self_refer=True)
         self._q('log_q', self_refer=True)
-        self._q('usage_q', self_refer=True, durable=False)
 
         self._q('solrsearch_changes')
         self._q('indextank_changes', self_refer=True)
         self._bind('search_changes', 'solrsearch_changes')
         self._bind('search_changes', 'indextank_changes')
 
+        self._q('usage_q', durable=False)
+
     def bindings(self):
         self.newlink_bindings()
         self.newcomment_bindings()
         self.newsubreddit_bindings()
+        self.requestinfo_bindings()
 
     def newlink_bindings(self):
         self._bind('new_link', 'scraper_q')
@@ -97,6 +99,9 @@ class RedditQueueMap(QueueMap):
 
     def newsubreddit_bindings(self):
         pass
+
+    def requestinfo_bindings(self):
+        self._bind('request_info', 'usage_q')
 
 try:
     from r2admin.lib.adminqueues import *

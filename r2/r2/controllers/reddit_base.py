@@ -641,12 +641,15 @@ class MinimalController(BaseController):
             log_text("unknown action", "no action for %r" % path_info,
                      "warning")
         if g.usage_sampling >= 1.0 or rand.random() < g.usage_sampling:
-
-            amqp.add_kw("usage_q",
-                        start_time = c.start_time,
-                        end_time = end_time,
-                        sampling_rate = g.usage_sampling,
-                        action = action)
+            amqp.add_kw(
+                "request_info",
+                ip=request.ip,
+                start_time=c.start_time,
+                end_time=end_time,
+                sampling_rate=g.usage_sampling,
+                action=action,
+                headers=dict(request.headers)
+            )
 
         # this thread is probably going to be reused, but it could be
         # a while before it is. So we might as well dump the cache in
