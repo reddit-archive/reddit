@@ -32,15 +32,10 @@ from utils import Storage
 from hashlib import md5
 
 from logger import WithWriteLock, LoggedSlots
+from r2.lib.i18n import I18N_PATH as _i18n_path
 
 from datetime import datetime, timedelta
 import time
-
-try:
-    import reddit_i18n
-    _i18n_path = os.path.dirname(reddit_i18n.__file__)
-except ImportError:
-    _i18n_path = os.path.abspath('r2/i18n')
 
 import pylons
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
