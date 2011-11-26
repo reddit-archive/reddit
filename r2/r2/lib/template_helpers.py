@@ -81,12 +81,12 @@ def static(path, allow_gzip=True):
         scheme = 'http'
         domain = g.static_domain
         query = None
-        suffix = '.gz' if should_gzip and g.static_pre_gzipped else ''
+        suffix = '.gzip' if should_gzip and g.static_pre_gzipped else ''
     elif c.secure and g.static_secure_domain:
         scheme = 'https'
         domain = g.static_secure_domain
         query = None
-        suffix = '.gz' if should_gzip and g.static_secure_pre_gzipped else ''
+        suffix = '.gzip' if should_gzip and g.static_secure_pre_gzipped else ''
     else:
         path_components.append(c.site.static_path)
         query = None

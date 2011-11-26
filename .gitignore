@@ -33,8 +33,8 @@ r2/myproduction.ini
 .DS_Store
 r2/r2.egg-info/**
 r2/r2/public/static/sprite*.png
-r2/r2/public/static/*.gz
-r2/r2/public/static/js/lib/*.gz
+r2/r2/public/static/*.gzip
+r2/r2/public/static/js/lib/*.gzip
 r2/r2/lib/_normalized_hot.c
 r2/r2/lib/mr_tools/_mr_tools.c
 r2/r2/lib/db/_sorts.c

@@ -167,13 +167,13 @@ clean_names:
 
 #### gzip!
 GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES) $(STATIC_DIR)/js/lib/jquery.js)
-GZIPPED := $(addsuffix .gz,$(GZIPPABLE))
+GZIPPED := $(addsuffix .gzip,$(GZIPPABLE))
 
 .PHONY: clean_gzip
 
 gzip: $(GZIPPED)
 
-$(GZIPPED): %.gz: %
+$(GZIPPED): %.gzip: %
 	gzip -c $< > $@
 
 clean_gzip:
