@@ -23,4 +23,11 @@
 
 This file loads the finished app from r2.config.middleware.
 """
-from r2.config.middleware import make_app
+
+# defer the (hefty) import until it's actually needed. this allows
+# modules below r2 to be imported before cython files are built, also
+# provides a hefty speed boost to said imports when they don't need
+# the app initialization.
+def make_app(*args, **kwargs):
+    from r2.config.middleware import make_app as real_make_app
+    return real_make_app(*args, **kwargs)
