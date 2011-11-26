@@ -33,31 +33,12 @@ import random
 import urlparse
 from pylons import g, c
 from pylons.i18n import _, ungettext
+from paste.util.mimeparse import desired_matches
 
 def is_encoding_acceptable(encoding_to_check):
-    """"Check if a content encoding is acceptable to the user agent.
-
-    An encoding is determined acceptable if the encoding (or the special '*' encoding)
-    is specified in the Accept-Encoding header with a quality value > 0.
-    """
+    "Check if a content encoding is acceptable to the user agent."
     header = request.headers.get('Accept-Encoding', '')
-    encodings = header.split(',')
-
-    for value in encodings:
-        if ';' not in value:
-            name = value.strip()
-        else:
-            coding_name, quality = value.split(';')
-            if '=' not in quality:
-                continue
-            q, value = quality.split('=')
-            if float(value) == 0:
-                continue
-            name = coding_name.strip()
-
-        if name in (encoding_to_check, '*'):
-            return True
-    return False
+    return 'gzip' in desired_matches(['gzip'], header)
 
 def static(path, allow_gzip=True):
     """
