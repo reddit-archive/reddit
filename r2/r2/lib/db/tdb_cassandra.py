@@ -26,7 +26,7 @@ from pylons import g
 
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
-from pycassa.system_manager import SystemManager, UTF8_TYPE
+from pycassa.system_manager import SystemManager, UTF8_TYPE, COUNTER_COLUMN_TYPE
 
 from r2.lib.utils import tup, Storage
 from r2.lib.db.sorts import epoch_seconds
@@ -141,10 +141,14 @@ class ThingMeta(type):
 
                 manager = get_manager(cassandra_seeds)
 
+                extra_creation_arguments = getattr(cls, "_extra_schema_creation_args", {})
+
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
                 with make_lock('cassandra_schema'):
                     manager.create_column_family(keyspace, cf_name,
-                                                 comparator_type = cls._compare_with)
+                                                 comparator_type = cls._compare_with,
+                                                 **extra_creation_arguments
+                                                 )
                 log.warning("Created Cassandra Column Family %s" % (cf_name,))
 
                 # try again to look it up
@@ -157,6 +161,30 @@ class ThingMeta(type):
 
     def __repr__(cls):
         return '<thing: %s>' % cls.__name__
+
+class Counter(object):
+    __metaclass__ = ThingMeta
+
+    _use_db = False
+    _connection_pool = 'noretries'
+    _extra_schema_creation_args = {
+        'default_validation_class': COUNTER_COLUMN_TYPE,
+        'replicate_on_write': True
+    }
+
+    _type_prefix = None
+    _cf_name = None
+    _compare_with = UTF8_TYPE
+
+    @classmethod
+    def _byID(cls, key):
+        return cls._cf.get(key)
+
+    @classmethod
+    @will_write
+    def _incr(cls, key, column, delta=1):
+        cls._cf.add(key, column, delta)
+
 
 class ThingBase(object):
     # base class for Thing and Relation

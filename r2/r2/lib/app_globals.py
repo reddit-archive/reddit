@@ -231,6 +231,16 @@ class Globals(object):
                     max_retries=3,
                     prefill=False
                 ),
+            "noretries":
+                PycassaConnectionPool(
+                    keyspace,
+                    logging_name="noretries",
+                    server_list=self.cassandra_seeds,
+                    pool_size=len(self.cassandra_seeds),
+                    timeout=.1,
+                    max_retries=0,
+                    prefill=False
+                ),
         }
 
         perma_memcache = (CMemcache(self.permacache_memcaches, num_clients = num_mc_clients)
