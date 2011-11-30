@@ -60,7 +60,7 @@ class JsonResponse(object):
         self._clear()
         self._errors.add((error, None))
 
-    def __call__(self, *a):
+    def __call__(self, *a, **kw):
         return self
 
     def __getattr__(self, key):
