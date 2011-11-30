@@ -83,7 +83,7 @@ class FlairTemplate(tdb_cassandra.Thing):
     _bool_props = ('text_editable',)
 
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     @classmethod
     def _new(cls, text='', css_class='', text_editable=False):
@@ -137,7 +137,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
 
     _int_props = ('sr_id',)
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     _key_prefix = 'ft_'
 

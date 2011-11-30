@@ -8,7 +8,7 @@ from r2.lib.cache import CL_ONE
 class SubredditsByPartialName(tdb_cassandra.View):
     _use_db = True
     _value_type = 'pickle'
-    _use_new_ring = True
+    _connection_pool = 'main'
     _read_consistency_level = CL_ONE
 
 def load_all_reddits():

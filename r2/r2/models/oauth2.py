@@ -69,7 +69,7 @@ class OAuth2Client(OAuth2Token):
                      redirect_uri="",
                     )
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     @classmethod
     def _new(cls, **kwargs):
@@ -90,7 +90,7 @@ class OAuth2AuthorizationCode(OAuth2Token):
     _int_props = ("user_id",)
     _warn_on_partial_ttl = False
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     @classmethod
     def _new(cls, client_id, redirect_uri, user_id, scope):
@@ -127,7 +127,7 @@ class OAuth2AccessToken(OAuth2Token):
                     )
     _int_props = ("user_id",)
     _use_db = True
-    _use_new_ring = True
+    _connection_pool = 'main'
 
     @classmethod
     def _new(cls, user_id, scope):

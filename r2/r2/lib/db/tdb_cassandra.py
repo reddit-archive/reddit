@@ -35,10 +35,11 @@ from uuid import uuid1
 from itertools import chain
 import cPickle as pickle
 
-cassandra = g.cassandra
-thing_cache = g.thing_cache
-seeds = g.cassandra_seeds
+connection_pools = g.cassandra_pools
+default_connection_pool = g.cassandra_default_pool
+
 keyspace = 'reddit'
+thing_cache = g.thing_cache
 disallow_db_writes = g.disallow_db_writes
 tz = g.tz
 log = g.log
@@ -93,7 +94,7 @@ def will_write(fn):
         return fn(*a, **kw)
     return _fn
 
-def get_manager():
+def get_manager(seeds):
     # n.b. does not retry against multiple servers
     server = seeds[0]
     return SystemManager(server)
@@ -125,8 +126,12 @@ class ThingMeta(type):
             if not getattr(cls, "_write_consistency_level", None):
                 cls._write_consistency_level = write_consistency_level
 
+            pool_name = getattr(cls, "_connection_pool", default_connection_pool)
+            connection_pool = connection_pools[pool_name]
+            cassandra_seeds = connection_pool.server_list
+
             try:
-                cls._cf = ColumnFamily(cassandra,
+                cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)
@@ -134,7 +139,7 @@ class ThingMeta(type):
                 if not db_create_tables:
                     raise
 
-                manager = get_manager()
+                manager = get_manager(cassandra_seeds)
 
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
                 with make_lock('cassandra_schema'):
@@ -143,7 +148,7 @@ class ThingMeta(type):
                 log.warning("Created Cassandra Column Family %s" % (cf_name,))
 
                 # try again to look it up
-                cls._cf = ColumnFamily(cassandra,
+                cls._cf = ColumnFamily(connection_pool,
                                        cf_name,
                                        read_consistency_level = cls._read_consistency_level,
                                        write_consistency_level = cls._write_consistency_level)

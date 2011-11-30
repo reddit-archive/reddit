@@ -833,6 +833,7 @@ class CommentSortsCache(tdb_cassandra.View):
        the candidate order"""
     _use_db = True
     _value_type = 'float'
+    _connection_pool = 'main'
     _read_consistency_level = tdb_cassandra.CL.ONE
 
 class StarkComment(Comment):
@@ -1175,9 +1176,11 @@ class SimpleRelation(tdb_cassandra.Relation):
         except tdb_cassandra.NotFound:
             pass
 
+
 class CassandraSave(SimpleRelation):
     _use_db = True
     _cf_name = 'Save'
+    _connection_pool = 'main'
 
     # thing1_cls = Account
     # thing2_cls = Link
@@ -1211,6 +1214,7 @@ class CassandraHide(SimpleRelation):
     _use_db = True
     _cf_name = 'Hide'
     _ttl = 7*24*60*60
+    _connection_pool = 'main'
 
     @classmethod
     def _hide(cls, *a, **kw):
@@ -1227,6 +1231,7 @@ class CassandraClick(SimpleRelation):
 class SavesByAccount(tdb_cassandra.View):
     _use_db = True
     _cf_name = 'SavesByAccount'
+    _connection_pool = 'main'
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),

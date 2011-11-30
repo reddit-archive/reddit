@@ -978,5 +978,5 @@ Subreddit.__bases__ += (UserRel('moderator', SRMember),
 class SubredditPopularityByLanguage(tdb_cassandra.View):
     _use_db = True
     _value_type = 'pickle'
-    _use_new_ring = True
+    _connection_pool = 'main'
     _read_consistency_level = CL_ONE
