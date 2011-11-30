@@ -100,12 +100,7 @@ class RunCommand(command.Command):
         loaded_namespace = {}
 
         if self.args[1:]:
-            cmd = self.args[1]
-            f = open(cmd);
-            data = f.read()
-            f.close()
-            
-            exec data in loaded_namespace
-            
+            execfile(self.args[1], loaded_namespace)
+
         if self.options.command:
             exec self.options.command in loaded_namespace
