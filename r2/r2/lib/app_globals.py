@@ -357,16 +357,12 @@ class Globals(object):
 
         # try to set the source control revision number
         try:
-            popen = subprocess.Popen(["git", "log", "--date=short",
-                                      "--pretty=format:%H %h", '-n1'],
-                                     stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE)
-            resp, stderrdata = popen.communicate()
-            resp = resp.strip().split(' ')
-            self.version, self.short_version = resp
-        except object, e:
+            self.version = subprocess.check_output(["git", "rev-parse", "HEAD"])
+        except subprocess.CalledProcessError, e:
             self.log.info("Couldn't read source revision (%r)" % e)
             self.version = self.short_version = '(unknown)'
+        else:
+            self.short_version = self.version[:7]
 
         if self.log_start:
             self.log.error("reddit app %s:%s started %s at %s" %
