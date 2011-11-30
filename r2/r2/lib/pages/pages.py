@@ -242,12 +242,19 @@ class Reddit(Templated):
             no_ads_yet = False
 
         if self.submit_box and (c.user_is_loggedin or not g.read_only_mode):
-            ps.append(SideBox(_('Submit a link'),
-                              '/submit', 'submit',
-                              sr_path = (isinstance(c.site,DefaultSR)
-                                         or not isinstance(c.site, FakeSubreddit)),
-                              subtitles = [strings.submit_box_text],
-                              show_cover = True))
+            kwargs = {
+                "title": _("Submit a link"),
+                "css_class": "submit",
+                "show_cover": True
+            }
+            if not c.user_is_loggedin or c.site.can_submit(c.user) or isinstance(c.site, FakeSubreddit):
+                kwargs["link"] = "/submit"
+                kwargs["sr_path"] = isinstance(c.site, DefaultSR) or not isinstance(c.site, FakeSubreddit),
+                kwargs["subtitles"] = [strings.submit_box_text]
+            else:
+                kwargs["disabled"] = True
+                kwargs["subtitles"] = [strings.submit_box_restricted_text]
+            ps.append(SideBox(**kwargs))
 
         if self.create_reddit_box and c.user_is_loggedin:
             delta = datetime.datetime.now(g.tz) - c.user._date
@@ -523,12 +530,13 @@ class SideBox(CachedTemplate):
     """
     Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
     """
-    def __init__(self, title, link, css_class='', subtitles = [],
-                 show_cover = False, nocname=False, sr_path = False):
+    def __init__(self, title, link=None, css_class='', subtitles = [],
+                 show_cover = False, nocname=False, sr_path = False, disabled=False):
         CachedTemplate.__init__(self, link = link, target = '_top',
                            title = title, css_class = css_class,
                            sr_path = sr_path, subtitles = subtitles,
-                           show_cover = show_cover, nocname=nocname)
+                           show_cover = show_cover, nocname=nocname,
+                           disabled=disabled)
 
 
 class PrefsPage(Reddit):

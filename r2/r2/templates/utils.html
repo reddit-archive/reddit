@@ -138,7 +138,7 @@ ${first_defined(kw[1:])}
          kw['target'] = target
 
      link = _a_buffered(link_text, 
-                        href=add_sr(path, sr_path=_sr_path, nocname=nocname), 
+                        href=path and add_sr(path, sr_path=_sr_path, nocname=nocname),
                         **kw) 
   %>
 

@@ -448,6 +448,24 @@ ul.flat-vert {text-align: left;}
     background-image: url(../gradient-nub-hover.png);  /* SPRITE */
 }
 
+.disabled .morelink, .disabled .morelink:hover {
+    background-image: url(../gradient-button-gray.png);  /* SPRITE stretch-x */
+    border-color: #dadada;
+}
+
+.disabled .morelink a {
+    cursor: default;
+    color: #aaa;
+}
+
+.disabled .morelink .nub, .disabled .morelink:hover .nub {
+    background-image: url(../gradient-nub-gray.png);  /* SPRITE */
+}
+
+.sidebox.submit.disabled .spacer a {
+    opacity: .5;
+}
+
 /* raised box */
 
 .raisedbox {
