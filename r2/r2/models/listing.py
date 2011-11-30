@@ -75,6 +75,9 @@ class Listing(object):
             p.update({'after':None, 'before':prev._fullname, 'count':bcount})
             self.before = prev._fullname
             self.prev = (request.path + utils.query_string(p))
+            p_first = request.get.copy()
+            p_first.update({'after':None, 'before':None, 'count':None})
+            self.first = (request.path + utils.query_string(p_first))
         if self.nextprev and self.next_link and next:
             p = request.get.copy()
             p.update({'after':next._fullname, 'before':None, 'count':acount})
