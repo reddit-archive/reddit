@@ -6,6 +6,8 @@ import mimetypes
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
+mimetypes.encodings_map['.gzip'] = 'gzip'
+
 def upload(static_root, bucket_name):
     s3 = boto.connect_s3()
     bucket = s3.get_bucket(bucket_name)
