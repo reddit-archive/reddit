@@ -247,7 +247,8 @@ class NavButton(Styled):
                  target = "", style = "plain", **kw):
         # keep original dest to check against c.location when rendering
         aliases = set(_force_unicode(a.rstrip('/')) for a in aliases)
-        aliases.add(_force_unicode(dest.rstrip('/')))
+        if dest:
+            aliases.add(_force_unicode(dest.rstrip('/')))
 
         self.request_params = dict(request.GET)
         self.stripped_path = _force_unicode(request.path.rstrip('/').lower())
@@ -265,7 +266,10 @@ class NavButton(Styled):
         # of opt 
         if self.opt:
             p = self.request_params.copy()
-            p[self.opt] = self.dest
+            if self.dest:
+                p[self.opt] = self.dest
+            elif self.opt in p:
+                del p[self.opt]
         else:
             p = {}
             base_path = ("%s/%s/" % (base_path, self.dest)).replace('//', '/')
@@ -286,6 +290,8 @@ class NavButton(Styled):
     def is_selected(self):
         """Given the current request path, would the button be selected."""
         if self.opt:
+            if not self.dest and self.opt not in self.request_params:
+                return True
             return self.request_params.get(self.opt, '') in self.aliases
         else:
             if self.stripped_path == self.bare_path:
