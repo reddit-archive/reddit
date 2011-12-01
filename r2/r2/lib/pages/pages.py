@@ -241,7 +241,8 @@ class Reddit(Templated):
                 ps.append(Ads())
             no_ads_yet = False
 
-        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode):
+        user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
+        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
             kwargs = {
                 "title": _("Submit a link"),
                 "css_class": "submit",
