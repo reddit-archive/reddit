@@ -48,12 +48,6 @@
 </rss>  
 
 <%def name="Title()">
-<% 
-   try:
-     title = _(c.site.title)
-   except UnicodeDecodeError:
-     title = c.site.title
- %>
-${title}
+${c.site.title}
 </%def>
 

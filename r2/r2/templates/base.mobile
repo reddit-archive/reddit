@@ -44,7 +44,7 @@ ${next.body()}
 
 
 <%def name="Title()">
-${_(c.site.title)}
+${c.site.title}
 </%def>
 
 
