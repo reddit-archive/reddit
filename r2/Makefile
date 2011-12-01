@@ -70,7 +70,8 @@ clean_i18n:
 	rm -f $(RAND_STRINGS_FILE)
 
 #################### ini files
-INIFILES := $(wildcard *.update)
+UPDATE_FILES := $(wildcard *.update)
+INIFILES := $(UPDATE_FILES:.update=.ini)
 
 ini: $(INIFILES)
 
