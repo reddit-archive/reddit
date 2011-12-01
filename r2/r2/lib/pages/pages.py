@@ -253,7 +253,10 @@ class Reddit(Templated):
                 kwargs["subtitles"] = [strings.submit_box_text]
             else:
                 kwargs["disabled"] = True
-                kwargs["subtitles"] = [strings.submit_box_restricted_text]
+                if c.site.type == "archived":
+                    kwargs["subtitles"] = [strings.submit_box_archived_text]
+                else:
+                    kwargs["subtitles"] = [strings.submit_box_restricted_text]
             ps.append(SideBox(**kwargs))
 
         if self.create_reddit_box and c.user_is_loggedin:

@@ -125,6 +125,7 @@ string_dict = dict(
     ),
     submit_box_text = _('to anything interesting: news article, blog entry, video, picture...'),
     submit_box_restricted_text = _('submission in this subreddit is restricted to approved submitters.'),
+    submit_box_archived_text = _('this subreddit is archived and no longer accepting submissions.'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
     banned_subreddit = _("""**this reddit has been banned**\n\nmost likely this was done automatically by our spam filtering program. the program is still learning, and may even have some bugs, so if you feel the ban was a mistake, please submit a link to our [request a reddit listing](%(link)s) and be sure to include the **exact name of the reddit**."""),

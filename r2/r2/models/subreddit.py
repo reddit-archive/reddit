@@ -266,7 +266,7 @@ class Subreddit(Thing, Printable):
         if c.user_is_admin:
             return True
 
-        if self.type in ('public', 'restricted'):
+        if self.type in ('public', 'restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
             #private requires contributorship
