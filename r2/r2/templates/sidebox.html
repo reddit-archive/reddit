@@ -25,14 +25,14 @@
 <div class="sidebox ${thing.css_class}">
   <div class="morelink">
     ${plain_link(thing.title, thing.link, _sr_path=thing.sr_path,
-                 _class='login-required', nocname=thing.nocname)}
+                 _class='login-required' if thing.show_cover else None, nocname=thing.nocname)}
     <div class="nub"> </div>
   </div>
 
   %if thing.subtitles:
     <div class="spacer">
       ${plain_link('', thing.link, _sr_path=thing.sr_path,
-                   _class='login-required', nocname=thing.nocname)}
+                   _class='login-required' if thing.show_cover else None, nocname=thing.nocname)}
       %for subtitle in thing.subtitles:
         <div class="subtitle">${subtitle}</div>
       %endfor
