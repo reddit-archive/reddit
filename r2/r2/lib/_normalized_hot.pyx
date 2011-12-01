@@ -70,13 +70,15 @@ cpdef list get_hot(list srs, only_fullnames = True):
                 q._filter(Link.c._date > timeago('%d days' % hot_page_age))
             q._limit = max_items
             for i, link in enumerate(q):
+                if i == 0:
+                    hot = link._hot
+                    thot = max(hot, 1.0)
                 es = epoch_seconds(link._date)
                 if not hot_page_age or es > oldest:
-                    hot = link._hot
                     if i == 0:
-                        thot = max(hot, 1.0)
                         ehot = 1.0
                     else:
+                        hot = link._hot
                         ehot = hot/thot
                     links.append((ehot, hot, link._fullname))
 
@@ -87,9 +89,10 @@ cpdef list get_hot(list srs, only_fullnames = True):
             # sorting a bit cheaper
 
             for i, (fname, hot, es) in enumerate(q.data[:max_items]):
+                if i == 0:
+                    thot = max(hot, 1.0)
                 if not hot_page_age or es > oldest:
                     if i == 0:
-                        thot = max(hot, 1.0)
                         ehot = 1.0
                     else:
                         ehot = hot/thot
