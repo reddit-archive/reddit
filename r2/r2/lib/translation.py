@@ -594,7 +594,7 @@ def get_active_langs(path = _i18n_path, default_lang = 'en'):
     trans_name = {}
     for lang in os.listdir(path):
         x = os.path.join(path, lang, 'LC_MESSAGES')
-        if os.path.exists(x) and os.path.isdir(x):
+        if os.path.isdir(x):
             name = Translator.get_name(lang)
             trans_name[lang] = name
             if Translator.is_enabled(lang) and Translator.in_use(lang):

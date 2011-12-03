@@ -35,7 +35,7 @@
            %endif
          />
     <label for="comment-visits-${i}">
-      ${visit} ${_("ago")}
+      ${_("%(when)s ago") % dict(when=visit)}
     </label>
   </div>
   %endfor

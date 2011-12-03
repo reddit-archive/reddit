@@ -177,9 +177,10 @@ class Globals(object):
         self.running_as_script = global_conf.get('running_as_script', False)
         
         # turn on for language support
-        if not hasattr(self, 'lang'): self.lang = 'en'
+        if not hasattr(self, 'lang'):
+            self.lang = 'en'
         self.languages, self.lang_name = \
-                        get_active_langs(default_lang= self.lang)
+            get_active_langs(default_lang=self.lang)
 
         all_languages = self.lang_name.keys()
         all_languages.sort()

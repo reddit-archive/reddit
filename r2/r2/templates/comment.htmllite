@@ -43,7 +43,7 @@
 %if thing.deleted:
 
 <small>
-    <b>${_("[deleted]")}</b> ${thing.timesince} ${_("ago")}
+    <b>${_("[deleted]")}</b> ${_("%(when)s ago") % dict(when=thing.timesince)}
 </small>
 
 %else:
