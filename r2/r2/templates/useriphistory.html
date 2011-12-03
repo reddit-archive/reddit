@@ -46,7 +46,7 @@
         <tr>
             <td>${ip}</td>
             <td>${location.get('country_name', '')}</td>
-            <td>${_('%(when)s ago') % dict(when=timestamp(last_visit))}</td>
+            <td>${timestamp(last_visit)}&#32;${_('ago')}</td>
         </tr>
         % endfor
     </tbody>
