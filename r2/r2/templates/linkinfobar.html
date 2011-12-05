@@ -33,7 +33,9 @@
 <div class="linkinfo">
   ${_("this post was submitted on")}
   &#32;
-  ${thing.a._date.strftime(thing.datefmt)}
+  <time datetime="${thing.a._date.isoformat()}">
+    ${thing.a._date.strftime(thing.datefmt)}
+  </time>
 
   <div class="score">
     ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.score, True),
