@@ -329,9 +329,11 @@ class Reddit(Templated):
                                   css_class = "pref-lang")]
         else:
             lang = c.lang.split('-')[0] if c.lang else ''
-            buttons += [JsButton(g.lang_name.get(lang, lang),  
-                                  onclick = "return showlang();",
-                                  css_class = "pref-lang")]
+            lang_name = g.lang_name.get(lang) or [lang, '']
+            lang_name = "".join(lang_name)
+            buttons += [JsButton(lang_name,
+                                 onclick = "return showlang();",
+                                 css_class = "pref-lang")]
         return NavMenu(buttons, base_path = "/", type = "flatlist")
 
     def build_toolbars(self):

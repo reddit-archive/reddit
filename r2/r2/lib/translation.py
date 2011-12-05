@@ -595,20 +595,19 @@ def get_active_langs(path = _i18n_path, default_lang = 'en'):
     for lang in os.listdir(path):
         x = os.path.join(path, lang, 'LC_MESSAGES')
         if os.path.isdir(x):
-            name = Translator.get_name(lang)
-            trans_name[lang] = name
+            name = [Translator.get_name(lang), '']
             if Translator.is_enabled(lang) and Translator.in_use(lang):
                 if lang != default_lang:
                     trans.append(lang)
                     if Translator.get_complete_frac(lang) < .5:
-                        name += ' (*)'
+                        name[1] = ' (*)'
+            trans_name[lang] = name
     trans.sort()
     # insert the default language at the top of the list
     trans.insert(0, default_lang)
     if default_lang not in trans_name:
         trans_name[default_lang] = default_lang
     return trans, trans_name
-    
 
 
 class TranslatorTemplate(Translator):
@@ -621,7 +620,6 @@ class TranslatorTemplate(Translator):
     def to_file(*a, **kw):
         pass
 
-    
 
 class AutoTranslator(Translator):
     def __init__(self, **kw):

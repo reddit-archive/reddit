@@ -199,7 +199,7 @@ ${unsafe(txt)}
   %endif
   %for x in langs:
   <option ${x == default_lang  and "selected='selected'" or ""} value="${x}">
-    ${g.lang_name[x]} [${x}]
+    ${g.lang_name[x][0]} [${x}] ${g.lang_name[x][1]}
   </option>
   %endfor
 </select>
@@ -237,7 +237,7 @@ ${unsafe(txt)}
     %>
     <input type="checkbox" name="${idname}" id="${idname}"
            onclick="check_some_langs(this)" ${checked}/>
-    <label for="${idname}">${g.lang_name[lang]}</label>
+    <label for="${idname}">${g.lang_name[lang][0]}</label>
     </td>
   %endfor
   </tr>
