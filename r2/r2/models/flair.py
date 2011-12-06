@@ -187,7 +187,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
             idx = cls.by_sr(sr_id)
         except tdb_cassandra.NotFound:
             # Everything went better than expected.
-            pass
+            return
 
         for k in idx._index_keys():
             del idx[k]
