@@ -146,7 +146,7 @@ label.disabled { color: gray; }
 
 .hover a:hover { text-decoration: underline }
 
-.selected { font-weight: bold; }
+.selected, .choice.primary { font-weight: bold; }
 
 .flat-list {list-style-type: none; display: inline;}
 .flat-list li, .flat-list form {display: inline; white-space: nowrap; }
@@ -4250,6 +4250,7 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-spam:before,
 .icon-menu .reddit-ban:before,
 .icon-menu .reddit-flair:before,
+.icon-menu .reddit-moderationlog:before,
 .icon-menu .reddit-moderators:before,
 .icon-menu .moderator-mail:before,
 .icon-menu .reddit-contributors:before,
@@ -4302,6 +4303,10 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-flair:before {
     background-image: url(../reddit_flair.png); /* SPRITE */
     /* Work around a centering difference between this icon and reddit_ban.png */
+    margin-left: 1px;
+}
+.icon-menu .reddit-moderationlog:before {
+    background-image: url(../reddit_moderationlog.png); /* SPRITE */
     margin-left: 1px;
 }
 .icon-menu .reddit-moderators:before {
@@ -4916,4 +4921,84 @@ tr.gold-accent + tr > td {
 .oauth2-authorize .fancybutton.decline:active {
     background: #e4e4e4;
     box-shadow: inset 0px -1px 0px white;
+}
+
+.modactionlisting table {
+    margin: 0 15px;
+}
+
+.modactionlisting td.timestamp {
+    white-space: nowrap;
+    padding-left: 0;
+    padding-right: 1.5em;
+}
+
+.modactionlisting td.button {
+    padding-right: 0;
+    padding-left: 1.5em;
+}
+
+.modactionlisting td.description em {
+    font-style: italic;
+}
+
+.modactions td {
+    font-size: small;
+    text-align: left;
+    padding: 2px; 
+}
+.modactions.banuser,
+.modactions.unbanuser,
+.modactions.removelink,
+.modactions.approvelink,
+.modactions.removecomment,
+.modactions.approvecomment,
+.modactions.addmoderator,
+.modactions.removemoderator,
+.modactions.addcontributor,
+.modactions.removecontributor,
+.modactions.editsettings,
+.modactions.editflair {
+    height: 16px;
+    width: 16px;
+    display: block;
+    content: " ";
+    float: left;
+    margin-right: 5px;
+}
+.modactions.banuser {
+    background-image: url(../modactions_banuser.png); /* SPRITE */
+}
+.modactions.unbanuser {
+    background-image: url(../modactions_unbanuser.png); /* SPRITE */
+}
+.modactions.removelink {
+    background-image: url(../modactions_removelink.png); /* SPRITE */
+}
+.modactions.approvelink {
+    background-image: url(../modactions_approvelink.png); /* SPRITE */
+}
+.modactions.removecomment {
+    background-image: url(../modactions_removecomment.png); /* SPRITE */
+}
+.modactions.approvecomment {
+    background-image: url(../modactions_approvecomment.png); /* SPRITE */
+}
+.modactions.addmoderator {
+    background-image: url(../modactions_addmoderator.png); /* SPRITE */
+}
+.modactions.removemoderator {
+    background-image: url(../modactions_removemoderator.png); /* SPRITE */
+}
+.modactions.addcontributor {
+    background-image: url(../modactions_addcontributor.png); /* SPRITE */
+}
+.modactions.removecontributor {
+    background-image: url(../modactions_removecontributor.png); /* SPRITE */
+}
+.modactions.editsettings {
+    background-image: url(../modactions_editsettings.png); /* SPRITE */
+}
+.modactions.editflair {
+    background-image: url(../modactions_editflair.png); /* SPRITE */
 }

@@ -50,6 +50,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/account-activity', controller='front', action='account_activity')
 
     mc('/about/message/:where', controller='message', action='listing')
+    mc('/about/log', controller='front', action='moderationlog')
     mc('/about/:location', controller='front', 
        action='editreddit', location = 'about')
 

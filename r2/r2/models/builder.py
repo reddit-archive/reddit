@@ -45,7 +45,7 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap = Wrapped, keep_fn = None, stale = True):
+    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True):
         self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
@@ -272,9 +272,8 @@ class Builder(object):
             return True
 
 class QueryBuilder(Builder):
-    def __init__(self, query, wrap = Wrapped, keep_fn = None,
-                 skip = False, **kw):
-        Builder.__init__(self, wrap, keep_fn)
+    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False, **kw):
+        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
         self.query = query
         self.skip = skip
         self.num = kw.get('num')

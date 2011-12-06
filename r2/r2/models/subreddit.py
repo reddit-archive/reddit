@@ -38,7 +38,6 @@ from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.cache import CL_ONE
 
-
 import os.path
 import random
 
@@ -333,6 +332,10 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_sr_comments(self)
 
+    def get_modactions(self, mod=None, action=None):
+        # Get a query that will yield ModAction objects with mod and action 
+        from r2.models import ModAction
+        return ModAction.get_actions(self, mod=mod, action=action)
 
     @classmethod
     def add_props(cls, user, wrapped):

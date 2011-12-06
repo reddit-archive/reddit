@@ -89,6 +89,10 @@ class Listing(object):
     def __iter__(self):
         return iter(self.things)
 
+class TableListing(Listing): pass
+
+class ModActionListing(TableListing): pass
+
 class LinkListing(Listing):
     def __init__(self, *a, **kw):
         Listing.__init__(self, *a, **kw)

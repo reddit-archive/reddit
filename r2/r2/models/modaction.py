@@ -1,6 +1,6 @@
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
-from r2.models import Account, Subreddit, Link, Printable
+from r2.models import Account, Subreddit, Link, Comment, Printable
 from pycassa.system_manager import TIME_UUID_TYPE
 from uuid import UUID
 from pylons.i18n import _
@@ -86,7 +86,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'flair_clear_template': _('clear flair templates')}
 
     # This stuff won't change
-    cache_ignore = set(['subreddit']).union(Printable.cache_ignore)
+    cache_ignore = set(['subreddit', 'target']).union(Printable.cache_ignore)
 
     # Thing properties for Printable
     @property
@@ -187,15 +187,54 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
 
         from r2.lib.menus import NavButton
         from r2.lib.db.thing import Thing
-        from r2.lib.pages import WrappedUser, SimpleLinkDisplay
+        from r2.lib.pages import WrappedUser
+        from r2.lib.filters import _force_unicode
+
+        TITLE_MAX_WIDTH = 50
 
         request_path = request.path
 
         target_fullnames = [item.target_fullname for item in wrapped if hasattr(item, 'target_fullname')]
-        targets = Thing._by_fullname(target_fullnames)
+        targets = Thing._by_fullname(target_fullnames, data=True)
+        authors = Account._byID([t.author_id for t in targets.values() if hasattr(t, 'author_id')], data=True)
+        links = Link._byID([t.link_id for t in targets.values() if hasattr(t, 'link_id')], data=True)
+        subreddits = Subreddit._byID([t.sr_id for t in targets.values() if hasattr(t, 'sr_id')])
+
+        # Assemble target links
+        target_links = {}
+        target_accounts = {}
+        for fullname, target in targets.iteritems():
+            if isinstance(target, Link):
+                author = authors[target.author_id]
+                title = _force_unicode(target.title)
+                if len(title) > TITLE_MAX_WIDTH:
+                    short_title = title[:TITLE_MAX_WIDTH] + '...'
+                else:
+                    short_title = title
+                text = '"%(title)s" %(by)s %(author)s' % {'title': short_title, 
+                                                          'by': _('by'),
+                                                          'author': author.name}
+                path = target.make_permalink(subreddits[target.sr_id])
+                target_links[fullname] = (text, path, title)
+            elif isinstance(target, Comment):
+                author = authors[target.author_id]
+                link = links[target.link_id]
+                title = _force_unicode(link.title)
+                if len(title) > TITLE_MAX_WIDTH:
+                    short_title = title[:TITLE_MAX_WIDTH] + '...'
+                else:
+                    short_title = title
+                text = '%(by)s %(author)s %(on)s "%(title)s"' % {'by': _('by'),
+                                                         'author': author.name,
+                                                         'on': _('on'),
+                                                         'title': short_title}
+                path = target.make_permalink(link, subreddits[target.sr_id])
+                target_links[fullname] = (text, path, title)
+            elif isinstance(target, Account):
+                target_accounts[fullname] = WrappedUser(target)
 
         for item in wrapped:
-            # Can I move these buttons somewhere else? Does it make sense to do so?
+            # Can I move these buttons somewhere else? Not great to have request stuff in here
             css_class = 'modactions %s' % item.action
             item.button = NavButton('', item.action, opt='type', css_class=css_class)
             item.button.build(base_path=request_path)
@@ -206,14 +245,13 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
             item.text = ModAction._text.get(item.action, '')
             item.details = item.get_extra_text()
 
-            # Can extend default_thing_wrapper to also lookup the targets
-            if hasattr(item, 'target_fullname') and not item.target_fullname == None:
+            if hasattr(item, 'target_fullname') and item.target_fullname:
                 target = targets[item.target_fullname]
                 if isinstance(target, Account):
-                    item.target = WrappedUser(target)
-                elif isinstance(target, Comment) or isinstance(target, Link):
-                    item.target = SimpleLinkDisplay(target)
-        
+                    item.target_wrapped_user = target_accounts[item.target_fullname]
+                elif isinstance(target, Link) or isinstance(target, Comment):
+                    item.target_text, item.target_path, item.target_title = target_links[item.target_fullname]
+
         Printable.add_props(user, wrapped)
 
 class ModActionBySR(tdb_cassandra.View):

@@ -131,6 +131,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      banned       = _("ban users"),
                      banusers     = _("ban users"),
                      flair        = _("edit user flair"),
+                     log          = _("moderation log"),
 
                      popular      = _("popular"),
                      create       = _("create"),

@@ -26,6 +26,8 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models.oauth2 import OAuth2Client
+from r2.models import ModAction
+from r2.models import Thing
 from r2.config import cache
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
@@ -203,6 +205,7 @@ class Reddit(Templated):
                 NamedButton('spam', css_class = 'reddit-spam'),
                 NamedButton('banned', css_class = 'reddit-ban'),
                 NamedButton('flair', css_class = 'reddit-flair'),
+                NamedButton('log', css_class = 'reddit-moderationlog'),
                 ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         css_class = "icon-menu",  separator = '')]
@@ -517,6 +520,7 @@ class SubredditInfoBar(CachedTemplate):
                     NamedButton('traffic'),
                     NavButton(menu.community_settings, 'edit'),
                     NavButton(menu.flair, 'flair'),
+                    NavButton(menu.modactions, 'modactions'),
                     ])
         return [NavMenu(buttons, type = "flat_vert", base_path = "/about/",
                         separator = '')]

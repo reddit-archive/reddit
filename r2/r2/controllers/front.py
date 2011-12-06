@@ -21,7 +21,7 @@
 ################################################################################
 from validator import *
 from pylons.i18n import _, ungettext
-from reddit_base import RedditController, base_listing
+from reddit_base import RedditController, base_listing, base_cassandra_listing
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
@@ -361,6 +361,59 @@ class FrontController(RedditController):
             return c.response
         else:
             return self.abort404()
+
+    def _make_moderationlog(self, num, after, reverse, count, mod=None, action=None):
+
+        if mod and action:
+            query = c.site.get_modactions(mod=mod, action=None)
+
+            def keep_fn(ma):
+                return ma.action == action
+        else:
+            query = c.site.get_modactions(mod=mod, action=action)
+
+            def keep_fn(ma):
+                return True
+
+        builder = QueryBuilder(query, skip=True, num=num, after=after, 
+                               keep_fn=keep_fn, count=count, 
+                               reverse=reverse,
+                               wrap=default_thing_wrapper())
+        listing = ModActionListing(builder)
+        pane = listing.listing()
+        return pane
+
+    @base_cassandra_listing
+    @validate(mod=VAccountByName('mod'),
+              action=VOneOf('type', ModAction.actions))
+    def GET_moderationlog(self, num, after, reverse, count, mod, action):
+
+        is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
+
+        if not is_moderator:
+            return self.abort404()
+
+        panes = PaneStack()
+        pane = self._make_moderationlog(num, after, reverse, count,
+                                         mod=mod, action=action)
+        panes.append(pane)
+
+        action_buttons = [NavButton(_('all'), None, opt='type', css_class='primary')]
+        for a in ModAction.actions:
+            action_buttons.append(NavButton(ModAction._menu[a], a, opt='type'))
+
+        mod_ids = c.site.moderators
+        mods = Account._byID(mod_ids)
+        mod_buttons = [NavButton(_('all'), None, opt='mod', css_class='primary')]
+        for mod_id in mod_ids:
+            mod = mods[mod_id]
+            mod_buttons.append(NavButton(mod.name, mod.name, opt='mod'))
+        base_path = request.path
+        menus = [NavMenu(action_buttons, base_path=base_path, 
+                         title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
+                NavMenu(mod_buttons, base_path=base_path, 
+                        title=_('filter by moderator'), type='lightdrop')]
+        return EditReddit(content=panes, nav_menus=menus, extension_handling=False).render()
 
     def _make_spamlisting(self, location, num, after, reverse, count):
         if location == 'reports':
