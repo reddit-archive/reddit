@@ -1698,14 +1698,6 @@ class ApiController(RedditController):
         c.user._commit()
 
 
-    @noresponse(VAdmin(),
-                tr = VTranslation("lang"), 
-                user = nop('user'))
-    def POST_deltranslator(self, tr, user):
-        if tr:
-            tr.author.remove(user)
-            tr.save()
-
     @noresponse(VUser(),
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
@@ -1733,18 +1725,6 @@ class ApiController(RedditController):
             # subscribe button or the DBs are really lagged; either way,
             # some other proc has already handled this subscribe request.
             return
-
-    @noresponse(VAdmin(),
-                tr = VTranslation("id"))
-    def POST_disable_lang(self, tr):
-        if tr:
-            tr._is_enabled = False
-
-    @noresponse(VAdmin(),
-                tr = VTranslation("id"))
-    def POST_enable_lang(self, tr):
-        if tr:
-            tr._is_enabled = True
 
 
     @validatedForm(VAdmin(),

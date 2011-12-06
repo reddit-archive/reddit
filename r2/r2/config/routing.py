@@ -83,10 +83,6 @@ def make_map(global_conf={}, app_conf={}):
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq',   controller='feedback', action='ad_inq')
 
-    mc('/admin/i18n', controller='i18n', action='list')
-    mc('/admin/i18n/:action', controller='i18n')
-    mc('/admin/i18n/:action/:lang', controller='i18n')
-
     mc('/admin/usage', controller='usage')
 
     # Used for editing ads

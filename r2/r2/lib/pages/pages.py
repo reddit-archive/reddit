@@ -1918,24 +1918,6 @@ class Bookmarklets(Templated):
         Templated.__init__(self, buttons = buttons)
 
 
-class Translator_Message(Templated):
-    def __init__(self, locale, user):
-        from r2.lib.translation import Translator
-        self.user = user
-        self.locale = locale
-        self.lang_name = Translator.get_name(self.locale)
-        self.en_name = Translator.get_en_name(self.locale)
-        Templated.__init__(self)
-
-class AdminTranslations(Templated):
-    """The translator control interface, used for determining which
-    user is allowed to edit which translation file and for providing a
-    summary of what translation files are done and/or in use."""
-    def __init__(self):
-        from r2.lib.translation import list_translations
-        Templated.__init__(self)
-        self.translations = list_translations()
-
 class UserAwards(Templated):
     """For drawing the regular-user awards page."""
     def __init__(self):
