@@ -27,7 +27,7 @@ try:
     import reddit_i18n
     I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 except ImportError:
-    I18N_PATH = os.path.abspath('r2/i18n')
+    I18N_PATH = os.path.abspath('r2/r2/i18n')
 
 
 def get_available_languages():

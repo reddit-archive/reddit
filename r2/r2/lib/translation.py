@@ -19,21 +19,12 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from babel import Locale
-from datetime import datetime, timedelta
-import gettext
-from hashlib import md5
 import json
 import os
 import pylons
-from pylons.i18n import _
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
-import random
-import re
-import time
 
 from r2.lib.i18n import I18N_PATH as _i18n_path
-from r2.lib.utils import Storage
 
 
 _domain = 'r2'
@@ -67,10 +58,11 @@ def set_lang(lang, graceful_fail = False, **kwargs):
 
 
 def load_data(lang, path=_i18n_path, domain=_domain, extension='data'):
-    filename = os.path.join(path, locale, 'LC_MESSAGES',
+    filename = os.path.join(path, lang, 'LC_MESSAGES',
                             domain + '.' + extension)
     with open(filename) as datafile:
         data = json.load(datafile)
+    return data
 
 
 def get_active_langs(path=_i18n_path, default_lang='en'):
