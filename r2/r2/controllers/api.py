@@ -432,6 +432,8 @@ class ApiController(RedditController):
         if container and container.is_moderator(c.user):
             container.remove_moderator(c.user)
             Subreddit.special_reddits(c.user, "moderator", _update=True)
+            ModAction.create(container, c.user, 'removemoderator', target=c.user, 
+                             details='remove_self')
 
     @noresponse(VUser(),
                 VModhash(),
@@ -477,7 +479,13 @@ class ApiController(RedditController):
         if type in ("friend", "enemy") and container != c.user:
             abort(403, 'forbidden')
         fn = getattr(container, 'remove_' + type)
-        fn(victim)
+        new = fn(victim)
+
+        # Log this action
+        if new and type in ('moderator','contributor','banned'):
+            action = dict(banned='unbanuser', moderator='removemoderator', 
+                          contributor='removecontributor').get(type, None)
+            ModAction.create(c.site, c.user, action, target=victim)
 
         if type == "friend" and c.user.gold:
             c.user.friend_rels_cache(_update=True)
@@ -517,6 +525,12 @@ class ApiController(RedditController):
             return
 
         new = fn(friend)
+
+        # Log this action
+        if new and type in ('moderator','contributor','banned'):
+            action = dict(banned='banuser', moderator='addmoderator', 
+                          contributor='addcontributor').get(type, None)
+            ModAction.create(c.site, c.user, action, target=friend)
 
         if type == "friend" and c.user.gold:
             # Yes, the order of the next two lines is correct.
@@ -1069,6 +1083,9 @@ class ApiController(RedditController):
 
             c.site._commit()
 
+            ModAction.create(c.site, c.user, action='editsettings', 
+                             details='stylesheet')
+
             form.set_html(".status", _('saved'))
             form.set_html(".errors ul", "")
 
@@ -1114,7 +1131,8 @@ class ApiController(RedditController):
             return self.abort(403,'forbidden')
         c.site.del_image(name)
         c.site._commit()
-
+        ModAction.create(c.site, c.user, action='editsettings', 
+                         details='del_image', description=name)
 
     @validatedForm(VSrModerator(),
                    VModhash(),
@@ -1136,6 +1154,9 @@ class ApiController(RedditController):
             c.site.header = None
             c.site.header_size = None
             c.site._commit()
+            ModAction.create(c.site, c.user, action='editsettings', 
+                             details='del_header')
+
         # hide the button which started this
         form.find('.delete-img').hide()
         # hide the preview box
@@ -1215,6 +1236,14 @@ class ApiController(RedditController):
             if add_image_to_sr:
                 c.site.add_image(name, url = new_url)
             c.site._commit()
+
+            if header:
+                ModAction.create(c.site, c.user, action='editsettings', 
+                                 details='upload_image_header')
+            else:
+                ModAction.create(c.site, c.user, action='editsettings', 
+                                 details='upload_image', description=name)
+
             return UploadedImage(_('saved'), new_url, name, 
                                  errors=errors, form_id=form_id).render()
 
@@ -1313,6 +1342,9 @@ class ApiController(RedditController):
             if not sr.domain:
                 del kw['css_on_cname']
             for k, v in kw.iteritems():
+                if getattr(sr, k, None) != v:
+                    ModAction.create(sr, c.user, action='editsettings', 
+                                     details=k)
                 setattr(sr, k, v)
             sr._commit()
 
@@ -1358,6 +1390,16 @@ class ApiController(RedditController):
             end_trial(thing, why + "-removed")
             admintools.spam(thing, False, not c.user_is_admin, c.user.name)
 
+            if isinstance(c.site, FakeSubreddit):
+                sr = Subreddit._byID(thing.sr_id)
+            else:
+                sr = c.site
+
+            if isinstance(thing, Link):
+                ModAction.create(sr, c.user, 'removelink', target=thing)
+            elif isinstance(thing, Comment):
+                ModAction.create(sr, c.user, 'removecomment', target=thing)
+
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
@@ -1367,6 +1409,16 @@ class ApiController(RedditController):
 
         end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)
+
+        if isinstance(c.site, FakeSubreddit):
+            sr = Subreddit._byID(thing.sr_id)
+        else:
+            sr = c.site
+
+        if isinstance(thing, Link):
+            ModAction.create(sr, c.user, 'approvelink', target=thing)
+        elif isinstance(thing, Comment):
+            ModAction.create(sr, c.user, 'approvecomment', target=thing)
 
     @validatedForm(VUser(), VModhash(),
                    VCanDistinguish(('id', 'how')),
@@ -1904,6 +1956,10 @@ class ApiController(RedditController):
         setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
         user._commit()
 
+        if c.user != user:
+            ModAction.create(c.site, c.user, action='editflair', target=user,
+                             details='flair_edit')
+
         if new:
             jquery.redirect('?name=%s' % user.name)
         else:
@@ -1928,6 +1984,9 @@ class ApiController(RedditController):
         setattr(user, 'flair_%s_text' % c.site._id, None)
         setattr(user, 'flair_%s_css_class' % c.site._id, None)
         user._commit()
+
+        ModAction.create(c.site, c.user, action='editflair', target=user,
+                         details='flair_delete')
 
         jquery('#flairrow_%s' % user._id36).remove()
         unflair = WrappedUser(
@@ -1992,6 +2051,10 @@ class ApiController(RedditController):
             setattr(user, 'flair_%s_text' % c.site._id, text)
             setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
             user._commit()
+
+            ModAction.create(c.site, c.user, action='editflair', target=user,
+                             details='flair_csv')
+
             line_result.status = '%s flair for user %s' % (mode, user.name)
             line_result.ok = True
 
@@ -2013,9 +2076,18 @@ class ApiController(RedditController):
         flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
                          flair_self_assign_enabled):
-        c.site.flair_enabled = flair_enabled
-        c.site.flair_position = flair_position
-        c.site.flair_self_assign_enabled = flair_self_assign_enabled
+        if c.site.flair_enabled != flair_enabled:
+            c.site.flair_enabled = flair_enabled
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='flair_enabled')
+        if c.site.flair_position != flair_position:
+            c.site.flair_position = flair_position
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='flair_position')
+        if c.site.flair_self_assign_enabled != flair_self_assign_enabled:
+            c.site.flair_self_assign_enabled = flair_self_assign_enabled
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='flair_self_enabled')
         c.site._commit()
         jquery.refresh()
 
@@ -2081,6 +2153,8 @@ class ApiController(RedditController):
             form.set_html('.status', _('saved'))
             jquery('input[name="text"]').data('saved', text)
             jquery('input[name="css_class"]').data('saved', css_class)
+        ModAction.create(c.site, c.user, action='editflair',
+                             details='flair_template')
 
     @validatedForm(VFlairManager(),
                    VModhash(),
@@ -2089,11 +2163,15 @@ class ApiController(RedditController):
         idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
         if idx.delete_by_id(flair_template._id):
             jquery('#%s' % flair_template._id).parent().remove()
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='flair_delete_template')
 
     @validatedForm(VFlairManager(), VModhash())
     def POST_clearflairtemplates(self, form, jquery):
         FlairTemplateBySubredditIndex.clear(c.site._id)
         jquery.refresh()
+        ModAction.create(c.site, c.user, action='editflair',
+                         details='flair_clear_template')
 
     @validate(VUser(),
               user = VOptionalExistingUname('name'))
@@ -2136,6 +2214,10 @@ class ApiController(RedditController):
         setattr(user, 'flair_%s_text' % c.site._id, text)
         setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
         user._commit()
+
+        if (c.site.is_moderator(c.user) or c.user_is_admin) and c.user != user:
+            ModAction.create(c.site, c.user, action='editflair', target=user, 
+                             details='flair_edit')
 
         # Push some client-side updates back to the browser.
         u = WrappedUser(user, force_show_flair=True,
