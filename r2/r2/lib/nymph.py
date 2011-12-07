@@ -157,7 +157,8 @@ def _rewrite_css(css_filename, sprite_path, images):
 
         return ''.join((
             'background-image: url(%s);' % sprite_path,
-            'background-position: -%dpx -%dpx;' % position
+            'background-position: -%dpx -%dpx;' % position,
+            'background-repeat: %s;' % ('repeat' if should_stretch else 'no-repeat'),
         ))
 
     # read in the css and replace sprite references
