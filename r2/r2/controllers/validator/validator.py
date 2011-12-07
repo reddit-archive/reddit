@@ -585,7 +585,7 @@ class VCaptcha(Validator):
     default_param = ('iden', 'captcha')
     
     def run(self, iden, solution):
-        if (not c.user_is_loggedin or c.user.needs_captcha()):
+        if c.user.needs_captcha():
             valid_captcha = captcha.valid_solution(iden, solution)
             if not valid_captcha:
                 self.set_error(errors.BAD_CAPTCHA)

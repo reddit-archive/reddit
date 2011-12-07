@@ -213,7 +213,7 @@ class Account(Thing):
         return id_time + ',' + sha.new(to_hash).hexdigest()
 
     def needs_captcha(self):
-        return self.link_karma < 1 and not g.disable_captcha
+        return not g.disable_captcha and self.link_karma < 1
 
     def modhash(self, rand=None, test=False):
         return modhash(self, rand = rand, test = test)
