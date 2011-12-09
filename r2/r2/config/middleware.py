@@ -378,14 +378,19 @@ class ExtensionMiddleware(object):
 
     def __call__(self, environ, start_response):
         path = environ['PATH_INFO']
+        fname, sep, path_ext = path.rpartition('.')
         domain_ext = environ.get('reddit-domain-extension')
-        for ext, val in extension_mapping.iteritems():
-            if ext == domain_ext or path.endswith('.' + ext):
-                set_extension(environ, ext)
-                #strip off the extension
-                if path.endswith('.' + ext):
-                    environ['PATH_INFO'] = path[:-(len(ext) + 1)]
-                break
+
+        ext = None
+        if path_ext in extension_mapping:
+            ext = path_ext
+            # Strip off the extension.
+            environ['PATH_INFO'] = path[:-(len(ext) + 1)]
+        elif domain_ext in extension_mapping:
+            ext = domain_ext
+
+        if ext:
+            set_extension(environ, ext)
         else:
             environ['render_style'] = 'html'
             environ['content_type'] = 'text/html; charset=UTF-8'
