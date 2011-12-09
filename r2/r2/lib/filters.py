@@ -148,6 +148,7 @@ valid_link_schemes = (
     'news://',
     'mumble://',
     'ssh://',
+    'git://',
 )
 
 class SouptestSaxHandler(ContentHandler):
