@@ -108,15 +108,19 @@ CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
 css: $(CSS_OUTPUTS)
 
 $(MINIFIED_OTHER_STYLESHEETS): $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
+	# when static file names are mangled, the original becomes a symlink to the mangled name
+	# remove the original file here in case it's a symlink so we don't just rewrite the old file
+	rm -f $@
 	$(CAT) $< | $(CSS_COMPRESS) > $@
 
 $(STATIC_DIR)/sprite-%.png $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
-	# when static file names are mangled, the original becomes a symlink to the mangled name
-	# remove the original file here in case it's a symlink so we don't just rewrite the old file
-	rm -f $(STATIC_DIR)/$*.css
+	# see above
+	rm -f $(STATIC_DIR)/sprite-$*.png $(STATIC_DIR)/$*.css
 	$(PYTHON) r2/lib/nymph.py $< $(STATIC_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_DIR)/$*.css
 
 $(RTL_STYLESHEETS): %-rtl.css : %.css
+	# see above
+	rm -f $@
 	$(SED) -e "s/left/>####</g" \
 	   -e "s/right/left/g" \
 	   -e "s/>####</right/g" \
