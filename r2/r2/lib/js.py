@@ -5,7 +5,7 @@ from subprocess import Popen, PIPE
 import re
 import json
 
-from r2.lib.i18n import get_available_languages
+from r2.lib.translation import iter_langs
 
 if __name__ != "__main__":
     from pylons import g, c
@@ -176,7 +176,7 @@ class LocalizedModule(Module):
         string_keys = re.findall("r\.strings\.([\w$_]+)", reddit_source)
 
         print >> sys.stderr, "Creating language-specific files:"
-        for lang in get_available_languages():
+        for lang, unused in iter_langs():
             strings = StringsSource(lang, string_keys)
             source = strings.get_source()
             lang_path = LocalizedModule.languagize_path(self.path, lang)
@@ -202,8 +202,7 @@ class LocalizedModule(Module):
 
     @property
     def outputs(self):
-        languages = get_available_languages()
-        for lang in languages:
+        for lang, unused in iter_langs():
             yield LocalizedModule.languagize_path(self.path, lang)
 
 class JQuery(Module):

@@ -24,7 +24,11 @@ import os
 import pylons
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
 
-from r2.lib.i18n import I18N_PATH as _i18n_path
+try:
+    import reddit_i18n
+    I18N_PATH = os.path.dirname(reddit_i18n.__file__)
+except ImportError:
+    I18N_PATH = os.path.abspath('r2/r2/i18n')
 
 
 _domain = 'r2'
@@ -36,7 +40,7 @@ def _get_translator(lang, graceful_fail=False, **kwargs):
     if not isinstance(lang, list):
         lang = [lang]
     try:
-        translator = translation(conf['pylons.package'], _i18n_path, 
+        translator = translation(conf['pylons.package'], I18N_PATH,
                                  languages=lang, **kwargs)
     except IOError, ioe:
         if graceful_fail:
@@ -57,28 +61,32 @@ def set_lang(lang, graceful_fail = False, **kwargs):
         registry.replace(pylons.translator, translator)
 
 
-def load_data(lang, path=_i18n_path, domain=_domain, extension='data'):
-    filename = os.path.join(path, lang, 'LC_MESSAGES',
-                            domain + '.' + extension)
+def load_data(lang_path, domain=_domain, extension='data'):
+    filename = os.path.join(lang_path, domain + '.' + extension)
     with open(filename) as datafile:
         data = json.load(datafile)
     return data
 
 
-def get_active_langs(path=_i18n_path, default_lang='en'):
+def iter_langs(base_path=I18N_PATH):
+    for lang in os.listdir(base_path):
+        full_path = os.path.join(base_path, lang, 'LC_MESSAGES')
+        if os.path.isdir(full_path):
+            yield lang, full_path
+
+
+def get_active_langs(path=I18N_PATH, default_lang='en'):
     trans = []
     trans_name = {}
-    for lang in os.listdir(path):
-        x = os.path.join(path, lang, 'LC_MESSAGES')
-        if os.path.isdir(x):
-            data = load_data(lang)
-            name = [data['name'], '']
-            if data['_is_enabled'] and lang != default_lang:
-                trans.append(lang)
-                completion = float(data['num_completed']) / float(data['num_total'])
-                if completion < .5:
-                    name[1] = ' (*)'
-            trans_name[lang] = name
+    for lang, lang_path in iter_langs(path):
+        data = load_data(lang_path)
+        name = [data['name'], '']
+        if data['_is_enabled'] and lang != default_lang:
+            trans.append(lang)
+            completion = float(data['num_completed']) / float(data['num_total'])
+            if completion < .5:
+                name[1] = ' (*)'
+        trans_name[lang] = name
     trans.sort()
     # insert the default language at the top of the list
     trans.insert(0, default_lang)
