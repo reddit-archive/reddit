@@ -622,7 +622,7 @@ class ApiController(RedditController):
         """
         /prefs/delete. Check the username/password and confirmation.
         """
-        if username != c.user.name:
+        if username and username.lower() != c.user.name.lower():
             c.errors.add(errors.NOT_USER, field="user")
 
         if not confirm:
