@@ -433,12 +433,12 @@ def ratelimit_throttled():
         abort(503, 'service temporarily unavailable')
 
 
-def paginated_listing(default_page_size=25, max_page_size=100):
+def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
     def decorator(fn):
         @validate(num=VLimit('limit', default=default_page_size,
                              max_limit=max_page_size),
-                  after=VByName('after'),
-                  before=VByName('before'),
+                  after=VByName('after', backend=backend),
+                  before=VByName('before', backend=backend),
                   count=VCount('count'),
                   target=VTarget("target"),
                   show=VLength('show', 3))
@@ -467,6 +467,9 @@ def paginated_listing(default_page_size=25, max_page_size=100):
 #anymore
 def base_listing(fn):
     return paginated_listing()(fn)
+
+def base_cassandra_listing(fn):
+    return paginated_listing(backend='cassandra')(fn)
 
 def is_trusted_origin(origin):
     try:
@@ -879,4 +882,3 @@ class RedditController(MinimalController):
         request.environ['retry_after'] = 60
 
         abort(503)
-

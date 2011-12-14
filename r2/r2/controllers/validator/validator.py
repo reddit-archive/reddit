@@ -529,25 +529,38 @@ def fullname_regex(thing_cls = None, multiple = False):
     return re.compile(r"\A" + pattern + r"\Z")
 
 class VByName(Validator):
+    # Lookup tdb_sql.Thing or tdb_cassandra.Thing objects by fullname. 
     splitter = re.compile('[ ,]+')
     def __init__(self, param, thing_cls = None, multiple = False,
-                 error = errors.NO_THING_ID, **kw):
+                 error = errors.NO_THING_ID, backend='sql', **kw):
         self.re = fullname_regex(thing_cls)
         self.multiple = multiple
         self._error = error
-        
+        self.backend = backend
+
         Validator.__init__(self, param, **kw)
     
     def run(self, items):
-        if items and self.multiple:
-            items = [item for item in self.splitter.split(items)
-                     if item and self.re.match(item)]
-        if items and (self.multiple or self.re.match(items)):
-            try:
-                return Thing._by_fullname(items, return_dict = False,
-                                          data=True)
-            except NotFound:
-                pass
+        if self.backend == 'cassandra':
+            # tdb_cassandra.Thing objects can't use the regex
+            if items and self.multiple:
+                items = [item for item in self.splitter.split(items)]
+            if items:                        
+                try:
+                    return tdb_cassandra.Thing._by_fullname(items, return_dict=False)
+                except NotFound:
+                    pass
+        else:
+            if items and self.multiple:
+                items = [item for item in self.splitter.split(items)
+                         if item and self.re.match(item)]
+            if items and (self.multiple or self.re.match(items)):
+                try:
+                    return Thing._by_fullname(items, return_dict=False,
+                                              data=True)
+                except NotFound:
+                    pass
+
         return self.set_error(self._error)
 
 class VByNameIfAuthor(VByName):
