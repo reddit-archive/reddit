@@ -619,9 +619,12 @@ class VAdmin(Validator):
 
 class VAdminOrAdminSecret(VAdmin):
     def run(self, secret):
+        '''If validation succeeds, return True if the secret was used,
+        False otherwise'''
         if secret and constant_time_compare(secret, g.ADMINSECRET):
-            return
+            return True
         super(VAdminOrAdminSecret, self).run()
+        return False
 
 class VVerifiedUser(VUser):
     def run(self):

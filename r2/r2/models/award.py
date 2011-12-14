@@ -29,6 +29,7 @@ from pylons import c, g, request
 class Award (Thing):
     _defaults = dict(
         awardtype = 'regular',
+        api_ok = False
         )
 
     @classmethod
@@ -45,11 +46,9 @@ class Award (Thing):
         return [ d[id] for id in all ]
 
     @classmethod
-    def _new(cls, codename, title, awardtype, imgurl):
-#        print "Creating new award codename=%s title=%s imgurl=%s" % (
-#            codename, title, imgurl)
+    def _new(cls, codename, title, awardtype, imgurl, api_ok):
         a = Award(codename=codename, title=title, awardtype=awardtype,
-                  imgurl=imgurl)
+                  imgurl=imgurl, api_ok=api_ok)
         a._commit()
         Award._all_awards_cache(_update=True)
 
@@ -142,8 +141,12 @@ class Trophy(Relation(Account, Award)):
             recipient.set_cup(cup_info)
 
         t._commit()
-        Trophy.by_account(recipient, _update=True)
-        Trophy.by_award(award, _update=True)
+        t.update_caches()
+        return t
+    
+    def update_caches(self):
+        self.by_account(self._thing1, _update=True)
+        self.by_award(self._thing2, _update=True)
 
     @classmethod
     @memoize('trophy.by_account2')

@@ -40,7 +40,8 @@
   <br/>
 </%def>
 
-<%def name="awardedit(fullname, title='', awardtype='', codename='', imgurl='')">
+<%def name="awardedit(fullname, title='', awardtype='', codename='', imgurl='',
+                      api_ok=False)">
  <form action="/post/editaward" method="post" class="pretty-form medium-text"
        style="display:none"
        onsubmit="return post_form(this, 'editaward');" id="awardedit-${fullname}">
@@ -69,6 +70,20 @@
         ${awardtype_radio("manual", "manual", fullname, awardtype)}
         ${awardtype_radio("invisible", "invisible", fullname, awardtype)}
         ${error_field("NO_TEXT", "awardtype", "span")}
+      </td>
+    </tr>
+    <tr>
+      <td>API ok?</td>
+      <td>
+        <input name="api_ok" id="award_${fullname}_api_ok"
+          type="checkbox"
+          %if api_ok:
+            checked="checked"
+          %endif
+          />
+        <label for="award_${fullname}_api_ok">
+          allow adding/removing this award via API
+        </label>
       </td>
     </tr>
     <tr>

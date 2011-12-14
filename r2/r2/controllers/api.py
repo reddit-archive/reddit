@@ -1881,10 +1881,11 @@ class ApiController(RedditController):
                    codename = VLength("codename", max_length = 100),
                    title = VLength("title", max_length = 100),
                    awardtype = VOneOf("awardtype",
-                                      ("regular", "manual", "invisible")),
+                                    ("regular", "manual", "invisible")),
+                   api_ok=VBoolean("api_ok"),
                    imgurl = VLength("imgurl", max_length = 1000))
     def POST_editaward(self, form, jquery, award, colliding_award, codename,
-                       title, awardtype, imgurl):
+                       title, awardtype, api_ok, imgurl):
         if form.has_errors(("codename", "title", "awardtype", "imgurl"),
                            errors.NO_TEXT):
             pass
@@ -1901,7 +1902,7 @@ class ApiController(RedditController):
             return
 
         if award is None:
-            Award._new(codename, title, awardtype, imgurl)
+            Award._new(codename, title, awardtype, imgurl, api_ok)
             form.set_html(".status", "saved. reload to see it.")
             return
 
@@ -1909,6 +1910,7 @@ class ApiController(RedditController):
         award.title = title
         award.awardtype = awardtype
         award.imgurl = imgurl
+        award.api_ok = api_ok
         award._commit()
         form.set_html(".status", _('saved'))
 
@@ -2221,27 +2223,28 @@ class ApiController(RedditController):
         jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
             'saved', css_class).val(css_class)
 
-    @validatedForm(VAdminOrAdminSecret("secret"),
+    @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award = VByName("fullname"),
                    description = VLength("description", max_length=1000),
                    url = VLength("url", max_length=1000),
                    cup_hours = VFloat("cup_hours",
                                       coerce=False, min=0, max=24 * 365),
                    recipient = VExistingUname("recipient"))
-    def POST_givetrophy(self, form, jquery, award, description,
+    def POST_givetrophy(self, form, jquery, secret_used, award, description,
                         url, cup_hours, recipient):
-        if form.has_errors("award", errors.NO_TEXT):
-            pass
-
         if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
                                         errors.NO_USER):
             pass
 
-        if form.has_errors("fullname", errors.NO_TEXT):
+        if form.has_errors("fullname", errors.NO_TEXT, errors.NO_THING_ID):
             pass
 
         if form.has_errors("cup_hours", errors.BAD_NUMBER):
             pass
+        
+        if secret_used and not award.api_ok:
+            c.errors.add(errors.NO_API, field='secret')
+            form.has_errors('secret', errors.NO_API)
 
         if form.has_error():
             return
@@ -2251,12 +2254,13 @@ class ApiController(RedditController):
             cup_expiration = timefromnow("%s seconds" % cup_seconds)
         else:
             cup_expiration = None
-
+        
         t = Trophy._new(recipient, award, description=description, url=url,
                         cup_info=dict(expiration=cup_expiration))
 
         form.set_html(".status", _('saved'))
-
+        form._send_data(trophy_fn=t._id36)
+    
     @validatedForm(VAdmin(),
                    account = VExistingUname("account"))
     def POST_removecup(self, form, jquery, account):
@@ -2264,13 +2268,19 @@ class ApiController(RedditController):
             return self.abort404()
         account.remove_cup()
 
-    @validatedForm(VAdmin(),
+    @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    trophy = VTrophy("trophy_fn"))
-    def POST_removetrophy(self, form, jquery, trophy):
+    def POST_removetrophy(self, form, jquery, secret_used, trophy):
         if not trophy:
             return self.abort404()
         recipient = trophy._thing1
         award = trophy._thing2
+        if secret_used and not award.api_ok:
+            c.errors.add(errors.NO_API, field='secret')
+            form.has_errors('secret', errors.NO_API)
+        
+        if form.has_error():
+            return
 
         trophy._delete()
         Trophy.by_account(recipient, _update=True)
