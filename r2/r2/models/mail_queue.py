@@ -23,7 +23,7 @@ import sha, datetime
 from email.MIMEText import MIMEText
 
 import sqlalchemy as sa
-from sqlalchemy.databases.postgres import PGInet, PGBigInteger
+from sqlalchemy.dialects.postgresql.base import PGInet
 
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from r2.lib.utils import Storage, timeago, Enum, tup
@@ -42,7 +42,7 @@ def mail_queue(metadata):
                     sa.Column("msg_hash", sa.String),
                     
                     # the id of the account who started it
-                    sa.Column('account_id', PGBigInteger),
+                    sa.Column('account_id', sa.BigInteger),
 
                     # the name (not email) for the from
                     sa.Column('from_name', sa.String),
@@ -81,7 +81,7 @@ def sent_mail_table(metadata, name = 'sent_mail'):
                     sa.Column('msg_hash', sa.String, primary_key=True),
                     
                     # the account who started it
-                    sa.Column('account_id', PGBigInteger),
+                    sa.Column('account_id', sa.BigInteger),
                     
                     # the "To" address of the email
                     sa.Column('to_addr', sa.String),
@@ -175,7 +175,7 @@ class EmailHandler(object):
                 has_opted_out(email, _update = True)
                 opt_count(_update = True)
                 return (email, True)
-            except sa.exceptions.SQLError:
+            except sa.exc.SQLError:
                 return (email, False)
         return (None, False)
 

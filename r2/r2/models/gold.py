@@ -25,7 +25,7 @@ from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 from pylons import g, c
 from datetime import datetime
 import sqlalchemy as sa
-from sqlalchemy.exceptions import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr

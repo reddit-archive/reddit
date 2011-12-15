@@ -40,7 +40,11 @@ def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
     return sa.create_engine('postgres://%s/%s' % (host, name),
                             strategy='threadlocal',
                             pool_size = int(pool_size),
-                            max_overflow = int(max_overflow))
+                            max_overflow = int(max_overflow),
+                            # our code isn't ready for unicode to appear
+                            # in place of strings yet
+                            use_native_unicode=False,
+                            )
 
 class db_manager:
     def __init__(self):

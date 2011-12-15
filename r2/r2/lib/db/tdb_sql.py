@@ -25,7 +25,7 @@ from copy import deepcopy
 import random
 
 import sqlalchemy as sa
-from sqlalchemy.databases import postgres
+from sqlalchemy.dialects import postgres
 
 from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
 import operators
@@ -38,8 +38,6 @@ log_format = logging.Formatter('sql: %(message)s')
 max_val_len = 1000
 
 transactions = TransSet()
-
-BigInteger = postgres.PGBigInteger
 
 MAX_THING_ID = 9223372036854775807 # http://www.postgresql.org/docs/8.3/static/datatype-numeric.html
 
@@ -124,7 +122,7 @@ def get_rel_type_table(metadata):
 
 def get_thing_table(metadata, name):
     table = sa.Table(g.db_app_name + '_thing_' + name, metadata,
-                     sa.Column('thing_id', BigInteger, primary_key = True),
+                     sa.Column('thing_id', sa.BigInteger, primary_key = True),
                      sa.Column('ups', sa.Integer, default = 0, nullable = False),
                      sa.Column('downs',
                                sa.Integer,
@@ -146,7 +144,7 @@ def get_thing_table(metadata, name):
 
 def get_data_table(metadata, name):
     data_table = sa.Table(g.db_app_name + '_data_' + name, metadata,
-                          sa.Column('thing_id', BigInteger, nullable = False,
+                          sa.Column('thing_id', sa.BigInteger, nullable = False,
                                     primary_key = True),
                           sa.Column('key', sa.String, nullable = False,
                                     primary_key = True),
@@ -156,9 +154,9 @@ def get_data_table(metadata, name):
 
 def get_rel_table(metadata, name):
     rel_table = sa.Table(g.db_app_name + '_rel_' + name, metadata,
-                         sa.Column('rel_id', BigInteger, primary_key = True),
-                         sa.Column('thing1_id', BigInteger, nullable = False),
-                         sa.Column('thing2_id', BigInteger, nullable = False),
+                         sa.Column('rel_id', sa.BigInteger, primary_key = True),
+                         sa.Column('thing1_id', sa.BigInteger, nullable = False),
+                         sa.Column('thing2_id', sa.BigInteger, nullable = False),
                          sa.Column('name', sa.String, nullable = False),
                          sa.Column('date', sa.DateTime(timezone = True),
                                    default = sa.func.now(), nullable = False),
@@ -371,7 +369,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         id = do_insert(table)
         params['thing_id'] = id
         return id
-    except sa.exceptions.SQLError, e:
+    except sa.exc.SQLError, e:
         if not 'IntegrityError' in e.message:
             raise
         # wrap the error to prevent db layer bleeding out
@@ -419,7 +417,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
                                    name = name, 
                                    date = date)
         return r.last_inserted_ids()[0]
-    except sa.exceptions.SQLError, e:
+    except sa.exc.SQLError, e:
         if not 'IntegrityError' in e.message:
             raise
         # wrap the error to prevent db layer bleeding out
@@ -482,7 +480,7 @@ def set_data(table, type_id, thing_id, **vals):
 
     i = table.insert(values = dict(thing_id = thing_id))
     u = table.update(sa.and_(table.c.thing_id == thing_id,
-                             table.c.key == sa.bindparam('key')))
+                             table.c.key == sa.bindparam('_key')))
 
     inserts = []
     for key, val in vals.iteritems():
@@ -490,7 +488,7 @@ def set_data(table, type_id, thing_id, **vals):
 
         #TODO one update?
         if key in keys:
-            u.execute(key = key, value = val, kind = kind)
+            u.execute(_key = key, value = val, kind = kind)
         else:
             inserts.append({'key':key, 'value':val, 'kind': kind})
 
@@ -684,7 +682,7 @@ def add_sort(sort, t_table, select):
                 if k and orig_col.startswith(k):
                     table = t_table[k]
                     col = orig_col[len(k):]
-            if not table:
+            if table is None:
                 table = t_table[None]
         else:
             table = t_table

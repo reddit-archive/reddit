@@ -182,7 +182,7 @@ class HardCacheBackend(object):
             self.profile_stop(prof)
             return value
 
-        except sa.exceptions.IntegrityError, e:
+        except sa.exc.IntegrityError, e:
             self.profile_stop(prof)
             return self.get(category, ids, force_write_table=True)
 

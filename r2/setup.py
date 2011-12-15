@@ -69,7 +69,7 @@ setup(
         "pycrypto",
         "Babel>=0.9.1",
         "cython>=0.14",
-        "SQLAlchemy==0.5.3",
+        "SQLAlchemy==0.7.4",
         "BeautifulSoup",
         "cssutils==0.9.5.1",
         "chardet",
