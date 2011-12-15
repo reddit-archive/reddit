@@ -20,7 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from r2.models import *
-from filters import unsafe, websafe
+from filters import unsafe, websafe, _force_unicode
 from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
 from r2.lib.media import s3_direct_url
@@ -118,7 +118,7 @@ def js_config():
         # are we in an iframe?
         "cnameframe": bool(c.cname and not c.authorized_cname),
         # this page's referer
-        "referer": request.referer or "",
+        "referer": _force_unicode(request.referer) or "",
         # the user's voting hash
         "modhash": c.modhash or False,
         # the current rendering style
