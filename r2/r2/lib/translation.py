@@ -26,9 +26,10 @@ from pylons.i18n.translation import translation, LanguageError, NullTranslations
 
 try:
     import reddit_i18n
-    I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 except ImportError:
-    I18N_PATH = os.path.abspath('r2/r2/i18n')
+    import r2.i18n as reddit_i18n
+
+I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 
 
 _domain = 'r2'
