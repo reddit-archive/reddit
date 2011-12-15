@@ -660,6 +660,7 @@ class MinimalController(BaseController):
         # push data to statsd
         g.stats.transact('web.%s' % action,
                          (end_time - c.start_time).total_seconds())
+        g.stats.flush_cassandra_events()
 
     def abort404(self):
         abort(404, "not found")
