@@ -155,16 +155,16 @@ $(function() {
             error: make_submit
         };
 
-        var target = "/button_info.json";
+        var infoTarget = "/button_info.json";
         if (querydict.sr) {
-            target = "/r/" + querydict.sr + target;
+            infoTarget = "/r/" + querydict.sr + infoTarget;
         }
 
         if ($.cookie_read("session", "reddit_").data) {
-            options.url = target;
+            options.url = infoTarget;
             options.dataType = "json";
         } else {
-            options.url = "http://buttons.reddit.com" + target;
+            options.url = "http://buttons.reddit.com" + infoTarget;
             options.dataType = options.jsonp = "jsonp";
             options.jsonpCallback = "buttonInfoCb";
             options.cache = true;
