@@ -703,7 +703,7 @@ function sr_search(query) {
     query = query.toLowerCase();
     var cache = sr_cache();
     if (!cache[query]) {
-        $.request('search_reddit_names', {query: query},
+        $.request('search_reddit_names.json', {query: query},
                   function (r) {
                       cache[query] = r['names'];
                       update_dropdown(r['names']);
