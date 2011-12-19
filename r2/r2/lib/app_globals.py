@@ -26,6 +26,8 @@ import signal
 from datetime import timedelta, datetime
 from urlparse import urlparse
 import json
+from sqlalchemy import engine
+from sqlalchemy import event
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
@@ -216,6 +218,11 @@ class Globals(object):
 
         self.stats = Stats(global_conf.get('statsd_addr'),
                            global_conf.get('statsd_sample_rate'))
+
+        event.listens_for(engine.Engine, 'before_cursor_execute')(
+            self.stats.pg_before_cursor_execute)
+        event.listens_for(engine.Engine, 'after_cursor_execute')(
+            self.stats.pg_after_cursor_execute)
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
