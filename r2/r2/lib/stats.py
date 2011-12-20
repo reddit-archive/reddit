@@ -8,6 +8,28 @@ from pycassa import pool
 from r2.lib import cache
 from r2.lib import utils
 
+class TimingStatBuffer:
+    """Dictionary of keys to cumulative time+count values.
+
+    This provides thread-safe accumulation of pairs of values. Iterating over
+    instances of this class yields (key, (total_time, count)) tuples.
+    """
+
+    def __init__(self):
+        # Store data internally as a map of keys to complex values. The real
+        # part of the complex value is the total time (in seconds), and the
+        # imaginary part is the total count.
+        self.data = collections.defaultdict(complex)
+
+    def record(self, key, service_time_sec):
+        # Add to the total time and total count with a single complex value,
+        # so as to avoid inconsistency from a poorly timed context switch.
+        self.data[key] += service_time_sec + 1j
+
+    def __iter__(self):
+        for k, v in self.data.iteritems():
+            yield k, (v.real, v.imag)
+
 class Stats:
     # Sample rate for recording cache hits/misses, relative to the global
     # sample_rate.
@@ -29,7 +51,8 @@ class Stats:
             self.port = None
             self.sample_rate = None
             self.connection = None
-        self.cassandra_events = collections.defaultdict(int)
+
+        self.timing_stats = TimingStatBuffer()
 
     def get_timer(self, name):
         if self.connection:
@@ -86,32 +109,24 @@ class Stats:
 
     def cassandra_event(self, operation, column_families, success,
                         service_time):
+        if not self.connection:
+            return
         if not isinstance(column_families, list):
             column_families = [column_families]
         for cf in column_families:
             key = '.'.join([
                 cf, operation, self.CASSANDRA_KEY_SUFFIXES[success]])
-            self.cassandra_events[key + '.time'] += service_time
-            self.cassandra_events[key] += 1
+            self.timing_stats.record(key, service_time)
 
-    def flush_cassandra_events(self):
-        events = self.cassandra_events
-        self.cassandra_events = collections.defaultdict(int)
+    def flush_timing_stats(self):
+        events = self.timing_stats
+        self.timing_stats = TimingStatBuffer()
         if self.connection:
             data = {}
-            for k, v in events.iteritems():
-                if k.endswith('.time'):
-                    suffix = '|ms'
-                    # these stats get stored under timers, so chop off ".time"
-                    k = k[:-5]
-                    if k.endswith('.ok'):
-                        # only report the mean over the duration of this request
-                        v /= events.get(k, 1)
-                        # chop off the ".ok" since we aren't storing error times
-                        k = k[:-3]
-                else:
-                    suffix = '|c'
-                data['cassandra.' + k] = str(v) + suffix
+            for key, (total_time, count) in events:
+                data['cassandra.' + key] = str(count) + '|c'
+                if key.endswith('.ok'):
+                    data['cassandra.' + key[:-3]] = str(total_time) + '|ms'
             self.connection.send(data)
 
 class CacheStats:
