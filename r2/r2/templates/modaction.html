@@ -22,15 +22,27 @@
 
 <%namespace file="utils.html" import="timestamp, plain_link"/>
 
-<tr class="modactions">
+<%
+    from pylons import c
+    from r2.models.subreddit import ModSR, MultiReddit
+    bgcolor = "rgb(255,255,255)"
+    is_multi = isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit)
+    if is_multi and hasattr(thing, 'bgcolor'):
+        bgcolor = 'rgb(%s,%s,%s)' % thing.bgcolor
+ %> 
+
+<tr class="modactions" style="background-color: ${bgcolor}">
   <td class="timestamp whitespace:nowrap">${timestamp(thing.date)}&#32;ago</td>
+  %if is_multi:
+    <td class="subreddit">${plain_link('/r/' + thing.sr_name, thing.sr_path + 'about/log', title=thing.sr_name)}</td>
+  %endif
   <td class="whitespace:nowrap">${thing.mod}</td>
   <td class="button">${thing.button}</td>
   <td class="description">${thing.text}&#32;
   %if hasattr(thing, 'target_text'):
-    ${plain_link(thing.target_text, thing.target_path, title=thing.target_title, sr_path=False, cname=False, _class="subreddit hover")}
+    ${plain_link(thing.target_text, thing.target_path, title=thing.target_title, sr_path=False, cname=False, _class="subreddit hover")}&#32;
   %elif hasattr(thing, 'target_wrapped_user'):
-    ${thing.target_wrapped_user}
+    ${thing.target_wrapped_user}&#32;
   %endif
   %if hasattr(thing, 'details') and thing.details:
     <em>(${thing.details})</em>

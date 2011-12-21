@@ -332,10 +332,11 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_sr_comments(self)
 
-    def get_modactions(self, mod=None, action=None):
+    @classmethod
+    def get_modactions(cls, srs, mod=None, action=None):
         # Get a query that will yield ModAction objects with mod and action 
         from r2.models import ModAction
-        return ModAction.get_actions(self, mod=mod, action=action)
+        return ModAction.get_actions(srs, mod=mod, action=action)
 
     @classmethod
     def add_props(cls, user, wrapped):
@@ -619,6 +620,28 @@ class Subreddit(Thing, Printable):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    @staticmethod
+    def user_mods_all(user, srs):
+        # Get moderator SRMember relations for all in srs
+        # if a relation doesn't exist there will be a None entry in the
+        # returned dict
+        mod_rels = SRMember._fast_query(srs, user, 'moderator', data=False)
+        if None in mod_rels.values():
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def get_all_mod_ids(srs):
+        from r2.lib.db.thing import Merge
+        srs = tup(srs)
+        queries = [SRMember._query(SRMember.c._thing1_id == sr._id,
+                                   SRMember.c._name == 'moderator') for sr in srs]
+        merged = Merge(queries)
+        # sr_ids = [sr._id for sr in srs]
+        # query = SRMember._query(SRMember.c._thing1_id == sr_ids, ...)
+        # is really slow
+        return [rel._thing2_id for rel in list(merged)]
 
 class FakeSubreddit(Subreddit):
     over_18 = False

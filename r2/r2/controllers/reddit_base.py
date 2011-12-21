@@ -468,9 +468,6 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
 def base_listing(fn):
     return paginated_listing()(fn)
 
-def base_cassandra_listing(fn):
-    return paginated_listing(backend='cassandra')(fn)
-
 def is_trusted_origin(origin):
     try:
         origin = urlparse(origin)

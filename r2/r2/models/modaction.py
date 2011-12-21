@@ -147,7 +147,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
             v.add_object(self)
 
     @classmethod
-    def get_actions(cls, sr, mod=None, action=None, after=None, reverse=False, count=1000):
+    def get_actions(cls, srs, mod=None, action=None, after=None, reverse=False, count=1000):
         """
         Get a ColumnQuery that yields ModAction objects according to
         specified criteria.
@@ -160,15 +160,17 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         if not isinstance(after, cls):
             after = None
 
+        srs = tup(srs)
+
         if not mod and not action:
-            rowkey = sr._id36
-            q = ModActionBySR.query(rowkey, after=after, reverse=reverse, count=count)
+            rowkeys = [sr._id36 for sr in srs]
+            q = ModActionBySR.query(rowkeys, after=after, reverse=reverse, count=count)
         elif mod and not action:
-            rowkey = '%s_%s' % (sr._id36, mod._id36)
-            q = ModActionBySRMod.query(rowkey, after=after, reverse=reverse, count=count)
+            rowkeys = ['%s_%s' % (sr._id36, mod._id36) for sr in srs]
+            q = ModActionBySRMod.query(rowkeys, after=after, reverse=reverse, count=count)
         elif not mod and action:
-            rowkey = '%s_%s' % (sr._id36, action)
-            q = ModActionBySRAction.query(rowkey, after=after, reverse=reverse, count=count)
+            rowkeys = ['%s_%s' % (sr._id36, action) for sr in srs]
+            q = ModActionBySRAction.query(rowkeys, after=after, reverse=reverse, count=count)
         else:
             raise NotImplementedError("Can't query by both mod and action")
 
@@ -181,6 +183,13 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         if hasattr(self, 'description') and not self.description == None:
             text += ' %s' % self.description
         return text
+
+    @staticmethod
+    def get_rgb(i, fade=0.8):
+        r = int(256 - (hash(str(i)) % 256)*(1-fade))
+        g = int(256 - (hash(str(i) + ' ') % 256)*(1-fade))
+        b = int(256 - (hash(str(i) + '  ') % 256)*(1-fade))
+        return (r, g, b)
 
     @classmethod
     def add_props(cls, user, wrapped):
@@ -198,7 +207,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         targets = Thing._by_fullname(target_fullnames, data=True)
         authors = Account._byID([t.author_id for t in targets.values() if hasattr(t, 'author_id')], data=True)
         links = Link._byID([t.link_id for t in targets.values() if hasattr(t, 'link_id')], data=True)
-        subreddits = Subreddit._byID([t.sr_id for t in targets.values() if hasattr(t, 'sr_id')])
+        subreddits = Subreddit._byID([item.sr_id for item in wrapped], data=True)
 
         # Assemble target links
         target_links = {}
@@ -228,7 +237,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                                                          'author': author.name,
                                                          'on': _('on'),
                                                          'title': short_title}
-                path = target.make_permalink(link, subreddits[target.sr_id])
+                path = target.make_permalink(link, subreddits[link.sr_id])
                 target_links[fullname] = (text, path, title)
             elif isinstance(target, Account):
                 target_accounts[fullname] = WrappedUser(target)
@@ -251,6 +260,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                     item.target_wrapped_user = target_accounts[item.target_fullname]
                 elif isinstance(target, Link) or isinstance(target, Comment):
                     item.target_text, item.target_path, item.target_title = target_links[item.target_fullname]
+
+            item.bgcolor = ModAction.get_rgb(item.sr_id)
+            item.sr_name = subreddits[item.sr_id].name
+            item.sr_path = subreddits[item.sr_id].path
 
         Printable.add_props(user, wrapped)
 

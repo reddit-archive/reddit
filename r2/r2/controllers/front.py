@@ -21,7 +21,7 @@
 ################################################################################
 from validator import *
 from pylons.i18n import _, ungettext
-from reddit_base import RedditController, base_listing, base_cassandra_listing
+from reddit_base import RedditController, base_listing, paginated_listing
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
@@ -36,6 +36,7 @@ from r2.lib.filters import unsafe
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
+from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
 from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
 from r2.lib.indextank import IndextankQuery, IndextankException, InvalidIndextankQuery
@@ -362,16 +363,14 @@ class FrontController(RedditController):
         else:
             return self.abort404()
 
-    def _make_moderationlog(self, num, after, reverse, count, mod=None, action=None):
+    def _make_moderationlog(self, srs, num, after, reverse, count, mod=None, action=None):
 
         if mod and action:
-            query = c.site.get_modactions(mod=mod, action=None)
-
+            query = Subreddit.get_modactions(srs, mod=mod, action=None)
             def keep_fn(ma):
                 return ma.action == action
         else:
-            query = c.site.get_modactions(mod=mod, action=action)
-
+            query = Subreddit.get_modactions(srs, mod=mod, action=action)
             def keep_fn(ma):
                 return True
 
@@ -383,27 +382,47 @@ class FrontController(RedditController):
         pane = listing.listing()
         return pane
 
-    @base_cassandra_listing
+    @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(mod=VAccountByName('mod'),
               action=VOneOf('type', ModAction.actions))
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
-
-        is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
-
-        if not is_moderator:
+        if not c.user_is_loggedin:
             return self.abort404()
 
+        if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
+            if isinstance(c.site, ModSR):
+                srs = Subreddit._byID(c.site.sr_ids(), return_dict=False)
+            else:
+                srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
+
+            # check that user is mod on all requested srs
+            if not Subreddit.user_mods_all(c.user, srs) and not c.user_is_admin:
+                return self.abort404()
+
+            # grab all moderators
+            mod_ids = set(Subreddit.get_all_mod_ids(srs))
+            mods = Account._byID(mod_ids, data=True)
+
+            pane = self._make_moderationlog(srs, num, after, reverse, count,
+                                            mod=mod, action=action)
+        elif isinstance(c.site, FakeSubreddit):
+            return self.abort404()
+        else:
+            if not c.site.is_moderator(c.user) and not c.user_is_admin:
+                return self.abort404()
+            mod_ids = c.site.moderators
+            mods = Account._byID(mod_ids, data=True)
+
+            pane = self._make_moderationlog(c.site, num, after, reverse, count,
+                                            mod=mod, action=action)
+
         panes = PaneStack()
-        pane = self._make_moderationlog(num, after, reverse, count,
-                                         mod=mod, action=action)
         panes.append(pane)
 
         action_buttons = [NavButton(_('all'), None, opt='type', css_class='primary')]
         for a in ModAction.actions:
             action_buttons.append(NavButton(ModAction._menu[a], a, opt='type'))
-
-        mod_ids = c.site.moderators
-        mods = Account._byID(mod_ids)
+        
         mod_buttons = [NavButton(_('all'), None, opt='mod', css_class='primary')]
         for mod_id in mod_ids:
             mod = mods[mod_id]
@@ -413,7 +432,8 @@ class FrontController(RedditController):
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
                 NavMenu(mod_buttons, base_path=base_path, 
                         title=_('filter by moderator'), type='lightdrop')]
-        return EditReddit(content=panes, nav_menus=menus, extension_handling=False).render()
+        return EditReddit(content=panes, nav_menus=menus,
+                          extension_handling=False).render()
 
     def _make_spamlisting(self, location, num, after, reverse, count):
         if location == 'reports':

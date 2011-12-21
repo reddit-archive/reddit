@@ -4995,6 +4995,12 @@ tr.gold-accent + tr > td {
     font-style: italic;
 }
 
+.modactionlisting td.subreddit {
+    white-space: nowrap;
+    padding-left: 0;
+    padding-right: 1.5em;
+}
+
 .modactions td {
     font-size: small;
     text-align: left;
