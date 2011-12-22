@@ -155,7 +155,16 @@ def api_validate(response_type=None):
         def _api_validate(*simple_vals, **param_vals):
             def val(fn):
                 def newfn(self, *a, **env):
-                    c.render_style = api_type(request.params.get("renderstyle", response_type))
+                    renderstyle = request.params.get("renderstyle")
+                    if renderstyle:
+                        c.render_style = api_type(renderstyle)
+                    elif not c.extension:
+                        # if the request URL included an extension, don't
+                        # touch the render_style, since it was already set by
+                        # set_extension. if no extension was provided, default
+                        # to response_type.
+                        c.render_style = api_type(response_type)
+
                     # generate a response object
                     if response_type == "html" and not request.params.get('api_type') == "json":
                         responder = JQueryResponse()
