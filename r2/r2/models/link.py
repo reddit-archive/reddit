@@ -102,7 +102,7 @@ class Link(Thing, Printable):
     def set_url_cache(self):
         if self.url != 'self':
             LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
-                                   {self._id36: self._id36})
+                                   {self._id36: ''})
 
     @property
     def already_submitted_link(self):
