@@ -104,18 +104,6 @@ class Link(Thing, Printable):
             LinksByUrl._set_values(LinksByUrl._key_from_url(self.url),
                                    {self._id36: self._id36})
 
-    def update_url_cache(self, old_url):
-        """Remove the old url from the by_url cache then update the
-        cache with the new url."""
-        if old_url != 'self':
-            try:
-                lbu = LinksByUrl._key_from_url(old_url)
-                del lbu[self._id36]
-                lbu._commit()
-            except tdb_cassandra.NotFound:
-                pass
-        self.set_url_cache()
-
     @property
     def already_submitted_link(self):
         return self.make_permalink_slow() + '?already_submitted=true'
