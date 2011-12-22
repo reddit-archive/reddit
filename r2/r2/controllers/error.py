@@ -23,6 +23,7 @@ import os.path
 from mako.filters import url_escape
 
 import paste.fileapp
+from paste.httpexceptions import HTTPFound
 from pylons.middleware import error_document_template, media_path
 from pylons import c, request, g
 from pylons.i18n import _
@@ -96,6 +97,9 @@ class ErrorController(RedditController):
         try:
             c.error_page = True
             RedditController.__before__(self)
+        except HTTPFound:
+            # ignore an attempt to redirect from an error page
+            pass
         except:
             handle_awful_failure("Error occurred in ErrorController.__before__")
 
