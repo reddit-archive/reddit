@@ -22,6 +22,7 @@
 
 from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
+from pylons.controllers.util import abort
 from pylons.i18n import N_, _, ungettext, get_lang
 import r2.lib.helpers as h
 from r2.lib.utils import to_js
@@ -173,7 +174,7 @@ class BaseController(WSGIController):
 
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
-        return cls.redirect(path)
+        abort(302, path)
 
     @classmethod
     def redirect(cls, dest, code = 302):
