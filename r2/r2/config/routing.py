@@ -146,8 +146,6 @@ def make_map(global_conf={}, app_conf={}):
        sort = "")
 
     mc('/health', controller='health', action='health')
-    mc('/health/:action', controller='health',
-       requirements=dict(action="threads|dump|sleep"))
 
     mc('/', controller='hot', action='listing')
 
