@@ -533,6 +533,7 @@ class Link(Thing, Printable):
 
 class LinksByUrl(tdb_cassandra.View):
     _use_db = True
+    _connection_pool = 'main'
 
     @classmethod
     def _key_from_url(cls, url):
