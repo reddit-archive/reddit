@@ -358,9 +358,6 @@ class Globals(object):
                 self.log.debug("Overriding g.%s to %s" % (k, v))
                 setattr(self, k, v)
 
-        #the shutdown toggle
-        self.shutdown = False
-
         #if we're going to use the query_queue, we need amqp
         if self.write_query_queue and not self.amqp_host:
             raise Exception("amqp_host must be defined to use the query queue")

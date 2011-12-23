@@ -22,12 +22,8 @@ class HealthController(MinimalController):
 
     def GET_health(self):
         c.dontcache = True
-
-        if g.shutdown:
-            abort(503, 'service temporarily unavailable')
-        else:
-            response.headers['Content-Type'] = 'text/plain'
-            return "i'm still alive!"
+        response.headers['Content-Type'] = 'text/plain'
+        return "i'm still alive!"
 
     @validate(secret=nop('secret'))
     def GET_sleep(self, secret):
@@ -81,16 +77,3 @@ class HealthController(MinimalController):
 
         response.headers['Content-Type'] = 'text/plain'
         return output or 'no busy threads'
-
-    @validate(secret=nop('secret'))
-    def GET_shutdown(self, secret):
-        if not g.shutdown_secret:
-            self.abort404()
-        if not secret or secret != g.shutdown_secret:
-            self.abort403()
-
-        c.dontcache = True
-        #the will make the next health-check initiate the shutdown
-        g.shutdown = 'init'
-        response.headers['Content-Type'] = 'text/plain'
-        return 'shutting down...'
