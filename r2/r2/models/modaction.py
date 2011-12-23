@@ -54,7 +54,11 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'editsettings': _('edited settings'),
              'editflair': _('edited user flair')}
 
-    _details_text = {# removemoderator
+    _details_text = {# approve comment/link
+                     'unspam': _('unspam'),
+                     # remove comment/link
+                     'confirm_spam': _('confirmed spam'),
+                     # removemoderator
                      'remove_self': _('removed self'),
                      # editsettings
                      'title': _('title'),
