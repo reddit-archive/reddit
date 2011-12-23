@@ -877,10 +877,6 @@ class RedditController(MinimalController):
         us = filters.unsafe(sf.render())
 
         errpage = pages.RedditError(_('search failed'), us)
-
-        c.response = Response()
-        c.response.status_code = 503
         request.environ['usable_error_content'] = errpage.render()
         request.environ['retry_after'] = 60
-
         abort(503)

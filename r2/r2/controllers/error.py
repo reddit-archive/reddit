@@ -171,16 +171,8 @@ class ErrorController(RedditController):
 
     def send503(self):
         c.response.status_code = 503
-        if 'retry_after' in request.environ:
-            c.response.headers['Retry-After'] = request.environ['retry_after']
-        else:
-            c.response.headers['Retry-After'] = 1
-
-        if 'usable_error_content' in request.environ:
-            return request.environ['usable_error_content']
-        else:
-            c.response.content = toofast
-            return c.response
+        c.response.headers['Retry-After'] = request.environ['retry_after']
+        return request.environ['usable_error_content']
 
     def GET_document(self):
         try:
