@@ -485,7 +485,7 @@ class ApiController(RedditController):
         if new and type in ('moderator','contributor','banned'):
             action = dict(banned='unbanuser', moderator='removemoderator', 
                           contributor='removecontributor').get(type, None)
-            ModAction.create(c.site, c.user, action, target=victim)
+            ModAction.create(container, c.user, action, target=victim)
 
         if type == "friend" and c.user.gold:
             c.user.friend_rels_cache(_update=True)
@@ -530,7 +530,7 @@ class ApiController(RedditController):
         if new and type in ('moderator','contributor','banned'):
             action = dict(banned='banuser', moderator='addmoderator', 
                           contributor='addcontributor').get(type, None)
-            ModAction.create(c.site, c.user, action, target=friend)
+            ModAction.create(container, c.user, action, target=friend)
 
         if type == "friend" and c.user.gold:
             # Yes, the order of the next two lines is correct.
@@ -1389,12 +1389,7 @@ class ApiController(RedditController):
         if getattr(thing, "promoted", None) is None:
             end_trial(thing, why + "-removed")
             admintools.spam(thing, False, not c.user_is_admin, c.user.name)
-
-            if isinstance(c.site, FakeSubreddit):
-                sr = Subreddit._byID(thing.sr_id)
-            else:
-                sr = c.site
-
+            sr = thing.subreddit_slow
             if isinstance(thing, Link):
                 ModAction.create(sr, c.user, 'removelink', target=thing)
             elif isinstance(thing, Comment):
@@ -1409,12 +1404,7 @@ class ApiController(RedditController):
 
         end_trial(thing, why + "-approved")
         admintools.unspam(thing, c.user.name)
-
-        if isinstance(c.site, FakeSubreddit):
-            sr = Subreddit._byID(thing.sr_id)
-        else:
-            sr = c.site
-
+        sr = thing.subreddit_slow
         if isinstance(thing, Link):
             ModAction.create(sr, c.user, 'approvelink', target=thing)
         elif isinstance(thing, Comment):
