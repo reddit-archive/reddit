@@ -42,6 +42,17 @@ from cStringIO import StringIO
 import sys, tempfile, urllib, re, os, sha, subprocess
 from httplib import HTTPConnection
 
+# hack in Paste support for HTTP 429 "Too Many Requests"
+from paste import httpexceptions, wsgiwrappers
+
+class HTTPTooManyRequests(httpexceptions.HTTPClientError):
+    code = 429
+    title = 'Too Many Requests'
+    explanation = ('The server has received too many requests from the client.')
+
+httpexceptions._exceptions[429] = HTTPTooManyRequests
+wsgiwrappers.STATUS_CODE_TEXT[429] = HTTPTooManyRequests.title
+
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
     from pylons import c
@@ -52,7 +63,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
     if global_conf is None:
         global_conf = {}
-    codes = [304, 401, 403, 404, 503]
+    codes = [304, 401, 403, 404, 429, 503]
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:

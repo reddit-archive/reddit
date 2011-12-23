@@ -72,13 +72,32 @@ redditbroke =  \
 '''
 
 toofast =  \
-'''<html>
-  <head><title>service temporarily unavailable</title></head>
+'''<!doctype html>
+<html>
+  <head>
+    <title>Too Many Requests</title>
+    <style>
+      body { font: small verdana, arial, helvetica, sans-serif; }
+    </style>
+  </head>
   <body>
-    the service you request is temporarily unavailable. please try again later.
+    <h1>whoa there, pardner!</h1>
+    <p>reddit's awesome and all, but you may have a bit of a
+    problem. we've seen far too many requests come from your ip address
+    recently.</p>
+    <p>if you think that we've incorrectly blocked you or you would like
+    to discuss easier ways to get the data you want, please contact us
+    any of the following ways.</p>
+    <ul>
+    <li><a href="http://webchat.freenode.net/?channels=reddit-dev">#reddit-dev on freenode</a></li>
+    <li><a href="http://groups.google.com/group/reddit-dev">the reddit-dev google group</a></li>
+    <li><a href="mailto:ratelimit@reddit.com">ratelimit@reddit.com</a></li>
+    </ul>
+    <p>as a reminder, we recommend that clients make no more than one
+    request every two seconds to avoid being blocked like this.</p>
   </body>
 </html>
-'''            
+'''
 
 class ErrorController(RedditController):
     """Generates error documents as and when they are required.
@@ -146,6 +165,10 @@ class ErrorController(RedditController):
         else:
             return pages.Reddit404().render()
 
+    def send429(self):
+        c.response.status_code = 429
+        return toofast
+
     def send503(self):
         c.response.status_code = 503
         if 'retry_after' in request.environ:
@@ -186,6 +209,8 @@ class ErrorController(RedditController):
                 return pages.TakedownPage(link).render()
             elif code == 403:
                 return self.send403()
+            elif code == 429:
+                return self.send429()
             elif code == 500:
                 randmin = {'admin': rand.choice(self.admins)}
                 failien_name = 'youbrokeit%d.png' % rand.randint(1, NUM_FAILIENS)

@@ -419,7 +419,7 @@ def ratelimit_agents():
         if s and user_agent and s in user_agent.lower():
             key = 'rate_agent_' + s
             if g.cache.get(s):
-                abort(503, 'service temporarily unavailable')
+                abort(429)
             else:
                 g.cache.set(s, 't', time = 1)
 
@@ -430,7 +430,7 @@ def ratelimit_throttled():
     ip, slash16 = ip_and_slash16(request)
 
     if throttled(ip) or throttled(slash16):
-        abort(503, 'service temporarily unavailable')
+        abort(429)
 
 
 def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
@@ -616,7 +616,7 @@ class MinimalController(BaseController):
             and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and response.status_code != 503
+            and response.status_code not in (429, 503)
             and response.content and response.content[0]):
             try:
                 g.rendercache.set(self.request_key(),
