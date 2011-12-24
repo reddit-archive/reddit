@@ -472,7 +472,7 @@ class ApiController(RedditController):
                 VModhash(),
                 nuser = VExistingUname('name'),
                 iuser = VByName('id'),
-                container = VByName('container'),
+                container = nop('container'),
                 type = VOneOf('type', ('friend', 'enemy', 'moderator', 
                                        'contributor', 'banned')))
     @api_doc(api_section.users)
@@ -481,18 +481,22 @@ class ApiController(RedditController):
         Handles removal of a friend (a user-user relation) or removal
         of a user's privileges from a subreddit (a user-subreddit
         relation).  The user can either be passed in by name (nuser)
-        or by fullname (iuser).  'container' will either be the
-        current user or the subreddit.
-
+        or by fullname (iuser).  If type is friend or enemy, 'container'
+        will be the current user, otherwise the subreddit must be set.
         """
+        sr_types = ('moderator', 'contributor', 'banned')
+        if type in sr_types:
+            container = c.site
+        else:
+            container = VByName('container').run(container)
+            if not container:
+                return
+
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
-
         victim = iuser or nuser
-
         if (not c.user_is_admin
-            and (type in ('moderator','contributor','banned')
-                 and not container.is_moderator(c.user))):
+            and (type in sr_types and not container.is_moderator(c.user))):
             abort(403, 'forbidden')
         if (type == 'moderator' and not
             (c.user_is_admin or container.can_demod(c.user, victim))):
@@ -505,7 +509,7 @@ class ApiController(RedditController):
         new = fn(victim)
 
         # Log this action
-        if new and type in ('moderator','contributor','banned'):
+        if new and type in sr_types:
             action = dict(banned='unbanuser', moderator='removemoderator', 
                           contributor='removecontributor').get(type, None)
             ModAction.create(container, c.user, action, target=victim)
@@ -520,7 +524,7 @@ class ApiController(RedditController):
                    VModhash(),
                    ip = ValidIP(),
                    friend = VExistingUname('name'),
-                   container = VByName('container'),
+                   container = nop('container'),
                    type = VOneOf('type', ('friend', 'moderator',
                                           'contributor', 'banned')),
                    note = VLength('note', 300))
@@ -531,13 +535,19 @@ class ApiController(RedditController):
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
         """
+        sr_types = ('moderator', 'contributor', 'banned')
+        if type in sr_types:
+            container = c.site
+        else:
+            container = VByName('container').run(container)
+            if not container:
+                return
         fn = getattr(container, 'add_' + type)
 
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in ('moderator','contributor', 'banned')
-                 and not container.is_moderator(c.user))):
+            and (type in sr_types and not container.is_moderator(c.user))):
             abort(403,'forbidden')
 
         # if we are (strictly) friending, the container
@@ -551,7 +561,7 @@ class ApiController(RedditController):
         new = fn(friend)
 
         # Log this action
-        if new and type in ('moderator','contributor','banned'):
+        if new and type in sr_types:
             action = dict(banned='banuser', moderator='addmoderator', 
                           contributor='addcontributor').get(type, None)
             ModAction.create(container, c.user, action, target=friend)
