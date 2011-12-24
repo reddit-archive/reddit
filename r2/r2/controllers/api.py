@@ -82,7 +82,9 @@ class ApiminimalController(MinimalController):
 
     @validatedForm()
     def POST_new_captcha(self, form, jquery, *a, **kw):
-        jquery("body").captcha(get_iden())
+        iden = get_iden()
+        jquery("body").captcha(iden)
+        form._send_data(iden = iden) 
 
 
 class ApiController(RedditController):
