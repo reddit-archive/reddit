@@ -31,6 +31,7 @@ from r2.lib import filters
 from r2.lib.log import log_text
 
 from pylons import g
+from pylons.i18n import _
 import time, sha
 from copy import copy
 from datetime import datetime, timedelta
@@ -159,7 +160,7 @@ class Account(Thing):
             return True
 
     def all_karmas(self):
-        """returns a list of tuples in the form (name, link_karma,
+        """returns a list of tuples in the form (name, hover-text, link_karma,
         comment_karma)"""
         link_suffix = '_link_karma'
         comment_suffix = '_comment_karma'
@@ -171,19 +172,18 @@ class Account(Thing):
             elif k.endswith(comment_suffix):
                 sr_names.add(k[:-len(comment_suffix)])
         for sr_name in sr_names:
-            karmas.append((sr_name,
+            karmas.append((sr_name, None,
                            self._t.get(sr_name + link_suffix, 0),
                            self._t.get(sr_name + comment_suffix, 0)))
 
-        karmas.sort(key = lambda x: abs(x[1] + x[2]), reverse=True)
+        karmas.sort(key = lambda x: abs(x[2] + x[3]), reverse=True)
 
-        karmas.insert(0, ('total',
-                          self.karma('link'),
-                          self.karma('comment')))
-
-        karmas.append(('old',
-                       self._t.get('link_karma', 0),
-                       self._t.get('comment_karma', 0)))
+        old_link_karma = self._t.get('link_karma', 0)
+        old_comment_karma = self._t.get('comment_karma', 0)
+        if old_link_karma or old_comment_karma:
+            karmas.append((_('ancient history'),
+                           _('really obscure karma from before it was cool to track per-subreddit'),
+                           old_link_karma, old_comment_karma))
 
         return karmas
 

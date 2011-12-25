@@ -4605,6 +4605,57 @@ tr.gold-accent + tr > td {
     padding-top: 10px; 
 }
 
+#per-sr-karma {
+    width: 300px;
+    margin: .6em auto 0 auto;
+    table-layout: fixed;
+}
+
+#per-sr-karma thead th,
+#per-sr-karma td {
+    text-align: right;
+}
+
+#per-sr-karma tbody th {
+    text-align: left;
+}
+
+#per-sr-karma #sr-karma-header {
+    width: 150px;
+    text-align: left;
+}
+
+#per-sr-karma thead th {
+    font-weight: bold;
+    padding-bottom: 2px;
+}
+
+#per-sr-karma tbody th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+}
+
+#per-sr-karma tbody td {
+    font-weight: bold;
+    color: #666;
+}
+
+#per-sr-karma th.helpful span {
+    border-bottom: 1px dotted #666;
+    cursor: help;
+    display: inline-block;
+}
+
+.more-karmas {
+    display: none;
+}
+
+.giftgold.karma-breakdown {
+    margin-top: .6em;
+}
+
 .friend-note button[type=submit] { 
     display: none; 
     font-size: x-small;
