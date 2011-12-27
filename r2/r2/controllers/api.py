@@ -1418,12 +1418,30 @@ class ApiController(RedditController):
                    how = VOneOf('how', ('yes','no','admin','special')))
     def POST_distinguish(self, form, jquery, thing, how):
         if not thing:return
+
+        log_modaction = True
+        log_kw = {}
+        original = thing.distinguished if hasattr(thing, 'distinguished') else 'no'
+        if how == original:
+            log_modaction = False   # Distinguish unchanged
+        elif how in ('admin', 'special'):
+            log_modaction = False   # Add admin/special
+        elif original in ('admin', 'special') and how == 'no':
+            log_modaction = False  # Remove admin/special
+        elif how == 'no':
+            log_kw['details'] = 'remove'    # yes --> no
+        else:
+            pass    # no --> yes
+
         thing.distinguished = how
         thing._commit()
         wrapper = default_thing_wrapper(expand_children = True)
         w = wrap_links(thing, wrapper)
         jquery(".content").replace_things(w, True, True)
         jquery(".content .link .rank").hide()
+        if log_modaction:
+            sr = thing.subreddit_slow
+            ModAction.create(sr, c.user, 'distinguish', target=thing, **log_kw)
 
     @noresponse(VUser(),
                 VModhash(),

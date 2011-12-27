@@ -26,7 +26,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
     actions = ('banuser', 'unbanuser', 'removelink', 'approvelink', 
                'removecomment', 'approvecomment', 'addmoderator',
                'removemoderator', 'addcontributor', 'removecontributor',
-               'editsettings', 'editflair')
+               'editsettings', 'editflair', 'distinguish')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -39,20 +39,22 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'addcontributor': _('add contributor'),
              'removecontributor': _('remove contributor'),
              'editsettings': _('edit settings'),
-             'editflair': _('edit user flair')}
+             'editflair': _('edit user flair'),
+             'distinguish': _('distinguish')}
 
     _text = {'banuser': _('banned'),
              'unbanuser': _('unbanned'),
-             'removelink': _('removed post'),
-             'approvelink': _('approved post'),
-             'removecomment': _('removed comment'),
-             'approvecomment': _('approved comment'),                    
+             'removelink': _('removed'),
+             'approvelink': _('approved'),
+             'removecomment': _('removed'),
+             'approvecomment': _('approved'),                    
              'addmoderator': _('added moderator'),
              'removemoderator': _('removed moderator'),
              'addcontributor': _('added approved contributor'),
              'removecontributor': _('removed approved contributor'),
              'editsettings': _('edited settings'),
-             'editflair': _('edited user flair')}
+             'editflair': _('edited user flair'),
+             'distinguish': _('distinguished')}
 
     _details_text = {# approve comment/link
                      'unspam': _('unspam'),
@@ -224,9 +226,11 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                     short_title = title[:TITLE_MAX_WIDTH] + '...'
                 else:
                     short_title = title
-                text = '"%(title)s" %(by)s %(author)s' % {'title': short_title, 
-                                                          'by': _('by'),
-                                                          'author': author.name}
+                text = '%(link)s "%(title)s" %(by)s %(author)s' % {
+                        'link': _('link'),
+                        'title': short_title, 
+                        'by': _('by'),
+                        'author': author.name}
                 path = target.make_permalink(subreddits[target.sr_id])
                 target_links[fullname] = (text, path, title)
             elif isinstance(target, Comment):
@@ -237,10 +241,12 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                     short_title = title[:TITLE_MAX_WIDTH] + '...'
                 else:
                     short_title = title
-                text = '%(by)s %(author)s %(on)s "%(title)s"' % {'by': _('by'),
-                                                         'author': author.name,
-                                                         'on': _('on'),
-                                                         'title': short_title}
+                text = '%(comment)s %(by)s %(author)s %(on)s "%(title)s"' % {
+                        'comment': _('comment'),
+                        'by': _('by'),
+                        'author': author.name,
+                        'on': _('on'),
+                        'title': short_title}
                 path = target.make_permalink(link, subreddits[link.sr_id])
                 target_links[fullname] = (text, path, title)
             elif isinstance(target, Account):

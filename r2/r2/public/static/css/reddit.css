@@ -5009,7 +5009,8 @@ tr.gold-accent + tr > td {
 .modactions.addcontributor,
 .modactions.removecontributor,
 .modactions.editsettings,
-.modactions.editflair {
+.modactions.editflair,
+.modactions.distinguish {
     height: 16px;
     width: 16px;
     display: block;
@@ -5052,4 +5053,7 @@ tr.gold-accent + tr > td {
 }
 .modactions.editflair {
     background-image: url(../modactions_editflair.png); /* SPRITE */
+}
+.modactions.distinguish {
+    background-image: url(../modactions_distinguish.png); /* SPRITE */
 }
