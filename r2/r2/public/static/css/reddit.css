@@ -5010,7 +5010,8 @@ tr.gold-accent + tr > td {
 .modactions.removecontributor,
 .modactions.editsettings,
 .modactions.editflair,
-.modactions.distinguish {
+.modactions.distinguish,
+.modactions.marknsfw {
     height: 16px;
     width: 16px;
     display: block;
@@ -5056,4 +5057,7 @@ tr.gold-accent + tr > td {
 }
 .modactions.distinguish {
     background-image: url(../modactions_distinguish.png); /* SPRITE */
+}
+.modactions.marknsfw {
+    background-image: url(../modactions_marknsfw.png); /* SPRITE */
 }

@@ -703,6 +703,10 @@ class ApiController(RedditController):
         thing.over_18 = True
         thing._commit()
 
+        if c.user._id != thing.author_id:
+            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+                             action='marknsfw')
+
         # flag search indexer that something has changed
         changed(thing)
 
@@ -713,6 +717,10 @@ class ApiController(RedditController):
     def POST_unmarknsfw(self, thing):
         thing.over_18 = False
         thing._commit()
+
+        if c.user._id != thing.author_id:
+            ModAction.create(thing.subreddit_slow, c.user, target=thing,
+                             action='marknsfw', details='remove')
 
         # flag search indexer that something has changed
         changed(thing)

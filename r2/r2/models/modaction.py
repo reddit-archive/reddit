@@ -26,7 +26,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
     actions = ('banuser', 'unbanuser', 'removelink', 'approvelink', 
                'removecomment', 'approvecomment', 'addmoderator',
                'removemoderator', 'addcontributor', 'removecontributor',
-               'editsettings', 'editflair', 'distinguish')
+               'editsettings', 'editflair', 'distinguish', 'marknsfw')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -40,7 +40,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'removecontributor': _('remove contributor'),
              'editsettings': _('edit settings'),
              'editflair': _('edit user flair'),
-             'distinguish': _('distinguish')}
+             'distinguish': _('distinguish'),
+             'marknsfw': _('mark nsfw')}
 
     _text = {'banuser': _('banned'),
              'unbanuser': _('unbanned'),
@@ -54,7 +55,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'removecontributor': _('removed approved contributor'),
              'editsettings': _('edited settings'),
              'editflair': _('edited user flair'),
-             'distinguish': _('distinguished')}
+             'distinguish': _('distinguished'),
+             'marknsfw': _('marked nsfw')}
 
     _details_text = {# approve comment/link
                      'unspam': _('unspam'),
@@ -89,7 +91,9 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'flair_self_enabled': _('toggle user assigned flair enabled'),
                      'flair_template': _('add/edit flair templates'),
                      'flair_delete_template': _('delete flair template'),
-                     'flair_clear_template': _('clear flair templates')}
+                     'flair_clear_template': _('clear flair templates'),
+                     # distinguish/nsfw
+                     'remove': _('remove')}
 
     # This stuff won't change
     cache_ignore = set(['subreddit', 'target']).union(Printable.cache_ignore)
