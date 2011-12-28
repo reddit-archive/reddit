@@ -375,13 +375,15 @@ ${unsafe(txt)}
   <script type="text/javascript">
 
     var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', '${g.googleanalytics}']);
-    _gaq.push(['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3]);
-    _gaq.push(['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3]);
-    _gaq.push(['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2]);
-    _gaq.push(['_setCustomVar', 4, 'uitype', '${uitype}', 3]);
-    _gaq.push(['_trackPageview']);
-    _gaq.push(['_trackPageLoadTime']);
+    _gaq.push(
+        ['_setAccount', '${g.googleanalytics}'],
+        ['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3],
+        ['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3],
+        ['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2],
+        ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
+        ['_trackPageview'],
+        ['_trackPageLoadTime']
+    );
 
     (function() {
       var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
