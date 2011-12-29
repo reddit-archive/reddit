@@ -126,7 +126,9 @@ class Stats:
             for key, (total_time, count) in events:
                 data['cassandra.' + key] = str(count) + '|c'
                 if key.endswith('.ok'):
-                    data['cassandra.' + key[:-3]] = str(total_time) + '|ms'
+                    divisor = count or 1
+                    mean = total_time / divisor
+                    data['cassandra.' + key[:-3]] = str(mean) + '|ms'
             self.connection.send(data)
 
 class CacheStats:
