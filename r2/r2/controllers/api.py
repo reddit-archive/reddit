@@ -2470,10 +2470,12 @@ class ApiController(RedditController):
             jquery('#flairrow_%s input[name="css_class"]' % user._id36).data(
                 'saved', css_class).val(css_class)
         elif flair_type == LINK_FLAIR:
-            # TODO: record mod action
             link.flair_text = text
             link.flair_css_class = css_class
             link._commit()
+            if ((c.site.is_moderator(c.user) or c.user_is_admin)):
+                ModAction.create(c.site, c.user, action='editflair',
+                                 target=link, details='flair_edit')
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award=VByName("fullname"),

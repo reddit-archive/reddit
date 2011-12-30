@@ -40,7 +40,8 @@
   <td class="button">${thing.button}</td>
   <td class="description">${thing.text}&#32;
   %if hasattr(thing, 'target_text'):
-    ${plain_link(thing.target_text, thing.target_path, title=thing.target_title, sr_path=False, cname=False, _class="subreddit hover", 
+    ${plain_link(thing.target_text, thing.target_path, title=thing.target_title,
+                 sr_path=False, cname=False, _class="subreddit hover",
                  target='_blank' if c.user.pref_newwindow else '')}&#32;
   %elif hasattr(thing, 'target_wrapped_user'):
     ${thing.target_wrapped_user}&#32;
