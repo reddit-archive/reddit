@@ -1876,14 +1876,14 @@ class ApiController(RedditController):
 
 
     @validatedForm(VAdmin(),
-                   award = VByName("fullname"),
+                   award=VByName("fullname"),
                    colliding_award=VAwardByCodename(("codename", "fullname")),
-                   codename = VLength("codename", max_length = 100),
-                   title = VLength("title", max_length = 100),
-                   awardtype = VOneOf("awardtype",
+                   codename=VLength("codename", max_length = 100),
+                   title=VLength("title", max_length = 100),
+                   awardtype=VOneOf("awardtype",
                                     ("regular", "manual", "invisible")),
                    api_ok=VBoolean("api_ok"),
-                   imgurl = VLength("imgurl", max_length = 1000))
+                   imgurl=VLength("imgurl", max_length = 1000))
     def POST_editaward(self, form, jquery, award, colliding_award, codename,
                        title, awardtype, api_ok, imgurl):
         if form.has_errors(("codename", "title", "awardtype", "imgurl"),
@@ -2224,12 +2224,12 @@ class ApiController(RedditController):
             'saved', css_class).val(css_class)
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
-                   award = VByName("fullname"),
-                   description = VLength("description", max_length=1000),
-                   url = VLength("url", max_length=1000),
-                   cup_hours = VFloat("cup_hours",
+                   award=VByName("fullname"),
+                   description=VLength("description", max_length=1000),
+                   url=VLength("url", max_length=1000),
+                   cup_hours=VFloat("cup_hours",
                                       coerce=False, min=0, max=24 * 365),
-                   recipient = VExistingUname("recipient"))
+                   recipient=VExistingUname("recipient"))
     def POST_givetrophy(self, form, jquery, secret_used, award, description,
                         url, cup_hours, recipient):
         if form.has_errors("recipient", errors.USER_DOESNT_EXIST,
