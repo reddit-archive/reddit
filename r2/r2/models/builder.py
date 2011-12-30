@@ -338,9 +338,6 @@ class QueryBuilder(Builder):
         last_item = None
         have_next = True
 
-        #for prewrap
-        orig_items = {}
-
         #logloop
         self.loopcount = 0
         
@@ -365,16 +362,17 @@ class QueryBuilder(Builder):
             if not first_item and self.start_count > 0:
                 first_item = new_items[0]
 
-            #pre-wrap
             if self.prewrap_fn:
+                orig_items = {}
                 new_items2 = []
                 for i in new_items:
                     new = self.prewrap_fn(i)
                     orig_items[new._id] = i
                     new_items2.append(new)
                 new_items = new_items2
+            else:
+                orig_items = dict((i._id, i) for i in new_items)
 
-            #wrap
             if self.wrap:
                 new_items = self.wrap_items(new_items)
 
@@ -390,8 +388,8 @@ class QueryBuilder(Builder):
                         i.num = count
                 last_item = i
         
-            #unprewrap the last item
-            if self.prewrap_fn and last_item:
+            # get original version of last item
+            if last_item and (self.prewrap_fn or self.wrap):
                 last_item = orig_items[last_item._id]
 
         if self.reverse:
