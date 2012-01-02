@@ -110,6 +110,13 @@
       ${utils.radio_type('type', "private", _("private"),
                          _("only approved members can view and submit"),
                          (thing.site and thing.site.type=='private'))}
+
+      <% is_archived = thing.site and thing.site.type == 'archived' %>
+      %if c.user_is_admin or is_archived:
+        ${utils.radio_type('type', "archived", _("archived"),
+                           _("anyone can view, but submissions are no longer accepted"),
+                           is_archived)}
+      %endif
       </table>
     </div>
   </%utils:line_field>

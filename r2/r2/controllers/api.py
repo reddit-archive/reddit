@@ -1264,7 +1264,7 @@ class ApiController(RedditController):
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
-                   type = VOneOf('type', ('public', 'private', 'restricted')),
+                   type = VOneOf('type', ('public', 'private', 'restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    ip = ValidIP(),
                    sponsor_text =VLength('sponsorship-text', max_length = 500),
@@ -1293,6 +1293,10 @@ class ApiController(RedditController):
         cname_sr = domain and Subreddit._by_domain(domain)
         if cname_sr and (not sr or sr != cname_sr):
             c.errors.add(errors.USED_CNAME)
+
+        can_set_archived = c.user_is_admin or (sr and sr.type == 'archived')
+        if type == 'archived' and not can_set_archived:
+            form.set_error('type', errors.INVALID_OPTION)
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass
