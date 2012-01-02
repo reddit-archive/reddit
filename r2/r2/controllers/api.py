@@ -1303,7 +1303,7 @@ class ApiController(RedditController):
             form.find('#example_title').hide()
         elif form.has_errors('domain', errors.BAD_CNAME, errors.USED_CNAME):
             form.find('#example_domain').hide()
-        elif (form.has_errors(None, errors.INVALID_OPTION) or
+        elif (form.has_errors(('type', 'link_type'), errors.INVALID_OPTION) or
               form.has_errors('description', errors.TOO_LONG)):
             pass
 
