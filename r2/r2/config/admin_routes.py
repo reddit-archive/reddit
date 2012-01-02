@@ -20,11 +20,9 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 def add(mc):
-    mc('/admin/', controller='i18n', action='list')
+    mc('/admin/', controller='awards')
 
 try:
     from r2admin.config.routing import *
 except ImportError:
     pass
-    
-    
