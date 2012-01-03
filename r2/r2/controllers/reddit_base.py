@@ -661,8 +661,10 @@ class MinimalController(BaseController):
         g.reset_caches()
 
         # push data to statsd
-        g.stats.transact('web.%s' % action,
-                         (end_time - c.start_time).total_seconds())
+        if 'pylons.action_method' in request.environ:
+            # only report web timing data if an action handler was called
+            g.stats.transact('web.%s' % action,
+                             (end_time - c.start_time).total_seconds())
         g.stats.flush_timing_stats()
 
     def abort404(self):
