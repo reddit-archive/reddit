@@ -32,6 +32,7 @@ from BeautifulSoup import BeautifulSoup
 
 from time import sleep
 from datetime import datetime, timedelta
+from pylons import g
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
 from mako.filters import url_escape
@@ -335,7 +336,7 @@ def trunc_time(time, mins, hours=None):
                         microsecond = 0)
 
 def long_datetime(datetime):
-    return datetime.ctime() + " GMT"
+    return datetime.astimezone(g.tz).ctime() + " " + str(g.tz)
 
 def median(l):
     if l:
