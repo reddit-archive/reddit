@@ -56,6 +56,7 @@ from r2.lib.filters import safemarkdown
 from r2.lib.scraper import str_to_image
 
 import csv
+from collections import defaultdict
 from datetime import datetime, timedelta
 from md5 import md5
 import urllib
@@ -1511,29 +1512,43 @@ class ApiController(RedditController):
     def POST_uncollapse_message(self, things):
         self.collapse_handler(things, False)
 
-    def unread_handler(self, thing, unread):
-        if not thing:
-            return
-        # if the message has a recipient, try validating that
-        # desitination first (as it is cheaper and more common)
-        queries.set_unread(thing, c.user, unread)
-        # if the message is for a subreddit, check that next
-        if hasattr(thing, "sr_id"):
-            sr = thing.subreddit_slow
-            if sr and sr.is_moderator(c.user):
-                queries.set_unread(thing, sr, unread)
+    def unread_handler(self, things, unread):
+        if not things:
+            if (errors.TOO_MANY_THING_IDS, 'id') in c.errors:
+                return abort(413)
+            else:
+                return abort(400)
+
+        thing_groups = defaultdict(list)
+        # Group things by subreddit or type
+        for thing in things:
+            if isinstance(thing, Message):
+                if hasattr(thing, 'sr_id') and thing.sr_id:
+                    thing_groups[thing.sr_id].append(thing)
+                else:
+                    thing_groups['Message'].append(thing)
+            else:
+                thing_groups['Comment'].append(thing)
+
+        # Batch set items as unread
+        for sr_id, things in thing_groups.items():
+            if sr_id not in ('Comment', 'Message'):
+                queries.set_unread(things, things[0].subreddit_slow, unread)
+            else:
+                queries.set_unread(things, c.user, unread)
+
 
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id'))
-    def POST_unread_message(self, thing):
-        self.unread_handler(thing, True)
+                things = VByName('id', multiple=True, limit=25))
+    def POST_unread_message(self, things):
+        self.unread_handler(things, True)
 
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id'))
-    def POST_read_message(self, thing):
-        self.unread_handler(thing, False)
+                things = VByName('id', multiple=True, limit=25))
+    def POST_read_message(self, things):
+        self.unread_handler(things, False)
 
     @noresponse(VUser(),
                 VModhash(),

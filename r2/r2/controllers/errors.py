@@ -34,6 +34,7 @@ error_list = dict((
         ('USERNAME_TAKEN_DEL', _('that username is taken by a deleted account')),
         ('USER_BLOCKED', _("you can't send to a user that you have blocked")),
         ('NO_THING_ID', _('id not specified')),
+        ('TOO_MANY_THING_IDS', _('you provided too many ids')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('NOT_USER', _("you are not logged in as that user")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),

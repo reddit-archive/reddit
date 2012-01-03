@@ -1273,15 +1273,19 @@ class Inbox(MultiRelation('inbox',
         return i
 
     @classmethod
-    def set_unread(cls, thing, unread, to = None):
-        inbox_rel = cls.rel(Account, thing.__class__)
+    def set_unread(cls, things, unread, to=None):
+        things = tup(things)
+        if len(set(type(x) for x in things)) != 1:
+            raise TypeError('things must only be of a single type')
+        thing_ids = [x._id for x in things]
+        inbox_rel = cls.rel(Account, things[0].__class__)
         if to:
-            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
-                                     eager_load = True)
-        else:
-            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing._id,
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
                                      inbox_rel.c._thing1_id == to._id,
-                                     eager_load = True)
+                                     eager_load=True)
+        else:
+            inbox = inbox_rel._query(inbox_rel.c._thing2_id == thing_ids,
+                                     eager_load=True)
         res = []
         for i in inbox:
             if i:
@@ -1320,9 +1324,10 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         return i
 
     @classmethod
-    def set_unread(cls, thing, unread):
-        inbox = cls._query(cls.c._thing2_id == thing._id,
-                           eager_load = True)
+    def set_unread(cls, things, unread):
+        things = tup(things)
+        thing_ids = [x._id for x in things]
+        inbox = cls._query(cls.c._thing2_id == thing_ids, eager_load=True)
         res = []
         for i in inbox:
             if i:

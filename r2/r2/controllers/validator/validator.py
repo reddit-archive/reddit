@@ -540,10 +540,14 @@ def fullname_regex(thing_cls = None, multiple = False):
 class VByName(Validator):
     # Lookup tdb_sql.Thing or tdb_cassandra.Thing objects by fullname. 
     splitter = re.compile('[ ,]+')
-    def __init__(self, param, thing_cls = None, multiple = False,
-                 error = errors.NO_THING_ID, backend='sql', **kw):
+    def __init__(self, param, thing_cls=None, multiple=False, limit=None,
+                 error=errors.NO_THING_ID, backend='sql', **kw):
+        # Limit param only applies when multiple is True
+        if not multiple and limit is not None:
+            raise TypeError('multiple must be True when limit is set')
         self.re = fullname_regex(thing_cls)
         self.multiple = multiple
+        self.limit = limit
         self._error = error
         self.backend = backend
 
@@ -554,6 +558,8 @@ class VByName(Validator):
             # tdb_cassandra.Thing objects can't use the regex
             if items and self.multiple:
                 items = [item for item in self.splitter.split(items)]
+                if self.limit and len(items) > self.limit:
+                    return self.set_error(errors.TOO_MANY_THING_IDS)
             if items:                        
                 try:
                     return tdb_cassandra.Thing._by_fullname(items, return_dict=False)
@@ -563,6 +569,8 @@ class VByName(Validator):
             if items and self.multiple:
                 items = [item for item in self.splitter.split(items)
                          if item and self.re.match(item)]
+                if self.limit and len(items) > self.limit:
+                    return self.set_error(errors.TOO_MANY_THING_IDS)
             if items and (self.multiple or self.re.match(items)):
                 try:
                     return Thing._by_fullname(items, return_dict=False,
