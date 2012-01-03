@@ -2473,9 +2473,22 @@ class ApiController(RedditController):
             link.flair_text = text
             link.flair_css_class = css_class
             link._commit()
+
             if ((c.site.is_moderator(c.user) or c.user_is_admin)):
                 ModAction.create(c.site, c.user, action='editflair',
                                  target=link, details='flair_edit')
+
+            # Push some client-side updates back to the browser.
+            flair = '<span class="flair %s">%s</span>' % (
+                ' '.join('flair-' + c for c in css_class.split()), text)
+
+            jquery('.id-%s .entry .flair' % link._fullname).remove()
+            title_path = '.id-%s .entry > .title > .title' % link._fullname
+            if c.site.link_flair_position == 'left':
+                jquery(title_path).before(flair)
+            elif c.site.link_flair_position == 'right':
+                jquery(title_path).after(flair)
+            jquery('body').click()
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),
                    award=VByName("fullname"),

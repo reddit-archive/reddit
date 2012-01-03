@@ -197,7 +197,7 @@ $(function() {
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 
     $(".tagline").delegate(".flairselectbtn", "click", openFlairSelector);
-    $(".entry").delegate(".flairselectbtn", "click", openFlairSelector);
+    $(".thing").delegate(".flairselectbtn", "click", openFlairSelector);
 
     $(".flairselector .dropdown").click(toggleFlairSelector);
 });

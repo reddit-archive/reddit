@@ -20,34 +20,21 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<h2>${_("select flair")}</h2>
-%if thing.choices:
-  <div class="flairoptionpane">
-    <ul>
-      %for choice in thing.choices:
-        <%
-          li_class = 'flairsample-%s' % thing.position
-          if choice.flair_text_editable:
-              li_class += ' texteditable'
-          if choice.flair_template_id == thing.matching_template:
-              li_class += ' selected'
-        %>
-        <li class="${li_class}" id="${choice.flair_template_id}">
-          ${choice}
-        </li>
-      %endfor
-    </ul>
-  </div>
-  <form action="/post/selectflair" method="post">
-    <div class="flairselection"></div>
-    <input type="hidden" name="name" value="${thing.target_name}">
-    <input type="hidden" name="flair_template_id">
-    <div class="customizer">
-      <input type="text" size="16" maxlength="64" name="text">
-    </div>
-    <button type="submit">${_('save')}</button>
-    <span class="status"></span>
-  </form>
-%else:
-  <div class="error">${_("flair selection unavailable")}</div>
+<%def name="flair()">
+  <span class="flair ${thing.flair_css_class}">
+    ${thing.flair_text}
+  </span>
+</%def>
+
+%if thing.flair_position == 'left':
+  ${flair()}
+%endif
+<%
+  title = thing.title
+  if len(title) > 10:
+      title = title[:7] + '...'
+%>
+<a class="title" href="javascript://void">${title}</a>
+%if thing.flair_position == 'right':
+  ${flair()}
 %endif

@@ -769,14 +769,27 @@ a.author { margin-right: 0.5em; }
     text-decoration: none !important;
 }
 
-.flairselector li { border: 1px solid white; cursor: pointer; }
+.flairselector li {
+    border: 1px solid white;
+    cursor: pointer;
+    display: block !important;
+    padding-left: 4px;
+}
+
+.flairselector li a {
+    color: #369 !important;
+    font-weight: normal !important;
+}
+
 .flairselector li:hover { background-color: #bbb;  border: 1px solid #bbb; }
 .flairselector li a:hover { text-decoration: none; }
 .flairselector li.selected { border: dashed 1px black; }
+.flairselector .title { font-size: x-small !important; }
 
 .flairselector form {
     border-top: solid 1px gray;
     clear: both;
+    display: block;
     padding-top: 4px;
     text-align: center;
 }

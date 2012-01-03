@@ -2653,47 +2653,55 @@ class FlairPrefs(CachedTemplate):
             user_flair_enabled=user_flair_enabled,
             wrapped_user=wrapped_user)
 
+class FlairSelectorLinkSample(CachedTemplate):
+    def __init__(self, link, site, flair_template):
+        flair_position = getattr(site, 'link_flair_position', 'right')
+        CachedTemplate.__init__(self,
+                                title=link.title,
+                                flair_position=flair_position,
+                                flair_template_id=flair_template._id,
+                                flair_text=flair_template.text,
+                                flair_css_class=flair_template.css_class,
+                                flair_text_editable=False,
+                               )
+
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
     def __init__(self, user=None, link=None, site=None):
         if user is None:
             user = c.user
+        if site is None:
+            site = c.site
+        admin = bool(c.user_is_admin or site.is_moderator(c.user))
+
         if link:
             flair_type = LINK_FLAIR
             target = link
+            target_name = link._fullname
             attr_pattern = 'flair_%s'
+            position = getattr(site, 'link_flair_position', 'right')
+            target_wrapper = (
+                lambda flair_template: FlairSelectorLinkSample(
+                    link, site, flair_template))
         else:
             flair_type = USER_FLAIR
             target = user
+            target_name = user.name
+            position = getattr(site, 'flair_position', 'right')
             attr_pattern = 'flair_%s_%%s' % c.site._id
-        if site is None:
-            site = c.site
-
-        position = getattr(site, 'flair_position', 'right')
+            target_wrapper = (
+                lambda flair_template: WrappedUser(
+                    user, subreddit=site, force_show_flair=True,
+                    flair_template=flair_template,
+                    flair_text_editable=admin or template.text_editable))
 
         text = getattr(target, attr_pattern % 'text', '')
         css_class = getattr(target, attr_pattern % 'css_class', '')
-
-        ids = FlairTemplateBySubredditIndex.get_template_ids(
-            site._id, flair_type)
-        template_dict = FlairTemplate._byID(ids)
-        templates = [template_dict[i] for i in ids]
-        for template in templates:
-            if template.covers((text, css_class)):
-                matching_template = template._id
-                break
-        else:
-             matching_template = None
-
-        admin = bool(c.user_is_admin or site.is_moderator(c.user))
+        templates, matching_template = self._get_templates(
+                site, flair_type, text, css_class)
 
         if site.flair_self_assign_enabled or admin:
-            choices = [
-                WrappedUser(
-                    user, subreddit=site, force_show_flair=True,
-                    flair_template=template,
-                    flair_text_editable=admin or template.text_editable)
-                for template in templates]
+            choices = [target_wrapper(template) for template in templates]
 
         # If one of the templates is already selected, modify its text to match
         # the user's current flair.
@@ -2704,12 +2712,23 @@ class FlairSelector(CachedTemplate):
                         choice.flair_text = text
                     break
 
-        wrapped_user = WrappedUser(user, subreddit=site, force_show_flair=True)
-
         Templated.__init__(self, text=text, css_class=css_class,
                            position=position, choices=choices,
                            matching_template=matching_template,
-                           wrapped_user=wrapped_user)
+                           target_name=target_name)
+
+    def _get_templates(self, site, flair_type, text, css_class):
+        ids = FlairTemplateBySubredditIndex.get_template_ids(
+            site._id, flair_type)
+        template_dict = FlairTemplate._byID(ids)
+        templates = [template_dict[i] for i in ids]
+        for template in templates:
+            if template.covers((text, css_class)):
+                matching_template = template._id
+                break
+        else:
+             matching_template = None
+        return templates, matching_template
 
 
 class FriendList(UserList):
