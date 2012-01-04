@@ -60,6 +60,7 @@ error_list = dict((
         ('SUBREDDIT_REQUIRED', _('you must specify a subreddit')),
         ('BAD_SR_NAME', _('that name isn\'t going to work')),
         ('RATELIMIT', _('you are doing that too much. try again in %(time)s.')),
+        ('QUOTA_FILLED', _("You've submitted too many links recently. Please try again in an hour.")),
         ('EXPIRED', _('your session has expired')),
         ('DRACONIAN', _('you must accept the terms first')),
         ('BANNED_IP', "IP banned"),

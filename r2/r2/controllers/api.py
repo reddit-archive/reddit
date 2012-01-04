@@ -293,6 +293,7 @@ class ApiController(RedditController):
 
                 md = safemarkdown(msg)
                 form.set_html(".status", md)
+                form.send_failure(errors.QUOTA_FILLED)
                 return
 
         # well, nothing left to do but submit it
