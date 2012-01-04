@@ -70,6 +70,8 @@ class JsonResponse(object):
         res = {}
         if self._data:
             res['data'] = self._data
+        if self._new_captcha:
+            res['captcha'] = get_iden()
         res['errors'] = [(e[0], c.errors[e].message, e[1]) for e in self._errors]
         return {"json": res}
 
@@ -120,6 +122,9 @@ class JsonResponse(object):
 
     def _send_data(self, **kw):
         self._data.update(kw)
+
+    def new_captcha(self):
+        self._new_captcha = True
 
 
 class JQueryResponse(JsonResponse):
