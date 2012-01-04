@@ -1225,7 +1225,7 @@ class ApiController(RedditController):
                 new_url = cssfilter.save_sr_image(c.site, file, suffix ='.' + img_type)
             except cssfilter.BadImage:
                 errors['IMAGE_ERROR'] = _("Invalid image or general image error")
-                return UploadedImage("", "", "", errors=errors).render()
+                return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
             size = str_to_image(file).size
             if header:
                 c.site.header = new_url
