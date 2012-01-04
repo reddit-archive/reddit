@@ -1747,7 +1747,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
-                sr = VByName('sr'))
+                sr = VSubscribeSR('sr', 'sr_name'))
     def POST_subscribe(self, action, sr):
         # only users who can make edits are allowed to subscribe.
         # Anyone can leave.

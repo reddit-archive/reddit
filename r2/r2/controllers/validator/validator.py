@@ -826,6 +826,24 @@ class VSubmitSR(Validator):
 
         return sr
 
+class VSubscribeSR(VByName):
+    def __init__(self, srid_param, srname_param):
+        VByName.__init__(self, (srid_param, srname_param)) 
+
+    def run(self, sr_id, sr_name):
+        if sr_id:
+            return VByName.run(self, sr_id)
+        elif not sr_name:
+            return
+
+        try:
+            sr = Subreddit._by_name(str(sr_name).strip())
+        except (NotFound, AttributeError, UnicodeEncodeError):
+            self.set_error(errors.SUBREDDIT_NOEXIST)
+            return
+
+        return sr
+
 MIN_PASSWORD_LENGTH = 3
 
 class VPassword(Validator):
