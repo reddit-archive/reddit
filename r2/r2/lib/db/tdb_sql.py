@@ -515,8 +515,8 @@ def fetch_query(table, id_col, thing_id):
         single = True
         thing_id = (thing_id,)
     
-    s = sa.select([table], sa.or_(*[id_col == tid
-                                    for tid in thing_id]))
+    s = sa.select([table], id_col.in_(thing_id))
+
     try:
         r = add_request_info(s).execute().fetchall()
     except Exception, e:
