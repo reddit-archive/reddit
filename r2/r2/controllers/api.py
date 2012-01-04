@@ -337,6 +337,9 @@ class ApiController(RedditController):
         if extension:
             path += ".%s" % extension
         form.redirect(path)
+        form._send_data(url=path)
+        form._send_data(id=l._id36)
+        form._send_data(name=l._fullname)
 
     @validatedForm(VRatelimit(rate_ip = True,
                               rate_user = True,
