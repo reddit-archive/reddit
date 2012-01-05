@@ -78,13 +78,8 @@ class db_manager:
             yield name, (type1_name, type2_name, engines) 
 
     def mark_dead(self, engine, g_override=None):
-        from r2.lib import services
         logger.error("db_manager: marking connection dead: %r" % engine)
         self.dead[engine] = time.time()
-        if g_override is None:
-            services.AppServiceMonitor.mark_db_down(engine.url.host)
-        else:
-            services.mark_db_down(g_override.servicecache, engine.url.host)
 
     def test_engine(self, engine, g_override=None):
         try:
@@ -106,10 +101,7 @@ class db_manager:
         return [self._engines[name] for name in names if name in self._engines]
 
     def get_read_table(self, tables):
-        from r2.lib.services import AppServiceMonitor
-        # short-cut for only one element
         if len(tables) == 1:
             return tables[0]
-
         return  random.choice(list(tables))
 

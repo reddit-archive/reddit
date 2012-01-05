@@ -104,11 +104,9 @@ class Globals(object):
                    'memcaches',
                    'permacache_memcaches',
                    'rendercaches',
-                   'servicecaches',
                    'cassandra_seeds',
                    'admins',
                    'sponsors',
-                   'monitored_servers',
                    'automatic_reddits',
                    'agents',
                    'allowed_css_linked_domains',
@@ -278,11 +276,6 @@ class Globals(object):
                                                     num_clients = num_mc_clients)))
         self.cache_chains.update(rendercache=self.rendercache)
 
-        self.servicecache = MemcacheChain((localcache_cls(),
-                                           CMemcache(self.servicecaches,
-                                                     num_clients = num_mc_clients)))
-        self.cache_chains.update(servicecache=self.servicecache)
-
         self.thing_cache = CacheChain((localcache_cls(),))
         self.cache_chains.update(thing_cache=self.thing_cache)
 
@@ -400,8 +393,6 @@ class Globals(object):
         return (x.strip() for x in v.split(delim) if x)
 
     def load_db_params(self, gc):
-        from r2.lib.services import get_db_load
-
         self.databases = tuple(self.to_iter(gc['databases']))
         self.db_params = {}
         if not self.databases:
@@ -425,10 +416,7 @@ class Globals(object):
             if params['max_overflow'] == "*":
                 params['max_overflow'] = self.db_pool_overflow_size
 
-            ip = params['db_host']
-            ip_loads = get_db_load(self.servicecache, ip)
-            if ip not in ip_loads or ip_loads[ip][0] < 1000:
-                dbm.setup_db(db_name, g_override=self, **params)
+            dbm.setup_db(db_name, g_override=self, **params)
             self.db_params[db_name] = params
 
         dbm.type_db = dbm.get_engine(gc['type_db'])
