@@ -53,7 +53,7 @@ clean_pyx:
 	rm -f $(PYX_BUILDSTAMP) $(PYX_C_FILES) $(PYX_SO_FILES)
 
 #################### i18n
-I18NPATH := $(shell $(PYTHON) -c 'from r2.lib.i18n import I18N_PATH; print I18N_PATH')
+I18NPATH := $(shell $(PYTHON) -c 'from r2.lib.translation import I18N_PATH; print I18N_PATH')
 STRINGS_FILE := r2/lib/strings.py
 RAND_STRINGS_FILE := r2/lib/rand_strings.py
 POTFILE := $(I18NPATH)/r2.pot
