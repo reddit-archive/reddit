@@ -1940,7 +1940,7 @@ class ApiController(RedditController):
     def POST_subscribe(self, action, sr):
         # only users who can make edits are allowed to subscribe.
         # Anyone can leave.
-        if action != 'sub' or sr.can_comment(c.user):
+        if sr and (action != 'sub' or sr.can_comment(c.user)):
             self._subscribe(sr, action == 'sub')
 
     @classmethod
