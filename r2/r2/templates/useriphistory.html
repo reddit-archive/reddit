@@ -20,7 +20,9 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%namespace file="utils.html" import="timestamp"/>
+<%namespace file="utils.html" import="error_field, timestamp"/>
+<%namespace name="utils" file="utils.html"/>
+
 <%
     from r2.lib.strings import strings
     ip_format = {'address': request.ip}
@@ -53,3 +55,20 @@
 </table>
 </div>
 
+<hr/>
+
+<h1>${_("Log out of all other sessions")}</h1>
+
+<form action="/post/clear_sessions" method="post"
+      onsubmit="return post_form(this, 'clear_sessions')" id="clear_sessions">
+
+<div class="spacer">
+  <%utils:round_field title="${_('current password')}" description="${_('(required)')}">
+  <input type="password" name="curpass" />
+  ${error_field("WRONG_PASSWORD", "curpass")}
+  </%utils:round_field>
+</div>
+<button type="submit" class="btn">${_('clear sessions')}</button>
+<span class="status error"></span>
+
+</form>

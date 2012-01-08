@@ -590,6 +590,25 @@ class ApiController(RedditController):
         c.user.add_friend_note(friend, note)
         form.set_html('.status', _("saved"))
 
+    @validatedForm(VUser('curpass', default=''),
+                   VModhash(),
+                   password = VPassword(['curpass', 'curpass']),
+                   dest = VDestination())
+    def POST_clear_sessions(self, form, jquery, password, dest):
+        """Clear all session cookies and update the current one."""
+        # password is required to proceed
+        if form.has_errors("curpass", errors.WRONG_PASSWORD):
+            return
+
+        form.set_html('.status',
+                      _('all other sessions have been logged out'))
+        form.set_inputs(curpass = "")
+        # run the change password command to get a new salt
+        change_password(c.user, password)
+        # the password salt has changed, so the user's cookie has been
+        # invalidated.  drop a new cookie.
+        self.login(c.user)
+
     @validatedForm(VUser('curpass', default = ''),
                    VModhash(),
                    email = ValidEmails("email", num = 1),
