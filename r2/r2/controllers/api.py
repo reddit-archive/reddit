@@ -1736,6 +1736,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   public_traffic = VBoolean('public_traffic'),
                    exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
                    type = VOneOf('type', ('public', 'private', 'restricted', 'gold_restricted', 'archived')),
@@ -1785,7 +1786,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description',
                            'show_media', 'exclude_banned_modqueue',
-                           'show_cname_sidebar', 'type',
+                           'show_cname_sidebar', 'type', 'public_traffic',
                            'link_type', 'submit_link_label', 'comment_score_hide_mins',
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',

@@ -638,7 +638,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             stylesheet = (c.site.stylesheet_contents_user or
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
-        elif (is_moderator or c.user_is_sponsor) and location == 'traffic':
+        elif location == 'traffic' and (c.site.public_traffic or
+                                        (is_moderator or c.user_is_sponsor)):
             pane = trafficpages.SubredditTraffic()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)

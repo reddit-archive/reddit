@@ -264,6 +264,14 @@
             ${_("exclude posts by site-wide banned users from modqueue")}
           </label>
         </li>
+        <li>
+          <input class="nomargin" type="checkbox"
+                 name="public_traffic" id="public_traffic"
+                 ${thing.site and thing.site.public_traffic and "checked='checked'" or ""}>
+          <label for="public_traffic">
+            ${_("make the traffic stats page available to everyone")}
+          </label>
+        </li>
       </ul>
     </div>
     <div class="usertext-edit">

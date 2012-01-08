@@ -135,6 +135,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'over_18': _('toggle viewers must be over 18'),
                      'allow_top': _('toggle allow in default set'),
                      'show_media': _('toggle show thumbnail images of content'),
+                     'public_traffic': _('toggle public traffic stats page'),
                      'exclude_banned_modqueue': _('toggle exclude banned users\' posts from modqueue'),
                      'domain': _('domain'),
                      'show_cname_sidebar': _('toggle show sidebar from cname'),
