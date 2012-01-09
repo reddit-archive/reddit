@@ -85,6 +85,13 @@
                   ${thing.link_child.css_style}"></a>
     %endif
     <div class="tagline">
+      %if thing.nsfw:
+        <span class="nsfw-warning">
+          <acronym title="${_('Adult content: Not Safe For Work')}">
+            ${_("NSFW")}
+          </acronym>
+        </span>
+      %endif
       ${tagline()}
     </div>
     </div>
