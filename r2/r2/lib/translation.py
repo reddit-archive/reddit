@@ -52,13 +52,17 @@ def _get_translator(lang, graceful_fail=False, **kwargs):
     return translator
 
 
-def set_lang(lang, graceful_fail = False, **kwargs):
+def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
     """Set the i18n language used"""
     registry = pylons.request.environ['paste.registry']
     if not lang:
         registry.replace(pylons.translator, NullTranslations())
     else:
         translator = _get_translator(lang, graceful_fail = graceful_fail, **kwargs)
+        if fallback_lang:
+            fallback_translator = _get_translator(fallback_lang,
+                                                  graceful_fail=True)
+            translator.add_fallback(fallback_translator)
         registry.replace(pylons.translator, translator)
 
 

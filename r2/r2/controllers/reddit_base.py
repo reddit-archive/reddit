@@ -373,7 +373,7 @@ def set_iface_lang():
     #one
     for l in lang:
         try:
-            h.set_lang(l)
+            h.set_lang(l, fallback_lang=g.lang)
             c.lang = l
             break
         except h.LanguageError:
