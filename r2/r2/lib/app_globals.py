@@ -240,7 +240,7 @@ class Globals(object):
                     logging_name="noretries",
                     server_list=self.cassandra_seeds,
                     pool_size=len(self.cassandra_seeds),
-                    timeout=.1,
+                    timeout=2,
                     max_retries=0,
                     prefill=False
                 ),
