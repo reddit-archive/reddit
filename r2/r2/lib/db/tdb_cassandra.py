@@ -146,6 +146,7 @@ class ThingMeta(type):
                 with make_lock('cassandra_schema'):
                     manager.create_column_family(keyspace, cf_name,
                                                  comparator_type = cls._compare_with,
+                                                 super=getattr(cls, '_super', False),
                                                  **extra_creation_arguments
                                                  )
                 log.warning("Created Cassandra Column Family %s" % (cf_name,))
@@ -181,8 +182,8 @@ class Counter(object):
 
     @classmethod
     @will_write
-    def _incr(cls, key, column, delta=1):
-        cls._cf.add(key, column, delta)
+    def _incr(cls, key, column, delta=1, super_column=None):
+        cls._cf.add(key, column, delta, super_column)
 
 
 class ThingBase(object):
