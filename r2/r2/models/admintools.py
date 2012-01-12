@@ -399,6 +399,9 @@ def filter_quotas(unfiltered):
     else:
         return baskets, None
 
+def check_request(end_time):
+    pass
+
 try:
     from r2admin.models.admintools import *
 except ImportError:
