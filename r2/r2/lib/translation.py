@@ -59,6 +59,14 @@ def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
         registry.replace(pylons.translator, NullTranslations())
     else:
         translator = _get_translator(lang, graceful_fail = graceful_fail, **kwargs)
+        base_lang, is_dialect, dialect = lang.partition("-")
+        if is_dialect:
+            try:
+                base_translator = _get_translator(base_lang)
+            except LanguageError:
+                pass
+            else:
+                translator.add_fallback(base_translator)
         if fallback_lang:
             fallback_translator = _get_translator(fallback_lang,
                                                   graceful_fail=True)
