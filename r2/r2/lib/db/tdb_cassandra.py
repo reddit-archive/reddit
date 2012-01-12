@@ -185,6 +185,12 @@ class Counter(object):
     def _incr(cls, key, column, delta=1, super_column=None):
         cls._cf.add(key, column, delta, super_column)
 
+    @classmethod
+    @will_write
+    def _incr_multi(cls, key, data):
+        with cls._cf.batch() as b:
+            b.insert(key, data)
+
 
 class ThingBase(object):
     # base class for Thing and Relation
