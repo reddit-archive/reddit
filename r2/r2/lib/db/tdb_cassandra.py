@@ -19,6 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+import inspect
 from datetime import datetime
 from socket import gethostbyaddr
 
@@ -140,7 +141,11 @@ class ThingMeta(type):
 
                 manager = get_manager(cassandra_seeds)
 
-                extra_creation_arguments = getattr(cls, "_extra_schema_creation_args", {})
+                # allow subclasses to add creation args or override base class ones
+                extra_creation_arguments = {}
+                for c in reversed(inspect.getmro(cls)):
+                    creation_args = getattr(c, "_extra_schema_creation_args", {})
+                    extra_creation_arguments.update(creation_args)
 
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
                 with make_lock('cassandra_schema'):
