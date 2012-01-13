@@ -1088,7 +1088,7 @@ class Message(Thing, Printable):
                     queries.set_unread(item.lookups[0],
                                        c.user, False)
             else:
-                item.new = (item._fullname in mod_unread)
+                item.new = (item._fullname in mod_unread and not item.to_id)
 
             item.score_fmt = Score.none
 
