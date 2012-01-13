@@ -386,4 +386,5 @@ rand_strings.add('create_reddit', "Reason to create a reddit", 20)
 def print_rand_strings():
     for name, rand_string in rand_strings:
         for string in rand_string:
-            print "_('" + string + "')"
+            print "# TRANSLATORS: Do not translate literally. Come up with a funny/relevant phrase (see the English version for ideas)"
+            print "print _('" + string + "')"
