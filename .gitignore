@@ -30,6 +30,7 @@ r2/data/*
 r2/count.pickle
 r2/srcount.pickle
 r2/myproduction.ini
+r2/run.ini
 .DS_Store
 r2/r2.egg-info/**
 r2/r2/public/static/sprite*.png
@@ -44,3 +45,4 @@ r2/r2/lib/utils/_utils.c
 r2/r2/lib/wrapped.c
 r2/r2/models/_builder.c
 build/
+srv/*/log/main/*
