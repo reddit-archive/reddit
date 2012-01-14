@@ -282,16 +282,14 @@ class ApiController(RedditController):
                               "%s just went over their per-%s quota" %
                               (c.user.name, filled_quota), "info")
 
-                    compose_link = ("/message/compose?to=%23" + sr.name +
-                                    "&subject=Exemption+request")
-
                     verify_link = "/verify?reason=submit"
+                    reddiquette_link = "/help/reddiquette" 
 
                     if c.user.email_verified:
-                        msg = strings.verified_quota_msg % dict(link=compose_link)
+                        msg = strings.verified_quota_msg % dict(reddiquette=reddiquette_link)
                     else:
-                        msg = strings.unverified_quota_msg % dict(link1=verify_link,
-                                                                  link2=compose_link)
+                        msg = strings.unverified_quota_msg % dict(verify=verify_link,
+                                                                  reddiquette=reddiquette_link)
 
                 md = safemarkdown(msg)
                 form.set_html(".status", md)
