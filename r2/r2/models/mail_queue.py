@@ -175,7 +175,7 @@ class EmailHandler(object):
                 has_opted_out(email, _update = True)
                 opt_count(_update = True)
                 return (email, True)
-            except sa.exc.SQLError:
+            except sa.exc.DBAPIError:
                 return (email, False)
         return (None, False)
 

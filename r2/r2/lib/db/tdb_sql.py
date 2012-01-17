@@ -369,7 +369,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
         id = do_insert(table)
         params['thing_id'] = id
         return id
-    except sa.exc.SQLError, e:
+    except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:
             raise
         # wrap the error to prevent db layer bleeding out
@@ -417,7 +417,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
                                    name = name, 
                                    date = date)
         return r.last_inserted_ids()[0]
-    except sa.exc.SQLError, e:
+    except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:
             raise
         # wrap the error to prevent db layer bleeding out
