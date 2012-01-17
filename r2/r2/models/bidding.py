@@ -116,7 +116,10 @@ class Sessionized(object):
 
         """
         args = []
-        cols = filter(filter_fn, cls.__table__.c)
+        if filter_fn is None:
+            cols = cls.__table__.c
+        else:
+            cols = filter(filter_fn, cls.__table__.c)
         for k, v in zip(cols, a):
             if not kw.has_key(k.name):
                 args.append((k, cls._make_storable(v)))
