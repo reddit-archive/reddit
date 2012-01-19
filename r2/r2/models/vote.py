@@ -132,7 +132,7 @@ class VotesByDay(tdb_cassandra.View):
 
 class CassandraLinkVote(CassandraVote):
     _use_db = True
-    _type_prefix = 'r6'
+    _type_prefix = 'LinkVote'
     _cf_name = 'LinkVote'
 
     # these parameters aren't actually meaningful, they just help
@@ -156,7 +156,7 @@ class CassandraLinkVote(CassandraVote):
 
 class CassandraCommentVote(CassandraVote):
     _use_db = True
-    _type_prefix = 'r5'
+    _type_prefix = 'CommentVote'
     _cf_name = 'CommentVote'
 
     # these parameters aren't actually meaningful, they just help
@@ -335,7 +335,7 @@ def test():
     print 'fast_query', CassandraLinkVote._fast_query('abc', ['def'])
 
     assert CassandraLinkVote._fast_query('abc', 'def') == v2
-    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('r6_abc_def')
+    assert CassandraLinkVote._byID('abc_def') == CassandraLinkVote._by_fullname('LinkVote_abc_def')
 
     print 'all', list(CassandraLinkVote._all()), list(VotesByLink._all())
 
