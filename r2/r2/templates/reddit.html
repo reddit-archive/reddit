@@ -87,8 +87,9 @@
           type="text/css" />
   %endif
 
-  <link rel='shortcut icon' href="${static('favicon.ico')}"
-        type="image/x-icon" />
+  <link rel='shortcut icon' href="${static('favicon.ico')}" type="image/x-icon" />
+  <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
+
   %if thing.extension_handling:
     <%
        rss= add_sr(join_urls(request.path,'.rss'))
