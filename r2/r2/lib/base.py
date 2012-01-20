@@ -42,6 +42,12 @@ import logging
 from r2.lib.utils import UrlParser, query_string
 logging.getLogger('scgi-wsgi').setLevel(logging.CRITICAL)
 
+
+def is_local_address(ip):
+    # TODO: support the /20 and /24 private networks? make this configurable?
+    return ip.startswith('10.')
+
+
 class BaseController(WSGIController):
     def try_pagecache(self):
         pass
@@ -65,7 +71,7 @@ class BaseController(WSGIController):
             and hashlib.md5(true_client_ip + g.ip_hash).hexdigest() \
             == ip_hash.lower()):
             request.ip = true_client_ip
-        elif remote_addr in g.proxy_addr and forwarded_for:
+        elif g.trust_local_proxies and forwarded_for and is_local_address(remote_addr):
             request.ip = forwarded_for.split(',')[-1]
         else:
             request.ip = environ['REMOTE_ADDR']

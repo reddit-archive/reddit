@@ -98,6 +98,7 @@ class Globals(object):
                   'disable_ads',
                   'static_pre_gzipped',
                   'static_secure_pre_gzipped',
+                  'trust_local_proxies',
                   ]
 
     tuple_props = ['stalecaches',
@@ -112,7 +113,6 @@ class Globals(object):
                    'allowed_css_linked_domains',
                    'authorized_cnames',
                    'hardcache_categories',
-                   'proxy_addr',
                    's3_media_buckets',
                    'allowed_pay_countries',
                    'case_sensitive_domains']
