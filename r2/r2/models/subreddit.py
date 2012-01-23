@@ -212,10 +212,10 @@ class Subreddit(Thing, Printable):
         else:
             return False
 
-    def can_submit(self, user):
+    def can_submit(self, user, promotion=False):
         if c.user_is_admin:
             return True
-        elif self.is_banned(user):
+        elif self.is_banned(user) and not promotion:
             return False
         elif self.type == 'public':
             return True

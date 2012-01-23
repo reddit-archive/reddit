@@ -789,8 +789,9 @@ class VSubmitParent(VByName):
         abort(403, "forbidden")
 
 class VSubmitSR(Validator):
-    def __init__(self, srname_param, linktype_param = None):
+    def __init__(self, srname_param, linktype_param=None, promotion=False):
         self.require_linktype = False
+        self.promotion = promotion
 
         if linktype_param:
             self.require_linktype = True
@@ -809,7 +810,7 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_NOEXIST)
             return
 
-        if not c.user_is_loggedin or not sr.can_submit(c.user):
+        if not c.user_is_loggedin or not sr.can_submit(c.user, self.promotion):
             self.set_error(errors.SUBREDDIT_NOTALLOWED)
             return
 
