@@ -66,3 +66,7 @@ from oauth2 import OAuth2AccessController as Oauth2accessController
 from admin import AdminController
 from redirect import RedirectController
 from ipn import IpnController
+
+from pylons import config
+for plugin in config['r2.plugins'].itervalues():
+    locals().update(plugin.load_controllers())

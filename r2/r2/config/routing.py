@@ -24,11 +24,15 @@ Setup your Routes options here
 """
 import os
 from routes import Mapper
+from pylons import config
 import admin_routes
 
-def make_map(global_conf={}, app_conf={}):
+def make_map():
     map = Mapper()
     mc = map.connect
+
+    for plugin in config['r2.plugins'].itervalues():
+        plugin.add_routes(mc)
 
     admin_routes.add(mc)
 

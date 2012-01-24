@@ -29,16 +29,16 @@ mimetypes.init()
 
 import webhelpers
 
-from   r2.config.routing import make_map
+from r2.config import routing
 import r2.lib.app_globals as app_globals
 from   r2.lib import  rpc
 import r2.lib.helpers
+from r2.lib.plugin import load_plugins
 import r2.config as reddit_config
 
 from r2.templates import tmpl_dirs
 
 def load_environment(global_conf={}, app_conf={}, setup_globals=True):
-    map = make_map(global_conf, app_conf)
     # Setup our paths
     root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -57,7 +57,9 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
         reddit_config.cache = g.cache
 
     config['pylons.h'] = r2.lib.helpers
-    config['routes.map'] = map
+
+    config['r2.plugins'] = load_plugins(getattr(g, 'plugins', []))
+    config['routes.map'] = routing.make_map()
 
     #override the default response options
     config['pylons.response_options']['headers'] = {}
