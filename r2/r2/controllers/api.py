@@ -1521,19 +1521,31 @@ class ApiController(RedditController):
 
         thing_groups = defaultdict(list)
         # Group things by subreddit or type
+        has_sr_messages = False
         for thing in things:
             if isinstance(thing, Message):
                 if hasattr(thing, 'sr_id') and thing.sr_id:
+                    has_sr_messages = True
                     thing_groups[thing.sr_id].append(thing)
                 else:
                     thing_groups['Message'].append(thing)
             else:
                 thing_groups['Comment'].append(thing)
 
+        if has_sr_messages:
+            mod_srs = Subreddit.reverse_moderator_ids(c.user)
+        else:
+            mod_srs = []
+
         # Batch set items as unread
         for sr_id, things in thing_groups.items():
             if sr_id not in ('Comment', 'Message'):
-                queries.set_unread(things, things[0].subreddit_slow, unread)
+                sr = things[0].subreddit_slow
+                # Only moderators or the `to` user can change the read status
+                if sr_id not in mod_srs:
+                    things = [x for x in things if x.to_id == c.user._id]
+                if things:
+                    queries.set_unread(things, sr, unread)
             else:
                 queries.set_unread(things, c.user, unread)
 
