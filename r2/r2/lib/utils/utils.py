@@ -247,25 +247,37 @@ def get_title(url):
         return None
 
     try:
-        # if we don't find it in the first kb of the resource, we
-        # probably won't find it
         opener = urlopen(url, timeout=15)
-        text = opener.read(1024)
+        
+        # Attempt to find the title in the first 1kb
+        data = opener.read(1024)
+        title = extract_title(data)
+        
+        # Title not found in the first kb, try searching an additional 2kb
+        if not title:
+            data += opener.read(2048)
+            title = extract_title(data)
+        
         opener.close()
-        bs = BeautifulSoup(text, convertEntities=BeautifulSoup.HTML_ENTITIES)
-        if not bs:
-            return
-
-        title_bs = bs.html.head.title
-
-        if not title_bs or not title_bs.string:
-            return
-
-        return title_bs.string.encode('utf-8').strip()
+        
+        return title
 
     except:
         return None
 
+def extract_title(data):
+    """Tries to extract the value of the title element from a string of HTML"""
+    bs = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
+    if not bs:
+        return
+    
+    title_bs = bs.html.head.title
+
+    if not title_bs or not title_bs.string:
+        return
+
+    return title_bs.string.encode('utf-8').strip()
+    
 valid_schemes = ('http', 'https', 'ftp', 'mailto')
 valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
 def sanitize_url(url, require_scheme = False):
