@@ -573,7 +573,12 @@ def make_app(global_conf, full_stack=True, **app_conf):
     # Static files
     javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
-    app = Cascade([static_app, javascripts_app, app])
+    static_cascade = [static_app, javascripts_app, app]
+    if config['r2.plugins']:
+        plugin_static_apps = Cascade([StaticURLParser(plugin.static_dir)
+                                      for plugin in config['r2.plugins'].itervalues()])
+        static_cascade.insert(0, plugin_static_apps)
+    app = Cascade(static_cascade)
 
     #add the rewrite rules
     app = RewriteMiddleware(app)
