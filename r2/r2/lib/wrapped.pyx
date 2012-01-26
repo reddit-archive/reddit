@@ -175,11 +175,11 @@ class Templated(object):
         from r2.config.templates import tpm
         from pylons import g
 
-        debug = g.template_debug
+        use_cache = not g.reload_templates
         template = None
         try:
             template = tpm.get(self.render_class,
-                               style, cache = not debug)
+                               style, cache = use_cache)
         except AttributeError:
             self._notfound(style)
         return template
