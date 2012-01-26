@@ -172,7 +172,7 @@ class Counter(object):
     __metaclass__ = ThingMeta
 
     _use_db = False
-    _connection_pool = 'noretries'
+    _connection_pool = 'main'
     _extra_schema_creation_args = {
         'default_validation_class': COUNTER_COLUMN_TYPE,
         'replicate_on_write': True
