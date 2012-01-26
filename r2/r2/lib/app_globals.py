@@ -443,6 +443,7 @@ class Globals(object):
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
 
+        initialize_admin_globals(self)
 
     def load_db_params(self):
         self.databases = tuple(ConfigValue.to_iter(self.config.raw_data['databases']))
@@ -522,3 +523,10 @@ class Globals(object):
         """
         pass
 
+def initialize_admin_globals(g):
+    pass
+
+try:
+    from r2admin.lib.app_globals import initialize_admin_globals
+except ImportError:
+    pass
