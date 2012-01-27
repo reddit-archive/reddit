@@ -19,10 +19,17 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from pylons.controllers.util import redirect_to
+from pylons.controllers.util import abort, redirect_to
 from r2.lib.base import BaseController
 from pylons import c
+from validator import chkuser
 
 class RedirectController(BaseController):
     def GET_redirect(self, dest):
         return redirect_to(str(dest))
+
+    def GET_user_redirect(self, username):
+        user = chkuser(username)
+        if not user:
+            abort(400)
+        return redirect_to("/user/" + user, _code=301)

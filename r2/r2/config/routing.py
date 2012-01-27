@@ -103,6 +103,7 @@ def make_map(global_conf={}, app_conf={}):
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
+    mc('/u/:username', controller='redirect', action='user_redirect')
 
     mc('/prefs/:location', controller='forms',
        action='prefs', location='options')
