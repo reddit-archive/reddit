@@ -31,7 +31,7 @@
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
-<%namespace file="utils.html" import="tags"/>
+<%namespace file="utils.html" import="tags, css_class"/>
 <%inherit file="base.html"/>
 
 <%def name="Title()">
@@ -138,7 +138,7 @@
       ##<div class="fixedwidth"><!--IE6sux--></div>
       ##<div class="clearleft"><!--IE6sux--></div>
       <a name="content"></a>
-      <div class="content">
+      <div class="content${css_class(thing)}">
         ${thing.content()}
       </div>
     %endif

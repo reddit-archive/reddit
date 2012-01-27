@@ -125,6 +125,7 @@ class Reddit(Templated):
     enable_login_cover = True
     site_tracking      = True
     show_firsttext     = True
+    css_class          = None
     additional_css     = None
     extra_page_classes = None
 
@@ -678,9 +679,11 @@ class BoringPage(Reddit):
     
     extension_handling= False
     
-    def __init__(self, pagename, **context):
+    def __init__(self, pagename, css_class=None, **context):
         self.pagename = pagename
         name = c.site.name or g.default_sr
+        if css_class:
+            self.css_class = css_class
         if "title" not in context:
             context['title'] = "%s: %s" % (name, pagename)
 
