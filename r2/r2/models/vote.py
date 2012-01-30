@@ -134,6 +134,7 @@ class CassandraLinkVote(CassandraVote):
     _use_db = True
     _type_prefix = 'LinkVote'
     _cf_name = 'LinkVote'
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     # these parameters aren't actually meaningful, they just help
     # keep track
@@ -158,6 +159,7 @@ class CassandraCommentVote(CassandraVote):
     _use_db = True
     _type_prefix = 'CommentVote'
     _cf_name = 'CommentVote'
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     # these parameters aren't actually meaningful, they just help
     # keep track
