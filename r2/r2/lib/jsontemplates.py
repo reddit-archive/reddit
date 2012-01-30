@@ -271,7 +271,6 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 subreddit_id = "subreddit_id",
                                                 is_self      = "is_self", 
                                                 permalink    = "permalink",
-                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -328,7 +327,6 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 subreddit    = "subreddit",
                                                 subreddit_id = "subreddit_id",
                                                 parent_id    = "parent_id",
-                                                levenshtein  = "levenshtein",
                                                 )
 
     def thing_attr(self, thing, attr):
