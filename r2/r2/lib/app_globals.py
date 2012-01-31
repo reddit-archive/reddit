@@ -76,6 +76,7 @@ class Globals(object):
                    'max_promote_bid',
                    'usage_sampling',
                    'statsd_sample_rate',
+                   'querycache_prune_chance',
                    ]
 
     bool_props = ['debug', 'translator',

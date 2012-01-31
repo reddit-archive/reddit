@@ -23,6 +23,7 @@ from reddit_base import RedditController, base_listing, organic_pos
 from validator import *
 
 from r2.models import *
+from r2.models.query_cache import CachedQuery, MergedCachedQuery
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
@@ -130,6 +131,8 @@ class ListingController(RedditController):
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
         elif isinstance(self.query_obj, (queries.CachedResults, queries.MergedCachedResults)):
+            builder_cls = IDBuilder
+        elif isinstance(self.query_obj, (CachedQuery, MergedCachedQuery)):
             builder_cls = IDBuilder
 
         b = builder_cls(self.query_obj,

@@ -8,6 +8,8 @@ from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
+from r2.models.query_cache import cached_query, merged_cached_query, UserQueryCache, CachedQueryMutator
+from r2.models.query_cache import ThingTupleComparator
 
 import cPickle as pickle
 
@@ -216,24 +218,16 @@ class MergedCachedResults(object):
         self._fetched = True
 
         self.sort = results[0].sort
+        comparator = ThingTupleComparator(self.sort)
         # make sure they're all the same
         assert all(r.sort == self.sort for r in results[1:])
 
         all_items = []
         for cr in results:
             all_items.extend(cr.data)
-        all_items.sort(cmp=self._thing_cmp)
+        all_items.sort(cmp=comparator)
         self.data = all_items
 
-    def _thing_cmp(self, t1, t2):
-        for i, s in enumerate(self.sort):
-            # t1 and t2 are tuples of (fullname, *sort_cols), so we
-            # can get the value to compare right out of the tuple
-            v1, v2 = t1[i + 1], t2[i + 1]
-            if v1 != v2:
-                return cmp(v1, v2) if isinstance(s, asc) else cmp(v2, v1)
-        #they're equal
-        return 0
 
     def __repr__(self):
         return '<MergedCachedResults %r>' % (self.cached_results,)
