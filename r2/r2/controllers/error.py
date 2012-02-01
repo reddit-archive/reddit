@@ -22,6 +22,7 @@
 import os.path
 from mako.filters import url_escape
 
+import pylons
 import paste.fileapp
 from paste.httpexceptions import HTTPFound
 from pylons.middleware import error_document_template, media_path
@@ -67,44 +68,6 @@ redditbroke =  \
       <p>
         %s
       </p>
-  </body>
-</html>
-'''
-
-toofast =  \
-'''<!doctype html>
-<html>
-  <head>
-    <title>Too Many Requests</title>
-    <style>
-      body {
-          font: small verdana, arial, helvetica, sans-serif;
-          width: 600px;
-          margin: 0 auto;
-      }
-
-      h1 {
-          height: 40px;
-          background: transparent url(%(logo_url)s) no-repeat scroll top right;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>whoa there, pardner!</h1>
-    <p>reddit's awesome and all, but you may have a bit of a
-    problem. we've seen far too many requests come from your ip address
-    recently.</p>
-    <p>if you think that we've incorrectly blocked you or you would like
-    to discuss easier ways to get the data you want, please contact us
-    any of the following ways.</p>
-    <ul>
-    <li><a href="http://webchat.freenode.net/?channels=reddit-ratelimit">#reddit-ratelimit on freenode</a></li>
-    <li><a href="http://groups.google.com/group/reddit-dev">the reddit-dev google group</a></li>
-    <li><a href="mailto:ratelimit@reddit.com">ratelimit@reddit.com</a></li>
-    </ul>
-    <p>when contacting us, please include your ip address which is: <strong>%(ip)s</strong></p>
-    <p>as a reminder, we recommend that clients make no more than one
-    request every two seconds to avoid being blocked like this.</p>
   </body>
 </html>
 '''
@@ -177,8 +140,16 @@ class ErrorController(RedditController):
 
     def send429(self):
         c.response.status_code = 429
-        return toofast % dict(ip=request.ip,
-                              logo_url=static(g.default_header_url))
+
+        if 'retry_after' in request.environ:
+            c.response.headers['Retry-After'] = str(request.environ['retry_after'])
+            template_name = '/ratelimit_toofast.html'
+        else:
+            template_name = '/ratelimit_throttled.html'
+
+        loader = pylons.buffet.engines['mako']['engine']
+        template = loader.load_template(template_name)
+        return template.render(logo_url=static(g.default_header_url))
 
     def send503(self):
         c.response.status_code = 503

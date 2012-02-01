@@ -416,6 +416,7 @@ def set_colors():
 def ratelimit_agent(agent):
     key = 'rate_agent_' + agent
     if g.cache.get(key):
+        request.environ['retry_after'] = 1
         abort(429)
     else:
         g.cache.set(key, 't', time = 1)
@@ -564,8 +565,8 @@ class MinimalController(BaseController):
 
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
-            ratelimit_agents()
             ratelimit_throttled()
+            ratelimit_agents()
 
         c.allow_loggedin_cache = False
 
