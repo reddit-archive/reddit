@@ -77,7 +77,16 @@ toofast =  \
   <head>
     <title>Too Many Requests</title>
     <style>
-      body { font: small verdana, arial, helvetica, sans-serif; }
+      body {
+          font: small verdana, arial, helvetica, sans-serif;
+          width: 600px;
+          margin: 0 auto;
+      }
+
+      h1 {
+          height: 40px;
+          background: transparent url(%(logo_url)s) no-repeat scroll top right;
+      }
     </style>
   </head>
   <body>
@@ -89,10 +98,11 @@ toofast =  \
     to discuss easier ways to get the data you want, please contact us
     any of the following ways.</p>
     <ul>
-    <li><a href="http://webchat.freenode.net/?channels=reddit-dev">#reddit-dev on freenode</a></li>
+    <li><a href="http://webchat.freenode.net/?channels=reddit-ratelimit">#reddit-ratelimit on freenode</a></li>
     <li><a href="http://groups.google.com/group/reddit-dev">the reddit-dev google group</a></li>
     <li><a href="mailto:ratelimit@reddit.com">ratelimit@reddit.com</a></li>
     </ul>
+    <p>when contacting us, please include your ip address which is: <strong>%(ip)s</strong></p>
     <p>as a reminder, we recommend that clients make no more than one
     request every two seconds to avoid being blocked like this.</p>
   </body>
@@ -167,7 +177,8 @@ class ErrorController(RedditController):
 
     def send429(self):
         c.response.status_code = 429
-        return toofast
+        return toofast % dict(ip=request.ip,
+                              logo_url=static(g.default_header_url))
 
     def send503(self):
         c.response.status_code = 503
