@@ -413,15 +413,31 @@ def set_colors():
     if color_rx.match(request.get.get('bordercolor') or ''):
         c.bordercolor = request.get.get('bordercolor')
 
+def ratelimit_agent(agent):
+    key = 'rate_agent_' + agent
+    if g.cache.get(key):
+        abort(429)
+    else:
+        g.cache.set(key, 't', time = 1)
+
+appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: s~([a-z0-9-]{6,30})\)\Z')
 def ratelimit_agents():
     user_agent = request.user_agent
+
+    if not user_agent:
+        return
+
+    # parse out the appid for appengine apps
+    appengine_match = appengine_re.match(user_agent)
+    if appengine_match:
+        appid = appengine_match.group(1)
+        ratelimit_agent(appid)
+        return
+
+    user_agent = user_agent.lower()
     for s in g.agents:
-        if s and user_agent and s in user_agent.lower():
-            key = 'rate_agent_' + s
-            if g.cache.get(s):
-                abort(429)
-            else:
-                g.cache.set(s, 't', time = 1)
+        if s and user_agent and s in user_agent:
+            ratelimit_agent(s)
 
 def throttled(key):
     return g.cache.get("throttle_" + key)
