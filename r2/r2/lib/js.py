@@ -88,8 +88,9 @@ class FileSource(Source):
 
 class Module(Source):
     """A module of JS code consisting of a collection of sources."""
-    def __init__(self, name, *sources):
+    def __init__(self, name, *sources, **kwargs):
         self.name = name
+        self.should_compile = kwargs.get('should_compile', True)
         self.sources = []
         sources = sources or (name,)
         for source in sources:
@@ -111,7 +112,10 @@ class Module(Source):
     def build(self, closure):
         print >> sys.stderr, "Compiling {0}...".format(self.name),
         with open(self.path, "w") as out:
-            closure.compile(self.get_source(), out)
+            if self.should_compile:
+                closure.compile(self.get_source(), out)
+            else:
+                out.write(self.get_source())
         print >> sys.stderr, " done."
 
     def use(self):
@@ -130,7 +134,10 @@ class Module(Source):
 
     @property
     def outputs(self):
-        return [self.path]
+        if self.should_compile:
+            return [self.path]
+        else:
+            return []
 
 class StringsSource(Source):
     """A virtual source consisting of localized strings from r2.lib.strings."""
@@ -215,7 +222,7 @@ class LocalizedModule(Module):
 
 class JQuery(Module):
     def __init__(self, cdn_src=None):
-        Module.__init__(self, os.path.join("js", "lib", "jquery.js"))
+        Module.__init__(self, os.path.join("js", "lib", "jquery.js"), should_compile=False)
         self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery"
     
     def build(self, closure):
@@ -228,14 +235,6 @@ class JQuery(Module):
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)
-
-    @property
-    def dependencies(self):
-        return []
-
-    @property
-    def outputs(self):
-        return []
 
 module = {}
 
@@ -288,8 +287,9 @@ def build_command(fn):
 
 @build_command
 def enumerate_modules():
-    for m in module:
-        print m
+    for name, m in module.iteritems():
+        if m.should_compile:
+            print name
 
 @build_command
 def dependencies(name):
