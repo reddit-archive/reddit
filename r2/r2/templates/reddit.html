@@ -42,6 +42,24 @@
   %endif
 </%def>
 
+<%def name="pagemeta()">
+  %if hasattr(thing, "shortlink"):
+    <link rel="shorturl" href="http://${thing.shortlink}"/>
+  %endif
+
+  <link rel='shortcut icon' href="${static('favicon.ico')}" type="image/x-icon" />
+  <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
+  %if thing.extension_handling:
+    <%
+       rss = add_sr(join_urls(request.path,'.rss'))
+       if thing.extension_handling == "private":
+          rss = make_feedurl(c.user, rss)
+     %>
+    <link rel="alternate" type="application/rss+xml" title="RSS"
+          href="${rss}" />
+  %endif
+</%def>
+
 <%def name="stylesheet()">
   %if c.lang_rtl:
     <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
@@ -63,10 +81,6 @@
       %endif
   %endif
 
-  %if hasattr(thing, "shortlink"):
-    <link rel="shorturl" href="http://${thing.shortlink}"/>
-  %endif
-
   %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_contents:
      <% inline_stylesheet = (
           len(c.site.stylesheet_contents) < 1024
@@ -86,19 +100,6 @@
   %if getattr(thing, "additional_css", None):
     <link rel="stylesheet" href="${static(thing.additional_css)}" 
           type="text/css" />
-  %endif
-
-  <link rel='shortcut icon' href="${static('favicon.ico')}" type="image/x-icon" />
-  <link rel='apple-touch-icon-precomposed' href="${static('icon-touch.png')}" />
-
-  %if thing.extension_handling:
-    <%
-       rss= add_sr(join_urls(request.path,'.rss'))
-       if thing.extension_handling == "private":
-          rss = make_feedurl(c.user, rss)
-     %>
-    <link rel="alternate" type="application/rss+xml" title="RSS"
-          href="${rss}" />
   %endif
 
   <!--[if lt IE 7]>
