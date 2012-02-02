@@ -69,6 +69,7 @@ class Globals(object):
                  'comment_visits_period',
                   'min_membership_create_community',
                  'bcrypt_work_factor',
+                 'cassandra_pool_size',
                  ]
 
     float_props = ['min_promote_bid',
@@ -236,7 +237,7 @@ class Globals(object):
                     stats=self.stats,
                     logging_name="main",
                     server_list=self.cassandra_seeds,
-                    pool_size=len(self.cassandra_seeds),
+                    pool_size=self.cassandra_pool_size,
                     timeout=2,
                     max_retries=3,
                     prefill=False
