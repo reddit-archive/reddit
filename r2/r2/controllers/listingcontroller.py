@@ -290,6 +290,7 @@ class HotController(FixListing, ListingController):
                 res = wrap_links(link_ids, wrapper = self.builder_wrapper,
                                  num = 1, keep_fn = lambda x: x.fresh, 
                                  skip = True)
+                res.parent_name = "promoted"
                 if res.things:
                     return res
 
