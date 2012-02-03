@@ -1325,6 +1325,9 @@ class SubredditTopBar(CachedTemplate):
                                   if sr.name not in g.automatic_reddits ]
         return self._pop_reddits
 
+    @property
+    def show_my_reddits_dropdown(self):
+        return len(self.my_reddits) > g.sr_dropdown_threshold
 
     def my_reddits_dropdown(self):
         drop_down_buttons = []
@@ -1381,9 +1384,6 @@ class SubredditTopBar(CachedTemplate):
         if not c.user_is_loggedin:
             menus.append(self.popular_reddits())
         else:
-            if len(self.my_reddits) > g.sr_dropdown_threshold:
-                menus = [self.my_reddits_dropdown()] + menus
-
             menus.append(self.subscribed_reddits())
             sep = '<span class="separator">&nbsp;&ndash;&nbsp;</span>'
             menus.append(RawString(sep))

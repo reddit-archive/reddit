@@ -23,14 +23,22 @@
 <%namespace file="utils.html" import="plain_link"/>
 
 <div id="sr-header-area">
-  %for m in thing.sr_bar():
-     ${m.render()}
-  %endfor
+  <div class="width-clip">
+    %if thing.show_my_reddits_dropdown:
+      ${thing.my_reddits_dropdown().render()}
+    %endif
 
-  <%
-     editmore = 'edit' if c.user_is_loggedin else 'more'
-   %>
+    <div class="sr-list">
+      %for m in thing.sr_bar():
+        ${m.render()}
+      %endfor
 
-  ${plain_link(unsafe(_(editmore) + " &raquo;"),
-               "/reddits/", id="sr-more-link")}
+      <%
+        editmore = 'edit' if c.user_is_loggedin else 'more'
+      %>
+    </div>
+
+    ${plain_link(unsafe(_(editmore) + " &raquo;"),
+                 "/reddits/", id="sr-more-link")}
+  </div>
 </div>

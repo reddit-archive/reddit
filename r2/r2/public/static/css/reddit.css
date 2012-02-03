@@ -2948,17 +2948,37 @@ ul#image-preview-list .description pre {
 }
 
 #sr-header-area {
-    padding: 3px 0px 3px 5px;
     background-color: #f0f0f0;
     white-space: nowrap;
-    overflow: hidden;
     text-transform: uppercase;
     border-bottom: 1px solid gray;
     font-size: 90%;
+    height: 18px;
+    line-height: 18px;
  }
+
+#sr-header-area .width-clip {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
 
 #sr-header-area .selected a {
     color: orangered;
+}
+
+#sr-header-area .sr-list {
+    overflow: hidden;
+}
+
+#sr-header-area .dropdown.srdrop {
+    float: left;
+    padding-left: 5px;
+}
+
+#sr-header-area .drop-choices.srdrop {
+    margin-top: 0;
+    margin-left: 5px;
 }
 
 .dropdown.srdrop .selected {
@@ -2995,8 +3015,8 @@ ul#image-preview-list .description pre {
     color: black;
     background-color: #f0f0f0;
     position: absolute;
-    right: 0px;
-    top: 3px;
+    right: 0;
+    top: 0;
     padding: 0 5px 0 15px;
     font-weight: bold;
     margin: 0;
