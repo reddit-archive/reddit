@@ -158,7 +158,8 @@ ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
 
 <%def name="subreddit()" buffered="True">
   ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
-               cname = False, _class = "subreddit hover")}
+               cname = False, _class = "subreddit hover",
+               target='_blank' if thing.newwindow else '')}
   <script type="text/javascript">
     reddit.sr['${thing._fullname}'] = '${thing.subreddit._fullname}';
   </script>

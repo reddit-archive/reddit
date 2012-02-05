@@ -49,7 +49,7 @@
     %>
     ${plain_link(thing.name + thing.karma, "/user/%s" % thing.name,
                  _class = ' '.join(classes),
-                 _sr_path = False, target=target, title=thing.author_title)}
+                 _sr_path = False, target='_blank' if c.user.pref_newwindow else target, title=thing.author_title)}
     %if thing.flair_position == 'right':
       ${flair(thing, enabled=thing.force_show_flair)}
     %endif

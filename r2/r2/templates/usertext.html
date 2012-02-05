@@ -50,7 +50,7 @@
     <div class="usertext-body">
       % if not thing.expunged:
       ${unsafe(safemarkdown(thing.text, nofollow = thing.nofollow,
-                                        target = thing.target))}
+                                        target = '_blank' if c.user.pref_newwindow else thing.target))}
       % else:
       <em>${_("[removed]")}</em>&#32;
       % endif
