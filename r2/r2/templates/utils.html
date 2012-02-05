@@ -23,7 +23,7 @@
 <%!
    import json
    from r2.models import FakeSubreddit
-   from r2.lib.filters import spaceCompress, unsafe
+   from r2.lib.filters import spaceCompress, unsafe, safemarkdown
    from r2.lib.template_helpers import add_sr, js_config, static
    from r2.lib.utils import cols, long_datetime, timesince
    from r2.lib.tracking import UserInfo
@@ -561,4 +561,8 @@ ${unsafe(txt)}
   %elif thing.editted:
     <em>*</em>
   %endif
+</%def>
+
+<%def name="_md(text, wrap=False)">
+  ${unsafe(safemarkdown(_(text), wrap=wrap))}
 </%def>

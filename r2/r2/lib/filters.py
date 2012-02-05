@@ -226,7 +226,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     if wrap:
         return SC_OFF + MD_START + text + MD_END + SC_ON
     else:
-        return text
+        return SC_OFF + text + SC_ON
 
 
 def keep_space(text):
