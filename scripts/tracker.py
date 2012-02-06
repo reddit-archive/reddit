@@ -43,7 +43,7 @@ def fetch_trackers():
 @application.route('/click')
 def click_redirect():
     ip = request.environ['REMOTE_ADDR']
-    destination = request.args['url']
+    destination = request.args['url'].encode('utf-8')
     fullname = request.args['id']
     observed_hash = request.args['hash']
 
