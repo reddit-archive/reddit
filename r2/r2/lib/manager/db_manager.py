@@ -74,7 +74,9 @@ class db_manager:
 
     def things_iter(self):
         for name, engines in self._things.iteritems():
-            yield name, [e for e in engines if e not in self.dead]
+            # ensure we ALWAYS return the actual master as the first,
+            # regardless of if we think it's dead or not.
+            yield name, [engines[0]] + [e for e in engines[1:] if e not in self.dead]
 
     def rels_iter(self):
         for name, (type1_name, type2_name, engines) in self._relations.iteritems():
