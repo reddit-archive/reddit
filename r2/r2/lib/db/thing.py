@@ -34,6 +34,7 @@ from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromno
 from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
+from r2.lib import stats
 from pylons import g
 
 
@@ -351,9 +352,13 @@ class DataThing(object):
               stale=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
+        cache_stats = stats.CacheStats(g.stats, 'sgm.%s' % cls.__name__)
 
         if not all(x <= tdb.MAX_THING_ID for x in ids):
             raise NotFound('huge thing_id in %r' % ids)
+
+        def count_found(ret, still_need):
+            cache_stats.cache_report(hits=len(ret), misses=len(still_need))
 
         def items_db(ids):
             items = cls._get_item(cls._type_id, ids)
@@ -362,7 +367,8 @@ class DataThing(object):
 
             return items
 
-        bases = sgm(cache, ids, items_db, prefix, stale=stale)
+        bases = sgm(cache, ids, items_db, prefix, stale=stale,
+                    found_fn=count_found)
 
         #check to see if we found everything we asked for
         for i in ids:
