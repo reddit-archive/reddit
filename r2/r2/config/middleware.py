@@ -515,6 +515,7 @@ class RedditApp(PylonsBaseWSGIApp):
         class_name = controller.capitalize() + 'Controller'
 
         __import__(self.package_name + '.controllers')
+        config['r2.plugins'].load_controllers()
         mycontroller = getattr(sys.modules[full_module_name], class_name)
         self.controller_classes[controller] = mycontroller
         return mycontroller
@@ -576,7 +577,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
     static_cascade = [static_app, javascripts_app, app]
     if config['r2.plugins']:
         plugin_static_apps = Cascade([StaticURLParser(plugin.static_dir)
-                                      for plugin in config['r2.plugins'].itervalues()])
+                                      for plugin in config['r2.plugins']])
         static_cascade.insert(0, plugin_static_apps)
     app = Cascade(static_cascade)
 

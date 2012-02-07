@@ -33,7 +33,7 @@ from r2.config import routing
 import r2.lib.app_globals as app_globals
 from   r2.lib import  rpc
 import r2.lib.helpers
-from r2.lib.plugin import load_plugins
+from r2.lib.plugin import PluginLoader
 import r2.config as reddit_config
 
 from r2.templates import tmpl_dirs
@@ -58,7 +58,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     config['pylons.h'] = r2.lib.helpers
 
-    config['r2.plugins'] = load_plugins(getattr(g, 'plugins', []))
+    config['r2.plugins'] = PluginLoader().load_plugins(getattr(g, 'plugins', []))
     config['routes.map'] = routing.make_map()
 
     #override the default response options

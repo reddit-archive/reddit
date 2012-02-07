@@ -67,6 +67,7 @@ from admin import AdminController
 from redirect import RedirectController
 from ipn import IpnController
 
-from pylons import config
-for plugin in config['r2.plugins'].itervalues():
-    locals().update(plugin.load_controllers())
+def add_controller(controller):
+    assert controller.__name__ not in globals()
+    globals()[controller.__name__] = controller
+    return controller

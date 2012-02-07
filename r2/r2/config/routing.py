@@ -31,7 +31,7 @@ def make_map():
     map = Mapper()
     mc = map.connect
 
-    for plugin in config['r2.plugins'].itervalues():
+    for plugin in config['r2.plugins']:
         plugin.add_routes(mc)
 
     admin_routes.add(mc)
