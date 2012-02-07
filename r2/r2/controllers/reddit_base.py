@@ -162,8 +162,13 @@ def set_recent_clicks():
                 set_user_cookie('recentclicks2', ','.join(names))
             #eventually this will look at the user preference
             names = names[:5]
-            c.recent_clicks = Link._by_fullname(names, data = True,
-                                                return_dict = False)
+
+            try:
+                c.recent_clicks = Link._by_fullname(names, data = True,
+                                                    return_dict = False)
+            except NotFound:
+                # clear their cookie because it's got bad links in it
+                set_user_cookie('recentclicks2', '')
         else:
             #if the cookie wasn't valid, clear it
             set_user_cookie('recentclicks2', '')
