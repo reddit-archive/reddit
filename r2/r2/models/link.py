@@ -35,6 +35,7 @@ from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
+from r2.models.subreddit import MultiReddit
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
@@ -217,9 +218,10 @@ class Link(Thing, Printable):
                 return False
 
         # hide NSFW links from non-logged users and under 18 logged users 
-        # if they're not explicitly visiting an NSFW subreddit
-        if ((not c.user_is_loggedin and c.site != wrapped.subreddit)
-            or (c.user_is_loggedin and not c.over18)):
+        # if they're not explicitly visiting an NSFW subreddit or a multireddit
+        if (((not c.user_is_loggedin and c.site != wrapped.subreddit)
+            or (c.user_is_loggedin and not c.over18))
+            and not (isinstance(c.site, MultiReddit) and c.over18)):
             is_nsfw = bool(wrapped.over_18)
             is_from_nsfw_sr = bool(wrapped.subreddit.over_18)
 
