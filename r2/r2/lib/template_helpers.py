@@ -177,6 +177,19 @@ def calc_time_period(comment_time):
 
     return rv
 
+def comment_label(num_comments=None):
+    if not num_comments:
+        # generates "comment" the imperative verb
+        com_label = _("comment {verb}")
+        com_cls = 'comments empty'
+    else:
+        # generates "XX comments" as a noun
+        com_label = ungettext("comment", "comments", num_comments)
+        com_label = strings.number_label % dict(num=num_comments,
+                                                thing=com_label)
+        com_cls = 'comments'
+    return com_label, com_cls
+
 def replace_render(listing, item, render_func):
     def _replace_render(style = None, display = True):
         """
@@ -229,16 +242,7 @@ def replace_render(listing, item, render_func):
                 replacements['votehash'] = vote_hash(c.user, item,
                                                      listing.vote_hash_type)
         if hasattr(item, "num_comments"):
-            if not item.num_comments:
-                # generates "comment" the imperative verb
-                com_label = _("comment {verb}")
-                com_cls = 'comments empty'
-            else:
-                # generates "XX comments" as a noun
-                com_label = ungettext("comment", "comments", item.num_comments)
-                com_label = strings.number_label % dict(num=item.num_comments,
-                                                        thing=com_label)
-                com_cls = 'comments'
+            com_label, com_cls = comment_label(item.num_comments)
             if style == "compact":
                 com_label = unicode(item.num_comments)
             replacements['numcomments'] = com_label
