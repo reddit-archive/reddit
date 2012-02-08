@@ -97,6 +97,14 @@ class Stats:
         if counter and random.random() < sample_rate:
             counter.increment(name, delta=delta)
 
+    def cache_count_multi(self, data, cache_name=None, sample_rate=None):
+        if sample_rate is None:
+            sample_rate = self.CACHE_SAMPLE_RATE
+        counter = self.get_counter('cache')
+        if counter and random.random() < sample_rate:
+            for name, delta in data.iteritems():
+                counter.increment(name, delta=delta)
+
     def amqp_processor(self, queue_name):
         """Decorator for recording stats for amqp queue consumers/handlers."""
         def decorator(processor):
@@ -165,14 +173,20 @@ class CacheStats:
             self.parent.cache_count(self.miss_stat_name, delta=delta)
             self.parent.cache_count(self.total_stat_name, delta=delta)
 
-    def cache_report(self, hits=0, misses=0, sample_rate=None):
+    def cache_report(self, hits=0, misses=0, cache_name=None, sample_rate=None):
         if hits or misses:
-            self.parent.cache_count(self.hit_stat_name, delta=hits,
-                                    sample_rate=sample_rate)
-            self.parent.cache_count(self.miss_stat_name, delta=misses,
-                                    sample_rate=sample_rate)
-            self.parent.cache_count(self.total_stat_name, delta=hits + misses,
-                                    sample_rate=sample_rate)
+            if not cache_name:
+                cache_name = self.cache_name
+            hit_stat_name = '%s.hit' % cache_name
+            miss_stat_name = '%s.miss' % cache_name
+            total_stat_name = '%s.total' % cache_name
+            data = {
+                hit_stat_name: hits,
+                miss_stat_name: misses,
+                total_stat_name: hits + misses,
+            }
+            self.parent.cache_count_multi(data, cache_name=cache_name,
+                                          sample_rate=sample_rate)
 
 class StatsCollectingConnectionPool(pool.ConnectionPool):
     def __init__(self, keyspace, stats=None, *args, **kwargs):
