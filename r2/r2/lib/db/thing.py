@@ -352,13 +352,15 @@ class DataThing(object):
               stale=False):
         ids, single = tup(ids, True)
         prefix = thing_prefix(cls.__name__)
-        cache_stats = stats.CacheStats(g.stats, 'sgm.%s' % cls.__name__)
 
         if not all(x <= tdb.MAX_THING_ID for x in ids):
             raise NotFound('huge thing_id in %r' % ids)
 
         def count_found(ret, still_need):
-            cache_stats.cache_report(hits=len(ret), misses=len(still_need))
+            cache.stats.cache_report(hits=len(ret), misses=len(still_need))
+
+        if not cache.stats:
+            count_found = None
 
         def items_db(ids):
             items = cls._get_item(cls._type_id, ids)
