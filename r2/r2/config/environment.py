@@ -53,7 +53,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     g = config['pylons.g'] = app_globals.Globals(global_conf, app_conf, paths)
     if setup_globals:
-        g.setup(global_conf)
+        g.setup()
         reddit_config.cache = g.cache
 
     config['pylons.h'] = r2.lib.helpers

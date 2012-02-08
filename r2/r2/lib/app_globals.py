@@ -39,95 +39,163 @@ from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 
+class ConfigValue(object):
+    @staticmethod
+    def int(k, v, data):
+        return int(v)
+
+    @staticmethod
+    def float(k, v, data):
+        return float(v)
+
+    @staticmethod
+    def bool(k, v, data):
+        return (v.lower() == 'true') if v else None
+
+    @staticmethod
+    def tuple(k, v, data):
+        return tuple(ConfigValue.to_iter(v))
+
+    @staticmethod
+    def choice(k, v, data):
+        if v not in data:
+            raise ValueError("Unknown option for %r: %r not in %r" % (k, v, data))
+        return data[v]
+
+    @staticmethod
+    def to_iter(v, delim = ','):
+        return (x.strip() for x in v.split(delim) if x)
+
+class ConfigValueParser(dict):
+    def __init__(self, raw_data):
+        dict.__init__(self, raw_data)
+        self.config_keys = {}
+        self.raw_data = raw_data
+
+    def add_spec(self, spec):
+        new_keys = []
+        for parser, keys in spec.iteritems():
+            # keys can be either a list or a dict
+            for key in keys:
+                assert key not in self.config_keys
+                # if keys is a dict, the value is passed as extra data to the parser.
+                extra_data = keys[key] if type(keys) is dict else None
+                self.config_keys[key] = (parser, extra_data)
+                new_keys.append(key)
+        self._update_values(new_keys)
+
+    def _update_values(self, keys):
+        for key in keys:
+            if key not in self.raw_data:
+                continue
+
+            value = self.raw_data[key]
+            if key in self.config_keys:
+                parser, extra_data = self.config_keys[key]
+                value = parser(key, value, extra_data)
+            self[key] = value
+
 class Globals(object):
+    spec = {
 
-    int_props = ['db_pool_size',
-                 'db_pool_overflow_size',
-                 'page_cache_time',
-                 'solr_cache_time',
-                 'num_mc_clients',
-                 'MIN_DOWN_LINK',
-                 'MIN_UP_KARMA',
-                 'MIN_DOWN_KARMA',
-                 'MIN_RATE_LIMIT_KARMA',
-                 'MIN_RATE_LIMIT_COMMENT_KARMA',
-                 'VOTE_AGE_LIMIT',
-                 'REPLY_AGE_LIMIT',
-                 'WIKI_KARMA',
-                 'HOT_PAGE_AGE',
-                 'MODWINDOW',
-                 'RATELIMIT',
-                 'QUOTA_THRESHOLD',
-                 'num_comments',
-                 'max_comments',
-                 'max_comments_gold',
-                 'num_default_reddits',
-                 'num_query_queue_workers',
-                 'max_sr_images',
-                 'num_serendipity',
-                 'sr_dropdown_threshold',
-                 'comment_visits_period',
-                  'min_membership_create_community',
-                 'bcrypt_work_factor',
-                 'cassandra_pool_size',
-                 ]
+        ConfigValue.int: [
+            'db_pool_size',
+            'db_pool_overflow_size',
+            'page_cache_time',
+            'solr_cache_time',
+            'num_mc_clients',
+            'MIN_DOWN_LINK',
+            'MIN_UP_KARMA',
+            'MIN_DOWN_KARMA',
+            'MIN_RATE_LIMIT_KARMA',
+            'MIN_RATE_LIMIT_COMMENT_KARMA',
+            'VOTE_AGE_LIMIT',
+            'REPLY_AGE_LIMIT',
+            'WIKI_KARMA',
+            'HOT_PAGE_AGE',
+            'MODWINDOW',
+            'RATELIMIT',
+            'QUOTA_THRESHOLD',
+            'num_comments',
+            'max_comments',
+            'max_comments_gold',
+            'num_default_reddits',
+            'num_query_queue_workers',
+            'max_sr_images',
+            'num_serendipity',
+            'sr_dropdown_threshold',
+            'comment_visits_period',
+            'min_membership_create_community',
+            'bcrypt_work_factor',
+            'cassandra_pool_size',
+        ],
 
-    float_props = ['min_promote_bid',
-                   'max_promote_bid',
-                   'usage_sampling',
-                   'statsd_sample_rate',
-                   'querycache_prune_chance',
-                   ]
+        ConfigValue.float: [
+            'min_promote_bid',
+            'max_promote_bid',
+            'usage_sampling',
+            'statsd_sample_rate',
+            'querycache_prune_chance',
+        ],
 
-    bool_props = ['debug', 'translator',
-                  'log_start',
-                  'sqlprinting',
-                  'template_debug',
-                  'reload_templates',
-                  'uncompressedJS',
-                  'enable_doquery',
-                  'use_query_cache',
-                  'write_query_queue',
-                  'css_killswitch',
-                  'db_create_tables',
-                  'disallow_db_writes',
-                  'exception_logging',
-                  'disable_ratelimit',
-                  'amqp_logging',
-                  'read_only_mode',
-                  'frontpage_dart',
-                  'allow_wiki_editing',
-                  'heavy_load_mode',
-                  's3_media_direct',
-                  'disable_captcha',
-                  'disable_ads',
-                  'static_pre_gzipped',
-                  'static_secure_pre_gzipped',
-                  'trust_local_proxies',
-                  ]
+        ConfigValue.bool: [
+            'debug',
+            'translator',
+            'log_start',
+            'sqlprinting',
+            'template_debug',
+            'reload_templates',
+            'uncompressedJS',
+            'enable_doquery',
+            'use_query_cache',
+            'write_query_queue',
+            'css_killswitch',
+            'db_create_tables',
+            'disallow_db_writes',
+            'exception_logging',
+            'disable_ratelimit',
+            'amqp_logging',
+            'read_only_mode',
+            'frontpage_dart',
+            'allow_wiki_editing',
+            'heavy_load_mode',
+            's3_media_direct',
+            'disable_captcha',
+            'disable_ads',
+            'static_pre_gzipped',
+            'static_secure_pre_gzipped',
+            'trust_local_proxies',
+        ],
 
-    tuple_props = ['stalecaches',
-                   'memcaches',
-                   'permacache_memcaches',
-                   'rendercaches',
-                   'cassandra_seeds',
-                   'admins',
-                   'sponsors',
-                   'automatic_reddits',
-                   'agents',
-                   'allowed_css_linked_domains',
-                   'authorized_cnames',
-                   'hardcache_categories',
-                   's3_media_buckets',
-                   'allowed_pay_countries',
-                   'case_sensitive_domains']
+        ConfigValue.tuple: [
+            'stalecaches',
+            'memcaches',
+            'permacache_memcaches',
+            'rendercaches',
+            'cassandra_seeds',
+            'admins',
+            'sponsors',
+            'automatic_reddits',
+            'agents',
+            'allowed_css_linked_domains',
+            'authorized_cnames',
+            'hardcache_categories',
+            's3_media_buckets',
+            'allowed_pay_countries',
+            'case_sensitive_domains',
+        ],
 
-    choice_props = {'cassandra_rcl': {'ONE':    CL_ONE,
-                                      'QUORUM': CL_QUORUM},
-                    'cassandra_wcl': {'ONE':    CL_ONE,
-                                      'QUORUM': CL_QUORUM},
-                    }
-
+        ConfigValue.choice: {
+             'cassandra_rcl': {
+                 'ONE': CL_ONE,
+                 'QUORUM': CL_QUORUM
+             },
+             'cassandra_wcl': {
+                 'ONE': CL_ONE,
+                 'QUORUM': CL_QUORUM
+             },
+        },
+    }
 
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
@@ -157,23 +225,8 @@ class Globals(object):
 
         global_conf.setdefault("debug", False)
 
-        # slop over all variables to start with
-        for k, v in  global_conf.iteritems():
-            if not k.startswith("_") and not hasattr(self, k):
-                if k in self.int_props:
-                    v = int(v)
-                elif k in self.float_props:
-                    v = float(v)
-                elif k in self.bool_props:
-                    v = self.to_bool(v)
-                elif k in self.tuple_props:
-                    v = tuple(self.to_iter(v))
-                elif k in self.choice_props:
-                    if v not in self.choice_props[k]:
-                        raise ValueError("Unknown option for %r: %r not in %r"
-                                         % (k, v, self.choice_props[k]))
-                    v = self.choice_props[k][v]
-                setattr(self, k, v)
+        self.config = ConfigValueParser(global_conf)
+        self.config.add_spec(self.spec)
 
         self.paths = paths
 
@@ -196,7 +249,13 @@ class Globals(object):
         dtz = global_conf.get('display_timezone', tz)
         self.display_tz = pytz.timezone(dtz)
 
-    def setup(self, global_conf):
+    def __getattr__(self, name):
+        if not name.startswith('_') and name in self.config:
+            return self.config[name]
+        else:
+            raise AttributeError
+
+    def setup(self):
         # heavy load mode is read only mode with a different infobar
         if self.heavy_load_mode:
             self.read_only_mode = True
@@ -218,8 +277,8 @@ class Globals(object):
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
         self.make_lock = make_lock_factory(self.memcache)
 
-        self.stats = Stats(global_conf.get('statsd_addr'),
-                           global_conf.get('statsd_sample_rate'))
+        self.stats = Stats(self.config.get('statsd_addr'),
+                           self.config.get('statsd_sample_rate'))
 
         event.listens_for(engine.Engine, 'before_cursor_execute')(
             self.stats.pg_before_cursor_execute)
@@ -290,7 +349,7 @@ class Globals(object):
         self.cache_chains.update(thing_cache=self.thing_cache)
 
         #load the database info
-        self.dbm = self.load_db_params(global_conf)
+        self.dbm = self.load_db_params()
 
         # can't do this until load_db_params() has been called
         self.hardcache = HardcacheChain((localcache_cls(),
@@ -391,16 +450,9 @@ class Globals(object):
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
 
-    @staticmethod
-    def to_bool(x):
-        return (x.lower() == 'true') if x else None
 
-    @staticmethod
-    def to_iter(v, delim = ','):
-        return (x.strip() for x in v.split(delim) if x)
-
-    def load_db_params(self, gc):
-        self.databases = tuple(self.to_iter(gc['databases']))
+    def load_db_params(self):
+        self.databases = tuple(ConfigValue.to_iter(self.config.raw_data['databases']))
         self.db_params = {}
         if not self.databases:
             return
@@ -409,7 +461,7 @@ class Globals(object):
         db_param_names = ('name', 'db_host', 'db_user', 'db_pass', 'db_port',
                           'pool_size', 'max_overflow')
         for db_name in self.databases:
-            conf_params = self.to_iter(gc[db_name + '_db'])
+            conf_params = ConfigValue.to_iter(self.config.raw_data[db_name + '_db'])
             params = dict(zip(db_param_names, conf_params))
             if params['db_user'] == "*":
                 params['db_user'] = self.db_user
@@ -426,17 +478,17 @@ class Globals(object):
             dbm.setup_db(db_name, g_override=self, **params)
             self.db_params[db_name] = params
 
-        dbm.type_db = dbm.get_engine(gc['type_db'])
-        dbm.relation_type_db = dbm.get_engine(gc['rel_type_db'])
+        dbm.type_db = dbm.get_engine(self.config.raw_data['type_db'])
+        dbm.relation_type_db = dbm.get_engine(self.config.raw_data['rel_type_db'])
 
         def split_flags(p):
             return ([n for n in p if not n.startswith("!")],
                     dict((n.strip('!'), True) for n in p if n.startswith("!")))
 
         prefix = 'db_table_'
-        for k, v in gc.iteritems():
+        for k, v in self.config.raw_data.iteritems():
             if k.startswith(prefix):
-                params = list(self.to_iter(v))
+                params = list(ConfigValue.to_iter(v))
                 name = k[len(prefix):]
                 kind = params[0]
                 if kind == 'thing':
