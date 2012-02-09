@@ -5,6 +5,8 @@ from pylons import config
 
 
 class Plugin(object):
+    js = {}
+
     @property
     def path(self):
         module = sys.modules[type(self).__module__]
@@ -18,6 +20,14 @@ class Plugin(object):
     @property
     def static_dir(self):
         return os.path.join(self.path, 'public')
+
+    def add_js(self):
+        from r2.lib import js
+        for name, module in self.js.iteritems():
+            if name not in js.module:
+                js.module[name] = module
+            else:
+                js.module[name].extend(module)
 
     def add_routes(self, mc):
         pass
@@ -50,6 +60,7 @@ class PluginLoader(object):
             plugin_cls = entry_point.load()
             plugin = self.plugins[name] = plugin_cls()
             config['pylons.paths']['templates'].extend(plugin.template_dirs)
+            plugin.add_js()
         return self
 
     def load_controllers(self):

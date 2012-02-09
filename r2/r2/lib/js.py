@@ -99,7 +99,10 @@ class Module(Source):
 
     def get_source(self):
         return ";".join(s.get_source() for s in self.sources)
-    
+
+    def extend(self, module):
+        self.sources.extend(module.sources)
+
     @property
     def path(self):
         """The destination path of the module file on the filesystem."""
