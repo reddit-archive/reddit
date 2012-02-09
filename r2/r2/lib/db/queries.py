@@ -15,6 +15,7 @@ import cPickle as pickle
 
 from datetime import datetime
 import itertools
+import collections
 
 from pylons import g
 query_cache = g.permacache
@@ -259,6 +260,29 @@ def merge_results(*results):
         m = Merge(results, sort = results[0]._sort)
         m.prewrap_fn = results[0].prewrap_fn
         return m
+
+
+@cached_query(UserQueryCache)
+def get_deleted_links(user_id):
+    return Link._query(Link.c.author_id == user_id,
+                       Link.c._deleted == True,
+                       Link.c._spam == (True, False),
+                       sort=db_sort('new'))
+
+
+@cached_query(UserQueryCache)
+def get_deleted_comments(user_id):
+    return Comment._query(Comment.c.author_id == user_id,
+                          Comment.c._deleted == True,
+                          Comment.c._spam == (True, False),
+                          sort=db_sort('new'))
+
+
+@merged_cached_query
+def get_deleted(user):
+    return [get_deleted_links(user),
+            get_deleted_comments(user)]
+
 
 def get_links(sr, sort, time):
     return _get_links(sr._id, sort, time)
@@ -756,11 +780,26 @@ def _by_srid(things,srs=True):
     else:
         return ret
 
+
+def _by_author(things):
+    by_account = collections.defaultdict(list)
+
+    for thing in tup(things):
+        author_id = getattr(thing, 'author_id')
+        if author_id:
+            by_account[author_id].append(thing)
+
+    return by_account
+
+
 def ban(things):
     del_or_ban(things, "ban")
 
 def delete_links(links):
     del_or_ban(links, "del")
+
+def delete_comments(comments):
+    del_or_ban(comments, "del")
 
 def del_or_ban(things, why):
     by_srid, srs = _by_srid(things)
@@ -790,6 +829,17 @@ def del_or_ban(things, why):
             add_queries([get_spam_comments(sr)], insert_items = comments)
             add_queries([get_all_comments(),
                          get_sr_comments(sr)], delete_items = comments)
+
+    if why == "del":
+        with CachedQueryMutator() as m:
+            for author_id, things in _by_author(things).iteritems():
+                links = [x for x in things if isinstance(x, Link)]
+                if links:
+                    m.insert(get_deleted_links(author_id), links)
+
+                comments = [x for x in things if isinstance(x, Comment)]
+                if comments:
+                    m.insert(get_deleted_comments(author_id), comments)
 
     changed(things)
 

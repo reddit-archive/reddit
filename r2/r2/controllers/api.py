@@ -696,6 +696,8 @@ class ApiController(RedditController):
                 rels = filter(None, d.values()) or None
                 queries.new_comment(thing, rels)
 
+            queries.delete_comments(thing)
+
     @noresponse(VUser(),
                 VModhash(),
                 VSrCanAlter('id'),

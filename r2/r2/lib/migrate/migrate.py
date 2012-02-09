@@ -347,6 +347,25 @@ def port_cassaurls(after_id=None, estimate=15231317):
                 if k:
                     b.insert(k, {l._id36: l._id36})
 
+def port_deleted_links(after_id=None):
+    from r2.models import Link
+    from r2.lib.db.operators import desc
+    from r2.models.query_cache import CachedQueryMutator
+    from r2.lib.db.queries import get_deleted_links
+    from r2.lib.utils import fetch_things2, in_chunks, progress
+
+    q = Link._query(Link.c._deleted == True,
+                    Link.c._spam == (True, False),
+                    sort=desc('_date'), data=True)
+    q = fetch_things2(q, chunk_size=500)
+    q = progress(q, verbosity=1000)
+
+    for chunk in in_chunks(q):
+        with CachedQueryMutator() as m:
+            for link in chunk:
+                query = get_deleted_links(link.author_id)
+                m.insert(query, [link])
+
 def port_cassahides():
     from r2.models import SaveHide, CassandraHide
     from r2.lib.db.tdb_cassandra import CL
