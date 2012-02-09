@@ -21,6 +21,9 @@ class Plugin(object):
     def static_dir(self):
         return os.path.join(self.path, 'public')
 
+    def on_load(self):
+        pass
+
     def add_js(self):
         from r2.lib import js
         for name, module in self.js.iteritems():
@@ -61,6 +64,7 @@ class PluginLoader(object):
             plugin = self.plugins[name] = plugin_cls()
             config['pylons.paths']['templates'].extend(plugin.template_dirs)
             plugin.add_js()
+            plugin.on_load()
         return self
 
     def load_controllers(self):
