@@ -132,7 +132,7 @@ def existing_subscription(subscr_id, paying_id):
             return "deleted account"
 
         if should_set_subscriber:
-            if hasattr(account, "gold_subscr_id"):
+            if hasattr(account, "gold_subscr_id") and account.gold_subscr_id:
                 g.log.warning("Attempted to set subscr_id (%s) for account (%d) " +
                               "that already has one." % (subscr_id, account_id))
                 return None
