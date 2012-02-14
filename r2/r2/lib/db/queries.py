@@ -711,13 +711,13 @@ def new_message(message, inbox_rels):
     from_user = Account._byID(message.author_id)
     for inbox_rel in tup(inbox_rels):
         to = inbox_rel._thing1
+        add_queries([get_sent(from_user)], insert_items=message)
         # moderator message
         if isinstance(inbox_rel, ModeratorInbox):
             add_queries([get_subreddit_messages(to)],
                         insert_items = inbox_rel)
         # personal message
         else:
-            add_queries([get_sent(from_user)], insert_items = message)
             add_queries([get_inbox_messages(to)],
                         insert_items = inbox_rel)
         set_unread(message, to, True)

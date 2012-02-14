@@ -1120,7 +1120,7 @@ class Message(Thing, Printable):
                         c.user_is_admin):
                     item.author = item.subreddit
                     item.hide_author = True
-
+            
             item.is_collapsed = None
             if not item.new:
                 if item.recipient:
@@ -1134,6 +1134,24 @@ class Message(Thing, Printable):
                 if not c.user_is_admin:
                     item.subject = _('[message from blocked user]')
                     item.body = _('[unblock user to see this message]')
+            taglinetext = ''
+            if item.hide_author:
+                taglinetext = _("subreddit message %(author)s sent %(when)s ago")
+            elif item.author_id == c.user._id:
+                taglinetext = _("to %(dest)s sent %(when)s ago")
+            elif item.to_id == c.user._id or item.to_id is None:
+                taglinetext = _("from %(author)s sent %(when)s ago")
+            else:
+                taglinetext = _("to %(dest)s from %(author)s sent %(when)s ago")
+            item.taglinetext = taglinetext
+            item.dest = item.to.name if item.to else ""
+            if item.sr_id:
+                if item.hide_author:
+                    item.updated_author = _("via %(subreddit)s")
+                else:
+                    item.updated_author = _("%(author)s via %(subreddit)s")
+            else:
+                item.updated_author = ''
 
 
         # Run this last
