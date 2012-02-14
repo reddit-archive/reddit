@@ -662,7 +662,7 @@ class FakeSubreddit(Subreddit):
     def can_comment(self, user):
         return False
 
-    def can_submit(self, user):
+    def can_submit(self, user, promotion=False):
         return False
 
     def can_change_stylesheet(self, user):
@@ -958,7 +958,7 @@ class SubSR(FakeSubreddit):
     def can_comment(self, user):
         return False
 
-    def can_submit(self, user):
+    def can_submit(self, user, promotion=False):
         return True
 
     @property
