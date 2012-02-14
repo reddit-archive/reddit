@@ -331,11 +331,11 @@
         "return change_state(this, 'unread_message', unread_thing, true);", \
          _("unread"))}
     </li>
-    %if thing.can_reply:
-      <li>
-         ${self.simple_button(_("reply {verb}"), "reply")}
-      </li>
-    %endif
+  %endif
+  %if thing.can_reply:
+    <li>
+       ${self.simple_button(_("reply {verb}"), "reply")}
+    </li>
   %endif
 </%def>
 
