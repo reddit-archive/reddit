@@ -1253,12 +1253,12 @@ class ApiController(RedditController):
                 c.site.add_image(name, url = new_url)
             c.site._commit()
 
-            if header:
-                ModAction.create(c.site, c.user, action='editsettings', 
-                                 details='upload_image_header')
-            else:
-                ModAction.create(c.site, c.user, action='editsettings', 
-                                 details='upload_image', description=name)
+            if not sponsor:
+                if header:
+                    kw = dict(details='upload_image_header')
+                else:
+                    kw = dict(details='upload_image', description=name)
+                ModAction.create(c.site, c.user, action='editsettings', **kw)
 
             return UploadedImage(_('saved'), new_url, name, 
                                  errors=errors, form_id=form_id).render()
