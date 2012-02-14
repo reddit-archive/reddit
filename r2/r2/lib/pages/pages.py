@@ -279,7 +279,7 @@ class Reddit(Templated):
                 if total > len(moderators):
                     more_text = "...and %d more" % (total - len(moderators))
                     mod_href = "http://%s/about/moderators" % get_domain()
-                helplink = ("/message/compose?to=%%23%s" % c.site.name,
+                helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
                             "message the moderators")
                 ps.append(SideContentBox(_('moderators'), moderators,
                                          helplink = helplink, 
