@@ -561,8 +561,13 @@ class ApiController(RedditController):
                 if msg and subj and friend.name != c.user.name:
                     # fullpath with domain needed or the markdown link
                     # will break
+                    if isinstance(container, Subreddit):
+                        title = "%s: %s" % (container.path.rstrip("/"),
+                                            container.title)
+                    else:
+                        title = container.title
                     d = dict(url = container.path,
-                             title = container.title)
+                             title = title)
                     msg = msg % d
                     subj = subj % d
                     if type == 'banned':
