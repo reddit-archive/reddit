@@ -708,7 +708,14 @@ class MessageController(ListingController):
         if (self.where == 'messages' and 
             (c.user.pref_threaded_messages or self.message)):
             return Listing(self.builder_obj).listing()
-        return ListingController.listing(self)
+        pane = ListingController.listing(self)
+
+        # Indicate that the comment tree wasn't built for comments
+        for i in pane.things:
+            if i.was_comment:
+                i.child = None
+
+        return pane
 
     def query(self):
         if self.where == 'messages':

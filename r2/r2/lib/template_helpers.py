@@ -186,10 +186,15 @@ def replace_render(listing, item, render_func):
         style = style or c.render_style or 'html'
         replacements = {}
 
-        child_txt = ( hasattr(item, "child") and item.child )\
-            and item.child.render(style = style) or ""
-        replacements["childlisting"] = child_txt
-
+        if hasattr(item, 'child'):
+            if item.child:
+                replacements['childlisting'] = item.child.render(style=style)
+            else:
+                # Special case for when the comment tree wasn't built which
+                # occurs both in the inbox and spam page view of comments.
+                replacements['childlisting'] = None
+        else:
+            replacements['childlisting'] = ''
 
         #only LinkListing has a show_nums attribute
         if listing:

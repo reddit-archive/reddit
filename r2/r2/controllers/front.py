@@ -487,6 +487,11 @@ class FrontController(RedditController):
         listing = LinkListing(builder)
         pane = listing.listing()
 
+        # Indicate that the comment tree wasn't built for comments
+        for i in pane.things:
+            if hasattr(i, 'body'):
+                i.child = None
+
         return pane
 
     def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
