@@ -47,7 +47,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
          %else:
            onclick="return hidecomment(this)">
          %endif
-         [${_("+") if collapse else _("-")}]&nbsp;
+         [${"+" if collapse else unsafe("&ndash;")}]&nbsp;
      </a>
   <span class="head">
   <%

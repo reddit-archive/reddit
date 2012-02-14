@@ -36,7 +36,7 @@
    %>
 <div class="thing subreddit id-${thing._fullname}">
   <div class="midcol"
-  ${toggle_button("fancy-toggle-button", _("+"), _("-"), 
+  ${toggle_button("fancy-toggle-button", "+", "-",
                   "subscribe('%s')" % thing._fullname, 
                   "unsubscribe('%s')" % thing._fullname, 
                   css_class = "add button", alt_css_class = "remove button",

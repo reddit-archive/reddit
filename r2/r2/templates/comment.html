@@ -83,7 +83,7 @@ ${parent.collapsed()}
        %else:
          onclick="return hidecomment(this)">
        %endif
-       [${_("+") if collapse else unsafe(_("&ndash;"))}]
+       [${"+" if collapse else unsafe("&ndash;")}]
     </a>
   %endif
 
