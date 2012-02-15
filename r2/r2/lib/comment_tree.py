@@ -364,7 +364,9 @@ def add_message(message):
     if message.to_id:
         with g.make_lock(messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
-    if message.sr_id:
+    # Messages to a subreddit should end in its inbox. Messages
+    # FROM a subreddit (currently, just ban messages) should NOT
+    if message.sr_id and not message.from_sr:
         with g.make_lock(sr_messages_lock_key(message.sr_id)):
             add_sr_message_nolock(message.sr_id, message)
 
