@@ -50,7 +50,7 @@ function admincheck(elem) {
 
 <div class="spacer">
   <%utils:round_field title="${_('to')}", 
-                      description="${_('(username, or # followed by the reddit name)')}">
+                      description="${_('(username, or /r/ followed by the reddit name)')}">
     <input type="text" name="to" value="${thing.to or ''}"
            onchange="admincheck(this)"/>
     ${error_field("NO_USER", "to")}
