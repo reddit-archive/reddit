@@ -264,8 +264,10 @@ class Subreddit(Thing, Printable):
     def can_view(self, user):
         if c.user_is_admin:
             return True
-
-        if self.type in ('public', 'restricted', 'archived'):
+        
+        if self.spammy():
+            return False
+        elif self.type in ('public', 'restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
             #private requires contributorship
