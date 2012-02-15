@@ -795,12 +795,8 @@ class RedditController(MinimalController):
                 read_mod_cookie()
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
-            if hasattr(c.user, 'modmsgtime'):
-                c.show_mod_mail = True
-                if c.user.modmsgtime:
-                    c.have_mod_messages = c.user.modmsgtime
-            else:
-                c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
+            c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
+            c.have_mod_messages = getattr(c.user, "modmsgtime", False)
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_special_distinguish = c.user.special_distinguish()
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
