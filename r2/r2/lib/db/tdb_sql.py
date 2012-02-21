@@ -794,7 +794,7 @@ def find_data(type_id, get_cols, sort, limit, constraints):
                 alias = d_table.alias()
                 id_col = first_alias.c.thing_id
 
-            if id_col:
+            if id_col is not None:
                 s.append_whereclause(id_col == alias.c.thing_id)
             
             s.append_column(alias.c.value.label(key))
