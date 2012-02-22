@@ -684,9 +684,14 @@ body[orient="landscape"] > #topbar > h1 {
 }
 
 .nsfw-warning {
+    @include border-radius(3px);
     color: #ac3939;
     text-decoration: none;
-    border: 0 none;
+    font-weight: normal;
+    font-size: 9px;
+    margin-left: 5px;
+    padding: 0 2px;
+    border: 1px solid #d27979 !important;
 }
 
 /* Comment count */

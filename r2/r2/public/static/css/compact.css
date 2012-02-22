@@ -213,7 +213,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .link > .thing_options { font-size: x-small; margin: none; display: block; float: left; clear: left; margin: 2px 0px 0px 10px; }
 
-.nsfw-warning { color: #ac3939; text-decoration: none; border: 0 none; }
+.nsfw-warning { -moz-border-radius: 3px; -webkit-border-radius: 3px; -o-border-radius: 3px; -ms-border-radius: 3px; -khtml-border-radius: 3px; border-radius: 3px; color: #ac3939; text-decoration: none; font-weight: normal; font-size: 9px; margin-left: 5px; padding: 0 2px; border: 1px solid #d27979 !important; }
 
 /* Comment count */
 .commentcount { float: right; margin: 5px; width: 45px; text-align: right; }
