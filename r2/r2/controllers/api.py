@@ -1539,15 +1539,13 @@ class ApiController(RedditController):
 
         # Batch set items as unread
         for sr_id, things in thing_groups.items():
-            if sr_id not in ('Comment', 'Message'):
-                sr = things[0].subreddit_slow
-                # Only moderators or the `to` user can change the read status
-                if sr_id not in mod_srs:
-                    things = [x for x in things if x.to_id == c.user._id]
-                if things:
-                    queries.set_unread(things, sr, unread)
-            else:
-                queries.set_unread(things, c.user, unread)
+            # Remove the item(s) from the user's inbox
+            queries.set_unread(things, c.user, unread)
+            if sr_id not in ('Comment', 'Message') and sr_id in mod_srs:
+                # Only moderators can change the read status of that
+                # message in the modmail inbox
+                sr = Subreddit._byID(sr_id)
+                queries.set_unread(things, sr, unread)
 
 
     @noresponse(VUser(),
