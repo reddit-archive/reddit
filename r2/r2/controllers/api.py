@@ -1519,33 +1519,38 @@ class ApiController(RedditController):
             else:
                 return abort(400)
 
-        thing_groups = defaultdict(list)
+        sr_messages = defaultdict(list)
+        comments = []
+        messages = []
         # Group things by subreddit or type
-        has_sr_messages = False
         for thing in things:
             if isinstance(thing, Message):
-                if hasattr(thing, 'sr_id') and thing.sr_id:
-                    has_sr_messages = True
-                    thing_groups[thing.sr_id].append(thing)
+                if getattr(thing, 'sr_id', False):
+                    sr_messages[thing.sr_id].append(thing)
                 else:
-                    thing_groups['Message'].append(thing)
+                    messages.append(thing)
             else:
-                thing_groups['Comment'].append(thing)
+                comments.append(thing)
 
-        if has_sr_messages:
+        if sr_messages:
             mod_srs = Subreddit.reverse_moderator_ids(c.user)
+            srs = Subreddit._byID(sr_messages.keys())
         else:
             mod_srs = []
 
         # Batch set items as unread
-        for sr_id, things in thing_groups.items():
+        for sr_id, things in sr_messages.items():
             # Remove the item(s) from the user's inbox
             queries.set_unread(things, c.user, unread)
-            if sr_id not in ('Comment', 'Message') and sr_id in mod_srs:
+            if sr_id in mod_srs:
                 # Only moderators can change the read status of that
                 # message in the modmail inbox
-                sr = Subreddit._byID(sr_id)
+                sr = srs[sr_id]
                 queries.set_unread(things, sr, unread)
+        if comments:
+            queries.set_unread(comments, c.user, unread)
+        if messages:
+            queries.set_unread(messages, c.user, unread)
 
 
     @noresponse(VUser(),
