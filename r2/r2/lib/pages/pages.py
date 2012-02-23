@@ -127,6 +127,7 @@ class Reddit(Templated):
     enable_login_cover = True
     site_tracking      = True
     show_firsttext     = True
+    content_id         = None
     css_class          = None
     additional_css     = None
     extra_page_classes = None
