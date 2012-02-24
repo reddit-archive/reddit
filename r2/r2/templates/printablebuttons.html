@@ -41,7 +41,10 @@
     %if not getattr(thing.thing, "use_big_modbuttons", False):
       %if not thing.show_spam:
         <li>
-           ${ynbutton(_("remove"), _("removed"), "remove")}
+           ${ynbutton(_("spam"), _("spammed"), "remove")}
+        </li>
+        <li>
+           ${ynbutton(_("remove"), _("removed"), "remove", hidden_data=dict(spam=False))}
         </li>
       %endif
 

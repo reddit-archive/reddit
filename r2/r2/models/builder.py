@@ -238,6 +238,8 @@ class Builder(object):
                     w.moderator_banned = ban_info.get('moderator_banned', False)
                     w.autobanned = ban_info.get('auto', False)
                     w.banner = ban_info.get('banner')
+                    if ban_info.get('not_spam', False) and w.banner:
+                        w.banner += ' (not spam)'
                     w.use_big_modbuttons = True
                     if getattr(w, "author", None) and w.author._spam:
                         w.show_spam = "author"

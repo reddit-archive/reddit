@@ -62,6 +62,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'unspam': _('unspam'),
                      # remove comment/link
                      'confirm_spam': _('confirmed spam'),
+                     'not_spam': _('not spam'),
                      # removemoderator
                      'remove_self': _('removed self'),
                      # editsettings

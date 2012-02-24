@@ -32,7 +32,7 @@ from copy import copy
 class AdminTools(object):
 
     def spam(self, things, auto=True, moderator_banned=False,
-             banner=None, date = None, **kw):
+             banner=None, date=None, train_spam=True, **kw):
         from r2.lib.db import queries
 
         all_things = tup(things)
@@ -57,6 +57,8 @@ class AdminTools(object):
                 ban_info['banner'] = banner[t._fullname]
             else:
                 ban_info['banner'] = banner
+
+            ban_info['not_spam'] = not train_spam
 
             t.ban_info = ban_info
             t._commit()

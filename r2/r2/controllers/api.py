@@ -1426,19 +1426,27 @@ class ApiController(RedditController):
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
-                thing = VByName('id'))
-    def POST_remove(self, why, thing):
+                thing = VByName('id'),
+                spam = VBoolean('spam', default=True))
+    def POST_remove(self, why, thing, spam):
         if getattr(thing, "promoted", None) is None:
             end_trial(thing, why + "-removed")
-            kw = {}
-            if thing._spam:
+
+            kw = {'target': thing}
+            if thing._spam and spam:
                 kw['details'] = 'confirm_spam'
-            admintools.spam(thing, False, not c.user_is_admin, c.user.name)
-            sr = thing.subreddit_slow
-            if isinstance(thing, Link):
-                ModAction.create(sr, c.user, 'removelink', target=thing, **kw)
-            elif isinstance(thing, Comment):
-                ModAction.create(sr, c.user, 'removecomment', target=thing, **kw)
+
+            admintools.spam(thing, auto=False,
+                            moderator_banned=not c.user_is_admin,
+                            banner=c.user.name,
+                            train_spam=spam)
+
+            if isinstance(thing, (Link, Comment)):
+                if not spam:
+                    kw['details'] = 'not_spam'
+                sr = thing.subreddit_slow
+                action = 'remove' + thing.__class__.__name__.lower()
+                ModAction.create(sr, c.user, action, **kw)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
