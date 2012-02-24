@@ -1,5 +1,8 @@
 (function() {
-var write_string="<iframe src=\"http://www.reddit.com/static/button/button3.html?width=69&url=";
+  var prefix = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.reddit.com';
+
+  var write_string="<iframe src=\"" + prefix + "/static/button/button3.html?width=69&url=";
+
   if (window.reddit_url)  { 
       write_string += encodeURIComponent(reddit_url); 
   }
