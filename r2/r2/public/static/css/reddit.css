@@ -300,6 +300,10 @@ ul.flat-vert {text-align: left;}
     background-color: #c7def7;
 }
 
+.drop-choices a.choice.selected {
+    display: none;
+}
+
 .dropdown.heavydrop .selected{
     background: white none no-repeat scroll center right;
     background-image: url(../droparrow.gif);
