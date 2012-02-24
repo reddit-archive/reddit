@@ -32,8 +32,10 @@
 
 <div class="linkinfo">
   <div class="date">
-    ${_("this post was submitted on")}
-    &#32;
+    <span>
+      ${_("this post was submitted on")}
+      &#32;
+    </span>
     <time datetime="${thing.a._date.isoformat()}">
       ${thing.a._date.strftime(thing.datefmt)}
     </time>
