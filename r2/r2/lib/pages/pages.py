@@ -204,6 +204,7 @@ class Reddit(Templated):
 
         buttons.extend([
                 NamedButton('traffic', css_class = 'reddit-traffic'),
+                NamedButton('modqueue', css_class = 'reddit-modqueue'),
                 NamedButton('reports', css_class = 'reddit-reported'),
                 NamedButton('spam', css_class = 'reddit-spam'),
                 NamedButton('banned', css_class = 'reddit-ban'),
