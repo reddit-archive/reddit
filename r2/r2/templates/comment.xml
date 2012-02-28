@@ -41,7 +41,7 @@
   <guid isPermaLink="true">${permalink}</guid>
   <title>${author} ${_("on")} ${thing.link.title}</title>
   <link>${permalink}</link>
-  <dc:date>${thing._date.isoformat()}-0700</dc:date>
+  <dc:date>${thing._date.isoformat()}</dc:date>
   <description>${body|h}</description>
 </item>
 
