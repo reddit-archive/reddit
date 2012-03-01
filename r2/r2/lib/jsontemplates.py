@@ -201,7 +201,10 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 url          = "path",
                                                 over18       = "over_18",
                                                 description  = "description",
-                                                display_name = "name")
+                                                display_name = "name",
+                                                header_img   = "header",
+                                                header_size  = "header_size",
+                                                header_title = "header_title")
 
     def thing_attr(self, thing, attr):
         # Don't reveal revenue information via /r/lounge's subscribers
