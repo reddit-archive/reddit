@@ -161,8 +161,12 @@ class ListingController(RedditController):
         if (getattr(c.site, "_id", -1) == get_promote_srid() and 
             not c.user_is_sponsor):
             abort(403, 'forbidden')
-        listing = LinkListing(self.builder_obj, show_nums = self.show_nums)
-        return listing.listing()
+        pane = LinkListing(self.builder_obj, show_nums = self.show_nums).listing()
+        # Indicate that the comment tree wasn't built for comments
+        for i in pane:
+            if hasattr(i, 'full_comment_path'):
+                i.child = None
+        return pane
 
     def title(self):
         """Page <title>"""
