@@ -530,6 +530,16 @@ def require_https():
     if not c.secure:
         abort(403)
 
+def prevent_framing_and_css(allow_cname_frame=False):
+    def wrap(f):
+        def no_funny_business(*args, **kwargs):
+            c.allow_styles = False
+            if not (allow_cname_frame and c.cname and not c.authorized_cname):
+                c.deny_frames = True
+            return f(*args, **kwargs)
+        return no_funny_business
+    return wrap
+
 class MinimalController(BaseController):
 
     allow_stylesheets = False

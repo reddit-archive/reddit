@@ -21,7 +21,7 @@
 ################################################################################
 from validator import *
 from pylons.i18n import _, ungettext
-from reddit_base import RedditController, base_listing, paginated_listing
+from reddit_base import RedditController, base_listing, paginated_listing, prevent_framing_and_css
 from r2 import config
 from r2.models import *
 from r2.lib.pages import *
@@ -109,6 +109,7 @@ class FrontController(RedditController):
         else:
             return self.redirect(add_sr('/'))
 
+    @prevent_framing_and_css()
     @validate(VAdmin(),
               article = VLink('article'))
     def GET_details(self, article):
@@ -382,6 +383,7 @@ class FrontController(RedditController):
         pane = listing.listing()
         return pane
 
+    @prevent_framing_and_css(allow_cname_frame=True)
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(mod=VAccountByName('mod'),
               action=VOneOf('type', ModAction.actions))
@@ -552,15 +554,18 @@ class FrontController(RedditController):
                 stylesheet_contents = c.site.stylesheet_contents
             else:
                 stylesheet_contents = ''
+            c.allow_styles = True
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
         elif location in ('reports', 'spam', 'trials', 'modqueue') and is_moderator:
+            c.allow_styles = True
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
         elif is_moderator and location == 'traffic':
             pane = RedditTraffic()
         elif is_moderator and location == 'flair':
+            c.allow_styles = True
             pane = FlairPane(num, after, reverse, name, user)
         elif c.user_is_sponsor and location == 'ads':
             pane = RedditAds()
@@ -573,6 +578,7 @@ class FrontController(RedditController):
                           extension_handling = extension_handling).render()
 
     @base_listing
+    @prevent_framing_and_css(allow_cname_frame=True)
     @validate(location = nop('location'),
               created = VOneOf('created', ('true','false'),
                                default = 'false'),
