@@ -481,20 +481,37 @@ class Globals(object):
         dbm.type_db = dbm.get_engine(self.config.raw_data['type_db'])
         dbm.relation_type_db = dbm.get_engine(self.config.raw_data['rel_type_db'])
 
-        def split_flags(p):
-            return ([n for n in p if not n.startswith("!")],
-                    dict((n.strip('!'), True) for n in p if n.startswith("!")))
+        def split_flags(raw_params):
+            params = []
+            flags = {}
+
+            for param in raw_params:
+                if not param.startswith("!"):
+                    params.append(param)
+                else:
+                    key, sep, value = param[1:].partition("=")
+                    if sep:
+                        flags[key] = value
+                    else:
+                        flags[key] = True
+
+            return params, flags
 
         prefix = 'db_table_'
+        self.predefined_type_ids = {}
         for k, v in self.config.raw_data.iteritems():
             if not k.startswith(prefix):
                 continue
 
-            params = tuple(ConfigValue.to_iter(v))
+            params, table_flags = split_flags(ConfigValue.to_iter(v))
             name = k[len(prefix):]
             kind = params[0]
             server_list = self.config.raw_data["db_servers_" + name]
             engines, flags = split_flags(ConfigValue.to_iter(server_list))
+
+            typeid = table_flags.get("typeid")
+            if typeid:
+                self.predefined_type_ids[name] = int(typeid)
 
             if kind == 'thing':
                 dbm.add_thing(name, dbm.get_engines(engines),

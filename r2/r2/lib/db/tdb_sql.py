@@ -31,6 +31,7 @@ from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
 import operators
 from pylons import g, c
 dbm = g.dbm
+predefined_type_ids = g.predefined_type_ids
 
 import logging
 log_format = logging.Formatter('sql: %(message)s')
@@ -184,9 +185,21 @@ types_name = {}
 rel_types_id = {}
 rel_types_name = {}
 
-def check_type(table, selector, insert_vals):
-    #check for type in type table, create if not existent
-    r = table.select(selector).execute().fetchone()
+class ConfigurationError(Exception):
+    pass
+
+def check_type(table, name, insert_vals):
+    # before hitting the db, check if we can get the type id from
+    # the ini file
+    type_id = predefined_type_ids.get(name)
+    if type_id:
+        return type_id
+    elif len(predefined_type_ids) > 0:
+        # flip the hell out if only *some* of the type ids are defined
+        raise ConfigurationError("Expected typeid for %s" % name)
+
+    # check for type in type table, create if not existent
+    r = table.select(table.c.name == name).execute().fetchone()
     if not r:
         r = table.insert().execute(**insert_vals)
         type_id = r.last_inserted_ids()[0]
@@ -198,7 +211,7 @@ def check_type(table, selector, insert_vals):
 def build_thing_tables():
     for name, engines in dbm.things_iter():
         type_id = check_type(type_table,
-                             type_table.c.name == name,
+                             name,
                              dict(name = name))
 
         tables = []
@@ -232,7 +245,7 @@ def build_rel_tables():
         type1_id = types_name[type1_name].type_id
         type2_id = types_name[type2_name].type_id
         type_id = check_type(rel_type_table,
-                             rel_type_table.c.name == name,
+                             name,
                              dict(name = name,
                                   type1_id = type1_id,
                                   type2_id = type2_id))
