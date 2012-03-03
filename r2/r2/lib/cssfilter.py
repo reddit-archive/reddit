@@ -73,7 +73,7 @@ custom_macros = {
     
     'single-text-shadow': r'({color}\s+)?{length}\s+{length}(\s+{length})?|{length}\s+{length}(\s+{length})?(\s+{color})?',
 
-    'box-shadow-pos': r'{length}\s+{length}(\s+{length})?',
+    'box-shadow-pos': r'{length}\s+{length}(\s+{length})?(\s+{length})?',
 }
 
 custom_values = {
