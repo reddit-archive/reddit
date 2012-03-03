@@ -487,19 +487,22 @@ class Globals(object):
 
         prefix = 'db_table_'
         for k, v in self.config.raw_data.iteritems():
-            if k.startswith(prefix):
-                params = list(ConfigValue.to_iter(v))
-                name = k[len(prefix):]
-                kind = params[0]
-                if kind == 'thing':
-                    engines, flags = split_flags(params[1:])
-                    dbm.add_thing(name, dbm.get_engines(engines),
-                                  **flags)
-                elif kind == 'relation':
-                    engines, flags = split_flags(params[3:])
-                    dbm.add_relation(name, params[1], params[2],
-                                     dbm.get_engines(engines),
-                                     **flags)
+            if not k.startswith(prefix):
+                continue
+
+            params = tuple(ConfigValue.to_iter(v))
+            name = k[len(prefix):]
+            kind = params[0]
+            server_list = self.config.raw_data["db_servers_" + name]
+            engines, flags = split_flags(ConfigValue.to_iter(server_list))
+
+            if kind == 'thing':
+                dbm.add_thing(name, dbm.get_engines(engines),
+                              **flags)
+            elif kind == 'relation':
+                dbm.add_relation(name, params[1], params[2],
+                                 dbm.get_engines(engines),
+                                 **flags)
         return dbm
 
     def __del__(self):
