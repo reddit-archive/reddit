@@ -81,6 +81,7 @@ class ListingController(RedditController):
 
     #extra parameters to send to the render_cls constructor
     render_params = {}
+    extra_page_classes = ['listing-page']
 
     @property
     def menus(self):
@@ -104,6 +105,7 @@ class ListingController(RedditController):
         content = self.content()
 
         res = self.render_cls(content = content,
+                              page_classes = self.extra_page_classes,
                               show_sidebar = self.show_sidebar,
                               nav_menus = self.menus,
                               title = self.title(),

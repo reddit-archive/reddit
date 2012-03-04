@@ -31,6 +31,7 @@
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
+<%namespace file="utils.html" import="tags"/>
 <%inherit file="base.html"/>
 
 <%def name="Title()">
@@ -124,7 +125,7 @@
 </%def>
 
 <%def name="bodyHTML()">
-  <body>
+  <body ${tags(_class=' '.join(thing.page_classes()))}>
     <%include file="redditheader.html"/>
   
     %if thing.show_sidebar:

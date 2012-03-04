@@ -126,10 +126,11 @@ class Reddit(Templated):
     site_tracking      = True
     show_firsttext     = True
     additional_css     = None
+    extra_page_classes = None
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, short_description='', title = '', robots = None, 
-                 show_sidebar = True, footer = True, srbar = True,
+                 show_sidebar = True, footer = True, srbar = True, page_classes = None,
                  **context):
         Templated.__init__(self, **context)
         self.title          = title
@@ -141,6 +142,7 @@ class Reddit(Templated):
         self.space_compress = space_compress and not g.template_debug
         # instantiate a footer
         self.footer         = RedditFooter() if footer else None
+        self.supplied_page_classes = page_classes or []
 
         #put the sort menus at the top
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
@@ -390,6 +392,23 @@ class Reddit(Templated):
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
         return self.content_stack((self.infobar, self.nav_menu, self._content))
+
+    def page_classes(self):
+        classes = set()
+        if c.user_is_loggedin:
+            classes.add('loggedin')
+            if not isinstance(c.site, FakeSubreddit):
+                if c.site.is_subscriber(c.user):
+                    classes.add('subscriber')
+                if c.site.is_moderator(c.user):
+                    classes.add('moderator')
+                if c.cname:
+                    classes.add('cname')
+        if self.extra_page_classes:
+            classes.update(self.extra_page_classes)
+        if self.supplied_page_classes:
+            classes.update(self.supplied_page_classes)
+        return classes
 
 class AccountActivityBox(Templated):
     def __init__(self):
@@ -745,6 +764,7 @@ class OAuth2Authorization(Templated):
 class SearchPage(BoringPage):
     """Search results page"""
     searchbox = False
+    extra_page_classes = ['search-page']
 
     def __init__(self, pagename, prev_search, elapsed_time,
                  num_results, search_params = {},
@@ -810,6 +830,7 @@ class LinkInfoPage(Reddit):
     """
 
     create_reddit_box = False
+    extra_page_classes = ['single-page']
 
     def __init__(self, link = None, comment = None,
                  link_title = '', subtitle = None, duplicates = None,
@@ -1131,6 +1152,7 @@ class ProfilePage(Reddit):
     searchbox         = False
     create_reddit_box = False
     submit_box        = False
+    extra_page_classes = ['profile-page']
 
     def __init__(self, user, *a, **kw):
         self.user     = user

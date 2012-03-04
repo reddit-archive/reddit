@@ -317,6 +317,7 @@ class FrontController(RedditController):
 
         res = LinkInfoPage(link = article, comment = comment,
                            content = displayPane,
+                           page_classes = ['comments-page'],
                            subtitle = subtitle,
                            subtitle_buttons = subtitle_buttons,
                            nav_menus = [CommentSortMenu(default = sort)],
@@ -787,6 +788,7 @@ class FrontController(RedditController):
 
         return FormPage(_("submit"),
                         show_sidebar = True,
+                        page_classes=['submit-page'],
                         content=NewLink(url=url or '',
                                         title=title or '',
                                         subreddits = sr_names,
