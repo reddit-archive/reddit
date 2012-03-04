@@ -377,21 +377,22 @@
                      question = None,
                      format = '%(link)s',
                      format_arg = 'link',
-                     hidden_data = {})">
+                     hidden_data = {},
+                     _class = '')">
   <%
      if question is None:
          question = _("are you sure?")
-     link = ('<a href="#" onclick="return toggle(this)">'
+     link = ('<a href="#" class="togglebutton" onclick="return toggle(this)">'
              + title + '</a>')
      link = format % {format_arg : link}
      link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
    %>
-  <form class="toggle ${op}-button" action="#" method="get">
+  <form class="toggle ${op}-button ${_class}" action="#" method="get">
     <input type="hidden" name="executed" value="${executed}"/>
     %for k, v in hidden_data.iteritems():
       <input type="hidden" name="${k}" value="${v}"/>
     %endfor
-    <span class="option active">
+    <span class="option main active">
       ${link}
     </span>
     <span class="option error">

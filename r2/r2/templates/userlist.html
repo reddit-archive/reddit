@@ -21,8 +21,24 @@
 ################################################################################
 
 <%namespace file="utils.html" import="error_field"/>
+<%namespace file="printablebuttons.html" import="ynbutton" />
 <% from r2.lib.template_helpers import static %>
+
 <div class="${thing._class} usertable">
+  %if thing.can_remove_self():
+    ${ynbutton(op=thing.remove_action,
+               title=thing.remove_self_action,
+               executed=thing.remove_self_final,
+               question=thing.remove_self_confirm,
+               format=thing.remove_self_title,
+               format_arg='action',
+               _class=thing.type + ' remove-self',
+               hidden_data=dict(
+                 id=c.user._fullname,
+                 type=thing.type,
+                 container=thing.container_name))}
+  %endif
+
   %if thing.addable:
     <form action="/post/${thing.destination}"
           method="post" class="pretty-form medium-text"

@@ -2436,6 +2436,9 @@ class UserList(Templated):
         to be listing in this UserList instance"""
         raise NotImplementedError
 
+    def can_remove_self(self):
+        return False
+
     @property
     def container_name(self):
         return c.site._fullname
@@ -2718,6 +2721,10 @@ class ContributorList(UserList):
 class ModList(UserList):
     """Moderator list for a reddit."""
     type = 'moderator'
+    remove_self_action = _('leave')
+    remove_self_title = _('you are a moderator of this subreddit. %(action)s')
+    remove_self_confirm = _('stop being a moderator?')
+    remove_self_final = _('you are no longer a moderator')
 
     @property
     def form_title(self):
@@ -2726,6 +2733,9 @@ class ModList(UserList):
     @property
     def table_title(self):
         return _("moderators of %(reddit)s") % dict(reddit = c.site.name)
+
+    def can_remove_self(self):
+        return c.user_is_loggedin and c.site.is_moderator(c.user)
 
     def editable_fn(self, user):
         if not c.user_is_loggedin:

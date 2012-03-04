@@ -1859,6 +1859,42 @@ label + #moresearchinfo {
 .usertable td, .usertable th { padding: 0 .7em }
 .usertable { white-space: nowrap }
 
+.usertable .remove-self {
+    display: inline-block;
+    margin: 1em 0 .5em;
+    padding: 11px 15px;
+    border: 1px solid #bbb;
+    border-radius: 2px;
+}
+
+.usertable .moderator.remove-self {
+    background: #fdffe8;
+}
+
+.usertable .remove-self .option.main:before {
+    margin-right: 7px;
+}
+
+.usertable .remove-self .option {
+    display: inline;
+}
+
+.usertable .remove-self .togglebutton, .usertable .remove-self .error {
+    display: none;
+    font-size: inherit;
+    border-left: 1px solid #bbb;
+    padding: 4px 15px;
+    padding-right: 0;
+    margin-left: 10px;
+}
+
+.usertable .remove-self .active .togglebutton {
+    display: inline;
+}
+
+.usertable .remove-self .error.active {
+    display: inline;
+}
 
 .aboutpage {  margin-right: 320px; }
 .aboutpage p { margin: 5px; }
@@ -4254,7 +4290,7 @@ dd { margin-left: 20px;  }
     font-size: 130%;
 }
 
-.titlebox form.toggle {
+.titlebox form.toggle, .leavemoderator {
     margin: 0;
     padding: 5px 0px;
     font-size: smaller;
@@ -4262,7 +4298,8 @@ dd { margin-left: 20px;  }
     background: white none no-repeat scroll center left;
 }
 
-.titlebox form.leavemoderator-button:before,
+.usertable .remove-self .main:before,
+.titlebox .leavemoderator:before,
 .titlebox form.leavecontributor-button:before,
 .icon-menu .reddit-edit:before,
 .icon-menu .reddit-traffic:before,
@@ -4284,7 +4321,7 @@ dd { margin-left: 20px;  }
     margin-right: 5px;
 }
 
-.titlebox form.leavemoderator-button:before {
+.titlebox .leavemoderator:before, .moderator.remove-self .main:before {
     background-image: url(../shield.png); /* SPRITE */
 }
 

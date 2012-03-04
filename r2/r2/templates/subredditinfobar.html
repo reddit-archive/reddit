@@ -23,18 +23,13 @@
 <%!
    import locale
    from r2.lib.strings import strings, Score
-   from r2.lib.pages import WrappedUser
+   from r2.lib.pages import WrappedUser, ModList
  %>
 
-<%namespace file="utils.html" import="plain_link, thing_timestamp"/>
+<%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
 <%namespace file="subreddit.html" import="addremove_button" />
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
-<%def name="moderate_button(location, fmt, question, left)">
-  ${ynbutton(_("leave"), left, location,
-             question = question, format = fmt, format_arg = "leave",
-             hidden_data = dict(id = thing.sr._fullname))}
-</%def>
 <div class="titlebox">
   <h1 class="hover redditname">
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
@@ -44,18 +39,25 @@
   ${unsafe(Score.readers(thing.subscribers))}
 
   %if thing.sr.moderator:
-    ${moderate_button("leavemoderator",
-                      _("you are a moderator of this reddit. (%(leave)s)"),
-                      _("stop being a moderator?"),
-                      _("you are no longer a moderator"))}
-                     
+    <div class="leavemoderator">
+      ${text_with_links(ModList.remove_self_title % dict(action='(%(action)s)'),
+          _sr_path=True,
+          action=dict(
+            ## TRANSLATORS: this label links to the edit moderators page.
+            link_text=_('change'),
+            path='about/moderators'))}
+    </div>
   %endif
 
   %if thing.sr.contributor:
-    ${moderate_button("leavecontributor",
-                      _("you are an approved submitter on this reddit. (%(leave)s)"),
-                      _("stop being an approved submitter?"),
-                      _("you are no longer an approved submitter"))}
+    ${ynbutton(op='leavecontributor',
+               title=_('leave'),
+               executed=_('you are no longer an approved submitter'),
+               question=_('stop being an approved submitter?'),
+               format=_('you are an approved submitter on this reddit. (%(leave)s)'),
+               format_arg='leave',
+               hidden_data=dict(
+                 id=thing.sr._fullname))}
   %endif
 
   %if thing.flair_prefs:
