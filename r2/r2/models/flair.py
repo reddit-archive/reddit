@@ -133,7 +133,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
     flair templates within the subreddit.
     """
 
-    MAX_FLAIR_TEMPLATES = 256
+    MAX_FLAIR_TEMPLATES = 350
 
     _int_props = ('sr_id',)
     _use_db = True
