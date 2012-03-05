@@ -909,7 +909,10 @@ class ApiController(RedditController):
                                        errors.USER_BLOCKED)):
 
             if is_message:
-                to = Account._byID(parent.author_id)
+                if parent.from_sr:
+                    to = Subreddit._byID(parent.sr_id)
+                else:
+                    to = Account._byID(parent.author_id)
                 subject = parent.subject
                 re = "re: "
                 if not subject.startswith(re):
