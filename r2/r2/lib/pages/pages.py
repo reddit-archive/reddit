@@ -404,6 +404,8 @@ class Reddit(Templated):
                     classes.add('moderator')
                 if c.cname:
                     classes.add('cname')
+        if isinstance(c.site, MultiReddit):
+            classes.add('multi-page')
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)
         if self.supplied_page_classes:
