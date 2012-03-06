@@ -395,6 +395,7 @@ class Reddit(Templated):
 
     def page_classes(self):
         classes = set()
+
         if c.user_is_loggedin:
             classes.add('loggedin')
             if not isinstance(c.site, FakeSubreddit):
@@ -406,10 +407,12 @@ class Reddit(Templated):
                     classes.add('cname')
         if isinstance(c.site, MultiReddit):
             classes.add('multi-page')
+
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)
         if self.supplied_page_classes:
             classes.update(self.supplied_page_classes)
+
         return classes
 
 class AccountActivityBox(Templated):
