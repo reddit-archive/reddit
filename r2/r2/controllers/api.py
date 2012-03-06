@@ -2479,6 +2479,8 @@ class ApiController(RedditController):
                                  target=link, details='flair_edit')
 
             # Push some client-side updates back to the browser.
+
+            # TODO: move this to a template
             flair = '<span class="flair %s">%s</span>' % (
                 ' '.join('flair-' + c for c in css_class.split()), text)
 
@@ -2488,6 +2490,8 @@ class ApiController(RedditController):
                 jquery(title_path).before(flair)
             elif c.site.link_flair_position == 'right':
                 jquery(title_path).after(flair)
+
+            # TODO: close the selector popup more gracefully
             jquery('body').click()
 
     @validatedForm(secret_used=VAdminOrAdminSecret("secret"),

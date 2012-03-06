@@ -227,7 +227,7 @@ class FlairTemplateBySubredditIndex(tdb_cassandra.Thing):
 
         A position value of None means to simply append.
         """
-        ft_ids = self.iter_template_ids(flair_type)
+        ft_ids = list(self.iter_template_ids(flair_type))
         if position is None:
             position = len(ft_ids)
         if position < 0 or position > len(ft_ids):
