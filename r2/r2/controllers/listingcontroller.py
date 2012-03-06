@@ -623,6 +623,9 @@ class MessageController(ListingController):
     show_nums = False
     render_cls = MessagePage
     allow_stylesheets = False
+    # note: this intentionally replaces the listing-page class which doesn't
+    # conceptually fit for styling these pages.
+    extra_page_classes = ['messages-page']
 
     @property
     def menus(self):
