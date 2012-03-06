@@ -534,6 +534,7 @@ class FrontController(RedditController):
             pane = PaneStack()
             if created == 'true':
                 pane.append(InfoBar(message = strings.sr_created))
+            c.allow_styles = True
             pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable = is_moderator)
