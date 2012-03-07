@@ -4579,6 +4579,14 @@ a.pretty-button.negative.pressed {
     background-image: url(../bg-button-negative-pressed.png); /* SPRITE stretch-x */
 }
 
+a.pretty-button.neutral {
+    background-image: url(../bg-button-neutral-unpressed.png); /* SPRITE stretch-x */
+}
+
+a.pretty-button.neutral.pressed {
+    background-image: url(../bg-button-neutral-pressed.png); /* SPRITE stretch-x */
+}
+
 a.pretty-button.positive {
     background-image: url(../bg-button-positive-unpressed.png); /* SPRITE stretch-x */
 }
