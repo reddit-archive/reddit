@@ -1137,12 +1137,12 @@ function big_mod_action(elem, dir) {
 
       elem.siblings(".status-msg").hide();
       if (dir == -1) {
-        $.request("remove", d, null, true);
-        elem.siblings(".spammed").show();
-      } else if (dir == -2) {
         d.spam = false;
         $.request("remove", d, null, true);
         elem.siblings(".removed").show();
+      } else if (dir == -2) {
+        $.request("remove", d, null, true);
+        elem.siblings(".spammed").show();
       } else if (dir == 1) {
         $.request("approve", d, null, true);
         elem.siblings(".approved").show();
