@@ -4563,23 +4563,27 @@ a.pretty-button:hover { text-decoration: none !important }
     outline-style: none;
 }
 
-a.pretty-button.negative {
+a.pretty-button {
     color: black;
+}
+
+a.pretty-button.pressed {
+    color: white;
+}
+
+a.pretty-button.negative {
     background-image: url(../bg-button-negative-unpressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.negative.pressed {
-    color: white;
     background-image: url(../bg-button-negative-pressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.positive {
-    color: black;
     background-image: url(../bg-button-positive-unpressed.png); /* SPRITE stretch-x */
 }
 
 a.pretty-button.positive.pressed {
-    color: white;
     background-image: url(../bg-button-positive-pressed.png); /* SPRITE stretch-x */
 }
 
