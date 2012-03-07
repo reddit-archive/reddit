@@ -1135,24 +1135,16 @@ function big_mod_action(elem, dir) {
          id: thing_id
       };
 
+      elem.siblings(".status-msg").hide();
       if (dir == -1) {
         $.request("remove", d, null, true);
         elem.siblings(".spammed").show();
-        elem.siblings(".removed").hide();
-        elem.siblings(".approved").hide();
       } else if (dir == -2) {
-          d = {
-                 id: thing_id,
-                 spam: false
-              };
+        d.spam = false;
         $.request("remove", d, null, true);
-        elem.siblings(".spammed").hide();
         elem.siblings(".removed").show();
-        elem.siblings(".approved").hide();
       } else if (dir == 1) {
         $.request("approve", d, null, true);
-        elem.siblings(".spammed").hide();
-        elem.siblings(".removed").hide();
         elem.siblings(".approved").show();
       }
    }

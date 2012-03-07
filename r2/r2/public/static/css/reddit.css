@@ -1103,6 +1103,11 @@ a.star { text-decoration: none; color: #ff8b60 }
 
 .entry .buttons a:hover {text-decoration: underline}
 
+.entry .buttons .status-msg {
+    display: none;
+    margin-right: .5em;
+}
+
 /* links */
 
 .toggle .error { font-size: x-small; }
