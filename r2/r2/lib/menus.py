@@ -24,7 +24,7 @@ from pylons import c, request, g
 from utils import  query_string, timeago
 from strings import StringHandler, plurals
 from r2.lib.db import operators
-from r2.lib.indextank import sorts as indextank_sorts
+import r2.lib.search as search
 from r2.lib.filters import _force_unicode
 from pylons.i18n import _
 
@@ -458,7 +458,7 @@ class CommentSortMenu(SortMenu):
 class SearchSortMenu(SortMenu):
     """Sort menu for search pages."""
     default   = 'relevance'
-    mapping   = indextank_sorts
+    mapping   = search.sorts
     options   = mapping.keys()
 
     @classmethod

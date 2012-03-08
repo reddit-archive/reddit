@@ -1740,9 +1740,8 @@ class SearchBar(Templated):
     and num_results if any."""
     def __init__(self, num_results = 0, prev_search = '', elapsed_time = 0,
                  search_params = {}, show_feedback=False,
-                 simple=False, restrict_sr=False, site=None, 
-                 subreddit_search=False,
-                 **kw):
+                 simple=False, restrict_sr=False, site=None,
+                 subreddit_search=False, **kw):
 
         # not listed explicitly in args to ensure it translates properly
         self.header = kw.get('header', _("previous search"))

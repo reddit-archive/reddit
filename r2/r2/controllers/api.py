@@ -1491,7 +1491,7 @@ class ApiController(RedditController):
             username = None
         d = dict(username=username, q=q, sort=sort, t=t)
         hex = md5(repr(d)).hexdigest()
-        key = "indextankfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
+        key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
         d['timestamp'] = timestamp
         d['approval'] = approval
         g.hardcache.set(key, d, time=86400 * 7)
