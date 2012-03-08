@@ -929,9 +929,9 @@ function edit_usertext(elem) {
 }
 
 function cancel_usertext(elem) {
-    var t = $(elem).thing().debug();
-    t.find(".edit-usertext:first").parent("li").andSelf().show(); 
-    hide_edit_usertext(t.find(".usertext:first"));
+    var t = $(elem);
+    t.thing().find(".edit-usertext:first").parent("li").andSelf().show(); 
+    hide_edit_usertext(t.closest(".usertext"));
 }
 
 function save_usertext(elem) {
