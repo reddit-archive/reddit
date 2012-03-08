@@ -119,17 +119,14 @@
 
 <%def name="big_modbuttons(thing, kind)">
   <span class="big-mod-buttons">
-    <% remove_text = _('removed') %>
     %if getattr(thing, "moderator_banned", None):
       <!-- pass -->
     %elif thing._spam:
-      ${pretty_button(_("dismiss"), "big_mod_action", -1, "neutral")}
-      <% remove_text = _('dismissed') %>
+      ${pretty_button(_("confirm spam"), "big_mod_action", -2, "negative")}
+      ${pretty_button(_("remove ham"), "big_mod_action", -1, "neutral")}
     %else:
-      ${pretty_button(_("spam %(obj)s") % dict(obj=kind),
-                      "big_mod_action", -2, "negative")}
-      ${pretty_button(_("remove %(obj)s") % dict(obj=kind),
-                      "big_mod_action", -1, "neutral")}
+      ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
+      ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
     %endif
 
     %if getattr(thing, "approval_checkmark", None):
@@ -145,7 +142,7 @@
       ${_("spammed")}
     </span>
     <span class="status-msg removed">
-      ${remove_text}
+      ${_("removed")}
     </span>
     <span class="status-msg approved">
       ${_("approved")}

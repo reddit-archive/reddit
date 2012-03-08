@@ -1432,24 +1432,39 @@ class ApiController(RedditController):
                 thing = VByName('id'),
                 spam = VBoolean('spam', default=True))
     def POST_remove(self, why, thing, spam):
-        if getattr(thing, "promoted", None) is None:
-            end_trial(thing, why + "-removed")
 
-            kw = {'target': thing}
-            if thing._spam:
-                kw['details'] = 'dismiss'
-            elif not spam:
-                kw['details'] = 'not_spam'
+        # Don't remove a promoted link
+        if getattr(thing, "promoted", None):
+            return
 
-            admintools.spam(thing, auto=False,
-                            moderator_banned=not c.user_is_admin,
-                            banner=c.user.name,
-                            train_spam=spam)
+        end_trial(thing, why + "-removed")
 
-            if isinstance(thing, (Link, Comment)):
-                sr = thing.subreddit_slow
-                action = 'remove' + thing.__class__.__name__.lower()
-                ModAction.create(sr, c.user, action, **kw)
+        filtered = thing._spam
+        kw = {'target': thing}
+
+        if filtered and spam:
+            kw['details'] = 'confirm_spam'
+            train_spam = False
+        elif filtered and not spam:
+            kw['details'] = 'remove'
+            admintools.unspam(thing, unbanner=c.user.name, insert=False)
+            train_spam = False
+        elif not filtered and spam:
+            kw['details'] = 'spam'
+            train_spam = True
+        elif not filtered and not spam:
+            kw['details'] = 'remove'
+            train_spam = False
+
+        admintools.spam(thing, auto=False,
+                        moderator_banned=not c.user_is_admin,
+                        banner=c.user.name,
+                        train_spam=train_spam)
+
+        if isinstance(thing, (Link, Comment)):
+            sr = thing.subreddit_slow
+            action = 'remove' + thing.__class__.__name__.lower()
+            ModAction.create(sr, c.user, action, **kw)
 
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
@@ -1458,15 +1473,20 @@ class ApiController(RedditController):
         if not thing: return
         if thing._deleted: return
         end_trial(thing, why + "-approved")
-        kw = {}
+        kw = {'target': thing}
         if thing._spam:
             kw['details'] = 'unspam'
-        admintools.unspam(thing, c.user.name)
-        sr = thing.subreddit_slow
-        if isinstance(thing, Link):
-            ModAction.create(sr, c.user, 'approvelink', target=thing, **kw)
-        elif isinstance(thing, Comment):
-            ModAction.create(sr, c.user, 'approvecomment', target=thing, **kw)
+            train_spam = True
+        else:
+            kw['details'] = 'confirm_ham'
+            train_spam = False
+
+        admintools.unspam(thing, c.user.name, train_spam=train_spam)
+
+        if isinstance(thing, (Link, Comment)):
+            sr = thing.subreddit_slow
+            action = 'approve' + thing.__class__.__name__.lower()
+            ModAction.create(sr, c.user, action, **kw)
 
     @validatedForm(VUser(), VModhash(),
                    VCanDistinguish(('id', 'how')),
