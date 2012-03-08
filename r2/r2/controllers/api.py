@@ -1436,8 +1436,10 @@ class ApiController(RedditController):
             end_trial(thing, why + "-removed")
 
             kw = {'target': thing}
-            if thing._spam and spam:
-                kw['details'] = 'confirm_spam'
+            if thing._spam:
+                kw['details'] = 'dismiss'
+            elif not spam:
+                kw['details'] = 'not_spam'
 
             admintools.spam(thing, auto=False,
                             moderator_banned=not c.user_is_admin,
@@ -1445,8 +1447,6 @@ class ApiController(RedditController):
                             train_spam=spam)
 
             if isinstance(thing, (Link, Comment)):
-                if not spam:
-                    kw['details'] = 'not_spam'
                 sr = thing.subreddit_slow
                 action = 'remove' + thing.__class__.__name__.lower()
                 ModAction.create(sr, c.user, action, **kw)
