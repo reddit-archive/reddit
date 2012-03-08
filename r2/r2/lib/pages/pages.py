@@ -2626,7 +2626,7 @@ class FlairTemplateEditor(Templated):
 class FlairTemplateSample(Templated):
     """Like a read-only version of FlairTemplateEditor."""
     def __init__(self, flair_template, flair_type):
-        if flair_type is USER_FLAIR:
+        if flair_type == USER_FLAIR:
             wrapped_user = WrappedUser(c.user, subreddit=c.site,
                                        force_show_flair=True,
                                        flair_template=flair_template)

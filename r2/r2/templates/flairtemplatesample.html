@@ -37,9 +37,9 @@ from r2.models import USER_FLAIR, LINK_FLAIR
 </%def>
 
 
-%if thing.flair_type is USER_FLAIR:
+%if thing.flair_type == USER_FLAIR:
   ${thing.wrapped_user}
-%elif thing.flair_type is LINK_FLAIR:
+%elif thing.flair_type == LINK_FLAIR:
   <div class="thing">
     <p class="title">
       %if c.site.link_flair_position == 'left':

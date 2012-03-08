@@ -21,7 +21,7 @@
 ################################################################################
 
 <%!
-    from r2.models import FlairTemplate
+    from r2.models import FlairTemplate, USER_FLAIR, LINK_FLAIR
     from r2.lib.pages.pages import FlairTemplateEditor
 
     empty_template = FlairTemplate()
@@ -39,7 +39,14 @@
     %for flair_template in thing.templates:
       ${flair_template}
     %endfor
-    <div id="empty-flair-template">
+
+    <%
+    if thing.flair_type == USER_FLAIR:
+        empty_id = 'empty-user-flair-template'
+    elif thing.flair_type == LINK_FLAIR:
+        empty_id = 'empty-link-flair-template'
+    %>
+    <div id="${empty_id}">
       ${FlairTemplateEditor(empty_template, thing.flair_type)}
     </div>
   </div>

@@ -2349,12 +2349,17 @@ class ApiController(RedditController):
 
         # Push changes back to client.
         if new:
-            jquery('#empty-flair-template').before(
+            empty_ids = {
+                USER_FLAIR: '#empty-user-flair-template',
+                LINK_FLAIR: '#empty-link-flair-template',
+            }
+            empty_id = empty_ids[flair_type]
+            jquery(empty_id).before(
                 FlairTemplateEditor(flair_template, flair_type)
                 .render(style='html'))
             empty_template = FlairTemplate()
             empty_template._committed = True  # to disable unnecessary warning
-            jquery('#empty-flair-template').html(
+            jquery(empty_id).html(
                 FlairTemplateEditor(empty_template, flair_type)
                 .render(style='html'))
             form.set_html('.status', _('saved'))
