@@ -366,6 +366,8 @@ class FrontController(RedditController):
                                 must_revalidate=False)
             c.response_content_type = 'text/css'
             c.response.content =  c.site.stylesheet_contents
+            if c.site.type == 'private':
+                c.response.headers['X-Private-Subreddit'] = 'private'
             return c.response
         else:
             return self.abort404()
