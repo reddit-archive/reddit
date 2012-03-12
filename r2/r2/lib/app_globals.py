@@ -116,6 +116,7 @@ class Globals(object):
             'MODWINDOW',
             'RATELIMIT',
             'QUOTA_THRESHOLD',
+            'ADMIN_COOKIE_TTL',
             'num_comments',
             'max_comments',
             'max_comments_gold',

@@ -36,10 +36,9 @@ class ButtonjsController(MinimalController):
         MinimalController.pre(self)
         # override user loggedin behavior to ensure this page always
         # uses the page cache
-        (user, maybe_admin) = \
-            valid_cookie(c.cookies[g.login_cookie].value
-                         if g.login_cookie in c.cookies
-                         else '')
+        user = valid_cookie(c.cookies[g.login_cookie].value
+                            if g.login_cookie in c.cookies
+                            else '')
         if user:
             self.user_is_loggedin = True
 

@@ -2462,5 +2462,5 @@ class ApiController(RedditController):
         if form.has_errors('password', errors.WRONG_PASSWORD):
             return
 
-        self.login(c.user, admin = True, rem = True)
+        self.enable_admin_mode(c.user)
         form.redirect(dest)

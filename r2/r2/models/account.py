@@ -30,12 +30,15 @@ from r2.lib.cache        import sgm
 from r2.lib import filters
 from r2.lib.log import log_text
 
-from pylons import g
+from pylons import c, g, request
 from pylons.i18n import _
 import time, sha
 from copy import copy
 from datetime import datetime, timedelta
 import bcrypt
+import hmac
+import hashlib
+
 
 class AccountExists(Exception): pass
 
@@ -202,15 +205,21 @@ class Account(Thing):
                     (self.name, prev_visit, current_time))
         set_last_visit(self)
 
-    def make_cookie(self, timestr = None, admin = False):
+    def make_cookie(self, timestr=None):
         if not self._loaded:
             self._load()
         timestr = timestr or time.strftime('%Y-%m-%dT%H:%M:%S')
         id_time = str(self._id) + ',' + timestr
         to_hash = ','.join((id_time, self.password, g.SECRET))
-        if admin:
-            to_hash += 'admin'
         return id_time + ',' + sha.new(to_hash).hexdigest()
+
+    def make_admin_cookie(self, timestr=None):
+        if not self._loaded:
+            self._load()
+        timestr = timestr or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        hashable = ','.join((timestr, request.ip, request.user_agent, self.password))
+        mac = hmac.new(g.SECRET, hashable, hashlib.sha1).hexdigest()
+        return ','.join((timestr, mac))
 
     def needs_captcha(self):
         return not g.disable_captcha and self.link_karma < 1
@@ -554,23 +563,46 @@ def valid_cookie(cookie):
         uid, timestr, hash = cookie.split(',')
         uid = int(uid)
     except:
-        return (False, False)
+        return False
 
     if g.read_only_mode:
-        return (False, False)
+        return False
 
     try:
         account = Account._byID(uid, True)
         if account._deleted:
-            return (False, False)
+            return False
     except NotFound:
-        return (False, False)
+        return False
 
-    if constant_time_compare(cookie, account.make_cookie(timestr, admin = False)):
-        return (account, False)
-    elif constant_time_compare(cookie, account.make_cookie(timestr, admin = True)):
-        return (account, True)
-    return (False, False)
+    if constant_time_compare(cookie, account.make_cookie(timestr)):
+        return account
+    return False
+
+
+def valid_admin_cookie(cookie):
+    if g.read_only_mode:
+        return False
+
+    # parse the cookie
+    try:
+        timestr, hash = cookie.split(',')
+    except ValueError:
+        return False
+
+    # make sure it's a recent cookie
+    try:
+        cookie_time = datetime.strptime(timestr, '%Y-%m-%dT%H:%M:%S')
+    except ValueError:
+        return False
+
+    cookie_age = datetime.utcnow() - cookie_time
+    if cookie_age.total_seconds() > g.ADMIN_COOKIE_TTL:
+        return False
+
+    # validate
+    return constant_time_compare(cookie, c.user.make_admin_cookie(timestr))
+
 
 def valid_feed(name, feedhash, path):
     if name and feedhash and path:

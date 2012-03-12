@@ -29,7 +29,7 @@ from r2.lib import pages, utils, filters, amqp, stats
 from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, ip_and_slash16
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
-from r2.models.account import valid_cookie, FakeAccount, valid_feed
+from r2.models.account import valid_cookie, FakeAccount, valid_feed, valid_admin_cookie
 from r2.models.subreddit import Subreddit
 from r2.models import *
 from errors import ErrorSet
@@ -40,7 +40,7 @@ from r2.lib.jsontemplates import api_type, is_api
 from Cookie import CookieError
 from copy import copy
 from Cookie import CookieError
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import sha1, md5
 from urllib import quote, unquote
 import simplejson
@@ -746,13 +746,24 @@ class MinimalController(BaseController):
 class RedditController(MinimalController):
 
     @staticmethod
-    def login(user, admin = False, rem = False):
-        c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(admin = admin),
+    def login(user, rem=False):
+        c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(),
                                            expires = NEVER if rem else None)
 
     @staticmethod
-    def logout(admin = False):
+    def logout():
         c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
+
+    @staticmethod
+    def enable_admin_mode(user):
+        expiration_time = datetime.utcnow() + timedelta(seconds=g.ADMIN_COOKIE_TTL)
+        expiration = expiration_time.strftime('%a, %d %b %Y %H:%M:%S GMT')
+        c.cookies[g.admin_cookie] = Cookie(value=user.make_admin_cookie(),
+                                           expires=expiration)
+
+    @staticmethod
+    def disable_admin_mode(user):
+        c.cookies[g.admin_cookie] = Cookie(value='', expires=DELETE)
 
     def pre(self):
         c.response_wrappers = []
@@ -781,12 +792,15 @@ class RedditController(MinimalController):
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:
             if c.extension != "rss":
-                (c.user, maybe_admin) = \
-                         valid_cookie(c.cookies[g.login_cookie].value
-                                      if g.login_cookie in c.cookies
-                                      else '')
-                if c.user:
-                    c.user_is_loggedin = True
+                session_cookie = c.cookies.get(g.login_cookie)
+                if session_cookie:
+                    c.user = valid_cookie(session_cookie.value)
+                    if c.user:
+                        c.user_is_loggedin = True
+
+                admin_cookie = c.cookies.get(g.admin_cookie)
+                if c.user_is_loggedin and admin_cookie:
+                    maybe_admin = valid_admin_cookie(admin_cookie.value)
 
             if not c.user:
                 c.user = UnloggedUser(get_browser_langs())

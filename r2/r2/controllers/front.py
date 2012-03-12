@@ -1076,7 +1076,7 @@ class FormsController(RedditController):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = False, rem = True)
+        self.disable_admin_mode(c.user)
         return self.redirect(dest)
 
     def GET_validuser(self):
