@@ -30,7 +30,7 @@ from r2.models import USER_FLAIR, LINK_FLAIR
   %if thing.flair_template.text or thing.flair_template.css_class:
     ## TODO: clean this up
     <span class=
-       "flair ${' '.join('flair-' + c for c in thing.flair_template.css_class.split())}">
+       "linkflair ${' '.join('linkflair-' + c for c in thing.flair_template.css_class.split())}">
       ${thing.flair_template.text}
     </span>
   %endif

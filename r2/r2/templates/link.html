@@ -81,8 +81,7 @@
 <%def name="flair()">
   %if thing.flair_text or thing.flair_css_class:
     ## TODO: clean this up
-    <span class=
-       "flair ${' '.join('flair-' + c for c in thing.flair_css_class.split())}">
+    <span class="linkflair ${' '.join('linkflair-' + c for c in thing.flair_css_class.split())}">
       ${thing.flair_text}
     </span>
   %endif

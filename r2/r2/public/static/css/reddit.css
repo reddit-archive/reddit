@@ -664,7 +664,7 @@ ul.flat-vert {text-align: left;}
 
 a.author { margin-right: 0.5em; }
 
-.flair {
+.flair, .linkflair {
     display: inline-block;
     margin-right: .5em;
     padding: 0 2px;
@@ -680,11 +680,10 @@ a.author { margin-right: 0.5em; }
     font-size: xx-small;
 }
 
-.title .flair {
-    font-size: x-small;
-}
+.linkflair { font-size: x-small; }
 
-.link .tagline .flair {
+.link .flair {
+    font-size: x-small;
     margin-top: -1px;
 }
 

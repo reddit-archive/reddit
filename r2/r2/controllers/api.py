@@ -2486,10 +2486,10 @@ class ApiController(RedditController):
             # Push some client-side updates back to the browser.
 
             # TODO: move this to a template
-            flair = '<span class="flair %s">%s</span>' % (
-                ' '.join('flair-' + c for c in css_class.split()), text)
+            flair = '<span class="linkflair %s">%s</span>' % (
+                ' '.join('linkflair-' + c for c in css_class.split()), text)
 
-            jquery('.id-%s .entry .flair' % link._fullname).remove()
+            jquery('.id-%s .entry .linkflair' % link._fullname).remove()
             title_path = '.id-%s .entry > .title > .title' % link._fullname
             if c.site.link_flair_position == 'left':
                 jquery(title_path).before(flair)

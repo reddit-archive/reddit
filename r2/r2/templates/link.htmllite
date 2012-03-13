@@ -43,6 +43,9 @@
          ${optionalstyle("margin-left: 28px; min-height:32px;")}
        %endif
        >
+    %if c.site.link_flair_position == 'left' and thing.flair_text:
+      <span class="linkflair">${thing.flair_text}</span>
+    %endif
     <a href="${thing.href_url}" class="reddit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
        %if thing.nofollow:
@@ -61,6 +64,9 @@
        >
       ${thing.title}
     </a>
+    %if c.site.link_flair_position == 'right' and thing.flair_text:
+      <span class="linkflair">${thing.flair_text}</span>
+    %endif
     %if not expanded:
       <br />
     %endif
