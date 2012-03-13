@@ -72,16 +72,17 @@
        %endif
        >
       %if not expanded:
-      <% 
-       if thing.likes is False:
-           score, cls = thing.display_score[0], "dislikes"
-       elif thing.likes is None:
-           score, cls = thing.display_score[1], "unvoted"
-       else:
-           score, cls = thing.display_score[2], "likes"
+      <%
+       score_dislikes, score_unvoted, score_likes = thing.display_score
        %>
-      <span class="score ${cls}">
-         ${score}
+      <span class="score dislikes">
+         ${score_dislikes}
+      </span>
+      <span class="score unvoted">
+         ${score_unvoted}
+      </span>
+      <span class="score likes">
+         ${score_likes}
       </span>
       &#32;|&#32;
       %endif
