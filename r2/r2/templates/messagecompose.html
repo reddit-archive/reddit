@@ -39,7 +39,7 @@
 function admincheck(elem) {
   var admins = ${unsafe(simplejson.dumps(thing.admins))};
 
-  if (admins.indexOf(elem.value) >= 0) {
+  if ($.inArray(elem.value, admins) >= 0) {
     $(".admin-to").text(elem.value);
     $(".clippy").show();
   } else {
