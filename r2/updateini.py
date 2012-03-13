@@ -6,6 +6,10 @@ import sys
 
 def main(source_ini, update_ini):
     parser = Parser()
+    # By default, the parser is case insensitve and rewrites config
+    # keys to lowercase. reddit is case sensitive, however
+    # See: http://docs.python.org/library/configparser.html#ConfigParser.RawConfigParser.optionxform
+    parser.optionxform = str
     # parser.read() will "fail" silently if the file is
     # not found; use open() and parser.readfp() to fail
     # on missing (or unreadable, etc.) file
