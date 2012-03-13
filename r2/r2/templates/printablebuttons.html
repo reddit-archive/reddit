@@ -66,7 +66,7 @@
   %if thing.show_unmarknsfw:
     <li>${ynbutton(_("un-nsfw"), _("unmarked"), "unmarknsfw")}</li>
   %endif
-  %if thing.show_flair:
+  %if c.site.link_flair_position and thing.show_flair:
     <li>
       <a class="flairselectbtn" href="javascript://">${_('flair')}</a>
       <div class="flairselector drop-choices"></div>

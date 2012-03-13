@@ -62,6 +62,9 @@
       </%utils:line_field>
       <%utils:line_field title="${_('link flair position')}">
         <table class="small-field">
+          ${utils.radio_type('link_flair_position', "", _("none"),
+                             _("don't show link flair"),
+                             not thing.link_flair_position)}
           ${utils.radio_type('link_flair_position', "left", _("left"),
                              _("position flair to the left of the link"),
                              thing.link_flair_position == 'left')}

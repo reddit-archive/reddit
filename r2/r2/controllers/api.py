@@ -2272,7 +2272,8 @@ class ApiController(RedditController):
         VModhash(),
         flair_enabled = VBoolean("flair_enabled"),
         flair_position = VOneOf("flair_position", ("left", "right")),
-        link_flair_position = VOneOf("link_flair_position", ("left", "right")),
+        link_flair_position = VOneOf("link_flair_position",
+                                     ("", "left", "right")),
         flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
     @api_doc(api_section.flair)
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,

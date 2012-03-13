@@ -42,7 +42,7 @@ from r2.models import USER_FLAIR, LINK_FLAIR
 %elif thing.flair_type == LINK_FLAIR:
   <div class="thing">
     <p class="title">
-      %if c.site.link_flair_position == 'left':
+      %if c.site.link_flair_position != 'right':
         <%call expr="flair()" />
       %endif
       <a class="title loggedin" href="javascript://">Link sample</a>
