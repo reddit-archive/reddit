@@ -1116,6 +1116,8 @@ class FormsController(RedditController):
             content.append(EnemyList())
         elif location == 'update':
             content = PrefUpdate()
+        elif location == 'apps':
+            content = PrefApps()
         elif location == 'feeds' and c.user.pref_private_feeds:
             content = PrefFeeds()
         elif location == 'delete':
