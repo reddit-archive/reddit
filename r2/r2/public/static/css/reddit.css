@@ -5135,3 +5135,8 @@ tr.gold-accent + tr > td {
 .modactions.marknsfw {
     background-image: url(../modactions_marknsfw.png); /* SPRITE */
 }
+
+.adminpasswordform {
+    margin-bottom: .5em;
+    display: inline-block;
+}

@@ -2454,3 +2454,13 @@ class ApiController(RedditController):
         wrapped = wrap_links(link)
         wrapped = list(wrapped)[0]
         return websafe(spaceCompress(wrapped.link_child.content()))
+
+    @validatedForm(VUser('password', default=''),
+                   VModhash(),
+                   dest=VDestination())
+    def POST_adminon(self, form, jquery, dest):
+        if form.has_errors('password', errors.WRONG_PASSWORD):
+            return
+
+        self.login(c.user, admin = True, rem = True)
+        form.redirect(dest)

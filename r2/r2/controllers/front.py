@@ -1066,8 +1066,9 @@ class FormsController(RedditController):
         #check like this because c.user_is_admin is still false
         if not c.user.name in g.admins:
             return self.abort404()
-        self.login(c.user, admin = True, rem = True)
-        return self.redirect(dest)
+
+        c.deny_frames = True
+        return AdminModeInterstitial(dest=dest).render()
 
     @validate(VAdmin(),
               dest = VDestination())
