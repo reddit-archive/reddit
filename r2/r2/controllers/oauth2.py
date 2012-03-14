@@ -33,7 +33,7 @@ from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.token import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
 from r2.controllers.errors import ForbiddenError, errors
-from validator import validate, VRequired, VOneOf, VUser, VModhash
+from validator import validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 
@@ -44,21 +44,6 @@ scope_info = {
         "description": _("Access my reddit username and signup date.")
     }
 }
-
-class VClientID(VRequired):
-    default_param = "client_id"
-    def __init__(self, param=None, *a, **kw):
-        VRequired.__init__(self, param, errors.OAUTH2_INVALID_CLIENT, *a, **kw)
-
-    def run(self, client_id):
-        if not client_id:
-            return self.error()
-
-        client = OAuth2Client.get_token(client_id)
-        if client:
-            return client
-        else:
-            return self.error()
 
 class OAuth2FrontendController(RedditController):
     def pre(self):
@@ -91,7 +76,7 @@ class OAuth2FrontendController(RedditController):
 
     @validate(VUser(),
               response_type = VOneOf("response_type", ("code",)),
-              client = VClientID(),
+              client = VOAuth2ClientID(),
               redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT))
@@ -127,7 +112,7 @@ class OAuth2FrontendController(RedditController):
 
     @validate(VUser(),
               VModhash(fatal=False),
-              client = VClientID(),
+              client = VOAuth2ClientID(),
               redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT),

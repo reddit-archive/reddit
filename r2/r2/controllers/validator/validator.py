@@ -1071,6 +1071,13 @@ class VExistingUname(VRequired):
             self.param: _('the name of an existing user')
         }
 
+class VExistingUnameNotSelf(VExistingUname):
+    def run(self, name):
+        user = super(VExistingUnameNotSelf, self).run(name)
+        if not user or user == c.user:
+            self.error()
+        return user
+
 class VMessageRecipient(VExistingUname):
     def run(self, name):
         if not name:
@@ -1820,3 +1827,26 @@ class VOneTimePassword(Validator):
 
         # if we got this far, their password was wrong, invalid or already used
         self.set_error(errors.WRONG_PASSWORD)
+
+class VOAuth2ClientID(VRequired):
+    default_param = "client_id"
+    def __init__(self, param=None, developer=False, *a, **kw):
+        self.developer = developer
+        VRequired.__init__(self, param, errors.OAUTH2_INVALID_CLIENT, *a, **kw)
+
+    def run(self, client_id):
+        if not client_id:
+            return self.error()
+
+        client = OAuth2Client.get_token(client_id)
+        if client and not client.deleted:
+            return client
+        else:
+            return self.error()
+
+class VOAuth2ClientDeveloper(VOAuth2ClientID):
+    def run(self, client_id):
+        client = super(VOAuth2ClientDeveloper)
+        if not client or not client.has_developer(c.user):
+            return self.error()
+        return client

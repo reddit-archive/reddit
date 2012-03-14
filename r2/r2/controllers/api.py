@@ -2810,3 +2810,54 @@ class ApiController(RedditController):
             })
 
         return sr_results
+
+    @noresponse(VUser(),
+                VModhash(),
+                client=VOAuth2ClientID())
+    def POST_revokeapp(self, form, jquery, client):
+        if client:
+            client.revoke(c.user)
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   client=VOAuth2ClientDeveloper(),
+                   name=VRequired('name', errors.NO_TEXT),
+                   about_url=VSanitizedUrl(),
+                   icon_url=VSanitizedUrl(),
+                   redirect_uri=VUrl('redirect_uri', allow_self=False))
+    def POST_updateapp(self, form, jquery, client, name, description, about_url, icon_url, redirect_uri):
+        if not form.has_error():
+            clinet.name = name
+            client.description = description
+            client.about_url = about_url
+            client.icon_url = icon_url
+            client.redirect_uri = redirect_uri
+            client._commit()
+            form.set_html('.status', _('application updated'))
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   client=VOAuth2ClientDeveloper(),
+                   account=VExistingUnameNotSelf('name'))
+    def POST_adddeveloper(self, form, jquery, client, account):
+        if not form.has_error():
+            client.add_developer(account)
+            form.set_html('.status', _('developer added'))
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   client=VOAuth2ClientDeveloper(),
+                   account=VExistingUnameNotSelf('name'))
+    def POST_removedeveloper(self, form, jquery, client, account):
+        if not form.has_error():
+            client.remove_developer(account)
+            form.set_html('.status', _('developer removed'))
+
+    @noresponse(VUser(),
+                VModhash(),
+                client=VOAuth2ClientDeveloper())
+    def POST_deleteapp(self, client):
+        if not client:
+            abort(403)
+        client.deleted = True
+        client._commit()
