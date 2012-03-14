@@ -194,7 +194,7 @@ class OAuth2Client(Token):
         for cid in cba._values().iterkeys():
             try:
                 client = cls._byID(cid)
-                if client.deleted or not client.has_developer(account):
+                if getattr(client, 'deleted', False) or not client.has_developer(account):
                     raise NotFound
             except tdb_cassandra.NotFound:
                 pass
@@ -297,7 +297,7 @@ class OAuth2AccessToken(Token):
         # Is the OAuth2Client still valid?
         try:
             client = OAuth2Client._byID(self.client_id)
-            if client.deleted:
+            if getattr(client, 'deleted', False):
                 raise NotFound
         except NotFound:
             return False
