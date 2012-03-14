@@ -962,6 +962,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             jquery(".content").replace_things(item, True, True, wrap = wrapper)
             jquery(".content .link .rank").hide()
 
+    @require_oauth2_scope("comment")
     @validatedForm(VUser(),
                    VModhash(),
                    VRatelimit(rate_user = True, rate_ip = True,

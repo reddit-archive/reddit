@@ -42,6 +42,11 @@ scope_info = {
         "id": "identity",
         "name": _("My Identity"),
         "description": _("Access my reddit username and signup date.")
+    },
+    "comment": {
+        "id": "comment",
+        "name": _("Commenting"),
+        "description": _("Submit comments from my account.")
     }
 }
 
