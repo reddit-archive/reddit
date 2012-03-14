@@ -1837,19 +1837,17 @@ class VOneTimePassword(Validator):
 
 class VOAuth2ClientID(VRequired):
     default_param = "client_id"
-    def __init__(self, param=None, developer=False, *a, **kw):
-        self.developer = developer
+    def __init__(self, param=None, *a, **kw):
         VRequired.__init__(self, param, errors.OAUTH2_INVALID_CLIENT, *a, **kw)
 
     def run(self, client_id):
-        if not client_id:
-            return self.error()
-
-        client = OAuth2Client.get_token(client_id)
-        if client and not getattr(client, 'deleted', False):
-            return client
-        else:
-            return self.error()
+        client_id = VRequired.run(self, client_id)
+        if client_id:
+            client = OAuth2Client.get_token(client_id)
+            if client and not getattr(client, 'deleted', False):
+                return client
+            else:
+                self.error()
 
 class VOAuth2ClientDeveloper(VOAuth2ClientID):
     def run(self, client_id):
