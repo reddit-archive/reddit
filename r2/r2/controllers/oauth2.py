@@ -25,14 +25,14 @@ import base64
 import simplejson
 
 from pylons import c, g, request
-from pylons.controllers.util import abort
 from pylons.i18n import _
 from r2.config.extensions import set_extension
+from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.token import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
-from r2.controllers.errors import errors
+from r2.controllers.errors import ForbiddenError, errors
 from validator import validate, VRequired, VOneOf, VUser, VModhash
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
@@ -67,7 +67,7 @@ class OAuth2FrontendController(RedditController):
 
     def _check_redirect_uri(self, client, redirect_uri):
         if not redirect_uri or not client or redirect_uri != client.redirect_uri:
-            abort(403)
+            abort(ForbiddenError(errors.OAUTH2_INVALID_REDIRECT_URI))
 
     def _error_response(self, resp):
         if (errors.OAUTH2_INVALID_CLIENT, "client_id") in c.errors:
