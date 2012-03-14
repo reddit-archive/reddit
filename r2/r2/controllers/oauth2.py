@@ -118,6 +118,9 @@ class OAuth2FrontendController(RedditController):
         self._check_redirect_uri(client, redirect_uri)
 
         resp = {}
+        if state:
+            resp["state"] = state
+
         if not c.errors:
             c.deny_frames = True
             return OAuth2AuthorizationPage(client, redirect_uri, scope_info[scope], state).render()
