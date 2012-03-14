@@ -1117,7 +1117,8 @@ class FormsController(RedditController):
         elif location == 'update':
             content = PrefUpdate()
         elif location == 'apps':
-            content = PrefApps()
+            content = PrefApps(my_apps=OAuth2Client._by_user(c.user),
+                               developed_apps=OAuth2Client._by_developer(c.user))
         elif location == 'feeds' and c.user.pref_private_feeds:
             content = PrefFeeds()
         elif location == 'delete':

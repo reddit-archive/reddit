@@ -1,5 +1,125 @@
-<div class="instructions apps">
-<h1>${_("Applications")}</h1>
+%if thing.my_apps:
+  <h1>${_("authorized applications")}</h1>
 
-<p>Hello world.</p>
+  %for app in thing.my_apps:
+    <tr>
+      <td>
+      %if app.icon_url:
+        <img src="${ app.icon_url }">
+      %endif
+      </td>
+      <td><a href="${ app.about_url }">${ app.name }</a></td>
+      <td><a href="#">revoke access</a></td>
+    </tr>
+  %endfor
+  </table>
+%endif
+
+%if thing.developed_apps:
+  <h1>${_("developed applications")}</h1>
+
+  %for app in thing.developed_apps:
+    <form method="post" action="/api/updateapp" class="pretty-form">
+      <table class="preftable">
+        <tr>
+          <th>${_("client id")}</th>
+          <td>${app._id}</td>
+        </tr>
+        <tr>
+          <th>${_("secret")}</th>
+          <td>${app.secret}</td>
+        </tr>
+        <tr>
+          <th>${_("name")}</th>
+          <td class="prefright">
+            <input name="name" value="${app.name}">
+          </td>
+        </tr>
+        <tr>
+          <th>${_("description")}</th>
+          <td class="prefright">
+            <textarea name="description"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <th>${_("about url")}</th>
+          <td class="prefright">
+            <input name="about_url" value="${app.about_url}">
+          </td>
+        </tr>
+        <tr>
+          <th>${_("icon url")}</th>
+          <td class="prefright">
+            <input name="icon_url" value="${app.icon_url}">
+          </td>
+        </tr>
+        <tr>
+          <th>${_("redirect uri")}</th>
+          <td class="prefright">
+            <input name="redirect_uri" value="${app.redirect_uri}">
+          </td>
+        </tr>
+        <tr>
+          <th>${_("developers")}</th>
+          <td class="prefright">
+            %for dev in app._developers:
+              <p>${dev.name}
+                %if False:
+                  (that's you!)
+                %else:
+                  <a href="#">remove</a>
+                %endif
+              </p>
+            %endfor
+            add developer: <input>
+          </td>
+        </tr>
+      </table>
+      <input type="submit" value="update app">
+      <a href="#">delete app</a>
+    </form>
+  %endfor
+  <p><a href="#">create another app...</a></p>
+%else:
+  <p><a href="#">are you a developer?  create an app...</a></p>
+%endif
+
+<div>
+  <h1>${_("create application")}</h1>
+  <form method="post" action="/api/updateapp" class="pretty-form">
+    <input type="hidden" name="uh" value="${c.modhash}" />
+    <table class="content preftable">
+      <tr>
+        <th>${_("name")}</th>
+        <td class="prefright">
+          <input name="name">
+        </td>
+      </tr>
+      <tr>
+        <th>${_("description")}</th>
+        <td class="prefright">
+          <textarea name="description"></textarea>
+        </td>
+      </tr>
+      <tr>
+        <th>${_("about url")}</th>
+        <td class="prefright">
+          <input name="about_url">
+        </td>
+      </tr>
+      <tr>
+        <th>${_("icon url")}</th>
+        <td class="prefright">
+          <input name="icon_url">
+        </td>
+      </tr>
+      <tr>
+        <th>${_("redirect uri")}</th>
+        <td class="prefright">
+          <input name="redirect_uri">
+        </td>
+      </tr>
+    </table>
+    <input type="submit" value="create app">
+  </form>
 </div>

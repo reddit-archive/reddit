@@ -659,7 +659,12 @@ class PrefUpdate(Templated):
 
 class PrefApps(Templated):
     """Preference form for managing authorized third-party applications."""
-    pass
+
+    def __init__(self, my_apps, developed_apps):
+        self.my_apps = my_apps
+        self.developed_apps = developed_apps
+        super(PrefApps, self).__init__()
+
 
 class PrefDelete(Templated):
     """Preference form for deleting a user's own account."""
