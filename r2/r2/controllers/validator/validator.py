@@ -1855,3 +1855,18 @@ class VOAuth2ClientDeveloper(VOAuth2ClientID):
         if not client or not client.has_developer(c.user):
             return self.error()
         return client
+
+class VOAuth2Scope(VRequired):
+    default_param = "scope"
+    def __init__(self, param=None, *a, **kw):
+        VRequired.__init__(self, param, errors.OAUTH2_INVALID_SCOPE, *a, **kw)
+
+    def run(self, scope):
+        from r2.controllers.oauth2 import scope_info
+        scope = VRequired.run(self, scope)
+        if scope:
+            scope_list = scope.split(',')
+            if all(scope in scope_info for scope in scope_list):
+                return scope_list
+            else:
+                self.error()

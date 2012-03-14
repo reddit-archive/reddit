@@ -31,13 +31,15 @@
   <div class="access">
     <h2>${_("Allow %(app_name)s to:") % dict(app_name=thing.client.name)}</h2>
     <ul>
-      <li>${thing.scope["description"]}</li>
+      %for scope_info in thing.scope_details:
+        <li>${scope_info["description"]}</li>
+      %endfor
     </ul>
     <p class="notice">${_("%(app_name)s will not be able to access your reddit password.") % dict(app_name=thing.client.name)}</p>
     <form method="post" action="/api/v1/authorize" class="pretty-form">
       <input type="hidden" name="client_id" value="${thing.client._id}" />
       <input type="hidden" name="redirect_uri" value="${thing.redirect_uri}" />
-      <input type="hidden" name="scope" value="${thing.scope['id']}" />
+      <input type="hidden" name="scope" value="${','.join(scope['id'] for scope in thing.scope_details)}" />
       <input type="hidden" name="state" value="${thing.state}" />
       <input type="hidden" name="uh" value="${c.modhash}"/>
       <div>

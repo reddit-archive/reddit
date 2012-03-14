@@ -824,10 +824,12 @@ class Register(Login):
     pass
 
 class OAuth2AuthorizationPage(BoringPage):
-    def __init__(self, client, redirect_uri, scope, state):
+    def __init__(self, client, redirect_uri, scopes, state):
+        from r2.controllers.oauth2 import scope_info
+        scope_details = [scope_info[scope] for scope in scopes]
         content = OAuth2Authorization(client=client,
                                       redirect_uri=redirect_uri,
-                                      scope=scope,
+                                      scope_details=scope_details,
                                       state=state)
         BoringPage.__init__(self, _("request for permission"),
                 show_sidebar=False, content=content)

@@ -33,7 +33,7 @@ from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.token import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
 from r2.controllers.errors import ForbiddenError, errors
-from validator import validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID
+from validator import validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID, VOAuth2Scope
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 
@@ -67,7 +67,7 @@ class OAuth2FrontendController(RedditController):
             resp["error"] = "access_denied"
         elif (errors.INVALID_OPTION, "response_type") in c.errors:
             resp["error"] = "unsupported_response_type"
-        elif (errors.INVALID_OPTION, "scope") in c.errors:
+        elif (errors.OAUTH2_INVALID_SCOPE, "scope") in c.errors:
             resp["error"] = "invalid_scope"
         else:
             resp["error"] = "invalid_request"
@@ -78,7 +78,7 @@ class OAuth2FrontendController(RedditController):
               response_type = VOneOf("response_type", ("code",)),
               client = VOAuth2ClientID(),
               redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
-              scope = VOneOf("scope", scope_info.keys()),
+              scope = VOAuth2Scope(),
               state = VRequired("state", errors.NO_TEXT))
     def GET_authorize(self, response_type, client, redirect_uri, scope, state):
         """
@@ -106,7 +106,7 @@ class OAuth2FrontendController(RedditController):
 
         if not c.errors:
             c.deny_frames = True
-            return OAuth2AuthorizationPage(client, redirect_uri, scope_info[scope], state).render()
+            return OAuth2AuthorizationPage(client, redirect_uri, scope, state).render()
         else:
             return self._error_response(state, redirect_uri)
 
@@ -114,7 +114,7 @@ class OAuth2FrontendController(RedditController):
               VModhash(fatal=False),
               client = VOAuth2ClientID(),
               redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
-              scope = VOneOf("scope", scope_info.keys()),
+              scope = VOAuth2Scope(),
               state = VRequired("state", errors.NO_TEXT),
               authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED))
     def POST_authorize(self, authorize, client, redirect_uri, scope, state):
@@ -219,7 +219,7 @@ class OAuth2ResourceController(MinimalController):
         if handler:
             oauth2_perms = getattr(handler, "oauth2_perms", None)
             if oauth2_perms:
-                if access_token.scope not in oauth2_perms["allowed_scopes"]:
+                if set(oauth2_perms["allowed_scopes"]).intersection(access_token.scope_list):
                     self._auth_error(403, "insufficient_scope")
             else:
                 self._auth_error(400, "invalid_request")
