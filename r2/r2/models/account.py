@@ -374,6 +374,12 @@ class Account(Thing):
         for f in q:
             f._thing1.remove_enemy(f._thing2)
 
+        # Remove OAuth2Client developer permissions.  This will delete any
+        # clients for which this account is the sole developer.
+        from r2.models.oauth2 import OAuth2Client
+        for client in OAuth2Client._by_developer(self):
+            client.remove_developer(self)
+
     @property
     def subreddits(self):
         from subreddit import Subreddit
