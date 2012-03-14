@@ -69,7 +69,9 @@ class OAuth2FrontendController(RedditController):
         if not redirect_uri or not client or redirect_uri != client.redirect_uri:
             abort(ForbiddenError(errors.OAUTH2_INVALID_REDIRECT_URI))
 
-    def _error_response(self, resp):
+    def _error_response(self, resp, redirect_uri):
+        """Return an error redirect, but only if client_id and redirect_uri are valid."""
+
         if (errors.OAUTH2_INVALID_CLIENT, "client_id") in c.errors:
             resp["error"] = "unauthorized_client"
         elif (errors.OAUTH2_ACCESS_DENIED, "authorize") in c.errors:
@@ -82,6 +84,8 @@ class OAuth2FrontendController(RedditController):
             resp["error"] = "invalid_scope"
         else:
             resp["error"] = "invalid_request"
+
+        return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
 
     @validate(VUser(),
               response_type = VOneOf("response_type", ("code",)),
@@ -118,8 +122,7 @@ class OAuth2FrontendController(RedditController):
             c.deny_frames = True
             return OAuth2AuthorizationPage(client, redirect_uri, scope_info[scope], state).render()
         else:
-            self._error_response(resp)
-            return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
+            return self._error_response(resp, redirect_uri)
 
     @validate(VUser(),
               VModhash(fatal=False),
@@ -140,10 +143,9 @@ class OAuth2FrontendController(RedditController):
         if not c.errors:
             code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id, scope)
             resp["code"] = code._id
+            return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
         else:
-            self._error_response(resp)
-
-        return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
+            return self._error_response(resp, redirect_uri)
 
 class OAuth2AccessController(MinimalController):
     def pre(self):
