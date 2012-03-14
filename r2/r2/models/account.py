@@ -40,6 +40,9 @@ import hmac
 import hashlib
 
 
+COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+
 class AccountExists(Exception): pass
 
 class Account(Thing):
@@ -208,18 +211,19 @@ class Account(Thing):
     def make_cookie(self, timestr=None):
         if not self._loaded:
             self._load()
-        timestr = timestr or time.strftime('%Y-%m-%dT%H:%M:%S')
+        timestr = timestr or time.strftime(COOKIE_TIMESTAMP_FORMAT)
         id_time = str(self._id) + ',' + timestr
         to_hash = ','.join((id_time, self.password, g.SECRET))
         return id_time + ',' + sha.new(to_hash).hexdigest()
 
-    def make_admin_cookie(self, timestr=None):
+    def make_admin_cookie(self, first_login=None, last_request=None):
         if not self._loaded:
             self._load()
-        timestr = timestr or datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        hashable = ','.join((timestr, request.ip, request.user_agent, self.password))
+        first_login = first_login or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
+        last_request = last_request or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
+        hashable = ','.join((first_login, last_request, request.ip, request.user_agent, self.password))
         mac = hmac.new(g.SECRET, hashable, hashlib.sha1).hexdigest()
-        return ','.join((timestr, mac))
+        return ','.join((first_login, last_request, mac))
 
     def needs_captcha(self):
         return not g.disable_captcha and self.link_karma < 1
@@ -582,26 +586,33 @@ def valid_cookie(cookie):
 
 def valid_admin_cookie(cookie):
     if g.read_only_mode:
-        return False
+        return (False, None)
 
     # parse the cookie
     try:
-        timestr, hash = cookie.split(',')
+        first_login, last_request, hash = cookie.split(',')
     except ValueError:
-        return False
+        return (False, None)
 
     # make sure it's a recent cookie
     try:
-        cookie_time = datetime.strptime(timestr, '%Y-%m-%dT%H:%M:%S')
+        first_login_time = datetime.strptime(first_login, COOKIE_TIMESTAMP_FORMAT)
+        last_request_time = datetime.strptime(last_request, COOKIE_TIMESTAMP_FORMAT)
     except ValueError:
-        return False
+        return (False, None)
 
-    cookie_age = datetime.utcnow() - cookie_time
+    cookie_age = datetime.utcnow() - first_login_time
     if cookie_age.total_seconds() > g.ADMIN_COOKIE_TTL:
-        return False
+        return (False, None)
+
+    idle_time = datetime.utcnow() - last_request_time
+    if idle_time.total_seconds() > g.ADMIN_COOKIE_MAX_IDLE:
+        return (False, None)
 
     # validate
-    return constant_time_compare(cookie, c.user.make_admin_cookie(timestr))
+    expected_cookie = c.user.make_admin_cookie(first_login, last_request)
+    return (constant_time_compare(cookie, expected_cookie),
+            first_login)
 
 
 def valid_feed(name, feedhash, path):

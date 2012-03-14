@@ -117,6 +117,7 @@ class Globals(object):
             'RATELIMIT',
             'QUOTA_THRESHOLD',
             'ADMIN_COOKIE_TTL',
+            'ADMIN_COOKIE_MAX_IDLE',
             'num_comments',
             'max_comments',
             'max_comments_gold',

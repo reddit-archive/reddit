@@ -755,11 +755,9 @@ class RedditController(MinimalController):
         c.cookies[g.login_cookie] = Cookie(value='', expires=DELETE)
 
     @staticmethod
-    def enable_admin_mode(user):
-        expiration_time = datetime.utcnow() + timedelta(seconds=g.ADMIN_COOKIE_TTL)
-        expiration = expiration_time.strftime('%a, %d %b %Y %H:%M:%S GMT')
-        c.cookies[g.admin_cookie] = Cookie(value=user.make_admin_cookie(),
-                                           expires=expiration)
+    def enable_admin_mode(user, first_login=None):
+        # no expiration time so the cookie dies with the browser session
+        c.cookies[g.admin_cookie] = Cookie(value=user.make_admin_cookie(first_login=first_login))
 
     @staticmethod
     def disable_admin_mode(user):
@@ -800,7 +798,12 @@ class RedditController(MinimalController):
 
                 admin_cookie = c.cookies.get(g.admin_cookie)
                 if c.user_is_loggedin and admin_cookie:
-                    maybe_admin = valid_admin_cookie(admin_cookie.value)
+                    maybe_admin, first_login = valid_admin_cookie(admin_cookie.value)
+
+                    if maybe_admin:
+                        self.enable_admin_mode(c.user, first_login=first_login)
+                    else:
+                        self.disable_admin_mode(c.user)
 
             if not c.user:
                 c.user = UnloggedUser(get_browser_langs())
