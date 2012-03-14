@@ -1380,26 +1380,32 @@ class ClientInfoBar(InfoBar):
 
 class RedditError(BoringPage):
     site_tracking = False
-    def __init__(self, title, message, image=None, sr_description=None):
+    def __init__(self, title, message, image=None, sr_description=None,
+                 explanation=None):
         BoringPage.__init__(self, title, loginbox=False,
-                            show_sidebar = False,
+                            show_sidebar = False, 
                             content=ErrorPage(title=title,
                                               message=message,
                                               image=image,
-                                              sr_description=sr_description))
+                                              sr_description=sr_description,
+                                              explanation=explanation))
 
 class ErrorPage(Templated):
     """Wrapper for an error message"""
-    def __init__(self, title, message, image=None, **kwargs):
+    def __init__(self, title, message, image=None, explanation=None, **kwargs):
         if not image:
             letter = random.choice(['a', 'b', 'c', 'd', 'e'])
             image = 'reddit404' + letter + '.png'
+        # Normalize explanation strings.
+        if explanation:
+            explanation = explanation.lower().rstrip('.') + '.'
         Templated.__init__(self,
                            title=title,
                            message=message,
                            image_url=image,
+                           explanation=explanation,
                            **kwargs)
-    
+
 
 class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""

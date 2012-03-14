@@ -22,10 +22,9 @@
 
 from mako.filters import url_escape
 from pylons import c, g, request
-from pylons.controllers.util import abort, redirect_to
+from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
-from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters, amqp, stats
 from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, is_throttled
 from r2.lib.cache import LocalCache, make_key, MemcachedError
@@ -33,11 +32,13 @@ import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed, valid_admin_cookie
 from r2.models.subreddit import Subreddit, Frontpage
 from r2.models import *
-from errors import ErrorSet
+from errors import ErrorSet, ForbiddenError, errors
 from validator import *
 from r2.lib.template_helpers import add_sr
 from r2.config.extensions import is_api
 from r2.lib.translation import set_lang
+from r2.lib.contrib import ipaddress
+from r2.lib.base import BaseController, proxyurl, abort
 
 from Cookie import CookieError
 from copy import copy
@@ -544,7 +545,7 @@ def cross_domain(origin_check=is_trusted_origin, **options):
 
 def require_https():
     if not c.secure:
-        abort(403)
+        abort(ForbiddenError(errors.HTTPS_REQUIRED))
 
 def prevent_framing_and_css(allow_cname_frame=False):
     def wrap(f):

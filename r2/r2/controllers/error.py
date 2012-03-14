@@ -116,7 +116,8 @@ class ErrorController(RedditController):
         else:
             res = pages.RedditError(
                 title=_("forbidden (%(domain)s)") % dict(domain=g.domain),
-                message=_("you are not allowed to do that"))
+                message=_("you are not allowed to do that"),
+                explanation=request.GET.get('explanation'))
             return res.render()
 
     def send404(self):

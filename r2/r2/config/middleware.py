@@ -69,6 +69,11 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
     if code in codes:
         # StatusBasedForward expects a relative URL (no SCRIPT_NAME)
         d = dict(code = code, message = message)
+
+        exception = environ.get('r2.controller.exception')
+        if exception:
+            d['explanation'] = exception.explanation
+
         if environ.get('REDDIT_CNAME'):
             d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):

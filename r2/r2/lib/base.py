@@ -26,8 +26,8 @@ import sqlalchemy.exc
 
 from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
-from pylons.controllers.util import abort
 from pylons.i18n import N_, _, ungettext, get_lang
+from paste import httpexceptions
 from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
@@ -63,6 +63,22 @@ def is_local_address(ip):
     # TODO: support the /20 and /24 private networks? make this configurable?
     return ip.startswith('10.')
 
+def abort(code_or_exception=None, detail="", headers=None, comment=None):
+    """Raise an HTTPException and save it in environ for use by error pages."""
+    # Pylons 0.9.6 makes it really hard to get your raised HTTPException,
+    # so this helper implements it manually using a familiar syntax.
+    # FIXME: when we upgrade Pylons, we can replace this with raise
+    #        and access environ['pylons.controller.exception']
+    if isinstance(code_or_exception, httpexceptions.HTTPException):
+        exc = code_or_exception
+    else:
+        if type(code_or_exception) is type and issubclass(code_or_exception, httpexceptions.HTTPException):
+            exc_cls = code_or_exception
+        else:
+            exc_cls = httpexceptions.get_exception(code_or_exception)
+        exc = exc_cls(detail, headers, comment)
+    request.environ['r2.controller.exception'] = exc
+    raise exc
 
 class BaseController(WSGIController):
     def try_pagecache(self):

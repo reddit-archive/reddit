@@ -31,6 +31,9 @@ from r2.lib.filters import unsafe, safemarkdown
   <h1>${thing.title}</h1>
   <div class="errorpage-message">
   ${unsafe(safemarkdown(thing.message, wrap=False))}
+  %if thing.explanation:
+    &mdash; ${thing.explanation}
+  %endif
   </div>
 
   % if thing.sr_description:
