@@ -190,7 +190,7 @@ class ThingJsonTemplate(JsonTemplate):
                     return thing.reported
                 ban_info = getattr(thing, "ban_info", {})
                 if attr == "banned_by":
-                    return ban_info.get("banner")
+                    return ban_info.get("banner") if ban_info.get('moderator_banned') else True
                 elif attr == "approved_by":
                     return ban_info.get("unbanner")
 
