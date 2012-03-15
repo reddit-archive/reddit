@@ -6,10 +6,10 @@
   var dislikes = ${unsafe(simplejson.dumps(thing.dislikes))};
   var friends = ${unsafe(simplejson.dumps(list(thing.is_friend)))};
   $.map(likes, function(l) {
-            $(".id-" + l).find(".arrow.up:first").vote("", null, null, true);
+            $(".id-" + l + " > .midcol").find(".arrow.up").vote("", null, null, true);
         });
   $.map(dislikes, function(l) {
-            $(".id-" + l).find(".arrow.down:first").vote("", null, null, true);
+            $(".id-" + l + " > .midcol").find(".arrow.down").vote("", null, null, true);
         });
   $.map(friends, show_friend);
 
