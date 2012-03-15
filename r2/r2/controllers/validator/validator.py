@@ -139,6 +139,9 @@ def validate(*simple_vals, **param_vals):
                 return self.intermediate_redirect('/login')
             except VerifiedUserRequiredException:
                 return self.intermediate_redirect('/verify')
+
+        newfn.__name__ = fn.__name__
+        newfn.__doc__ = fn.__doc__
         return newfn
     return val
 
@@ -183,11 +186,14 @@ def api_validate(response_type=None):
                     except VerifiedUserRequiredException:
                         responder.send_failure(errors.VERIFIED_USER_REQUIRED)
                         return self.api_wrapper(responder.make_response())
+
+                newfn.__name__ = fn.__name__
+                newfn.__doc__ = fn.__doc__
                 return newfn
             return val
         return _api_validate
     return wrap
-    
+
 
 @api_validate("html")
 def noresponse(self, self_method, responder, simple_vals, param_vals, *a, **kw):

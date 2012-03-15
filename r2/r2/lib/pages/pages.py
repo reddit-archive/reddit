@@ -3782,3 +3782,9 @@ class UserIPHistory(Templated):
     def __init__(self):
         self.ips = ips_by_account_id(c.user._id)
         super(UserIPHistory, self).__init__()
+
+class ApiHelp(Templated):
+    def __init__(self, api_methods, oauth2_scopes, *a, **kw):
+        self.api_methods = api_methods
+        self.oauth2_scopes = oauth2_scopes
+        super(ApiHelp, self).__init__(*a, **kw)

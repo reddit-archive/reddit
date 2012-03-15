@@ -89,6 +89,8 @@ class OAuth2FrontendController(RedditController):
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT))
     def GET_authorize(self, response_type, client, redirect_uri, scope, state):
+        """Endpoint for OAuth2 authorization."""
+
         self._check_redirect_uri(client, redirect_uri)
 
         resp = {}
@@ -107,6 +109,8 @@ class OAuth2FrontendController(RedditController):
               state = VRequired("state", errors.NO_TEXT),
               authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED))
     def POST_authorize(self, authorize, client, redirect_uri, scope, state):
+        """Endpoint for OAuth2 authorization."""
+
         self._check_redirect_uri(client, redirect_uri)
 
         resp = {}

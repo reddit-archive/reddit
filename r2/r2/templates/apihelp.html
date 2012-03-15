@@ -1,0 +1,78 @@
+<%!
+    from r2.lib.filters import safemarkdown
+%>
+
+<div class="content apihelp">
+<div class="introduction">
+<p>This is the automatically-generated documentation for the Reddit API.</p>
+<p>It's gathered from the docstrings in the code.</p>
+</div>
+
+<div class="contents">
+<h1>Contents</h1>
+
+<ul>
+  <li>
+    <strong>API methods</strong>
+    <ul>
+      %for uri in sorted(thing.api_methods.keys()):
+        <li>
+            <a href="#api_method_${uri.split('/')[-1]}">${uri}</a>
+            &nbsp; <span class="gray">(${', '.join(sorted(thing.api_methods[uri].keys()))})</span>
+        </li>
+      %endfor
+    </ul>
+  <li>
+    <strong>OAuth scopes</strong>
+    <ul>
+      %for scope in sorted(thing.oauth2_scopes.keys()):
+        <li><a href="#oauth2_scope_${scope}">${scope}</a></li>
+      %endfor
+    </ul>
+  </li>
+</ul>
+</div>
+
+<div class="methods">
+<h1>API methods</h1>
+
+%for uri in sorted(thing.api_methods.keys()):
+  <div class="endpoint">
+    <a name="api_method_${uri.split('/')[-1]}"></a>
+    <h2>${uri}</h2>
+    %for method in sorted(thing.api_methods[uri].keys()):
+      <div class="method">
+        <h3>${method}</h3>
+        ${unsafe(safemarkdown(thing.api_methods[uri][method]))}
+      </div>
+    %endfor
+  </div>
+%endfor
+</div>
+
+<div class="apihelp scopes">
+<h1>OAuth scopes</h1>
+
+<table class="oauth2-scopes">
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>name</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    %for scope in sorted(thing.oauth2_scopes.keys()):
+      <tr>
+        <td class="oauth2-scope-id">
+          <a name="oauth2_scope_${scope}"></a>
+          ${scope}
+        </td>
+        <td class="oauth2-scope-name">${thing.oauth2_scopes[scope]['name']}</td>
+        <td class="oauth2-scope-description">${thing.oauth2_scopes[scope]['description']}</td>
+      </tr>
+    %endfor
+  </tbody>
+</table>
+</div>
+</div>

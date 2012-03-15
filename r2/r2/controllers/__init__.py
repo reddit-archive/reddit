@@ -59,7 +59,7 @@ try:
 except ImportError:
     from api import ApiController
 
-from api import ApiminimalController
+from api import ApiminimalController, ApihelpController
 from apiv1 import APIv1Controller as Apiv1Controller
 from oauth2 import OAuth2FrontendController as Oauth2frontendController
 from oauth2 import OAuth2AccessController as Oauth2accessController

@@ -34,7 +34,7 @@ from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links
 from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     BannedList, BoringPage, FormPage, CssError, UploadedImage, ClickGadget, \
-    UrlParser, WrappedUser
+    UrlParser, WrappedUser, ApiHelp, BoringPage
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
@@ -2494,3 +2494,52 @@ class ApiController(RedditController):
 
         self.enable_admin_mode(c.user)
         form.redirect(dest)
+
+class ApihelpController(RedditController):
+    @staticmethod
+    def docs_from_controller(controller, url_prefix='/api'):
+        api_methods = defaultdict(dict)
+        for name, func in controller.__dict__.iteritems():
+            i = name.find('_')
+            if i > 0:
+                method = name[:i]
+                action = name[i+1:]
+            else:
+                continue
+
+            if func.__doc__ and method in ('GET', 'POST'):
+                docs = func.__doc__.strip()
+                if hasattr(func, 'oauth2_perms'):
+                    scopes = func.oauth2_perms.get('allowed_scopes')
+                    if scopes:
+                        docs = '*OAuth2 scope(s): %s*\n\n%s' % (
+                            ', '.join([
+                                ('[%s](#oauth2_scope_%s)' % (scope, scope))
+                                for scope in scopes
+                            ]),
+                            docs,
+                        )
+                api_methods['/'.join((url_prefix, action))][method] = docs
+
+        return api_methods
+
+    def GET_help(self):
+        from r2.controllers.apiv1 import APIv1Controller
+        from r2.controllers.oauth2 import OAuth2FrontendController, OAuth2AccessController, scope_info
+
+        api_methods = defaultdict(dict)
+        for controller, url_prefix in ((ApiController, '/api'),
+                                       (ApiminimalController, '/api'),
+                                       (OAuth2FrontendController, '/api/v1'),
+                                       (OAuth2AccessController, '/api/v1'),
+                                       (APIv1Controller, '/api/v1')):
+            for url, methods in self.docs_from_controller(controller, url_prefix).iteritems():
+                api_methods[url].update(methods)
+
+        return BoringPage(
+            _('api documentation'),
+            content=ApiHelp(
+                api_methods=api_methods,
+                oauth2_scopes=scope_info,
+            )
+        ).render()

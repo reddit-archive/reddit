@@ -29,5 +29,6 @@ class APIv1Controller(OAuth2ResourceController):
 
    @require_oauth2_scope("identity")
    def GET_me(self):
+      """Returns the identity of the user currently authenticated via OAuth."""
       resp = IdentityJsonTemplate().data(c.oauth_user)
       return self.api_wrapper(resp)
