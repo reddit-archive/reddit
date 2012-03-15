@@ -89,7 +89,26 @@ class OAuth2FrontendController(RedditController):
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT))
     def GET_authorize(self, response_type, client, redirect_uri, scope, state):
-        """Endpoint for OAuth2 authorization."""
+        """
+        First step in [OAuth 2.0](http://oauth.net/2/) authentication.
+        End users will be prompted for their credentials (username/password)
+        and asked if they wish to authorize the application identified by
+        the **client_id** parameter with the permissions specified by the
+        **scope** parameter.  They are then redirected to the endpoint on
+        the client application's side specified by **redirect_uri**.
+
+        If the user granted permission to the application, the response will
+        contain a **code** parameter with a temporary authorization code
+        which can be exchanged for an access token at
+        [/api/v1/access_token](#api_method_access_token).
+
+        **redirect_uri** must match the URI configured for the client in the
+        [app preferences](/prefs/apps).  If **client_id** or **redirect_uri**
+        is not valid, or if the call does not take place over SSL, a 403
+        error will be returned.  For all other errors, a redirect to
+        **redirect_uri** will be returned, with a **error** parameter
+        indicating why the request failed.
+        """
 
         self._check_redirect_uri(client, redirect_uri)
 
@@ -153,6 +172,26 @@ class OAuth2AccessController(MinimalController):
               code = VRequired("code", errors.NO_TEXT),
               redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False))
     def POST_access_token(self, grant_type, code, redirect_uri):
+        """
+        Exchange an [OAuth 2.0](http://oauth.net/2/) authorization code
+        (from [/api/v1/authorize](#api_method_authorize)) for an access token.
+
+        On success, returns a URL-encoded dictionary containing
+        **access_token**, **token_type**, **expires_in**, and **scope**.
+        If there is a problem, an **error** parameter will be returned
+        instead.
+
+        Must be called using SSL, and must contain a HTTP `Authorization:`
+        header which contains the application's client identifier as the
+        username and client secret as the password.  (The client id and secret
+        are visible on the [app preferences page](/prefs/apps).)
+
+        Per the OAuth specification, **grant_type** must
+        be ``authorization_code`` and **redirect_uri** must exactly match the
+        value that was used in the call to
+        [/api/v1/authorize](#api_method_authorize).
+        """
+
         resp = {}
         if not c.errors:
             auth_token = OAuth2AuthorizationCode.use_token(code, c.oauth2_client._id, redirect_uri)
