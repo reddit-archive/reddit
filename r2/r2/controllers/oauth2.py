@@ -186,7 +186,7 @@ class OAuth2AccessController(MinimalController):
         if not c.errors:
             auth_token = OAuth2AuthorizationCode.use_token(code, c.oauth2_client._id, redirect_uri)
             if auth_token:
-                access_token = OAuth2AccessToken._new(auth_token.user_id, auth_token.scope)
+                access_token = OAuth2AccessToken._new(auth_token.client_id, auth_token.user_id, auth_token.scope)
                 resp["access_token"] = access_token._id
                 resp["token_type"] = access_token.token_type
                 resp["expires_in"] = access_token._ttl
