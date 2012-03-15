@@ -23,37 +23,7 @@
 <%namespace file="utils.html" import="plain_link, img_link, separator"/>
 
 <%def name="dropdown()">
-  ## caching comment:
-  ##  see caching comment for plain_link.  In addition to the args, 
-  ##  this function depends on c.site.name, c.render_style and c.cname.
-  <% css_class = str(thing.css_class) if thing.css_class else "" %>
-  %if thing:
-    %if thing.title and thing.selected:
-      <span class="dropdown-title ${css_class}">${thing.title}:&#32;</span>
-    %endif
-
-    <div class="dropdown ${css_class}"
-         ${"id='%s'" % thing._id if thing._id else ""}
-         onclick="open_menu(this)"
-         onmouseover="hover_open_menu(this)">
- 
-      %if thing.selected:
-          <span class="selected">${thing.selected.selected_title()}</span>
-      %elif thing.title:
-          <span class="selected title">${thing.title}</span>
-      %endif
-    </div>
-
-    <div class="drop-choices ${css_class}">
-      %for option in thing:
-        %if option != thing.selected:
-          ${plain_link(option.title, option.path, _sr_path = option.sr_path,
-                       _class = "choice" + " " + option.css_class)}
-        %endif
-      %endfor
-    </div>
-
-  %endif
+  ${flatlist()}
 </%def>
 
 
@@ -63,9 +33,6 @@
     <ul class="${css_class} hover"
         ${"id='%s'" % thing._id if thing._id else ""}>
 
-      %if thing.title:
-        <li class="${css_class} title">${thing.title}</li>
-      %endif
 
       %for i, option in enumerate(thing):
         <%
