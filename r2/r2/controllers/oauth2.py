@@ -128,7 +128,7 @@ class OAuth2FrontendController(RedditController):
         self._check_redirect_uri(client, redirect_uri)
 
         if not c.errors:
-            code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id, scope)
+            code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id36, scope)
             resp = {"code": code._id, "state": state}
             return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
         else:
@@ -213,7 +213,7 @@ class OAuth2ResourceController(MinimalController):
             access_token = OAuth2AccessToken.get_token(self._get_bearer_token())
             require(access_token)
             c.oauth2_access_token = access_token
-            account = Account._byID(access_token.user_id, data=True)
+            account = Account._byID36(access_token.user_id, data=True)
             require(account)
             require(not account._deleted)
             c.oauth_user = account

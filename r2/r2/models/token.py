@@ -241,6 +241,7 @@ class OAuth2AuthorizationCode(ConsumableToken):
                      ]
                 )
     _int_props = ("user_id",)
+    _warn_on_partial_ttl = False
     _use_db = True
     _connection_pool = "main"
 
@@ -271,7 +272,6 @@ class OAuth2AccessToken(Token):
     _defaults = dict(scope="",
                      token_type="bearer",
                     )
-    _int_props = ("user_id",)
     _use_db = True
     _connection_pool = "main"
 
