@@ -618,7 +618,7 @@ class CassandraCacheChain(CacheChain):
                     if value is None:
                         value = self.cassa.get(key,
                                                read_consistency_level = rcl)
-                except cassandra.ttypes.NotFoundException:
+                except CassandraNotFound:
                     value = default
 
                 # due to an old bug in NoneResult caching, we still
