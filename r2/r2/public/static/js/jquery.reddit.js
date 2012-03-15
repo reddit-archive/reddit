@@ -515,15 +515,11 @@ $.insert_things = function(things, append) {
     /* Insert new things into a listing.*/
     return $.map(things, function(thing) {
             var data = thing.data;
-            var midcol = $(".midcol:visible:first").css("width");
-            var numcol = $(".rank:visible:first").css("width");
             var s = $.listing(data.parent);
             if(append)
                 s = s.append($.unsafe(data.content)).children(".thing:last");
             else
                 s = s.prepend($.unsafe(data.content)).children(".thing:first");
-            s.find(".midcol").css("width", midcol);
-            s.find(".rank").css("width", numcol);
             thing_init_func(s.hide().show());
             return s;
         });
