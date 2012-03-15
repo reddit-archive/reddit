@@ -2498,6 +2498,17 @@ class ApiController(RedditController):
 class ApihelpController(RedditController):
     @staticmethod
     def docs_from_controller(controller, url_prefix='/api'):
+        """
+        Examines a controller for documentation.  A dictionary of URLs is
+        returned.  For each URL, a dictionary of HTTP methods (GET, POST, etc.)
+        is contained.  For each URL/method pair, a dictionary containing the
+        following items is available:
+
+        - `__doc__`: Markdown-formatted docstring.
+        - `oauth2_scopes`: List of OAuth2 scopes
+        - *more to come...*
+        """
+
         api_methods = defaultdict(dict)
         for name, func in controller.__dict__.iteritems():
             i = name.find('_')
@@ -2508,17 +2519,20 @@ class ApihelpController(RedditController):
                 continue
 
             if func.__doc__ and method in ('GET', 'POST'):
-                docs = re.sub(r'\n +', '\n', func.__doc__).strip()
+                docs = {
+                    '__doc__': re.sub(r'\n +', '\n', func.__doc__).strip(),
+                }
+
                 if hasattr(func, 'oauth2_perms'):
                     scopes = func.oauth2_perms.get('allowed_scopes')
                     if scopes:
-                        docs = '*OAuth2 scope(s): %s*\n\n%s' % (
-                            ', '.join([
-                                ('[%s](#oauth2_scope_%s)' % (scope, scope))
-                                for scope in scopes
-                            ]),
-                            docs,
-                        )
+                        docs['oauth2_scopes'] = scopes
+
+                # TODO: in the future, it would be cool to introspect the
+                # validators in order to generate a list of request
+                # parameters.  Some decorators also give a hint as to response
+                # type (JSON, etc.) which could be included as well.
+
                 api_methods['/'.join((url_prefix, action))][method] = docs
 
         return api_methods
