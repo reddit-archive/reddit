@@ -209,7 +209,7 @@ class OAuth2Client(Token):
 
         client_ids = set()
         for token in OAuth2AccessToken._by_user(account):
-            if token.is_valid:
+            if token.check_valid():
                 client_ids.add(token.client_id)
 
         return [ cls._byID(client_id) for client_id in client_ids ]
@@ -289,8 +289,7 @@ class OAuth2AccessToken(Token):
         OAuth2AccessTokensByUser._set_values(self.user_id, {self._id: ''})
         return super(OAuth2AccessToken, self)._on_create()
 
-    @property
-    def is_valid(self):
+    def check_valid(self):
         """Returns boolean indicating whether or not this access token is still valid."""
 
         # Has the token been revoked?
@@ -325,7 +324,7 @@ class OAuth2AccessToken(Token):
             tba = OAuth2AccessTokensByUser._byID(self.user_id)
             del tba[self._id]
         except (tdb_cassandra.NotFound, KeyError):
-            # Not fatal, since self.is_valid() will still be False.
+            # Not fatal, since self.check_valid() will still be False.
             pass
         else:
             tba._commit()
@@ -343,7 +342,7 @@ class OAuth2AccessToken(Token):
         for tid in tba._values().iterkeys():
             try:
                 token = cls._byID(tid)
-                if not token.is_valid:
+                if not token.check_valid():
                     raise NotFound
             except tdb_cassandra.NotFound:
                 pass
