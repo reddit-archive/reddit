@@ -237,11 +237,17 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     # clear out the status line as a courtesy
     form.set_html(".status", "")
 
-    # auto-refresh the captcha if there are errors.
-    if (c.errors.errors and
-        any(isinstance(v, VCaptcha) for v in simple_vals)):
-        form.has_errors('captcha', errors.BAD_CAPTCHA)
-        form.new_captcha()
+    # handle specific errors
+    if c.errors.errors:
+        handled_captcha = handled_ratelimit = False
+        for v in simple_vals:
+            if not handled_captcha and isinstance(v, VCaptcha):
+                form.has_errors('captcha', errors.BAD_CAPTCHA)
+                form.new_captcha()
+                handled_captcha = True
+            elif not handled_ratelimit and isinstance(v, VRatelimit):
+                form.ratelimit(v.seconds)
+                handled_ratelimit = True
     
     # do the actual work
     val = self_method(self, form, responder, *a, **kw)
@@ -1243,6 +1249,7 @@ class VRatelimit(Validator):
         self.rate_ip = rate_ip
         self.prefix = prefix
         self.error = error
+        self.seconds = None
         Validator.__init__(self, *a, **kw)
 
     def run (self):
@@ -1270,6 +1277,11 @@ class VRatelimit(Validator):
             # when errors have associated field parameters, we'll need
             # to add that here
             if self.error == errors.RATELIMIT:
+                from datetime import datetime
+                delta = expire_time - datetime.now(g.tz)
+                self.seconds = delta.total_seconds()
+                if self.seconds < 3:  # Don't ratelimit within three seconds
+                    return
                 self.set_error(errors.RATELIMIT, {'time': time},
                                field = 'ratelimit')
             else:

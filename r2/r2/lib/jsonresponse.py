@@ -53,6 +53,7 @@ class JsonResponse(object):
     def _clear(self):
         self._errors = set()
         self._new_captcha = False
+        self._ratelimit = False
         self._data = {}
 
     def send_failure(self, error):
@@ -72,6 +73,8 @@ class JsonResponse(object):
             res['data'] = self._data
         if self._new_captcha:
             res['captcha'] = get_iden()
+        if self._ratelimit:
+            res['ratelimit'] = self._ratelimit
         res['errors'] = [(e[0], c.errors[e].message, e[1]) for e in self._errors]
         return {"json": res}
 
@@ -125,6 +128,9 @@ class JsonResponse(object):
 
     def new_captcha(self):
         self._new_captcha = True
+
+    def ratelimit(self, seconds):
+        self._ratelimit = seconds
 
 
 class JQueryResponse(JsonResponse):
