@@ -2508,7 +2508,7 @@ class ApihelpController(RedditController):
                 continue
 
             if func.__doc__ and method in ('GET', 'POST'):
-                docs = func.__doc__.strip()
+                docs = re.sub(r'\n +', '\n', func.__doc__).strip()
                 if hasattr(func, 'oauth2_perms'):
                     scopes = func.oauth2_perms.get('allowed_scopes')
                     if scopes:
