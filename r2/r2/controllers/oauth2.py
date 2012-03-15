@@ -212,6 +212,7 @@ class OAuth2ResourceController(MinimalController):
         try:
             access_token = OAuth2AccessToken.get_token(self._get_bearer_token())
             require(access_token)
+            require(access_token.check_valid())
             c.oauth2_access_token = access_token
             account = Account._byID36(access_token.user_id, data=True)
             require(account)
