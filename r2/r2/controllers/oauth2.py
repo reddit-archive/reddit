@@ -205,7 +205,7 @@ class OAuth2ResourceController(MinimalController):
         require_https()
 
         try:
-            access_token = self._get_bearer_token()
+            access_token = OAuth2AccessToken.get_token(self._get_bearer_token())
             require(access_token)
             c.oauth2_access_token = access_token
             account = Account._byID(access_token.user_id, data=True)
@@ -227,14 +227,15 @@ class OAuth2ResourceController(MinimalController):
     def _auth_error(self, code, error):
         abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
 
-    def _get_bearer_token(self):
+    def _get_bearer_token(self, strict=True):
         auth = request.headers.get("Authorization")
         try:
             auth_scheme, bearer_token = require_split(auth, 2)
             require(auth_scheme.lower() == "bearer")
-            return OAuth2AccessToken.get_token(bearer_token)
+            return bearer_token
         except RequirementException:
-            self._auth_error(400, "invalid_request")
+            if strict:
+                self._auth_error(400, "invalid_request")
 
 def require_oauth2_scope(*scopes):
     def oauth2_scope_wrap(fn):

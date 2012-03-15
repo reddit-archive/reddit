@@ -264,7 +264,11 @@ class Account(Thing):
         return modhash(self, rand = rand, test = test)
     
     def valid_hash(self, hash):
-        return valid_hash(self, hash)
+        if self == c.oauth_user:
+            # OAuth authenticated requests do not require CSRF protection.
+            return True
+        else:
+            return valid_hash(self, hash)
 
     @classmethod
     @memoize('account._by_name')
