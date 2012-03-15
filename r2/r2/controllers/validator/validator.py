@@ -1846,7 +1846,7 @@ class VOAuth2ClientID(VRequired):
             return self.error()
 
         client = OAuth2Client.get_token(client_id)
-        if client and not client.deleted:
+        if client and not getattr(client, 'deleted', False):
             return client
         else:
             return self.error()

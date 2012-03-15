@@ -1,4 +1,5 @@
 <%namespace file="utils.html" import="error_field"/>
+<%namespace file="printablebuttons.html" import="ynbutton" />
 
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
@@ -11,7 +12,11 @@
       %endif
       </td>
       <td><a href="${ app.about_url }">${ app.name }</a></td>
-      <td><a href="#">revoke access</a></td>
+      <td>${ynbutton(_("revoke access"),
+                     _("revoked"),
+                     "revokeapp",
+                     callback="deleteRow",
+                     hidden_data=dict(client_id=app._id))}</td>
     </tr>
   %endfor
   </table>
@@ -75,9 +80,13 @@
             %for dev in app._developers:
               <p>${dev.name}
                 %if c.user == dev:
-                  <span>(that's you!)</span>
+                  <span class="gray">(that's you!)</span>
                 %else:
-                  <a href="#">remove</a>
+                  ${ynbutton(_("remove"),
+                             _("removed"),
+                             "removedeveloper",
+                             hidden_data=dict(client_id=app._id,
+                                              developer=dev._fullname))}
                 %endif
               </p>
             %endfor
@@ -86,9 +95,12 @@
         </tr>
       </table>
       <input type="submit" value="update app">
-      <a href="#">delete app</a>
       <span class="status"></span>
     </form>
+    ${ynbutton(_("delete app"),
+               "deleted",
+               "deleteapp",
+               hidden_data=dict(client_id=app._id))}
   %endfor
   <p><a href="#">create another app...</a></p>
 %else:
