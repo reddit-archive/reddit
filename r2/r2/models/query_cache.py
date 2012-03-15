@@ -1,10 +1,9 @@
 import random
-import cPickle
 import datetime
 import collections
 
 from pylons import g
-from pycassa.system_manager import ASCII_TYPE
+from pycassa.system_manager import ASCII_TYPE, UTF8_TYPE
 from pycassa.batch import Mutator
 
 from r2.models import Thing
@@ -17,6 +16,16 @@ from r2.lib.utils import flatten, to36
 CONNECTION_POOL = g.cassandra_pools['main']
 PRUNE_CHANCE = g.querycache_prune_chance
 MAX_CACHED_ITEMS = 1000
+
+
+# if cjson is installed, use it. it's faster.
+try:
+    import cjson as json
+except ImportError:
+    LOG.warning("Couldn't import cjson. Using (slower) python implementation.")
+    import json
+else:
+    json.dumps, json.loads = json.encode, json.decode
 
 
 class ThingTupleComparator(object):
@@ -260,7 +269,8 @@ def merged_cached_query(fn):
 class BaseQueryCache(object):
     __metaclass__ = tdb_cassandra.ThingMeta
     _connection_pool = 'main'
-    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE)
+    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
+                                       default_validation_class=UTF8_TYPE)
     _compare_with = ASCII_TYPE
     _use_db = False
 
@@ -278,8 +288,8 @@ class BaseQueryCache(object):
             timestamps = []
 
             for (key, (value, timestamp)) in columns.iteritems():
-                value = cPickle.loads(value)
-                data.append((key,) + value)
+                value = json.loads(value)
+                data.append((key,) + tuple(value))
                 timestamps.append((key, timestamp))
 
             res[row] = (data, dict(timestamps))
@@ -289,7 +299,7 @@ class BaseQueryCache(object):
     @classmethod
     @tdb_cassandra.will_write
     def insert(cls, mutator, key, columns):
-        updates = dict((key, cPickle.dumps(value, protocol=2))
+        updates = dict((key, json.dumps(value))
                        for key, value in columns.iteritems())
         mutator.insert(cls._cf, key, updates)
 

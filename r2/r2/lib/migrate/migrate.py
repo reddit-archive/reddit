@@ -381,3 +381,19 @@ def port_cassahides():
     for sh in q:
         CassandraHide._hide(sh._thing1, sh._thing2,
                             write_consistency_level=CL.ONE)
+
+def convert_query_cache_to_json():
+    import cPickle
+    from r2.models.query_cache import json, UserQueryCache
+
+    with UserQueryCache._cf.batch() as m:
+        for key, columns in UserQueryCache._cf.get_range():
+            out = {}
+            for ckey, cvalue in columns.iteritems():
+                try:
+                    raw = cPickle.loads(cvalue)
+                except cPickle.UnpicklingError:
+                    continue
+                out[ckey] = json.dumps(raw)
+            m.insert(key, out)
+
