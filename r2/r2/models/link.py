@@ -924,9 +924,9 @@ class MoreChildren(MoreComments):
     pass
 
 class Message(Thing, Printable):
-    _defaults = dict(reported = 0, was_comment = False, parent_id = None,
-                     new = False,  first_message = None, to_id = None,
-                     sr_id = None, to_collapse = None, author_collapse = None)
+    _defaults = dict(reported=0, was_comment=False, parent_id=None, new=False,
+                     first_message=None, to_id=None, sr_id=None,
+                     to_collapse=None, author_collapse=None, from_sr=False)
     _data_int_props = Thing._data_int_props + ('reported', )
     _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
