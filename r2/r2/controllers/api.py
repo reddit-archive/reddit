@@ -2820,27 +2820,55 @@ class ApiController(RedditController):
 
     @validatedForm(VUser(),
                    VModhash(),
-                   client=VOAuth2ClientDeveloper(),
                    name=VRequired('name', errors.NO_TEXT),
-                   about_url=VSanitizedUrl(),
-                   icon_url=VSanitizedUrl(),
+                   about_url=VSanitizedUrl('about_url'),
+                   icon_url=VSanitizedUrl('icon_url'),
                    redirect_uri=VUrl('redirect_uri', allow_self=False))
-    def POST_updateapp(self, form, jquery, client, name, description, about_url, icon_url, redirect_uri):
-        if not form.has_error():
-            clinet.name = name
+    def POST_updateapp(self, form, jquery, name, about_url, icon_url, redirect_uri):
+        if (form.has_errors('name', errors.NO_TEXT) |
+            form.has_errors('redirect_uri', errors.BAD_URL, errors.NO_URL)):
+            return
+
+        description = request.post.get('description', '')
+
+        client_id = request.post.get('client_id')
+        if client_id:
+            # client_id was specified, updating existing OAuth2Client
+            client = OAuth2Client.get_token(client_id)
+            if not client:
+                form.set_html('.status', _('invalid client id'))
+                return
+            if getattr(client, 'deleted', False):
+                form.set_html('.status', _('cannot update deleted app'))
+                return
+            if not client.has_developer(c.user):
+                form.set_html('.status', _('app does not belong to you'))
+                return
+
+            client.name = name
             client.description = description
-            client.about_url = about_url
-            client.icon_url = icon_url
+            client.about_url = about_url or ''
+            client.icon_url = icon_url or ''
             client.redirect_uri = redirect_uri
             client._commit()
             form.set_html('.status', _('application updated'))
+        else:
+            # client_id was omitted or empty, creating new OAuth2Client
+            client = OAuth2Client._new(name=name,
+                                       description=description,
+                                       about_url=about_url or '',
+                                       icon_url=icon_url or '',
+                                       redirect_uri=redirect_uri)
+            client._commit()
+            client.add_developer(c.user)
+            form.set_html('.status', _('application created'))
 
     @validatedForm(VUser(),
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
     def POST_adddeveloper(self, form, jquery, client, account):
-        if not form.has_error():
+        if client and not form.has_error('name'):
             client.add_developer(account)
             form.set_html('.status', _('developer added'))
 
@@ -2849,7 +2877,7 @@ class ApiController(RedditController):
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
     def POST_removedeveloper(self, form, jquery, client, account):
-        if not form.has_error():
+        if client and not form.has_error('name'):
             client.remove_developer(account)
             form.set_html('.status', _('developer removed'))
 
@@ -2857,7 +2885,6 @@ class ApiController(RedditController):
                 VModhash(),
                 client=VOAuth2ClientDeveloper())
     def POST_deleteapp(self, client):
-        if not client:
-            abort(403)
-        client.deleted = True
-        client._commit()
+        if client:
+            client.deleted = True
+            client._commit()

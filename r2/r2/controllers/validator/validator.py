@@ -114,7 +114,14 @@ class Validator(object):
                 else:
                     val = self.default
                 a.append(val)
-        return self.run(*a)
+        try:
+            return self.run(*a)
+        except TypeError, e:
+            if str(e).startswith('run() takes'):
+                # Prepend our class name so we know *which* run()
+                raise TypeError('%s.%s' % (type(self).__name__, str(e)))
+            else:
+                raise
 
 
 def build_arg_list(fn, env):
@@ -1846,7 +1853,7 @@ class VOAuth2ClientID(VRequired):
 
 class VOAuth2ClientDeveloper(VOAuth2ClientID):
     def run(self, client_id):
-        client = super(VOAuth2ClientDeveloper)
+        client = super(VOAuth2ClientDeveloper, self).run(client_id)
         if not client or not client.has_developer(c.user):
             return self.error()
         return client

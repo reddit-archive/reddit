@@ -1,3 +1,5 @@
+<%namespace file="utils.html" import="error_field"/>
+
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
 
@@ -19,7 +21,10 @@
   <h1>${_("developed applications")}</h1>
 
   %for app in thing.developed_apps:
-    <form method="post" action="/api/updateapp" class="pretty-form">
+    <form method="post" action="/api/updateapp" class="pretty-form" id="update-app-${app._id}"
+     onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("updating...")}">
+      <input type="hidden" name="uh" value="${c.modhash}" />
+      <input type="hidden" name="client_id" value="${app._id}" />
       <table class="preftable">
         <tr>
           <th>${_("client id")}</th>
@@ -33,6 +38,7 @@
           <th>${_("name")}</th>
           <td class="prefright">
             <input name="name" value="${app.name}">
+            ${error_field("NO_TEXT", "name")}
           </td>
         </tr>
         <tr>
@@ -45,18 +51,22 @@
           <th>${_("about url")}</th>
           <td class="prefright">
             <input name="about_url" value="${app.about_url}">
+            ${error_field("BAD_URL", "about_url")}
           </td>
         </tr>
         <tr>
           <th>${_("icon url")}</th>
           <td class="prefright">
             <input name="icon_url" value="${app.icon_url}">
+            ${error_field("BAD_URL", "icon_url")}
           </td>
         </tr>
         <tr>
           <th>${_("redirect uri")}</th>
           <td class="prefright">
             <input name="redirect_uri" value="${app.redirect_uri}">
+            ${error_field("NO_URL", "redirect_uri")}
+            ${error_field("BAD_URL", "redirect_uri")}
           </td>
         </tr>
         <tr>
@@ -64,8 +74,8 @@
           <td class="prefright">
             %for dev in app._developers:
               <p>${dev.name}
-                %if False:
-                  (that's you!)
+                %if c.user == dev:
+                  <span>(that's you!)</span>
                 %else:
                   <a href="#">remove</a>
                 %endif
@@ -77,6 +87,7 @@
       </table>
       <input type="submit" value="update app">
       <a href="#">delete app</a>
+      <span class="status"></span>
     </form>
   %endfor
   <p><a href="#">create another app...</a></p>
@@ -86,13 +97,15 @@
 
 <div>
   <h1>${_("create application")}</h1>
-  <form method="post" action="/api/updateapp" class="pretty-form">
+  <form method="post" action="/api/updateapp" class="pretty-form" id="create-app"
+   onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("creating...")}">
     <input type="hidden" name="uh" value="${c.modhash}" />
     <table class="content preftable">
       <tr>
         <th>${_("name")}</th>
         <td class="prefright">
           <input name="name">
+          ${error_field("NO_TEXT", "name")}
         </td>
       </tr>
       <tr>
@@ -105,21 +118,26 @@
         <th>${_("about url")}</th>
         <td class="prefright">
           <input name="about_url">
+          ${error_field("BAD_URL", "about_url")}
         </td>
       </tr>
       <tr>
         <th>${_("icon url")}</th>
         <td class="prefright">
           <input name="icon_url">
+          ${error_field("BAD_URL", "icon_url")}
         </td>
       </tr>
       <tr>
         <th>${_("redirect uri")}</th>
         <td class="prefright">
           <input name="redirect_uri">
+          ${error_field("NO_URL", "redirect_uri")}
+          ${error_field("BAD_URL", "redirect_uri")}
         </td>
       </tr>
     </table>
     <input type="submit" value="create app">
+    <span class="status"></span>
   </form>
 </div>
