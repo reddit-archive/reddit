@@ -73,10 +73,15 @@ clean_i18n:
 UPDATE_FILES := $(wildcard *.update)
 INIFILES := $(UPDATE_FILES:.update=.ini)
 
+.PHONY: clean_ini
+
 ini: $(INIFILES)
 
 $(INIFILES): %.ini: %.update
 	  ./updateini.py example.ini $< > $@ || rm $@ 
+
+clean_ini:
+	rm $(INIFILES)
 
 #################### Static Files
 STATIC_DIR := r2/public/static

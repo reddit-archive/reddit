@@ -4,6 +4,15 @@ from ConfigParser import MissingSectionHeaderError
 from StringIO import StringIO
 import sys
 
+HEADER = '''
+# YOU DO NOT NEED TO EDIT THIS FILE
+# This is a generated file. To update the configuration,
+# edit the *.update file of the same name, and then
+# run 'make ini'
+# Configuration settings in the *.update file will override
+# or be added to the base 'example.ini' file.
+'''
+
 def main(source_ini, update_ini):
     parser = Parser()
     # By default, the parser is case insensitve and rewrites config
@@ -24,6 +33,7 @@ def main(source_ini, update_ini):
     except MissingSectionHeaderError:
         updates = "[DEFAULT]\n" + updates
         parser.readfp(StringIO(updates))
+    print HEADER
     parser.write(sys.stdout)
 
 if __name__ == '__main__':
