@@ -196,14 +196,10 @@ class CachedQueryMutator(object):
         self.to_prune = set()
 
     def __enter__(self):
-        self.mutator.__enter__()
         return self
 
     def __exit__(self, type, value, traceback):
-        self.mutator.__exit__(type, value, traceback)
-
-        if self.to_prune:
-            CachedQuery._prune_multi(self.to_prune)
+        self.send()
 
     def insert(self, query, things):
         if not things:
@@ -219,6 +215,12 @@ class CachedQueryMutator(object):
             return
 
         query._delete(self.mutator, things)
+
+    def send(self):
+        self.mutator.send()
+
+        if self.to_prune:
+            CachedQuery._prune_multi(self.to_prune)
 
 
 def filter_identity(x):
