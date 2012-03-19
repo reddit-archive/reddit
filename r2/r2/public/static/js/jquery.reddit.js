@@ -448,8 +448,6 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
      * case of a comment tree, flags whether or not the new thing has
      * the thread present) while "reveal" determines whether or not to
      * animate the transition from old to new. */
-    var midcol = $(".midcol:visible:first").css("width");
-    var numcol = $(".rank:visible:first").css("width");
     var self = this;
     return $.map(things, function(thing) {
             var data = thing.data;
@@ -465,10 +463,6 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
             }
             existing.after($.unsafe(data.content));
             var new_thing = existing.next();
-            if($.defined(midcol)) {
-                new_thing.find(".midcol").css("width", midcol).end()
-                    .find(".rank").css("width", midcol);
-            }
             if(keep_children) {
                 /* show the new thing */
                 new_thing.show()
