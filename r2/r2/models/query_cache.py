@@ -16,6 +16,7 @@ from r2.lib.utils import flatten, to36
 CONNECTION_POOL = g.cassandra_pools['main']
 PRUNE_CHANCE = g.querycache_prune_chance
 MAX_CACHED_ITEMS = 1000
+LOG = g.log
 
 
 # if cjson is installed, use it. it's faster.
@@ -172,6 +173,10 @@ class CachedQuery(CachedQueryBase):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __repr__(self):
+        return "%s(%s, %r)" % (self.__class__.__name__,
+                               self.model.__name__, self.key)
+
 
 class MergedCachedQuery(CachedQueryBase):
     def __init__(self, queries):
@@ -205,6 +210,8 @@ class CachedQueryMutator(object):
         if not things:
             return
 
+        LOG.debug("Inserting %r into query %r", things, query)
+
         query._insert(self.mutator, things)
 
         if (random.random() / len(things)) < PRUNE_CHANCE:
@@ -214,12 +221,15 @@ class CachedQueryMutator(object):
         if not things:
             return
 
+        LOG.debug("Deleting %r from query %r", things, query)
+
         query._delete(self.mutator, things)
 
     def send(self):
         self.mutator.send()
 
         if self.to_prune:
+            LOG.debug("Pruning queries %r", self.to_prune)
             CachedQuery._prune_multi(self.to_prune)
 
 
