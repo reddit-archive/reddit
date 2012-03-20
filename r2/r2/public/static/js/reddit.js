@@ -1242,7 +1242,7 @@ $(function() {
 
 function show_friend(account_fullname) {
     var label = '<a class="friend" title="friend" href="/prefs/friends">F</a>';
-    var ua = $(".author.id-" + account_fullname).addClass("friend")
+    var ua = $("div.content .author.id-" + account_fullname).addClass("friend")
         .next(".userattrs").each(function() {
                 if (!$(this).html()) {
                     $(this).html(" [" + label + "]");
