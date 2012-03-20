@@ -269,7 +269,8 @@ class BaseQueryCache(object):
 
     @classmethod
     def get(cls, keys):
-        rows = cls._cf.multiget(keys, include_timestamp=True)
+        rows = cls._cf.multiget(keys, include_timestamp=True,
+                                column_count=tdb_cassandra.max_column_count)
 
         res = {}
         for row, columns in rows.iteritems():
