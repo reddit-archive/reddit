@@ -571,8 +571,8 @@ class FrontController(RedditController):
             pane = FlairPane(num, after, reverse, name, user)
         elif c.user_is_sponsor and location == 'ads':
             pane = RedditAds()
-        elif (not location or location == "about") and is_api():
-            return Reddit(content = Wrapped(c.site)).render()
+        elif (location == "about") and is_api():
+            return self.redirect(add_sr('about.json'), code=301)
         else:
             return self.abort404()
 
@@ -606,6 +606,13 @@ class FrontController(RedditController):
             return self._edit_normal_reddit(location, num, after, reverse,
                                             count, created, name, user)
 
+    def GET_about(self):
+        """Return information about the subreddit.
+
+        Data includes the subscriber count, description, and header image."""
+        if not is_api() or isinstance(c.site, FakeSubreddit):
+            return self.abort404()
+        return Reddit(content = Wrapped(c.site)).render()
 
     def GET_awards(self):
         """The awards page."""
