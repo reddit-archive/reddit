@@ -645,7 +645,17 @@ class ApiController(RedditController):
                      _("you should be getting a verification email shortly."))
             else:
                 form.set_html('.status', _('your email has been updated'))
-            
+
+        # user is removing their email
+        if (not email and c.user.email and 
+            form.has_errors("email", errors.NO_EMAILS)):
+            c.user.email = ''
+            c.user.email_verified = None
+            c.user._commit()
+            Award.take_away("verified_email", c.user)
+            updated = True
+            form.set_html('.status', _('your email has been updated'))
+
         # change password
         if (password and
             not (form.has_errors("newpass", errors.BAD_PASSWORD) or
