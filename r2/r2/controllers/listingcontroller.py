@@ -89,8 +89,7 @@ class ListingController(RedditController):
         etc) to be displayed on this listing page"""
         return []
 
-    @base_listing
-    def build_listing(self, num, after, reverse, count):
+    def build_listing(self, num, after, reverse, count, **kwargs):
         """uses the query() method to define the contents of the
         listing and renders the page self.render_cls(..).render() with
         the listing as contents"""
@@ -180,6 +179,7 @@ class ListingController(RedditController):
 
     builder_wrapper = staticmethod(default_thing_wrapper())
 
+    @base_listing
     def GET_listing(self, **env):
         check_cheating('site')
         return self.build_listing(**env)
