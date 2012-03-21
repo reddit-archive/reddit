@@ -3787,7 +3787,7 @@ class UserIPHistory(Templated):
         super(UserIPHistory, self).__init__()
 
 class ApiHelp(Templated):
-    def __init__(self, api_methods, oauth2_scopes, *a, **kw):
-        self.api_methods = api_methods
-        self.oauth2_scopes = oauth2_scopes
+    api_source_url = "https://github.com/reddit/reddit/blob/master/r2/r2/controllers/api.py"
+    def __init__(self, api_docs, *a, **kw):
+        self.api_docs = api_docs
         super(ApiHelp, self).__init__(*a, **kw)

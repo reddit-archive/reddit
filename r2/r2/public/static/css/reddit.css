@@ -5140,3 +5140,179 @@ tr.gold-accent + tr > td {
     margin-bottom: .5em;
     display: inline-block;
 }
+
+.content.api-help {
+    font-size: 1.25em;
+    margin: 0 auto;
+    max-width: 950px;
+}
+
+.api-help .contents {
+    padding: 0 20px;
+    margin-left: 24em;
+    margin-top: 20px;
+}
+
+.api-help .contents .section {
+    margin-bottom: 2em;
+}
+
+.api-help .sidebar {
+    float: left;
+    margin-left: 10px;
+}
+
+.api-help .sidebar .head {
+    position: relative;
+    background: url(../xray-snoo-head.png) top center no-repeat;
+    height: 188px;
+    margin-bottom: -78px;
+    z-index: 2;
+}
+
+.api-help .sidebar .feet {
+    position: relative;
+    background: url(../xray-snoo-feet.png) top center no-repeat;
+    height: 75px;
+    margin-top: -42px;
+    z-index: 2;
+}
+
+.api-help .toc {
+    background: #181818 url(../xray-snoo-body.png) center repeat-y;
+    border: 5px solid #959595;
+    border-radius: 8px;
+    padding: 15px 2em 0 2em;
+    width: 18em;
+}
+
+.api-help .contents .introduction {
+    position: relative;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: -1em;
+}
+
+.api-help .introduction:before,
+.api-help .introduction:after {
+    position: absolute;
+    display: block;
+    content: '';
+    border: 15px solid;
+    border-style: solid solid outset; /* mitigates firefox drawing a thicker arrow */
+}
+
+.api-help .introduction:before {
+    border-color: transparent #ccc transparent transparent;
+    left: -31px;
+    top: 58px;
+}
+
+.api-help .introduction:after {
+    border-color: transparent white transparent transparent;
+    left: -28px;
+    top: 58px;
+}
+
+.api-help .toc ul {
+    position: relative;
+    margin-top: .5em;
+    margin-bottom: 1.5em;
+    z-index: 10;
+}
+
+.api-help .toc > ul > li > strong {
+    color: #aaa;
+}
+
+.api-help .toc a.section {
+    color: #888;
+    font-weight: bold;
+}
+
+.api-help .toc a {
+    color: #8EB0D2;
+}
+
+.api-help .toc a:hover, .api-help .endpoint a:hover {
+    text-decoration: underline;
+}
+
+.api-help em.placeholder {
+    font-style: italic;
+    font-weight: normal;
+}
+
+.api-help .toc em.placeholder {
+    color: #8EB0D2;
+}
+
+.api-help .endpoint em.placeholder {
+    color: #369;
+}
+
+.api-help .endpoint, .api-help .section .description {
+    margin-bottom: 1.5em;
+}
+
+.api-help .methods h2 {
+    color: black;
+    font-size: 1.45em;
+    text-align: middle;
+    margin-top: 1.5em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #aaa;
+}
+
+.api-help .endpoint .info {
+    padding-left: 1em;
+    border-left: 1px solid #ddd;
+}
+
+.api-help .endpoint h3, .api-help .endpoint .uri-variants {
+    color: #369;
+    margin-bottom: .5em;
+}
+
+.api-help .endpoint .uri-variants {
+    opacity: .85;
+    font-weight: bold;
+    margin-top: -.5em;
+    margin-left: 3em;
+}
+
+.api-help .endpoint .method, .api-help .endpoint .extensions {
+    font-weight: normal;
+    color: gray;
+}
+
+.api-help .endpoint .extensions {
+    margin-left: .5em;
+}
+
+.api-help .endpoint .links {
+    float: right;
+}
+
+.api-help .endpoint .links a {
+    margin-left: .85em;
+    opacity: .45;
+}
+
+.api-help .endpoint:hover .links a {
+    opacity: 1;
+}
+
+.api-help .parameters {
+    background: #f0f0f0;
+    border-collapse: separate;
+    border-radius: 3px;
+    padding: 5px 10px;
+    width: 100%;
+}
+
+.api-help .parameters .name {
+    font-family: 'Courier New', monospace;
+    width: 50%;
+}

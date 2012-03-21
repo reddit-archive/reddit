@@ -32,6 +32,7 @@ from BeautifulSoup import BeautifulSoup
 
 from time import sleep
 from datetime import datetime, timedelta
+from functools import wraps, partial, WRAPPER_ASSIGNMENTS
 from pylons import g
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode
@@ -1384,3 +1385,8 @@ def constant_time_compare(actual, expected):
             result |= ord(actual[i]) ^ ord(expected[i % expected_len])
     return result == 0
 
+def wraps_api(f):
+    # work around issue where wraps() requires attributes to exist
+    if not hasattr(f, '_api_doc'):
+        f._api_doc = {}
+    return wraps(f, assigned=WRAPPER_ASSIGNMENTS+('_api_doc',))

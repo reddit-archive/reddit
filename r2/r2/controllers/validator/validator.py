@@ -44,6 +44,7 @@ from datetime import datetime, timedelta
 from curses.ascii import isprint
 import re, inspect
 import pycountry
+from itertools import chain
 
 def visible_promo(article):
     is_promo = getattr(article, "promoted", None) is not None
@@ -85,6 +86,12 @@ class Validator(object):
             field = self.param
 
         c.errors.add(error, msg_params = msg_params, field = field)
+
+    def param_docs(self):
+        param_info = {}
+        for param in filter(None, tup(self.param)):
+            param_info[param] = None
+        return param_info
 
     def __call__(self, url):
         a = []
@@ -129,8 +136,17 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
         kw[var] = validator(env)
     return kw
 
+def set_api_docs(fn, simple_vals, param_vals):
+    doc = fn._api_doc = getattr(fn, '_api_doc', {})
+    param_info = doc.get('parameters', {})
+    for validator in chain(simple_vals, param_vals.itervalues()):
+        param_info.update(validator.param_docs())
+    doc['parameters'] = param_info
+    doc['lineno'] = fn.func_code.co_firstlineno
+
 def validate(*simple_vals, **param_vals):
     def val(fn):
+        @utils.wraps_api(fn)
         def newfn(self, *a, **env):
             try:
                 kw = _make_validated_kw(fn, simple_vals, param_vals, env)
@@ -140,8 +156,7 @@ def validate(*simple_vals, **param_vals):
             except VerifiedUserRequiredException:
                 return self.intermediate_redirect('/verify')
 
-        newfn.__name__ = fn.__name__
-        newfn.__doc__ = fn.__doc__
+        set_api_docs(newfn, simple_vals, param_vals)
         return newfn
     return val
 
@@ -157,6 +172,7 @@ def api_validate(response_type=None):
     def wrap(response_function):
         def _api_validate(*simple_vals, **param_vals):
             def val(fn):
+                @utils.wraps_api(fn)
                 def newfn(self, *a, **env):
                     renderstyle = request.params.get("renderstyle")
                     if renderstyle:
@@ -187,8 +203,7 @@ def api_validate(response_type=None):
                         responder.send_failure(errors.VERIFIED_USER_REQUIRED)
                         return self.api_wrapper(responder.make_response())
 
-                newfn.__name__ = fn.__name__
-                newfn.__doc__ = fn.__doc__
+                set_api_docs(newfn, simple_vals, param_vals)
                 return newfn
             return val
         return _api_validate
