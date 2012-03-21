@@ -44,12 +44,14 @@ from r2.lib import sup
 from r2.lib.promote import randomized_promotion_list, get_promote_srid
 import socket
 
+from api_docs import api_doc, api_section
 from admin import admin_profile_query
 
 from pylons.i18n import _
 from pylons import Response
 
 import random
+from functools import partial
 
 class ListingController(RedditController):
     """Generalized controller for pages with lists of links."""
@@ -180,9 +182,12 @@ class ListingController(RedditController):
     builder_wrapper = staticmethod(default_thing_wrapper())
 
     @base_listing
+    @api_doc(api_section.listings, extensions=['json', 'xml'])
     def GET_listing(self, **env):
         check_cheating('site')
         return self.build_listing(**env)
+
+listing_api_doc = partial(api_doc, section=api_section.listings, extends=ListingController.GET_listing)
 
 class FixListing(object):
     """When sorting by hotness, computing a listing when the before/after
@@ -337,6 +342,7 @@ class HotController(FixListing, ListingController):
     def title(self):
         return c.site.title
 
+    @listing_api_doc(uri='/hot')
     def GET_listing(self, **env):
         self.infotext = request.get.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
@@ -350,6 +356,7 @@ class SavedController(ListingController):
         return queries.get_saved(c.user)
 
     @validate(VUser())
+    @listing_api_doc(uri='/saved')
     def GET_listing(self, **env):
         return ListingController.GET_listing(self, **env)
 
@@ -396,6 +403,7 @@ class NewController(ListingController):
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
     @validate(sort = VMenu('controller', NewMenu))
+    @listing_api_doc(uri='/new')
     def GET_listing(self, sort, **env):
         self.sort = sort
         return ListingController.GET_listing(self, **env)
@@ -433,6 +441,7 @@ class BrowseController(ListingController):
     # TODO: this is a hack with sort.
     @validate(sort = VOneOf('sort', ('top', 'controversial')),
               t = VMenu('sort', ControversyTimeMenu))
+    @listing_api_doc(uri='/{sort}', uri_variants=['/top', '/controversial'])
     def GET_listing(self, sort, t, **env):
         self.sort = sort
         if sort == 'top':
@@ -578,6 +587,10 @@ class UserController(ListingController):
     @validate(vuser = VExistingUname('username'),
               sort = VMenu('sort', ProfileSortMenu, remember = False),
               time = VMenu('t', TimeMenu, remember = False))
+    @listing_api_doc(section=api_section.users, uri='/{username}/{where}',
+                     uri_variants=['/{username}/' + where for where in [
+                                       'overview', 'submitted', 'commented',
+                                       'liked', 'disliked', 'hidden']])
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
         self.sort = sort
@@ -613,7 +626,9 @@ class UserController(ListingController):
         return ListingController.GET_listing(self, **env)
 
     @validate(vuser = VExistingUname('username'))
+    @api_doc(section=api_section.users, uri='/{username}/about', extensions=['json'])
     def GET_about(self, vuser):
+        """Return information about the user, including karma and gold status."""
         if not is_api() or not vuser:
             return self.abort404()
         return Reddit(content = Wrapped(vuser)).render()
@@ -766,6 +781,9 @@ class MessageController(ListingController):
     @validate(VUser(),
               message = VMessageID('mid'),
               mark = VOneOf('mark',('true','false')))
+    @listing_api_doc(section=api_section.messages,
+                     uri='/message/{where}',
+                     uri_variants=['/message/inbox', '/message/unread', '/message/sent'])
     def GET_listing(self, where, mark, message, subwhere = None, **env):
         if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
             abort(403, "forbidden")
@@ -835,6 +853,10 @@ class RedditsController(ListingController):
                 reddits._filter(Subreddit.c.over_18 == False)
 
         return reddits
+
+    @listing_api_doc(section=api_section.subreddits,
+                     uri='/reddits/{where}',
+                     uri_variants=['/reddits/popular', '/reddits/new', '/reddits/banned'])
     def GET_listing(self, where, **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
@@ -883,6 +905,9 @@ class MyredditsController(ListingController):
         return stack
 
     @validate(VUser())
+    @listing_api_doc(section=api_section.subreddits,
+                     uri='/reddits/mine/{where}',
+                     uri_variants=['/reddits/mine/subscriber', '/reddits/mine/contributor', '/reddits/mine/moderator'])
     def GET_listing(self, where = 'inbox', **env):
         self.where = where
         return ListingController.GET_listing(self, **env)

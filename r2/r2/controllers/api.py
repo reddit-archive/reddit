@@ -54,6 +54,7 @@ from r2.lib.subreddit_search import search_reddits
 from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.scraper import str_to_image
+from r2.controllers.api_docs import api_doc, api_section
 
 import csv
 from collections import defaultdict
@@ -76,12 +77,14 @@ def reject_vote(thing):
               (voteword, c.user.name, request.ip, thing.__class__.__name__,
                thing._id36, request.referer), "info")
 
+
 class ApiminimalController(MinimalController):
     """
     Put API calls in here which don't rely on the user being logged in
     """
 
     @validatedForm()
+    @api_doc(api_section.misc)
     def POST_new_captcha(self, form, jquery, *a, **kw):
         iden = get_iden()
         jquery("body").captcha(iden)
@@ -100,6 +103,7 @@ class ApiController(RedditController):
     @validate(link1 = VUrl(['url']),
               link2 = VByName('id'),
               count = VLimit('limit'))
+    @api_doc(api_section.links_and_comments)
     def GET_info(self, link1, link2, count):
         """
         Gets a listing of links which have the provided url.  
@@ -115,7 +119,13 @@ class ApiController(RedditController):
 
 
     @json_validate()
+    @api_doc(api_section.account, extensions=["json"])
     def GET_me(self, responder):
+        """
+        Get info about the currently authenticated user.
+
+        Response includes a modhash, karma, and new mail status.
+        """
         if c.user_is_loggedin:
             return Wrapped(c.user).render()
         else:
@@ -155,6 +165,7 @@ class ApiController(RedditController):
                    to = VMessageRecipient('to'),
                    subject = VRequired('subject', errors.NO_SUBJECT),
                    body = VMarkdown(['text', 'message']))
+    @api_doc(api_section.messages)
     def POST_compose(self, form, jquery, to, subject, body, ip):
         """
         handles message composition under /message/compose.
@@ -186,6 +197,7 @@ class ApiController(RedditController):
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'),
                    extension = VLength("extension", 20))
+    @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
                     save, sr, ip, then, extension):
         from r2.models.admintools import is_banned_domain
@@ -373,10 +385,12 @@ class ApiController(RedditController):
             responder._send_data(cookie  = user.make_cookie())
 
     @cross_domain(allow_credentials=True)
+    @api_doc(api_section.account)
     def POST_login(self, *args, **kwargs):
         return self._handle_login(*args, **kwargs)
 
     @cross_domain(allow_credentials=True)
+    @api_doc(api_section.account)
     def POST_register(self, *args, **kwargs):
         return self._handle_register(*args, **kwargs)
 
@@ -430,6 +444,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
+    @api_doc(api_section.moderation)
     def POST_leavemoderator(self, container):
         """
         Handles self-removal as moderator from a subreddit as rendered
@@ -444,6 +459,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 container = VByName('id'))
+    @api_doc(api_section.moderation)
     def POST_leavecontributor(self, container):
         """
         same comment as for POST_leave_moderator.
@@ -459,6 +475,7 @@ class ApiController(RedditController):
                 container = VByName('container'),
                 type = VOneOf('type', ('friend', 'enemy', 'moderator', 
                                        'contributor', 'banned')))
+    @api_doc(api_section.users)
     def POST_unfriend(self, nuser, iuser, container, type):
         """
         Handles removal of a friend (a user-user relation) or removal
@@ -507,6 +524,7 @@ class ApiController(RedditController):
                    type = VOneOf('type', ('friend', 'moderator',
                                           'contributor', 'banned')),
                    note = VLength('note', 300))
+    @api_doc(api_section.users)
     def POST_friend(self, form, jquery, ip, friend,
                     container, type, note):
         """
@@ -597,8 +615,13 @@ class ApiController(RedditController):
                    VModhash(),
                    password = VPassword(['curpass', 'curpass']),
                    dest = VDestination())
+    @api_doc(api_section.account)
     def POST_clear_sessions(self, form, jquery, password, dest):
-        """Clear all session cookies and update the current one."""
+        """
+        Clear all session cookies and update the current one.
+
+        A valid password (`curpass`) must be supplied.
+        """
         # password is required to proceed
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
             return
@@ -617,9 +640,14 @@ class ApiController(RedditController):
                    email = ValidEmails("email", num = 1),
                    password = VPassword(['newpass', 'verpass']),
                    verify = VBoolean("verify"))
+    @api_doc(api_section.account)
     def POST_update(self, form, jquery, email, password, verify):
         """
-        handles /prefs/update for updating email address and password.
+        Update account email address and password.
+
+        Called by /prefs/update on the site. For frontend form verification
+        purposes, `newpass` and `verpass` must be equal for a password change
+        to succeed.
         """
         # password is required to proceed
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
@@ -678,9 +706,16 @@ class ApiController(RedditController):
                    username = VRequired("user", errors.NOT_USER),
                    user = VThrottledLogin(["user", "passwd"]),
                    confirm = VBoolean("confirm"))
+    @api_doc(api_section.account)
     def POST_delete_user(self, form, jquery, delete_message, username, user, confirm):
         """
-        /prefs/delete. Check the username/password and confirmation.
+        Delete an account.
+
+        A valid username/password and confirmation must be supplied. An
+        optional `delete_message` may be supplied to explain the reason the
+        account is to be deleted.
+
+        Called by /prefs/delete on the site.
         """
         if username and username.lower() != c.user.name.lower():
             c.errors.add(errors.NOT_USER, field="user")
@@ -746,6 +781,7 @@ class ApiController(RedditController):
                 VModhash(),
                 VSrCanAlter('id'),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_marknsfw(self, thing):
         thing.over_18 = True
         thing._commit()
@@ -761,6 +797,7 @@ class ApiController(RedditController):
                 VModhash(),
                 VSrCanAlter('id'),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_unmarknsfw(self, thing):
         thing.over_18 = False
         thing._commit()
@@ -774,6 +811,7 @@ class ApiController(RedditController):
 
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_report(self, thing):
         '''for reporting...'''
         if not thing or thing._deleted:
@@ -800,6 +838,7 @@ class ApiController(RedditController):
 
     @noresponse(VUser(), VModhash(),
                 thing=VByName('id'))
+    @api_doc(api_section.messages)
     def POST_block(self, thing):
         '''for blocking via inbox'''
         if not thing:
@@ -841,6 +880,7 @@ class ApiController(RedditController):
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),
                    text = VSelfText('text'))
+    @api_doc(api_section.links_and_comments)
     def POST_editusertext(self, form, jquery, item, text):
         if (not form.has_errors("text",
                                 errors.NO_TEXT, errors.TOO_LONG) and
@@ -880,6 +920,7 @@ class ApiController(RedditController):
                    ip = ValidIP(),
                    parent = VSubmitParent(['thing_id', 'parent']),
                    comment = VMarkdown(['text', 'comment']))
+    @api_doc(api_section.links_and_comments)
     def POST_comment(self, commentform, jquery, parent, comment, ip):
         should_ratelimit = True
         #check the parent type here cause we need that for the
@@ -1065,6 +1106,7 @@ class ApiController(RedditController):
                 ip = ValidIP(),
                 dir = VInt('dir', min=-1, max=1),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_vote(self, dir, thing, ip, vote_type):
         ip = request.ip
         user = c.user
@@ -1098,6 +1140,7 @@ class ApiController(RedditController):
                    # nop is safe: handled after auth checks below
                    stylesheet_contents = nop('stylesheet_contents'),
                    op = VOneOf('op',['save','preview']))
+    @api_doc(api_section.subreddits)
     def POST_subreddit_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', op='save'):
         if not c.site.can_change_stylesheet(c.user):
@@ -1171,6 +1214,7 @@ class ApiController(RedditController):
     @validatedForm(VSrModerator(),
                    VModhash(),
                    name = VCssName('img_name'))
+    @api_doc(api_section.subreddits)
     def POST_delete_sr_img(self, form, jquery, name):
         """
         Called called upon requested delete on /about/stylesheet.
@@ -1188,6 +1232,7 @@ class ApiController(RedditController):
     @validatedForm(VSrModerator(),
                    VModhash(),
                    sponsor = VInt("sponsor", min = 0, max = 1))
+    @api_doc(api_section.subreddits)
     def POST_delete_sr_header(self, form, jquery, sponsor):
         """
         Called when the user request that the header on a sr be reset.
@@ -1235,6 +1280,7 @@ class ApiController(RedditController):
               form_id = VLength('formid', max_length = 100), 
               header = VInt('header', max=1, min=0),
               sponsor = VSubredditSponsorship('sponsor'))
+    @api_doc(api_section.subreddits)
     def POST_upload_sr_img(self, file, header, sponsor, name, form_id, img_type):
         """
         Called on /about/stylesheet when an image needs to be replaced
@@ -1323,6 +1369,7 @@ class ApiController(RedditController):
                    sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
+    @api_doc(api_section.subreddits)
     def POST_site_admin(self, form, jquery, name, ip, sr,
                         sponsor_text, sponsor_url, sponsor_name, **kw):
         # the status button is outside the form -- have to reset by hand
@@ -1441,6 +1488,7 @@ class ApiController(RedditController):
                 why = VSrCanBan('id'),
                 thing = VByName('id'),
                 spam = VBoolean('spam', default=True))
+    @api_doc(api_section.moderation)
     def POST_remove(self, why, thing, spam):
 
         # Don't remove a promoted link
@@ -1479,6 +1527,7 @@ class ApiController(RedditController):
     @noresponse(VUser(), VModhash(),
                 why = VSrCanBan('id'),
                 thing = VByName('id'))
+    @api_doc(api_section.moderation)
     def POST_approve(self, why, thing):
         if not thing: return
         if thing._deleted: return
@@ -1502,6 +1551,7 @@ class ApiController(RedditController):
                    VCanDistinguish(('id', 'how')),
                    thing = VByName('id'),
                    how = VOneOf('how', ('yes','no','admin','special')))
+    @api_doc(api_section.moderation)
     def POST_distinguish(self, form, jquery, thing, how):
         if not thing:return
 
@@ -1532,6 +1582,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_save(self, thing):
         if not thing: return
         r = thing._save(c.user)
@@ -1541,6 +1592,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_unsave(self, thing):
         if not thing: return
         r = thing._unsave(c.user)
@@ -1619,18 +1671,21 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple=True, limit=25))
+    @api_doc(api_section.messages)
     def POST_unread_message(self, things):
         self.unread_handler(things, True)
 
     @noresponse(VUser(),
                 VModhash(),
                 things = VByName('id', multiple=True, limit=25))
+    @api_doc(api_section.messages)
     def POST_read_message(self, things):
         self.unread_handler(things, False)
 
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_hide(self, thing):
         if not thing: return
         r = thing._hide(c.user)
@@ -1640,6 +1695,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByName('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_unhide(self, thing):
         if not thing: return
         r = thing._unhide(c.user)
@@ -1674,6 +1730,7 @@ class ApiController(RedditController):
                    children = VCommentIDs('children'),
                    pv_hex = VPrintable('pv_hex', 40),
                    mc_id = nop('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_morechildren(self, form, jquery, link, sort, children,
                           pv_hex, mc_id):
         user = c.user if c.user_is_loggedin else None
@@ -1879,6 +1936,7 @@ class ApiController(RedditController):
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
                 sr = VSubscribeSR('sr', 'sr_name'))
+    @api_doc(api_section.subreddits)
     def POST_subscribe(self, action, sr):
         # only users who can make edits are allowed to subscribe.
         # Anyone can leave.
@@ -2055,6 +2113,7 @@ class ApiController(RedditController):
                                          prefer_existing=True),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
+    @api_doc(api_section.flair)
     def POST_flair(self, form, jquery, user, text, css_class):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
@@ -2103,6 +2162,7 @@ class ApiController(RedditController):
                    VModhash(),
                    user = VExistingUname("name", allow_deleted=True,
                                          prefer_existing=True))
+    @api_doc(api_section.flair)
     def POST_deleteflair(self, form, jquery, user):
         # Check validation.
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
@@ -2123,6 +2183,7 @@ class ApiController(RedditController):
     @validate(VFlairManager(),
               VModhash(),
               flair_csv = nop('flair_csv'))
+    @api_doc(api_section.flair)
     def POST_flaircsv(self, flair_csv):
         limit = 100  # max of 100 flair settings per call
         results = FlairCsv()
@@ -2190,6 +2251,7 @@ class ApiController(RedditController):
     @validatedForm(VUser(),
                    VModhash(),
                    flair_enabled = VBoolean("flair_enabled"))
+    @api_doc(api_section.flair)
     def POST_setflairenabled(self, form, jquery, flair_enabled):
         setattr(c.user, 'flair_%s_enabled' % c.site._id, flair_enabled)
         c.user._commit()
@@ -2201,6 +2263,7 @@ class ApiController(RedditController):
         flair_enabled = VBoolean("flair_enabled"),
         flair_position = VOneOf("flair_position", ("left", "right")),
         flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
+    @api_doc(api_section.flair)
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
                          flair_self_assign_enabled):
         if c.site.flair_enabled != flair_enabled:
@@ -2222,6 +2285,7 @@ class ApiController(RedditController):
     @validate(VFlairManager(),
               user = VOptionalExistingUname('name', allow_deleted=True,
                                             prefer_existing=True))
+    @api_doc(api_section.flair)
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
@@ -2232,6 +2296,7 @@ class ApiController(RedditController):
                    text = VFlairText('text'),
                    css_class = VFlairCss('css_class'),
                    text_editable = VBoolean('text_editable'))
+    @api_doc(api_section.flair)
     def POST_flairtemplate(self, form, jquery, flair_template, text,
                            css_class, text_editable):
         if text is None:
@@ -2286,6 +2351,7 @@ class ApiController(RedditController):
     @validatedForm(VFlairManager(),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'))
+    @api_doc(api_section.flair)
     def POST_deleteflairtemplate(self, form, jquery, flair_template):
         idx = FlairTemplateBySubredditIndex.by_sr(c.site._id)
         if idx.delete_by_id(flair_template._id):
@@ -2294,6 +2360,7 @@ class ApiController(RedditController):
                              details='flair_delete_template')
 
     @validatedForm(VFlairManager(), VModhash())
+    @api_doc(api_section.flair)
     def POST_clearflairtemplates(self, form, jquery):
         FlairTemplateBySubredditIndex.clear(c.site._id)
         jquery.refresh()
@@ -2313,6 +2380,7 @@ class ApiController(RedditController):
                    user = VOptionalExistingUname('name'),
                    flair_template = VFlairTemplateByID('flair_template_id'),
                    text = VFlairText("text"))
+    @api_doc(api_section.flair)
     def POST_selectflair(self, form, jquery, user, flair_template, text):
         if not flair_template:
             # TODO: serve error to client
