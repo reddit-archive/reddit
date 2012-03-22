@@ -397,3 +397,27 @@ def convert_query_cache_to_json():
                 out[ckey] = json.dumps(raw)
             m.insert(key, out)
 
+def populate_spam_filtered():
+    from r2.lib.db.queries import get_spam_links, get_spam_comments
+    from r2.lib.db.queries import get_spam_filtered_links, get_spam_filtered_comments
+    from r2.models.query_cache import CachedQueryMutator
+
+    def was_filtered(thing):
+        if thing._spam and not thing._deleted and \
+           getattr(thing, 'verdict', None) != 'mod-removed':
+            return True
+        else:
+            return False
+
+    q = Subreddit._query(sort = asc('_date'))
+    for sr in fetch_things2(q):
+        print 'Processing %s' % sr.name
+        links = Thing._by_fullname(get_spam_links(sr), data=True,
+                                   return_dict=False)
+        comments = Thing._by_fullname(get_spam_comments(sr), data=True,
+                                      return_dict=False)
+        insert_links = [l for l in links if was_filtered(l)]
+        insert_comments = [c for c in comments if was_filtered(c)]
+        with CachedQueryMutator() as m:
+            m.insert(get_spam_filtered_links(sr), insert_links)
+            m.insert(get_spam_filtered_comments(sr), insert_comments)

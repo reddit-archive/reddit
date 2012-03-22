@@ -8,7 +8,8 @@ from r2.lib import utils
 from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.models.query_cache import cached_query, merged_cached_query, UserQueryCache, CachedQueryMutator
+from r2.models.query_cache import cached_query, merged_cached_query, \
+    UserQueryCache, SubredditQueryCache, CachedQueryMutator
 from r2.models.query_cache import ThingTupleComparator
 
 import cPickle as pickle
@@ -321,6 +322,27 @@ def get_spam(sr):
         return merge_results(get_spam_links(sr),
                              get_spam_comments(sr))
 
+@cached_query(SubredditQueryCache)
+def get_spam_filtered_links(sr_id):
+    """ NOTE: This query will never run unless someone does an "update" on it,
+        but that will probably timeout. Use insert_spam_filtered_links."""
+    return Link._query(Link.c.sr_id == sr_id,
+                       Link.c._spam == True,
+                       Link.c.verdict != 'mod-removed',
+                       sort = db_sort('new'))
+
+@cached_query(SubredditQueryCache)
+def get_spam_filtered_comments(sr_id):
+    return Comment._query(Comment.c.sr_id == sr_id,
+                          Comment.c._spam == True,
+                          Comment.c.verdict != 'mod-removed',
+                          sort = db_sort('new'))
+
+@merged_cached_query
+def get_spam_filtered(sr):
+    return [get_spam_filtered_links(sr),
+            get_spam_filtered_comments(sr)]
+
 def get_reported_links(sr):
     q_l = Link._query(Link.c.reported != 0,
                       Link.c.sr_id == sr._id,
@@ -403,14 +425,14 @@ def get_modqueue(sr):
         for sr in srs:
             results.append(get_reported_links(sr))
             results.append(get_reported_comments(sr))
-            results.append(get_spam_links(sr))
-            results.append(get_spam_comments(sr))
+            results.append(get_spam_filtered_links(sr))
+            results.append(get_spam_filtered_comments(sr))
     else:
         results.append(get_trials_links(sr))
         results.append(get_reported_links(sr))
         results.append(get_reported_comments(sr))
-        results.append(get_spam_links(sr))
-        results.append(get_spam_comments(sr))
+        results.append(get_spam_filtered_links(sr))
+        results.append(get_spam_filtered_comments(sr))
 
     return merge_results(*results)
 
@@ -829,10 +851,17 @@ def del_or_ban(things, why):
 
             add_queries(results, delete_items = links)
 
+            if why == "del":
+                with CachedQueryMutator() as m:
+                    m.delete(get_spam_filtered_links(sr), links)
+
         if comments:
             add_queries([get_spam_comments(sr)], insert_items = comments)
             add_queries([get_all_comments(),
                          get_sr_comments(sr)], delete_items = comments)
+            if why == "del":
+                with CachedQueryMutator() as m:
+                    m.delete(get_spam_filtered_comments(sr), comments)
 
     if why == "del":
         with CachedQueryMutator() as m:
@@ -901,6 +930,49 @@ def clear_reports(things):
             add_queries([get_reported_links(sr)], delete_items = links)
         if comments:
             add_queries([get_reported_comments(sr)], delete_items = comments)
+
+def new_spam_filtered(things):
+    by_srid, srs = _by_srid(things)
+    if not by_srid:
+        return
+
+    def was_filtered(thing):
+        if thing._spam and not thing._deleted and \
+           getattr(thing, 'verdict', None) != 'mod-removed':
+            return True
+        else:
+            return False
+
+    with CachedQueryMutator() as m:
+        for sr_id, sr_things in by_srid.iteritems():
+            sr = srs[sr_id]
+            links = [ x for x in sr_things if isinstance(x, Link) ]
+            comments = [ x for x in sr_things if isinstance(x, Comment) ]
+
+            insert_links = []
+            delete_links = []
+            for l in links:
+                if was_filtered(l):
+                    insert_links.append(l)
+                else:
+                    delete_links.append(l)
+
+            insert_comments = []
+            delete_comments = []
+            for c in comments:
+                if was_filtered(c):
+                    insert_comments.append(c)
+                else:
+                    delete_comments.append(c)
+
+            if insert_links:
+                m.insert(get_spam_filtered_links(sr), insert_links)
+            if delete_links:
+                m.delete(get_spam_filtered_links(sr), delete_links)
+            if insert_comments:
+                m.insert(get_spam_filtered_comments(sr), insert_comments)
+            if delete_comments:
+                m.delete(get_spam_filtered_comments(sr), delete_comments)
 
 def add_all_ban_report_srs():
     """Adds the initial spam/reported pages to the report queue"""
