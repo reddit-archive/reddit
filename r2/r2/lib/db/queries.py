@@ -9,7 +9,7 @@ from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.models.query_cache import cached_query, merged_cached_query, \
-    UserQueryCache, SubredditQueryCache, CachedQueryMutator
+    UserQueryCache, SubredditQueryCache, CachedQueryMutator, CachedQuery
 from r2.models.query_cache import ThingTupleComparator
 
 import cPickle as pickle
@@ -217,6 +217,8 @@ class MergedCachedResults(object):
         self.cached_results = results
         CachedResults.fetch_multi([r for r in results
                                    if isinstance(r, CachedResults)])
+        CachedQuery._fetch_multi([r for r in results
+                                   if isinstance(r, CachedQuery)])
         self._fetched = True
 
         self.sort = results[0].sort
