@@ -9,7 +9,7 @@ from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.models.query_cache import cached_query, merged_cached_query, UserQueryCache, CachedQueryMutator
-from r2.models.query_cache import ThingTupleComparator, SubredditQueryCache
+from r2.models.query_cache import ThingTupleComparator
 
 import cPickle as pickle
 
@@ -436,10 +436,10 @@ def user_query(kind, user_id, sort, time):
         q._filter(db_times[time])
     return make_results(q)
 
-@cached_query(SubredditQueryCache)
 def get_all_comments():
     """the master /comments page"""
-    return Comment._query(sort=desc('_date'))
+    q = Comment._query(sort = desc('_date'))
+    return make_results(q)
 
 def get_sr_comments(sr):
     return _get_sr_comments(sr._id)
@@ -616,9 +616,7 @@ def new_comment(comment, inbox_rels):
     if comment._deleted:
         job_key = "delete_items"
         job.append(get_sr_comments(sr))
-
-        with CachedQueryMutator() as m:
-            m.delete(get_all_comments(), [comment])
+        job.append(get_all_comments())
     else:
         job_key = "insert_items"
         if comment._spam:
@@ -812,7 +810,6 @@ def del_or_ban(things, why):
     if not by_srid:
         return
 
-    comments_to_remove = []
     for sr_id, things in by_srid.iteritems():
         sr = srs[sr_id]
         links = [x for x in things if isinstance(x, Link)]
@@ -834,13 +831,11 @@ def del_or_ban(things, why):
 
         if comments:
             add_queries([get_spam_comments(sr)], insert_items = comments)
-            add_queries([get_sr_comments(sr)], delete_items = comments)
-            comments_to_remove.extend(comments)
+            add_queries([get_all_comments(),
+                         get_sr_comments(sr)], delete_items = comments)
 
-    with CachedQueryMutator() as m:
-        m.delete(get_all_comments(), comments_to_remove)
-
-        if why == "del":
+    if why == "del":
+        with CachedQueryMutator() as m:
             for author_id, things in _by_author(things).iteritems():
                 links = [x for x in things if isinstance(x, Link)]
                 if links:
@@ -857,7 +852,6 @@ def unban(things):
     if not by_srid:
         return
 
-    all_comments = []
     for sr_id, things in by_srid.iteritems():
         sr = srs[sr_id]
         links = [x for x in things if isinstance(x, Link)]
@@ -878,12 +872,9 @@ def unban(things):
             add_queries(results, insert_items = links)
 
         if comments:
-            all_comments.extend(comments)
             add_queries([get_spam_comments(sr)], delete_items = comments)
-            add_queries([get_sr_comments(sr)], insert_items = comments)
-
-    with CachedQueryMutator() as m:
-        m.insert(get_all_comments(), all_comments)
+            add_queries([get_all_comments(),
+                         get_sr_comments(sr)], insert_items = comments)
 
     changed(things)
 
@@ -980,9 +971,8 @@ def run_new_comments(limit=1000):
         fnames = [msg.body for msg in msgs]
 
         comments = Comment._by_fullname(fnames, data=True, return_dict=False)
-
-        with CachedQueryMutator() as m:
-            m.insert(get_all_comments(), comments)
+        add_queries([get_all_comments()],
+                    insert_items=comments)
 
         bysrid = _by_srid(comments, False)
         for srid, sr_comments in bysrid.iteritems():
