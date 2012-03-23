@@ -2506,7 +2506,7 @@ class FlairPane(Templated):
 
         Templated.__init__(
             self,
-            tabs=TabbedPane(tabs),
+            tabs=TabbedPane(tabs, linkable=True),
             flair_enabled=c.site.flair_enabled,
             flair_position=c.site.flair_position,
             link_flair_position=c.site.link_flair_position,
@@ -3028,17 +3028,18 @@ class Roadblocks(Templated):
                           else g.default_sr
 
 class TabbedPane(Templated):
-    def __init__(self, tabs):
+    def __init__(self, tabs, linkable=False):
         """Renders as tabbed area where you can choose which tab to
         render. Tabs is a list of tuples (tab_name, tab_pane)."""
         buttons = []
         for tab_name, title, pane in tabs:
-            buttons.append(JsButton(title, onclick="return select_tab_menu(this, '%s');" % tab_name))
+            onclick = "return select_tab_menu(this, '%s')" % tab_name
+            buttons.append(JsButton(title, tab_name=tab_name, onclick=onclick))
 
         self.tabmenu = JsNavMenu(buttons, type = 'tabmenu')
         self.tabs = tabs
 
-        Templated.__init__(self)
+        Templated.__init__(self, linkable=linkable)
 
 class LinkChild(object):
     def __init__(self, link, load = False, expand = False, nofollow = False):

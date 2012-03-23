@@ -7,3 +7,15 @@ ${thing.tabmenu}
     </div>
   %endfor
 </div>
+%if thing.linkable:
+  <script>
+    $(function() {
+        var target = "tab-" + $(window.location).attr("hash").substr(1);
+        $(".tabmenu li").each(function() {
+            if (this.id == target) {
+                $(this).find("a").click();
+            }
+        });
+    });
+  </script>
+%endif

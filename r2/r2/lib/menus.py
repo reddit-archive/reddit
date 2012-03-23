@@ -363,11 +363,15 @@ class NamedButton(NavButton):
 class JsButton(NavButton):
     """A button which fires a JS event and thus has no path and cannot
     be in the 'selected' state"""
-    def __init__(self, title, style = 'js', **kw):
-        NavButton.__init__(self, title, '#', style = style, **kw)
+    def __init__(self, title, style = 'js', tab_name = None, **kw):
+        NavButton.__init__(self, title, '#', style = style, tab_name = tab_name,
+                           **kw)
 
     def build(self, *a, **kw):
-        self.path = 'javascript:void(0)'
+        if self.tab_name:
+            self.path = '#' + self.tab_name
+        else:
+            self.path = 'javascript:void(0)'
 
     def is_selected(self):
         return False
