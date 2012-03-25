@@ -1191,8 +1191,14 @@ class VRatelimit(Validator):
         Validator.__init__(self, *a, **kw)
 
     def run (self):
+        from r2.models.admintools import admin_ratelimit
+
         if g.disable_ratelimit:
             return
+
+        if c.user_is_loggedin and not admin_ratelimit(c.user):
+            return
+
         to_check = []
         if self.rate_user and c.user_is_loggedin:
             to_check.append('user' + str(c.user._id36))

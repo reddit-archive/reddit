@@ -317,6 +317,9 @@ def update_gold_users(verbose=False):
             delta, account = minimum
             print "Next expiration is %s, in %d days" % (account.name, delta.days)
 
+def admin_ratelimit(user):
+    return True
+
 def is_banned_IP(ip):
     return False
 
