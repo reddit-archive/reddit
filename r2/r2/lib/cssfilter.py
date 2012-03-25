@@ -389,9 +389,7 @@ def find_preview_links(sr):
     # try to find a link to use, otherwise give up and return
     links = get_hot([c.site])
     if not links:
-        sr = Subreddit._by_name(g.default_sr)
-        if sr:
-            links = get_hot([sr])
+        links = get_hot(Subreddit.default_subreddits(ids=False))
 
     if links:
         links = links[:25]
