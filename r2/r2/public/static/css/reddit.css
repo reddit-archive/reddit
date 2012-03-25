@@ -2942,7 +2942,7 @@ ul#image-preview-list .description pre {
     border-color: lightgray;
     padding: 5px; 
     margin: 5px; 
-    width: 100%;
+    width: 900px;
 }
 
 #preview-table > table > tbody > tr { padding-bottom: 10px;  }
