@@ -364,13 +364,23 @@ def validate_css(string):
     return parsed,report
 
 def find_preview_comments(sr):
-    comments = Comment._query(Comment.c.sr_id == c.site._id,
-                              limit=25, data=True)
-    comments = list(comments)
-    if not comments:
-        comments = Comment._query(limit=25, data=True)
-        comments = list(comments)
+    if g.use_query_cache:
+        from r2.lib.db.queries import get_sr_comments, get_all_comments
 
+        comments = get_sr_comments(c.site)
+        comments = list(comments)
+        if not comments:
+            comments = get_all_comments()
+            comments = list(comments)
+
+        return Thing._by_fullname(comments[:25], data=True, return_dict=False)
+    else:
+        comments = Comment._query(Comment.c.sr_id == c.site._id,
+                                  limit=25, data=True)
+        comments = list(comments)
+        if not comments:
+            comments = Comment._query(limit=25, data=True)
+            comments = list(comments)
     return comments
 
 def find_preview_links(sr):
