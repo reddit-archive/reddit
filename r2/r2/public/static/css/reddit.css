@@ -5190,8 +5190,16 @@ tr.gold-accent + tr > td {
     position: relative;
     border: 2px solid #ccc;
     border-radius: 12px;
-    padding: 14px;
     margin-bottom: -1em;
+}
+
+.api-help .contents .introduction p {
+    margin: 1em 14px;
+}
+
+.api-help .contents .introduction strong {
+    color: #222;
+    font-weight: bold;
 }
 
 .api-help .introduction:before,
