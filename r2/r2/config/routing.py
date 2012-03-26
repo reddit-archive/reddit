@@ -204,7 +204,7 @@ def make_map(global_conf={}, app_conf={}):
     mc('/post/:action', controller='post',
        requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
 
-    mc('/api', controller='apidocs', action='docs')
+    mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     # wherever this is, google has to agree.
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
@@ -224,6 +224,9 @@ def make_map(global_conf={}, app_conf={}):
     mc("/api/v1/:action", controller="oauth2frontend", requirements=dict(action="authorize"))
     mc("/api/v1/:action", controller="oauth2access", requirements=dict(action="access_token"))
     mc("/api/v1/:action", controller="apiv1")
+
+    mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
+    mc('/dev/api', controller='apidocs', action='docs')
 
     mc("/button_info", controller="api", action="info", limit = 1)
 
