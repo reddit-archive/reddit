@@ -57,6 +57,7 @@ def api_doc(section, **kwargs):
             kwargs['extends'] = kwargs['extends']._api_doc
         doc.update(kwargs)
         doc['section'] = section
+        doc['lineno'] = api_function.func_code.co_firstlineno
         return api_function
     return add_metadata
 
