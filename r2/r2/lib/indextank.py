@@ -95,9 +95,8 @@ class IndextankQuery(object):
         #    q.append(self._req_fs(
         #            Subreddit.user_subreddits(c.user,over18=c.over18,
         #                                      ids=True, limit=None)))
-        elif isinstance(self.sr, MultiReddit):
-            q.append(self._req_fs(
-                    self.sr.sr_ids))
+        elif isinstance(self.sr, (MultiReddit, ModContribSR)):
+            q.append(self._req_fs(self.sr.sr_ids))
         elif isinstance(self.sr, DomainSR):
             q.append('+site:%s' % (self.sr.domain))
         elif self.sr == Friends and c.user_is_loggedin and c.user.friends:
@@ -110,9 +109,6 @@ class IndextankQuery(object):
 
             q.append(self._req_fs(
                     friend_names, field='author'))
-        elif isinstance(self.sr, ModContribSR):
-            q.append(self._req_fs(
-                    self.sr.sr_ids()))
         elif not isinstance(self.sr, FakeSubreddit):
             q.append(self._req_fs([self.sr._id]))
 

@@ -398,11 +398,8 @@ class FrontController(RedditController):
         if not c.user_is_loggedin:
             return self.abort404()
 
-        if isinstance(c.site, ModSR) or isinstance(c.site, MultiReddit):
-            if isinstance(c.site, ModSR):
-                srs = Subreddit._byID(c.site.sr_ids(), return_dict=False)
-            else:
-                srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
+        if isinstance(c.site, (MultiReddit, ModSR)):
+            srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
 
             # check that user is mod on all requested srs
             if not Subreddit.user_mods_all(c.user, srs) and not c.user_is_admin:

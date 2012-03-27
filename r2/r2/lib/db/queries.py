@@ -314,7 +314,7 @@ def get_spam_comments(sr):
 
 def get_spam(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         results = [ get_spam_links(sr) for sr in srs ]
         return merge_results(*results)
     else:
@@ -337,7 +337,7 @@ def get_reported_comments(sr):
 
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         results = []
         results.extend(get_reported_links(sr) for sr in srs)
         results.extend(get_reported_comments(sr) for sr in srs)
@@ -389,7 +389,7 @@ def get_trials_links(sr):
 
 def get_trials(sr):
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         return get_trials_links(srs)
     else:
         return get_trials_links(sr)
@@ -397,7 +397,7 @@ def get_trials(sr):
 def get_modqueue(sr):
     results = []
     if isinstance(sr, ModContribSR):
-        srs = Subreddit._byID(sr.sr_ids(), return_dict=False)
+        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         results.append(get_trials_links(srs))
 
         for sr in srs:
