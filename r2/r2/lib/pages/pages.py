@@ -22,7 +22,7 @@
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models.oauth2 import OAuth2Client
@@ -234,7 +234,7 @@ class Reddit(Templated):
             ps.append(SponsorshipBox())
 
         no_ads_yet = True
-        if isinstance(c.site, MultiReddit) and c.user_is_loggedin:
+        if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
             srs = Subreddit._byID(c.site.sr_ids,data=True,
                                   return_dict=False)
             if srs:
