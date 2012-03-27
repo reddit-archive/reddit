@@ -2,7 +2,9 @@ import re
 from collections import defaultdict
 from itertools import chain
 import inspect
+from os.path import relpath
 
+from pylons import config
 from pylons.i18n import _
 from reddit_base import RedditController
 from r2.lib.utils import Storage
@@ -57,6 +59,7 @@ def api_doc(section, **kwargs):
             kwargs['extends'] = kwargs['extends']._api_doc
         doc.update(kwargs)
         doc['section'] = section
+        doc['filepath'] = api_function.func_code.co_filename
         doc['lineno'] = api_function.func_code.co_firstlineno
         return api_function
     return add_metadata
@@ -79,6 +82,7 @@ class ApidocsController(RedditController):
         - `extends`: API method from which to inherit documentation
         """
 
+        root_dir = config['pylons.paths']['root']
         api_docs = defaultdict(lambda: defaultdict(dict))
         for name, func in controller.__dict__.iteritems():
             method, sep, action = name.partition('_')
@@ -103,6 +107,11 @@ class ApidocsController(RedditController):
                         uri += '.' + docs['extensions'][0]
                         del docs['extensions']
                 docs['uri'] = uri
+
+                # make the file path relative to the module root for use in
+                # github source link generation
+                if docs['filepath'].startswith(root_dir):
+                    docs['relfilepath'] = relpath(docs['filepath'], root_dir)
 
                 # add every variant to the index -- the templates will filter
                 # out variants in the long-form documentation
