@@ -1127,6 +1127,7 @@ def ip_and_slash16(req):
 
     if ip is None:
         raise ValueError("request.ip is None")
+    ip = ip.strip()
 
     m = r_subnet.match(ip)
     if m is None:
