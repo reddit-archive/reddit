@@ -824,7 +824,7 @@ def fix_if_broken(thing, delete = True, fudge_links = False):
 
             if not tried_loading:
                 tried_loading = True
-                thing._load(check_essentials=False)
+                thing._load()
 
             try:
                 getattr(thing, attr)
