@@ -488,10 +488,10 @@ def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))
 
-def user_rel_query(rel, user, name, filters = []):
-    """General user relationship query."""
+def rel_query(rel, thing, name, filters = []):
+    """General relationship query."""
 
-    q = rel._query(rel.c._thing1_id == user._id,
+    q = rel._query(rel.c._thing1_id == thing._id,
                    rel.c._t2_deleted == False,
                    rel.c._name == name,
                    sort = desc('_date'),
@@ -506,45 +506,45 @@ def user_rel_query(rel, user, name, filters = []):
 vote_rel = Vote.rel(Account, Link)
 
 def get_liked(user):
-    return user_rel_query(vote_rel, user, '1')
+    return rel_query(vote_rel, user, '1')
 
 def get_disliked(user):
-    return user_rel_query(vote_rel, user, '-1')
+    return rel_query(vote_rel, user, '-1')
 
 def get_hidden(user):
-    return user_rel_query(SaveHide, user, 'hide')
+    return rel_query(SaveHide, user, 'hide')
 
 def get_saved(user):
-    return user_rel_query(SaveHide, user, 'save')
+    return rel_query(SaveHide, user, 'save')
 
 def get_subreddit_messages(sr):
-    return user_rel_query(ModeratorInbox, sr, 'inbox')
+    return rel_query(ModeratorInbox, sr, 'inbox')
 
 def get_unread_subreddit_messages(sr):
-    return user_rel_query(ModeratorInbox, sr, 'inbox',
+    return rel_query(ModeratorInbox, sr, 'inbox',
                           filters = [ModeratorInbox.c.new == True])
 
 inbox_message_rel = Inbox.rel(Account, Message)
 def get_inbox_messages(user):
-    return user_rel_query(inbox_message_rel, user, 'inbox')
+    return rel_query(inbox_message_rel, user, 'inbox')
 
 def get_unread_messages(user):
-    return user_rel_query(inbox_message_rel, user, 'inbox',
+    return rel_query(inbox_message_rel, user, 'inbox',
                           filters = [inbox_message_rel.c.new == True])
 
 inbox_comment_rel = Inbox.rel(Account, Comment)
 def get_inbox_comments(user):
-    return user_rel_query(inbox_comment_rel, user, 'inbox')
+    return rel_query(inbox_comment_rel, user, 'inbox')
 
 def get_unread_comments(user):
-    return user_rel_query(inbox_comment_rel, user, 'inbox',
+    return rel_query(inbox_comment_rel, user, 'inbox',
                           filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox_selfreply(user):
-    return user_rel_query(inbox_comment_rel, user, 'selfreply')
+    return rel_query(inbox_comment_rel, user, 'selfreply')
 
 def get_unread_selfreply(user):
-    return user_rel_query(inbox_comment_rel, user, 'selfreply',
+    return rel_query(inbox_comment_rel, user, 'selfreply',
                           filters = [inbox_comment_rel.c.new == True])
 
 def get_inbox(user):
