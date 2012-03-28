@@ -1,6 +1,7 @@
 from threading import Thread
 import os
 import time
+import json
 
 from pylons.controllers.util import abort
 from pylons import c, g, response
@@ -23,4 +24,4 @@ class HealthController(MinimalController):
     def GET_health(self):
         c.dontcache = True
         response.headers['Content-Type'] = 'text/plain'
-        return "i'm still alive!"
+        return json.dumps(g.versions, sort_keys=True, indent=4)

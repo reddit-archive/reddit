@@ -428,13 +428,15 @@ class Globals(object):
             raise Exception("write_query_queue requires use_query_cache")
 
         # try to set the source control revision number
+        self.versions = {}
+
         try:
-            self.version = subprocess.check_output(["git", "rev-parse", "HEAD"])
+            self.versions['r2'] = subprocess.check_output(["git", "rev-parse", "HEAD"])
         except subprocess.CalledProcessError, e:
             self.log.info("Couldn't read source revision (%r)" % e)
-            self.version = self.short_version = '(unknown)'
+            self.versions['r2'] = self.short_version = '(unknown)'
         else:
-            self.short_version = self.version[:7]
+            self.short_version = self.versions['r2'][:7]
 
         if self.log_start:
             self.log.error("reddit app %s:%s started %s at %s" %
