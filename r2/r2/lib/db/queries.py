@@ -264,6 +264,23 @@ def merge_results(*results):
         m.prewrap_fn = results[0].prewrap_fn
         return m
 
+def migrating_cached_query(model, filter_fn=filter_identity):
+    """Returns a CachedResults object that has a new-style cached query
+    attached as "new_query". This way, reads will happen from the old
+    query cache while writes can be made to go to both caches until a
+    backfill migration is complete."""
+
+    decorator = cached_query(model, filter_fn)
+    def migrating_cached_query_decorator(fn):
+        wrapped = decorator(fn)
+        def migrating_cached_query_wrapper(*args):
+            new_query = wrapped(*args)
+            old_query = make_results(new_query.query, filter_fn)
+            old_query.new_query = new_query
+            return old_query
+        return migrating_cached_query_wrapper
+    return migrating_cached_query_decorator
+
 
 @cached_query(UserQueryCache)
 def get_deleted_links(user_id):
@@ -585,6 +602,18 @@ def add_queries(queries, insert_items=None, delete_items=None, foreground=False)
                 worker.do(q.delete, delete_items)
         else:
             raise Exception("Cannot update query %r!" % (q,))
+
+    # dual-write any queries that are being migrated to the new query cache
+    with CachedQueryMutator() as m:
+        new_queries = [getattr(q, 'new_query') for q in queries if hasattr(q, 'new_query')]
+
+        if insert_items:
+            for query in new_queries:
+                m.insert(query, tup(insert_items))
+
+        if delete_items:
+            for query in new_queries:
+                m.delete(query, tup(delete_items))
 
 #can be rewritten to be more efficient
 def all_queries(fn, obj, *param_lists):
