@@ -34,7 +34,7 @@ from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
 from r2.lib.utils import thread_dump
 from r2.lib.db.stats import QueryStats
-from r2.lib.translation import get_active_langs
+from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
@@ -427,11 +427,14 @@ class Globals(object):
         if self.write_query_queue and not self.use_query_cache:
             raise Exception("write_query_queue requires use_query_cache")
 
-        # try to set the source control revision number
+        # try to set the source control revision numbers
         self.versions = {}
         r2_root = os.path.dirname(os.path.dirname(self.paths["root"]))
         r2_gitdir = os.path.join(r2_root, ".git")
         self.short_version = self.record_repo_version("r2", r2_gitdir)
+
+        i18n_git_path = os.path.join(os.path.dirname(I18N_PATH), ".git")
+        self.record_repo_version("i18n", i18n_git_path)
 
         if self.log_start:
             self.log.error("reddit app %s:%s started %s at %s" %
