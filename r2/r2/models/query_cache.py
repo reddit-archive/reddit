@@ -78,6 +78,7 @@ class CachedQuery(CachedQueryBase):
         self.model = model
         self.key = key
         self.query = query
+        self.query._limit = MAX_CACHED_ITEMS  # .update() should only get as many items as we need
         self.filter = filter_fn
         self.timestamps = None  # column timestamps, for safe pruning
         super(CachedQuery, self).__init__(query._sort)
