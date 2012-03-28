@@ -429,14 +429,9 @@ class Globals(object):
 
         # try to set the source control revision number
         self.versions = {}
-
-        try:
-            self.versions['r2'] = subprocess.check_output(["git", "rev-parse", "HEAD"])
-        except subprocess.CalledProcessError, e:
-            self.log.info("Couldn't read source revision (%r)" % e)
-            self.versions['r2'] = self.short_version = '(unknown)'
-        else:
-            self.short_version = self.versions['r2'][:7]
+        r2_root = os.path.dirname(os.path.dirname(self.paths["root"]))
+        r2_gitdir = os.path.join(r2_root, ".git")
+        self.short_version = self.record_repo_version("r2", r2_gitdir)
 
         if self.log_start:
             self.log.error("reddit app %s:%s started %s at %s" %
@@ -444,6 +439,27 @@ class Globals(object):
                             self.short_version, datetime.now()))
 
         initialize_admin_globals(self)
+
+    def record_repo_version(self, repo_name, git_dir):
+        """Get the currently checked out git revision for a given repository,
+        record it in g.versions, and return the short version of the hash."""
+        try:
+            subprocess.check_output
+        except AttributeError:
+            # python 2.6 compat
+            pass
+        else:
+            try:
+                revision = subprocess.check_output(["git",
+                                                    "--git-dir", git_dir,
+                                                    "rev-parse", "HEAD"])
+            except subprocess.CalledProcessError, e:
+                self.log.warning("Unable to fetch git revision: %r", e)
+            else:
+                self.versions[repo_name] = revision.rstrip()
+                return revision[:7]
+
+        return "(unknown)"
 
     def load_db_params(self):
         self.databases = tuple(ConfigValue.to_iter(self.config.raw_data['databases']))
