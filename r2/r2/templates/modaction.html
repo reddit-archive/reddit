@@ -31,7 +31,7 @@
         bgcolor = 'rgb(%s,%s,%s)' % thing.bgcolor
  %> 
 
-<tr class="modactions" style="background-color: ${bgcolor}">
+<tr class="modactions" style="background-color: ${bgcolor}" data-fullname="${thing.fullname}">
   <td class="timestamp whitespace:nowrap">${timestamp(thing.date)}&#32;ago</td>
   %if is_multi:
     <td class="subreddit">${plain_link('/r/' + thing.sr_name, thing.sr_path + 'about/log', title=thing.sr_name)}</td>
