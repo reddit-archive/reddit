@@ -33,6 +33,10 @@
 ### specific fill-in functions for comment
 ##################
 
+<%def name="thing_data_attributes(what)" buffered="True">
+${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${what.downvotes}"
+</%def>
+
 <%def name="midcol(display=True, cls = '')">
 ${parent.midcol(not thing.collapsed, cls = cls)}
 </%def>

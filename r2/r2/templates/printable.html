@@ -47,6 +47,8 @@ ${self.RenderPrintable()}
 
 <%def name="thing_css_class(what)">thing id-${what._fullname}</%def>
 
+<%def name="thing_data_attributes(what)">data-fullname="${what._fullname}"</%def>
+
 <%def name="RenderPrintable()">
 <% cls = thing.lookups[0].__class__.__name__.lower() %>
 <%
@@ -76,7 +78,8 @@ ${self.RenderPrintable()}
      rowclass += " hidden"
  %>
 <div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)} ${selflink}"
-    ${thing.display} data-fullname="${thing._fullname}" onclick="click_thing(this)">
+    ${thing.display} onclick="click_thing(this)"
+    ${unsafe(self.thing_data_attributes(thing))}>
   <p class="parent">
     ${self.ParentDiv()}
   </p>
