@@ -9,7 +9,8 @@ from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.models.query_cache import cached_query, merged_cached_query, \
-    UserQueryCache, SubredditQueryCache, CachedQueryMutator, CachedQuery
+                                  CachedQuery, CachedQueryMutator
+from r2.models.query_cache import UserQueryCache, SubredditQueryCache
 from r2.models.query_cache import ThingTupleComparator
 
 import cPickle as pickle
@@ -505,10 +506,10 @@ def get_overview(user, sort, time):
     return merge_results(get_comments(user, sort, time),
                          get_submitted(user, sort, time))
 
-def rel_query(rel, thing, name, filters = []):
+def rel_query(rel, thing_id, name, filters = []):
     """General relationship query."""
 
-    q = rel._query(rel.c._thing1_id == thing._id,
+    q = rel._query(rel.c._thing1_id == thing_id,
                    rel.c._t2_deleted == False,
                    rel.c._name == name,
                    sort = desc('_date'),
@@ -518,48 +519,63 @@ def rel_query(rel, thing, name, filters = []):
     if filters:
         q._filter(*filters)
 
-    return make_results(q, filter_thing2)
+    return q
 
 vote_rel = Vote.rel(Account, Link)
 
+migrating_cached_userrel_query = migrating_cached_query(UserQueryCache, filter_thing2)
+migrating_cached_srrel_query = migrating_cached_query(SubredditQueryCache, filter_thing2)
+
+@migrating_cached_userrel_query
 def get_liked(user):
     return rel_query(vote_rel, user, '1')
 
+@migrating_cached_userrel_query
 def get_disliked(user):
     return rel_query(vote_rel, user, '-1')
 
+@migrating_cached_userrel_query
 def get_hidden(user):
     return rel_query(SaveHide, user, 'hide')
 
+@migrating_cached_userrel_query
 def get_saved(user):
     return rel_query(SaveHide, user, 'save')
 
+@migrating_cached_srrel_query
 def get_subreddit_messages(sr):
     return rel_query(ModeratorInbox, sr, 'inbox')
 
+@migrating_cached_srrel_query
 def get_unread_subreddit_messages(sr):
     return rel_query(ModeratorInbox, sr, 'inbox',
                           filters = [ModeratorInbox.c.new == True])
 
 inbox_message_rel = Inbox.rel(Account, Message)
+@migrating_cached_userrel_query
 def get_inbox_messages(user):
     return rel_query(inbox_message_rel, user, 'inbox')
 
+@migrating_cached_userrel_query
 def get_unread_messages(user):
     return rel_query(inbox_message_rel, user, 'inbox',
                           filters = [inbox_message_rel.c.new == True])
 
 inbox_comment_rel = Inbox.rel(Account, Comment)
+@migrating_cached_userrel_query
 def get_inbox_comments(user):
     return rel_query(inbox_comment_rel, user, 'inbox')
 
+@migrating_cached_userrel_query
 def get_unread_comments(user):
     return rel_query(inbox_comment_rel, user, 'inbox',
                           filters = [inbox_comment_rel.c.new == True])
 
+@migrating_cached_userrel_query
 def get_inbox_selfreply(user):
     return rel_query(inbox_comment_rel, user, 'selfreply')
 
+@migrating_cached_userrel_query
 def get_unread_selfreply(user):
     return rel_query(inbox_comment_rel, user, 'selfreply',
                           filters = [inbox_comment_rel.c.new == True])
