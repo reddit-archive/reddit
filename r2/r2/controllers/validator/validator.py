@@ -674,7 +674,7 @@ class VGold(VUser):
     def run(self):
         VUser.run(self)
         if not c.user.gold:
-            raise GoldRequiredException
+            abort(403, 'forbidden')
 
 class VSponsorAdmin(VVerifiedUser):
     """
