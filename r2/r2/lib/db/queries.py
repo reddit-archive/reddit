@@ -688,6 +688,7 @@ def new_comment(comment, inbox_rels):
         job_key = "insert_items"
         if comment._spam:
             job.append(get_spam_comments(sr))
+            new_spam_filtered(comment)
         amqp.add_item('new_comment', comment._fullname)
         if not g.amqp_host:
             add_comment_tree([comment])
