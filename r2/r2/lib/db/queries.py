@@ -321,17 +321,17 @@ def _get_links(sr_id, sort, time):
 
     return res
 
-def get_spam_links(sr):
-    q_l = Link._query(Link.c.sr_id == sr._id,
-                      Link.c._spam == True,
-                      sort = db_sort('new'))
-    return make_results(q_l)
+@migrating_cached_query(SubredditQueryCache)
+def get_spam_links(sr_id):
+    return Link._query(Link.c.sr_id == sr_id,
+                       Link.c._spam == True,
+                       sort = db_sort('new'))
 
-def get_spam_comments(sr):
-    q_c = Comment._query(Comment.c.sr_id == sr._id,
-                         Comment.c._spam == True,
-                         sort = db_sort('new'))
-    return make_results(q_c)
+@migrating_cached_query(SubredditQueryCache)
+def get_spam_comments(sr_id):
+    return Comment._query(Comment.c.sr_id == sr_id,
+                          Comment.c._spam == True,
+                          sort = db_sort('new'))
 
 def get_spam(sr):
     if isinstance(sr, ModContribSR):
