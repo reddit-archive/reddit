@@ -363,19 +363,19 @@ def get_spam_filtered(sr):
     return [get_spam_filtered_links(sr),
             get_spam_filtered_comments(sr)]
 
-def get_reported_links(sr):
-    q_l = Link._query(Link.c.reported != 0,
-                      Link.c.sr_id == sr._id,
-                      Link.c._spam == False,
-                      sort = db_sort('new'))
-    return make_results(q_l)
+@migrating_cached_query(SubredditQueryCache)
+def get_reported_links(sr_id):
+    return Link._query(Link.c.reported != 0,
+                       Link.c.sr_id == sr_id,
+                       Link.c._spam == False,
+                       sort = db_sort('new'))
 
-def get_reported_comments(sr):
-    q_c = Comment._query(Comment.c.reported != 0,
-                         Comment.c.sr_id == sr._id,
-                         Comment.c._spam == False,
-                         sort = db_sort('new'))
-    return make_results(q_c)
+@migrating_cached_query(SubredditQueryCache)
+def get_reported_comments(sr_id):
+    return Comment._query(Comment.c.reported != 0,
+                          Comment.c.sr_id == sr_id,
+                          Comment.c._spam == False,
+                          sort = db_sort('new'))
 
 def get_reported(sr):
     if isinstance(sr, ModContribSR):
