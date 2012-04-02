@@ -106,6 +106,11 @@ def make_map(global_conf={}, app_conf={}):
        where='overview')
     mc('/u/:username', controller='redirect', action='user_redirect')
 
+    # preserve timereddit URLs from 4/1/2012
+    mc('/t/:timereddit', controller='redirect', action='timereddit_redirect')
+    mc('/t/:timereddit/*rest', controller='redirect',
+       action='timereddit_redirect')
+
     mc('/prefs/:location', controller='forms',
        action='prefs', location='options')
 
