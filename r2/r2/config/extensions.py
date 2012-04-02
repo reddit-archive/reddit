@@ -18,6 +18,8 @@ extension_mapping = {
     "i": ("compact", "text/html; charset=UTF-8"),
 }
 
+API_TYPES = ('api', 'json')
+
 def set_extension(environ, ext):
     environ["extension"] = ext
     environ["render_style"], environ["content_type"] = extension_mapping[ext]
