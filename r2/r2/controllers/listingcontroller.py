@@ -904,11 +904,20 @@ class MyredditsController(ListingController):
 
         return stack
 
+    def build_listing(self, after=None, **kwargs):
+        if after and isinstance(after, Subreddit):
+            after = SRMember._fast_query(after, c.user, self.where,
+                                         data=False).values()[0]
+        if after and not isinstance(after, SRMember):
+            abort(400, 'gimme a srmember')
+
+        return ListingController.build_listing(self, after=after, **kwargs)
+
     @validate(VUser())
     @listing_api_doc(section=api_section.subreddits,
                      uri='/reddits/mine/{where}',
                      uri_variants=['/reddits/mine/subscriber', '/reddits/mine/contributor', '/reddits/mine/moderator'])
-    def GET_listing(self, where = 'inbox', **env):
+    def GET_listing(self, where='subscriber', **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
 
