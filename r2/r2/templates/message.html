@@ -26,6 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 <%inherit file="comment_skeleton.html"/>
+<%namespace file="utils.html" import="thing_timestamp" />
 
 ## disable voting arrows
 <%def name="midcol(cls='')">
@@ -60,7 +61,7 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
      author = thing.updated_author % dict(author=author, subreddit=subreddit)
    
    taglinetext = thing.taglinetext.replace(' ', '&nbsp;')
-   taglinetext = taglinetext % dict(when=thing.timesince,
+   taglinetext = taglinetext % dict(when=capture(thing_timestamp, thing, thing.timesince),
                                     author=u"<b>%s</b>" % author,
                                     dest=u"<b>%s</b>" % thing.dest)
   %>
