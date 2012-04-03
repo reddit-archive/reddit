@@ -338,13 +338,13 @@ def get_spam_comments(sr_id):
 def get_spam(sr):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        results = []
-        results.extend(get_spam_links(sr) for sr in srs)
-        results.extend(get_spam_comments(sr) for sr in srs)
-        return merge_results(*results)
+        q = []
+        q.extend(get_spam_links(sr).new_query for sr in srs)
+        q.extend(get_spam_comments(sr).new_query) for sr in srs)
+        return MergedCachedQuery(q)
     else:
-        return merge_results(get_spam_links(sr),
-                             get_spam_comments(sr))
+        return MergedCachedQuery([get_spam_links(sr).new_query,
+                                  get_spam_comments(sr).new_query])
 
 @cached_query(SubredditQueryCache)
 def get_spam_filtered_links(sr_id):
@@ -384,13 +384,13 @@ def get_reported_comments(sr_id):
 def get_reported(sr):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        results = []
-        results.extend(get_reported_links(sr) for sr in srs)
-        results.extend(get_reported_comments(sr) for sr in srs)
-        return merge_results(*results)
+        q = []
+        q.extend(get_reported_links(sr).new_query for sr in srs)
+        q.extend(get_reported_comments(sr).new_query for sr in srs)
+        return MergedCachedQuery(q)
     else:
-        return merge_results(get_reported_links(sr),
-                             get_reported_comments(sr))
+        return MergedCachedQuery([get_reported_links(sr).new_query,
+                                  get_reported_comments(sr).new_query])
 
 # TODO: Wow, what a hack. I'm doing this in a hurry to make
 # /r/blah/about/trials and /r/blah/about/modqueue work. At some point
@@ -441,22 +441,22 @@ def get_trials(sr):
         return get_trials_links(sr)
 
 def get_modqueue(sr):
-    results = []
+    q = []
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
 
         for sr in srs:
-            results.append(get_reported_links(sr))
-            results.append(get_reported_comments(sr))
-            results.append(get_spam_filtered_links(sr))
-            results.append(get_spam_filtered_comments(sr))
+            q.append(get_reported_links(sr).new_query)
+            q.append(get_reported_comments(sr).new_query)
+            q.append(get_spam_filtered_links(sr))
+            q.append(get_spam_filtered_comments(sr))
     else:
-        results.append(get_reported_links(sr))
-        results.append(get_reported_comments(sr))
-        results.append(get_spam_filtered_links(sr))
-        results.append(get_spam_filtered_comments(sr))
+        q.append(get_reported_links(sr).new_query)
+        q.append(get_reported_comments(sr).new_query)
+        q.append(get_spam_filtered_links(sr))
+        q.append(get_spam_filtered_comments(sr))
 
-    return merge_results(*results)
+    return MergedCachedQuery(q)
 
 def get_domain_links_old(domain, sort, time):
     return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
