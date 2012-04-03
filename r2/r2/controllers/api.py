@@ -2427,13 +2427,17 @@ class ApiController(RedditController):
             flair_type = USER_FLAIR
             site = c.site
 
-        try:
-            flair_template = FlairTemplateBySubredditIndex.get_template(
-                site._id, flair_template_id, flair_type=flair_type)
-        except NotFound:
-            # TODO: serve error to client
-            g.log.debug('invalid flair template for subreddit %s', site._id)
-            return
+        if flair_template_id:
+            try:
+                flair_template = FlairTemplateBySubredditIndex.get_template(
+                    site._id, flair_template_id, flair_type=flair_type)
+            except NotFound:
+                # TODO: serve error to client
+                g.log.debug('invalid flair template for subreddit %s', site._id)
+                return
+        else:
+            flair_template = None
+            text = None
 
         if not site.is_moderator(c.user) and not c.user_is_admin:
             if not site.flair_self_assign_enabled:
@@ -2445,13 +2449,15 @@ class ApiController(RedditController):
             user = c.user
 
             # Ignore given text if user doesn't have permission to customize it.
-            if not flair_template.text_editable:
+            if not (flair_template and flair_template.text_editable):
                 text = None
 
         if not text:
-            text = flair_template.text
+            text = flair_template.text if flair_template else None
 
-        css_class = flair_template.css_class
+        css_class = flair_template.css_class if flair_template else None
+        text_editable = (
+            flair_template.text_editable if flair_template else False)
 
         if flair_type == USER_FLAIR:
             site.add_flair(user)
@@ -2466,7 +2472,7 @@ class ApiController(RedditController):
 
             # Push some client-side updates back to the browser.
             u = WrappedUser(user, force_show_flair=True,
-                            flair_text_editable=flair_template.text_editable,
+                            flair_text_editable=text_editable,
                             include_flair_selector=True)
             flair = u.render(style='html')
             jquery('.tagline .flairselectable.id-%s'
@@ -2486,16 +2492,17 @@ class ApiController(RedditController):
 
             # Push some client-side updates back to the browser.
 
-            # TODO: move this to a template
-            flair = '<span class="linkflair %s">%s</span>' % (
-                ' '.join('linkflair-' + c for c in css_class.split()), text)
-
             jquery('.id-%s .entry .linkflair' % link._fullname).remove()
             title_path = '.id-%s .entry > .title > .title' % link._fullname
-            if c.site.link_flair_position == 'left':
-                jquery(title_path).before(flair)
-            elif c.site.link_flair_position == 'right':
-                jquery(title_path).after(flair)
+
+            # TODO: move this to a template
+            if flair_template:
+                flair = '<span class="linkflair %s">%s</span>' % (
+                    ' '.join('linkflair-' + c for c in css_class.split()), text)
+                if c.site.link_flair_position == 'left':
+                    jquery(title_path).before(flair)
+                elif c.site.link_flair_position == 'right':
+                    jquery(title_path).after(flair)
 
             # TODO: close the selector popup more gracefully
             jquery('body').click()

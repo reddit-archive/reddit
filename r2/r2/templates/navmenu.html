@@ -124,12 +124,11 @@
         ${"id='%s'" % thing._id if thing._id else ""}>
       %for i, option in enumerate(thing):
         <%
-           li_id = (
-               "id='tab-%s'" % option.tab_name if hasattr(option, 'tab_name')
-               else "")
+           tab_name = getattr(option, 'tab_name', None)
+           li_id = "id='tab-%s'" % tab_name if tab_name else ""
            li_class = "class='selected'" if option == thing.selected else ""
         %>
-        <li ${id_class} ${li_class}>
+        <li ${li_id} ${li_class}>
           ${option}
         </li>
       %endfor

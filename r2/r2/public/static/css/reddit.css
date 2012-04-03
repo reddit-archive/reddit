@@ -804,6 +804,8 @@ a.author { margin-right: 0.5em; }
 .flairselector .customizer input { display: none; }
 .flairselector .customizer button { display: inline !important; }
 
+.flairselector .flairremove { display: none; }
+
 .media-button .option { color: red; }
 .media-button .option.active {
     background: transparent none no-repeat scroll right center;
