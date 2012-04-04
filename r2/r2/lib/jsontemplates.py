@@ -560,3 +560,26 @@ class FlairListJsonTemplate(JsonTemplate):
 class FlairCsvJsonTemplate(JsonTemplate):
     def render(self, thing, *a, **kw):
         return ObjectTemplate([l.__dict__ for l in thing.results_by_line])
+
+class StylesheetTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(subreddit_id = '_fullname',
+                        stylesheet = 'stylesheet_contents',
+                        images = '_images')
+
+    def kind(self, wrapped):
+        return 'stylesheet'
+
+    def images(self):
+        images = []
+        for name, url in c.site.get_images():
+            images.append({'name': name,
+                           'link': 'url(%%%%%s%%%%)' % name,
+                           'url': url})
+        return images
+
+    def thing_attr(self, thing, attr):
+        if attr == '_images':
+            return self.images()
+        elif attr == '_fullname':
+            return c.site._fullname
+        return ThingJsonTemplate.thing_attr(self, thing, attr)

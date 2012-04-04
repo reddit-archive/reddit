@@ -57,4 +57,6 @@ api('takedownpane', TakedownJsonTemplate)
 api('flairlist', FlairListJsonTemplate)
 api('flaircsv', FlairCsvJsonTemplate)
 
+api('subredditstylesheet', StylesheetTemplate)
+
 tpm.add_handler('usertableitem', 'api-html', UserItemHTMLJsonTemplate())
