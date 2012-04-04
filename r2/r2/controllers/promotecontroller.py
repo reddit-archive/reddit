@@ -28,6 +28,7 @@ from r2.lib.pages.things import wrap_links
 from r2.lib.strings import strings
 from r2.lib.menus import *
 from r2.controllers import ListingController
+from r2.lib.db import queries
 import sha
 
 from r2.controllers.reddit_base import RedditController
