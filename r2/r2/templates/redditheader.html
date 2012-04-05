@@ -35,7 +35,7 @@
     <%
         header_title = c.site.header_title
         d = DefaultSR()
-        if c.site.header and c.allow_styles:
+        if c.site.header and c.can_apply_styles and c.allow_styles:
             header_img = c.site.header
             header_size = c.site.header_size
         else:

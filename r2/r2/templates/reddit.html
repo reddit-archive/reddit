@@ -67,7 +67,7 @@
     <link rel="shorturl" href="http://${thing.shortlink}"/>
   %endif
 
-  %if c.allow_styles and c.site.stylesheet_contents:
+  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_contents:
      <% inline_stylesheet = (
           len(c.site.stylesheet_contents) < 1024
           and '<' not in c.site.stylesheet_contents) %>
