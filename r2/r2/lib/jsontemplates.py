@@ -582,4 +582,25 @@ class StylesheetTemplate(ThingJsonTemplate):
             return self.images()
         elif attr == '_fullname':
             return c.site._fullname
+
+class SubredditSettingsTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(subreddit_id = 'site._fullname',
+                        title = 'site.title',
+                        description = 'site.description',
+                        language = 'site.lang',
+                        subreddit_type = 'site.type',
+                        content_options = 'site.link_type',
+                        over_18 = 'site.over_18',
+                        default_set = 'site.allow_top',
+                        show_media = 'site.show_media',
+                        domain = 'site.domain',
+                        domain_css = 'site.css_on_cname',
+                        domain_sidebar = 'site.show_cname_sidebar')
+
+    def kind(self, wrapped):
+        return 'subreddit_settings'
+
+    def thing_attr(self, thing, attr):
+        if attr.startswith('site.'):
+            return getattr(thing.site, attr[5:])
         return ThingJsonTemplate.thing_attr(self, thing, attr)
