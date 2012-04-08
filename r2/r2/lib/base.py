@@ -20,6 +20,10 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+import _pylibmc
+import pycassa.pool
+import sqlalchemy.exc
+
 from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
 from pylons.controllers.util import abort
@@ -30,11 +34,22 @@ from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
 from r2.lib.log import log_exception
+import r2.lib.db.thing
 
 import re, hashlib
 from urllib import quote
 import urllib2
 import sys
+
+
+OPERATIONAL_EXCEPTIONS = (_pylibmc.MemcachedError,
+                          r2.lib.db.thing.NotFound,
+                          sqlalchemy.exc.OperationalError,
+                          sqlalchemy.exc.IntegrityError,
+                          pycassa.pool.AllServersUnavailable,
+                          pycassa.pool.NoConnectionAvailable,
+                          pycassa.pool.MaximumRetryException,
+                         )
 
 
 #TODO hack
@@ -113,7 +128,7 @@ class BaseController(WSGIController):
         try:
             res = WSGIController.__call__(self, environ, start_response)
         except Exception as e:
-            if g.exception_logging:
+            if g.exception_logging and not isinstance(e, OPERATIONAL_EXCEPTIONS):
                 try:
                     log_exception(e, *sys.exc_info())
                 except Exception as f:
