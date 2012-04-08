@@ -6,6 +6,7 @@ from pylons import config
 
 class Plugin(object):
     js = {}
+    config = {}
 
     @property
     def path(self):
@@ -54,14 +55,16 @@ class PluginLoader(object):
         return self.plugins[key]
 
     def load_plugins(self, plugin_names):
+        g = config['pylons.g']
         for name in plugin_names:
             try:
                 entry_point = pkg_resources.iter_entry_points('r2.plugin', name).next()
             except StopIteration:
-                config['pylons.g'].log.warning('Unable to locate plugin "%s". Skipping.' % name)
+                g.log.warning('Unable to locate plugin "%s". Skipping.' % name)
                 continue
             plugin_cls = entry_point.load()
             plugin = self.plugins[name] = plugin_cls()
+            g.config.add_spec(plugin.config)
             config['pylons.paths']['templates'].extend(plugin.template_dirs)
             plugin.add_js()
             plugin.on_load()
