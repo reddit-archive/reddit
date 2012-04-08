@@ -1172,15 +1172,15 @@ class ApiController(RedditController):
             form.set_html(".status", _('validation errors'))
             form.set_html(".errors ul", ''.join(error_items))
             form.find('.errors').show()
+            return
         else:
             form.find('.errors').hide()
             form.set_html(".errors ul", '')
 
         stylesheet_contents_parsed = parsed.cssText if parsed else ''
         # if the css parsed, we're going to apply it (both preview & save)
-        if not report.errors:
-            jquery.apply_stylesheet(stylesheet_contents_parsed)
-        if not report.errors and op == 'save':
+        jquery.apply_stylesheet(stylesheet_contents_parsed)
+        if op == 'save':
             c.site.stylesheet_contents      = stylesheet_contents_parsed
             c.site.stylesheet_contents_user = stylesheet_contents
 
