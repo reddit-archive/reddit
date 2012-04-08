@@ -1129,6 +1129,10 @@ def queue_vote(user, thing, dir, ip, organic = False,
                 qname = vote_link_q
             elif isinstance(thing, Comment):
                 qname = vote_comment_q
+            else:
+                log.warning("%s tried to vote on %r. that's not a link or comment!",
+                            user, thing)
+                return
 
             amqp.add_item(qname,
                           pickle.dumps((user._id, thing._fullname,
