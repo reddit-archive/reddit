@@ -904,6 +904,9 @@ class ApiController(RedditController):
                 if not getattr(item, "is_self", False):
                     return abort(403, "forbidden")
                 item.selftext = text
+            else:
+                g.log.warning("%s tried to edit usertext on %r", c.user, item)
+                return
 
             if item._deleted:
                 return abort(403, "forbidden")
