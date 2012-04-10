@@ -3,13 +3,25 @@
 import os
 import boto
 import mimetypes
+import ConfigParser
 
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 
 mimetypes.encodings_map['.gzip'] = 'gzip'
 
-def upload(static_root, bucket_name):
-    s3 = boto.connect_s3()
+def upload(config_file):
+    # grab the configuration
+    parser = ConfigParser.RawConfigParser()
+    with open(config_file, "r") as cf:
+        parser.readfp(cf)
+    aws_access_key_id = parser.get("static_files", "aws_access_key_id")
+    aws_secret_access_key = parser.get("static_files",
+                                       "aws_secret_access_key")
+    static_root = parser.get("static_files", "static_root")
+    bucket_name = parser.get("static_files", "bucket")
+
+    # start up the s3 connection
+    s3 = boto.connect_s3(aws_access_key_id, aws_secret_access_key)
     bucket = s3.get_bucket(bucket_name)
 
     # build a list of files already in the bucket
@@ -53,8 +65,8 @@ def upload(static_root, bucket_name):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 3:
-        print >> sys.stderr, "USAGE: %s static_root bucket_name" % sys.argv[0]
+    if len(sys.argv) != 2:
+        print >> sys.stderr, "USAGE: %s /path/to/config-file.ini" % sys.argv[0]
         sys.exit(1)
 
-    upload(sys.argv[1], sys.argv[2])
+    upload(sys.argv[1])
