@@ -24,6 +24,13 @@
 This file loads the finished app from r2.config.middleware.
 """
 
+# _strptime is imported with PyImport_ImportModuleNoBlock which can fail
+# miserably when multiple threads try to import it simultaneously.
+# import this here to get it over with
+# see "Non Blocking Module Imports" in:
+# http://code.google.com/p/modwsgi/wiki/ApplicationIssues
+import _strptime
+
 # defer the (hefty) import until it's actually needed. this allows
 # modules below r2 to be imported before cython files are built, also
 # provides a hefty speed boost to said imports when they don't need
