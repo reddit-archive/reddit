@@ -52,6 +52,7 @@
   </div>
   <form class="clearflairtemplates"
         method="post" action="/api/clearflairtemplates">
+    <input type="hidden" name="flair_type" value="${thing.flair_type}" />
     <button class="flairtemplateclear">
       ${_("clear all flair templates")}
     </button>

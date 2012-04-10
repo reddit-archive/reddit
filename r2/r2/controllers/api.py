@@ -2385,10 +2385,12 @@ class ApiController(RedditController):
             ModAction.create(c.site, c.user, action='editflair',
                              details='flair_delete_template')
 
-    @validatedForm(VFlairManager(), VModhash())
+    @validatedForm(VFlairManager(), VModhash(),
+                   flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
+                                       default=USER_FLAIR))
     @api_doc(api_section.flair)
-    def POST_clearflairtemplates(self, form, jquery):
-        FlairTemplateBySubredditIndex.clear(c.site._id)
+    def POST_clearflairtemplates(self, form, jquery, flair_type):
+        FlairTemplateBySubredditIndex.clear(c.site._id, flair_type=flair_type)
         jquery.refresh()
         ModAction.create(c.site, c.user, action='editflair',
                          details='flair_clear_template')
