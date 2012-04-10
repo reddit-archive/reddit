@@ -694,6 +694,7 @@ class FrontController(RedditController):
                              simple=True).render()
         return res
 
+    search_help_page = "/help/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
     @validate(query = VLength('q', max_length=512),
@@ -734,7 +735,11 @@ class FrontController(RedditController):
                     cleanup_message = strings.invalid_search_query % {
                                           "clean_query": cleaned
                                       }
-		
+                cleanup_message += " "
+                cleanup_message += strings.search_help % {"search_help":
+                                                          self.search_help_page
+                                                          }
+            
             res = SearchPage(_('search results'), query, t, num, content=spane,
                              nav_menus = [SearchSortMenu(default=sort)],
                              search_params = dict(sort = sort), 
