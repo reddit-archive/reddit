@@ -34,7 +34,7 @@
   if len(title) > 10:
       title = title[:7] + '...'
 %>
-<a class="title" href="javascript://void">${title}</a>
+<a class="title" href="javascript://void(0)">${title}</a>
 %if thing.flair_position == 'right':
   ${flair()}
 %endif
