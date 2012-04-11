@@ -27,26 +27,26 @@
 
 <%def name="search_faq()">
   <div id="moresearchinfo">
-  <p>use the following search parameters to narrow your results:</p>
+  <p>${_('use the following search parameters to narrow your results:')}</p>
 
   <dl>
-      <dt>reddit:{name}</dt>
+      <dt>reddit:'{name}'</dt>
       <dd>${_('find things posted in {name} only')}</dd>
-      <dt>author:{username}</dt>
+      <dt>author:'{username}'</dt>
       <dd>${_('return things submitted by {username} only')}</dd>
-      <dt>site:{domain}</dt>
+      <dt>site:'{domain}'</dt>
       <dd>${_('get links to pages on {domain} only')}</dd>
-      <dt>url:{text}</dt>
+      <dt>url:'{text}'</dt>
       <dd>${_('search for {text} in url')}</dd>
-      <dt>selftext:{text}</dt>
+      <dt>selftext:'{text}'</dt>
       <dd>${_('search for {text} in self post contents')}</dd>
-      <dt>is_self:{yes|no}</dt>
-      <dd>${_('include or exclude self posts')}</dd>
-      <dt>over18:{yes|no}</dt>
-      <dd>${_('include or exclude results from nsfw reddits')}</dd>
+      <dt>is_self:{1|0}</dt>
+      <dd>${_('include (1) or exclude (0) self posts')}</dd>
+      <dt>over18:{1|0}</dt>
+      <dd>${_('include (1) or exclude (0) results tagged NSFW')}</dd>
   </dl>
 
-  <p>e.g. <code>reddit:pics site:imgur.com dog</code></p>
+  <p>e.g. <code>(and 'dog' reddit:'aww' site:'imgur.com')</code></p>
   <p><a href="http://www.reddit.com/help/search">${_('see the search faq for details.')}</a></p>
   </div>
 
