@@ -529,7 +529,7 @@ basic_link = functools.partial(basic_query, facets=("reddit",), facet_count=10,
 basic_subreddit = functools.partial(basic_query,
                                     facets=(),
                                     size=10, start=0,
-                                    rank="relevance",
+                                    rank="-activity",
                                     return_fields=['title', 'reddit',
                                                    'author_fullname'],
                                     record_stats=False,
@@ -569,7 +569,7 @@ class CloudSearchQuery(object):
     default_syntax = "plain"
     lucene_parser = None
     
-    def __init__(self, query, sr=None, sort=None, syntax=None):
+    def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None):
         if syntax is None:
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
@@ -579,7 +579,10 @@ class CloudSearchQuery(object):
         self.syntax = syntax
         self.sr = sr
         self._sort = sort
-        self.sort = self.sorts[sort]
+        if raw_sort:
+            self.sort = raw_sort
+        else:
+            self.sort = self.sorts[sort]
         self.bq = ''
         self.results = None
     
@@ -764,8 +767,8 @@ class LinkSearchQuery(CloudSearchQuery):
 
 class SubredditSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SUBREDDIT_SEARCH_API
-    sorts = {'relevance': '-text_relevance',
-             None: '-text_relevance',
+    sorts = {'relevance': '-activity',
+             None: '-activity',
              }
     sorts_menu_mapping = {'relevance': 1,
                           }

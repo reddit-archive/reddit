@@ -633,35 +633,36 @@ class FrontController(RedditController):
         """The awards page."""
         return BoringPage(_("awards"), content = UserAwards()).render()
 
-    # filter for removing punctuation which could be interpreted as lucene syntax
-    related_replace_regex = re.compile('[?\\&|!{}+~^()":*-]+')
+    # filter for removing punctuation which could be interpreted as search syntax
+    related_replace_regex = re.compile('[?\\&|!{}+~^()"\':*-]+')
     related_replace_with  = ' '
 
     @base_listing
     @validate(article = VLink('article'))
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
-        the search query."""
-
+        the search query.
+        
+        """
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        title = c.site.name + ((': ' + article.title) if hasattr(article, 'title') else '')
-
         query = self.related_replace_regex.sub(self.related_replace_with,
                                                article.title)
-        if len(query) > 1024:
-            # could get fancier and break this into words, but titles
-            # longer than this are typically ascii art anyway
-            query = query[0:1023]
+        query = query[:1024]
+        query = "|".join(query.split())
+        query = "title:'%s'" % query
+        rel_range = timedelta(days=3)
+        start = (article._date - rel_range).strftime("%s")
+        end = (article._date + rel_range).strftime("%s")
+        query = "(and %s timestamp:%s..%s)" % (query, start, end)
+        q = SearchQuery(query, raw_sort="-text_relevance",
+                        syntax="cloudsearch")
+        num, t, pane = self._search(q, num=num, after=after, reverse=reverse,
+                                    count=count)
 
-        q = RelatedSearchQuery(query, ignore = [article._fullname])
-        num, t, pane = self._search(q,
-                                    num = num, after = after, reverse = reverse,
-                                    count = count)
-
-        return LinkInfoPage(link = article, content = pane,
-                            subtitle = _('related')).render()
+        return LinkInfoPage(link=article, content=pane,
+                            subtitle=_('related')).render()
 
     @base_listing
     @validate(article = VLink('article'))
