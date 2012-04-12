@@ -91,7 +91,7 @@ ${thing.formtabs_menu}
 
     <input name="kind" value="self" type="hidden"/>
 
-    ${UserText(None, have_form = False, creating = True)}
+    ${UserText(None, text = thing.text, have_form = False, creating = True)}
 
     ${error_field("NO_SELFS", "sr")}
   </%utils:round_field>
