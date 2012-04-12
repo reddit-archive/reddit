@@ -40,10 +40,16 @@
        com_label = _("comment") 
  %>
   <div class="link">
+     %if c.site.link_flair_position == 'left' and thing.flair_text:
+       <span class="linkflair">${thing.flair_text}</span>
+     %endif
      %if thing.is_self:
        <a class="title" href="${add_sr(thing.href_url)}">${thing.title}</a>
      %else:
       <a class="title" href="${thing.url}">${thing.title}</a>
+     %endif
+     %if c.site.link_flair_position == 'right' and thing.flair_text:
+       <span class="linkflair">${thing.flair_text}</span>
      %endif
     <p class="byline">&#32;${thing.score}&#32;${ungettext("point", "points", thing.score)}
     %if thing.num_comments or thing.is_self:

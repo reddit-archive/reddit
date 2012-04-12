@@ -61,6 +61,9 @@
     else:
         url = thing.url
   %>
+  %if c.site.link_flair_position == 'left' and thing.flair_text:
+    <span class="linkflair">${thing.flair_text}</span>
+  %endif
   %if thing.has_thumbnail and thing.thumbnail:
     <a href="${url}" class="thumbnail">
       <img src="${s3_https_if_secure(thing.thumbnail)}" alt=""/>
@@ -68,6 +71,9 @@
   %endif
     <p class="title">
     <a href="${url}">${thing.title}</a>
+    %if c.site.link_flair_position == 'right' and thing.flair_text:
+      <span class="linkflair">${thing.flair_text}</span>
+    %endif
     <span class="domain">
     %if thing.is_self:
         (self)
