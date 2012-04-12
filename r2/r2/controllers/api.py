@@ -2123,13 +2123,23 @@ class ApiController(RedditController):
     @validatedForm(VFlairManager(),
                    VModhash(),
                    user = VFlairAccount("name"),
+                   link = VFlairLink('link'),
                    text = VFlairText("text"),
                    css_class = VFlairCss("css_class"))
     @api_doc(api_section.flair)
-    def POST_flair(self, form, jquery, user, text, css_class):
-        # Check validation.
-        if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
-            return
+    def POST_flair(self, form, jquery, user, link, text, css_class):
+        if link:
+            flair_type = LINK_FLAIR
+            if hasattr(c.site, '_id') and c.site._id == link.sr_id:
+                site = c.site
+            else:
+                site = Subreddit._byID(link.sr_id, data=True)
+        else:
+            flair_type = USER_FLAIR
+            site = c.site
+            if form.has_errors('name', errors.BAD_FLAIR_TARGET):
+                return
+
         if form.has_errors('css_class', errors.BAD_CSS_NAME):
             form.set_html(".status:first", _('invalid css class'))
             return
@@ -2137,38 +2147,47 @@ class ApiController(RedditController):
             form.set_html(".status:first", _('too many css classes'))
             return
 
-        if not text and not css_class:
-            # empty text and css is equivalent to unflairing
-            text = css_class = None
-            c.site.remove_flair(user)
-            jquery('#flairrow_%s' % user._id36).hide()
-            new = False
-        elif not c.site.is_flair(user):
-            c.site.add_flair(user)
-            new = True
-        else:
-            new = False
-
-        # Save the flair details in the account data.
-        setattr(user, 'flair_%s_text' % c.site._id, text)
-        setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
-        user._commit()
-
-        if c.user != user:
-            ModAction.create(c.site, c.user, action='editflair', target=user,
+        if flair_type == LINK_FLAIR:
+            if not text and not css_class:
+                text = css_class = None
+            link.flair_text = text
+            link.flair_css_class = css_class
+            link._commit()
+            ModAction.create(site, c.user, action='editflair', target=link,
                              details='flair_edit')
+        elif flair_type == USER_FLAIR:
+            if not text and not css_class:
+                # empty text and css is equivalent to unflairing
+                text = css_class = None
+                c.site.remove_flair(user)
+                jquery('#flairrow_%s' % user._id36).hide()
+                new = False
+            elif not c.site.is_flair(user):
+                c.site.add_flair(user)
+                new = True
+            else:
+                new = False
 
-        if new:
-            jquery.redirect('?name=%s' % user.name)
-        else:
-            flair = WrappedUser(
-                user, force_show_flair=True,
-                include_flair_selector=True).render(style='html')
-            jquery('.tagline .flairselectable.id-%s'
-                   % user._fullname).parent().html(flair)
-            jquery('input[name="text"]').data('saved', text)
-            jquery('input[name="css_class"]').data('saved', css_class)
-            form.set_html('.status', _('saved'))
+            # Save the flair details in the account data.
+            setattr(user, 'flair_%s_text' % c.site._id, text)
+            setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
+            user._commit()
+
+            if c.user != user:
+                ModAction.create(site, c.user, action='editflair',
+                                 target=user, details='flair_edit')
+
+            if new:
+                jquery.redirect('?name=%s' % user.name)
+            else:
+                flair = WrappedUser(
+                    user, force_show_flair=True,
+                    include_flair_selector=True).render(style='html')
+                jquery('.tagline .flairselectable.id-%s'
+                    % user._fullname).parent().html(flair)
+                jquery('input[name="text"]').data('saved', text)
+                jquery('input[name="css_class"]').data('saved', css_class)
+                form.set_html('.status', _('saved'))
 
     @validatedForm(VFlairManager(),
                    VModhash(),
