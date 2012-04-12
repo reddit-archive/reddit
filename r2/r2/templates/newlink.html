@@ -89,7 +89,7 @@ ${thing.formtabs_menu}
   <%utils:round_field title="${_('text')}", description="${_('(optional)')}" id="text-field">
     <input name="kind" value="self" type="hidden"/>
 
-    ${UserText(None, have_form = False, creating = True)}
+    ${UserText(None, text = thing.text, have_form = False, creating = True)}
 
     ${error_field("NO_SELFS", "sr")}
   </%utils:round_field>
