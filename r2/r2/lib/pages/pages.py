@@ -1817,7 +1817,7 @@ class FrameToolbar(Wrapped):
 
 class NewLink(Templated):
     """Render the link submission form"""
-    def __init__(self, captcha = None, url = '', title= '', text = '',
+    def __init__(self, captcha = None, url = '', title= '', text = '', selftext = '',
                  subreddits = (), then = 'comments', resubmit=False):
 
         self.show_link = self.show_self = False
@@ -1834,7 +1834,7 @@ class NewLink(Templated):
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))
             buttons = []
             
-            if text != '':
+            if selftext == 'true' or text != '':
                 self.default_tab = tabs[1][0]
             else:
                 self.default_tab = tabs[0][0]
