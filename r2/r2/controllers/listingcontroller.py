@@ -324,7 +324,7 @@ class HotController(FixListing, ListingController):
             return normalized_hot(sr_ids)
 
         elif isinstance(c.site, MultiReddit):
-            return normalized_hot(c.site.kept_sr_ids)
+            return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False)
 
         #if not using the query_cache we still want cached front pages
         elif (not g.use_query_cache
