@@ -324,10 +324,14 @@ class OffsiteButton(NavButton):
         return [('path', self.path), ('title', self.title)]
 
 class SubredditButton(NavButton):
+    from r2.models.subreddit import Frontpage, Mod
+    # TRANSLATORS: these refer to /r/mod and the front page.
+    name_overrides = {Mod: _("mod"),
+                      Frontpage: _("front")}
+
     def __init__(self, sr):
-        from r2.models.subreddit import Mod
         self.path = sr.path
-        name = 'mod' if sr == Mod else sr.name
+        name = self.name_overrides.get(sr, sr.name)
         NavButton.__init__(self, name, sr.path, False,
                            isselected = (c.site == sr))
 

@@ -22,7 +22,7 @@
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR, Frontpage
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
@@ -1409,7 +1409,7 @@ class SubredditTopBar(CachedTemplate):
                        css_class = 'sr-bar', _id = 'sr-bar')
 
     def special_reddits(self):
-        reddits = [All, Random]
+        reddits = [Frontpage, All, Random]
         if getattr(c.site, "over_18", False):
             reddits.append(RandomNSFW)
         if c.user_is_loggedin:

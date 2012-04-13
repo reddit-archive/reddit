@@ -30,7 +30,7 @@ from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, ip_and_slash1
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed, valid_admin_cookie
-from r2.models.subreddit import Subreddit
+from r2.models.subreddit import Subreddit, Frontpage
 from r2.models import *
 from errors import ErrorSet
 from validator import *
@@ -249,13 +249,12 @@ def set_subreddit():
 
     can_stale = request.method.upper() in ('GET','HEAD')
 
-    default_sr = DefaultSR()
-    c.site = default_sr
+    c.site = Frontpage
     if not sr_name:
         #check for cnames
         sub_domain = request.environ.get('sub_domain')
         if sub_domain and not sub_domain.endswith(g.media_domain):
-            c.site = Subreddit._by_domain(sub_domain) or default_sr
+            c.site = Subreddit._by_domain(sub_domain) or Frontpage
     elif sr_name == 'r':
         #reddits
         c.site = Sub

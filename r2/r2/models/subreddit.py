@@ -985,6 +985,7 @@ class DomainSR(FakeSubreddit):
         # switched over to use the non-_old variety.
         return queries.get_domain_links(self.domain, sort, time)
 
+Frontpage = DefaultSR()
 Sub = SubSR()
 Friends = FriendsSR()
 Mod = ModSR()
