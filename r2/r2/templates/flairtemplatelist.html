@@ -20,6 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+<%namespace file="printablebuttons.html" import="ynbutton"/>
+
 <%!
     from r2.models import FlairTemplate, USER_FLAIR, LINK_FLAIR
     from r2.lib.pages.pages import FlairTemplateEditor
@@ -50,12 +52,7 @@
       ${FlairTemplateEditor(empty_template, thing.flair_type)}
     </div>
   </div>
-  <form class="clearflairtemplates"
-        method="post" action="/api/clearflairtemplates">
-    <input type="hidden" name="flair_type" value="${thing.flair_type}" />
-    <button class="flairtemplateclear">
-      ${_("clear all flair templates")}
-    </button>
-    <span class="status"></span>
-  </form>
+  ${ynbutton(_("clear all flair templates"), _("cleared"),
+             "clearflairtemplates",
+             hidden_data=dict(flair_type=thing.flair_type))}
 </div>
