@@ -2665,14 +2665,16 @@ class FlairPrefs(CachedTemplate):
 class FlairSelectorLinkSample(CachedTemplate):
     def __init__(self, link, site, flair_template):
         flair_position = getattr(site, 'link_flair_position', 'right')
-        CachedTemplate.__init__(self,
-                                title=link.title,
-                                flair_position=flair_position,
-                                flair_template_id=flair_template._id,
-                                flair_text=flair_template.text,
-                                flair_css_class=flair_template.css_class,
-                                flair_text_editable=False,
-                               )
+        admin = bool(c.user_is_admin or site.is_moderator(c.user))
+        CachedTemplate.__init__(
+            self,
+            title=link.title,
+            flair_position=flair_position,
+            flair_template_id=flair_template._id,
+            flair_text=flair_template.text,
+            flair_css_class=flair_template.css_class,
+            flair_text_editable=admin or flair_template.text_editable,
+            )
 
 class FlairSelector(CachedTemplate):
     """Provide user with flair options according to subreddit settings."""
