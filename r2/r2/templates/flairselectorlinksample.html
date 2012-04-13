@@ -21,7 +21,7 @@
 ################################################################################
 
 <%def name="flair()">
-  <span class="flair ${thing.flair_css_class}">
+  <span class="linkflair ${' '.join('linkflair-%s' % c for c in thing.flair_css_class.split())}">
     ${thing.flair_text}
   </span>
 </%def>
