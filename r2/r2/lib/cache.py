@@ -511,6 +511,7 @@ class StaleCacheChain(CacheChain):
         self.realcache = realcache
         self.caches = (localcache, realcache) # for the other
                                               # CacheChain machinery
+        self.stats = None
 
     def get(self, key, default=None, stale = False, **kw):
         if kw.get('allow_local', True) and key in self.caches[0]:
