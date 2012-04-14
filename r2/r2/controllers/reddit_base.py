@@ -123,6 +123,9 @@ class UnloggedUser(FakeAccount):
     def _unsubscribe(self, sr):
         pass
 
+    def valid_hash(self, hash):
+        return False
+
     def _commit(self):
         if self._dirty:
             for k, (oldv, newv) in self._dirties.iteritems():
