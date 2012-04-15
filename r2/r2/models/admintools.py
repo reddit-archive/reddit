@@ -101,6 +101,10 @@ class AdminTools(object):
             ban_info['unbanned_at'] = datetime.now(g.tz)
             if unbanner:
                 ban_info['unbanner'] = unbanner
+            if ban_info.get('reset_used', None) == None:
+                ban_info['reset_used'] = False
+            else:
+                ban_info['reset_used'] = True
             t.ban_info = ban_info
             t._spam = False
             t._commit()
