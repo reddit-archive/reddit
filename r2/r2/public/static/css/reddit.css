@@ -684,7 +684,12 @@ a.author { margin-right: 0.5em; }
     font-size: xx-small;
 }
 
-.linkflair { font-size: x-small; }
+.linkflair {
+    font-size: x-small;
+    max-width: 10em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 .link .flair {
     font-size: x-small;

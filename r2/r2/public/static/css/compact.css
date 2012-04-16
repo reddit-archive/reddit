@@ -554,4 +554,4 @@ a.author { margin-right: 0.5em; }
 
 .flair, .linkflair { margin-top: 2px; margin-right: 0.5em; padding: 0px 2px; display: inline-block; background: whiteSmoke; color: #545454; border: 1px solid #dedede; font-size: 9px; -moz-border-radius: 2px; -webkit-border-radius: 2px; -o-border-radius: 2px; -ms-border-radius: 2px; -khtml-border-radius: 2px; border-radius: 2px; -moz-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.9); -webkit-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.9); -o-box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.9); box-shadow: inset 0px 1px 0px rgba(255, 255, 255, 0.9); }
 
-.linkflair { font-weight: normal; }
+.linkflair { font-weight: normal; max-width: 10em; overflow: hidden; text-overflow: ellipsis; }
