@@ -33,23 +33,12 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import flatten, to36
-
+from r2.lib.db.tdb_cassandra import json
 
 CONNECTION_POOL = g.cassandra_pools['main']
 PRUNE_CHANCE = g.querycache_prune_chance
 MAX_CACHED_ITEMS = 1000
 LOG = g.log
-
-
-# if cjson is installed, use it. it's faster.
-try:
-    import cjson as json
-except ImportError:
-    LOG.warning("Couldn't import cjson. Using (slower) python implementation.")
-    import json
-else:
-    json.dumps, json.loads = json.encode, json.decode
-
 
 class ThingTupleComparator(object):
     def __init__(self, sorts):

@@ -55,6 +55,8 @@ debug = g.debug
 make_lock = g.make_lock
 db_create_tables = g.db_create_tables
 
+import json
+
 thing_types = {}
 
 TRANSIENT_EXCEPTIONS = (MaximumRetryException,)
@@ -1456,6 +1458,51 @@ class View(ThingBase):
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
+
+class DenormalizedView(View):
+    """Store the entire underlying object inside the View column."""
+
+    @classmethod
+    def _thing_dumper(cls, thing):
+        serialize_fn = cls._view_of._serialize_column
+        serialized_columns = dict((attr, serialize_fn(attr, val)) for
+            (attr, val) in thing._orig.iteritems())
+        dump = json.dumps(serialized_columns)
+        return dump
+
+    @classmethod
+    def _thing_loader(cls, _id, dump):
+        serialized_columns = json.loads(dump)
+        obj = cls._view_of._from_serialized_columns(_id, serialized_columns)
+        return obj
+
+    @classmethod
+    def _obj_to_column(cls, objs):
+        objs = tup(objs)
+        columns = []
+        for o in objs:
+            _id = o._id
+            dump = cls._thing_dumper(o)
+            columns.append({_id: dump})
+
+        if len(columns) == 1:
+            return columns[0]
+        else:
+            return columns
+
+    @classmethod
+    def _column_to_obj(cls, columns):
+        columns = tup(columns)
+        objs = []
+        for column in columns:
+            _id, dump = column.items()[0]
+            obj = cls._thing_loader(_id, dump)
+            objs.append(obj)
+
+        if len(objs) == 1:
+            return objs[0]
+        else:
+            return objs
 
 def schema_report():
     manager = get_manager()
