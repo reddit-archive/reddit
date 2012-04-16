@@ -653,7 +653,7 @@ class FakeSubreddit(Subreddit):
     def __init__(self):
         Subreddit.__init__(self)
         self.title = ''
-        self.link_flair_position = 'left'
+        self.link_flair_position = 'right'
 
     def is_moderator(self, user):
         return c.user_is_loggedin and c.user_is_admin
