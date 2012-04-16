@@ -935,6 +935,9 @@ class ModContribSR(_DefaultSR):
         else:
             return []
 
+    def rising_srs(self):
+        return self.sr_ids
+
     def get_links(self, sort, time):
         return self.get_links_sr_ids(self.sr_ids, sort, time)
 
