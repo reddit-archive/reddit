@@ -1549,11 +1549,14 @@ class ApiController(RedditController):
         if thing._spam:
             kw['details'] = 'unspam'
             train_spam = True
+            insert = True
         else:
             kw['details'] = 'confirm_ham'
             train_spam = False
+            insert = False
 
-        admintools.unspam(thing, c.user.name, train_spam=train_spam)
+        admintools.unspam(thing, c.user.name, train_spam=train_spam,
+                          insert=insert)
 
         if isinstance(thing, (Link, Comment)):
             sr = thing.subreddit_slow
