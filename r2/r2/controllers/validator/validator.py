@@ -237,20 +237,17 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     # clear out the status line as a courtesy
     form.set_html(".status", "")
 
-    # handle specific errors
-    if c.errors.errors:
-        handled_captcha = handled_ratelimit = False
-        for v in simple_vals:
-            if not handled_captcha and isinstance(v, VCaptcha):
-                form.has_errors('captcha', errors.BAD_CAPTCHA)
-                form.new_captcha()
-                handled_captcha = True
-            elif not handled_ratelimit and isinstance(v, VRatelimit):
-                form.ratelimit(v.seconds)
-                handled_ratelimit = True
-    
     # do the actual work
     val = self_method(self, form, responder, *a, **kw)
+
+    # add data to the output on some errors
+    for validator in simple_vals:
+        if (isinstance(validator, VCaptcha) and
+            form.has_errors('captcha', errors.BAD_CAPTCHA)):
+            form.new_captcha()
+        elif (isinstance(validator, VRatelimit) and
+              form.has_errors('ratelimit', errors.RATELIMIT)):
+            form.ratelimit(validator.seconds)
 
     if val:
         return val
