@@ -975,7 +975,8 @@ class CommentPane(Templated):
         return "_".join(map(str, ["commentpane", self.article._fullname,
                                   num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style,
-                                  c.user.pref_show_flair]))
+                                  c.user.pref_show_flair,
+                                  c.user.pref_show_link_flair]))
 
     def __init__(self, article, sort, comment, context, num, **kw):
         # keys: lang, num, can_reply, render_style
@@ -1028,8 +1029,9 @@ class CommentPane(Templated):
                 logged_in = c.user_is_loggedin
                 try:
                     c.user = UnloggedUser([c.lang])
-                    # Preserve the viewing user's flair preference.
+                    # Preserve the viewing user's flair preferences.
                     c.user.pref_show_flair = user.pref_show_flair
+                    c.user.pref_show_link_flair = user.pref_show_link_flair
                     c.user_is_loggedin = False
 
                     # render as if not logged in (but possibly with reply buttons)

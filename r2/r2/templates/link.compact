@@ -32,6 +32,12 @@
 <%namespace file="utils.compact" import="icon_button, toggle_button" />
 <%namespace file="printablebuttons.html" import="state_button" />
 
+<%def name="flair()">
+  %if c.user.pref_show_link_flair:
+    <span class="linkflair">${thing.flair_text}</span>
+  %endif
+</%def>
+
 <div class="thing link id-${thing._fullname}">
   <span class="rank" style="width:${thing.numcolmargin};">
     ${thing.num}
@@ -62,7 +68,7 @@
         url = thing.url
   %>
   %if c.site.link_flair_position == 'left' and thing.flair_text:
-    <span class="linkflair">${thing.flair_text}</span>
+    ${flair()}
   %endif
   %if thing.has_thumbnail and thing.thumbnail:
     <a href="${url}" class="thumbnail">
@@ -72,7 +78,7 @@
     <p class="title">
     <a href="${url}">${thing.title}</a>
     %if c.site.link_flair_position == 'right' and thing.flair_text:
-      <span class="linkflair">${thing.flair_text}</span>
+      ${flair()}
     %endif
     <span class="domain">
     %if thing.is_self:

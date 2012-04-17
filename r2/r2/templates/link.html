@@ -79,7 +79,7 @@
  </%def>
 
 <%def name="flair()">
-  %if thing.flair_text or thing.flair_css_class:
+  %if c.user.pref_show_link_flair and (thing.flair_text or thing.flair_css_class):
     ## TODO: clean this up
     <span class="linkflair ${' '.join('linkflair-' + c for c in thing.flair_css_class.split())}">
       ${thing.flair_text}

@@ -91,6 +91,7 @@ class PostController(ApiController):
                                        default = g.num_comments),
               pref_show_stylesheets = VBoolean('show_stylesheets'),
               pref_show_flair = VBoolean('show_flair'),
+              pref_show_link_flair = VBoolean('show_link_flair'),
               pref_no_profanity = VBoolean('no_profanity'),
               pref_label_nsfw = VBoolean('label_nsfw'),
               pref_show_promote = VBoolean('show_promote'),

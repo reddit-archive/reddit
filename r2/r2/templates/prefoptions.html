@@ -232,6 +232,8 @@
       ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
       <br/>
       ${checkbox(_("show user flair"), "show_flair")}
+      <br/>
+      ${checkbox(_("show link flair"), "show_link_flair")}
       %if c.user.pref_show_promote is not None:
         <br/>
         ${checkbox(_("show promote tab on front page"), 

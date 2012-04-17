@@ -28,6 +28,12 @@
 <%namespace file="utils.html" import="plain_link" />
 <%inherit file="printable.mobile" />
 
+<%def name="flair()">
+  %if c.user.pref_show_link_flair:
+    <span class="linkflair">${thing.flair_text}</span>
+  %endif
+</%def>
+
 <%def name="entry()">
 <% 
    if thing.num_comments:
@@ -41,7 +47,7 @@
  %>
   <div class="link">
      %if c.site.link_flair_position == 'left' and thing.flair_text:
-       <span class="linkflair">${thing.flair_text}</span>
+       ${flair()}
      %endif
      %if thing.is_self:
        <a class="title" href="${add_sr(thing.href_url)}">${thing.title}</a>
@@ -49,7 +55,7 @@
       <a class="title" href="${thing.url}">${thing.title}</a>
      %endif
      %if c.site.link_flair_position == 'right' and thing.flair_text:
-       <span class="linkflair">${thing.flair_text}</span>
+       ${flair()}
      %endif
     <p class="byline">&#32;${thing.score}&#32;${ungettext("point", "points", thing.score)}
     %if thing.num_comments or thing.is_self:

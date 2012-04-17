@@ -74,6 +74,7 @@ class Account(Thing):
                      pref_label_nsfw = True,
                      pref_show_stylesheets = True,
                      pref_show_flair = True,
+                     pref_show_link_flair = True,
                      pref_mark_messages_read = True,
                      pref_threaded_messages = True,
                      pref_collapse_read_messages = False,
