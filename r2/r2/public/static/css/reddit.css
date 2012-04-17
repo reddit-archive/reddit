@@ -248,7 +248,11 @@ ul.flat-vert {text-align: left;}
     background-image: url(../modmailgray.png);  /* SPRITE */
 }
 .user {color: gray;}
-
+.user .userkarma {
+    cursor: help;
+    font-weight: bold;
+    border-bottom: 1px dotted gray;	
+}
 
 .pagename {
     font-weight: bold;
