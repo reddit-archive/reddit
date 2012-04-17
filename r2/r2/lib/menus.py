@@ -325,8 +325,9 @@ class OffsiteButton(NavButton):
 
 class SubredditButton(NavButton):
     from r2.models.subreddit import Frontpage, Mod
-    # TRANSLATORS: these refer to /r/mod and the front page.
+    # TRANSLATORS: This refers to /r/mod
     name_overrides = {Mod: _("mod"),
+    # TRANSLATORS: This refers to the user's front page
                       Frontpage: _("front")}
 
     def __init__(self, sr):
