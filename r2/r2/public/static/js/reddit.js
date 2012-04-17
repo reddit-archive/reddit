@@ -325,6 +325,9 @@ function linkstatus(form) {
 function subscribe(reddit_name) {
     return function() { 
         if (reddit.logged) {
+            if (reddit.cur_site == reddit_name) {
+                $('body').addClass('subscriber');
+            }
             $.things(reddit_name).find(".entry").addClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "sub"});
         }
@@ -334,6 +337,9 @@ function subscribe(reddit_name) {
 function unsubscribe(reddit_name) {
     return function() { 
         if (reddit.logged) {
+            if (reddit.cur_site == reddit_name) {
+                $('body').removeClass('subscriber');
+            }
             $.things(reddit_name).find(".entry").removeClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "unsub"});
         }
