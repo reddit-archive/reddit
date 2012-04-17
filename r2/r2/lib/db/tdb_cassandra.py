@@ -629,6 +629,8 @@ class ThingBase(object):
 
         if not self._committed:
             self._on_create()
+        else:
+            self._on_commit()
 
         self._committed = True
 
@@ -742,6 +744,10 @@ class ThingBase(object):
         """A hook executed on creation, good for creation of static
            Views. Subclasses should call their parents' hook(s) as
            well"""
+        pass
+
+    def _on_commit(self):
+        """Executed on _commit other than creation."""
         pass
 
     @classmethod
