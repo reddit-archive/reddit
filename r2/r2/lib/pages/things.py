@@ -91,8 +91,7 @@ class LinkButtons(PrintableButtons):
         else:
             show_unmarknsfw = False
 
-        # add "or is_author" to allow submitters to edit flair on their links
-        show_flair = thing.can_ban
+        show_flair = thing.can_ban or is_author
 
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted

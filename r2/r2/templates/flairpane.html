@@ -49,6 +49,17 @@
         <label for="sr_flair_self_assign_enabled">
             ${_("allow users to assign their own flair")}
         </label>
+        <br>
+        <input type="checkbox"
+            id="sr_link_flair_self_assign_enabled"
+            name="link_flair_self_assign_enabled"
+            %if thing.link_flair_self_assign_enabled:
+              checked="checked"
+            %endif
+            />
+        <label for="sr_link_flair_self_assign_enabled">
+            ${_("allow submitters to assign their own link flair")}
+        </label>
       </%utils:line_field>
       <%utils:line_field title="${_('user flair position')}">
         <table class="small-field">

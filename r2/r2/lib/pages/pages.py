@@ -2519,7 +2519,9 @@ class FlairPane(Templated):
             flair_enabled=c.site.flair_enabled,
             flair_position=c.site.flair_position,
             link_flair_position=c.site.link_flair_position,
-            flair_self_assign_enabled=c.site.flair_self_assign_enabled)
+            flair_self_assign_enabled=c.site.flair_self_assign_enabled,
+            link_flair_self_assign_enabled=
+                c.site.link_flair_self_assign_enabled)
 
 class FlairList(Templated):
     """List of users who are tagged with flair within a subreddit."""
@@ -2694,6 +2696,9 @@ class FlairSelector(CachedTemplate):
             target_wrapper = (
                 lambda flair_template: FlairSelectorLinkSample(
                     link, site, flair_template))
+            self_assign_enabled = (
+                c.user._id == link.author_id
+                and site.link_flair_self_assign_enabled)
         else:
             flair_type = USER_FLAIR
             target = user
@@ -2705,14 +2710,17 @@ class FlairSelector(CachedTemplate):
                     user, subreddit=site, force_show_flair=True,
                     flair_template=flair_template,
                     flair_text_editable=admin or template.text_editable))
+            self_assign_enabled = site.flair_self_assign_enabled
 
         text = getattr(target, attr_pattern % 'text', '')
         css_class = getattr(target, attr_pattern % 'css_class', '')
         templates, matching_template = self._get_templates(
                 site, flair_type, text, css_class)
 
-        if site.flair_self_assign_enabled or admin:
+        if self_assign_enabled or admin:
             choices = [target_wrapper(template) for template in templates]
+        else:
+            choices = []
 
         # If one of the templates is already selected, modify its text to match
         # the user's current flair.

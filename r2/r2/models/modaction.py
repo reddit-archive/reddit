@@ -93,6 +93,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'flair_position': _('toggle user flair position'),
                      'link_flair_position': _('toggle link flair position'),
                      'flair_self_enabled': _('toggle user assigned flair enabled'),
+                     'link_flair_self_enabled': _('toggle submitter assigned link flair enabled'),
                      'flair_template': _('add/edit flair templates'),
                      'flair_delete_template': _('delete flair template'),
                      'flair_clear_template': _('clear flair templates'),

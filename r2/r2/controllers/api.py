@@ -2293,10 +2293,13 @@ class ApiController(RedditController):
         flair_position = VOneOf("flair_position", ("left", "right")),
         link_flair_position = VOneOf("link_flair_position",
                                      ("", "left", "right")),
-        flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"))
+        flair_self_assign_enabled = VBoolean("flair_self_assign_enabled"),
+        link_flair_self_assign_enabled =
+            VBoolean("link_flair_self_assign_enabled"))
     @api_doc(api_section.flair)
     def POST_flairconfig(self, form, jquery, flair_enabled, flair_position,
-                         link_flair_position, flair_self_assign_enabled):
+                         link_flair_position, flair_self_assign_enabled,
+                         link_flair_self_assign_enabled):
         if c.site.flair_enabled != flair_enabled:
             c.site.flair_enabled = flair_enabled
             ModAction.create(c.site, c.user, action='editflair',
@@ -2313,6 +2316,12 @@ class ApiController(RedditController):
             c.site.flair_self_assign_enabled = flair_self_assign_enabled
             ModAction.create(c.site, c.user, action='editflair',
                              details='flair_self_enabled')
+        if (c.site.link_flair_self_assign_enabled
+            != link_flair_self_assign_enabled):
+            c.site.link_flair_self_assign_enabled = (
+                link_flair_self_assign_enabled)
+            ModAction.create(c.site, c.user, action='editflair',
+                             details='link_flair_self_enabled')
         c.site._commit()
         jquery.refresh()
 
@@ -2444,9 +2453,11 @@ class ApiController(RedditController):
                 site = c.site
             else:
                 site = Subreddit._byID(link.sr_id, data=True)
+            self_assign_enabled = site.link_flair_self_assign_enabled
         else:
             flair_type = USER_FLAIR
             site = c.site
+            self_assign_enabled = site.flair_self_assign_enabled
 
         if flair_template_id:
             try:
@@ -2461,7 +2472,7 @@ class ApiController(RedditController):
             text = None
 
         if not site.is_moderator(c.user) and not c.user_is_admin:
-            if not site.flair_self_assign_enabled:
+            if not self_assign_enabled:
                 # TODO: serve error to client
                 g.log.debug('flair self-assignment not permitted')
                 return
