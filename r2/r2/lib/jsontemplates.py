@@ -582,6 +582,7 @@ class StylesheetTemplate(ThingJsonTemplate):
             return self.images()
         elif attr == '_fullname':
             return c.site._fullname
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class SubredditSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(subreddit_id = 'site._fullname',
