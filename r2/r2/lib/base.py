@@ -35,6 +35,7 @@ from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
 from r2.lib.log import log_exception
 import r2.lib.db.thing
+import r2.lib.lock
 
 import re, hashlib
 from urllib import quote
@@ -44,6 +45,7 @@ import sys
 
 OPERATIONAL_EXCEPTIONS = (_pylibmc.MemcachedError,
                           r2.lib.db.thing.NotFound,
+                          r2.lib.lock.TimeoutExpired,
                           sqlalchemy.exc.OperationalError,
                           sqlalchemy.exc.IntegrityError,
                           pycassa.pool.AllServersUnavailable,
