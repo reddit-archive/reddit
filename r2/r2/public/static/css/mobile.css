@@ -148,5 +148,5 @@ ul {
 .md ol, .md ul { margin: 10px 2em; }
 .md pre { margin: 10px; }
 .flair, .linkflair { color: #545454; background-color: #F5F5F5; border: 1px solid #DEDEDE; }
-.linkflair { font-size: small; max-width: 10em; overflow: hidden; text-overflow: ellipsis; }
+.linkflair { display: inline-block; font-size: small; max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 a.author, .flair, .linkflair { margin-right: 0.5em }
