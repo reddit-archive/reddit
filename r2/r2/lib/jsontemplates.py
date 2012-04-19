@@ -602,6 +602,6 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         return 'subreddit_settings'
 
     def thing_attr(self, thing, attr):
-        if attr.startswith('site.'):
+        if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
         return ThingJsonTemplate.thing_attr(self, thing, attr)
