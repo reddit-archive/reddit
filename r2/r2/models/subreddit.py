@@ -848,6 +848,10 @@ class DefaultSR(_DefaultSR):
         return "t5_6"
 
     @property
+    def type(self):
+        return self._base.type if self._base else "public"
+
+    @property
     def header(self):
         return (self._base and self._base.header) or _DefaultSR.header
 
