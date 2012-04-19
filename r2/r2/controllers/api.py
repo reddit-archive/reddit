@@ -1258,8 +1258,6 @@ class ApiController(RedditController):
             c.site.sponsorship_size = None
             c.site._commit()
         elif c.site.header:
-            # reset the header image on the page
-            jquery('#header-img').attr("src", DefaultSR.header)
             c.site.header = None
             c.site.header_size = None
             c.site._commit()
