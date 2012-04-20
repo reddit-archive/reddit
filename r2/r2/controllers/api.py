@@ -2136,9 +2136,7 @@ class ApiController(RedditController):
             else:
                 site = Subreddit._byID(link.sr_id, data=True)
                 # make sure c.user has permission to set flair on this link
-                if not (c.user_is_admin or site.is_moderator(c.user)
-                        or (site.link_flair_self_assign_enabled
-                            and link.author_id == c.user._id)):
+                if not c.user_is_admin and not site.is_moderator(c.user):
                     abort(403, 'forbidden')
         else:
             flair_type = USER_FLAIR
