@@ -600,7 +600,8 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         show_media = 'site.show_media',
                         domain = 'site.domain',
                         domain_css = 'site.css_on_cname',
-                        domain_sidebar = 'site.show_cname_sidebar')
+                        domain_sidebar = 'site.show_cname_sidebar',
+                        header_hover_text = 'site.header_title')
 
     def kind(self, wrapped):
         return 'subreddit_settings'
