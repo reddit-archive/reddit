@@ -587,7 +587,8 @@ class ApiController(RedditController):
             jquery("#" + type + "-table").show(
                 ).find("table").insert_table_rows(user_row)
 
-            if type != 'friend':
+            if type != 'friend' and (type != 'banned' or
+                                     friend.has_interacted_with(container)):
                 msg = strings.msg_add_friend.get(type)
                 subj = strings.subj_add_friend.get(type)
                 if msg and subj and friend.name != c.user.name:

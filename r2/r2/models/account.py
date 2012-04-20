@@ -107,6 +107,19 @@ class Account(Thing):
                      gold_creddit_escrow = 0,
                      )
 
+    def has_interacted_with(self, sr):
+        if not sr:
+            return False
+
+        for type in ('link', 'comment'):
+            if hasattr(self, "%s_%s_karma" % (sr.name, type)):
+                return True
+
+        if sr.is_subscriber(self):
+            return True
+
+        return False
+
     def karma(self, kind, sr = None):
         suffix = '_' + kind + '_karma'
 
