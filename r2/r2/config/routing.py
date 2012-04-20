@@ -50,6 +50,7 @@ def make_map():
 
     mc('/search', controller='front', action='search')
 
+    mc('/rules', controller='front', action='rules')
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
     mc('/account-activity', controller='front', action='account_activity')

@@ -3903,3 +3903,6 @@ class ApiHelp(Templated):
     def __init__(self, api_docs, *a, **kw):
         self.api_docs = api_docs
         super(ApiHelp, self).__init__(*a, **kw)
+
+class RulesPage(Templated):
+    pass

@@ -1991,6 +1991,92 @@ li.searchfacet {
     display: inline;
 }
 
+body.rulespage-body {
+    overflow-y: scroll;
+}
+
+.rulespage {
+    margin: 0 auto;
+    position: relative;
+    vertical-align: middle;
+    width: 600px;
+}
+
+.rulespage h1 {
+    font-size: xx-large;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.rulespage .info {
+    font-size: larger;
+    padding-top: 10px;
+}
+
+.rulespage .rule-list {
+    margin:10px;
+    padding:10px;
+    font-size: medium;
+}
+
+.rulespage li {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px;
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    background-clip: padding-box;
+}
+
+.rulespage li.first-rule {
+    border-top: 1px solid #ddd;
+    padding-top: 18px;
+}
+
+.rulespage li#minors {
+    padding-bottom: 18px;
+}
+
+.rulespage .expander {
+    color: gray;
+    cursor: help;
+    padding: 10px;
+}
+
+.rulespage .examples {
+    font-size: small;
+}
+
+.rulespage li.example {
+    border: none;
+}
+
+.rulespage li.good-example {
+    background: #bcf5a9;
+}
+
+.rulespage li.bad-example {
+    background: #f5a9a9;
+}
+
+.rulespage em {
+    font-weight: bold;
+}
+
+.rulespage em.toggle {
+    font-weight: normal;
+}
+
+.rulespage .info {
+    text-align: center;
+}
+
+.rulespage img.bottom {
+    margin-top: 30px;
+    text-align: center;
+    padding-bottom: -40px;
+}
+
 .aboutpage {  margin-right: 320px; }
 .aboutpage p { margin: 5px; }
 .aboutpage h1, .aboutpage h2 { margin: 10px;}

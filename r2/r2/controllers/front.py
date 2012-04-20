@@ -940,6 +940,11 @@ class FrontController(RedditController):
     @validate(VUser())
     def GET_account_activity(self):
         return AccountActivityPage().render()
+    
+    def GET_rules(self):
+        return BoringPage(_("rules of reddit"), show_sidebar=False,
+                          content=RulesPage(), page_classes=["rulespage-body"]
+                          ).render()
 
 
 class FormsController(RedditController):
