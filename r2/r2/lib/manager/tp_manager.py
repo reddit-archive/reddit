@@ -41,6 +41,7 @@ class tp_manager:
         elif not file.startswith('/'):
             file = '/' + file
         self.templates[key] = file
+        return file
 
     def add_handler(self, name, style, handler):
         key = (name.lower(), style.lower())
@@ -57,14 +58,18 @@ class tp_manager:
         for cls in inspect.getmro(thing):
             name = cls.__name__.lower()
             key = (name, style)
-            if not self.templates.has_key(key):
-                self.add(name, style)
-            if isinstance(self.templates[key], self.Template):
-                template = self.templates[key]
+
+            template_or_name = self.templates.get(key)
+            if not template_or_name:
+                template_or_name = self.add(name, style)
+
+            if isinstance(template_or_name, self.Template):
+                template = template_or_name
+                break
             else:
                 try:
                     _loader = pylons.buffet.engines[self.engine]['engine']
-                    template = _loader.load_template(self.templates[key])
+                    template = _loader.load_template(template_or_name)
                     if cache:
                         self.templates[key] = template
                         # also store a hash for the template
@@ -76,9 +81,9 @@ class tp_manager:
                         # introspection is not required on subsequent passes
                         if key != top_key:
                             self.templates[top_key] = template
+                    break
                 except TemplateLookupException:
-                    continue
-            break
+                    pass
 
         if not template or not isinstance(template, self.Template):
             raise AttributeError, ("template doesn't exist for %s" % str(top_key))
