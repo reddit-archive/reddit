@@ -275,6 +275,10 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                     "author_flair_text",
                                                 author_flair_css_class =
                                                     "author_flair_css_class",
+                                                link_flair_text =
+                                                    "flair_text",
+                                                link_flair_css_class =
+                                                    "flair_css_class",
                                                 thumbnail    = "thumbnail",
                                                 media        = "media_object",
                                                 media_embed  = "media_embed",
