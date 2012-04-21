@@ -21,11 +21,10 @@
 ################################################################################
 
 <%def name="flair()">
-  <span class="linkflair ${' '.join('linkflair-%s' % c for c in thing.flair_css_class.split())}">
-    ${thing.flair_text}
-  </span>
+  <span class="linkflairlabel">${thing.flair_text}</span>
 </%def>
 
+<div class="linkflair ${' '.join('linkflair-%s' % c for c in thing.flair_css_class.split())}">
 %if thing.flair_position == 'left':
   ${flair()}
 %endif
@@ -34,7 +33,8 @@
   if len(title) > 10:
       title = title[:7] + '...'
 %>
-<a class="title" href="javascript://void(0)">${title}</a>
+  <a class="title" href="javascript://void(0)">${title}</a>
 %if thing.flair_position == 'right':
   ${flair()}
 %endif
+</div>

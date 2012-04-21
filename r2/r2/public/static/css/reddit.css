@@ -668,7 +668,7 @@ ul.flat-vert {text-align: left;}
 
 a.author { margin-right: 0.5em; }
 
-.flair, .linkflair {
+.flair, .linkflairlabel {
     display: inline-block;
     margin-right: .5em;
     padding: 0 2px;
@@ -684,7 +684,7 @@ a.author { margin-right: 0.5em; }
     font-size: xx-small;
 }
 
-.linkflair {
+.linkflairlabel {
     font-size: x-small;
     max-width: 10em;
     overflow: hidden;

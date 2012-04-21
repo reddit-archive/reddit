@@ -79,12 +79,8 @@
  </%def>
 
 <%def name="flair()">
-  <% css = thing.flair_css_class or '' %>
-  %if c.user.pref_show_link_flair and (thing.flair_text or css):
-    ## TODO: clean this up
-    <span class="linkflair ${' '.join('linkflair-' + c for c in css.split())}">
-      ${thing.flair_text}
-    </span>
+  %if c.user.pref_show_link_flair and thing.flair_text:
+    <span class="linkflairlabel">${thing.flair_text}</span>
   %endif
 </%def>
 
@@ -170,6 +166,10 @@
 
 <%def name="thing_css_class(what)" buffered="True">
 ${parent.thing_css_class(what)} ${"over18" if thing.over_18 else ""}
+%if c.user.pref_show_link_flair and (thing.flair_text or thing.flair_css_class):
+  <% css = thing.flair_css_class or '' %>
+  linkflair ${' '.join('linkflair-' + c for c in css.split())}
+%endif
 </%def>
 
 <%def name="thing_data_attributes(what)" buffered="True">
