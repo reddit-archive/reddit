@@ -23,6 +23,11 @@
     from r2.lib.template_helpers import add_sr, panel_size
 %>
 <html>
+  <script type="text/javascript">
+     if (window == window.top) {
+       window.location = "${add_sr('/tb/' + thing.link._id36)}"
+     }
+  </script>
   <frameset cols="${panel_size('expanded' if thing.expanded else 'collapsed')}"
            name="inner_toolbar" onload="window.frames[1].focus()">
     <frame frameborder="0" src="${add_sr('/toolbar/comments/'+thing.link._id36)}"
