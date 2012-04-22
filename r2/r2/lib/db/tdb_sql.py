@@ -141,6 +141,7 @@ def get_thing_table(metadata, name):
                                sa.DateTime(timezone = True),
                                default = sa.func.now(),
                                nullable = False))
+    table.thing_name = name
     return table
 
 def get_data_table(metadata, name):
@@ -162,6 +163,7 @@ def get_rel_table(metadata, name):
                          sa.Column('date', sa.DateTime(timezone = True),
                                    default = sa.func.now(), nullable = False),
                          sa.UniqueConstraint('thing1_id', 'thing2_id', 'name'))
+    rel_table.rel_name = name
     return rel_table
 
 #get/create the type tables
@@ -381,6 +383,7 @@ def make_thing(type_id, ups, downs, date, deleted, spam, id=None):
     try:
         id = do_insert(table)
         params['thing_id'] = id
+        g.stats.event_count('thing.create', table.thing_name)
         return id
     except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:
@@ -429,6 +432,7 @@ def make_relation(rel_type_id, thing1_id, thing2_id, name, date=None):
                                    thing2_id = thing2_id,
                                    name = name, 
                                    date = date)
+        g.stats.event_count('rel.create', table.rel_name)
         return r.last_inserted_ids()[0]
     except sa.exc.DBAPIError, e:
         if not 'IntegrityError' in e.message:

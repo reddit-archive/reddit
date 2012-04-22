@@ -89,6 +89,12 @@ class Stats:
         elif state == False:
             self.action_count(counter_name, false_name, delta=delta)
         self.action_count(counter_name, 'total', delta=delta)
+  
+    def event_count(self, event_name, name):
+        counter = self.get_counter('event.%s' % event_name)
+        if counter:
+            counter.increment(name)
+            counter.increment('total')
 
     def cache_count(self, name, delta=1, sample_rate=None):
         if sample_rate is None:
@@ -154,7 +160,7 @@ class Stats:
             return
         key = '.'.join(['pg', db_server.replace('.', '-'), db_name])
         self.timing_stats.record(key, service_time)
-
+    
 class CacheStats:
     def __init__(self, parent, cache_name):
         self.parent = parent
