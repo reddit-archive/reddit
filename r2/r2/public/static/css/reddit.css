@@ -2356,6 +2356,9 @@ label + #moresearchinfo {
     font-size: x-small; 
     line-height: 17px;
 }
+.button .blog3 .snoo {
+    margin-top: -1px;
+}
 
 
 .blog5 .right { float: right; }
