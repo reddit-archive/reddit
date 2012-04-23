@@ -20,7 +20,6 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import os.path
-from mako.filters import url_escape
 
 import pylons
 import paste.fileapp
@@ -111,32 +110,20 @@ class ErrorController(RedditController):
     def send403(self):
         c.response.status_code = 403
         c.site = DefaultSR()
-        res = pages.RedditError(_("forbidden (%(domain)s)") %
-                                dict(domain=g.domain))
-        return res.render()
+        if 'usable_error_content' in request.environ:
+            return request.environ['usable_error_content']
+        else:
+            res = pages.RedditError(
+                title=_("forbidden (%(domain)s)") % dict(domain=g.domain),
+                message=_("you are not allowed to do that"))
+            return res.render()
 
     def send404(self):
         c.response.status_code = 404
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
-        if c.site.spammy() and not c.user_is_admin:
-            ban_info = getattr(c.site, "ban_info", {})
-            if "message" in ban_info:
-                message = ban_info["message"]
-            else:
-                subject = ("the subreddit /r/%s has been incorrectly banned" %
-                           c.site.name)
-                lnk = ("/r/redditrequest/submit?url=%s&title=%s"
-                       % (url_escape("http://%s/r/%s" % (g.domain, c.site.name)),
-                          ("the subreddit /r/%s has been incorrectly banned" %
-                           c.site.name)))
-                message = strings.banned_subreddit % dict(link = lnk)
-
-            res = pages.RedditError(_('this reddit has been banned'),
-                                    unsafe(safemarkdown(message)))
-            return res.render()
-        else:
-            return pages.Reddit404().render()
+        return pages.RedditError(_("page not found"),
+                                 _("the page you requested does not exist")).render()
 
     def send429(self):
         c.response.status_code = 429

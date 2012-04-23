@@ -1310,30 +1310,20 @@ class ClientInfoBar(InfoBar):
 
 class RedditError(BoringPage):
     site_tracking = False
-    def __init__(self, title, message = None):
-        if not message:
-            message = title
+    def __init__(self, title, message, image=None):
         BoringPage.__init__(self, title, loginbox=False,
-                            show_sidebar = False, 
-                            content=ErrorPage(message))
+                            show_sidebar = False,
+                            content=ErrorPage(title=title,
+                                              message=message,
+                                              image=image))
 
-class Reddit404(BoringPage):
-    site_tracking = False
-    def __init__(self):
-        ch=random.choice(['a','b','c','d','e'])
-        BoringPage.__init__(self, _("page not found"), loginbox=False,
-                            show_sidebar = False, 
-                            content=UnfoundPage(ch))
-        
-class UnfoundPage(Templated):
-    """Wrapper for the 404 page"""
-    def __init__(self, choice):
-        Templated.__init__(self, choice = choice)
-    
 class ErrorPage(Templated):
     """Wrapper for an error message"""
-    def __init__(self, message = _("you aren't allowed to do that.")):
-        Templated.__init__(self, message = message)
+    def __init__(self, title, message, image=None):
+        if not image:
+            letter = random.choice(['a', 'b', 'c', 'd', 'e'])
+            image = 'reddit404' + letter + '.png'
+        Templated.__init__(self, title=title, message=message, image_url=image)
     
 class Profiling(Templated):
     """Debugging template for code profiling using built in python
@@ -1738,14 +1728,6 @@ class SearchBar(Templated):
         Templated.__init__(self, search_params = search_params,
                            simple=simple, restrict_sr=restrict_sr,
                            site=site, subreddit_search=subreddit_search)
-
-class SearchFail(Templated):
-    """Search failure page."""
-    def __init__(self, **kw):
-        self.errmsg = strings.search_failed
-
-        Templated.__init__(self)
-
 
 class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The

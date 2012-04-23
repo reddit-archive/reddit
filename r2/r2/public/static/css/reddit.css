@@ -5362,3 +5362,11 @@ tr.gold-accent + tr > td {
     font-family: 'Courier New', monospace;
     width: 50%;
 }
+
+#classy-error {
+    text-align: center;
+}
+
+#classy-error .md {
+    display: inline-block;
+}

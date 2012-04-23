@@ -20,4 +20,14 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<p class="error">${thing.message}</p>
+<%
+from r2.lib.template_helpers import static
+from r2.lib.filters import unsafe, safemarkdown
+%>
+
+<div id="classy-error" class="content">
+  <img src="${static(thing.image_url)}" alt="an unhappy alien" />
+
+  <h1>${thing.title}</h1>
+  ${unsafe(safemarkdown(thing.message))}
+</div>

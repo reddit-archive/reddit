@@ -20,4 +20,11 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
-<%inherit file="errorpage.html" />
+<%
+from r2.lib.filters import unsafe, safemarkdown
+%>
+
+<div id="classy-error">
+<h1>${thing.title}</h1>
+${unsafe(safemarkdown(thing.message))}
+</div>
