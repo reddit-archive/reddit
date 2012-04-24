@@ -878,6 +878,9 @@ class RedditController(MinimalController):
 
             # check if the user has access to this subreddit
             if not c.site.can_view(c.user) and not c.error_page:
+                errpage = pages.RedditError(strings.private_subreddit_title,
+                                            strings.private_subreddit_message)
+                request.environ['usable_error_content'] = errpage.render()
                 self.abort403()
 
             #check over 18
