@@ -20,8 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.lib.db.thing import Thing, Relation, NotFound, MultiRelation, \
-     CreationError
+from r2.lib.db.thing import (
+    Thing, Relation, NotFound, MultiRelation, CreationError)
 from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from account import Account, DeletedUser
@@ -68,7 +68,8 @@ class Link(Thing, Printable):
                      noselfreply=False,
                      ip='0.0.0.0',
                      flair_text=None,
-                     flair_css_class=None)
+                     flair_css_class=None,
+                     comment_tree_version=1)
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
@@ -132,7 +133,8 @@ class Link(Thing, Printable):
                 author_id=author._id,
                 sr_id=sr._id,
                 lang=sr.lang,
-                ip=ip)
+                ip=ip,
+                comment_tree_version=2)
         l._commit()
         l.set_url_cache()
         if author._spam:
@@ -667,7 +669,8 @@ class Comment(Thing, Printable):
                      moderator_banned=False,
                      new=False,
                      gildings=0,
-                     banned_before_moderator=False)
+                     banned_before_moderator=False,
+                     parents=None)
     _essentials = ('link_id', 'author_id')
 
     def _markdown(self):
@@ -677,12 +680,19 @@ class Comment(Thing, Printable):
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.db.queries import changed
 
+        kw = {}
+        if link.comment_tree_version > 1:
+            if parent:
+                kw['parents'] = parent.parents + ':' + parent._id36
+            else:
+                kw['parents'] = ':'
         c = Comment(_ups=1,
                     body=body,
                     link_id=link._id,
                     sr_id=link.sr_id,
                     author_id=author._id,
-                    ip=ip)
+                    ip=ip,
+                    **kw)
 
         c._spam = author._spam
 

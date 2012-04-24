@@ -25,7 +25,7 @@ from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, M
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
+from r2.lib.utils import fetch_things2, tup, UniqueIterator
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
@@ -854,7 +854,7 @@ def new_comment(comment, inbox_rels):
                 amqp.add_item('new_comment', comment._fullname)
 
             if not g.amqp_host:
-                add_comment_tree([comment])
+                add_comments([comment])
 
         job_dict = { job_key: comment }
         add_queries(job, **job_dict)
@@ -1310,16 +1310,6 @@ def add_all_users():
     for user in fetch_things2(q):
         update_user(user)
 
-def add_comment_tree(comments):
-    #update the comment cache
-    add_comments(comments)
-    #update last modified
-    links = Link._byID(list(set(com.link_id for com in tup(comments))),
-                       data = True, return_dict = False)
-    for link in links:
-        set_last_modified(link, 'comments')
-        LastModified.touch(link._fullname, 'Comments')
-
 # amqp queue processing functions
 
 def run_new_comments(limit=1000):
@@ -1351,7 +1341,7 @@ def run_commentstree(qname="commentstree_q", limit=100):
                                         data = True, return_dict = False)
         print 'Processing %r' % (comments,)
 
-        add_comment_tree(comments)
+        add_comments(comments)
 
     amqp.handle_items(qname, _run_commentstree, limit = limit)
 

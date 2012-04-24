@@ -22,7 +22,7 @@
 
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
-from r2.lib.comment_tree import link_comments, link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
+from r2.lib.comment_tree import link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
 from r2.models.link import *
 from r2.lib.db import operators
 from r2.lib import utils
@@ -50,11 +50,10 @@ class _CommentBuilder(Builder):
         cdef list cid
         cdef dict cid_tree
         cdef dict depth
-        cdef dict num_children
         cdef dict parents
         cdef dict sorter
 
-        r = link_comments_and_sort(self.link._id, self.sort.col)
+        r = link_comments_and_sort(self.link, self.sort.col)
         cids, cid_tree, depth, num_children, parents, sorter = r
 
         cdef dict debug_dict = dict(
