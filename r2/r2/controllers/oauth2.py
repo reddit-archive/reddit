@@ -32,7 +32,7 @@ from r2.lib.db.thing import NotFound
 from r2.models import Account
 from r2.models.oauth2 import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
 from r2.controllers.errors import errors
-from validator import validate, VRequired, VOneOf, VUrl, VUser, VModhash
+from validator import validate, VRequired, VOneOf, VUser, VModhash
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 
@@ -85,7 +85,7 @@ class OAuth2FrontendController(RedditController):
     @validate(VUser(),
               response_type = VOneOf("response_type", ("code",)),
               client = VClientID(),
-              redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False),
+              redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT))
     def GET_authorize(self, response_type, client, redirect_uri, scope, state):
@@ -123,7 +123,7 @@ class OAuth2FrontendController(RedditController):
     @validate(VUser(),
               VModhash(fatal=False),
               client = VClientID(),
-              redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False),
+              redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI),
               scope = VOneOf("scope", scope_info.keys()),
               state = VRequired("state", errors.NO_TEXT),
               authorize = VRequired("authorize", errors.OAUTH2_ACCESS_DENIED))
@@ -170,7 +170,7 @@ class OAuth2AccessController(MinimalController):
 
     @validate(grant_type = VOneOf("grant_type", ("authorization_code",)),
               code = VRequired("code", errors.NO_TEXT),
-              redirect_uri = VUrl("redirect_uri", allow_self=False, lookup=False))
+              redirect_uri = VRequired("redirect_uri", errors.OAUTH2_INVALID_REDIRECT_URI))
     def POST_access_token(self, grant_type, code, redirect_uri):
         """
         Exchange an [OAuth 2.0](http://oauth.net/2/) authorization code
