@@ -201,6 +201,10 @@ class Scraper:
         max_url = None
 
         if self.soup:
+            og_image = self.soup.find('meta', property='og:image')
+            if og_image and og_image['content']:
+                log.debug("Using og:image")
+                return og_image['content']
             thumbnail_spec = self.soup.find('link', rel = 'image_src')
             if thumbnail_spec and thumbnail_spec['href']:
                 log.debug("Using image_src")
