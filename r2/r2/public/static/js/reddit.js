@@ -1120,7 +1120,7 @@ function fetch_parent(elem, parent_permalink, parent_id) {
                     });
                 if(parent) {
                     /* make a parent div for the contents of the fetch */
-                    thing.find(".noncollapsed .md")
+                    thing.find(".noncollapsed .md").first() 
                         .before('<div class="parent rounded">' +
                                 $.unsafe(parent) +
                                 '</div>'); 
