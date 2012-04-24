@@ -672,7 +672,7 @@ def run_changed(drain=False):
         print "changed: Processing %d items" % len(msgs)
         msgs = [strordict_fullname(msg.body)
                 for msg in msgs]
-        fullnames = set(msg['fullname'] for msg in msgs)
+        fullnames = set(msg['fullname'] for msg in msgs if not msg.get('boost_only'))
 
         things = Thing._by_fullname(fullnames, data=True, return_dict=False)
         things = [x for x in things if isinstance(x, indexed_types)]
