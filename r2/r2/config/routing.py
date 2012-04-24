@@ -37,16 +37,16 @@ def make_map():
 
     admin_routes.add(mc)
 
-    mc('/login',    controller='forms', action='login')
-    mc('/register',    controller='forms', action='register')
-    mc('/logout',   controller='forms', action='logout')
-    mc('/verify',   controller='forms', action='verify')
-    mc('/adminon',  controller='forms', action='adminon')
+    mc('/login', controller='forms', action='login')
+    mc('/register', controller='forms', action='register')
+    mc('/logout', controller='forms', action='logout')
+    mc('/verify', controller='forms', action='verify')
+    mc('/adminon', controller='forms', action='adminon')
     mc('/adminoff', controller='forms', action='adminoff')
-    mc('/submit',   controller='front', action='submit')
-    mc('/validuser',   controller='forms', action='validuser')
+    mc('/submit', controller='front', action='submit')
+    mc('/validuser', controller='forms', action='validuser')
 
-    mc('/over18',   controller='post', action='over18')
+    mc('/over18', controller='post', action='over18')
 
     mc('/search', controller='front', action='search')
 
@@ -58,15 +58,14 @@ def make_map():
     mc('/about/message/:where', controller='message', action='listing')
     mc('/about/log', controller='front', action='moderationlog')
     mc('/about', controller='front', action='about')
-    mc('/about/:location', controller='front', 
-       action='editreddit', location = 'about')
+    mc('/about/:location', controller='front', action='editreddit',
+       location='about')
 
     mc('/reddits/create', controller='front', action='newreddit')
     mc('/reddits/search', controller='front', action='search_reddits')
     mc('/reddits/login', controller='forms', action='login')
     mc('/reddits/:where', controller='reddits', action='listing',
-       where = 'popular',
-       requirements=dict(where="popular|new|banned"))
+       where='popular', requirements=dict(where="popular|new|banned"))
 
     mc('/reddits/mine/:where', controller='myreddits', action='listing',
        where='subscriber',
@@ -89,7 +88,7 @@ def make_map():
     mc('/i18n', controller='redirect', action='redirect',
        dest='http://www.reddit.com/r/i18n')
     mc('/feedback', controller='feedback', action='feedback')
-    mc('/ad_inq',   controller='feedback', action='ad_inq')
+    mc('/ad_inq', controller='feedback', action='ad_inq')
 
     mc('/admin/usage', controller='usage')
 
@@ -117,46 +116,45 @@ def make_map():
     mc('/t/:timereddit/*rest', controller='redirect',
        action='timereddit_redirect')
 
-    mc('/prefs/:location', controller='forms',
-       action='prefs', location='options')
+    mc('/prefs/:location', controller='forms', action='prefs',
+       location='options')
 
     mc('/depmod', controller='forms', action='depmod')
 
-    mc('/info/0:article/*rest', controller = 'front', 
+    mc('/info/0:article/*rest', controller='front',
        action='oldinfo', dest='comments', type='ancient')
     mc('/info/:article/:dest/:comment', controller='front',
        action='oldinfo', type='old', dest='comments', comment=None)
 
     mc('/related/:article/:title', controller='front',
-       action = 'related', title=None)
+       action='related', title=None)
     mc('/details/:article/:title', controller='front',
-       action = 'details', title=None)
+       action='details', title=None)
     mc('/traffic/:article/:title', controller='front',
-       action = 'traffic', title=None)
-    mc('/comments/:article/:title/:comment', controller='front', 
-       action = 'comments', title=None, comment = None)
-    mc('/duplicates/:article/:title', controller = 'front',
-       action = 'duplicates', title=None)
+       action='traffic', title=None)
+    mc('/comments/:article/:title/:comment', controller='front',
+       action='comments', title=None, comment=None)
+    mc('/duplicates/:article/:title', controller='front',
+       action='duplicates', title=None)
 
-    mc('/mail/optout', controller='forms', action = 'optout')
-    mc('/mail/optin',  controller='forms', action = 'optin')
-    mc('/stylesheet', controller = 'front', action = 'stylesheet')
-    mc('/frame', controller='front', action = 'frame')
-    mc('/framebuster/:blah', controller='front', action = 'framebuster')
+    mc('/mail/optout', controller='forms', action='optout')
+    mc('/mail/optin', controller='forms', action='optin')
+    mc('/stylesheet', controller='front', action='stylesheet')
+    mc('/frame', controller='front', action='frame')
+    mc('/framebuster/:blah', controller='front', action='framebuster')
     mc('/framebuster/:what/:blah',
-       controller='front', action = 'framebuster')
+       controller='front', action='framebuster')
 
     mc('/promoted/edit_promo/:link',
-       controller='promote', action = 'edit_promo')
+       controller='promote', action='edit_promo')
     mc('/promoted/pay/:link/:indx',
-       controller='promote', action = 'pay')
+       controller='promote', action='pay')
     mc('/promoted/graph',
-       controller='promote', action = 'graph')
+       controller='promote', action='graph')
     mc('/promoted/:action', controller='promote',
-       requirements = dict(action = "edit_promo|new_promo|roadblock"))
-    mc('/promoted/:sort', controller='promote', action = "listing")
-    mc('/promoted/', controller='promoted', action = "listing",
-       sort = "")
+       requirements=dict(action="edit_promo|new_promo|roadblock"))
+    mc('/promoted/:sort', controller='promote', action="listing")
+    mc('/promoted/', controller='promoted', action="listing", sort="")
 
     mc('/health', controller='health', action='health')
 
@@ -170,17 +168,17 @@ def make_map():
 
     mc('/by_id/:names', controller='byId', action='listing')
 
-    mc('/:sort', controller='browse', sort='top', action = 'listing',
-       requirements = dict(sort = 'top|controversial'))
+    mc('/:sort', controller='browse', sort='top', action='listing',
+       requirements=dict(sort='top|controversial'))
 
     mc('/message/compose', controller='message', action='compose')
     mc('/message/messages/:mid', controller='message', action='listing',
-       where = "messages")
+       where="messages")
     mc('/message/:where', controller='message', action='listing')
     mc('/message/moderator/:subwhere', controller='message', action='listing',
-       where = 'moderator')
+       where='moderator')
 
-    mc('/thanks', controller='forms', action="thanks", secret = '')
+    mc('/thanks', controller='forms', action="thanks", secret='')
     mc('/thanks/:secret', controller='forms', action="thanks")
 
     mc('/gold', controller='forms', action="gold")
@@ -215,7 +213,8 @@ def make_map():
     mc('/post/:action/:url_user', controller='post',
        requirements=dict(action="login|reg"))
     mc('/post/:action', controller='post',
-       requirements=dict(action="options|over18|unlogged_options|optout|optin|login|reg"))
+       requirements=dict(action="options|over18|unlogged_options|optout"
+                         "|optin|login|reg"))
 
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
@@ -223,25 +222,32 @@ def make_map():
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
-    mc('/ipn/:secret',     controller='ipn', action='ipn')
+    mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',
        requirements=dict(action="login|register"))
-    mc('/api/gadget/click/:ids', controller = 'api', action='gadget', type='click')
-    mc('/api/gadget/:type', controller = 'api', action='gadget')
+    mc('/api/gadget/click/:ids', controller='api', action='gadget',
+       type='click')
+    mc('/api/gadget/:type', controller='api', action='gadget')
     mc('/api/:action', controller='promote',
-       requirements=dict(action="promote|unpromote|edit_promo|link_thumb|freebie|promote_note|update_pay|refund|traffic_viewer|rm_traffic_viewer|edit_campaign|delete_campaign|meta_promo|add_roadblock|rm_roadblock"))
+       requirements=dict(action=("promote|unpromote|edit_promo|link_thumb|"
+                                 "freebie|promote_note|update_pay|refund|"
+                                 "traffic_viewer|rm_traffic_viewer|"
+                                 "edit_campaign|delete_campaign|meta_promo|"
+                                 "add_roadblock|rm_roadblock")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:action', controller='api')
 
-    mc("/api/v1/:action", controller="oauth2frontend", requirements=dict(action="authorize"))
-    mc("/api/v1/:action", controller="oauth2access", requirements=dict(action="access_token"))
+    mc("/api/v1/:action", controller="oauth2frontend",
+       requirements=dict(action="authorize"))
+    mc("/api/v1/:action", controller="oauth2access",
+       requirements=dict(action="access_token"))
     mc("/api/v1/:action", controller="apiv1")
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')
 
-    mc("/button_info", controller="api", action="info", limit = 1)
+    mc("/button_info", controller="api", action="info", limit=1)
 
     mc('/captcha/:iden', controller='captcha', action='captchaimg')
 
@@ -258,20 +264,21 @@ def make_map():
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
 
-    mc('/authorize_embed', controller = 'front', action = 'authorize_embed')
+    mc('/authorize_embed', controller='front', action='authorize_embed')
 
     # Used for showing ads
-    mc("/ads/", controller = "ad", action = "ad")
-    mc("/ads/r/:reddit_name/:keyword", controller = "ad", action = "ad", keyword=None)
-    mc("/ads/:codename", controller = "ad", action = "ad_by_codename")
+    mc("/ads/", controller="ad", action="ad")
+    mc("/ads/r/:reddit_name/:keyword", controller="ad", action="ad",
+       keyword=None)
+    mc("/ads/:codename", controller="ad", action="ad_by_codename")
 
-    mc("/try", controller = "forms", action = "try_compact")
+    mc("/try", controller="forms", action="try_compact")
     mc('/comscore-iframe/', controller='mediaembed', action='comscore')
     mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')
 
-    # This route handles displaying the error page and 
+    # This route handles displaying the error page and
     # graphics used in the 404/500
-    # error pages. It should likely stay at the top 
+    # error pages. It should likely stay at the top
     # to ensure that the error page is
     # displayed properly.
     mc('/error/document/:id', controller='error', action="document")
@@ -288,4 +295,3 @@ def make_map():
     mc("/*url", controller='front', action='catchall')
 
     return map
-
