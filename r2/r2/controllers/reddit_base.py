@@ -872,14 +872,16 @@ class RedditController(MinimalController):
                     message = strings.banned_subreddit_message % dict(
                                                                     link=link)
                 errpage = pages.RedditError(strings.banned_subreddit_title,
-                                            message)
+                                            message,
+                                            image="subreddit-banned.png")
                 request.environ['usable_error_content'] = errpage.render()
                 self.abort404()
 
             # check if the user has access to this subreddit
             if not c.site.can_view(c.user) and not c.error_page:
                 errpage = pages.RedditError(strings.private_subreddit_title,
-                                            strings.private_subreddit_message)
+                                            strings.private_subreddit_message,
+                                            image="subreddit-private.png")
                 request.environ['usable_error_content'] = errpage.render()
                 self.abort403()
 
