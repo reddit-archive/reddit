@@ -850,10 +850,6 @@ class VSubmitSR(Validator):
             self.set_error(errors.SUBREDDIT_REQUIRED)
             return None
 
-        if not chksrname(sr_name):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
-            return None
-
         try:
             sr = Subreddit._by_name(str(sr_name).strip())
         except (NotFound, AttributeError, UnicodeEncodeError):
@@ -990,9 +986,6 @@ class VUrl(VRequired):
     def run(self, url, sr = None, resubmit=False):
         if sr is None and not isinstance(c.site, FakeSubreddit):
             sr = c.site
-        elif not chksrname(sr):
-            self.set_error(errors.SUBREDDIT_NOEXIST)
-            sr = None
         elif sr:
             try:
                 sr = Subreddit._by_name(str(sr))
