@@ -26,7 +26,7 @@
    from r2.lib.pages import WrappedUser
 %>
 
-<%namespace file="utils.html" import="plain_link, thing_timestamp" />
+<%namespace file="utils.html" import="plain_link, thing_timestamp, edited" />
 <%inherit file="comment_skeleton.html"/>
 
 #####################
@@ -109,9 +109,7 @@ ${parent.collapsed()}
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
     ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}
-    %if thing.editted:
-      <em>*</em>&nbsp;
-    %endif
+    ${edited(thing, thing.lastedited)}
   %endif
   %if collapse:
     &nbsp;<a href="#" class="expand"

@@ -665,6 +665,7 @@ ul.flat-vert {text-align: left;}
 .tagline .alum { color: #BE1337; }
 .tagline a.author.admin { font-weight: bold }
 .tagline a:hover { text-decoration: underline }
+.tagline .edited-timestamp{ cursor: default }
 
 a.author { margin-right: 0.5em; }
 

@@ -292,6 +292,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 subreddit_id = "subreddit_id",
                                                 is_self      = "is_self", 
                                                 permalink    = "permalink",
+                                                edited       = "editted"
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -306,6 +307,9 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                height = media_embed.height,
                                content = media_embed.content)
            return dict()
+        elif attr == "editted" and not isinstance(thing.editted, bool):
+            return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
+                    - time.timezone)
         elif attr == 'subreddit':
             return thing.subreddit.name
         elif attr == 'subreddit_id':
@@ -351,12 +355,16 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 banned_by    = "banned_by",
                                                 approved_by  = "approved_by",
                                                 parent_id    = "parent_id",
+                                                edited       = "editted"
                                                 )
 
     def thing_attr(self, thing, attr):
         from r2.models import Comment, Link, Subreddit
         if attr == 'link_id':
             return make_fullname(Link, thing.link_id)
+        elif attr == "editted" and not isinstance(thing.editted, bool):
+            return (time.mktime(thing.editted.astimezone(pytz.UTC).timetuple())
+                    - time.timezone)
         elif attr == 'subreddit':
             return thing.subreddit.name
         elif attr == 'subreddit_id':

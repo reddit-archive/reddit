@@ -914,7 +914,7 @@ class ApiController(RedditController):
 
             if (item._date < timeago('3 minutes')
                 or (item._ups + item._downs > 2)):
-                item.editted = True
+                item.editted = c.start_time
 
             item._commit()
 

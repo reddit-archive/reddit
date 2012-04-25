@@ -263,6 +263,10 @@ def replace_render(listing, item, render_func):
 
             replacements['time_period'] = calc_time_period(item._date)
 
+        # compute the last edited time here so we don't end up caching it
+        if hasattr(item, "editted") and not isinstance(item.editted, bool):
+            replacements['lastedited'] = timesince(item.editted)
+
         # Set in front.py:GET_comments()
         replacements['previous_visits_hex'] = c.previous_visits_hex
 
