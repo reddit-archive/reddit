@@ -4325,11 +4325,31 @@ dd { margin-left: 20px;  }
     color: gray; 
 }
 
-.sidecontentbox h1 {
+.sidecontentbox .title h1 {
+    display: inline;
     text-transform:uppercase;
     margin: 0;
     color: gray;
     font-size: 130%;
+}
+
+.sidecontentbox.collapsible .title {
+    cursor: pointer;
+}
+
+.sidecontentbox .collapse-button {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    line-height: 10px;
+    text-align: center;
+    font-size: 10px;
+    background: #eee;
+    color: #333;
+    border: 1px solid #999;
+    border-radius: 2px;
+    margin: 1px 8px;
+    vertical-align: bottom;
 }
 
 .titlebox form.toggle, .leavemoderator {
