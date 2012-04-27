@@ -396,15 +396,12 @@ class FrontController(RedditController):
               action=VOneOf('type', ModAction.actions))
     @api_doc(api_section.moderation)
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
-        if not c.user_is_loggedin:
+        if not c.user_is_loggedin or not (c.user_is_admin or
+                                          c.site.is_moderator(c.user)):
             return self.abort404()
 
         if isinstance(c.site, (MultiReddit, ModSR)):
             srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
-
-            # check that user is mod on all requested srs
-            if not Subreddit.user_mods_all(c.user, srs) and not c.user_is_admin:
-                return self.abort404()
 
             # grab all moderators
             mod_ids = set(Subreddit.get_all_mod_ids(srs))
@@ -415,8 +412,6 @@ class FrontController(RedditController):
         elif isinstance(c.site, FakeSubreddit):
             return self.abort404()
         else:
-            if not c.site.is_moderator(c.user) and not c.user_is_admin:
-                return self.abort404()
             mod_ids = c.site.moderators
             mods = Account._byID(mod_ids, data=True)
 
@@ -606,8 +601,7 @@ class FrontController(RedditController):
             return self._edit_modcontrib_reddit(location, num, after, reverse,
                                                 count, created)
         elif isinstance(c.site, MultiReddit):
-            srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
-            if not Subreddit.user_mods_all(c.user, srs) and not c.user_is_admin:
+            if not (c.user_is_admin or c.site.is_moderator(c.user)):
                 self.abort403()
             return self._edit_modcontrib_reddit(location, num, after, reverse,
                                                 count, created)

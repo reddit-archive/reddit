@@ -769,7 +769,7 @@ class MessageController(ListingController):
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
         elif self.where == 'multi' and self.subwhere == 'unread':
-            q = queries.merge_results(*[queries.get_unread_subreddit_messages(s) for s in self.srs])
+            q = queries.merge_results(*[queries.get_unread_subreddit_messages(s) for s in c.site.kept_srs])
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
                 srids = Subreddit.reverse_moderator_ids(c.user)
@@ -804,11 +804,9 @@ class MessageController(ListingController):
         if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
             abort(403, "forbidden")
         if isinstance(c.site, MultiReddit):
-            srs = Subreddit._byID(c.site.sr_ids, data=False, return_dict=False)
-            if not (c.user_is_admin or Subreddit.user_mods_all(c.user, srs)):
+            if not (c.user_is_admin or c.site.is_moderator(c.user)):
                 self.abort403()
             self.where = "multi"
-            self.srs = srs
         elif isinstance(c.site, ModSR) or not c.default_sr:
             self.where = "moderator"
         else:
