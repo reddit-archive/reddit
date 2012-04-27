@@ -638,13 +638,19 @@ class UserController(ListingController):
         return Reddit(content = Wrapped(vuser)).render()
 
 class MessageController(ListingController):
-    show_sidebar = False
     show_nums = False
     render_cls = MessagePage
     allow_stylesheets = False
     # note: this intentionally replaces the listing-page class which doesn't
     # conceptually fit for styling these pages.
     extra_page_classes = ['messages-page']
+
+    @property
+    def show_sidebar(self):
+        if c.default_sr and not isinstance(c.site, (ModSR, MultiReddit)):
+            return False
+
+        return self.where in ("moderator", "multi")
 
     @property
     def menus(self):
