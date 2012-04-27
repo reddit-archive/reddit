@@ -803,7 +803,7 @@ class MessageController(ListingController):
                 self.abort403()
             self.where = "multi"
             self.srs = srs
-        elif not c.default_sr:
+        elif isinstance(c.site, ModSR) or not c.default_sr:
             self.where = "moderator"
         else:
             self.where = where
