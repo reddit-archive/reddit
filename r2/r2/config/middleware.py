@@ -462,9 +462,19 @@ class LimitUploadSize(object):
                 return r(environ, start_response)
 
             if cl_int > self.max_size:
+                from r2.lib.strings import string_dict
+                error_msg = string_dict['css_validator_messages']['max_size'] % dict(max_size = self.max_size/1024)
                 r = Response()
                 r.status_code = 413
-                r.content = '<html><head></head><body><script type="text/javascript">parent.too_big();</script>request entity too large</body></html>'
+                r.content = ("<html>"
+                             "<head>"
+                             "<script type='text/javascript'>"
+                             "parent.completedUploadImage('failed',"
+                             "''," 
+                             "''," 
+                             "[['BAD_CSS_NAME', ''], ['IMAGE_ERROR', '", error_msg,"']],"
+                             "'image-upload');"
+                             "</script></head><body>you shouldn\'t be here</body></html>")
                 return r(environ, start_response)
 
         return self.app(environ, start_response)

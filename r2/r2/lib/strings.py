@@ -118,6 +118,7 @@ string_dict = dict(
         invalid_property = _('"%(cssprop)s" is not a valid CSS property'),
         invalid_val_for_prop = _('"%(cssvalue)s" is not a valid value for CSS property "%(cssprop)s"'),
         too_big = _('too big. keep it under %(max_size)dkb'),
+        max_size = _('max size: %(max_size)dkB'),
         syntax_error = _('syntax error: "%(syntaxerror)s"'),
         no_imports = _('@imports are not allowed'),
         invalid_property_list = _('invalid CSS property list "%(proplist)s"'),
