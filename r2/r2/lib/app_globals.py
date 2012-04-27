@@ -75,6 +75,10 @@ class Globals(object):
             'min_membership_create_community',
             'bcrypt_work_factor',
             'cassandra_pool_size',
+            'sr_banned_quota',
+            'sr_moderator_quota',
+            'sr_contributor_quota',
+            'sr_quota_time',
         ],
 
         ConfigValue.float: [

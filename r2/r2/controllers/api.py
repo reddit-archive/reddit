@@ -549,6 +549,17 @@ class ApiController(RedditController):
         if (not c.user_is_admin
             and (type in sr_types and not container.is_moderator(c.user))):
             abort(403,'forbidden')
+        
+        if type in sr_types and not c.user_is_admin:
+            quota_key = "sr%squota-%s" % (str(type), container._id36)
+            g.cache.add(quota_key, 0, time=g.sr_quota_time)
+            subreddit_quota = g.cache.incr(quota_key)
+            quota_limit = getattr(g, "sr_%s_quota" % type)
+            if subreddit_quota > quota_limit and container.use_quotas:
+                form.set_html(".status", errors.SUBREDDIT_RATELIMIT)
+                c.errors.add(errors.SUBREDDIT_RATELIMIT)
+                form.set_error(errors.SUBREDDIT_RATELIMIT, None)
+                return
 
         # if we are (strictly) friending, the container
         # had better be the current user.

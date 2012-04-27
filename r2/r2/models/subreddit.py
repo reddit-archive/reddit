@@ -79,6 +79,7 @@ class Subreddit(Thing, Printable):
                      link_flair_position = '', # one of ('', 'left', 'right')
                      flair_self_assign_enabled = False,
                      link_flair_self_assign_enabled = False,
+                     use_quotas = True,
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
