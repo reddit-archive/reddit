@@ -27,7 +27,7 @@
     <% enabled = user.flair_enabled %>
   %endif
   %if user.has_flair and enabled:
-    <span class="flair ${user.flair_css_class}">${user.flair_text}</span>
+    <span class="flair ${user.flair_css_class}" title="${user.flair_text}">${user.flair_text}</span>
   %endif
 </%def>
 
