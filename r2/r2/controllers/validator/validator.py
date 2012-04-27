@@ -421,7 +421,7 @@ class VCssMeasure(Validator):
     def run(self, value):
         return value if value and self.measure.match(value) else ''
 
-subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,20}\Z")
+subreddit_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{2,%s}\Z" % Subreddit.MAX_SRNAME_LENGTH)
 
 def chksrname(x):
     #notice the space before reddit.com

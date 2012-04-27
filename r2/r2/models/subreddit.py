@@ -86,6 +86,10 @@ class Subreddit(Thing, Printable):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
+    # Note: this value can increase but should never go down or it won't match
+    # names already in the db
+    MAX_SRNAME_LENGTH = 20
+
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
@@ -116,6 +120,16 @@ class Subreddit(Thing, Printable):
 
     @classmethod
     def _by_name(cls, names, stale=False, _update = False):
+        '''
+        Usages: 
+        1. Subreddit._by_name('funny') # single sr name
+        Searches for a single subreddit. Returns a single Subreddit object or 
+        raises NotFound if the subreddit doesn't exist.
+        2. Subreddit._by_name(['aww','iama']) # list of sr names
+        Searches for a list of subreddits. Returns a dict mapping srnames to 
+        Subreddit objects. Items that were not found are ommitted from the dict.
+        If no items are found, an empty dict is returned.
+        '''
         #lower name here so there is only one cache
         names, single = tup(names, True)
 
@@ -127,6 +141,8 @@ class Subreddit(Thing, Printable):
 
             if lname in cls._specials:
                 ret[name] = cls._specials[lname]
+            elif len(lname) > Subreddit.MAX_SRNAME_LENGTH:
+                g.log.debug("Subreddit._by_name() ignoring invalid srname (too long): %s", lname)
             else:
                 to_fetch[lname] = name
 
