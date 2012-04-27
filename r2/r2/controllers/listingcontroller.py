@@ -658,7 +658,7 @@ class MessageController(ListingController):
 
             return [NavMenu(buttons, base_path = '/message/',
                             default = 'inbox', type = "flatlist")]
-        elif not c.default_sr or self.where == 'moderator':
+        elif not c.default_sr or self.where in ('moderator', 'multi'):
             buttons = (NavButton(_("all"), "inbox"),
                        NavButton(_("unread"), "unread"))
             return [NavMenu(buttons, base_path = '/message/moderator/',
@@ -702,10 +702,14 @@ class MessageController(ListingController):
 
     def builder(self):
         if (self.where == 'messages' or
-            (self.where == "moderator" and self.subwhere != "unread")):
+            (self.where in ("moderator", "multi") and self.subwhere != "unread")):
             root = c.user
             message_cls = UserMessageBuilder
-            if not c.default_sr:
+
+            if self.where == "multi":
+                root = c.site
+                message_cls = MultiredditMessageBuilder
+            elif not c.default_sr:
                 root = c.site
                 message_cls = SrMessageBuilder
             elif self.where == 'moderator' and self.subwhere != 'unread':
@@ -758,6 +762,8 @@ class MessageController(ListingController):
             q = queries.get_unread_inbox(c.user)
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
+        elif self.where == 'multi' and self.subwhere == 'unread':
+            q = queries.merge_results(*[queries.get_unread_subreddit_messages(s) for s in self.srs])
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
                 srids = Subreddit.reverse_moderator_ids(c.user)
@@ -766,7 +772,7 @@ class MessageController(ListingController):
                     *[queries.get_unread_subreddit_messages(s) for s in srs])
             else:
                 q = queries.get_unread_subreddit_messages(c.site)
-        elif self.where == 'moderator':
+        elif self.where in ('moderator', 'multi'):
             if c.have_mod_messages and self.mark != 'false':
                 c.user.modmsgtime = False
                 c.user._commit()
@@ -791,7 +797,13 @@ class MessageController(ListingController):
     def GET_listing(self, where, mark, message, subwhere = None, **env):
         if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
             abort(403, "forbidden")
-        if not c.default_sr:
+        if isinstance(c.site, MultiReddit):
+            srs = Subreddit._byID(c.site.sr_ids, data=False, return_dict=False)
+            if not (c.user_is_admin or Subreddit.user_mods_all(c.user, srs)):
+                self.abort403()
+            self.where = "multi"
+            self.srs = srs
+        elif not c.default_sr:
             self.where = "moderator"
         else:
             self.where = where

@@ -1,5 +1,5 @@
 from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
-from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox
+from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
@@ -335,7 +335,7 @@ def get_spam_comments(sr_id):
                           sort = db_sort('new'))
 
 def get_spam(sr):
-    if isinstance(sr, ModContribSR):
+    if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         results = []
         results.extend(get_spam_links(sr) for sr in srs)
@@ -381,7 +381,7 @@ def get_reported_comments(sr_id):
                           sort = db_sort('new'))
 
 def get_reported(sr):
-    if isinstance(sr, ModContribSR):
+    if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         results = []
         results.extend(get_reported_links(sr) for sr in srs)
@@ -433,7 +433,7 @@ def get_trials_links(sr):
     return s
 
 def get_trials(sr):
-    if isinstance(sr, ModContribSR):
+    if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         return get_trials_links(srs)
     else:
@@ -441,7 +441,7 @@ def get_trials(sr):
 
 def get_modqueue(sr):
     results = []
-    if isinstance(sr, ModContribSR):
+    if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
 
         for sr in srs:

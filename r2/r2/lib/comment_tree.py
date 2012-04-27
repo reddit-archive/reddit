@@ -479,9 +479,8 @@ def subreddit_messages(sr, update = False):
         g.permacache.set(key, trees)
     return trees
 
-def moderator_messages(user):
+def moderator_messages(sr_ids):
     from r2.models import Subreddit
-    sr_ids = Subreddit.reverse_moderator_ids(user)
 
     def multi_load_tree(sr_ids):
         srs = Subreddit._byID(sr_ids, return_dict = False)
