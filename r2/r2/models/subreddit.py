@@ -947,8 +947,8 @@ class ModContribSR(_DefaultSR):
         return self.get_links_sr_ids(self.sr_ids, sort, time)
 
 class ModSR(ModContribSR):
-    name  = "communities you moderate"
-    title = "communities you moderate"
+    name  = "subreddits you moderate"
+    title = "subreddits you moderate"
     query_param = "moderator"
     real_path = "mod"
 

@@ -266,7 +266,7 @@ class Reddit(Templated):
                 ps.append(self.sr_admin_menu())
 
             if srs:
-                ps.append(SideContentBox(_('these reddits'),[SubscriptionBox(srs=srs)]))
+                ps.append(SideContentBox(_('these subreddits'),[SubscriptionBox(srs=srs)]))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
