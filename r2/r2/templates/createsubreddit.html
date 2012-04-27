@@ -35,19 +35,6 @@
        id="${thing.site._fullname}"
      %endif
      >
-%if thing.site:
-  <h1>${_("community settings")}
-  %if thing.site:
-    | &#32;<strong>${thing.site.name}</strong>
-  %endif
-  </h1>
-%else:
-  %if thing.name:
-    <p class="infobar">
-      ${_("that subreddit doesn't exist, but you can create it here.")}</p>
-  %endif
-  <h1>${_("create a community")}</h1>
-%endif
 
 <div class="pretty-form" id="sr-form">
 

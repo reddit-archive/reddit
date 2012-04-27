@@ -1111,17 +1111,23 @@ class EditReddit(Reddit):
     extension_handling= False
 
     def __init__(self, *a, **kw):
-        is_moderator = c.user_is_loggedin and \
-            c.site.is_moderator(c.user) or c.user_is_admin
+        from r2.lib.menus import menu
 
-        title = _('community settings') if is_moderator else \
-                _('about %(site)s') % dict(site=c.site.name)
+        try:
+            key = kw.pop("location")
+            title = menu[key]
+        except KeyError:
+            is_moderator = c.user_is_loggedin and \
+                c.site.is_moderator(c.user) or c.user_is_admin
 
-        Reddit.__init__(self, title = title, *a, **kw)
+            title = (_('subreddit settings') if is_moderator else
+                     _('about %(site)s') % dict(site=c.site.name))
+
+        Reddit.__init__(self, title=title, *a, **kw)
     
     def build_toolbars(self):
         if not c.cname:
-            return [PageNameNav('subreddit')]
+            return [PageNameNav('subreddit', title=self.title)]
         else:
             return []
 

@@ -440,7 +440,9 @@ class FrontController(RedditController):
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
                 NavMenu(mod_buttons, base_path=base_path, 
                         title=_('filter by moderator'), type='lightdrop')]
-        return EditReddit(content=panes, nav_menus=menus,
+        return EditReddit(content=panes,
+                          nav_menus=menus,
+                          location="log",
                           extension_handling=False).render()
 
     def _make_spamlisting(self, location, num, after, reverse, count):
@@ -527,8 +529,9 @@ class FrontController(RedditController):
         else:
             return self.abort404()
 
-        return EditReddit(content = pane,
-                          extension_handling = extension_handling).render()
+        return EditReddit(content=pane,
+                          location=location,
+                          extension_handling=extension_handling).render()
 
     def _edit_normal_reddit(self, location, num, after, reverse, count, created,
                             name, user):
@@ -581,8 +584,9 @@ class FrontController(RedditController):
         else:
             return self.abort404()
 
-        return EditReddit(content = pane,
-                          extension_handling = extension_handling).render()
+        return EditReddit(content=pane,
+                          location=location,
+                          extension_handling=extension_handling).render()
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
