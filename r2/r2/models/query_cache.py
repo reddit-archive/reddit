@@ -108,7 +108,7 @@ class _CachedQueryBase(object):
     def __iter__(self):
         self.fetch()
 
-        for x in self.data:
+        for x in self.data[:MAX_CACHED_ITEMS]:
             yield x[0]
 
 
