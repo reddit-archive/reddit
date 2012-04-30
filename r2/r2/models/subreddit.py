@@ -86,9 +86,7 @@ class Subreddit(Thing, Printable):
     gold_limit = 100
     DEFAULT_LIMIT = object()
 
-    # Note: this value can increase but should never go down or it won't match
-    # names already in the db
-    MAX_SRNAME_LENGTH = 20
+    MAX_SRNAME_LENGTH = 200 # must be less than max memcached key length
 
     # note: for purposely unrenderable reddits (like promos) set author_id = -1
     @classmethod
