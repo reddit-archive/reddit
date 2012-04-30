@@ -65,7 +65,7 @@
         <li>
           <label for="user_${op}">${_('username')}:</label>
           <input value="${user}" name="user" id="user_${op}" 
-                 type="text" maxlength="20" tabindex="${tabindex}"/>
+                 type="text" maxlength="20" tabindex="${tabindex}" autofocus />
           %if register:
             ${error_field("BAD_USERNAME", "user", kind="span")}
             ${error_field("USERNAME_TAKEN", "user", kind="span")}
