@@ -610,6 +610,7 @@ class FrontController(RedditController):
                 user = Account._by_name(name)
             except NotFound:
                 c.errors.add(errors.USER_DOESNT_EXIST, field='name')
+        c.profilepage = True
         if isinstance(c.site, ModContribSR):
             return self._edit_modcontrib_reddit(location, num, after, reverse,
                                                 count, created)
