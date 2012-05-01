@@ -75,6 +75,8 @@ string_dict = dict(
 
     oauth_login_msg = _("Log in or register to connect your reddit account with [%(app_name)s](%(app_about_url)s)."),
 
+    login_fallback_msg = _("try using our secure login form."),
+
     legal = _("I understand and agree that registration on or use of this site constitutes agreement to its %(user_agreement)s and %(privacy_policy)s."),
 
     friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),

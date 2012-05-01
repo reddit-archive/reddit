@@ -1,4 +1,6 @@
 r.login = {
+    currentOrigin: location.protocol+'//'+location.host,
+
     post: function(form, action, callback) {
         if (r.config.cnameframe && !r.config.https_endpoint) {
             form.$el.unbind()
@@ -8,10 +10,9 @@ r.login = {
 
         var username = $('input[name="user"]', form.$el).val(),
             endpoint = r.config.https_endpoint || ('http://'+r.config.ajax_domain),
-            sameOrigin = location.protocol+'//'+location.host == endpoint,
             apiTarget = endpoint+'/api/'+action+'/'+username
 
-        if (sameOrigin || $.support.cors) {
+        if (this.currentOrigin == endpoint || $.support.cors) {
             var params = form.serialize()
             params.push({name:'api_type', value:'json'})
             $.ajax({
@@ -186,6 +187,17 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
             }
         } else {
             r.ui.Form.prototype._handleResult.call(this, result)
+        }
+    },
+
+    _handleNetError: function(result, err, xhr) {
+        r.ui.Form.prototype._handleNetError.apply(this, arguments)
+        if (xhr.status == 0 && r.login.currentOrigin != r.config.https_endpoint) {
+            $('<p>').append(
+                $('<a>')
+                    .text(r.strings.login_fallback_msg)
+                    .attr('href', r.config.https_endpoint + '/login')
+            ).appendTo(this.$el.find('.status'))
         }
     },
 

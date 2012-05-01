@@ -131,12 +131,16 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
             this._handleResult(result)
         } else {
             this.setWorking(false)
-            this.showStatus('an error occurred (' + xhr.status + ')', true)
+            this._handleNetError(result, err, xhr)
         }
     },
 
     _handleResult: function(result) {
         this.showErrors(result.json.errors)
         this.setWorking(false)
+    },
+
+    _handleNetError: function(result, err, xhr) {
+        this.showStatus('an error occurred (' + xhr.status + ')', true)
     }
 })
