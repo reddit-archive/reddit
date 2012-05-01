@@ -272,6 +272,8 @@ class Builder(object):
             return False
         if hasattr(item, 'subreddit') and not item.subreddit.can_view(user):
             return True
+        if hasattr(item, 'can_view_slow') and not item.can_view_slow():
+            return True
 
 class QueryBuilder(Builder):
     def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False, **kw):
