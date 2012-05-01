@@ -62,7 +62,7 @@ CL = Storage(ANY    = ConsistencyLevel.ANY,
 # wire for a given row (this should be increased if we start working
 # with classes with lots of columns, like Account which has lots of
 # karma_ rows, or we should not do that)
-max_column_count = 25000
+max_column_count = 35000
 
 class CassandraException(Exception):
     """Base class for Exceptions in tdb_cassandra"""
