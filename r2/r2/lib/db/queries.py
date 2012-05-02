@@ -531,11 +531,11 @@ cached_srrel_query = cached_query(SubredditQueryCache, filter_thing2)
 migrating_cached_userrel_query = migrating_cached_query(UserQueryCache, filter_thing2)
 migrating_cached_srrel_query = migrating_cached_query(SubredditQueryCache, filter_thing2)
 
-@migrating_cached_userrel_query
+@cached_userrel_query
 def get_liked(user):
     return rel_query(vote_rel, user, '1')
 
-@migrating_cached_userrel_query
+@cached_userrel_query
 def get_disliked(user):
     return rel_query(vote_rel, user, '-1')
 
@@ -768,15 +768,16 @@ def new_vote(vote, foreground=False):
     if isinstance(item, Link):
         # must update both because we don't know if it's a changed
         # vote
-        if vote._name == '1':
-            add_queries([get_liked(user)], insert_items = vote, foreground = foreground)
-            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
-        elif vote._name == '-1':
-            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
-            add_queries([get_disliked(user)], insert_items = vote, foreground = foreground)
-        else:
-            add_queries([get_liked(user)], delete_items = vote, foreground = foreground)
-            add_queries([get_disliked(user)], delete_items = vote, foreground = foreground)
+        with CachedQueryMutator() as m:
+            if vote._name == '1':
+                m.insert(get_liked(user), [vote])
+                m.delete(get_disliked(user), [vote])
+            elif vote._name == '-1':
+                m.delete(get_liked(user), [vote])
+                m.insert(get_disliked(user), [vote])
+            else:
+                m.delete(get_liked(user), [vote])
+                m.delete(get_disliked(user), [vote])
 
 def new_message(message, inbox_rels):
     from r2.lib.comment_tree import add_message
