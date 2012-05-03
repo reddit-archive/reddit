@@ -1227,6 +1227,9 @@ class ProfilePage(Reddit):
                         NamedButton('disliked'),
                         NamedButton('hidden')]
 
+        if c.user_is_loggedin and (c.user._id == self.user._id or
+                                   c.user_is_admin):
+            main_buttons += [NamedButton('saved')]
 
         toolbar = [PageNameNav('nomenu', title = self.user.name),
                    NavMenu(main_buttons, base_path = path, type="tabmenu")]

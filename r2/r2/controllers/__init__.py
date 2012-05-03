@@ -21,7 +21,6 @@
 ################################################################################
 from listingcontroller import ListingController
 from listingcontroller import HotController
-from listingcontroller import SavedController
 from listingcontroller import NewController
 from listingcontroller import BrowseController
 from listingcontroller import MessageController

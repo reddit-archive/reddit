@@ -49,6 +49,7 @@ from admin import admin_profile_query
 
 from pylons.i18n import _
 from pylons import Response
+from pylons.controllers.util import redirect_to
 
 import random
 from functools import partial
@@ -351,19 +352,6 @@ class HotController(FixListing, ListingController):
         self.infotext = request.get.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
 
-class SavedController(ListingController):
-    where = 'saved'
-    skip = False
-    title_text = _('saved')
-
-    def query(self):
-        return queries.get_saved(c.user)
-
-    @validate(VUser())
-    @listing_api_doc(uri='/saved')
-    def GET_listing(self, **env):
-        return ListingController.GET_listing(self, **env)
-
 class NewController(ListingController):
     where = 'new'
     title_text = _('newest submissions')
@@ -527,6 +515,7 @@ class UserController(ListingController):
                   'submitted': _("submitted by %(user)s"),
                   'liked': _("liked by %(user)s"),
                   'disliked': _("disliked by %(user)s"),
+                  'saved': _("saved by %(user)s"),
                   'hidden': _("hidden by %(user)s")}
         title = titles.get(self.where, _('profile for %(user)s')) \
             % dict(user = self.vuser.name, site = c.site.name)
@@ -547,6 +536,8 @@ class UserController(ListingController):
                 if not item.likes and self.where == 'liked':
                     return False
                 if item.likes is not False and self.where == 'disliked':
+                    return False
+                if self.where == 'saved' and not item.saved:
                     return False
             return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
@@ -580,6 +571,9 @@ class UserController(ListingController):
         elif self.where == 'hidden':
             q = queries.get_hidden(self.vuser)
 
+        elif self.where == 'saved':
+            q = queries.get_saved(self.vuser)
+
         elif c.user_is_admin:
             q = admin_profile_query(self.vuser, self.where, desc('_date'))
 
@@ -594,7 +588,7 @@ class UserController(ListingController):
     @listing_api_doc(section=api_section.users, uri='/{username}/{where}',
                      uri_variants=['/{username}/' + where for where in [
                                        'overview', 'submitted', 'commented',
-                                       'liked', 'disliked', 'hidden']])
+                                       'liked', 'disliked', 'hidden', 'saved']])
     def GET_listing(self, where, vuser, sort, time, **env):
         self.where = where
         self.sort = sort
@@ -618,6 +612,11 @@ class UserController(ListingController):
             and not votes_visible(vuser)):
             return self.abort403()
 
+        if where == "saved" and not (c.user_is_loggedin and
+                                     (c.user._id == vuser._id or
+                                      c.user_is_admin)):
+            self.abort403()
+
         check_cheating('user')
 
         self.vuser = vuser
@@ -636,6 +635,11 @@ class UserController(ListingController):
         if not is_api() or not vuser:
             return self.abort404()
         return Reddit(content = Wrapped(vuser)).render()
+
+    def GET_saved_redirect(self):
+        if not c.user_is_loggedin:
+            abort(404)
+        return redirect_to("/user/" + c.user.name + "/saved")
 
 class MessageController(ListingController):
     show_nums = False

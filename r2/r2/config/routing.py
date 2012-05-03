@@ -156,10 +156,11 @@ def make_map(global_conf={}, app_conf={}):
 
     mc('/', controller='hot', action='listing')
 
-    listing_controllers = "hot|saved|new|randomrising|comments"
+    listing_controllers = "hot|new|randomrising|comments"
 
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
+    mc('/saved', controller='user', action='saved_redirect')
 
     mc('/by_id/:names', controller='byId', action='listing')
 
