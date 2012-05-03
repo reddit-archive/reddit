@@ -616,7 +616,7 @@ class UserController(ListingController):
 
         if (where not in ('overview', 'submitted', 'comments')
             and not votes_visible(vuser)):
-            return self.abort404()
+            return self.abort403()
 
         check_cheating('user')
 
