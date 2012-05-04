@@ -1,0 +1,67 @@
+#!/usr/bin/python
+"""
+Wrap a command, setuid/setgid, change directory to the reddit
+code, and send output to syslog.
+
+The following environment variables may be used to control
+the environment the wrapped command runs in:
+
+REDDIT_USER
+
+    The user to run the job as. Defaults to "reddit".
+
+REDDIT_GROUP
+
+    The group to run the job as. Defaults to $REDDIT_USER.
+
+REDDIT_ROOT
+
+    The root directory of the reddit repo. Should contain
+    r2/, scripts/ etc.
+
+REDDIT_LOG_FACILITY
+
+    The syslog facility to write messages to.
+"""
+
+import os
+import sys
+import grp
+import pwd
+import syslog
+import subprocess
+
+
+# drop permissions
+user = os.environ.get("REDDIT_USER", "reddit")
+group = os.environ.get("REDDIT_GROUP", user)
+uid = pwd.getpwnam(user).pw_uid
+gid = grp.getgrnam(group).gr_gid
+os.setgroups([])
+os.setgid(gid)
+os.setuid(uid)
+
+# change directory to the reddit code root
+root = os.environ.get("REDDIT_ROOT", "/opt/reddit/lib/public")
+r2_root = os.path.join(root, "r2")
+os.chdir(r2_root)
+
+# configure syslog
+job_name = os.environ.get("UPSTART_JOB", "-".join(sys.argv[1:]))
+facility = getattr(syslog, "LOG_" + os.environ.get("REDDIT_LOG_FACILITY", "CRON"))
+syslog.openlog(ident=job_name, facility=facility)
+
+# run the wrapped command
+child = subprocess.Popen(sys.argv[1:],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+
+# write out to syslog
+for line in child.stdout:
+    line = line.rstrip('\n')
+    syslog.syslog(syslog.LOG_NOTICE, line)
+    print line
+
+# our success depends on our child's success
+child.wait()
+sys.exit(child.returncode)
