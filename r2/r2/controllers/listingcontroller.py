@@ -534,19 +534,10 @@ class UserController(ListingController):
                 wouldkeep = (item._date > utils.timeago('1 %s' % str(self.time)))
             if c.user == self.vuser:
                 if not item.likes and self.where == 'liked':
-                    g.log.warning("unliked thing %s on liked page for %s",
-                                  item.fullname,
-                                  self.vuser.name)
                     return False
                 if item.likes is not False and self.where == 'disliked':
-                    g.log.warning("undisliked thing %s on disliked page for %s",
-                                  item.fullname,
-                                  self.vuser.name)
                     return False
                 if self.where == 'saved' and not item.saved:
-                    g.log.warning("unsaved thing %s on saved page for %s",
-                                  item.fullname,
-                                  self.vuser.name)
                     return False
             return wouldkeep and (getattr(item, "promoted", None) is None and
                     (self.where == "deleted" or
