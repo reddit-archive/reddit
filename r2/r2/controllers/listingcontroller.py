@@ -781,13 +781,12 @@ class MessageController(ListingController):
         elif self.where == 'sent':
             q = queries.get_sent(c.user)
         elif self.where == 'multi' and self.subwhere == 'unread':
-            q = queries.merge_results(*[queries.get_unread_subreddit_messages(s) for s in c.site.kept_srs])
+            q = queries.get_unread_subreddit_messages_multi(c.site.kept_sr_ids)
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
                 srids = Subreddit.reverse_moderator_ids(c.user)
                 srs = Subreddit._byID(srids, data = False, return_dict = False)
-                q = queries.merge_results(
-                    *[queries.get_unread_subreddit_messages(s) for s in srs])
+                q = queries.get_unread_subreddit_messages_multi(srs)
             else:
                 q = queries.get_unread_subreddit_messages(c.site)
         elif self.where in ('moderator', 'multi'):

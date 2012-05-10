@@ -1097,8 +1097,7 @@ class Message(Thing, Printable):
                       for x in wrapped if x.sr_id is not None
                       and isinstance(x.lookups[0], Message))
         # load the unread mod list for the same reason
-        mod_unread = set(queries.merge_results(
-            *[queries.get_unread_subreddit_messages(sr) for sr in msg_srs]))
+        mod_unread = set(queries.get_unread_subreddit_messages_multi(msg_srs))
 
         for item in wrapped:
             item.to = tos.get(item.to_id)
