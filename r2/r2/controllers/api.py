@@ -745,6 +745,7 @@ class ApiController(RedditController):
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByNameIfAuthor('id'))
+    @api_doc(api_section.links_and_comments)
     def POST_del(self, thing):
         if not thing: return
         '''for deleting all sorts of things'''
