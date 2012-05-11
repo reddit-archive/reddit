@@ -17,7 +17,7 @@ else:
 # STATIC_ROOT will be None if pylons is uninitialized
 if not STATIC_ROOT:
     REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    STATIC_ROOT = os.path.join(REDDIT_ROOT, "public")
+    STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>\n'

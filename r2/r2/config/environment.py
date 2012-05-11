@@ -30,7 +30,7 @@ mimetypes.init()
 import webhelpers
 
 from r2.config import routing
-import r2.lib.app_globals as app_globals
+from r2.lib.app_globals import ConfigValue, Globals
 from   r2.lib import  rpc
 import r2.lib.helpers
 from r2.lib.plugin import PluginLoader
@@ -45,13 +45,17 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     paths = {'root': root_path,
              'controllers': os.path.join(root_path, 'controllers'),
              'templates': tmpl_dirs,
-             'static_files': os.path.join(root_path, 'public')
              }
+
+    if ConfigValue.bool(global_conf.get('uncompressedJS')):
+        paths['static_files'] = os.path.join(root_path, 'public')
+    else:
+        paths['static_files'] = os.path.join(os.path.dirname(root_path), 'build/public')
 
     config.init_app(global_conf, app_conf, package='r2',
                     template_engine='mako', paths=paths)
 
-    g = config['pylons.g'] = app_globals.Globals(global_conf, app_conf, paths)
+    g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
     if setup_globals:
         g.setup()
         reddit_config.cache = g.cache

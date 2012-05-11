@@ -84,24 +84,33 @@ clean_ini:
 	rm $(INIFILES)
 
 #################### Static Files
-STATIC_DIR := r2/public/static
+STATIC_ROOT := r2/public
+STATIC_FILES := $(shell find $(STATIC_ROOT) -readable)
+STATIC_BUILD_ROOT := $(BUILD_DIR)/public
+STATIC_BUILD_DIR := $(STATIC_BUILD_ROOT)/static
+STATIC_BUILDSTAMP := $(BUILD_DIR)/static-buildstamp
 
 .PHONY: clean_static
 
 static: pyx css js names
 
-clean_static: clean_css clean_js clean_names
+clean_static:
+	rm -rf $(STATIC_BUILDSTAMP) $(STATIC_BUILD_DIR)
+
+$(STATIC_BUILDSTAMP): $(STATIC_FILES)
+	cp -ruTL $(STATIC_ROOT) $(STATIC_BUILD_ROOT)
+	touch $@
 
 #### Stylesheets
 CSS_COMPRESS := $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
-CSS_SOURCE_DIR := $(STATIC_DIR)/css
+CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
 
 SPRITED_STYLESHEETS := reddit.css compact.css
-PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_DIR)/, $(SPRITED_STYLESHEETS))
-SPRITES := $(addprefix $(STATIC_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS)))
+PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(SPRITED_STYLESHEETS))
+SPRITES := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS)))
 
 OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
-MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_DIR)/, $(OTHER_STYLESHEETS))
+MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(OTHER_STYLESHEETS))
 
 PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS)
 RTL_STYLESHEETS := $(PROCESSED_STYLESHEETS:.css=-rtl.css)
@@ -110,18 +119,19 @@ CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
 
 .PHONY: clean_css
 
-css: $(CSS_OUTPUTS)
+css: $(STATIC_BUILDSTAMP) $(CSS_OUTPUTS)
 
-$(MINIFIED_OTHER_STYLESHEETS): $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
+
+$(MINIFIED_OTHER_STYLESHEETS): $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
 	# when static file names are mangled, the original becomes a symlink to the mangled name
 	# remove the original file here in case it's a symlink so we don't just rewrite the old file
 	rm -f $@
 	$(CAT) $< | $(CSS_COMPRESS) > $@
 
-$(STATIC_DIR)/sprite-%.png $(STATIC_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
+$(STATIC_BUILD_DIR)/sprite-%.png $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css $(STATIC_BUILDSTAMP)
 	# see above
-	rm -f $(STATIC_DIR)/sprite-$*.png $(STATIC_DIR)/$*.css
-	$(PYTHON) r2/lib/nymph.py $< $(STATIC_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_DIR)/$*.css
+	rm -f $(STATIC_BUILD_DIR)/sprite-$*.png $(STATIC_BUILD_DIR)/$*.css
+	$(PYTHON) r2/lib/nymph.py $< $(STATIC_BUILD_DIR)/sprite-$*.png | $(CSS_COMPRESS) > $(STATIC_BUILD_DIR)/$*.css
 
 $(RTL_STYLESHEETS): %-rtl.css : %.css
 	# see above
@@ -141,7 +151,7 @@ JS_OUTPUTS := $(shell $(PYTHON) r2/lib/js.py enumerate_outputs)
 
 .PHONY: clean_js
 
-js: $(JS_MODULE_BUILDSTAMPS)
+js: $(STATIC_BUILDSTAMP) $(JS_MODULE_BUILDSTAMPS)
 
 $(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
 
@@ -156,12 +166,12 @@ endef
 $(foreach module,$(JS_MODULES),$(eval $(call JS_MODULE_TEMPLATE,$(module))))
 
 clean_js:
-	rm -f $(JS_MODULE_BUILDSTAMPS) $(STATIC_DIR)/*.js
+	rm -f $(JS_MODULE_BUILDSTAMPS) $(STATIC_BUILD_DIR)/*.js
 
 #### name mangling
 MANGLEABLE_FILES := $(CSS_OUTPUTS) $(JS_OUTPUTS)
 MANGLE_BUILDSTAMP := $(BUILD_DIR)/mangle-buildstamp
-NAMES_FILE := $(STATIC_DIR)/names.json
+NAMES_FILE := $(STATIC_BUILD_DIR)/names.json
 MANGLED_FILES := $(wildcard $(foreach file,$(MANGLEABLE_FILES),$(basename $(file)).*$(suffix $(file))))
 
 .PHONY: clean_names
@@ -176,7 +186,7 @@ clean_names:
 	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILES) $(MANGLEABLE_FILES) $(MANGLED_FILES) $(JS_MODULE_BUILDSTAMPS)
 
 #### gzip!
-GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES) $(STATIC_DIR)/js/lib/jquery.js)
+GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES) $(STATIC_BUILD_DIR)/js/lib/jquery.js)
 GZIPPED := $(addsuffix .gzip,$(GZIPPABLE))
 
 .PHONY: clean_gzip
