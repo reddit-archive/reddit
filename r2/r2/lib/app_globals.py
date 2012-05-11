@@ -41,25 +41,25 @@ from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 
 class ConfigValue(object):
     @staticmethod
-    def int(k, v, data):
+    def int(v, key=None, data=None):
         return int(v)
 
     @staticmethod
-    def float(k, v, data):
+    def float(v, key=None, data=None):
         return float(v)
 
     @staticmethod
-    def bool(k, v, data):
+    def bool(v, key=None, data=None):
         return (v.lower() == 'true') if v else None
 
     @staticmethod
-    def tuple(k, v, data):
+    def tuple(v, key=None, data=None):
         return tuple(ConfigValue.to_iter(v))
 
     @staticmethod
-    def choice(k, v, data):
+    def choice(v, key, data):
         if v not in data:
-            raise ValueError("Unknown option for %r: %r not in %r" % (k, v, data))
+            raise ValueError("Unknown option for %r: %r not in %r" % (key, v, data))
         return data[v]
 
     @staticmethod
@@ -92,7 +92,7 @@ class ConfigValueParser(dict):
             value = self.raw_data[key]
             if key in self.config_keys:
                 parser, extra_data = self.config_keys[key]
-                value = parser(key, value, extra_data)
+                value = parser(value, key, extra_data)
             self[key] = value
 
 class Globals(object):
