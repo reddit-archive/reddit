@@ -358,6 +358,10 @@ class FrontController(RedditController):
         return res
 
     def GET_stylesheet(self):
+        # de-stale the subreddit object so we don't poison nginx's cache
+        if not isinstance(c.site, FakeSubreddit):
+            c.site = Subreddit._byID(c.site._id, data=True, stale=False)
+
         if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
             c.allow_loggedin_cache = True
             self.check_modified(c.site,'stylesheet_contents',
