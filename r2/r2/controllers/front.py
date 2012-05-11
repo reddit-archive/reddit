@@ -705,11 +705,13 @@ class FrontController(RedditController):
     search_help_page = "/help/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
-    @validate(query = VLength('q', max_length=512),
-              sort = VMenu('sort', SearchSortMenu, remember=False),
-              restrict_sr = VBoolean('restrict_sr', default=False))
+    @validate(query=VLength('q', max_length=512),
+              sort=VMenu('sort', SearchSortMenu, remember=False),
+              restrict_sr=VBoolean('restrict_sr', default=False),
+              syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
     @api_doc(api_section.search, extensions=['json', 'xml'])
-    def GET_search(self, query, num, reverse, after, count, sort, restrict_sr):
+    def GET_search(self, query, num, reverse, after, count, sort, restrict_sr,
+                   syntax):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
@@ -720,16 +722,19 @@ class FrontController(RedditController):
             site = DefaultSR()
         else:
             site = c.site
+        
+        if not syntax:
+            syntax = SearchQuery.default_syntax
 
         try:
             cleanup_message = None
             try:
-                q = SearchQuery(query, site, sort)
+                q = SearchQuery(query, site, sort, syntax=syntax)
                 num, t, spane = self._search(q, num=num, after=after, 
                                              reverse = reverse, count = count)
             except InvalidQuery:
                 # strip the query down to a whitelist
-                cleaned = re.sub("[^\w\s]+", "", query)
+                cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower()
 
                 # if it was nothing but mess, we have to stop
@@ -738,7 +743,7 @@ class FrontController(RedditController):
                     cleanup_message = strings.completely_invalid_search_query
                 else:
                     q = SearchQuery(cleaned, site, sort)
-                    num, t, spane = self._search(q, num=num, after=after, 
+                    num, t, spane = self._search(q, num=num, after=after,
                                                  reverse=reverse, count=count)
                     cleanup_message = strings.invalid_search_query % {
                                           "clean_query": cleaned
@@ -749,11 +754,13 @@ class FrontController(RedditController):
                                                           }
             
             res = SearchPage(_('search results'), query, t, num, content=spane,
-                             nav_menus = [SearchSortMenu(default=sort)],
-                             search_params = dict(sort = sort), 
+                             nav_menus=[SearchSortMenu(default=sort)],
+                             search_params=dict(sort=sort),
                              infotext=cleanup_message,
                              simple=False, site=c.site,
                              restrict_sr=restrict_sr,
+                             syntax=syntax,
+                             converted_data=q.converted_data
                              ).render()
 
             return res

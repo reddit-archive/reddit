@@ -4,17 +4,18 @@ import httplib
 import json
 from lxml import etree
 from pylons import g, c
-import random
 import re
 import time
 import urllib
 
+import l2cs
+
 from r2.lib import amqp
 from r2.lib.db.operators import desc
 import r2.lib.utils as r2utils
-from r2.models import Account, Link, Subreddit, Thing, \
-    All, DefaultSR, MultiReddit, DomainSR, Friends, ModContribSR, \
-    FakeSubreddit, NotFound
+from r2.models import (Account, Link, Subreddit, Thing, All, DefaultSR,
+                       MultiReddit, DomainSR, Friends, ModContribSR,
+                       FakeSubreddit, NotFound)
 
 
 _CHUNK_SIZE = 4000000 # Approx. 4 MB, to stay under the 5MB limit
@@ -182,7 +183,8 @@ def xml_from_things(things):
 def delete_ids(ids):
     '''Delete documents from the index. 'ids' should be a list of fullnames'''
     version = _version()
-    deletes = [etree.Element("delete", id=id_, version=str(version)) for id_ in ids]
+    deletes = [etree.Element("delete", id=id_, version=str(version))
+               for id_ in ids]
     batch = etree.Element("batch")
     batch.extend(deletes)
     return send_documents(batch)
@@ -373,7 +375,7 @@ def _to_fn(cls, id_):
     require an instance of the class)
     
     '''
-    return (cls._type_prefix + r2utils.to36(cls._type_id) + '_' + 
+    return (cls._type_prefix + r2utils.to36(cls._type_id) + '_' +
             r2utils.to36(id_))
 
 
@@ -389,7 +391,8 @@ def basic_query(query=None, bq=None, facets=("reddit",), facet_count=10,
     timer = None
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
-        timer.start()
+        if timer:
+            timer.start()
     connection = httplib.HTTPConnection(g.CLOUDSEARCH_SEARCH_API, 80)
     try:
         connection.request('GET', path)
@@ -454,8 +457,19 @@ class CloudSearchQuery(object):
                           'top': 3,
                           }
     
-    def __init__(self, query, sr, sort):
+    lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
+                                     yesno_fields=['over18', 'is_self'])
+    known_syntaxes = ("cloudsearch", "lucene")
+    default_syntax = "lucene"
+    
+    def __init__(self, query, sr, sort, syntax=None):
+        if syntax is None:
+            syntax = self.default_syntax
+        elif syntax not in self.known_syntaxes:
+            raise ValueError("Unknown search syntax: %s" % syntax)
         self.query = query.encode("utf-8") if query else ''
+        self.converted_data = None
+        self.syntax = syntax
         self.sr = sr
         self._sort = sort
         self.sort = self.sorts[sort]
@@ -475,8 +489,8 @@ class CloudSearchQuery(object):
         self.results = Results(after_docs, hits, facets)
         return self.results
     
-    @staticmethod
-    def create_boolean_query(base_query, subreddit_query):
+    @classmethod
+    def create_boolean_query(cls, query, subreddit_query):
         '''Join a (user-entered) text query with the generated subreddit query
         
         Input:
@@ -489,19 +503,10 @@ class CloudSearchQuery(object):
                              without parens "author:'foo'"
         
         '''
-        is_boolean_query = any([x in base_query for x in ":()"])
-        
-        query = base_query.strip()
-        if not is_boolean_query:
-            query = query.replace("\\", "")
-            query = query.replace("'", "\\'")
-            query = "(field text '%s')" % query
-        
         if subreddit_query:
             bq = "(and %s %s)" % (query, subreddit_query)
         else:
             bq = query
-        
         return bq
     
     @staticmethod
@@ -527,7 +532,8 @@ class CloudSearchQuery(object):
             # The query limit is roughly 8k bytes. Limit to 200 friends to
             # avoid getting too close to that limit
             friend_ids = c.user.friends[:200]
-            friends = ["author_fullname:'%s'" % _to_fn(Account, id_) for id_ in friend_ids]
+            friends = ["author_fullname:'%s'" % _to_fn(Account, id_)
+                       for id_ in friend_ids]
             bq.extend(friends)
             bq.append(")")
         elif isinstance(sr, ModContribSR):
@@ -543,7 +549,13 @@ class CloudSearchQuery(object):
     def _run(self, start=0, num=1000, _update=False):
         '''Run the search against self.query'''
         subreddit_query = self._get_sr_restriction(self.sr)
-        self.bq = self.create_boolean_query(self.query, subreddit_query)
+        if self.syntax == "cloudsearch":
+            base_query = self.query
+        elif self.syntax == "lucene":
+            base_query = l2cs.convert(self.query, self.lucene_parser)
+            self.converted_data = {"syntax": "cloudsearch",
+                                   "converted": base_query}
+        self.bq = self.create_boolean_query(base_query, subreddit_query)
         if g.sqlprinting:
             g.log.info("%s", self)
         return self._run_cached(self.bq, self.sort, start=start, num=num,
@@ -551,7 +563,8 @@ class CloudSearchQuery(object):
     
     def __repr__(self):
         '''Return a string representation of this query'''
-        result = ["<", self.__class__.__name__, "> query:", repr(self.query), " "]
+        result = ["<", self.__class__.__name__, "> query:",
+                  repr(self.query), " "]
         if self.bq:
             result.append(" bq:")
             result.append(repr(self.bq))
@@ -612,23 +625,3 @@ class CloudSearchQuery(object):
         
         results = Results(docs, hits, facets)
         return results
-
-
-def test_create_boolean_query():
-    tests = [('steve holt', None),
-             ('steve holt', '(or sr_id:1 sr_id:2 sr_id:3)'),
-             ('steve holt', "author:'qgyh2'"),
-             ("can't help myself", None),
-             ("can't help myself", '(or sr_id:1 sr_id:2 sr_id:3)'),
-             ("can't help myself", "author:'qgyh2'"),
-             ("text:'steve holt'", None),
-             ("text:'steve holt'", '(or sr_id:1 sr_id:2 sr_id:3)'),
-             ("text:'steve holt'", "author:'qgyh2'"),
-             ("(or text:'steve holt' text:'nintendo')", None),
-             ("(or text:'steve holt' text:'nintendo')", '(or sr_id:1 sr_id:2 sr_id:3)'),
-             ("(or text:'steve holt' text:'nintendo')", "author:'qgyh2'")]
-    for test in tests:
-        print "Trying: %r" % (test,)
-        bq = CloudSearchQuery.create_boolean_query(*test)
-        print "Query: %r" % bq
-        basic_query(bq=bq, size=1)

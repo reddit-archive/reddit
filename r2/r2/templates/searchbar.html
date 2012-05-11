@@ -51,6 +51,14 @@
       </div>
     </div>
     %endif
+    <div>
+    %if thing.converted_data:
+    <p class="debuginfo">
+      <span class="icon">&delta;</span>&nbsp;
+      <span class="content">${_('converted query to %(syntax)s syntax: %(converted)s') % thing.converted_data}</span>
+    </p>
+    %endif
+    </div>
   </div>
 %endif
 
@@ -58,9 +66,10 @@
   <h4 style="color:gray">${thing.header}</h4>
 
   <div id="previoussearch">
-    ${SearchForm(prev_search = thing.prev_search,
-                 search_params = thing.search_params,
+    ${SearchForm(prev_search=thing.prev_search,
+                 search_params=thing.search_params,
                  site=thing.site, subreddit_search=thing.subreddit_search,
-                 simple=thing.simple, restrict_sr=thing.restrict_sr)}
+                 simple=thing.simple, restrict_sr=thing.restrict_sr,
+                 syntax=thing.syntax)}
   </div>
 </div>
