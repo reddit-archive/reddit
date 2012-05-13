@@ -345,7 +345,7 @@ def login_throttle(username, wrong_password):
 def apply_updates(user):
     pass
 
-def update_score(obj, up_change, down_change, new_valid_thing, old_valid_thing):
+def update_score(obj, up_change, down_change, vote, old_valid_thing):
      obj._incr('_ups',   up_change)
      obj._incr('_downs', down_change)
 

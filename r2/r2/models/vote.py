@@ -227,7 +227,7 @@ class Vote(MultiRelation('vote',
             # we don't do this if it's the author's initial automatic
             # vote, because we checked it in with _ups == 1
             update_score(obj, up_change, down_change,
-                         v.valid_thing, old_valid_thing)
+                         v, old_valid_thing)
 
         if v.valid_user:
             author = Account._byID(obj.author_id, data=True)
