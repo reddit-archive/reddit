@@ -83,3 +83,14 @@ class PluginLoader(object):
         for plugin in self:
             plugin.load_controllers()
         self.controllers_loaded = True
+
+if __name__ == '__main__':
+    if sys.argv[1] == 'list':
+        print " ".join(p.name for p in pkg_resources.iter_entry_points("r2.plugin"))
+    elif sys.argv[1] == 'path':
+        try:
+            plugin = pkg_resources.iter_entry_points("r2.plugin", sys.argv[2]).next()
+        except StopIteration:
+            sys.exit(1)
+        else:
+            print os.path.join(plugin.dist.location, plugin.module_name)

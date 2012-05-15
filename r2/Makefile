@@ -83,6 +83,10 @@ $(INIFILES): %.ini: %.update
 clean_ini:
 	rm $(INIFILES)
 
+#################### CSS file lists
+SPRITED_STYLESHEETS += reddit.css compact.css
+OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
+
 #################### Static Files
 STATIC_ROOT := r2/public
 STATIC_FILES := $(shell find $(STATIC_ROOT) -readable)
@@ -92,7 +96,7 @@ STATIC_BUILDSTAMP := $(BUILD_DIR)/static-buildstamp
 
 .PHONY: clean_static
 
-static: pyx css js names
+static: plugin_static pyx css js names
 
 clean_static:
 	rm -rf $(STATIC_BUILDSTAMP) $(STATIC_BUILD_DIR)
@@ -101,15 +105,39 @@ $(STATIC_BUILDSTAMP): $(STATIC_FILES)
 	cp -ruTL $(STATIC_ROOT) $(STATIC_BUILD_ROOT)
 	touch $@
 
+#################### Plugin static files
+PLUGINS := $(shell $(PYTHON) -m r2.lib.plugin list)
+PLUGIN_BUILDSTAMPS := $(foreach plugin,$(PLUGINS),$(BUILD_DIR)/plugin-$(plugin)-buildstamp)
+$(foreach plugin,$(PLUGINS),$(eval PLUGIN_PATH_$(plugin)=$(shell $(PYTHON) -m r2.lib.plugin path $(plugin))))
+
+plugin_static: $(PLUGIN_BUILDSTAMPS)
+
+define PLUGIN_STATIC_TEMPLATE
+# If the plugin provides a Makefile, this helper provides the appropriate command. Otherwise, it returns the command 'true'.
+$(eval PLUGIN_MAKE_$(1) := $(shell \
+	if [ -f $(PLUGIN_PATH_$(1))/../Makefile ]; then
+		echo '$(MAKE) -C $(PLUGIN_PATH_$(1))/../';
+	else
+		echo true;
+	fi))
+
+$(BUILD_DIR)/plugin-$(1)-buildstamp: $(STATIC_BUILDSTAMP) $(shell find $(PLUGIN_PATH_$(1))/public)
+	$(PLUGIN_MAKE_$(1)) static
+	cp -r --preserve=timestamps $(PLUGIN_PATH_$(1))/public/* $(STATIC_BUILD_ROOT)/
+	touch $$@
+
+$(info [+] adding make rules from plugin "$(1)")
+$(eval $(shell $(PLUGIN_MAKE_$(1)) -s reddit_make))
+endef
+$(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
+
 #### Stylesheets
 CSS_COMPRESS := $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
 CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
 
-SPRITED_STYLESHEETS := reddit.css compact.css
 PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(SPRITED_STYLESHEETS))
 SPRITES := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS)))
 
-OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
 MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(OTHER_STYLESHEETS))
 
 PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS)
