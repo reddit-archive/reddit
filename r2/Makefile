@@ -146,7 +146,7 @@ clean_css:
 
 #### JS
 JS_MODULES := $(shell $(PYTHON) r2/lib/js.py enumerate_modules)
-JS_MODULE_BUILDSTAMPS := $(foreach module,$(JS_MODULES),$(BUILD_DIR)/$(module)-js-buildstamp)
+JS_MODULE_BUILDSTAMPS := $(foreach module,$(JS_MODULES),$(BUILD_DIR)/js-$(module)-buildstamp)
 JS_OUTPUTS := $(shell $(PYTHON) r2/lib/js.py enumerate_outputs)
 
 .PHONY: clean_js
@@ -156,7 +156,7 @@ js: $(STATIC_BUILDSTAMP) $(JS_MODULE_BUILDSTAMPS)
 $(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
 
 define JS_MODULE_TEMPLATE
-$(BUILD_DIR)/$(1)-js-buildstamp: $$(shell $(PYTHON) r2/lib/js.py dependencies $(1))
+$(BUILD_DIR)/js-$(1)-buildstamp: $$(shell $(PYTHON) r2/lib/js.py dependencies $(1))
 	paster run standalone r2/lib/js.py -c "build_module('$(1)')"
 	touch $$@
 endef
