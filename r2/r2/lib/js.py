@@ -95,6 +95,8 @@ class Module(Source):
         sources = sources or (name,)
         for source in sources:
             if not isinstance(source, Source):
+                if 'prefix' in kwargs:
+                    source = os.path.join(kwargs['prefix'], source)
                 source = FileSource(source)
             self.sources.append(source)
 
