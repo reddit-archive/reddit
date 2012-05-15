@@ -25,13 +25,16 @@ class Plugin(object):
     def on_load(self):
         pass
 
-    def add_js(self):
-        from r2.lib import js
+    def add_js(self, module_registry=None):
+        if not module_registry:
+            from r2.lib import js
+            module_registry = js.module
+
         for name, module in self.js.iteritems():
-            if name not in js.module:
-                js.module[name] = module
+            if name not in module_registry:
+                module_registry[name] = module
             else:
-                js.module[name].extend(module)
+                module_registry[name].extend(module)
 
     def add_routes(self, mc):
         pass
@@ -54,11 +57,15 @@ class PluginLoader(object):
     def __getitem__(self, key):
         return self.plugins[key]
 
+    @staticmethod
+    def available_plugins(name=None):
+        return pkg_resources.iter_entry_points('r2.plugin', name)
+
     def load_plugins(self, plugin_names):
         g = config['pylons.g']
         for name in plugin_names:
             try:
-                entry_point = pkg_resources.iter_entry_points('r2.plugin', name).next()
+                entry_point = self.available_plugins(name).next()
             except StopIteration:
                 g.log.warning('Unable to locate plugin "%s". Skipping.' % name)
                 continue

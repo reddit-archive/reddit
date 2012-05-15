@@ -280,10 +280,19 @@ module["flot"] = Module("jquery.flot.js",
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
+def load_plugin_modules():
+    from r2.lib.plugin import PluginLoader
+    for plugin in PluginLoader.available_plugins():
+        plugin_cls = plugin.load()
+        plugin_cls().add_js(module)
+
 commands = {}
 def build_command(fn):
-    commands[fn.__name__] = fn
-    return fn
+    def wrapped(*args):
+        load_plugin_modules()
+        fn(*args)
+    commands[fn.__name__] = wrapped
+    return wrapped
 
 @build_command
 def enumerate_modules():
