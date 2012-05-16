@@ -1774,7 +1774,9 @@ class ApiController(RedditController):
             g.cache.set(mc_key, 1, time=30)
             count = 1
 
-        if count >= 10:
+        # Anything above 15 hits in 30 seconds violates the
+        # "1 request per 2 seconds" rule of the API
+        if count > 15:
             if user:
                 name = user.name
             else:
