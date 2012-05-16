@@ -528,6 +528,38 @@ class Link(Thing, Printable):
                 item.expunged = Link._should_expunge_selftext(item)
 
             item.editted = getattr(item, "editted", False)
+            
+            taglinetext = ''
+            if item.different_sr:
+                author_text = (" <span>" + _("by %(author)s to %(reddit)s") +
+                               "</span>")
+            else:
+                author_text = " <span>" + _("by %(author)s") + "</span>"
+            if item.editted:
+                if item.score_fmt == Score.points:
+                    taglinetext = ("<span>" +
+                                   _("%(score)s submitted %(when)s "
+                                     "ago%(lastedited)s") +
+                                   "</span>")
+                    taglinetext += author_text
+                elif item.different_sr:
+                    taglinetext = _("submitted %(when)s ago%(lastedited)s "
+                                    "by %(author)s to %(reddit)s")
+                else:
+                    taglinetext = _("submitted %(when)s ago%(lastedited)s "
+                                    "by %(author)s")
+            else:
+                if item.score_fmt == Score.points:
+                    taglinetext = ("<span>" +
+                                   _("%(score)s submitted %(when)s ago") +
+                                   "</span>")
+                    taglinetext += author_text
+                elif item.different_sr:
+                    taglinetext = _("submitted %(when)s ago by %(author)s "
+                                    "to %(reddit)s")
+                else:
+                    taglinetext = _("submitted %(when)s ago by %(author)s")
+            item.taglinetext = taglinetext
 
         if user_is_loggedin:
             incr_counts(wrapped)
