@@ -435,6 +435,18 @@ class RewriteMiddleware(object):
 
         return self.app(environ, start_response)
 
+class StaticTestMiddleware(object):
+    def __init__(self, app, static_path, domain):
+        self.app = app
+        self.static_path = static_path
+        self.domain = domain
+
+    def __call__(self, environ, start_response):
+        if environ['HTTP_HOST'] == self.domain:
+            environ['PATH_INFO'] = self.static_path.rstrip('/') + environ['PATH_INFO']
+            return self.app(environ, start_response)
+        raise httpexceptions.HTTPNotFound()
+
 class LimitUploadSize(object):
     """
     Middleware for restricting the size of uploaded files (such as
@@ -575,7 +587,9 @@ def make_app(global_conf, full_stack=True, **app_conf):
     javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
     static_cascade = [static_app, javascripts_app, app]
-    if config['r2.plugins']:
+
+    g = config['pylons.g']
+    if config['r2.plugins'] and g.config['uncompressedJS']:
         plugin_static_apps = Cascade([StaticURLParser(plugin.static_dir)
                                       for plugin in config['r2.plugins']])
         static_cascade.insert(0, plugin_static_apps)
@@ -583,5 +597,9 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
     #add the rewrite rules
     app = RewriteMiddleware(app)
+
+    if not g.config['uncompressedJS'] and g.config['debug']:
+        static_fallback = StaticTestMiddleware(static_app, g.config['static_path'], g.config['static_domain'])
+        app = Cascade([static_fallback, app])
 
     return app
