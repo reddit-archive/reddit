@@ -41,6 +41,7 @@ from r2.lib.html_source import HTMLValidationParser
 from cStringIO import StringIO
 import sys, tempfile, urllib, re, os, sha, subprocess
 from httplib import HTTPConnection
+from threading import Lock
 
 # hack in Paste support for HTTP 429 "Too Many Requests"
 from paste import httpexceptions, wsgiwrappers
@@ -519,18 +520,29 @@ class CleanupMiddleware(object):
 
 #god this shit is disorganized and confusing
 class RedditApp(PylonsBaseWSGIApp):
-    def find_controller(self, controller):
-        if controller in self.controller_classes:
-            return self.controller_classes[controller]
+    def __init__(self, *args, **kwargs):
+        super(RedditApp, self).__init__(*args, **kwargs)
+        self._loading_lock = Lock()
+        self._controllers = None
 
-        full_module_name = self.package_name + '.controllers'
-        class_name = controller.capitalize() + 'Controller'
+    def load_controllers(self):
+        with self._loading_lock:
+            if not self._controllers:
+                controllers = __import__(self.package_name + '.controllers').controllers
+                controllers.load_controllers()
+                config['r2.plugins'].load_controllers()
+                self._controllers = controllers
 
-        __import__(self.package_name + '.controllers')
-        config['r2.plugins'].load_controllers()
-        mycontroller = getattr(sys.modules[full_module_name], class_name)
-        self.controller_classes[controller] = mycontroller
-        return mycontroller
+        return self._controllers
+
+    def find_controller(self, controller_name):
+        if controller_name in self.controller_classes:
+            return self.controller_classes[controller_name]
+
+        controllers = self.load_controllers()
+        controller_cls = controllers.get_controller(controller_name)
+        self.controller_classes[controller_name] = controller_cls
+        return controller_cls
 
 def make_app(global_conf, full_stack=True, **app_conf):
     """Create a Pylons WSGI application and return it

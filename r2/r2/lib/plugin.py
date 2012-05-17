@@ -46,7 +46,6 @@ class Plugin(object):
 class PluginLoader(object):
     def __init__(self):
         self.plugins = {}
-        self.controllers_loaded = False
 
     def __len__(self):
         return len(self.plugins)
@@ -78,11 +77,8 @@ class PluginLoader(object):
         return self
 
     def load_controllers(self):
-        if self.controllers_loaded:
-            return
         for plugin in self:
             plugin.load_controllers()
-        self.controllers_loaded = True
 
 if __name__ == '__main__':
     if sys.argv[1] == 'list':
