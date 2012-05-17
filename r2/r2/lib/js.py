@@ -151,11 +151,11 @@ class StringsSource(Source):
     def get_source(self):
         from pylons.i18n import get_lang
         from r2.lib import strings, translation
-        
+
         if self.lang:
             old_lang = get_lang()
             translation.set_lang(self.lang)
-        
+
         data = {}
         if self.keys is not None:
             for key in self.keys:
