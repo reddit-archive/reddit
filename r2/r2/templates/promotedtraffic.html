@@ -20,12 +20,12 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, format_number
    from r2.lib import js
-   import locale
    from r2.models.subreddit import DomainSR, FakeSubreddit
+   locale = c.locale
    def num(x):
-      return locale.format('%d', x, True)
+      return format_number(x, locale)
  %>
 
 ${unsafe(js.use('flot'))}

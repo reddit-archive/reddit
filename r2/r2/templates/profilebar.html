@@ -21,9 +21,8 @@
 ################################################################################
 
 <%! 
-   import locale
    from r2.lib.filters import edit_comment_filter, unsafe, safemarkdown
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, format_number
  %>
 <%namespace file="utils.html" import="submit_form, plain_link, thing_timestamp"/>
 <%namespace file="printablebuttons.html" import="toggle_button"/>
@@ -58,12 +57,12 @@
     </div>
   %endif
 
-  <span class="karma">${locale.format("%d", thing.user.safe_karma, True)}</span>
+  <span class="karma">${format_number(thing.user.safe_karma)}</span>
   &#32;
   ${_("link karma")}
 
   <br/>
-  <span class="karma comment-karma">${locale.format("%d", thing.user.comment_karma, True)}</span>
+  <span class="karma comment-karma">${format_number(thing.user.comment_karma)}</span>
   &#32;
   ${_("comment karma")}
 

@@ -20,14 +20,17 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, format_number
    from r2.lib import js
-   import datetime, locale
+   import datetime
    from r2.lib import promote
+   import babel.numbers
+
+   locale = c.locale
    def num(x):
-      return locale.format('%d', x, True)
+      return format_number(x, locale)
    def money(x):
-      return "$%.2f" % x
+      return babel.numbers.format_currency(x, 'USD', locale)
  %>
 <h1>Sponsored link calendar</h1>
 

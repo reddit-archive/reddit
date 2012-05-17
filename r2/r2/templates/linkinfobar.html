@@ -20,8 +20,8 @@
 ## CondeNet, Inc. All Rights Reserved.
 ################################################################################
 <%!
-   import locale
    from r2.lib.strings import strings
+   from r2.lib.template_helpers import format_number
  %>
 
 
@@ -42,7 +42,7 @@
   </div>
 
   <div class="score">
-    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.score, True),
+    ${unsafe(strings.person_label % dict(num = format_number(thing.a.score),
                                          persons = ungettext("point", "points", 
                                          thing.a.score)))}
     <% percent = int(float(thing.a.upvotes) / max(thing.a.upvotes + thing.a.downvotes, 1) * 100) %>
@@ -50,13 +50,13 @@
   </div>
 
   <span class="upvotes">
-    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.upvotes, True),
+    ${unsafe(strings.person_label % dict(num = format_number(thing.a.upvotes),
                                          persons = ungettext("up vote", "up votes", 
                                          thing.a.upvotes)))}
   </span>
   &#32;
   <span class="downvotes">
-    ${unsafe(strings.person_label % dict(num = locale.format("%d", thing.a.downvotes, True),
+    ${unsafe(strings.person_label % dict(num = format_number(thing.a.downvotes),
                                          persons = ungettext("down vote", "down votes", 
                                          thing.a.downvotes)))}
   </span>

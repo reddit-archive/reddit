@@ -46,6 +46,7 @@ from hashlib import sha1, md5
 from urllib import quote, unquote
 import simplejson
 import locale, socket
+import babel.core
 
 from r2.lib.tracking import encrypt, decrypt
 from pylons import Response
@@ -387,6 +388,11 @@ def set_iface_lang():
         except h.LanguageError:
             #we don't have a translation for that language
             h.set_lang(g.lang, graceful_fail = True)
+
+    try:
+        c.locale = babel.core.Locale.parse(c.lang, sep='-')
+    except (babel.core.UnknownLocaleError, ValueError):
+        c.locale = babel.core.Locale.parse(g.lang, sep='-')
 
     #TODO: add exceptions here for rtl languages
     if c.lang in ('ar', 'he', 'fa'):

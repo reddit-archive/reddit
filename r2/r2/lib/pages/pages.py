@@ -50,7 +50,7 @@ from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil
-from r2.lib.template_helpers import add_sr, get_domain
+from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
@@ -58,7 +58,7 @@ from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate
 from r2.lib.filters import safemarkdown
 
-import sys, random, datetime, locale, calendar, simplejson, re, time
+import sys, random, datetime, calendar, simplejson, re, time
 import graph, pycountry, time
 from itertools import chain
 from urllib import quote
@@ -3261,14 +3261,14 @@ class PromotedTraffic(Traffic):
         if len(imp) > 2:
             imp_total = sum(x[2] for x in imp)
             self.totals[1] = max(self.totals[1], imp_total)
-            imp_total = locale.format('%d', imp_total, True)
+            imp_total = format_number(imp_total)
             self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
                                           title = ("recent impressions (%s total)" %
                                                    imp_total))
             cli = self.slice_traffic(self.traffic, 2, 3)
             cli_total = sum(x[2] for x in cli)
             self.totals[3] = max(self.totals[3], cli_total)
-            cli_total = locale.format('%d', cli_total, True)
+            cli_total = format_number(cli_total)
             self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
                                           title = ("recent clicks (%s total)" %
                                                    cli_total))
@@ -3281,9 +3281,10 @@ class PromotedTraffic(Traffic):
         Templated.__init__(self)
 
     def to_iter(self, localize = True, total = False):
+        locale = c.locale
         def num(x):
             if localize:
-                return locale.format('%d', x, True)
+                return format_number(x, locale)
             return str(x)
         def row(label, data):
             uimp, nimp, ucli, ncli = data
@@ -3414,10 +3415,11 @@ class RedditTraffic(Traffic):
                         user_scale = ( (day_mean * month_len) /
                                        (last_mean * lastmonthlen) )
             last_month_users = 0
+            locale = c.locale
             for x, (date, d) in enumerate(data):
                 res.append([("date", date.strftime("%Y-%m")),
-                            ("", locale.format("%d", d[0], True)),
-                            ("", locale.format("%d", d[1], True))])
+                            ("", format_number(d[0], locale)),
+                            ("", format_number(d[1], locale))])
                 last_d = data[x-1][1] if x else None
                 for i in range(2):
                     # store last month's users for this month's projection
@@ -3435,7 +3437,7 @@ class RedditTraffic(Traffic):
                         else:
                             scaled = float(d[i] * month_len) / yday
                         res[-1].append(("gray",
-                                        locale.format("%d", scaled, True)))
+                                        format_number(scaled, locale)))
                     elif last_d and d[i] and last_d[i]:
                         f = 100 * (float(d[i])/last_d[i] - 1)
 
@@ -3740,9 +3742,10 @@ class Promote_Graph(Templated):
                            promote_blocks = sorted_blocks)
 
     def to_iter(self, localize = True):
+        locale = c.locale
         def num(x):
             if localize:
-                return locale.format('%d', x, True)
+                return format_number(x, locale)
             return str(x)
         for link, uimp, nimp, ucli, ncli in self.recent:
             yield (link._date.strftime("%Y-%m-%d"),

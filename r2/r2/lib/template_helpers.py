@@ -25,6 +25,7 @@ from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
 from r2.lib.media import s3_direct_url
 
+import babel.numbers
 from mako.filters import url_escape
 import simplejson
 import os.path
@@ -505,3 +506,10 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
         raise ValueError ("Got weird kind [%s]" % kind)
 
     attrs.append( (priority, symbol, cssclass, label, link, img) )
+
+
+def format_number(number, locale=None):
+    if not locale:
+        locale = c.locale
+
+    return babel.numbers.format_number(number, locale=locale)

@@ -28,9 +28,10 @@ hooks to the UI are the same.
 """
 
 import r2.lib.helpers as h
-from pylons import g
+from pylons import g, c
 from pylons.i18n import _, ungettext
-import random, locale
+import random
+import babel.numbers
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
            'Score', 'rand_strings']
@@ -279,7 +280,7 @@ class Score(object):
     @staticmethod
     def _people(x, label):
         return strings.person_label % \
-            dict(num = locale.format("%d", x, True),
+            dict(num = babel.numbers.format_number(x, c.locale),
                  persons = label(x))
 
     @staticmethod

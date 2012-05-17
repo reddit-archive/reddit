@@ -19,7 +19,7 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-import math, datetime, locale
+import math, datetime
 
 def google_extended(n):
     """Computes the google extended encoding of an int in [0, 4096)"""
@@ -174,7 +174,7 @@ class LineGraph(object):
 
         def make_labels(i, m, p = 4):
             return (("%d:|" % i) + 
-                    '|'.join(locale.format('%d', i * m / p, True)
+                    '|'.join(str(i * m / p)
                              for i in range(p+1)))
         
         # data stores a list of xy data strings in google's format
