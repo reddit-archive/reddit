@@ -154,6 +154,7 @@
     </div>
   </%utils:line_field>
 
+% if thing.site and thing.site.domain != thing.site._defaults['domain']:
   <%utils:line_field title="${_('domain')}" css_class="usertext">
     <div class="delete-field">
       %if thing.site and c.site.domain:
@@ -188,6 +189,7 @@
       </div>
     </div>
   </%utils:line_field>
+% endif
 
 %if thing.site:
   <input type="hidden" name="sr" value="${thing.site._fullname}"/> 
