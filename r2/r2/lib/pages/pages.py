@@ -461,9 +461,10 @@ class RedditFooter(CachedTemplate):
         self.nav = [
             NavMenu([
                     NamedButton("blog", False, nocname=True),
-                    NamedButton("ad_inq", False, nocname=True),
+                    NamedButton("about", False, nocname=True),
+                    NamedButton("team", False, nocname=True, dest="/about/team"),
                     NamedButton("code", False, nocname=True),
-                    NamedButton("feedback", False),
+                    NamedButton("ad_inq", False, nocname=True),
                 ],
                 title = _("about"),
                 type = "flat_vert",
@@ -474,6 +475,7 @@ class RedditFooter(CachedTemplate):
                     OffsiteButton(_("FAQ"), dest = "/help/faq", nocname=True),
                     OffsiteButton(_("reddiquette"), nocname=True, dest = "/help/reddiquette"),
                     NamedButton("reddits", False, nocname=True),
+                    NamedButton("feedback", False),
                 ],
                 title = _("help"),
                 type = "flat_vert",

@@ -100,6 +100,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      ad_inq       = _("advertise"),
                      gold         = _('reddit gold'),
                      reddits      = _('subreddits'),
+                     team         = _('team'),
 
                      #preferences
                      options      = _('options'),
