@@ -172,6 +172,7 @@ class Globals(object):
         ConfigValue.tuple: [
             'stalecaches',
             'memcaches',
+            'lockcaches',
             'permacache_memcaches',
             'rendercaches',
             'cassandra_seeds',
@@ -276,8 +277,10 @@ class Globals(object):
 
         self.cache_chains = {}
 
+        self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
+        self.make_lock = make_lock_factory(self.lock_cache)
+
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
-        self.make_lock = make_lock_factory(self.memcache)
 
         self.stats = Stats(self.config.get('statsd_addr'),
                            self.config.get('statsd_sample_rate'))
