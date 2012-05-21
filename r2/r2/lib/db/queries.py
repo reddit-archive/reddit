@@ -595,11 +595,11 @@ def get_inbox(user):
                          get_inbox_messages(user),
                          get_inbox_selfreply(user))
 
-def get_sent(user):
-    q = Message._query(Message.c.author_id == user._id,
-                       Message.c._spam == (True, False),
-                       sort = desc('_date'))
-    return make_results(q)
+@migrating_cached_query(UserQueryCache)
+def get_sent(user_id):
+    return Message._query(Message.c.author_id == user_id,
+                          Message.c._spam == (True, False),
+                          sort = desc('_date'))
 
 def get_unread_inbox(user):
     return merge_results(get_unread_comments(user),
