@@ -38,8 +38,9 @@ from r2.lib.db.operators import desc
 from r2.lib.db import queries
 from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
-from r2.lib.search import SearchQuery, SearchException, InvalidQuery
-from r2.lib.solrsearch import RelatedSearchQuery, SubredditSearchQuery
+from r2.lib.search import (SearchQuery, SubredditSearchQuery, SearchException,
+                           InvalidQuery)
+from r2.lib.solrsearch import RelatedSearchQuery
 from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup

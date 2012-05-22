@@ -25,6 +25,7 @@ import r2.lib.cloudsearch as cloudsearch
 InvalidQuery = (cloudsearch.InvalidQuery,)
 SearchException = (cloudsearch.CloudSearchHTTPError,)
 
-SearchQuery = cloudsearch.CloudSearchQuery
+SearchQuery = cloudsearch.LinkSearchQuery
+SubredditSearchQuery = cloudsearch.SubredditSearchQuery
 
-sorts = cloudsearch.CloudSearchQuery.sorts_menu_mapping
+sorts = cloudsearch.LinkSearchQuery.sorts_menu_mapping
