@@ -1468,7 +1468,7 @@ textarea.gray { color: gray; }
 .subreddit .description {font-size: small; max-width: 60em;}
 .subreddit .key {display: block;}
 .subreddit .title { font-size: medium; margin-right: 5px; }
-.subreddit .midcol { margin-right: 5px; margin-top: 5px; text-align: right; }
+.subreddit .midcol { margin-right: 5px; margin-top: 5px; text-align: right; width: 12em; }
 
 .fancy-toggle-button {
     display: block;
