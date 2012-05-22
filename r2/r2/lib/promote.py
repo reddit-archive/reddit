@@ -93,6 +93,17 @@ def is_rejected(link):
 def is_promoted(link):
     return is_promo(link) and link.promote_status == STATUS.promoted
 
+def is_valid_campaign(link, campaign_id):
+    # check for campaign in link data (old way)
+    if link and campaign_id in getattr(link, "campaigns", {}):
+        return True
+    # check for campaign in Thing data (new way)
+    try:
+        PromoCampaign._byID(campaign_id)
+        return True
+    except NotFound:
+        return False
+
 # no references to promote_status below this function, pls
 def set_status(l, status, onchange = None):
     # keep this out here.  Useful for updating the queue if there is a bug
@@ -344,18 +355,19 @@ def get_transactions(link):
 
 
 def new_campaign(link, dates, bid, sr):
-    indx = None
+    # empty string for sr_name means target to all
+    sr_name = sr.name if sr else ""
+    # dual-write campaigns as data Things
+    campaign = PromoCampaign._new(link, sr_name, bid, dates[0], dates[1])
+    # note indx in link.campaigns is the Thing id now 
+    indx = campaign._id
     with g.make_lock(campaign_lock(link)):
         # get a copy of the attr so that it'll be
         # marked as dirty on the next write.
         campaigns = getattr(link, "campaigns", {}).copy()
-        # create a new index
-        indx = max(campaigns.keys() or [-1]) + 1
         # add the campaign
-        # store the name not the reddit
-        sr = sr.name if sr else ""
-        campaigns[indx] = list(dates) + [bid, sr, 0]
-        PromotionWeights.add(link, indx, sr, dates[0], dates[1], bid)
+        campaigns[indx] = list(dates) + [bid, sr_name, 0]
+        PromotionWeights.add(link, indx, sr_name, dates[0], dates[1], bid)
         link.campaigns = {}
         link.campaigns = campaigns
         link._commit()
@@ -370,16 +382,16 @@ def free_campaign(link, index, user):
     auth_campaign(link, index, user, -1)
 
 def edit_campaign(link, index, dates, bid, sr):
+    sr_name = sr.name if sr else ""
     with g.make_lock(campaign_lock(link)):
         campaigns = getattr(link, "campaigns", {}).copy()
         if index in campaigns:
             trans_id = campaigns[index][CAMPAIGN.trans_id]
             prev_bid = campaigns[index][CAMPAIGN.bid]
             # store the name not the reddit
-            sr = sr.name if sr else ""
-            campaigns[index] = list(dates) + [bid, sr, trans_id]
+            campaigns[index] = list(dates) + [bid, sr_name, trans_id]
             PromotionWeights.reschedule(link, index,
-                                        sr, dates[0], dates[1], bid)
+                                        sr_name, dates[0], dates[1], bid)
             link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
@@ -387,6 +399,16 @@ def edit_campaign(link, index, dates, bid, sr):
             #TODO cancel any existing charges if the bid has changed
             if prev_bid != bid:
                 void_campaign(link, index, c.user)
+
+    # dual-write update to campaign Thing if it exists
+    try: 
+        campaign = PromoCampaign._byID(index)
+        campaign.set_bid(sr_name, bid, dates[0], dates[1])
+        campaign._commit()
+    except NotFound:
+        g.log.debug("Skipping update of non-existent PromoCampaign [link:%d, index:%d]" %
+                    (link._id, index))
+
     author = Account._byID(link.author_id, True)
     if getattr(author, "complimentary_promos", False):
         free_campaign(link, index, c.user)
@@ -407,6 +429,13 @@ def delete_campaign(link, index):
             link._commit()
             #TODO cancel any existing charges
             void_campaign(link, index, c.user)
+    # dual-write update to campaign Thing if it exists
+    try:
+        campaign = PromoCampaign._byID(index)
+        campaign.delete()
+    except NotFound:
+        g.log.debug("Skipping deletion of non-existent PromoCampaign [link:%d, index:%d]" %
+                    (link._id, index))
 
 def void_campaign(link, index, user):
     campaigns = getattr(link, "campaigns", {}).copy()
@@ -460,6 +489,17 @@ def auth_campaign(link, index, user, pay_id):
             link.campaigns = {}
             link.campaigns = campaigns
             link._commit()
+
+            # dual-write update to campaign Thing
+            campaign = PromoCampaign._byID(index)
+            if campaign:
+                if trans_id > 0:
+                    campaign.mark_paid(trans_id)
+                elif trans_id < 0:
+                    campaign.mark_freebie()
+                else:
+                    campaign.mark_payment_error(reason)
+                campaign._commit()
 
             return bool(trans_id), reason
         return False, ""

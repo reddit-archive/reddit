@@ -451,8 +451,7 @@ class PromoteController(ListingController):
         if c.user_is_loggedin and c.user._id != article.author_id:
             return self.abort404()
 
-        # make sure this is a valid campaign index
-        if indx not in getattr(article, "campaigns", {}):
+        if not promote.is_valid_campaign(article, indx):
             return self.abort404()
 
         if g.authorizenetapi:

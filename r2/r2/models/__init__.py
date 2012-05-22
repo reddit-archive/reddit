@@ -37,3 +37,4 @@ from gold import *
 from admintools import *
 from oauth2 import *
 from modaction import *
+from promo import *
