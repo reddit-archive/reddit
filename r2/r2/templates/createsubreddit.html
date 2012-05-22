@@ -66,7 +66,16 @@
   </%utils:line_field>
 
   <%utils:line_field title="${_('description')}" css_class="usertext"
-                     description="${_('500 characters max.  Make them count.')}">
+                     description="${_('publicly describe your subreddit for all to see. 500 characters max.')}">
+    %if thing.site and thing.site.public_description:
+     ${UserText(None, text=thing.site.public_description or "", editable=True, creating=True, name="public_description", have_form=False)}
+    %else:
+     ${UserText(None, text="", creating=True, name="public_description", have_form=False)}
+    %endif
+  </%utils:line_field>
+
+  <%utils:line_field title="${_('sidebar')}" css_class="usertext"
+                     description="${_('shown in the sidebar of your subreddit. 5120 characters max.')}">
     %if thing.site and thing.site.description:
      ${UserText(None, text = thing.site.description or "", editable = True, creating = True, name="description", have_form = False)}
     %else:

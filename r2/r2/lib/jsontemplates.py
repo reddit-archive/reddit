@@ -212,6 +212,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 url          = "path",
                                                 over18       = "over_18",
                                                 description  = "description",
+                                                public_description = "public_description",
                                                 display_name = "name",
                                                 header_img   = "header",
                                                 header_size  = "header_size",

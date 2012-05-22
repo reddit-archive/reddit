@@ -57,6 +57,7 @@ class Subreddit(Thing, Printable):
                      header_size = None,
                      header_title = "",
                      allow_top = False, # overridden in "_new"
+                     public_description = '',
                      description = '',
                      images = {},
                      reported = 0,
@@ -388,7 +389,11 @@ class Subreddit(Thing, Printable):
 
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
-            item.usertext = UserText(item, item.description, target=target)
+            item.description_usertext = UserText(item, item.description, target=target)
+            if item.public_description or item.description:
+                item.public_description_usertext = UserText(item, item.public_description or item.description, target=target)
+            else:
+                item.public_description_usertext = None
 
 
         Printable.add_props(user, wrapped)

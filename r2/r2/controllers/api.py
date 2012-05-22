@@ -1368,6 +1368,7 @@ class ApiController(RedditController):
                    title = VLength("title", max_length = 100),
                    header_title = VLength("header-title", max_length = 500),
                    domain = VCnameDomain("domain"),
+                   public_description = VMarkdown("public_description", max_length = 500),
                    description = VMarkdown("description", max_length = 5120),
                    lang = VLang("lang"),
                    over_18 = VBoolean('over_18'),
@@ -1393,7 +1394,7 @@ class ApiController(RedditController):
                   if k in ('name', 'title', 'domain', 'description', 'over_18',
                            'show_media', 'show_cname_sidebar', 'type', 'link_type', 'lang',
                            "css_on_cname", "header_title", 
-                           'allow_top'))
+                           'allow_top', 'public_description'))
 
         #if a user is banned, return rate-limit errors
         if c.user._spam:
@@ -1419,6 +1420,7 @@ class ApiController(RedditController):
         elif form.has_errors('domain', errors.BAD_CNAME, errors.USED_CNAME):
             form.find('#example_domain').hide()
         elif (form.has_errors(('type', 'link_type'), errors.INVALID_OPTION) or
+              form.has_errors('public_description', errors.TOO_LONG) or
               form.has_errors('description', errors.TOO_LONG)):
             pass
 

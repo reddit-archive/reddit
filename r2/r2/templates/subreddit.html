@@ -42,9 +42,9 @@
   ${self.admintagline()}
   %endif
 </p>
-%if thing.description:
+%if thing.public_description_usertext:
   <div class="description">
-    ${thing.usertext}
+    ${thing.public_description_usertext}
   </div>
 %endif
 <p class="tagline">

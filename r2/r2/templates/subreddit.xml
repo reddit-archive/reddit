@@ -26,8 +26,8 @@
   <guid>${thing.path}</guid>
   <dc:date>${thing._date.isoformat()}</dc:date>
   <description>
-    %if thing.description:
-      ${thing.description}
+    %if thing.public_description:
+      ${thing.public_description}
     %endif
     &lt;a href="${thing.path}"&gt;[link]&lt;/a&gt;
   </description>

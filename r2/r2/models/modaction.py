@@ -69,7 +69,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'remove_self': _('removed self'),
                      # editsettings
                      'title': _('title'),
-                     'description': _('description'),
+                     'public_description': _('description'),
+                     'description': _('sidebar'),
                      'lang': _('language'),
                      'type': _('type'),
                      'link_type': _('link type'),

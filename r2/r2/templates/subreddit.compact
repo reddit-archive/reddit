@@ -43,7 +43,7 @@
                   reverse = thing.subscriber)}
   </div>
   <div class="entry ${like_cls}">
-    %if thing.description:
+    %if thing.public_description or thing.description:
       <a href="javascript:void(0)" class="expando-button collapsed button">
           Aa
       </a>
@@ -55,10 +55,10 @@
     <p class="tagline">
       ${tagline()}
     </p>
-  %if thing.description:
+  %if thing.public_description_usertext:
     <div class="expando" style="display:none">
       <div class="description">
-        ${thing.usertext}
+        ${thing.public_description_usertext}
       </div>
     </div>
   %endif
