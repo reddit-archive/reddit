@@ -36,8 +36,7 @@
 <%def name="entry()">
 <% fullname = thing._fullname %>
 <p class="titlerow">
-  ${plain_link(thing.title, thing.path, _class="title")}
-  <span class="domain">(${thing.path})</span> 
+  ${plain_link('%s: %s' % (thing.path.rstrip('/'), thing.title), thing.path, _class="title")}
   %if c.user_is_admin:
   ${self.admintagline()}
   %endif
