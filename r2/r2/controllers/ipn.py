@@ -25,6 +25,13 @@ def get_blob(code):
         g.hardcache.set(key, blob, 86400 * 30)
     return key, blob
 
+def has_blob(custom):
+    if not custom:
+        return False
+
+    blob = g.hardcache.get('payment_blob-%s' % custom)
+    return bool(blob)
+
 def dump_parameters(parameters):
     for k, v in parameters.iteritems():
         g.log.info("IPN: %r = %r" % (k, v))
@@ -110,14 +117,20 @@ def verify_ipn(parameters):
         raise ValueError("Invalid IPN response: %r" % status)
 
 
-def existing_subscription(subscr_id, paying_id):
+def existing_subscription(subscr_id, paying_id, custom):
     if subscr_id is None:
         return None
 
     account_id = accountid_from_paypalsubscription(subscr_id)
 
+    if not account_id and has_blob(custom):
+        # New subscription contains the user info in hardcache
+        return None
+
     should_set_subscriber = False
     if account_id is None:
+        # Payment from legacy subscription (subscr_id not set), fall back
+        # to guessing the user from the paying_id
         account_id = account_by_payingid(paying_id)
         should_set_subscriber = True
         if account_id is None:
@@ -396,7 +409,7 @@ class IpnController(RedditController):
         months, days = months_and_days_from_pennies(pennies)
 
         # Special case: autorenewal payment
-        existing = existing_subscription(subscr_id, paying_id)
+        existing = existing_subscription(subscr_id, paying_id, custom)
         if existing:
             if existing != "deleted account":
                 create_claimed_gold ("P" + txn_id, payer_email, paying_id,
@@ -407,9 +420,6 @@ class IpnController(RedditController):
                 g.log.info("Just applied IPN renewal for %s, %d days" %
                            (existing.name, days))
             return "Ok"
-        elif subscr_id:
-            g.log.warning("IPN subscription %s is not associated with anyone"
-                          % subscr_id)
 
         # More sanity checks that all non-autorenewals should pass:
 
