@@ -601,6 +601,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(subreddit_id = 'site._fullname',
                         title = 'site.title',
                         description = 'site.description',
+                        public_description = 'site.public_description',
                         language = 'site.lang',
                         subreddit_type = 'site.type',
                         content_options = 'site.link_type',
