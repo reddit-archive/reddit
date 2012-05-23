@@ -247,6 +247,10 @@ def over18():
             if cookie == sha1(request.ip).hexdigest():
                 return True
 
+def set_obey_over18():
+    "querystring parameter for API to obey over18 filtering rules"
+    c.obey_over18 = request.GET.get("obey_over18") == "true"
+
 def set_subreddit():
     #the r parameter gets added by javascript for POST requests so we
     #can reference c.site in api.py
@@ -839,6 +843,7 @@ class RedditController(MinimalController):
                 c.user.update_last_visit(c.start_time)
 
         c.over18 = over18()
+        set_obey_over18()
 
         #set_browser_langs()
         set_host_lang()
