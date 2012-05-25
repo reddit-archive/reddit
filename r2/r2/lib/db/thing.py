@@ -342,9 +342,13 @@ class DataThing(object):
     def _id36(self):
         return to36(self._id)
 
+    @classmethod
+    def _fullname_from_id36(cls, id36):
+        return cls._type_prefix + to36(cls._type_id) + '_' + id36
+
     @property
     def _fullname(self):
-        return self._type_prefix + to36(self._type_id) + '_' + to36(self._id)
+        return self._fullname_from_id36(self._id36)
 
     #TODO error when something isn't found?
     @classmethod

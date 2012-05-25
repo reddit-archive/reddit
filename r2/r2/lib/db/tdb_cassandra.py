@@ -877,7 +877,13 @@ class Relation(ThingBase):
     def _commit(self, *a, **kw):
         assert self._id == self._rowkey(self.thing1_id, self.thing2_id)
 
-        return ThingBase._commit(self, *a, **kw)
+        retval = ThingBase._commit(self, *a, **kw)
+
+        from r2.models.last_modified import LastModified
+        fullname = self._thing1_cls._fullname_from_id36(self.thing1_id)
+        LastModified.touch(fullname, self._cf.column_family)
+
+        return retval
 
     @classmethod
     def _rel(cls, thing1_cls, thing2_cls):

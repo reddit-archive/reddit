@@ -1228,8 +1228,8 @@ class CassandraSave(SimpleRelation):
     _cf_name = 'Save'
     _connection_pool = 'main'
 
-    # thing1_cls = Account
-    # thing2_cls = Link
+    _thing1_cls = Account
+    _thing2_cls = Link
 
     @classmethod
     def _save(cls, *a, **kw):
@@ -1261,6 +1261,9 @@ class CassandraHide(SimpleRelation):
     _cf_name = 'Hide'
     _ttl = 7*24*60*60
     _connection_pool = 'main'
+
+    _thing1_cls = Account
+    _thing2_cls = Link
 
     @classmethod
     def _hide(cls, *a, **kw):

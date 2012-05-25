@@ -136,8 +136,6 @@ class CassandraLinkVote(CassandraVote):
     _cf_name = 'LinkVote'
     _read_consistency_level = tdb_cassandra.CL.ONE
 
-    # these parameters aren't actually meaningful, they just help
-    # keep track
     # _views = [VotesByLink, VotesByDay]
     _thing1_cls = Account
     _thing2_cls = Link
@@ -161,8 +159,6 @@ class CassandraCommentVote(CassandraVote):
     _cf_name = 'CommentVote'
     _read_consistency_level = tdb_cassandra.CL.ONE
 
-    # these parameters aren't actually meaningful, they just help
-    # keep track
     _thing1_cls = Account
     _thing2_cls = Comment
 
