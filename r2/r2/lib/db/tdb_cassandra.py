@@ -20,6 +20,7 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import inspect
+import pytz
 from datetime import datetime
 from socket import gethostbyaddr
 
@@ -28,8 +29,8 @@ from pylons import g
 from pycassa import ColumnFamily
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
 from pycassa.system_manager import SystemManager, UTF8_TYPE, COUNTER_COLUMN_TYPE, TIME_UUID_TYPE
+from pycassa.types import DateType
 from r2.lib.utils import tup, Storage
-from r2.lib.db.sorts import epoch_seconds
 from r2.lib import cache
 from uuid import uuid1, UUID
 from itertools import chain
@@ -63,6 +64,10 @@ CL = Storage(ANY    = ConsistencyLevel.ANY,
 # with classes with lots of columns, like Account which has lots of
 # karma_ rows, or we should not do that)
 max_column_count = 50000
+
+# the pycassa date serializer, for use when we can't set the right metadata
+# to get pycassa to serialize dates for us
+date_serializer = DateType()
 
 class CassandraException(Exception):
     """Base class for Exceptions in tdb_cassandra"""
@@ -434,6 +439,11 @@ class ThingBase(object):
         return cls._read_consistency_level
 
     @classmethod
+    def _get_column_validator(cls, colname):
+        return cls._cf.column_validators.get(colname,
+                                             cls._cf.default_validation_class)
+
+    @classmethod
     def _deserialize_column(cls, attr, val):
         if attr in cls._int_props or (cls._value_type and cls._value_type == 'int'):
             try:
@@ -448,8 +458,7 @@ class ThingBase(object):
         elif attr in cls._pickle_props or (cls._value_type and cls._value_type == 'pickle'):
             return pickle.loads(val)
         elif attr in cls._date_props or attr == cls._timestamp_prop or (cls._value_type and cls._value_type == 'date'):
-            as_float = float(val)
-            return datetime.utcfromtimestamp(as_float).replace(tzinfo = tz)
+            return cls._deserialize_date(val)
         elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
             return val
 
@@ -470,7 +479,11 @@ class ThingBase(object):
         elif (attr in cls._date_props or attr == cls._timestamp_prop or
               (cls._value_type and cls._value_type == 'date')):
             # the _timestamp_prop is handled in _commit(), not here
-            return cls._serialize_date(val)
+            if cls._get_column_validator(attr) == 'DateType':
+                # pycassa will take it from here
+                return val
+            else:
+                return cls._serialize_date(val)
         elif attr in cls._bytes_props or (cls._value_type and cls._value_type == 'bytes'):
             return val
 
@@ -478,12 +491,19 @@ class ThingBase(object):
 
     @classmethod
     def _serialize_date(cls, date):
-        return str(epoch_seconds(date))
+        return date_serializer.pack(date)
 
     @classmethod
     def _deserialize_date(cls, val):
-        as_float = float(val)
-        return datetime.utcfromtimestamp(as_float).replace(tzinfo = tz)
+        if isinstance(val, datetime):
+            date = val
+        elif len(val) == 8: # cassandra uses 8-byte integer format for this
+            date = date_serializer.unpack(val)
+        else: # it's probably the old-style stringified seconds since epoch
+            as_float = float(val)
+            date = datetime.utcfromtimestamp(as_float)
+
+        return date.replace(tzinfo=pytz.utc)
 
     @classmethod
     def _from_serialized_columns(cls, t_id, columns):
