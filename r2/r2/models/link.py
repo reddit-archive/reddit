@@ -1270,10 +1270,6 @@ class CassandraHide(SimpleRelation):
     def _unhide(cls, *a, **kw):
         return cls._uncreate(*a, **kw)
 
-class CassandraClick(SimpleRelation):
-    _use_db = True
-    _cf_name = 'Click'
-
 class SavesByAccount(tdb_cassandra.View):
     _use_db = True
     _cf_name = 'SavesByAccount'
