@@ -29,6 +29,7 @@ from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
 from r2.lib import filters
 from r2.lib.log import log_text
+from r2.models.last_modified import LastModified
 
 from pylons import c, g, request
 from pylons.i18n import _
@@ -221,6 +222,8 @@ class Account(Thing):
         g.log.debug ("Updating last visit for %s from %s to %s" %
                     (self.name, prev_visit, current_time))
         set_last_visit(self)
+
+        LastModified.touch(self._fullname, "Visit")
 
     def make_cookie(self, timestr=None):
         if not self._loaded:
