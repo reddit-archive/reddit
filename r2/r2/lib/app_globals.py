@@ -184,6 +184,7 @@ class Globals(object):
             'allowed_pay_countries',
             'case_sensitive_domains',
             'reserved_subdomains',
+            'TRAFFIC_LOG_HOSTS',
         ],
 
         ConfigValue.choice: {
