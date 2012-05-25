@@ -39,6 +39,7 @@ from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
+from r2.models.last_modified import LastModified
 
 from r2.lib.menus import CommentSortMenu
 from r2.lib.captcha import get_iden
@@ -920,6 +921,7 @@ class ApiController(RedditController):
 
             if kind == 'link':
                 set_last_modified(item, 'comments')
+                LastModified.touch(item._fullname, 'Comments')
 
             wrapper = default_thing_wrapper(expand_children = True)
             jquery(".content").replace_things(item, True, True, wrap = wrapper)

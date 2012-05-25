@@ -13,6 +13,7 @@ from r2.models.query_cache import (cached_query, merged_cached_query,
                                    MergedCachedQuery)
 from r2.models.query_cache import UserQueryCache, SubredditQueryCache
 from r2.models.query_cache import ThingTupleComparator
+from r2.models.last_modified import LastModified
 
 import cPickle as pickle
 
@@ -1114,6 +1115,7 @@ def add_comment_tree(comments):
                        data = True, return_dict = False)
     for link in links:
         set_last_modified(link, 'comments')
+        LastModified.touch(link._fullname, 'Comments')
 
 # amqp queue processing functions
 
