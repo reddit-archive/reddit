@@ -1226,31 +1226,36 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
+    timestamps = []
     if isinstance(thing, Link):
         new_vote(v, foreground=foreground)
 
         #update the modified flags
         if user._id == thing.author_id:
-            set_last_modified(user, 'overview')
-            set_last_modified(user, 'submitted')
+            timestamps.append('Overview')
+            timestamps.append('Submitted')
             #update sup listings
             sup.add_update(user, 'submitted')
 
             #update sup listings
             if dir:
-                set_last_modified(user, 'liked')
+                timestamps.append('Liked')
                 sup.add_update(user, 'liked')
             elif dir is False:
-                set_last_modified(user, 'disliked')
+                timestamps.append('Disliked')
                 sup.add_update(user, 'disliked')
 
     elif isinstance(thing, Comment):
         #update last modified
         if user._id == thing.author_id:
-            set_last_modified(user, 'overview')
-            set_last_modified(user, 'commented')
+            timestamps.append('Overview')
+            timestamps.append('Commented')
             #update sup listings
             sup.add_update(user, 'commented')
+
+    for timestamp in timestamps:
+        set_last_modified(user, timestamp.lower())
+    LastModified.touch(user._fullname, timestamps)
 
 
 def process_votes_single(qname, limit=0):
