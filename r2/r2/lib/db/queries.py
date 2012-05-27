@@ -595,7 +595,7 @@ def get_inbox(user):
                          get_inbox_messages(user),
                          get_inbox_selfreply(user))
 
-@migrating_cached_query(UserQueryCache)
+@cached_query(UserQueryCache)
 def get_sent(user_id):
     return Message._query(Message.c.author_id == user_id,
                           Message.c._spam == (True, False),
@@ -789,9 +789,10 @@ def new_message(message, inbox_rels):
     from_user = Account._byID(message.author_id)
     for inbox_rel in tup(inbox_rels):
         to = inbox_rel._thing1
-        add_queries([get_sent(from_user)], insert_items=message)
 
         with CachedQueryMutator() as m:
+            m.insert(get_sent(from_user), [message])
+
             # moderator message
             if isinstance(inbox_rel, ModeratorInbox):
                 m.insert(get_subreddit_messages(to), [inbox_rel])
