@@ -370,7 +370,9 @@ def new_campaign(link, dates, bid, sr):
         PromotionWeights.add(link, indx, sr_name, dates[0], dates[1], bid)
         link.campaigns = {}
         link.campaigns = campaigns
+        promotion_log(link, "campaign %s created" % campaign._id)
         link._commit()
+
 
     author = Account._byID(link.author_id, True)
     if getattr(author, "complimentary_promos", False):
@@ -394,6 +396,7 @@ def edit_campaign(link, index, dates, bid, sr):
                                         sr_name, dates[0], dates[1], bid)
             link.campaigns = {}
             link.campaigns = campaigns
+            promotion_log(link, "updated campaign %s. (bid: %0.2f)" % (index, bid))
             link._commit()
 
             #TODO cancel any existing charges if the bid has changed
@@ -426,6 +429,7 @@ def delete_campaign(link, index):
             del campaigns[index]
             link.campaigns = {}
             link.campaigns = campaigns
+            promotion_log(link, "deleted campaign %s" % index)
             link._commit()
             #TODO cancel any existing charges
             void_campaign(link, index, c.user)
@@ -447,6 +451,7 @@ def void_campaign(link, index, user):
             a = Account._byID(link.author_id)
             authorize.void_transaction(a, trans_id, index)
 
+
 def auth_campaign(link, index, user, pay_id):
     """
     for setting up a campaign as a real bid with authorize.net
@@ -465,11 +470,11 @@ def auth_campaign(link, index, user, pay_id):
                                                           index,
                                                           test = test)
             if not reason and trans_id is not None and int(trans_id) != 0:
-                promotion_log(link, "updated payment and/or bid: "
-                              "SUCCESS (id: %s)"
-                              % trans_id)
+                promotion_log(link, "updated payment and/or bid for campaign %s: "
+                              "SUCCESS (trans_id: %d, amt: %0.2f)"
+                              % (index, trans_id, bid))
                 if trans_id < 0:
-                    promotion_log(link, "FREEBIE")
+                    promotion_log(link, "FREEBIE (campaign: %s)" % index)
 
                 set_status(link,
                            max(STATUS.unseen if trans_id else STATUS.unpaid,
@@ -481,8 +486,8 @@ def auth_campaign(link, index, user, pay_id):
 
             else:
                 # something bad happend.
-                promotion_log(link, "updated payment and/or bid: FAILED ('%s')" 
-                              % reason)
+                promotion_log(link, "updated payment and/or bid for campaign %s: FAILED ('%s')" 
+                              % (index, reason))
                 trans_id = 0
 
             campaigns[index] = sd, ed, bid, sr, trans_id
@@ -602,14 +607,13 @@ def charge_pending(offset = 1):
         try:
             if (not authorize.is_charged_transaction(trans_id, indx) and
                 authorize.charge_transaction(user, trans_id, indx)):
-                # TODO: probably not absolutely necessary
-                promotion_log(l, "status update: pending")
                 # update the query queue
                 if is_promoted(l):
                     emailer.queue_promo(l, bid, trans_id)
                 else:
                     set_status(l, STATUS.pending,
                                onchange = lambda: emailer.queue_promo(l, bid, trans_id) )
+                promotion_log(l, "auth charge for campaign %s, trans_id: %d" % (indx, trans_id), True)
         except:
             print "Error on %s, campaign %s" % (l, indx)
     accepted_iter(_charge, offset = offset)
