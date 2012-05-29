@@ -116,7 +116,7 @@ def auth_transaction(amount, user, payid, thing, campaign, test = None):
         return bid.transaction, ""
 
     elif int(payid) in PayID.get_ids(user):
-        order = Order(invoiceNumber = "%dT%dC%d" % (user._id, thing._id, campaign))
+        order = Order(invoiceNumber = "T%dC%d" % (thing._id, campaign))
         success, res = _make_transaction(ProfileTransAuthOnly,
                                          amount, user, payid,
                                          order = order, test = test)
