@@ -58,7 +58,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     config['pylons.h'] = r2.lib.helpers
 
-    config['r2.plugins'] = PluginLoader().load_plugins(getattr(g, 'plugins', []))
+    g.plugins = config['r2.plugins'] = PluginLoader().load_plugins(g.config.get('plugins', []))
     config['routes.map'] = routing.make_map()
 
     #override the default response options
