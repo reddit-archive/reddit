@@ -28,6 +28,7 @@ from socket import gethostbyaddr
 from pylons import g
 
 from pycassa import ColumnFamily
+from pycassa.pool import MaximumRetryException
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
 from pycassa.system_manager import SystemManager, UTF8_TYPE, COUNTER_COLUMN_TYPE, TIME_UUID_TYPE
 from pycassa.types import DateType
@@ -53,6 +54,8 @@ make_lock = g.make_lock
 db_create_tables = g.db_create_tables
 
 thing_types = {}
+
+TRANSIENT_EXCEPTIONS = (MaximumRetryException,)
 
 # The available consistency levels
 CL = Storage(ANY    = ConsistencyLevel.ANY,

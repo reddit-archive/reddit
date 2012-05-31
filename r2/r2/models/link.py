@@ -338,8 +338,13 @@ class Link(Thing, Printable):
         site = c.site
 
         if user_is_loggedin:
-            saved  = CassandraSave._fast_query(user, wrapped)
-            hidden = CassandraHide._fast_query(user, wrapped)
+            try:
+                saved = CassandraSave._fast_query(user, wrapped)
+                hidden = CassandraHide._fast_query(user, wrapped)
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                g.log.warning("Cassandra save/hide lookup failed: %r", e)
+                saved = hidden = {}
+
             clicked = {}
         else:
             saved = hidden = clicked = {}

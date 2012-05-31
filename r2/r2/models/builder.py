@@ -35,7 +35,7 @@ from r2.lib.comment_tree import user_messages, subreddit_messages
 
 from r2.lib.wrapped import Wrapped
 from r2.lib import utils
-from r2.lib.db import operators
+from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from copy import deepcopy
 
@@ -90,7 +90,11 @@ class Builder(object):
                               if sr.can_ban(user))
 
         #get likes/dislikes
-        likes = queries.get_likes(user, items)
+        try:
+            likes = queries.get_likes(user, items)
+        except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+            g.log.warning("Cassandra vote lookup failed: %r", e)
+            likes = {}
         uid = user._id if user else None
 
         types = {}
