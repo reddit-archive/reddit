@@ -64,10 +64,16 @@ syslog.openlog(ident=job_name, facility=facility)
 # run the wrapped command
 child = subprocess.Popen(sys.argv[1:],
                          stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+                         stderr=subprocess.STDOUT,
+                         bufsize=1)
 
 # write out to syslog
-for line in child.stdout:
+while True:
+    line = child.stdout.readline()
+
+    if not line:
+        break
+
     line = line.rstrip('\n')
     syslog.syslog(syslog.LOG_NOTICE, line)
     print line
