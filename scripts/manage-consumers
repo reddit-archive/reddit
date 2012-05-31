@@ -1,0 +1,19 @@
+#!/bin/bash
+
+command=${UPSTART_JOB#reddit-consumers-}
+while read consumer instance_count; do
+    # blank lines in the file should be ignored
+    if [ -z "$consumer" ]; then
+        continue
+    fi
+
+    # allow targeting which consumer the event is meant for (defaulting to 'all')
+    if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
+        continue
+    fi
+
+    for i in $(seq 1 "$instance_count"); do
+        "/sbin/$command" "reddit-consumer-$consumer" "x=$i"
+    done
+done < "$REDDIT_CONSUMER_CONFIG"
+
