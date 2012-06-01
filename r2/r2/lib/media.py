@@ -20,6 +20,8 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 
+import subprocess
+
 from pylons import g, config
 
 from r2.models.link import Link
@@ -48,6 +50,13 @@ threads = 20
 log = g.log
 
 MEDIA_FILENAME_LENGTH = 12
+
+
+def optimize_jpeg(filename, optimizer):
+    if optimizer:
+        with open(os.path.devnull, 'w') as devnull:
+            subprocess.check_call((optimizer, filename),
+                                  stdout=devnull)
 
 
 def thumbnail_url(link):
@@ -116,6 +125,8 @@ def upload_media(image, never_expire=True, file_type='.jpg'):
         
         if file_type == ".png":
             optimize_png(f.name, g.png_optimizer)
+        elif file_type == ".jpg":
+            optimize_jpeg(f.name, g.jpeg_optimizer)
         contents = open(f.name).read()
         file_name = get_filename_from_content(contents)
         if g.media_store == "s3":
