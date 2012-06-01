@@ -1,7 +1,11 @@
 (function() {
-  var prefix = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.reddit.com';
+  if ('https:' == document.location.protocol) {
+      var base_url = 'https://redditstatic.s3.amazonaws.com'
+  } else {
+      var base_url = 'http://www.reddit.com/static'
+  }
 
-  var write_string="<iframe src=\"" + prefix + "/static/button/button1.html?width=120&url=";
+  var write_string="<iframe src=\"" + base_url + "/button/button1.html?width=120&url=";
 
   if (window.reddit_url)  { 
       write_string += encodeURIComponent(reddit_url); 
