@@ -2525,6 +2525,7 @@ class ApiController(RedditController):
             link.flair_text = text
             link.flair_css_class = css_class
             link._commit()
+            changed(link)
 
             if ((c.site.is_moderator(c.user) or c.user_is_admin)):
                 ModAction.create(c.site, c.user, action='editflair',
