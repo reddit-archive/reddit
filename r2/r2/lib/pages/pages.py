@@ -381,7 +381,7 @@ class Reddit(Templated):
                             NamedButton('top'),
                             ]
 
-            if c.user_is_loggedin or not g.read_only_mode:
+            if c.user_is_loggedin:
                 main_buttons.append(NamedButton('saved', False))
 
         more_buttons = []
