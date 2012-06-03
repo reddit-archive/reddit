@@ -935,8 +935,10 @@ def del_or_ban(things, why):
 
             if why == "ban":
                 query_cache_inserts.append([get_spam_links(sr), links])
-                query_cache_inserts.append([get_spam_filtered_links(sr),
-                    [l for l in links if was_spam_filtered(l)]])
+                filtered = [l for l in links if was_spam_filtered(l)]
+                not_filtered = [l for l in links if not was_spam_filtered(l)]
+                query_cache_inserts.append([get_spam_filtered_links(sr), filtered])
+                query_cache_deletes.append([get_spam_filtered_links(sr), not_filtered])
             if why == "del":
                 query_cache_deletes.append([get_spam_links(sr), links])
                 query_cache_deletes.append([get_spam_filtered_links(sr), links])
@@ -945,8 +947,10 @@ def del_or_ban(things, why):
         if comments:
             if why == "ban":
                 query_cache_inserts.append([get_spam_comments(sr), comments])
-                query_cache_inserts.append([get_spam_filtered_comments(sr),
-                    [c for c in comments if was_spam_filtered(c)]])
+                filtered = [c for c in comments if was_spam_filtered(c)]
+                not_filtered = [c for c in comments if not was_spam_filtered(c)]
+                query_cache_inserts.append([get_spam_filtered_comments(sr), filtered])
+                query_cache_deletes.append([get_spam_filtered_comments(sr), not_filtered])
             if why == "del":
                 query_cache_deletes.append([get_spam_comments(sr), comments])
                 query_cache_deletes.append([get_spam_filtered_comments(sr), comments])
