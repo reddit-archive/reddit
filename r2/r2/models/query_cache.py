@@ -183,8 +183,11 @@ class MergedCachedQuery(CachedQueryBase):
     def __init__(self, queries):
         self.queries = queries
 
-        sort = queries[0].sort
-        assert all(sort == q.sort for q in queries)
+        if queries:
+            sort = queries[0].sort
+            assert all(sort == q.sort for q in queries)
+        else:
+            sort = []
         super(MergedCachedQuery, self).__init__(sort)
 
     def _fetch(self):
