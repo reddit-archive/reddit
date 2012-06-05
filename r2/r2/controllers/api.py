@@ -187,6 +187,7 @@ class ApiController(RedditController):
                    VCaptcha(),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
+                   VShamedDomain('url'),
                    ip = ValidIP(),
                    sr = VSubmitSR('sr', 'kind'),
                    url = VUrl(['url', 'sr', 'resubmit']),
@@ -248,7 +249,8 @@ class ApiController(RedditController):
             check_domain = True
 
             # check for no url, or clear that error field on return
-            if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
+            if form.has_errors("url", errors.NO_URL, errors.BAD_URL,
+                                      errors.DOMAIN_BANNED):
                 pass
             elif form.has_errors("url", errors.ALREADY_SUB):
                 check_domain = False
@@ -266,13 +268,8 @@ class ApiController(RedditController):
                 g.log.warning("%s is trying to submit url=None (title: %r)"
                               % (request.ip, title))
             elif check_domain:
+
                 banmsg = is_banned_domain(url, request.ip)
-
-# Uncomment if we want to let spammers know we're on to them
-#            if banmsg:
-#                form.set_html(".field-url.BAD_URL", banmsg)
-#                return
-
         else:
             form.has_errors('text', errors.TOO_LONG)
 

@@ -94,6 +94,7 @@ error_list = dict((
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
         ('CONFIRM', _("please confirm the form")),
         ('NO_API', _('cannot perform this action via the API')),
+        ('DOMAIN_BANNED', _('%(domain)s is not allowed on reddit: %(reason)s')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

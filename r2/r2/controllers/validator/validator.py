@@ -1025,6 +1025,17 @@ class VUrl(VRequired):
             pass
         return params
 
+class VShamedDomain(Validator):
+    def run(self, url):
+        if not url:
+            return
+
+        is_shamed, domain, reason = is_shamed_domain(url, request.ip)
+
+        if is_shamed:
+            self.set_error(errors.DOMAIN_BANNED, dict(domain=domain,
+                                                      reason=reason))
+
 class VExistingUname(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.NO_USER, *a, **kw)
