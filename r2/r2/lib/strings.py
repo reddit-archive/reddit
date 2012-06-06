@@ -63,7 +63,7 @@ string_dict = dict(
     # this is for Japanese which treats people counts differently
     person_label = _("<span class='number'>%(num)s</span>&#32;<span class='word'>%(persons)s</span>"),
 
-    firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own!"),
+    firsttext = _("reddit is a source for what's new and popular online. vote on links that you like or dislike and help decide what's popular, or submit your own! [learn more &rsaquo;](/about)"),
 
     already_submitted = _("that link has already been submitted, but you can try to [submit it again](%s)."),
 
