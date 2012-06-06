@@ -40,6 +40,7 @@ from uuid import uuid1, UUID
 from itertools import chain
 import cPickle as pickle
 from pycassa.util import OrderedDict
+import base64
 
 connection_pools = g.cassandra_pools
 default_connection_pool = g.cassandra_default_pool
@@ -1469,16 +1470,35 @@ class DenormalizedView(View):
     """Store the entire underlying object inside the View column."""
 
     @classmethod
+    def is_date_prop(cls, attr):
+        view_cls = cls._view_of
+        return (view_cls._value_type == 'date' or
+                attr in view_cls._date_props or
+                view_cls._timestamp_prop and attr == view_cls._timestamp_prop)
+
+    @classmethod
     def _thing_dumper(cls, thing):
         serialize_fn = cls._view_of._serialize_column
         serialized_columns = dict((attr, serialize_fn(attr, val)) for
             (attr, val) in thing._orig.iteritems())
+
+        # Encode date props which may be binary
+        for attr, val in serialized_columns.items():
+            if cls.is_date_prop(attr):
+                serialized_columns[attr] = base64.b64encode(val)
+
         dump = json.dumps(serialized_columns)
         return dump
 
     @classmethod
     def _thing_loader(cls, _id, dump):
         serialized_columns = json.loads(dump)
+
+        # Decode date props
+        for attr, val in serialized_columns.items():
+            if cls.is_date_prop(attr):
+                serialized_columns[attr] = base64.b64decode(val)
+
         obj = cls._view_of._from_serialized_columns(_id, serialized_columns)
         return obj
 
