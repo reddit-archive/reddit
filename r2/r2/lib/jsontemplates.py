@@ -484,6 +484,9 @@ class NullJsonTemplate(JsonTemplate):
     def render(self, thing = None, *a, **kw):
         return ""
 
+    def get_def(self, name):
+        return self
+
 class ListingJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(children = "things",
                         after = "after",
