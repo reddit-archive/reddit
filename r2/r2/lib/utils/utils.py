@@ -1123,22 +1123,6 @@ def in_chunks(it, size=25):
         if chunk:
             yield chunk
 
-r_subnet = re.compile("\A(\d+\.\d+)\.\d+\.\d+\Z")
-def ip_and_slash16(req):
-    ip = req.ip
-
-    if ip is None:
-        raise ValueError("request.ip is None")
-    ip = ip.strip()
-
-    m = r_subnet.match(ip)
-    if m is None:
-        raise ValueError("Couldn't parse IP %s" % ip)
-
-    slash16 = m.group(1) + '.x.x'
-
-    return (ip, slash16)
-
 def spaceout(items, targetseconds,
              minsleep = 0, die = False,
              estimate = None):

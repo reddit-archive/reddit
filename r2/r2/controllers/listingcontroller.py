@@ -39,7 +39,6 @@ from r2.lib.strings import Score
 from r2.lib import organic
 import r2.lib.search as search
 from r2.lib.utils import iters, check_cheating, timeago
-from r2.lib.utils.trial_utils import populate_spotlight
 from r2.lib import sup
 from r2.lib.promote import randomized_promotion_list, get_promote_srid
 import socket
@@ -234,7 +233,6 @@ class HotController(FixListing, ListingController):
 
             if c.user.pref_show_sponsors or not c.user.gold:
                 spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
-            trial = populate_spotlight()
 
             # Need to do this again, because if there was a duplicate removed,
             # pos might be pointing outside the list.
@@ -242,9 +240,6 @@ class HotController(FixListing, ListingController):
                 pos = 0
             elif pos != 0:
                 pos = pos % len(spotlight_links)
-
-            if trial:
-                spotlight_links.insert(pos, trial._fullname)
 
             if not spotlight_links:
                 return None
@@ -258,24 +253,11 @@ class HotController(FixListing, ListingController):
                 disp_links = [spotlight_links[(i + pos) % num_tl]
                               for i in xrange(-2, left_side)]
 
-            def trial_keep_fn(item):
-                if trial and trial._fullname == item._fullname:
-                    return True
-                return organic.keep_fresh_links(item)
-
-            def trial_wrap(item):
-               if item is trial:
-                   w = Wrapped(item)
-                   w.trial_mode = True
-                   w.render_class = LinkOnTrial
-                   return w
-               return self.builder_wrapper(item)
-
             b = IDBuilder(disp_links,
-                          wrap = trial_wrap if trial else self.builder_wrapper,
+                          wrap = self.builder_wrapper,
                           num = organic.organic_length,
                           skip = True,
-                          keep_fn = trial_keep_fn if trial else organic.keep_fresh_links)
+                          keep_fn = organic.keep_fresh_links)
 
             try:
                 vislink = spotlight_links[pos]

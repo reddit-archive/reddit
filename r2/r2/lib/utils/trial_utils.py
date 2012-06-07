@@ -21,7 +21,7 @@
 ###############################################################################
 
 from pylons import c, g, request
-from r2.lib.utils import ip_and_slash16, jury_cache_dict, voir_dire_priv, tup
+from r2.lib.utils import jury_cache_dict, voir_dire_priv, tup
 from r2.lib.memoize import memoize
 from r2.lib.log import log_text
 import random as rand
@@ -165,6 +165,8 @@ def assign_trial(account, juries_already_on, ip, slash16):
     return None
 
 def populate_spotlight():
+    raise Exception("this function is broken (re: ip_and_slash16) and pending demolition")
+
     from r2.models import Jury
     from r2.lib.db.thing import NotFound
 

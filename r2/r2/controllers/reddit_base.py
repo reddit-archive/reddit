@@ -27,7 +27,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib.base import BaseController, proxyurl
 from r2.lib import pages, utils, filters, amqp, stats
-from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, ip_and_slash16
+from r2.lib.utils import http_utils, is_subdomain, UniqueIterator
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import valid_cookie, FakeAccount, valid_feed, valid_admin_cookie
@@ -456,9 +456,8 @@ def throttled(key):
     return g.cache.get("throttle_" + key)
 
 def ratelimit_throttled():
-    ip, slash16 = ip_and_slash16(request)
-
-    if throttled(ip) or throttled(slash16):
+    ip = request.ip.strip()
+    if throttled(ip):
         abort(429)
 
 
