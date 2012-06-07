@@ -35,3 +35,10 @@ class LastModified(tdb_cassandra.View):
                 return None
 
         return getattr(obj, name, None)
+
+    @classmethod
+    def get_multi(cls, fullnames, name):
+        res = cls._byID(fullnames, return_dict=True)
+
+        return dict((k, getattr(v, name, None))
+                    for k, v in res.iteritems())
