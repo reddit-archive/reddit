@@ -60,16 +60,4 @@ def set_last_visit(thing):
     key = last_modified_key(thing, "visit")
     g.permacache.set(key, make_last_modified())
 
-def last_visit(thing):
-    from pylons import g
-    res = last_modified_date(thing, "visit", False)
-    if res is None:
-        res = getattr(thing, "last_visit", None)
-        if res:
-            g.permacache.set(last_modified_key(thing, "visit"), res)
-    return res
-
-def last_visit_multi(things):
-    return last_modified_multi(things, "visit")
-
 

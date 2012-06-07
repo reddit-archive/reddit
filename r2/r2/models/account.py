@@ -24,7 +24,7 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
-from r2.lib.utils        import UrlParser, set_last_visit, last_visit
+from r2.lib.utils        import UrlParser, set_last_visit
 from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
 from r2.lib import filters
@@ -213,15 +213,12 @@ class Account(Thing):
 
         apply_updates(self)
 
-        #prev_visit = getattr(self, 'last_visit', None)
-        prev_visit = last_visit(self)
-
-        if prev_visit and current_time - prev_visit < timedelta(1):
+        prev_visit = LastModified.get(self._fullname, "Visit")
+        if prev_visit and current_time - prev_visit < timedelta(days=1):
             return
 
         g.log.debug ("Updating last visit for %s from %s to %s" %
                     (self.name, prev_visit, current_time))
-        set_last_visit(self)
 
         LastModified.touch(self._fullname, "Visit")
 
