@@ -28,15 +28,16 @@ from copy import deepcopy
 import cPickle as pickle
 import re, math, random
 
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, SoupStrainer
 
 from time import sleep
 from datetime import datetime, timedelta
 from functools import wraps, partial, WRAPPER_ASSIGNMENTS
 from pylons import g
 from pylons.i18n import ungettext, _
-from r2.lib.filters import _force_unicode
+from r2.lib.filters import _force_unicode, _force_utf8
 from mako.filters import url_escape
+import snudown
  
 from r2.lib.utils._utils import *
         
@@ -1391,3 +1392,15 @@ def wraps_api(f):
     if not hasattr(f, '_api_doc'):
         f._api_doc = {}
     return wraps(f, assigned=WRAPPER_ASSIGNMENTS+('_api_doc',))
+
+
+def extract_urls_from_markdown(md):
+    "Extract URLs that will be hot links from a piece of raw Markdown."
+
+    html = snudown.markdown(_force_utf8(md))
+    links = SoupStrainer("a")
+
+    for link in BeautifulSoup(html, parseOnlyThese=links):
+        url = link.get('href')
+        if url:
+            yield url
