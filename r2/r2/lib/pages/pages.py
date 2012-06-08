@@ -3516,30 +3516,34 @@ class Promotion_Summary(Templated):
     def __init__(self, ndays):
         end_date = promote.promo_datetime_now().date()
         start_date = promote.promo_datetime_now(offset = -ndays).date()
-
         links = set()
         authors = {}
         author_score = {}
         self.total = 0
         for link, indx, s, e in Promote_Graph.get_current_promos(start_date, end_date):
-            sd, ed, bid, sr, trans_id = link.campaigns[indx]
-            if trans_id > 0: #ignore freebies
-                links.add(link)
-                link.bid = getattr(link, "bid", 0) + bid
-                link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+            campaigns = getattr(link, 'campaigns', {})
+            if indx in campaigns:
+                sd, ed, bid, sr, trans_id = link.campaigns[indx]
+                if trans_id > 0: #ignore freebies
+                    links.add(link)
+                    link.bid = getattr(link, "bid", 0) + bid
+                    link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
 
-                bid_per_day = bid / (ed - sd).days
-                if isinstance(sd, datetime.datetime):
-                    sd = sd.date()
-                if isinstance(ed, datetime.datetime):
-                    ed = ed.date()
-                sd = max(sd, start_date)
-                ed = min(ed, end_date)
+                    bid_per_day = bid / (ed - sd).days
+                    if isinstance(sd, datetime.datetime):
+                        sd = sd.date()
+                    if isinstance(ed, datetime.datetime):
+                        ed = ed.date()
+                    sd = max(sd, start_date)
+                    ed = min(ed, end_date)
 
-                self.total += bid_per_day * (ed - sd).days
+                    self.total += bid_per_day * (ed - sd).days
 
-                authors.setdefault(link.author.name, []).append(link)
-                author_score[link.author.name] = author_score.get(link.author.name,0) + link._score
+                    authors.setdefault(link.author.name, []).append(link)
+                    author_score[link.author.name] = author_score.get(link.author.name,0) + link._score
+            else: # indx not found in campaigns. bad data?
+                g.log.error("Missing campaign (link: %d, indx: %d) omitted "
+                            "from promotion summary" % (link._id, indx))
 
         links = list(links)
         links.sort(key = lambda x: x._score, reverse = True)
