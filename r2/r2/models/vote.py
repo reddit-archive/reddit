@@ -70,7 +70,7 @@ class CassandraVote(tdb_cassandra.Relation):
         votee = v._thing2
         cvc = cls._rel(Account, votee.__class__)
         try:
-            cv = cvc._fast_query(voter._id36, votee._id36)
+            cv = cvc._fast_query(voter, votee)
         except tdb_cassandra.NotFound:
             cv = cvc(thing1_id = voter._id36, thing2_id = votee._id36)
         cv.name = v._name
@@ -268,14 +268,12 @@ class Vote(MultiRelation('vote',
         ret = {}
 
         for relcls, items in rels.iteritems():
-            ids = dict((item._id36, item)
-                       for item in items)
-            votes = relcls._fast_query(sub._id36, ids,
+            votes = relcls._fast_query(sub, items,
                                        properties=['name'])
-            for (thing1_id36, thing2_id36), rel in votes.iteritems():
-                ret[(sub, ids[thing2_id36])] = (True if rel.name == '1'
-                                                 else False if rel.name == '-1'
-                                                 else None)
+            for cross, rel in votes.iteritems():
+                ret[cross] = (True if rel.name == '1'
+                              else False if rel.name == '-1'
+                              else None)
         return ret
 
 def test():

@@ -813,30 +813,57 @@ class Relation(ThingBase):
         pass
 
     @classmethod
-    def _fast_query(cls, thing1_ids, thing2_ids, properties = None, **kw):
+    def _fast_query(cls, thing1s, thing2s, properties = None, **kw):
         """Find all of the relations of this class between all of the
            members of thing1_ids and thing2_ids"""
-        thing1_ids, thing1s_is_single = tup(thing1_ids, True)
-        thing2_ids, thing2s_is_single = tup(thing2_ids, True)
+        thing1s, thing1s_is_single = tup(thing1s, True)
+        thing2s, thing2s_is_single = tup(thing2s, True)
 
-        if not thing1_ids or not thing2_ids:
-            # nothing to permute
+        if not thing1s or not thing2s:
             return {}
 
+        # grab the last time each thing1 modified this relation class so we can
+        # know which relations not to even bother looking up
+        if thing1s:
+            from r2.models.last_modified import LastModified
+            fullnames = [cls._thing1_cls._fullname_from_id36(thing1._id36)
+                         for thing1 in thing1s]
+            timestamps = LastModified.get_multi(fullnames,
+                                                cls._cf.column_family)
+
+        # build up a list of ids to look up, throwing out the ones that the
+        # timestamp fetched above indicates are pointless
+        ids = set()
+        thing1_ids, thing2_ids = {}, {}
+        for thing1 in thing1s:
+            last_modification = timestamps.get(thing1._fullname)
+
+            if not last_modification:
+                continue
+
+            for thing2 in thing2s:
+                key = cls._rowkey(thing1._id36, thing2._id36)
+
+                if key in ids:
+                    continue
+
+                if thing2._date > last_modification:
+                    continue
+
+                ids.add(key)
+                thing2_ids[thing2._id36] = thing2
+            thing1_ids[thing1._id36] = thing1
+
+        # all relations must load these properties, even if unrequested
         if properties is not None:
             properties = set(properties)
 
-            # all relations must load these properties, even if
-            # unrequested
             properties.add('thing1_id')
             properties.add('thing2_id')
 
-        # permute all of the pairs
-        ids = set(cls._rowkey(x, y)
-                  for x in thing1_ids
-                  for y in thing2_ids)
-
-        rels = cls._byID(ids, properties = properties).values()
+        rels = {}
+        if ids:
+            rels = cls._byID(ids, properties=properties).values()
 
         if thing1s_is_single and thing2s_is_single:
             if rels:
@@ -844,10 +871,10 @@ class Relation(ThingBase):
                 return rels[0]
             else:
                 raise NotFound("<%s %r>" % (cls.__name__,
-                                            cls._rowkey(thing1_ids[0],
-                                                        thing2_ids[0])))
+                                            cls._rowkey(thing1s[0]._id36,
+                                                        thing2s[0]._id36)))
 
-        return dict(((rel.thing1_id, rel.thing2_id), rel)
+        return dict(((thing1_ids[rel.thing1_id], thing2_ids[rel.thing2_id]), rel)
                     for rel in rels)
 
     @classmethod

@@ -336,14 +336,8 @@ class Link(Thing, Printable):
         site = c.site
 
         if user_is_loggedin:
-            saved_lu = []
-            for item in wrapped:
-                if not SaveHide._can_skip_lookup(user, item):
-                    saved_lu.append(item._id36)
-
-            saved  = CassandraSave._fast_query(user._id36, saved_lu)
-            hidden = CassandraHide._fast_query(user._id36, saved_lu)
-
+            saved  = CassandraSave._fast_query(user, wrapped)
+            hidden = CassandraHide._fast_query(user, wrapped)
             clicked = {}
         else:
             saved = hidden = clicked = {}
@@ -408,8 +402,8 @@ class Link(Thing, Printable):
             item.urlprefix = ''
 
             if user_is_loggedin:
-                item.saved =  (user._id36, item._id36) in saved
-                item.hidden = (user._id36, item._id36) in hidden
+                item.saved =  (user, item) in saved
+                item.hidden = (user, item) in hidden
 
                 item.clicked = bool(clicked.get((user, item, 'click')))
             else:
@@ -1218,7 +1212,7 @@ class SimpleRelation(tdb_cassandra.Relation):
     @classmethod
     def _uncreate(cls, user, link):
         try:
-            cls._fast_query(user._id36, link._id36)._destroy()
+            cls._fast_query(user, link)._destroy()
         except tdb_cassandra.NotFound:
             pass
 

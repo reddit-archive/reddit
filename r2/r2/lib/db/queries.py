@@ -1200,25 +1200,15 @@ def get_likes(user, items):
                               else False if v == '-1'
                               else None)
 
-    # avoid requesting items that they can't have voted on (we're
-    # still using the tdb_sql Thing API for this). TODO: we should do
-    # this before the prequeued_vote_keys lookup, so that in extreme
-    # cases we can avoid hitting the cache for them at all, but in the
-    # current state that precludes brand new comments from appearing
-    # to have been voted on
     for item in items:
+        # already retrieved above
         if (user, item) in res:
             continue
 
         # we can only vote on links and comments
-        if isinstance(item, (Link, Comment)):
-            rel = Vote.rel(user.__class__, item.__class__)
-            if rel._can_skip_lookup(user, item):
-                res[(user, item)] = None
-        else:
+        if not isinstance(item, (Link, Comment)):
             res[(user, item)] = None
 
-    # now hit Cassandra with the remainder
     likes = Vote.likes(user, [i for i in items if (user, i) not in res])
 
     res.update(likes)
