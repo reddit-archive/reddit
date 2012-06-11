@@ -19,8 +19,6 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-from r2.lib.cache import sgm
-from r2.lib.utils import Storage
 
 # ad tags
 ad_urls = {}
