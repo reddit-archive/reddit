@@ -416,6 +416,7 @@ class PromoteController(ListingController):
     def POST_update_pay(self, form, jquery, link, indx, customer_id, pay_id,
                         edit, address, creditcard):
         address_modified = not pay_id or edit
+        form_has_errors = False
         if address_modified:
             if (form.has_errors(["firstName", "lastName", "company", "address",
                                  "city", "state", "zip",
@@ -423,13 +424,13 @@ class PromoteController(ListingController):
                                 errors.BAD_ADDRESS) or
                 form.has_errors(["cardNumber", "expirationDate", "cardCode"],
                                 errors.BAD_CARD)):
-                pass
+                form_has_errors = True
             elif g.authorizenetapi:
                 pay_id = edit_profile(c.user, address, creditcard, pay_id)
             else:
                 pay_id = 1
         # if link is in use or finished, don't make a change
-        if pay_id:
+        if pay_id and not form_has_errors:
             # valid bid and created or existing bid id.
             # check if already a transaction
             if g.authorizenetapi:

@@ -1638,15 +1638,34 @@ class ValidCard(Validator):
                             dict(message=msg), field = field)
 
     def run(self, cardNumber, expirationDate, cardCode):
+        has_errors = False
+
         if not self.valid_ccn.match(cardNumber or ""):
             self.set_error(_("credit card numbers should be 13 to 16 digits"),
                            "cardNumber")
-        elif not self.valid_date.match(expirationDate or ""):
+            has_errors = True
+        
+        if not self.valid_date.match(expirationDate or ""):
             self.set_error(_("dates should be YYYY-MM"), "expirationDate")
-        elif not self.valid_ccv.match(cardCode or ""):
+            has_errors = True
+        else:
+            now = datetime.now()
+            yyyy, mm = expirationDate.split("-")
+            year = int(yyyy)
+            month = int(mm)
+            if month < 1 or month > 12:
+                self.set_error(_("month must be in the range 01..12"), "expirationDate")
+                has_errors = True
+            elif datetime(year, month, now.day) < now:
+                self.set_error(_("expiration date must be in the future"), "expirationDate")
+                has_errors = True
+
+        if not self.valid_ccv.match(cardCode or ""):
             self.set_error(_("card verification codes should be 3 or 4 digits"),
                            "cardCode")
-        else:
+            has_errors = True
+
+        if not has_errors:
             return CreditCard(cardNumber = cardNumber,
                               expirationDate = expirationDate,
                               cardCode = cardCode)
