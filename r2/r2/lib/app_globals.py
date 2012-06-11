@@ -28,6 +28,7 @@ from urlparse import urlparse
 import json
 from sqlalchemy import engine
 from sqlalchemy import event
+from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.cache import LocalCache, SelfEmptyingCache
 from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
@@ -38,62 +39,6 @@ from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
-
-class ConfigValue(object):
-    @staticmethod
-    def int(v, key=None, data=None):
-        return int(v)
-
-    @staticmethod
-    def float(v, key=None, data=None):
-        return float(v)
-
-    @staticmethod
-    def bool(v, key=None, data=None):
-        return (v.lower() == 'true') if v else None
-
-    @staticmethod
-    def tuple(v, key=None, data=None):
-        return tuple(ConfigValue.to_iter(v))
-
-    @staticmethod
-    def choice(v, key, data):
-        if v not in data:
-            raise ValueError("Unknown option for %r: %r not in %r" % (key, v, data))
-        return data[v]
-
-    @staticmethod
-    def to_iter(v, delim = ','):
-        return (x.strip() for x in v.split(delim) if x)
-
-class ConfigValueParser(dict):
-    def __init__(self, raw_data):
-        dict.__init__(self, raw_data)
-        self.config_keys = {}
-        self.raw_data = raw_data
-
-    def add_spec(self, spec):
-        new_keys = []
-        for parser, keys in spec.iteritems():
-            # keys can be either a list or a dict
-            for key in keys:
-                assert key not in self.config_keys
-                # if keys is a dict, the value is passed as extra data to the parser.
-                extra_data = keys[key] if type(keys) is dict else None
-                self.config_keys[key] = (parser, extra_data)
-                new_keys.append(key)
-        self._update_values(new_keys)
-
-    def _update_values(self, keys):
-        for key in keys:
-            if key not in self.raw_data:
-                continue
-
-            value = self.raw_data[key]
-            if key in self.config_keys:
-                parser, extra_data = self.config_keys[key]
-                value = parser(value, key, extra_data)
-            self[key] = value
 
 class Globals(object):
     spec = {

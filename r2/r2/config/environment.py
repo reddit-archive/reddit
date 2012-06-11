@@ -30,7 +30,8 @@ mimetypes.init()
 import webhelpers
 
 from r2.config import routing
-from r2.lib.app_globals import ConfigValue, Globals
+from r2.lib.app_globals import Globals
+from r2.lib.configparse import ConfigValue
 from   r2.lib import  rpc
 import r2.lib.helpers
 from r2.lib.plugin import PluginLoader
