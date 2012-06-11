@@ -308,8 +308,13 @@ def dependencies(name):
         print dep
 
 @build_command
-def enumerate_outputs():
-    for m in module.itervalues():
+def enumerate_outputs(*names):
+    if names:
+        modules = [module[name] for name in names]
+    else:
+        modules = module.itervalues()
+
+    for m in modules:
         for output in m.outputs:
             print output
 

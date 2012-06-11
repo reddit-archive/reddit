@@ -185,6 +185,8 @@ $(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
 
 define JS_MODULE_TEMPLATE
 $(BUILD_DIR)/js-$(1)-buildstamp: $$(shell $(PYTHON) r2/lib/js.py dependencies $(1))
+	# remove mangled output symlinks, similar to above.
+	rm -f $$(shell $(PYTHON) r2/lib/js.py enumerate_outputs $(1))
 	paster run standalone r2/lib/js.py -c "build_module('$(1)')"
 	touch $$@
 endef
