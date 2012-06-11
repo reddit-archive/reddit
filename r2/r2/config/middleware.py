@@ -32,9 +32,8 @@ from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
-from r2.config.extensions import extension_mapping, set_extension
+from r2.config.extensions import extension_mapping, set_extension, api_type
 from r2.lib.utils import rstrips, is_authorized_cname
-from r2.lib.jsontemplates import api_type
 
 #middleware stuff
 from r2.lib.html_source import HTMLValidationParser

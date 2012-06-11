@@ -22,20 +22,11 @@
 from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
+from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
 import time, pytz
 from pylons import c, g
 from pylons.i18n import _
-
-def api_type(subtype = ''):
-    return 'api-' + subtype if subtype else 'api'
-
-def is_api(subtype = ''):
-    return c.render_style and c.render_style.startswith(api_type(subtype))
-
-def get_api_subtype():
-    if is_api() and c.render_style.startswith('api-'):
-        return c.render_style[4:]
 
 def make_typename(typ):
     return 't%s' % to36(typ._type_id)

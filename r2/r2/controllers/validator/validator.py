@@ -22,6 +22,7 @@
 from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
+from r2.config.extensions import api_type
 from r2.lib import utils, captcha, promote
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
@@ -29,7 +30,6 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
 from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
-from r2.lib.jsontemplates import api_type
 from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard

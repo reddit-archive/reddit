@@ -24,9 +24,9 @@ from pylons.i18n import _, ungettext
 from reddit_base import RedditController, base_listing, paginated_listing, prevent_framing_and_css
 from r2 import config
 from r2.models import *
+from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.jsontemplates import is_api
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates

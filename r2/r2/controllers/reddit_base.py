@@ -36,7 +36,7 @@ from r2.models import *
 from errors import ErrorSet
 from validator import *
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsontemplates import api_type, is_api
+from r2.config.extensions import is_api
 
 from Cookie import CookieError
 from copy import copy

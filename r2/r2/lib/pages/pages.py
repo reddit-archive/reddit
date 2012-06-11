@@ -30,10 +30,10 @@ from r2.models.oauth2 import OAuth2Client
 from r2.models import ModAction
 from r2.models import Thing
 from r2.config import cache
+from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
 from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
-from r2.lib.jsontemplates import is_api
 from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort

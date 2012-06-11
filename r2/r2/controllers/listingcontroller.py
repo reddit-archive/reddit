@@ -24,6 +24,7 @@ from validator import *
 
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
+from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
 from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
@@ -35,7 +36,6 @@ from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
-from r2.lib.jsontemplates import is_api
 import r2.lib.solrsearch as solrsearch
 import r2.lib.search as search
 from r2.lib.utils import iters, check_cheating, timeago

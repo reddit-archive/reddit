@@ -19,11 +19,11 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
+from r2.config.extensions import get_api_subtype
 from r2.lib.utils import tup
 from r2.lib.captcha import get_iden
 from r2.lib.wrapped import Wrapped, StringTemplate
 from r2.lib.filters import websafe_json, spaceCompress
-from r2.lib.jsontemplates import get_api_subtype
 from r2.lib.base import BaseController
 from r2.lib.pages.things import wrap_links
 from r2.models import IDBuilder, Listing
