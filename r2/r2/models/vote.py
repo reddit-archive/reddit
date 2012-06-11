@@ -215,8 +215,6 @@ class Vote(MultiRelation('vote',
 
         v._commit()
 
-        v._fast_query_timestamp_touch(sub)
-
         up_change, down_change = score_changes(amount, oldamount)
 
         if not (is_new and obj.author_id == sub._id and amount == 1):

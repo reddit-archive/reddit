@@ -24,7 +24,7 @@ from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
-from r2.lib.utils        import UrlParser, set_last_visit
+from r2.lib.utils        import UrlParser
 from r2.lib.utils        import constant_time_compare
 from r2.lib.cache        import sgm
 from r2.lib import filters

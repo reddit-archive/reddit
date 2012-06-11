@@ -779,30 +779,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
             self._name = 'un' + self._name
 
         @classmethod
-        def _fast_query_timestamp_touch(cls, thing1):
-            thing_utils.set_last_modified_for_cls(thing1, cls._type_name)
-
-        @classmethod
-        def _can_skip_lookup(cls, thing1, thing2):
-            # we can't possibly have voted on things that were created
-            # after the last time we voted. for relations that have an
-            # invariant like this we can avoid doing these lookups as
-            # long as the relation takes responsibility for keeping
-            # the timestamp up-to-date
-
-            last_done = thing_utils.get_last_modified_for_cls(
-                thing1, cls._type_name)
-
-            if not last_done:
-                return False
-
-            if thing2._date > last_done:
-                return True
-
-            return False
-
-
-        @classmethod
         def _fast_query(cls, thing1s, thing2s, name, data=True, eager_load=True,
                         thing_data=False, timestamp_optimize = False):
             """looks up all the relationships between thing1_ids and
@@ -830,9 +806,6 @@ def Relation(type1, type2, denorm1 = None, denorm2 = None):
                 t2_ids = set()
                 names = set()
                 for t1, t2, name in pairs:
-                    if timestamp_optimize and cls._can_skip_lookup(thing1_dict[t1],
-                                                                   thing2_dict[t2]):
-                        continue
                     t1_ids.add(t1)
                     t2_ids.add(t2)
                     names.add(name)

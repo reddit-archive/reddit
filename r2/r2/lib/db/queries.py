@@ -768,8 +768,6 @@ def new_vote(vote, foreground=False):
                     results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item, foreground=foreground)
-
-    vote._fast_query_timestamp_touch(user)
     
     if isinstance(item, Link):
         # must update both because we don't know if it's a changed

@@ -28,21 +28,6 @@ def set_last_modified(thing, action):
     key = last_modified_key(thing, action)
     g.permacache.set(key, make_last_modified())
 
-
-def set_last_modified_for_cls(user, cls_type_name):
-    if cls_type_name != "vote_account_link":
-        set_last_modified(user, "cls_" + cls_type_name)
-
-def get_last_modified_for_cls(user, cls_type_name):
-    # vote times are already stored in the permacache and updated by the
-    # query queue
-    if cls_type_name == "vote_account_link":
-        return max(last_modified_date(user, "liked"),
-                   last_modified_date(user, "disliked"))
-    # other types are not -- special key for them
-    elif cls_type_name in ("vote_account_comment", "savehide"):
-        return last_modified_date(user, "cls_" + cls_type_name)
-
 def last_modified_multi(things, action):
     from pylons import g
     cache = g.permacache
@@ -52,12 +37,3 @@ def last_modified_multi(things, action):
 
     last_modified = cache.get_multi(keys.keys())
     return dict((keys[k], v) for k, v in last_modified.iteritems())
-
-
-def set_last_visit(thing):
-    from pylons import g
-    from r2.lib.cache import CL_ONE
-    key = last_modified_key(thing, "visit")
-    g.permacache.set(key, make_last_modified())
-
-
