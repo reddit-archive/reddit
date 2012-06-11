@@ -919,6 +919,8 @@ class ApiController(RedditController):
 
             changed(item)
 
+            amqp.add_item('usertext_edited', item._fullname)
+
             if kind == 'link':
                 set_last_modified(item, 'comments')
                 LastModified.touch(item._fullname, 'Comments')
