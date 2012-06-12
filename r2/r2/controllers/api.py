@@ -436,6 +436,8 @@ class ApiController(RedditController):
             d = c.user._dirties.copy()
             user._commit()
 
+            amqp.add_item('new_account', user._fullname)
+
             c.user = user
             self._login(responder, user, rem)
 
