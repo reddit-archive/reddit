@@ -117,21 +117,15 @@ PLUGIN_BUILDSTAMPS := $(foreach plugin,$(PLUGINS),$(BUILD_DIR)/plugin-$(plugin)-
 plugin_static: $(PLUGIN_BUILDSTAMPS)
 
 define PLUGIN_STATIC_TEMPLATE
-# If the plugin provides a Makefile, this helper provides the appropriate command. Otherwise, it returns the command 'true'.
-$(eval PLUGIN_MAKE_$(1) := $(shell \
-	if [ -f $(PLUGIN_PATH_$(1))/../Makefile ]; then
-		echo '$(MAKE) -C $(PLUGIN_PATH_$(1))/../';
-	else
-		echo true;
-	fi))
-
 $(BUILD_DIR)/plugin-$(1)-buildstamp: $(STATIC_BUILDSTAMP) $(shell find $(PLUGIN_PATH_$(1))/public)
-	$(PLUGIN_MAKE_$(1)) static
+	if [ -f $(PLUGIN_PATH_$(1))/../Makefile ]; then \
+		$(MAKE) -C $(PLUGIN_PATH_$(1))/../ static; \
+	fi
 	cp -r --preserve=timestamps $(PLUGIN_PATH_$(1))/public/* $(STATIC_BUILD_ROOT)/
 	touch $$@
 
 $(info [+] adding make rules from plugin "$(1)")
-$(eval $(shell $(PLUGIN_MAKE_$(1)) -s reddit_make))
+-include $(PLUGIN_PATH_$(1))/../Makefile.plugin
 endef
 $(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
 
