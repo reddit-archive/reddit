@@ -30,6 +30,13 @@ BUILD_DIR=build
 all: pyx static ini
 clean: clean_pyx clean_i18n clean_static
 
+DEFS_PY := Makefile.py
+DEFS_FILE := Makefile.defs
+.PHONY: $(DEFS_FILE)
+$(shell $(PYTHON) $(DEFS_PY) > $(DEFS_FILE))
+include $(DEFS_FILE)
+$(info [+] including definitions from $(DEFS_PY))
+
 #################### Cython
 PYX_FILES := $(shell find . -name \*.pyx)
 PYX_C_FILES := $(PYX_FILES:.pyx=.c)
@@ -53,7 +60,6 @@ clean_pyx:
 	rm -f $(PYX_BUILDSTAMP) $(PYX_C_FILES) $(PYX_SO_FILES)
 
 #################### i18n
-I18NPATH := $(shell $(PYTHON) -c 'from r2.lib.translation import I18N_PATH; print I18N_PATH')
 STRINGS_FILE := r2/lib/strings.py
 RAND_STRINGS_FILE := r2/lib/rand_strings.py
 POTFILE := $(I18NPATH)/r2.pot
@@ -106,9 +112,7 @@ $(STATIC_BUILDSTAMP): $(STATIC_FILES)
 	touch $@
 
 #################### Plugin static files
-PLUGINS := $(shell $(PYTHON) -m r2.lib.plugin list)
 PLUGIN_BUILDSTAMPS := $(foreach plugin,$(PLUGINS),$(BUILD_DIR)/plugin-$(plugin)-buildstamp)
-$(foreach plugin,$(PLUGINS),$(eval PLUGIN_PATH_$(plugin)=$(shell $(PYTHON) -m r2.lib.plugin path $(plugin))))
 
 plugin_static: $(PLUGIN_BUILDSTAMPS)
 
@@ -173,9 +177,7 @@ clean_css:
 	rm -f $(CSS_OUTPUTS)
 
 #### JS
-JS_MODULES := $(shell $(PYTHON) r2/lib/js.py enumerate_modules)
 JS_MODULE_BUILDSTAMPS := $(foreach module,$(JS_MODULES),$(BUILD_DIR)/js-$(module)-buildstamp)
-JS_OUTPUTS := $(shell $(PYTHON) r2/lib/js.py enumerate_outputs)
 
 .PHONY: clean_js
 
@@ -184,9 +186,9 @@ js: $(STATIC_BUILDSTAMP) $(JS_MODULE_BUILDSTAMPS)
 $(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
 
 define JS_MODULE_TEMPLATE
-$(BUILD_DIR)/js-$(1)-buildstamp: $$(shell $(PYTHON) r2/lib/js.py dependencies $(1))
+$(BUILD_DIR)/js-$(1)-buildstamp: $(JS_MODULE_DEPS_$(1))
 	# remove mangled output symlinks, similar to above.
-	rm -f $$(shell $(PYTHON) r2/lib/js.py enumerate_outputs $(1))
+	rm -f $(JS_MODULE_OUTPUTS_$(1))
 	paster run standalone r2/lib/js.py -c "build_module('$(1)')"
 	touch $$@
 endef
@@ -228,3 +230,5 @@ $(GZIPPED): %.gzip: %
 
 clean_gzip:
 	rm -f $(GZIPPED)
+
+$(shell rm -f $(DEFS_FILE))

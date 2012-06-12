@@ -60,6 +60,15 @@ class PluginLoader(object):
     def available_plugins(name=None):
         return pkg_resources.iter_entry_points('r2.plugin', name)
 
+    @staticmethod
+    def plugin_path(plugin):
+        if isinstance(plugin, str):
+            try:
+                plugin = pkg_resources.iter_entry_points("r2.plugin", name).next()
+            except StopIteration:
+                return None
+        return os.path.join(plugin.dist.location, plugin.module_name)
+
     def load_plugins(self, plugin_names):
         g = config['pylons.g']
         for name in plugin_names:
@@ -79,14 +88,3 @@ class PluginLoader(object):
     def load_controllers(self):
         for plugin in self:
             plugin.load_controllers()
-
-if __name__ == '__main__':
-    if sys.argv[1] == 'list':
-        print " ".join(p.name for p in pkg_resources.iter_entry_points("r2.plugin"))
-    elif sys.argv[1] == 'path':
-        try:
-            plugin = pkg_resources.iter_entry_points("r2.plugin", sys.argv[2]).next()
-        except StopIteration:
-            sys.exit(1)
-        else:
-            print os.path.join(plugin.dist.location, plugin.module_name)
