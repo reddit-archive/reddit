@@ -32,7 +32,7 @@ from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.utils import randstr
 from r2.lib.template_helpers import get_domain
-from r2.lib.filters import unsafe
+from r2.lib.filters import unsafe, _force_unicode
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
@@ -649,6 +649,7 @@ class FrontController(RedditController):
 
         query = self.related_replace_regex.sub(self.related_replace_with,
                                                article.title)
+        query = _force_unicode(query)
         query = query[:1024]
         query = "|".join(query.split())
         query = "title:'%s'" % query

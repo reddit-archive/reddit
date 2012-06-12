@@ -11,7 +11,7 @@ import urllib
 
 import l2cs
 
-from r2.lib import amqp
+from r2.lib import amqp, filters
 from r2.lib.db.operators import desc
 import r2.lib.utils as r2utils
 from r2.models import (Account, Link, Subreddit, Thing, All, DefaultSR,
@@ -607,7 +607,7 @@ class CloudSearchQuery(object):
         elif self.syntax == "lucene":
             bq = l2cs.convert(self.query, self.lucene_parser)
             self.converted_data = {"syntax": "cloudsearch",
-                                   "converted": bq}
+                                   "converted": filters._force_unicode(bq)}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
             q = self.query
