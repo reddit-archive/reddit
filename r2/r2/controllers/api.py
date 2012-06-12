@@ -2177,6 +2177,7 @@ class ApiController(RedditController):
             link.flair_text = text
             link.flair_css_class = css_class
             link._commit()
+            changed(link)
             ModAction.create(site, c.user, action='editflair', target=link,
                              details='flair_edit')
         elif flair_type == USER_FLAIR:
