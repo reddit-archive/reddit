@@ -96,7 +96,7 @@ def fetch_url(url, referer = None, retries = 1, dimension = False):
     nothing = None if dimension else (None, None)
     url = clean_url(url)
     #just basic urls
-    if not url.startswith('http://'):
+    if not (url.startswith('http://') or url.startswith('https://')):
         return nothing
     while True:
         try:
