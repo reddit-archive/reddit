@@ -501,7 +501,7 @@ def auth_campaign(link, index, user, pay_id):
                 if trans_id > 0:
                     campaign.mark_paid(trans_id)
                 elif trans_id < 0:
-                    campaign.mark_freebie()
+                    campaign.mark_freebie(trans_id)
                 else:
                     campaign.mark_payment_error(reason)
                 campaign._commit()

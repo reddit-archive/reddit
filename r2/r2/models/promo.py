@@ -59,8 +59,8 @@ class PromoCampaign(Thing):
         self.trans_id = trans_id
         self.payment_state = PaymentState.PAID
 
-    def mark_freebie(self):
-        self.trans_id = TransactionCode.FREEBIE
+    def mark_freebie(self, trans_id):
+        self.trans_id = trans_id
         self.payment_state = PaymentState.FREEBIE
 
     def mark_payment_error(self, error_msg):
