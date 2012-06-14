@@ -1249,10 +1249,8 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
 
             #update sup listings
             if dir:
-                timestamps.append('Liked')
                 sup.add_update(user, 'liked')
             elif dir is False:
-                timestamps.append('Disliked')
                 sup.add_update(user, 'disliked')
 
     elif isinstance(thing, Comment):
