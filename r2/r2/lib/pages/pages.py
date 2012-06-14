@@ -1236,12 +1236,16 @@ class ProfilePage(Reddit):
                                    c.user_is_admin):
             main_buttons += [NamedButton('saved')]
 
+        if c.user_is_sponsor:
+            main_buttons += [NamedButton('promoted')]
+
         toolbar = [PageNameNav('nomenu', title = self.user.name),
                    NavMenu(main_buttons, base_path = path, type="tabmenu")]
 
         if c.user_is_admin:
             from admin_pages import AdminProfileMenu
             toolbar.append(AdminProfileMenu(path))
+
         return toolbar
 
 

@@ -516,7 +516,8 @@ class UserController(ListingController):
                   'liked': _("liked by %(user)s"),
                   'disliked': _("disliked by %(user)s"),
                   'saved': _("saved by %(user)s"),
-                  'hidden': _("hidden by %(user)s")}
+                  'hidden': _("hidden by %(user)s"),
+                  'promoted': _("promoted by %(user)s")}
         title = titles.get(self.where, _('profile for %(user)s')) \
             % dict(user = self.vuser.name, site = c.site.name)
         return title
@@ -526,6 +527,9 @@ class UserController(ListingController):
     def keep_fn(self):
         # keep promotions off of profile pages.
         def keep(item):
+            if self.where == 'promoted':
+                return bool(getattr(item, "promoted", None))
+
             wouldkeep = True
             # TODO: Consider a flag to disable this (and see below plus builder.py)
             if item._deleted and not c.user_is_admin:
@@ -574,6 +578,9 @@ class UserController(ListingController):
         elif self.where == 'saved':
             q = queries.get_saved(self.vuser)
 
+        elif c.user_is_sponsor and self.where == 'promoted':
+            q = promote.get_all_links(self.vuser._id)
+
         elif c.user_is_admin:
             q = admin_profile_query(self.vuser, self.where, desc('_date'))
 
@@ -608,14 +615,13 @@ class UserController(ListingController):
                and vuser._spam:
             return self.abort404()
 
-        if (where not in ('overview', 'submitted', 'comments')
-            and not votes_visible(vuser)):
+        if where in ('liked', 'disliked') and not votes_visible(vuser):
             return self.abort403()
 
-        if where == "saved" and not (c.user_is_loggedin and
-                                     (c.user._id == vuser._id or
-                                      c.user_is_admin)):
-            self.abort403()
+        if (where in ('saved', 'hidden') and not 
+            ((c.user_is_loggedin and c.user._id == vuser._id) or
+              c.user_is_admin)):
+            return self.abort403()
 
         check_cheating('user')
 
