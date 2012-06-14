@@ -110,6 +110,7 @@ python-pylibmc
 python-bcrypt
 python-python-statsd
 python-snudown
+python-l2cs
 python-cjson
 python-lxml
 
