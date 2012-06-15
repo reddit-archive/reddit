@@ -688,7 +688,7 @@ class FrontController(RedditController):
     @base_listing
     @validate(query = nop('q'))
     @api_doc(api_section.subreddits, uri='/reddits/search', extensions=['json', 'xml'])
-    def GET_search_reddits(self, query, reverse, after,  count, num):
+    def GET_search_reddits(self, query, reverse, after, count, num):
         """Search reddits by title and description."""
         q = SubredditSearchQuery(query)
 
@@ -697,12 +697,12 @@ class FrontController(RedditController):
                                      skip_deleted_authors=False)
         
         res = SubredditsPage(content=spane,
-                             prev_search = query,
-                             elapsed_time = t,
-                             num_results = num,
+                             prev_search=query,
+                             elapsed_time=t,
+                             num_results=num,
                              # update if we ever add sorts
-                             search_params = {},
-                             title = _("search results"),
+                             search_params={},
+                             title=_("search results"),
                              simple=True).render()
         return res
 
