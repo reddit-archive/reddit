@@ -692,8 +692,9 @@ class FrontController(RedditController):
         """Search reddits by title and description."""
         q = SubredditSearchQuery(query)
 
-        num, t, spane = self._search(q, num = num, reverse = reverse,
-                                     after = after, count = count)
+        num, t, spane = self._search(q, num=num, reverse=reverse,
+                                     after=after, count=count,
+                                     skip_deleted_authors=False)
         
         res = SubredditsPage(content=spane,
                              prev_search = query,
@@ -770,14 +771,16 @@ class FrontController(RedditController):
         except SearchException + (socket.error,) as e:
             return self.search_fail(e)
 
-    def _search(self, query_obj, num, after, reverse, count=0):
+    def _search(self, query_obj, num, after, reverse, count=0,
+                skip_deleted_authors=True):
         """Helper function for interfacing with search.  Basically a
            thin wrapper for SearchBuilder."""
 
         builder = SearchBuilder(query_obj,
                                 after = after, num = num, reverse = reverse,
                                 count = count,
-                                wrap = ListingController.builder_wrapper)
+                                wrap = ListingController.builder_wrapper,
+                                skip_deleted_authors=skip_deleted_authors)
 
         listing = LinkListing(builder, show_nums=True)
 

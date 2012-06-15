@@ -460,6 +460,10 @@ class IDBuilder(QueryBuilder):
         return done, new_items
 
 class SearchBuilder(IDBuilder):
+    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
+                 skip_deleted_authors=True, **kw):
+        IDBuilder.__init__(self, query, wrap, keep_fn, skip, **kw)
+        self.skip_deleted_authors = skip_deleted_authors
     def init_query(self):
         self.skip = True
 
@@ -482,7 +486,8 @@ class SearchBuilder(IDBuilder):
         # TODO: Consider a flag to disable this (and see listingcontroller.py)
         if item._spam or item._deleted:
             return False
-        elif getattr(item, "author", None) and item.author._deleted:
+        elif (self.skip_deleted_authors and
+              getattr(item, "author", None) and item.author._deleted):
             return False
         else:
             return True
