@@ -75,9 +75,7 @@ class RedditQueueMap(QueueMap):
         self._q('log_q', self_refer=True)
         self._q('usage_q', self_refer=True, durable=False)
 
-        self._q('solrsearch_changes')
         self._q('cloudsearch_changes', self_refer=True)
-        self._bind('search_changes', 'solrsearch_changes')
         self._bind('search_changes', 'cloudsearch_changes')
 
     def bindings(self):
