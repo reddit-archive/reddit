@@ -703,7 +703,8 @@ class LinkSearchQuery(CloudSearchQuery):
                           }
     
     lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
-                                     yesno_fields=['over18', 'is_self'])
+                                     yesno_fields=['over18', 'is_self',
+                                                   'nsfw', 'self'])
     known_syntaxes = ("cloudsearch", "lucene")
     default_syntax = "lucene"
     
@@ -777,7 +778,5 @@ class SubredditSearchQuery(CloudSearchQuery):
     sorts_menu_mapping = {'relevance': 1,
                           }
     
-    lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
-                                     yesno_fields=['over18', 'is_self'])
     known_syntaxes = ("plain",)
     default_syntax = "plain"
