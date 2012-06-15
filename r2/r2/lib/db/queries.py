@@ -5,7 +5,6 @@ from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
-from r2.lib.solrsearch import DomainSearchQuery
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.models.query_cache import (cached_query, merged_cached_query,
@@ -38,12 +37,6 @@ db_sorts = dict(hot = (desc, '_hot'),
 def db_sort(sort):
     cls, col = db_sorts[sort]
     return cls(col)
-
-search_sort = dict(hot = 'hot desc',
-                   new = 'date desc',
-                   top = 'points desc',
-                   controversial = 'controversy desc',
-                   old = 'date asc')
 
 db_times = dict(all = None,
                 hour = Thing.c._date >= timeago('1 hour'),
@@ -457,9 +450,6 @@ def get_modqueue(sr):
         q.append(get_spam_filtered_links(sr))
         q.append(get_spam_filtered_comments(sr))
     return q
-
-def get_domain_links_old(domain, sort, time):
-    return DomainSearchQuery(domain, sort=search_sort[sort], timerange=time)
 
 def get_domain_links(domain, sort, time):
     from r2.lib.db import operators

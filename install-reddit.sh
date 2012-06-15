@@ -338,8 +338,6 @@ if [ ! -f /etc/cron.d/reddit ]; then
 
 # disabled by default, uncomment if you need these jobs
 #*/2  * * * * root /sbin/start --quiet reddit-job-google_checkout
-#*/10 * * * * root /sbin/start --quiet reddit-job-solrsearch optimize=False
-#0    0 * * * root /sbin/start --quiet reddit-job-solrsearch optimize=True
 #0    0 * * * root /sbin/start --quiet reddit-job-update_gold_users
 CRON
 fi

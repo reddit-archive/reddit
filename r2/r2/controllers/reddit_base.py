@@ -931,17 +931,8 @@ class RedditController(MinimalController):
             abort(304, 'not modified')
 
     def search_fail(self, exception):
-        from r2.lib.contrib.pysolr import SolrError
         from r2.lib.search import SearchException
-        if isinstance(exception, SolrError):
-            errmsg = "SolrError: %r" % exception
-
-            if (str(exception) == 'None'):
-                # Production error logs only get non-None errors
-                g.log.debug(errmsg)
-            else:
-                g.log.error(errmsg)
-        elif isinstance(exception, SearchException + (socket.error,)):
+        if isinstance(exception, SearchException + (socket.error,)):
             g.log.error("Search Error: %s" % repr(exception))
 
         errpage = pages.RedditError(_("search failed"),

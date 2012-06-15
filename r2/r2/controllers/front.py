@@ -40,8 +40,6 @@ from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
 from r2.lib.search import (SearchQuery, SubredditSearchQuery, SearchException,
                            InvalidQuery)
-from r2.lib.solrsearch import RelatedSearchQuery
-from r2.lib.contrib.pysolr import SolrError
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
@@ -788,7 +786,7 @@ class FrontController(RedditController):
         # computed after fetch_more
         try:
             res = listing.listing()
-        except SearchException + (SolrError, socket.error) as e:
+        except SearchException + (socket.error,) as e:
             return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 

@@ -36,7 +36,6 @@ from r2.lib.db.thing import Query, Merge, Relations
 from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
-import r2.lib.solrsearch as solrsearch
 import r2.lib.search as search
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib.utils.trial_utils import populate_spotlight
@@ -130,7 +129,7 @@ class ListingController(RedditController):
             builder_cls = self.builder_cls
         elif isinstance(self.query_obj, Query):
             builder_cls = QueryBuilder
-        elif isinstance(self.query_obj, (solrsearch.SearchQuery, search.SearchQuery)):
+        elif isinstance(self.query_obj, search.SearchQuery):
             builder_cls = SearchBuilder
         elif isinstance(self.query_obj, iters):
             builder_cls = IDBuilder
