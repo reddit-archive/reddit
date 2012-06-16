@@ -285,12 +285,22 @@ class CreateCustomerProfileRequest(AuthorizeNetRequest):
         return (CustomerID.get_id(self._user) or
                 AuthorizeNetRequest.make_request(self))
 
-    re_lost_id = re.compile("A duplicate record with id (\d+) already exists")
+    re_lost_id = re.compile("A duplicate record with ID (\d+) already exists")
     def process_error(self, res):
         if self.is_error_code(res, Errors.DUPLICATE_RECORD):
-            # D'oh.  We lost one
-            m = self.re_lost_id.match(res.find("text").contents[0]).groups()
-            CustomerID.set(self._user, m[0])
+            # authorize.net has a record for this customer but we don't. get
+            # the correct id from the error message and update our db
+            matches = self.re_lost_id.match(res.find("text").contents[0])
+            if matches:
+                match_groups = matches.groups()
+                CustomerID.set(self._user, match_groups[0])
+                g.log.debug("Updated missing authorize.net id for user %s" % self._user._id)
+            else:
+                # could happen if the format of the error message changes.
+                msg = ("Failed to fix duplicate authorize.net profile id. "
+                       "re_lost_id regexp may need to be updated. Response: %r" 
+                       % res)
+                raise AuthorizeNetException(msg)
         # otherwise, we might have sent a user that already had a customer ID
         cust_id = CustomerID.get_id(self._user)
         if cust_id:
