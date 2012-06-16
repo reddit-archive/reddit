@@ -90,7 +90,6 @@ python-dev
 python-setuptools
 python-routes
 python-pylons
-python-webhelpers
 python-boto
 python-tz
 python-crypto

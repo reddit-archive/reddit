@@ -20,7 +20,6 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 from mako.filters import url_escape
-import r2.lib.helpers as h
 from pylons import c, g, request
 from pylons.controllers.util import abort, redirect_to
 from pylons.i18n import _
@@ -37,6 +36,7 @@ from errors import ErrorSet
 from validator import *
 from r2.lib.template_helpers import add_sr
 from r2.config.extensions import is_api
+from r2.lib.translation import set_lang
 
 from Cookie import CookieError
 from copy import copy
@@ -382,12 +382,12 @@ def set_iface_lang():
     #one
     for l in lang:
         try:
-            h.set_lang(l, fallback_lang=g.lang)
+            set_lang(l, fallback_lang=g.lang)
             c.lang = l
             break
-        except h.LanguageError:
+        except LanguageError:
             #we don't have a translation for that language
-            h.set_lang(g.lang, graceful_fail = True)
+            set_lang(g.lang, graceful_fail=True)
 
     try:
         c.locale = babel.core.Locale.parse(c.lang, sep='-')

@@ -27,11 +27,12 @@ random strings which can be different in each language, though the
 hooks to the UI are the same.
 """
 
-import r2.lib.helpers as h
 from pylons import g, c
-from pylons.i18n import _, ungettext
+from pylons.i18n import _, ungettext, get_lang
 import random
 import babel.numbers
+
+from r2.lib.translation import set_lang
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
            'Score', 'rand_strings']
@@ -309,11 +310,11 @@ def fallback_trans(x):
     translation that we've hopefully already provided"""
     t = _(x)
     if t == x:
-        l = h.get_lang()
-        h.set_lang(g.lang, graceful_fail = True)
+        l = get_lang()
+        set_lang(g.lang, graceful_fail = True)
         t = _(x)
         if l and l[0] != g.lang:
-            h.set_lang(l[0])
+            set_lang(l[0])
     return t
 
 class RandomString(object):

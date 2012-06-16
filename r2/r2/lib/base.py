@@ -28,7 +28,6 @@ from pylons import Response, c, g, request, session, config
 from pylons.controllers import WSGIController, Controller
 from pylons.controllers.util import abort
 from pylons.i18n import N_, _, ungettext, get_lang
-import r2.lib.helpers as h
 from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
