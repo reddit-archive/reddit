@@ -28,7 +28,7 @@ from pylons import request, c, g
 from validator import *
 from pylons.i18n import _
 from r2.models import *
-import sha
+import hashlib
 
 class PostController(ApiController):
     def api_wrapper(self, kw):
@@ -145,7 +145,7 @@ class PostController(ApiController):
                 c.user.pref_over_18 = True
                 c.user._commit()
             else:
-                ip_hash = sha.new(request.ip).hexdigest()
+                ip_hash = hashlib.sha1(request.ip).hexdigest()
                 domain = g.domain if not c.frameless_cname else None
                 c.cookies.add('over18', ip_hash,
                               domain = domain)

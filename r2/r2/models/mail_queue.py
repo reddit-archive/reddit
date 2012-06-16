@@ -19,7 +19,8 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ##############################################################################
-import sha, datetime
+import datetime
+import hashlib
 from email.MIMEText import MIMEText
 
 import sqlalchemy as sa
@@ -214,7 +215,7 @@ class EmailHandler(object):
         for email in tup(emails):
             uid = user._id if user else 0
             tid = thing._fullname if thing else ""
-            key = sha.new(str((email, from_name, uid, tid, ip, kind, body,
+            key = hashlib.sha1(str((email, from_name, uid, tid, ip, kind, body,
                                datetime.datetime.now(g.tz)))).hexdigest()
             s.insert().values({s.c.to_addr : email,
                                s.c.account_id : uid,

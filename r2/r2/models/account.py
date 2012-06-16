@@ -33,7 +33,8 @@ from r2.models.last_modified import LastModified
 
 from pylons import c, g, request
 from pylons.i18n import _
-import time, sha
+import time
+import hashlib
 from copy import copy
 from datetime import datetime, timedelta
 import bcrypt
@@ -228,7 +229,7 @@ class Account(Thing):
         timestr = timestr or time.strftime(COOKIE_TIMESTAMP_FORMAT)
         id_time = str(self._id) + ',' + timestr
         to_hash = ','.join((id_time, self.password, g.SECRET))
-        return id_time + ',' + sha.new(to_hash).hexdigest()
+        return id_time + ',' + hashlib.sha1(to_hash).hexdigest()
 
     def make_admin_cookie(self, first_login=None, last_request=None):
         if not self._loaded:
@@ -642,7 +643,7 @@ def valid_feed(name, feedhash, path):
             pass
 
 def make_feedhash(user, path):
-    return sha.new("".join([user.name, user.password, g.FEEDSECRET])
+    return hashlib.sha1("".join([user.name, user.password, g.FEEDSECRET])
                    ).hexdigest()
 
 def make_feedurl(user, path, ext = "rss"):
@@ -701,7 +702,7 @@ def passhash(username, password, salt = ''):
     if salt is True:
         salt = randstr(3)
     tohash = '%s%s %s' % (salt, username, password)
-    return salt + sha.new(tohash).hexdigest()
+    return salt + hashlib.sha1(tohash).hexdigest()
 
 def change_password(user, newpassword):
     user.password = bcrypt_password(newpassword)
