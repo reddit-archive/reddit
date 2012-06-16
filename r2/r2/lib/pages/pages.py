@@ -1366,13 +1366,6 @@ class ErrorPage(Templated):
             image = 'reddit404' + letter + '.png'
         Templated.__init__(self, title=title, message=message, image_url=image)
     
-class Profiling(Templated):
-    """Debugging template for code profiling using built in python
-    library (only used in middleware)"""
-    def __init__(self, header = '', table = [], caller = [], callee = [],
-                 path = '', sort_order = ''):
-        Templated.__init__(self, header = header, table = table, caller = caller,
-                           callee = callee, path = path)
 
 class Over18(Templated):
     """The creepy 'over 18' check page for nsfw content."""
