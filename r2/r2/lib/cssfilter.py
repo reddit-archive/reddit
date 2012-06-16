@@ -33,7 +33,6 @@ from mako import filters
 import os
 import tempfile
 from r2.lib import s3cp
-from md5 import md5
 
 from r2.lib.media import upload_media
 

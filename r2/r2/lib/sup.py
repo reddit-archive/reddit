@@ -22,7 +22,8 @@
 
 from datetime import datetime
 from itertools import ifilter
-import time, md5
+import time
+import hashlib
 
 import simplejson
 
@@ -52,7 +53,7 @@ def make_last_time(period):
     return make_cur_time(period) - period
 
 def make_sup_id(user, action):
-    sup_id = md5.new(user.name + action).hexdigest()
+    sup_id = hashlib.md5(user.name + action).hexdigest()
     #cause cool kids only use part of the hash
     return sup_id[:10]
 

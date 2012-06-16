@@ -60,7 +60,7 @@ from r2.controllers.api_docs import api_doc, api_section
 import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
-from md5 import md5
+import hashlib
 import urllib
 import urllib2
 
@@ -1200,7 +1200,8 @@ class ApiController(RedditController):
             c.site.stylesheet_contents      = stylesheet_contents_parsed
             c.site.stylesheet_contents_user = stylesheet_contents
 
-            c.site.stylesheet_hash = md5(stylesheet_contents_parsed).hexdigest()
+            hash = hashlib.md5(stylesheet_contents_parsed)
+            c.site.stylesheet_hash = hash.hexdigest()
 
             set_last_modified(c.site,'stylesheet_contents')
 
@@ -1507,7 +1508,7 @@ class ApiController(RedditController):
         else:
             username = None
         d = dict(username=username, q=q, sort=sort, t=t)
-        hex = md5(repr(d)).hexdigest()
+        hex = hashlib.md5(repr(d)).hexdigest()
         key = "searchfeedback-%s-%s-%s" % (timestamp[:10], request.ip, hex)
         d['timestamp'] = timestamp
         d['approval'] = approval
