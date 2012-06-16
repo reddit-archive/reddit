@@ -20,25 +20,26 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 """Pylons middleware initialization"""
+import re
+import urllib
+import tempfile
+import urlparse
+from threading import Lock
+
 from paste.cascade import Cascade
 from paste.registry import RegistryManager
-from paste.urlparser import URLParser, StaticURLParser
+from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
-
-from pylons import config, request, Response
+from pylons import config, Response
 from pylons.error import error_template
 from pylons.middleware import ErrorDocuments, ErrorHandler, StaticJavascripts
 from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
-from r2.config.extensions import extension_mapping, set_extension, api_type
-from r2.lib.utils import rstrips, is_authorized_cname
+from r2.config.extensions import extension_mapping, set_extension
+from r2.lib.utils import is_authorized_cname
 
-#middleware stuff
-import sys, tempfile, urllib, re, os, sha, subprocess, urlparse
-from httplib import HTTPConnection
-from threading import Lock
 
 # hack in Paste support for HTTP 429 "Too Many Requests"
 from paste import httpexceptions, wsgiwrappers

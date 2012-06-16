@@ -19,8 +19,3 @@
 # All portions of the code written by CondeNet are Copyright (c) 2006-2010
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
-
-# ad tags
-ad_urls = {}
-
-

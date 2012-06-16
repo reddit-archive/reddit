@@ -20,23 +20,21 @@
 # CondeNet, Inc. All Rights Reserved.
 ################################################################################
 import os
+import mimetypes
 
-#import pylons.config
 from pylons import config
 
-import mimetypes
-mimetypes.init()
-
-import webhelpers
-
+import r2.config
+import r2.lib.helpers
 from r2.config import routing
 from r2.lib.app_globals import Globals
 from r2.lib.configparse import ConfigValue
-import r2.lib.helpers
 from r2.lib.plugin import PluginLoader
-import r2.config as reddit_config
-
 from r2.templates import tmpl_dirs
+
+
+mimetypes.init()
+
 
 def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     # Setup our paths
@@ -58,7 +56,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
     if setup_globals:
         g.setup()
-        reddit_config.cache = g.cache
+        r2.config.cache = g.cache
 
     config['pylons.h'] = r2.lib.helpers
 
