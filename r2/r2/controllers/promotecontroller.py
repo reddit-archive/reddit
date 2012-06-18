@@ -77,7 +77,7 @@ class PromoteController(ListingController):
     @validate(VSponsor('link'),
               link = VLink('link'))
     def GET_edit_promo(self, link):
-        if link.promoted is None:
+        if not link or link.promoted is None:
             return self.abort404()
         rendered = wrap_links(link, wrapper = promote.sponsor_wrapper,
                               skip = False)
