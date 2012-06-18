@@ -892,8 +892,6 @@ class DefaultSR(_DefaultSR):
     def sponsorship_img(self):
         return self._base.sponsorship_img if self._base else ""
 
-
-
 class MultiReddit(_DefaultSR):
     name = 'multi'
     header = ""
@@ -950,15 +948,14 @@ class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
     header = ""
 
-class ModContribSR(_DefaultSR):
+class ModContribSR(MultiReddit):
     name  = None
     title = None
     query_param = None
     real_path = None
 
-    @property
-    def path(self):
-        return '/r/' + self.real_path
+    def __init__(self):
+        MultiReddit.__init__(self, self.sr_ids, self.real_path)
 
     @property
     def sr_ids(self):
@@ -967,11 +964,9 @@ class ModContribSR(_DefaultSR):
         else:
             return []
 
-    def rising_srs(self):
+    @property
+    def kept_sr_ids(self):
         return self.sr_ids
-
-    def get_links(self, sort, time):
-        return self.get_links_sr_ids(self.sr_ids, sort, time)
 
 class ModSR(ModContribSR):
     name  = "subreddits you moderate"
