@@ -481,7 +481,8 @@ def _to_fn(cls, id_):
 _SEARCH = "/2011-02-01/search?"
 INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-InvalidMatchSetExpression',
-                       'CS-IncorrectFieldTypeInMatchExpression')
+                       'CS-IncorrectFieldTypeInMatchExpression',
+                       'CS-InvalidMatchSetExpression',)
 def basic_query(query=None, bq=None, facets=("reddit",), facet_count=10,
                 size=1000, start=0, rank="hot", return_fields=None,
                 record_stats=False, search_api=None):
