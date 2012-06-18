@@ -325,6 +325,10 @@ class Bid(Sessionized, Base):
         self.set_status(self.STATUS.CHARGE)
 
     def is_charged(self):
+        '''
+        Returns True if transaction has been charged with authorize.net or is
+        a freebie with "charged" status.
+        '''
         return (self.status == self.STATUS.CHARGE)
 
     def refund(self):

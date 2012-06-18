@@ -483,7 +483,7 @@ def auth_campaign(link, index, user, pay_id):
                 # update the query queue
                 if user._id == link.author_id and trans_id > 0:
                     emailer.promo_bid(link, bid, sd)
-
+            
             else:
                 # something bad happend.
                 promotion_log(link, "updated payment and/or bid for campaign %s: FAILED ('%s')" 
@@ -551,7 +551,7 @@ def accept_promotion(link):
     if link._fullname in set(l.thing_name for l in
                              PromotionWeights.get_campaigns(now)):
         promotion_log(link, "requeued")
-        #TODO: smarter would be nice, but this will have to do for now
+        charge_pending(0) # campaign must be charged before it will go live
         make_daily_promotions()
     if link._spam:
         link._spam = False
@@ -679,6 +679,9 @@ def get_live_promotions():
 def set_live_promotions(x):
     return g.permacache.set(promotion_key(), x)
 
+# Gotcha: even if links are scheduled and authorized, they won't be added to 
+# current promotions until they're actually charged, so make sure to call
+# charge_pending() before make_daily_promotions()
 def make_daily_promotions(offset = 0, test = False):
     old_links = set([])
     all_links, weighted = get_weighted_schedule(offset)
