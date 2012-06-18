@@ -245,9 +245,12 @@ class LocalizedModule(Module):
             yield LocalizedModule.languagize_path(self.path, lang)
 
 class JQuery(Module):
+    version = "1.7.2"
+
     def __init__(self, cdn_src=None):
-        Module.__init__(self, os.path.join("js", "lib", "jquery.js"), should_compile=False)
-        self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery"
+        local_jquery_path = os.path.join("js", "lib", "jquery-%s.min.js" % self.version)
+        Module.__init__(self, local_jquery_path, should_compile=False)
+        self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/%s/jquery" % self.version
     
     def build(self, closure):
         pass
