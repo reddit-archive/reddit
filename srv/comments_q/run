@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export HOME=/home/reddit
-cd $HOME/reddit/r2
-exec 2>&1
-exec setuidgid reddit /usr/local/bin/paster run run.ini r2/lib/db/queries.py -c "run_new_comments()"

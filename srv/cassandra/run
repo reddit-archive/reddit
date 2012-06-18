@@ -1,6 +1,0 @@
-#!/bin/sh
-
-ulimit -n 32768
-
-exec 2>&1
-exec setuidgid reddit cassandra -f
