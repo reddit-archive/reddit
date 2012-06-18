@@ -1018,8 +1018,6 @@ class DomainSR(FakeSubreddit):
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
-        # TODO: once the lists are precomputed properly, this can be
-        # switched over to use the non-_old variety.
         return queries.get_domain_links(self.domain, sort, time)
 
 Frontpage = DefaultSR()
