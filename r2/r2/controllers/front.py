@@ -113,11 +113,19 @@ class FrontController(RedditController):
 
     @prevent_framing_and_css()
     @validate(VAdmin(),
-              thing = VByName('article'))
-    def GET_details(self, thing):
+              thing = VByName('article'),
+              oldid36 = nop('article'))
+    def GET_details(self, thing, oldid36):
         """The (now deprecated) details page.  Content on this page
         has been subsubmed by the presence of the LinkInfoBar on the
         rightbox, so it is only useful for Admin-only wizardry."""
+        if not thing:
+            try:
+                link = Link._byID36(oldid36)
+                return self.redirect('/details/' + link._fullname)
+            except (NotFound, ValueError):
+                abort(404)
+
         return DetailsPage(thing=thing, expand_children=False).render()
 
     def GET_selfserviceoatmeal(self):
