@@ -639,7 +639,7 @@ def get_traffic_weights(srnames):
 
     # the weight is just the last 7 days of impressions (averaged)
     def weigh(t, npoints = 7):
-        if t:
+        if t and len(t) > 1:
             t = [y[1] for x, y in t[-npoints-1:-1]]
             return max(float(sum(t)) / len(t), 1)
         return 1
