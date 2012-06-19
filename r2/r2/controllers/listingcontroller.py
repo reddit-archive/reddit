@@ -219,7 +219,40 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def spotlight(self):
-        if (isinstance(c.site, DefaultSR)
+        if (self.requested_ad or
+            not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors):
+
+            link_ids = None
+
+            if self.requested_ad:
+                link = None
+                try:
+                    link = Link._by_fullname(self.requested_ad)
+                except NotFound:
+                    pass
+
+                if not (link and link.promoted and
+                        (c.user_is_sponsor or
+                         c.user_is_loggedin and link.author_id == c.user._id)):
+                    return self.abort404()
+
+                # check if we can show the requested ad
+                if promote.is_live_on_sr(link, c.site.name):
+                    link_ids = [link._fullname]
+                else:
+                    return _("requested campaign not eligible for display")
+            else:
+                # no organic box on a hot page, then show a random promoted link
+                link_ids = randomized_promotion_list(c.user, c.site)
+
+            if link_ids:
+                res = wrap_links(link_ids, wrapper=self.builder_wrapper,
+                                 num=1, keep_fn=lambda x: x.fresh, skip=True)
+                res.parent_name = "promoted"
+                if res.things:
+                    return res
+
+        elif (isinstance(c.site, DefaultSR)
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
@@ -277,17 +310,6 @@ class HotController(FixListing, ListingController):
                 organic.update_pos(pos+1)
                 return s
 
-        # no organic box on a hot page, then show a random promoted link
-        elif not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors:
-            link_ids = randomized_promotion_list(c.user, c.site)
-            if link_ids:
-                res = wrap_links(link_ids, wrapper = self.builder_wrapper,
-                                 num = 1, keep_fn = lambda x: x.fresh, 
-                                 skip = True)
-                res.parent_name = "promoted"
-                if res.things:
-                    return res
-
     def query(self):
         #no need to worry when working from the cache
         if g.use_query_cache or isinstance(c.site, DefaultSR):
@@ -331,6 +353,7 @@ class HotController(FixListing, ListingController):
 
     @listing_api_doc(uri='/hot')
     def GET_listing(self, **env):
+        self.requested_ad = request.get.get('ad')
         self.infotext = request.get.get('deleted') and strings.user_deleted
         return ListingController.GET_listing(self, **env)
 
