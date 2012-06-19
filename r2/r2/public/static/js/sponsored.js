@@ -105,6 +105,9 @@ function get_flag_class(flags) {
     if(flags.free) {
         css_class += " free";
     }
+    if(flags.live) {
+        css_class += " live";
+    }
     if(flags.complete) {
         css_class += " complete";
     }
@@ -133,6 +136,10 @@ $.new_campaign = function(indx, start_date, end_date, duration,
       if (flags && flags.pay_url) {
           data += ("<input type='hidden' name='pay_url' value='" + 
                    flags.pay_url + "'/>");
+      }
+      if (flags && flags.view_live_url) {
+          data += ("<input type='hidden' name='view_live_url' value='" + 
+                   flags.view_live_url + "'/>");
       }
       var row = [start_date, end_date, duration, "$" + bid, targeting, data];
       $(".existing-campaigns .error").hide();
@@ -173,12 +180,18 @@ $.set_up_campaigns = function() {
     var pay = "<button>pay</button>";
     var free = "<button>free</button>";
     var repay = "<button>change</button>";
+    var view = "<button>view live</button>";
     $(".existing-campaigns tr").each(function() {
             var tr = $(this);
             var td = $(this).find("td:last");
             var bid_td = $(this).find("td:first").next().next().next()
                 .addClass("bid");
+            var target_td = $(this).find("td:nth-child(5)")
             if(td.length && ! td.children("button, span").length ) {
+                if(tr.hasClass("live")) {
+                    $(target_td).append($(view).addClass("view")
+                            .click(function() { view_campaign(tr) }));
+                }
                 /* once paid, we shouldn't muck around with the campaign */
                 if(!tr.hasClass("complete")) {
                     if (tr.hasClass("sponsor") && !tr.hasClass("free")) {
@@ -349,4 +362,8 @@ function free_campaign(elem) {
 
 function pay_campaign(elem) {
     $.redirect($(elem).find('input[name="pay_url"]').val());
+}
+
+function view_campaign(elem) {
+    $.redirect($(elem).find('input[name="view_live_url"]').val());
 }

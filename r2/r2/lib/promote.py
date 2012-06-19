@@ -72,6 +72,12 @@ def promo_edit_url(l):
 def pay_url(l, indx):
     return "%spromoted/pay/%s/%d" % (g.payment_domain, l._id36, indx)
 
+def view_live_url(l, srname):
+    url = get_domain(cname=False, subreddit=False)
+    if srname:
+        url += '/r/%s' % srname
+    return 'http://%s/?ad=%s' % (url, l._fullname)
+
 # booleans
 
 def is_promo(link):
@@ -249,12 +255,15 @@ class RenderableCampaign():
                                   time = ungettext("day", "days", ndays))
         self.bid = "%.2f" % bid
         self.sr = sr
+        live = is_live_on_sr(link, sr)
 
         self.status = dict(paid = bool(transaction),
                            complete = False,
                            free = (trans_id < 0),
                            pay_url = pay_url(link, indx),
-                           sponsor = c.user_is_sponsor)
+                           view_live_url = view_live_url(link, sr),
+                           sponsor = c.user_is_sponsor,
+                           live = live)
         if transaction:
             if transaction.is_void():
                 self.status['paid'] = False
