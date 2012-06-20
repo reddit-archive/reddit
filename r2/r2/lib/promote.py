@@ -283,8 +283,7 @@ def editable_add_props(l):
         l = Wrapped(l)
 
     l.bids = get_transactions(l)
-    l.campaigns = dict((indx, RenderableCampaign(l, indx,
-                                                 campaign, l.bids.get(indx))) 
+    l.campaigns = dict((indx, RenderableCampaign(l, indx, campaign, l.bids.get(indx))) 
                        for indx, campaign in
                        getattr(l, "campaigns", {}).iteritems())
 
