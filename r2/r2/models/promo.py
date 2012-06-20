@@ -25,7 +25,8 @@ from r2.lib.utils import Enum
 from r2.models import Link
 
 PaymentState = Enum('UNPAID', 'PAID', 'FREEBIE')
-TransactionCode = Enum('NEW', 'FREEBIE')
+
+NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):
     
@@ -33,7 +34,7 @@ class PromoCampaign(Thing):
                      sr_name='',
                      owner_id=None,
                      payment_state=PaymentState.UNPAID,
-                     trans_id=TransactionCode.NEW,
+                     trans_id=NO_TRANSACTION,
                      trans_error=None,
                      bid=None,
                      start_date=None,
@@ -65,7 +66,7 @@ class PromoCampaign(Thing):
         self.payment_state = PaymentState.FREEBIE
 
     def mark_payment_error(self, error_msg):
-        self.trans_id = TransactionCode.ERROR
+        self.trans_id = NO_TRANSACTION
         self.trans_error = error_msg
 
     def delete(self):
