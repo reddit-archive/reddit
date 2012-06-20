@@ -62,7 +62,7 @@ ${unsafe(js.use('flot'))}
           </tr>
         %endif
       </tr>
-      %for x, (date, data) in enumerate(reversed(thing.day_data)):
+      %for x, (date, data) in enumerate(thing.day_data):
       <tr class="${'odd' if x % 2 else 'even'} ${'max' if data[0] == umax else 'min' if data[0] == umin else ''}">
           <td>${date.strftime("%Y-%m-%d")}</td>
           <%

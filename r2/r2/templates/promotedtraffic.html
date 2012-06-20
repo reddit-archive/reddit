@@ -101,7 +101,7 @@ ${thing.viewers}
           ${num(ucli)}${'*' if thing.preliminary else ''}
         </td>
         <td>${num(ncli)}</td>
-        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%"}</td>
+        <td>${("%.2f%%" % (float(100*ucli) / uimp)) if uimp else "--.--%"}</td>
         <td>${("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%"}</td>
       </tr>
       %if thing.preliminary:

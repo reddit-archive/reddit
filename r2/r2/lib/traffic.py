@@ -20,87 +20,73 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from httplib import HTTPConnection
-from urlparse import urlparse
-from cPickle import loads
-from utils import query_string
-import os, socket, time, datetime
-from pylons import g
-from r2.lib.memoize import memoize
+import time
+import datetime
 
-def load_traffic_uncached(interval, what, iden, 
-                          start_time = None, stop_time = None,
-                          npoints = None):
-    """
-    Fetches pickled traffic from the traffic server and returns it as a list.
-    On connection failure (or no data) returns an empy list. 
-    """
-    from r2.lib import promote
-    def format_date(d):
-        if hasattr(d, "tzinfo"):
-            if d.tzinfo is None:
-                d = d.replace(tzinfo = g.tz)
-            else:
-                d = d.astimezone(g.tz)
-        return ":".join(map(str, d.timetuple()[:6]))
-    
-    traffic_url = os.path.join(g.traffic_url, interval, what, iden)
-    args = {}
-    if what == 'thing' and interval == 'hour':
-        if start_time:
-            if not isinstance(start_time, datetime.datetime):
-                start_time = datetime.datetime(*start_time.timetuple()[:3])
-            start_time -= promote.timezone_offset
-        if stop_time:
-            if not isinstance(stop_time, datetime.datetime):
-                stop_time = datetime.datetime(*stop_time.timetuple()[:3])
-            stop_time -= promote.timezone_offset
-    if start_time:
-        args['start_time'] = format_date(start_time)
-            
-    if stop_time:
-        args['stop_time'] = format_date(stop_time)
-    if npoints:
-        args['n'] = npoints
-    u = urlparse(traffic_url)
-    try:
-        conn = HTTPConnection(u.hostname, u.port)
-        conn.request("GET", u.path + query_string(args))
-        res = conn.getresponse()
-        res = loads(res.read()) if res.status == 200 else []
-        conn.close()
-        return res
-    except socket.error:
-        return []
+from r2.lib import promote
+from r2.models import traffic
 
-#@memoize("cached_traffic", time = 60)
-def load_traffic(interval, what, iden = '', 
-                 start_time = None, stop_time = None,
-                 npoints = None):
-    """
-     interval = (hour, day, month)
-     
-     what = (reddit, lang, thing, promos)
-     
-     iden is the specific thing (reddit name, language name, thing
-     fullname) that one is seeking traffic for.
-    """
-    res = load_traffic_uncached(interval, what, iden, 
-                                start_time = start_time, stop_time = stop_time,
-                                npoints = npoints)
 
-    if res and isinstance(res[0][0], datetime.datetime):
-        dates, data = zip(*res)
-        if interval == 'hour':
-            # shift hourly totals into local time zone.
-            dates = [x.replace(tzinfo=None) -
-                     datetime.timedelta(0, time.timezone) for x in dates]
-        else:
-            # we don't care about the hours
-            dates = [x.date() for x in dates]
-        res = zip(dates, data)
+def force_datetime(dt):
+    if isinstance(dt, datetime.datetime):
+        return dt
+    elif isinstance(dt, datetime.date):
+        return datetime.datetime.combine(dt, datetime.time())
+    else:
+        raise NotImplementedError()
+
+
+def load_traffic(interval, what, iden="",
+                 start_time=None, stop_time=None,
+                 npoints=None):
+    if what == "reddit":
+        sr_traffic = traffic.PageviewsBySubreddit.history(interval, iden)
+
+        # add in null values for cname stuff
+        res = [(t, v + (0, 0)) for (t, v) in sr_traffic]
+
+        # day interval needs subscription numbers
+        if interval == "day":
+            subscriptions = traffic.SubscriptionsBySubreddit.history(interval,
+                                                                     iden)
+            res = traffic.zip_timeseries(res, subscriptions)
+    elif what == "total":
+        res = traffic.SitewidePageviews.history(interval)
+    elif what == "summary" and iden == "reddit" and interval == "month":
+        sr_traffic = traffic.PageviewsBySubreddit.top_last_month()
+        # add in null values for cname stuff
+        # return directly because this doesn't have a date parameter first
+        return [(t, v + (0, 0)) for (t, v) in sr_traffic]
+    elif what == "promos" and interval == "day":
+        pageviews = traffic.AdImpressionsByCodename.historical_totals(interval)
+        clicks = traffic.ClickthroughsByCodename.historical_totals(interval)
+        res = traffic.zip_timeseries(pageviews, clicks)
+    elif what == "thing" and interval == "hour" and start_time:
+        start_time = force_datetime(start_time) - promote.timezone_offset
+        stop_time = force_datetime(stop_time) - promote.timezone_offset
+        pageviews = traffic.AdImpressionsByCodename.promotion_history(iden,
+                                                                      start_time,
+                                                                      stop_time)
+        clicks = traffic.ClickthroughsByCodename.promotion_history(iden,
+                                                                   start_time,
+                                                                   stop_time)
+        res = traffic.zip_timeseries(pageviews, clicks)
+    elif what == "thing" and not start_time:
+        pageviews = traffic.AdImpressionsByCodename.history(interval, iden)
+        clicks = traffic.ClickthroughsByCodename.history(interval, iden)
+        res = traffic.zip_timeseries(pageviews, clicks)
+    else:
+        raise NotImplementedError()
+
+    if interval == "hour":
+        # convert to local time
+        tzoffset = datetime.timedelta(0, time.timezone)
+        res = [(d - tzoffset, v) for d, v in res]
+    else:
+        res = [(d.date(), v) for d, v in res]
+
     return res
-    
+
 
 def load_summary(what, interval = "month", npoints = 50):
     return load_traffic(interval, "summary", what, npoints = npoints)

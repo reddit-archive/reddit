@@ -126,6 +126,9 @@ def timefromnow(interval):
     from pylons import g
     return datetime.now(g.tz) + timeinterval_fromstr(interval)
 
+def timedelta_by_name(interval):
+    return timeinterval_fromstr('1 ' + interval)
+
 cdef dict timeintervald = dict(second = 1,
                                minute = 60,
                                hour   = 60 * 60,

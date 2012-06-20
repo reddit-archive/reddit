@@ -3256,10 +3256,8 @@ class PromotedTraffic(Traffic):
             self.preliminary = (until + datetime.timedelta(1) > now)
             self.traffic = load_traffic('hour', "thing", thing._fullname,
                                         start_time = d, stop_time = until)
-            # load monthly totals if we have them, otherwise use the daily totals
-            self.totals =  load_traffic('month', "thing", thing._fullname)
-            if not self.totals:
-                self.totals = load_traffic('day', "thing", thing._fullname)
+            # TODO: ditch uniques and just sum the hourly values
+            self.totals = load_traffic('day', "thing", thing._fullname)
             # generate a list of
             # (uniq impressions, # impressions, uniq clicks, # clicks)
             if self.totals:
@@ -3301,7 +3299,7 @@ class PromotedTraffic(Traffic):
             uimp, nimp, ucli, ncli = data
             return (label,
                    num(uimp), num(nimp), num(ucli), num(ncli),
-                   ("%.2f%%" % (float(100*ucli) / uimp)) if nimp else "--.--%", 
+                   ("%.2f%%" % (float(100*ucli) / uimp)) if uimp else "--.--%", 
                    ("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%")
 
         for date, data in self.traffic:
