@@ -123,6 +123,23 @@ class Link(Thing, Printable):
         return submit_url
 
     @classmethod
+    def _choose_comment_tree_version(cls):
+        try:
+            weights = g.live_config['comment_tree_version_weights']
+        except KeyError:
+            return cls._defaults['comment_tree_version']
+        total = sum(weights.itervalues())
+        r = random.random() * total
+        t = 0
+        for version, weight in weights.iteritems():
+            t += weight
+            if t >= r:
+                return version
+        # this point should never be reached, but if it is, return the default
+        # for old links
+        return cls._defaults['comment_tree_version']
+
+    @classmethod
     def _submit(cls, title, url, author, sr, ip, spam=False):
         from r2.models import admintools
 
@@ -134,7 +151,7 @@ class Link(Thing, Printable):
                 sr_id=sr._id,
                 lang=sr.lang,
                 ip=ip,
-                comment_tree_version=2)
+                comment_tree_version=cls._choose_comment_tree_version())
         l._commit()
         l.set_url_cache()
         if author._spam:
