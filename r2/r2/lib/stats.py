@@ -222,6 +222,9 @@ class StatsCollectingConnectionPool(pool.ConnectionPool):
         self.stats = stats
 
     def _get_new_wrapper(self, server):
+        host, sep, port = server.partition(':')
+        self.stats.event_count('cassandra.connections', host)
+
         cf_types = (columnfamily.ColumnParent, columnfamily.ColumnPath)
 
         def get_cf_name_from_args(args, kwargs):
