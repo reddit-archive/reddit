@@ -2296,11 +2296,11 @@ class ApiController(RedditController):
             setattr(user, 'flair_%s_css_class' % c.site._id, css_class)
             user._commit()
 
-            ModAction.create(c.site, c.user, action='editflair', target=user,
-                             details='flair_csv')
-
             line_result.status = '%s flair for user %s' % (mode, user.name)
             line_result.ok = True
+
+        ModAction.create(c.site, c.user, action='editflair',
+                         details='flair_csv')
 
         return BoringPage(_("API"), content = results).render()
 
