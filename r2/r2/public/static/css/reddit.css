@@ -645,6 +645,11 @@ ul.flat-vert {text-align: left;}
     overflow: hidden;
 }
 
+.compressed .midcol {
+    width: 15px;
+    margin-right: 5px;
+}
+
 .entry {
     overflow: hidden; 
     margin-left: 3px;

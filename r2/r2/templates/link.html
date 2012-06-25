@@ -187,7 +187,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 
 <%def name="midcol(display=True, cls = '')">
   %if thing.pref_compress:
-    <div class="midcol ${cls}" style="width:2ex;" 
+    <div class="midcol ${cls}"
   %else:
     <div class="midcol ${cls}" style="width:${thing.midcolmargin};" 
   %endif
