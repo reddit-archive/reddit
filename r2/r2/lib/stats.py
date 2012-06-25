@@ -111,7 +111,13 @@ class Stats:
         elif state == False:
             self.action_count(counter_name, false_name, delta=delta)
         self.action_count(counter_name, 'total', delta=delta)
-  
+
+    def simple_event(self, event_name, delta=1):
+        parts = event_name.split('.')
+        counter = self.get_counter('.'.join(['event'] + parts[:-1]))
+        if counter:
+            counter.increment(parts[-1], delta=delta)
+
     def event_count(self, event_name, name):
         counter = self.get_counter('event.%s' % event_name)
         if counter:
