@@ -105,6 +105,22 @@ def is_valid_campaign(link, campaign_id):
     except NotFound:
         return False
 
+def is_live_on_sr(link, srname):
+
+    campaigns = link.campaigns
+    if not campaigns:
+        return False
+
+    live = scheduled_campaigns_by_link(link)
+    srname = srname.lower()
+    srname = srname if srname != DefaultSR.name.lower() else ''
+
+    for index in live:
+        campaign = campaigns.get(index)
+        if campaign and campaign[CAMPAIGN.sr].lower() == srname:
+            return True
+    return False
+
 # no references to promote_status below this function, pls
 def set_status(l, status, onchange = None):
     # keep this out here.  Useful for updating the queue if there is a bug
@@ -609,6 +625,33 @@ def charge_pending(offset=1):
             promotion_log(l, "auth charge for campaign %s, trans_id: %d" % (index, trans_id), True)
         except:
             print "Error on %s, campaign %s" % (l, index)
+
+def scheduled_campaigns_by_link(l, date=None):
+    # A promotion/campaign is scheduled/live if it's in
+    # PromotionWeights.get_campaigns(now) and
+    # authorize.is_charged_transaction()
+
+    date = date or promo_datetime_now()
+
+    if not is_accepted(l):
+        return []
+    if not l.campaigns:
+        return []
+
+    scheduled = PromotionWeights.get_campaigns(date)
+    campaigns = [c.promo_idx for c in scheduled if c.thing_name == l._fullname]
+
+    # Check authorize
+    accepted = []
+    for index in campaigns:
+        if not index in l.campaigns:
+            continue
+
+        sd, ed, bid, sr, trans_id = l.campaigns[index]
+        if authorize.is_charged_transaction(trans_id, index):
+            accepted.append(index)
+
+    return accepted
 
 def get_traffic_weights(srnames):
     from r2.lib import traffic
