@@ -45,13 +45,17 @@ class Listing(object):
         self.prev_link = True
         self.next = None
         self.prev = None
-        self.max_num = 1
+        self._max_num = 1
         self.vote_hash_type = vote_hash_type
 
     @property
     def max_score(self):
         scores = [x.score for x in self.things if hasattr(x, 'score')]
         return max(scores) if scores else 0
+
+    @property
+    def max_num(self):
+        return self._max_num
 
     def get_items(self, *a, **kw):
         """Wrapper around builder's get_items that caches the rendering."""
@@ -67,7 +71,7 @@ class Listing(object):
     def listing(self):
         self.things, prev, next, bcount, acount = self.get_items()
 
-        self.max_num = max(acount, bcount)
+        self._max_num = max(acount, bcount)
         self.after = None
         self.before = None
 
@@ -127,20 +131,22 @@ class SpotlightListing(Listing):
         Listing.__init__(self, *a, **kw)
         self.nextprev   = False
         self.show_nums  = True
-        self._max_num   = kw.get('max_num', 0)
-        self._max_score = kw.get('max_score', 0)
+        self._parent_max_num   = kw.get('max_num', 0)
+        self._parent_max_score = kw.get('max_score', 0)
         self.spotlight_links  = kw.get('spotlight_links', [])
         self.visible_link = kw.get('visible_link', '')
 
     @property
     def max_score(self):
-        return self._max_score
+        return self._parent_max_score
+
+    @property
+    def max_num(self):
+        return self._parent_max_num
 
     def listing(self):
         res = Listing.listing(self)
-        # override score fields
-        res.max_num = self._max_num
-        res.max_score = self._max_score
+        # suppress item numbering
         for t in res.things:
             t.num = ""
         return res
