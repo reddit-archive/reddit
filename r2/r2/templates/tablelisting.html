@@ -49,14 +49,14 @@
   <p class="nextprev"> ${_("view more:")}&#32;
   %if thing.prev:
     ${plain_link(_("first"), thing.first, _sr_path = (c.site != Sub), rel="nofollow first")} 
-    &#32;|&#32;
-    ${plain_link(_("prev"), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}  
+    <span class="separator"></span>
+    ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}
   %endif
   %if thing.prev and thing.next:
-    &#32;|&#32;
+    <span class="separator"></span>
   %endif
   %if thing.next:
-    ${plain_link(_("next"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}  
+  ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}
   %endif
   </p>
 %endif

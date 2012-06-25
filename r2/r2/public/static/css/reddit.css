@@ -855,6 +855,29 @@ a.author { margin-right: 0.5em; }
 .ajaxhook { position: absolute; top: -1000px; left: 0px; }
 .nextprev { color: gray; font-size: larger; margin-top: 10px;}
 
+.nextprev a {
+    padding: 1px 4px;
+    background: #eee;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.nextprev a:hover {
+    background: #f0f0f0;
+    border: 1px solid #82A6C9;
+}
+
+.nextprev a:active {
+    background: #e4e4e4;
+}
+
+.nextprev .separator {
+    margin: 0;
+    margin-left: .5em;
+    padding-left: .5em;
+    border-left: 1px solid #ccc;
+}
+
 /* corner help */
 .help a.help {
     color: #808080;
