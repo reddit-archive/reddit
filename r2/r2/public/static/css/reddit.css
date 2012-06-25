@@ -912,7 +912,7 @@ a.author { margin-right: 0.5em; }
 }
 .organic-listing .link,
 .organic-listing .link.promotedlink {
-    padding: 5px 7em 10px 0;
+    padding: 5px 7em 10px 2px;
     margin-bottom: 0px;  
 }
 
