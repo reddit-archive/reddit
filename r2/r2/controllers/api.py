@@ -253,9 +253,10 @@ class ApiController(RedditController):
             check_domain = True
 
             # check for no url, or clear that error field on return
-            if form.has_errors("url", errors.NO_URL, errors.BAD_URL,
-                                      errors.DOMAIN_BANNED):
+            if form.has_errors("url", errors.NO_URL, errors.BAD_URL):
                 pass
+            elif form.has_errors("url", errors.DOMAIN_BANNED):
+                g.stats.simple_event('spam.shame.link')
             elif form.has_errors("url", errors.ALREADY_SUB):
                 check_domain = False
                 u = url[0].already_submitted_link
@@ -316,6 +317,7 @@ class ApiController(RedditController):
                          c.user, sr, ip, spam=c.user._spam)
 
         if banmsg:
+            g.stats.simple_event('spam.domainban.link_url')
             admintools.spam(l, banner = "domain (%s)" % banmsg)
 
         if kind == 'self':

@@ -132,6 +132,7 @@ class Link(Thing, Printable):
         l._commit()
         l.set_url_cache()
         if author._spam:
+            g.stats.simple_event('spam.autoremove.link')
             admintools.spam(l, banner='banned user')
         return l
 
@@ -645,6 +646,9 @@ class Comment(Thing, Printable):
 
         c._spam = author._spam
 
+        if author._spam:
+            g.stats.simple_event('spam.autoremove.comment')
+
         #these props aren't relations
         if parent:
             c.parent_id = parent._id
@@ -992,6 +996,10 @@ class Message(Thing, Printable):
         m = Message(subject=subject, body=body, author_id=author._id, new=True,
                     ip=ip, from_sr=from_sr)
         m._spam = author._spam
+
+        if author._spam:
+            g.stats.simple_event('spam.autoremove.message')
+
         sr_id = None
         # check to see if the recipient is a subreddit and swap args accordingly
         if to and isinstance(to, Subreddit):
