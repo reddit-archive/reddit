@@ -461,6 +461,8 @@ class FrontController(RedditController):
             num = 1000
         elif location == 'modqueue':
             query = c.site.get_modqueue()
+        elif location == 'unmoderated':
+            query = c.site.get_unmoderated()
         else:
             raise ValueError
 
@@ -491,6 +493,8 @@ class FrontController(RedditController):
                 if x._spam and verdict != 'mod-removed':
                     return True # spam, unless banned by a moderator
                 return False
+            elif location == "unmoderated":
+                return True
             else:
                 raise ValueError
 
@@ -525,7 +529,7 @@ class FrontController(RedditController):
             raise ValueError
 
         if ((level == 'mod' and
-             location in ('reports', 'spam', 'trials', 'modqueue'))
+             location in ('reports', 'spam', 'trials', 'modqueue', 'unmoderated'))
             or
             (level == 'all' and
              location == 'trials')):
@@ -574,7 +578,8 @@ class FrontController(RedditController):
             c.allow_styles = True
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
-        elif location in ('reports', 'spam', 'trials', 'modqueue') and is_moderator:
+        elif (location in ('reports', 'spam', 'trials', 'modqueue', 'unmoderated')
+              and is_moderator):
             c.allow_styles = True
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:

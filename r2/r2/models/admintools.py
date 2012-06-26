@@ -76,6 +76,7 @@ class AdminTools(object):
         if not auto:
             self.author_spammer(new_things, True)
             self.set_last_sr_ban(new_things)
+            queries.mark_moderated(things)
 
         queries.ban(new_things)
 
@@ -113,6 +114,7 @@ class AdminTools(object):
         self.set_last_sr_ban(things)
 
         queries.unban(things, insert)
+        queries.mark_moderated(things)
 
     def author_spammer(self, things, spam):
         """incr/decr the 'spammer' field for the author of every

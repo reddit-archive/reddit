@@ -4410,6 +4410,7 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-ban:before,
 .icon-menu .reddit-flair:before,
 .icon-menu .reddit-moderationlog:before,
+.icon-menu .reddit-unmoderated:before,
 .icon-menu .reddit-moderators:before,
 .icon-menu .moderator-mail:before,
 .icon-menu .reddit-contributors:before,
@@ -4467,6 +4468,10 @@ dd { margin-left: 20px;  }
 }
 .icon-menu .reddit-moderationlog:before {
     background-image: url(../reddit_moderationlog.png); /* SPRITE */
+    margin-left: 1px;
+}
+.icon-menu .reddit-unmoderated:before {
+    background-image: url(../reddit_unmoderated.png); /* SPRITE */
     margin-left: 1px;
 }
 .icon-menu .reddit-moderators:before {

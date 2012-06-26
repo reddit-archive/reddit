@@ -226,7 +226,8 @@ class Reddit(Templated):
             buttons += [NamedButton("banned", css_class="reddit-ban"),
                         NamedButton("flair", css_class="reddit-flair")]
 
-        buttons.append(NamedButton("log", css_class="reddit-moderationlog"))
+        buttons += [NamedButton("log", css_class="reddit-moderationlog"),
+                    NamedButton("unmoderated", css_class="reddit-unmoderated")]
 
         return SideContentBox(_('moderation tools'),
                               [NavMenu(buttons,

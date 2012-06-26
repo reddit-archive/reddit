@@ -349,6 +349,10 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_modqueue(self)
 
+    def get_unmoderated(self):
+        from r2.lib.db import queries
+        return queries.get_unmoderated(self)
+
     def get_all_comments(self):
         from r2.lib.db import queries
         return queries.get_sr_comments(self)

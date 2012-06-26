@@ -135,6 +135,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      flair        = _("edit flair"),
                      log          = _("moderation log"),
                      modqueue     = _("moderation queue"),
+                     unmoderated  = _("unmoderated links"),
 
                      popular      = _("popular"),
                      create       = _("create"),

@@ -42,6 +42,7 @@ from datetime import datetime
 import itertools
 import collections
 from copy import deepcopy
+from r2.lib.db.operators import and_, or_
 
 from pylons import g
 query_cache = g.permacache
@@ -409,6 +410,17 @@ def get_reported(sr):
         return [get_reported_links(sr),
                 get_reported_comments(sr)]
 
+@cached_query(SubredditQueryCache)
+def get_unmoderated_links(sr_id):
+    q = Link._query(Link.c.sr_id == sr_id,
+                    Link.c._spam == (True, False),
+                    sort = db_sort('new'))
+
+    # Doesn't really work because will not return Links with no verdict
+    q._filter(or_(and_(Link.c._spam == True, Link.c.verdict != 'mod-removed'),
+                  and_(Link.c._spam == False, Link.c.verdict != 'mod-approved')))
+    return q
+
 # TODO: Wow, what a hack. I'm doing this in a hurry to make
 # /r/blah/about/trials and /r/blah/about/modqueue work. At some point
 # before the heat death of the universe, we should start precomputing
@@ -471,6 +483,16 @@ def get_modqueue(sr):
         q.append(get_reported_comments(sr))
         q.append(get_spam_filtered_links(sr))
         q.append(get_spam_filtered_comments(sr))
+    return q
+
+@merged_cached_query
+def get_unmoderated(sr):
+    q = []
+    if isinstance(sr, MultiReddit):
+        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        q.extend(get_unmoderated_links(sr) for sr in srs)
+    else:
+        q.append(get_unmoderated_links(sr))
     return q
 
 def get_domain_links(domain, sort, time):
@@ -687,9 +709,10 @@ def new_link(link):
     for domain in utils.UrlParser(link.url).domain_permutations():
         results.append(get_domain_links(domain, 'new', "all"))
 
-    if link._spam:
-        with CachedQueryMutator() as m:
+    with CachedQueryMutator() as m:
+        if link._spam:    
             m.insert(get_spam_links(sr), [link])
+        m.insert(get_unmoderated_links(sr), [link])
 
     add_queries(results, insert_items = link)
     amqp.add_item('new_link', link._fullname)
@@ -1078,6 +1101,14 @@ def clear_reports(things):
     with CachedQueryMutator() as m:
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
+
+def mark_moderated(links):
+    by_srid, srs = _by_srid(links)
+
+    with CachedQueryMutator() as m:
+        for sr_id, sr_links in by_srid.iteritems():
+            sr = srs[sr_id]
+            m.delete(get_unmoderated_links(sr), sr_links)
 
 def add_all_srs():
     """Recalculates every listing query for every subreddit. Very,
