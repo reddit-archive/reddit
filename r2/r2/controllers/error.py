@@ -24,7 +24,7 @@ import os.path
 
 import pylons
 import paste.fileapp
-from paste.httpexceptions import HTTPFound
+from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
 from pylons.middleware import error_document_template, media_path
 from pylons import c, request, g
 from pylons.i18n import _
@@ -89,7 +89,7 @@ class ErrorController(RedditController):
         try:
             c.error_page = True
             RedditController.__before__(self)
-        except HTTPFound:
+        except (HTTPMovedPermanently, HTTPFound):
             # ignore an attempt to redirect from an error page
             pass
         except:

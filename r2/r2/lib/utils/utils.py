@@ -55,9 +55,6 @@ def randstr(len, reallyrandom = False):
     return ''.join(random.choice(alphabet)
                    for i in range(len))
 
-def is_authorized_cname(domain, cnames):
-    return any(is_subdomain(domain, cname) for cname in cnames)
-
 class Storage(dict):
     """
     A Storage object is like a dictionary except `obj.foo` can be used
@@ -533,7 +530,6 @@ class UrlParser(object):
         from pylons import g
         return (not self.hostname or
                 is_subdomain(self.hostname, g.domain) or
-                is_authorized_cname(self.hostname, g.authorized_cnames) or
                 (subreddit and subreddit.domain and
                  is_subdomain(self.hostname, subreddit.domain)))
 

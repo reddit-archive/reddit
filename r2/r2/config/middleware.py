@@ -39,7 +39,7 @@ from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
 from r2.config.extensions import extension_mapping, set_extension
-from r2.lib.utils import is_authorized_cname
+from r2.lib.utils import is_subdomain
 
 
 # hack in Paste support for HTTP 429 "Too Many Requests"
@@ -134,76 +134,60 @@ class DomainMiddleware(object):
 
     def __init__(self, app):
         self.app = app
-        auth_cnames = config['global_conf'].get('authorized_cnames', '')
-        auth_cnames = [x.strip() for x in auth_cnames.split(',')]
-        # we are going to be matching with endswith, so make sure there
-        # are no empty strings that have snuck in
-        self.auth_cnames = filter(None, auth_cnames)
-
-    def is_auth_cname(self, domain):
-        return is_authorized_cname(domain, self.auth_cnames)
 
     def __call__(self, environ, start_response):
-        # get base domain as defined in INI file
-        base_domain = config['global_conf']['domain']
-        try:
-            sub_domains, request_port  = environ['HTTP_HOST'].split(':')
-            environ['request_port'] = int(request_port)
-        except ValueError:
-            sub_domains = environ['HTTP_HOST'].split(':')[0]
-        except KeyError:
-            sub_domains = "localhost"
+        g = config['pylons.g']
+        http_host = environ.get('HTTP_HOST', 'localhost').lower()
+        domain, s, port = http_host.partition(':')
 
-        #If the domain doesn't end with base_domain, assume
-        #this is a cname, and redirect to the frame controller.
-        #Ignore localhost so paster shell still works.
-        #If this is an error, don't redirect
-        if (not sub_domains.endswith(base_domain)
-            and (not sub_domains == 'localhost')):
-            environ['sub_domain'] = sub_domains
-            if not environ.get('extension'):
-                if environ['PATH_INFO'].startswith('/frame'):
-                    return self.app(environ, start_response)
-                elif self.is_auth_cname(sub_domains):
-                    environ['frameless_cname'] = True
-                    environ['authorized_cname'] = True
-                elif ("redditSession=cname" in environ.get('HTTP_COOKIE', '')
-                      and environ['REQUEST_METHOD'] != 'POST'
-                      and not environ['PATH_INFO'].startswith('/error')):
-                    environ['original_path'] = environ['PATH_INFO']
-                    environ['FULLPATH'] = environ['PATH_INFO'] = '/frame'
-                else:
-                    environ['frameless_cname'] = True
+        # remember the port
+        try:
+            environ['request_port'] = int(port)
+        except ValueError:
+            pass
+
+        # localhost is exempt so paster run/shell will work
+        # media_domain doesn't need special processing since it's just ads
+        if domain == "localhost" or is_subdomain(domain, g.media_domain):
             return self.app(environ, start_response)
 
-        sub_domains = sub_domains[:-len(base_domain)].strip('.')
-        sub_domains = sub_domains.split('.')
+        # tell reddit_base to redirect to the appropriate subreddit for
+        # a legacy CNAME
+        if not is_subdomain(domain, g.domain):
+            environ['legacy-cname'] = domain
+            return self.app(environ, start_response)
+
+        # figure out what subdomain we're on if any
+        subdomains = domain[:-len(g.domain) - 1].split('.')
+        extension_subdomains = dict(m="mobile",
+                                    i="compact",
+                                    api="api",
+                                    rss="rss",
+                                    xml="xml",
+                                    json="json")
 
         sr_redirect = None
-        for sd in list(sub_domains):
-            # subdomains to disregard completely
-            if sd in ('www', 'origin', 'beta', 'lab', 'pay', 'buttons', 'ssl'):
+        for subdomain in subdomains[:]:
+            if subdomain in g.reserved_subdomains:
                 continue
-            # subdomains which change the extension
-            elif sd == 'm':
-                environ['reddit-domain-extension'] = 'mobile'
-            elif sd == 'I':
-                environ['reddit-domain-extension'] = 'compact'
-            elif sd == 'i':
-                environ['reddit-domain-extension'] = 'compact'
-            elif sd in ('api', 'rss', 'xml', 'json'):
-                environ['reddit-domain-extension'] = sd
-            elif (len(sd) == 2 or (len(sd) == 5 and sd[2] == '-')) and self.lang_re.match(sd):
-                environ['reddit-prefer-lang'] = sd
-                environ['reddit-domain-prefix'] = sd
-            else:
-                sr_redirect = sd
-                sub_domains.remove(sd)
 
+            extension = extension_subdomains.get(subdomain)
+            if extension:
+                environ['reddit-domain-extension'] = extension
+            elif self.lang_re.match(subdomain):
+                environ['reddit-prefer-lang'] = subdomain
+                environ['reddit-domain-prefix'] = subdomain
+            else:
+                sr_redirect = subdomain
+                subdomains.remove(subdomain)
+
+        # if there was a subreddit subdomain, redirect
         if sr_redirect and environ.get("FULLPATH"):
             r = Response()
-            sub_domains.append(base_domain)
-            redir = "%s/r/%s/%s" % ('.'.join(sub_domains),
+            if not subdomains and g.domain_prefix:
+                subdomains.append(g.domain_prefix)
+            subdomains.append(g.domain)
+            redir = "%s/r/%s/%s" % ('.'.join(subdomains),
                                     sr_redirect, environ['FULLPATH'])
             redir = "http://" + redir.replace('//', '/')
             r.status_code = 301

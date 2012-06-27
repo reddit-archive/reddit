@@ -262,9 +262,13 @@ def set_subreddit():
     c.site = Frontpage
     if not sr_name:
         #check for cnames
-        sub_domain = request.environ.get('sub_domain')
-        if sub_domain and not sub_domain.endswith(g.media_domain):
-            c.site = Subreddit._by_domain(sub_domain) or Frontpage
+        cname = request.environ.get('legacy-cname')
+        if cname:
+            sr = Subreddit._by_domain(cname) or Frontpage
+            domain = g.domain
+            if g.domain_prefix:
+                domain = ".".join((g.domain_prefix, domain))
+            redirect_to('http://%s%s' % (domain, sr.path), _code=301)
     elif sr_name == 'r':
         #reddits
         c.site = Sub
