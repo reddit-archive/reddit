@@ -153,6 +153,7 @@ def void_transaction(user, trans_id, campaign, test = None):
 
 
 def is_charged_transaction(trans_id, campaign):
+    if not trans_id: return False # trans_id == 0 means no bid
     bid =  Bid.one(transaction = trans_id, campaign = campaign)
     return bid.is_charged()
 
