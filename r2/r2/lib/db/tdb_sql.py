@@ -491,12 +491,8 @@ def db2py(val, kind):
 
 #TODO i don't need type_id
 def set_data(table, type_id, thing_id, **vals):
-    s = sa.select([table.c.key], sa.and_(table.c.thing_id == thing_id))
-
     transactions.add_engine(table.bind)
-    keys = [x.key for x in s.execute().fetchall()]
 
-    i = table.insert(values = dict(thing_id = thing_id))
     u = table.update(sa.and_(table.c.thing_id == thing_id,
                              table.c.key == sa.bindparam('_key')))
 
@@ -504,14 +500,13 @@ def set_data(table, type_id, thing_id, **vals):
     for key, val in vals.iteritems():
         val, kind = py2db(val, return_kind=True)
 
-        #TODO one update?
-        if key in keys:
-            u.execute(_key = key, value = val, kind = kind)
-        else:
+        uresult = u.execute(_key = key, value = val, kind = kind)
+        if not uresult.rowcount:
             inserts.append({'key':key, 'value':val, 'kind': kind})
 
     #do one insert
     if inserts:
+        i = table.insert(values = dict(thing_id = thing_id))
         i.execute(*inserts)
 
 def incr_data_prop(table, type_id, thing_id, prop, amount):
