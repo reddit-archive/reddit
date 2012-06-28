@@ -221,6 +221,9 @@ class ApiController(RedditController):
             # submission page, and hasn't updated their script
             return
 
+        if form.has_errors('captcha', errors.BAD_CAPTCHA):
+            return
+
         if (form.has_errors('sr',
                             errors.SUBREDDIT_NOEXIST,
                             errors.SUBREDDIT_NOTALLOWED,
