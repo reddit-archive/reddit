@@ -613,18 +613,18 @@ def accepted_campaigns(offset=0):
         camp = getattr(l, "campaigns", {}).get(x.promo_idx)
         if not camp or not camp[CAMPAIGN.trans_id]:
             continue
-        yield (l, x.promo_idx, camp)
+        yield (l, x.promo_idx, camp, x.weight)
 
 def get_scheduled(offset=0):
     by_sr = {}
-    for l, index, camp in accepted_campaigns(offset=offset):
+    for l, index, camp, weight in accepted_campaigns(offset=offset):
         sd, ed, bid, sr, trans_id = camp
         if authorize.is_charged_transaction(trans_id, index):
-            by_sr.setdefault(sr, []).append((l, bid))
+            by_sr.setdefault(sr, []).append((l, weight))
     return by_sr
 
 def charge_pending(offset=1):
-    for l, index, camp in accepted_campaigns(offset=offset):
+    for l, index, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
         sd, ed, bid, sr, trans_id = camp
         try:
