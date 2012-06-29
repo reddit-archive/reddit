@@ -30,6 +30,8 @@ from validator import *
 
 from r2.models import *
 
+from r2.lib import amqp
+
 from r2.lib.utils import get_title, sanitize_url, timeuntil, set_last_modified
 from r2.lib.utils import query_string, timefromnow, randstr
 from r2.lib.utils import timeago, tup, filter_links
