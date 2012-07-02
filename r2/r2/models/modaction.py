@@ -246,7 +246,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         targets = Thing._by_fullname(target_fullnames, data=True)
         authors = Account._byID([t.author_id for t in targets.values() if hasattr(t, 'author_id')], data=True)
         links = Link._byID([t.link_id for t in targets.values() if hasattr(t, 'link_id')], data=True)
-        subreddits = Subreddit._byID([item.sr_id for item in wrapped], data=True)
+
+        sr_ids = set([t.sr_id for t in targets.itervalues() if hasattr(t, 'sr_id')] +
+                     [w.sr_id for w in wrapped])
+        subreddits = Subreddit._byID(sr_ids, data=True)
 
         # Assemble target links
         target_links = {}
