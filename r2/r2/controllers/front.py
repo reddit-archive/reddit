@@ -28,6 +28,7 @@ from r2.models import *
 from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
+from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
@@ -584,8 +585,8 @@ class FrontController(RedditController):
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
-        elif is_moderator and location == 'traffic':
-            pane = RedditTraffic()
+        elif (is_moderator or c.user_is_sponsor) and location == 'traffic':
+            pane = trafficpages.SubredditTraffic()
         elif is_moderator and location == 'flair':
             c.allow_styles = True
             pane = FlairPane(num, after, reverse, name, user)
@@ -923,19 +924,27 @@ class FrontController(RedditController):
     @validate(VTrafficViewer('article'),
               article = VLink('article'))
     def GET_traffic(self, article):
-        content = PromotedTraffic(article)
+        content = trafficpages.PromotedLinkTraffic(article)
         if c.render_style == 'csv':
             c.response.content = content.as_csv()
             return c.response
 
-        return LinkInfoPage(link = article,
-                           comment = None,
-                           content = content).render()
+        return LinkInfoPage(link=article,
+                            page_classes=["promoted-traffic"],
+                            comment=None,
+                            content=content).render()
 
     @validate(VSponsorAdmin())
     def GET_site_traffic(self):
-        return BoringPage("traffic",
-                          content = RedditTraffic()).render()
+        return trafficpages.SitewideTrafficPage().render()
+
+    @validate(VSponsorAdmin())
+    def GET_lang_traffic(self, langcode):
+        return trafficpages.LanguageTrafficPage(langcode).render()
+
+    @validate(VSponsorAdmin())
+    def GET_advert_traffic(self, code):
+        return trafficpages.AdvertTrafficPage(code).render()
 
     @validate(VUser())
     def GET_account_activity(self):

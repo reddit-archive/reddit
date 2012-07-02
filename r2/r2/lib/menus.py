@@ -173,6 +173,10 @@ menu =   MenuHandler(hot          = _('hot'),
                      pending_promos = _('pending'),
                      rejected_promos = _('rejected'),
 
+                     sitewide = _('sitewide'),
+                     languages = _('languages'),
+                     adverts = _('adverts'),
+
                      whitelist = _("whitelist")
                      )
 

@@ -316,6 +316,13 @@ def rm_traffic_viewer(thing, user):
 def traffic_viewers(thing):
     return sorted(getattr(thing, "promo_traffic_viewers", set()))
 
+def traffic_totals():
+    from r2.models import traffic
+    impressions = traffic.AdImpressionsByCodename.historical_totals("day")
+    clicks = traffic.ClickthroughsByCodename.historical_totals("day")
+    traffic_data = traffic.zip_timeseries(impressions, clicks)
+    return [(d.date(), v) for d, v in traffic_data]
+
 # logging routine for keeping track of diffs
 def promotion_log(thing, text, commit = False):
     """
@@ -662,7 +669,7 @@ def scheduled_campaigns_by_link(l, date=None):
     return accepted
 
 def get_traffic_weights(srnames):
-    from r2.lib import traffic
+    from r2.models.traffic import PageviewsBySubreddit
 
     # the weight is just the last 7 days of impressions (averaged)
     def weigh(t, npoints = 7):
@@ -671,7 +678,7 @@ def get_traffic_weights(srnames):
             return max(float(sum(t)) / len(t), 1)
         return 1
 
-    default_traffic = [weigh(traffic.load_traffic("day", "reddit", sr.name))
+    default_traffic = [weigh(PageviewsBySubreddit.history("day", sr.name))
                              for sr in Subreddit.top_lang_srs('all', 10)]
     default_traffic = (float(max(sum(default_traffic),1)) /
                        max(len(default_traffic), 1))
@@ -680,7 +687,7 @@ def get_traffic_weights(srnames):
     for srname in srnames:
         if srname:
             res[srname] = (default_traffic /
-                          weigh(traffic.load_traffic("day", "reddit", srname)) )
+                          weigh(PageviewsBySubreddit.history("day", sr.name)) )
         else:
             res[srname] = 1
     return res
@@ -880,6 +887,34 @@ def benchmark_promoted(user, site, pos = 0, link_sample = 50, attempts = 100):
     for l, v in res:
         print "%s: %5.3f %3.5f" % (l,float(v)/attempts, expected.get(l, 0))
 
+
+def get_total_run(link):
+    """Return the total time span this promotion has run for.
+
+    Starts at the start date of the earliest campaign and goes to the end date
+    of the latest campaign.
+
+    """
+
+    if not link.campaigns:
+        return None, None
+
+    earliest = None
+    latest = None
+    for start, end, bid, sr, trans_id in link.campaigns.itervalues():
+        if not trans_id:
+            continue
+
+        if not earliest or start < earliest:
+            earliest = start
+
+        if not latest or end > latest:
+            latest = end
+
+    # ugh this stuff is a mess. they're stored as "UTC" but actually mean UTC-5.
+    earliest = earliest.replace(tzinfo=None) - timezone_offset
+    latest = latest.replace(tzinfo=None) - timezone_offset
+    return earliest, latest
 
 
 def Run(offset = 0):

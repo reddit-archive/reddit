@@ -28,14 +28,17 @@
    import babel.numbers
 
    locale = c.locale
+
    def num(x):
       return format_number(x, locale)
    def money(x):
       return babel.numbers.format_currency(x, 'USD', locale)
  %>
-<h1>Sponsored link calendar</h1>
 
-${unsafe(js.use('flot'))}
+<%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+${load_timeseries_js()}
+
+<h1>${_("Sponsored link calendar")}</h1>
 
 %if not c.user_is_sponsor:
 <div class="instructions">
@@ -171,114 +174,12 @@ ${unsafe(js.use('flot'))}
 </div>
 <div class="clear"></div>
 
-%if c.user_is_sponsor:
-  <h1>${_("total promotion traffic")}</h1>
-  <div>
-  %if thing.imp_graph:
-     ${thing.imp_graph}
-  %endif
-  %if thing.cli_graph:
-     ${thing.cli_graph}
-  %endif
-  %if thing.money_graph:
-     ${thing.money_graph}
-  %endif
-  </div>
-%endif
-
 <h1>${_("historical site performance")}</h1>
-<div>
-%if thing.cpm_graph:
-   ${thing.cpm_graph}
-%endif
-%if thing.cpc_graph:
-   ${thing.cpc_graph}
-%endif
-%if thing.cpc_graph and c.user_is_sponsor:
-   ${thing.ctr_graph}
-%endif
+<div id="charts"></div>
+
+${thing.performance_table}
+
+<script type="text/javascript">
+    r.timeseries.init()
+</script>
 </div>
-
-%if c.user_is_sponsor:
-<div class="clear"></div>
-  %if thing.top_promoters:
-  <h1>${_('top promoters this month')}</h1>
-  
-  <table class="traffic-table">
-    <tr>
-      <th>user</th>
-      <th>promos</th>
-      <th>bids</th>
-      <th>credits</th>
-      <th>total</th>
-      <th>per promo</th>
-    </tr>
-    %for account, bid, refund, promos in thing.top_promoters:
-      <tr>
-        <td>${account.name}</td>
-        <td>${len(promos)}</td>
-        <td>${money(bid)}</td>
-        <td>${money(refund)}</td>
-        <td>${money(bid - refund)}</td>
-        <td>${money((bid - refund)/len(promos))}</td>
-      </tr>
-    %endfor
-    %if len(thing.top_promoters) != 1:
-      <% 
-         totals = zip(*thing.top_promoters)
-         total_bid = sum(totals[1])
-         total_refund = sum(totals[2])
-         total_promos = sum(map(len, totals[3]))
-       %>
-      <tr class="totals">
-        <td>Total</td>
-        <td>${total_promos}</td>
-        <td>${money(total_bid)}</td>
-        <td>${money(total_refund)}</td>
-        <td>${money(total_bid - total_refund)}</td>
-        <td>${money((total_bid - total_refund)/total_promos)}</td>
-      </tr>
-   %endif
-  </table>
-  %endif
-
-  %if thing.recent:
-  <h1>${_('promotions this month')}&nbsp;<a href="/promoted/graph.csv">[CSV]</a></h1>
-  
-  <table class="traffic-table">
-    <tr>
-      <th colspan="2">Impresions</th>
-      <th colspan="2">Clicks</th>
-      <th></th>
-      <th></th>
-    </tr>
-    <tr>
-      <th>date</th>
-      <th>unique</th>
-      <th>total</th>
-      <th>unique</th>
-      <th>total</th>
-      <th>price</th>
-      <th>points</th>
-      <th>title</th>
-    </tr>
-    %for link, uimp, nimp, ucli, ncli in thing.recent:
-    <tr>
-      <td style="white-space:nowrap">
-        ${link._date.strftime("%Y-%m-%d")}
-      </td>
-      <td>${num(uimp)}</td>
-      <td>${num(nimp)}</td>
-      <td>${num(ucli)}</td>
-      <td>${num(ncli)}</td>
-      <td>TODO</td>
-##      <td>${money(link.promote_bid)}</td>
-      <td>${link._ups - link._downs}</td>
-      <td style="text-align:left">
-        <a class="title" href="${link.permalink}">${link.title}</a>
-      </td>
-    </tr>
-    %endfor
-  </table>
-  %endif
-%endif

@@ -1,0 +1,103 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2012
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%inherit file="reddittraffic.html"/>
+<%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+
+<%!
+    from r2.lib.strings import strings
+    from r2.lib.filters import safemarkdown
+    from r2.lib.template_helpers import format_number, js_timestamp
+%>
+
+<%def name="preamble()">
+  ${unsafe(safemarkdown(strings.traffic_promoted_link_explanation))}
+
+  ${thing.viewer_list}
+
+  <h1>
+  ${_("promotion traffic")}
+    <a href="/traffic/${thing.thing._id36}.csv">
+    ${_("(download as .csv)")}
+    </a>
+  </h1>
+
+  ${load_timeseries_js()}
+</%def>
+
+<%def name="sidetables()" />
+
+<%def name="tables()">
+  <table id="promotion-history" class="traffic-table timeseries" data-interval="hour" data-max-points="${thing.max_points}">
+  <thead>
+  <tr>
+    <th></th>
+    <th colspan="2">${_("impressions")}</th>
+    <th colspan="2">${_("clicks")}</th>
+    <th colspan="2">${_("click-through (%)")}</th>
+  </tr>
+  <tr>
+    <th scope="col">${_("date")}</th>
+    <th scope="col" title="${_("unique impressions")}">${_("unique")}</th>
+    <th scope="col" title="${_("total impressions")}" data-color="#ff5700">${_("total")}</th>
+    <th scope="col" title="${_("unique clicks")}">${_("unique")}</th>
+    <th scope="col" title="${_("total clicks")}" data-color="#9494ff">${_("total")}</th>
+    <th scope="col">${_("unique")}</th>
+    <th scope="col">${_("total")}</th>
+  </tr>
+  </thead>
+  <tbody>
+  % for date, data in thing.history:
+  <tr>
+    <th scope="col" data-value="${js_timestamp(date)}">${date}</th>
+    % for datum in data:
+    <td data-value="${datum}">${format_number(datum)}</td>
+    % endfor
+  </tr>
+  % endfor
+  </tbody>
+  <tfoot>
+  <tr>
+    <th scope="row">
+      ${_("total")}
+      % if thing.is_preliminary:
+      *
+      % endif
+    </th>
+    <td>--</td>
+    <td>${format_number(thing.total_impressions)}</td>
+    <td>--</td>
+    <td>${format_number(thing.total_clicks)}</td>
+    <td>--</td>
+    % if thing.total_impressions != 0:
+    <td>${format_number(thing.total_ctr)}%</td>
+    % else:
+    <td>--</td>
+    % endif
+  </tr>
+  </tfoot>
+  </table>
+
+  % if thing.is_preliminary:
+  <p class="totals-are-preliminary">* ${_("totals are preliminary until 24 hours after the end of the promotion.")}</p>
+  % endif
+</%def>

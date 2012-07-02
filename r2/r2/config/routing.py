@@ -53,6 +53,8 @@ def make_map():
     mc('/rules', controller='front', action='rules')
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
+    mc('/traffic/languages/:langcode', controller='front', action='lang_traffic', langcode='')
+    mc('/traffic/adverts/:code', controller='front', action='advert_traffic', code='')
     mc('/account-activity', controller='front', action='account_activity')
 
     mc('/about/message/:where', controller='message', action='listing')

@@ -61,19 +61,19 @@ clean_pyx:
 
 #################### i18n
 STRINGS_FILE := r2/lib/strings.py
-RAND_STRINGS_FILE := r2/lib/rand_strings.py
+GENERATED_STRINGS_FILE := r2/lib/generated_strings.py
 POTFILE := $(I18NPATH)/r2.pot
 
 .PHONY: i18n clean_i18n
 
-i18n: $(RAND_STRINGS_FILE)
+i18n: $(GENERATED_STRINGS_FILE)
 	$(PYTHON) setup.py extract_messages -o $(POTFILE)
 
-$(RAND_STRINGS_FILE): $(STRINGS_FILE)
-	paster run standalone $(STRINGS_FILE) -c "print_rand_strings()" > $(RAND_STRINGS_FILE)
+$(GENERATED_STRINGS_FILE): $(STRINGS_FILE)
+	paster run standalone $(STRINGS_FILE) -c "generate_strings()" > $(GENERATED_STRINGS_FILE)
 
 clean_i18n:
-	rm -f $(RAND_STRINGS_FILE)
+	rm -f $(GENERATED_STRINGS_FILE)
 
 #################### ini files
 UPDATE_FILES := $(wildcard *.update)

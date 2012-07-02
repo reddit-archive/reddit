@@ -28,6 +28,7 @@ from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Commen
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models.oauth2 import OAuth2Client
+from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
 from r2.config import cache
@@ -40,7 +41,6 @@ from pylons import c, request, g
 from pylons.controllers.util import abort
 
 from r2.lib import promote
-from r2.lib.traffic import load_traffic, load_summary
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
@@ -49,7 +49,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
-from r2.lib.utils import link_duplicates, make_offset_date, to_csv, median, to36
+from r2.lib.utils import link_duplicates, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil
 from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
@@ -60,7 +60,7 @@ from r2.lib.utils import trunc_string as _truncate
 from r2.lib.filters import safemarkdown
 
 import sys, random, datetime, calendar, simplejson, re, time
-import graph, pycountry, time
+import pycountry, time
 from itertools import chain
 from urllib import quote
 
@@ -2896,32 +2896,6 @@ class BannedList(UserList):
     def user_ids(self):
         return c.site.banned
 
-class TrafficViewerList(UserList):
-    """Traffic share list on /traffic/*"""
-    destination = "traffic_viewer"
-    remove_action = "rm_traffic_viewer"
-    type = 'traffic'
-
-    def __init__(self, link, editable = True):
-        self.link = link
-        UserList.__init__(self, editable = editable)
-
-    @property
-    def form_title(self):
-        return _('share traffic')
-
-    @property
-    def table_title(self):
-        return _('current viewers')
-
-    def user_ids(self):
-        return promote.traffic_viewers(self.link)
-
-    @property
-    def container_name(self):
-        return self.link._fullname
-
-
 
 class DetailsPage(LinkInfoPage):
     extension_handling= False
@@ -3042,7 +3016,8 @@ class PromoteLinkForm(Templated):
             self.now = promote.promo_datetime_now().date()
             start_date = promote.promo_datetime_now(offset = -14).date()
             end_date = promote.promo_datetime_now(offset = 14).date()
-            self.promo_traffic = dict(load_traffic('day', 'promos'))
+
+            self.promo_traffic = dict(promote.traffic_totals())
             self.market, self.promo_counter = \
                 Promote_Graph.get_market(None, start_date, end_date)
 
@@ -3226,270 +3201,6 @@ class MediaEmbedBody(CachedTemplate):
         res = CachedTemplate.render(self, *a, **kw)
         return responsive(res, True)
 
-class Traffic(Templated):
-    @staticmethod
-    def slice_traffic(traffic, *indices):
-        return [[a] + [b[i] for i in indices] for a, b in traffic]
-
-
-class PromotedTraffic(Traffic):
-    """
-    Traffic page for a promoted link, including 2 graphs (one for
-    impressions and one for clicks with uniques on each plotted in
-    multiy format) and a table of the data.
-    """
-    def __init__(self, thing):
-        # TODO: needs a fix for multiple campaigns
-        self.thing = thing
-        d = until = None
-        self.traffic = []
-        if thing.campaigns:
-            d = min(sd.date() if isinstance(sd, datetime.datetime) else sd
-                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
-                     if trans_id)
-            until = max(ed.date() if isinstance(ed, datetime.datetime) else ed
-                     for sd, ed, bid, sr, trans_id in thing.campaigns.values()
-                     if trans_id)
-            now = datetime.datetime.now(g.tz).date()
-
-            # the results are preliminary until 1 day after the promotion ends
-            self.preliminary = (until + datetime.timedelta(1) > now)
-            self.traffic = load_traffic('hour', "thing", thing._fullname,
-                                        start_time = d, stop_time = until)
-            # TODO: ditch uniques and just sum the hourly values
-            self.totals = load_traffic('day', "thing", thing._fullname)
-            # generate a list of
-            # (uniq impressions, # impressions, uniq clicks, # clicks)
-            if self.totals:
-                self.totals = map(sum, zip(*zip(*self.totals)[1]))
-
-        imp = self.slice_traffic(self.traffic, 0, 1)
-
-        if len(imp) > 2:
-            imp_total = sum(x[2] for x in imp)
-            if self.totals:
-                self.totals[1] = max(self.totals[1], imp_total)
-            imp_total = format_number(imp_total)
-            self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
-                                          title = ("recent impressions (%s total)" %
-                                                   imp_total))
-            cli = self.slice_traffic(self.traffic, 2, 3)
-            cli_total = sum(x[2] for x in cli)
-            if self.totals:
-                self.totals[3] = max(self.totals[3], cli_total)
-            cli_total = format_number(cli_total)
-            self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
-                                          title = ("recent clicks (%s total)" %
-                                                   cli_total))
-
-        else:
-            self.imp_graph = self.cli_graph = None
-
-        editable = c.user_is_sponsor or c.user._id == thing.author_id
-        self.viewers = TrafficViewerList(thing, editable = editable)
-        Templated.__init__(self)
-
-    def to_iter(self, localize = True, total = False):
-        locale = c.locale
-        def num(x):
-            if localize:
-                return format_number(x, locale)
-            return str(x)
-        def row(label, data):
-            uimp, nimp, ucli, ncli = data
-            return (label,
-                   num(uimp), num(nimp), num(ucli), num(ncli),
-                   ("%.2f%%" % (float(100*ucli) / uimp)) if uimp else "--.--%", 
-                   ("%.2f%%" % (float(100*ncli) / nimp)) if nimp else "--.--%")
-
-        for date, data in self.traffic:
-            yield row(date.strftime("%Y-%m-%d %H:%M"), data)
-        if total:
-            yield row("total", self.totals)
-
-
-    def as_csv(self):
-        return to_csv(self.to_iter(localize = False, total = True))
-
-class RedditTraffic(Traffic):
-    """
-    fetches hourly and daily traffic for the current reddit.  If the
-    current reddit is a default subreddit, fetches the site-wide
-    uniques and includes monthly totals.  In this latter case, getter
-    methods are available for computing breakdown of site trafffic by
-    reddit.
-    """
-    def __init__(self):
-        self.has_data = False
-        ivals = ["hour", "day", "month"]
-
-        for ival in ivals:
-            if c.default_sr:
-                data = load_traffic(ival, "total", "")
-            else:
-                data = load_traffic(ival, "reddit", c.site.name)
-            if not data:
-                break
-            slices = [("uniques",     (0, 2) if c.site.domain else (0,),
-                       "FF4500"),
-                      ("impressions", (1, 3) if c.site.domain else (1,),
-                       "336699")]
-            if not c.default_sr and ival == 'day':
-                slices.append(("subscriptions", (4,), "00FF00"))
-            setattr(self, ival + "_data", data)
-            for name, indx, color in slices:
-                data2 = self.slice_traffic(data, *indx)
-                setattr(self, name + "_" + ival + "_chart", data2)
-                title = "%s by %s" % (name, ival)
-                res = TrafficGraph(data2, colors = [color], title = title)
-                setattr(self, name + "_" + ival, res)
-        else:
-            self.has_data = True
-        if self.has_data:
-            imp_by_day = [[] for i in range(7)]
-            uni_by_day = [[] for i in range(7)]
-            if c.site.domain:
-                dates, imps, foo    = zip(*self.impressions_day_chart)
-                dates, uniques, foo = zip(*self.uniques_day_chart)
-            else:
-                dates, imps    = zip(*self.impressions_day_chart)
-                dates, uniques = zip(*self.uniques_day_chart)
-            self.uniques_mean     = sum(map(float, uniques))/len(uniques)
-            self.impressions_mean = sum(map(float, imps))/len(imps)
-            for i, d in enumerate(dates):
-                imp_by_day[d.weekday()].append(float(imps[i]))
-                uni_by_day[d.weekday()].append(float(uniques[i]))
-            self.uniques_by_dow     = [sum(x)/max(len(x),1)
-                                       for x in uni_by_day]
-            self.impressions_by_dow = [sum(x)/max(len(x),1)
-                                       for x in imp_by_day]
-        Templated.__init__(self)
-
-    def reddits_summary(self):
-        if c.default_sr:
-            data = map(list, load_summary("reddit"))
-            data.sort(key = lambda x: x[1][1], reverse = True)
-            for d in data:
-                name = d[0]
-                for sr in (Friends, All, Sub, DefaultSR()):
-                    if name == sr.name:
-                        name = sr
-                        break
-                else:
-                    try:
-                        name = Subreddit._by_name(name)
-                    except NotFound:
-                        name = DomainSR(name)
-                d[0] = name
-            return data
-        return res
-
-    def monthly_summary(self):
-        """
-        Convenience method b/c it is bad form to do this much math
-        inside of a template.b
-        """
-        res = []
-        if c.default_sr:
-            data = self.month_data
-
-            # figure out the mean number of users last month, 
-            # unless today is the first and there is no data
-            days = self.day_data
-            now = datetime.datetime.utcnow()
-            if now.day != 1:
-                # project based on traffic so far
-                # totals are going to be up to yesterday
-                month_len = calendar.monthrange(now.year, now.month)[1]
-
-                lastmonth = datetime.datetime.utcnow().month
-                lastmonthyear = datetime.datetime.utcnow().year
-                if lastmonth == 1:
-                    lastmonthyear -= 1
-                    lastmonth = 1
-                else:
-                    lastmonth = (lastmonth - 1) if lastmonth != 1 else 12
-                # length of last month
-                lastmonthlen = calendar.monthrange(lastmonthyear, lastmonth)[1]
-    
-                lastdays = filter(lambda x: x[0].month == lastmonth, days) 
-                thisdays = filter(lambda x: x[0].month == now.month, days) 
-                user_scale = 0
-                if lastdays:
-                    last_mean = (sum(u for (d, (u, v)) in lastdays) / 
-                                 float(len(lastdays)))
-                    day_mean = (sum(u for (d, (u, v)) in thisdays) / 
-                                float(len(thisdays)))
-                    if last_mean and day_mean:
-                        user_scale = ( (day_mean * month_len) /
-                                       (last_mean * lastmonthlen) )
-            last_month_users = 0
-            locale = c.locale
-            for x, (date, d) in enumerate(data):
-                res.append([("date", date.strftime("%Y-%m")),
-                            ("", format_number(d[0], locale)),
-                            ("", format_number(d[1], locale))])
-                last_d = data[x-1][1] if x else None
-                for i in range(2):
-                    # store last month's users for this month's projection
-                    if x == len(data) - 2 and i == 0:
-                        last_month_users = d[i]
-                    if x == 0:
-                        res[-1].append(("",""))
-                    # project, unless today is the first of the month
-                    elif x == len(data) - 1 and now.day != 1:
-                        # yesterday
-                        yday = (datetime.datetime.utcnow()
-                                -datetime.timedelta(1)).day
-                        if i == 0:
-                            scaled = int(last_month_users * user_scale)
-                        else:
-                            scaled = float(d[i] * month_len) / yday
-                        res[-1].append(("gray",
-                                        format_number(scaled, locale)))
-                    elif last_d and d[i] and last_d[i]:
-                        f = 100 * (float(d[i])/last_d[i] - 1)
-
-                        res[-1].append(("up" if f > 0 else "down", 
-                                        "%5.2f%%" % f))
-        return res
-
-class TrafficGraph(Templated):
-    def __init__(self, data, width = 300, height = 175,
-                 bar_fmt = True, colors = ("FF4500", "336699"), title = '',
-                 ylabels = [], multiy = True):
-        # fallback on google charts
-        chart = graph.LineGraph(data[:72], colors = colors)
-        self.gc = chart.google_chart(ylabels = ylabels, multiy = multiy, title = title)
-
-        xdata = []
-        ydata = []
-        for d in data:
-            xdata.append(time.mktime(d[0].timetuple())*1000)
-            ydata.append(d[1:])
-        ydata = zip(*ydata)
-        self.colors = colors
-        self.title = title
-
-        if bar_fmt:
-            xdata = graph.DataSeries(xdata).toBarX()
-
-        if ydata and not isinstance(ydata[0], (list, tuple)):
-            if bar_fmt:
-                ydata = graph.DataSeries(ydata).toBarY()
-            self.data = [zip(xdata, ydata)]
-        else:
-            self.data = []
-            for ys in ydata:
-                if bar_fmt:
-                    ys = graph.DataSeries(ys).toBarY()
-                self.data.append(zip(xdata, ys))
-
-        self.width = width
-        self.height = height
-        Templated.__init__(self)
-
-
 class RedditAds(Templated):
     def __init__(self, **kw):
         self.sr_name = c.site.name
@@ -3572,6 +3283,10 @@ class Promotion_Summary(Templated):
         emailer.send_html_email(to_addr, g.feedback_email,
                                 "Self-serve promotion summary for last %d days"
                                 % ndays, p.render('email'))
+
+
+def force_datetime(d):
+    return datetime.datetime.combine(d, datetime.time())
 
 
 class Promote_Graph(Templated):
@@ -3665,84 +3380,43 @@ class Promote_Graph(Templated):
                 else:
                     break
 
-        # load recent traffic as well:
-        self.recent = {}
-        #TODO 
-        for k, v in []:#load_summary("thing"):
-            if k.startswith('t%d_' % Link._type_id):
-                self.recent[k] = v
-
-        if self.recent:
-            link_listing = wrap_links(self.recent.keys())
-            for t in link_listing:
-                self.recent[t._fullname].insert(0, t)
-
-            self.recent = self.recent.values()
-            self.recent.sort(key = lambda x: x[0]._date)
-
         pool =PromotionWeights.bid_history(promote.promo_datetime_now(offset=-30),
                                            promote.promo_datetime_now(offset=2))
-        if pool:
-            # we want to generate a stacked line graph, so store the
-            # bids and the total including refunded amounts
-            total_sale = sum((b-r) for (d, b, r) in pool)
-            total_refund = sum(r for (d, b, r) in pool)
-            
-            self.money_graph = TrafficGraph([(d, b, r) for (d, b, r) in pool],
-                                            colors = ("008800", "FF0000"),
-                                            ylabels = ['total ($)'],
-                                            title = ("monthly sales ($%.2f charged, $%.2f credits)" %
-                                                     (total_sale, total_refund)),
-                                            multiy = False)
-
-            #TODO
-            self.top_promoters = []
-        else:
-            self.money_graph = None
-            self.top_promoters = []
 
         # graphs of impressions and clicks
-        self.promo_traffic = load_traffic('day', 'promos')
+        self.promo_traffic = promote.traffic_totals()
 
         impressions = [(d, i) for (d, (i, k)) in self.promo_traffic]
         pool = dict((d, b+r) for (d, b, r) in pool)
 
         if impressions:
-            self.imp_graph = TrafficGraph(impressions, ylabels = ['total'],
-                                          title = "impressions")
-
-            clicks = [(d, k) for (d, (i, k)) in self.promo_traffic]
-
-            CPM = [(d, (pool.get(d, 0) * 1000. / i) if i else 0)
+            CPM = [(force_datetime(d), (pool.get(d, 0) * 1000. / i) if i else 0)
                    for (d, (i, k)) in self.promo_traffic if d in pool]
-
-            CPC = [(d, (100 * pool.get(d, 0) / k) if k else 0)
-                   for (d, (i, k)) in self.promo_traffic if d in pool]
-
-            CTR = [(d, (100 * float(k) / i if i else 0))
-                   for (d, (i, k)) in self.promo_traffic if d in pool]
-
-            self.cli_graph = TrafficGraph(clicks, ylabels = ['total'],
-                                          title = "clicks")
             mean_CPM = sum(x[1] for x in CPM) * 1. / max(len(CPM), 1)
-            self.cpm_graph = TrafficGraph([(d, min(x, mean_CPM*2)) for d, x in CPM],
-                                          colors = ["336699"], ylabels = ['CPM ($)'],
-                                          title = "cost per 1k impressions " + 
-                                          "($%.2f average)" % mean_CPM)
 
+            CPC = [(force_datetime(d), (100 * pool.get(d, 0) / k) if k else 0)
+                   for (d, (i, k)) in self.promo_traffic if d in pool]
             mean_CPC = sum(x[1] for x in CPC) * 1. / max(len(CPC), 1)
-            self.cpc_graph = TrafficGraph([(d, min(x, mean_CPC*2)) for d, x in CPC],
-                                          colors = ["336699"], ylabels = ['CPC ($0.01)'],
-                                          title = "cost per click " + 
-                                          "($%.2f average)" % (mean_CPC/100.))
 
-            self.ctr_graph = TrafficGraph(CTR, colors = ["336699"], ylabels = ['CTR (%)'],
-                                          title = "click through rate")
+            cpm_title = _("cost per 1k impressions ($%(avg).2f average)") % dict(avg=mean_CPM)
+            cpc_title = _("cost per click ($%(avg).2f average)") % dict(avg=mean_CPC/100.)
 
+            data = traffic.zip_timeseries(((d, (min(v, mean_CPM * 2),)) for d, v in CPM),
+                                          ((d, (min(v, mean_CPC * 2),)) for d, v in CPC))
+
+            from r2.lib.pages.trafficpages import COLORS  # not top level because of * imports :(
+            self.performance_table = TimeSeriesChart("promote-graph-table",
+                                                     _("historical performance"),
+                                                     "day",
+                                                     [dict(color=COLORS.DOWNVOTE_BLUE,
+                                                           title=cpm_title,
+                                                           shortname=_("CPM")),
+                                                      dict(color=COLORS.DOWNVOTE_BLUE,
+                                                           title=cpc_title,
+                                                           shortname=_("CPC"))],
+                                                     data)
         else:
-            self.imp_graph = self.cli_graph = None
-            self.cpc_graph = self.cpm_graph = None
-            self.ctr_graph = None
+            self.performance_table = None
 
         self.promo_traffic = dict(self.promo_traffic)
 
@@ -3766,9 +3440,6 @@ class Promote_Graph(Templated):
                    num(link._ups - link._downs), 
                    "$%.2f" % link.promote_bid,
                    _force_unicode(link.title))
-
-    def as_csv(self):
-        return to_csv(self.to_iter(localize = False))
 
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):
@@ -3904,3 +3575,17 @@ class ApiHelp(Templated):
 
 class RulesPage(Templated):
     pass
+
+class TimeSeriesChart(Templated):
+    def __init__(self, id, title, interval, columns, rows,
+                 latest_available_data=None, classes=[]):
+        self.id = id
+        self.title = title
+        self.interval = interval
+        self.columns = columns
+        self.rows = rows
+        self.latest_available_data = (latest_available_data or
+                                      datetime.datetime.utcnow())
+        self.classes = " ".join(classes)
+
+        Templated.__init__(self)

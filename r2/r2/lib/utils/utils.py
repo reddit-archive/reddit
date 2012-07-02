@@ -1097,15 +1097,6 @@ def make_offset_date(start_date, interval, future = True,
         return start_date - timedelta(interval)
     return start_date
 
-def to_csv(table):
-    # commas and linebreaks must result in a quoted string
-    def quote_commas(x):
-        if ',' in x or '\n' in x:
-            return u'"%s"' % x.replace('"', '""')
-        return x
-    return u"\n".join(u','.join(quote_commas(y) for y in x)
-                      for x in table)
-
 def in_chunks(it, size=25):
     chunk = []
     it = iter(it)

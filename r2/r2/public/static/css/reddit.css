@@ -3821,46 +3821,97 @@ ul.tabmenu.formtab {
     }
 
 /***traffic stuff***/
-.traffic-table {margin: 10px 20px; }
+.traffic-table,
+.traffic-tables-side fieldset {
+    margin: 1.5em 2em;
+    font-size: small;
+    border: 0;
+}
+
+.traffic-table caption,
+.traffic-tables-side fieldset legend{
+    font-weight: bold;
+    text-align: left;
+    font-size: medium;
+    font-variant: small-caps;
+}
+
 .traffic-table a:hover { text-decoration: underline; }
-.traffic-table th { font-weight: bold; text-align: center;}
-.traffic-table th,
+.traffic-table thead th { font-weight: bold; text-align: center; padding-left: 2em;}
+.traffic-table thead th:first-child { text-align: left; padding-left: 0; }
+.traffic-table tbody th,
+.traffic-table tfoot th { text-align: left;}
 .traffic-table td { padding: 0 5px; }
 .traffic-table td { text-align: right; }
 
-.traffic-table td.up   { color: #FF8B60; }
-.traffic-table td.down { color: #336699; }
-.traffic-table td.gray { color: gray; font-style: italic; }
+.traffic-table tfoot tr { border-top: 1px solid black; }
+.traffic-table tfoot th,
+.traffic-table tfoot td { font-style: italic; }
 
 .traffic-table tr.max  { border: 2px solid #FF8B60; }
 .traffic-table tr.min  { border: 2px solid #336699; }
-.traffic-table tr.odd { background-color: #E0E0E0; }
+.traffic-table tbody tr:nth-child(even) { background-color: #E0E0E0; }
 .traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
 
-.traffic-table .prelim { font-style: italic; }
-.traffic-table .totals { font-style: italic; border-top: 1px solid black; }
-
-.traffic-graph {
-    padding: 10px; 
-    border: 1px solid #B0B0B0; 
-    margin-left: 10px;
-    margin-bottom: 10px;
-    display: inline-block;
+.traffic-tables-side {
+    float: left;
+    min-height: 50em;
 }
-.traffic-graph .title { 
+
+#promote-graph-table,
+#traffic-hour {
+    display: none;
+}
+
+div.timeseries {
+    padding: 10px;
+    border: 1px solid #B0B0B0;
+    margin: 10px 10px;
+    display: inline-block;
     text-align: center;
 }
+.timeseries-placeholder {
+    width: 350px;
+    height: 200px;
+    font-family: verdana;
+    font-size: small;
+}
+div.timeseries span.title {
+    font-weight: bold;
+    font-size: medium;
+    font-variant: small-caps;
+}
 
-.promoted-traffic h1 { 
-    border: none;
-    margin-bottom: 10px; 
+#timeseries-unprocessed {
+    font-size: small;
+    font-weight: bold;
+    color: #900;
+    margin: 1em 0;
+    max-width: 60em;
+}
+
+.timeseries-tablebar {
+    height: 5px;
+    margin: 1px 0;
 }
 
 .promoted-traffic .usertable {  margin-left: 0px;  }
 
-.promoted-traffic h1 a { 
+.promoted-traffic h1 a {
     font-size: small;
-    margin-left: 10px; 
+    margin-left: 10px;
+}
+
+.promoted-traffic tfoot th,
+.promoted-traffic tfoot td {
+    font-style: normal;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding-top: .3em;
+}
+
+p.totals-are-preliminary {
+    margin-left: 10px;
 }
 
 .award-square-container {

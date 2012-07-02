@@ -189,6 +189,13 @@ def time_range(interval):
     return start_time, stop_time
 
 
+def points_for_interval(interval):
+    """Calculate the number of data points to render for a given interval."""
+    range = time_range_by_interval[interval]
+    interval = timedelta_by_name(interval)
+    return range.total_seconds() / interval.total_seconds()
+
+
 def make_history_query(cls, interval):
     """Build a generic query showing the history of a given aggregate."""
 

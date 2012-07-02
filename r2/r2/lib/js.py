@@ -300,8 +300,19 @@ module["sponsored"] = Module("sponsored.js",
     "sponsored.js"
 )
 
-module["flot"] = Module("jquery.flot.js",
-    "lib/jquery.flot.js"
+module["timeseries"] = Module("timeseries.js",
+    "lib/jquery.flot.js",
+    "lib/jquery.flot.time.js",
+    "timeseries.js",
+)
+
+module["timeseries-ie"] = Module("timeseries-ie.js",
+    "lib/excanvas.min.js",
+    module["timeseries"],
+)
+
+module["traffic"] = LocalizedModule("traffic.js",
+    "traffic.js",
 )
 
 def use(*names):

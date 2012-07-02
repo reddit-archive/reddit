@@ -33,6 +33,7 @@ import os.path
 from copy import copy
 import random
 import urlparse
+import calendar
 from pylons import g, c
 from pylons.i18n import _, ungettext
 from paste.util.mimeparse import desired_matches
@@ -530,3 +531,7 @@ def format_number(number, locale=None):
         locale = c.locale
 
     return babel.numbers.format_number(number, locale=locale)
+
+
+def js_timestamp(date):
+    return '%d' % (calendar.timegm(date.timetuple()) * 1000)

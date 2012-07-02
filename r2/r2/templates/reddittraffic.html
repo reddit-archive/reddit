@@ -21,241 +21,93 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import static, format_number
-   from r2.lib import js
-   from r2.models.subreddit import DomainSR, FakeSubreddit
-   locale = c.locale
-   def num(x):
-      return format_number(x, locale)
- %>
+    import babel.dates
 
-${unsafe(js.use('flot'))}
+    from r2.lib import js
+    from r2.lib.strings import strings
+    from r2.lib.template_helpers import static, js_timestamp, format_number
 
-<%def name="daily_summary()">
-  <% 
-     thing.day_data = filter(None, thing.day_data)
-     umin = min(data[0] for date, data in thing.day_data)
-     if len(filter(lambda x: x[1][0] == umin, thing.day_data)) > 1:
-         umin = -1
-     umax = max(data[0] for date, data in filter(None, thing.day_data))
-   %>
-    <table class="traffic-table">
-      <tr>
-        %if c.site.domain:
-          <th></th>
-          <th colspan="2">total</th>
-          <th colspan="2">${c.site.domain}</th>
-        </tr><tr>
-          <th>${_("date")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-          <th>${_("subscriptions")}</th>
-        %else:
-          <th>${_("date")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-          %if not c.default_sr:
-            <th>${_("subscriptions")}</th>
-          %endif
-          </tr>
-        %endif
-      </tr>
-      %for x, (date, data) in enumerate(thing.day_data):
-      <tr class="${'odd' if x % 2 else 'even'} ${'max' if data[0] == umax else 'min' if data[0] == umin else ''}">
-          <td>${date.strftime("%Y-%m-%d")}</td>
-          <%
-             indx = range(5) if c.site.domain else \
-                [0,1,4] if not c.default_sr else [0,1]
-           %>
-          %for i in indx:
-            <td>${num(data[i]) if data[i] else "-"}</td>
-          %endfor
-          ${bars(data[0], data[1])}
-        </tr>
-      %endfor
-    </table>
+    import babel.dates
+%>
+
+<%def name="load_timeseries_js()">
+  <!--[if lte IE 8]>
+  ${unsafe(js.use('timeseries-ie'))}
+  <![endif]-->
+  <!--[if !(lte IE 8)]><!-->
+  ${unsafe(js.use('timeseries'))}
+  <!--<![endif]-->
 </%def>
 
-<%def name="weekly_summary()">
-    <table class="traffic-table">
-      <tr>
-        <th colspan="3">Weekly summary</th>
-      </tr>
-      <tr>
-        <th>${_("date")}</th>
-        <th>${_("uniques")}</th>
-        <th>${_("impressions")}</th>
-      </tr>
-      <%
-         dow = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
-         "Saturday", "Sunday"]
-       %>
-      %for i, (uni, imp) in enumerate(zip(thing.uniques_by_dow, thing.impressions_by_dow)):
-        <tr class="${'odd' if i % 2 else 'even'}">
-          <td>${dow[i]}</td>
-          <td>${num(int(uni))}</td>
-          <td>${num(int(imp))}</td>
-          ${bars(uni, imp)}
-        </tr>
-      %endfor
-      <tr class="mean">
-        <td>${_("Daily Mean")}</td>
-        <td>${num(int(thing.uniques_mean))}</td>
-        <td>${num(int(thing.impressions_mean))}</td>
-      </tr>
-    </table>
-</%def>
+% if thing.place:
+<h1>${_("traffic statistics for %(place)s") % dict(place=thing.place)}</h1>
+% endif
 
-<h1>Traffic for ${c.site.name}</h1>
+${self.preamble()}
 
-<p>
-  Below are the traffic stats for your reddit.  Each graph represents one of the following over the interval specified
-</p>
-<ul style="margin:7px">
-  <li>
-    <b>pageviews</b> &#32;are all hits to ${c.site.name}, including both listing pages and comment pages.
-  </li>
-  <li>
-    <b>uniques</b> &#32;are the total number of unique visitors (IP and U/A combo) that generate the above pageviews. This is independent of whether or not they are logged in.
-  </li>
-  <li>
-    <b>subscriptions</b> &#32;is the number of new subscriptions in a given day that have been generated. This number is less accurate than the first two metrics, as, though we can track new subscriptions, we have no way to track unsubscriptions (which are when a subscription is actually deleted from the db).
-  </li>
-</ul>
-<p>
-  Note: there are a couple of places outside of your reddit where someone can click "subscribe", so it is possible (though unlikely) that the subscription count can exceed the unique count on a given day.
+<p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
+% if thing.traffic_lag.total_seconds() > 10800:
+${strings.traffic_processing_slow % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+% else:
+${strings.traffic_processing_normal % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+% endif
 </p>
 
-%if not thing.has_data:
-  <p class="error">
-   ${_("There doesn't seem to be any traffic data at the moment.  Please check back later.")}
-  </p>
-%else:
-  <table>
-    <tr>
-      <td>
-        ${thing.uniques_hour}
-      </td>
-      <td>
-        ${thing.impressions_hour}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        ${thing.uniques_day}
-      </td>
-      <td>
-        ${thing.impressions_day}
-      </td>
-    </tr>
-    <tr>
-      <td>
-          ${thing.uniques_month}
-      </td>
-      <td>
-        ${thing.impressions_month}
-      </td>
-    </tr>
-    %if not c.default_sr:
-    <tr>
-      <td>
-        ${thing.subscriptions_day}
-      </td>
-      <td>
-      </td>
-    </tr>
-    %endif
-  </table>
+<div id="charts"></div>
 
-  <div style="float:left">
-    ${weekly_summary()}
-   %if c.default_sr:
-    ${daily_summary()}
-   %endif
-  </div>
+<div class="traffic-tables-side">
+${self.sidetables()}
+</div>
 
-  %if c.default_sr:
-    <% data = thing.monthly_summary() %>
-    <table class="traffic-table">
-      <tr>
-          <th colspan="3">Monthly data</th>
-        </tr>
-        <tr>
-          <th>${_("date")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-        </tr>
-        %for i, d in enumerate(reversed(data)):
-          <tr class="${'odd' if i % 2 else 'even'}">
-            %for cls, x in d:
-              <td class="${cls}">${x}</td>
-            %endfor
-          </tr>
-        %endfor
-      </table>
-      <table class="traffic-table">
-        <tr>
-          <th></th>
-          <th colspan="2">total</th>
-          <th colspan="2">${_("cnamed")}</th>
-        </tr>
-        <tr>
-          <th>${_("date")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-          <th>${_("uniques")}</th>
-          <th>${_("impressions")}</th>
-          <th>${_("cname")}</th>
-        </tr>
-        %for i, (sr, d) in enumerate(thing.reddits_summary()):
-          <tr class="${'odd' if i % 2 else 'even'}">
-            
-            <td 
-               %if isinstance(sr, FakeSubreddit):
-                 style="font-style: left; text-align: left"
-               %else:
-                 style="font-weight:bold; text-align: left"
-               %endif
-               >
-              %if isinstance(sr, DomainSR):
-                <a href="${sr.path}">[domain:${sr.name}]</a>
-              %elif isinstance(sr, FakeSubreddit):
-                <a href="${sr.path}">[meta:${sr.name}]</a>
-              %else:
-                <a href="${sr.path}about/traffic">${sr.name}</a>
-              %endif
-              </a>
-            </td>
-            %for x in d:
-              <td>${num(x) if x else "--"}</td>
-            %endfor
-            <td>
-            %if not isinstance(sr, FakeSubreddit) and sr.domain:
-              <a href="http://${sr.domain}/">${sr.domain}</a>
-            %endif
-            </td>
-          </tr>
-        %endfor
-      </table>
-    %else:
-      ${daily_summary()}
-    %endif
-%endif
+<div class="traffic-tables">
+${self.tables()}
+</div>
 
+<script type="text/javascript">
+  r.timeseries.init()
+</script>
 
+<%def name="preamble()" />
 
-<%def name="bars(uni, imp)">
+<%def name="sidetables()">
   <%
-     wid_uni = int(50 * min(2, float(uni)/max(thing.uniques_mean, 1)))
-     wid_imp = int(50 * min(2, float(imp)/max(thing.impressions_mean,1)))
-   %>
-  <td>
-    <div style="height:4px; width:${wid_imp}px; background-color:#336699; margin-bottom:1px">
-    </div>
-    <div style="height:4px; width:${wid_uni}px; background-color:#FF4500">
-    </div>
-  </td>
+    day_names = babel.dates.get_day_names(locale=c.locale)
+  %>
+
+  % if thing.dow_summary:
+  <table class="traffic-table">
+  <caption>${_("traffic by day of week")}</caption>
+  <thead>
+  <tr>
+    <th scope="col">${_("day")}</th>
+    <th scope="col">${_("uniques")}</th>
+    <th scope="col">${_("pageviews")}</th>
+  </tr>
+  </thead>
+  <tbody>
+  % for date, cols in thing.dow_summary:
+  <tr>
+    <th scope="row">${day_names[date.weekday()]}</th>
+    % for col in cols:
+    <td>${format_number(col)}</td>
+    % endfor
+  </tr>
+  % endfor
+  </tbody>
+  <tfoot>
+  <tr>
+    <th scope="row">${_("daily mean")}</th>
+    % for col in thing.dow_means:
+    <td>${format_number(col)}</td>
+    % endfor
+  </tr>
+  </tfoot>
+  </table>
+  % endif
 </%def>
 
+<%def name="tables()">
+  % for table in thing.tables:
+  ${table}
+  % endfor
+</%def>
