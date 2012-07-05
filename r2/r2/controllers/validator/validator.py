@@ -77,6 +77,7 @@ class Validator(object):
 
         self.default = default
         self.post, self.get, self.url = post, get, url
+        self.has_errors = False
 
     def set_error(self, error, msg_params = {}, field = False):
         """
@@ -87,6 +88,7 @@ class Validator(object):
             field = self.param
 
         c.errors.add(error, msg_params = msg_params, field = field)
+        self.has_errors = True
 
     def param_docs(self):
         param_info = {}
@@ -1622,6 +1624,24 @@ class ValidAddress(Validator):
             country = pycountry.countries.get(alpha2=country)
             if country.name not in self.allowed_countries:
                 self.set_error(_("Our ToS don't cover your country (yet). Sorry."), "country")
+
+        # Make sure values don't exceed max length defined in the authorize.net
+        # xml schema: https://api.authorize.net/xml/v1/schema/AnetApiSchema.xsd
+        max_lengths = [
+            (firstName, 50, 'firstName'), # (argument, max len, form field name)
+            (lastName, 50, 'lastName'),
+            (company, 50, 'company'),
+            (address, 60, 'address'),
+            (city, 40, 'city'),
+            (state, 40, 'state'),
+            (zipCode, 20, 'zip'),
+            (phoneNumber, 255, 'phoneNumber')
+        ]
+        for (arg, max_length, form_field_name) in max_lengths:
+            if arg and len(arg) > max_length:
+                self.set_error(_("max length %d characters" % max_length), form_field_name)
+
+        if not self.has_errors: 
             return Address(firstName = firstName,
                            lastName = lastName,
                            company = company or "",
