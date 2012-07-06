@@ -1725,7 +1725,7 @@ class ApiController(RedditController):
 
     @noresponse(VUser(),
                 VModhash(),
-                thing = VByName('id'))
+                thing = VByName('id', thing_cls=Link))
     @api_doc(api_section.links_and_comments)
     def POST_hide(self, thing):
         if not thing: return
