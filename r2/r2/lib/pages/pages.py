@@ -126,7 +126,7 @@ class Reddit(Templated):
     extension_handling = True
     enable_login_cover = True
     site_tracking      = True
-    show_firsttext     = True
+    show_infobar       = True
     content_id         = None
     css_class          = None
     extra_page_classes = None
@@ -164,7 +164,7 @@ class Reddit(Templated):
             if g.domain_prefix:
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
-        if self.show_firsttext and not infotext:
+        if self.show_infobar and not infotext:
             if g.heavy_load_mode:
                 # heavy load mode message overrides read only
                 infotext = strings.heavy_load_msg
@@ -635,7 +635,7 @@ class RedditMin(Reddit):
        etc"""
     footer       = False
     show_sidebar = False
-    show_firsttext = False
+    show_infobar = False
 
     def page_classes(self):
         return ('min-body',)

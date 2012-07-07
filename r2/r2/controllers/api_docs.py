@@ -202,5 +202,5 @@ class ApidocsController(RedditController):
             ),
             css_class="api-help",
             show_sidebar=False,
-            show_firsttext=False
+            show_infobar=False
         ).render()
