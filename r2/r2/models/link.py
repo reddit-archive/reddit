@@ -1247,6 +1247,7 @@ class Click(Relation(Account, Link)): pass
 
 class SimpleRelation(tdb_cassandra.Relation):
     _use_db = False
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
     def _create(cls, user, link, write_consistency_level = None):
