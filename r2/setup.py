@@ -94,6 +94,7 @@ setup(
         "python-statsd",
         "snudown",
         "l2cs",
+        "lxml",
     ],
     dependency_links=[
         "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
