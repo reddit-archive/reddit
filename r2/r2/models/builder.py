@@ -474,9 +474,9 @@ class SearchBuilder(IDBuilder):
 
         self.start_time = time.time()
 
-        search = self.query.run()
-        names = list(search.docs)
-        self.total_num = search.hits
+        self.results = self.query.run()
+        names = list(self.results.docs)
+        self.total_num = self.results.hits
 
         after = self.after._fullname if self.after else None
 

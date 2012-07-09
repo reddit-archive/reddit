@@ -672,8 +672,8 @@ class FrontController(RedditController):
         query = "(and %s timestamp:%s..%s)" % (query, start, end)
         q = SearchQuery(query, raw_sort="-text_relevance",
                         syntax="cloudsearch")
-        num, t, pane = self._search(q, num=num, after=after, reverse=reverse,
-                                    count=count)
+        pane = self._search(q, num=num, after=after, reverse=reverse,
+                            count=count)[2]
 
         return LinkInfoPage(link=article, content=pane,
                             subtitle=_('related')).render()
@@ -705,14 +705,14 @@ class FrontController(RedditController):
         """Search reddits by title and description."""
         q = SubredditSearchQuery(query)
 
-        num, t, spane = self._search(q, num=num, reverse=reverse,
-                                     after=after, count=count,
-                                     skip_deleted_authors=False)
+        results, etime, spane = self._search(q, num=num, reverse=reverse,
+                                            after=after, count=count,
+                                            skip_deleted_authors=False)
         
         res = SubredditsPage(content=spane,
                              prev_search=query,
-                             elapsed_time=t,
-                             num_results=num,
+                             elapsed_time=etime,
+                             num_results=results.hits,
                              # update if we ever add sorts
                              search_params={},
                              title=_("search results"),
@@ -747,8 +747,9 @@ class FrontController(RedditController):
             cleanup_message = None
             try:
                 q = SearchQuery(query, site, sort, syntax=syntax)
-                num, t, spane = self._search(q, num=num, after=after, 
-                                             reverse = reverse, count = count)
+                results, etime, spane = self._search(q, num=num, after=after,
+                                                     reverse=reverse,
+                                                     count=count)
             except InvalidQuery:
                 # strip the query down to a whitelist
                 cleaned = re.sub("[^\w\s]+", " ", query)
@@ -756,12 +757,14 @@ class FrontController(RedditController):
 
                 # if it was nothing but mess, we have to stop
                 if not cleaned.strip():
-                    num, t, spane = 0, 0, []
+                    results, etime, spane = 0, 0, []
                     cleanup_message = strings.completely_invalid_search_query
                 else:
                     q = SearchQuery(cleaned, site, sort)
-                    num, t, spane = self._search(q, num=num, after=after,
-                                                 reverse=reverse, count=count)
+                    results, etime, spane = self._search(q, num=num,
+                                                         after=after,
+                                                         reverse=reverse,
+                                                         count=count)
                     cleanup_message = strings.invalid_search_query % {
                                           "clean_query": cleaned
                                       }
@@ -770,14 +773,17 @@ class FrontController(RedditController):
                                                           self.search_help_page
                                                           }
             
-            res = SearchPage(_('search results'), query, t, num, content=spane,
+            res = SearchPage(_('search results'), query, etime, results.hits,
+                             content=spane,
                              nav_menus=[SearchSortMenu(default=sort)],
                              search_params=dict(sort=sort),
                              infotext=cleanup_message,
                              simple=False, site=c.site,
                              restrict_sr=restrict_sr,
                              syntax=syntax,
-                             converted_data=q.converted_data
+                             converted_data=q.converted_data,
+                             facets=results.subreddit_facets,
+                             sort=sort,
                              ).render()
 
             return res
@@ -805,7 +811,7 @@ class FrontController(RedditController):
             return self.search_fail(e)
         timing = time_module.time() - builder.start_time
 
-        return builder.total_num, timing, res
+        return builder.results, timing, res
 
     @validate(VAdmin(),
               comment = VCommentByID('comment_id'))

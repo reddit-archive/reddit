@@ -513,6 +513,18 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     attrs.append( (priority, symbol, cssclass, label, link, img) )
 
 
+def search_url(query, subreddit, restrict_sr="off", sort=None):
+    import urllib
+    url_query = {"q": query}
+    if restrict_sr:
+        url_query["restrict_sr"] = restrict_sr
+    if sort:
+        url_query["sort"] = sort
+    path = "/r/%s/search?" % subreddit if subreddit else "/search?"
+    path += urllib.urlencode(url_query)
+    return path
+
+
 def format_number(number, locale=None):
     if not locale:
         locale = c.locale

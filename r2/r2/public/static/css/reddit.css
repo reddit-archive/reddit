@@ -1813,6 +1813,29 @@ label + #moresearchinfo {
     text-decoration: underline;
 }
 
+.searchfacets {
+  overflow: auto;
+  font-size: small;
+}
+
+.searchfacets.title {
+  margin: 5px;
+}
+
+.searchfacets.list {
+  margin: 0px 0px 0px 10px;
+}
+
+li.searchfacet {
+  display: inline-block;
+  width: 15em;
+}
+
+.facet.count {
+  font-weight: bold;
+  color: #888888;
+}
+
 /* login, register */
 
 

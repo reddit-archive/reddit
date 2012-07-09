@@ -822,9 +822,9 @@ class SearchPage(BoringPage):
     extra_page_classes = ['search-page']
 
     def __init__(self, pagename, prev_search, elapsed_time,
-                 num_results, search_params = {},
-                 simple=False, restrict_sr = False, site=None,
-                 syntax=None, converted_data=None,
+                 num_results, search_params={},
+                 simple=False, restrict_sr=False, site=None,
+                 syntax=None, converted_data=None, facets={}, sort=None,
                  *a, **kw):
         self.searchbar = SearchBar(prev_search=prev_search,
                                    elapsed_time=elapsed_time,
@@ -832,7 +832,8 @@ class SearchPage(BoringPage):
                                    search_params=search_params,
                                    show_feedback=True, site=site,
                                    simple=simple, restrict_sr=restrict_sr,
-                                   syntax=syntax, converted_data=converted_data)
+                                   syntax=syntax, converted_data=converted_data,
+                                   facets=facets, sort=sort)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -1745,7 +1746,8 @@ class SearchBar(Templated):
     def __init__(self, header=None, num_results=0, prev_search='',
                  elapsed_time=0, search_params={}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None, syntax=None,
-                 subreddit_search=False, converted_data=None, **kw):
+                 subreddit_search=False, converted_data=None, facets={}, 
+                 sort=None, **kw):
         if header is None:
             header = _("previous search")
         self.header = header
@@ -1764,7 +1766,8 @@ class SearchBar(Templated):
                            simple=simple, restrict_sr=restrict_sr,
                            site=site, syntax=syntax,
                            converted_data=converted_data,
-                           subreddit_search=subreddit_search)
+                           subreddit_search=subreddit_search, facets=facets,
+                           sort=sort)
 
 class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The
