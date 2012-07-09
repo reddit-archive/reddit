@@ -39,6 +39,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
     description - optional user
     """
 
+    _read_consistency_level = tdb_cassandra.CL.ONE
     _use_db = True
     _connection_pool = 'main'
     _str_props = ('sr_id36', 'mod_id36', 'target_fullname', 'action', 'details', 
@@ -315,6 +316,7 @@ class ModActionBySR(tdb_cassandra.View):
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
     _ttl = 60*60*24*30*3  # 3 month ttl
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
     def _rowkey(cls, ma):
@@ -326,6 +328,7 @@ class ModActionBySRMod(tdb_cassandra.View):
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
     _ttl = 60*60*24*30*3  # 3 month ttl
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
     def _rowkey(cls, ma):
@@ -337,6 +340,7 @@ class ModActionBySRAction(tdb_cassandra.View):
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
     _ttl = 60*60*24*30*3  # 3 month ttl
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
     def _rowkey(cls, ma):
