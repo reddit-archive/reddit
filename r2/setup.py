@@ -26,11 +26,23 @@ use_setuptools()
 
 from setuptools import find_packages
 from distutils.core import setup, Extension
-from Cython.Distutils import build_ext
 import os
 import fnmatch
 
-commands = {"build_ext": build_ext}
+
+commands = {}
+
+
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    pass
+else:
+    commands.update({
+        "build_ext": build_ext
+    })
+
+
 try:
     from babel.messages import frontend as babel
     commands.update({
