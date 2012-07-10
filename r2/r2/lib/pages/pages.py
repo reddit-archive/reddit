@@ -3266,14 +3266,16 @@ class PromotedTraffic(Traffic):
 
         if len(imp) > 2:
             imp_total = sum(x[2] for x in imp)
-            self.totals[1] = max(self.totals[1], imp_total)
+            if self.totals:
+                self.totals[1] = max(self.totals[1], imp_total)
             imp_total = format_number(imp_total)
             self.imp_graph = TrafficGraph(imp[-72:], ylabels = ['uniques', 'total'],
                                           title = ("recent impressions (%s total)" %
                                                    imp_total))
             cli = self.slice_traffic(self.traffic, 2, 3)
             cli_total = sum(x[2] for x in cli)
-            self.totals[3] = max(self.totals[3], cli_total)
+            if self.totals:
+                self.totals[3] = max(self.totals[3], cli_total)
             cli_total = format_number(cli_total)
             self.cli_graph = TrafficGraph(cli[-72:], ylabels = ['uniques', 'total'],
                                           title = ("recent clicks (%s total)" %
