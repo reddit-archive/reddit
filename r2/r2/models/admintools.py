@@ -78,7 +78,7 @@ class AdminTools(object):
             self.set_last_sr_ban(new_things)
             queries.mark_moderated(things)
 
-        queries.ban(new_things)
+        queries.ban(all_things)
 
     def unspam(self, things, unbanner=None, train_spam=True, insert=True):
         from r2.lib.db import queries
