@@ -256,7 +256,18 @@ class HotController(FixListing, ListingController):
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
+            # Spotlight shows rising links. If available, mix in subreddit
+            # discovery links as well. (These don't count towards ad bids)
             spotlight_links = organic.organic_links(c.user)
+            if hasattr(g, 'sr_discovery_links'):
+                spotlight_links.extend(g.sr_discovery_links)
+                random.shuffle(spotlight_links)
+                spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
+                num_links = len(spotlight_links)
+            else:
+                spotlight_keep_fn = organic.keep_fresh_links
+                num_links = organic.organic_length
+
             pos = organic_pos()
 
             if not spotlight_links:
@@ -288,9 +299,9 @@ class HotController(FixListing, ListingController):
 
             b = IDBuilder(disp_links,
                           wrap = self.builder_wrapper,
-                          num = organic.organic_length,
-                          skip = True,
-                          keep_fn = organic.keep_fresh_links)
+                          num = num_links,
+                          keep_fn = spotlight_keep_fn,
+                          skip = True)
 
             try:
                 vislink = spotlight_links[pos]

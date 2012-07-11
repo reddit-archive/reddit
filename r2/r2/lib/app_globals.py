@@ -137,6 +137,7 @@ class Globals(object):
             'allowed_pay_countries',
             'case_sensitive_domains',
             'reserved_subdomains',
+            'sr_discovery_links'
         ],
 
         ConfigValue.choice: {
