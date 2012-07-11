@@ -2878,16 +2878,25 @@ class ApiController(RedditController, OAuth2ResourceController):
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
     def POST_adddeveloper(self, form, jquery, client, account):
-        if client and not form.has_error('name'):
-            client.add_developer(account)
-            form.set_html('.status', _('developer added'))
+        if not client:
+            form.set_html('.status', _('error'))
+            return
+        if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
+            form.set_html('.status', _('invalid user'))
+            return
+        if client.has_developer(account):
+            form.set_html('.status', _('already added'))
+            return
+        client.add_developer(account)
+        form.set_html('.status', _('developer added'))
 
     @validatedForm(VUser(),
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
     def POST_removedeveloper(self, form, jquery, client, account):
-        if client and not form.has_error('name'):
+        if client and account and not form.has_errors('name'):
+            g.log.debug('removing developer: %s', account.name)
             client.remove_developer(account)
             form.set_html('.status', _('developer removed'))
 

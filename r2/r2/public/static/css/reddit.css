@@ -5835,3 +5835,58 @@ tr.gold-accent + tr > td {
     color: gray;
     font-weight: bold;
 }
+
+.developed-app {
+    border: solid 1px black;
+    margin-left: 20px;
+    margin-bottom: 0.5em;
+    padding: 7px;
+    position: relative;
+    width: 880px;
+}
+
+.developed-app .collapsed { display: none; }
+.developed-app img {
+    height: 64px;
+    width: 64px;
+}
+
+.app-details {
+    position: absolute;
+    top: 7px;
+    left: 80px;
+    height: 64px;
+    margin-left: 0.5em;
+    vertical-align: top;
+}
+
+.app-details h2 { font-size: medium; }
+.app-details h3 { font-size: x-small; }
+
+.app-description {
+    font-size: small;
+    position: absolute;
+    top: 0px;
+    left: 200px;
+    width: 600px;
+}
+
+.edit-app-button {
+    position: absolute;
+    bottom: 0px;
+}
+
+.edit-app { display: none; }
+.edit-app-form, .edit-app-form form { display: inline-block; }
+.edit-app-form input, .edit-app-form textarea { margin: 0px; width: 50ex; }
+.edit-app-form input[name="name"] { width: 20ex !important; }
+.edit-app-form input[type="submit"] {
+    margin-left: 10px;
+    width: auto !important;
+}
+
+.delete-app-button {
+    position: absolute;
+    bottom: 7px;
+    left: 100px;
+}
