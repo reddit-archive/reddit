@@ -784,6 +784,7 @@ class ApiController(RedditController):
         if isinstance(thing, Link):
             sr = thing.subreddit_slow
             queries.delete_links(thing)
+            queries.mark_moderated([thing])
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
