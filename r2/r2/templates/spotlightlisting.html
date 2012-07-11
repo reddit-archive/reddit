@@ -121,7 +121,7 @@
     $(function() {
         $(".help")
             .find("a.open").click(function() {
-               var l = $(this).parents(".organic-listing").hide();
+               var l = $(this).parents(".organic-listing");
                if (l.find(".thing:visible").hasClass("promoted")) {
                     l.siblings(".help.promoted").show();
                } else if (l.find(".thing:visible").hasClass("ontrial")) {
@@ -129,6 +129,7 @@
                } else {
                     l.siblings(".help.organic").show();
                }
+               l.hide();
             }).end()
             .find("a.close").click(function() {
               $(this).parents(".spacer")
