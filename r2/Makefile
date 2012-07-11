@@ -95,7 +95,7 @@ clean_ini:
 
 #################### CSS file lists
 SPRITED_STYLESHEETS += reddit.less compact.css
-LESS_STYLESHEETS := goldinfo.less wiki.less
+LESS_STYLESHEETS := goldinfo.less wiki.less adminbar.less
 OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css highlight.css
 
 #################### Static Files

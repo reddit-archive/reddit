@@ -665,6 +665,13 @@ def request_timer_name(action):
     return "service_time.web." + action
 
 
+def flatten_response(content):
+    """Convert a content iterable to a string, properly handling unicode."""
+    # TODO: it would be nice to replace this with response.body someday
+    # once unicode issues are ironed out.
+    return "".join(_force_utf8(x) for x in tup(content) if x)
+
+
 class MinimalController(BaseController):
 
     allow_stylesheets = False
@@ -750,11 +757,10 @@ class MinimalController(BaseController):
 
         # if the action raised an HTTPException (i.e. it aborted) then pylons
         # will have replaced response with the exception itself.
-        is_exception_response = getattr(response, "_exception", False)
+        c.is_exception_response = getattr(response, "_exception", False)
 
-        if c.response_wrapper and not is_exception_response:
-            content = "".join(_force_utf8(x)
-                              for x in tup(response.content) if x)
+        if c.response_wrapper and not c.is_exception_response:
+            content = flatten_response(response.content)
             wrapped_content = c.response_wrapper(content)
             response.content = wrapped_content
 
@@ -772,7 +778,7 @@ class MinimalController(BaseController):
             and not c.used_cache
             and response.status_int != 429
             and not response.status.startswith("5")
-            and not is_exception_response):
+            and not c.is_exception_response):
             try:
                 g.pagecache.set(self.request_key(),
                                 (response._current_obj(), c.cookies),
@@ -907,6 +913,11 @@ class RedditController(MinimalController):
         c.cookies[g.admin_cookie] = Cookie(value='', expires=DELETE)
 
     def pre(self):
+        record_timings = g.admin_cookie in request.cookies or g.debug
+        admin_bar_eligible = response.content_type == 'text/html'
+        if admin_bar_eligible and record_timings:
+            g.stats.start_logging_timings()
+
         MinimalController.pre(self)
 
         set_cnameframe()
@@ -1050,7 +1061,37 @@ class RedditController(MinimalController):
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.can_apply_styles = False
 
+        c.show_admin_bar = admin_bar_eligible and (c.user_is_admin or g.debug)
+        if not c.show_admin_bar:
+            g.stats.end_logging_timings()
+
         c.request_timer.intermediate("base-pre")
+
+    def post(self):
+        MinimalController.post(self)
+        self._embed_html_timing_data()
+
+    def _embed_html_timing_data(self):
+        timings = g.stats.end_logging_timings()
+
+        if not timings or not c.show_admin_bar or c.is_exception_response:
+            return
+
+        timings = [{
+            "key": timing.key,
+            "start": round(timing.start, 4),
+            "end": round(timing.end, 4),
+        } for timing in timings]
+
+        content = flatten_response(response.content)
+        # inject stats script tag at the end of the <body>
+        body_parts = list(content.rpartition("</body>"))
+        if body_parts[1]:
+            script = ('<script type="text/javascript">'
+                      'r.timings = %s'
+                      '</script>') % simplejson.dumps(timings)
+            body_parts.insert(1, script)
+            response.content = "".join(body_parts)
 
     def check_modified(self, thing, action):
         # this is a legacy shim until the old last_modified system is dead

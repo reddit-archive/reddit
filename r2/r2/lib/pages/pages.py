@@ -497,9 +497,6 @@ class Reddit(Templated):
         more_buttons = []
 
         if c.user_is_loggedin:
-            if c.user_is_admin:
-                more_buttons.append(NamedButton('admin', False))
-                more_buttons.append(NamedButton('traffic', False))
             if c.user.pref_show_promote or c.user_is_sponsor:
                 more_buttons.append(NavButton(menu.promote, 'promoted', False))
 
