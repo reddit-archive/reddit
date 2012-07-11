@@ -782,7 +782,6 @@ class ApiController(RedditController):
 
         #expire the item from the sr cache
         if isinstance(thing, Link):
-            sr = thing.subreddit_slow
             queries.delete_links(thing)
             queries.mark_moderated([thing])
 
