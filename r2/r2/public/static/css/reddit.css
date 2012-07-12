@@ -1836,6 +1836,10 @@ li.searchfacet {
   color: #888888;
 }
 
+#search input[type='submit'] {
+	padding: 1px 10px;
+}
+
 /* login, register */
 
 
