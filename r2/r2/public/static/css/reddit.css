@@ -5836,7 +5836,7 @@ tr.gold-accent + tr > td {
     font-weight: bold;
 }
 
-.developed-app {
+.developed-app, .authorized-app {
     border: solid 1px black;
     margin-left: 20px;
     margin-bottom: 0.5em;
@@ -5871,9 +5871,10 @@ tr.gold-accent + tr > td {
     width: 600px;
 }
 
-.edit-app-button {
+.edit-app-button, .revoke-app-button {
     position: absolute;
     bottom: 0px;
+    width: 200px;
 }
 
 .edit-app { display: none; }

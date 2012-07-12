@@ -2824,7 +2824,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientID())
-    def POST_revokeapp(self, form, jquery, client):
+    def POST_revokeapp(self, client):
         if client:
             client.revoke(c.user)
 

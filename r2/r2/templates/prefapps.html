@@ -5,28 +5,35 @@
   <h1>${_("authorized applications")}</h1>
 
   %for app in thing.my_apps:
-    <tr>
-      <td>
-      %if app.icon_url:
-        <img src="${ app.icon_url }">
+  <div id="authorized-app-${app._id}" class="authorized-app rounded">
+    %if app.icon_url:
+      <img src="${app.icon_url}">
+    %endif
+    <div class="app-details">
+      <h2>
+      %if app.about_url:
+        <a href="${app.about_url}">${app.name}</a>
+      %else:
+        ${app.name}
       %endif
-      </td>
-      <td><a href="${ app.about_url }">${ app.name }</a></td>
-      <td>${ynbutton(_("revoke access"),
-                     _("revoked"),
-                     "revokeapp",
-                     callback="deleteRow",
-                     hidden_data=dict(client_id=app._id))}</td>
-    </tr>
+      </h2>
+      <div class="app-description">${app.description}</div>
+      ${ynbutton(_("revoke access"),
+                 _("revoked"),
+                 "revokeapp",
+                 callback="app_revoked",
+                 hidden_data=dict(client_id=app._id),
+                 _class="revoke-app-button")}
+    </div>
+  </div>
   %endfor
-  </table>
 %endif
 
 %if thing.developed_apps:
   <h1>${_("developed applications")}</h1>
 
   %for app in thing.developed_apps:
-  <div class="developed-app rounded">
+  <div id="developed-app-${app._id}" class="developed-app rounded">
     %if app.icon_url:
       <img src="${app.icon_url}">
     %endif
@@ -131,6 +138,7 @@
         ${ynbutton(_("delete app"),
                    "deleted",
                    "deleteapp",
+                   callback="app_deleted",
                    hidden_data=dict(client_id=app._id))}
       </div>
     </div>
