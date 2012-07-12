@@ -5871,13 +5871,20 @@ tr.gold-accent + tr > td {
     width: 600px;
 }
 
+.app-developers {
+    position: absolute;
+    left: 200px;
+    bottom: 0px;
+    width: 600px;
+}
+
 .edit-app-button, .revoke-app-button {
     position: absolute;
     bottom: 0px;
     width: 200px;
 }
 
-.edit-app { display: none; }
+.edit-app, .developed-app .collapsed { display: none; }
 .edit-app-form, .edit-app-form form { display: inline-block; }
 .edit-app-form input, .edit-app-form textarea { margin: 0px; width: 50ex; }
 .edit-app-form input[name="name"] { width: 20ex !important; }

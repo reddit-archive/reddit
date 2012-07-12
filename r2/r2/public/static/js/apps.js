@@ -1,8 +1,10 @@
 $(function() {
     $(".edit-app-button").click(
         function() {
+            var app = $(this).closest(".developed-app");
             $(this).toggleClass("collapsed");
-            $(this).parent().parent().find(".edit-app").slideToggle();
+            app.find(".app-developers").remove();
+            app.find(".edit-app").slideToggle();
         });
 });
 

@@ -1,5 +1,24 @@
-<%namespace file="utils.html" import="error_field"/>
+<%namespace file="utils.html" import="error_field, plain_link" />
 <%namespace file="printablebuttons.html" import="ynbutton" />
+
+<%def name="developers(app)">
+  <% devs = app._developers %>
+  %if devs:
+    <div class="app-developers">
+      Developers:&#32;
+      %for i, dev in enumerate(devs):
+        %if i:
+          %if i == len(devs) - 1:
+            &#32;and&#32;
+          %else:
+            ,&#32;
+          %endif
+        %endif
+        ${plain_link(dev.name, "/u/" + dev.name)}
+      %endfor
+    </div>
+  %endif
+</%def>
 
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
@@ -18,6 +37,7 @@
       %endif
       </h2>
       <div class="app-description">${app.description}</div>
+      ${developers(app)}
       ${ynbutton(_("revoke access"),
                  _("revoked"),
                  "revokeapp",
@@ -47,6 +67,7 @@
       </h2>
       <h3>${app._id}</h3>
       <div class="app-description">${app.description}</div>
+      ${developers(app)}
       <a class="edit-app-button" href="javascript://void(0)">
          ${_("edit")}
       </a>
