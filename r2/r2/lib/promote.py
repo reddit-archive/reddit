@@ -896,8 +896,11 @@ def get_total_run(link):
 
     """
 
-    if not link.campaigns:
-        return None, None
+    # a manually launched promo (e.g., sr discovery) might not have campaigns.
+    if not link.campaigns: 
+        latest = datetime.utcnow()
+        earliest = latest - timedelta(days=30)  # last month
+        return earliest, latest
 
     earliest = None
     latest = None
