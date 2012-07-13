@@ -1376,3 +1376,10 @@ def extract_urls_from_markdown(md):
         url = link.get('href')
         if url:
             yield url
+
+
+def summarize_markdown(md):
+    """Get the first paragraph of some Markdown text, potentially truncated."""
+
+    first_graf, sep, rest = md.partition("\n\n")
+    return first_graf[:500]
