@@ -5599,6 +5599,25 @@ tr.gold-accent + tr > td {
     text-align: center;
 }
 
-#classy-error .md {
-    display: inline-block;
+.errorpage-message {
+    margin: 1em auto;
+    width: 500px;
+    font-size: small;
+}
+
+.errorpage-message.sr-description {
+    border-top: 2px solid black;
+    margin-top: 2em;
+    padding-top: 2em;
+}
+
+.errorpage-message.sr-description h2 {
+    color: black;
+    font-weight: bold;
+    font-size: 125%;
+    margin-bottom: .7em;
+}
+
+.sr-description p {
+    margin: .75em 0;
 }

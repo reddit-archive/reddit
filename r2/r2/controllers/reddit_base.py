@@ -891,9 +891,11 @@ class RedditController(MinimalController):
 
             # check if the user has access to this subreddit
             if not c.site.can_view(c.user) and not c.error_page:
+                public_description = c.site.public_description
                 errpage = pages.RedditError(strings.private_subreddit_title,
                                             strings.private_subreddit_message,
-                                            image="subreddit-private.png")
+                                            image="subreddit-private.png",
+                                            sr_description=public_description)
                 request.environ['usable_error_content'] = errpage.render()
                 self.abort403()
 

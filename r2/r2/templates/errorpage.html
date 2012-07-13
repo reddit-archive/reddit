@@ -29,5 +29,14 @@ from r2.lib.filters import unsafe, safemarkdown
   <img src="${static(thing.image_url)}" alt="an unhappy alien" />
 
   <h1>${thing.title}</h1>
-  ${unsafe(safemarkdown(thing.message))}
+  <div class="errorpage-message">
+  ${unsafe(safemarkdown(thing.message, wrap=False))}
+  </div>
+
+  % if thing.sr_description:
+  <div class="errorpage-message sr-description">
+      <h2>${_("a message from the moderators of /r/%s") % c.site.name}</h2>
+      ${unsafe(safemarkdown(thing.sr_description, wrap=False))}
+  </div>
+  % endif
 </div>
