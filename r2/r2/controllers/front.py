@@ -648,7 +648,7 @@ class FrontController(RedditController):
         return BoringPage(_("awards"), content = UserAwards()).render()
 
     # filter for removing punctuation which could be interpreted as search syntax
-    related_replace_regex = re.compile('[?\\&|!{}+~^()"\':*-]+')
+    related_replace_regex = re.compile(r'[?\\&|!{}+~^()"\':*-]+')
     related_replace_with  = ' '
 
     @base_listing
