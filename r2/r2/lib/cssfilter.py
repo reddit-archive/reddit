@@ -66,7 +66,7 @@ custom_macros = {
     'csscolor': r'(maroon|red|orange|yellow|olive|purple|fuchsia|white|lime|green|navy|blue|aqua|teal|black|silver|gray|ActiveBorder|ActiveCaption|AppWorkspace|Background|ButtonFace|ButtonHighlight|ButtonShadow|ButtonText|CaptionText|GrayText|Highlight|HighlightText|InactiveBorder|InactiveCaption|InactiveCaptionText|InfoBackground|InfoText|Menu|MenuText|Scrollbar|ThreeDDarkShadow|ThreeDFace|ThreeDHighlight|ThreeDLightShadow|ThreeDShadow|Window|WindowFrame|WindowText)|#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\({w}{int}{w},{w}{int}{w},{w}{int}{w}\)|rgb\({w}{num}%{w},{w}{num}%{w},{w}{num}%{w}\)',
     'color': '{x11color}|{csscolor}',
 
-    'bg-gradient': r'none|{color}|[a-z-]*-gradient\(.*\)',
+    'bg-gradient': r'none|{color}|[a-z-]*-gradient\([^;]*\)',
     'bg-gradients': r'{bg-gradient}(?:,\s*{bg-gradient})*',
 
     'border-radius': r'(({length}|{percentage}){w}){1,2}',
