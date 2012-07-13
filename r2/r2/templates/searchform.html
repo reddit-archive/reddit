@@ -78,7 +78,7 @@
       ${_('limit my search to %(path)s') % dict(path=thing.site.path.rstrip('/'))}</label>
     %endif
     ${search_faq()}
-    <input type="submit" />
+    <input type="submit" value="${_('search reddit')}" />
   %endif
 
   %for k, v in thing.search_params.iteritems():
