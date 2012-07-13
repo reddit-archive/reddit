@@ -354,7 +354,7 @@ class PromotedLinkTraffic(RedditTraffic):
         clicks = traffic.ClickthroughsByCodename.promotion_history(fullname,
                                                                    start, end)
 
-        history = traffic.zip_timeseries(imps, clicks)
+        history = traffic.zip_timeseries(imps, clicks, order="ascending")
         computed_history = []
         self.total_impressions, self.total_clicks = 0, 0
         for date, data in history:

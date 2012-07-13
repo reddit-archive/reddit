@@ -80,7 +80,7 @@ class PeekableIterator(object):
         return item
 
 
-def zip_timeseries(*series):
+def zip_timeseries(*series, **kwargs):
     """Zip timeseries data while gracefully handling gaps in the data.
 
     Timeseries data is expected to be a sequence of two-tuples (date, values).
@@ -93,6 +93,8 @@ def zip_timeseries(*series):
 
     """
 
+    next_slice = (max if kwargs.get("order", "descending") == "descending"
+                  else min)
     iterators = [PeekableIterator(s) for s in series]
     widths = [len(w.peek()) for w in iterators]
 
@@ -101,7 +103,7 @@ def zip_timeseries(*series):
         if not any(items):
             return
 
-        current_slice = max(item[0] for item in items if item)
+        current_slice = next_slice(item[0] for item in items if item)
 
         data = []
         for i, item in enumerate(items):
