@@ -83,32 +83,54 @@ class CassandraVote(tdb_cassandra.Relation):
         cv._commit()
 
 
-class VotesByLink(tdb_cassandra.View):
-    _use_db = True
-    _type_prefix = 'VotesByLink'
+class VotesByThing(tdb_cassandra.View):
+    _use_db = False
     _connection_pool = 'main'
 
+    _view_of = None
+
+    @classmethod
+    def get_all(cls, *thing_ids):
+        vbts = cls._byID(thing_ids)
+        
+        lists = [vbt._values().keys() for vbt in vbts.values()]
+        vals = flatten(lists)
+        
+        return cls._view_of._byID(vals).values()
+
+
+class VotesByLink(VotesByThing):
+    _use_db = True
+    _type_prefix = 'VotesByLink'
     # _view_of = CassandraLinkVote
 
     @classmethod
-    def get_all(cls, *link_ids):
-        vbls = cls._byID(link_ids)
-        
-        lists = [vbl._values().keys() for vbl in vbls.values()]
-        vals = flatten(lists)
-        
-        return CassandraLinkVote._byID(vals).values()
+    def _rowkey(cls, cassandra_link_vote):
+        return cassandra_link_vote.thing2_id
 
-class VotesByDay(tdb_cassandra.View):
+
+class VotesByComment(VotesByThing):
+    _use_db = True
+    _type_prefix = 'VotesByComment'
+    # _view_of = CassandraCommentVote
+
+    @classmethod
+    def _rowkey(cls, cassandra_comment_vote):
+        return cassandra_comment_vote.thing2_id
+
+
+class VotesByDay(VotesByThing):
     _use_db = True
     _type_prefix = 'VotesByDay'
-    _connection_pool = 'main'
-
     # _view_of = CassandraLinkVote
 
     @staticmethod
     def _id_for_day(dt):
         return dt.strftime('%Y-%j')
+
+    @classmethod
+    def _rowkey(cls, cassandra_link_vote):
+        return cls._id_for_day(cassandra_link_vote.date)
 
     @classmethod
     def _votes_for_period(ls, start_date, length):
@@ -131,37 +153,46 @@ class VotesByDay(tdb_cassandra.View):
 
             thisdate += timedelta(days=1)
 
-class CassandraLinkVote(CassandraVote):
-    _use_db = True
-    _type_prefix = 'LinkVote'
-    _cf_name = 'LinkVote'
+
+class CassandraThingVote(CassandraVote):
+    _use_db = False
+    _views = []
     _read_consistency_level = tdb_cassandra.CL.ONE
 
-    # _views = [VotesByLink, VotesByDay]
-    _thing1_cls = Account
-    _thing2_cls = Link
-
     def _on_create(self):
-        # it's okay if these indices get lost
         wcl = tdb_cassandra.CL.ONE
-
         v_id = {self._id: self._id}
 
-        VotesByLink._set_values(self.thing2_id, v_id,
-                                write_consistency_level=wcl)
-        VotesByDay._set_values(VotesByDay._id_for_day(self.date), v_id,
-                               write_consistency_level=wcl)
+        for view in self._views:
+            view._set_values(view._rowkey(self), v_id,
+                             write_consistency_level=wcl)
 
         return CassandraVote._on_create(self)
 
-class CassandraCommentVote(CassandraVote):
+class CassandraLinkVote(CassandraThingVote):
+    _use_db = True
+    _type_prefix = 'LinkVote'
+    _cf_name = 'LinkVote'
+    _views = [VotesByLink, VotesByDay]
+    _thing1_cls = Account
+    _thing2_cls = Link
+
+
+VotesByLink._view_of = CassandraLinkVote
+VotesByDay._view_of = CassandraLinkVote
+
+
+class CassandraCommentVote(CassandraThingVote):
     _use_db = True
     _type_prefix = 'CommentVote'
     _cf_name = 'CommentVote'
-    _read_consistency_level = tdb_cassandra.CL.ONE
-
+    _views = [VotesByComment]
     _thing1_cls = Account
     _thing2_cls = Comment
+
+
+VotesByComment._view_of = CassandraCommentVote
+
 
 class Vote(MultiRelation('vote',
                          Relation(Account, Link),
