@@ -38,7 +38,7 @@ from r2.models.subreddit import Subreddit, _DefaultSR
 
 COLORS = Storage(UPVOTE_ORANGE="#ff5700",
                  DOWNVOTE_BLUE="#9494ff",
-                 MISC_GREEN="#00aa00")
+                 MISCELLANEOUS="#006600")
 
 
 class TrafficPage(Reddit):
@@ -291,7 +291,7 @@ class AdvertTraffic(RedditTraffic):
 
         columns += [
             dict(shortname=_("unique clicks")),
-            dict(color=COLORS.MISC_GREEN,
+            dict(color=COLORS.MISCELLANEOUS,
                  title=_("clicks by %s" % interval),
                  shortname=_("total clicks")),
         ]
@@ -312,7 +312,7 @@ class SubredditTraffic(RedditTraffic):
         pageviews = traffic.PageviewsBySubreddit.history(interval, c.site.name)
 
         if interval == "day":
-            columns.append(dict(color=COLORS.MISC_GREEN,
+            columns.append(dict(color=COLORS.MISCELLANEOUS,
                                 title=_("subscriptions by day"),
                                 shortname=_("subscriptions")))
 
