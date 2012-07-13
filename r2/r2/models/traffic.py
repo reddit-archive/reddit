@@ -101,7 +101,7 @@ def zip_timeseries(*series):
         if not any(items):
             return
 
-        current_slice = min(item[0] for item in items if item)
+        current_slice = max(item[0] for item in items if item)
 
         data = []
         for i, item in enumerate(items):
