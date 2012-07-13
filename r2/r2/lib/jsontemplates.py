@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import calendar
+
 from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
@@ -539,10 +541,16 @@ class OrganicListingJsonTemplate(ListingJsonTemplate):
 class TrafficJsonTemplate(JsonTemplate):
     def render(self, thing, *a, **kw):
         res = {}
-        for ival in ("hour", "day", "month"):
-            if hasattr(thing, ival + "_data"):
-                res[ival] = [[time.mktime(date.timetuple())] + list(data)
-                             for date, data in getattr(thing, ival+"_data")]
+
+        for interval in ("hour", "day", "month"):
+            # we don't actually care about the column definitions (used for
+            # charting) here, so just pass an empty list.
+            interval_data = thing.get_data_for_interval(interval, [])
+
+            # turn the python datetimes into unix timestamps and flatten data
+            res[interval] = [(calendar.timegm(date.timetuple()),) + data
+                             for date, data in interval_data]
+
         return ObjectTemplate(res)
 
 class FlairListJsonTemplate(JsonTemplate):

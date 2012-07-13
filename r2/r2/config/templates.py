@@ -53,7 +53,7 @@ api('usertableitem', UserTableItemJsonTemplate)
 api('account',       AccountJsonTemplate)
 
 api('organiclisting',       OrganicListingJsonTemplate)
-api('reddittraffic', TrafficJsonTemplate)
+api('subreddittraffic', TrafficJsonTemplate)
 api('takedownpane', TakedownJsonTemplate)
 
 api('flairlist', FlairListJsonTemplate)
