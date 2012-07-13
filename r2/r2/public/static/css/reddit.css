@@ -1816,6 +1816,7 @@ label + #moresearchinfo {
 .searchfacets {
   overflow: auto;
   font-size: small;
+  white-space: pre-wrap;
 }
 
 .searchfacets.title {
