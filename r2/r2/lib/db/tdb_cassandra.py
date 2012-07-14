@@ -580,7 +580,8 @@ class ThingBase(object):
             s_now = self._serialize_date(datetime.now(tz))
             now = self._deserialize_date(s_now)
 
-            updates[self._timestamp_prop] = s_now
+            timestamp_is_typed = self._get_column_validator(self._timestamp_prop) == "DateType"
+            updates[self._timestamp_prop] = now if timestamp_is_typed else s_now
             self._dirties[self._timestamp_prop] = now
 
         if not updates and not self._deletes:
