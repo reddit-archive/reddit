@@ -31,7 +31,7 @@ from r2.config.extensions import set_extension
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db.thing import NotFound
 from r2.models import Account
-from r2.models.oauth2 import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
+from r2.models.token import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
 from r2.controllers.errors import errors
 from validator import validate, VRequired, VOneOf, VUser, VModhash
 from r2.lib.pages import OAuth2AuthorizationPage

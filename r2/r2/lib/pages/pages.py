@@ -27,7 +27,7 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
-from r2.models.oauth2 import OAuth2Client
+from r2.models.token import OAuth2Client
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
