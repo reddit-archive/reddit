@@ -1938,25 +1938,37 @@ class ApiController(RedditController):
                 form.set_html(".status", _("try again tomorrow"))
 
 
-    @validatedForm(cache_evt = VHardCacheKey('email-reset', ('key',)),
-                   password  = VPassword(['passwd', 'passwd2']))
-    def POST_resetpassword(self, form, jquery, cache_evt, password):
-        if form.has_errors('name', errors.EXPIRED):
-            cache_evt.clear()
+    @validatedForm(token=VOneTimeToken(PasswordResetToken, "key"),
+                   password=VPassword(["passwd", "passwd2"]))
+    def POST_resetpassword(self, form, jquery, token, password):
+        # was the token invalid or has it expired?
+        if not token:
+            form.redirect("/password?expired=true")
+            return
+
+        # did they fill out the password form correctly?
+        form.has_errors("passwd",  errors.BAD_PASSWORD)
+        form.has_errors("passwd2", errors.BAD_PASSWORD_MATCH)
+        if form.has_error():
+            return
+
+        # at this point, we should mark the token used since it's either
+        # valid now or will never be valid again.
+        token.consume()
+
+        # load up the user and check that things haven't changed
+        user = Account._by_fullname(token.user_id)
+        if not token.valid_for_user(user):
             form.redirect('/password?expired=true')
-        elif form.has_errors('passwd',  errors.BAD_PASSWORD):
-            pass
-        elif form.has_errors('passwd2', errors.BAD_PASSWORD_MATCH):
-            pass
-        elif cache_evt.user:
-            # successfully entered user name and valid new password
-            change_password(cache_evt.user, password)
-            g.hardcache.delete("%s_%s" % (cache_evt.cache_prefix, cache_evt.key))
-            print "%s did a password reset for %s via %s" % (
-                request.ip, cache_evt.user.name, cache_evt.key)
-            self._login(jquery, cache_evt.user)
-            jquery.redirect('/')
-            cache_evt.clear()
+            return
+
+        # successfully entered user name and valid new password
+        change_password(user, password)
+        g.log.warning("%s did a password reset for %s via %s",
+                      request.ip, user.name, token._id)
+
+        self._login(jquery, user)
+        jquery.redirect('/')
 
 
     @noresponse(VUser())

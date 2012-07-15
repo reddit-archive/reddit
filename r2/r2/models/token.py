@@ -161,3 +161,35 @@ class OAuth2AccessToken(Token):
         return super(OAuth2AccessToken, cls)._new(
                 user_id=user_id,
                 scope=scope)
+
+
+class EmailVerificationToken(ConsumableToken):
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = 60 * 60 * 12
+    token_size = 20
+
+    @classmethod
+    def _new(cls, user):
+        return super(EmailVerificationToken, cls)._new(user_id=user._fullname,
+                                                       email=user.email)
+
+    def valid_for_user(self, user):
+        return self.email == user.email
+
+
+class PasswordResetToken(ConsumableToken):
+    _use_db = True
+    _connection_pool = "main"
+    _ttl = 60 * 60 * 12
+    token_size = 20
+
+    @classmethod
+    def _new(cls, user):
+        return super(PasswordResetToken, cls)._new(user_id=user._fullname,
+                                                   email_address=user.email,
+                                                   password=user.password)
+
+    def valid_for_user(self, user):
+        return (self.email_address == user.email and
+                self.password == user.password)

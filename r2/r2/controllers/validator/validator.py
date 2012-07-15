@@ -1369,29 +1369,19 @@ class CachedUser(object):
         if self.key and self.cache_prefix:
             g.cache.delete(str(self.cache_prefix + "_" + self.key))
 
-
-class VCacheKey(Validator):
-    def __init__(self, cache_prefix, param, *a, **kw):
-        self.cache = g.cache
-        self.cache_prefix = cache_prefix
-        Validator.__init__(self, param, *a, **kw)
+class VOneTimeToken(Validator):
+    def __init__(self, model, param, *args, **kwargs):
+        self.model = model
+        Validator.__init__(self, param, *args, **kwargs)
 
     def run(self, key):
-        c_user = CachedUser(self.cache_prefix, None, key)
-        if key:
-            uid = self.cache.get(str(self.cache_prefix + "_" + key))
-            if uid:
-                try:
-                    c_user.user = Account._byID(uid, data = True)
-                except NotFound:
-                    return
-            return c_user
-        self.set_error(errors.EXPIRED)
+        token = self.model.get_token(key)
 
-class VHardCacheKey(VCacheKey):
-    def __init__(self, cache_prefix, param, *a, **kw):
-        VCacheKey.__init__(self, cache_prefix, param, *a, **kw)
-        self.cache = g.hardcache
+        if token:
+            return token
+        else:
+            self.set_error(errors.EXPIRED)
+            return None
 
 class VOneOf(Validator):
     def __init__(self, param, options = (), *a, **kw):

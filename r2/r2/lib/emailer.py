@@ -27,6 +27,8 @@ from r2.lib.utils import timeago, query_string, randstr
 from r2.models import passhash, Email, DefaultSR, has_opted_out, Account, Award
 import os, random, datetime
 import traceback, sys, smtplib
+from r2.models.token import EmailVerificationToken, PasswordResetToken
+
 
 def _feedback_email(email, body, kind, name='', reply_to = ''):
     """Function for handling feedback and ad_inq emails.  Adds an
@@ -64,14 +66,14 @@ def verify_email(user, dest):
     For verifying an email address
     """
     from r2.lib.pages import VerifyEmail
-    key = passhash(user.name, user.email)
     user.email_verified = False
     user._commit()
     Award.take_away("verified_email", user)
-    emaillink = ('http://' + g.domain + '/verification/' + key
+
+    token = EmailVerificationToken._new(user)
+    emaillink = ('http://' + g.domain + '/verification/' + token._id
                  + query_string(dict(dest=dest)))
     g.log.debug("Generated email verification link: " + emaillink)
-    g.cache.set("email_verify_%s" %key, user._id, time=1800)
 
     _system_email(user.email,
                   VerifyEmail(user=user,
@@ -94,10 +96,9 @@ def password_email(user):
     if g.cache.incr(reset_count_global) > 1000:
         raise ValueError("Somebody's beating the hell out of the password reset box")
 
-    key = passhash(randstr(64, reallyrandom = True), user.email)
-    passlink = 'http://' + g.domain + '/resetpassword/' + key
+    token = PasswordResetToken._new(user)
+    passlink = 'http://' + g.domain + '/resetpassword/' + token._id
     g.log.info("Generated password reset link: " + passlink)
-    g.hardcache.set("email-reset_%s" % key, user._id, time=3600 * 12)
     _system_email(user.email,
                   PasswordReset(user=user,
                                 passlink=passlink).render(style='email'),

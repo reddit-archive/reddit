@@ -49,6 +49,7 @@ from errors import errors
 from listingcontroller import ListingController
 from api_docs import api_doc, api_section
 from pylons import c, request, request, Response
+from r2.models.token import EmailVerificationToken
 
 import string
 import random as rand
@@ -990,34 +991,36 @@ class FormsController(RedditController):
         return BoringPage(_("verify email"), content = content).render()
 
     @validate(VUser(),
-              cache_evt = VCacheKey('email_verify', ('key',)),
-              key = nop('key'),
-              dest = VDestination(default = "/prefs/update"))
-    def GET_verify_email(self, cache_evt, key, dest):
-        if c.user_is_loggedin and c.user.email_verified:
-            cache_evt.clear()
-            return self.redirect(dest)
-        elif not (cache_evt.user and
-                key == passhash(cache_evt.user.name, cache_evt.user.email)):
-            content = PaneStack(
-                [InfoBar(message = strings.email_verify_failed),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-            return BoringPage(_("verify email"), content = content).render()
-        elif c.user != cache_evt.user:
-            # wrong user.  Log them out and try again. 
+              token=VOneTimeToken(EmailVerificationToken, "key"),
+              dest=VDestination(default="/prefs/update"))
+    def GET_verify_email(self, token, dest):
+        if token and token.user_id != c.user._fullname:
+            # wrong user. log them out and try again.
             self.logout()
             return self.redirect(request.fullpath)
-        else:
-            cache_evt.clear()
+        elif token and c.user.email_verified:
+            # they've already verified. consume and ignore this token.
+            token.consume()
+            return self.redirect(dest)
+        elif token and token.valid_for_user(c.user):
+            # successful verification!
+            token.consume()
             c.user.email_verified = True
             c.user._commit()
             Award.give_if_needed("verified_email", c.user)
             return self.redirect(dest)
+        else:
+            # failure. let 'em know.
+            content = PaneStack(
+                [InfoBar(message=strings.email_verify_failed),
+                 PrefUpdate(email=True,
+                            verify=True,
+                            password=False)])
+            return BoringPage(_("verify email"), content=content).render()
 
-    @validate(cache_evt = VHardCacheKey('email-reset', ('key',)),
-              key = nop('key'))
-    def GET_resetpassword(self, cache_evt, key):
+    @validate(token=VOneTimeToken(PasswordResetToken, "key"),
+              key=nop("key"))
+    def GET_resetpassword(self, token, key):
         """page hit once a user has been sent a password reset email
         to verify their identity before allowing them to update their
         password."""
@@ -1031,7 +1034,7 @@ class FormsController(RedditController):
         if not key and request.referer:
             referer_path = request.referer.split(g.domain)[-1]
             done = referer_path.startswith(request.fullpath)
-        elif not getattr(cache_evt, "user", None):
+        elif not token:
             return self.redirect("/password?expired=true")
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
