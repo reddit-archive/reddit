@@ -13,6 +13,7 @@ r2/data/
 build/
 dist/
 r2/r2.egg-info/
+r2/r2/lib/generated_strings.py
 
 # ini files
 *.ini
@@ -30,7 +31,6 @@ r2/r2/public/static/js/lib/*.gzip
 r2/r2/lib/_normalized_hot.c
 r2/r2/lib/mr_tools/_mr_tools.c
 r2/r2/lib/db/_sorts.c
-r2/r2/lib/rand_strings.py
 r2/r2/lib/sgm.c
 r2/r2/lib/utils/_utils.c
 r2/r2/lib/wrapped.c
