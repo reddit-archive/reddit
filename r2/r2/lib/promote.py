@@ -127,6 +127,12 @@ def is_live_on_sr(link, srname):
             return True
     return False
 
+
+def campign_is_live(link, campaign_index):
+    live = scheduled_campaigns_by_link(link)
+    return campaign_index in live
+
+
 # no references to promote_status below this function, pls
 def set_status(l, status, onchange = None):
     # keep this out here.  Useful for updating the queue if there is a bug
@@ -255,7 +261,7 @@ class RenderableCampaign():
                                   time = ungettext("day", "days", ndays))
         self.bid = "%.2f" % bid
         self.sr = sr
-        live = is_live_on_sr(link, sr)
+        live = campign_is_live(link, indx)
 
         self.status = dict(paid = bool(transaction),
                            complete = False,
