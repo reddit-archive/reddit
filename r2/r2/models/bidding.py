@@ -536,7 +536,7 @@ class PromotionWeights(Sessionized, Base):
         q = q.filter(and_(cls.date >= start_date, cls.date < end_date))
 
         if author_id is not None:
-            q.filter(author_id = author_id)
+            q = q.filter(cls.account_id == author_id)
 
         res = {}
         for x in q.all():
