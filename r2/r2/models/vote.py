@@ -161,7 +161,7 @@ class CassandraThingVote(CassandraVote):
 
     def _on_create(self):
         wcl = tdb_cassandra.CL.ONE
-        v_id = {self._id: self._id}
+        v_id = {self._id: ''}
 
         for view in self._views:
             view._set_values(view._rowkey(self), v_id,
