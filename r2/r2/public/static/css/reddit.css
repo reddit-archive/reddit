@@ -658,6 +658,10 @@ ul.flat-vert {text-align: left;}
 .domain { color: #888; font-size:x-small; }
 .domain a { color: #888 }
 .domain a:hover { text-decoration: underline }
+.spam .domain,
+.spam .domain a {
+    color: black;
+}
 
 .link-note {
     background-color: white;
