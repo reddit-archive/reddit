@@ -133,7 +133,7 @@ class VotesByDay(VotesByThing):
         return cls._id_for_day(cassandra_link_vote.date)
 
     @classmethod
-    def _votes_for_period(ls, start_date, length):
+    def _votes_for_period(cls, start_date, length):
         """An iterator yielding every vote that occured in the given
            period in no particular order
 
