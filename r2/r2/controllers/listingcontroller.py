@@ -256,26 +256,24 @@ class HotController(FixListing, ListingController):
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
-            # Spotlight shows rising links. If available, mix in subreddit
-            # discovery links as well. (These don't count towards ad bids)
             spotlight_links = organic.organic_links(c.user)
-            if hasattr(g, 'sr_discovery_links'):
-                spotlight_links.extend(g.sr_discovery_links)
-                random.shuffle(spotlight_links)
-                spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
-                num_links = len(spotlight_links)
-            else:
-                spotlight_keep_fn = organic.keep_fresh_links
-                num_links = organic.organic_length
-
+            
             pos = organic_pos()
 
             if not spotlight_links:
                 pos = 0
             elif pos != 0:
                 pos = pos % len(spotlight_links)
+            spotlight_keep_fn = organic.keep_fresh_links
+            num_links = organic.organic_length
 
+            # If prefs allow it, mix in promoted links and sr discovery content
             if c.user.pref_show_sponsors or not c.user.gold:
+                if hasattr(g, 'sr_discovery_links'):
+                    spotlight_links.extend(g.sr_discovery_links)
+                    random.shuffle(spotlight_links)
+                    spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
+                    num_links = len(spotlight_links)
                 spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
 
             # Need to do this again, because if there was a duplicate removed,
