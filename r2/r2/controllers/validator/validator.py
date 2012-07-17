@@ -74,14 +74,15 @@ def can_comment_link(article):
 
 class Validator(object):
     default_param = None
-    def __init__(self, param=None, default=None, post=True, get=True, url=True):
+    def __init__(self, param=None, default=None, post=True, get=True, url=True,
+                 docs=None):
         if param:
             self.param = param
         else:
             self.param = self.default_param
 
         self.default = default
-        self.post, self.get, self.url = post, get, url
+        self.post, self.get, self.url, self.docs = post, get, url, docs
         self.has_errors = False
 
     def set_error(self, error, msg_params = {}, field = False):
@@ -99,6 +100,8 @@ class Validator(object):
         param_info = {}
         for param in filter(None, tup(self.param)):
             param_info[param] = None
+        if self.docs:
+            param_info.update(self.docs)
         return param_info
 
     def __call__(self, url):
@@ -992,6 +995,9 @@ class VSanitizedUrl(Validator):
     def run(self, url):
         return utils.sanitize_url(url)
 
+    def param_docs(self):
+        return {self.param: _("a valid URL")}
+
 class VUrl(VRequired):
     def __init__(self, item, allow_self = True, lookup = True, *a, **kw):
         self.allow_self = allow_self
@@ -1031,11 +1037,15 @@ class VUrl(VRequired):
         return self.error(errors.BAD_URL)
 
     def param_docs(self):
+        if isinstance(self.param, (list, tuple)):
+            param_names = self.param
+        else:
+            param_names = [self.param]
         params = {}
         try:
-            params[self.param[0]] = _('a valid URL')
-            params[self.param[1]] = _('a subreddit')
-            params[self.param[2]] = _('boolean value')
+            params[param_names[0]] = _('a valid URL')
+            params[param_names[1]] = _('a subreddit')
+            params[param_names[2]] = _('boolean value')
         except IndexError:
             pass
         return params
@@ -1837,6 +1847,7 @@ class VOneTimePassword(Validator):
 
 class VOAuth2ClientID(VRequired):
     default_param = "client_id"
+    default_param_doc = _("an app")
     def __init__(self, param=None, *a, **kw):
         VRequired.__init__(self, param, errors.OAUTH2_INVALID_CLIENT, *a, **kw)
 
@@ -1849,7 +1860,12 @@ class VOAuth2ClientID(VRequired):
             else:
                 self.error()
 
+    def param_docs(self):
+        return {self.default_param: self.default_param_doc}
+
 class VOAuth2ClientDeveloper(VOAuth2ClientID):
+    default_param_doc = _("an app developed by the user")
+
     def run(self, client_id):
         client = super(VOAuth2ClientDeveloper, self).run(client_id)
         if not client or not client.has_developer(c.user):

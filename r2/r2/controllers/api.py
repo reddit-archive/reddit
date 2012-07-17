@@ -375,7 +375,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                               rate_user = True,
                               prefix = 'fetchtitle_'),
                    VUser(),
-                   url = VSanitizedUrl(['url']))
+                   url = VSanitizedUrl('url'))
     def POST_fetch_title(self, form, jquery, url):
         if form.has_errors('ratelimit', errors.RATELIMIT):
             form.set_html(".title-status", "");
@@ -2824,16 +2824,19 @@ class ApiController(RedditController, OAuth2ResourceController):
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientID())
+    @api_doc(api_section.apps)
     def POST_revokeapp(self, client):
         if client:
             client.revoke(c.user)
 
     @validatedForm(VUser(),
                    VModhash(),
-                   name=VRequired('name', errors.NO_TEXT),
+                   name=VRequired('name', errors.NO_TEXT,
+                                  docs=dict(name=_("a name for the app"))),
                    about_url=VSanitizedUrl('about_url'),
                    icon_url=VSanitizedUrl('icon_url'),
                    redirect_uri=VUrl('redirect_uri', allow_self=False))
+    @api_doc(api_section.apps)
     def POST_updateapp(self, form, jquery, name, about_url, icon_url, redirect_uri):
         if (form.has_errors('name', errors.NO_TEXT) |
             form.has_errors('redirect_uri', errors.BAD_URL, errors.NO_URL)):
@@ -2877,6 +2880,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
+    @api_doc(api_section.apps)
     def POST_adddeveloper(self, form, jquery, client, account):
         if not client:
             form.set_html('.status', _('error'))
@@ -2894,6 +2898,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
                    account=VExistingUnameNotSelf('name'))
+    @api_doc(api_section.apps)
     def POST_removedeveloper(self, form, jquery, client, account):
         if client and account and not form.has_errors('name'):
             g.log.debug('removing developer: %s', account.name)
@@ -2903,6 +2908,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @noresponse(VUser(),
                 VModhash(),
                 client=VOAuth2ClientDeveloper())
+    @api_doc(api_section.apps)
     def POST_deleteapp(self, client):
         if client:
             client.deleted = True
@@ -2911,7 +2917,9 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
-                   icon_file=VLength('file', max_length=1024*32))
+                   icon_file=VLength('file', max_length=1024*32,
+                                     docs=dict(file=_("an icon (72x72)"))))
+    @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
         if client and icon_file:
             filename = 'icon-%s' % client._id
