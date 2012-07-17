@@ -167,9 +167,12 @@
 %endif
 
 <div class="edit-app-form">
-  <h1>${_("create application")}</h1>
+  <button id="create-app-button" class="submit-img">
+    ${_("create application")}
+  </button>
   <form method="post" action="/api/updateapp" class="pretty-form" id="create-app"
    onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("creating...")}">
+    <h1>${_("create application")}</h1>
     <input type="hidden" name="uh" value="${c.modhash}" />
     <table class="content preftable">
       <tr>

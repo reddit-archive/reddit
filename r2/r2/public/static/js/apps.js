@@ -6,6 +6,11 @@ $(function() {
             app.find(".app-developers").remove();
             app.find(".edit-app").slideToggle();
         });
+    $("#create-app-button").click(
+        function() {
+            $(this).hide();
+            $("#create-app").fadeIn();
+        });
 });
 
 function app_revoked(elem, op) {
