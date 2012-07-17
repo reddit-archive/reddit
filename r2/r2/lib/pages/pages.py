@@ -40,6 +40,7 @@ from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
+from r2.lib import media
 from r2.lib import promote
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
@@ -663,6 +664,7 @@ class PrefApps(Templated):
     def __init__(self, my_apps, developed_apps):
         self.my_apps = my_apps
         self.developed_apps = developed_apps
+        self.can_upload_icon = media.can_upload_icon()
         super(PrefApps, self).__init__()
 
 

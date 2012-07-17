@@ -70,12 +70,26 @@
       <h3>${app._id}</h3>
       <div class="app-description">${app.description}</div>
       ${developers(app)}
-      <a class="edit-app-button" href="javascript://void(0)">
+      <a class="edit-app-button" href="javascript:void(0)">
          ${_("edit")}
       </a>
     </div>
     <div class="edit-app">
-      ${image_upload('/api/setappicon', hidden_data=dict(client_id=app._id))}
+      %if thing.can_upload_icon:
+        <a class="edit-app-icon-button" href="javascript:void(0)">
+          change icon
+        </a>
+        <table class="edit-app-icon pretty-form preftable">
+          <tr>
+            <th>${_("new icon")}</th>
+            <td class="prefright">
+              ${image_upload('/api/setappicon',
+                             form_id='app-icon-upload-%s' % app._id,
+                             hidden_data=dict(client_id=app._id))}
+            </td>
+          </tr>
+        </table>
+      %endif
       <div class="edit-app-form">
         <form method="post" action="/api/updateapp" class="pretty-form"
          id="update-app-${app._id}"

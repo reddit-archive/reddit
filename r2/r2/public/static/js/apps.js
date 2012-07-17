@@ -11,6 +11,11 @@ $(function() {
             $(this).hide();
             $("#create-app").fadeIn();
         });
+    $(".edit-app-icon-button").click(
+        function() {
+            $(this).toggleClass("collapsed");
+            $(this).closest(".edit-app").find(".edit-app-icon").show();
+        });
 });
 
 function app_revoked(elem, op) {

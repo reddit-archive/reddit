@@ -50,8 +50,8 @@ from r2.lib.strings import strings
 from r2.lib.filters import _force_unicode, websafe_json, websafe, spaceCompress
 from r2.lib.db import queries
 from r2.lib.db.queries import changed
+from r2.lib import media
 from r2.lib import promote
-from r2.lib.media import force_thumbnail, thumbnail_url, upload_icon
 from r2.lib.comment_tree import delete_comment
 from r2.lib import tracking,  cssfilter, emailer
 from r2.lib.subreddit_search import search_reddits
@@ -2921,9 +2921,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                                      docs=dict(file=_("an icon (72x72)"))))
     @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
-        if client and icon_file:
+        if client and icon_file and media.can_upload_icon():
             filename = 'icon-%s' % client._id
-            client.icon_url = upload_icon(filename, icon_file, (72, 72))
+            client.icon_url = media.upload_icon(filename, icon_file, (72, 72))
             client._commit()
             jquery('#app-icon-%s' % client._id).attr('src', client.icon_url)
             form.set_html('.img-status', _('icon uploaded'))

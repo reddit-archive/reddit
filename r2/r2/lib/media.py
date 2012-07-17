@@ -186,7 +186,7 @@ def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     update_link(link, thumbnail=thumb_url, media_object=None, thumbnail_size=image.size)
 
 def upload_icon(file_name, image_data, size):
-    assert g.media_store == "s3"
+    assert g.media_store == 's3'
     image = str_to_image(image_data)
     image.format = 'PNG'
     image.thumbnail(size, Image.ANTIALIAS)
@@ -197,6 +197,9 @@ def upload_icon(file_name, image_data, size):
                            file_type='.png',
                            never_expire=True,
                            replace=True)
+
+def can_upload_icon():
+    return g.media_store == 's3'
 
 def run():
     @g.stats.amqp_processor('scraper_q')
