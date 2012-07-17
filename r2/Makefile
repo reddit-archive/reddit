@@ -105,7 +105,7 @@ STATIC_BUILDSTAMP := $(BUILD_DIR)/static-buildstamp
 static: plugin_static pyx css js names
 
 clean_static:
-	rm -rf $(STATIC_BUILDSTAMP) $(STATIC_BUILD_DIR) $(PLUGIN_BUILDSTAMPS) $(JS_MODULE_BUILDSTAMPS) $(MANGLE_BUILDSTAMP)
+	rm -rf $(STATIC_BUILDSTAMP) $(STATIC_BUILD_DIR) $(PLUGIN_BUILDSTAMPS) $(MANGLE_BUILDSTAMP)
 
 $(STATIC_BUILDSTAMP): $(STATIC_FILES)
 	cp -ruTL $(STATIC_ROOT) $(STATIC_BUILD_ROOT)
@@ -171,16 +171,13 @@ clean_css:
 	rm -f $(CSS_OUTPUTS)
 
 #### JS
-JS_MODULE_BUILDSTAMPS := $(foreach module,$(JS_MODULES),$(BUILD_DIR)/js-$(module)-buildstamp)
 
 .PHONY: clean_js
 
-js: $(STATIC_BUILDSTAMP) $(JS_MODULE_BUILDSTAMPS)
-
-$(JS_OUTPUTS): $(JS_MODULE_BUILDSTAMPS)
+js: $(STATIC_BUILDSTAMP) $(JS_OUTPUTS)
 
 define JS_MODULE_TEMPLATE
-$(BUILD_DIR)/js-$(1)-buildstamp: $(JS_MODULE_DEPS_$(1))
+$(JS_MODULE_OUTPUTS_$(1)): $(JS_MODULE_DEPS_$(1))
 	# remove mangled output symlinks, similar to above.
 	rm -f $(JS_MODULE_OUTPUTS_$(1))
 	paster run standalone r2/lib/js.py -c "build_module('$(1)')"
@@ -192,7 +189,7 @@ endef
 $(foreach module,$(JS_MODULES),$(eval $(call JS_MODULE_TEMPLATE,$(module))))
 
 clean_js:
-	rm -f $(JS_MODULE_BUILDSTAMPS) $(STATIC_BUILD_DIR)/*.js
+	rm -f $(STATIC_BUILD_DIR)/*.js
 
 #### name mangling
 MANGLEABLE_FILES := $(CSS_OUTPUTS) $(JS_OUTPUTS)
@@ -209,7 +206,7 @@ $(MANGLE_BUILDSTAMP): $(MANGLEABLE_FILES)
 	touch $@
 
 clean_names:
-	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILES) $(MANGLEABLE_FILES) $(MANGLED_FILES) $(JS_MODULE_BUILDSTAMPS)
+	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILES) $(MANGLEABLE_FILES) $(MANGLED_FILES)
 
 #### gzip!
 JQUERY_JS := $(wildcard $(STATIC_BUILD_DIR)/js/lib/jquery-*.min.js)
