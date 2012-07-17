@@ -76,7 +76,7 @@ class AdminTools(object):
         if not auto:
             self.author_spammer(new_things, True)
             self.set_last_sr_ban(new_things)
-            queries.mark_moderated(things)
+            queries.mark_moderated(all_things)
 
         queries.ban(all_things)
 
