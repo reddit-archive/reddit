@@ -76,9 +76,8 @@ class AdminTools(object):
         if not auto:
             self.author_spammer(new_things, True)
             self.set_last_sr_ban(new_things)
-            queries.mark_moderated(all_things)
 
-        queries.ban(all_things)
+        queries.ban(all_things, filtered=auto)
 
     def unspam(self, things, unbanner=None, train_spam=True, insert=True):
         from r2.lib.db import queries
@@ -112,9 +111,11 @@ class AdminTools(object):
 
         self.author_spammer(things, False)
         self.set_last_sr_ban(things)
-
         queries.unban(things, insert)
         queries.mark_moderated(things)
+    
+    def report(self, thing):
+        pass
 
     def author_spammer(self, things, spam):
         """incr/decr the 'spammer' field for the author of every

@@ -782,8 +782,7 @@ class ApiController(RedditController):
 
         #expire the item from the sr cache
         if isinstance(thing, Link):
-            queries.delete_links(thing)
-            queries.mark_moderated([thing])
+            queries.delete(thing)
 
         #comments have special delete tasks
         elif isinstance(thing, Comment):
@@ -808,7 +807,7 @@ class ApiController(RedditController):
                 rels = filter(None, d.values()) or None
                 queries.new_comment(thing, rels)
 
-            queries.delete_comments(thing)
+            queries.delete(thing)
 
     @noresponse(VUser(),
                 VModhash(),
