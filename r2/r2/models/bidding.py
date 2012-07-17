@@ -565,7 +565,11 @@ class PromotionWeights(Sessionized, Base):
             for i in q:
                 if d == i.date:
                     l = links[i.thing_name]
-                    if not promote.is_rejected(l) and not promote.is_unpaid(l) and not l._deleted:
+                    if (not promote.is_rejected(l) and 
+                        not promote.is_unpaid(l) and 
+                        not l._deleted and 
+                        i.promo_idx in getattr(l, 'campaigns', {})):
+                        
                         camp = l.campaigns[i.promo_idx]
                         bid += i.bid
                         refund += i.bid if camp[-1] <= 0 else 0
