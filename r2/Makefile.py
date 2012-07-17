@@ -32,7 +32,7 @@ for plugin in plugins:
     print 'PLUGIN_PATH_%s := %s' % (plugin.name, PluginLoader.plugin_path(plugin))
 
 js.load_plugin_modules()
-modules = dict((k, m) for k, m in js.module.iteritems() if m.should_compile)
+modules = dict((k, m) for k, m in js.module.iteritems())
 print 'JS_MODULES := ' + ' '.join(modules.iterkeys())
 outputs = []
 for name, module in modules.iteritems():

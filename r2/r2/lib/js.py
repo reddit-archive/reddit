@@ -134,11 +134,12 @@ class Module(Source):
         return os.path.join(STATIC_ROOT, "static", self.name)
 
     def build(self, closure):
-        print >> sys.stderr, "Compiling {0}...".format(self.name),
         with open(self.path, "w") as out:
             if self.should_compile:
+                print >> sys.stderr, "Compiling {0}...".format(self.name),
                 closure.compile(self.get_source(), out)
             else:
+                print >> sys.stderr, "Concatenating {0}...".format(self.name),
                 out.write(self.get_source())
         print >> sys.stderr, " done."
 
@@ -158,10 +159,7 @@ class Module(Source):
 
     @property
     def outputs(self):
-        if self.should_compile:
-            return [self.path]
-        else:
-            return []
+        return [self.path]
 
 class StringsSource(Source):
     """A virtual source consisting of localized strings from r2.lib.strings."""
@@ -247,18 +245,15 @@ class LocalizedModule(Module):
 class JQuery(Module):
     version = "1.7.2"
 
-    def __init__(self, cdn_src=None):
-        local_jquery_path = os.path.join("js", "lib", "jquery-%s.min.js" % self.version)
-        Module.__init__(self, local_jquery_path, should_compile=False)
-        self.cdn_src = cdn_src or "http://ajax.googleapis.com/ajax/libs/jquery/%s/jquery" % self.version
-    
-    def build(self, closure):
-        pass
+    def __init__(self, cdn_url="http://ajax.googleapis.com/ajax/libs/jquery/{version}/jquery"):
+        self.jquery_src = FileSource("lib/jquery-{0}.min.js".format(self.version))
+        Module.__init__(self, "jquery.js", self.jquery_src, should_compile=False)
+        self.cdn_src = cdn_url.format(version=self.version)
 
     def use(self):
         from r2.lib.template_helpers import static
         if c.secure or c.user.pref_local_js:
-            return script_tag.format(src=static(self.name))
+            return Module.use(self)
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)
@@ -335,8 +330,7 @@ def build_command(fn):
 @build_command
 def enumerate_modules():
     for name, m in module.iteritems():
-        if m.should_compile:
-            print name
+        print name
 
 @build_command
 def dependencies(name):

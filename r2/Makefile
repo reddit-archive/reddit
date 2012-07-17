@@ -209,8 +209,7 @@ clean_names:
 	rm -f $(MANGLE_BUILDSTAMP) $(NAMES_FILES) $(MANGLEABLE_FILES) $(MANGLED_FILES)
 
 #### gzip!
-JQUERY_JS := $(wildcard $(STATIC_BUILD_DIR)/js/lib/jquery-*.min.js)
-GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES) $(JQUERY_JS))
+GZIPPABLE := $(filter %.css %.js,$(MANGLED_FILES))
 GZIPPED := $(addsuffix .gzip,$(GZIPPABLE))
 
 .PHONY: clean_gzip
