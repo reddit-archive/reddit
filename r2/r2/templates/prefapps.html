@@ -1,5 +1,11 @@
-<%namespace file="utils.html" import="error_field, plain_link" />
+<%namespace file="utils.html" import="error_field, image_upload, plain_link" />
 <%namespace file="printablebuttons.html" import="ynbutton" />
+
+<%def name="icon(app)">
+  <div class="app-icon">
+    <img src="${app.icon_url}">&nbsp;
+  </div>
+</%def>
 
 <%def name="developers(app)">
   <% devs = app._developers %>
@@ -25,9 +31,7 @@
 
   %for app in thing.my_apps:
   <div id="authorized-app-${app._id}" class="authorized-app rounded">
-    %if app.icon_url:
-      <img src="${app.icon_url}">
-    %endif
+    ${icon(app)}
     <div class="app-details">
       <h2>
       %if app.about_url:
@@ -54,9 +58,7 @@
 
   %for app in thing.developed_apps:
   <div id="developed-app-${app._id}" class="developed-app rounded">
-    %if app.icon_url:
-      <img src="${app.icon_url}">
-    %endif
+    ${icon(app)}
     <div class="app-details">
       <h2>
       %if app.about_url:
@@ -73,6 +75,7 @@
       </a>
     </div>
     <div class="edit-app">
+      ${image_upload('/api/setappicon', hidden_data=dict(client_id=app._id))}
       <div class="edit-app-form">
         <form method="post" action="/api/updateapp" class="pretty-form"
          id="update-app-${app._id}"
@@ -102,13 +105,6 @@
               <td class="prefright">
                 <input name="about_url" value="${app.about_url}">
                 ${error_field("BAD_URL", "about_url")}
-              </td>
-            </tr>
-            <tr>
-              <th>${_("icon url")}</th>
-              <td class="prefright">
-                <input name="icon_url" value="${app.icon_url}">
-                ${error_field("BAD_URL", "icon_url")}
               </td>
             </tr>
             <tr>
@@ -194,13 +190,6 @@
         <td class="prefright">
           <input name="about_url">
           ${error_field("BAD_URL", "about_url")}
-        </td>
-      </tr>
-      <tr>
-        <th>${_("icon url")}</th>
-        <td class="prefright">
-          <input name="icon_url">
-          ${error_field("BAD_URL", "icon_url")}
         </td>
       </tr>
       <tr>

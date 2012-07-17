@@ -5846,22 +5846,31 @@ tr.gold-accent + tr > td {
 }
 
 .developed-app .collapsed { display: none; }
-.developed-app img {
-    height: 64px;
-    width: 64px;
-}
 
 .app-details {
     position: absolute;
     top: 7px;
     left: 80px;
-    height: 64px;
+    height: 72px;
     margin-left: 0.5em;
     vertical-align: top;
 }
 
 .app-details h2 { font-size: medium; }
 .app-details h3 { font-size: x-small; }
+
+.app-icon {
+    width: 72px;
+    height: 72px;
+    line-height: 72px;
+    white-space: nowrap;
+
+background: #eee;
+}
+
+.app-icon img {
+    vertical-align: middle;
+}
 
 .app-description {
     font-size: small;

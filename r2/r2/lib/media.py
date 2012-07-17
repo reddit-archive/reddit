@@ -80,11 +80,12 @@ def filename_to_s3_bucket(file_name):
     num = ord(file_name[-1]) % len(g.s3_media_buckets)
     return g.s3_media_buckets[num]
 
-def s3_upload_media(data, file_name, file_type, mime_type, never_expire):
+def s3_upload_media(data, file_name, file_type, mime_type, never_expire,
+                    replace=False):
     bucket = filename_to_s3_bucket(file_name)
     s3cp.send_file(bucket, file_name+file_type, data, mime_type,
                        never_expire=never_expire,
-                       replace = False,
+                       replace=replace,
                        reduced_redundancy=True)
     if g.s3_media_direct:
         return "http://%s/%s/%s%s" % (s3_direct_url, bucket, file_name, file_type)
@@ -183,6 +184,19 @@ def force_thumbnail(link, image_data, never_expire=True, file_type=".jpg"):
     image = prepare_image(image)
     thumb_url = upload_media(image, never_expire=never_expire, file_type=file_type)
     update_link(link, thumbnail=thumb_url, media_object=None, thumbnail_size=image.size)
+
+def upload_icon(file_name, image_data, size):
+    assert g.media_store == "s3"
+    image = str_to_image(image_data)
+    image.format = 'PNG'
+    image.thumbnail(size, Image.ANTIALIAS)
+    icon_data = image_to_str(image)
+    return s3_upload_media(icon_data,
+                           file_name=file_name,
+                           mime_type='image/png',
+                           file_type='.png',
+                           never_expire=True,
+                           replace=True)
 
 def run():
     @g.stats.amqp_processor('scraper_q')

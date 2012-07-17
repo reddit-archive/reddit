@@ -268,7 +268,8 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
-                         onchange = '', label = '', form_id = 'image-upload', ask_type = False)">
+                         onchange = '', label = '', form_id = 'image-upload',
+                         ask_type = False, hidden_data=None)">
   <form id="${form_id}" enctype="multipart/form-data"
         class="image-upload"
         target="upload-iframe"
@@ -284,6 +285,11 @@ ${unsafe(txt)}
             <input type="hidden" name="r"  value="${c.site.name}" />
           %endif
           <input type="hidden" name="formid" value="${form_id}" />
+          %if hidden_data:
+            %for name, value in hidden_data.iteritems():
+              <input type="hidden" name="${name}" value="${value}" />
+            %endfor
+          %endif
           <br/>
           %if ask_type:
             <label for="img_type">${_("Type: ")}</label>

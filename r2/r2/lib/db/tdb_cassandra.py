@@ -587,6 +587,7 @@ class ThingBase(object):
             self._dirties[self._timestamp_prop] = now
 
         if not updates and not self._deletes:
+            self._dirties.clear()
             return
 
         # actually write out the changes to the CF
