@@ -354,6 +354,10 @@ class PromotedLinkTraffic(RedditTraffic):
         clicks = traffic.ClickthroughsByCodename.promotion_history(fullname,
                                                                    start, end)
 
+        # promotion might have no clicks, zip_timeseries needs valid columns
+        if imps and not clicks:
+            clicks = [(imps[0][0], (0, 0))]
+
         history = traffic.zip_timeseries(imps, clicks, order="ascending")
         computed_history = []
         self.total_impressions, self.total_clicks = 0, 0
