@@ -405,13 +405,19 @@ class FrontController(RedditController):
 
     @prevent_framing_and_css(allow_cname_frame=True)
     @paginated_listing(max_page_size=500, backend='cassandra')
-    @validate(mod=VAccountByName('mod'),
+    @validate(mod=nop('mod'),
               action=VOneOf('type', ModAction.actions))
     @api_doc(api_section.moderation)
     def GET_moderationlog(self, num, after, reverse, count, mod, action):
         if not c.user_is_loggedin or not (c.user_is_admin or
                                           c.site.is_moderator(c.user)):
             return self.abort404()
+
+        if mod:
+            try:
+                mod = Account._by_name(mod, allow_deleted=True)
+            except NotFound:
+                mod = None
 
         if isinstance(c.site, (MultiReddit, ModSR)):
             srs = Subreddit._byID(c.site.sr_ids, return_dict=False)
