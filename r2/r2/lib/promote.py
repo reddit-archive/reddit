@@ -231,7 +231,7 @@ def get_roadblocks():
     rbs = g.hardcache.backend.ids_by_category(roadblock_prefix)
     by_sr = {}
     for rb in rbs:
-        rb = rb.split('_')
+        rb = rb.rsplit('_', 3)  # subreddit_name_YYYY_MM_DD
         date = datetime.strptime('_'.join(rb[1:]), "%Y_%m_%d").date()
         by_sr.setdefault(rb[0], []).append((date, date + timedelta(1)))
 
