@@ -423,6 +423,7 @@ def free_campaign(link, index, user):
 
 def edit_campaign(link, index, dates, bid, sr):
     sr_name = sr.name if sr else ""
+    trans_id = 0
     with g.make_lock(campaign_lock(link)):
         campaigns = getattr(link, "campaigns", {}).copy()
         if index in campaigns:
@@ -444,8 +445,7 @@ def edit_campaign(link, index, dates, bid, sr):
     # dual-write update to campaign Thing if it exists
     try: 
         campaign = PromoCampaign._byID(index)
-        campaign.set_bid(sr_name, bid, dates[0], dates[1])
-        campaign._commit()
+        campaign.update(dates[0], dates[1], bid, sr_name, trans_id, commit=True)
     except NotFound:
         g.log.debug("Skipping update of non-existent PromoCampaign [link:%d, index:%d]" %
                     (link._id, index))
@@ -536,14 +536,8 @@ def auth_campaign(link, index, user, pay_id):
             # dual-write update to campaign Thing
             campaign = PromoCampaign._byID(index)
             if campaign:
-                if trans_id > 0:
-                    campaign.mark_paid(trans_id)
-                elif trans_id < 0:
-                    campaign.mark_freebie(trans_id)
-                else:
-                    campaign.mark_payment_error(reason)
-                campaign._commit()
-
+                campaign.update(sd, ed, bid, sr, trans_id, commit=True)
+                
             return bool(trans_id), reason
         return False, ""
 

@@ -24,21 +24,9 @@ from r2.lib.db.thing import Thing, NotFound
 from r2.lib.utils import Enum
 from r2.models import Link
 
-PaymentState = Enum('UNPAID', 'PAID', 'FREEBIE')
-
 NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):
-    
-    _defaults = dict(link_id=None,
-                     sr_name='',
-                     owner_id=None,
-                     payment_state=PaymentState.UNPAID,
-                     trans_id=NO_TRANSACTION,
-                     trans_error=None,
-                     bid=None,
-                     start_date=None,
-                     end_date=None)
     
     @classmethod 
     def _new(cls, link, sr_name, bid, start_date, end_date):
@@ -47,27 +35,36 @@ class PromoCampaign(Thing):
                            bid=bid,
                            start_date=start_date,
                            end_date=end_date,
+                           trans_id=NO_TRANSACTION,
                            owner_id=link.author_id)
         pc._commit()
         return pc
 
-    def set_bid(self, sr_name, bid, start_date, end_date):
-        self.sr_name = sr_name
-        self.bid = bid
+    @classmethod
+    def _by_link(cls, link_id):
+        '''
+        Returns an iterable of campaigns associated with link_id or an empty
+        list if there are none.
+        '''
+        return cls._query(PromoCampaign.c.link_id == link_id, data=True)
+
+
+    @classmethod
+    def _by_user(cls, account_id):
+        '''
+        Returns an iterable of all campaigns owned by account_id or an empty 
+        list if there are none.
+        '''
+        return cls._query(PromoCampaign.c.owner_id == account_id, data=True)
+
+    def update(self, start_date, end_date, bid, sr_name, trans_id, commit=True):
         self.start_date = start_date
-        self.end_date = end_date 
-
-    def mark_paid(self, trans_id):
+        self.end_date = end_date
+        self.bid = bid
+        self.sr_name = sr_name
         self.trans_id = trans_id
-        self.payment_state = PaymentState.PAID
-
-    def mark_freebie(self, trans_id):
-        self.trans_id = trans_id
-        self.payment_state = PaymentState.FREEBIE
-
-    def mark_payment_error(self, error_msg):
-        self.trans_id = NO_TRANSACTION
-        self.trans_error = error_msg
+        if commit:
+            self._commit()
 
     def delete(self):
         self._deleted = True
