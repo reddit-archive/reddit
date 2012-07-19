@@ -57,6 +57,9 @@ class PromoCampaign(Thing):
         '''
         return cls._query(PromoCampaign.c.owner_id == account_id, data=True)
 
+    def is_freebie(self):
+        return self.trans_id < 0
+
     def update(self, start_date, end_date, bid, sr_name, trans_id, commit=True):
         self.start_date = start_date
         self.end_date = end_date
