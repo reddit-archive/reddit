@@ -41,7 +41,7 @@ def send_file(bucketname, filename, content, content_type='text/plain', never_ex
     # TODO: add ACL support instead of always using public-read
 
     connection = S3Connection(KEY_ID, SECRET_KEY)
-    bucket = connection.get_bucket(bucketname)
+    bucket = connection.get_bucket(bucketname, validate=False)
     k = bucket.new_key(filename)
 
     headers={'Content-Type': content_type}
