@@ -163,8 +163,8 @@ def set_recent_clicks():
         if valid_click_cookie(click_cookie):
             names = [ x for x in UniqueIterator(click_cookie.split(',')) if x ]
 
-            if len(click_cookie) > 1000:
-                names = names[:20]
+            if len(names) > 5:
+                names = names[:5]
                 set_user_cookie('recentclicks2', ','.join(names))
             #eventually this will look at the user preference
             names = names[:5]

@@ -496,9 +496,9 @@ function add_thing_id_to_cookie(id, cookie_name) {
 
     cookie.data = id + ',' + cookie.data;
 
-    if(cookie.data.length > 1000) {
-        var fullnames = cookie.data.split(',');
-        fullnames = $.uniq(fullnames, 20);
+    var fullnames = cookie.data.split(',');
+    if(fullnames.length > 5) {
+        fullnames = $.uniq(fullnames, 5);
         cookie.data = fullnames.join(',');
     }
 
