@@ -63,10 +63,13 @@ class Cookies(dict):
         self[name] = Cookie(value, *k, **kw)
 
 class Cookie(object):
-    def __init__(self, value, expires = None, domain = None, dirty = True):
+    def __init__(self, value, expires=None, domain=None,
+                 dirty=True, secure=False, httponly=False):
         self.value = value
         self.expires = expires
         self.dirty = dirty
+        self.secure = secure
+        self.httponly = httponly
         if domain:
             self.domain = domain
         elif c.authorized_cname and not c.default_sr:
@@ -626,7 +629,9 @@ class MinimalController(BaseController):
                                             value   = cookie.value,
                                             domain  = cookie.get('domain',None),
                                             expires = cookie.get('expires',None),
-                                            path    = cookie.get('path',None))
+                                            path    = cookie.get('path',None),
+                                            secure  = cookie.get('secure', False),
+                                            httponly = cookie.get('httponly', False))
 
                 response.status_code = r.status_code
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
@@ -677,7 +682,9 @@ class MinimalController(BaseController):
                 response.set_cookie(key     = k,
                                     value   = quote(v.value),
                                     domain  = v.domain,
-                                    expires = v.expires)
+                                    expires = v.expires,
+                                    secure  = getattr(v, 'secure', False),
+                                    httponly = getattr(v, 'httponly', False))
 
         end_time = datetime.now(g.tz)
 
