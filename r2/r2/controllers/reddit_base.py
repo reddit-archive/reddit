@@ -763,6 +763,15 @@ class MinimalController(BaseController):
         c.response.content = filters.websafe_json(data)
         return c.response
 
+    def iframe_api_wrapper(self, kw):
+        data = simplejson.dumps(kw)
+        c.response_content_type = 'text/html'
+        c.response.content = (
+            '<html><head><script type="text/javascript">\n'
+            'parent.$.handleResponse().call(parent.$(window.frameElement.id).parent(), %s)\n'
+            '</script></head></html>') % filters.websafe_json(data)
+        return c.response
+
 
 class RedditController(MinimalController):
 

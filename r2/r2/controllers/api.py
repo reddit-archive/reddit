@@ -2914,16 +2914,38 @@ class ApiController(RedditController, OAuth2ResourceController):
             client.deleted = True
             client._commit()
 
-    @validatedForm(VUser(),
-                   VModhash(),
-                   client=VOAuth2ClientDeveloper(),
-                   icon_file=VLength('file', max_length=1024*32,
-                                     docs=dict(file=_("an icon (72x72)"))))
+    @validatedMultipartForm(VUser(),
+                            VModhash(),
+                            client=VOAuth2ClientDeveloper(),
+                            icon_file=VLength(
+                                'file', max_length=1024*128,
+                                docs=dict(file=_("an icon (72x72)"))))
     @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
-        if client and icon_file and media.can_upload_icon():
+        if client:
+            form_id = 'app-icon-upload-%s' % client._id
+        else:
+            form_id = None
+        if not media.can_upload_icon():
+            form.set_error(errors.NOT_SUPPORTED, '')
+        if not icon_file:
+            form.set_error(errors.TOO_LONG, 'file')
+        if not form.has_error():
             filename = 'icon-%s' % client._id
-            client.icon_url = media.upload_icon(filename, icon_file, (72, 72))
-            client._commit()
-            jquery('#app-icon-%s' % client._id).attr('src', client.icon_url)
-            form.set_html('.img-status', _('icon uploaded'))
+            try:
+                client.icon_url = media.upload_icon(filename, icon_file,
+                                                    (72, 72))
+            except IOError, ex:
+                c.errors.add(errors.BAD_IMAGE,
+                             msg_params=dict(message=ex.message),
+                             field='file')
+                form.set_error(errors.BAD_IMAGE, 'file')
+            else:
+                client._commit()
+                form.set_html('.status', 'uploaded')
+                jquery('#developed-app-%s .app-icon img'
+                       % client._id).attr('src', client.icon_url)
+                jquery('#developed-app-%s .ajax-upload-form'
+                       % client._id).hide()
+                jquery('#developed-app-%s .edit-app-icon-button'
+                       % client._id).toggleClass('collapsed')

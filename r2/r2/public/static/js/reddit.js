@@ -123,6 +123,11 @@ function post_pseudo_form(form, where, block) {
     return false;
 }
 
+function post_multipart_form(form, where) {
+    $(form).find(".status").html(reddit.status_msg.submitting).show();
+    return true;
+}
+
 function emptyInput(elem, msg) {
     if (! $(elem).val() || $(elem).val() == msg ) 
         $(elem).addClass("gray").val(msg).attr("rows", 3);

@@ -1,4 +1,5 @@
-<%namespace file="utils.html" import="error_field, image_upload, plain_link" />
+<%namespace name="utils" file="utils.html" />
+<%namespace file="utils.html" import="error_field, plain_link" />
 <%namespace file="printablebuttons.html" import="ynbutton" />
 
 <%def name="icon(app)">
@@ -79,16 +80,13 @@
         <a class="edit-app-icon-button" href="javascript:void(0)">
           change icon
         </a>
-        <table class="edit-app-icon pretty-form preftable">
-          <tr>
-            <th>${_("new icon")}</th>
-            <td class="prefright">
-              ${image_upload('/api/setappicon',
-                             form_id='app-icon-upload-%s' % app._id,
-                             hidden_data=dict(client_id=app._id))}
-            </td>
-          </tr>
-        </table>
+        <%utils:ajax_upload target="/api/setappicon"
+                            form_id="app-icon-upload-${app._id}">
+          <input type="hidden" name="client_id" value="${app._id}" />
+          ${error_field('NOT_SUPPORTED', '')}
+          ${error_field('TOO_LONG', 'file')}
+          ${error_field('BAD_IMAGE', 'file')}
+        </%utils:ajax_upload>
       %endif
       <div class="edit-app-form">
         <form method="post" action="/api/updateapp" class="pretty-form"

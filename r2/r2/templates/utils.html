@@ -267,6 +267,25 @@ ${unsafe(txt)}
   </input>
 </%def>
 
+<%def name="ajax_upload(target, form_id)">
+  <form method="post" enctype="multipart/form-data" target="${form_id}-iframe"
+        id="${form_id}" class="ajax-upload-form pretty-form" action="${target}"
+        onsubmit="return post_multipart_form(this, '${target}')">
+    <input type="hidden" name="id" value="${form_id}" />
+    <input type="hidden" name="uh" value="${c.modhash}" />
+    <input type="file" name="file" />
+    <button type="submit">
+      ${_('upload')}
+    </button>
+    %if caller:
+      ${caller.body()}
+    %endif
+    <span class="status"></span>
+    <iframe src="about:blank" name="${form_id}-iframe" id="${form_id}-iframe">
+    </iframe>
+  </form>
+</%def>
+
 <%def name="image_upload(post_target, current_image = None, onsubmit = '', 
                          onchange = '', label = '', form_id = 'image-upload',
                          ask_type = False, hidden_data=None)">

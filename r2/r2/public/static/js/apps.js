@@ -14,7 +14,7 @@ $(function() {
     $(".edit-app-icon-button").click(
         function() {
             $(this).toggleClass("collapsed");
-            $(this).closest(".edit-app").find(".edit-app-icon").show();
+            $(this).closest(".developed-app").find(".ajax-upload-form").show();
         });
 });
 

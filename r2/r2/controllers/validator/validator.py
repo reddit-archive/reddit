@@ -246,8 +246,7 @@ def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **k
         val = responder.make_response()
     return self.api_wrapper(val)
 
-@api_validate("html")
-def validatedForm(self, self_method, responder, simple_vals, param_vals,
+def _validatedForm(self, self_method, responder, simple_vals, param_vals,
                   *a, **kw):
     # generate a form object
     form = responder(request.POST.get('id', "body"))
@@ -272,6 +271,23 @@ def validatedForm(self, self_method, responder, simple_vals, param_vals,
     else:
         return self.api_wrapper(responder.make_response())
 
+@api_validate("html")
+def validatedForm(self, self_method, responder, simple_vals, param_vals,
+                  *a, **kw):
+    return _validatedForm(self, self_method, responder, simple_vals, param_vals,
+                          *a, **kw)
+
+@api_validate("html")
+def validatedMultipartForm(self, self_method, responder, simple_vals,
+                           param_vals, *a, **kw):
+    def wrapped_self_method(*a, **kw):
+        val = self_method(*a, **kw)
+        if val:
+            return val
+        else:
+            return self.iframe_api_wrapper(responder.make_response())
+    return _validatedForm(self, wrapped_self_method, responder, simple_vals,
+                          param_vals, *a, **kw)
 
 
 #### validators ####
