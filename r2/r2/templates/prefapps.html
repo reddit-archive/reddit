@@ -1,7 +1,6 @@
-<% from r2.lib.pages import AppDeveloper %>
 <%namespace name="utils" file="utils.html" />
 <%namespace file="utils.html" import="error_field, plain_link" />
-<%namespace file="printablebuttons.html" import="ynbutton" />
+<%namespace file="printablebuttons.html" import="ajax_ynbutton, ynbutton" />
 
 <%def name="icon(app)">
   <div class="app-icon">
@@ -28,39 +27,26 @@
   %endif
 </%def>
 
-%if thing.my_apps:
-  <h1>${_("authorized applications")}</h1>
+<%def name="editable_developer(app, dev)">
+  <li id="app-dev-${app._id}-${dev._id}">
+    ${dev.name}&#32;
+    %if c.user == dev:
+      <span class="gray">${_("(that's you!)")}</span>&#32;
+    %else:
+      ${ajax_ynbutton(_("remove"), "removedeveloper",
+                      hidden_data=dict(client_id=app._id, name=dev.name))}
+    %endif
+  </li>
+</%def>
 
-  %for app in thing.my_apps:
-  <div id="authorized-app-${app._id}" class="authorized-app rounded">
+<%def name="developed_app(app, collapsed=True)">
+  <li id="developed-app-${app._id}"
+      class="developed-app rounded ${'collapsed' if collapsed else ''}">
     ${icon(app)}
-    <div class="app-details">
-      <h2>
-      %if app.about_url:
-        <a href="${app.about_url}">${app.name}</a>
-      %else:
-        ${app.name}
-      %endif
-      </h2>
-      <div class="app-description">${app.description}</div>
-      ${developers(app)}
-      ${ynbutton(_("revoke access"),
-                 _("revoked"),
-                 "revokeapp",
-                 callback="app_revoked",
-                 hidden_data=dict(client_id=app._id),
-                 _class="revoke-app-button")}
-    </div>
-  </div>
-  %endfor
-%endif
-
-%if thing.developed_apps:
-  <h1>${_("developed applications")}</h1>
-
-  %for app in thing.developed_apps:
-  <div id="developed-app-${app._id}" class="developed-app rounded">
-    ${icon(app)}
+    <a class="edit-app-button ${'' if collapsed else 'collapsed'}"
+       href="javascript:void(0)">
+       ${_("edit")}
+    </a>
     <div class="app-details">
       <h2>
       %if app.about_url:
@@ -70,14 +56,14 @@
       %endif
       </h2>
       <h3>${app._id}</h3>
-      <div class="app-description">${app.description}</div>
-      ${developers(app)}
-      <a class="edit-app-button" href="javascript:void(0)">
-         ${_("edit")}
-      </a>
     </div>
-    <div class="edit-app">
-      %if thing.can_upload_icon:
+    <div class="app-description">${app.description}</div>
+    %if collapsed:
+      ${developers(app)}
+    %endif
+    <div class="edit-app ${'collapsed' if collapsed else ''}">
+      <% from r2.lib import media %>
+      %if media.can_upload_icon():
         <a class="edit-app-icon-button" href="javascript:void(0)">
           change icon
         </a>
@@ -141,7 +127,7 @@
             <td class="prefright">
               <ul>
                 %for dev in app._developers:
-                  ${AppDeveloper(app, dev)}
+                  ${editable_developer(app, dev)}
                 %endfor
               </ul>
               <br>
@@ -166,12 +152,47 @@
                    hidden_data=dict(client_id=app._id))}
       </div>
     </div>
+  </li>
+</%def>
+
+%if thing.my_apps:
+  <h1>${_("authorized applications")}</h1>
+
+  %for app in thing.my_apps:
+  <div id="authorized-app-${app._id}" class="authorized-app rounded">
+    ${icon(app)}
+    <div class="app-details">
+      <h2>
+      %if app.about_url:
+        <a href="${app.about_url}">${app.name}</a>
+      %else:
+        ${app.name}
+      %endif
+      </h2>
+    </div>
+    <div class="app-description">${app.description}</div>
+    ${developers(app)}
+    ${ynbutton(_("revoke access"),
+               _("revoked"),
+               "revokeapp",
+               callback="r.apps.revoked",
+               hidden_data=dict(client_id=app._id),
+               _class="revoke-app-button")}
   </div>
   %endfor
-  <p><a href="#">create another app...</a></p>
-%else:
-  <p><a href="#">are you a developer?  create an app...</a></p>
 %endif
+
+<div id="developed-apps">
+  %if thing.developed_apps:
+    <h1>${_("developed applications")}</h1>
+
+    <ul>
+    %for app in thing.developed_apps:
+      ${developed_app(app)}
+    %endfor
+    </ul>
+  %endif
+</div>
 
 <div class="edit-app-form">
   <button id="create-app-button" class="submit-img">

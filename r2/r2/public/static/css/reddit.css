@@ -5847,6 +5847,7 @@ tr.gold-accent + tr > td {
     width: 880px;
 }
 
+.developed-app.collapsed, .authorized-app { height: 100px; }
 .developed-app .collapsed { display: none; }
 
 .developed-app .ajax-upload-form {
@@ -5854,11 +5855,10 @@ tr.gold-accent + tr > td {
 }
 
 .app-details {
-    position: absolute;
-    top: 7px;
-    left: 80px;
+    display: inline-block;
+    width: 200px;
     height: 72px;
-    margin-left: 0.5em;
+    margin-left: 1em;
     vertical-align: top;
 }
 
@@ -5866,6 +5866,7 @@ tr.gold-accent + tr > td {
 .app-details h3 { font-size: x-small; }
 
 .app-icon {
+    display: inline-block;
     width: 72px;
     height: 72px;
     line-height: 72px;
@@ -5877,27 +5878,32 @@ tr.gold-accent + tr > td {
 }
 
 .app-description {
+    display: inline-block;
     font-size: small;
-    position: absolute;
-    top: 0px;
-    left: 200px;
-    width: 600px;
+    width: 597px;
+    height: 80px;
+    overflow-y: auto;
+    vertical-align: top;
 }
 
 .app-developers {
     position: absolute;
-    left: 200px;
-    bottom: 0px;
+    left: 289px;
+    bottom: 1ex;
     width: 600px;
 }
 
 .edit-app-button, .revoke-app-button {
     position: absolute;
-    bottom: 0px;
+    bottom: 1ex;
+    left: 12px;
     width: 200px;
 }
 
-.edit-app, .edit-app-icon, .developed-app .collapsed { display: none; }
+.edit-app.collapsed, .edit-app-icon, .developed-app .collapsed {
+    display: none;
+}
+
 .edit-app-icon-button { display: block; text-align: center; width: 72px; }
 .edit-app-form, .edit-app-form form { display: inline-block; }
 .edit-app-form th, .edit-app-icon th { width: 12ex; }

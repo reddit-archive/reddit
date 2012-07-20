@@ -40,7 +40,7 @@ from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     UrlParser, WrappedUser, BoringPage
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
-from r2.lib.pages import AppDeveloper
+from r2.lib.pages import PrefApps
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 from r2.models.last_modified import LastModified
@@ -2862,20 +2862,24 @@ class ApiController(RedditController, OAuth2ResourceController):
             client.name = name
             client.description = description
             client.about_url = about_url or ''
-            client.icon_url = icon_url or ''
             client.redirect_uri = redirect_uri
             client._commit()
             form.set_html('.status', _('application updated'))
+            apps = PrefApps([], [client])
+            jquery('#developed-app-%s' % client._id).replaceWith(
+                apps.call('developed_app', client, collapsed=False))
         else:
             # client_id was omitted or empty, creating new OAuth2Client
             client = OAuth2Client._new(name=name,
                                        description=description,
                                        about_url=about_url or '',
-                                       icon_url=icon_url or '',
                                        redirect_uri=redirect_uri)
             client._commit()
             client.add_developer(c.user)
             form.set_html('.status', _('application created'))
+            apps = PrefApps([], [client])
+            jquery('#developed-apps ul').append(
+                apps.call('developed_app', client, collapsed=False))
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -2894,9 +2898,10 @@ class ApiController(RedditController, OAuth2ResourceController):
             return
         client.add_developer(account)
         form.set_html('.status', _('developer added'))
+        apps = PrefApps([], [client])
         (jquery('#app-developer-%s input[name="name"]' % client._id).val('')
             .closest('.prefright').find('ul').append(
-                AppDeveloper(client, account).render(style='html')))
+                apps.call('editable_developer', client, account)))
 
     @validatedForm(VUser(),
                    VModhash(),

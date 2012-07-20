@@ -400,6 +400,13 @@ class Templated(object):
         if style: del kw['style']
         return self._render(attr, style, **kw)
 
+    def call(self, name, *args, **kwargs):
+        from pylons import g
+        from r2.lib.filters import spaceCompress
+        res = self.template().get_def(name).render(*args, **kwargs)
+        if not g.template_debug:
+            res = spaceCompress(res)
+        return res
 
 class Uncachable(Exception): pass
 
