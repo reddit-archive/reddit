@@ -21,6 +21,7 @@
 ###############################################################################
 
 import datetime
+import collections
 
 from pylons.i18n import _
 from pylons import g, c
@@ -127,7 +128,30 @@ class RedditTraffic(Templated):
         except NotImplementedError:
             self.dow_summary = None
         else:
-            self.dow_summary = self.dow_summary[1:8]  # latest complete week
+            uniques_total = collections.Counter()
+            pageviews_total = collections.Counter()
+            days_total = collections.Counter()
+
+            # don't include the latest (likely incomplete) day
+            for date, (uniques, pageviews) in self.dow_summary[1:]:
+                dow = date.weekday()
+                uniques_total[dow] += uniques
+                pageviews_total[dow] += pageviews
+                days_total[dow] += 1
+
+            # make a summary of the averages for each day of the week
+            self.dow_summary = []
+            for dow in xrange(7):
+                day_count = days_total[dow]
+                if day_count:
+                    avg_uniques = uniques_total[dow] / day_count
+                    avg_pageviews = pageviews_total[dow] / day_count
+                    self.dow_summary.append((dow,
+                                             (avg_uniques, avg_pageviews)))
+                else:
+                    self.dow_summary.append((dow, (0, 0)))
+
+            # calculate the averages for *any* day of the week
             mean_uniques = sum(r[1][0] for r in self.dow_summary) / 7.0
             mean_pageviews = sum(r[1][1] for r in self.dow_summary) / 7.0
             self.dow_means = (round(mean_uniques), round(mean_pageviews))

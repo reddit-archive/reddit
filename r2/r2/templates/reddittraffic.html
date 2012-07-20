@@ -85,9 +85,9 @@ ${self.tables()}
   </tr>
   </thead>
   <tbody>
-  % for date, cols in thing.dow_summary:
+  % for dow, cols in thing.dow_summary:
   <tr>
-    <th scope="row">${day_names[date.weekday()]}</th>
+    <th scope="row">${day_names[dow]}</th>
     % for col in cols:
     <td>${format_number(col)}</td>
     % endfor
