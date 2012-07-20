@@ -1,0 +1,12 @@
+<%namespace file="printablebuttons.html" import="ajax_ynbutton" />
+
+<li id="app-dev-${thing.app._id}-${thing.dev._id}">
+${thing.dev.name}&#32;
+%if c.user == thing.dev:
+  <span class="gray">(that's you!)</span>
+%else:
+  ${ajax_ynbutton(_("remove"), "removedeveloper",
+                  hidden_data=dict(client_id=thing.app._id,
+                                   name=thing.dev.name))}
+%endif
+</li>

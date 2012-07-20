@@ -1280,6 +1280,21 @@ $(function() {
         });
 
         organic_help()
+
+        /* ajax ynbutton */
+        function toggleThis() { return toggle(this); }
+        $("body")
+            .delegate(".ajax-yn-button", "submit",
+                      function() {
+                          var op = $(this).find('input[name="_op"]').val();
+                          post_form(this, op);
+                          return false;
+                      })
+            .delegate(".ajax-yn-button .togglebutton", "click", toggleThis)
+            .delegate(".ajax-yn-button .no", "click", toggleThis)
+            .delegate(".ajax-yn-button .yes", "click",
+                      function() { $(this).closest("form").submit(); })
+            ;
     });
 
 function show_friend(account_fullname) {

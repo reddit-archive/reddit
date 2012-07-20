@@ -1,3 +1,4 @@
+<% from r2.lib.pages import AppDeveloper %>
 <%namespace name="utils" file="utils.html" />
 <%namespace file="utils.html" import="error_field, plain_link" />
 <%namespace file="printablebuttons.html" import="ynbutton" />
@@ -138,25 +139,19 @@
           <tr>
             <th>${_("developers")}</th>
             <td class="prefright">
-              %for dev in app._developers:
-                ${dev.name}&#32;
-                %if c.user == dev:
-                  <span class="gray">(that's you!)</span>
-                %else:
-                  ${ynbutton(_("remove"),
-                             _("removed"),
-                             "removedeveloper",
-                             hidden_data=dict(client_id=app._id,
-                                              developer=dev._fullname))}
-                %endif
-                <br>
-              %endfor
+              <ul>
+                %for dev in app._developers:
+                  ${AppDeveloper(app, dev)}
+                %endfor
+              </ul>
+              <br>
               <form method="post" action="/api/adddeveloper"
-               class="pretty-form app-developers" id="app-developer-${app._id}"
+               class="pretty-form" id="app-developer-${app._id}"
                onsubmit="${"return post_form(this, 'adddeveloper', function(x) {return '%s'})" % _("adding...")}">
                 <input type="hidden" name="uh" value="${c.modhash}" />
                 <input type="hidden" name="client_id" value="${app._id}" />
-                add developer: <input name="name">
+                ${_('add developer')}: <input name="name">
+                <br>
                 <span class="status"></span>
               </form>
             </td>

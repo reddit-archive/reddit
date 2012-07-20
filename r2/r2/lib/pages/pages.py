@@ -667,6 +667,11 @@ class PrefApps(Templated):
         self.can_upload_icon = media.can_upload_icon()
         super(PrefApps, self).__init__()
 
+class AppDeveloper(Templated):
+    def __init__(self, app, dev):
+        self.app = app
+        self.dev = dev
+        super(AppDeveloper, self).__init__()
 
 class PrefDelete(Templated):
     """Preference form for deleting a user's own account."""

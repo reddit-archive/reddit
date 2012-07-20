@@ -389,6 +389,26 @@
 </%def>
 
 
+<%def name="ajax_ynbutton(title, op, question=None, _class='', hidden_data={})">
+  <form method="post" action="/api/${op}"
+        class="toggle ajax-yn-button ${op}-button ${_class}">
+    <input type="hidden" name="_op" value="${op}" />
+    %for k, v in hidden_data.iteritems():
+      <input type="hidden" name="${k}" value="${v}" />
+    %endfor
+    <span class="option main active">
+      <a href="javascript:void(0)" class="togglebutton">${title}</a>
+    </span>
+    <span class="option error">
+      ${_("are you sure?") if question is None else question}
+      &#32;
+      <a href="javascript:void(0)" class="yes">${_("yes")}</a>
+      &#32;/&#32;
+      <a href="javascript:void(0)" class="no">${_("no")}</a>
+    </span>
+  </form>
+</%def>
+
 <%def name="ynbutton(title, executed, op, callback = 'null', 
                      question = None,
                      format = '%(link)s',
@@ -422,7 +442,6 @@
     </span>
   </form>
 </%def>
-
 
 <%def name="simple_button(title, nameFunc, css_class='')">
  <a class="${css_class}" href="javascript:void(0)" 

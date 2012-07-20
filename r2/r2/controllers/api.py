@@ -40,6 +40,7 @@ from r2.lib.pages import EnemyList, FriendList, ContributorList, ModList, \
     UrlParser, WrappedUser, BoringPage
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
+from r2.lib.pages import AppDeveloper
 from r2.lib.utils.trial_utils import indict, end_trial, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 from r2.models.last_modified import LastModified
@@ -2893,6 +2894,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             return
         client.add_developer(account)
         form.set_html('.status', _('developer added'))
+        (jquery('#app-developer-%s input[name="name"]' % client._id).val('')
+            .closest('.prefright').find('ul').append(
+                AppDeveloper(client, account).render(style='html')))
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -2901,9 +2905,8 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.apps)
     def POST_removedeveloper(self, form, jquery, client, account):
         if client and account and not form.has_errors('name'):
-            g.log.debug('removing developer: %s', account.name)
             client.remove_developer(account)
-            form.set_html('.status', _('developer removed'))
+            jquery('li#app-dev-%s-%s' % (client._id, account._id)).fadeOut()
 
     @noresponse(VUser(),
                 VModhash(),
