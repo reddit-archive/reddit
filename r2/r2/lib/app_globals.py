@@ -63,6 +63,7 @@ class Globals(object):
             'QUOTA_THRESHOLD',
             'ADMIN_COOKIE_TTL',
             'ADMIN_COOKIE_MAX_IDLE',
+            'OTP_COOKIE_TTL',
             'num_comments',
             'max_comments',
             'max_comments_gold',

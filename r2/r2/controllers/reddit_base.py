@@ -150,9 +150,10 @@ def read_user_cookie(name):
     else:
         return ''
 
-def set_user_cookie(name, val):
+def set_user_cookie(name, val, **kwargs):
     uname = c.user.name if c.user_is_loggedin else ""
-    c.cookies[uname + '_' + name] = Cookie(value = val)
+    c.cookies[uname + '_' + name] = Cookie(value=val,
+                                           **kwargs)
 
     
 valid_click_cookie = fullname_regex(Link, True).match
@@ -783,6 +784,17 @@ class RedditController(MinimalController):
         c.cookies[g.admin_cookie] = Cookie(value=user.make_admin_cookie(first_login=first_login))
 
     @staticmethod
+    def remember_otp(user):
+        cookie = user.make_otp_cookie()
+        expiration = datetime.utcnow() + timedelta(seconds=g.OTP_COOKIE_TTL)
+        expiration = expiration.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        set_user_cookie(g.otp_cookie,
+                        cookie,
+                        secure=True,
+                        httponly=True,
+                        expires=expiration)
+
+    @staticmethod
     def disable_admin_mode(user):
         c.cookies[g.admin_cookie] = Cookie(value='', expires=DELETE)
 
@@ -809,6 +821,7 @@ class RedditController(MinimalController):
 
         # the user could have been logged in via one of the feeds 
         maybe_admin = False
+        is_otpcookie_valid = False
 
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:
@@ -827,6 +840,10 @@ class RedditController(MinimalController):
                         self.enable_admin_mode(c.user, first_login=first_login)
                     else:
                         self.disable_admin_mode(c.user)
+
+                otp_cookie = read_user_cookie(g.otp_cookie)
+                if c.user_is_loggedin and otp_cookie:
+                    is_otpcookie_valid = valid_otp_cookie(otp_cookie)
 
             if not c.user:
                 c.user = UnloggedUser(get_browser_langs())
@@ -850,6 +867,7 @@ class RedditController(MinimalController):
             c.user_is_admin = maybe_admin and c.user.name in g.admins
             c.user_special_distinguish = c.user.special_distinguish()
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
+            c.otp_cached = is_otpcookie_valid
             if request.path != '/validuser' and not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)
 

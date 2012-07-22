@@ -108,6 +108,7 @@ class Account(Thing):
                      gold_charter = False,
                      gold_creddits = 0,
                      gold_creddit_escrow = 0,
+                     otp_secret=None,
                      )
 
     def has_interacted_with(self, sr):
@@ -240,6 +241,16 @@ class Account(Thing):
         hashable = ','.join((first_login, last_request, request.ip, request.user_agent, self.password))
         mac = hmac.new(g.SECRET, hashable, hashlib.sha1).hexdigest()
         return ','.join((first_login, last_request, mac))
+
+    def make_otp_cookie(self, timestamp=None):
+        if not self._loaded:
+            self._load()
+
+        timestamp = timestamp or datetime.utcnow().strftime(COOKIE_TIMESTAMP_FORMAT)
+        secrets = [request.user_agent, self.otp_secret, self.password]
+        signature = hmac.new(g.SECRET, ','.join([timestamp] + secrets), hashlib.sha1).hexdigest()
+
+        return ",".join((timestamp, signature))
 
     def needs_captcha(self):
         return not g.disable_captcha and self.link_karma < 1
@@ -629,6 +640,31 @@ def valid_admin_cookie(cookie):
     expected_cookie = c.user.make_admin_cookie(first_login, last_request)
     return (constant_time_compare(cookie, expected_cookie),
             first_login)
+
+
+def valid_otp_cookie(cookie):
+    if g.read_only_mode:
+        return False
+
+    # parse the cookie
+    try:
+        remembered_at, signature = cookie.split(",")
+    except ValueError:
+        return False
+
+    # make sure it hasn't expired
+    try:
+        remembered_at_time = datetime.strptime(remembered_at, COOKIE_TIMESTAMP_FORMAT)
+    except ValueError:
+        return False
+
+    age = datetime.utcnow() - remembered_at_time
+    if age.total_seconds() > g.OTP_COOKIE_TTL:
+        return False
+
+    # validate
+    expected_cookie = c.user.make_otp_cookie(remembered_at)
+    return constant_time_compare(cookie, expected_cookie)
 
 
 def valid_feed(name, feedhash, path):

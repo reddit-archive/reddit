@@ -109,6 +109,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      friends      = _("friends"),
                      update       = _("password/email"),
                      delete       = _("delete"),
+                     otp          = _("two-factor authentication"),
 
                      # messages
                      compose      = _("compose"),

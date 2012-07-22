@@ -97,6 +97,7 @@ error_list = dict((
         ('CONFIRM', _("please confirm the form")),
         ('NO_API', _('cannot perform this action via the API')),
         ('DOMAIN_BANNED', _('%(domain)s is not allowed on reddit: %(reason)s')),
+        ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

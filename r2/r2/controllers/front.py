@@ -1104,6 +1104,8 @@ class FormsController(RedditController):
             content = PrefFeeds()
         elif location == 'delete':
             content = PrefDelete()
+        elif location == 'otp':
+            content = PrefOTP()
         else:
             return self.abort404()
 

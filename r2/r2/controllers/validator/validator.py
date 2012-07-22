@@ -24,7 +24,7 @@ from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
 from r2.config.extensions import api_type
-from r2.lib import utils, captcha, promote
+from r2.lib import utils, captcha, promote, totp
 from r2.lib.filters import unkeep_space, websafe, _force_unicode
 from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
@@ -1767,3 +1767,63 @@ class VFlairTemplateByID(VRequired):
                 c.site._id, flair_template_id)
         except tdb_cassandra.NotFound:
             return None
+
+class VOneTimePassword(Validator):
+    max_skew = 2  # check two periods to allow for some clock skew
+    ratelimit = 3  # maximum number of tries per period
+
+    def __init__(self, param, required):
+        self.required = required
+        Validator.__init__(self, param)
+
+    @classmethod
+    def validate_otp(cls, secret, password):
+        # is the password a valid format and has it been used?
+        try:
+            key = "otp-%s-%d" % (c.user._id36, int(password))
+        except (TypeError, ValueError):
+            valid_and_unused = False
+        else:
+            # leave this key around for one more time period than the maximum
+            # number of time periods we'll check for valid passwords
+            key_ttl = totp.PERIOD * (cls.max_skew + 1)
+            valid_and_unused = g.cache.add(key, True, time=key_ttl)
+
+        # check the password (allowing for some clock-skew as 2FA-users
+        # frequently travel at relativistic velocities)
+        if valid_and_unused:
+            for skew in range(cls.max_skew):
+                expected_otp = totp.make_totp(secret, skew=skew)
+                if constant_time_compare(password, expected_otp):
+                    return True
+
+        return False
+
+    def run(self, password):
+        # does the user have 2FA configured?
+        secret = c.user.otp_secret
+        if not secret:
+            if self.required:
+                self.set_error(errors.NO_OTP_SECRET)
+            return
+
+        # do they have the otp cookie instead?
+        if c.otp_cached:
+            return
+
+        # make sure they're not trying this too much
+        if not g.disable_ratelimit:
+            current_password = totp.make_totp(secret)
+            key = "otp-tries-" + current_password
+            g.cache.add(key, 0)
+            recent_attempts = g.cache.incr(key)
+            if recent_attempts > self.ratelimit:
+                self.set_error(errors.RATELIMIT, dict(time="30 seconds"))
+                return
+
+        # check the password
+        if self.validate_otp(secret, password):
+            return
+
+        # if we got this far, their password was wrong, invalid or already used
+        self.set_error(errors.WRONG_PASSWORD)

@@ -2713,3 +2713,51 @@ class ApiController(RedditController):
         self.enable_admin_mode(c.user)
         form.redirect(dest)
 
+    @validatedForm(VUser("password", default=""),
+                   VModhash())
+    def POST_generate_otp_secret(self, form, jquery):
+        if form.has_errors("password", errors.WRONG_PASSWORD):
+            return
+
+        secret = totp.generate_secret()
+        g.cache.set('otp_secret_' + c.user._id36, secret, time=300)
+        jquery("body").make_totp_qrcode(secret)
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   otp=nop("otp"))
+    def POST_enable_otp(self, form, jquery, otp):
+        if form.has_errors("password", errors.WRONG_PASSWORD):
+            return
+
+        secret = g.cache.get("otp_secret_" + c.user._id36)
+        if not secret:
+            c.errors.add(errors.EXPIRED, field="otp")
+            form.has_errors("otp", errors.EXPIRED)
+            return
+
+        if not VOneTimePassword.validate_otp(secret, otp):
+            c.errors.add(errors.WRONG_PASSWORD, field="otp")
+            form.has_errors("otp", errors.WRONG_PASSWORD)
+            return
+
+        c.user.otp_secret = secret
+        c.user._commit()
+
+        form.redirect("/prefs/otp")
+
+    @validatedForm(VUser("password", default=""),
+                   VOneTimePassword("otp", required=True),
+                   VModhash())
+    def POST_disable_otp(self, form, jquery):
+        if form.has_errors("password", errors.WRONG_PASSWORD):
+            return
+
+        if form.has_errors("otp", errors.WRONG_PASSWORD,
+                                  errors.NO_OTP_SECRET,
+                                  errors.RATELIMIT):
+            return
+
+        c.user.otp_secret = ""
+        c.user._commit()
+        form.redirect("/prefs/otp")

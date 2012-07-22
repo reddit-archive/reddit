@@ -310,6 +310,11 @@ module["traffic"] = LocalizedModule("traffic.js",
     "traffic.js",
 )
 
+module["qrcode"] = Module("qrcode.js",
+    "lib/jquery.qrcode.min.js",
+    "qrcode.js",
+)
+
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
