@@ -114,6 +114,7 @@ class Globals(object):
             's3_media_direct',
             'disable_captcha',
             'disable_ads',
+            'disable_require_admin_otp',
             'static_pre_gzipped',
             'static_secure_pre_gzipped',
             'trust_local_proxies',

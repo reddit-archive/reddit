@@ -2705,10 +2705,21 @@ class ApiController(RedditController):
 
     @validatedForm(VUser('password', default=''),
                    VModhash(),
+                   VOneTimePassword("otp",
+                                    required=not g.disable_require_admin_otp),
+                   remember=VBoolean("remember"),
                    dest=VDestination())
-    def POST_adminon(self, form, jquery, dest):
+    def POST_adminon(self, form, jquery, remember, dest):
         if form.has_errors('password', errors.WRONG_PASSWORD):
             return
+
+        if form.has_errors("otp", errors.WRONG_PASSWORD,
+                                  errors.NO_OTP_SECRET,
+                                  errors.RATELIMIT):
+            return
+
+        if remember:
+            self.remember_otp(c.user)
 
         self.enable_admin_mode(c.user)
         form.redirect(dest)

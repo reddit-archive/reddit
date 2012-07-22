@@ -5409,8 +5409,13 @@ tr.gold-accent + tr > td {
 }
 
 .adminpasswordform {
-    margin-bottom: .5em;
-    display: inline-block;
+    display: block;
+    margin: .5em auto 0 auto;
+}
+
+.adminpasswordform label {
+    display: block;
+    padding: .5em;
 }
 
 .content.api-help {
