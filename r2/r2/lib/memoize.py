@@ -30,7 +30,7 @@ from pylons import g
 
 make_lock = g.make_lock
 
-def memoize(iden, time = 0, stale=False):
+def memoize(iden, time = 0, stale=False, timeout=30):
     def memoize_fn(fn):
         from r2.lib.memoize import NoneResult
         def new_fn(*a, **kw):
@@ -45,7 +45,9 @@ def memoize(iden, time = 0, stale=False):
 
             if res is None:
                 # not cached, we should calculate it.
-                with make_lock("memoize", 'memoize_lock(%s)' % key):
+                with make_lock("memoize", 'memoize_lock(%s)' % key,
+                               time=timeout, timeout=timeout):
+
                     # see if it was completed while we were waiting
                     # for the lock
                     stored = None if update else cache.get(key)
