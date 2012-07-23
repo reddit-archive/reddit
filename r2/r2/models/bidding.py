@@ -549,6 +549,10 @@ class PromotionWeights(Sessionized, Base):
     def bid_history(cls, start_date, end_date = None, account_id = None):
         from r2.models import Link
         from r2.lib import promote
+       
+        if not end_date:
+            end_date = datetime.datetime.now(g.tz)
+        
         start_date = to_date(start_date)
         end_date   = to_date(end_date)
         q = cls.query()
