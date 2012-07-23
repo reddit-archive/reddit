@@ -96,37 +96,25 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
 
 class ProfilingMiddleware(object):
-    def __init__(self, app):
+    def __init__(self, app, directory):
         self.app = app
+        self.directory = directory
 
     def __call__(self, environ, start_response):
-        query_params = urlparse.parse_qs(environ['QUERY_STRING'])
+        import cProfile
 
-        if "profile" in query_params:
-            import cProfile
+        try:
+            tmpfile = tempfile.NamedTemporaryFile(prefix='profile',
+                                                  dir=self.directory,
+                                                  delete=False)
 
-            def fake_start_response(*args, **kwargs):
-                pass
+            profile = cProfile.Profile()
+            result = profile.runcall(self.app, environ, start_response)
+            profile.dump_stats(tmpfile.name)
 
-            try:
-                tmpfile = tempfile.NamedTemporaryFile()
-
-                cProfile.runctx("self.app(environ, fake_start_response)",
-                                globals(),
-                                locals(),
-                                tmpfile.name)
-
-                tmpfile.seek(0)
-
-                start_response('200 OK', 
-                               [('Content-Type', 'application/octet-stream'),
-                                ('Content-Disposition',
-                                 'attachment; filename=profile.bin')])
-                return tmpfile.read()
-            finally:
-                tmpfile.close()
-
-        return self.app(environ, start_response)
+            return result
+        finally:
+            tmpfile.close()
 
 
 class DomainMiddleware(object):
@@ -423,8 +411,9 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
     app = LimitUploadSize(app)
 
-    if g.config['debug']:
-        app = ProfilingMiddleware(app)
+    profile_directory = g.config.get('profile_directory')
+    if profile_directory:
+        app = ProfilingMiddleware(app, profile_directory)
 
     app = DomainListingMiddleware(app)
     app = SubredditMiddleware(app)
