@@ -95,6 +95,7 @@ class ConsumableToken(Token):
 
 class OAuth2Client(Token):
     """A client registered for OAuth2 access"""
+    max_developers = 20
     token_size = 10
     client_secret_size = 20
     _defaults = dict(name="",
@@ -116,13 +117,22 @@ class OAuth2Client(Token):
         return super(OAuth2Client, cls)._new(**kwargs)
 
     @property
+    def _developer_ids(self):
+        for k, v in self._t.iteritems():
+            if k.startswith(self._developer_colname_prefix) and v:
+                try:
+                    yield int(k[len(self._developer_colname_prefix):], 36)
+                except ValueError:
+                    pass
+
+    @property
     def _developers(self):
         """Returns a list of users who are developers of this client."""
 
         devs = []
-        for k in [ k for k, v in self._t.iteritems() if k.startswith(self._developer_colname_prefix) and v ]:
+        for dev_id in self._developer_ids:
             try:
-                dev = Account._byID36(k[len(self._developer_colname_prefix):])
+                dev = Account._byID(dev_id)
                 if dev._deleted or dev._spam:
                     raise NotFound
             except NotFound:
@@ -149,10 +159,13 @@ class OAuth2Client(Token):
         else:
             return getattr(self, self._developer_colname(account), False)
 
-    def add_developer(self, account):
+    def add_developer(self, account, force=False):
         """Grants developer access to the supplied Account."""
 
-        if not getattr(self, self._developer_colname(account), False):
+        dev_ids = set(self._developer_ids)
+        if account._id not in dev_ids:
+            if not force and len(dev_ids) >= self.max_developers:
+                raise OverflowError('max developers reached')
             setattr(self, self._developer_colname(account), True)
             self._commit()
 

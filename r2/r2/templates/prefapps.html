@@ -13,7 +13,7 @@
   %if devs:
     <div class="app-developers">
       Developers:&#32;
-      %for i, dev in enumerate(devs):
+      %for i, dev in enumerate(sorted(devs, key=lambda d: d.name)):
         %if i:
           %if i == len(devs) - 1:
             &#32;and&#32;
@@ -126,7 +126,7 @@
             <th>${_("developers")}</th>
             <td class="prefright">
               <ul>
-                %for dev in app._developers:
+                %for dev in sorted(app._developers, key=lambda d: d.name):
                   ${editable_developer(app, dev)}
                 %endfor
               </ul>

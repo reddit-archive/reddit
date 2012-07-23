@@ -2896,7 +2896,12 @@ class ApiController(RedditController, OAuth2ResourceController):
         if client.has_developer(account):
             form.set_html('.status', _('already added'))
             return
-        client.add_developer(account)
+        try:
+            client.add_developer(account)
+        except OverflowError:
+            form.set_html('.status', _('too many developers'))
+            return
+
         form.set_html('.status', _('developer added'))
         apps = PrefApps([], [client])
         (jquery('#app-developer-%s input[name="name"]' % client._id).val('')
