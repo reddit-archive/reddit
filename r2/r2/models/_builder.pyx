@@ -326,7 +326,8 @@ class _MessageBuilder(Builder):
                             tree)
                         next = self.after._id
                         if len(tree) > self.num:
-                            prev = tree[-(self.num+1)][0]
+                            first = tree[-(self.num+1)]
+                            prev = first[1][-1] if first[1] else first[0]
                             tree = tree[-self.num:]
                     else:
                         prev = self.after._id
@@ -335,7 +336,8 @@ class _MessageBuilder(Builder):
                             tree)
                 if len(tree) > self.num:
                     tree = tree[:self.num]
-                    next = tree[-1][0]
+                    last = tree[-1]
+                    next = last[1][-1] if last[1] else last[0]
 
         # generate the set of ids to look up and look them up
         message_ids = []
