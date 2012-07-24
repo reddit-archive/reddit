@@ -419,6 +419,10 @@ class QueryBuilder(Builder):
                 after_count)
 
 class IDBuilder(QueryBuilder):
+    def thing_lookup(self, names):
+        return Thing._by_fullname(names, data=True, return_dict=False,
+                                  stale=self.stale)
+
     def init_query(self):
         names = list(tup(self.query))
 
@@ -461,8 +465,30 @@ class IDBuilder(QueryBuilder):
             done = True
 
         self.names, new_names = names[slice_size:], names[:slice_size]
-        new_items = Thing._by_fullname(new_names, data = True, return_dict=False, stale=self.stale)
+        new_items = self.thing_lookup(new_names)
         return done, new_items
+
+
+class FakeThing(object):
+    def __init__(self, name):
+        self._id = name
+
+class SimpleBuilder(IDBuilder):
+    def thing_lookup(self, names):
+        return [FakeThing(name) for name in names]
+
+    def init_query(self):
+        names = list(tup(self.query))
+        self.names = self._get_after(names, self.after, self.reverse)
+
+    def get_items(self):
+        items, prev, next, bcount, acount = IDBuilder.get_items(self)
+        items = [i._id for i in items]
+        if prev:
+            prev = prev._id
+        if next:
+            next = next._id
+        return (items, prev, next, bcount, acount)
 
 class SearchBuilder(IDBuilder):
     def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
