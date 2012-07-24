@@ -112,6 +112,8 @@ def is_valid_campaign(link, campaign_id):
         return False
 
 def is_live_on_sr(link, srname):
+    if not is_promoted(link):
+        return False
     live = scheduled_campaigns_by_link(link)
     srname = srname.lower()
     srname = srname if srname != DefaultSR.name.lower() else ''
@@ -125,6 +127,8 @@ def is_live_on_sr(link, srname):
 
 
 def campign_is_live(link, campaign_index):
+    if not is_promoted(link):
+        return False
     live = scheduled_campaigns_by_link(link)
     return campaign_index in live
 
