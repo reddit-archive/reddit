@@ -183,15 +183,14 @@
 %endif
 
 <div id="developed-apps">
-  %if thing.developed_apps:
-    <h1>${_("developed applications")}</h1>
-
-    <ul>
+  <h1 style="${'' if thing.developed_apps else 'display:none'}">
+    ${_("developed applications")}
+  </h1>
+  <ul>
     %for app in thing.developed_apps:
       ${developed_app(app)}
     %endfor
-    </ul>
-  %endif
+  </ul>
 </div>
 
 <div class="edit-app-form">

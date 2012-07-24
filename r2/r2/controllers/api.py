@@ -2878,7 +2878,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             client.add_developer(c.user)
             form.set_html('.status', _('application created'))
             apps = PrefApps([], [client])
-            jquery('#developed-apps ul').append(
+            jquery('#developed-apps > h1').show()
+            jquery('#developed-apps > ul').append(
                 apps.call('developed_app', client, collapsed=False))
 
     @validatedForm(VUser(),
