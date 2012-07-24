@@ -652,9 +652,17 @@ def accepted_campaigns(offset=0):
 
 def get_scheduled(offset=0):
     by_sr = {}
+    failed = []
     for l, campaign, weight in accepted_campaigns(offset=offset):
-        if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
-            by_sr.setdefault(campaign.sr_name, []).append((l, weight))
+        try:
+            if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
+                by_sr.setdefault(campaign.sr_name, []).append((l, weight))
+        except Exception, e: # could happen if campaign things have corrupt data
+            failed.append((campaign._id, e))
+    if failed:
+       err_msgs = ["camp id: %d, reason: %r" % (f[0], f[1]) for f in failed]
+       g.log.error("%d accepted campaign not included in schedule:\n%s" % 
+                   (len(failed), "\n".join(err_msgs)))
     return by_sr
 
 
