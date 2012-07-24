@@ -30,10 +30,6 @@
      lookup = dict((t._fullname, t) for t in thing.things)
      seen = set([])
    %>
-  <script type="text/javascript">
-    ## fortunately, python arrays print in JS-compatible form.
-    var organic_links = ${thing.spotlight_links};
-  </script>
   %for name in thing.spotlight_links:
     %if name in seen:
       <% pass %>
