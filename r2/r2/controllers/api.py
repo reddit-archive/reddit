@@ -2836,7 +2836,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                                   docs=dict(name=_("a name for the app"))),
                    about_url=VSanitizedUrl('about_url'),
                    icon_url=VSanitizedUrl('icon_url'),
-                   redirect_uri=VUrl('redirect_uri', allow_self=False))
+                   redirect_uri=VSanitizedUrl('redirect_uri'))
     @api_doc(api_section.apps)
     def POST_updateapp(self, form, jquery, name, about_url, icon_url, redirect_uri):
         if (form.has_errors('name', errors.NO_TEXT) |
