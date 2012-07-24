@@ -126,7 +126,7 @@ def is_live_on_sr(link, srname):
     return False
 
 
-def campign_is_live(link, campaign_index):
+def campaign_is_live(link, campaign_index):
     if not is_promoted(link):
         return False
     live = scheduled_campaigns_by_link(link)
@@ -260,7 +260,7 @@ class RenderableCampaign():
                           time = ungettext("day", "days", ndays))
         self.bid = "%.2f" % campaign.bid
         self.sr = campaign.sr_name
-        live = campign_is_live(link, campaign._id)
+        live = campaign_is_live(link, campaign._id)
         
         self.status = dict(paid = bool(transaction),
                            complete = False,
