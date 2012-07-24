@@ -116,7 +116,7 @@
               </td>
             </tr>
           </table>
-          <input type="submit" value="update app">
+          <button type="submit">${_('update app')}</button>
           <span class="status"></span>
         </form>
       </div>
@@ -196,7 +196,11 @@
 
 <div class="edit-app-form">
   <button id="create-app-button" class="submit-img">
-    ${_("create application")}
+    %if thing.developed_apps:
+      ${_('create another app...')}
+    %else:
+      ${_('are you a developer? create an app...')}
+    %endif
   </button>
   <form method="post" action="/api/updateapp" class="pretty-form" id="create-app"
    onsubmit="${"return post_form(this, 'updateapp', function(x) {return '%s'})" % _("creating...")}">
@@ -232,7 +236,7 @@
         </td>
       </tr>
     </table>
-    <input type="submit" value="create app">
+    <button type="submit">${_('create app')}</button>
     <span class="status"></span>
   </form>
 </div>
