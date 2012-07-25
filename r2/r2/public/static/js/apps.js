@@ -1,4 +1,5 @@
-$(function() {
+r.apps = {
+  init: function() {
     $("#developed-apps")
         .delegate(".edit-app-button", "click",
                   function() {
@@ -20,12 +21,13 @@ $(function() {
             $(this).hide();
             $("#create-app").fadeIn();
         });
-});
+  },
 
-function app_revoked(elem, op) {
-    $(elem).closest(".authorized-app").fadeOut();
-}
+  revoked: function (elem, op) {
+      $(elem).closest(".authorized-app").fadeOut();
+  },
 
-function app_deleted(elem, op) {
-    $(elem).closest(".developed-app").fadeOut();
+  deleted: function (elem, op) {
+      $(elem).closest(".developed-app").fadeOut();
+  }
 }
