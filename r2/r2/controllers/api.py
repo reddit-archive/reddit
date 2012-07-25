@@ -2374,8 +2374,7 @@ class ApiController(RedditController):
         jquery.refresh()
 
     @paginated_listing(max_page_size=1000)
-    @validate(VFlairManager(),
-              user = VFlairAccount('name'))
+    @validate(user = VFlairAccount('name'))
     @api_doc(api_section.flair)
     def GET_flairlist(self, num, after, reverse, count, user):
         flair = FlairList(num, after, reverse, '', user)
