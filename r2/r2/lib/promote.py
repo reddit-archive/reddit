@@ -970,12 +970,6 @@ def get_total_run(link):
 
     campaigns = PromoCampaign._by_link(link._id)
     
-    # a manually launched promo (e.g., sr discovery) might not have campaigns.
-    if not campaigns: 
-        latest = datetime.utcnow()
-        earliest = latest - timedelta(days=30)  # last month
-        return earliest, latest
-   
     earliest = None
     latest = None
     for campaign in campaigns:
@@ -987,7 +981,12 @@ def get_total_run(link):
 
         if not latest or campaign.end_date > latest:
             latest = campaign.end_date
-   
+
+    # a manually launched promo (e.g., sr discovery) might not have campaigns.
+    if not earliest or not latest: 
+        latest = datetime.utcnow()
+        earliest = latest - timedelta(days=30)  # last month
+
     # ugh this stuff is a mess. they're stored as "UTC" but actually mean UTC-5.
     earliest = earliest.replace(tzinfo=None) - timezone_offset
     latest = latest.replace(tzinfo=None) - timezone_offset
