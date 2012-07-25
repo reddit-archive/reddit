@@ -32,8 +32,8 @@ class AdminSidebar(Templated):
 
 
 class Details(Templated):
-    def __init__(self, link):
-        Templated.__init__(self)
+    def __init__(self, link, *a, **kw):
+        Templated.__init__(self, *a, **kw)
         self.link = link
 
 

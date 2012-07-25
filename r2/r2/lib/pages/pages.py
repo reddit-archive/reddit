@@ -2914,11 +2914,17 @@ class DetailsPage(LinkInfoPage):
 
     def __init__(self, thing, *args, **kwargs):
         from admin_pages import Details
+        after = kwargs.pop('after', None)
+        reverse = kwargs.pop('reverse', False)
+        count = kwargs.pop('count', None)
+
+        if isinstance(thing, (Link, Comment)):
+            details = Details(thing, after=after, reverse=reverse, count=count)
 
         if isinstance(thing, Link):
             link = thing
             comment = None
-            content = Details(thing=thing)
+            content = details
         elif isinstance(thing, Comment):
             comment = thing
             link = Link._byID(comment.link_id)
@@ -2927,7 +2933,7 @@ class DetailsPage(LinkInfoPage):
             content.append(LinkCommentSep())
             content.append(CommentPane(link, CommentSortMenu.operator('new'),
                                    comment, None, 1))
-            content.append(Details(thing=thing))
+            content.append(details)
 
         kwargs['content'] = content
         LinkInfoPage.__init__(self, link, comment, *args, **kwargs)
