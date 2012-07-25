@@ -264,6 +264,7 @@ module["jquery"] = JQuery()
 
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/json2.js",
+    "lib/underscore-1.3.3.js",
     "lib/store.js",
     "lib/jquery.cookie.js",
     "lib/jquery.url.js",
