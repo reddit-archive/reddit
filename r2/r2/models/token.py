@@ -129,19 +129,9 @@ class OAuth2Client(Token):
     def _developers(self):
         """Returns a list of users who are developers of this client."""
 
-        devs = []
-        for dev_id in self._developer_ids:
-            try:
-                dev = Account._byID(dev_id)
-                if dev._deleted or dev._spam:
-                    raise NotFound
-            except NotFound:
-                # Developer account is no longer valid; ignore
-                pass
-            else:
-                devs.append(dev)
-
-        return devs
+        devs = Account._byID(list(self._developer_ids))
+        return [dev for dev in devs.itervalues()
+                if not (dev._deleted or dev._spam)]
 
     def _developer_colname(self, account):
         """Developer access is granted by way of adding a column with the
@@ -203,18 +193,10 @@ class OAuth2Client(Token):
         except tdb_cassandra.NotFound:
             return []
 
-        clients = []
-        for cid in cba._values().iterkeys():
-            try:
-                client = cls._byID(cid)
-                if getattr(client, 'deleted', False) or not client.has_developer(account):
-                    raise tdb_cassandra.NotFound
-            except tdb_cassandra.NotFound:
-                pass
-            else:
-                clients.append(client)
-
-        return clients
+        clients = cls._byID(cba._values().keys())
+        return [client for client in clients.itervalues()
+                if not getattr(client, 'deleted', False)
+                    and client.has_developer(account)]
 
     @classmethod
     def _by_user(cls, account):
@@ -225,7 +207,7 @@ class OAuth2Client(Token):
             if token.check_valid():
                 client_ids.add(token.client_id)
 
-        return [ cls._byID(client_id) for client_id in client_ids ]
+        return cls._byID(client_ids).values()
 
     def revoke(self, account):
         """Revoke all of the outstanding OAuth2AccessTokens associated with this client and user Account."""
@@ -299,7 +281,7 @@ class OAuth2AccessToken(Token):
     def _on_create(self):
         """Updates the OAuth2AccessTokensByUser index upon creation."""
 
-        OAuth2AccessTokensByUser._set_values(self.user_id, {self._id: ''})
+        OAuth2AccessTokensByUser._set_values(str(self.user_id), {self._id: ''})
         return super(OAuth2AccessToken, self)._on_create()
 
     def check_valid(self):
@@ -351,18 +333,8 @@ class OAuth2AccessToken(Token):
         except tdb_cassandra.NotFound:
             return []
 
-        tokens = []
-        for tid in tba._values().iterkeys():
-            try:
-                token = cls._byID(tid)
-                if not token.check_valid():
-                    raise NotFound
-            except tdb_cassandra.NotFound:
-                pass
-            else:
-                tokens.append(token)
-
-        return tokens
+        tokens = cls._byID(tba._values().keys())
+        return [token for token in tokens.itervalues() if token.check_valid()]
 
     @property
     def scope_list(self):
