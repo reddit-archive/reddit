@@ -5288,7 +5288,16 @@ tr.gold-accent + tr > td {
 .oauth2-authorize .icon {
     position: absolute;
     left: 160px;
-    top: 77px;
+    top: 69px;
+    width: 72px;
+    height: 72px;
+    line-height: 72px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.oauth2-authorize .icon img {
+    vertical-align: middle;
 }
 
 .oauth2-authorize .access,
@@ -5870,6 +5879,7 @@ tr.gold-accent + tr > td {
     width: 72px;
     height: 72px;
     line-height: 72px;
+    text-align: center;
     white-space: nowrap;
 }
 

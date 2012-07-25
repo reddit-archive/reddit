@@ -25,7 +25,12 @@
 %>
 <%namespace file="utils.html" import="_md" />
 <div class="content oauth2-authorize">
-  <img class="icon" src="${s3_https_if_secure(thing.client.icon_url)}" alt="${thing.client.name} icon" />
+  <div class="icon">
+    &nbsp;
+    <img src="${s3_https_if_secure(thing.client.icon_url)}"
+         alt="${thing.client.name} icon" />
+    &nbsp;
+  </div>
   %if thing.client.about_url:
     ${_md("#[%(app_name)s](%(app_about_url)s) requests to connect with your reddit account."
           % dict(app_name=thing.client.name, app_about_url=thing.client.about_url))}
