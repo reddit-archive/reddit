@@ -32,10 +32,9 @@
     ${dev.name}&#32;
     %if c.user == dev:
       <span class="gray">${_("(that's you!)")}</span>&#32;
-    %else:
-      ${ajax_ynbutton(_("remove"), "removedeveloper",
-                      hidden_data=dict(client_id=app._id, name=dev.name))}
     %endif
+    ${ajax_ynbutton(_("remove"), "removedeveloper",
+                    hidden_data=dict(client_id=app._id, name=dev.name))}
   </li>
 </%def>
 

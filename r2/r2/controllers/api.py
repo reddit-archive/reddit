@@ -2912,12 +2912,15 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
-                   account=VExistingUnameNotSelf('name'))
+                   account=VExistingUname('name'))
     @api_doc(api_section.apps)
     def POST_removedeveloper(self, form, jquery, client, account):
         if client and account and not form.has_errors('name'):
             client.remove_developer(account)
-            jquery('li#app-dev-%s-%s' % (client._id, account._id)).fadeOut()
+            if account._id == c.user._id:
+                jquery('#developed-app-%s' % client._id).fadeOut()
+            else:
+                jquery('li#app-dev-%s-%s' % (client._id, account._id)).fadeOut()
 
     @noresponse(VUser(),
                 VModhash(),
