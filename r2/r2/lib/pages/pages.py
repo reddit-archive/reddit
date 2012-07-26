@@ -24,7 +24,7 @@ from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, Ad, AdSR, SubSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR, Frontpage
-from r2.models import Link, Printable, Trophy, bidding, PromotionWeights, Comment
+from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
 from r2.models.token import OAuth2Client
@@ -3260,31 +3260,42 @@ class Promotion_Summary(Templated):
         authors = {}
         author_score = {}
         self.total = 0
-        for link, indx, s, e in Promote_Graph.get_current_promos(start_date, end_date):
-            campaigns = getattr(link, 'campaigns', {})
-            if indx in campaigns:
-                sd, ed, bid, sr, trans_id = link.campaigns[indx]
-                if trans_id > 0: #ignore freebies
-                    links.add(link)
-                    link.bid = getattr(link, "bid", 0) + bid
-                    link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+        for link, camp_id, s, e in Promote_Graph.get_current_promos(start_date, end_date):
+            # fetch campaign or skip to next campaign if it's not found
+            try:
+                campaign = PromoCampaign._byID(camp_id, data=True)
+            except NotFound:
+                g.log.error("Missing campaign (link: %d, camp_id: %d) omitted "
+                            "from promotion summary" % (link._id, camp_id))
+                continue
 
-                    bid_per_day = bid / (ed - sd).days
-                    if isinstance(sd, datetime.datetime):
-                        sd = sd.date()
-                    if isinstance(ed, datetime.datetime):
-                        ed = ed.date()
-                    sd = max(sd, start_date)
-                    ed = min(ed, end_date)
+            # get required attributes or skip to next campaign if any are missing.
+            try:
+                campaign_trans_id = campaign.trans_id
+                campaign_start_date = campaign.start_date
+                campaign_end_date = campaign.end_date
+                campaign_bid = campaign.bid
+            except AttributeError, e:
+                g.log.error("Corrupt PromoCampaign (link: %d, camp_id, %d) "
+                            "omitted from promotion summary. Error was: %r" % 
+                            (link._id, camp_id, e))
+                continue
 
-                    self.total += bid_per_day * (ed - sd).days
+            if campaign_trans_id > 0: # skip freebies and unauthorized
+                links.add(link)
+                link.bid = getattr(link, "bid", 0) + campaign_bid
+                link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
+                
+                bid_per_day = campaign_bid / (campaign_end_date - campaign_start_date).days
 
-                    authors.setdefault(link.author.name, []).append(link)
-                    author_score[link.author.name] = author_score.get(link.author.name,0) + link._score
-            else: # indx not found in campaigns. bad data?
-                g.log.error("Missing campaign (link: %d, indx: %d) omitted "
-                            "from promotion summary" % (link._id, indx))
-
+                sd = max(start_date, campaign_start_date.date())
+                ed = min(end_date, campaign_end_date.date())
+                
+                self.total += bid_per_day * (ed - sd).days
+                    
+                authors.setdefault(link.author.name, []).append(link)
+                author_score[link.author.name] = author_score.get(link.author.name, 0) + link._score
+            
         links = list(links)
         links.sort(key = lambda x: x._score, reverse = True)
         author_score = list(sorted(((v, k) for k,v in author_score.iteritems()),
