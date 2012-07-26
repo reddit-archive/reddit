@@ -230,6 +230,8 @@ function toggle_label (elem, callback, cancelback) {
 }
 
 function toggle(elem, callback, cancelback) {
+    r.analytics.breadcrumbs.storeLastClick(elem)
+
     var self = $(elem).parent().andSelf().filter(".option");
     var sibling = self.removeClass("active")
         .siblings().addClass("active").get(0); 
@@ -332,6 +334,7 @@ function subscribe(reddit_name) {
             }
             $.things(reddit_name).find(".entry").addClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "sub"});
+            r.analytics.fireUITrackingPixel("sub", reddit_name)
         }
     };
 };
@@ -344,6 +347,7 @@ function unsubscribe(reddit_name) {
             }
             $.things(reddit_name).find(".entry").removeClass("likes");
             $.request("subscribe", {sr: reddit_name, action: "unsub"});
+            r.analytics.fireUITrackingPixel("unsub", reddit_name)
         }
     };
 };

@@ -145,6 +145,7 @@ def js_config():
         "tracking_domain": g.tracking_domain,
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
+        "uitracker_url": g.uitracker_url,
         "static_root": static(''),
     }
     return config

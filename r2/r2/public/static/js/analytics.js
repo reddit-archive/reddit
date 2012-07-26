@@ -95,5 +95,97 @@ r.analytics = {
         thumb.attr('href', click_url)
 
         thing.data('trackerFired', true)
+    },
+
+    fireUITrackingPixel: function(action, srname) {
+        var pixel = new Image()
+        pixel.src = r.config.uitracker_url + '?' + $.param(
+            _.extend(
+                {
+                    'act': action,
+                    'sr': srname,
+                    'r': Math.round(Math.random() * 2147483647) // cachebuster
+                },
+                r.analytics.breadcrumbs.toParams()
+            )
+        )
+    }
+}
+
+r.analytics.breadcrumbs = {
+    hasSessionStorage: 'sessionStorage' in window,
+    selector: '.thing, .side, .sr-list, .srdrop, .tagline, .md, .organic-listing, .gadget, a, button, input',
+
+    init: function() {
+        this.data = this._load()
+
+        var refreshed = this.data[0] && this.data[0]['url'] == window.location
+        if (!refreshed) {
+            this._storeBreadcrumb()
+        }
+
+        $(document).delegate('a, button', 'click', $.proxy(function(ev) {
+            this.storeLastClick($(ev.target))
+        }, this))
+    },
+
+    _load: function() {
+        if (!this.hasSessionStorage) {
+            return [{stored: false}]
+        }
+
+        var data
+        try {
+            data = JSON.parse(sessionStorage['breadcrumbs'])
+        } catch (e) {
+            data = []
+        }
+
+        if (!_.isArray(data)) {
+            data = []
+        }
+
+        return data
+    },
+
+    store: function(data) {
+        if (this.hasSessionStorage) {
+            sessionStorage['breadcrumbs'] = JSON.stringify(this.data)
+        }
+    },
+
+    _storeBreadcrumb: function() {
+        var cur = {
+            'url': location.toString()
+        }
+
+        if ('referrer' in document) {
+            var referrerExternal = !document.referrer.match('^' + r.config.currentOrigin),
+                referrerUnexpected = this.data[0] && document.referrer != this.data[0]['url']
+
+            if (referrerExternal || referrerUnexpected) {
+                cur['ref'] = document.referrer
+            }
+        }
+
+        this.data.unshift(cur)
+        this.data = this.data.slice(0, 2)
+        this.store()
+    },
+
+    storeLastClick: function(el) {
+        this.data[0]['click'] =
+            r.utils.querySelectorFromEl(el, this.selector)
+        this.store()
+    },
+
+    toParams: function() {
+        params = []
+        for (var i = 0; i < this.data.length; i++) {
+            _.each(this.data[i], function(v, k) {
+                params['c'+i+'_'+k] = v
+            })
+        }
+        return params
     }
 }

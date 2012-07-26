@@ -12,7 +12,7 @@ r.login = {
             endpoint = r.config.https_endpoint || ('http://'+r.config.ajax_domain),
             apiTarget = endpoint+'/api/'+action+'/'+username
 
-        if (this.currentOrigin == endpoint || $.support.cors) {
+        if (r.config.currentOrigin == endpoint || $.support.cors) {
             var params = form.serialize()
             params.push({name:'api_type', value:'json'})
             $.ajax({
@@ -192,7 +192,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
 
     _handleNetError: function(result, err, xhr) {
         r.ui.Form.prototype._handleNetError.apply(this, arguments)
-        if (xhr.status == 0 && r.login.currentOrigin != r.config.https_endpoint) {
+        if (xhr.status == 0 && r.config.currentOrigin != r.config.https_endpoint) {
             $('<p>').append(
                 $('<a>')
                     .text(r.strings.login_fallback_msg)

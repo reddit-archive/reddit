@@ -4,6 +4,9 @@ r.setup = function(config) {
     r.config = config
     // Set the legacy config global
     reddit = config
+
+    r.config.currentOrigin = location.protocol+'//'+location.host
+    r.analytics.breadcrumbs.init()
 }
 
 $(function() {
