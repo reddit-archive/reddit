@@ -497,7 +497,8 @@ class Results(object):
                          self._facets['reddit']]
             srs_by_name = Subreddit._by_name([sr[0] for sr in sr_facets])
             self._subreddits = [sr for sr in sr_facets
-                                if srs_by_name[sr[0]].can_view(c.user)]
+                                if sr[0] in srs_by_name and
+                                srs_by_name[sr[0]].can_view(c.user)]
         
         return self._subreddits
 
