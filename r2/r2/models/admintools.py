@@ -112,7 +112,6 @@ class AdminTools(object):
         self.author_spammer(things, False)
         self.set_last_sr_ban(things)
         queries.unban(things, insert)
-        queries.mark_moderated(things)
     
     def report(self, thing):
         pass
