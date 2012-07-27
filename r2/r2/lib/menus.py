@@ -102,6 +102,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      gold         = _('reddit gold'),
                      reddits      = _('subreddits'),
                      team         = _('team'),
+                     rules        = _('rules'),
 
                      #preferences
                      options      = _('options'),

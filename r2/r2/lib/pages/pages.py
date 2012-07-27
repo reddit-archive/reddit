@@ -476,7 +476,7 @@ class RedditFooter(CachedTemplate):
                     NamedButton("help", False, nocname=True),
                     OffsiteButton(_("FAQ"), dest = "/help/faq", nocname=True),
                     OffsiteButton(_("reddiquette"), nocname=True, dest = "/help/reddiquette"),
-                    NamedButton("reddits", False, nocname=True),
+                    NamedButton("rules", False, nocname=True),
                     NamedButton("feedback", False),
                 ],
                 title = _("help"),
