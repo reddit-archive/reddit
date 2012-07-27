@@ -59,22 +59,6 @@
   link = unsafe(link.replace(" <", "&#32;<").replace("> ", ">&#32;"))
 %>
 
-<div class="help help-cover juryduty">
-    <p>
-      ${_("Sometimes reddit needs to ask the community to help fight spam. This is your chance to take part in that.")}
-      &#32;
-      <a href="/help/deputies">
-        ${_("Click here for more info.")}
-      </a>
-    </p>
-    ${ynbutton(_("here"), _("This element has been disabled."),
-               "disable_ui", callback = "disappear_help",
-               format = _("Click %(here)s to disable this feature."),
-               format_arg = "here",
-               hidden_data = dict(id="organic"))}
-    ${link}
-</div>
-
 <div class="help help-cover promoted">
     <p>
       This sponsored link is an advertisement generated with our&#32;<a href="http://www.reddit.com/help/selfservicepromotion">self-serve advertisement tool.</a>&#32.  
@@ -120,8 +104,6 @@
                var l = $(this).parents(".organic-listing");
                if (l.find(".thing:visible").hasClass("promoted")) {
                     l.siblings(".help.promoted").show();
-               } else if (l.find(".thing:visible").hasClass("ontrial")) {
-                    l.siblings(".help.juryduty").show();
                } else {
                     l.siblings(".help.organic").show();
                }
