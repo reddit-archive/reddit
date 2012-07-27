@@ -884,7 +884,7 @@ a.author { margin-right: 0.5em; }
     text-decoration: underline;
 }
 
-.help a.open {
+.help a.open, .help a.close {
     margin: 0px 5px 5px 0;
     position: absolute;
     right: 0px;
@@ -893,6 +893,7 @@ a.author { margin-right: 0.5em; }
 
 
 .help.help-cover {
+    position: relative;
     background-color: #F8F8F8;
     border: 1px solid gray;
     font-size: 110%;
