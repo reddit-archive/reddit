@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton"/>
+<%namespace file="utils.html" import="text_with_links"/>
 <% 
    from r2.lib.template_helpers import static
 %>
@@ -53,10 +54,16 @@
 
 <div class="help help-cover promoted">
     <p>
-      This sponsored link is an advertisement generated with our&#32;<a href="http://www.reddit.com/help/selfservicepromotion">self-serve advertisement tool</a>.
+      ${text_with_links(
+        _("This sponsored link is an advertisement generated with our %(self_serve_advertisement_tool)s."),
+          self_serve_advertisement_tool=dict(link_text=_("self-serve advertisement tool"), path="http://www.reddit.com/help/selfservicepromotion")
+      )}
     </p>
     <p>
-      Use of this tool is open to all members of reddit.com, and for as little as $20 you can advertise in this area.&#32;<a href="/ad_inq">Get started &rsaquo;</a>
+      ${text_with_links(
+        _("Use of this tool is open to all members of reddit.com, and for as little as $20 you can advertise in this area. %(get_started)s"),
+          get_started=dict(link_text=unsafe(_("Get started &rsaquo;")), path="/ad_inq")
+      )}
     </p>
     <div class="help">
       <a class="close" href="javascript:void(0)">${_("close help")}</a>
