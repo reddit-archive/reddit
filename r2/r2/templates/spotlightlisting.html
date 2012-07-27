@@ -69,13 +69,13 @@
             " links here to help them become popular, and click" +
             " the forwards and backwards buttons to view more. ")}
     </p>
-        %if c.user_is_loggedin:
-          ${ynbutton(_("here"), _("This element has been disabled."),
-                     "disable_ui", callback = "disappear_help",
-                     format = _("Click %(here)s to disable this feature."),
-                     format_arg = "here",
-                     hidden_data = dict(id="organic"))}
-        %endif
+    %if c.user_is_loggedin:
+      ${ynbutton(_("here"), _("This element has been disabled."),
+                 "disable_ui", callback = "disappear_help",
+                 format = _("Click %(here)s to disable this feature."),
+                 format_arg = "here",
+                 hidden_data = dict(id="organic"))}
+    %endif
     <div class="help">
       <a class="close" href="javascript:void(0)">${_("close help")}</a>
     </div>
