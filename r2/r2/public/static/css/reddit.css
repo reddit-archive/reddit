@@ -896,13 +896,12 @@ a.author { margin-right: 0.5em; }
     position: relative;
     background-color: #F8F8F8;
     border: 1px solid gray;
-    font-size: 110%;
     display:none;
     padding: 5px 10px 10px 10px;
     overflow:hidden;
  }
 
-.help p, .help form { margin: 5px; } 
+.help p, .help form { margin: 5px; font-size:110%; }
 .help form { display: inline; }
 
 .infotext { 
