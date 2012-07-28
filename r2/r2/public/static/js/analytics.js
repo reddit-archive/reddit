@@ -113,10 +113,10 @@ r.analytics = {
 }
 
 r.analytics.breadcrumbs = {
-    hasSessionStorage: 'sessionStorage' in window,
     selector: '.thing, .side, .sr-list, .srdrop, .tagline, .md, .organic-listing, .gadget, a, button, input',
 
     init: function() {
+        this.hasSessionStorage = this._checkSessionStorage()
         this.data = this._load()
 
         var refreshed = this.data[0] && this.data[0]['url'] == window.location
@@ -127,6 +127,17 @@ r.analytics.breadcrumbs = {
         $(document).delegate('a, button', 'click', $.proxy(function(ev) {
             this.storeLastClick($(ev.target))
         }, this))
+    },
+
+    _checkSessionStorage: function() {
+        // Via modernizr.com's sessionStorage check.
+        try {
+            sessionStorage.setItem('__test__', 'test')
+            sessionStorage.removeItem('__test__')
+            return true
+        } catch(e) {
+            return false
+        }
     },
 
     _load: function() {
