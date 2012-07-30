@@ -3501,7 +3501,7 @@ class ComScore(CachedTemplate):
 def render_ad(reddit_name=None, codename=None, keyword=None):
     if not reddit_name:
         reddit_name = g.default_sr
-        if g.frontpage_dart:
+        if g.live_config["frontpage_dart"]:
             return Dart_Ad("reddit.dart", reddit_name, keyword).render()
 
     try:

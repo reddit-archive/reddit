@@ -131,7 +131,6 @@ class Globals(object):
             'disable_ratelimit',
             'amqp_logging',
             'read_only_mode',
-            'frontpage_dart',
             'allow_wiki_editing',
             'heavy_load_mode',
             's3_media_direct',
@@ -178,6 +177,9 @@ class Globals(object):
     }
 
     live_config_spec = {
+        ConfigValue.bool: [
+            'frontpage_dart',
+        ],
     }
 
     def __init__(self, global_conf, app_conf, paths, **extra):
