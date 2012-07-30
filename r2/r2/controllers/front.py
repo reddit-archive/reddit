@@ -772,25 +772,23 @@ class FrontController(RedditController):
             except InvalidQuery:
                 # strip the query down to a whitelist
                 cleaned = re.sub("[^\w\s]+", " ", query)
-                cleaned = cleaned.lower()
+                cleaned = cleaned.lower().strip()
 
-                # if it was nothing but mess, we have to stop
-                if not cleaned.strip():
-                    results, etime, spane = 0, 0, []
-                    cleanup_message = strings.completely_invalid_search_query
-                else:
-                    q = SearchQuery(cleaned, site, sort)
-                    results, etime, spane = self._search(q, num=num,
-                                                         after=after,
-                                                         reverse=reverse,
-                                                         count=count)
+                q = SearchQuery(cleaned, site, sort)
+                results, etime, spane = self._search(q, num=num,
+                                                     after=after,
+                                                     reverse=reverse,
+                                                     count=count)
+                if cleaned:
                     cleanup_message = strings.invalid_search_query % {
-                                          "clean_query": cleaned
-                                      }
-                cleanup_message += " "
-                cleanup_message += strings.search_help % {"search_help":
-                                                          self.search_help_page
-                                                          }
+                                                        "clean_query": cleaned
+                                                                      }
+                    cleanup_message += " "
+                    cleanup_message += strings.search_help % {
+                                          "search_help": self.search_help_page
+                                                              }
+                else:
+                    cleanup_message = strings.completely_invalid_search_query
             
             res = SearchPage(_('search results'), query, etime, results.hits,
                              content=spane,
