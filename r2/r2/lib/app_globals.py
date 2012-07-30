@@ -231,6 +231,15 @@ class Globals(object):
 
         self.cache_chains = {}
 
+        # for now, zookeeper will be an optional part of the stack.
+        zk_hosts = self.config.get("zookeeper_connection_string")
+        if zk_hosts:
+            from r2.lib.zookeeper import connect_to_zookeeper
+            zk_username = self.config["zookeeper_username"]
+            zk_password = self.config["zookeeper_password"]
+            self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
+                                                             zk_password))
+
         self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
         self.make_lock = make_lock_factory(self.lock_cache)
 
