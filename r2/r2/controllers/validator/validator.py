@@ -1097,19 +1097,13 @@ class VExistingUname(VRequired):
                 return Account._by_name(name)
             except NotFound:
                 self.error(errors.USER_DOESNT_EXIST)
-        self.error()
+        else:
+            self.error()
 
     def param_docs(self):
         return {
             self.param: _('the name of an existing user')
         }
-
-class VExistingUnameNotSelf(VExistingUname):
-    def run(self, name):
-        user = super(VExistingUnameNotSelf, self).run(name)
-        if not user or user == c.user:
-            self.error()
-        return user
 
 class VMessageRecipient(VExistingUname):
     def run(self, name):

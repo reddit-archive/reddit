@@ -139,6 +139,11 @@
                 <input type="hidden" name="client_id" value="${app._id}" />
                 ${_('add developer')}: <input name="name">
                 <br>
+                ${error_field('TOO_MANY_DEVELOPERS', '')}
+                ${error_field('OAUTH2_INVALID_CLIENT', 'client_id')}
+                ${error_field('DEVELOPER_ALREADY_ADDED', 'name')}
+                ${error_field('USER_DOESNT_EXIST', 'name')}
+                ${error_field('NO_USER', 'name')}
                 <span class="status"></span>
               </form>
             </td>

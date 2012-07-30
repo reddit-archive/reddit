@@ -2885,22 +2885,22 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    client=VOAuth2ClientDeveloper(),
-                   account=VExistingUnameNotSelf('name'))
+                   account=VExistingUname('name'))
     @api_doc(api_section.apps)
     def POST_adddeveloper(self, form, jquery, client, account):
         if not client:
-            form.set_html('.status', _('error'))
             return
         if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
-            form.set_html('.status', _('invalid user'))
             return
         if client.has_developer(account):
-            form.set_html('.status', _('already added'))
+            c.errors.add(errors.DEVELOPER_ALREADY_ADDED, field='name')
+            form.set_error(errors.DEVELOPER_ALREADY_ADDED, 'name')
             return
         try:
             client.add_developer(account)
         except OverflowError:
-            form.set_html('.status', _('too many developers'))
+            c.errors.add(errors.TOO_MANY_DEVELOPERS, field='')
+            form.set_error(errors.TOO_MANY_DEVELOPERS, '')
             return
 
         form.set_html('.status', _('developer added'))

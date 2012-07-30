@@ -101,6 +101,8 @@ error_list = dict((
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
         ('NOT_SUPPORTED', _('this feature is not supported')),
         ('BAD_IMAGE', _('image problem')),
+        ('DEVELOPER_ALREADY_ADDED', _('already added')),
+        ('TOO_MANY_DEVELOPERS', _('too many developers')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
