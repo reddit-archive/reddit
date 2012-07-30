@@ -30,7 +30,6 @@ import r2.lib.helpers
 from r2.config import routing
 from r2.lib.app_globals import Globals
 from r2.lib.configparse import ConfigValue
-from r2.lib.plugin import PluginLoader
 from r2.templates import tmpl_dirs
 
 
@@ -58,10 +57,10 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     if setup_globals:
         g.setup()
         r2.config.cache = g.cache
+    g.plugins.load_plugins()
+    config['r2.plugins'] = g.plugins
 
     config['pylons.h'] = r2.lib.helpers
-
-    g.plugins = config['r2.plugins'] = PluginLoader().load_plugins(g.config.get('plugins', []))
     config['routes.map'] = routing.make_map()
 
     #override the default response options

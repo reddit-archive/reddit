@@ -66,8 +66,19 @@ class Plugin(object):
 
 
 class PluginLoader(object):
-    def __init__(self):
+    def __init__(self, plugin_names):
         self.plugins = {}
+
+        for name in plugin_names:
+            try:
+                entry_point = self.available_plugins(name).next()
+            except StopIteration:
+                print >> sys.stderr, ("Unable to locate plugin "
+                                      "%s. Skipping." % name)
+                continue
+
+            plugin_cls = entry_point.load()
+            self.plugins[name] = plugin_cls()
 
     def __len__(self):
         return len(self.plugins)
@@ -91,21 +102,13 @@ class PluginLoader(object):
                 return None
         return os.path.join(plugin.dist.location, plugin.module_name)
 
-    def load_plugins(self, plugin_names):
+    def load_plugins(self):
         g = config['pylons.g']
-        for name in plugin_names:
-            try:
-                entry_point = self.available_plugins(name).next()
-            except StopIteration:
-                g.log.warning('Unable to locate plugin "%s". Skipping.' % name)
-                continue
-            plugin_cls = entry_point.load()
-            plugin = self.plugins[name] = plugin_cls()
+        for plugin in self:
             g.config.add_spec(plugin.config)
             config['pylons.paths']['templates'].extend(plugin.template_dirs)
             plugin.add_js()
             plugin.on_load()
-        return self
 
     def load_controllers(self):
         for plugin in self:
