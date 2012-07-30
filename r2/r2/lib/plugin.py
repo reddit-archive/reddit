@@ -29,6 +29,7 @@ from pylons import config
 class Plugin(object):
     js = {}
     config = {}
+    live_config = {}
 
     @property
     def path(self):

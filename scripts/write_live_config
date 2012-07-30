@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+# The contents of this file are subject to the Common Public Attribution
+# License Version 1.0. (the "License"); you may not use this file except in
+# compliance with the License. You may obtain a copy of the License at
+# http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+# License Version 1.1, but Sections 14 and 15 have been added to cover use of
+# software over a computer network and provide for limited attribution for the
+# Original Developer. In addition, Exhibit A has been modified to be consistent
+# with Exhibit B.
+#
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+# the specific language governing rights and limitations under the License.
+#
+# The Original Code is reddit.
+#
+# The Original Developer is the Initial Developer.  The Initial Developer of
+# the Original Code is reddit Inc.
+#
+# All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
+# Inc. All Rights Reserved.
+###############################################################################
+"""Read config from an INI file and put it in ZooKeeper for instant use."""
+
+import os
+import sys
+import json
+import getpass
+import ConfigParser
+
+import kazoo.client
+from kazoo.security import make_acl, make_digest_acl
+
+from r2.lib.zookeeper import connect_to_zookeeper
+from r2.lib.app_globals import extract_live_config, LIVE_CONFIG_NODE
+from r2.lib.configparse import ConfigValue
+from r2.lib.plugin import PluginLoader
+
+
+USERNAME = "live-config"
+
+
+def write_config_to_zookeeper(node, username, password, config, live_config):
+    """Write given configuration to ZooKeeper with correct security etc."""
+
+    # read the zk configuration from the app's config
+    zk_hostlist = config.get("DEFAULT", "zookeeper_connection_string")
+    app_username = config.get("DEFAULT", "zookeeper_username")
+    app_password = config.get("DEFAULT", "zookeeper_password")
+
+    # connect to zk!
+    client = connect_to_zookeeper(zk_hostlist, (username, password))
+
+    # ensure that the path leading up to the config node exists. if it doesn't,
+    # create it with ACLs such that new stuff can be added below it, but no one
+    # but we can delete nodes.
+    parent_path = os.path.dirname(node)
+    client.ensure_path(parent_path, acl=[
+        # only we can delete children
+        make_digest_acl(username, password, delete=True),
+
+        # anyone authenticated can read/list children/create children
+        make_acl("auth", "", read=True, create=True),
+    ])
+
+    # create or update the config node ensuring that only we can write to it.
+    json_data = json.dumps(live_config)
+    try:
+        client.create(node, json_data, acl=[
+            make_digest_acl(username, password, read=True, write=True),
+            make_digest_acl(app_username, app_password, read=True),
+        ])
+    except kazoo.exceptions.NodeExistsException:
+        client.set(node, json_data)
+
+
+def confirm_config(live_config):
+    """Display the parsed live config and confirm that we should continue."""
+
+    max_key_length = max(len(k) for k in live_config.iterkeys())
+
+    print "Parsed Config:"
+    for key, value in sorted(live_config.iteritems(), key=lambda t: t[0]):
+        print " ", key.ljust(max_key_length), "=", repr(value)
+
+    answer = raw_input("Continue? [y|N] ")
+    return answer.lower() == "y"
+
+
+def main():
+    """Get and validate input from the user via CLI then write to ZK."""
+
+    progname = os.path.basename(sys.argv[0])
+
+    try:
+        ini_file_name = sys.argv[1]
+    except IndexError:
+        print >> sys.stderr, "USAGE: %s INI" % progname
+        return 1
+
+    config = ConfigParser.RawConfigParser()
+    try:
+        with open(ini_file_name, "r") as ini_file:
+            config.readfp(ini_file)
+    except (IOError, ConfigParser.Error), e:
+        print >> sys.stderr, "%s: %s: %s" % (progname, ini_file_name, e)
+        return 1
+
+    try:
+        plugin_config = config.get("DEFAULT", "plugins")
+        plugin_names = ConfigValue.tuple(plugin_config)
+        plugins = PluginLoader(plugin_names)
+        live = extract_live_config(config, plugins)
+    except ValueError as e:
+        print >> sys.stderr, "%s: %s" % (progname, e)
+        return 1
+    else:
+        if not confirm_config(live):
+            print "Oh, well, never mind then. Bye :("
+            return 0
+
+    password = getpass.getpass("Password: ")
+
+    write_config_to_zookeeper(LIVE_CONFIG_NODE,
+                              USERNAME, password,
+                              config, live)
+
+    print "Succesfully updated live config!"
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

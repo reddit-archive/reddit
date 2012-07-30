@@ -21,6 +21,7 @@
 ###############################################################################
 
 from __future__ import with_statement
+import ConfigParser
 from pylons import config
 import pytz, os, logging, sys, socket, re, subprocess, random
 import signal
@@ -41,6 +42,26 @@ from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.plugin import PluginLoader
+
+
+LIVE_CONFIG_NODE = "/config/live"
+
+
+def extract_live_config(config, plugins):
+    """Gets live config out of INI file and validates it according to spec."""
+
+    # ConfigParser will include every value in DEFAULT (which paste abuses)
+    # if we do this the way we're supposed to. sorry for the horribleness.
+    live_config = config._sections["live_config"].copy()
+    del live_config["__name__"]  # magic value used by ConfigParser
+
+    # parse the config data including specs from plugins
+    parsed = ConfigValueParser(live_config)
+    parsed.add_spec(Globals.live_config_spec)
+    for plugin in plugins:
+        parsed.add_spec(plugin.live_config)
+
+    return parsed
 
 
 class Globals(object):
@@ -156,6 +177,9 @@ class Globals(object):
         },
     }
 
+    live_config_spec = {
+    }
+
     def __init__(self, global_conf, app_conf, paths, **extra):
         """
         Globals acts as a container for objects available throughout
@@ -235,13 +259,20 @@ class Globals(object):
         self.cache_chains = {}
 
         # for now, zookeeper will be an optional part of the stack.
+        # if it's not configured, we will grab the expected config from the
+        # [live_config] section of the ini file
         zk_hosts = self.config.get("zookeeper_connection_string")
         if zk_hosts:
-            from r2.lib.zookeeper import connect_to_zookeeper
+            from r2.lib.zookeeper import connect_to_zookeeper, LiveConfig
             zk_username = self.config["zookeeper_username"]
             zk_password = self.config["zookeeper_password"]
             self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
                                                              zk_password))
+            self.live_config = LiveConfig(self.zookeeper, LIVE_CONFIG_NODE)
+        else:
+            parser = ConfigParser.RawConfigParser()
+            parser.read([self.config["__file__"]])
+            self.live_config = extract_live_config(parser, self.plugins)
 
         self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
         self.make_lock = make_lock_factory(self.lock_cache)

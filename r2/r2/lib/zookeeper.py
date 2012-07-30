@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import json
 import functools
 
 from kazoo.client import KazooClient
@@ -45,3 +46,25 @@ def connect_to_zookeeper(hostlist, credentials):
     client.connect()
     client.add_auth("digest", ":".join(credentials))
     return client
+
+
+class LiveConfig(object):
+    """A read-only dictionary view of configuration retrieved from ZooKeeper.
+
+    The data will be parsed using the given configuration specs, exactly like
+    the ini file based configuration. When data is changed in ZooKeeper, the
+    data in this view will automatically update.
+
+    """
+    def __init__(self, client, key):
+        self.data = {}
+
+        @client.DataWatch(key)
+        def watcher(data, stat):
+            self.data = json.loads(data)
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __repr__(self):
+        return "<LiveConfig %r>" % self.data
