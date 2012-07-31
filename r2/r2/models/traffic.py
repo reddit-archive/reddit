@@ -215,7 +215,7 @@ def make_history_query(cls, interval):
 
 
 def top_last_month(cls, key):
-    """Aggregate a listing of the top items (by uniques) last month.
+    """Aggregate a listing of the top items (by pageviews) last month.
 
     We use the last month because it's guaranteed to be fully computed and
     therefore will be more meaningful.
@@ -227,7 +227,7 @@ def top_last_month(cls, key):
     q = (Session.query(cls)
                 .filter(cls.date == last_month)
                 .filter(cls.interval == "month")
-                .order_by(desc(cls.date), desc(cls.unique_count))
+                .order_by(desc(cls.date), desc(cls.pageview_count))
                 .limit(55))
 
     return [(getattr(r, key), (r.unique_count, r.pageview_count))
