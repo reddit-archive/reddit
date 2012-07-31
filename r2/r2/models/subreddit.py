@@ -506,9 +506,27 @@ class Subreddit(Thing, Printable):
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
 
+            # don't count automatic reddits against the limit
+            if g.automatic_reddits:
+                subscribed_automatic = [sr._id for sr in
+                                        Subreddit._by_name(g.automatic_reddits,
+                                        stale=stale).itervalues()]
+
+                for sr_id in list(subscribed_automatic):
+                    try:
+                        sr_ids.remove(sr_id)
+                    except ValueError:
+                        subscribed_automatic.remove(sr_id)
+            else:
+                subscribed_automatic = []
+
             if limit and len(sr_ids) > limit:
                 sr_ids.sort()
                 sr_ids = cls.random_reddits(user.name, sr_ids, limit)
+
+            # we can now add the automatic ones (that the user wants) back in
+            sr_ids += subscribed_automatic
+
             return sr_ids if ids else Subreddit._byID(sr_ids,
                                                       data=True,
                                                       return_dict=False,
