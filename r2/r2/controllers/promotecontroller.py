@@ -291,12 +291,14 @@ class PromoteController(ListingController):
                           dates, bid, sr, targeting):
         if not l:
             return
-
-        start, end = [x.date() for x in dates] if dates else (None, None)
+        
+        start, end = dates or (None, None)
 
         if start and end and not promote.is_accepted(l) and not c.user_is_sponsor:
             # if the ad is not approved already, ensure the start date
             # is at least 2 days in the future
+            start = start.date()
+            end = end.date()
             now = promote.promo_datetime_now()
             future = make_offset_date(now, g.min_promote_future,
                                       business_days = True)
