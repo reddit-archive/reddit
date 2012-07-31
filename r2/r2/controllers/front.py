@@ -51,6 +51,7 @@ from api_docs import api_doc, api_section
 from pylons import c, request, request, Response
 from r2.models.token import EmailVerificationToken
 
+from operator import attrgetter
 import string
 import random as rand
 import re, socket
@@ -704,6 +705,7 @@ class FrontController(RedditController):
             abort(403, 'forbidden')
 
         links = link_duplicates(article)
+        links.sort(key=attrgetter('num_comments'), reverse=True)
         builder = IDBuilder([ link._fullname for link in links ],
                             num = num, after = after, reverse = reverse,
                             count = count, skip = False)
