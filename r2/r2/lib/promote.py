@@ -653,21 +653,29 @@ def accepted_campaigns(offset=0):
 
         yield (link, campaign, pw.weight)
     
-
 def get_scheduled(offset=0):
-    by_sr = {}
-    failed = []
+    '''  
+    Arguments:
+      offset - number of days after today you want the schedule for
+    Returns:
+      {'by_sr': dict, 'links':set(), 'error_campaigns':[]}
+      -by_sr maps sr names to lists of (Link, bid) tuples
+      -links is the set of promoted Link objects used in the schedule
+      -error_campaigns is a list of (campaign_id, error_msg) tuples if any 
+        exceptions were raised or an empty list if there were none
+      Note: campaigns in error_campaigns will not be included in by_sr
+      '''
+    by_sr = {} 
+    error_campaigns = [] 
+    links = set()
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
                 by_sr.setdefault(campaign.sr_name, []).append((l, weight))
+                links.add(l)
         except Exception, e: # could happen if campaign things have corrupt data
-            failed.append((campaign._id, e))
-    if failed:
-       err_msgs = ["camp id: %d, reason: %r" % (f[0], f[1]) for f in failed]
-       g.log.error("%d accepted campaign not included in schedule:\n%s" % 
-                   (len(failed), "\n".join(err_msgs)))
-    return by_sr
+            error_campaigns.append((campaign._id, e))
+    return {'by_sr': by_sr, 'links': links, 'error_campaigns': error_campaigns}
 
 
 # The next two functions are being kept around for troubleshooting and can be
@@ -768,18 +776,23 @@ def get_traffic_weights(srnames):
             res[srname] = 1
     return res
 
-def get_weighted_schedule(offset = 0):
-    by_sr = get_scheduled(offset = offset)
+def weight_schedule(by_sr):
+    '''
+    Arguments:
+      by_sr - a dict mapping subreddit names to lists of (Link, bid) tuples. 
+        Usually this data struct would come from the output of get_scheduled
+    Returns:
+      a dict just like by_sr but with bids replaced by weights 
+    '''
     weight_dict = get_traffic_weights(by_sr.keys())
     weighted = {}
-    links = set()
     for sr_name, t_tuples in by_sr.iteritems():
         weighted[sr_name] = []
         for l, weight in t_tuples:
-            links.add(l._fullname)
             weighted[sr_name].append((l._fullname,
                                       weight * weight_dict[sr_name]))
-    return links, weighted
+    return weighted
+
 
 def promotion_key():
     return "current_promotions"
@@ -794,8 +807,19 @@ def set_live_promotions(x):
 # current promotions until they're actually charged, so make sure to call
 # charge_pending() before make_daily_promotions()
 def make_daily_promotions(offset = 0, test = False):
+    '''
+    Arguments:
+      offset - number of days after today to get the schedule for
+      test - if True, new schedule will be generated but not launched
+    Raises Exception with list of campaigns that had errors if there were any
+    '''
     old_links = set([])
-    all_links, weighted = get_weighted_schedule(offset)
+
+    schedule = get_scheduled(offset)
+    all_links = set([l._fullname for l in schedule['links']])
+    error_campaigns = schedule['error_campaigns']
+    weighted = weight_schedule(schedule['by_sr'])
+
     # over18 check
     for sr, links in weighted.iteritems():
         if sr:
@@ -803,7 +827,8 @@ def make_daily_promotions(offset = 0, test = False):
             if sr.over_18:
                 for l in Link._by_fullname([l[0] for l in links], return_dict = False):
                     l.over_18 = True
-                    l._commit()
+                    if not test:
+                        l._commit()
 
     x = get_live_promotions()
     if x:
@@ -846,6 +871,12 @@ def make_daily_promotions(offset = 0, test = False):
         set_live_promotions((all_links, weighted))
     else:
         print (all_links, weighted)
+
+    # after launching as many campaigns as possible, raise an exception to 
+    #   report any error campaigns. (useful for triggering alerts in irc)
+    if error_campaigns:
+        raise Exception("Some scheduled campaigns could not be added to daily "
+                        "promotions: %r" % error_campaigns)
 
 
 def get_promotion_list(user, site):
