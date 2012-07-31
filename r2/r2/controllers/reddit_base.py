@@ -768,7 +768,8 @@ class MinimalController(BaseController):
         c.response_content_type = 'text/html'
         c.response.content = (
             '<html><head><script type="text/javascript">\n'
-            'parent.$.handleResponse().call(parent.$(window.frameElement.id).parent(), %s)\n'
+            'parent.$.handleResponse().call('
+            'parent.$("#" + window.frameElement.id).parent(), %s)\n'
             '</script></head></html>') % filters.websafe_json(data)
         return c.response
 

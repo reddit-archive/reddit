@@ -271,16 +271,29 @@ ${unsafe(txt)}
   <form method="post" enctype="multipart/form-data" target="${form_id}-iframe"
         id="${form_id}" class="ajax-upload-form pretty-form" action="${target}"
         onsubmit="return post_multipart_form(this, '${target}')">
-    <input type="hidden" name="id" value="${form_id}" />
+    <input type="hidden" name="id" value="#${form_id}" />
     <input type="hidden" name="uh" value="${c.modhash}" />
     <input type="file" name="file" />
     <button type="submit">
       ${_('upload')}
     </button>
+    ${error_field('IMAGE_ERROR', '')}
     %if caller:
       ${caller.body()}
     %endif
     <span class="status"></span>
+    <script type="text/javascript">
+      function completedUploadImage (status, img_src, name, errors, form_id) {
+        /* should only be called when the uploaded file is too large */
+        if (status == "failed") {
+          $("#${form_id}").find(".status").html("");
+          for (var i in errors) {
+            $("#${form_id}").find(".error." + errors[i][0])
+                .show().text(errors[i][1]);
+          }
+        }
+      }
+    </script>
     <iframe src="about:blank" name="${form_id}-iframe" id="${form_id}-iframe">
     </iframe>
   </form>

@@ -124,6 +124,7 @@ function post_pseudo_form(form, where, block) {
 }
 
 function post_multipart_form(form, where) {
+    $(form).find(".error").not(".status").hide();
     $(form).find(".status").html(reddit.status_msg.submitting).show();
     return true;
 }

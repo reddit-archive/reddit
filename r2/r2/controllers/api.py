@@ -2939,10 +2939,6 @@ class ApiController(RedditController, OAuth2ResourceController):
                                 docs=dict(file=_("an icon (72x72)"))))
     @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
-        if client:
-            form_id = 'app-icon-upload-%s' % client._id
-        else:
-            form_id = None
         if not media.can_upload_icon():
             form.set_error(errors.NOT_SUPPORTED, '')
         if not icon_file:
