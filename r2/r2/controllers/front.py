@@ -770,7 +770,10 @@ class FrontController(RedditController):
                                                      reverse=reverse,
                                                      count=count)
             except InvalidQuery:
-                # strip the query down to a whitelist
+                # Clean the search of characters that might be causing the
+                # InvalidQuery exception. If the cleaned search boils down
+                # to an empty string, the search code is expected to bail
+                # out early with an empty result set.
                 cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower().strip()
 
