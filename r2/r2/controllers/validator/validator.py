@@ -1665,14 +1665,14 @@ class ValidCard(Validator):
             self.set_error(_("dates should be YYYY-MM"), "expirationDate")
             has_errors = True
         else:
-            now = datetime.now()
+            now = datetime.now(g.tz)
             yyyy, mm = expirationDate.split("-")
             year = int(yyyy)
             month = int(mm)
             if month < 1 or month > 12:
                 self.set_error(_("month must be in the range 01..12"), "expirationDate")
                 has_errors = True
-            elif datetime(year, month, now.day) < now:
+            elif datetime(year, month, 1) < datetime(now.year, now.month, 1):
                 self.set_error(_("expiration date must be in the future"), "expirationDate")
                 has_errors = True
 
