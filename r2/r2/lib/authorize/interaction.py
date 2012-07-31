@@ -134,10 +134,12 @@ def auth_transaction(amount, user, payid, thing, campaign, test = None):
         # duplicate transaction, which is bad, but not horrible.  Log
         # the transaction id, creating a new bid if necessary. 
         elif (res.response_code, res.response_reason_code) == (3,11):
+            g.log.debug("Authorize.net duplicate trans %d on campaign %d" % 
+                        (res.trans_id, campaign))
             try:
-                Bid.one(res.trans_id)
+                Bid.one(res.trans_id, campaign=campaign)
             except NotFound:
-                Bid._new(res.trans_id, user, payid, thing._id, amount)
+                Bid._new(res.trans_id, user, payid, thing._id, amount, campaign)
         return res.trans_id, res.response_reason_text
 
 
