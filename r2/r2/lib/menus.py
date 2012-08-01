@@ -339,11 +339,11 @@ class SubredditButton(NavButton):
     # TRANSLATORS: This refers to the user's front page
                       Frontpage: _("front")}
 
-    def __init__(self, sr):
+    def __init__(self, sr, **kw):
         self.path = sr.path
         name = self.name_overrides.get(sr, sr.name)
         NavButton.__init__(self, name, sr.path, False,
-                           isselected = (c.site == sr))
+                           isselected = (c.site == sr), **kw)
 
     def build(self, base_path = ''):
         pass

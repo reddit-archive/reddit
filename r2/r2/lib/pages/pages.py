@@ -1454,6 +1454,7 @@ class SubredditTopBar(CachedTemplate):
                        css_class = 'sr-bar', _id = 'sr-bar')
 
     def special_reddits(self):
+        css_classes = {Random: "random"}
         reddits = [Frontpage, All, Random]
         if getattr(c.site, "over_18", False):
             reddits.append(RandomNSFW)
@@ -1462,7 +1463,8 @@ class SubredditTopBar(CachedTemplate):
                 reddits.append(Friends)
             if c.show_mod_mail:
                 reddits.append(Mod)
-        return NavMenu([SubredditButton(sr) for sr in reddits],
+        return NavMenu([SubredditButton(sr, css_class=css_classes.get(sr))
+                        for sr in reddits],
                        type = 'flatlist', separator = '-',
                        css_class = 'sr-bar')
     
