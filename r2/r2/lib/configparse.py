@@ -33,6 +33,8 @@ class ConfigValue(object):
 
     @staticmethod
     def bool(v, key=None, data=None):
+        if v in (True, False, None):
+            return bool(v)
         try:
             return ConfigValue._bool_map[v.lower()]
         except KeyError:
