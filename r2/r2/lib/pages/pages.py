@@ -662,7 +662,9 @@ class PrefApps(Templated):
     """Preference form for managing authorized third-party applications."""
 
     def __init__(self, my_apps, developed_apps):
-        self.my_apps = my_apps
+        from r2.controllers.oauth2 import scope_info
+        self.my_apps = [(app, [scope_info[scope] for scope in scopes])
+                        for app, scopes in my_apps]
         self.developed_apps = developed_apps
         super(PrefApps, self).__init__()
 

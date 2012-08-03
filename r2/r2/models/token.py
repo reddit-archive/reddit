@@ -200,14 +200,18 @@ class OAuth2Client(Token):
 
     @classmethod
     def _by_user(cls, account):
-        """Returns a (possibly empty) list of clients for which Account has outstanding access tokens."""
+        """Returns a (possibly empty) list of client-scope pairs for which Account has outstanding access tokens."""
 
         client_ids = set()
+        client_id_to_scope = {}
         for token in OAuth2AccessToken._by_user(account):
             if token.check_valid():
-                client_ids.add(token.client_id)
+                client_id_to_scope.setdefault(token.client_id, set()).update(
+                    token.scope_list)
 
-        return cls._byID(client_ids).values()
+        clients = cls._byID(client_id_to_scope.keys())
+        return [(client, list(client_id_to_scope.get(client_id, [])))
+                for client_id, client in clients.iteritems()]
 
     def revoke(self, account):
         """Revoke all of the outstanding OAuth2AccessTokens associated with this client and user Account."""
@@ -271,8 +275,7 @@ class OAuth2AccessToken(Token):
     _connection_pool = "main"
 
     @classmethod
-    def _new(cls, client_id, user_id, scope_list):
-        scope = ','.join(scope_list)
+    def _new(cls, client_id, user_id, scope):
         return super(OAuth2AccessToken, cls)._new(
                      client_id=client_id,
                      user_id=user_id,

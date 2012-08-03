@@ -5887,6 +5887,17 @@ tr.gold-accent + tr > td {
     vertical-align: middle;
 }
 
+.app-permissions li { position: relative; }
+.app-scope {
+    display: none;
+    position: absolute;
+    top: 1ex;
+    left: 3ex;
+    border: 1px solid black;
+    background: #fffdcc;
+    z-index: 1;
+}
+
 .app-description {
     display: inline-block;
     font-size: small;

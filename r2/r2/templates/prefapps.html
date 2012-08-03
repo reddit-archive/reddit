@@ -164,7 +164,7 @@
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
 
-  %for app in thing.my_apps:
+  %for app, scopes in thing.my_apps:
   <div id="authorized-app-${app._id}" class="authorized-app rounded">
     ${icon(app)}
     <div class="app-details">
@@ -175,6 +175,14 @@
         ${app.name}
       %endif
       </h2>
+      <ul class="app-permissions">
+        %for scope_info in scopes:
+          <li>
+            ${scope_info['name']}
+            <span class="app-scope">${scope_info['description']}</span>
+          </li>
+        %endfor
+      </ul>
     </div>
     <div class="app-description">${app.description}</div>
     ${developers(app)}
