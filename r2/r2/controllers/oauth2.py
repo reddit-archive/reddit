@@ -225,7 +225,9 @@ class OAuth2ResourceController(MinimalController):
         if handler:
             oauth2_perms = getattr(handler, "oauth2_perms", None)
             if oauth2_perms:
-                if set(oauth2_perms["allowed_scopes"]).intersection(access_token.scope_list):
+                granted_scopes = set(access_token.scope_list)
+                required_scopes = set(oauth2_perms['allowed_scopes'])
+                if not (granted_scopes >= required_scopes):
                     self._auth_error(403, "insufficient_scope")
             else:
                 self._auth_error(400, "invalid_request")
