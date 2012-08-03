@@ -225,9 +225,13 @@ r.analytics.breadcrumbs = {
     },
 
     storeLastClick: function(el) {
-        this.data[0]['click'] =
-            r.utils.querySelectorFromEl(el, this.selector)
-        this.store()
+        try {
+            this.data[0]['click'] =
+                r.utils.querySelectorFromEl(el, this.selector)
+            this.store()
+        } catch (e) {
+            // Band-aid for Firefox NS_ERROR_DOM_SECURITY_ERR until fixed.
+        }
     },
 
     toParams: function() {
