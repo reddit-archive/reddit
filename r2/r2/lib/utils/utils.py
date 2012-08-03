@@ -38,6 +38,7 @@ from pylons import g
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode, _force_utf8
 from mako.filters import url_escape
+from r2.lib.contrib import ipaddress
 import snudown
  
 from r2.lib.utils._utils import *
@@ -1383,3 +1384,12 @@ def summarize_markdown(md):
 
     first_graf, sep, rest = md.partition("\n\n")
     return first_graf[:500]
+
+
+def is_throttled(address):
+    """Determine if an IP address is in a throttled range."""
+    addr = ipaddress.ip_address(address)
+    for network in g.throttles:
+        if addr in network:
+            return True
+    return False

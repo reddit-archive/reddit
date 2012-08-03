@@ -28,6 +28,7 @@ import signal
 from datetime import timedelta, datetime
 from urlparse import urlparse
 import json
+from r2.lib.contrib import ipaddress
 from sqlalchemy import engine
 from sqlalchemy import event
 from r2.lib.configparse import ConfigValue, ConfigValueParser
@@ -265,16 +266,21 @@ class Globals(object):
         # [live_config] section of the ini file
         zk_hosts = self.config.get("zookeeper_connection_string")
         if zk_hosts:
-            from r2.lib.zookeeper import connect_to_zookeeper, LiveConfig
+            from r2.lib.zookeeper import (connect_to_zookeeper,
+                                          LiveConfig, LiveList)
             zk_username = self.config["zookeeper_username"]
             zk_password = self.config["zookeeper_password"]
             self.zookeeper = connect_to_zookeeper(zk_hosts, (zk_username,
                                                              zk_password))
             self.live_config = LiveConfig(self.zookeeper, LIVE_CONFIG_NODE)
+            self.throttles = LiveList(self.zookeeper, "/throttles",
+                                      map_fn=ipaddress.ip_network,
+                                      reduce_fn=ipaddress.collapse_addresses)
         else:
             parser = ConfigParser.RawConfigParser()
             parser.read([self.config["__file__"]])
             self.live_config = extract_live_config(parser, self.plugins)
+            self.throttles = tuple()  # immutable since it's not real
 
         self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
         self.make_lock = make_lock_factory(self.lock_cache)

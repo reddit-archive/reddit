@@ -20,11 +20,14 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import os
 import json
+import urllib
 import functools
 
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
+from kazoo.exceptions import NoNodeException
 
 
 def connect_to_zookeeper(hostlist, credentials):
@@ -68,3 +71,42 @@ class LiveConfig(object):
 
     def __repr__(self):
         return "<LiveConfig %r>" % self.data
+
+
+class LiveList(object):
+    """A mutable set shared by all apps and backed by ZooKeeper."""
+    def __init__(self, client, root, map_fn=None, reduce_fn=lambda L: L):
+        self.client = client
+        self.root = root
+        self.data = []
+
+        acl = [self.client.make_acl(read=True, create=True, delete=True)]
+        self.client.ensure_path(self.root, acl)
+
+        @client.ChildrenWatch(root)
+        def watcher(children):
+            unquoted = (urllib.unquote(c) for c in children)
+            mapped = map(map_fn, unquoted)
+            self.data = list(reduce_fn(mapped))
+
+    def _nodepath(self, item):
+        escaped = urllib.quote(str(item), safe=":")
+        return os.path.join(self.root, escaped)
+
+    def add(self, item):
+        path = self._nodepath(item)
+        self.client.ensure_path(path)
+
+    def remove(self, item):
+        path = self._nodepath(item)
+
+        try:
+            self.client.delete(path)
+        except NoNodeException:
+            raise ValueError("not in list")
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __repr__(self):
+        return "<LiveList %r>" % self.data
