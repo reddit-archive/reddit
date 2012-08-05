@@ -120,6 +120,9 @@
   % if c.deny_frames:
     <script>if (window != top) top.location = window.location</script>
   % endif
+  <!--[if lt IE 9]>
+    ${unsafe(js.use('html5shiv'))}
+  <![endif]-->
 </%def>
 
 <%def name="javascript_run()">

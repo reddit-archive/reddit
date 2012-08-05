@@ -262,6 +262,11 @@ module = {}
 
 module["jquery"] = JQuery()
 
+module["html5shiv"] = Module("html5shiv.js",
+    "lib/html5shiv.js",
+    should_compile=False
+)
+
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/json2.js",
     "lib/underscore-1.3.3.js",
