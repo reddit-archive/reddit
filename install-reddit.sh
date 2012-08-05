@@ -149,6 +149,21 @@ haproxy
 PACKAGES
 
 ###############################################################################
+# Wait for all the services to be up
+###############################################################################
+# check each port for connectivity
+echo "Waiting for services to be available, see source for port meanings..."
+# 11211 - memcache
+# 5432 - postgres
+# 5672 - rabbitmq
+# 9160 - cassandra
+for port in 11211 5432 5672 9160; do
+    while ! nc -vz localhost $port; do
+        sleep 1
+    done
+done
+
+###############################################################################
 # Install the reddit source repositories
 ###############################################################################
 if [ ! -d $REDDIT_HOME ]; then
@@ -169,9 +184,6 @@ fi
 ###############################################################################
 # Configure Cassandra
 ###############################################################################
-# wait a bit to make sure all the servers come up
-sleep 30
-
 if ! echo | cassandra-cli -h localhost -k reddit > /dev/null 2>&1; then
     echo "create keyspace reddit;" | cassandra-cli -h localhost -B
 fi
