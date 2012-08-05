@@ -151,6 +151,9 @@ PACKAGES
 ###############################################################################
 # Wait for all the services to be up
 ###############################################################################
+# cassandra no longer auto-starts
+service cassandra start
+
 # check each port for connectivity
 echo "Waiting for services to be available, see source for port meanings..."
 # 11211 - memcache
