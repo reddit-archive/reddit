@@ -45,7 +45,7 @@ class KeyValueStore(object):
     @classmethod
     def get(cls, key, default=NoDefault):
         try:
-            return json.loads(cls._cf.get(key)["value"])
+            return json.loads(cls._cf.get(key)["data"])
         except NotFoundException:
             if default is not NoDefault:
                 return default
@@ -53,8 +53,8 @@ class KeyValueStore(object):
                 raise
 
     @classmethod
-    def set(cls, key, value):
-        cls._cf.insert(key, {"value": json.dumps(value)})
+    def set(cls, key, data):
+        cls._cf.insert(key, {"data": json.dumps(data)})
 
 
 class NamedGlobals(KeyValueStore):
