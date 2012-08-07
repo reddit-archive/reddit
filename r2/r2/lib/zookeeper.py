@@ -91,16 +91,20 @@ class LiveList(object):
 
             @client.ChildrenWatch(root)
             def watcher(children):
-                self.data = self._normalize_children(children)
+                self.data = self._normalize_children(children, reduce=True)
 
     def _nodepath(self, item):
         escaped = urllib.quote(str(item), safe=":")
         return os.path.join(self.root, escaped)
 
-    def _normalize_children(self, children):
+    def _normalize_children(self, children, reduce):
         unquoted = (urllib.unquote(c) for c in children)
         mapped = map(self.map_fn, unquoted)
-        return list(self.reduce_fn(mapped))
+
+        if reduce:
+            return list(self.reduce_fn(mapped))
+        else:
+            return list(mapped)
 
     def add(self, item):
         path = self._nodepath(item)
@@ -114,9 +118,9 @@ class LiveList(object):
         except NoNodeException:
             raise ValueError("not in list")
 
-    def get(self):
+    def get(self, reduce=True):
         children = self.client.get_children(self.root)
-        return self._normalize_children(children)
+        return self._normalize_children(children, reduce)
 
     def __iter__(self):
         if not self.is_watching:
