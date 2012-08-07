@@ -31,6 +31,9 @@ class Plugin(object):
     config = {}
     live_config = {}
 
+    def __init__(self, entry_point):
+        self.entry_point = entry_point
+
     @property
     def path(self):
         module = sys.modules[type(self).__module__]
@@ -79,7 +82,7 @@ class PluginLoader(object):
                 continue
 
             plugin_cls = entry_point.load()
-            self.plugins[name] = plugin_cls()
+            self.plugins[name] = plugin_cls(entry_point)
 
     def __len__(self):
         return len(self.plugins)
