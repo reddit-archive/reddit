@@ -263,6 +263,9 @@ def make_map():
     mc('/code', controller='redirect', action='redirect',
        dest='http://github.com/reddit/')
 
+    mc('/socialite', controller='redirect', action='redirect',
+       dest='https://addons.mozilla.org/firefox/addon/socialite/')
+
     mc('/mobile', controller='redirect', action='redirect',
        dest='http://m.reddit.com/')
 

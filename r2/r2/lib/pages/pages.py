@@ -485,7 +485,7 @@ class RedditFooter(CachedTemplate):
 
             NavMenu([
                     OffsiteButton("mobile", "http://i.reddit.com"),
-                    NamedButton("socialite", False),
+                    OffsiteButton(_("firefox extension"), "https://addons.mozilla.org/firefox/addon/socialite/"),
                     OffsiteButton(_("chrome extension"), "https://chrome.google.com/webstore/detail/algjnflpgoopkdijmkalfcifomdhmcbe"),
                     NamedButton("buttons", True),
                     NamedButton("widget", True),

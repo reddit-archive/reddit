@@ -92,7 +92,6 @@ menu =   MenuHandler(hot          = _('hot'),
                      
                      #reddit footer strings
                      feedback     = _("contact us"),
-                     socialite    = _("firefox extension"),
                      buttons      = _("buttons"),
                      widget       = _("widget"), 
                      code         = _("source code"),
