@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.template_helpers import format_number
+   from r2.lib.template_helpers import format_number, html_datetime
  %>
 
 
@@ -37,7 +37,7 @@
       ${_("this post was submitted on")}
       &#32;
     </span>
-    <time datetime="${thing.a._date.isoformat()}">
+    <time datetime="${html_datetime(thing.a._date)}">
       ${thing.a._date.strftime(thing.datefmt)}
     </time>
   </div>

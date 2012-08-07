@@ -533,5 +533,12 @@ def format_number(number, locale=None):
     return babel.numbers.format_number(number, locale=locale)
 
 
+def html_datetime(date):
+    # Strip off the microsecond to appease the HTML5 gods, since
+    # datetime.isoformat() returns too long of a microsecond value.
+    # http://www.whatwg.org/specs/web-apps/current-work/multipage/common-microsyntaxes.html#times
+    return date.replace(microsecond=0).isoformat()
+
+
 def js_timestamp(date):
     return '%d' % (calendar.timegm(date.timetuple()) * 1000)
