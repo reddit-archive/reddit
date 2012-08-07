@@ -70,19 +70,26 @@ class Plugin(object):
 
 
 class PluginLoader(object):
-    def __init__(self, plugin_names):
+    def __init__(self, plugin_names=None):
         self.plugins = {}
 
-        for name in plugin_names:
-            try:
-                entry_point = self.available_plugins(name).next()
-            except StopIteration:
-                print >> sys.stderr, ("Unable to locate plugin "
-                                      "%s. Skipping." % name)
-                continue
+        if plugin_names is None:
+            entry_points = self.available_plugins()
+        else:
+            entry_points = []
+            for name in plugin_names:
+                try:
+                    entry_point = self.available_plugins(name).next()
+                except StopIteration:
+                    print >> sys.stderr, ("Unable to locate plugin "
+                                          "%s. Skipping." % name)
+                    continue
+                else:
+                    entry_points.append(entry_point)
 
+        for entry_point in entry_points:
             plugin_cls = entry_point.load()
-            self.plugins[name] = plugin_cls(entry_point)
+            self.plugins[entry_point.name] = plugin_cls(entry_point)
 
     def __len__(self):
         return len(self.plugins)
