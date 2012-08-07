@@ -109,6 +109,12 @@ class PluginLoader(object):
     def load_plugins(self):
         g = config['pylons.g']
         for plugin in self:
+            # Record plugin version
+            entry = plugin.entry_point
+            git_dir = os.path.join(entry.dist.location, '.git')
+            g.record_repo_version(entry.name, git_dir)
+
+            # Load plugin
             g.config.add_spec(plugin.config)
             config['pylons.paths']['templates'].extend(plugin.template_dirs)
             plugin.add_js()
