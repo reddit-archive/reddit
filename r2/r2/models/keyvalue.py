@@ -22,10 +22,12 @@
 
 import json
 
+from pycassa import NotFoundException
 from pycassa.system_manager import UTF8_TYPE
 
 from r2.lib.db.tdb_cassandra import ThingMeta
 
+NoDefault = object()
 
 class KeyValueStore(object):
     __metaclass__ = ThingMeta
@@ -41,8 +43,14 @@ class KeyValueStore(object):
     )
 
     @classmethod
-    def get(cls, key):
-        return json.loads(cls._cf.get(key)["value"])
+    def get(cls, key, default=NoDefault):
+        try:
+            return json.loads(cls._cf.get(key)["value"])
+        except NotFoundException:
+            if default is not NoDefault:
+                return default
+            else:
+                raise
 
     @classmethod
     def set(cls, key, value):
