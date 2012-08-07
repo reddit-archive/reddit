@@ -435,18 +435,14 @@ class BrowseController(ListingController):
     def query(self):
         return c.site.get_links(self.sort, self.time)
 
-    # TODO: this is a hack with sort.
-    @validate(sort = VOneOf('sort', ('top', 'controversial')),
-              t = VMenu('sort', ControversyTimeMenu))
+    @validate(t = VMenu('sort', ControversyTimeMenu))
     def POST_listing(self, sort, t, **env):
         # VMenu validator will save the value of time before we reach this
         # point. Now just redirect to GET mode.
         return self.redirect(
             request.fullpath + query_string(dict(sort=sort, t=t)))
 
-    # TODO: this is a hack with sort.
-    @validate(sort = VOneOf('sort', ('top', 'controversial')),
-              t = VMenu('sort', ControversyTimeMenu))
+    @validate(t = VMenu('sort', ControversyTimeMenu))
     @listing_api_doc(uri='/{sort}', uri_variants=['/top', '/controversial'])
     def GET_listing(self, sort, t, **env):
         self.sort = sort
@@ -454,6 +450,10 @@ class BrowseController(ListingController):
             self.title_text = _('top scoring links')
         elif sort == 'controversial':
             self.title_text = _('most controversial links')
+        else:
+            # 'sort' is forced to top/controversial by routing.py,
+            # but in case something has gone wrong...
+            abort(404)
         self.time = t
         return ListingController.GET_listing(self, **env)
 
