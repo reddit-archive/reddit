@@ -1386,10 +1386,15 @@ def summarize_markdown(md):
     return first_graf[:500]
 
 
+def find_containing_network(ip_ranges, address):
+    """Find an IP network that contains the given address."""
+    addr = ipaddress.ip_address(address)
+    for network in ip_ranges:
+        if addr in network:
+            return network
+    return None
+
+
 def is_throttled(address):
     """Determine if an IP address is in a throttled range."""
-    addr = ipaddress.ip_address(address)
-    for network in g.throttles:
-        if addr in network:
-            return True
-    return False
+    return bool(find_containing_network(g.throttles, address))
