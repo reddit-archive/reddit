@@ -321,9 +321,8 @@ def use(*names):
 
 def load_plugin_modules():
     from r2.lib.plugin import PluginLoader
-    for plugin in PluginLoader.available_plugins():
-        plugin_cls = plugin.load()
-        plugin_cls().add_js(module)
+    for plugin in PluginLoader():
+        plugin.add_js(module)
 
 commands = {}
 def build_command(fn):
