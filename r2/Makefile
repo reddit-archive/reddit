@@ -35,7 +35,11 @@ DEFS_FILE := Makefile.defs
 .PHONY: $(DEFS_FILE)
 $(shell $(PYTHON) $(DEFS_PY) > $(DEFS_FILE))
 include $(DEFS_FILE)
+ifdef DEFS_SUCCESS
 $(info [+] including definitions from $(DEFS_PY))
+else
+$(error $(DEFS_PY) failed. aborting)
+endif
 
 #################### Cython
 PYX_FILES := $(shell find . -name \*.pyx)

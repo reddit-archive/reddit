@@ -41,3 +41,4 @@ for name, module in modules.iteritems():
     print 'JS_MODULE_DEPS_%s := %s' % (name, ' '.join(module.dependencies))
 
 print 'JS_OUTPUTS := ' + ' '.join(outputs)
+print 'DEFS_SUCCESS := 1'
