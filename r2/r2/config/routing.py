@@ -278,8 +278,6 @@ def make_map():
     mc("/ads/:codename", controller="ad", action="ad_by_codename")
 
     mc("/try", controller="forms", action="try_compact")
-    mc('/comscore-iframe/', controller='mediaembed', action='comscore')
-    mc('/comscore-iframe/*url', controller='mediaembed', action='comscore')
 
     # This route handles displaying the error page and
     # graphics used in the 404/500

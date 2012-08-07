@@ -24,7 +24,7 @@ from validator import *
 from reddit_base import MinimalController
 
 from r2.lib.scraper import get_media_embed
-from r2.lib.pages import MediaEmbedBody, ComScore, render_ad
+from r2.lib.pages import MediaEmbedBody, render_ad
 
 from pylons import request
 from pylons.controllers.util import abort
@@ -53,9 +53,6 @@ class MediaembedController(MinimalController):
             content = media_embed.content
 
         return MediaEmbedBody(body = content).render()
-
-    def GET_comscore(self, reddit = None):
-        return ComScore().render(style="html")
 
 class AdController(MinimalController):
     def request_key(self):
