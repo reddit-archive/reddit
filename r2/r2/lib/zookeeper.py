@@ -75,23 +75,32 @@ class LiveConfig(object):
 
 class LiveList(object):
     """A mutable set shared by all apps and backed by ZooKeeper."""
-    def __init__(self, client, root, map_fn=None, reduce_fn=lambda L: L):
+    def __init__(self, client, root, map_fn=None, reduce_fn=lambda L: L,
+                 watch=True):
         self.client = client
         self.root = root
-        self.data = []
+        self.map_fn = map_fn
+        self.reduce_fn = reduce_fn
+        self.is_watching = watch
 
         acl = [self.client.make_acl(read=True, create=True, delete=True)]
         self.client.ensure_path(self.root, acl)
 
-        @client.ChildrenWatch(root)
-        def watcher(children):
-            unquoted = (urllib.unquote(c) for c in children)
-            mapped = map(map_fn, unquoted)
-            self.data = list(reduce_fn(mapped))
+        if watch:
+            self.data = []
+
+            @client.ChildrenWatch(root)
+            def watcher(children):
+                self.data = self._normalize_children(children)
 
     def _nodepath(self, item):
         escaped = urllib.quote(str(item), safe=":")
         return os.path.join(self.root, escaped)
+
+    def _normalize_children(self, children):
+        unquoted = (urllib.unquote(c) for c in children)
+        mapped = map(self.map_fn, unquoted)
+        return list(self.reduce_fn(mapped))
 
     def add(self, item):
         path = self._nodepath(item)
@@ -105,8 +114,20 @@ class LiveList(object):
         except NoNodeException:
             raise ValueError("not in list")
 
+    def get(self):
+        children = self.client.get_children(self.root)
+        return self._normalize_children(children)
+
     def __iter__(self):
+        if not self.is_watching:
+            raise NotImplementedError()
         return iter(self.data)
 
+    def __len__(self):
+        if not self.is_watching:
+            raise NotImplementedError()
+        return len(self.data)
+
     def __repr__(self):
-        return "<LiveList %r>" % self.data
+        return "<LiveList %r (%s)>" % (self.data,
+                                       "push" if self.is_watching else "pull")
