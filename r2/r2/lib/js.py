@@ -59,7 +59,7 @@ class ClosureCompiler(object):
             raise ClosureError(msg)
         else:
             return out, msg
-    
+
     def compile(self, data, dest, args=None):
         """Run closure compiler on a string of source code `data`, writing the
         result to output file `dest`. A ClosureError exception will be raised if
@@ -71,7 +71,7 @@ class Source(object):
     def get_source(self):
         """Return the full JavaScript source code."""
         raise NotImplementedError
-    
+
     def use(self):
         """Return HTML to insert the JavaScript source inside a template."""
         raise NotImplementedError
@@ -88,7 +88,7 @@ class FileSource(Source):
     """A JavaScript source file on disk."""
     def __init__(self, name):
         self.name = name
-    
+
     def get_source(self):
         return open(self.path).read()
 
@@ -182,7 +182,7 @@ class StringsSource(Source):
                 data[key] = strings.strings[key]
         else:
             data = dict(strings.strings)
-        
+
         output = self.prepend + json.dumps(data) + "\n"
 
         if self.lang:
