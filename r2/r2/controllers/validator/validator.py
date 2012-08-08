@@ -53,7 +53,7 @@ def visible_promo(article):
                  c.user._id == article.author_id)
 
     # subreddit discovery links are visible even without a live campaign
-    if article._fullname in getattr(g, 'sr_discovery_links', {}):
+    if article._fullname in g.live_config['sr_discovery_links']:
         return True
     
     # promos are visible only if comments are not disabled and the

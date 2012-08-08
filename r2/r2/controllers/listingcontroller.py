@@ -269,8 +269,8 @@ class HotController(FixListing, ListingController):
 
             # If prefs allow it, mix in promoted links and sr discovery content
             if c.user.pref_show_sponsors or not c.user.gold:
-                if hasattr(g, 'sr_discovery_links'):
-                    spotlight_links.extend(g.sr_discovery_links)
+                if g.live_config['sr_discovery_links']:
+                    spotlight_links.extend(g.live_config['sr_discovery_links'])
                     random.shuffle(spotlight_links)
                     spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
                     num_links = len(spotlight_links)
