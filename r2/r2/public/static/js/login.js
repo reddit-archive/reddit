@@ -1,6 +1,4 @@
 r.login = {
-    currentOrigin: location.protocol+'//'+location.host,
-
     post: function(form, action, callback) {
         if (r.config.cnameframe && !r.config.https_endpoint) {
             form.$el.unbind()
