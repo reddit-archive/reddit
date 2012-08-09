@@ -41,13 +41,18 @@ scope_info = {
     "identity": {
         "id": "identity",
         "name": _("My Identity"),
-        "description": _("Access my reddit username and signup date.")
+        "description": _("Access my reddit username and signup date."),
     },
     "comment": {
         "id": "comment",
         "name": _("Commenting"),
-        "description": _("Submit comments from my account.")
-    }
+        "description": _("Submit comments from my account."),
+    },
+    "myreddits": {
+        "id": "myreddits",
+        "name": _("My Subscriptions"),
+        "description": _("Access my list of subreddits."),
+    },
 }
 
 class OAuth2FrontendController(RedditController):
@@ -231,6 +236,13 @@ class OAuth2ResourceController(MinimalController):
                     self._auth_error(403, "insufficient_scope")
             else:
                 self._auth_error(400, "invalid_request")
+
+    def check_for_bearer_token(self):
+        if self._get_bearer_token(strict=False):
+            OAuth2ResourceController.pre(self)
+            if c.oauth_user:
+                c.user = c.oauth_user
+                c.user_is_loggedin = True
 
     def _auth_error(self, code, error):
         abort(code, headers=[("WWW-Authenticate", 'Bearer realm="reddit", error="%s"' % error)])
