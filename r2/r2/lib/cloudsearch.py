@@ -614,7 +614,7 @@ class CloudSearchQuery(object):
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
             raise ValueError("Unknown search syntax: %s" % syntax)
-        self.query = query.encode("utf-8") if query else ''
+        self.query = filters._force_unicode(query or u'')
         self.converted_data = None
         self.syntax = syntax
         self.sr = sr
@@ -624,7 +624,7 @@ class CloudSearchQuery(object):
         else:
             self.sort = self.sorts[sort]
         self.faceting = faceting
-        self.bq = ''
+        self.bq = u''
         self.results = None
     
     def run(self, after=None, reverse=False, num=1000, _update=False):
@@ -648,14 +648,15 @@ class CloudSearchQuery(object):
         elif self.syntax == "lucene":
             bq = l2cs.convert(self.query, self.lucene_parser)
             self.converted_data = {"syntax": "cloudsearch",
-                                   "converted": filters._force_unicode(bq)}
+                                   "converted": bq}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
             q = self.query
         if g.sqlprinting:
             g.log.info("%s", self)
-        return self._run_cached(q, self.bq, self.sort, self.faceting,
-                                start=start, num=num, _update=_update)
+        return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
+                                self.faceting, start=start, num=num,
+                                _update=_update)
     
     def customize_query(self, bq):
         return bq
