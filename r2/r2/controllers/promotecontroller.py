@@ -283,7 +283,8 @@ class PromoteController(ListingController):
                                   business_days = False, 
                                   admin_override = True),
                    l     = VLink('link_id'),
-                   bid   = VBid('bid', 'link_id', 'sr'),
+                   bid   = VFloat('bid', min=0, max=g.max_promote_bid, 
+                                  coerce=False, error=errors.BAD_BID),
                    sr = VSubmitSR('sr', promotion=True),
                    indx = VInt("indx"), 
                    targeting = VLength("targeting", 10))
@@ -319,10 +320,19 @@ class PromoteController(ListingController):
         if form.has_errors('bid', errors.BAD_BID):
             return
 
-        if bid is None or float(bid) / duration < g.min_promote_bid:
+        # minimum bid depends on user privilege and targeting, checked here
+        # instead of in the validator b/c current duration is needed
+        if c.user_is_admin:
+            min_daily_bid = 0
+        elif targeting == 'one':
+            min_daily_bid = g.min_promote_bid * 1.5
+        else:
+            min_daily_bid = g.min_promote_bid
+
+        if bid is None or bid / duration < min_daily_bid:
             c.errors.add(errors.BAD_BID, field = 'bid',
-                         msg_params = {"min": g.min_promote_bid,
-                                       "max": g.max_promote_bid})
+                         msg_params = {'min': min_daily_bid,
+                                       'max': g.max_promote_bid})
             form.has_errors('bid', errors.BAD_BID)
             return
 

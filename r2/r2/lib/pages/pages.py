@@ -3041,6 +3041,8 @@ class PromoteLinkForm(Templated):
             self.market, self.promo_counter = \
                 Promote_Graph.get_market(None, start_date, end_date)
 
+        self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
+
         Templated.__init__(self, sr = sr, 
                            datefmt = datefmt,
                            timedeltatext = timedeltatext,

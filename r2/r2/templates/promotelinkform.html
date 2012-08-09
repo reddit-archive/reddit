@@ -92,7 +92,7 @@ ${unsafe(js.use('sponsored'))}
     <%
        start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
        end_title = "Date when your sponsored link will end (at midnight UTC+5)"
-       targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wise "
+       targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wide "
        newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
      %>
     <table class="preftable">
@@ -140,8 +140,9 @@ ${unsafe(js.use('sponsored'))}
                   style="width:auto"
                   onchange="update_bid(this)"
                   onkeyup="update_bid(this)"
-                  title="Minimum is $${'%.2f' % g.min_promote_bid} per day, or $${'%.2f' % (g.min_promote_bid * 1.5)} per day targeted"
-                  value="${'%.2f' % (g.min_promote_bid * 5)}"
+                  title="Minimum is $${'%.2f' % thing.min_daily_bid} per day, or $${'%.2f' % (thing.min_daily_bid * 1.5)} per day targeted"
+                  value="${'%.2f' % (thing.min_daily_bid * 5)}"
+                  data-min_daily_bid="${thing.min_daily_bid}"
                   />
           <span class="bid-info gray"></span>
         </td>

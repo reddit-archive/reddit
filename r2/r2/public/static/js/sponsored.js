@@ -10,7 +10,9 @@ function update_bid(elem) {
              Date.parse(form.find('*[name="startdate"]').val())) / (86400*1000));
     ndays = Math.round(ndays);
 
-    var minimum_daily_bid = (is_targeted ? 30 : 20);
+    // min bid is slightly higher for targeted promos
+    var minimum_daily_bid = is_targeted ? $("#bid").data("min_daily_bid") * 1.5 : 
+                                          $("#bid").data("min_daily_bid");
     $(".minimum-spend").removeClass("error");
     if (bid < ndays * minimum_daily_bid) {
         $(".bid-info").addClass("error");

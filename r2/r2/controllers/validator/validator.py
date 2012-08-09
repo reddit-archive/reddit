@@ -1160,6 +1160,9 @@ class VFloat(VNumber):
         return float(val)
 
 class VBid(VNumber):
+    '''
+    DEPRECATED. Use VFloat instead and check bid amount in function body.
+    '''
     def __init__(self, bid, link_id, sr):
         self.duration = 1
         VNumber.__init__(self, (bid, link_id, sr),
