@@ -100,12 +100,15 @@ class ToolbarController(RedditController):
         "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
-        elif link.is_self or not link.subreddit_slow.can_view(c.user):
+        elif link.is_self:
             return self.redirect(link.url)
-
+        
         # if the domain is shame-banned, bail out.
         if is_shamed_domain(link.url, request.ip)[0]:
             self.abort404()
+        
+        if not link.subreddit_slow.can_view(c.user):
+            self.abort403()
 
         if link.has_thumbnail:
             thumbnail = thumbnail_url(link)
