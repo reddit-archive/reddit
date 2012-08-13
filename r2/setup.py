@@ -90,7 +90,7 @@ setup(
         "PIL",
         "pycaptcha",
         "amqplib",
-        "pylibmc==1.2.1-dev",
+        "pylibmc>=1.2.1",
         "py-bcrypt",
         "python-statsd",
         "snudown>=1.1.0",
@@ -99,9 +99,7 @@ setup(
         "kazoo",
     ],
     dependency_links=[
-        "https://github.com/downloads/reddit/pylibmc/pylibmc-1.2.1-dev.tar.gz#egg=pylibmc-1.2.1-dev",
         "https://nodeload.github.com/reddit/snudown/tarball/v1.1.0#egg=snudown-1.1.0",
-        "https://nodeload.github.com/reddit/pycassa/zipball/master#egg=pycassa-1.7.0",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,
