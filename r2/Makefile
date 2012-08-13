@@ -66,10 +66,10 @@ clean_pyx:
 #################### i18n
 STRINGS_FILE := r2/lib/strings.py
 GENERATED_STRINGS_FILE := r2/lib/generated_strings.py
-POTFILE := $(I18NPATH)/r2.pot
 
 .PHONY: i18n clean_i18n
 
+# POTFILE is set by Makefile.py
 i18n: $(GENERATED_STRINGS_FILE)
 	$(PYTHON) setup.py extract_messages -o $(POTFILE)
 

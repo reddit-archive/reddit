@@ -222,8 +222,7 @@ class Globals(object):
         self.running_as_script = global_conf.get('running_as_script', False)
         
         # turn on for language support
-        if not hasattr(self, 'lang'):
-            self.lang = 'en'
+        self.lang = getattr(self, 'site_lang', 'en')
         self.languages, self.lang_name = \
             get_active_langs(default_lang=self.lang)
 
@@ -443,8 +442,9 @@ class Globals(object):
         r2_gitdir = os.path.join(r2_root, ".git")
         self.short_version = self.record_repo_version("r2", r2_gitdir)
 
-        i18n_git_path = os.path.join(os.path.dirname(I18N_PATH), ".git")
-        self.record_repo_version("i18n", i18n_git_path)
+        if I18N_PATH:
+            i18n_git_path = os.path.join(os.path.dirname(I18N_PATH), ".git")
+            self.record_repo_version("i18n", i18n_git_path)
 
         if self.log_start:
             self.log.error("reddit app %s:%s started %s at %s" %

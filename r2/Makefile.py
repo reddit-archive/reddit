@@ -24,7 +24,7 @@ from r2.lib.translation import I18N_PATH
 from r2.lib.plugin import PluginLoader
 from r2.lib import js
 
-print 'I18NPATH := ' + I18N_PATH
+print 'POTFILE := ' + I18N_PATH + 'r2.pot'
 
 plugins = list(PluginLoader.available_plugins())
 print 'PLUGINS := ' + ' '.join(plugin.name for plugin in plugins)

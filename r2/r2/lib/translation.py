@@ -28,9 +28,9 @@ from pylons.i18n.translation import translation, LanguageError, NullTranslations
 try:
     import reddit_i18n
 except ImportError:
-    import r2.i18n as reddit_i18n
-
-I18N_PATH = os.path.dirname(reddit_i18n.__file__)
+    I18N_PATH = ''
+else:
+    I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 
 
 _domain = 'r2'
@@ -83,10 +83,11 @@ def load_data(lang_path, domain=_domain, extension='data'):
 
 
 def iter_langs(base_path=I18N_PATH):
-    for lang in os.listdir(base_path):
-        full_path = os.path.join(base_path, lang, 'LC_MESSAGES')
-        if os.path.isdir(full_path):
-            yield lang, full_path
+    if base_path:
+        for lang in os.listdir(base_path):
+            full_path = os.path.join(base_path, lang, 'LC_MESSAGES')
+            if os.path.isdir(full_path):
+                yield lang, full_path
 
 
 def get_active_langs(path=I18N_PATH, default_lang='en'):
