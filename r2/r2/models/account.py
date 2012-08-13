@@ -23,6 +23,7 @@
 from r2.lib.db.thing     import Thing, Relation, NotFound
 from r2.lib.db.operators import lower
 from r2.lib.db.userrel   import UserRel
+from r2.lib.db           import tdb_cassandra
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser
@@ -41,6 +42,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import hmac
 import hashlib
+from pycassa.system_manager import ASCII_TYPE
 
 
 COOKIE_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%S'
@@ -797,3 +799,22 @@ class DeletedUser(FakeAccount):
             pass
         else:
             object.__setattr__(self, attr, val)
+
+class AccountActivityBySR(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _ttl = 15*60
+
+    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE)
+
+    _read_consistency_level  = tdb_cassandra.CL.ONE
+    _write_consistency_level = tdb_cassandra.CL.ANY
+
+    @classmethod
+    def touch(cls, account, sr):
+        cls._set_values(sr._id36,
+                        {account._id36: ''})
+
+    @classmethod
+    def get_count(cls, sr):
+        return cls._cf.get_count(sr._id36)
