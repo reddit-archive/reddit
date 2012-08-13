@@ -81,7 +81,7 @@ fi
 set -x
 
 # create the user if non-existent
-if ! id $REDDIT_USER > /dev/null 2>&1; then
+if ! id $REDDIT_USER &> /dev/null; then
     adduser --system $REDDIT_USER
 fi
 
