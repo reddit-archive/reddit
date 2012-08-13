@@ -591,7 +591,7 @@ class Account(Thing):
 
     def update_sr_activity(self, sr):
         if not self._spam:
-            AccountActivityBySR.touch(self, sr)
+            AccountsActiveBySR.touch(self, sr)
 
 class FakeAccount(Account):
     _nodb = True
@@ -804,7 +804,7 @@ class DeletedUser(FakeAccount):
         else:
             object.__setattr__(self, attr, val)
 
-class AccountActivityBySR(tdb_cassandra.View):
+class AccountsActiveBySR(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
     _ttl = 15*60
