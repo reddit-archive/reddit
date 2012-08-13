@@ -57,6 +57,11 @@ REDDIT_HOME=/home/$REDDIT_USER
 # not be writable by the reddit user.
 REDDIT_OWNER=reddit
 
+# the domain that you will connect to your reddit install with.
+# MUST contain a . in it somewhere as browsers won't do cookies for dotless
+# domains. an IP address will suffice if nothing else is available.
+REDDIT_DOMAIN=${REDDIT_DOMAIN:-reddit.local}
+
 ###############################################################################
 # Sanity Checks
 ###############################################################################
@@ -262,6 +267,8 @@ page_cache_time = 0
 
 set debug = true
 
+domain = $REDDIT_DOMAIN
+
 [server:main]
 port = 8001
 DEVELOPMENT
@@ -279,6 +286,8 @@ reload_templates = false
 uncompressedJS = false
 
 set debug = false
+
+domain = $REDDIT_DOMAIN
 
 [server:main]
 port = 8001
@@ -411,8 +420,7 @@ See the GitHub wiki for more information on these jobs:
 Now that the core of reddit is installed, you may want to do some additional
 steps:
 
-* Add "reddit.local" to your /etc/hosts file as an alias for 127.0.0.1
-  (or add it to your host OS's resolver configuration if running in a VM)
+* Ensure that $REDDIT_DOMAIN resolves to this machine.
 
 * To populate the database with test data, run:
 
