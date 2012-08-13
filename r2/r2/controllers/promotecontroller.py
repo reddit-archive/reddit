@@ -344,7 +344,7 @@ class PromoteController(ListingController):
                 # check for rate-limiting if there's no subreddit
                 return
             oversold = promote.is_roadblocked(sr.name, start, end)
-            if oversold:
+            if oversold and not c.user_is_sponsor:
                 c.errors.add(errors.OVERSOLD, field = 'sr',
                              msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
                                            "end": oversold[1].strftime('%m/%d/%Y')})
