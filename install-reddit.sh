@@ -358,8 +358,8 @@ fi
 if [ ! -f $REDDIT_HOME/consumer-counts ]; then
     cat > $REDDIT_HOME/consumer-counts <<COUNTS
 log_q           0
-cloudsearch_q   1
-scraper_q       1
+cloudsearch_q   0
+scraper_q       0
 commentstree_q  1
 newcomments_q   1
 vote_comment_q  1
