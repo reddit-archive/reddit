@@ -71,12 +71,12 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # seriously! these checks aren't here for no reason. the packages from the
-# reddit ppa aren't built for anything but natty (11.04) right now, so
+# reddit ppa aren't built for anything but precise (12.04) right now, so
 # if you try and use this install script on another release you're gonna
 # have a bad time.
 source /etc/lsb-release
-if [ "$DISTRIB_ID" != "Ubuntu" -o "$DISTRIB_RELEASE" != "11.04" ]; then
-    echo "ERROR: Only Ubuntu 11.04 is supported."
+if [ "$DISTRIB_ID" != "Ubuntu" -o "$DISTRIB_RELEASE" != "12.04" ]; then
+    echo "ERROR: Only Ubuntu 12.04 is supported."
     exit 1
 fi
 
@@ -120,7 +120,7 @@ python-pylons
 python-boto
 python-tz
 python-crypto
-python-pybabel
+python-babel
 cython
 python-sqlalchemy
 python-beautifulsoup
@@ -134,7 +134,7 @@ python-pycaptcha
 python-amqplib
 python-pylibmc
 python-bcrypt
-python-python-statsd
+python-statsd
 python-snudown
 python-l2cs
 python-lxml
