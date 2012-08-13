@@ -310,6 +310,12 @@ if [ -e /etc/haproxy/haproxy.cfg ]; then
     cat /etc/haproxy/haproxy.cfg > $BACKUP_HAPROXY
 fi
 
+# make sure haproxy is enabled
+cat > /etc/default/haproxy <<DEFAULT
+ENABLED=1
+DEFAULT
+
+# configure haproxy
 cat > /etc/haproxy/haproxy.cfg <<HAPROXY
 global
     maxconn 100
