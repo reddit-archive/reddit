@@ -96,7 +96,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # add the reddit ppa for some custom packages
 apt-get install $APTITUDE_OPTIONS python-software-properties
-apt-add-repository ppa:reddit/ppa
+apt-add-repository -y ppa:reddit/ppa
 
 # pin the ppa -- packages present in the ppa will take precedence over
 # ones in other repositories (unless further pinning is done)
