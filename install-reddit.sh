@@ -208,7 +208,7 @@ IS_DATABASE_CREATED=$(sudo -u postgres psql -t -c "$SQL")
 
 if [ $IS_DATABASE_CREATED -ne 1 ]; then
     cat <<PGSCRIPT | sudo -u postgres psql
-CREATE DATABASE reddit WITH ENCODING = 'utf8';
+CREATE DATABASE reddit WITH ENCODING = 'utf8' TEMPLATE template0;
 CREATE USER reddit WITH PASSWORD 'password';
 PGSCRIPT
 fi
