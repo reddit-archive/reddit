@@ -867,6 +867,8 @@ class RedditController(MinimalController):
             c.otp_cached = is_otpcookie_valid
             if request.path != '/validuser' and not g.disallow_db_writes:
                 c.user.update_last_visit(c.start_time)
+            if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
+                c.user.update_sr_activity(c.site)
 
         c.over18 = over18()
         set_obey_over18()
