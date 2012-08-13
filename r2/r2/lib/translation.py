@@ -23,6 +23,7 @@
 import json
 import os
 import pylons
+import pylons.config
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
 
 try:
@@ -33,16 +34,12 @@ else:
     I18N_PATH = os.path.dirname(reddit_i18n.__file__)
 
 
-_domain = 'r2'
-
-
 def _get_translator(lang, graceful_fail=False, **kwargs):
-    from pylons import config as conf
     """Utility method to get a valid translator object from a language name"""
     if not isinstance(lang, list):
         lang = [lang]
     try:
-        translator = translation(conf['pylons.package'], I18N_PATH,
+        translator = translation(pylons.config['pylons.package'], I18N_PATH,
                                  languages=lang, **kwargs)
     except IOError, ioe:
         if graceful_fail:
@@ -75,7 +72,9 @@ def set_lang(lang, graceful_fail=False, fallback_lang=None, **kwargs):
         registry.replace(pylons.translator, translator)
 
 
-def load_data(lang_path, domain=_domain, extension='data'):
+def load_data(lang_path, domain=None, extension='data'):
+    if domain is None:
+        domain = pylons.config['pylons.package']
     filename = os.path.join(lang_path, domain + '.' + extension)
     with open(filename) as datafile:
         data = json.load(datafile)
