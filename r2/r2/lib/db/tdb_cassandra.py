@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import json
 import inspect
 import pytz
 from datetime import datetime
@@ -55,8 +56,6 @@ write_consistency_level = g.cassandra_wcl
 debug = g.debug
 make_lock = g.make_lock
 db_create_tables = g.db_create_tables
-
-import json
 
 thing_types = {}
 

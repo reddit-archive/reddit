@@ -32,6 +32,7 @@ jobs.
 
 """
 
+import json
 import random
 import datetime
 import collections
@@ -45,7 +46,6 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import flatten, to36
-from r2.lib.db.tdb_cassandra import json
 
 
 CONNECTION_POOL = g.cassandra_pools['main']
