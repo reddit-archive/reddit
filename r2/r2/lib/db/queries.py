@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Trial, Vote, SaveHide
+from r2.models import Account, Link, Comment, Trial, Vote, SaveHide, Report
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -640,6 +640,31 @@ def get_unread_inbox(user):
                          get_unread_messages(user),
                          get_unread_selfreply(user))
 
+def _user_reported_query(user_id, thing_cls):
+    rel_cls = Report.rel(Account, thing_cls)
+    return rel_query(rel_cls, user_id, ('-1', '0', '1'))
+    # -1: rejected report
+    # 0: unactioned report
+    # 1: accepted report
+
+@cached_userrel_query
+def get_user_reported_links(user_id):
+    return _user_reported_query(user_id, Link)
+
+@cached_userrel_query
+def get_user_reported_comments(user_id):
+    return _user_reported_query(user_id, Comment)
+
+@cached_userrel_query
+def get_user_reported_messages(user_id):
+    return _user_reported_query(user_id, Message)
+
+@merged_cached_query
+def get_user_reported(user_id):
+    return [get_user_reported_links(user_id),
+            get_user_reported_comments(user_id),
+            get_user_reported_messages(user_id)]
+
 def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
@@ -931,6 +956,13 @@ def _by_author(things, authors=True):
     else:
         return ret
 
+def _by_thing1_id(rels):
+    ret = {}
+    for rel in tup(rels):
+        ret.setdefault(rel._thing1_id, []).append(rel)
+    return ret
+
+
 def was_spam_filtered(thing):
     if (thing._spam and not thing._deleted and
         getattr(thing, 'verdict', None) != 'mod-removed'):
@@ -1103,14 +1135,21 @@ def unban(things, insert=True):
 
     changed(things)
 
-def new_report(thing):
+def new_report(thing, report_rel):
+    reporter_id = report_rel._thing1_id
+
     with CachedQueryMutator() as m:
         if isinstance(thing, Link):
             m.insert(get_reported_links(thing.sr_id), [thing])
+            m.insert(get_user_reported_links(reporter_id), [report_rel])
         elif isinstance(thing, Comment):
             m.insert(get_reported_comments(thing.sr_id), [thing])
+            m.insert(get_user_reported_comments(reporter_id), [report_rel])
+        elif isinstance(thing, Message):
+            m.insert(get_user_reported_messages(reporter_id), [report_rel])
 
-def clear_reports(things):
+
+def clear_reports(things, rels):
     query_cache_deletes = []
 
     by_srid = _by_srid(things, srs=False)
@@ -1123,6 +1162,25 @@ def clear_reports(things):
             query_cache_deletes.append([get_reported_links(sr_id), links])
         if comments:
             query_cache_deletes.append([get_reported_comments(sr_id), comments])
+
+    # delete from user_reported if the report was correct
+    rels = [r for r in rels if r._name == '1']
+    if rels:
+        link_rels = [r for r in rels if r._type2 == Link]
+        comment_rels = [r for r in rels if r._type2 == Comment]
+        message_rels = [r for r in rels if r._type2 == Message]
+
+        rels_to_query = ((link_rels, get_user_reported_links),
+                         (comment_rels, get_user_reported_comments),
+                         (message_rels, get_user_reported_messages))
+
+        for thing_rels, query in rels_to_query:
+            if not thing_rels:
+                continue
+
+            by_thing1_id = _by_thing1_id(thing_rels)
+            for reporter_id, reporter_rels in by_thing1_id.iteritems():
+                query_cache_deletes.append([query(reporter_id), reporter_rels])
 
     with CachedQueryMutator() as m:
         for q, deletes in query_cache_deletes:

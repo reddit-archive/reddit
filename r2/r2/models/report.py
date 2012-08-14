@@ -71,7 +71,7 @@ class Report(MultiRelation('report',
             author._incr('reported')
 
         # update the reports queue if it exists
-        queries.new_report(thing)
+        queries.new_report(thing, r)
 
         # if the thing is already marked as spam, accept the report
         if thing._spam:
@@ -101,11 +101,12 @@ class Report(MultiRelation('report',
         for thing_cls, cls_things in things_by_cls.iteritems():
             # look up all of the reports for each thing
             rel_cls = cls.rel(Account, thing_cls)
-            rels = rel_cls._query(rel_cls.c._thing2_id == [ x._id for x in cls_things ],
-                                  rel_cls.c._name == '0')
+            thing_ids = [t._id for t in cls_things]
+            rels = rel_cls._query(rel_cls.c._thing2_id == thing_ids)
             for r in rels:
-                r._name = '1' if correct else '-1'
-                r._commit()
+                if r._name == '0':
+                    r._name = '1' if correct else '-1'
+                    r._commit()
 
             for thing in cls_things:
                 if thing.reported > 0:
@@ -113,6 +114,5 @@ class Report(MultiRelation('report',
                     thing._commit()
                     to_clear.append(thing)
 
-        if to_clear:
-            queries.clear_reports(to_clear)
+        queries.clear_reports(to_clear, rels)
 

@@ -39,9 +39,7 @@ class AdminTools(object):
         all_things = tup(things)
         new_things = [x for x in all_things if not x._spam]
 
-        # No need to accept reports on things with _spam=True,
-        # since nobody can report them in the first place.
-        Report.accept(new_things, True)
+        Report.accept(all_things, True)
 
         for t in all_things:
             if getattr(t, "promoted", None) is not None:
