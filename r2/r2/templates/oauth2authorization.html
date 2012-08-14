@@ -24,11 +24,16 @@
    from r2.lib.template_helpers import static, s3_https_if_secure
 %>
 <%namespace file="utils.html" import="_md" />
+<%
+   if thing.client.icon_url:
+     icon = s3_https_if_secure(thing.client.icon_url)
+   else:
+     icon = static("defaultapp.png")
+%>
 <div class="content oauth2-authorize">
   <div class="icon">
     &nbsp;
-    <img src="${s3_https_if_secure(thing.client.icon_url)}"
-         alt="${thing.client.name} icon" />
+    <img src="${icon}" alt="${thing.client.name} icon" />
     &nbsp;
   </div>
   %if thing.client.about_url:

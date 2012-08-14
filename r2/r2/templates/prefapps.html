@@ -1,3 +1,7 @@
+<%!
+  from r2.lib.template_helpers import static
+%>
+
 <%namespace name="utils" file="utils.html" />
 <%namespace file="utils.html" import="error_field, plain_link" />
 <%namespace file="printablebuttons.html" import="ajax_ynbutton, ynbutton" />
@@ -5,7 +9,7 @@
 <%def name="icon(app)">
   <div class="app-icon">
     &nbsp;
-    <img src="${app.icon_url}">
+    <img src="${app.icon_url or static('defaultapp.png')}">
     &nbsp;
   </div>
 </%def>
