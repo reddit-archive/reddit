@@ -48,6 +48,11 @@ scope_info = {
         "name": _("Commenting"),
         "description": _("Submit comments from my account."),
     },
+    "moderateflair": {
+        "id": "moderateflair",
+        "name": _("Moderating Flair"),
+        "description": _("Manage flair in subreddits I moderate."),
+    },
     "myreddits": {
         "id": "myreddits",
         "name": _("My Subscriptions"),

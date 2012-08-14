@@ -2172,6 +2172,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         award._commit()
         form.set_html(".status", _('saved'))
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VFlairManager(),
                    VModhash(),
                    user = VFlairAccount("name"),
@@ -2245,6 +2246,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 jquery('input[name="css_class"]').data('saved', css_class)
                 form.set_html('.status', _('saved'))
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VFlairManager(),
                    VModhash(),
                    user = VFlairAccount("name"))
@@ -2266,6 +2268,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             user, include_flair_selector=True).render(style='html')
         jquery('.tagline .id-%s' % user._fullname).parent().html(unflair)
 
+    @require_oauth2_scope("moderateflair")
     @validate(VFlairManager(),
               VModhash(),
               flair_csv = nop('flair_csv'))
@@ -2333,6 +2336,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         return BoringPage(_("API"), content = results).render()
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VUser(),
                    VModhash(),
                    flair_enabled = VBoolean("flair_enabled"))
@@ -2342,6 +2346,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user._commit()
         jquery.refresh()
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(
         VFlairManager(),
         VModhash(),
@@ -2381,6 +2386,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.site._commit()
         jquery.refresh()
 
+    @require_oauth2_scope("moderateflair")
     @paginated_listing(max_page_size=1000)
     @validate(user = VFlairAccount('name'))
     @api_doc(api_section.flair)
@@ -2388,6 +2394,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         flair = FlairList(num, after, reverse, '', user)
         return BoringPage(_("API"), content = flair).render()
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VFlairManager(),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'),
@@ -2457,6 +2464,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         ModAction.create(c.site, c.user, action='editflair',
                              details='flair_template')
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VFlairManager(),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'))
@@ -2468,6 +2476,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             ModAction.create(c.site, c.user, action='editflair',
                              details='flair_delete_template')
 
+    @require_oauth2_scope("moderateflair")
     @validatedForm(VFlairManager(), VModhash(),
                    flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
                                        default=USER_FLAIR))
