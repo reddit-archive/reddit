@@ -187,7 +187,7 @@ fi
 ###############################################################################
 # Configure Cassandra
 ###############################################################################
-if ! echo | cassandra-cli -h localhost -k reddit > /dev/null 2>&1; then
+if ! echo | cassandra-cli -h localhost -k reddit &> /dev/null; then
     echo "create keyspace reddit;" | cassandra-cli -h localhost -B
 fi
 
