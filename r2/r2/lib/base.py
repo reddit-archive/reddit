@@ -176,8 +176,8 @@ class BaseController(WSGIController):
 
         # unparse and encode it un utf8
         rv = _force_unicode(u.unparse()).encode('utf8')
-        if any(ch.isspace() for ch in rv):
-            raise ValueError("Space characters in redirect URL: [%r]" % rv)
+        if "\n" in rv or "\r" in rv:
+            abort(400)
         return rv
 
 
