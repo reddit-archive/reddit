@@ -516,13 +516,13 @@ _SEARCH = "/2011-02-01/search?"
 INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-IncorrectFieldTypeInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
-def basic_query(query=None, bq=None, facets=("reddit",), facet_count=20,
-                size=1000, start=0, rank="hot", return_fields=None,
-                record_stats=False, search_api=None):
+DEFAULT_FACETS = {"reddit": {"count":20}}
+def basic_query(query=None, bq=None, facets=DEFAULT_FACETS, size=1000,
+                start=0, rank="hot", return_fields=None, record_stats=False,
+                search_api=None):
     if search_api is None:
         search_api = g.CLOUDSEARCH_SEARCH_API
-    path = _encode_query(query, bq, facets, facet_count, size, start, rank,
-                         return_fields)
+    path = _encode_query(query, bq, facets, size, start, rank, return_fields)
     timer = None
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
@@ -556,8 +556,7 @@ def basic_query(query=None, bq=None, facets=("reddit",), facet_count=20,
     return json.loads(response)
 
 
-basic_link = functools.partial(basic_query, facets=("reddit",), facet_count=10,
-                               size=10, start=0, rank="hot",
+basic_link = functools.partial(basic_query, size=10, start=0, rank="hot",
                                return_fields=['title', 'reddit',
                                               'author_fullname'],
                                record_stats=False,
@@ -565,7 +564,7 @@ basic_link = functools.partial(basic_query, facets=("reddit",), facet_count=10,
 
 
 basic_subreddit = functools.partial(basic_query,
-                                    facets=(),
+                                    facets=None,
                                     size=10, start=0,
                                     rank="-activity",
                                     return_fields=['title', 'reddit',
@@ -574,8 +573,7 @@ basic_subreddit = functools.partial(basic_query,
                                     search_api=g.CLOUDSEARCH_SUBREDDIT_SEARCH_API)
 
 
-def _encode_query(query, bq, facets, facet_count, size, start, rank,
-                  return_fields):
+def _encode_query(query, bq, facets, size, start, rank, return_fields):
     if not (query or bq):
         raise ValueError("Need query or bq")
     params = {}
@@ -588,9 +586,11 @@ def _encode_query(query, bq, facets, facet_count, size, start, rank,
     params["start"] = start
     params["rank"] = rank
     if facets:
-        params["facet"] = ",".join(facets)
-        for facet in facets:
-            params["facet-%s-top-n" % facet] = facet_count
+        params["facet"] = ",".join(facets.iterkeys())
+        for facet, options in facets.iteritems():
+            params["facet-%s-top-n" % facet] = options.get("count", 20)
+            if "sort" in options:
+                params["facet-%s-sort" % facet] = options["sort"]
     if return_fields:
         params["return-fields"] = ",".join(return_fields)
     encoded_query = urllib.urlencode(params)
