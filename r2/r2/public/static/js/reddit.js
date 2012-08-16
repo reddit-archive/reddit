@@ -290,6 +290,8 @@ function get_organic(elem, next) {
         if (next_thing.length == 0)
             next_thing = thing.siblings(".thing:not(.stub)").filter(":last");
     }    
+
+    organic_help(listing, next_thing)
     thing.fadeOut('fast', function() {
             if(next_thing.length)
                 next_thing.fadeIn('fast', function() {
@@ -318,6 +320,25 @@ function get_organic(elem, next) {
                     })
                     });
 };
+
+function organic_help(listing, thing) {
+    listing = listing || $('.organic-listing')
+    thing = thing || listing.find('.thing:visible')
+
+    var help = $('#spotlight-help')
+    if (!help.length) {
+        return
+    }
+
+    help.data('HelpBubble').hide(function() {
+        help.find('.help-section').hide()
+        if (thing.hasClass('promoted')) {
+            help.find('.help-promoted').show()
+        } else {
+            help.find('.help-organic').show()
+        }
+    })
+}
 
 /* links */
 
@@ -1250,6 +1271,8 @@ $(function() {
         $("#shortlink-text").click(function() {
             $(this).select();
         });
+
+        organic_help()
     });
 
 function show_friend(account_fullname) {

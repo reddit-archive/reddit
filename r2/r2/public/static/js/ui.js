@@ -144,3 +144,61 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
         this.showStatus(r.strings.an_error_occurred + ' (' + xhr.status + ')', true)
     }
 })
+
+r.ui.HelpBubble = function(el) {
+    r.ui.Base.call(this, el)
+    this.$el.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+    this.$parent = this.$el.parent()
+    this.$parent.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+    this.$parent.click($.proxy(this, 'queueShow'))
+}
+r.ui.HelpBubble.init = function() {
+    $('.help-bubble').each(function(idx, el) {
+        $(el).data('HelpBubble', new r.ui.HelpBubble(el))
+    })
+}
+r.ui.HelpBubble.prototype = $.extend(new r.ui.Base(), {
+    showDelay: 150,
+    hideDelay: 750,
+
+    show: function() {
+        this.cancelTimeout()
+
+        $('body').append(this.$el)
+
+        var parentPos = this.$parent.offset()
+        this.$el
+            .show()
+            .offset({
+                left: parentPos.left + this.$parent.outerWidth(true) - this.$el.outerWidth(true),
+                top: parentPos.top + this.$parent.outerHeight(true) + 5
+            })
+    },
+
+    hide: function(callback) {
+        this.$el.fadeOut(150, $.proxy(function() {
+            this.$el.hide()
+            this.$parent.append(this.$el)
+            if (callback) {
+                callback()
+            }
+        }, this))
+    },
+
+    cancelTimeout: function() {
+        if (this.timeout) {
+            clearTimeout(this.timeout)
+            this.timeout = null
+        }
+    },
+
+    queueShow: function() {
+        this.cancelTimeout()
+        this.timeout = setTimeout($.proxy(this, 'show'), this.showDelay)
+    },
+
+    queueHide: function() {
+        this.cancelTimeout()
+        this.timeout = setTimeout($.proxy(this, 'hide'), this.hideDelay)
+    }
+})
