@@ -308,8 +308,8 @@ class HotController(FixListing, ListingController):
                 g.log.error("pos = %d" % pos)
                 raise
 
-            s = SpotlightListing(b, spotlight_links = spotlight_links,
-                                 visible_link = vislink,
+            s = SpotlightListing(b, spotlight_items = spotlight_links,
+                                 visible_item = vislink,
                                  max_num = self.listing_obj.max_num,
                                  max_score = self.listing_obj.max_score).listing()
 

@@ -31,12 +31,12 @@
      lookup = dict((t._fullname, t) for t in thing.things)
      seen = set([])
    %>
-  %for name in thing.spotlight_links:
+  %for name in thing.spotlight_items:
     %if name in seen:
       <% pass %>
     %elif lookup.has_key(name):
       <% seen.add(name) %>
-      ${unsafe(lookup[name].render(display = (thing.visible_link == name)))} 
+      ${unsafe(lookup[name].render(display = (thing.visible_item == name)))}
     %else:
       <div class="thing id-${name} stub" style="display:none"></div>
     %endif
