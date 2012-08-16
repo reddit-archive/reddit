@@ -278,6 +278,7 @@ class Globals(object):
                                       map_fn=ipaddress.ip_network,
                                       reduce_fn=ipaddress.collapse_addresses)
         else:
+            self.zookeeper = None
             parser = ConfigParser.RawConfigParser()
             parser.read([self.config["__file__"]])
             self.live_config = extract_live_config(parser, self.plugins)
