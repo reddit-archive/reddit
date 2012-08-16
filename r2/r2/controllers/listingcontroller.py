@@ -914,6 +914,9 @@ class RedditsController(ListingController):
             if not c.over18:
                 reddits._filter(Subreddit.c.over_18 == False)
 
+        if self.where == 'popular':
+            self.render_params = {"show_interestbar": True}
+
         return reddits
 
     @listing_api_doc(section=api_section.subreddits,

@@ -1156,19 +1156,21 @@ class SubredditsPage(Reddit):
     searchbox    = False
     submit_box   = False
     def __init__(self, prev_search = '', num_results = 0, elapsed_time = 0,
-                 title = '', loginbox = True, infotext = None,
+                 title = '', loginbox = True, infotext = None, show_interestbar=False,
                  search_params = {}, *a, **kw):
         Reddit.__init__(self, title = title, loginbox = loginbox, infotext = infotext,
                         *a, **kw)
         self.searchbar = SearchBar(prev_search = prev_search,
                                    elapsed_time = elapsed_time,
                                    num_results = num_results,
-                                   header = _('search reddits'),
+                                   header = _('search subreddits by name'),
                                    search_params = {},
                                    simple=True,
                                    subreddit_search=True
                                    )
         self.sr_infobar = InfoBar(message = strings.sr_subscribe)
+
+        self.interestbar = InterestBar(True) if show_interestbar else None
 
     def build_toolbars(self):
         buttons =  [NavButton(menu.popular, ""),
@@ -1187,8 +1189,9 @@ class SubredditsPage(Reddit):
                 NavMenu(buttons, base_path = '/reddits', type="tabmenu")]
 
     def content(self):
-        return self.content_stack((self.searchbar, self.nav_menu,
-                                   self.sr_infobar, self._content))
+        return self.content_stack((self.interestbar, self.searchbar,
+                                   self.nav_menu, self.sr_infobar,
+                                   self._content))
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
