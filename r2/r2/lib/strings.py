@@ -188,6 +188,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     go = _("go"),
     view_subreddit_traffic = _("view subreddit traffic"),
 
+    an_error_occurred = _("an error occurred"),
 )
 
 class StringHandler(object):

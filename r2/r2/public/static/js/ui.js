@@ -141,6 +141,6 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
     },
 
     _handleNetError: function(result, err, xhr) {
-        this.showStatus('an error occurred (' + xhr.status + ')', true)
+        this.showStatus(r.strings.an_error_occurred + ' (' + xhr.status + ')', true)
     }
 })
