@@ -119,41 +119,6 @@ class VotesByComment(VotesByThing):
         return cassandra_comment_vote.thing2_id
 
 
-class VotesByDay(VotesByThing):
-    _use_db = True
-    _type_prefix = 'VotesByDay'
-    # _view_of = CassandraLinkVote
-
-    @staticmethod
-    def _id_for_day(dt):
-        return dt.strftime('%Y-%j')
-
-    @classmethod
-    def _rowkey(cls, cassandra_link_vote):
-        return cls._id_for_day(cassandra_link_vote.date)
-
-    @classmethod
-    def _votes_for_period(cls, start_date, length):
-        """An iterator yielding every vote that occured in the given
-           period in no particular order
-
-           start_date =:= datetime()
-           length =:+ timedelta()
-        """
-
-        # n.b. because of the volume of data involved this has to do
-        # multiple requests and can be quite slow
-
-        thisdate = start_date
-        while thisdate <= start_date + length:
-            for voteid_chunk in in_chunks(cls._byID(cls._id_for_date(thisdate)),
-                                      chunk_size=1000):
-                for vote in LinkVote._byID(voteid_chunk).values():
-                    yield vote
-
-            thisdate += timedelta(days=1)
-
-
 class CassandraThingVote(CassandraVote):
     _use_db = False
     _views = []
@@ -173,13 +138,12 @@ class CassandraLinkVote(CassandraThingVote):
     _use_db = True
     _type_prefix = 'LinkVote'
     _cf_name = 'LinkVote'
-    _views = [VotesByLink, VotesByDay]
+    _views = [VotesByLink]
     _thing1_cls = Account
     _thing2_cls = Link
 
 
 VotesByLink._view_of = CassandraLinkVote
-VotesByDay._view_of = CassandraLinkVote
 
 
 class CassandraCommentVote(CassandraThingVote):
