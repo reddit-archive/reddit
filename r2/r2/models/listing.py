@@ -149,4 +149,5 @@ class SpotlightListing(Listing):
         # suppress item numbering
         for t in res.things:
             t.num = ""
+        self.lookup = {t._fullname : t for t in self.things}
         return res
