@@ -72,18 +72,19 @@
                  simple=thing.simple, restrict_sr=thing.restrict_sr,
                  syntax=thing.syntax)}
   </div>
-  %if thing.facets and len(thing.facets) > 1:
-  <div class="searchfacets">
-    <h4 class="searchfacets title">${_("too many results? narrow it down to a subreddit!")}</h4>
-    <ol class="searchfacets list">
-    %for facet in thing.facets:
-      <% subreddit, count = facet %>
-      <li class="searchfacet reddit">
-        <a class="facet title word" href="${search_url(thing.prev_search, subreddit, restrict_sr='on', sort=thing.sort)}">/r/${subreddit}</a>&nbsp;
-        <span class="facet count number">(${count})</span>
-      </li>&nbsp;
-    %endfor
-    </ol>
-  </div>
-  %endif
 </div>
+
+%if thing.facets and len(thing.facets) > 1:
+<div class="searchfacets">
+  <h4 class="title">${_("too many results? narrow it down to a subreddit!")}</h4>
+  <ol class="list">
+  %for facet in thing.facets:
+    <% subreddit, count = facet %>
+    <li class="searchfacet reddit">
+      <a class="facet title word" href="${search_url(thing.prev_search, subreddit, restrict_sr='on', sort=thing.sort)}">/r/${subreddit}</a>&nbsp;
+      <span class="facet count number">(${count})</span>
+    </li>&nbsp;
+  %endfor
+  </ol>
+</div>
+%endif

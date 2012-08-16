@@ -1833,6 +1833,8 @@ label + #moresearchinfo {
 
 .searchpane {
     margin: 5px 305px 5px 0px;
+    padding-left: 96px;
+    background: #E0E0E0 url(../search-large.png) 26px center no-repeat;
 } 
 
 .searchpane #search input[type=text] { }
@@ -1862,13 +1864,18 @@ label + #moresearchinfo {
   overflow: auto;
   font-size: small;
   white-space: pre-wrap;
+  border: 1px solid gray;
+  padding: 10px;
+  margin-top: -6px;
+  box-shadow: 0 4px 6px -1px #ccc inset;
+  background: #fefefe;
 }
 
-.searchfacets.title {
+.searchfacets .title {
   margin: 5px;
 }
 
-.searchfacets.list {
+.searchfacets .list {
   margin: 0px 0px 0px 10px;
 }
 
