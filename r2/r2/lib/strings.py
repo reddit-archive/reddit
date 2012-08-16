@@ -189,6 +189,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     view_subreddit_traffic = _("view subreddit traffic"),
 
     an_error_occurred = _("an error occurred"),
+    an_error_occurred_friendly = _("an error occurred. please try again later!"),
 )
 
 class StringHandler(object):

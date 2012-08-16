@@ -21,9 +21,10 @@
 ###############################################################################
 
 <%namespace file="printablebuttons.html" import="ynbutton"/>
-<%namespace file="utils.html" import="text_with_links"/>
+<%namespace file="utils.html" import="tags, text_with_links"/>
 <% 
    from r2.lib.template_helpers import static
+   from r2.lib.wrapped import Templated
 %>
 
 <div id="siteTable_organic" class="organic-listing">
@@ -31,7 +32,11 @@
      seen = set([])
    %>
   %for name in thing.spotlight_items:
-    %if name in seen:
+    %if isinstance(name, Templated):
+      <div class="thing ${type(name).__name__.lower()}" ${tags(style="display:none" if thing.visible_item != name else None)}>
+        ${unsafe(name.render())}
+      </div>
+    %elif name in seen:
       <% pass %>
     %elif name in thing.lookup:
       <% seen.add(name) %>
@@ -76,6 +81,15 @@
                      format_arg = "here",
                      hidden_data = dict(id="organic"))}
         %endif
+      </div>
+      <div class="help-section help-interestbar">
+        <p>${_("Enter a keyword or topic to discover new subreddits around your interests. Be specific!")}</p>
+        <p>
+          ${text_with_links(
+            _("You can access this tool at any time on the %(reddits)s page."),
+              reddits=dict(link_text="/reddits/", path="/reddits/")
+          )}
+        </p>
       </div>
     </div>
   </div>

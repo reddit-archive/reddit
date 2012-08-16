@@ -313,6 +313,17 @@ class HotController(FixListing, ListingController):
                                  max_num = self.listing_obj.max_num,
                                  max_score = self.listing_obj.max_score).listing()
 
+            has_subscribed = c.user.has_subscribed
+            promo_visible = promote.is_promo(s.lookup[vislink])
+            if not promo_visible:
+                prob = g.live_config['spotlight_interest_sub_p'
+                                     if has_subscribed else
+                                     'spotlight_interest_nosub_p']
+                if random.random() < prob:
+                    bar = InterestBar(has_subscribed)
+                    s.spotlight_items.insert(pos, bar)
+                    s.visible_item = bar
+
             if len(s.things) > 0:
                 # only pass through a listing if the links made it
                 # through our builder

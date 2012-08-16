@@ -334,6 +334,8 @@ function organic_help(listing, thing) {
         help.find('.help-section').hide()
         if (thing.hasClass('promoted')) {
             help.find('.help-promoted').show()
+        } else if (thing.hasClass('interestbar')) {
+            help.find('.help-interestbar').show()
         } else {
             help.find('.help-organic').show()
         }

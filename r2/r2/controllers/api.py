@@ -59,6 +59,7 @@ from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.scraper import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
+from r2.lib.cloudsearch import basic_query
 
 import csv
 from collections import defaultdict
@@ -2783,3 +2784,37 @@ class ApiController(RedditController):
         c.user.otp_secret = ""
         c.user._commit()
         form.redirect("/prefs/otp")
+
+    @json_validate(query=VPrintable("query", max_length=50))
+    @api_doc(api_section.subreddits, extensions=["json"])
+    def GET_subreddits_by_topic(self, responder, query):
+        if not g.CLOUDSEARCH_SEARCH_API:
+            return []
+
+        if not query or not query.strip():
+            return []
+
+        exclude = Subreddit.default_subreddits()
+
+        q = basic_query(query,
+                        facets={"reddit":{"sort":"-sum(text_relevance)", "count":20}},
+                        record_stats=True)
+        if not q["facets"]:
+            return []
+
+        sr_facets = [f["value"] for f in q["facets"]["reddit"]["constraints"]]
+        srs = Subreddit._by_name(sr_facets)
+
+        results = []
+        for sr_name in sr_facets:
+            sr = srs.get(sr_name)
+            if (sr._id in exclude or (sr.over_18 and not c.over18)
+                  or not sr.can_view(c.user)
+                  or sr.type == "archived"):
+                continue
+
+            results.append({
+                "name": sr_name,
+            })
+
+        return results

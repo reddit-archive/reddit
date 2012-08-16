@@ -5709,3 +5709,118 @@ tr.gold-accent + tr > td {
 .users-online .word, .users-online .number:after {
     cursor: help;
 }
+
+.sr-interest-bar {
+    position: relative;
+    background: #cee3f8 url(../snoo-upside-down.png) 15px top no-repeat;
+    padding: 5px;
+    overflow: hidden;
+    border: 1px solid #336699;
+    margin-bottom: 10px;
+}
+
+.organic-listing .sr-interest-bar {
+    border: none;
+    margin: 0;
+}
+
+.sr-interest-bar .bubble {
+    position: relative;
+    margin-left: 85px;
+    margin-right: 68px;
+    max-width: 700px;
+    font-size: 13px;
+    background: white;
+    padding: 6px;
+    border-radius: 8px;
+}
+
+.sr-interest-bar .bubble:after {
+    position: absolute;
+    display: block;
+    content: '';
+    border: 10px solid;
+    border-style: solid solid outset;
+    border-color: transparent;
+    border-right-color: white;
+    left: -20px;
+    top: 15px;
+}
+
+.sr-interest-bar .bubble p {
+    margin: 6px 3px;
+    margin-top: 0;
+}
+
+.sr-interest-bar .subscribe {
+    background-image: url(../bg-button-add.png); /* SPRITE stretch-x */
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 0 6px;
+    color: white;
+    font-weight: bold;
+}
+
+.sr-interest-bar .query-box {
+    position: relative;
+    padding: 2px 4px;
+    border: 2px solid #979797;
+    border-radius: 5px;
+}
+
+.sr-interest-bar.focus .query-box {
+    border-color: #5f99cf;
+}
+
+.sr-interest-bar.error .query-box {
+    border-color: #cf5e5e;
+}
+
+.sr-interest-bar .error-caption, .sr-interest-bar.error .caption {
+    display: none;
+}
+
+.sr-interest-bar.error .error-caption {
+    display: block;
+}
+
+.sr-interest-bar .query {
+    width: 100%;
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+}
+
+.sr-interest-bar .throbber {
+    position: absolute;
+    right: 3px;
+    top: 5px;
+}
+
+.sr-interest-bar ul.results {
+    margin: 0;
+    margin-top: 6px;
+    padding-top: 2px;
+    border-top: 1px dotted #bbb;
+    display: none;
+}
+
+.sr-interest-bar li {
+    display: inline-block;
+    margin: 6px 3px;
+}
+
+.sr-interest-bar a {
+    padding: 1px 2px;
+}
+
+.sr-interest-bar a:hover {
+    text-decoration: underline;
+}
+
+.sr-interest-bar .results .random {
+    color: gray;
+    font-weight: bold;
+}

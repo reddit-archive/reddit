@@ -180,6 +180,10 @@ class Globals(object):
         ConfigValue.bool: [
             'frontpage_dart',
         ],
+        ConfigValue.float: [
+            'spotlight_interest_sub_p',
+            'spotlight_interest_nosub_p',
+        ],
         ConfigValue.tuple: [
             'sr_discovery_links',
         ],

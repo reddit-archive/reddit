@@ -13,4 +13,5 @@ $(function() {
     r.login.ui.init()
     r.analytics.init()
     r.ui.HelpBubble.init()
+    r.interestbar.init()
 })
