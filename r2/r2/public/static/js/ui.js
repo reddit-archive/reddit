@@ -122,7 +122,7 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
         this.setWorking(true)
         this._submit()
     },
-    
+
     _submit: function() {},
 
     handleResult: function(result, err, xhr) {
