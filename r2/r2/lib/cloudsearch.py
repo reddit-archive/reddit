@@ -257,6 +257,7 @@ class LinkUploader(CloudSearchUploader):
                   "over18": 1 if nsfw else 0,
                   "is_self": 1 if thing.is_self else 0,
                   "author_fullname": account._fullname,
+                  "type_id": thing._type_id
                   }
         
         if account._deleted:
@@ -327,6 +328,7 @@ class SubredditUploader(CloudSearchUploader):
                   'link_type': thing.link_type,
                   'activity': thing._downs,
                   'subscribers': thing._ups,
+                  'type_id': thing._type_id
                   }
         return fields
     
