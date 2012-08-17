@@ -26,7 +26,7 @@ from pylons import c, g
 from pylons.i18n import _
 
 from r2.lib.db.thing import Thing, Relation, NotFound
-from account import Account
+from account import Account, AccountsActiveBySR
 from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
@@ -214,6 +214,10 @@ class Subreddit(Thing, Printable):
     @property
     def flair(self):
         return self.flair_ids()
+
+    @property
+    def accounts_active(self):
+        return AccountsActiveBySR.get_count(self)
 
     def spammy(self):
         return self._spam
