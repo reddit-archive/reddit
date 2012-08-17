@@ -23,7 +23,6 @@
 import json
 import os
 import pylons
-import pylons.config
 from pylons.i18n.translation import translation, LanguageError, NullTranslations
 
 try:
