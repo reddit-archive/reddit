@@ -510,7 +510,7 @@ INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
 DEFAULT_FACETS = {"reddit": {"count":20}}
 def basic_query(query=None, bq=None, facets=DEFAULT_FACETS, size=1000,
-                start=0, rank="hot", return_fields=None, record_stats=False,
+                start=0, rank="-relevance", return_fields=None, record_stats=False,
                 search_api=None):
     if search_api is None:
         search_api = g.CLOUDSEARCH_SEARCH_API
@@ -548,7 +548,8 @@ def basic_query(query=None, bq=None, facets=DEFAULT_FACETS, size=1000,
     return json.loads(response)
 
 
-basic_link = functools.partial(basic_query, size=10, start=0, rank="hot",
+basic_link = functools.partial(basic_query, size=10, start=0,
+                               rank="-relevance",
                                return_fields=['title', 'reddit',
                                               'author_fullname'],
                                record_stats=False,
