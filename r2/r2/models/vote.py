@@ -20,10 +20,14 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import json
+import collections
+
 from r2.lib.db.thing import MultiRelation, Relation
 from r2.lib.db import tdb_cassandra
-from r2.lib.db.tdb_cassandra import TdbException
+from r2.lib.db.tdb_cassandra import TdbException, ASCII_TYPE, UTF8_TYPE
 from r2.lib.utils._utils import flatten
+from r2.lib.db.sorts import epoch_seconds
 
 from account import Account
 from link import Link, Comment
@@ -158,6 +162,77 @@ class CassandraCommentVote(CassandraThingVote):
 VotesByComment._view_of = CassandraCommentVote
 
 
+class VotesByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = False
+    _thing1_cls = Account
+
+    @classmethod
+    def rel(cls, thing1_cls, thing2_cls):
+        if (thing1_cls, thing2_cls) == (Account, Link):
+            return LinkVotesByAccount
+        elif (thing1_cls, thing2_cls) == (Account, Comment):
+            return CommentVotesByAccount
+
+        raise TdbException("Can't find relation for %r(%r,%r)"
+                           % (cls, thing1_cls, thing2_cls))
+
+    @classmethod
+    def copy_from(cls, pgvote):
+        rel = cls.rel(Account, pgvote._thing2.__class__)
+        rel.create(pgvote._thing1, pgvote._thing2, opaque=pgvote)
+
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        return opaque._name
+
+
+class LinkVotesByAccount(VotesByAccount):
+    _use_db = True
+    _thing2_cls = Link
+    _views = []
+
+
+class CommentVotesByAccount(VotesByAccount):
+    _use_db = True
+    _thing2_cls = Comment
+    _views = []
+
+
+class VoteDetailsByThing(tdb_cassandra.View):
+    _use_db = False
+    _ttl = 60 * 60 * 24 * 30
+    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
+                                       default_validation_class=UTF8_TYPE)
+
+    @classmethod
+    def create(cls, thing1, thing2s, pgvote):
+        assert len(thing2s) == 1
+
+        voter = pgvote._thing1
+        votee = pgvote._thing2
+
+        details = dict(
+            direction=pgvote._name,
+            date=epoch_seconds(pgvote._date),
+            valid_user=pgvote.valid_user,
+            valid_thing=pgvote.valid_thing,
+            ip=getattr(pgvote, "ip", ""),
+            organic=getattr(pgvote, "organic", False),
+        )
+
+        cls._set_values(voter._id36, {votee._id36: json.dumps(details)})
+
+
+@tdb_cassandra.view_of(LinkVotesByAccount)
+class VoteDetailsByLink(VoteDetailsByThing):
+    _use_db = True
+
+
+@tdb_cassandra.view_of(CommentVotesByAccount)
+class VoteDetailsByComment(VoteDetailsByThing):
+    _use_db = True
+
+
 class Vote(MultiRelation('vote',
                          Relation(Account, Link),
                          Relation(Account, Comment))):
@@ -231,6 +306,7 @@ class Vote(MultiRelation('vote',
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
         CassandraVote._copy_from(v)
+        VotesByAccount.copy_from(v)
 
         queries.changed(v._thing2, True)
 
