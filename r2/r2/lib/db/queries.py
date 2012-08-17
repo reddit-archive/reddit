@@ -531,9 +531,21 @@ def get_disliked(user):
 def get_hidden(user):
     return rel_query(SaveHide, user, 'hide')
 
+@cached_query(UserQueryCache, sort=[desc('action_date')])
+def get_hidden_links(user_id):
+    return
+
 @cached_userrel_query
 def get_saved(user):
     return rel_query(SaveHide, user, 'save')
+
+@cached_query(UserQueryCache, sort=[desc('action_date')])
+def get_saved_links(user_id, sr_id):
+    return
+
+@cached_query(UserQueryCache, sort=[desc('action_date')])
+def get_saved_comments(user_id, sr_id):
+    return
 
 @cached_srrel_query
 def get_subreddit_messages(sr):

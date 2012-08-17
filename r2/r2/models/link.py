@@ -35,8 +35,10 @@ from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
+from r2.lib.db.tdb_cassandra import NotFoundException, view_of
 from r2.models.subreddit import MultiReddit
 from r2.models.promo import PROMOTE_STATUS, get_promote_srid
+from r2.models.query_cache import CachedQueryMutator
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
@@ -1293,6 +1295,159 @@ class CassandraHide(SimpleRelation):
     @classmethod
     def _unhide(cls, *a, **kw):
         return cls._uncreate(*a, **kw)
+
+class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        return ''
+
+    @classmethod
+    def _cached_queries(cls, user, thing):
+        return []
+
+    @classmethod
+    def _savehide(cls, user, things):
+        things = tup(things)
+        now = datetime.now(g.tz)
+        with CachedQueryMutator() as m:
+            for thing in things:
+                # action_date is only used by the cached queries as the sort
+                # value, we don't want to write it. Report.new(link) needs to
+                # incr link.reported but will fail if the link is dirty.
+                thing.__setattr__('action_date', now, make_dirty=False)
+                for q in cls._cached_queries(user, thing):
+                    m.insert(q, [thing])
+        cls.create(user, things)
+
+    @classmethod
+    def _unsavehide(cls, user, things):
+        things = tup(things)
+        with CachedQueryMutator() as m:
+            for thing in things:
+                for q in cls._cached_queries(user, thing):
+                    m.delete(q, [thing])
+        cls.destroy(user, things)
+
+
+class _ThingSavesByAccount(_SaveHideByAccount):
+    @classmethod
+    def _save(cls, user, things):
+        cls._savehide(user, things)
+
+    @classmethod
+    def _unsave(cls, user, things):
+        cls._unsavehide(user, things)
+
+
+class LinkSavesByAccount(_ThingSavesByAccount):
+    _use_db = True
+    _last_modified_name = 'Save'
+    _views = []
+
+    @classmethod
+    def _cached_queries(cls, user, thing):
+        from r2.lib.db import queries
+        return [queries.get_saved_links(user, 'none'),
+                queries.get_saved_links(user, thing.sr_id)]
+
+
+class CommentSavesByAccount(_ThingSavesByAccount):
+    _use_db = True
+    _last_modified_name = 'CommentSave'
+    _views = []
+
+    @classmethod
+    def _cached_queries(cls, user, thing):
+        from r2.lib.db import queries
+        return [queries.get_saved_comments(user, 'none'),
+                queries.get_saved_comments(user, thing.sr_id)]
+
+
+class _ThingHidesByAccount(_SaveHideByAccount):
+    @classmethod
+    def _hide(cls, user, things):
+        cls._savehide(user, things)
+
+    @classmethod
+    def _unhide(cls, user, things):
+        cls._unsavehide(user, things)
+
+
+class LinkHidesByAccount(_ThingHidesByAccount):
+    _use_db = True
+    _last_modified_name = 'Hide'
+    _views = []
+
+    @classmethod
+    def _cached_queries(cls, user, thing):
+        from r2.lib.db import queries
+        return [queries.get_hidden_links(user)]
+
+
+class _ThingSavesBySubreddit(tdb_cassandra.View):
+    @classmethod
+    def _rowkey(cls, user, thing):
+        return user._id36
+
+    @classmethod
+    def _column(cls, user, thing):
+        return {utils.to36(thing.sr_id): ''}
+
+    @classmethod
+    def get_saved_subreddits(cls, user):
+        rowkey = user._id36
+        try:
+            columns = cls._cf.get(rowkey)
+        except NotFoundException:
+            return []
+
+        sr_id36s = columns.keys()
+        srs = Subreddit._byID36(sr_id36s, return_dict=False, data=True)
+        return sorted([sr.name for sr in srs])
+
+    @classmethod
+    def create(cls, user, things, opaque):
+        for thing in things:
+            rowkey = cls._rowkey(user, thing)
+            column = cls._column(user, thing)
+            cls._set_values(rowkey, column)
+
+    @classmethod
+    def _check_empty(cls, user, sr_id):
+        return False
+
+    @classmethod
+    def destroy(cls, user, things):
+        # See if thing's sr is present anymore
+        sr_ids = set([thing.sr_id for thing in things])
+        for sr_id in set(sr_ids):
+            if cls._check_empty(user, sr_id):
+                cls._cf.remove(user._id36, [utils.to36(sr_id)])
+
+
+@view_of(LinkSavesByAccount)
+class LinkSavesBySubreddit(_ThingSavesBySubreddit):
+    _use_db = True
+
+    @classmethod
+    def _check_empty(cls, user, sr_id):
+        from r2.lib.db import queries
+        q = queries.get_saved_links(user, sr_id)
+        q.fetch()
+        return not q.data
+
+
+@view_of(CommentSavesByAccount)
+class CommentSavesBySubreddit(_ThingSavesBySubreddit):
+    _use_db = True
+
+    @classmethod
+    def _check_empty(cls, user, sr_id):
+        from r2.lib.db import queries
+        q = queries.get_saved_comments(user, sr_id)
+        q.fetch()
+        return not q.data
+
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
