@@ -232,7 +232,7 @@ def json_validate(self, self_method, responder, simple_vals, param_vals, *a, **k
         abort(404)
 
     val = self_method(self, responder, *a, **kw)
-    if not val:
+    if val is None:
         val = responder.make_response()
     return self.api_wrapper(val)
 
