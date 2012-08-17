@@ -47,8 +47,8 @@ ILLEGAL_XML = re.compile(u'[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]
 
 
 def _safe_xml_str(s, use_encoding="utf-8"):
-    '''Replace invalid-in-XML unicode control characters with '?'.
-    Also, coerces 's' to unicode
+    '''Replace invalid-in-XML unicode control characters with '\uFFFD'.
+    Also, coerces result to unicode
     
     '''
     if not isinstance(s, unicode):
@@ -272,8 +272,7 @@ class LinkUploader(CloudSearchUploader):
             fields['url'] = thing.url
             try:
                 url = r2utils.UrlParser(thing.url)
-                domains = ' '.join(url.domain_permutations())
-                fields['site'] = domains
+                fields['site'] = list(url.domain_permutations())
             except ValueError:
                 # UrlParser couldn't handle thing.url, oh well
                 pass
@@ -319,13 +318,13 @@ class SubredditUploader(CloudSearchUploader):
     def fields(self, thing):
         fields = {'name': thing.name,
                   'title': thing.title,
-                  'type': thing.type, # XXX Int type?
+                  'type': thing.type,
                   'language': thing.lang,
                   'header_title': thing.header_title,
                   'description': thing.public_description,
                   'sidebar': thing.description,
-                  'over18': thing.over_18, # Reminder: copy-field to nsfw
-                  'link_type': thing.link_type, # XXX Use integer?
+                  'over18': thing.over_18,
+                  'link_type': thing.link_type,
                   'activity': thing._downs,
                   'subscribers': thing._ups,
                   }
@@ -501,15 +500,6 @@ class Results(object):
                                 srs_by_name[sr[0]].can_view(c.user)]
         
         return self._subreddits
-
-
-def _to_fn(cls, id_):
-    '''Convert id_ to a fullname (equivalent to "link._fullname", but doesn't
-    require an instance of the class)
-    
-    '''
-    return (cls._type_prefix + r2utils.to36(cls._type_id) + '_' +
-            r2utils.to36(id_))
 
 
 _SEARCH = "/2011-02-01/search?"
@@ -789,7 +779,8 @@ class LinkSearchQuery(CloudSearchQuery):
             # The query limit is roughly 8k bytes. Limit to 200 friends to
             # avoid getting too close to that limit
             friend_ids = c.user.friends[:200]
-            friends = ["author_fullname:'%s'" % _to_fn(Account, id_)
+            friends = ["author_fullname:'%s'" %
+                       Account._fullname_from_id36(r2utils.to36(id_))
                        for id_ in friend_ids]
             bq.extend(friends)
             bq.append(")")
