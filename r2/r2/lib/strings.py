@@ -244,9 +244,14 @@ class PluralManager(object):
             self.string_dict[s] = self.string_dict[p] = (s, p)
 
     def __getattr__(self, attr):
+        to_func = False
         if attr.startswith("N_"):
-            a = attr[2:]
-            rval = self.string_dict[a]
+            attr = attr[2:]
+            to_func = True
+
+        attr = attr.replace("_", " ")
+        if to_func:
+            rval = self.string_dict[attr]
             return lambda x: ungettext(rval[0], rval[1], x)
         else:
             rval = self.string_dict[attr]
@@ -268,6 +273,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("subscriber",  "subscribers"),
                          P_("approved submitter", "approved submitters"),
                          P_("moderator",   "moderators"),
+                         P_("user online",   "users online"),
 
                          # time words
                          P_("milliseconds","milliseconds"),
@@ -297,10 +303,10 @@ class Score(object):
                                             point=plurals.N_points(x))
 
     @staticmethod
-    def _people(x, label):
+    def _people(x, label, prepend=''):
+        num = prepend + babel.numbers.format_number(x, c.locale)
         return strings.person_label % \
-            dict(num = babel.numbers.format_number(x, c.locale),
-                 persons = label(x))
+            dict(num=num, persons=label(x))
 
     @staticmethod
     def subscribers(x):
@@ -315,6 +321,10 @@ class Score(object):
         p = plurals.string_dict[word]
         f = lambda x: ungettext(p[0], p[1], x)
         return strings.number_label % dict(num=x, thing=f(x))
+
+    @staticmethod
+    def users_online(x, prepend=''):
+        return Score._people(x, plurals.N_users_online, prepend=prepend)
 
     @staticmethod
     def none(x):
