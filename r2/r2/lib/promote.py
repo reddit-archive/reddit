@@ -461,7 +461,7 @@ def edit_campaign(link, campaign_id, dates, bid, sr):
         # make it a freebie, if applicable
         author = Account._byID(link.author_id, True)
         if getattr(author, "complimentary_promos", False):
-            free_campaign(link, index, c.user)
+            free_campaign(link, campaign._id, c.user)
 
     except Exception, e: # record error and rethrow 
         g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" % 
@@ -544,7 +544,7 @@ def auth_campaign(link, campaign_id, user, pay_id):
                        link.promote_status))
         # notify of campaign creation
         # update the query queue
-        if user._id == link.author_id and trans_id > 0:
+        if user and (user._id == link.author_id) and trans_id > 0:
             emailer.promo_bid(link, campaign.bid, campaign.start_date)
     
     else:
