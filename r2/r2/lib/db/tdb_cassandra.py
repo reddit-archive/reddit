@@ -30,7 +30,9 @@ from pylons import g
 from pycassa import ColumnFamily
 from pycassa.pool import MaximumRetryException
 from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
-from pycassa.system_manager import SystemManager, UTF8_TYPE, COUNTER_COLUMN_TYPE, TIME_UUID_TYPE
+from pycassa.system_manager import (SystemManager, UTF8_TYPE,
+                                    COUNTER_COLUMN_TYPE, TIME_UUID_TYPE,
+                                    ASCII_TYPE)
 from pycassa.types import DateType
 from r2.lib.utils import tup, Storage
 from r2.lib import cache
@@ -926,6 +928,112 @@ class Relation(ThingBase):
     def _datekey(cls, date):
         # ick
         return str(long(cls._serialize_date(date)))
+
+
+def view_of(cls):
+    """Register a class as a view of a DenormalizedRelation.
+
+    Views are expected to implement two methods:
+
+        create - called on relationship creation. takes a thing1, a list
+                 of thing2s and opaque, extra data passed from above.
+
+        delete - called on relationship destruction. takes a thing1, a list
+                 of things2 and opaque.
+
+    """
+    def view_of_decorator(view_cls):
+        cls._views.append(view_cls)
+        return view_cls
+    return view_of_decorator
+
+
+
+class DenormalizedRelation(object):
+    """A model of many-to-many relationships, indexed by thing1.
+
+    Each thing1 is represented by a row. The relationships from that thing1 to
+    a number of thing2s are represented by columns in that row. To query if
+    relationships exist and what its value is ("name" in the PG model), we
+    fetch the thing1's row, telling C* we're only interested in the columns
+    representing the thing2s we are interested in. This allows negative lookups
+    to be very fast because of the row-level bloom filter.
+
+    This data model will generate VERY wide rows. Any column family based on
+    it should have its row cache disabled.
+
+    """
+    __metaclass__ = ThingMeta
+    _use_db = False
+    _cf_name = None
+    _compare_with = ASCII_TYPE
+    _type_prefix = None
+    _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
+                                       default_validation_class=UTF8_TYPE)
+
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        """Return a value to store for a relationship between thing1/thing2."""
+        raise NotImplementedError()
+
+    @classmethod
+    def create(cls, thing1, thing2s, opaque=None):
+        """Create a relationship between thing1 and thing2s.
+
+        If there are any other views of this data, they will be updated as
+        well.
+
+        Takes an optional parameter "opaque" which can be used by views
+        or value_for to get additional information.
+
+        """
+        thing2s = tup(thing2s)
+        values = {thing2._id36 : cls.value_for(thing1, thing2, opaque)
+                  for thing2 in thing2s}
+        cls._cf.insert(thing1._id36, values)
+
+        for view in cls._views:
+            view.create(thing1, thing2s, opaque)
+
+    @classmethod
+    def destroy(cls, thing1, thing2s):
+        """Destroy relationships between thing1 and some thing2s."""
+        thing2s = tup(thing2s)
+        cls._cf.remove(thing1._id36, (thing2._id36 for thing2 in thing2s))
+
+        for view in cls._views:
+            view.destroy(thing1, thing2s)
+
+    @classmethod
+    def fast_query(cls, thing1, thing2s):
+        """Find relationships between thing1 and various thing2s."""
+        thing2s, thing2s_is_single = tup(thing2s, ret_is_single=True)
+
+        if not thing1 or not thing2s:
+            return {}
+
+        # fetch the row from cassandra. if it doesn't exist, thing1 has no
+        # relation of this type to any thing2!
+        try:
+            columns = [thing2._id36 for thing2 in thing2s]
+            results = cls._cf.get(thing1._id36, columns)
+        except NotFoundException:
+            results = {}
+
+        # return the data in the expected format
+        if not thing2s_is_single:
+            # {(thing1, thing2) : value}
+            thing2s_by_id = {thing2._id36 : thing2 for thing2 in thing2s}
+            return {(thing1, thing2s_by_id[k]) : v
+                    for k, v in results.iteritems()}
+        else:
+            if results:
+                assert len(results) == 1
+                return results[0]
+            else:
+                raise NotFound("<%s %r>" % (cls.__name__, (thing1._id36,
+                                                           thing2._id36)))
+
 
 class ColumnQuery(object):
     """
