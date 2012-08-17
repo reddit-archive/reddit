@@ -820,5 +820,10 @@ class AccountsActiveBySR(tdb_cassandra.View):
                         {account._id36: ''})
 
     @classmethod
-    def get_count(cls, sr):
-        return cls._cf.get_count(sr._id36)
+    def get_count(cls, sr, cached=True):
+        return cls.get_count_cached(sr._id36, _update=not cached)
+
+    @classmethod
+    @memoize('accounts_active', time=60)
+    def get_count_cached(cls, sr_id):
+        return cls._cf.get_count(sr_id)
