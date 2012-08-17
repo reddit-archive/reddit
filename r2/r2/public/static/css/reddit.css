@@ -5655,3 +5655,11 @@ tr.gold-accent + tr > td {
 #otp-secret-info .secret {
     font-weight: bold;
 }
+
+.users-online {
+    margin-bottom: .25em;
+}
+
+.users-online .word, .users-online .number:after {
+    cursor: help;
+}
