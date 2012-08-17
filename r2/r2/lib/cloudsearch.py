@@ -721,12 +721,14 @@ class CloudSearchQuery(object):
 class LinkSearchQuery(CloudSearchQuery):
     search_api = g.CLOUDSEARCH_SEARCH_API
     sorts = {'relevance': '-relevance',
+             'hot': '-hot2',
              'top': '-top',
              'new': '-timestamp',
              }
     sorts_menu_mapping = {'relevance': 1,
-                          'new': 2,
-                          'top': 3,
+                          'hot': 2,
+                          'new': 3,
+                          'top': 4,
                           }
     
     lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
