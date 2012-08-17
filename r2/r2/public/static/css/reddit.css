@@ -4586,7 +4586,8 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-contributors:before,
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
-.gold-form h1.goldgift:before {
+.gold-form h1.goldgift:before,
+.users-online:before {
     height: 16px;
     width: 16px;
     display: block;
@@ -4659,6 +4660,10 @@ dd { margin-left: 20px;  }
 }
 .icon-menu .reddit-modqueue:before {
     background-image: url(../reddit_modqueue.png); /* SPRITE */
+}
+
+.users-online:before {
+    background-image: url(../online.png);  /* SPRITE */
 }
 
 .linkinfo {
