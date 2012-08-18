@@ -38,7 +38,7 @@
   <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
   <p class="users-online" title="${_('number of logged-in users in the past 15 minutes')}">
       %if thing.sr.accounts_active < 100 and not c.user_is_admin:
-          ${unsafe(Score.users_online(100, prepend='<'))}
+          ${unsafe(Score.users_online(100, prepend='&lt;'))}
       %else:
           ${unsafe(Score.users_online(thing.sr.accounts_active))}
       %endif
