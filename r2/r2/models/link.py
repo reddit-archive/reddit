@@ -165,11 +165,13 @@ class Link(Thing, Printable):
     def _save(self, user):
         # dual-write CassandraSaves
         CassandraSave._save(user, self)
+        LinkSavesByAccount._save(user, self)
         return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
         # dual-write CassandraSaves
         CassandraSave._unsave(user, self)
+        LinkSavesByAccount._unsave(user, self)
         return self._unsomething(user, self._saved, 'save')
 
     @classmethod
@@ -185,10 +187,12 @@ class Link(Thing, Printable):
 
     def _hide(self, user):
         CassandraHide._hide(user, self)
+        LinkHidesByAccount._hide(user, self)
         return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
         CassandraHide._unhide(user, self)
+        LinkHidesByAccount._unhide(user, self)
         return self._unsomething(user, self._hidden, 'hide')
 
     def link_domain(self):
