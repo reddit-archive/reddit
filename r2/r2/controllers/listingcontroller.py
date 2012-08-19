@@ -546,6 +546,20 @@ class UserController(ListingController):
             res.append(ProfileSortMenu(default = self.sort))
             if self.sort not in ("hot", "new"):
                 res.append(TimeMenu(default = self.time))
+        if self.where == 'saved' and c.user.gold:
+            srnames = LinkSavesBySubreddit.get_saved_subreddits(self.vuser)
+            srnames += CommentSavesBySubreddit.get_saved_subreddits(self.vuser)
+            srnames = sorted(list(set(srnames)))
+            if len(srnames) > 1:
+                sr_buttons = [NavButton(_('all'), None, opt='sr',
+                                        css_class='primary')]
+                for srname in srnames:
+                    sr_buttons.append(NavButton(srname, srname, opt='sr'))
+                base_path = request.path
+                sr_menu = NavMenu(sr_buttons, base_path=base_path, 
+                                  title=_('filter by subreddit'),
+                                  type='lightdrop')
+                res.append(sr_menu)
         return res
 
     def title(self):
@@ -615,7 +629,15 @@ class UserController(ListingController):
             q = queries.get_hidden(self.vuser)
 
         elif self.where == 'saved':
-            q = queries.get_saved(self.vuser)
+            srname = request.get.get('sr')
+            if srname and c.user.gold:
+                try:
+                    sr_id = Subreddit._by_name(srname)._id
+                except NotFound:
+                    sr_id = None
+            else:
+                sr_id = None
+            q = queries.get_saved(self.vuser, sr_id)
 
         elif c.user_is_sponsor and self.where == 'promoted':
             q = queries.get_promoted_links(self.vuser._id)
