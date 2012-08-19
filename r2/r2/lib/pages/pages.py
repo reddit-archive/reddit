@@ -1163,6 +1163,7 @@ class CommentPane(Templated):
             likes = []
             dislikes = []
             is_friend = set()
+            saves = set()
             for t in self.listing_iter(my_listing):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion
@@ -1173,9 +1174,12 @@ class CommentPane(Templated):
                     likes.append(t._fullname)
                 if t.likes is False:
                     dislikes.append(t._fullname)
+                if t.saved:
+                    saves.add(t._fullname)
             self.rendered += ThingUpdater(likes = likes,
                                           dislikes = dislikes,
-                                          is_friend = is_friend).render()
+                                          is_friend = is_friend,
+                                          saves = saves).render()
             g.log.debug("using comment page cache")
         else:
             self.rendered = my_listing.render()

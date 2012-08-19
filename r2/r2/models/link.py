@@ -677,6 +677,12 @@ class Comment(Thing, Printable):
 
         return (c, inbox_rel)
 
+    def _save(self, user):
+        CommentSavesByAccount._save(user, self)
+
+    def _unsave(self, user):
+        CommentSavesByAccount._unsave(user, self)
+
     @property
     def subreddit_slow(self):
         from subreddit import Subreddit
@@ -758,6 +764,15 @@ class Comment(Thing, Printable):
         cname = c.cname
         site = c.site
 
+        if user_is_loggedin:
+            try:
+                saved = CommentSavesByAccount.fast_query(user, wrapped)
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                g.log.warning("Cassandra comment save lookup failed: %r", e)
+                saved = {}
+        else:
+            saved = {}
+
         for item in wrapped:
             # for caching:
             item.profilepage = c.profilepage
@@ -791,6 +806,10 @@ class Comment(Thing, Printable):
                 if item.link.promoted or age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 
+            if user_is_loggedin:
+                item.saved = (user, item) in saved
+            else:
+                item.saved = False
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin

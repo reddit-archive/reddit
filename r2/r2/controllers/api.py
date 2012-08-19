@@ -1731,6 +1731,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.links_and_comments)
     def POST_save(self, thing):
         if not thing: return
+        if isinstance(thing, Comment) and not c.user.gold: return
         r = thing._save(c.user)
 
     @noresponse(VUser(),

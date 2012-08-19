@@ -1307,6 +1307,17 @@ function show_unfriend(account_fullname) {
         });
 }
 
+function show_saved(comment_fullname) {
+    var comment = $('.id-' + comment_fullname),
+        buttons = comment.find('.buttons').first(),
+        save = buttons.find('.comment-save-button')
+        form = '<li class="comment-unsave-button"><form action="/post/unsave" method="post" class="state-button unsave-button">'
+    form = form + '<input type="hidden" name="executed" value="unsaved"/><span>'
+    form = form + '<a href="javascript:void(0)" onclick="return change_state(this, \'unsave\', unsave_thing);">unsave</a></span></form></li>'
+    save.replaceWith(form)
+    comment.addClass('saved')
+}
+
 function search_feedback(elem, approval) {
   f = $("form#search");
   var q    = f.find('input[name="q"]').val();

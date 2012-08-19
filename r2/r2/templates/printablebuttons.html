@@ -251,6 +251,17 @@
   <li class="first">
     ${self.bylink_button(_("permalink"), thing.permalink)}
   </li>
+  %if thing.saved:
+    <li class="comment-unsave-button">
+       ${self.state_button("unsave", _("unsave"), \
+         "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
+    </li>
+  %else:
+    <li class="comment-save-button">
+       ${self.state_button("save", _("save"), \
+         "return change_state(this, 'save', save_thing);", _("saved"))}
+    </li>
+  %endif
   %if c.profilepage:
     <li>
       ${self.bylink_button(_("context"), thing.permalink + "?context=3")}

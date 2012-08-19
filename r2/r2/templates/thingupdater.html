@@ -35,4 +35,7 @@
         });
   $.map(friends, show_friend);
 
+  var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
+  $.map(saves, show_saved);
+
 </script>

@@ -6252,3 +6252,8 @@ table.diff {font-size: small;}
 .diff_add {background-color:lightgreen}
 .diff_chg {background-color:yellow}
 .diff_sub {background-color:lightcoral}
+
+.buttons li.comment-save-button { display: none; }
+.buttons li.comment-unsave-button { display: inline; }
+
+body.gold .buttons li.comment-save-button { display: inline; }
