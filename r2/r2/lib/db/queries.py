@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Vote, SaveHide, Report
+from r2.models import Account, Link, Comment, Vote, Report
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -527,17 +527,12 @@ def get_liked(user):
 def get_disliked(user):
     return rel_query(vote_rel, user, '-1')
 
-@cached_userrel_query
-def get_hidden(user):
-    return rel_query(SaveHide, user, 'hide')
-
 @cached_query(UserQueryCache, sort=[desc('action_date')])
 def get_hidden_links(user_id):
     return
 
-@cached_userrel_query
-def get_saved(user):
-    return rel_query(SaveHide, user, 'save')
+def get_hidden(user):
+    return get_hidden_links(user)
 
 @cached_query(UserQueryCache, sort=[desc('action_date')])
 def get_saved_links(user_id, sr_id):
@@ -546,6 +541,11 @@ def get_saved_links(user_id, sr_id):
 @cached_query(UserQueryCache, sort=[desc('action_date')])
 def get_saved_comments(user_id, sr_id):
     return
+
+def get_saved(user, sr_id=None):
+    sr_id = sr_id or 'none'
+    queries = [get_saved_links(user, sr_id), get_saved_comments(user, sr_id)]
+    return MergedCachedQuery(queries)
 
 @cached_srrel_query
 def get_subreddit_messages(sr):
@@ -996,18 +996,6 @@ def set_unread(messages, to, unread, mutator=None):
     if not mutator:
         m.send()
 
-def new_savehide(rel):
-    user = rel._thing1
-    name = rel._name
-    with CachedQueryMutator() as m:
-        if name == 'save':
-            m.insert(get_saved(user), [rel])
-        elif name == 'unsave':
-            m.delete(get_saved(user), [rel])
-        elif name == 'hide':
-            m.insert(get_hidden(user), [rel])
-        elif name == 'unhide':
-            m.delete(get_hidden(user), [rel])
 
 def changed(things, boost_only=False):
     """Indicate to search that a given item should be updated in the index"""
@@ -1307,8 +1295,6 @@ def update_user(user):
                get_sent(user),
                get_liked(user),
                get_disliked(user),
-               get_saved(user),
-               get_hidden(user),
                get_submitted(user, 'new', 'all'),
                get_comments(user, 'new', 'all')]
     for q in results:

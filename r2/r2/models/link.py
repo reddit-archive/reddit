@@ -163,14 +163,10 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'save')
 
     def _save(self, user):
-        # dual-write CassandraSaves
-        CassandraSave._save(user, self)
         LinkSavesByAccount._save(user, self)
         return self._something(SaveHide, user, self._saved, 'save')
 
     def _unsave(self, user):
-        # dual-write CassandraSaves
-        CassandraSave._unsave(user, self)
         LinkSavesByAccount._unsave(user, self)
         return self._unsomething(user, self._saved, 'save')
 
@@ -186,12 +182,10 @@ class Link(Thing, Printable):
         return cls._somethinged(SaveHide, user, link, 'hide')
 
     def _hide(self, user):
-        CassandraHide._hide(user, self)
         LinkHidesByAccount._hide(user, self)
         return self._something(SaveHide, user, self._hidden, 'hide')
 
     def _unhide(self, user):
-        CassandraHide._unhide(user, self)
         LinkHidesByAccount._unhide(user, self)
         return self._unsomething(user, self._hidden, 'hide')
 
@@ -346,8 +340,8 @@ class Link(Thing, Printable):
 
         if user_is_loggedin:
             try:
-                saved = CassandraSave._fast_query(user, wrapped)
-                hidden = CassandraHide._fast_query(user, wrapped)
+                saved = LinkSavesByAccount.fast_query(user, wrapped)
+                hidden = LinkHidesByAccount.fast_query(user, wrapped)
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 g.log.warning("Cassandra save/hide lookup failed: %r", e)
                 saved = hidden = {}
@@ -1242,63 +1236,6 @@ class Message(Thing, Printable):
 class SaveHide(Relation(Account, Link)): pass
 class Click(Relation(Account, Link)): pass
 
-class SimpleRelation(tdb_cassandra.Relation):
-    _use_db = False
-    _read_consistency_level = tdb_cassandra.CL.ONE
-
-    @classmethod
-    def _create(cls, user, link, write_consistency_level = None):
-        n = cls(thing1_id = user._id36,
-                thing2_id = link._id36)
-        n._commit(write_consistency_level=write_consistency_level)
-        return n
-
-    @classmethod
-    def _uncreate(cls, user, link):
-        try:
-            cls._fast_query(user, link)._destroy()
-        except tdb_cassandra.NotFound:
-            pass
-
-
-class CassandraSave(SimpleRelation):
-    _use_db = True
-    _cf_name = 'Save'
-    _connection_pool = 'main'
-
-    _thing1_cls = Account
-    _thing2_cls = Link
-
-    @classmethod
-    def _save(cls, *a, **kw):
-        return cls._create(*a, **kw)
-
-    @classmethod
-    def _unsave(cls, *a, **kw):
-        return cls._uncreate(*a, **kw)
-
-    def _on_create(self):
-        return SimpleRelation._on_create(self)
-
-    def _on_destroy(self):
-        return SimpleRelation._on_destroy(self)
-
-class CassandraHide(SimpleRelation):
-    _use_db = True
-    _cf_name = 'Hide'
-    _ttl = 7*24*60*60
-    _connection_pool = 'main'
-
-    _thing1_cls = Account
-    _thing2_cls = Link
-
-    @classmethod
-    def _hide(cls, *a, **kw):
-        return cls._create(*a, **kw)
-
-    @classmethod
-    def _unhide(cls, *a, **kw):
-        return cls._uncreate(*a, **kw)
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
