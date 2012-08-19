@@ -516,6 +516,7 @@ body[orient="landscape"] > #topbar > h1 {
     @include box-sizing(border-box);
     background: rgba(255,255,255,.6);
     position: relative;
+    overflow: hidden;
 }
 .link:first-child {
     border-top: none;

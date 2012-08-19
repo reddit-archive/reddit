@@ -148,7 +148,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 .link .arrow.downmod, .comment .arrow.downmod, .message .arrow.downmod { background-image: url("../compact/downvote-active.png"); /*SPRITE*/ }
 
 /*Links*/
-.link { min-height: 70px; border-bottom: 1px solid #999; border-top: 1px solid #ddd; padding: 5px 5px; padding-bottom: 0px; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; background: rgba(255, 255, 255, 0.6); position: relative; }
+.link { min-height: 70px; border-bottom: 1px solid #999; border-top: 1px solid #ddd; padding: 5px 5px; padding-bottom: 0px; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; -ms-box-sizing: border-box; box-sizing: border-box; background: rgba(255, 255, 255, 0.6); position: relative; overflow: hidden; }
 
 .link:first-child { border-top: none; }
 
