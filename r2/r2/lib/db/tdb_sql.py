@@ -489,8 +489,7 @@ def db2py(val, kind):
 
     return val
 
-#TODO i don't need type_id
-def set_data(table, type_id, thing_id, **vals):
+def set_data(table, thing_id, **vals):
     transactions.add_engine(table.bind)
 
     u = table.update(sa.and_(table.c.thing_id == thing_id,
@@ -555,7 +554,7 @@ def get_data(table, thing_id):
 
 def set_thing_data(type_id, thing_id, **vals):
     table = get_thing_table(type_id, action = 'write')[1]
-    return set_data(table, type_id, thing_id, **vals)
+    return set_data(table, thing_id, **vals)
 
 def incr_thing_data(type_id, thing_id, prop, amount):
     table = get_thing_table(type_id, action = 'write')[1]
@@ -590,7 +589,7 @@ def get_thing(type_id, thing_id):
 
 def set_rel_data(rel_type_id, thing_id, **vals):
     table = get_rel_table(rel_type_id, action = 'write')[3]
-    return set_data(table, rel_type_id, thing_id, **vals)
+    return set_data(table, thing_id, **vals)
 
 def incr_rel_data(rel_type_id, thing_id, prop, amount):
     table = get_rel_table(rel_type_id, action = 'write')[3]
