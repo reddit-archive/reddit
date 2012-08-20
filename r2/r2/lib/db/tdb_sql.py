@@ -489,7 +489,8 @@ def db2py(val, kind):
 
     return val
 
-def set_data(table, thing_id, **vals):
+
+def update_data(table, thing_id, **vals):
     transactions.add_engine(table.bind)
 
     u = table.update(sa.and_(table.c.thing_id == thing_id,
@@ -509,6 +510,22 @@ def set_data(table, thing_id, **vals):
         i.execute(*inserts)
 
     return len(inserts)
+
+
+def create_data(table, thing_id, **vals):
+    transactions.add_engine(table.bind)
+
+    inserts = []
+    for key, val in vals.iteritems():
+        val, kind = py2db(val, return_kind=True)
+        inserts.append(dict(key=key, value=val, kind=kind))
+
+    if inserts:
+        i = table.insert(values=dict(thing_id=thing_id))
+        i.execute(*inserts)
+
+    return 0
+
 
 def incr_data_prop(table, type_id, thing_id, prop, amount):
     t = table
@@ -554,9 +571,13 @@ def get_data(table, thing_id):
 
     return res
 
-def set_thing_data(type_id, thing_id, **vals):
+def set_thing_data(type_id, thing_id, brand_new_thing, **vals):
     table = get_thing_table(type_id, action = 'write')[1]
-    return set_data(table, thing_id, **vals)
+
+    if brand_new_thing:
+        return create_data(table, thing_id, **vals)
+    else:
+        return update_data(table, thing_id, **vals)
 
 def incr_thing_data(type_id, thing_id, prop, amount):
     table = get_thing_table(type_id, action = 'write')[1]
@@ -589,9 +610,13 @@ def get_thing(type_id, thing_id):
             res[row.thing_id] = stor
     return res
 
-def set_rel_data(rel_type_id, thing_id, **vals):
+def set_rel_data(rel_type_id, thing_id, brand_new_thing, **vals):
     table = get_rel_table(rel_type_id, action = 'write')[3]
-    return set_data(table, thing_id, **vals)
+
+    if brand_new_thing:
+        return create_data(table, thing_id, **vals)
+    else:
+        return update_data(table, thing_id, **vals)
 
 def incr_rel_data(rel_type_id, thing_id, prop, amount):
     table = get_rel_table(rel_type_id, action = 'write')[3]

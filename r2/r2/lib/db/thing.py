@@ -234,6 +234,9 @@ class DataThing(object):
     def _commit(self, keys=None):
         if not self._created:
             self._create()
+            just_created = True
+        else:
+            just_created = False
 
         with g.make_lock('commit_' + self._fullname):
             if not self._sync_latest():
@@ -259,6 +262,7 @@ class DataThing(object):
             if data_props:
                 useless_updates = self._set_data(self._type_id,
                                                  self._id,
+                                                 just_created,
                                                  **data_props)
             else:
                 useless_updates = 0
