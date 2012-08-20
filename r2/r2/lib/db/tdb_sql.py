@@ -508,6 +508,8 @@ def set_data(table, thing_id, **vals):
         i = table.insert(values = dict(thing_id = thing_id))
         i.execute(*inserts)
 
+    return len(inserts)
+
 def incr_data_prop(table, type_id, thing_id, prop, amount):
     t = table
     transactions.add_engine(t.bind)
