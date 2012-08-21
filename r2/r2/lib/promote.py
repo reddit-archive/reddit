@@ -743,7 +743,7 @@ def scheduled_campaigns_by_link(l, date=None):
     accepted = []
     for campaign_id in campaigns:
         try:
-            campaign = PromoCampaign._byID(campaign_id)
+            campaign = PromoCampaign._byID(campaign_id, data=True)
             if authorize.is_charged_transaction(campaign.trans_id, campaign_id):
                 accepted.append(campaign_id)
         except NotFound:
