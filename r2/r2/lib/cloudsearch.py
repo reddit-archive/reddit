@@ -509,12 +509,12 @@ INVALID_QUERY_CODES = ('CS-UnknownFieldInMatchExpression',
                        'CS-IncorrectFieldTypeInMatchExpression',
                        'CS-InvalidMatchSetExpression',)
 DEFAULT_FACETS = {"reddit": {"count":20}}
-def basic_query(query=None, bq=None, facets=DEFAULT_FACETS, size=1000,
+def basic_query(query=None, bq=None, faceting=DEFAULT_FACETS, size=1000,
                 start=0, rank="-relevance", return_fields=None, record_stats=False,
                 search_api=None):
     if search_api is None:
         search_api = g.CLOUDSEARCH_SEARCH_API
-    path = _encode_query(query, bq, facets, size, start, rank, return_fields)
+    path = _encode_query(query, bq, faceting, size, start, rank, return_fields)
     timer = None
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
@@ -557,7 +557,7 @@ basic_link = functools.partial(basic_query, size=10, start=0,
 
 
 basic_subreddit = functools.partial(basic_query,
-                                    facets=None,
+                                    faceting=None,
                                     size=10, start=0,
                                     rank="-activity",
                                     return_fields=['title', 'reddit',
@@ -566,7 +566,7 @@ basic_subreddit = functools.partial(basic_query,
                                     search_api=g.CLOUDSEARCH_SUBREDDIT_SEARCH_API)
 
 
-def _encode_query(query, bq, facets, size, start, rank, return_fields):
+def _encode_query(query, bq, faceting, size, start, rank, return_fields):
     if not (query or bq):
         raise ValueError("Need query or bq")
     params = {}
@@ -578,9 +578,9 @@ def _encode_query(query, bq, facets, size, start, rank, return_fields):
     params["size"] = size
     params["start"] = start
     params["rank"] = rank
-    if facets:
-        params["facet"] = ",".join(facets.iterkeys())
-        for facet, options in facets.iteritems():
+    if faceting:
+        params["facet"] = ",".join(faceting.iterkeys())
+        for facet, options in faceting.iteritems():
             params["facet-%s-top-n" % facet] = options.get("count", 20)
             if "sort" in options:
                 params["facet-%s-sort" % facet] = options["sort"]
