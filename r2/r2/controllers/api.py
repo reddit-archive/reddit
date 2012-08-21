@@ -2785,7 +2785,7 @@ class ApiController(RedditController):
         c.user._commit()
         form.redirect("/prefs/otp")
 
-    @json_validate(query=VPrintable("query", max_length=50))
+    @json_validate(query=VLength("query", max_length=50))
     @api_doc(api_section.subreddits, extensions=["json"])
     def GET_subreddits_by_topic(self, responder, query):
         if not g.CLOUDSEARCH_SEARCH_API:
