@@ -496,11 +496,18 @@ class Results(object):
         if not self._subreddits and 'reddit' in self._facets:
             sr_facets = [(sr['value'], sr['count']) for sr in
                          self._facets['reddit']]
-            srs_by_name = Subreddit._by_name([sr[0] for sr in sr_facets])
-            self._subreddits = [sr for sr in sr_facets
-                                if sr[0] in srs_by_name and
-                                srs_by_name[sr[0]].can_view(c.user)]
-        
+
+            # look up subreddits
+            srs_by_name = Subreddit._by_name([name for name, count
+                                              in sr_facets])
+
+            sr_facets = [(srs_by_name[name], count) for name, count
+                         in sr_facets if name in srs_by_name]
+
+            # filter by can_view
+            self._subreddits = [(sr, count) for sr, count in sr_facets
+                                if sr.can_view(c.user)]
+
         return self._subreddits
 
 

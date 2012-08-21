@@ -78,10 +78,9 @@
 <div class="searchfacets">
   <h4 class="title">${_("too many results? narrow it down to a subreddit!")}</h4>
   <ol class="list">
-  %for facet in thing.facets:
-    <% subreddit, count = facet %>
+  %for subreddit, count in thing.facets:
     <li class="searchfacet reddit">
-      <a class="facet title word" href="${search_url(thing.prev_search, subreddit, restrict_sr='on', sort=thing.sort)}">/r/${subreddit}</a>&nbsp;
+      <a class="facet title word" href="${search_url(thing.prev_search, subreddit.name, restrict_sr='on', sort=thing.sort)}">/r/${subreddit.name}</a>&nbsp;
       <span class="facet count number">(${count})</span>
     </li>&nbsp;
   %endfor
