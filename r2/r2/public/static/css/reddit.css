@@ -1875,6 +1875,10 @@ label + #moresearchinfo {
   margin: 5px;
 }
 
+.searchfacets .facet:hover {
+  text-decoration: underline;
+}
+
 .searchfacets .list {
   margin: 0px 0px 0px 10px;
 }
