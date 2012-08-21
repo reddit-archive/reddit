@@ -59,7 +59,7 @@ from r2.lib.log import log_text
 from r2.lib.filters import safemarkdown
 from r2.lib.scraper import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
-from r2.lib.cloudsearch import basic_query
+from r2.lib.search import SearchQuery
 
 import csv
 from collections import defaultdict
@@ -2796,25 +2796,17 @@ class ApiController(RedditController):
 
         exclude = Subreddit.default_subreddits()
 
-        q = basic_query(query,
-                        facets={"reddit":{"sort":"-sum(text_relevance)", "count":20}},
-                        record_stats=True)
-        if not q["facets"]:
-            return []
+        faceting = {"reddit":{"sort":"-sum(text_relevance)", "count":20}}
+        results = SearchQuery(query, sort="relevance", faceting=faceting).run()
 
-        sr_facets = [f["value"] for f in q["facets"]["reddit"]["constraints"]]
-        srs = Subreddit._by_name(sr_facets)
-
-        results = []
-        for sr_name in sr_facets:
-            sr = srs.get(sr_name)
+        sr_results = []
+        for sr, count in results.subreddit_facets:
             if (sr._id in exclude or (sr.over_18 and not c.over18)
-                  or not sr.can_view(c.user)
                   or sr.type == "archived"):
                 continue
 
-            results.append({
-                "name": sr_name,
+            sr_results.append({
+                "name": sr.name,
             })
 
-        return results
+        return sr_results
