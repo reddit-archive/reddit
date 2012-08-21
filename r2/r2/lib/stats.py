@@ -89,8 +89,7 @@ class Stats:
 
     def transact(self, action, service_time_sec):
         timer = self.get_timer('service_time')
-        if timer:
-            timer.send(action, service_time_sec)
+        timer.send(action, service_time_sec)
 
     def get_counter(self, name):
         if self.connection:

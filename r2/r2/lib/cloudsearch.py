@@ -527,8 +527,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
     timer = None
     if record_stats:
         timer = g.stats.get_timer("cloudsearch_timer")
-        if timer:
-            timer.start()
+        timer.start()
     connection = httplib.HTTPConnection(search_api, 80)
     try:
         connection.request('GET', path)
@@ -551,8 +550,7 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                                        response)
     finally:
         connection.close()
-        if timer:
-            timer.stop()
+        timer.stop()
     
     return json.loads(response)
 
