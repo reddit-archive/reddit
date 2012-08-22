@@ -35,6 +35,7 @@ from r2.models.query_cache import (cached_query, merged_cached_query,
 from r2.models.query_cache import UserQueryCache, SubredditQueryCache
 from r2.models.query_cache import ThingTupleComparator
 from r2.models.last_modified import LastModified
+from r2.lib.utils import SimpleSillyStub
 
 import cPickle as pickle
 
@@ -49,6 +50,7 @@ query_cache = g.permacache
 log = g.log
 make_lock = g.make_lock
 worker = amqp.worker
+stats = g.stats
 
 precompute_limit = 1000
 
@@ -796,9 +798,12 @@ def new_subreddit(sr):
     amqp.add_item('new_subreddit', sr._fullname)
 
 
-def new_vote(vote, foreground=False):
+def new_vote(vote, foreground=False, timer=None):
     user = vote._thing1
     item = vote._thing2
+
+    if timer is None:
+        timer = SimpleSillyStub()
 
     if not isinstance(item, (Link, Comment)):
         return
@@ -828,6 +833,8 @@ def new_vote(vote, foreground=False):
                     results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item, foreground=foreground)
+
+    timer.intermediate("permacache")
     
     if isinstance(item, Link):
         # must update both because we don't know if it's a changed
@@ -1335,18 +1342,23 @@ def get_likes(user, items):
 
     return res
 
-def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
+def handle_vote(user, thing, dir, ip, organic,
+                cheater=False, foreground=False, timer=None):
+    if timer is None:
+        timer = SimpleSillyStub()
+
     from r2.lib.db import tdb_sql
     from sqlalchemy.exc import IntegrityError
     try:
-        v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater)
+        v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater,
+                      timer=timer)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
     timestamps = []
     if isinstance(thing, Link):
-        new_vote(v, foreground=foreground)
+        new_vote(v, foreground=foreground, timer=timer)
 
         #update the modified flags
         if user._id == thing.author_id:
@@ -1369,9 +1381,12 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
             #update sup listings
             sup.add_update(user, 'commented')
 
+    timer.intermediate("sup")
+
     for timestamp in timestamps:
         set_last_modified(user, timestamp.lower())
     LastModified.touch(user._fullname, timestamps)
+    timer.intermediate("last_modified")
 
 
 def process_votes(qname, limit=0):
@@ -1379,21 +1394,27 @@ def process_votes(qname, limit=0):
 
     @g.stats.amqp_processor(qname)
     def _handle_vote(msg):
+        timer = stats.get_timer("service_time." + qname)
+        timer.start()
+
         #assert(len(msgs) == 1)
         r = pickle.loads(msg.body)
 
         uid, tid, dir, ip, organic, cheater = r
         voter = Account._byID(uid, data=True)
         votee = Thing._by_fullname(tid, data = True)
+        timer.intermediate("preamble")
+
         if isinstance(votee, Comment):
             update_comment_votes([votee])
+            timer.intermediate("update_comment_votes")
 
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater, foreground=True)
+                        cheater = cheater, foreground=True, timer=timer)
 
     amqp.consume_items(qname, _handle_vote, verbose = False)
 

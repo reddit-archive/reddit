@@ -28,6 +28,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import TdbException, ASCII_TYPE, UTF8_TYPE
 from r2.lib.utils._utils import flatten
 from r2.lib.db.sorts import epoch_seconds
+from r2.lib.utils import SimpleSillyStub
 
 from account import Account
 from link import Link, Comment
@@ -239,10 +240,14 @@ class Vote(MultiRelation('vote',
     _defaults = {'organic': False}
 
     @classmethod
-    def vote(cls, sub, obj, dir, ip, organic = False, cheater = False):
+    def vote(cls, sub, obj, dir, ip, organic = False, cheater = False,
+             timer=None):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_sr_count
         from r2.lib.db import queries
+
+        if timer is None:
+            timer = SimpleSillyStub()
 
         sr = obj.subreddit_slow
         kind = obj.__class__.__name__.lower()
@@ -255,6 +260,8 @@ class Vote(MultiRelation('vote',
         rel = cls.rel(sub, obj)
         oldvote = rel._fast_query(sub, obj, ['-1', '0', '1']).values()
         oldvote = filter(None, oldvote)
+
+        timer.intermediate("pg_read_vote")
 
         amount = 1 if dir is True else 0 if dir is None else -1
 
@@ -286,6 +293,8 @@ class Vote(MultiRelation('vote',
 
         v._commit()
 
+        timer.intermediate("pg_write_vote")
+
         up_change, down_change = score_changes(amount, oldamount)
 
         if not (is_new and obj.author_id == sub._id and amount == 1):
@@ -293,22 +302,27 @@ class Vote(MultiRelation('vote',
             # vote, because we checked it in with _ups == 1
             update_score(obj, up_change, down_change,
                          v, old_valid_thing)
+            timer.intermediate("pg_update_score")
 
         if v.valid_user:
             author = Account._byID(obj.author_id, data=True)
             author.incr_karma(kind, sr, up_change - down_change)
+            timer.intermediate("pg_incr_karma")
 
         #update the sr's valid vote count
         if is_new and v.valid_thing and kind == 'link':
             if sub._id != obj.author_id:
                 incr_sr_count(sr)
+            timer.intermediate("incr_sr_counts")
 
         # now write it out to Cassandra. We'll write it out to both
         # this way for a while
         CassandraVote._copy_from(v)
         VotesByAccount.copy_from(v)
+        timer.intermediate("cassavotes")
 
         queries.changed(v._thing2, True)
+        timer.intermediate("changed")
 
         return v
 
