@@ -39,6 +39,8 @@ from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
 from r2.lib.cache import CL_ONE
 
+import math
+
 import os.path
 import random
 
@@ -217,7 +219,26 @@ class Subreddit(Thing, Printable):
 
     @property
     def accounts_active(self):
-        return AccountsActiveBySR.get_count(self)
+        return self.get_accounts_active()[0]
+
+    def get_accounts_active(self):
+        fuzzed = False
+        count = AccountsActiveBySR.get_count(self)
+        key = 'get_accounts_active-' + self._id36
+
+        # Fuzz counts having low values, for privacy reasons
+        if count < 100 and not c.user_is_admin:
+            fuzzed = True
+            cached_count = g.cache.get(key)
+            if not cached_count:
+                # decay constant is e**(-x / 60)
+                decay = math.exp(float(-count) / 60)
+                jitter = round(5 * decay)
+                count = count + random.randint(0, jitter)
+                g.cache.set(key, count, time=5*60)
+            else:
+                count = cached_count
+        return count, fuzzed
 
     def spammy(self):
         return self._spam
