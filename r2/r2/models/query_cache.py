@@ -85,14 +85,13 @@ class CachedQueryBase(object):
 
 
 class CachedQuery(CachedQueryBase):
-    def __init__(self, model, key, query, filter_fn):
+    def __init__(self, model, key, sort, filter_fn):
         self.model = model
         self.key = key
-        self.query = query
-        self.query._limit = MAX_CACHED_ITEMS  # .update() should only get as many items as we need
+        self.sort = sort
         self.filter = filter_fn
         self.timestamps = None  # column timestamps, for safe pruning
-        super(CachedQuery, self).__init__(query._sort)
+        super(CachedQuery, self).__init__(sort)
 
     def _make_item_tuple(self, item):
         """Given a single 'item' from the result of a query build the tuple
@@ -161,11 +160,7 @@ class CachedQuery(CachedQueryBase):
                 counter.increment('pruned', delta=len(extraneous_ids))
 
     def update(self):
-        things = list(self.query)
-
-        with Mutator(CONNECTION_POOL) as m:
-            self.model.remove(m, self.key, None)  # empty the whole row
-            self._insert(m, things)
+        raise NotImplementedError()
 
     @classmethod
     def _prune_multi(cls, queries):
@@ -188,6 +183,24 @@ class CachedQuery(CachedQueryBase):
     def __repr__(self):
         return "%s(%s, %r)" % (self.__class__.__name__,
                                self.model.__name__, self.key)
+
+
+class SqlCachedQuery(CachedQuery):
+    def __init__(self, model, key, query, filter_fn):
+        self.query = query
+        self.query._limit = MAX_CACHED_ITEMS  # .update() should only get as many items as we need
+        super(SqlCachedQuery, self).__init__(model, key, query._sort, filter_fn)
+
+    def update(self):
+        things = list(self.query)
+
+        with Mutator(CONNECTION_POOL) as m:
+            self.model.remove(m, self.key, None)  # empty the whole row
+            self._insert(m, things)
+
+
+class CassandraCachedQuery(CachedQuery):
+    pass
 
 
 class MergedCachedQuery(CachedQueryBase):
@@ -258,7 +271,7 @@ def filter_thing2(x):
     return x._thing2
 
 
-def cached_query(model, filter_fn=filter_identity):
+def cached_query(model, filter_fn=filter_identity, sort=None):
     def cached_query_decorator(fn):
         def cached_query_wrapper(*args):
             # build the row key from the function name and arguments
@@ -277,11 +290,14 @@ def cached_query(model, filter_fn=filter_identity):
             row_key_components.extend(str(x) for x in args[1:])
             row_key = '.'.join(row_key_components)
 
-            # call the wrapped function to get a query
-            query = fn(*args)
+            if sort:
+                return CassandraCachedQuery(model, row_key, sort, filter_fn)
+            else:
+                # call the wrapped function to get a query
+                query = fn(*args)
 
-            # cached results for everyone!
-            return CachedQuery(model, row_key, query, filter_fn)
+                # cached results for everyone!
+                return SqlCachedQuery(model, row_key, query, filter_fn)
         return cached_query_wrapper
     return cached_query_decorator
 
