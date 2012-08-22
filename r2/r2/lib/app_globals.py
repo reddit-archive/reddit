@@ -394,7 +394,8 @@ class Globals(object):
             https_url = urlparse(self.https_endpoint)
             self.secure_domains.add(https_url.netloc)
             self.trusted_domains.add(https_url.hostname)
-
+        if getattr(self, 'oauth_domain', None):
+            self.secure_domains.add(self.oauth_domain)
 
         # load the unique hashed names of files under static
         static_files = os.path.join(self.paths.get('static_files'), 'static')
