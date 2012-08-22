@@ -384,7 +384,7 @@ function unsubscribe(reddit_name) {
 function friend(user_name, container_name, type) {
     return function() {
         if (reddit.logged) {
-            encoded = encodeURIComponent(reddit.referer);
+            encoded = encodeURIComponent(document.referrer);
             $.request("friend?note=" + encoded,
                       {name: user_name, container: container_name, type: type});
         }
