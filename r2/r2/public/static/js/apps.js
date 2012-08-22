@@ -1,45 +1,43 @@
 r.apps = {
   init: function() {
-    $(".authorized-app")
-        .delegate(".app-permissions li", "mouseover mouseout",
+    $('.authorized-app')
+        .delegate('.app-permissions li', 'mouseover mouseout',
                   function(e) {
-                    if (e.type == "mouseover") {
-                      $(this).find(".app-scope").show();
+                    if (e.type == 'mouseover') {
+                      $(this).find('.app-scope').show()
                     } else {
-                      $(this).find(".app-scope").hide();
+                      $(this).find('.app-scope').hide()
                     }
                   })
-        ;
 
-    $("#developed-apps")
-        .delegate(".edit-app-button", "click",
+    $('#developed-apps')
+        .delegate('.edit-app-button', 'click',
                   function() {
-                    $(this).toggleClass("collapsed").closest(".developed-app")
+                    $(this).toggleClass('collapsed').closest('.developed-app')
                         .removeClass('collapsed')
-                        .find(".app-developers").remove().end()
-                        .find(".edit-app")
-                          .slideToggle().removeClass('collapsed').end();
+                        .find('.app-developers').remove().end()
+                        .find('.edit-app')
+                          .slideToggle().removeClass('collapsed').end()
                   })
-        .delegate(".edit-app-icon-button", "click",
+        .delegate('.edit-app-icon-button', 'click',
                   function() {
-                    $(this).toggleClass("collapsed")
-                        .closest(".developed-app")
-                            .find(".ajax-upload-form").show();
+                    $(this).toggleClass('collapsed')
+                        .closest('.developed-app')
+                            .find('.ajax-upload-form').show()
                   })
-        ;
 
-    $("#create-app-button").click(
+    $('#create-app-button').click(
         function() {
-            $(this).hide();
-            $("#create-app").fadeIn();
-        });
+            $(this).hide()
+            $('#create-app').fadeIn()
+        })
   },
 
   revoked: function (elem, op) {
-      $(elem).closest(".authorized-app").fadeOut();
+      $(elem).closest('.authorized-app').fadeOut()
   },
 
   deleted: function (elem, op) {
-      $(elem).closest(".developed-app").fadeOut();
+      $(elem).closest('.developed-app').fadeOut()
   }
 }
