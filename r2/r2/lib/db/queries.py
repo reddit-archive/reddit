@@ -1374,7 +1374,7 @@ def handle_vote(user, thing, dir, ip, organic, cheater=False, foreground=False):
     LastModified.touch(user._fullname, timestamps)
 
 
-def process_votes_single(qname, limit=0):
+def process_votes(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
 
     @g.stats.amqp_processor(qname)
@@ -1396,41 +1396,6 @@ def process_votes_single(qname, limit=0):
                         cheater = cheater, foreground=True)
 
     amqp.consume_items(qname, _handle_vote, verbose = False)
-
-def process_votes_multi(qname, limit=100):
-    # limit is taken but ignored for backwards compatibility
-    @g.stats.amqp_processor(qname)
-    def _handle_vote(msgs, chan):
-        comments = []
-
-        for msg in msgs:
-            tag = msg.delivery_tag
-            r = pickle.loads(msg.body)
-
-            uid, tid, dir, ip, organic, cheater = r
-            voter = Account._byID(uid, data=True)
-            votee = Thing._by_fullname(tid, data = True)
-            if isinstance(votee, Comment):
-                comments.append(votee)
-
-            if not isinstance(votee, (Link, Comment)):
-                # I don't know how, but somebody is sneaking in votes
-                # for subreddits
-                continue
-
-            print (voter, votee, dir, ip, organic, cheater)
-            try:
-                handle_vote(voter, votee, dir, ip, organic,
-                            cheater=cheater, foreground=False)
-            except Exception, e:
-                print 'Rejecting %r:%r because of %r' % (msg.delivery_tag, r,e)
-                chan.basic_reject(msg.delivery_tag, requeue=True)
-
-        update_comment_votes(comments)
-
-    amqp.handle_items(qname, _handle_vote, limit = limit)
-
-process_votes = process_votes_single
 
 try:
     from r2admin.lib.admin_queries import *
