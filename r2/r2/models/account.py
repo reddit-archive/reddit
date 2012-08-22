@@ -380,7 +380,7 @@ class Account(Thing):
 
         # Remove OAuth2Client developer permissions.  This will delete any
         # clients for which this account is the sole developer.
-        from r2.models.oauth2 import OAuth2Client
+        from r2.models.token import OAuth2Client
         for client in OAuth2Client._by_developer(self):
             client.remove_developer(self)
 
