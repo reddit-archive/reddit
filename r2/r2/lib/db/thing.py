@@ -260,12 +260,10 @@ class DataThing(object):
                     data_props[k] = v
 
             if data_props:
-                useless_updates = self._set_data(self._type_id,
-                                                 self._id,
-                                                 just_created,
-                                                 **data_props)
-            else:
-                useless_updates = 0
+                self._set_data(self._type_id,
+                               self._id,
+                               just_created,
+                               **data_props)
 
             if thing_props:
                 self._set_props(self._type_id, self._id, **thing_props)
@@ -278,18 +276,6 @@ class DataThing(object):
                 self._dirties.clear()
 
             self._cache_myself()
-
-        thing_or_rel = "thing" if self._type_prefix == "t" else "rel"
-
-        if useless_updates:
-            g.stats.simple_event("%s.useless_updates.%s" % (thing_or_rel,
-                                                            self._type_name),
-                                useless_updates)
-        if data_props:
-            g.stats.simple_event("%s.data_props.%s" % (thing_or_rel,
-                                                       self._type_name),
-                                 len(data_props))
-
 
     @classmethod
     def _load_multi(cls, need):

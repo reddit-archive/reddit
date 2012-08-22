@@ -509,8 +509,6 @@ def update_data(table, thing_id, **vals):
         i = table.insert(values = dict(thing_id = thing_id))
         i.execute(*inserts)
 
-    return len(inserts)
-
 
 def create_data(table, thing_id, **vals):
     transactions.add_engine(table.bind)
@@ -523,8 +521,6 @@ def create_data(table, thing_id, **vals):
     if inserts:
         i = table.insert(values=dict(thing_id=thing_id))
         i.execute(*inserts)
-
-    return 0
 
 
 def incr_data_prop(table, type_id, thing_id, prop, amount):
