@@ -557,6 +557,8 @@ class SubredditInfoBar(CachedTemplate):
         # so the menus cache properly
         self.path = request.path
 
+        self.accounts_active, self.accounts_active_fuzzed = self.sr.get_accounts_active()
+
         if c.user_is_loggedin and c.user.pref_show_flair:
             self.flair_prefs = FlairPrefs()
         else:

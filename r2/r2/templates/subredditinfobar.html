@@ -36,12 +36,8 @@
 
   ${addremove_button(thing.sr)}
   <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
-  <p class="users-online" title="${_('number of logged-in users in the past 15 minutes')}">
-      %if thing.sr.accounts_active < 100 and not c.user_is_admin:
-          ${unsafe(Score.users_online(100, prepend='&lt;'))}
-      %else:
-          ${unsafe(Score.users_online(thing.sr.accounts_active))}
-      %endif
+  <p class="users-online ${'fuzzed' if thing.accounts_active_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
+      ${unsafe(Score.users_here_now(thing.accounts_active, prepend='~' if thing.accounts_active_fuzzed else ''))}
   </p>
 
   %if thing.sr.moderator:

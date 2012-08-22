@@ -275,7 +275,7 @@ plurals = PluralManager([P_("comment",     "comments"),
                          P_("subscriber",  "subscribers"),
                          P_("approved submitter", "approved submitters"),
                          P_("moderator",   "moderators"),
-                         P_("user online",   "users online"),
+                         P_("user here now",   "users here now"),
 
                          # time words
                          P_("milliseconds","milliseconds"),
@@ -325,8 +325,8 @@ class Score(object):
         return strings.number_label % dict(num=x, thing=f(x))
 
     @staticmethod
-    def users_online(x, prepend=''):
-        return Score._people(x, plurals.N_users_online, prepend=prepend)
+    def users_here_now(x, prepend=''):
+        return Score._people(x, plurals.N_users_here_now, prepend=prepend)
 
     @staticmethod
     def none(x):
