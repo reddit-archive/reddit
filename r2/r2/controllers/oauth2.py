@@ -138,7 +138,7 @@ class OAuth2FrontendController(RedditController):
         self._check_redirect_uri(client, redirect_uri)
 
         if not c.errors:
-            code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id36, scope)
+            code = OAuth2AuthorizationCode._new(client._id, redirect_uri, c.user._id, scope)
             resp = {"code": code._id, "state": state}
             return self.redirect(redirect_uri+"?"+urlencode(resp), code=302)
         else:
