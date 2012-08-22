@@ -210,7 +210,9 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 display_name = "name",
                                                 header_img   = "header",
                                                 header_size  = "header_size",
-                                                header_title = "header_title")
+                                                header_title = "header_title",
+                                                accounts_active = "accounts_active",
+                                                )
 
     def thing_attr(self, thing, attr):
         # Don't reveal revenue information via /r/lounge's subscribers
