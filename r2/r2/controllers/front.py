@@ -686,8 +686,8 @@ class FrontController(RedditController):
         query = "|".join(query.split())
         query = "title:'%s'" % query
         rel_range = timedelta(days=3)
-        start = (article._date - rel_range).strftime("%s")
-        end = (article._date + rel_range).strftime("%s")
+        start = int(time.mktime((article._date - rel_range).utctimetuple()))
+        end = int(time.mktime((article._date + rel_range).utctimetuple()))
         nsfw = "nsfw:0" if not (article.over_18 or article._nsfw.findall(article.title)) else ""
         query = "(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
         q = SearchQuery(query, raw_sort="-text_relevance",

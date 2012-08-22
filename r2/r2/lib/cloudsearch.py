@@ -252,7 +252,7 @@ class LinkUploader(CloudSearchUploader):
                   "subreddit": sr.name,
                   "reddit": sr.name,
                   "title": thing.title,
-                  "timestamp": thing._date.strftime("%s"),
+                  "timestamp": int(time.mktime(thing._date.utctimetuple())),
                   "sr_id": thing.sr_id,
                   "over18": 1 if nsfw else 0,
                   "is_self": 1 if thing.is_self else 0,
