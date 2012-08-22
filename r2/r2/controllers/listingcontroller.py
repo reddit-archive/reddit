@@ -325,7 +325,10 @@ class HotController(FixListing, ListingController):
                                  max_score = self.listing_obj.max_score).listing()
 
             if vislink not in s.lookup:
-                g.log.error("spotlight vislink skipped by builder: %s" % vislink)
+                # FIXME: spotlight vislink is missing from the items returned
+                # by the builder.
+                # This may result in an empty spotlight box.
+                pass
             else:
                 has_subscribed = c.user.has_subscribed
                 promo_visible = promote.is_promo(s.lookup[vislink])
