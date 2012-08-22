@@ -239,7 +239,6 @@ class OAuth2AuthorizationCode(ConsumableToken):
                          ("scope", ""),
                      ]
                 )
-    _int_props = ("user_id",)
     _warn_on_partial_ttl = False
     _use_db = True
     _connection_pool = "main"
