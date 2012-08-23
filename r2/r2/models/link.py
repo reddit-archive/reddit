@@ -1272,20 +1272,9 @@ class CassandraSave(SimpleRelation):
         return cls._uncreate(*a, **kw)
 
     def _on_create(self):
-        # it's okay if these indices get lost
-        wcl = tdb_cassandra.CL.ONE
-
-        SavesByAccount._set_values(self.thing1_id,
-                                   {self._id: self._id},
-                                   write_consistency_level=wcl)
-
         return SimpleRelation._on_create(self)
 
     def _on_destroy(self):
-        sba = SavesByAccount._byID(self.thing1_id)
-        del sba[self._id]
-        sba._commit()
-
         return SimpleRelation._on_destroy(self)
 
 class CassandraHide(SimpleRelation):
@@ -1304,11 +1293,6 @@ class CassandraHide(SimpleRelation):
     @classmethod
     def _unhide(cls, *a, **kw):
         return cls._uncreate(*a, **kw)
-
-class SavesByAccount(tdb_cassandra.View):
-    _use_db = True
-    _cf_name = 'SavesByAccount'
-    _connection_pool = 'main'
 
 class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
