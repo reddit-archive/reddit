@@ -3,8 +3,9 @@
         var form = $('#pref-otp'),
             newform = $('#pref-otp-qr'),
             placeholder = $('<div>'),
-            uri = ('otpauth://totp/' + r.config.logged + '@' +
-                   r.config.cur_domain + '?secret=' + secret)
+            uri = ('otpauth://totp/' + encodeURIComponent("/u/" +
+                    r.config.logged + " on " + r.config.cur_domain) +
+                   '?secret=' + secret)
 
         newform.find('#otp-secret-info').append(
             placeholder,
