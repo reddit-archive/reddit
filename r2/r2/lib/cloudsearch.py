@@ -550,7 +550,8 @@ def basic_query(query=None, bq=None, faceting=None, size=1000,
                                        response)
     finally:
         connection.close()
-        timer.stop()
+        if timer is not None:
+            timer.stop()
     
     return json.loads(response)
 
