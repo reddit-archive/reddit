@@ -1036,21 +1036,23 @@ def filter_links(links, filter_spam = False, multiple = True):
     return links if multiple else links[0]
 
 def link_duplicates(article):
-    from r2.models import Link, NotFound
-
     # don't bother looking it up if the link doesn't have a URL anyway
     if getattr(article, 'is_self', False):
         return []
 
+    return url_links(article.url, is_not = article._fullname)
+
+def url_links(url, is_not = None):
+    from r2.models import Link, NotFound
+
     try:
-        links = tup(Link._by_url(article.url, None))
+        links = tup(Link._by_url(url, None))
     except NotFound:
         links = []
 
-    duplicates = [ link for link in links
-                   if link._fullname != article._fullname ]
-
-    return duplicates
+    links = [ link for link in links
+                   if link._fullname != is_not ]
+    return links
 
 class TimeoutFunctionException(Exception):
     pass
