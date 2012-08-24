@@ -486,7 +486,7 @@ class ThingBase(object):
             return val
 
         # otherwise we'll assume that it's a utf-8 string
-        return val.decode('utf-8')
+        return val if isinstance(val, unicode) else val.decode('utf-8')
 
     @classmethod
     def _serialize_column(cls, attr, val):
