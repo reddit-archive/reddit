@@ -248,7 +248,9 @@ class Reddit(Templated):
 
         if is_single_subreddit:
             buttons += [NamedButton("banned", css_class="reddit-ban"),
-                        NamedButton("flair", css_class="reddit-flair")]
+                        NamedButton("flair", css_class="reddit-flair"),
+                        NamedButton('wikibanned', css_class = 'reddit-ban'),
+                        NamedButton('wikicontributors', css_class = 'reddit-contributors')]
 
         buttons += [NamedButton("log", css_class="reddit-moderationlog"),
                     NamedButton("unmoderated", css_class="reddit-unmoderated")]
@@ -2951,6 +2953,28 @@ class BannedList(UserList):
 
     def user_ids(self):
         return c.site.banned
+ 
+class WikiBannedList(BannedList):
+    """List of users banned from editing a given wiki"""
+    type = 'wikibanned'
+
+    def user_ids(self):
+        return c.site.wikibanned
+
+class WikiMayContributeList(UserList):
+    """List of users allowed to contribute to a given wiki"""
+    type = 'wikicontributor'
+
+    @property
+    def form_title(self):
+        return _('add a wiki contributor')
+
+    @property
+    def table_title(self):
+        return _('wiki page contributors')
+
+    def user_ids(self):
+        return c.site.wikicontributor
 
 
 class DetailsPage(LinkInfoPage):
