@@ -954,8 +954,120 @@ a.author { margin-right: 0.5em; }
     margin: 5px;
 }
 
-.wikipage {
+.wiki-page-content {
     margin: 15px;
+}
+
+.wikirevisionlisting .generic-table {
+    width: 100%;
+}
+
+.wikititle strong {
+    font-weight: bold;
+}
+
+.wikititle {
+    margin-left: 15px;
+    color: #666;
+}
+
+.wiki-page .md {
+    word-wrap: break-word;
+    max-width: none;
+}
+
+.wiki-page .fancy-settings .toggle {
+    display: inline-block;
+    padding-right: 15px;
+}
+
+.wiki-page input {
+    margin: 5px;
+    padding: 2px;
+    margin-left: 0;
+}
+
+.wiki-page-content {
+    margin-right: 315px;
+}
+.discussionlink {
+    display: inline-block;
+    margin-left: 15px;
+    padding-right: 50px;
+}
+
+.discussionlink a {
+    padding-left: 15px;
+}
+
+.wikirevisionlisting table tr td {
+    padding-right: 15px;
+}
+
+.wiki-page .pagelisting ul {
+    list-style: disc;
+    padding: 2px;
+    padding-left: 10px;
+}
+
+.wiki-page .revision {
+    transition: opacity 500ms;
+    -o-transition: opacity 500ms;
+    -ms-transition: opacity 500ms;
+    -moz-transition: opacity 500ms;
+    -webkit-transition: opacity 500ms;
+}
+
+.wiki-page .revision.hidden {
+    opacity: .5;
+}
+
+.wikiaction-revisions::before {
+    background-image: url(../report.png); /* SPRITE */
+}
+
+.wikiaction-pages::before {
+    background-image: url(../page_white_copy.png); /* SPRITE */
+}
+
+.pageactions {
+    display: inline-block;
+    font-size: larger;
+    margin-left: 25px;
+    border-radius: 5px;
+    border: 1px solid #8D9CAA;
+    vertical-align: middle;
+}
+
+.wikiaction {
+    display: inline-block;
+    margin: 2px;
+    padding-top: 2px;
+    padding-bottom: 3px;
+    border-radius: 3px;
+}
+
+.wikititle {
+    display: inline;
+    vertical-align: middle;
+}
+
+.pageactions .wikiaction {
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.pageactions .wikiaction:hover {
+    background-color: #CEE3F8;
+}
+
+.pageactions .wikiaction-current:hover {
+    background-color: #5F99CF;
+}
+
+.pageactions .wikiaction-current {
+    color: white;
+    background-color: #5F99CF;
 }
 
 /* organic listing */
@@ -1167,6 +1279,7 @@ a.author { margin-right: 0.5em; }
 .md em { font-style: italic; }
 .md strong em { font-style: italic; font-weight: bold }
 .md img { display: none }
+.md.wiki img { display: block }
 .md ol, .md ul { margin: 10px 2em; }
 .md ul { list-style: disc outside }
 .md ol { list-style: decimal outside }
@@ -4629,6 +4742,8 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-traffic:before,
 .icon-menu .reddit-reported:before,
 .icon-menu .reddit-spam:before,
+.icon-menu .wikiaction-pages:before,
+.icon-menu .wikiaction-revisions:before,
 .icon-menu .reddit-ban:before,
 .icon-menu .reddit-flair:before,
 .icon-menu .reddit-moderationlog:before,
@@ -5973,3 +6088,10 @@ tr.gold-accent + tr > td {
 }
 
 #create-app { display: none; }
+
+table.diff {font-size: small;}
+.diff_header {background-color:lightgrey}
+.diff_next {background-color:lightgrey}
+.diff_add {background-color:lightgreen}
+.diff_chg {background-color:yellow}
+.diff_sub {background-color:lightcoral}
