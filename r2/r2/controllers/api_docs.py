@@ -137,6 +137,9 @@ class ApidocsController(RedditController):
                         del docs['extensions']
                 docs['uri'] = uri
 
+                oauth_perms = getattr(func, 'oauth2_perms', {})
+                docs['oauth_scopes'] = oauth_perms.get('allowed_scopes', [])
+
                 # add every variant to the index -- the templates will filter
                 # out variants in the long-form documentation
                 for variant in chain([uri], docs.get('uri_variants', [])):
@@ -147,10 +150,12 @@ class ApidocsController(RedditController):
     def GET_docs(self):
         # controllers to gather docs from.
         from r2.controllers.api import ApiController, ApiminimalController
+        from r2.controllers.apiv1 import APIv1Controller
         from r2.controllers.front import FrontController
         from r2.controllers import listingcontroller
 
         api_controllers = [
+            (APIv1Controller, '/api/v1'),
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
             (FrontController, '')

@@ -45,10 +45,13 @@
           <a href="#section_${section}" class="section">${section_info[section]['title']}</a>
             <ul>
               %for uri in sorted(api[section]):
-                <% methods = sorted(api[section][uri].keys()) %>
-                <li>
+                <%
+                   methods = sorted(api[section][uri].keys())
+                   has_oauth = any(api[section][uri][method]['oauth_scopes']
+                                   for method in methods)
+                %>
+                <li class="${'supports-oauth' if has_oauth else ''}">
                   <a href="#${api_method_id(uri, methods[0])}">${api_uri(uri)}</a>
-                    &nbsp; <span class="gray">(${', '.join(methods)})</span>
                 </li>
               %endfor
             </ul>
@@ -99,6 +102,13 @@
               %if 'extensions' in docs:
                 <span class="extensions">
                   [ ${' | '.join('.'+extension for extension in docs['extensions'])} ]
+                </span>
+              %endif
+              %if docs['oauth_scopes']:
+                <span class="oauth-scope-list">
+                  %for scope in docs['oauth_scopes']:
+                    <span class="oauth-scope">${scope}</span>
+                  %endfor
                 </span>
               %endif
             </h3>

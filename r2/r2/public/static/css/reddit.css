@@ -5587,6 +5587,7 @@ tr.gold-accent + tr > td {
 }
 
 .api-help .toc a {
+    display: block;
     color: #8EB0D2;
 }
 
@@ -5603,12 +5604,40 @@ tr.gold-accent + tr > td {
     color: #8EB0D2;
 }
 
+.api-help .toc li.supports-oauth a { background: none; }
+.api-help .toc li.supports-oauth a:after {
+    content: 'oauth';
+    display: inline-block;
+    position: absolute;
+    right: 0;
+    font-size: .75em; 
+    background: #29440e;
+    color: #ddc;
+    padding: 0 2px;
+    margin-left: 2px;
+    border-radius: 2px;
+}
+
 .api-help .endpoint em.placeholder {
     color: #369;
 }
 
 .api-help .endpoint, .api-help .section .description {
     margin-bottom: 1.5em;
+}
+
+.api-help .oauth-scope-list { display: inline; margin-left: 1em; }
+
+.api-help .oauth-scope {
+    display: inline-block;
+    margin-left: 0.5em;
+    font-size: .75em; 
+    font-weight: normal;
+    vertical-align: bottom;
+    background: #577439;
+    color: #fbfbf9;
+    padding: 2px 6px;
+    border-radius: 2px;
 }
 
 .api-help .methods h2 {
