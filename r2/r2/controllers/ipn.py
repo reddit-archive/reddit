@@ -36,7 +36,7 @@ from reddit_base import RedditController
 
 def get_blob(code):
     key = "payment_blob-" + code
-    with g.make_lock("payment_blob_lock-" + code):
+    with g.make_lock("payment_blob", "payment_blob_lock-" + code):
         blob = g.hardcache.get(key)
         if not blob:
             raise NotFound("No payment_blob-" + code)

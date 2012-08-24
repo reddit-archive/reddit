@@ -288,10 +288,8 @@ class Globals(object):
             self.live_config = extract_live_config(parser, self.plugins)
             self.throttles = tuple()  # immutable since it's not real
 
-        self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
-        self.make_lock = make_lock_factory(self.lock_cache)
-
         self.memcache = CMemcache(self.memcaches, num_clients = num_mc_clients)
+        self.lock_cache = CMemcache(self.lockcaches, num_clients=num_mc_clients)
 
         self.stats = Stats(self.config.get('statsd_addr'),
                            self.config.get('statsd_sample_rate'))
@@ -300,6 +298,8 @@ class Globals(object):
             self.stats.pg_before_cursor_execute)
         event.listens_for(engine.Engine, 'after_cursor_execute')(
             self.stats.pg_after_cursor_execute)
+
+        self.make_lock = make_lock_factory(self.lock_cache, self.stats)
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")

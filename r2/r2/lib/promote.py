@@ -410,7 +410,7 @@ def new_campaign(link, dates, bid, sr):
     campaign = PromoCampaign._new(link, sr_name, bid, dates[0], dates[1])
     # note indx in link.campaigns is the Thing id now 
     indx = campaign._id
-    with g.make_lock(campaign_lock(link)):
+    with g.make_lock("promo_campaign", campaign_lock(link)):
         # get a copy of the attr so that it'll be
         # marked as dirty on the next write.
         campaigns = getattr(link, "campaigns", {}).copy()
@@ -449,7 +449,7 @@ def edit_campaign(link, campaign_id, dates, bid, sr):
         campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id, commit=True)
 
         # dual-write to link attribute in case we need to roll back
-        with g.make_lock(campaign_lock(link)):
+        with g.make_lock("promo_campaign", campaign_lock(link)):
             campaigns = getattr(link, 'campaigns', {}).copy()
             campaigns[campaign_id] = (dates[0], dates[1], bid, sr_name, campaign.trans_id)
             link.campaigns = campaigns
@@ -480,7 +480,7 @@ def complimentary(username, value = True):
     a._commit()
 
 def delete_campaign(link, index):
-    with g.make_lock(campaign_lock(link)):
+    with g.make_lock("promo_campaign", campaign_lock(link)):
         campaigns = getattr(link, "campaigns", {}).copy()
         if index in campaigns:
             PromotionWeights.delete_unfinished(link, index)
@@ -557,7 +557,7 @@ def auth_campaign(link, campaign_id, user, pay_id):
     campaign._commit()
 
     # dual-write update to link attribute in case we need to roll back
-    with g.make_lock(campaign_lock(link)):
+    with g.make_lock("promo_campaign", campaign_lock(link)):
         campaigns = getattr(link, "campaigns", {}).copy()
         if campaign_id in campaigns:
             campaigns[campaign_id] = (campaign.start_date, campaign.end_date,

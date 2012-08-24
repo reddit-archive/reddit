@@ -160,7 +160,7 @@ class ThingMeta(type):
                     extra_creation_arguments.update(creation_args)
 
                 log.warning("Creating Cassandra Column Family %s" % (cf_name,))
-                with make_lock('cassandra_schema'):
+                with make_lock("cassandra_schema", 'cassandra_schema'):
                     manager.create_column_family(keyspace, cf_name,
                                                  comparator_type = cls._compare_with,
                                                  super=getattr(cls, '_super', False),

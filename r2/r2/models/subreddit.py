@@ -97,7 +97,7 @@ class Subreddit(Thing, Printable):
     @classmethod
     def _new(cls, name, title, author_id, ip, lang = g.lang, type = 'public',
              over_18 = False, **kw):
-        with g.make_lock('create_sr_' + name.lower()):
+        with g.make_lock("create_sr", 'create_sr_' + name.lower()):
             try:
                 sr = Subreddit._by_name(name)
                 raise SubredditExists

@@ -56,7 +56,7 @@ def add_comments(comments):
 
     for link_id, coms in link_map.iteritems():
         try:
-            with g.make_lock(lock_key(link_id)):
+            with g.make_lock("comment_tree", lock_key(link_id)):
                 add_comments_nolock(link_id, coms)
         except:
             g.log.exception(
@@ -154,7 +154,7 @@ def update_comment_votes(comments, write_consistency_level = None):
                                           write_consistency_level = write_consistency_level)
 
 def delete_comment(comment):
-    with g.make_lock(lock_key(comment.link_id)):
+    with g.make_lock("comment_tree", lock_key(comment.link_id)):
         cids, comment_tree, depth, num_children = link_comments(comment.link_id)
 
         # only completely remove comments with no children
@@ -260,7 +260,7 @@ def link_comments_and_sort(link_id, sort):
         parents = {}
 
     if not parents and len(cids) > 0:
-        with g.make_lock(lock_key(link_id)):
+        with g.make_lock("comment_tree", lock_key(link_id)):
             # reload from the cache so the sorter and parents are
             # maximally consistent
             r = g.permacache.get(comments_key(link_id))
@@ -285,7 +285,7 @@ def link_comments(link_id, _update=False):
         # This operation can take longer than most (note the inner
         # locks) better to time out request temporarily than to deal
         # with an inconsistent tree
-        with g.make_lock(lock_key(link_id), timeout=180):
+        with g.make_lock("comment_tree", lock_key(link_id), timeout=180):
             r = _load_link_comments(link_id)
             # rebuild parent dict
             cids, cid_tree, depth, num_children, num_comments = r
@@ -360,15 +360,15 @@ def messages_lock_key(user_id):
 
 def add_message(message):
     # add the message to the author's list and the recipient
-    with g.make_lock(messages_lock_key(message.author_id)):
+    with g.make_lock("message_tree", messages_lock_key(message.author_id)):
         add_message_nolock(message.author_id, message)
     if message.to_id:
-        with g.make_lock(messages_lock_key(message.to_id)):
+        with g.make_lock("message_tree", messages_lock_key(message.to_id)):
             add_message_nolock(message.to_id, message)
     # Messages to a subreddit should end in its inbox. Messages
     # FROM a subreddit (currently, just ban messages) should NOT
     if message.sr_id and not message.from_sr:
-        with g.make_lock(sr_messages_lock_key(message.sr_id)):
+        with g.make_lock("modmail_tree", sr_messages_lock_key(message.sr_id)):
             add_sr_message_nolock(message.sr_id, message)
 
 

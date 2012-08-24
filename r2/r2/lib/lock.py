@@ -41,10 +41,13 @@ class MemcacheLock(object):
     attempt to grab a lock by 'adding' the lock name. If the response
     is True, we have the lock. If it's False, someone else has it."""
 
-    def __init__(self, key, cache, time = 30, timeout = 30, verbose=True):
+    def __init__(self, stats, group, key, cache,
+                 time=30, timeout=30, verbose=True):
         # get a thread-local set of locks that we own
         self.locks = locks.locks = getattr(locks, 'locks', set())
 
+        self.stats = stats
+        self.group = group
         self.key = key
         self.cache = cache
         self.time = time
@@ -60,6 +63,9 @@ class MemcacheLock(object):
         #if this thread already has this lock, move on
         if self.key in self.locks:
             return
+
+        timer = self.stats.get_timer("lock_wait")
+        timer.start()
 
         #try and fetch the lock, looping until it's available
         while not self.cache.add(self.key, my_info, time = self.time):
@@ -79,6 +85,8 @@ class MemcacheLock(object):
 
             sleep(.01)
 
+        timer.stop(subname=self.group)
+
         #tell this thread we have this lock so we can avoid deadlocks
         #of requests for the same lock in the same thread
         self.locks.add(self.key)
@@ -90,7 +98,7 @@ class MemcacheLock(object):
             self.cache.delete(self.key)
             self.locks.remove(self.key)
 
-def make_lock_factory(cache):
-    def factory(key, **kw):
-        return MemcacheLock(key, cache, **kw)
+def make_lock_factory(cache, stats):
+    def factory(group, key, **kw):
+        return MemcacheLock(stats, group, key, cache, **kw)
     return factory

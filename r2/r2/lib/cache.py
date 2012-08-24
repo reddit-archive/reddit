@@ -598,7 +598,7 @@ class CassandraCacheChain(CacheChain):
 
     def mutate(self, key, mutation_fn, default = None, willread=True):
         """Mutate a Cassandra key as atomically as possible"""
-        with self.make_lock('mutate_%s' % key):
+        with self.make_lock("permacache_mutate", 'mutate_%s' % key):
             # we have to do some of the the work of the cache chain
             # here so that we can be sure that if the value isn't in
             # memcached (an atomic store), we fetch it from Cassandra
