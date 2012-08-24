@@ -165,7 +165,10 @@ class ErrorController(RedditController):
                      c.response.content = str(code)
                 return c.response
             elif c.render_style == "api":
-                c.response.content = "{\"error\": %s}" % code
+                if 'usable_error_content' in request.environ:
+                    c.response.content = request.environ['usable_error_content']
+                else:
+                    c.response.content = "{\"error\": %s}" % code
                 return c.response
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)
