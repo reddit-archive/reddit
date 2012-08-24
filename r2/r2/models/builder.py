@@ -29,6 +29,7 @@ from pylons import g
 from pylons.i18n import _
 
 import subreddit
+import datetime
 
 from r2.lib.comment_tree import moderator_messages, sr_conversation, conversation
 from r2.lib.comment_tree import user_messages, subreddit_messages
@@ -38,6 +39,8 @@ from r2.lib import utils
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from copy import deepcopy
+
+from r2.models.wiki import WIKI_RECENT_DAYS
 
 import time
 from admintools import compute_votes, admintools, ip_span
@@ -522,6 +525,29 @@ class SearchBuilder(IDBuilder):
             return False
         else:
             return True
+
+class WikiRevisionBuilder(QueryBuilder):
+    def wrap_items(self, items):
+        types = {}
+        wrapped = []
+        for item in items:
+            w = self.wrap(item)
+            types.setdefault(w.render_class, []).append(w)
+            wrapped.append(w)
+        
+        user = c.user
+        for cls in types.keys():
+            cls.add_props(user, types[cls])
+
+        return wrapped
+    
+    def keep_item(self, item):
+        return not item.is_hidden
+
+class WikiRecentRevisionBuilder(WikiRevisionBuilder):
+    def must_skip(self, item):
+        return (datetime.datetime.now(g.tz) - item.date).days >= WIKI_RECENT_DAYS
+        
 
 def empty_listing(*things):
     parent_name = None
