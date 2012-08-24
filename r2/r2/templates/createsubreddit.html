@@ -74,7 +74,7 @@
     %endif
     <div id="public_description_conflict_box" style="display: none">
         <div id="public_description_conflict_diff"></div>
-        ${UserText(None, text ="", editable = True, creating = True, name="public_description_conflict_old", have_form = False)}
+        ${UserText(None, text="", editable=True, creating=True, name="public_description_conflict_old", have_form=False)}
     </div>
     ${error_field("CONFLICT", "public_description")}
   </%utils:line_field>
@@ -82,13 +82,13 @@
   <%utils:line_field title="${_('sidebar')}" css_class="usertext"
                      description="${_('shown in the sidebar of your subreddit. 5120 characters max.')}">
     %if thing.site and thing.site.description:
-     ${UserText(None, text = thing.site.description or "", editable = True, creating = True, name="description", have_form = False)}
+     ${UserText(None, text=thing.site.description or "", editable=True, creating=True, name="description", have_form=False)}
     %else:
-     ${UserText(None, text = "", creating = True, name="description", have_form = False)}
+     ${UserText(None, text="", creating=True, name="description", have_form=False)}
     %endif
     <div id="description_conflict_box" style="display: none">
         <div id="description_conflict_diff"></div>
-        ${UserText(None, text ="", editable = True, creating = True, name="description_conflict_old", have_form = False)}
+        ${UserText(None, text="", editable=True, creating=True, name="description_conflict_old", have_form=False)}
     </div>
     ${error_field("CONFLICT", "description")}
   </%utils:line_field>
@@ -152,7 +152,7 @@
     <div class="delete-field">
       <table>
         ${utils.radio_type('wikimode', "disabled", _("disabled"),
-                           _("Wiki is disabled for all users execept mods"),
+                           _("Wiki is disabled for all users except mods"),
                            (not thing.site or thing.site.wikimode == 'disabled'))}
         ${utils.radio_type('wikimode', "modonly", _("mod editing"),
                            _("Only mods or those on a pages edit list may edit"),
@@ -167,7 +167,7 @@
     <label for="wiki_edit_karma">${_('Subreddit karma required to edit and create wiki pages:')}</label>
         %if thing.site:
             <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" 
-                   value = "${getattr(thing.site, 'wiki_edit_karma', 100)}"/>
+                   value = "${thing.site.wiki_edit_karma}"/>
         %else:
             <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" value="100" />
         %endif
@@ -176,7 +176,7 @@
     <label for="wiki_edit_age">${_('Account age (days) required to edit and create wiki pages:')}</label>
         %if thing.site:
             <input id="wiki_edit_age" type="text" name="wiki_edit_age" 
-                   value = "${getattr(thing.site, 'wiki_edit_age', 0)}"/>
+                   value = "${thing.site.wiki_edit_age}"/>
         %else:
             <input id="wiki_edit_age" type="text" name="wiki_edit_age" value="0" />
         %endif

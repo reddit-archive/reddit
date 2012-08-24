@@ -37,10 +37,15 @@ from r2.lib.cache import sgm
 from r2.lib.strings import strings, Score
 from r2.lib.filters import _force_unicode
 from r2.lib.db import tdb_cassandra
+from r2.models.wiki import WikiPage
+from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 
 import math
 
+from r2.lib.utils import set_last_modified
+from r2.models.wiki import WikiPage
+from md5 import md5
 import os.path
 import random
 
@@ -60,8 +65,6 @@ class Subreddit(Thing, Printable):
                      header_size = None,
                      header_title = "",
                      allow_top = False, # overridden in "_new"
-                     public_description = '',
-                     description = '',
                      images = {},
                      reported = 0,
                      valid_votes = 0,
