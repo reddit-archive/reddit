@@ -1360,7 +1360,7 @@ def constant_time_compare(actual, expected):
     """
     Returns True if the two strings are equal, False otherwise
     
-    The time taken is dependent on the number of charaters provided
+    The time taken is dependent on the number of characters provided
     instead of the number of characters that match.
     """
     actual_len   = len(actual)
