@@ -19,12 +19,13 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+import os
 
 from r2.lib.translation import I18N_PATH
 from r2.lib.plugin import PluginLoader
 from r2.lib import js
 
-print 'POTFILE := ' + I18N_PATH + 'r2.pot'
+print 'POTFILE := ' + os.path.join(I18N_PATH, 'r2.pot')
 
 plugins = list(PluginLoader.available_plugins())
 print 'PLUGINS := ' + ' '.join(plugin.name for plugin in plugins)
