@@ -138,6 +138,12 @@ menu =   MenuHandler(hot          = _('hot'),
                      log          = _("moderation log"),
                      modqueue     = _("moderation queue"),
                      unmoderated  = _("unmoderated links"),
+                     
+                     wikibanned        = _("ban wiki contributors"),
+                     wikicontributors  = _("add wiki contributors"),
+                     
+                     wikirecentrevisions = _("recent wiki revisions"),
+                     wikipageslist = _("wiki page list"),
 
                      popular      = _("popular"),
                      create       = _("create"),

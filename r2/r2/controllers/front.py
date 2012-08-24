@@ -871,7 +871,9 @@ class FrontController(RedditController):
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
                     Subreddit.submit_sr_names(None))
-
+        
+        never_show_self = request.get.get('no_self')
+        
         return FormPage(_("submit"),
                         show_sidebar = True,
                         page_classes=['submit-page'],
@@ -882,6 +884,7 @@ class FrontController(RedditController):
                                         subreddits = sr_names,
                                         captcha=captcha,
                                         resubmit=resubmit,
+                                        never_show_self = never_show_self,
                                         then = then)).render()
 
     def GET_frame(self):
@@ -1191,7 +1194,7 @@ class FormsController(RedditController):
         returns their user name"""
         c.response_content_type = 'text/plain'
         if c.user_is_loggedin:
-            perm = str(g.allow_wiki_editing and c.user.can_wiki())
+            perm = str(c.user.can_wiki())
             c.response.content = c.user.name + "," + perm
         else:
             c.response.content = ''

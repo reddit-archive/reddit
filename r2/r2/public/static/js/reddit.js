@@ -105,8 +105,8 @@ function form_error(form) {
     }
 }
 
-function simple_post_form(form, where, fields, block) {
-    $.request(where, get_form_fields(form, fields), null, block, 
+function simple_post_form(form, where, fields, block, callback) {
+    $.request(where, get_form_fields(form, fields), callback, block, 
               "json", false, form_error(form));
     return false;
 };
@@ -157,7 +157,7 @@ function deleteRow(elem) {
 
 /* general things */
 
-function change_state(elem, op, callback, keep) {
+function change_state(elem, op, callback, keep, post_callback) {
     var form = $(elem).parents("form");
     /* look to see if the form has an id specified */
     var id = form.find('input[name="id"]');
@@ -166,7 +166,7 @@ function change_state(elem, op, callback, keep) {
     else /* fallback on the parent thing */
         id = $(elem).thing_id();
 
-    simple_post_form(form, op, {id: id});
+    simple_post_form(form, op, {id: id}, undefined, post_callback);
     /* call the callback first before we mangle anything */
     if (callback) {
         callback(form.length ? form : elem, op);

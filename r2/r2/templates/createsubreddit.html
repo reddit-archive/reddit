@@ -72,6 +72,11 @@
     %else:
      ${UserText(None, text="", creating=True, name="public_description", have_form=False)}
     %endif
+    <div id="public_description_conflict_box" style="display: none">
+        <div id="public_description_conflict_diff"></div>
+        ${UserText(None, text ="", editable = True, creating = True, name="public_description_conflict_old", have_form = False)}
+    </div>
+    ${error_field("CONFLICT", "public_description")}
   </%utils:line_field>
 
   <%utils:line_field title="${_('sidebar')}" css_class="usertext"
@@ -81,7 +86,18 @@
     %else:
      ${UserText(None, text = "", creating = True, name="description", have_form = False)}
     %endif
+    <div id="description_conflict_box" style="display: none">
+        <div id="description_conflict_diff"></div>
+        ${UserText(None, text ="", editable = True, creating = True, name="description_conflict_old", have_form = False)}
+    </div>
+    ${error_field("CONFLICT", "description")}
   </%utils:line_field>
+  
+  
+  %if thing.site:
+        <input type="hidden" name="prev_public_description_id" value="${thing.site.prev_public_description_id}"/>
+        <input type="hidden" name="prev_description_id" value="${thing.site.prev_description_id}"/>
+  %endif
 
   <%utils:line_field title="${_('language')}">
     <div class="delete-field">
@@ -132,7 +148,41 @@
       </table>
     </div>
   </%utils:line_field>
-
+  <%utils:line_field title="${_('wiki')}">
+    <div class="delete-field">
+      <table>
+        ${utils.radio_type('wikimode', "disabled", _("disabled"),
+                           _("Wiki is disabled for all users execept mods"),
+                           (not thing.site or thing.site.wikimode == 'disabled'))}
+        ${utils.radio_type('wikimode', "modonly", _("mod editing"),
+                           _("Only mods or those on a pages edit list may edit"),
+                           (thing.site and thing.site.wikimode == 'modonly'))}
+        ${utils.radio_type('wikimode', "anyone", _("anyone"),
+                           _("Anyone who can submit to the subreddit may edit"),
+                           (thing.site and thing.site.wikimode == 'anyone'))}
+      </table>
+    </div>
+    <div class="usertext-edit">
+    <div class="delete-field">
+    <label for="wiki_edit_karma">${_('Subreddit karma required to edit and create wiki pages:')}</label>
+        %if thing.site:
+            <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" 
+                   value = "${getattr(thing.site, 'wiki_edit_karma', 100)}"/>
+        %else:
+            <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" value="100" />
+        %endif
+    </div>
+    <div class="delete-field">
+    <label for="wiki_edit_age">${_('Account age (days) required to edit and create wiki pages:')}</label>
+        %if thing.site:
+            <input id="wiki_edit_age" type="text" name="wiki_edit_age" 
+                   value = "${getattr(thing.site, 'wiki_edit_age', 0)}"/>
+        %else:
+            <input id="wiki_edit_age" type="text" name="wiki_edit_age" value="0" />
+        %endif
+    </div>
+    </div>
+  </%utils:line_field>
   <%utils:line_field title="${_('other options')}">
     <div class="delete-field">
       <ul>

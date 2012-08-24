@@ -282,6 +282,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "analytics.js",
     "flair.js",
     "interestbar.js",
+    "wiki.js",
     "reddit.js",
     "apps.js",
 )

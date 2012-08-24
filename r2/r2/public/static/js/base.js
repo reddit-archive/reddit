@@ -15,4 +15,5 @@ $(function() {
     r.ui.HelpBubble.init()
     r.interestbar.init()
     r.apps.init()
+    r.wiki.init()
 })

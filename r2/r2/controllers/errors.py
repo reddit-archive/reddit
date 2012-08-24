@@ -20,8 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from paste.httpexceptions import HTTPForbidden
+from paste.httpexceptions import HTTPForbidden, HTTPError
 from r2.lib.utils import Storage, tup
+from pylons import request
 from pylons.i18n import _
 from copy import copy
 
@@ -98,6 +99,7 @@ error_list = dict((
         ('OAUTH2_INVALID_SCOPE', _('invalid scope requested')),
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
         ('CONFIRM', _("please confirm the form")),
+        ('CONFLICT', _("conflict error while saving")),
         ('NO_API', _('cannot perform this action via the API')),
         ('DOMAIN_BANNED', _('%(domain)s is not allowed on reddit: %(reason)s')),
         ('NO_OTP_SECRET', _('you must enable two-factor authentication')),
@@ -110,12 +112,13 @@ errors = Storage([(e, e) for e in error_list.keys()])
 
 class Error(object):
 
-    def __init__(self, name, i18n_message, msg_params, field = None):
+    def __init__(self, name, i18n_message, msg_params, field=None, code=None):
         self.name = name
         self.i18n_message = i18n_message
         self.msg_params = msg_params
         # list of fields in the original form that caused the error
         self.fields = tup(field) if field else []
+        self.code = code
         
     @property
     def message(self):
@@ -151,10 +154,10 @@ class ErrorSet(object):
     def __len__(self):
         return len(self.errors)
         
-    def add(self, error_name, msg_params = {}, field = None):
-        msg = error_list[error_name]
+    def add(self, error_name, msg_params={}, field=None, code=None):
+        msg = error_list.get(error_name)
         for field_name in tup(field):
-            e = Error(error_name, msg, msg_params, field = field_name)
+            e = Error(error_name, msg, msg_params, field=field_name, code=code)
             self.errors[(error_name, field_name)] = e
 
     def remove(self, pair):
@@ -162,6 +165,13 @@ class ErrorSet(object):
         from the errors list."""
         if self.errors.has_key(pair):
             del self.errors[pair]
+
+class WikiError(HTTPError):
+    def __init__(self, code, reason=None, **data):
+        self.code = code
+        data['reason'] = self.explanation = reason or 'UNKNOWN_ERROR'
+        self.error_data = data
+        HTTPError.__init__(self)
 
 class ForbiddenError(HTTPForbidden):
     def __init__(self, error):

@@ -1040,9 +1040,9 @@ def link_duplicates(article):
     if getattr(article, 'is_self', False):
         return []
 
-    return url_links(article.url, is_not = article._fullname)
+    return url_links(article.url, exclude = article._fullname)
 
-def url_links(url, is_not = None):
+def url_links(url, exclude=None):
     from r2.models import Link, NotFound
 
     try:
@@ -1051,7 +1051,7 @@ def url_links(url, is_not = None):
         links = []
 
     links = [ link for link in links
-                   if link._fullname != is_not ]
+                   if link._fullname != exclude ]
     return links
 
 class TimeoutFunctionException(Exception):

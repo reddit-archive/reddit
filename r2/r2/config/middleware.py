@@ -73,7 +73,10 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         exception = environ.get('r2.controller.exception')
         if exception:
             d['explanation'] = exception.explanation
-
+            error_data = getattr(exception, 'error_data', None)
+            if error_data:
+                environ['extra_error_data'] = error_data
+        
         if environ.get('REDDIT_CNAME'):
             d['cnameframe'] = 1
         if environ.get('REDDIT_NAME'):

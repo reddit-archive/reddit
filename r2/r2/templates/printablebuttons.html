@@ -411,6 +411,7 @@
 
 <%def name="ynbutton(title, executed, op, callback = 'null', 
                      question = None,
+                     post_callback = 'null',
                      format = '%(link)s',
                      format_arg = 'link',
                      hidden_data = {},
@@ -434,7 +435,7 @@
     <span class="option error">
       ${question}
       &#32;<a href="javascript:void(0)" class="yes"
-         onclick='change_state(this, "${op}", ${callback})'>
+         onclick='change_state(this, "${op}", ${callback}, undefined, ${post_callback})'>
         ${_("yes")}
       </a>&#32;/&#32;
       <a href="javascript:void(0)" class="no"

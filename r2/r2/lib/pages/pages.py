@@ -191,7 +191,30 @@ class Reddit(Templated):
             self._content = content
 
         self.toolbars = self.build_toolbars()
-
+    
+    def wiki_actions_menu(self, moderator=False):
+        buttons = []
+        
+        buttons.append(NamedButton("wikirecentrevisions", 
+                                   css_class="wikiaction-revisions",
+                                   dest="revisions"))
+        
+        buttons.append(NamedButton("wikipageslist", 
+                           css_class="wikiaction-pages",
+                           dest="pages"))
+        if moderator:
+            buttons += [NamedButton('wikibanned', css_class = 'reddit-ban'),
+            NamedButton('wikicontributors', css_class = 'reddit-contributors')]
+                           
+        return SideContentBox(_('wiki tools'),
+                      [NavMenu(buttons,
+                               type="flat_vert",
+                               base_path="/wiki/",
+                               css_class="icon-menu",
+                               separator="")],
+                      _id="wikiactions",
+                      collapsible=True)
+    
     def sr_admin_menu(self):
         buttons = []
         is_single_subreddit = not isinstance(c.site, (ModSR, MultiReddit))
@@ -263,7 +286,6 @@ class Reddit(Templated):
         if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
             srs = Subreddit._byID(c.site.sr_ids,data=True,
                                   return_dict=False)
-
             if c.user_is_admin or c.site.is_moderator(c.user):
                 ps.append(self.sr_admin_menu())
 
@@ -273,12 +295,17 @@ class Reddit(Templated):
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
-            if c.user_is_loggedin and (c.user_is_admin or
-                                       c.site.is_moderator(c.user)):
+            moderator = c.user_is_loggedin and (c.user_is_admin or 
+                                          c.site.is_moderator(c.user))
+            if c.show_wiki_actions:
+                ps.append(self.wiki_actions_menu(moderator=moderator))
+            if moderator:
                 ps.append(self.sr_admin_menu())
             if (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads:
                 ps.append(Ads())
             no_ads_yet = False
+        elif c.show_wiki_actions:
+            ps.append(self.wiki_actions_menu())
 
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
         if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
@@ -387,6 +414,13 @@ class Reddit(Templated):
 
             if c.user_is_loggedin:
                 main_buttons.append(NamedButton('saved', False))
+
+            mod = False
+            if c.user_is_loggedin:
+                mod = bool(c.user_is_admin or c.site.is_moderator(c.user))
+            if c.site.wikimode != 'disabled' or mod:
+                if not g.wiki_disabled:
+                    main_buttons.append(NavButton('wiki', 'wiki'))
 
         more_buttons = []
 
@@ -1888,7 +1922,7 @@ class FrameToolbar(Wrapped):
 class NewLink(Templated):
     """Render the link submission form"""
     def __init__(self, captcha = None, url = '', title= '', text = '', selftext = '',
-                 subreddits = (), then = 'comments', resubmit=False):
+                 subreddits = (), then = 'comments', resubmit=False, never_show_self=False):
 
         self.show_link = self.show_self = False
 
@@ -1898,7 +1932,7 @@ class NewLink(Templated):
             self.show_link = True
         if c.default_sr or c.site.link_type != 'link':
             tabs.append(('text', ('text-desc', 'text-field')))
-            self.show_self = True
+            self.show_self = not never_show_self
 
         if self.show_self and self.show_link:
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))

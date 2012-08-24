@@ -31,6 +31,8 @@ from pylons.i18n import _
 import random as rand
 from r2.lib.filters import safemarkdown, unsafe
 
+import json
+
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll get caught and
     # the stack trace won't be presented to the user in production
@@ -165,10 +167,8 @@ class ErrorController(RedditController):
                      c.response.content = str(code)
                 return c.response
             elif c.render_style == "api":
-                if 'usable_error_content' in request.environ:
-                    c.response.content = request.environ['usable_error_content']
-                else:
-                    c.response.content = "{\"error\": %s}" % code
+                data = request.environ.get('extra_error_data', {'error': code})
+                c.response.content = json.dumps(data)
                 return c.response
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)

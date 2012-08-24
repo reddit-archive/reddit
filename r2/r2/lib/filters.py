@@ -42,6 +42,8 @@ SC_ON = "<!-- SC_ON -->"
 MD_START = '<div class="md">'
 MD_END = '</div>'
 
+WIKI_MD_START = '<div class="md wiki">'
+WIKI_MD_END = '</div>'
 
 def python_websafe(text):
     return text.replace('&', "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
@@ -175,16 +177,21 @@ class SouptestSaxHandler(ContentHandler):
 markdown_ok_tags = {
     'div': ('class'),
     'a': set(('href', 'title', 'target', 'nofollow')),
-    'table': ("align", ),
-    'th': ("align", ),
-    'td': ("align", ),
+    
     }
+
 markdown_boring_tags =  ('p', 'em', 'strong', 'br', 'ol', 'ul', 'hr', 'li',
                          'pre', 'code', 'blockquote', 'center',
-                         'tbody', 'thead', 'tr', 'sup', 'del',
-                         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
+                          'sup', 'del', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',)
+
+markdown_user_tags = ('table', 'th', 'tr', 'td', 'tbody', 'img',
+                     'tbody', 'thead', 'tr', 'tfoot', 'caption')
+
 for bt in markdown_boring_tags:
     markdown_ok_tags[bt] = ()
+
+for bt in markdown_user_tags:
+    markdown_ok_tags[bt] = ('colspan', 'rowspan', 'cellspacing', 'cellpadding', 'align', 'scope')
 
 markdown_xhtml_dtd_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
@@ -229,6 +236,33 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     else:
         return SC_OFF + text + SC_ON
 
+def wikimarkdown(text):
+    from r2.lib.cssfilter import legacy_s3_url
+    
+    def img_swap(tag):
+        name = tag.get('src')
+        if c.site.images.has_key(name):
+            url = c.site.images[name]
+            url = legacy_s3_url(url, c.site)
+            tag['src'] = url
+        else:
+            tag.extract()
+    
+    nofollow = True
+    target = None
+    
+    text = snudown.markdown(_force_utf8(text), nofollow, target,
+                            renderer=snudown.RENDERER_WIKI, enable_toc=True)
+    
+    # TODO: We should test how much of a load this adds to the app
+    soup = BeautifulSoup(text)
+    images = soup.findAll('img')
+    
+    if images:
+        [img_swap(image) for image in images]
+        text = str(soup)
+    
+    return SC_OFF + WIKI_MD_START + text + WIKI_MD_END + SC_ON
 
 def keep_space(text):
     text = websafe(text)
