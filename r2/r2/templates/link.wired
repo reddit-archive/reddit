@@ -34,7 +34,7 @@
     </td>
 <tr><td class="small byline">${thing.score} ${ungettext("point", "points", thing.score)}
         by &nbsp; <a target="reddit_pop" class="user" href="http://${get_domain()}/user/${thing.author.name}">${thing.author.name}</a>
-        &nbsp [<a target="reddit_pop" class="comments" href="http://${get_domain(subreddit=False)}${thing.permalink}">
+        &nbsp; [<a target="reddit_pop" class="comments" href="http://${get_domain(subreddit=False)}${thing.permalink}">
         ${thing.num_comments} ${ungettext("comment", "comments", thing.num_comments or 0)}</a>]
      <td>
 </tr>
