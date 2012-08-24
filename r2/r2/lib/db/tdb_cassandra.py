@@ -1465,6 +1465,12 @@ class View(ThingBase):
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
+    
+    @classmethod
+    @will_write
+    def _remove(cls, key, columns):
+        cls._cf.remove(key, columns)
+        thing_cache.delete(cls._cache_key_id(key))
 
 class DenormalizedView(View):
     """Store the entire underlying object inside the View column."""
