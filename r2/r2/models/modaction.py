@@ -23,6 +23,7 @@
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
 from r2.models import Account, Subreddit, Link, Comment, Printable
+from r2.models.subreddit import DefaultSR
 from pycassa.system_manager import TIME_UUID_TYPE
 from uuid import UUID
 from pylons.i18n import _
@@ -161,7 +162,10 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
         # Split this off into separate function to check for valid actions?
         if not action in cls.actions:
             raise ValueError("Invalid ModAction: %s" % action)
-
+        
+        # Front page should insert modactions into the base sr
+        sr = sr._base if isinstance(sr, DefaultSR) else sr
+        
         kw = dict(sr_id36=sr._id36, mod_id36=mod._id36, action=action)
 
         if target:
