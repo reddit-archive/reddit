@@ -678,35 +678,6 @@ def get_scheduled(offset=0):
     return {'by_sr': by_sr, 'links': links, 'error_campaigns': error_campaigns}
 
 
-# The next two functions are being kept around for troubleshooting and can be
-# deleted when the link "campaigns" attribute is removed.
-def accepted_campaigns_old(offset=0):
-    now = promo_datetime_now(offset=offset)
-    campaigns = PromotionWeights.get_campaigns(now)
-    links = Link._by_fullname(set(x.thing_name for x in campaigns),
-                              data=True, return_dict=True)
-
-    for x in campaigns:
-        l = links[x.thing_name]
-        if not is_accepted(l):
-            continue
-        camp = getattr(l, "campaigns", {}).get(x.promo_idx)
-        if not camp or not camp[CAMPAIGN.trans_id]:
-            continue
-        yield (l, x.promo_idx, camp, x.weight)
-
-def get_scheduled_old(offset=0):
-    by_sr = {}
-    for l, index, camp, weight in accepted_campaigns_old(offset=offset):
-        sd, ed, bid, sr, trans_id = camp
-        if authorize.is_charged_transaction(trans_id, index):
-            by_sr.setdefault(sr, []).append((l, weight))
-    return by_sr
-# end of troubleshooting functions
-
-
-
-
 def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):
         user = Account._byID(l.author_id)
@@ -1026,30 +997,6 @@ def get_total_run(link):
     earliest = earliest.replace(tzinfo=None) - timezone_offset
     latest = latest.replace(tzinfo=None) - timezone_offset
 
-    return earliest, latest
-
-def get_total_run_old(link):
-    # a manually launched promo (e.g., sr discovery) might not have campaigns.
-    if not link.campaigns: 
-        latest = datetime.utcnow()
-        earliest = latest - timedelta(days=30)  # last month
-        return earliest, latest
-
-    earliest = None
-    latest = None
-    for start, end, bid, sr, trans_id in link.campaigns.itervalues():
-        if not trans_id:
-            continue
-
-        if not earliest or start < earliest:
-            earliest = start
-
-        if not latest or end > latest:
-            latest = end
-
-    # ugh this stuff is a mess. they're stored as "UTC" but actually mean UTC-5.
-    earliest = earliest.replace(tzinfo=None) - timezone_offset
-    latest = latest.replace(tzinfo=None) - timezone_offset
     return earliest, latest
 
 
