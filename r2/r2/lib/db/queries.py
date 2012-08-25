@@ -516,10 +516,10 @@ def user_query(kind, user_id, sort, time):
         q._filter(db_times[time])
     return make_results(q)
 
-@cached_query(SubredditQueryCache)
 def get_all_comments():
     """the master /comments page"""
-    return Comment._query(sort=desc('_date'))
+    q = Comment._query(sort = desc('_date'))
+    return make_results(q)
 
 def get_sr_comments(sr):
     return _get_sr_comments(sr._id)
@@ -757,7 +757,7 @@ def new_comment(comment, inbox_rels):
         if comment._deleted:
             job_key = "delete_items"
             job.append(get_sr_comments(sr))
-            m.delete(get_all_comments(), [comment])
+            job.append(get_all_comments())
         else:
             job_key = "insert_items"
             if comment._spam:
@@ -1093,7 +1093,6 @@ def _common_del_ban(things):
 
 
 def unban(things, insert=True):
-    query_cache_inserts = []
     query_cache_deletes = []
 
     by_srid, srs = _by_srid(things)
@@ -1131,8 +1130,7 @@ def unban(things, insert=True):
             query_cache_deletes.append([get_spam_links(sr), links])
 
         if insert and comments:
-            query_cache_inserts.append((get_all_comments(), comments))
-            add_queries([get_sr_comments(sr)],
+            add_queries([get_all_comments(), get_sr_comments(sr)],
                         insert_items=comments)
             query_cache_deletes.append([get_spam_comments(sr), comments])
 
@@ -1144,9 +1142,6 @@ def unban(things, insert=True):
             query_cache_deletes.append([get_spam_filtered_comments(sr), comments])
 
     with CachedQueryMutator() as m:
-        for q, inserts in query_cache_inserts:
-            m.insert(q, inserts)
-
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
 
@@ -1264,8 +1259,8 @@ def run_new_comments(limit=1000):
         fnames = [msg.body for msg in msgs]
 
         comments = Comment._by_fullname(fnames, data=True, return_dict=False)
-        with CachedQueryMutator() as m:
-            m.insert(get_all_comments(), comments)
+        add_queries([get_all_comments()],
+                    insert_items=comments)
 
         bysrid = _by_srid(comments, False)
         for srid, sr_comments in bysrid.iteritems():
