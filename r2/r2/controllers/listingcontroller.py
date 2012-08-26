@@ -220,6 +220,7 @@ class HotController(FixListing, ListingController):
     where = 'hot'
 
     def spotlight(self):
+        campaigns_by_link = {}
         if (self.requested_ad or
             not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors):
 
@@ -244,13 +245,22 @@ class HotController(FixListing, ListingController):
                     return _("requested campaign not eligible for display")
             else:
                 # no organic box on a hot page, then show a random promoted link
-                link_ids = randomized_promotion_list(c.user, c.site)
+                promo_tuples = randomized_promotion_list(c.user, c.site)
+                link_ids, camp_ids = zip(*promo_tuples) if promo_tuples else ([],[])
+
+                # save campaign-to-link mapping so campaign can be added to 
+                # link data later (for tracking.) Gotcha: assumes each link 
+                # appears for only campaign
+                campaigns_by_link = dict(promo_tuples)
 
             if link_ids:
                 res = wrap_links(link_ids, wrapper=self.builder_wrapper,
                                  num=1, keep_fn=lambda x: x.fresh, skip=True)
                 res.parent_name = "promoted"
                 if res.things:
+                    # store campaign id for tracking
+                    for thing in res.things:
+                        thing.campaign = campaigns_by_link.get(thing._fullname, None)
                     return res
 
         elif (isinstance(c.site, DefaultSR)
@@ -275,7 +285,8 @@ class HotController(FixListing, ListingController):
                     random.shuffle(spotlight_links)
                     spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
                     num_links = len(spotlight_links)
-                spotlight_links, pos = promote.insert_promoted(spotlight_links, pos)
+                spotlight_links, pos, campaigns_by_link = promote.insert_promoted(spotlight_links,
+                                                                                  pos) 
 
             # Need to do this again, because if there was a duplicate removed,
             # pos might be pointing outside the list.
@@ -329,6 +340,9 @@ class HotController(FixListing, ListingController):
                 # only pass through a listing if the links made it
                 # through our builder
                 organic.update_pos(pos+1)
+                # add campaign id to promoted links for tracking
+                for thing in s.things:
+                    thing.campaign = campaigns_by_link.get(thing._fullname, None)
                 return s
 
     def query(self):

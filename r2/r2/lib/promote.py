@@ -612,7 +612,7 @@ def reject_promotion(link, reason = None):
     if link._fullname in links:
         links.remove(link._fullname)
         for k in list(weighted.keys()):
-            weighted[k] = [(lid, w) for lid, w in weighted[k]
+            weighted[k] = [(lid, w, cid) for lid, w, cid in weighted[k]
                            if lid != link._fullname]
             if not weighted[k]:
                 del weighted[k]
@@ -659,7 +659,7 @@ def get_scheduled(offset=0):
       offset - number of days after today you want the schedule for
     Returns:
       {'by_sr': dict, 'links':set(), 'error_campaigns':[]}
-      -by_sr maps sr names to lists of (Link, bid) tuples
+      -by_sr maps sr names to lists of (Link, bid, campaign_fullname) tuples
       -links is the set of promoted Link objects used in the schedule
       -error_campaigns is a list of (campaign_id, error_msg) tuples if any 
         exceptions were raised or an empty list if there were none
@@ -671,7 +671,7 @@ def get_scheduled(offset=0):
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
-                by_sr.setdefault(campaign.sr_name, []).append((l, weight))
+                by_sr.setdefault(campaign.sr_name, []).append((l, weight, campaign._fullname))
                 links.add(l)
         except Exception, e: # could happen if campaign things have corrupt data
             error_campaigns.append((campaign._id, e))
@@ -759,14 +759,15 @@ def weight_schedule(by_sr):
     weighted = {}
     for sr_name, t_tuples in by_sr.iteritems():
         weighted[sr_name] = []
-        for l, weight in t_tuples:
+        for l, weight, cid in t_tuples:
             weighted[sr_name].append((l._fullname,
-                                      weight * weight_dict[sr_name]))
+                                      weight * weight_dict[sr_name],
+                                      cid))
     return weighted
 
 
 def promotion_key():
-    return "current_promotions"
+    return "current_promotions:1"
 
 def get_live_promotions():
     return g.permacache.get(promotion_key()) or (set(), {})
@@ -874,14 +875,14 @@ def get_promotions_cached(sites):
         available = {}
         for k, links in promo_dict.iteritems():
             if k in sites:
-                for l, w in links:
+                for l, w, cid in links:
                     available[l] = available.get(l, 0) + w
         # sort the available list by weight
         links = available.keys()
         links.sort(key = lambda x: -available[x])
         norm = sum(available.values())
         # return a sorted list of (link, norm_weight)
-        return [(l, available[l] / norm) for l in links]
+        return [(l, available[l] / norm, cid) for l in links]
 
     return []
 
@@ -893,13 +894,13 @@ def randomized_promotion_list(user, site):
     # more than two: randomize
     elif len(promos) > 1:
         n = random.uniform(0, 1)
-        for i, (l, w) in enumerate(promos):
+        for i, (l, w, cid) in enumerate(promos):
             n -= w
             if n < 0:
                 promos = promos[i:] + promos[:i]
                 break
     # fall thru for the length 1 case here as well
-    return [l for l, w in promos]
+    return [(l, cid) for l, w, cid in promos]
 
 
 def insert_promoted(link_names, pos, promoted_every_n = 5):
@@ -907,16 +908,18 @@ def insert_promoted(link_names, pos, promoted_every_n = 5):
     Inserts promoted links into an existing organic list. Destructive
     on `link_names'
     """
-    promoted_items = randomized_promotion_list(c.user, c.site)
+    promo_tuples = randomized_promotion_list(c.user, c.site)
+    promoted_link_names, campaign_ids = zip(*promo_tuples) if promo_tuples else ([],[])
 
-    if not promoted_items:
-        return link_names, pos
+    if not promoted_link_names:
+        return link_names, pos, {}
+
+    campaigns_by_link = dict(promo_tuples)
 
     # no point in running the builder over more promoted links than
     # we'll even use
     max_promoted = max(1,len(link_names)/promoted_every_n)
-
-    builder = IDBuilder(promoted_items, keep_fn = keep_fresh_links,
+    builder = IDBuilder(promoted_link_names, keep_fn = keep_fresh_links,
                         skip = True)
     promoted_items = builder.get_items()[0]
 
@@ -948,7 +951,7 @@ def insert_promoted(link_names, pos, promoted_every_n = 5):
         random.choice((True,False))):
         pos = (pos + 1) % len(link_names)  
 
-    return list(UniqueIterator(link_names)), pos
+    return list(UniqueIterator(link_names)), pos, campaigns_by_link
 
 def benchmark_promoted(user, site, pos = 0, link_sample = 50, attempts = 100):
     c.user = user
@@ -956,7 +959,7 @@ def benchmark_promoted(user, site, pos = 0, link_sample = 50, attempts = 100):
     link_names = ["blah%s" % i for i in xrange(link_sample)]
     res = {}
     for i in xrange(attempts):
-        names, p =  insert_promoted(link_names[::], pos)
+        names, p, campaigns_by_link =  insert_promoted(link_names[::], pos)
         name = names[p]
         res[name] = res.get(name, 0) + 1
     res = list(res.iteritems())

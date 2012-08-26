@@ -47,7 +47,12 @@ ${self.RenderPrintable()}
 
 <%def name="thing_css_class(what)">thing id-${what._fullname}</%def>
 
-<%def name="thing_data_attributes(what)">data-fullname="${what._fullname}"</%def>
+<%def name="thing_data_attributes(what)">
+    data-fullname="${what._fullname}"
+    % if hasattr(what, 'campaign'):
+      data-cid="${what.campaign}"
+    % endif
+</%def>
 
 <%def name="RenderPrintable()">
 <% cls = thing.lookups[0].__class__.__name__.lower() %>
