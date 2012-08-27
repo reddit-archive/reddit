@@ -668,6 +668,10 @@ class ApiController(RedditController, OAuth2ResourceController):
         form.set_html('.status',
                       _('all other sessions have been logged out'))
         form.set_inputs(curpass = "")
+
+        # deauthorize all access tokens
+        OAuth2AccessToken.revoke_all_by_user(c.user)
+
         # run the change password command to get a new salt
         change_password(c.user, password)
         # the password salt has changed, so the user's cookie has been

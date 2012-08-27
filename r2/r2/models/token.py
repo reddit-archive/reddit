@@ -327,6 +327,13 @@ class OAuth2AccessToken(Token):
             tba._commit()
 
     @classmethod
+    def revoke_all_by_user(cls, account):
+        """Revokes all access tokens for a given user Account."""
+        tokens = cls._by_user(account)
+        for token in tokens:
+            token.revoke()
+
+    @classmethod
     def _by_user(cls, account):
         """Returns a (possibly empty) list of valid access tokens for a given user Account."""
 
