@@ -5883,6 +5883,7 @@ tr.gold-accent + tr > td {
     padding: 7px;
     position: relative;
     width: 880px;
+    font-size: x-small;
 }
 
 .developed-app.collapsed, .authorized-app { height: 100px; }
@@ -5900,8 +5901,8 @@ tr.gold-accent + tr > td {
     vertical-align: top;
 }
 
-.app-details h2 { font-size: medium; }
-.app-details h3 { font-size: x-small; }
+.app-details h2 { font-size: medium; margin: 0px; }
+.app-details h3 { font-size: x-small; margin: 0px; }
 
 .app-icon {
     display: inline-block;

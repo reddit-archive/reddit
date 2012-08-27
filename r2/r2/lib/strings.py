@@ -170,6 +170,11 @@ string_dict = dict(
     unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices. Note: due to a bug, private-use addresses (starting with 10.) sometimes show up erroneously in this list after regular use of the site."),
     your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
+    account_activity_apps_blurb = _("""
+These apps are authorized to access your account. Logging out of all sessions
+will revoke access from all apps. You may also revoke access from individual
+apps below.
+"""),
 
     traffic_promoted_link_explanation = _("Below you will see your promotion's impression and click traffic per hour of promotion.  Please note that these traffic totals will lag behind by two to three hours, and that daily totals will be preliminary until 24 hours after the link has finished its run."),
     traffic_processing_slow = _("Traffic processing is currently running slow. The latest data available is from %(date)s. This page will be updated as new data becomes available."),

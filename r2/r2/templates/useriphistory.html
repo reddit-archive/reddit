@@ -20,6 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
+<%namespace file="prefapps.html" import="authorized_app"/>
 <%namespace file="utils.html" import="error_field, timestamp"/>
 <%namespace name="utils" file="utils.html"/>
 
@@ -72,3 +73,14 @@
 <span class="status error"></span>
 
 </form>
+
+%if thing.my_apps:
+  <hr/>
+  <div id="account-activity-apps" class="instructions">
+    <h1>${_("Apps you have authorized")}</h1>
+    <p>${strings.account_activity_apps_blurb}</p>
+    %for app, scopes in thing.my_apps:
+      ${authorized_app(app, scopes)}
+    %endfor
+  </div>
+%endif

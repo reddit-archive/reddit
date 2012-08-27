@@ -165,10 +165,7 @@
   </li>
 </%def>
 
-%if thing.my_apps:
-  <h1>${_("authorized applications")}</h1>
-
-  %for app, scopes in thing.my_apps:
+<%def name="authorized_app(app, scopes)">
   <div id="authorized-app-${app._id}" class="authorized-app rounded">
     ${icon(app)}
     <div class="app-details">
@@ -197,6 +194,13 @@
                hidden_data=dict(client_id=app._id),
                _class="revoke-app-button")}
   </div>
+</%def>
+
+%if thing.my_apps:
+  <h1>${_("authorized applications")}</h1>
+
+  %for app, scopes in thing.my_apps:
+    ${authorized_app(app, scopes)}
   %endfor
 %endif
 

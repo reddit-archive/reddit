@@ -3620,6 +3620,9 @@ class AccountActivityPage(BoringPage):
 
 class UserIPHistory(Templated):
     def __init__(self):
+        from r2.controllers.oauth2 import scope_info
+        self.my_apps = [(app, [scope_info[scope] for scope in scopes])
+                        for app, scopes in OAuth2Client._by_user(c.user)]
         self.ips = ips_by_account_id(c.user._id)
         super(UserIPHistory, self).__init__()
 
