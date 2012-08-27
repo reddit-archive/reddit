@@ -21,6 +21,7 @@
 ###############################################################################
 
 from pylons import c
+from r2.controllers.api_docs import api_doc, api_section
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.jsontemplates import IdentityJsonTemplate
 
@@ -29,6 +30,7 @@ class APIv1Controller(OAuth2ResourceController):
       pass
 
    @require_oauth2_scope("identity")
+   @api_doc(api_section.account)
    def GET_me(self):
       """Returns the identity of the user currently authenticated via OAuth."""
       resp = IdentityJsonTemplate().data(c.oauth_user)
