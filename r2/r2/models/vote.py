@@ -28,7 +28,7 @@ from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import TdbException, ASCII_TYPE, UTF8_TYPE
 from r2.lib.utils._utils import flatten
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import SimpleSillyStub
+from r2.lib.utils import SimpleSillyStub, Storage
 
 from account import Account
 from link import Link, Comment
@@ -192,6 +192,12 @@ class LinkVotesByAccount(VotesByAccount):
     _thing2_cls = Link
     _views = []
 
+    @classmethod
+    def _fast_query(cls, subject, objects, properties=None):
+        # this is a compatibility shim for transition
+        return {k: Storage(name=v)
+                for k, v in cls.fast_query(subject, objects).iteritems()}
+
 
 class CommentVotesByAccount(VotesByAccount):
     _use_db = True
@@ -340,7 +346,10 @@ class Vote(MultiRelation('vote',
         rels = {}
         for obj in objs:
             try:
-                types = CassandraVote._rel(sub.__class__, obj.__class__)
+                if obj.__class__ == Link:
+                    types = VotesByAccount.rel(sub.__class__, obj.__class__)
+                else:
+                    types = CassandraVote._rel(sub.__class__, obj.__class__)
             except TdbException:
                 # for types for which we don't have a vote rel, we'll
                 # skip them
