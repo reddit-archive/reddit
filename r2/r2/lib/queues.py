@@ -68,6 +68,7 @@ class RedditQueueMap(QueueMap):
         self._q('scraper_q')
         self._q('newcomments_q')
         self._q('commentstree_q')
+        self._q('commentstree_fastlane_q')
         # this isn't in use until the spam_q plumbing is
         #self._q('newpage_q')
         self._q('register_vote_q', self_refer=True)
@@ -94,6 +95,7 @@ class RedditQueueMap(QueueMap):
     def newcomment_bindings(self):
         self._bind('new_comment', 'newcomments_q')
         self._bind('new_comment', 'commentstree_q')
+        self._bind('new_fastlane_comment', 'commentstree_fastlane_q')
 
     def newsubreddit_bindings(self):
         pass

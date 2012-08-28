@@ -764,7 +764,12 @@ def new_comment(comment, inbox_rels):
                 m.insert(get_spam_comments(sr), [comment])
             if was_spam_filtered(comment):
                 m.insert(get_spam_filtered_comments(sr), [comment])
-            amqp.add_item('new_comment', comment._fullname)
+
+            if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
+                amqp.add_item('new_fastlane_comment', comment._fullname)
+            else:
+                amqp.add_item('new_comment', comment._fullname)
+
             if not g.amqp_host:
                 add_comment_tree([comment])
 
