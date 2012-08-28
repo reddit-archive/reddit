@@ -1284,6 +1284,7 @@ def run_commentstree(qname="commentstree_q", limit=100):
 
 vote_link_q = 'vote_link_q'
 vote_comment_q = 'vote_comment_q'
+vote_fastlane_q = 'vote_fastlane_q'
 
 def queue_vote(user, thing, dir, ip, organic = False,
                cheater = False, store = True):
@@ -1294,9 +1295,16 @@ def queue_vote(user, thing, dir, ip, organic = False,
     if store:
         if g.amqp_host:
             if isinstance(thing, Link):
-                qname = vote_link_q
+                if thing._id36 in g.live_config["fastlane_links"]:
+                    qname = vote_fastlane_q
+                else:
+                    qname = vote_link_q
+
             elif isinstance(thing, Comment):
-                qname = vote_comment_q
+                if utils.to36(thing.link_id) in g.live_config["fastlane_links"]:
+                    qname = vote_fastlane_q
+                else:
+                    qname = vote_comment_q
             else:
                 log.warning("%s tried to vote on %r. that's not a link or comment!",
                             user, thing)

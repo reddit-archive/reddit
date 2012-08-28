@@ -73,6 +73,7 @@ class RedditQueueMap(QueueMap):
         self._q('register_vote_q', self_refer=True)
         self._q('vote_link_q', self_refer=True)
         self._q('vote_comment_q', self_refer=True)
+        self._q('vote_fastlane_q', self_refer=True)
         self._q('log_q', self_refer=True)
         self._q('usage_q', self_refer=True, durable=False)
 

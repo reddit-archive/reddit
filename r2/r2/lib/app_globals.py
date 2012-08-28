@@ -186,6 +186,7 @@ class Globals(object):
         ],
         ConfigValue.tuple: [
             'sr_discovery_links',
+            'fastlane_links',
         ],
     }
 
