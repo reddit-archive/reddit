@@ -1269,10 +1269,10 @@ def run_new_comments(limit=1000):
 
     amqp.handle_items('newcomments_q', _run_new_comments, limit=limit)
 
-def run_commentstree(limit=100):
+def run_commentstree(qname="commentstree_q", limit=100):
     """Add new incoming comments to their respective comments trees"""
 
-    @g.stats.amqp_processor('commentstree_q')
+    @g.stats.amqp_processor(qname)
     def _run_commentstree(msgs, chan):
         comments = Comment._by_fullname([msg.body for msg in msgs],
                                         data = True, return_dict = False)
@@ -1280,7 +1280,7 @@ def run_commentstree(limit=100):
 
         add_comment_tree(comments)
 
-    amqp.handle_items('commentstree_q', _run_commentstree, limit = limit)
+    amqp.handle_items(qname, _run_commentstree, limit = limit)
 
 vote_link_q = 'vote_link_q'
 vote_comment_q = 'vote_comment_q'
