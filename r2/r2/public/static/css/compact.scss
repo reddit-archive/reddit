@@ -1527,7 +1527,7 @@ body.toolbar {
 
 a.author { margin-right: 0.5em; }
  
-.flair {
+.flair, .linkflair {
     margin: {
         top: 2px;
         right: 0.5em;
@@ -1541,4 +1541,12 @@ a.author { margin-right: 0.5em; }
     
     @include border-radius(2px);
     @include box-shadow(inset 0px 1px 0px hsla(0,0%,100%,.9));
+}
+
+.linkflair {
+    font-weight: normal;
+    max-width: 10em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
