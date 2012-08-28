@@ -1096,7 +1096,8 @@ class CommentPane(Templated):
 
                     # render as if not logged in (but possibly with reply buttons)
                     self.rendered = renderer().render()
-                    g.cache.set(key, self.rendered, time = 120)
+                    g.cache.set(key, self.rendered,
+                                time=g.commentpane_cache_time)
 
                 finally:
                     # undo the spoofing

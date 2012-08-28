@@ -72,6 +72,7 @@ class Globals(object):
             'db_pool_size',
             'db_pool_overflow_size',
             'page_cache_time',
+            'commentpane_cache_time',
             'num_mc_clients',
             'MIN_DOWN_LINK',
             'MIN_UP_KARMA',
