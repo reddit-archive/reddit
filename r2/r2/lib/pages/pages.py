@@ -1049,6 +1049,11 @@ class CommentPane(Templated):
         self.can_reply = False
         if c.user_is_admin:
             try_cache = False
+
+        # don't cache if the current user is the author of the link
+        if c.user_is_loggedin and c.user._id == article.author_id:
+            try_cache = False
+
         if try_cache and c.user_is_loggedin:
             sr = article.subreddit_slow
             c.can_reply = self.can_reply = sr.can_comment(c.user)
