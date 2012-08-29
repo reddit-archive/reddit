@@ -15,14 +15,26 @@ r.analytics = {
     fetchTrackingHashes: function(callback) {
         var fullnames = []
 
+        /*------------------------------------------* 
+           Generates a trackingName like:
+           t3_ab-t8_99-pics if targeted with campaign
+           t3_ab-t8_99      not targeted with campaign
+           t3_ab--pics      targeted with no campaign
+           t3_ab-           not targeted, no campaign 
+         *------------------------------------------*/
+
         $('.promotedlink.promoted, .sponsorshipbox')
             .each(function() {
                 var thing = $(this),
                     fullname = thing.data('fullname'),
-                    sponsorship = thing.data('sponsorship')
+                    sponsorship = thing.data('sponsorship'),
+                    campaign = thing.data('cid')
 
                 if (sponsorship)
                     fullname += '_' + sponsorship
+
+                // append a hyphen even if there's no campaign
+                fullname += '-' + (campaign || '')
 
                 if (!r.config.is_fake)
                     fullname += '-' + r.config.post_site
