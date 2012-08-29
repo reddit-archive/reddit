@@ -25,6 +25,7 @@
    from r2.models import Sub, FakeSubreddit
    from r2.models.subreddit import DefaultSR
    from r2.lib.pages import SearchForm
+   from r2.lib import authentication
 %>
 <%namespace file="utils.html" import="plain_link, img_link, text_with_links, separator, logout"/>
 
@@ -113,7 +114,7 @@
       %endif
     %endif
     ${thing.corner_buttons()}
-    %if c.user_is_loggedin:
+    %if c.user_is_loggedin and authentication.user_can_log_out():
       ${separator("|")}
       ${logout()}
     %endif

@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import base64
+
 from urllib import unquote_plus
 from urllib2 import urlopen
 from urlparse import urlparse, urlunparse
@@ -39,6 +41,7 @@ from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode, _force_utf8
 from mako.filters import url_escape
 from r2.lib.contrib import ipaddress
+from r2.lib.require import require, require_split
 import snudown
  
 from r2.lib.utils._utils import *
@@ -1416,7 +1419,7 @@ def parse_http_basic(authorization_header):
 
     Raises RequirementException if anything is uncool.
     """
-    auth_scheme, auth_token = require_split(auth, 2)
+    auth_scheme, auth_token = require_split(authorization_header, 2)
     require(auth_scheme.lower() == "basic")
     try:
         auth_data = base64.b64decode(auth_token)

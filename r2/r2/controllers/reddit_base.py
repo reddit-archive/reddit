@@ -29,7 +29,7 @@ from r2.lib import pages, utils, filters, amqp, stats
 from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, is_throttled
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
-from r2.models.account import valid_cookie, FakeAccount, valid_feed, valid_admin_cookie
+from r2.models.account import FakeAccount, valid_feed, valid_admin_cookie
 from r2.models.subreddit import Subreddit, Frontpage
 from r2.models import *
 from errors import ErrorSet, ForbiddenError, errors
@@ -39,6 +39,7 @@ from r2.config.extensions import is_api
 from r2.lib.translation import set_lang
 from r2.lib.contrib import ipaddress
 from r2.lib.base import BaseController, proxyurl, abort
+from r2.lib.authentication import authenticate_user
 
 from Cookie import CookieError
 from copy import copy
@@ -834,11 +835,7 @@ class RedditController(MinimalController):
         # no logins for RSS feed unless valid_feed has already been called
         if not c.user:
             if c.extension != "rss":
-                session_cookie = c.cookies.get(g.login_cookie)
-                if session_cookie:
-                    c.user = valid_cookie(session_cookie.value)
-                    if c.user:
-                        c.user_is_loggedin = True
+                authenticate_user()
 
                 admin_cookie = c.cookies.get(g.admin_cookie)
                 if c.user_is_loggedin and admin_cookie:

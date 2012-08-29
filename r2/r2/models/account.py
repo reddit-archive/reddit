@@ -608,28 +608,6 @@ class FakeAccount(Account):
     pref_no_profanity = True
 
 
-def valid_cookie(cookie):
-    try:
-        uid, timestr, hash = cookie.split(',')
-        uid = int(uid)
-    except:
-        return False
-
-    if g.read_only_mode:
-        return False
-
-    try:
-        account = Account._byID(uid, True)
-        if account._deleted:
-            return False
-    except NotFound:
-        return False
-
-    if constant_time_compare(cookie, account.make_cookie(timestr)):
-        return account
-    return False
-
-
 def valid_admin_cookie(cookie):
     if g.read_only_mode:
         return (False, None)

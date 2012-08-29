@@ -23,6 +23,7 @@
 <%!
    from r2.lib.template_helpers import static, s3_https_if_secure
    from r2.models.subreddit import DefaultSR
+   from r2.lib import authentication
    
  %>
 <%namespace file="utils.html" import="plain_link, img_link, separator, logout"/>
@@ -95,9 +96,11 @@
     <div class="menuitem">
       ${plain_link("submit", "/submit", _sr_path=False)}
     </div>
+    %if authentication.user_can_log_out():
     <div class="menuitem bottm-bar">
       ${logout()}
     </div>
+    % endif
    %else:
     <div class="menuitem">
       ${plain_link("login", "/login", _sr_path=False)}
