@@ -28,10 +28,12 @@ single-signon on an intranet doesn't generally allow new account creation on a
 single website.)
 """
 
-from pylons import g, c
+import bcrypt
+from pylons import g, c, request
 
 from r2.models import Account, NotFound
-from r2.lib.utils import constant_time_compare
+from r2.lib.utils import constant_time_compare, parse_http_basic
+from r2.lib.require import RequirementException
 
 
 _AUTHENTICATION_PROVIDERS = {}
@@ -70,6 +72,33 @@ def cookie():
         return None
 
     if not constant_time_compare(cookie, account.make_cookie(timestr)):
+        return None
+    return account
+
+
+@authentication_provider(allow_logout=False)
+def http_basic():
+    """Authenticate the user based on their HTTP "Authorization" header."""
+    import crypt
+
+    try:
+        authorization = request.environ.get("HTTP_AUTHORIZATION")
+        username, password = parse_http_basic(authorization)
+    except RequirementException:
+        return None
+
+    try:
+        account = Account._by_name(username)
+    except NotFound:
+        return None
+
+    # not all systems support bcrypt in the standard crypt
+    if account.password.startswith("$2a$"):
+        expected_hash = bcrypt.hashpw(password, account.password)
+    else:
+        expected_hash = crypt.crypt(password, account.password)
+
+    if not constant_time_compare(expected_hash, account.password):
         return None
     return account
 
