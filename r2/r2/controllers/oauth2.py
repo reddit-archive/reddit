@@ -36,6 +36,7 @@ from r2.controllers.errors import ForbiddenError, errors
 from validator import validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID, VOAuth2Scope
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
+from r2.lib.utils import parse_http_basic
 
 scope_info = {
     "identity": {
@@ -155,13 +156,7 @@ class OAuth2AccessController(MinimalController):
     def _get_client_auth(self):
         auth = request.headers.get("Authorization")
         try:
-            auth_scheme, auth_token = require_split(auth, 2)
-            require(auth_scheme.lower() == "basic")
-            try:
-                auth_data = base64.b64decode(auth_token)
-            except TypeError:
-                raise RequirementException
-            client_id, client_secret = require_split(auth_data, 2, ":")
+            client_id, client_secret = parse_http_basic(auth)
             client = OAuth2Client.get_token(client_id)
             require(client)
             require(client.secret == client_secret)

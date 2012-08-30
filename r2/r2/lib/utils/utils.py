@@ -1409,3 +1409,17 @@ def find_containing_network(ip_ranges, address):
 def is_throttled(address):
     """Determine if an IP address is in a throttled range."""
     return bool(find_containing_network(g.throttles, address))
+
+
+def parse_http_basic(authorization_header):
+    """Parse the username/credentials out of an HTTP Basic Auth header.
+
+    Raises RequirementException if anything is uncool.
+    """
+    auth_scheme, auth_token = require_split(auth, 2)
+    require(auth_scheme.lower() == "basic")
+    try:
+        auth_data = base64.b64decode(auth_token)
+    except TypeError:
+        raise RequirementException
+    return require_split(auth_data, 2, ":")
