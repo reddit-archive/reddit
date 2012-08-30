@@ -280,6 +280,13 @@ class ThingBase(object):
     # these attributes are to be removed on _commit()
     _deletes = set()
 
+    # thrift will materialize the entire result set for a slice range
+    # in memory, meaning that we need to limit the maximum number of columns
+    # we receive in a single get to avoid hurting the server. if this
+    # value is true, we will make sure to do extra gets to retrieve all of
+    # the columns in a row when there are more than the per-call maximum.
+    _fetch_all_columns = False
+
     def __init__(self, _id = None, _committed = False, _partial = None, **kw):
         # things that have changed
         self._dirties = kw.copy()
@@ -350,13 +357,20 @@ class ThingBase(object):
                 still_need.add(k)
 
         def lookup(l_ids):
-            # TODO: if we get back max_column_count columns for a
-            # given row, check a flag on the class as to whether to
-            # refetch for more of them. This could be important with
-            # large Views, for instance
-
             if properties is None:
                 rows = cls._cf.multiget(l_ids, column_count=max_column_count)
+
+                # if we got max_column_count columns back for a row, it was
+                # probably clipped. in this case, we should fetch the remaining
+                # columns for that row and add them to the result.
+                if cls._fetch_all_columns:
+                    for key, row in rows.iteritems():
+                        if len(row) == max_column_count:
+                            last_column_seen = next(reversed(row))
+                            cols = cls._cf.xget(key,
+                                                column_start=last_column_seen,
+                                                buffer_size=max_column_count)
+                            row.update(cols)
             else:
                 rows = cls._cf.multiget(l_ids, columns = willask_properties)
 
