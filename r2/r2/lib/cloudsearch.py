@@ -735,11 +735,13 @@ class LinkSearchQuery(CloudSearchQuery):
              'hot': '-hot2',
              'top': '-top',
              'new': '-timestamp',
+             'comments': '-num_comments',
              }
     sorts_menu_mapping = {'relevance': 1,
                           'hot': 2,
                           'new': 3,
                           'top': 4,
+                          'comments': 5,
                           }
     
     lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
