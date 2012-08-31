@@ -29,8 +29,6 @@
 <%namespace file="utils.html" import="error_field, submit_form, plain_link, reddit_selector"/>
 <%namespace name="utils" file="utils.html"/>
 
-Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
-
 <%utils:submit_form onsubmit="return post_form(this, 'submit', linkstatus, null, true)" 
                     action=${add_sr("/submit")},
                     _class="submit content",
@@ -109,7 +107,6 @@ ${thing.captcha}
 </div>
 <input name="resubmit" value="${thing.resubmit}" type="hidden"/>
 <div class="spacer">
-Try our&#32;<a href="/iphonebookmarklet.compact?__javascript:location.href='http://${g.domain}/submit.compact?url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)">bookmarklet</a>.
 <button class="btn save button" name="submit" value="form" type="submit">${_("submit")}</button>
   <span class="status"></span>
   ${error_field("RATELIMIT", "ratelimit")}

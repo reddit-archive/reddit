@@ -81,7 +81,6 @@ def make_map():
 
     mc('/widget', controller='buttons', action='widget_demo_page')
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
-    mc('/iphonebookmarklet', controller='buttons', action='iphonebookmarklets')
 
     mc('/awards', controller='front', action='awards')
 

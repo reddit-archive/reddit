@@ -119,10 +119,3 @@ class ButtonsController(RedditController):
                           show_sidebar = False, 
                           content=Bookmarklets()).render()
 
-    def GET_iphonebookmarklets(self):
-        return BoringPage(_("submit"),
-                          title = "submit to reddit",
-                          show_sidebar = False, 
-                          content=Bookmarklets()).render()
-
-
