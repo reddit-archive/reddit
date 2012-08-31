@@ -2817,7 +2817,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         exclude = Subreddit.default_subreddits()
 
         faceting = {"reddit":{"sort":"-sum(text_relevance)", "count":20}}
-        results = SearchQuery(query, sort="relevance", faceting=faceting).run()
+        results = SearchQuery(query, sort="relevance", faceting=faceting,
+                              syntax="plain").run()
 
         sr_results = []
         for sr, count in results.subreddit_facets:

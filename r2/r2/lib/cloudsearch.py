@@ -745,7 +745,7 @@ class LinkSearchQuery(CloudSearchQuery):
     lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
                                      yesno_fields=['over18', 'is_self',
                                                    'nsfw', 'self'])
-    known_syntaxes = ("cloudsearch", "lucene")
+    known_syntaxes = ("cloudsearch", "lucene", "plain")
     default_syntax = "lucene"
     
     def customize_query(self, bq):
