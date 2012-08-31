@@ -21,11 +21,12 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import static
+   from r2.lib.template_helpers import static, get_domain
+   from r2.lib.utils import query_string
    from r2.lib.strings import Score
  %>
 
-<%namespace file="buttontypes.html" import="submiturl" />
+<%def name="submiturl(url, title='')">${("http://%s/submit" % get_domain(cname = c.cname, subreddit = not c.cname)) + query_string(dict(url=url, title=title))}</%def>
 
 <% 
     if thing._fullname:

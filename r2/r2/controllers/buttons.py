@@ -20,74 +20,17 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from reddit_base import RedditController, MinimalController, make_key
-from r2.lib.pages import Button, ButtonNoBody, ButtonEmbed, ButtonLite, \
-    ButtonDemoPanel, WidgetDemoPanel, Bookmarklets, BoringPage, UpgradeButtons
+from reddit_base import RedditController
+from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
+                          Bookmarklets, BoringPage)
 from r2.lib.pages.things import wrap_links
 from r2.models import *
-from r2.lib.utils import tup, query_string
+from r2.lib.utils import tup
 from pylons import c, request
 from validator import *
 from pylons.i18n import _
-from r2.lib.filters import spaceCompress
-from r2.controllers.listingcontroller import ListingController
-
-class ButtonjsController(MinimalController):
-    def pre(self):
-        MinimalController.pre(self)
-        # override user loggedin behavior to ensure this page always
-        # uses the page cache
-        user = valid_cookie(c.cookies[g.login_cookie].value
-                            if g.login_cookie in c.cookies
-                            else '')
-        if user:
-            self.user_is_loggedin = True
-
-    @validate(buttontype = VInt('t', 1, 5),
-              url = VSanitizedUrl("url"),
-              _height = VInt('height', 0, 300),
-              _width = VInt('width', 0, 800),
-              autohide = VBoolean("autohide"))
-    def GET_button_embed(self, buttontype, _height, _width, url, autohide):
-        # no buttons on domain listings
-        if isinstance(c.site, DomainSR):
-            return self.abort404()
-        c.render_style = 'js'
-        c.response_content_type = 'text/javascript; charset=UTF-8'
-        if not c.user_is_loggedin and autohide:
-            c.response.content = "void(0);"
-            return c.response
-
-        buttontype = buttontype or 1
-        width, height = ((120, 22), (51, 69), (69, 52),
-                         (51, 52), (600, 52))[min(buttontype - 1, 4)]
-        if _width: width = _width
-        if _height: height = _height
-
-        bjs = ButtonEmbed(button=buttontype,
-                          width=width,
-                          height=height,
-                          url = url,
-                          referer = request.referer).render()
-        return self.sendjs(bjs, callback='', escape=False)
-
-    def request_key(self):
-        return make_key('button_request_key',
-                        c.lang,
-                        c.content_langs,
-                        request.host,
-                        c.cname,
-                        request.referer,
-                        request.fullpath)
 
 class ButtonsController(RedditController):
-    def buttontype(self):
-        b = request.get.get('t') or 1
-        try: 
-            return int(b)
-        except ValueError:
-            return 1
-
     def get_wrapped_link(self, url, link = None, wrapper = None):
         try:
             links = []
@@ -123,47 +66,13 @@ class ButtonsController(RedditController):
             if wrapper:
                 return wrapper(None)
 
+    @validate(buttontype = VInt('t', 1, 5))
+    def GET_button_embed(self, buttontype):
+        if not buttontype:
+            abort(404)
 
-    def GET_button_content(self, *a, **kw):
-        return """
-        <html>
-        <head>
-        </head>
-        <body style='border:1px solid #336699;text-align:center;margin:0px'>
-           <a href='http://www.reddit.com/upgradebuttons' target='_top' style='color:red'>upgrade</a>
-        </body>
-        </html>
-        """
-
-    @validate(buttontype = VInt('t', 1, 5),
-              url = VSanitizedUrl("url"),
-              _height = VInt('height', 0, 300),
-              _width = VInt('width', 0, 800),
-              autohide = VBoolean("autohide"))
-    def GET_button_embed(self, buttontype, _height, _width, url, autohide):
-        # no buttons on domain listings
-        if isinstance(c.site, DomainSR):
-            return self.abort404()
-        c.render_style = 'js'
-        c.response_content_type = 'text/javascript; charset=UTF-8'
-        if not c.user_is_loggedin and autohide:
-            c.response.content = "void(0);"
-            return c.response
-
-        buttontype = buttontype or 1
-        width, height = ((120, 22), (51, 69), (69, 52),
-                         (51, 52), (600, 52))[min(buttontype - 1, 4)]
-        if _width: width = _width
-        if _height: height = _height
-
-        bjs = ButtonEmbed(button=buttontype,
-                          width=width,
-                          height=height,
-                          url = url,
-                          referer = request.referer).render()
-        # we doing want the JS to be cached (it is referer dependent)
-        c.used_cache = True
-        return self.sendjs(bjs, callback='', escape=False)
+        return self.redirect('/static/button/button%s.js' % buttontype,
+                             code=301)
 
     @validate(buttonimage = VInt('i', 0, 14),
               title = nop('title'),
@@ -192,8 +101,6 @@ class ButtonsController(RedditController):
         bjs = self.get_wrapped_link(url, wrapper = builder_wrapper)
         return self.sendjs(bjs.render(), callback='', escape=False)
 
-
-
     def GET_button_demo_page(self):
         # no buttons for domain listings -> redirect to top level
         if isinstance(c.site, DomainSR):
@@ -201,15 +108,6 @@ class ButtonsController(RedditController):
         return BoringPage(_("reddit buttons"),
                           show_sidebar = False, 
                           content=ButtonDemoPanel()).render()
-
-    def GET_upgrade_buttons(self):
-        # no buttons for domain listings -> redirect to top level
-        if isinstance(c.site, DomainSR):
-            return self.redirect('/buttons')
-        return BoringPage(_("reddit buttons"),
-                          show_sidebar = False, 
-                          content=UpgradeButtons()).render()
-
 
     def GET_widget_demo_page(self):
         return BoringPage(_("reddit widget"),

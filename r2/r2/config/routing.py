@@ -74,11 +74,9 @@ def make_map():
        requirements=dict(where='subscriber|contributor|moderator'))
 
     mc('/buttons', controller='buttons', action='button_demo_page')
-    mc('/upgradebuttons', controller='buttons', action='upgrade_buttons')
-    #the frame
-    mc('/button_content', controller='buttons', action='button_content')
+
     #/button.js and buttonlite.js - the embeds
-    mc('/button', controller='buttonjs', action='button_embed')
+    mc('/button', controller='buttons', action='button_embed')
     mc('/buttonlite', controller='buttons', action='button_lite')
 
     mc('/widget', controller='buttons', action='widget_demo_page')

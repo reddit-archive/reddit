@@ -1957,21 +1957,6 @@ class OptIn(Templated):
     pass
 
 
-class ButtonEmbed(CachedTemplate):
-    """Generates the JS wrapper around the buttons for embedding."""
-    def __init__(self, button = None, width = 100,
-                 height=100, referer = "", url = "", **kw):
-        arg = "cnameframe=1&" if c.cname else ""
-        sr = c.site.name if not isinstance(c.site, FakeSubreddit) else ""
-        if sr:
-            arg += "sr=%s&" % sr
-        Templated.__init__(self, button = button,
-                           width = width, height = height,
-                           referer=referer, url = url,
-                           domain = get_domain(subreddit = False),
-                           arg = arg,
-                           **kw)
-
 class Button(Wrapped):
     cachable = True
     extension_handling = False
@@ -2001,18 +1986,9 @@ class ButtonLite(Button):
     def render(self, *a, **kw):
         return Wrapped.render(self, *a, **kw)
 
-class ButtonNoBody(Button):
-    """A button page that just returns the raw button for direct embeding"""
-    pass
-
 class ButtonDemoPanel(Templated):
     """The page for showing the different styles of embedable voting buttons"""
     pass
-
-class UpgradeButtons(Templated):
-    """The page for showing the different styles of embedable voting buttons"""
-    pass
-
 
 class SelfServeBlurb(Templated):
     pass
