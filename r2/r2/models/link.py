@@ -885,6 +885,7 @@ class CommentSortsCache(tdb_cassandra.View):
     _value_type = 'float'
     _connection_pool = 'main'
     _read_consistency_level = tdb_cassandra.CL.ONE
+    _fetch_all_columns = True
 
 class StarkComment(Comment):
     """Render class for the comments in the top-comments display in

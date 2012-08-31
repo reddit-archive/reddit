@@ -69,7 +69,7 @@ CL = Storage(ANY    = ConsistencyLevel.ANY,
 # wire for a given row (this should be increased if we start working
 # with classes with lots of columns, like Account which has lots of
 # karma_ rows, or we should not do that)
-max_column_count = 50000
+max_column_count = 10000
 
 # the pycassa date serializer, for use when we can't set the right metadata
 # to get pycassa to serialize dates for us
