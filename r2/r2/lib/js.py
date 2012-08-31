@@ -252,7 +252,7 @@ class JQuery(Module):
 
     def use(self):
         from r2.lib.template_helpers import static
-        if c.secure or c.user.pref_local_js:
+        if c.secure or (c.user and c.user.pref_local_js):
             return Module.use(self)
         else:
             ext = ".js" if g.uncompressedJS else ".min.js"
