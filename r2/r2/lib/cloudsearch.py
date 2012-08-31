@@ -651,7 +651,7 @@ class CloudSearchQuery(object):
                                    "converted": bq}
             self.bq = self.customize_query(bq)
         elif self.syntax == "plain":
-            q = self.query
+            q = self.query.encode('utf-8')
         if g.sqlprinting:
             g.log.info("%s", self)
         return self._run_cached(q, self.bq.encode('utf-8'), self.sort,
