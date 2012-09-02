@@ -32,8 +32,19 @@
   % if c.user_is_sponsor:
   <div class="md">
   <ul>
-    <li><a href="/traffic/adverts/${c.site._fullname}">${_("300x100 traffic for this subreddit.")}</a></li>
-    <li><a href="/traffic/adverts/dart_${c.site.name}">${_("DART traffic for this subreddit.")}</a></li>
+    <li><a href="/traffic/adverts/dart_${c.site.name}">${_("all DART traffic for this subreddit.")}</a></li>
+    % if thing.codenames:
+    <li>
+      ${_("recent 300x100 campaigns in this subreddit:")}
+      <ul>
+      % for codename, campaign in thing.codenames:
+      <li><a href="/traffic/adverts/${codename}">${campaign}</a></li>
+      % endfor
+      </ul>
+    </li>
+    % else:
+    <li>${_("no recent 300x100 campaigns in this subreddit")}</li>
+    % endif
   </ul>
   </div>
   % else:

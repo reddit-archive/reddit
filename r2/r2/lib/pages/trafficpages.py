@@ -240,8 +240,17 @@ class AdvertTrafficSummary(RedditTraffic):
             self.advert_summary.append(((name, url), data))
 
     @staticmethod
+    def split_codename(codename):
+        """Codenames can be "fullname_campaign". Rend the parts asunder."""
+        split_code = codename.split("_")
+        fullname = "_".join(split_code[:2])
+        campaign = "_".join(split_code[2:])
+        return fullname, campaign
+
+    @staticmethod
     def get_things(codes):
-        fullnames = [code for code in codes
+        fullnames = [AdvertTrafficSummary.split_codename(code)[0]
+                     for code in codes
                      if code.startswith(Thing._type_prefix)]
         return Thing._by_fullname(fullnames, data=True, return_dict=True)
 
@@ -258,6 +267,14 @@ class AdvertTrafficSummary(RedditTraffic):
             things = AdvertTrafficSummary.get_things([code])
 
         thing = things.get(code)
+        campaign = None
+
+        # if it's not at first a thing, see if it's a thing with campaign
+        # appended to it.
+        if not thing:
+            fullname, campaign = AdvertTrafficSummary.split_codename(code)
+            thing = things.get(fullname)
+
         if not thing:
             if code.startswith("dart_"):
                 srname = code.split("_", 1)[1]
@@ -269,7 +286,10 @@ class AdvertTrafficSummary(RedditTraffic):
             return "Link: " + thing.title
         elif isinstance(thing, Subreddit):
             srname = AdvertTrafficSummary.get_sr_name(thing.name)
-            return "300x100: " + srname
+            name = "300x100: " + srname
+            if campaign:
+                name += " (%s)" % campaign
+            return name
 
     @staticmethod
     def get_ad_url(code, things):
@@ -328,6 +348,13 @@ class AdvertTraffic(RedditTraffic):
 class SubredditTraffic(RedditTraffic):
     def __init__(self):
         RedditTraffic.__init__(self, "/r/" + c.site.name)
+
+        if c.user_is_sponsor:
+            fullname = c.site._fullname
+            codes = traffic.AdImpressionsByCodename.recent_codenames(fullname)
+            self.codenames = [(code,
+                               AdvertTrafficSummary.split_codename(code)[1])
+                               for code in codes]
 
     def get_dow_summary(self):
         return traffic.PageviewsBySubreddit.history("day", c.site.name)

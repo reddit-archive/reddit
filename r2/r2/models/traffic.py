@@ -27,7 +27,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.schema import Column
 from sqlalchemy.types import DateTime, Integer, String, BigInteger
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, distinct
 from sqlalchemy.sql.functions import sum
 
 from r2.lib.utils import timedelta_by_name
@@ -413,6 +413,20 @@ class AdImpressionsByCodename(Base):
     @memoize_traffic(time=3600)
     def top_last_month(cls):
         return top_last_month(cls, "codename")
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def recent_codenames(cls, fullname):
+        """Get a list of recent codenames used for 300x100 ads.
+
+        The 300x100 ads get a codename that looks like "fullname_campaign".
+        This function gets a list of recent campaigns.
+        """
+        start_time, stop_time = time_range("day")
+        query = (Session.query(distinct(cls.codename).label("codename"))
+                        .filter(cls.date > start_time)
+                        .filter(cls.codename.startswith(fullname)))
+        return [row.codename for row in query]
 
 
 class TargetedImpressionsByCodename(Base):
