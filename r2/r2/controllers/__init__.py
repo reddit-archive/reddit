@@ -72,17 +72,12 @@ def load_controllers():
 
     from querycontroller import QueryController
 
-    try:
-        from r2admin.controllers.adminapi import ApiController
-    except ImportError:
-        from api import ApiController
-
+    from api import ApiController
     from api import ApiminimalController
     from api_docs import ApidocsController
     from apiv1 import APIv1Controller
     from oauth2 import OAuth2FrontendController
     from oauth2 import OAuth2AccessController
-    from admin import AdminController
     from redirect import RedirectController
     from ipn import IpnController
 

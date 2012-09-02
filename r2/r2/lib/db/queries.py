@@ -1435,8 +1435,3 @@ def process_votes(qname, limit=0):
                         cheater = cheater, foreground=True, timer=timer)
 
     amqp.consume_items(qname, _handle_vote, verbose = False)
-
-try:
-    from r2admin.lib.admin_queries import *
-except ImportError:
-    pass

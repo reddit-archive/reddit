@@ -45,7 +45,6 @@ from r2.lib.promote import randomized_promotion_list, get_promote_srid
 import socket
 
 from api_docs import api_doc, api_section
-from admin import admin_profile_query
 
 from pylons.i18n import _
 from pylons import Response
@@ -620,9 +619,6 @@ class UserController(ListingController):
 
         elif c.user_is_sponsor and self.where == 'promoted':
             q = promote.get_all_links(self.vuser._id)
-
-        elif c.user_is_admin:
-            q = admin_profile_query(self.vuser, self.where, desc('_date'))
 
         if q is None:
             return self.abort404()

@@ -20,13 +20,3 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import os
-
-tmpl_dirs = [os.path.dirname(os.path.abspath(__file__))]
-
-try:
-    from r2admin import templates as admin
-except ImportError:
-    import admin
-
-tmpl_dirs.append(os.path.dirname(admin.__file__))

@@ -26,7 +26,6 @@ Setup your Routes options here
 import os
 from routes import Mapper
 from pylons import config
-import admin_routes
 
 def make_map():
     map = Mapper()
@@ -35,7 +34,7 @@ def make_map():
     for plugin in config['r2.plugins']:
         plugin.add_routes(mc)
 
-    admin_routes.add(mc)
+    mc('/admin/', controller='awards')
 
     mc('/login', controller='forms', action='login')
     mc('/register', controller='forms', action='register')
@@ -101,8 +100,6 @@ def make_map():
        requirements=dict(action="give|winners"))
 
     mc('/admin/errors', controller='errorlog')
-
-    mc('/admin/:action', controller='admin')
 
     mc('/user/:username/about', controller='user', action='about',
        where='overview')

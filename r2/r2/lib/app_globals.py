@@ -459,8 +459,6 @@ class Globals(object):
                            (self.reddit_host, self.reddit_pid,
                             self.short_version, datetime.now()))
 
-        initialize_admin_globals(self)
-
     def record_repo_version(self, repo_name, git_dir):
         """Get the currently checked out git revision for a given repository,
         record it in g.versions, and return the short version of the hash."""
@@ -559,11 +557,3 @@ class Globals(object):
         here.
         """
         pass
-
-def initialize_admin_globals(g):
-    pass
-
-try:
-    from r2admin.lib.app_globals import initialize_admin_globals
-except ImportError:
-    pass

@@ -30,7 +30,6 @@ import r2.lib.helpers
 from r2.config import routing
 from r2.lib.app_globals import Globals
 from r2.lib.configparse import ConfigValue
-from r2.templates import tmpl_dirs
 
 
 mimetypes.init()
@@ -42,7 +41,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
 
     paths = {'root': root_path,
              'controllers': os.path.join(root_path, 'controllers'),
-             'templates': tmpl_dirs,
+             'templates': [os.path.join(root_path, 'templates')],
              }
 
     if ConfigValue.bool(global_conf.get('uncompressedJS')):
