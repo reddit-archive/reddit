@@ -27,12 +27,13 @@ from r2.lib import js
 
 print 'POTFILE := ' + os.path.join(I18N_PATH, 'r2.pot')
 
-plugins = list(PluginLoader.available_plugins())
-print 'PLUGINS := ' + ' '.join(plugin.name for plugin in plugins)
+plugins = PluginLoader()
+print 'PLUGINS := ' + ' '.join(plugin.name for plugin in plugins
+                               if plugin.needs_static_build)
 for plugin in plugins:
-    print 'PLUGIN_PATH_%s := %s' % (plugin.name, PluginLoader.plugin_path(plugin))
+    print 'PLUGIN_PATH_%s := %s' % (plugin.name, plugin.path)
 
-js.load_plugin_modules()
+js.load_plugin_modules(plugins)
 modules = dict((k, m) for k, m in js.module.iteritems())
 print 'JS_MODULES := ' + ' '.join(modules.iterkeys())
 outputs = []

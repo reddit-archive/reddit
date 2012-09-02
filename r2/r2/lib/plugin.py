@@ -30,9 +30,14 @@ class Plugin(object):
     js = {}
     config = {}
     live_config = {}
+    needs_static_build = False
 
     def __init__(self, entry_point):
         self.entry_point = entry_point
+
+    @property
+    def name(self):
+        return self.entry_point.name
 
     @property
     def path(self):
@@ -103,15 +108,6 @@ class PluginLoader(object):
     @staticmethod
     def available_plugins(name=None):
         return pkg_resources.iter_entry_points('r2.plugin', name)
-
-    @staticmethod
-    def plugin_path(plugin):
-        if isinstance(plugin, str):
-            try:
-                plugin = pkg_resources.iter_entry_points("r2.plugin", name).next()
-            except StopIteration:
-                return None
-        return os.path.join(plugin.dist.location, plugin.module_name)
 
     def load_plugins(self):
         g = config['pylons.g']

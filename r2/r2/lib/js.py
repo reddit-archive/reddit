@@ -326,9 +326,8 @@ module["qrcode"] = Module("qrcode.js",
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
-def load_plugin_modules():
-    from r2.lib.plugin import PluginLoader
-    for plugin in PluginLoader():
+def load_plugin_modules(plugins):
+    for plugin in plugins:
         plugin.add_js(module)
 
 commands = {}
