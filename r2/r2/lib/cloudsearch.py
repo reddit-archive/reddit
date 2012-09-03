@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import collections
 import cPickle as pickle
 from datetime import datetime
 import functools
@@ -79,6 +80,244 @@ def safe_get(get_fn, ids, return_dict=True, **kw):
 
 class CloudSearchHTTPError(httplib.HTTPException): pass
 class InvalidQuery(Exception): pass
+
+
+Field = collections.namedtuple("Field", "name cloudsearch_type "
+                               "lucene_type function")
+SAME_AS_CLOUDSEARCH = object()
+FIELD_TYPES = (int, str, datetime, SAME_AS_CLOUDSEARCH, "yesno")
+
+def field(name=None, cloudsearch_type=str, lucene_type=SAME_AS_CLOUDSEARCH):
+    if lucene_type is SAME_AS_CLOUDSEARCH:
+        lucene_type = cloudsearch_type
+    if cloudsearch_type not in FIELD_TYPES + (None,):
+        raise ValueError("cloudsearch_type %r not in %r" %
+                         (cloudsearch_type, FIELD_TYPES))
+    if lucene_type not in FIELD_TYPES + (None,):
+        raise ValueError("lucene_type %r not in %r" %
+                         (lucene_type, FIELD_TYPES))
+    if callable(name):
+        # Simple case; decorated as '@field'; act as a decorator instead
+        # of a decorator factory
+        function = name
+        name = None
+    else:
+        function = None
+    
+    def field_inner(fn):
+        fn.field = Field(name or fn.func_name, cloudsearch_type,
+                         lucene_type, fn)
+        return fn
+    
+    if function:
+        return field_inner(function)
+    else:
+        return field_inner
+
+
+class FieldsMeta(type):
+    def __init__(cls, name, bases, attrs):
+        type.__init__(cls, name, bases, attrs)
+        for attr in attrs.itervalues():
+            if hasattr(attr, "field"):
+                cls._fields.append(attr.field)
+
+
+class FieldsBase(object):
+    __metaclass__ = FieldsMeta
+    _fields = []
+    
+    def fields(self):
+        data = {}
+        for field in self._fields:
+            if field.cloudsearch_type is None:
+                continue
+            val = field.function(self)
+            if val is not None:
+                data[field.name] = val
+        return data
+    
+    @classmethod
+    def all_fields(cls):
+        return cls._fields
+    
+    @classmethod
+    def cloudsearch_fields(cls, type_=None, types=FIELD_TYPES):
+        types = (type_,) if type_ else types
+        return [f for f in cls._fields if f.cloudsearch_type in types]
+    
+    @classmethod
+    def lucene_fields(cls, type_=None, types=FIELD_TYPES):
+        types = (type_,) if type_ else types
+        return [f for f in cls._fields if f.lucene_type in types]
+    
+    @classmethod
+    def cloudsearch_fieldnames(cls, type_=None, types=FIELD_TYPES):
+        return [f.name for f in cls.cloudsearch_fields(type_=type_,
+                                                       types=types)]
+    
+    @classmethod
+    def lucene_fieldnames(cls, type_=None, types=FIELD_TYPES):
+        return [f.name for f in cls.lucene_fields(type_=type_, types=types)]
+
+
+class LinkFields(FieldsBase):
+    def __init__(self, link, author, sr):
+        self.link = link
+        self.author = author
+        self.sr = sr
+    
+    @field(cloudsearch_type=int, lucene_type=None)
+    def ups(self):
+        return max(0, self.link._ups)
+    
+    @field(cloudsearch_type=int, lucene_type=None)
+    def downs(self):
+        return max(0, self.link._downs)
+    
+    @field(cloudsearch_type=int, lucene_type=None)
+    def num_comments(self):
+        return max(0, getattr(self.link, 'num_comments', 0))
+    
+    @field
+    def fullname(self):
+        return self.link._fullname
+    
+    @field
+    def subreddit(self):
+        return self.sr.name
+    
+    @field
+    def reddit(self):
+        return self.sr.name
+    
+    @field
+    def title(self):
+        return self.link.title
+    
+    @field(cloudsearch_type=int)
+    def sr_id(self):
+        return self.link.sr_id
+    
+    @field(cloudsearch_type=int, lucene_type=datetime)
+    def timestamp(self):
+        return int(time.mktime(self.link._date.utctimetuple()))
+    
+    @field(cloudsearch_type=int, lucene_type="yesno")
+    def over18(self):
+        nsfw = (self.sr.over_18 or self.link.over_18 or
+                Link._nsfw.findall(self.link.title))
+        return (1 if nsfw else 0)
+    
+    @field(cloudsearch_type=None, lucene_type="yesno")
+    def nsfw(self):
+        return NotImplemented
+    
+    @field(cloudsearch_type=int, lucene_type="yesno")
+    def is_self(self):
+        return (1 if self.link.is_self else 0)
+    
+    @field(name="self", cloudsearch_type=None, lucene_type="yesno")
+    def self_(self):
+        return NotImplemented
+    
+    @field
+    def author_fullname(self):
+        return self.author._fullname
+    
+    @field(name="author")
+    def author_field(self):
+        return '[deleted]' if self.author._deleted else self.author.name
+    
+    @field(cloudsearch_type=int)
+    def type_id(self):
+        return self.link._type_id
+    
+    @field
+    def site(self):
+        if self.link.is_self:
+            return g.domain
+        else:
+            url = r2utils.UrlParser(self.link.url)
+            try:
+                return list(url.domain_permutations())
+            except ValueError:
+                return None
+    
+    @field
+    def selftext(self):
+        if self.link.is_self and self.link.selftext:
+            return self.link.selftext
+        else:
+            return None
+    
+    @field
+    def url(self):
+        if not self.link.is_self:
+            return self.link.url
+        else:
+            return None
+    
+    @field
+    def flair_css_class(self):
+        return self.link.flair_css_class
+    
+    @field
+    def flair_text(self):
+        return self.link.flair_text
+
+
+class SubredditFields(FieldsBase):
+    def __init__(self, sr):
+        self.sr = sr
+    
+    @field
+    def name(self):
+        return self.sr.name
+    
+    @field
+    def title(self):
+        return self.sr.title
+    
+    @field(name="type")
+    def type_(self):
+        return self.sr.type
+    
+    @field
+    def language(self):
+        return self.sr.lang
+    
+    @field
+    def header_title(self):
+        return self.sr.header_title
+    
+    @field
+    def description(self):
+        return self.sr.public_description
+    
+    @field
+    def sidebar(self):
+        return self.sr.sidebar
+    
+    @field
+    def over18(self):
+        return self.sr.over_18
+    
+    @field
+    def link_type(self):
+        return self.sr.link_type
+    
+    @field
+    def activity(self):
+        return self.sr._downs
+    
+    @field
+    def subscribers(self):
+        return self.sr._ups
+    
+    @field
+    def type_id(self):
+        return self.sr._type_id
 
 
 class CloudSearchUploader(object):
@@ -243,46 +482,7 @@ class LinkUploader(CloudSearchUploader):
         '''Return fields relevant to a Link search index'''
         account = self.accounts[thing.author_id]
         sr = self.srs[thing.sr_id]
-        nsfw = sr.over_18 or thing.over_18 or Link._nsfw.findall(thing.title)
-        
-        fields = {"ups": max(0, thing._ups),
-                  "downs": max(0, thing._downs),
-                  "num_comments": max(0, getattr(thing, 'num_comments', 0)),
-                  "fullname": thing._fullname,
-                  "subreddit": sr.name,
-                  "reddit": sr.name,
-                  "title": thing.title,
-                  "timestamp": int(time.mktime(thing._date.utctimetuple())),
-                  "sr_id": thing.sr_id,
-                  "over18": 1 if nsfw else 0,
-                  "is_self": 1 if thing.is_self else 0,
-                  "author_fullname": account._fullname,
-                  "type_id": thing._type_id
-                  }
-        
-        if account._deleted:
-            fields['author'] = '[deleted]'
-        else:
-            fields['author'] = account.name
-    
-        if thing.is_self:
-            fields['site'] = g.domain
-            if thing.selftext:
-                fields['selftext'] = thing.selftext
-        else:
-            fields['url'] = thing.url
-            try:
-                url = r2utils.UrlParser(thing.url)
-                fields['site'] = list(url.domain_permutations())
-            except ValueError:
-                # UrlParser couldn't handle thing.url, oh well
-                pass
-        
-        if thing.flair_css_class or thing.flair_text:
-            fields['flair_css_class'] = thing.flair_css_class or ''
-            fields['flair_text'] = thing.flair_text or ''
-        
-        return fields
+        return LinkFields(thing, account, sr).fields()
     
     def batch_lookups(self):
         author_ids = [thing.author_id for thing in self.things
@@ -317,20 +517,7 @@ class SubredditUploader(CloudSearchUploader):
     _version = CloudSearchUploader._version_seconds
     
     def fields(self, thing):
-        fields = {'name': thing.name,
-                  'title': thing.title,
-                  'type': thing.type,
-                  'language': thing.lang,
-                  'header_title': thing.header_title,
-                  'description': thing.public_description,
-                  'sidebar': thing.description,
-                  'over18': thing.over_18,
-                  'link_type': thing.link_type,
-                  'activity': thing._downs,
-                  'subscribers': thing._ups,
-                  'type_id': thing._type_id
-                  }
-        return fields
+        return SubredditFields(thing).fields()
     
     def should_index(self, thing):
         return getattr(thing, 'author_id', None) != -1
@@ -744,9 +931,11 @@ class LinkSearchQuery(CloudSearchQuery):
                           'comments': 5,
                           }
     
-    lucene_parser = l2cs.make_parser(int_fields=['timestamp'],
-                                     yesno_fields=['over18', 'is_self',
-                                                   'nsfw', 'self'])
+    schema = l2cs.make_schema(LinkFields.lucene_fieldnames())
+    lucene_parser = l2cs.make_parser(
+             int_fields=LinkFields.lucene_fieldnames(type_=int),
+             yesno_fields=LinkFields.lucene_fieldnames(type_="yesno"),
+             schema=schema)
     known_syntaxes = ("cloudsearch", "lucene", "plain")
     default_syntax = "lucene"
     

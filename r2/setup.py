@@ -94,7 +94,7 @@ setup(
         "py-bcrypt",
         "python-statsd",
         "snudown>=1.1.0",
-        "l2cs",
+        "l2cs>=2.0.2",
         "lxml",
         "kazoo",
     ],
