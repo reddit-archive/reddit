@@ -28,6 +28,7 @@ import re
 import json
 
 from r2.lib.translation import iter_langs
+from r2.lib.plugin import PluginLoader
 
 try:
     from pylons import g, c, config
@@ -326,7 +327,9 @@ module["qrcode"] = Module("qrcode.js",
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
-def load_plugin_modules(plugins):
+def load_plugin_modules(plugins=None):
+    if not plugins:
+        plugins = PluginLoader()
     for plugin in plugins:
         plugin.add_js(module)
 
