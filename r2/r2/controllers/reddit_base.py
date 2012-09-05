@@ -688,6 +688,11 @@ class MinimalController(BaseController):
 
         end_time = datetime.now(g.tz)
 
+        # update last_visit
+        if (c.user_is_loggedin and not g.disallow_db_writes and
+            request.path != '/validuser'):
+            c.user.update_last_visit(c.start_time)
+
         if ('pylons.routes_dict' in request.environ and
             'action' in request.environ['pylons.routes_dict']):
             action = str(request.environ['pylons.routes_dict']['action'])
@@ -873,8 +878,6 @@ class RedditController(MinimalController):
             c.user_special_distinguish = c.user.special_distinguish()
             c.user_is_sponsor = c.user_is_admin or c.user.name in g.sponsors
             c.otp_cached = is_otpcookie_valid
-            if request.path != '/validuser' and not g.disallow_db_writes:
-                c.user.update_last_visit(c.start_time)
             if not isinstance(c.site, FakeSubreddit) and not g.disallow_db_writes:
                 c.user.update_sr_activity(c.site)
 
