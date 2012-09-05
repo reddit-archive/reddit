@@ -538,7 +538,7 @@ class VSelfText(VMarkdown):
     def get_max_length(self):
         if c.site.link_type == "self":
             return self._max_length * 4
-        return self._max_length
+        return self._max_length * 1.5
 
     max_length = property(get_max_length, set_max_length)
 
