@@ -298,8 +298,6 @@ def empty_queue(queue):
 
 def black_hole(queue):
     """continually empty out a queue as new items are created"""
-    chan = connection_manager.get_channel()
-
     def _ignore(msg):
         print 'Ignoring msg: %r' % msg.body
 
@@ -352,22 +350,3 @@ def dedup_queue(queue, rk = None, limit=None,
         worker.join()
 
         chan.basic_ack(0, multiple=True)
-
-
-def _test_setup(test_q = 'test_q'):
-    from r2.lib.queues import RedditQueueMap
-    chan = connection_manager.get_channel()
-    rqm = RedditQueueMap(amqp_exchange, chan)
-    rqm._q(test_q, durable=False, auto_delete=True, self_refer=True)
-    return chan
-
-def test_consume(test_q = 'test_q'):
-    chan = _test_setup()
-    def _print(msg):
-        print msg.body
-    consume_items(test_q, _print)
-
-def test_produce(test_q = 'test_q', msg_body = 'hello, world!'):
-    _test_setup()
-    add_item(test_q, msg_body)
-    worker.join()
