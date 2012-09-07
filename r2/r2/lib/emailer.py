@@ -115,11 +115,6 @@ def ad_inq_email(email, body, name='', reply_to = ''):
     return _feedback_email(email, body,  Email.Kind.ADVERTISE, name = name,
                            reply_to = reply_to)
 
-def i18n_email(email, body, name='', reply_to = ''):
-    """Queues a ad_inq email to the feedback account."""
-    return _feedback_email(email, body,  Email.Kind.HELP_TRANSLATE, name = name,
-                           reply_to = reply_to)
-
 def gold_email(body, to_address, from_name=g.domain):
     return _gold_email(body, to_address, from_name, Email.Kind.GOLDMAIL)
 

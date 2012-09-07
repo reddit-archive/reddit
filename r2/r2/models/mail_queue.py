@@ -301,7 +301,6 @@ class Email(object):
                 "LIVE_PROMO",
                 "FINISHED_PROMO",
                 "NEW_PROMO",
-                "HELP_TRANSLATE",
                 "NERDMAIL",
                 "GOLDMAIL",
                 )
@@ -321,7 +320,6 @@ class Email(object):
         Kind.LIVE_PROMO   : _("[reddit] your promotion is now live"),
         Kind.FINISHED_PROMO : _("[reddit] your promotion has finished"),
         Kind.NEW_PROMO : _("[reddit] your promotion has been created"),
-        Kind.HELP_TRANSLATE : _("[i18n] translation offer from '%(user)s'"),
         Kind.NERDMAIL : _("[reddit] hey, nerd!"),
         Kind.GOLDMAIL : _("[reddit] reddit gold activation link")
         }
