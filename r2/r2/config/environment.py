@@ -53,6 +53,7 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
                     template_engine='mako', paths=paths)
 
     g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
+    g.plugins.declare_queues(g.queues)
     if setup_globals:
         g.setup()
         r2.config.cache = g.cache

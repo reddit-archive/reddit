@@ -43,6 +43,7 @@ log = g.log
 amqp_virtual_host = g.amqp_virtual_host
 amqp_logging = g.amqp_logging
 stats = g.stats
+queues = g.queues
 
 #there are two ways of interacting with this module: add_item and
 #handle_items/consume_items. _add_item (the internal function for
@@ -129,11 +130,22 @@ class ConnectionManager(local):
         return self.channel
 
     def init_queue(self):
-        from r2.lib.queues import RedditQueueMap
-
         chan = self.get_channel()
+        chan.exchange_declare(exchange=amqp_exchange,
+                              type="direct",
+                              durable=True,
+                              auto_delete=False)
 
-        RedditQueueMap(amqp_exchange, chan).init()
+        for queue in queues:
+            chan.queue_declare(queue=queue.name,
+                               durable=queue.durable,
+                               exclusive=queue.exclusive,
+                               auto_delete=queue.auto_delete)
+
+        for queue, key in queues.bindings:
+            chan.queue_bind(routing_key=key,
+                            queue=queue,
+                            exchange=amqp_exchange)
 
 connection_manager = ConnectionManager()
 

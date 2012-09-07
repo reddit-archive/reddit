@@ -43,6 +43,7 @@ from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.plugin import PluginLoader
+from r2.config import queues
 
 
 LIVE_CONFIG_NODE = "/config/live"
@@ -222,6 +223,7 @@ class Globals(object):
         self.config = ConfigValueParser(global_conf)
         self.config.add_spec(self.spec)
         self.plugins = PluginLoader(self.config.get("plugins", []))
+        self.queues = queues.declare_queues()
 
         self.paths = paths
 

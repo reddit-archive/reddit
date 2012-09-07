@@ -69,6 +69,9 @@ class Plugin(object):
             else:
                 module_registry[name].extend(module)
 
+    def declare_queues(self, queues):
+        pass
+
     def add_routes(self, mc):
         pass
 
@@ -112,6 +115,10 @@ class PluginLoader(object):
     @staticmethod
     def available_plugins(name=None):
         return pkg_resources.iter_entry_points('r2.plugin', name)
+
+    def declare_queues(self, queues):
+        for plugin in self:
+            plugin.declare_queues(queues)
 
     def load_plugins(self):
         g = config['pylons.g']
