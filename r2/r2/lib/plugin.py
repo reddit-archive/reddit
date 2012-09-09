@@ -45,9 +45,9 @@ class Plugin(object):
         return os.path.dirname(module.__file__)
 
     @property
-    def template_dirs(self):
+    def template_dir(self):
         """Add module/templates/ as a template directory."""
-        return [os.path.join(self.path, 'templates')]
+        return os.path.join(self.path, 'templates')
 
     @property
     def static_dir(self):
@@ -119,7 +119,7 @@ class PluginLoader(object):
 
             # Load plugin
             g.config.add_spec(plugin.config)
-            config['pylons.paths']['templates'].extend(plugin.template_dirs)
+            config['pylons.paths']['templates'].insert(0, plugin.template_dir)
             plugin.add_js()
             plugin.on_load()
 
