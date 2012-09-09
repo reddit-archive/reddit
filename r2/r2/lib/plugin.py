@@ -103,6 +103,9 @@ class PluginLoader(object):
     def __iter__(self):
         return self.plugins.itervalues()
 
+    def __reversed__(self):
+        return reversed(self.plugins.values())
+
     def __getitem__(self, key):
         return self.plugins[key]
 
