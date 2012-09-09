@@ -77,7 +77,21 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
                                  ["from r2.lib.filters import websafe, unsafe, mako_websafe",
                                   "from pylons import c, g, request",
                                   "from pylons.i18n import _, ungettext"]
-    
+
+    # when mako loads a previously compiled template file from its cache, it
+    # doesn't check that the original template path matches the current path.
+    # in the event that a new plugin defines a template overriding a reddit
+    # template, unless the mtime newer, mako doesn't update the compiled
+    # template. as a workaround, this makes mako store compiled templates with
+    # the original path in the filename, forcing it to update with the path.
+    def mako_module_path(filename, uri):
+        module_directory = tmpl_options['mako.module_directory']
+        filename = filename.lstrip('/').replace('/', '-')
+        path = os.path.join(module_directory, filename + ".py")
+        return os.path.abspath(path)
+
+    tmpl_options['mako.modulename_callable'] = mako_module_path
+
     # Add your own template options config options here,
     # note that all config options will override
     # any Pylons config options
