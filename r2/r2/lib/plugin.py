@@ -23,6 +23,7 @@
 import sys
 import os.path
 import pkg_resources
+from collections import OrderedDict
 
 from pylons import config
 
@@ -77,8 +78,6 @@ class Plugin(object):
 
 class PluginLoader(object):
     def __init__(self, plugin_names=None):
-        self.plugins = {}
-
         if plugin_names is None:
             entry_points = self.available_plugins()
         else:
@@ -93,6 +92,7 @@ class PluginLoader(object):
                 else:
                     entry_points.append(entry_point)
 
+        self.plugins = OrderedDict()
         for entry_point in entry_points:
             plugin_cls = entry_point.load()
             self.plugins[entry_point.name] = plugin_cls(entry_point)
