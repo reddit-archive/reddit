@@ -2149,6 +2149,29 @@ li.searchfacet {
 #passform h1 {margin-bottom: 0px}
 #passform p {margin-bottom: 5px; font-size: small}
 
+.register-form .name-entry * {
+    vertical-align: middle;
+}
+
+.notice-taken, .notice-available {
+    display: none;
+    margin-left: 6px;
+    line-height: 16px;
+}
+
+.register-form.name-taken .notice-taken, .register-form.name-available .notice-available {
+    display: inline-block;
+}
+
+.register-form .name-entry .throbber {
+    display: none;
+    margin-left: 5px;
+}
+
+.register-form.name-checking .name-entry .throbber {
+    display: inline-block;
+}
+
 /* cover */
 .cover {
     position: fixed;
@@ -4826,7 +4849,9 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
 .gold-form h1.goldgift:before,
-.users-online:before {
+.users-online:before,
+.notice-taken:before,
+.notice-available:before {
     height: 16px;
     width: 16px;
     display: block;
@@ -4903,6 +4928,18 @@ dd { margin-left: 20px;  }
 
 .users-online:before {
     background-image: url(../online.png);  /* SPRITE */
+}
+
+.notice-taken:before, .notice-available:before {
+    margin-right: 3px;
+}
+
+.notice-taken:before {
+    background-image: url(../icon-circle-exclamation.png);  /* SPRITE */
+}
+
+.notice-available:before {
+    background-image: url(../icon-circle-check.png);  /* SPRITE */
 }
 
 .linkinfo {

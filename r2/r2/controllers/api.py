@@ -147,6 +147,15 @@ class ApiController(RedditController, OAuth2ResourceController):
         else:
             return {}
 
+    @json_validate(user=VUname("user"))
+    @api_doc(api_section.users, extensions=["json"])
+    def GET_username_available(self, responder, user):
+        """
+        Check whether a username is available for registration.
+        """
+        if not (responder.has_errors("user", errors.BAD_USERNAME)):
+            return bool(user)
+
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
                    email=ValidEmails('email', num = 1),

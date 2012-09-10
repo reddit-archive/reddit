@@ -207,8 +207,44 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
 
 r.ui.RegisterForm = function() {
     r.ui.Form.apply(this, arguments)
+    this.checkUsernameDebounced = _.debounce($.proxy(this, 'checkUsername'), 500)
+    this.$user = this.$el.find('[name="user"]')
+    this.$user.on('keyup', $.proxy(this, 'usernameChanged'))
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
+    usernameChanged: function() {
+        var name = this.$user.val()
+        if (name == this._priorName) {
+            return
+        } else {
+            this._priorName = name
+        }
+
+        this.$el.find('.error.field-user').hide()
+        this.$el.removeClass('name-available name-taken')
+        this.checkUsernameDebounced(name)
+        this.$el.toggleClass('name-checking', !!name)
+    },
+
+    checkUsername: function(name) {
+        if (name) {
+            $.ajax({
+                url: '/api/username_available.json',
+                data: {user: name},
+                success: $.proxy(this, 'displayUsernameStatus'),
+                complete: $.proxy(function() { this.$el.removeClass('name-checking') }, this)
+            })
+        }
+    },
+
+    displayUsernameStatus: function(result) {
+        if (result.json && result.json.errors) {
+            this.showErrors(result.json.errors)
+        } else {
+            this.$el.addClass(result ? 'name-available' : 'name-taken')
+        }
+    },
+
     _submit: function() {
         r.login.post(this, 'register', $.proxy(this, 'handleResult'))
     },
