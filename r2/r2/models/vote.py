@@ -166,6 +166,7 @@ VotesByComment._view_of = CassandraCommentVote
 class VotesByAccount(tdb_cassandra.DenormalizedRelation):
     _use_db = False
     _thing1_cls = Account
+    _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
     def rel(cls, thing1_cls, thing2_cls):
