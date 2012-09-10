@@ -283,8 +283,8 @@ ${unsafe(js.use('sponsored'))}
   %if c.user_is_sponsor:
   <label style="display:block; text-align:right" for="domain">Override display domain:</label>
   <input id="domain" name="domain" type="text" 
-         %if getattr(link, "domain_override", False):
-           value="${link.domain_override}" class="rounded"
+         %if getattr(thing.link, "domain_override", False):
+           value="${thing.link.domain_override}" class="rounded"
          %else:
            class="gray rounded" value="optional" 
          %endif

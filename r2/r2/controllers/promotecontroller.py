@@ -216,7 +216,6 @@ class PromoteController(ListingController):
 
             # comment disabling is free to be changed any time.
             l.disable_comments = disable_comments
-
             if c.user_is_sponsor or c.user.trusted_sponsor:
                 if media_embed and media_width and media_height:
                     l.media_object = dict(height = media_height,
@@ -227,8 +226,7 @@ class PromoteController(ListingController):
                     l.media_object = None
 
                 l.media_override = media_override
-
-                if getattr(link, "domain_override", False) or domain_override:
+                if getattr(l, "domain_override", False) or domain_override:
                     l.domain_override = domain_override
             l._commit()
 
