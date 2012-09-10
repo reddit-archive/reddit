@@ -107,6 +107,7 @@ error_list = dict((
         ('BAD_IMAGE', _('image problem')),
         ('DEVELOPER_ALREADY_ADDED', _('already added')),
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
+        ('BAD_HASH', _("i don't believe you.")),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
