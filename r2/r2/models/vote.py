@@ -168,6 +168,9 @@ class VotesByAccount(tdb_cassandra.DenormalizedRelation):
     _thing1_cls = Account
     _read_consistency_level = tdb_cassandra.CL.ONE
 
+    # TODO: enable writes when CassandraVote is phased out
+    _write_last_modified = False
+
     @classmethod
     def rel(cls, thing1_cls, thing2_cls):
         if (thing1_cls, thing2_cls) == (Account, Link):
@@ -192,6 +195,7 @@ class LinkVotesByAccount(VotesByAccount):
     _use_db = True
     _thing2_cls = Link
     _views = []
+    _last_modified_name = "LinkVote"
 
     @classmethod
     def _fast_query(cls, subject, objects, properties=None):
@@ -204,6 +208,7 @@ class CommentVotesByAccount(VotesByAccount):
     _use_db = True
     _thing2_cls = Comment
     _views = []
+    _last_modified_name = "CommentVote"
 
 
 class VoteDetailsByThing(tdb_cassandra.View):
