@@ -983,6 +983,8 @@ class DenormalizedRelation(object):
     _cf_name = None
     _compare_with = ASCII_TYPE
     _type_prefix = None
+    _last_modified_name = None
+    _write_last_modified = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)
 
@@ -1010,6 +1012,10 @@ class DenormalizedRelation(object):
         for view in cls._views:
             view.create(thing1, thing2s, opaque)
 
+        if cls._write_last_modified:
+            from r2.models.last_modified import LastModified
+            LastModified.touch(thing1._fullname, cls._last_modified_name)
+
     @classmethod
     def destroy(cls, thing1, thing2s):
         """Destroy relationships between thing1 and some thing2s."""
@@ -1024,7 +1030,22 @@ class DenormalizedRelation(object):
         """Find relationships between thing1 and various thing2s."""
         thing2s, thing2s_is_single = tup(thing2s, ret_is_single=True)
 
-        if not thing1 or not thing2s:
+        if not thing1:
+            return {}
+
+        # don't bother looking up relationships for items that were created
+        # since the last time the thing1 created a relationship of this type
+        if cls._last_modified_name:
+            from r2.models.last_modified import LastModified
+            timestamp = LastModified.get(thing1._fullname,
+                                         cls._last_modified_name)
+            if timestamp:
+                thing2s = [thing2 for thing2 in thing2s
+                           if thing2._date <= timestamp]
+            else:
+                thing2s = []
+
+        if not thing2s:
             return {}
 
         # fetch the row from cassandra. if it doesn't exist, thing1 has no
