@@ -40,7 +40,9 @@ function admincheck(elem) {
   var admins = ${unsafe(simplejson.dumps(thing.admins))};
 
   if ($.inArray(elem.value, admins) >= 0) {
-    $(".admin-to").text(elem.value);
+    $(".admin-to")
+      .text(elem.value)
+      .attr('href', '/about/team/#user/' + elem.value);
     $(".clippy").show();
   } else {
     $(".clippy").hide();
@@ -86,15 +88,13 @@ function admincheck(elem) {
 
        Before you click "send", you might want to make sure that
        &#32;
-       <span class="admin-to">${thing.to}</span>
+       <a class="admin-to" href="/about/team/#user/${thing.to}">${thing.to}</a>
        &#32;
-       is the right admin for the job.
-
+       is the right admin for the job. The
        &#32;
-       <a href="http://reddit.com/help/faq#WhichstaffmembershouldIwritetoifIhaveaproblemorquestion">
-         The FAQ has some guidelines</a>
+       <a href="/about/team/">team page</a>
        &#32;
-       about who handles what.
+       has some info about who handles what.
 
        Also:
      </p>
