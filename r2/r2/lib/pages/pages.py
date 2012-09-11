@@ -700,9 +700,7 @@ class PrefApps(Templated):
     """Preference form for managing authorized third-party applications."""
 
     def __init__(self, my_apps, developed_apps):
-        from r2.controllers.oauth2 import scope_info
-        self.my_apps = [(app, [scope_info[scope] for scope in scopes])
-                        for app, scopes in my_apps]
+        self.my_apps = my_apps
         self.developed_apps = developed_apps
         super(PrefApps, self).__init__()
 
@@ -864,12 +862,10 @@ class Register(Login):
     pass
 
 class OAuth2AuthorizationPage(BoringPage):
-    def __init__(self, client, redirect_uri, scopes, state):
-        from r2.controllers.oauth2 import scope_info
-        scope_details = [scope_info[scope] for scope in scopes]
+    def __init__(self, client, redirect_uri, scope, state):
         content = OAuth2Authorization(client=client,
                                       redirect_uri=redirect_uri,
-                                      scope_details=scope_details,
+                                      scope=scope,
                                       state=state)
         BoringPage.__init__(self, _("request for permission"),
                 show_sidebar=False, content=content)
@@ -3662,9 +3658,7 @@ class AccountActivityPage(BoringPage):
 
 class UserIPHistory(Templated):
     def __init__(self):
-        from r2.controllers.oauth2 import scope_info
-        self.my_apps = [(app, [scope_info[scope] for scope in scopes])
-                        for app, scopes in OAuth2Client._by_user(c.user)]
+        self.my_apps = OAuth2Client._by_user(c.user)
         self.ips = ips_by_account_id(c.user._id)
         super(UserIPHistory, self).__init__()
 

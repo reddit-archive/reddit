@@ -79,8 +79,8 @@
   <div id="account-activity-apps" class="instructions">
     <h1>${_("Apps you have authorized")}</h1>
     <p>${strings.account_activity_apps_blurb}</p>
-    %for app, scopes in thing.my_apps:
-      ${authorized_app(app, scopes)}
+    %for app, scope in thing.my_apps:
+      ${authorized_app(app, scope)}
     %endfor
   </div>
 %endif

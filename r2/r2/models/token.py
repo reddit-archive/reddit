@@ -25,10 +25,11 @@ from base64 import urlsafe_b64encode
 
 from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 
+from pylons.i18n import _
+
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.models.account import Account
-
 
 def generate_token(size):
     return urlsafe_b64encode(urandom(size)).rstrip("=")
@@ -91,6 +92,62 @@ class ConsumableToken(Token):
     def consume(self):
         self.used = True
         self._commit()
+
+
+class OAuth2Scope:
+    scope_info = {
+        "identity": {
+            "id": "identity",
+            "name": _("My Identity"),
+            "description": _("Access my reddit username and signup date."),
+        },
+        "comment": {
+            "id": "comment",
+            "name": _("Commenting"),
+            "description": _("Submit comments from my account."),
+        },
+        "moderateflair": {
+            "id": "moderateflair",
+            "name": _("Moderating Flair"),
+            "description": _("Manage flair in subreddits I moderate."),
+        },
+        "myreddits": {
+            "id": "myreddits",
+            "name": _("My Subscriptions"),
+            "description": _("Access my list of subreddits."),
+        },
+    }
+
+    def __init__(self, scope_str=None):
+        if scope_str:
+            self._parse_scope_str(scope_str)
+        else:
+            self.subreddit_only = False
+            self.subreddits = set()
+            self.scopes = set()
+
+    def _parse_scope_str(self, scope_str):
+        srs, sep, scopes = scope_str.rpartition(':')
+        if sep:
+            self.subreddit_only = True
+            self.subreddits = set(srs.split('+'))
+        else:
+            self.subreddit_only = False
+            self.subreddits = set()
+        self.scopes = set(scopes.split(','))
+
+    def __str__(self):
+        if self.subreddit_only:
+            sr_part = '+'.join(sorted(self.subreddits)) + ':'
+        else:
+            sr_part = ''
+        return sr_part + ','.join(sorted(self.scopes))
+
+    def is_valid(self):
+        return all(scope in self.scope_info for scope in self.scopes)
+
+    def details(self):
+        return [(scope, self.scope_info[scope]) for scope in self.scopes]
 
 
 class OAuth2Client(Token):
@@ -202,16 +259,11 @@ class OAuth2Client(Token):
     def _by_user(cls, account):
         """Returns a (possibly empty) list of client-scope pairs for which Account has outstanding access tokens."""
 
-        client_ids = set()
-        client_id_to_scope = {}
-        for token in OAuth2AccessToken._by_user(account):
-            if token.check_valid():
-                client_id_to_scope.setdefault(token.client_id, set()).update(
-                    token.scope_list)
-
-        clients = cls._byID(client_id_to_scope.keys())
-        return [(client, list(client_id_to_scope.get(client_id, [])))
-                for client_id, client in clients.iteritems()]
+        tokens = [token for token in OAuth2AccessToken._by_user(account)
+                  if token.check_valid()]
+        clients = cls._byID([token.client_id for token in tokens])
+        return [(clients[token.client_id], OAuth2Scope(token.scope))
+                for token in tokens]
 
     def revoke(self, account):
         """Revoke all of the outstanding OAuth2AccessTokens associated with this client and user Account."""
@@ -244,13 +296,12 @@ class OAuth2AuthorizationCode(ConsumableToken):
     _connection_pool = "main"
 
     @classmethod
-    def _new(cls, client_id, redirect_uri, user_id, scope_list):
-        scope = ','.join(scope_list)
+    def _new(cls, client_id, redirect_uri, user_id, scope):
         return super(OAuth2AuthorizationCode, cls)._new(
                 client_id=client_id,
                 redirect_uri=redirect_uri,
                 user_id=user_id,
-                scope=scope)
+                scope=str(scope))
 
     @classmethod
     def use_token(cls, _id, client_id, redirect_uri):
@@ -278,7 +329,7 @@ class OAuth2AccessToken(Token):
         return super(OAuth2AccessToken, cls)._new(
                      client_id=client_id,
                      user_id=user_id,
-                     scope=scope)
+                     scope=str(scope))
 
     def _on_create(self):
         """Updates the OAuth2AccessTokensByUser index upon creation."""
@@ -344,10 +395,6 @@ class OAuth2AccessToken(Token):
 
         tokens = cls._byID(tba._values().keys())
         return [token for token in tokens.itervalues() if token.check_valid()]
-
-    @property
-    def scope_list(self):
-        return self.scope.split(',')
 
 class OAuth2AccessTokensByUser(tdb_cassandra.View):
     """Index listing the outstanding access tokens for an account."""

@@ -31,35 +31,13 @@ from r2.lib.base import abort
 from reddit_base import RedditController, MinimalController, require_https
 from r2.lib.db.thing import NotFound
 from r2.models import Account
-from r2.models.token import OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken
+from r2.models.token import (
+    OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken, OAuth2Scope)
 from r2.controllers.errors import ForbiddenError, errors
 from validator import validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID, VOAuth2Scope
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.utils import parse_http_basic
-
-scope_info = {
-    "identity": {
-        "id": "identity",
-        "name": _("My Identity"),
-        "description": _("Access my reddit username and signup date."),
-    },
-    "comment": {
-        "id": "comment",
-        "name": _("Commenting"),
-        "description": _("Submit comments from my account."),
-    },
-    "moderateflair": {
-        "id": "moderateflair",
-        "name": _("Moderating Flair"),
-        "description": _("Manage flair in subreddits I moderate."),
-    },
-    "myreddits": {
-        "id": "myreddits",
-        "name": _("My Subscriptions"),
-        "description": _("Access my list of subreddits."),
-    },
-}
 
 class OAuth2FrontendController(RedditController):
     def pre(self):
@@ -231,9 +209,11 @@ class OAuth2ResourceController(MinimalController):
         if handler:
             oauth2_perms = getattr(handler, "oauth2_perms", None)
             if oauth2_perms:
-                granted_scopes = set(access_token.scope_list)
+                grant = OAuth2Scope(access_token.scope)
+                if grant.subreddit_only and c.site.name not in grant.subreddits:
+                    self._auth_error(403, "insufficient_scope")
                 required_scopes = set(oauth2_perms['allowed_scopes'])
-                if not (granted_scopes >= required_scopes):
+                if not (grant.scopes >= required_scopes):
                     self._auth_error(403, "insufficient_scope")
             else:
                 self._auth_error(400, "invalid_request")

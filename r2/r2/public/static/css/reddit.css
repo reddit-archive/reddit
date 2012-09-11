@@ -6146,6 +6146,8 @@ tr.gold-accent + tr > td {
 }
 
 .app-permissions li { position: relative; }
+.app-permissions-subreddits { display:block; margin-top: 1em; }
+
 .app-scope {
     display: none;
     position: absolute;

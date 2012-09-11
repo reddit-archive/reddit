@@ -1890,11 +1890,10 @@ class VOAuth2Scope(VRequired):
         VRequired.__init__(self, param, errors.OAUTH2_INVALID_SCOPE, *a, **kw)
 
     def run(self, scope):
-        from r2.controllers.oauth2 import scope_info
         scope = VRequired.run(self, scope)
         if scope:
-            scope_list = scope.split(',')
-            if all(scope in scope_info for scope in scope_list):
-                return scope_list
+            parsed_scope = OAuth2Scope(scope)
+            if parsed_scope.is_valid():
+                return parsed_scope
             else:
                 self.error()
