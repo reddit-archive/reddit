@@ -210,6 +210,8 @@ r.ui.RegisterForm = function() {
     this.checkUsernameDebounced = _.debounce($.proxy(this, 'checkUsername'), 500)
     this.$user = this.$el.find('[name="user"]')
     this.$user.on('keyup', $.proxy(this, 'usernameChanged'))
+    this.$submit = this.$el.find('.submit button')
+
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     usernameChanged: function() {
@@ -221,6 +223,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
         }
 
         this.$el.find('.error.field-user').hide()
+        this.$submit.attr('disabled', false)
         this.$el.removeClass('name-available name-taken')
         this.checkUsernameDebounced(name)
         this.$el.toggleClass('name-checking', !!name)
@@ -240,8 +243,10 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     displayUsernameStatus: function(result) {
         if (result.json && result.json.errors) {
             this.showErrors(result.json.errors)
+            this.$submit.attr('disabled', true)
         } else {
             this.$el.addClass(result ? 'name-available' : 'name-taken')
+            this.$submit.attr('disabled', result == false)
         }
     },
 

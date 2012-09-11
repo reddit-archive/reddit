@@ -2684,6 +2684,10 @@ body.rulespage-body {
     color: #369;
 }
 
+button.button[disabled] {
+    color: gray;
+}
+
 .button #cover {
     position: relative; 
  }
