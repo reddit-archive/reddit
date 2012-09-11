@@ -2681,7 +2681,8 @@ body.rulespage-body {
     color: gray;
     text-align: center;
     margin: 1px;
- }
+    color: #369;
+}
 
 .button #cover {
     position: relative; 
@@ -2732,7 +2733,6 @@ body.rulespage-body {
 .button .blog .r { color: gray;  }
 .button .blog .score { white-space: nowrap; }
 
-.button {color: #369;}
 .button a:hover { text-decoration: underline }
 
 .button .blog1 { font-size: x-small; }
