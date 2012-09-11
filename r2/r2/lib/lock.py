@@ -24,9 +24,10 @@ from __future__ import with_statement
 from time import sleep
 from datetime import datetime
 from threading import local
-from traceback import format_stack
 import os
 import socket
+
+from r2.lib.utils import simple_traceback
 
 # thread-local storage for detection of recursive locks
 locks = local()
@@ -58,7 +59,7 @@ class MemcacheLock(object):
     def __enter__(self):
         start = datetime.now()
 
-        my_info = (reddit_host, reddit_pid, ''.join(format_stack()))
+        my_info = (reddit_host, reddit_pid, simple_traceback())
 
         #if this thread already has this lock, move on
         if self.key in self.locks:

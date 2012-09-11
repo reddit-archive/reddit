@@ -20,7 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import os
 import base64
+import traceback
 
 from urllib import unquote_plus
 from urllib2 import urlopen
@@ -1426,3 +1428,15 @@ def parse_http_basic(authorization_header):
     except TypeError:
         raise RequirementException
     return require_split(auth_data, 2, ":")
+
+
+def simple_traceback():
+    """Generate a pared-down traceback that's human readable but small."""
+
+    stack_trace = traceback.extract_stack(limit=7)[:-2]
+    return "\n".join(":".join((os.path.basename(filename),
+                               function_name,
+                               str(line_number),
+                              ))
+                     for filename, line_number, function_name, text
+                     in stack_trace)
