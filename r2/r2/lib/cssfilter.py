@@ -183,9 +183,9 @@ def legacy_s3_url(url, site):
         baseurl = "http://%s" % (bucket)
         if g.s3_media_direct:
             baseurl = "http://%s/%s" % (s3_direct_url, bucket)
-            url = "%s/%s_%d.png"\
-                    % (baseurl, site._fullname, url)
-        url = s3_https_if_secure(url)
+        url = "%s/%s_%d.png"\
+                % (baseurl, site._fullname, url)
+    url = s3_https_if_secure(url)
     return url
 
 # local urls should be in the static directory
