@@ -942,8 +942,8 @@ class MyredditsController(ListingController, OAuth2ResourceController):
     render_cls = MySubredditsPage
 
     def pre(self):
-        ListingController.pre(self)
         self.check_for_bearer_token()
+        ListingController.pre(self)
 
     @property
     def menus(self):

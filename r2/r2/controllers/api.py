@@ -109,8 +109,8 @@ class ApiController(RedditController, OAuth2ResourceController):
     """
 
     def pre(self):
-        RedditController.pre(self)
         self.check_for_bearer_token()
+        RedditController.pre(self)
 
     @validatedForm()
     def ajax_login_redirect(self, form, jquery, dest):
