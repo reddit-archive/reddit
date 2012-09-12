@@ -166,7 +166,6 @@ class WikiController(RedditController):
     
     def GET_wiki_listing(self):
         def check_hidden(page):
-            g.log.debug("Got here %s" % str(this_may_view(page)))
             return this_may_view(page)
         pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
         return WikiListing(pages).render()
