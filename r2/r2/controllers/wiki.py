@@ -134,8 +134,8 @@ class WikiController(RedditController):
                 error = _("this wiki cannot handle page names of that magnitude!  please select a page name shorter than %d characters") % c.error['max_length']
             elif c.error['reason'] == 'PAGE_CREATED_ELSEWHERE':
                 error = _("this page is a special page, please go into the subreddit settings and save the field once to create this special page")
-            elif c.error['reason'] == 'PAGE_NAME_MAX_SEPERATORS':
-                error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['max_separator']
+            elif c.error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
+                error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['MAX_SEPARATORS']
             return BoringPage(_("Wiki error"), infotext=error).render()
         elif view:
             return WikiNotFound().render()
