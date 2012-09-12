@@ -45,6 +45,8 @@ MD_END = '</div>'
 WIKI_MD_START = '<div class="md wiki">'
 WIKI_MD_END = '</div>'
 
+custom_img_url = re.compile(r'\A%%([a-zA-Z0-9\-]+)%%$')
+
 def python_websafe(text):
     return text.replace('&', "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
@@ -241,7 +243,9 @@ def wikimarkdown(text):
     
     def img_swap(tag):
         name = tag.get('src')
-        if c.site.images.has_key(name):
+        name = custom_img_url.search(name)
+        name = name and name.group(1)
+        if name and c.site.images.has_key(name):
             url = c.site.images[name]
             url = legacy_s3_url(url, c.site)
             tag['src'] = url
