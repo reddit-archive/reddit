@@ -86,7 +86,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     _str_props = ('pageid', 'content', 'author', 'reason')
     _bool_props = ('hidden')
     
-    cache_ignore = set(['subreddit'] + list(_str_props)).union(Printable.cache_ignore)
+    cache_ignore = set(list(_str_props)).union(Printable.cache_ignore)
     
     def author_name(self):
         return get_author_name(self._get('author', None))
@@ -176,7 +176,7 @@ class WikiPage(tdb_cassandra.Thing):
         id = getattr(sr, '_id36', None)
         if not id:
             raise tdb_cassandra.NotFound
-        return cls._byID(wiki_id(sr._id36, name))
+        return cls._byID(wiki_id(id, name))
     
     @classmethod
     def create(cls, sr, name):
