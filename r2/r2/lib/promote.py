@@ -23,6 +23,7 @@
 from __future__ import with_statement
 
 from r2.models import *
+from r2.models.bidding import SponsorBoxWeightings, WeightingRef
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
 from r2.lib import emailer, filters
@@ -558,9 +559,14 @@ def accept_promotion(link):
 def reject_promotion(link, reason = None):
     PromotionLog.add(link, 'status update: rejected')
     # update the query queue
+    # Since status is updated first,
+    # if make_daily_promotions happens to run
+    # while we're doing work here, it will correctly exclude it
     set_status(link, STATUS.rejected)
-    # check to see if this link is a member of the current live list
-    links, weighted = get_live_promotions()
+    
+    # Updates just the permacache list
+    # permacache doesn't check the srids list; send an empty list
+    links, weighted = get_live_promotions([], _use_cass=False)
     if link._fullname in links:
         links.remove(link._fullname)
         for k in list(weighted.keys()):
@@ -568,18 +574,25 @@ def reject_promotion(link, reason = None):
                            if lid != link._fullname]
             if not weighted[k]:
                 del weighted[k]
-        set_live_promotions((links, weighted))
+        set_live_promotions(links, weighted, which=("permacache",))
         PromotionLog.add(link, 'dequeued')
-    # don't send a rejection email when the rejection was user initiated.
+    
+    # Updates just the Cassandra version
+    campaigns = PromoCampaign._by_link(link._id)
+    subreddits = Subreddit._by_name([c.sr_name for c in campaigns],
+                                    return_dict=False)
+    SponsorBoxWeightings.remove_link(link._fullname, subreddits)
+    
+    # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
         emailer.reject_promo(link, reason = reason)
+
 
 
 def unapprove_promotion(link):
     PromotionLog.add(link, 'status update: unapproved')
     # update the query queue
     set_status(link, STATUS.unseen)
-    links, weghts = get_live_promotions()
 
 def accepted_campaigns(offset=0):
     now = promo_datetime_now(offset=offset)
@@ -722,11 +735,46 @@ def weight_schedule(by_sr):
 def promotion_key():
     return "current_promotions:1"
 
-def get_live_promotions():
-    return g.permacache.get(promotion_key()) or (set(), {})
+def get_live_promotions(srids, _use_cass=False):
+    if _use_cass:
+        timer = g.stats.get_timer("promote.get_live.cass")
+        timer.start()
+        links = set()
+        weights = {}
+        find_srids = set(srids)
+        if '' in find_srids:
+            find_srids.remove('')
+            find_srids.add(SponsorBoxWeightings.DEFAULT_SR_ID)
+        ads = SponsorBoxWeightings.load_multi(find_srids)
+        for srid, refs in ads.iteritems():
+            links.update([ref.data['link'] for ref in refs])
+            promos = [ref.to_promo() for ref in refs]
+            if srid == SponsorBoxWeightings.DEFAULT_SR_ID:
+                srid = ''
+            elif srid == SponsorBoxWeightings.ALL_ADS_ID:
+                srid = 'all'
+            weights[srid] = promos
+            links.update([ad.data['link'] for ad in ads])
+        timer.stop()
+    else:
+        timer = g.stats.get_timer("promote.get_live.permacache")
+        timer.start()
+        links, weights = g.permacache.get(promotion_key()) or (set(), {})
+        timer.stop()
+    return links, weights
 
-def set_live_promotions(x):
-    return g.permacache.set(promotion_key(), x)
+
+def set_live_promotions(links, weights, which=("cass", "permacache")):
+    if "cass" in which:
+        timer = g.stats.get_timer("promote.set_live.cass")
+        timer.start()
+        SponsorBoxWeightings.set_from_weights(weights)
+        timer.stop()
+    if "permacache" in which:
+        timer = g.stats.get_timer("promote.set_live.permacache")
+        timer.start()
+        g.permacache.set(promotion_key(), (links, weights))
+        timer.stop()
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
@@ -738,8 +786,6 @@ def make_daily_promotions(offset = 0, test = False):
       test - if True, new schedule will be generated but not launched
     Raises Exception with list of campaigns that had errors if there were any
     '''
-    old_links = set([])
-
     schedule = get_scheduled(offset)
     all_links = set([l._fullname for l in schedule['links']])
     error_campaigns = schedule['error_campaigns']
@@ -755,18 +801,16 @@ def make_daily_promotions(offset = 0, test = False):
                     if not test:
                         l._commit()
 
-    x = get_live_promotions()
-    if x:
-        old_links, old_weights = x
-        # links that need to be promoted
-        new_links = all_links - old_links
-        # links that have already been promoted
-        old_links = old_links - all_links
-    else:
-        new_links = links
+    old_links = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
+    
+    # links that need to be promoted
+    new_links = all_links - old_links
+    # links that have already been promoted
+    old_links = old_links - all_links
 
     links = Link._by_fullname(new_links.union(old_links), data = True,
                               return_dict = True)
+    
     for l in old_links:
         if is_promoted(links[l]):
             if test:
@@ -793,7 +837,7 @@ def make_daily_promotions(offset = 0, test = False):
     weighted = dict((srs[k], v) for k, v in weighted.iteritems())
 
     if not test:
-        set_live_promotions((all_links, weighted))
+        set_live_promotions(all_links, weighted)
     else:
         print (all_links, weighted)
 
@@ -822,7 +866,7 @@ def get_promotion_list(user, site):
 
 #@memoize('get_promotions_cached', time = 10 * 60)
 def get_promotions_cached(sites):
-    p = get_live_promotions()
+    p = get_live_promotions(sites)
     if p:
         links, promo_dict = p
         available = {}
@@ -838,7 +882,7 @@ def get_promotions_cached(sites):
         norm = sum(available.values())
         # return a sorted list of (link, norm_weight)
         return [(l, available[l] / norm, campaigns[l]) for l in links]
-
+    
     return []
 
 def randomized_promotion_list(user, site):

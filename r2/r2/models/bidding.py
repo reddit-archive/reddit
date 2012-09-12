@@ -20,6 +20,13 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import datetime
+import itertools
+import json
+import random
+
+import pycassa
+from pylons import g, request
 from sqlalchemy import Column, String, DateTime, Date, Float, Integer, Boolean,\
      BigInteger, func as safunc, and_, or_
 from sqlalchemy.exc import IntegrityError
@@ -28,14 +35,14 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.dialects.postgresql.base import PGInet as Inet
 from sqlalchemy.ext.declarative import declarative_base
-from pylons import g
-from r2.lib.utils import Enum
+
+from r2.lib.utils import Enum, fetch_things2
 from r2.models.account import Account
-from r2.models import Link
+from r2.models import Link, Subreddit
+import r2.lib.db.operators as db_ops
 from r2.lib.db.thing import Thing, NotFound
-from pylons import request
+import r2.lib.db.tdb_cassandra as tdb_cassandra
 from r2.lib.memoize import memoize
-import datetime
 
 
 engine = g.dbm.get_engine('authorize')
@@ -584,6 +591,204 @@ class PromotionWeights(Sessionized, Base):
             res.append([d, bid, refund])
             d += datetime.timedelta(1)
         return res
+
+
+class WeightingRef(object):
+    def __init__(self, weight, data):
+        self.data = data
+        self.data['weight'] = weight
+        self.weight = weight
+    
+    @classmethod
+    def from_promo(cls, link_fn, weight, campaign_fn):
+        data = {"link": link_fn, "campaign": campaign_fn, "weight": weight}
+        return cls(weight, data)
+    
+    @classmethod
+    def from_cass(cls, string):
+        data = json.loads(string)
+        return cls(data['weight'], data)
+    
+    def to_promo(self):
+        return (self.data['link'], self.data['weight'], self.data['campaign'])
+    
+    def to_cass(self):
+        return json.dumps(self.data)
+    
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.weight,
+                                   self.data)
+    
+    def __str__(self):
+        return "WeightingRef: %s" % self.to_cass()
+
+
+class SponsorBoxWeightings(object):
+    __metaclass__ = tdb_cassandra.ThingMeta
+    _use_db = True
+    _read_consistency_level = tdb_cassandra.CL.ONE
+    # To avoid spoiling caches when pulling back? Only the cron job
+    # and reject_promo will be writing.
+    _write_consistency_level = tdb_cassandra.CL.QUORUM
+    _connection_pool = 'main'
+    _compare_with = pycassa.INT_TYPE
+    _str_props = ()
+    _type_prefix = None
+    _cf_name = None
+    _SCALE = 2**32
+    
+    # TTL for the timestamped rows. Set to 1 day so that we can examine
+    # the data if something goes wrong.
+    TTL = datetime.timedelta(days=1).total_seconds()
+    
+    DEFAULT_SR_ID = 0
+    
+    # TODO The concept of an "All ads row" should not be needed
+    # after the permacache implementation is removed.
+    ALL_ADS_ID = -1
+    
+    _IDX_ROWKEY_FMT = '%s.latest'
+    _IDX_COLUMN_KEY = 0
+    
+    class ID(int):
+        @property
+        def _id(self):
+            return int(self)
+    
+    def __init__(self, subreddit, timestamp, items, is_srid=True):
+        self.subreddit = self.ID(subreddit) if is_srid else subreddit
+        self.items = items
+        self.timeslot = tdb_cassandra.date_serializer.pack(timestamp)
+    
+    @classmethod
+    def index_column(cls, subreddit):
+        return subreddit._id
+    
+    @classmethod
+    def index_rowkey(cls, subreddit):
+        return cls._IDX_ROWKEY_FMT % subreddit._id
+    
+    def rowkey(self):
+        return '%s.%s' % (self.subreddit._id, self.timeslot)
+    
+    @classmethod
+    def get_latest_rowkey(cls, subreddit):
+        # This is a 2 layered function so the memoize key can be an ID instead
+        # of a Subreddit object
+        return cls._get_latest_rowkey(cls.index_rowkey(subreddit))
+    
+    @classmethod
+    @memoize('sponsor_box_weightings_rowkey', time=60 * 60, stale=False)
+    def _get_latest_rowkey(cls, idx_rowkey, _update=False):
+        if _update:
+            # Don't spoil the memoize cache with outdated data
+            rcl = tdb_cassandra.CL.QUORUM
+        else:
+            rcl = cls._read_consistency_level
+        try:
+            return cls._cf.get(idx_rowkey, columns=[cls._IDX_COLUMN_KEY],
+                               read_consistency_level=rcl)[cls._IDX_COLUMN_KEY]
+        except tdb_cassandra.NotFoundException:
+            return None
+    
+    @classmethod
+    def load_by_sr(cls, sr_id):
+        rowkey = cls.get_latest_rowkey(cls.ID(sr_id))
+        if rowkey:
+            data = cls._load(rowkey)
+        else:
+            data = []
+        return data
+    
+    @classmethod
+    @memoize('sponsor_box_weightings__load', time=60 * 60, stale=True)
+    def _load(cls, rowkey, _update=False):
+        return [WeightingRef.from_cass(val)
+                for dummy, val in cls._cf.xget(rowkey)]
+    
+    @classmethod
+    def load_multi(cls, sr_ids):
+        # TODO: Use multiget & fully read rows
+        return {sr_id: cls.load_by_sr(sr_id) for sr_id in sr_ids}
+    
+    def set_as_latest(self):
+        self.set_timeslots()
+        self._set_as_latest()
+    
+    @tdb_cassandra.will_write
+    def _set_as_latest(self):
+        rowkey = self.rowkey() if not self.empty else ''
+        self._cf.insert(self.index_rowkey(self.subreddit),
+                        {self._IDX_COLUMN_KEY: rowkey},
+                        ttl=self.TTL)
+        
+        self._get_latest_rowkey(self.index_rowkey(self.subreddit),
+                                _update=True)
+    
+    @tdb_cassandra.will_write
+    def set_timeslots(self):
+        campaign_weights = self._calculate_weights()
+        if campaign_weights:
+            self._cf.insert(self.rowkey(), campaign_weights, ttl=self.TTL)
+    
+    def _calculate_weights(self):
+        # Distribute the ads as "slices" of the range 0 - 2^32
+        # Each Ad gets the slice from the prior Ad's column key to its own
+        # column key.
+        weight_tally = 0
+        total_weight = float(sum(item.weight for item in self.items))
+        campaign_weights = {}
+        for item in self.items:
+            scaled_weight = int(item.weight / total_weight * self._SCALE)
+            weight_tally += scaled_weight
+            campaign_weights[weight_tally] = item.to_cass()
+        if weight_tally > self._SCALE:
+            raise ValueError("Awkward: Your math was a bit off.")
+        return campaign_weights
+    
+    @property
+    def empty(self):
+        return not bool(self.items)
+    
+    @classmethod
+    def set_from_weights(cls, all_weights):
+        weights = all_weights.copy()
+        all_ads = itertools.chain.from_iterable(all_weights.itervalues())
+        weights[cls.ALL_ADS_ID] = all_ads
+        if '' in weights:
+            weights[cls.DEFAULT_SR_ID] = weights.pop('')
+        
+        timeslot = datetime.datetime.now(g.tz)
+        
+        while weights:
+            srid, promos = weights.popitem()
+            weight_refs = [WeightingRef.from_promo(*promo) for promo in promos]
+            sbw = cls(srid, timeslot, weight_refs, is_srid=True)
+            sbw.set_as_latest()
+        
+        # Clear out expired ads
+        query = Subreddit._query(sort=db_ops.desc('_date'), data=False)
+        for subreddit in fetch_things2(query):
+            if subreddit._id not in all_weights:
+                cls.clear(subreddit, timeslot=timeslot)
+    
+    @classmethod
+    def clear(cls, srid, timeslot=None, is_srid=False):
+        timeslot = timeslot or datetime.datetime.now(g.tz)
+        cls(srid, timeslot, [], is_srid=is_srid).set_as_latest()
+    
+    @classmethod
+    def remove_link(cls, link_fn, from_subreddits, include_all_sr=True):
+        now = datetime.datetime.now(g.tz)
+        if include_all_sr:
+            srs = itertools.chain(from_subreddits, [cls.ID(cls.ALL_ADS_ID)])
+        else:
+            srs = iter(from_subreddits)
+        for subreddit in srs:
+            current = cls.load_by_sr(subreddit._id)
+            updated = [r for r in current if r.data['link'] != link_fn]
+            cls(subreddit, now, updated).set_as_latest()
+
 
 def to_date(d):
     if isinstance(d, datetime.datetime):
