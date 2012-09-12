@@ -23,6 +23,10 @@
 <%namespace file="printablebuttons.html" import="ynbutton" />
 <%namespace name="utils" file="utils.html"/>
 
+<%!
+   from urllib import quote
+%>
+
 <div class="fancy-settings">
     %if thing.show_settings:
         <form id="pagesettings" method="post">
@@ -59,7 +63,7 @@
             <li>
                 ${user}
                 &mdash;&nbsp;
-                ${ynbutton(_("(remove)"), _("done"), "../r/%s/wiki/api/alloweditor/del/%s/%s" % (c.site.name, user, c.page), post_callback="$.refresh")}
+                ${ynbutton(_("(remove)"), _("done"), quote("../r/%s/wiki/api/alloweditor/del/%s/%s" % (c.site.name, user, c.page)), post_callback="$.refresh")}
             </li>
         %endfor
         </ul>
