@@ -591,5 +591,6 @@ def to_date(d):
     return d
 
 # do all the leg work of creating/connecting to tables
-Base.metadata.create_all()
+if g.db_create_tables:
+    Base.metadata.create_all()
 
