@@ -873,16 +873,18 @@ def get_promotions_cached(sites):
     if p:
         links, promo_dict = p
         available = {}
+        campaigns = {}
         for k, links in promo_dict.iteritems():
             if k in sites:
                 for l, w, cid in links:
                     available[l] = available.get(l, 0) + w
+                    campaigns[l] = cid
         # sort the available list by weight
         links = available.keys()
         links.sort(key = lambda x: -available[x])
         norm = sum(available.values())
         # return a sorted list of (link, norm_weight)
-        return [(l, available[l] / norm, cid) for l in links]
+        return [(l, available[l] / norm, campaigns[l]) for l in links]
 
     return []
 
