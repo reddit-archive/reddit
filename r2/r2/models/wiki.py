@@ -89,7 +89,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     cache_ignore = set(['subreddit'] + list(_str_props)).union(Printable.cache_ignore)
     
     def author_name(self):
-        return get_author_name(getattr(self, 'author', None))
+        return get_author_name(self._get('author', None))
     
     @classmethod
     def add_props(cls, user, wrapped):
