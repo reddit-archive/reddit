@@ -608,7 +608,8 @@ class FlairCsvJsonTemplate(JsonTemplate):
 class StylesheetTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(subreddit_id = '_fullname',
                         stylesheet = 'stylesheet_contents',
-                        images = '_images')
+                        images = '_images',
+                        prevstyle = 'prev_stylesheet')
 
     def kind(self, wrapped):
         return 'stylesheet'
@@ -626,6 +627,8 @@ class StylesheetTemplate(ThingJsonTemplate):
             return self.images()
         elif attr == '_fullname':
             return c.site._fullname
+        elif attr == 'prev_stylesheet':
+            return c.site.prev_stylesheet
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class SubredditSettingsTemplate(ThingJsonTemplate):
