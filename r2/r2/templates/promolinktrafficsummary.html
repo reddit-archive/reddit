@@ -1,0 +1,121 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2012
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%inherit file="reddittraffic.html"/>
+<%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+
+<%!
+    from r2.lib import promote
+    from r2.lib.strings import strings
+    from r2.lib.filters import safemarkdown
+    from r2.lib.template_helpers import format_number, js_timestamp
+%>
+
+
+<%def name="preamble()">
+  ${load_timeseries_js()}
+</%def>
+
+<%def name="last_modified_message()">
+  <span id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
+    ${_("Data is updated hourly. Last update: %s" % thing.traffic_last_modified)}
+  </span>
+</%def>
+
+<%def name="sidetables()" />
+
+<%def name="top_content()">
+  <div id="promo-traffic-lifetime-stats">
+    ${_("Lifetime Stats:")}
+    ${ungettext("%s impression", "%s impressions", thing.total_imps) % format_number(thing.total_imps)}
+    ${ungettext("%s click", "%s clicks", thing.total_clicks) % format_number(thing.total_clicks)}
+    ${_("CTR: ")}
+    %if thing.total_ctr != 0:
+      ${format_number(thing.total_ctr)}%
+    %else:
+      ---
+    %endif
+  </div>
+  <span class="promo-traffic-csv-link">
+    <a href="${promote.promotraffic_url(thing.thing)}.csv">
+      ${_("(download data as .csv)")}
+    </a>
+  </span>
+
+</%def>
+
+<%def name="tables()"> 
+  <table id="promotion-history" class="traffic-table timeseries promoted-traffic" 
+         data-interval="hour" data-max-points="${thing.max_points}">
+  <thead>
+  <tr>
+    <th></th>
+    <th colspan="2">${_("impressions")}</th>
+    <th colspan="2">${_("clicks")}</th>
+    <th colspan="2">${_("click-through (%)")}</th>
+  </tr>
+  <tr>
+    <th scope="col">${_("date")}</th>
+    <th scope="col" title="${_("unique impressions")}">${_("unique")}</th>
+    <th scope="col" title="${_("total impressions")}" data-color="#ff5700">${_("total")}</th>
+    <th scope="col" title="${_("unique clicks")}">${_("unique")}</th>
+    <th scope="col" title="${_("total clicks")}" data-color="#9494ff">${_("total")}</th>
+    <th scope="col">${_("unique")}</th>
+    <th scope="col">${_("total")}</th>
+  </tr>
+  </thead>
+  <tbody>
+  % for date, data in thing.history:
+  <tr>
+    <th scope="col" data-value="${js_timestamp(date)}">${date}</th>
+    % for datum in data:
+    <td data-value="${datum}">${format_number(datum)}</td>
+    % endfor
+  </tr>
+  % endfor
+  </tbody>
+  <tfoot>
+  <tr>
+    <th scope="row">
+      ${_("total")}
+      % if thing.is_preliminary:
+      *
+      % endif
+    </th>
+    <td>--</td>
+    <td>${format_number(thing.total_impressions)}</td>
+    <td>--</td>
+    <td>${format_number(thing.total_clicks)}</td>
+    <td>--</td>
+    % if thing.total_impressions != 0:
+    <td>${format_number(thing.total_ctr)}%</td>
+    % else:
+    <td>--</td>
+    % endif
+  </tr>
+  </tfoot>
+  </table>
+
+  % if thing.is_preliminary:
+  <p class="totals-are-preliminary">* ${_("totals are preliminary until 24 hours after the end of the promotion.")}</p>
+  % endif
+</%def>

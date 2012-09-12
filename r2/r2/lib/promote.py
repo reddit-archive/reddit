@@ -62,9 +62,13 @@ def get_promote_srid(name = 'promos'):
 
 # attrs
 
-def promo_traffic_url(l):
+def promo_traffic_url(l): # old traffic url
     domain = get_domain(cname = False, subreddit = False)
     return "http://%s/traffic/%s/" % (domain, l._id36)
+
+def promotraffic_url(l): # new traffic url
+    domain = get_domain(cname=False, subreddit=False)
+    return "http://%s/promoted/traffic/headline/%s" % (domain, l._id36)
 
 def promo_edit_url(l):
     domain = get_domain(cname = False, subreddit = False)

@@ -29,11 +29,11 @@ import babel.core
 
 from r2.lib.menus import menu
 from r2.lib.wrapped import Templated
-from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList
+from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
 from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
 from r2.lib import promote
 from r2.lib.utils import Storage
-from r2.models import Thing, Link, traffic
+from r2.models import Thing, Link, PromoCampaign, traffic
 from r2.models.subreddit import Subreddit, _DefaultSR
 
 
@@ -483,3 +483,96 @@ class TrafficViewerList(UserList):
     @property
     def container_name(self):
         return self.link._fullname
+
+
+def ctr(impressions, clicks):
+    return (float(clicks) / impressions) * 100. if impressions else 0
+
+def cpc(spend, clicks):
+    return (float(spend) / clicks) if clicks else 0
+
+def cpm(spend, impressions):
+    return 1000. * float(spend) / impressions if impressions else 0
+
+def is_preliminary(end_date):
+    # the results are preliminary until 1 day after the promotion ends
+    now = datetime.datetime.now(g.tz)
+    return end_date + datetime.timedelta(days=1) > now
+
+
+class PromoTraffic(Templated):
+    def __init__(self, link):
+        self.thing = link
+        self.summary_tab = PromoLinkTrafficSummary(link)
+        tabs = [('summary', 'summary', self.summary_tab),
+                ('details', 'traffic by campaign', PromoCampaignTrafficTable(link)),
+                ('settings', 'settings', PromoTrafficSettings(link)),
+                ('help', 'help', PromoTrafficHelp())]
+        Templated.__init__(self, tabs=TabbedPane(tabs, True))
+
+    def as_csv(self):
+        return self.summary_tab.as_csv()
+
+
+class PromoLinkTrafficSummary(PromotedLinkTraffic):
+     def __init__(self, link):
+         self.thing = link
+         self.place = None
+         impq = traffic.AdImpressionsByCodename.total_by_codename(link._fullname)
+         clickq = traffic.ClickthroughsByCodename.total_by_codename(link._fullname)
+         self.total_imps = impq[0][1] if impq else 0
+         self.total_clicks = clickq[0][1] if clickq else 0
+         self.total_ctr = self.total_clicks / self.total_imps if self.total_imps else 0
+         PromotedLinkTraffic.__init__(self, link)
+
+
+class PromoCampaignTrafficTable(Templated):
+    def __init__(self, link):
+        self.thing = link
+        self.edit_url = promote.promo_edit_url(link)
+        self.is_preliminary = False
+        campaigns = PromoCampaign._by_link(link._id)
+        camps = {}
+        fullnames = []
+        for campaign in campaigns:
+            campaign.imps = 0
+            campaign.clicks = 0
+            if not self.is_preliminary and is_preliminary(campaign.end_date):
+                self.is_preliminary = True
+            camps[campaign._fullname] = campaign
+            fullnames.append(campaign._fullname)
+        click_data = traffic.TargetedClickthroughsByCodename.total_by_codename(fullnames)
+        for fullname, clicks in click_data:
+            camps[fullname].clicks = clicks
+        imp_data = traffic.TargetedImpressionsByCodename.total_by_codename(fullnames)
+        for fullname, imps in imp_data:
+            camps[fullname].imps = imps
+        self.campaigns = camps.values()
+        self.total_clicks = self.total_imps = self.total_spend = 0
+        for camp in self.campaigns:
+            self.total_clicks += camp.clicks
+            self.total_imps += camp.imps
+            self.total_spend += camp.bid
+            camp.ctr = ctr(camp.imps, camp.clicks)
+            camp.cpc = cpc(camp.bid, camp.clicks)
+            camp.cpm = cpm(camp.bid, camp.imps)
+        self.total_ctr = ctr(self.total_imps, self.total_clicks)
+        self.total_cpc = cpc(self.total_spend, self.total_clicks)
+        self.total_cpm = cpm(self.total_spend, self.total_imps)
+        Templated.__init__(self)
+   
+
+class PromoTrafficSettings(Templated):
+    def __init__(self, thing):
+        self.thing = thing
+        editable = c.user_is_sponsor or c.user._id == thing.author_id
+        self.viewer_list = TrafficViewerList(thing, editable) 
+        self.traffic_url = promote.promotraffic_url(thing)
+        Templated.__init__(self)
+
+
+class PromoTrafficHelp(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+
+

@@ -20,6 +20,10 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from datetime import datetime
+
+from pylons import g
+
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.utils import Enum
 from r2.models import Link
@@ -59,6 +63,10 @@ class PromoCampaign(Thing):
 
     def is_freebie(self):
         return self.trans_id < 0
+
+    def is_live_now(self):
+        now = datetime.now(g.tz)
+        return self.start_date < now and self.end_date > now
 
     def update(self, start_date, end_date, bid, sr_name, trans_id, commit=True):
         self.start_date = start_date

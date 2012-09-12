@@ -45,13 +45,20 @@
 
 ${self.preamble()}
 
-<p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
-% if thing.traffic_lag.total_seconds() > 10800:
-${strings.traffic_processing_slow % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
-% else:
-${strings.traffic_processing_normal % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
-% endif
-</p>
+${self.last_modified_message()}
+
+<%def name="last_modified_message()">
+    <p id="timeseries-unprocessed" data-last-processed="${js_timestamp(thing.traffic_last_modified)}">
+    % if thing.traffic_lag.total_seconds() > 10800:
+    ${strings.traffic_processing_slow % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+    % else:
+    ${strings.traffic_processing_normal % dict(date=babel.dates.format_datetime(thing.traffic_last_modified, format="long", locale=c.locale))}
+    % endif
+    </p>
+</%def>
+
+<%def name="top_content()"></%def>
+${self.top_content()}
 
 <div id="charts"></div>
 

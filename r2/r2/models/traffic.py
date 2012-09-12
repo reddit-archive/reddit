@@ -30,7 +30,7 @@ from sqlalchemy.types import DateTime, Integer, String, BigInteger
 from sqlalchemy.sql.expression import desc, distinct
 from sqlalchemy.sql.functions import sum
 
-from r2.lib.utils import timedelta_by_name
+from r2.lib.utils import timedelta_by_name, tup
 from r2.models.link import Link
 from r2.lib.memoize import memoize
 
@@ -251,6 +251,16 @@ def totals(cls, interval):
     return fill_gaps(interval, start_time, stop_time, q, "sum")
 
 
+def total_by_codename(cls, codenames):
+    """Return total lifetime pageviews (or clicks) for given codename(s)"""
+    codenames = tup(codenames)
+    # uses hour totals to get the most up-to-date count
+    q = (Session.query(cls.codename, sum(cls.pageview_count))
+                       .filter(cls.interval == "hour")
+                       .filter(cls.codename.in_(codenames))
+                       .group_by(cls.codename))
+    return list(q)
+
 def promotion_history(cls, codename, start, stop):
     """Get hourly traffic for a self-serve promotion across all campaigns."""
     q = (Session.query(cls)
@@ -370,6 +380,11 @@ class ClickthroughsByCodename(Base):
     def historical_totals(cls, interval):
         return totals(cls, interval)
 
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames)
+
 
 class TargetedClickthroughsByCodename(Base):
     __tablename__ = "traffic_clicktarget"
@@ -380,6 +395,11 @@ class TargetedClickthroughsByCodename(Base):
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
     pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames)
 
 
 class AdImpressionsByCodename(Base):
@@ -428,6 +448,11 @@ class AdImpressionsByCodename(Base):
                         .filter(cls.codename.startswith(fullname)))
         return [row.codename for row in query]
 
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codename):
+        return total_by_codename(cls, codename)
+
 
 class TargetedImpressionsByCodename(Base):
     __tablename__ = "traffic_thingtarget"
@@ -438,6 +463,11 @@ class TargetedImpressionsByCodename(Base):
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
     pageview_count = Column("total", Integer())
+    
+    @classmethod
+    @memoize_traffic(time=3600)
+    def total_by_codename(cls, codenames):
+        return total_by_codename(cls, codenames)
 
 
 class SubscriptionsBySubreddit(Base):

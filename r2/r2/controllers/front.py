@@ -987,6 +987,22 @@ class FrontController(RedditController, OAuth2ResourceController):
                             comment=None,
                             content=content).render()
 
+    @validate(VSponsorAdmin(), # gated for development
+              VTrafficViewer('link'),
+              link=VLink('link'))
+    def GET_promo_traffic(self, link):
+        if link:
+            content = trafficpages.PromoTraffic(link)
+            if c.render_style == 'csv':
+                c.response.content = content.as_csv()
+                return c.response
+            return LinkInfoPage(link=link,
+                                page_classes=["promo-traffic"],
+                                comment=None,
+                                content=content).render()
+        else:
+            return self.abort404()
+
     @validate(VSponsorAdmin())
     def GET_site_traffic(self):
         return trafficpages.SitewideTrafficPage().render()

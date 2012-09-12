@@ -149,6 +149,9 @@ def make_map():
        controller='promote', action='pay')
     mc('/promoted/graph',
        controller='promote', action='graph')
+
+    mc('/promoted/traffic/headline/:link', controller='front', action='promo_traffic')
+
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))
     mc('/promoted/:sort', controller='promote', action="listing")

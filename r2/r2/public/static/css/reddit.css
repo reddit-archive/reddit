@@ -4159,6 +4159,75 @@ div.timeseries span.title {
     padding-top: .3em;
 }
 
+.promocampaign-table td {
+    white-space: nowrap;
+}
+
+.promo-traffic .content .tabmenu li {
+    font-size: 1.3em;
+}
+
+.promo-traffic #helptext {
+    font-size: 1.2em;
+    padding: 3px 10px 6px;
+}
+
+#promo-traffic-no-campaigns {
+    padding: 20px;
+}
+
+.promo-traffic .tabpane-content {
+    margin-right: 305px;
+    min-width: 800px;
+    position: relative;
+}
+
+.promo-traffic #timeseries-unprocessed {
+    font-size: 1.2em;
+    margin: 0 .1em;
+    padding: 0px;
+    position: absolute;
+    right: 1em;
+    top: -1.3em;
+}
+
+.promo-traffic-csv-link {
+    font-size: 1.1em;
+    font-weight: bold;
+    position: absolute;
+    right: 15px;
+    top: 11px;
+}
+
+.promo-traffic-help {
+    font-size: 1.2em;
+    margin: 20px;
+}
+
+.promo-traffic-help p {
+    padding: 5px;
+}
+
+#promo-traffic-lifetime-stats {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 2px 10px;
+    padding-top: 5px;
+}
+
+.promo-traffic-live {
+    background-color: #EFF7FF;
+}
+
+.promo-traffic-settings-instructions {
+    font-size: small;
+    margin: 0px 15px 10px;
+}
+
+.promo-traffic-settings {
+    padding: 20px;
+}
+
 p.totals-are-preliminary {
     margin-left: 10px;
 }
