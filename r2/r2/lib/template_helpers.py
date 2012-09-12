@@ -150,6 +150,10 @@ def js_config():
         "uitracker_url": g.uitracker_url,
         "static_root": static(''),
     }
+
+    if c.page:
+        config["wiki_page"] = c.page
+
     return config
 
 

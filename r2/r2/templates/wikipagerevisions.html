@@ -22,6 +22,6 @@
 
 ${thing.revisions}
 %if c.page and thing.revisions.things:
-    <button onclick="r.wiki.goCompare('${c.page}', '${c.wiki_base_url}')">${_("compare selected")}</button>
+    <button onclick="r.wiki.goCompare()">${_("compare selected")}</button>
 %endif
 <br/>

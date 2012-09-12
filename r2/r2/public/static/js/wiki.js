@@ -98,10 +98,10 @@ r.wiki = {
         })
     },
 
-    goCompare: function(page, base) {
+    goCompare: function() {
         v1 = $('input:radio[name=v1]:checked').val()
         v2 = $('input:radio[name=v2]:checked').val()
-        url = base + '/' + page + '?v=' + v1
+        url = r.wiki.baseUrl() + '/' + r.config.wiki_page + '?v=' + v1
         if (v2 != v1) {
             url += '&v2=' + v2
         }
