@@ -283,6 +283,9 @@ class VWikiPageCreate(VWikiPage):
             c.error = {'reason': 'PAGE_EXISTS'}
         elif c.is_wiki_mod and WikiPage.is_special(page):
             c.error = {'reason': 'PAGE_CREATED_ELSEWHERE'}
+        elif WikiPage.is_restricted(page):
+            self.set_error('RESTRICTED_PAGE', code=403)
+            return
         elif page.count('/') > MAX_SEPARATORS:
             c.error = {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'MAX_SEPARATORS': MAX_SEPARATORS}
         elif len(page) > MAX_PAGE_NAME_LENGTH:
