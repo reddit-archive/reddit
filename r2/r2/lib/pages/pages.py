@@ -197,19 +197,22 @@ class Reddit(Templated):
         
         buttons.append(NamedButton("wikirecentrevisions", 
                                    css_class="wikiaction-revisions",
-                                   dest="revisions"))
+                                   dest="/wiki/revisions"))
         
         buttons.append(NamedButton("wikipageslist", 
                            css_class="wikiaction-pages",
-                           dest="pages"))
+                           dest="/wiki/pages"))
         if moderator:
-            buttons += [NamedButton('wikibanned', css_class = 'reddit-ban'),
-            NamedButton('wikicontributors', css_class = 'reddit-contributors')]
+            buttons += [NamedButton('wikibanned', css_class='reddit-ban', 
+                                    dest='/about/wikibanned'),
+                        NamedButton('wikicontributors', 
+                                    css_class='reddit-contributors', 
+                                    dest='/about/wikicontributors')
+                        ]
                            
         return SideContentBox(_('wiki tools'),
                       [NavMenu(buttons,
                                type="flat_vert",
-                               base_path="/wiki/",
                                css_class="icon-menu",
                                separator="")],
                       _id="wikiactions",
@@ -248,9 +251,7 @@ class Reddit(Templated):
 
         if is_single_subreddit:
             buttons += [NamedButton("banned", css_class="reddit-ban"),
-                        NamedButton("flair", css_class="reddit-flair"),
-                        NamedButton('wikibanned', css_class = 'reddit-ban'),
-                        NamedButton('wikicontributors', css_class = 'reddit-contributors')]
+                        NamedButton("flair", css_class="reddit-flair")]
 
         buttons += [NamedButton("log", css_class="reddit-moderationlog"),
                     NamedButton("unmoderated", css_class="reddit-unmoderated")]
