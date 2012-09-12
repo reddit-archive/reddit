@@ -988,7 +988,7 @@ a.author { margin-right: 0.5em; }
 }
 
 .wiki-page-content {
-    margin-right: 315px;
+    margin-right: 325px;
 }
 .discussionlink {
     display: inline-block;
@@ -1068,6 +1068,78 @@ a.author { margin-right: 0.5em; }
 .pageactions .wikiaction-current {
     color: white;
     background-color: #5F99CF;
+}
+
+/* wiki table of contents */
+
+.md.wiki ul:first-child {
+    float: right;
+    padding: 10px 25px;
+    margin-right: 0;
+    border: 1px solid #8D9CAA;
+    list-style: none;
+}
+
+.md.wiki ul:first-child ul {
+    margin: 4px 0;
+    padding-left: 25px;
+    border-left: 1px dotted #cce;
+    list-style: none;
+}
+
+/* wiki content */
+
+.md.wiki p, .md.wiki blockquote {
+    margin: .75em 0;
+}
+
+.md.wiki blockquote {
+    padding-left: 1em;
+}
+
+.md.wiki h1,
+.md.wiki h2,
+.md.wiki h3,
+.md.wiki h4,
+.md.wiki h5,
+.md.wiki h6 {
+    font-weight: bold;
+    color: black;
+    margin-bottom: .25em;
+    margin-top: .5em;
+}
+
+.md.wiki h1 {
+    margin-top: .75em;
+    font-size: 2.4em;
+}
+
+.md.wiki ul:first-child + h1 {
+    margin-top: 0;
+}
+
+.md.wiki h2 {
+    margin-top: .75em;
+    font-size: 1.8em;
+}
+
+.md.wiki h3 {
+    font-size: 1.6em;
+}
+
+.md.wiki h4 {
+    font-size: 1.4em;
+    color: #333;
+}
+
+.md.wiki h5 {
+    font-size: 1.2em;
+    color: #444;
+}
+
+.md.wiki h6 {
+    font-size: 1.05em;
+    color: #666;
 }
 
 /* organic listing */
