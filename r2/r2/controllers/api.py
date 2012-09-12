@@ -1227,13 +1227,15 @@ class ApiController(RedditController, OAuth2ResourceController):
         if op == 'save':
             c.site.stylesheet_contents = stylesheet_contents_parsed
             try:
-                c.site.change_css(stylesheet_contents, parsed, prevstyle)
+                wr = c.site.change_css(stylesheet_contents, parsed, prevstyle)
                 form.find('.conflict_box').hide()
                 form.find('.errors').hide()
                 form.set_html(".status", _('saved'))
                 form.set_html(".errors ul", "")
-                description = wiki.modactions.get('config/stylesheet')
-                ModAction.create(c.site, c.user, 'wikirevise', description)
+                if wr:
+                    description = wiki.modactions.get('config/stylesheet')
+                    form.set_inputs(prevstyle=str(wr._id))
+                    ModAction.create(c.site, c.user, 'wikirevise', description)
             except ConflictException as e:
                 form.set_html(".status", _('conflict error'))
                 form.set_html(".errors ul", _('There was a conflict while editing the stylesheet'))
@@ -1443,8 +1445,10 @@ class ApiController(RedditController, OAuth2ResourceController):
             except tdb_cassandra.NotFound:
                 wikipage = wiki.WikiPage.create(sr, pagename)
             try:
-                if wikipage.revise(value, previous=prev, author=c.user.name):
-                    ModAction.create(c.site, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
+                wr = wikipage.revise(value, previous=prev, author=c.user.name)
+                if not wr:
+                    return True
+                ModAction.create(c.site, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
                 return True
             except ConflictException as e:
                 c.errors.add(errors.CONFLICT, field = field)

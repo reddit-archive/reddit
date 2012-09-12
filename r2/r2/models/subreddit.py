@@ -363,12 +363,13 @@ class Subreddit(Thing, Printable):
             wiki = WikiPage.get(self, 'config/stylesheet')
         except tdb_cassandra.NotFound:
             wiki = WikiPage.create(self, 'config/stylesheet')
-        wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
+        wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
         self.stylesheet_contents = parsed
         self.stylesheet_hash = md5(parsed).hexdigest()
         set_last_modified(self, 'stylesheet_contents')
         c.site._commit()
         ModAction.create(self, c.user, action='wikirevise', details='Updated subreddit stylesheet')
+        return wr
 
     def is_special(self, user):
         return (user
