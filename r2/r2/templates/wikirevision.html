@@ -42,12 +42,12 @@
     
     %if not c.page:
         <td>
-            <a href="/r/${thing.sr}/wiki/${thing.page}">${thing.page}</a>
+            <a href="${c.wiki_base_url}/${thing.page}">${thing.page}</a>
         </td>
     %endif
     
     <td>
-        <a href="/r/${thing.sr}/wiki/${thing.page}?v=${thing._id}">view</a>
+        <a href="${c.wiki_base_url}/${thing.page}?v=${thing._id}">view</a>
     </td>
     
     <td>
@@ -63,7 +63,7 @@
             <a href="#" class="revision_hide" data-revision="${thing._id}" data-page="${thing.page}">hide</a>
         </td>
         <td class="wiki_revert" style="white-space: nowrap;">
-            ${ynbutton(_("revert here"), _("done"), "../r/%s/wiki/api/revert/%s/%s" % (thing.sr, thing._id, thing.page), post_callback="$.refresh")}
+            ${ynbutton(_("revert here"), _("done"), "..%s/api/revert/%s/%s" % (c.wiki_base_url, thing._id, thing.page), post_callback="$.refresh")}
         </td>
     %endif
 
