@@ -150,7 +150,10 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     
     @property
     def sr(self):
-        return self.info['sr']
+        id36 = self.info['sr']
+        if c.site._id36 == id36:
+            return c.site.name
+        return Subreddit._byID36(id36).name
 
 
 class WikiPage(tdb_cassandra.Thing):
