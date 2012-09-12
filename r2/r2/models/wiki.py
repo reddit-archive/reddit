@@ -129,7 +129,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     
     @classmethod
     def get_recent(cls, sr, count=100):
-        return WikiRevisionsRecentBySR.query([sr], count=count)
+        return WikiRevisionsRecentBySR.query([sr._id36], count=count)
     
     @property
     def is_hidden(self):
