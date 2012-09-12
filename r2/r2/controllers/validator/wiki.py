@@ -22,6 +22,7 @@
 
 from os.path import normpath
 import datetime
+import re
 
 from pylons.controllers.util import redirect_to
 from pylons import c, g, request
@@ -29,6 +30,7 @@ from pylons import c, g, request
 from r2.models.wiki import WikiPage, WikiRevision
 from r2.controllers.validator import Validator, validate, make_validated_kw
 from r2.lib.db import tdb_cassandra
+
 
 MAX_PAGE_NAME_LENGTH = g.wiki_max_page_name_length
 
@@ -166,6 +168,8 @@ def normalize_page(page):
 class AbortWikiError(Exception):
     pass
 
+page_match_regex = re.compile(r'^[\w_/]+\Z')
+
 class VWikiPage(Validator):
     def __init__(self, param, required=True, restricted=True, modonly=False, **kw):
         self.restricted = restricted
@@ -187,6 +191,9 @@ class VWikiPage(Validator):
             new_name = page.replace(' ', '_')
             url = '%s/%s' % (c.wiki_base_url, new_name)
             redirect_to(url)
+        
+        if not page_match_regex.match(page):
+            return self.set_error('INVALID_PAGE_NAME', code=400)
         
         page = normalize_page(page)
         
@@ -237,6 +244,8 @@ class VWikiPage(Validator):
 class VWikiPageAndVersion(VWikiPage):    
     def run(self, page, *versions):
         wp = VWikiPage.run(self, page)
+        if c.errors:
+            return
         validated = []
         for v in versions:
             try:
@@ -248,6 +257,8 @@ class VWikiPageAndVersion(VWikiPage):
 class VWikiPageRevise(VWikiPage):
     def run(self, page, previous=None):
         wp = VWikiPage.run(self, page)
+        if c.errors:
+            return
         if not wp:
             return self.set_error('INVALID_PAGE', code=404)
         if not this_may_revise(wp):
@@ -260,19 +271,21 @@ class VWikiPageRevise(VWikiPage):
             return (wp, prev)
         return (wp, None)
 
-class VWikiPageCreate(Validator):
+class VWikiPageCreate(VWikiPage):
+    def __init__(self, param, **kw):
+        VWikiPage.__init__(self, param, required=False, **kw)
+    
     def run(self, page):
-        page = normalize_page(page)
-        if c.is_wiki_mod and WikiPage.is_special(page):
+        wp = VWikiPage.run(self, page)
+        if c.errors:
+            return
+        if wp:
+            c.error = {'reason': 'PAGE_EXISTS'}
+        elif c.is_wiki_mod and WikiPage.is_special(page):
             c.error = {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif page.count('/') > MAX_SEPARATORS:
             c.error = {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'max_separators': MAX_SEPERATORS}
         elif len(page) > MAX_PAGE_NAME_LENGTH:
             c.error = {'reason': 'PAGE_NAME_LENGTH', 'max_length': MAX_PAGE_NAME_LENGTH}
-        else:
-            try:
-                WikiPage.get(c.site, page)
-                c.error = {'reason': 'PAGE_EXISTS'}
-            except tdb_cassandra.NotFound:
-                pass
         return this_may_revise()
+               
