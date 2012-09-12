@@ -169,7 +169,7 @@ class Trophy(Relation(Account, Award)):
     def by_award_cache(cls, award_id):
         q = Trophy._query(Trophy.c._thing2_id == award_id,
                           sort = desc('_date'))
-        q._limit = 500
+        q._limit = 50
         return [ t._id for t in q ]
 
     @classmethod
