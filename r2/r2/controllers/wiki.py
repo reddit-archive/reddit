@@ -262,7 +262,7 @@ class WikiApiController(WikiController):
             page.remove_editor(c.username)
         else:
             if not user:
-                self.handle_error(404, 'UNKOWN_USER')
+                self.handle_error(404, 'UNKNOWN_USER')
             page.add_editor(user.name)
         return json.dumps({})
     
