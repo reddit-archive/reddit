@@ -25,6 +25,7 @@ from pylons.i18n import _
 from r2.models import *
 from r2.lib.authorize import get_account_info, edit_profile
 from r2.lib.pages import *
+from r2.lib.pages.trafficpages import TrafficViewerList
 from r2.lib.pages.things import wrap_links
 from r2.lib.strings import strings
 from r2.lib.menus import *
