@@ -646,6 +646,9 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         show_media = 'site.show_media',
                         domain = 'site.domain',
                         domain_css = 'site.css_on_cname',
+                        wikimode = 'site.wikimode',
+                        wiki_edit_karma = 'site.wiki_edit_karma',
+                        wiki_edit_age = 'site.wiki_edit_age',
                         domain_sidebar = 'site.show_cname_sidebar',
                         header_hover_text = 'site.header_title')
 
