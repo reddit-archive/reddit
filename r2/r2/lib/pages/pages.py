@@ -445,7 +445,7 @@ class Reddit(Templated):
             if c.user_is_loggedin:
                 mod = bool(c.user_is_admin or c.site.is_moderator(c.user))
             if c.site._should_wiki and (c.site.wikimode != 'disabled' or mod):
-                if not g.wiki_disabled:
+                if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))
 
         more_buttons = []

@@ -207,7 +207,7 @@ class WikiController(RedditController):
     
     def pre(self):
         RedditController.pre(self)
-        if g.wiki_disabled and not c.user_is_admin:
+        if g.disable_wiki and not c.user_is_admin:
             self.handle_error(403, 'WIKI_DOWN')
         if not c.site._should_wiki:
             self.handle_error(404, 'NOT_WIKIABLE') # /r/mod for an example

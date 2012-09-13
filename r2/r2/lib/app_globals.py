@@ -151,7 +151,7 @@ class Globals(object):
             'disable_ratelimit',
             'amqp_logging',
             'read_only_mode',
-            'wiki_disabled',
+            'disable_wiki',
             'heavy_load_mode',
             's3_media_direct',
             'disable_captcha',
