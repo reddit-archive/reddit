@@ -27,6 +27,7 @@ import paste.fileapp
 from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
 from pylons.middleware import error_document_template, media_path
 from pylons import c, request, g
+from r2.config import extensions
 from pylons.i18n import _
 import random as rand
 from r2.controllers.errors import ErrorSet
@@ -169,7 +170,7 @@ class ErrorController(RedditController):
                      c.response.content = str(code)
                 c.response.status_code = code
                 return c.response
-            elif c.render_style == "api":
+            elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
                 c.response.content = json.dumps(data)
                 return c.response
