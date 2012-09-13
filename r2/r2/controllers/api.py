@@ -416,22 +416,17 @@ class ApiController(RedditController, OAuth2ResourceController):
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
 
-    @cross_domain(allow_credentials=True)
-    @api_doc(api_section.account)
-    def POST_login(self, *args, **kwargs):
-        return self._handle_login(*args, **kwargs)
-
-    @cross_domain(allow_credentials=True)
-    @api_doc(api_section.account)
-    def POST_register(self, *args, **kwargs):
-        return self._handle_register(*args, **kwargs)
-
     @validatedForm(user = VThrottledLogin(['user', 'passwd']),
                    rem = VBoolean('rem'))
     def _handle_login(self, form, responder, user, rem):
         if not (responder.has_errors("vdelay", errors.RATELIMIT) or
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)
+
+    @cross_domain(allow_credentials=True)
+    @api_doc(api_section.account, extends=_handle_login)
+    def POST_login(self, *args, **kwargs):
+        return self._handle_login(*args, **kwargs)
 
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
@@ -473,6 +468,11 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             c.user = user
             self._login(responder, user, rem)
+
+    @cross_domain(allow_credentials=True)
+    @api_doc(api_section.account, extends=_handle_register)
+    def POST_register(self, *args, **kwargs):
+        return self._handle_register(*args, **kwargs)
 
     @noresponse(VUser(),
                 VModhash(),
