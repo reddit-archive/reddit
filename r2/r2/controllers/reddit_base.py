@@ -525,6 +525,7 @@ def cross_domain(origin_check=is_trusted_origin, **options):
             "allow_credentials": bool(options.get("allow_credentials"))
         }
 
+        @wraps(fn)
         def cross_domain_handler(self, *args, **kwargs):
             if request.params.get("hoist") == "cookie":
                 # Cookie polling response
