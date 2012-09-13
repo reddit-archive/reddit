@@ -214,10 +214,9 @@ class VWikiPage(Validator):
             wp = self.validpage(page)
         except AbortWikiError:
             return
-        
-        # TODO: MAKE NOT REQUIRED
-        c.wiki_page_obj = wp
-        
+
+        c.wiki_may_revise = this_may_revise(wp)
+
         return wp
     
     def validpage(self, page):

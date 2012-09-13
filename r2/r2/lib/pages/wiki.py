@@ -12,7 +12,6 @@ class WikiView(Templated):
         self.edit_by = edit_by
         self.edit_date = edit_date
         self.base_url = c.wiki_base_url
-        self.may_revise = this_may_revise(c.wiki_page_obj)
         Templated.__init__(self)
 
 class WikiPageListing(Templated):
@@ -69,7 +68,7 @@ class WikiBase(Reddit):
         if not actionless and c.wiki_page:
             title = '%s - %s' % (title, c.wiki_page)
             pageactions += [(c.wiki_page, _("view"), False)]
-            if this_may_revise(c.wiki_page_obj):
+            if c.wiki_may_revise:
                 pageactions += [('edit', _("edit"), True)]
             pageactions += [('revisions/%s' % c.wiki_page, _("history"), False)]
             pageactions += [('discussions', _("talk"), True)]
@@ -89,7 +88,7 @@ class WikiBase(Reddit):
 class WikiPageView(WikiBase):
     def __init__(self, content, diff=None, **context):
         if not content and not context.get('alert'):
-            if this_may_revise(c.wiki_page_obj):
+            if c.wiki_may_revise:
                 context['alert'] = _("this page is empty, edit it to add some content.")
         content = WikiView(content, context.get('edit_by'), context.get('edit_date'), diff=diff)
         WikiBase.__init__(self, content, **context)
