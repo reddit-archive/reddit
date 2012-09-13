@@ -50,6 +50,7 @@ from urllib import quote, unquote
 import simplejson
 import locale, socket
 import babel.core
+from functools import wraps
 
 from r2.lib.tracking import encrypt, decrypt
 from pylons import Response
@@ -481,7 +482,7 @@ def paginated_listing(default_page_size=25, max_page_size=100, backend='sql'):
                   count=VCount('count'),
                   target=VTarget("target"),
                   show=VLength('show', 3))
-        @utils.wraps_api(fn)
+        @wraps(fn)
         def new_fn(self, before, **env):
             if c.render_style == "htmllite":
                 c.link_target = env.get("target")
@@ -550,7 +551,7 @@ def require_https():
 
 def prevent_framing_and_css(allow_cname_frame=False):
     def wrap(f):
-        @utils.wraps_api(f)
+        @wraps(f)
         def no_funny_business(*args, **kwargs):
             c.allow_styles = False
             if not (allow_cname_frame and c.cname and not c.authorized_cname):

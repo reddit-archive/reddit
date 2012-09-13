@@ -46,6 +46,7 @@ from curses.ascii import isprint
 import re, inspect
 import pycountry
 from itertools import chain
+from functools import wraps
 
 def visible_promo(article):
     is_promo = getattr(article, "promoted", None) is not None
@@ -168,7 +169,7 @@ make_validated_kw = _make_validated_kw
 
 def validate(*simple_vals, **param_vals):
     def val(fn):
-        @utils.wraps_api(fn)
+        @wraps(fn)
         def newfn(self, *a, **env):
             try:
                 kw = _make_validated_kw(fn, simple_vals, param_vals, env)
@@ -194,7 +195,7 @@ def api_validate(response_type=None):
     def wrap(response_function):
         def _api_validate(*simple_vals, **param_vals):
             def val(fn):
-                @utils.wraps_api(fn)
+                @wraps(fn)
                 def newfn(self, *a, **env):
                     renderstyle = request.params.get("renderstyle")
                     if renderstyle:
