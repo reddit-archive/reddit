@@ -24,10 +24,11 @@ class WikiPageListing(Templated):
         Templated.__init__(self)
 
 class WikiEditPage(Templated):
-    def __init__(self, page_content, previous):
+    def __init__(self, page_content='', previous='', show_reason_field=True):
         self.page_content = page_content
         self.previous = previous
         self.base_url = c.wiki_base_url
+        self.show_reason_field = show_reason_field
         Templated.__init__(self)
 
 class WikiPageSettings(Templated):
@@ -94,13 +95,12 @@ class WikiPageView(WikiBase):
         content = WikiView(content, context.get('edit_by'), context.get('edit_date'), diff=diff)
         WikiBase.__init__(self, content, **context)
 
-class WikiNotFound(WikiPageView):
-    def __init__(self, **context):
-        context['alert'] = _("page %s does not exist in this subreddit") % c.page
+class WikiNotFound(WikiBase):
+    def __init__(self, page, **context):
+        context['alert'] = _("page %s does not exist in this subreddit") % page
         context['actionless'] = True
-        create_link = '%s/create/%s' % (c.wiki_base_url, c.page)
-        text =  _("a page with that name does not exist in this subreddit.\n\n[Create a page called %s](%s)") % (c.page, create_link)
-        WikiPageView.__init__(self, text, **context)
+        content = WikiEditPage(show_reason_field=False)
+        WikiBase.__init__(self, content, **context)
 
 class WikiEdit(WikiBase):
     def __init__(self, content, previous, **context):

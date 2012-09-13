@@ -34,12 +34,11 @@ from r2.models.builder import WikiRevisionBuilder, WikiRecentRevisionBuilder
 from r2.lib.template_helpers import join_urls
 
 
-from r2.controllers.validator import VMarkdown
+from r2.controllers.validator import VMarkdown, nop
 
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
-                                           VWikiModerator, VWikiPageRevise
-                                           VWikiPageCreate, this_may_view
-                                           wiki_validate)
+                                           VWikiModerator, VWikiPageRevise,
+                                           this_may_view, wiki_validate)
 
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
@@ -59,7 +58,7 @@ from r2.lib.merge import ConflictException, make_htmldiff
 from pylons.i18n import _
 from r2.lib.pages import PaneStack
 from r2.lib.utils import timesince
-
+from r2.config import extensions
 from r2.lib.base import abort
 from r2.controllers.errors import WikiError
 
@@ -81,7 +80,7 @@ class WikiController(RedditController):
         message = None
         
         if not page:
-            return self.GET_wiki_create(page=c.page, view=True)
+            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', c.page))
         
         if version:
             edit_by = version.author_name()
@@ -121,17 +120,17 @@ class WikiController(RedditController):
         listing = WikiRevisionListing(builder).listing()
         return WikiRevisions(listing).render()
     
-    @wiki_validate(may_create=VWikiPageCreate('page'))
-    def GET_wiki_create(self, may_create, page, view=False):
-        api = c.extension == 'json'
-        
-        if c.error and c.error['reason'] == 'PAGE_EXISTS':
-            return self.redirect(join_urls(c.wiki_base_url, page))
-        elif not may_create or api:
-            if may_create and c.error:
+    @wiki_validate(wp=VWikiPageRevise('page'),
+                   page=nop('page'))
+    def GET_wiki_notfound(self, wp, page):
+        api = c.render_style in extensions.API_TYPES
+        if wp[0]:
+            return self.redirect(join_urls(c.wiki_base_url, wp[0].name))
+        elif api:
+            if c.error:
                 self.handle_error(403, **c.error)
             else:
-                self.handle_error(404, 'PAGE_NOT_FOUND', may_create=may_create)
+                self.handle_error(404, 'PAGE_NOT_CREATED')
         elif c.error:
             error = ''
             if c.error['reason'] == 'PAGE_NAME_LENGTH':
@@ -141,20 +140,18 @@ class WikiController(RedditController):
             elif c.error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
                 error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['MAX_SEPARATORS']
             return BoringPage(_("Wiki error"), infotext=error).render()
-        elif view:
-            return WikiNotFound().render()
-        elif may_create:
-            WikiPage.create(c.site, page)
-            url = join_urls(c.wiki_base_url, '/edit/', page)
-            return self.redirect(url)
+        else:
+            return WikiNotFound(page=page).render()
     
-    @wiki_validate(page=VWikiPageRevise('page', restricted=True))
-    def GET_wiki_revise(self, page, message=None, **kw):
-        page = page[0]
-        previous = kw.get('previous', page._get('revision'))
-        content = kw.get('content', page.content)
-        if not message and page.name in page_descriptions:
-            message = page_descriptions[page.name]
+    @wiki_validate(wp=VWikiPageRevise('page', restricted=True))
+    def GET_wiki_revise(self, wp, page, message=None, **kw):
+        wp = wp[0]
+        if not wp:
+            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', page))
+        previous = kw.get('previous', wp._get('revision'))
+        content = kw.get('content', wp.content)
+        if not message and wp.name in page_descriptions:
+            message = page_descriptions[wp.name]
         return WikiEdit(content, previous, alert=message).render()
     
     @paginated_listing(max_page_size=100, backend='cassandra')
@@ -206,8 +203,8 @@ class WikiController(RedditController):
         ModAction.create(c.site, c.user, 'wikipermlevel', description=description)
         return self.GET_wiki_settings(page=page.name)
     
-    def handle_error(self, code, error=None, **data):
-        abort(WikiError(code, error, **data))
+    def handle_error(self, code, reason=None, **data):
+        abort(WikiError(code, reason, **data))
     
     def pre(self):
         RedditController.pre(self)
@@ -216,7 +213,9 @@ class WikiController(RedditController):
         if not c.site._should_wiki:
             self.handle_error(404, 'NOT_WIKIABLE') # /r/mod for an example
         frontpage = isinstance(c.site, DefaultSR)
-        c.wiki_base_url = '/wiki' if frontpage else '/r/%s/wiki' % c.site.name
+        base = '' if frontpage else '/r/%s' % c.site.name
+        c.wiki_base_url = '%s/wiki' % base
+        c.wiki_api_url = '%s/wiki/api' % base
         c.wiki_id = g.default_sr if frontpage else c.site.name
         c.page = None
         c.show_wiki_actions = True
@@ -233,9 +232,16 @@ class WikiController(RedditController):
 
 class WikiApiController(WikiController):
     @wiki_validate(pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
-              content=VMarkdown(('content')))
-    def POST_wiki_edit(self, pageandprevious, content):
+                   content=VMarkdown(('content')),   
+                   page_name=nop('page'))
+    def POST_wiki_edit(self, pageandprevious, content, page_name):
         page, previous = pageandprevious
+        
+        if not page:
+            if c.error:
+                self.handle_error(403, **c.error)
+            page = WikiPage.create(c.site, page_name)
+        
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed. 
@@ -249,10 +255,10 @@ class WikiApiController(WikiController):
                 if report.errors:
                     error_items = [x.message for x in sorted(report.errors)]
                     self.handle_error(415, 'SPECIAL_ERRORS', special_errors=error_items)
-                c.site.change_css(content, parsed, previous, reason=request.POST['reason'])
+                c.site.change_css(content, parsed, previous, reason=request.POST.get('reason', ''))
             else:
                 try:
-                    page.revise(content, previous, c.user.name, reason=request.POST['reason'])
+                    page.revise(content, previous, c.user.name, reason=request.POST.get('reason', ''))
                 except ContentLengthError as e:
                     self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length = e.max_length)
 
@@ -287,7 +293,7 @@ class WikiApiController(WikiController):
     def POST_wiki_revision_hide(self, pv, page, revision):
         page, revision = pv
         return json.dumps({'status': revision.toggle_hide()})
-   
+    
     @wiki_validate(VWikiModerator(),
                    pv=VWikiPageAndVersion(('page', 'revision')))
     def POST_wiki_revision_revert(self, pv, page, revision):

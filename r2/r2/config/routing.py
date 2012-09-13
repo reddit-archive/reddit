@@ -196,7 +196,7 @@ def make_map():
     mc('/help/gold', controller='redirect', action='redirect', dest='/gold/about')
     mc('/help/*anything', controller='embed', action='help')
     
-    mc('/wiki/create/*page', controller='wiki', action='wiki_create')
+    mc('/wiki/notfound/*page', controller='wiki', action='wiki_notfound')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
     mc('/wiki/revisions/*page', controller='wiki', action='wiki_revisions')
     mc('/wiki/settings/*page', controller='wiki', action='wiki_settings')
@@ -204,6 +204,7 @@ def make_map():
     mc('/wiki/revisions', controller='wiki', action='wiki_recent')
     mc('/wiki/pages', controller='wiki', action='wiki_listing')
     
+    mc('/wiki/api/create', controller='wikiapi', action='wiki_create')
     mc('/wiki/api/edit/*page', controller='wikiapi', action='wiki_edit')
     mc('/wiki/api/hide/:revision/*page', controller='wikiapi', action='wiki_revision_hide')
     mc('/wiki/api/revert/:revision/*page', controller='wikiapi', action='wiki_revision_revert')

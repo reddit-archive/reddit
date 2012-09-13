@@ -249,7 +249,7 @@ class VWikiPage(Validator):
 class VWikiPageAndVersion(VWikiPage):    
     def run(self, page, *versions):
         wp = VWikiPage.run(self, page)
-        if c.errors:
+        if self.has_errors:
             return
         validated = []
         for v in versions:
@@ -260,14 +260,31 @@ class VWikiPageAndVersion(VWikiPage):
         return tuple([wp] + validated)
 
 class VWikiPageRevise(VWikiPage):
+    def __init__(self, *k, **kw):
+        VWikiPage.__init__(self, required=False, *k, **kw)
+    
+    def may_not_create(self, page):
+        if c.is_wiki_mod and WikiPage.is_special(page):
+            return {'reason': 'PAGE_CREATED_ELSEWHERE'}
+        elif WikiPage.is_restricted(page):
+            self.set_error('RESTRICTED_PAGE', code=403)
+            return
+        elif page.count('/') > MAX_SEPARATORS:
+            return {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'MAX_SEPARATORS': MAX_SEPARATORS}
+        elif len(page) > MAX_PAGE_NAME_LENGTH:
+            return {'reason': 'PAGE_NAME_LENGTH', 'max_length': MAX_PAGE_NAME_LENGTH}
+    
     def run(self, page, previous=None):
         wp = VWikiPage.run(self, page)
-        if c.errors:
+        if self.has_errors:
             return
-        if not wp:
-            return self.set_error('INVALID_PAGE', code=404)
         if not this_may_revise(wp):
+            if not wp:
+                return self.set_error('PAGE_NOT_FOUND', code=404)
             return self.set_error('MAY_NOT_REVISE', code=403)
+        if not wp:
+            c.error = self.may_not_create(page)
+            return (None, None)
         if previous:
             try:
                 prev = self.validversion(previous, wp._id)
@@ -275,25 +292,6 @@ class VWikiPageRevise(VWikiPage):
                 return
             return (wp, prev)
         return (wp, None)
-
-class VWikiPageCreate(VWikiPage):
-    def __init__(self, param, **kw):
-        VWikiPage.__init__(self, param, required=False, **kw)
     
-    def run(self, page):
-        wp = VWikiPage.run(self, page)
-        if c.errors:
-            return
-        if wp:
-            c.error = {'reason': 'PAGE_EXISTS'}
-        elif c.is_wiki_mod and WikiPage.is_special(page):
-            c.error = {'reason': 'PAGE_CREATED_ELSEWHERE'}
-        elif WikiPage.is_restricted(page):
-            self.set_error('RESTRICTED_PAGE', code=403)
-            return
-        elif page.count('/') > MAX_SEPARATORS:
-            c.error = {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'MAX_SEPARATORS': MAX_SEPARATORS}
-        elif len(page) > MAX_PAGE_NAME_LENGTH:
-            c.error = {'reason': 'PAGE_NAME_LENGTH', 'max_length': MAX_PAGE_NAME_LENGTH}
-        return this_may_revise()
+
                
