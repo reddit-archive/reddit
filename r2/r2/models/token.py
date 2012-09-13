@@ -111,10 +111,12 @@ class OAuth2Scope:
             "name": _("Moderating Flair"),
             "description": _("Manage flair in subreddits I moderate."),
         },
-        "myreddits": {
-            "id": "myreddits",
+        "mysubreddits": {
+            "id": "mysubreddits",
             "name": _("My Subscriptions"),
-            "description": _("Access my list of subreddits."),
+            "description": _(
+                "Access the list of subreddits I moderate, contribute to,"
+                " and subscribe to."),
         },
     }
 

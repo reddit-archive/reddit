@@ -994,7 +994,7 @@ class MyredditsController(ListingController, OAuth2ResourceController):
 
         return ListingController.build_listing(self, after=after, **kwargs)
 
-    @require_oauth2_scope("myreddits")
+    @require_oauth2_scope("mysubreddits")
     @validate(VUser())
     @listing_api_doc(section=api_section.subreddits,
                      uri='/reddits/mine/{where}',
