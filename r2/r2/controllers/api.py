@@ -1255,6 +1255,12 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_html('#conflict_diff', e.htmldiff)
                 form.find('.errors').show()
                 return
+            except ValueError:
+                # Revision does not belong to page
+                return
+            except tdb_cassandra.NotFound:
+                # Previous revision not found
+                return
         jquery.apply_stylesheet(stylesheet_contents_parsed)
         if op == 'preview':
             # try to find a link to use, otherwise give up and
@@ -1467,6 +1473,12 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.find('#%s_conflict_box' % field).show()
                 form.set_inputs(**{'prev_%s_id' % field: e.new_id, '%s_conflict_old' % field: e.your, field: e.new})
                 form.set_html('#%s_conflict_diff' % field, e.htmldiff)
+            except ValueError:
+                # Revision does not belong to page
+                pass
+            except tdb_cassandra.NotFound:
+                # Previous revision not found
+                pass
             return False
         
         # the status button is outside the form -- have to reset by hand
