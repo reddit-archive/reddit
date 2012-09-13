@@ -197,12 +197,6 @@ class LinkVotesByAccount(VotesByAccount):
     _views = []
     _last_modified_name = "LinkVote"
 
-    @classmethod
-    def _fast_query(cls, subject, objects, properties=None):
-        # this is a compatibility shim for transition
-        return {k: Storage(name=v)
-                for k, v in cls.fast_query(subject, objects).iteritems()}
-
 
 class CommentVotesByAccount(VotesByAccount):
     _use_db = True
@@ -340,22 +334,16 @@ class Vote(MultiRelation('vote',
 
     @classmethod
     def likes(cls, sub, objs):
-        # generalise and put on all abstract relations?
-
         if not sub or not objs:
             return {}
 
         from r2.models import Account
-
         assert isinstance(sub, Account)
 
         rels = {}
         for obj in objs:
             try:
-                if obj.__class__ == Link:
-                    types = VotesByAccount.rel(sub.__class__, obj.__class__)
-                else:
-                    types = CassandraVote._rel(sub.__class__, obj.__class__)
+                types = VotesByAccount.rel(sub.__class__, obj.__class__)
             except TdbException:
                 # for types for which we don't have a vote rel, we'll
                 # skip them
@@ -363,16 +351,13 @@ class Vote(MultiRelation('vote',
 
             rels.setdefault(types, []).append(obj)
 
+        dirs_by_name = {"1": True, "0": None, "-1": False}
 
         ret = {}
-
         for relcls, items in rels.iteritems():
-            votes = relcls._fast_query(sub, items,
-                                       properties=['name'])
-            for cross, rel in votes.iteritems():
-                ret[cross] = (True if rel.name == '1'
-                              else False if rel.name == '-1'
-                              else None)
+            votes = relcls.fast_query(sub, items)
+            for cross, name in votes.iteritems():
+                ret[cross] = dirs_by_name[name]
         return ret
 
 def test():
