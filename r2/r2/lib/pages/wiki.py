@@ -3,12 +3,10 @@ from pylons import c
 from r2.lib.wrapped import Templated
 from r2.lib.menus import PageNameNav
 from r2.controllers.validator.wiki import this_may_revise
-from r2.lib.filters import wikimarkdown
 from pylons.i18n import _
 
 class WikiView(Templated):
     def __init__(self, content, edit_by, edit_date, diff=None):
-        self.page_content = wikimarkdown(content) if content else ''
         self.page_content_md = content
         self.diff = diff
         self.edit_by = edit_by

@@ -26,7 +26,7 @@ from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
 from r2.config.extensions import get_api_subtype
-from r2.lib.filters import spaceCompress, safemarkdown
+from r2.lib.filters import spaceCompress, safemarkdown, wikimarkdown
 from r2.models.subreddit import SubSR
 import time, pytz
 from pylons import c, g
@@ -590,7 +590,7 @@ class WikiViewJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
         edit_date = time.mktime(thing.edit_date.timetuple())
         return ObjectTemplate(dict(content_md=thing.page_content_md,
-                                   content_html=thing.page_content,
+                                   content_html=wikimarkdown(thing.page_content_md),
                                    revision_by=thing.edit_by,
                                    revision_date=edit_date,
                                    may_revise=thing.may_revise))

@@ -22,6 +22,9 @@
 
 <%namespace file="utils.html" import="timestamp"/>
 
+<%!
+    from r2.lib.filters import wikimarkdown
+%>
 
 %if thing.diff:
     <p>
@@ -29,10 +32,10 @@
     </p>
 %endif
 <p>
-    %if not thing.page_content:
+    %if not thing.page_content_md:
         <em>${_("this page is empty")}</em>
     %else:
-        ${unsafe(thing.page_content)}
+        ${unsafe(wikimarkdown(thing.page_content_md))}
     %endif
 </p>
 %if thing.edit_date:
