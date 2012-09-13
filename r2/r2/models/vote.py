@@ -233,7 +233,7 @@ class VoteDetailsByThing(tdb_cassandra.View):
             organic=getattr(pgvote, "organic", False),
         )
 
-        cls._set_values(voter._id36, {votee._id36: json.dumps(details)})
+        cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
 
 
 @tdb_cassandra.view_of(LinkVotesByAccount)
