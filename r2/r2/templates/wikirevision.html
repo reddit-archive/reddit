@@ -64,11 +64,16 @@
    
     %if c.page and c.is_wiki_mod:
         <td>
-            <a href="#" class="revision_hide" data-revision="${thing._id}" data-page="${thing.page}">hide</a>
+            <a href="#" class="revision_hide" data-revision="${thing._id}">hide</a>
         </td>
         <td class="wiki_revert" style="white-space: nowrap;">
-            ${ynbutton(_("revert here"), _("done"), quote("..%s/api/revert/%s/%s" % (c.wiki_base_url, thing._id, thing.page)), post_callback="$.refresh")}
+            ${ynbutton(_("revert here"), 
+                       _("done"),
+                       quote("..%s/revert" % c.wiki_api_url), 
+                       hidden_data=dict(revision=thing._id, page=thing.page), 
+                       post_callback="$.refresh"
+                      )
+             }
         </td>
     %endif
-
 </tr>

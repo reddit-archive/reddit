@@ -204,11 +204,11 @@ def make_map():
     mc('/wiki/revisions', controller='wiki', action='wiki_recent')
     mc('/wiki/pages', controller='wiki', action='wiki_listing')
     
-    mc('/wiki/api/create', controller='wikiapi', action='wiki_create')
-    mc('/wiki/api/edit/*page', controller='wikiapi', action='wiki_edit')
-    mc('/wiki/api/hide/:revision/*page', controller='wikiapi', action='wiki_revision_hide')
-    mc('/wiki/api/revert/:revision/*page', controller='wikiapi', action='wiki_revision_revert')
-    mc('/wiki/api/alloweditor/:act/:username/*page', controller='wikiapi', action='wiki_allow_editor')
+    mc('/api/wiki/create', controller='wikiapi', action='wiki_create')
+    mc('/api/wiki/edit', controller='wikiapi', action='wiki_edit')
+    mc('/api/wiki/hide', controller='wikiapi', action='wiki_revision_hide')
+    mc('/api/wiki/revert', controller='wikiapi', action='wiki_revision_revert')
+    mc('/api/wiki/alloweditor/:act', controller='wikiapi', action='wiki_allow_editor')
     
     mc('/wiki/*page', controller='wiki', action='wiki_page')
     mc('/wiki/', controller='wiki', action='wiki_page')

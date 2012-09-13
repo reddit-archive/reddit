@@ -52,7 +52,7 @@
     %if thing.permlevel != 2:
     <br/>
     <%utils:line_field title="${_('allow users to edit page')}">
-        <form id="WikiAllowEditor" data-page="${c.page}" onsubmit="r.wiki.addUser(event)">
+        <form id="WikiAllowEditor" onsubmit="r.wiki.addUser(event)">
             <input name="username" maxlength="32" type="text" style="width: 430px;" />
             <button type="submit" style="font-size: 100%;">${_('add')}</button>
             <h3 class="error" style="display:none" id="usereditallowerror">${_('username does not exist')}</h2>
@@ -63,7 +63,7 @@
             <li>
                 ${user}
                 &mdash;&nbsp;
-                ${ynbutton(_("(remove)"), _("done"), quote("../r/%s/wiki/api/alloweditor/del/%s/%s" % (c.site.name, user, c.page)), post_callback="$.refresh")}
+                ${ynbutton(_("delete"), _("done"), quote("..%s/alloweditor/del" % (c.wiki_api_url)), hidden_data=dict(username=user, page=c.page), post_callback="$.refresh")}
             </li>
         %endfor
         </ul>
