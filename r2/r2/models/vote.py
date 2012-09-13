@@ -208,6 +208,7 @@ class CommentVotesByAccount(VotesByAccount):
 class VoteDetailsByThing(tdb_cassandra.View):
     _use_db = False
     _ttl = 60 * 60 * 24 * 30
+    _fetch_all_columns = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)
 
@@ -228,6 +229,25 @@ class VoteDetailsByThing(tdb_cassandra.View):
         )
 
         cls._set_values(votee._id36, {voter._id36: json.dumps(details)})
+
+    @classmethod
+    def get_details(cls, thing):
+        if isinstance(thing, Link):
+            details_cls = VoteDetailsByLink
+        elif isinstance(thing, Comment):
+            details_cls = VoteDetailsByComment
+        else:
+            raise ValueError
+
+        raw_details = details_cls._byID(thing._id36)._values()
+        details = []
+        for key, value in raw_details.iteritems():
+            data = Storage(json.loads(value))
+            data["_id"] = key + "_" + thing._id36
+            data["voter_id"] = key
+            details.append(data)
+        details.sort(key=lambda d: d["date"])
+        return details
 
 
 @tdb_cassandra.view_of(LinkVotesByAccount)
