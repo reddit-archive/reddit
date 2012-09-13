@@ -945,6 +945,21 @@ a.author { margin-right: 0.5em; }
     margin: 15px;
 }
 
+.wiki-page-content .pagelisting {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: black;
+    padding-left: 25px;
+}
+
+.wiki-page-content .description h2 {
+    color: #222;
+}
+
+.wiki-page-content .description {
+    padding-bottom: 5px;
+}
+
 .wikirevisionlisting .generic-table {
     width: 100%;
 }
@@ -981,6 +996,7 @@ a.author { margin-right: 0.5em; }
     display: inline-block;
     margin-left: 15px;
     padding-right: 50px;
+    margin-top: 5px;
 }
 
 .discussionlink a {

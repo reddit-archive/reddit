@@ -53,14 +53,16 @@
     %endif
 </span>
     
-<br/>
-
-%if thing.description:
-    <br/>
-    <span><h2>${unsafe(thing.description)}</h2></span>
-%endif
-
 <div class="wiki-page-content">
+    %if thing.description:
+        <div class="description">
+            <h2>
+                %for desc in thing.description:
+                    ${desc}<br/>
+                %endfor
+            </h2>
+        </div>
+    %endif
     ${thing.content}
 </div>
 

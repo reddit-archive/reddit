@@ -131,13 +131,14 @@ class WikiListing(WikiBase):
     def __init__(self, pages, **context):
         content = WikiPageListing(pages)
         context['wikiaction'] = ('pages', _("Viewing pages for /r/%s") % c.wiki_id)
-        WikiBase.__init__(self, content, showtitle=True, **context)
+        description = [_("Below is a list of pages in this wiki visible to you in this subreddit.")]
+        WikiBase.__init__(self, content, description=description, showtitle=True, **context)
 
 class WikiDiscussions(WikiBase):
     def __init__(self, listing, **context):
         content = WikiPageDiscussions(listing)
         context['wikiaction'] = ('discussions', _("discussions"))
-        description = _("Discussions are site-wide links to this wiki page.<br/>\
-        Submit a link to this wiki page or see other discussions about this wiki page.")
+        description = [_("Discussions are site-wide links to this wiki page."),
+                       _("Submit a link to this wiki page or see other discussions about this wiki page.")]
         WikiBase.__init__(self, content, description=description, **context)
 
