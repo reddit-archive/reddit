@@ -15,8 +15,9 @@ class WikiView(Templated):
         Templated.__init__(self)
 
 class WikiPageListing(Templated):
-    def __init__(self, pages):
+    def __init__(self, pages, linear_pages):
         self.pages = pages
+        self.linear_pages = linear_pages
         self.base_url = c.wiki_base_url
         Templated.__init__(self)
 
@@ -38,7 +39,7 @@ class WikiPageSettings(Templated):
 
 class WikiPageRevisions(Templated):
     def __init__(self, revisions):
-        self.revisions = revisions
+        self.listing = revisions
         Templated.__init__(self)
 
 class WikiPageDiscussions(Templated):
@@ -125,8 +126,8 @@ class WikiRecent(WikiBase):
         WikiBase.__init__(self, content, showtitle=True, **context)
 
 class WikiListing(WikiBase):
-    def __init__(self, pages, **context):
-        content = WikiPageListing(pages)
+    def __init__(self, pages, linear_pages, **context):
+        content = WikiPageListing(pages, linear_pages)
         context['wikiaction'] = ('pages', _("Viewing pages for /r/%s") % c.wiki_id)
         description = [_("Below is a list of pages in this wiki visible to you in this subreddit.")]
         WikiBase.__init__(self, content, description=description, showtitle=True, **context)

@@ -61,6 +61,10 @@ api('wikipagerevisions', WikiJsonTemplate)
 api('wikiview', WikiViewJsonTemplate)
 api('wikirevision', WikiRevisionJsonTemplate)
 
+api('wikipagelisting', WikiPageListingJsonTemplate)
+api('wikipagediscussions', WikiJsonTemplate)
+api('wikipagesettings', WikiSettingsJsonTemplate)
+
 api('flairlist', FlairListJsonTemplate)
 api('flaircsv', FlairCsvJsonTemplate)
 

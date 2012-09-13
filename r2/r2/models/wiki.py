@@ -218,12 +218,13 @@ class WikiPage(tdb_cassandra.Thing):
         WikiPageEditors._set_values(self._id, {user: ''})
     
     @classmethod
-    def get_pages(cls, sr, after=None):
+    def get_pages(cls, sr, after=None, filter_check=None):
         NUM_AT_A_TIME = 1000
         pages = WikiPagesBySR.query([sr._id36], after=after, count=NUM_AT_A_TIME)
         pages = list(pages)
         if len(pages) >= NUM_AT_A_TIME:
             return pages + cls.get_pages(sr, after=pages[-1])
+        pages = filter(filter_check, pages)
         return pages
     
     @classmethod
@@ -232,8 +233,7 @@ class WikiPage(tdb_cassandra.Thing):
             Create a tree of pages from their path.
         """
         page_tree = OrderedDict()
-        pages = cls.get_pages(sr)
-        pages = filter(filter_check, pages)
+        pages = cls.get_pages(sr, filter_check=filter_check)
         pages = sorted(pages, key=lambda page: page.name)
         for page in pages:
             p = page.name.split('/')
@@ -257,9 +257,9 @@ class WikiPage(tdb_cassandra.Thing):
                 node[0] = page
             else:
                 cur_node[pagename] = [page, OrderedDict()]
-                
-        return page_tree
-    
+
+        return page_tree, pages
+
     def get_editors(self, properties=None):
         try:
             return WikiPageEditors._byID(self._id, properties=properties)._values() or []

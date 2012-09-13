@@ -20,8 +20,8 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-${thing.revisions}
-%if c.wiki_page and thing.revisions.things:
+${thing.listing}
+%if c.wiki_page and thing.listing.things:
     <button onclick="r.wiki.goCompare()">${_("compare selected")}</button>
 %endif
 <br/>

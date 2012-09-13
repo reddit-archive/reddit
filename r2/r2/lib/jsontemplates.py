@@ -583,8 +583,18 @@ class WikiJsonTemplate(JsonTemplate):
         try:
             content = thing.content
         except AttributeError:
-            content = thing.revisions
+            content = thing.listing
         return ObjectTemplate(content.render() if thing else {})
+
+class WikiPageListingJsonTemplate(ThingJsonTemplate):
+    def render(self, thing, *a, **kw):
+        pages = [p.name for p in thing.linear_pages]
+        return ObjectTemplate(dict(pages=pages))
+
+class WikiSettingsJsonTemplate(ThingJsonTemplate):
+    def render(self, thing, *a, **kw):
+        return ObjectTemplate(dict(permlevel=thing.permlevel,
+                                   editors=thing.mayedit))
 
 class WikiViewJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
