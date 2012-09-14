@@ -130,6 +130,7 @@
                            is_archived)}
       %endif
       </table>
+      ${error_field("INVALID_OPTION", "type")}
     </div>
   </%utils:line_field>
 
@@ -146,6 +147,7 @@
                            _("only text/self posts are allowed"),
                            (thing.site and thing.site.link_type=='self'))}
       </table>
+      ${error_field("INVALID_OPTION", "link_type")}
     </div>
   </%utils:line_field>
   <%utils:line_field title="${_('wiki')}">
@@ -161,6 +163,7 @@
                            _("Anyone who can submit to the subreddit may edit"),
                            (thing.site and thing.site.wikimode == 'anyone'))}
       </table>
+      ${error_field("INVALID_OPTION", "wikimode")}
     </div>
     <div class="usertext-edit">
     <div class="delete-field">
