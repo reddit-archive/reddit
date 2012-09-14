@@ -89,6 +89,10 @@ class Subreddit(Thing, Printable):
                      flair_self_assign_enabled = False,
                      link_flair_self_assign_enabled = False,
                      use_quotas = True,
+                     description = "",
+                     public_description = "",
+                     prev_description_id = "",
+                     prev_public_description_id = "",
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
@@ -206,49 +210,21 @@ class Subreddit(Thing, Printable):
     @property
     def moderators(self):
         return self.moderator_ids()
-    
+
     @property
     def stylesheet_contents_user(self):
         try:
             return WikiPage.get(self, 'config/stylesheet')._get('content','')
         except tdb_cassandra.NotFound:
            return  self._t.get('stylesheet_contents_user')
-    
+
     @property
     def prev_stylesheet(self):
         try:
             return WikiPage.get(self, 'config/stylesheet')._get('revision','')
         except tdb_cassandra.NotFound:
             return ''
-    
-    @property
-    def description(self):
-        try:
-            return WikiPage.get(self, 'config/sidebar')._get('content','')
-        except tdb_cassandra.NotFound:
-            return self._t.get('description')
-    
-    @property
-    def public_description(self):
-        try:
-            return WikiPage.get(self, 'config/description')._get('content','')
-        except tdb_cassandra.NotFound:
-            return self._t.get('public_description')
-    
-    @property
-    def prev_description_id(self):
-        try:
-            return WikiPage.get(self, 'config/sidebar')._get('revision','')
-        except tdb_cassandra.NotFound:
-            return ''
-    
-    @property
-    def prev_public_description_id(self):
-        try:
-            return WikiPage.get(self, 'config/description')._get('revision','')
-        except tdb_cassandra.NotFound:
-            return ''
-    
+
     @property
     def contributors(self):
         return self.contributor_ids()

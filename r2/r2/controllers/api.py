@@ -1462,8 +1462,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                 wikipage = wiki.WikiPage.create(sr, pagename)
             try:
                 wr = wikipage.revise(value, previous=prev, author=c.user.name)
+                setattr(sr, field, value)
                 if not wr:
                     return True
+                setattr(sr, "prev_" + field + "_id", str(wikipage.revision))
                 ModAction.create(c.site, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
                 return True
             except ConflictException as e:
@@ -1558,6 +1560,24 @@ class ApiController(RedditController, OAuth2ResourceController):
                 sr.sponsorship_url = sponsor_url or None
                 sr.sponsorship_name = sponsor_name or None
 
+            if not apply_wikid_field(sr,
+                                     form,
+                                     'config/sidebar',
+                                     description,
+                                     prev_desc,
+                                     'description',
+                                     _("Sidebar was not saved")):
+                return
+
+            if not apply_wikid_field(sr,
+                                     form,
+                                     'config/description',
+                                     public_description,
+                                     prev_pubdesc,
+                                     'public_description',
+                                     _("Description was not saved")):
+                return
+
             #assume sr existed, or was just built
             old_domain = sr.domain
 
@@ -1579,16 +1599,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             changed(sr)
             form.parent().set_html('.status', _("saved"))
 
-        # don't go any further until the form validates
         if form.has_error():
             return
-        
-        if not apply_wikid_field(sr, form, 'config/sidebar', description, prev_desc, 'description', _("Sidebar was not saved")):
-            return
-        if not apply_wikid_field(sr, form, 'config/description', public_description, prev_pubdesc, 'public_description', _("Description was not saved")):
-            return
-        
-        if redir:
+        elif redir:
             form.redirect(redir)
         else:
             jquery.refresh()

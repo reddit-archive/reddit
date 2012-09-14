@@ -67,6 +67,9 @@ import json
 page_descriptions = {'config/stylesheet':_("This page is the subreddit stylesheet, changes here apply to the subreddit css"),
                      'config/sidebar':_("The contents of this page appear on the subreddit sidebar")}
 
+ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
+                     "config/description": "public_description"}
+
 class WikiController(RedditController):
     allow_stylesheets = True
     
@@ -247,6 +250,14 @@ class WikiApiController(WikiController):
                     page.revise(content, previous, c.user.name, reason=request.POST['reason'])
                 except ContentLengthError as e:
                     self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length = e.max_length)
+
+                # continue storing the special pages as data attributes on the subreddit
+                # object. TODO: change this to minimize subreddit get sizes.
+                if page.special:
+                    setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
+                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", str(page.revision))
+                    c.site._commit()
+
                 if page.special or c.is_wiki_mod:
                     description = modactions.get(page.name, 'Page %s edited' % page.name)
                     ModAction.create(c.site, c.user, 'wikirevise', details=description)
@@ -289,6 +300,13 @@ class WikiApiController(WikiController):
         else:
             try:
                 page.revise(content, author=author, reason=reason, force=True)
+
+                # continue storing the special pages as data attributes on the subreddit
+                # object. TODO: change this to minimize subreddit get sizes.
+                if page.special:
+                    setattr(c.site, ATTRIBUTE_BY_PAGE[page.name], content)
+                    setattr(c.site, "prev_" + ATTRIBUTE_BY_PAGE[page.name] + "_id", page.revision)
+                    c.site._commit()
             except ContentLengthError as e:
                 self.handle_error(403, 'CONTENT_LENGTH_ERROR', e.max_length)
         return json.dumps({})
