@@ -1498,8 +1498,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             c.errors.add(errors.USED_CNAME)
 
         can_set_archived = c.user_is_admin or (sr and sr.type == 'archived')
-        if type == 'archived' and not can_set_archived:
-            form.set_error('type', errors.INVALID_OPTION)
+        if kw['type'] == 'archived' and not can_set_archived:
+            c.errors.add(errors.INVALID_OPTION, field='type')
 
         if not sr and form.has_errors("ratelimit", errors.RATELIMIT):
             pass
