@@ -107,6 +107,11 @@ class OAuth2Scope:
             "description": _(
                 "Manage and assign flair in subreddits I moderate."),
         },
+        "modtraffic": {
+            "id": "modtraffic",
+            "name": _("Subreddit Traffic"),
+            "description": _("Access traffic stats in subreddits I moderate."),
+        },
         "mysubreddits": {
             "id": "mysubreddits",
             "name": _("My Subreddits"),
