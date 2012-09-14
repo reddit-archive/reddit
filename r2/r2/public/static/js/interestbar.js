@@ -29,7 +29,7 @@ r.ui.InterestBar.prototype = {
         }
 
         this.queryChangedDebounced(query)
-        if (query) {
+        if (query && query.length > 1) {
             this.$el.addClass('working')
         } else {
             this.hideResults()
@@ -38,7 +38,7 @@ r.ui.InterestBar.prototype = {
     },
 
     queryChanged: function(query) {
-        if (query) {
+        if (query && query.length > 1) {
             $.ajax({
                 url: '/api/subreddits_by_topic.json',
                 data: {'query': query},

@@ -2871,7 +2871,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not g.CLOUDSEARCH_SEARCH_API:
             return []
 
-        if not query or not query.strip():
+        query = query and query.strip()
+        if not query or len(query) < 2:
             return []
 
         exclude = Subreddit.default_subreddits()
