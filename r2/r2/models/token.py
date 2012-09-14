@@ -101,10 +101,11 @@ class OAuth2Scope:
             "name": _("My Identity"),
             "description": _("Access my reddit username and signup date."),
         },
-        "moderateflair": {
-            "id": "moderateflair",
+        "modflair": {
+            "id": "modflair",
             "name": _("Moderating Flair"),
-            "description": _("Manage flair in subreddits I moderate."),
+            "description": _(
+                "Manage and assign flair in subreddits I moderate."),
         },
         "mysubreddits": {
             "id": "mysubreddits",
