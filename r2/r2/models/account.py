@@ -113,6 +113,15 @@ class Account(Thing):
                      otp_secret=None,
                      )
 
+    def __eq__(self, other):
+        if type(self) != type(other):
+            return False
+
+        return self._id == other._id
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def has_interacted_with(self, sr):
         if not sr:
             return False
@@ -600,6 +609,8 @@ class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True
 
+    def __eq__(self, other):
+        return self is other
 
 def valid_admin_cookie(cookie):
     if g.read_only_mode:
