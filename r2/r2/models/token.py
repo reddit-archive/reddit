@@ -108,7 +108,7 @@ class OAuth2Scope:
         },
         "mysubreddits": {
             "id": "mysubreddits",
-            "name": _("My Subscriptions"),
+            "name": _("My Subreddits"),
             "description": _(
                 "Access the list of subreddits I moderate, contribute to,"
                 " and subscribe to."),
@@ -117,6 +117,11 @@ class OAuth2Scope:
             "id": "submit",
             "name": _("Submit Content"),
             "description": _("Submit links and comments from my account."),
+        },
+        "subscribe": {
+            "id": "subscribe",
+            "name": _("Edit My Subscriptions"),
+            "description": _("Manage my subreddit subscriptions."),
         },
     }
 

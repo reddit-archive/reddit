@@ -2094,6 +2094,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user._commit()
 
 
+    @require_oauth2_scope("subscribe")
     @noresponse(VUser(),
                 VModhash(),
                 action = VOneOf('action', ('sub', 'unsub')),
