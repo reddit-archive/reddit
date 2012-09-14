@@ -208,6 +208,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             queries.new_message(m, inbox_rel)
 
+    @require_oauth2_scope("submit")
     @validatedForm(VUser(),
                    VModhash(),
                    VCaptcha(),
@@ -983,7 +984,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             jquery(".content").replace_things(item, True, True, wrap = wrapper)
             jquery(".content .link .rank").hide()
 
-    @require_oauth2_scope("comment")
+    @require_oauth2_scope("submit")
     @validatedForm(VUser(),
                    VModhash(),
                    VRatelimit(rate_user = True, rate_ip = True,

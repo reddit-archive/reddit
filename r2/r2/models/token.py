@@ -101,11 +101,6 @@ class OAuth2Scope:
             "name": _("My Identity"),
             "description": _("Access my reddit username and signup date."),
         },
-        "comment": {
-            "id": "comment",
-            "name": _("Commenting"),
-            "description": _("Submit comments from my account."),
-        },
         "moderateflair": {
             "id": "moderateflair",
             "name": _("Moderating Flair"),
@@ -117,6 +112,11 @@ class OAuth2Scope:
             "description": _(
                 "Access the list of subreddits I moderate, contribute to,"
                 " and subscribe to."),
+        },
+        "submit": {
+            "id": "submit",
+            "name": _("Submit Content"),
+            "description": _("Submit links and comments from my account."),
         },
     }
 
