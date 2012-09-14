@@ -244,7 +244,9 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
             this.showErrors(result.json.errors)
             this.$submit.attr('disabled', true)
         } else {
-            this.$el.addClass(result ? 'name-available' : 'name-taken')
+            this.$el
+                .removeClass('name-available name-taken')
+                .addClass(result ? 'name-available' : 'name-taken')
             this.$submit.attr('disabled', result == false)
         }
     },
