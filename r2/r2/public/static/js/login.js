@@ -211,7 +211,6 @@ r.ui.RegisterForm = function() {
     this.$user = this.$el.find('[name="user"]')
     this.$user.on('keyup', $.proxy(this, 'usernameChanged'))
     this.$submit = this.$el.find('.submit button')
-
 }
 r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     usernameChanged: function() {
