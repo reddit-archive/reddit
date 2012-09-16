@@ -472,26 +472,34 @@ class IDBuilder(QueryBuilder):
         return done, new_items
 
 
-class FakeThing(object):
-    def __init__(self, name):
-        self._id = name
-
 class SimpleBuilder(IDBuilder):
     def thing_lookup(self, names):
-        return [FakeThing(name) for name in names]
+        return names
 
     def init_query(self):
-        names = list(tup(self.query))
-        self.names = self._get_after(names, self.after, self.reverse)
+        items = list(tup(self.query))
+
+        if self.reverse:
+            items.reverse()
+
+        if self.after:
+            for i, item in enumerate(items):
+                if item._id == self.after:
+                    self.names = items[i + 1:]
+                    break
+            else:
+                self.names = ()
+        else:
+            self.names = items
 
     def get_items(self):
         items, prev, next, bcount, acount = IDBuilder.get_items(self)
-        items = [i._id for i in items]
         if prev:
             prev = prev._id
         if next:
             next = next._id
         return (items, prev, next, bcount, acount)
+
 
 class SearchBuilder(IDBuilder):
     def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
