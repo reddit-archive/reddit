@@ -134,7 +134,7 @@ endef
 $(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
 
 #### Stylesheets
-CSS_COMPRESS := $(SED) -e 's/ \+/ /' -e 's/\/\*.*\*\///g' -e 's/: /:/' | grep -v "^ *$$"
+CSS_COMPRESS := $(PYTHON) r2/lib/contrib/rcssmin.py
 CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
 
 PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(SPRITED_STYLESHEETS))
