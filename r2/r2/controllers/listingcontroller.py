@@ -628,8 +628,8 @@ class UserController(ListingController):
     @validate(vuser = VExistingUname('username'),
               sort = VMenu('sort', ProfileSortMenu, remember = False),
               time = VMenu('t', TimeMenu, remember = False))
-    @listing_api_doc(section=api_section.users, uri='/{username}/{where}',
-                     uri_variants=['/{username}/' + where for where in [
+    @listing_api_doc(section=api_section.users, uri='/user/{username}/{where}',
+                     uri_variants=['/user/{username}/' + where for where in [
                                        'overview', 'submitted', 'commented',
                                        'liked', 'disliked', 'hidden', 'saved']])
     def GET_listing(self, where, vuser, sort, time, **env):
@@ -671,7 +671,8 @@ class UserController(ListingController):
         return ListingController.GET_listing(self, **env)
 
     @validate(vuser = VExistingUname('username'))
-    @api_doc(section=api_section.users, uri='/{username}/about', extensions=['json'])
+    @api_doc(section=api_section.users, uri='/user/{username}/about',
+             extensions=['json'])
     def GET_about(self, vuser):
         """Return information about the user, including karma and gold status."""
         if not is_api() or not vuser:
