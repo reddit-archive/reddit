@@ -209,6 +209,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             queries.new_message(m, inbox_rel)
 
     @validatedForm(VUser(),
+                   VModhash(),
                    VCaptcha(),
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_submit_"),
