@@ -27,6 +27,7 @@ from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Template
 from mako.template import Template
 from r2.config.extensions import get_api_subtype
 from r2.lib.filters import spaceCompress, safemarkdown
+from r2.models.subreddit import SubSR
 import time, pytz
 from pylons import c, g
 from pylons.i18n import _
@@ -219,6 +220,9 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         if (attr == "_ups" and g.lounge_reddit
             and thing.name == g.lounge_reddit):
             return 0
+        # Don't return accounts_active counts in /reddits
+        elif (attr == "accounts_active" and isinstance(c.site, SubSR)):
+            return None
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
