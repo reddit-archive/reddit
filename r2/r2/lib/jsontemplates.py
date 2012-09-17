@@ -226,8 +226,16 @@ class IdentityJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
                                                 link_karma = "safe_karma",
                                                 comment_karma = "comment_karma",
-                                                is_gold = "gold"
+                                                is_gold = "gold",
+                                                is_mod = "is_mod",
                                                 )
+
+    def thing_attr(self, thing, attr):
+        from r2.models import Subreddit
+        if attr == "is_mod":
+            t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
+            return bool(Subreddit.reverse_moderator_ids(t))
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
 class AccountJsonTemplate(IdentityJsonTemplate):
     _data_attrs_ = IdentityJsonTemplate.data_attrs(has_mail = "has_mail",
@@ -236,7 +244,6 @@ class AccountJsonTemplate(IdentityJsonTemplate):
                                                   )
 
     def thing_attr(self, thing, attr):
-        from r2.models import Subreddit
         if attr == "has_mail":
             if c.user_is_loggedin and thing._id == c.user._id:
                 return bool(c.have_messages)
@@ -245,10 +252,7 @@ class AccountJsonTemplate(IdentityJsonTemplate):
             if c.user_is_loggedin and thing._id == c.user._id:
                 return bool(c.have_mod_messages)
             return None
-        if attr == "is_mod":
-            t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
-            return bool(Subreddit.reverse_moderator_ids(t))
-        return ThingJsonTemplate.thing_attr(self, thing, attr)
+        return IdentityJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
         data = ThingJsonTemplate.raw_data(self, thing)
