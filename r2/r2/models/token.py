@@ -107,6 +107,13 @@ class OAuth2Scope:
             "description": _(
                 "Manage and assign flair in subreddits I moderate."),
         },
+        "modposts": {
+            "id": "modposts",
+            "name": _("Moderate Posts"),
+            "description": _(
+                "Approve, remove, mark nsfw, and distinguish content"
+                " in subreddits I moderate."),
+        },
         "modtraffic": {
             "id": "modtraffic",
             "name": _("Subreddit Traffic"),
