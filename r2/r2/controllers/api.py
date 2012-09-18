@@ -116,6 +116,8 @@ class ApiController(RedditController, OAuth2ResourceController):
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))
 
+    
+    @require_oauth2_scope("read")
     @validate(link1 = VUrl(['url']),
               link2 = VByName('id'),
               count = VLimit('limit'))

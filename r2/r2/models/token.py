@@ -119,6 +119,11 @@ class OAuth2Scope:
                 "Access the list of subreddits I moderate, contribute to,"
                 " and subscribe to."),
         },
+        "read": {
+            "id": "read",
+            "name": _("Read Content"),
+            "description": _("Access posts and comments through my account."),
+        },
         "submit": {
             "id": "submit",
             "name": _("Submit Content"),

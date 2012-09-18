@@ -201,6 +201,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         # point. Now just redirect to GET mode.
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
+    @require_oauth2_scope("read")
     @validate(article      = VLink('article'),
               comment      = VCommentID('comment'),
               context      = VInt('context', min = 0, max = 8),
@@ -671,6 +672,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self._edit_normal_reddit(location, num, after, reverse,
                                             count, created, name, user)
 
+    @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uri='/r/{subreddit}/about', extensions=['json'])
     def GET_about(self):
         """Return information about the subreddit.
