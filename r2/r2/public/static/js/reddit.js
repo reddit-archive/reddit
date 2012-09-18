@@ -158,7 +158,7 @@ function deleteRow(elem) {
 /* general things */
 
 function change_state(elem, op, callback, keep, post_callback) {
-    var form = $(elem).parents("form");
+    var form = $(elem).parents("form").first();
     /* look to see if the form has an id specified */
     var id = form.find('input[name="id"]');
     if (id.length) 
