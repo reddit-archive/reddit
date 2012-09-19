@@ -122,7 +122,10 @@ class VoteDetailsByThing(tdb_cassandra.View):
         else:
             raise ValueError
 
-        raw_details = details_cls._byID(thing._id36)._values()
+        try:
+            raw_details = details_cls._byID(thing._id36)._values()
+        except tdb_cassandra.NotFound:
+            raw_details = {}
         details = []
         for key, value in raw_details.iteritems():
             data = Storage(json.loads(value))
