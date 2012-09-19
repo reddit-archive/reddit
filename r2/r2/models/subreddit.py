@@ -22,6 +22,9 @@
 
 from __future__ import with_statement
 
+import base64
+import hashlib
+
 from pylons import c, g
 from pylons.i18n import _
 
@@ -40,12 +43,13 @@ from r2.lib.db import tdb_cassandra
 from r2.models.wiki import WikiPage
 from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
+from r2.lib.contrib.rcssmin import cssmin
+from r2.lib import s3cp
 
 import math
 
 from r2.lib.utils import set_last_modified
 from r2.models.wiki import WikiPage
-from md5 import md5
 import os.path
 import random
 
@@ -59,7 +63,7 @@ class Subreddit(Thing, Printable):
                      stylesheet = None,
                      stylesheet_rtl = None,
                      stylesheet_contents = '',
-                     stylesheet_hash     = '0',
+                     stylesheet_hash     = '',
                      firsttext = strings.firsttext,
                      header = None,
                      header_size = None,
@@ -212,6 +216,30 @@ class Subreddit(Thing, Printable):
         return self.moderator_ids()
 
     @property
+    def stylesheet_is_static(self):
+        """Is the subreddit using the newer static file based stylesheets?"""
+        return g.static_stylesheet_bucket and len(self.stylesheet_hash) == 27
+
+    static_stylesheet_prefix = "subreddit-stylesheet/"
+
+    @property
+    def static_stylesheet_name(self):
+        return "".join((self.static_stylesheet_prefix,
+                        self.stylesheet_hash,
+                        ".css"))
+
+    @property
+    def stylesheet_url(self):
+        from r2.lib.template_helpers import static, get_domain
+
+        if self.stylesheet_is_static:
+            return static(self.static_stylesheet_name)
+        else:
+            return "http://%s/stylesheet.css?v=%s" % (get_domain(cname=False,
+                                                                 subreddit=True),
+                                                      self.stylesheet_hash)
+
+    @property
     def stylesheet_contents_user(self):
         try:
             return WikiPage.get(self, 'config/stylesheet')._get('content','')
@@ -340,10 +368,33 @@ class Subreddit(Thing, Printable):
         except tdb_cassandra.NotFound:
             wiki = WikiPage.create(self, 'config/stylesheet')
         wr = wiki.revise(content, previous=prev, author=author, reason=reason, force=force)
-        self.stylesheet_contents = parsed
-        self.stylesheet_hash = md5(parsed).hexdigest()
-        set_last_modified(self, 'stylesheet_contents')
-        c.site._commit()
+
+        minified = cssmin(parsed)
+        if minified:
+            if g.static_stylesheet_bucket:
+                digest = hashlib.sha1(minified).digest()
+                self.stylesheet_hash = (base64.urlsafe_b64encode(digest)
+                                              .rstrip("="))
+
+                s3cp.send_file(g.static_stylesheet_bucket,
+                               self.static_stylesheet_name,
+                               minified,
+                               content_type="text/css",
+                               never_expire=True,
+                               replace=False,
+                              )
+
+                self.stylesheet_contents = ""
+            else:
+                self.stylesheet_hash = hashlib.md5(minified).hexdigest()
+                self.stylesheet_contents = minified
+                set_last_modified(self, 'stylesheet_contents')
+        else:
+            self.stylesheet_contents = ""
+            self.stylesheet_hash = ""
+        self.stylesheet_contents_user = ""  # reads from wiki; ensure pg clean
+        self._commit()
+
         ModAction.create(self, c.user, action='wikirevise', details='Updated subreddit stylesheet')
         return wr
 

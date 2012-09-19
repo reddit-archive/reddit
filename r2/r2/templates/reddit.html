@@ -82,21 +82,11 @@
       %endif
   %endif
 
-  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_contents:
-     <% inline_stylesheet = (
-          len(c.site.stylesheet_contents) < 1024
-          and '<' not in c.site.stylesheet_contents) %>
-     %if inline_stylesheet:
-       ## for very simple stylesheets, we can just include them inline
-       <style type="text/css" title="applied_subreddit_stylesheet">
-           ${unsafe(c.site.stylesheet_contents)}
-       </style>
-     %else:
-       <link rel="stylesheet"
-             href="http://${get_domain(cname=False, subreddit=True)}/stylesheet.css?v=${c.site.stylesheet_hash}"
-             title="applied_subreddit_stylesheet"
-             type="text/css" />
-     %endif
+  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_hash:
+    <link rel="stylesheet"
+          href="${c.site.stylesheet_url}"
+          title="applied_subreddit_stylesheet"
+          type="text/css">
   %endif
   %if getattr(thing, "additional_css", None):
     <link rel="stylesheet" href="${static(thing.additional_css)}" 

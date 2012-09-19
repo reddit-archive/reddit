@@ -22,6 +22,7 @@
 
 from validator import *
 from pylons.i18n import _, ungettext
+from pylons.controllers.util import redirect_to
 from reddit_base import RedditController, base_listing, paginated_listing, prevent_framing_and_css
 from r2 import config
 from r2.models import *
@@ -379,17 +380,26 @@ class FrontController(RedditController):
         return res
 
     def GET_stylesheet(self):
+        if g.css_killswitch:
+            self.abort404()
+
         # de-stale the subreddit object so we don't poison nginx's cache
         if not isinstance(c.site, FakeSubreddit):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
 
-        if hasattr(c.site,'stylesheet_contents') and not g.css_killswitch:
+        if c.site.stylesheet_is_static:
+            # TODO: X-Private-Subreddit?
+            return redirect_to(c.site.stylesheet_url)
+        else:
+            stylesheet_contents = c.site.stylesheet_contents
+
+        if stylesheet_contents:
             c.allow_loggedin_cache = True
             self.check_modified(c.site,'stylesheet_contents',
                                 private=False, max_age=7*24*60*60,
                                 must_revalidate=False)
             c.response_content_type = 'text/css'
-            c.response.content =  c.site.stylesheet_contents
+            c.response.content =  stylesheet_contents
             if c.site.type == 'private':
                 c.response.headers['X-Private-Subreddit'] = 'private'
             return c.response
