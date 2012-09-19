@@ -304,7 +304,7 @@ def validate_css(string):
     if len(string) > max_size_kb * 1024:
         report.append(ValidationError((msgs['too_big']
                                        % dict (max_size = max_size_kb))))
-        return (string, report)
+        return ('', report)
 
     if '\\' in string:
         report.append(ValidationError(_("if you need backslashes, you're doing it wrong")))
