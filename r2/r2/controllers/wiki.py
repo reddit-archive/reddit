@@ -37,8 +37,9 @@ from r2.lib.template_helpers import join_urls
 from r2.controllers.validator import VMarkdown
 
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
-                                           VWikiPageRevise, VWikiPageCreate,
-                                           this_may_view, wiki_validate)
+                                           VWikiModerator, VWikiPageRevise
+                                           VWikiPageCreate, this_may_view
+                                           wiki_validate)
 
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
@@ -269,10 +270,10 @@ class WikiApiController(WikiController):
             self.handle_error(409, 'EDIT_CONFLICT', newcontent=e.new, newrevision=page.revision, diffcontent=e.htmldiff)
         return json.dumps({})
     
-    @wiki_validate(page=VWikiPage('page'), user=VExistingUname('username'))
+    @wiki_validate(VWikiModerator(),
+                   page=VWikiPage('page'),
+                   user=VExistingUname('username'))
     def POST_wiki_allow_editor(self, act, page, user):
-        if not c.is_wiki_mod:
-            self.handle_error(403, 'MOD_REQUIRED')
         if act == 'del':
             page.remove_editor(c.username)
         else:
@@ -281,17 +282,15 @@ class WikiApiController(WikiController):
             page.add_editor(user.name)
         return json.dumps({})
     
-    @wiki_validate(pv=VWikiPageAndVersion(('page', 'revision')))
+    @wiki_validate(VWikiModerator(),
+                   pv=VWikiPageAndVersion(('page', 'revision')))
     def POST_wiki_revision_hide(self, pv, page, revision):
-        if not c.is_wiki_mod:
-            self.handle_error(403, 'MOD_REQUIRED')
         page, revision = pv
         return json.dumps({'status': revision.toggle_hide()})
    
-    @wiki_validate(pv=VWikiPageAndVersion(('page', 'revision')))
+    @wiki_validate(VWikiModerator(),
+                   pv=VWikiPageAndVersion(('page', 'revision')))
     def POST_wiki_revision_revert(self, pv, page, revision):
-        if not c.is_wiki_mod:
-            self.handle_error(403, 'MOD_REQUIRED')
         page, revision = pv
         content = revision.content
         author = revision._get('author')

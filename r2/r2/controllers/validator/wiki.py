@@ -28,7 +28,8 @@ from pylons.controllers.util import redirect_to
 from pylons import c, g, request
 
 from r2.models.wiki import WikiPage, WikiRevision
-from r2.controllers.validator import Validator, validate, make_validated_kw
+from r2.controllers.validator import (Validator, validate, VSrModerator,
+                                      make_validated_kw)
 from r2.lib.db import tdb_cassandra
 
 
@@ -169,6 +170,10 @@ class AbortWikiError(Exception):
     pass
 
 page_match_regex = re.compile(r'^[\w_/]+\Z')
+
+class VWikiModerator(VSrModerator):
+    def __init__(self, *a, **kw):
+        VSrModerator.__init__(self, fatal=False, *a, **kw)
 
 class VWikiPage(Validator):
     def __init__(self, param, required=True, restricted=True, modonly=False, **kw):

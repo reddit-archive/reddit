@@ -824,10 +824,17 @@ class VTrafficViewer(VSponsor):
                 promote.is_traffic_viewer(thing, c.user))
 
 class VSrModerator(Validator):
+    def __init__(self, fatal=True, *a, **kw):
+        Validator.__init__(self, *a, **kw)
+        # If True, abort rather than setting an error
+        self.fatal = fatal
+
     def run(self):
         if not (c.user_is_loggedin and c.site.is_moderator(c.user) 
                 or c.user_is_admin):
-            abort(403, "forbidden")
+            if self.fatal:
+                abort(403, "forbidden")
+            return self.set_error('MODERATOR_REQUIRED', code=403)
 
 class VFlairManager(VSrModerator):
     """Validates that a user is permitted to manage flair for a subreddit.
