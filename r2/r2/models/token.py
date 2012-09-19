@@ -126,6 +126,12 @@ class OAuth2Scope:
                 "Access the list of subreddits I moderate, contribute to,"
                 " and subscribe to."),
         },
+        "privatemessages": {
+            "id": "privatemessages",
+            "name": _("Private Messages"),
+            "description": _(
+                "Access my inbox and send private messages to other users."),
+        },
         "read": {
             "id": "read",
             "name": _("Read Content"),

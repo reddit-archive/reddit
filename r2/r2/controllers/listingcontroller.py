@@ -692,13 +692,17 @@ class UserController(ListingController):
             dest += "?" + query_string
         return redirect_to(dest)
 
-class MessageController(ListingController):
+class MessageController(ListingController, OAuth2ResourceController):
     show_nums = False
     render_cls = MessagePage
     allow_stylesheets = False
     # note: this intentionally replaces the listing-page class which doesn't
     # conceptually fit for styling these pages.
     extra_page_classes = ['messages-page']
+
+    def pre(self):
+        self.check_for_bearer_token()
+        ListingController.pre(self)
 
     @property
     def show_sidebar(self):
@@ -848,6 +852,7 @@ class MessageController(ListingController):
 
         return q
 
+    @require_oauth2_scope("privatemessages")
     @validate(VUser(),
               message = VMessageID('mid'),
               mark = VOneOf('mark',('true','false')))
