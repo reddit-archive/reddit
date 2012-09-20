@@ -1223,12 +1223,14 @@ Subreddit._specials.update(dict(friends = Friends,
                                 all = All))
 
 class SRMember(Relation(Subreddit, Account)): pass
-Subreddit.__bases__ += (UserRel('moderator', SRMember),
-                        UserRel('contributor', SRMember),
-                        UserRel('subscriber', SRMember, disable_ids_fn = True),
-                        UserRel('banned', SRMember),
-                        UserRel('wikibanned', SRMember),
-                        UserRel('wikicontributor', SRMember))
+Subreddit.__bases__ += (
+    UserRel('moderator', SRMember),
+    UserRel('contributor', SRMember),
+    UserRel('subscriber', SRMember, disable_ids_fn=True),
+    UserRel('banned', SRMember),
+    UserRel('wikibanned', SRMember),
+    UserRel('wikicontributor', SRMember),
+)
 
 class SubredditPopularityByLanguage(tdb_cassandra.View):
     _use_db = True
