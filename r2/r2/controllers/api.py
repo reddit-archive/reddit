@@ -1466,7 +1466,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 if not wr:
                     return True
                 setattr(sr, "prev_" + field + "_id", str(wikipage.revision))
-                ModAction.create(c.site, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
+                ModAction.create(sr, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
                 return True
             except ConflictException as e:
                 c.errors.add(errors.CONFLICT, field = field)
