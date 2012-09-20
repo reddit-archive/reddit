@@ -5499,11 +5499,15 @@ tr.gold-accent + tr > td {
 .oauth2-authorize {
     position: relative;
     background: url(../snoo-tray.png) no-repeat;
-    width: 415px;
+    width: 442px;
     height: 235px;
     margin: 40px auto 0;
-    padding-left: 280px;
+    padding-left: 268px;
     padding-top: 18px;
+}
+
+.oauth2-authorize h1 {
+    margin-left: 10px;
 }
 
 .oauth2-authorize h1 a {
@@ -5536,7 +5540,8 @@ tr.gold-accent + tr > td {
 
 .oauth2-authorize .access {
     position: relative;
-    margin: 0 -12px;
+    float: right;
+    width: 410px;
     padding: 10px 15px;
     font-size: 1.5em;
     line-height: 1.5em;
