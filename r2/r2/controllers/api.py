@@ -1227,7 +1227,12 @@ class ApiController(RedditController, OAuth2ResourceController):
                                   stylesheet_contents = '', prevstyle='', op='save'):
         
         report, parsed = c.site.parse_css(stylesheet_contents)
-        
+
+        # Use the raw POST value as we need to tell the difference between
+        # None/Undefined and an empty string.  The validators use a default
+        # value with both of those cases and would need to be changed. 
+        # In order to avoid breaking functionality, this was done instead.
+        prevstyle = request.post.get('prevstyle')
         if not report:
             return self.abort(403,'forbidden')
         
@@ -1502,17 +1507,20 @@ class ApiController(RedditController, OAuth2ResourceController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description',
-                           'prev_description_id', 'prev_public_description_id',
                            'show_media', 'show_cname_sidebar', 'type', 'link_type', 'lang',
                            'css_on_cname', 'header_title', 'over_18',
                            'wikimode', 'wiki_edit_karma', 'wiki_edit_age',
                            'allow_top', 'public_description'))
-        
-        description = kw.pop('description')
-        prev_desc = kw.pop('prev_description_id')
-        
+
         public_description = kw.pop('public_description')
-        prev_pubdesc = kw.pop('prev_public_description_id')
+        description = kw.pop('description')
+
+        # Use the raw POST value as we need to tell the difference between
+        # None/Undefined and an empty string.  The validators use a default
+        # value with both of those cases and would need to be changed. 
+        # In order to avoid breaking functionality, this was done instead.
+        prev_desc = request.post.get('prev_description_id')
+        prev_pubdesc = request.post.get('prev_public_description_id')
 
         def update_wiki_text(sr):
             apply_wikid_field(sr,
