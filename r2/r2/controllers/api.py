@@ -1570,7 +1570,12 @@ class ApiController(RedditController, OAuth2ResourceController):
               form.has_errors('public_description', errors.TOO_LONG) or
               form.has_errors('description', errors.TOO_LONG)):
             pass
-
+        elif sr and (form.has_errors(('prev_public_description_id', 
+                                      'prev_description_id'), errors.TOO_LONG)):
+            pass
+        elif (form.has_errors(('wiki_edit_karma', 'wiki_edit_age'), 
+                              errors.BAD_NUMBER)):
+            pass
         #creating a new reddit
         elif not sr:
             #sending kw is ok because it was sanitized above

@@ -97,6 +97,8 @@
   %if thing.site:
         <input type="hidden" name="prev_public_description_id" value="${thing.site.prev_public_description_id}"/>
         <input type="hidden" name="prev_description_id" value="${thing.site.prev_description_id}"/>
+        ${error_field("TOO_LONG", "prev_public_description_id")}
+        ${error_field("TOO_LONG", "prev_description_id")}
   %endif
 
   <%utils:line_field title="${_('language')}">
@@ -174,6 +176,7 @@
         %else:
             <input id="wiki_edit_karma" type="text" name="wiki_edit_karma" value="100" />
         %endif
+        ${error_field("BAD_NUMBER", "wiki_edit_karma")}
     </div>
     <div class="delete-field">
     <label for="wiki_edit_age">${_('Account age (days) required to edit and create wiki pages:')}</label>
@@ -183,6 +186,7 @@
         %else:
             <input id="wiki_edit_age" type="text" name="wiki_edit_age" value="0" />
         %endif
+        ${error_field("BAD_NUMBER", "wiki_edit_age")}
     </div>
     </div>
   </%utils:line_field>
