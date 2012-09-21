@@ -1184,8 +1184,15 @@ class VNumber(Validator):
                     raise ValueError, ""
             return val
         except ValueError:
-            self.set_error(self.error, msg_params = dict(min=self.min,
-                                                         max=self.max))
+            if self.max is None and self.min is None:
+                range = ""
+            elif self.max is None:
+                range = _("%(min)d to any") % dict(min=self.min)
+            elif self.min is None:
+                range = _("any to %(max)d") % dict(max=self.max)
+            else:
+                range = _("%(min)d to %(max)d") % dict(min=self.min, max=self.max)
+            self.set_error(self.error, msg_params=dict(range=range))
 
 class VInt(VNumber):
     def cast(self, val):

@@ -55,7 +55,7 @@ error_list = dict((
         ('USER_DOESNT_EXIST', _("that user doesn't exist")),
         ('NO_USER', _('please enter a username')),
         ('INVALID_PREF', "that preference isn't valid"),
-        ('BAD_NUMBER', _("that number isn't in the right range (%(min)d to %(max)d)")),
+        ('BAD_NUMBER', _("that number isn't in the right range (%(range)s)")),
         ('BAD_STRING', _("you used a character here that we can't handle")),
         ('BAD_BID', _("your bid must be at least $%(min)d per day and no more than to $%(max)d in total.")),
         ('ALREADY_SUB', _("that link has already been submitted")),
