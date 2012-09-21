@@ -797,6 +797,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             c.user.delete(delete_message)
             form.redirect("/?deleted=true")
 
+    @require_oauth2_scope("edit")
     @noresponse(VUser(),
                 VModhash(),
                 thing = VByNameIfAuthor('id'))
@@ -946,6 +947,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         indict(thing)
 
+    @require_oauth2_scope("edit")
     @validatedForm(VUser(),
                    VModhash(),
                    item = VByNameIfAuthor('thing_id'),

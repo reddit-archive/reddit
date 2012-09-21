@@ -96,6 +96,11 @@ class ConsumableToken(Token):
 
 class OAuth2Scope:
     scope_info = {
+        "edit": {
+            "id": "edit",
+            "name": _("Edit Posts"),
+            "description": _("Edit and delete my comments and submissions."),
+        },
         "identity": {
             "id": "identity",
             "name": _("My Identity"),
