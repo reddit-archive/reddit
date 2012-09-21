@@ -1212,6 +1212,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         queries.queue_vote(user, thing, dir, ip, organic, store = store,
                            cheater = (errors.CHEATER, None) in c.errors)
 
+    @require_oauth2_scope("modconfig")
     @validatedForm(VUser(),
                    VModhash(),
                    # nop is safe: handled after auth checks below
@@ -1295,7 +1296,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 jquery('#preview_comment').html(
                     cssfilter.rendered_comment(comments))
 
-
+    @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(),
                    VModhash(),
                    name = VCssName('img_name'))
@@ -1314,6 +1315,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         ModAction.create(c.site, c.user, action='editsettings', 
                          details='del_image', description=name)
 
+    @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(),
                    VModhash(),
                    sponsor = VInt("sponsor", min = 0, max = 1))
@@ -1355,6 +1357,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         return "nothing to see here."
 
+    @require_oauth2_scope("modconfig")
     @validate(VSrModerator(),
               VModhash(),
               file = VLength('file', max_length=1024*500),
@@ -1427,6 +1430,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             return UploadedImage(_('saved'), new_url, name, 
                                  errors=errors, form_id=form_id).render()
 
+    @require_oauth2_scope("modconfig")
     @validatedForm(VUser(),
                    VModhash(),
                    VRatelimit(rate_user = True,

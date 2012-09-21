@@ -114,6 +114,13 @@ class OAuth2Scope:
                 "Approve, remove, mark nsfw, and distinguish content"
                 " in subreddits I moderate."),
         },
+        "modconfig": {
+            "id": "modconfig",
+            "name": _("Moderate Subreddit Configuration"),
+            "description": _(
+                "Manage the configuration, sidebar, and CSS"
+                " of subreddits I moderate."),
+        },
         "modtraffic": {
             "id": "modtraffic",
             "name": _("Subreddit Traffic"),
