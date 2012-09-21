@@ -159,6 +159,12 @@ class OAuth2Scope:
             "name": _("Edit My Subscriptions"),
             "description": _("Manage my subreddit subscriptions."),
         },
+        "vote": {
+            "id": "vote",
+            "name": _("Vote"),
+            "description":
+                _("Submit and change my votes on comments and submissions."),
+        },
     }
 
     def __init__(self, scope_str=None):
