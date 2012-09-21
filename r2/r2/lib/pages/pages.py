@@ -2533,60 +2533,6 @@ class UserTableItem(Templated):
     def __repr__(self):
         return '<UserTableItem "%s">' % self.user.name
 
-class UserList(Templated):
-    """base class for generating a list of users"""    
-    form_title     = ''
-    table_title    = ''
-    type           = ''
-    container_name = ''
-    cells          = ('user', 'sendmessage', 'remove')
-    _class         = ""
-    destination    = "friend"
-    remove_action  = "unfriend"
-    editable_fn    = None
-
-    def __init__(self, editable=True, addable=None):
-        self.editable = editable
-        if addable is None:
-            addable = editable
-        self.addable = addable
-        Templated.__init__(self)
-
-    def user_row(self, user):
-        """Convenience method for constructing a UserTableItem
-        instance of the user with type, container_name, etc. of this
-        UserList instance"""
-        editable = self.editable
-
-        if self.editable_fn and not self.editable_fn(user):
-            editable = False
-
-        return UserTableItem(user, self.type, self.cells, self.container_name,
-                             editable, self.remove_action)
-
-    @property
-    def users(self, site = None):
-        """Generates a UserTableItem wrapped list of the Account
-        objects which should be present in this UserList."""
-        uids = self.user_ids()
-        if uids:
-            users = Account._byID(uids, True, return_dict = False) 
-            return [self.user_row(u) for u in users]
-        else:
-            return []
-
-    def user_ids(self):
-        """virtual method for fetching the list of ids of the Accounts
-        to be listing in this UserList instance"""
-        raise NotImplementedError
-
-    def can_remove_self(self):
-        return False
-
-    @property
-    def container_name(self):
-        return c.site._fullname
-
 class FlairPane(Templated):
     def __init__(self, num, after, reverse, name, user):
         # Make sure c.site isn't stale before rendering.
@@ -2836,6 +2782,61 @@ class FlairSelector(CachedTemplate):
         else:
              matching_template = None
         return templates, matching_template
+
+
+class UserList(Templated):
+    """base class for generating a list of users"""
+    form_title     = ''
+    table_title    = ''
+    type           = ''
+    container_name = ''
+    cells          = ('user', 'sendmessage', 'remove')
+    _class         = ""
+    destination    = "friend"
+    remove_action  = "unfriend"
+    editable_fn    = None
+
+    def __init__(self, editable=True, addable=None):
+        self.editable = editable
+        if addable is None:
+            addable = editable
+        self.addable = addable
+        Templated.__init__(self)
+
+    def user_row(self, user):
+        """Convenience method for constructing a UserTableItem
+        instance of the user with type, container_name, etc. of this
+        UserList instance"""
+        editable = self.editable
+
+        if self.editable_fn and not self.editable_fn(user):
+            editable = False
+
+        return UserTableItem(user, self.type, self.cells, self.container_name,
+                             editable, self.remove_action)
+
+    @property
+    def users(self, site = None):
+        """Generates a UserTableItem wrapped list of the Account
+        objects which should be present in this UserList."""
+        uids = self.user_ids()
+        if uids:
+            users = Account._byID(uids, True, return_dict = False) 
+            return [self.user_row(u) for u in users]
+        else:
+            return []
+
+    def user_ids(self):
+        """virtual method for fetching the list of ids of the Accounts
+        to be listing in this UserList instance"""
+        raise NotImplementedError
+
+    def can_remove_self(self):
+        return False
+
+    @property
+    def container_name(self):
+        return c.site._fullname
 
 
 class FriendList(UserList):
