@@ -1220,12 +1220,14 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    # nop is safe: handled after auth checks below
                    stylesheet_contents = nop('stylesheet_contents'),
-                   prevstyle = VLength('prevstyle', max_length=256),
+                   prevstyle = VLength('prevstyle', max_length=36),
                    op = VOneOf('op',['save','preview']))
     @api_doc(api_section.subreddits)
     def POST_subreddit_stylesheet(self, form, jquery,
                                   stylesheet_contents = '', prevstyle='', op='save'):
         
+        if form.has_errors("prevstyle", errors.TOO_LONG):
+            return
         report, parsed = c.site.parse_css(stylesheet_contents)
 
         # Use the raw POST value as we need to tell the difference between

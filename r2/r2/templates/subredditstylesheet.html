@@ -42,6 +42,7 @@
 
   <h2>${_("stylesheet")}</h2>
   <input type="hidden" name="prevstyle" value="${thing.site.prev_stylesheet}"/>
+  ${error_field("TOO_LONG", "prevstyle")}
   <div class="sheets">
     <div style="width: 100%" class="col">
       <div>
