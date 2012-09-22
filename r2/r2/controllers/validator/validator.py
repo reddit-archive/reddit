@@ -347,6 +347,10 @@ class VLink(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Link, redirect=redirect, *a, **kw)
 
+class VPromoCampaign(VThing):
+    def __init__(self, param, redirect = True, *a, **kw):
+        VThing.__init__(self, param, PromoCampaign, *a, **kw)
+
 class VCommentByID(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Comment, redirect=redirect, *a, **kw)
@@ -734,18 +738,31 @@ class VSponsorAdmin(VVerifiedUser):
 class VSponsor(VVerifiedUser):
     """
     Not intended to be used as a check for c.user_is_sponsor, but
-    rather is the user allowed to use the sponsored link system and,
-    if there is a link passed in, is the user allowed to edit the link
-    in question.
+    rather is the user allowed to use the sponsored link system.
+    If a link or campaign is passed in, it also checks whether the user is
+    allowed to edit that particular sponsored link.
     """
     def user_test(self, thing):
         return (thing.author_id == c.user._id)
 
-    def run(self, link_id = None):
+    def run(self, link_id=None, campaign_id=None):
+        assert not (link_id and campaign_id), 'Pass link or campaign, not both'
+          
         VVerifiedUser.run(self)
         if c.user_is_sponsor:
             return
-        elif link_id:
+        elif campaign_id:
+            pc = None
+            try:
+                if '_' in campaign_id:
+                    pc = PromoCampaign._by_fullname(campaign_id, data=True)
+                else:
+                    pc = PromoCampaign._byID36(campaign_id, data=True)
+            except (NotFound, ValueError):
+                pass
+            if pc:
+                link_id = pc.link_id
+        if link_id:
             try:
                 if '_' in link_id:
                     t = Link._by_fullname(link_id, True)

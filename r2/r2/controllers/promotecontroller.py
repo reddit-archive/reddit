@@ -92,6 +92,15 @@ class PromoteController(ListingController):
 
         return page.render()
 
+    # admin only because the route might change
+    @validate(VSponsorAdmin('campaign'),
+              campaign=VPromoCampaign('campaign'))
+    def GET_edit_promo_campaign(self, campaign):
+        if not campaign:
+            return self.abort404()
+        link = Link._byID(campaign.link_id)
+        return self.redirect(promote.promo_edit_url(link))
+
     @validate(VSponsor())
     def GET_graph(self):
         content = Promote_Graph()
