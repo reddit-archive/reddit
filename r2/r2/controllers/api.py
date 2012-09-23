@@ -1264,6 +1264,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                     form.set_inputs(prevstyle=str(wr._id))
                     ModAction.create(c.site, c.user, 'wikirevise', description)
             except ConflictException as e:
+                c.errors.add(errors.CONFLICT, field="stylesheet_contents")
+                form.has_errors("stylesheet_contents", errors.CONFLICT)
                 form.set_html(".status", _('conflict error'))
                 form.set_html(".errors ul", _('There was a conflict while editing the stylesheet'))
                 form.find('#conflict_box').show()
