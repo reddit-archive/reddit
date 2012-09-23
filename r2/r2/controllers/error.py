@@ -165,6 +165,7 @@ class ErrorController(RedditController):
             if c.render_style not in self.allowed_render_styles:
                 if code not in (204, 304):
                      c.response.content = str(code)
+                c.response.status_code = code
                 return c.response
             elif c.render_style == "api":
                 data = request.environ.get('extra_error_data', {'error': code})
