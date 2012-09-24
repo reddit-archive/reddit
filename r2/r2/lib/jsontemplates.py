@@ -246,7 +246,8 @@ class AccountJsonTemplate(IdentityJsonTemplate):
                 return bool(c.have_mod_messages)
             return None
         if attr == "is_mod":
-            return bool(Subreddit.reverse_moderator_ids(thing))
+            t = thing.lookups[0] if isinstance(thing, Wrapped) else thing
+            return bool(Subreddit.reverse_moderator_ids(t))
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
