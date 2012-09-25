@@ -1490,7 +1490,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 ModAction.create(sr, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
                 return True
             except ConflictException as e:
-                c.errors.add(errors.CONFLICT, field = field)
+                c.errors.add(errors.CONFLICT, field=field)
                 form.has_errors(field, errors.CONFLICT)
                 form.parent().set_html('.status', error)
                 form.find('#%s_conflict_box' % field).show()
