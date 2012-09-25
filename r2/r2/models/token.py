@@ -353,7 +353,7 @@ class OAuth2ClientsByDeveloper(tdb_cassandra.View):
 class OAuth2AuthorizationCode(ConsumableToken):
     """An OAuth2 authorization code for completing authorization flow"""
     token_size = 20
-    _ttl = 10 * 60
+    _ttl = datetime.timedelta(minutes=10)
     _defaults = dict(ConsumableToken._defaults.items() + [
                          ("client_id", ""),
                          ("redirect_uri", ""),
@@ -387,7 +387,7 @@ class OAuth2AuthorizationCode(ConsumableToken):
 class OAuth2AccessToken(Token):
     """An OAuth2 access token for accessing protected resources"""
     token_size = 20
-    _ttl = 60 * 60
+    _ttl = datetime.timedelta(minutes=60)
     _defaults = dict(scope="",
                      token_type="bearer",
                      refresh_token=None,
@@ -505,7 +505,7 @@ class OAuth2RefreshTokensByUser(tdb_cassandra.View):
 class EmailVerificationToken(ConsumableToken):
     _use_db = True
     _connection_pool = "main"
-    _ttl = 60 * 60 * 12
+    _ttl = timedelta(hours=12)
     token_size = 20
 
     @classmethod
@@ -520,7 +520,7 @@ class EmailVerificationToken(ConsumableToken):
 class PasswordResetToken(ConsumableToken):
     _use_db = True
     _connection_pool = "main"
-    _ttl = 60 * 60 * 12
+    _ttl = timedelta(hours=12)
     token_size = 20
 
     @classmethod

@@ -637,9 +637,9 @@ class SponsorBoxWeightings(object):
     _cf_name = None
     _SCALE = 2**32
     
-    # TTL for the timestamped rows. Set to 1 day so that we can examine
+    # TTL is set to 1 day so that we can examine
     # the data if something goes wrong.
-    TTL = datetime.timedelta(days=1).total_seconds()
+    _ttl = datetime.timedelta(days=1)
     
     DEFAULT_SR_ID = 0
     
@@ -720,7 +720,7 @@ class SponsorBoxWeightings(object):
         rowkey = self.rowkey() if not self.empty else ''
         self._cf.insert(self.index_rowkey(self.subreddit),
                         {self._IDX_COLUMN_KEY: rowkey},
-                        ttl=self.TTL)
+                        ttl=self._ttl)
         
         self._get_latest_rowkey(self.index_rowkey(self.subreddit),
                                 _update=True)
@@ -729,7 +729,7 @@ class SponsorBoxWeightings(object):
     def set_timeslots(self):
         campaign_weights = self._calculate_weights()
         if campaign_weights:
-            self._cf.insert(self.rowkey(), campaign_weights, ttl=self.TTL)
+            self._cf.insert(self.rowkey(), campaign_weights, ttl=self._ttl)
     
     def _calculate_weights(self):
         # Distribute the ads as "slices" of the range 0 - 2^32

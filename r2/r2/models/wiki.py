@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import NotFound
 from r2.lib.merge import *
@@ -348,7 +348,7 @@ class WikiRevisionsRecentBySR(tdb_cassandra.DenormalizedView):
     _connection_pool = 'main'
     _view_of = WikiRevision
     _compare_with = TIME_UUID_TYPE
-    _ttl = 60*60*24*WIKI_RECENT_DAYS
+    _ttl = timedelta(days=WIKI_RECENT_DAYS)
     
     @classmethod
     def _rowkey(cls, wr):

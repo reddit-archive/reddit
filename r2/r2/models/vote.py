@@ -90,7 +90,7 @@ class CommentVotesByAccount(VotesByAccount):
 
 class VoteDetailsByThing(tdb_cassandra.View):
     _use_db = False
-    _ttl = timedelta(days=90).total_seconds()
+    _ttl = timedelta(days=90)
     _fetch_all_columns = True
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
                                        default_validation_class=UTF8_TYPE)

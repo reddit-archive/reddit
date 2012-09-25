@@ -40,7 +40,7 @@ from r2.models.subreddit import MultiReddit
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import md5
 
 import random, re
@@ -50,31 +50,31 @@ class LinkExists(Exception): pass
 # defining types
 class Link(Thing, Printable):
     _data_int_props = Thing._data_int_props + ('num_comments', 'reported')
-    _defaults = dict(is_self = False,
-                     over_18 = False,
-                     nsfw_str = False,
-                     reported = 0, num_comments = 0,
-                     moderator_banned = False,
-                     banned_before_moderator = False,
-                     media_object = None,
-                     promoted = None,
-                     pending = False,
-                     disable_comments = False,
-                     selftext = '',
-                     noselfreply = False,
-                     ip = '0.0.0.0',
-                     flair_text = None,
-                     flair_css_class = None)
+    _defaults = dict(is_self=False,
+                     over_18=False,
+                     nsfw_str=False,
+                     reported=0, num_comments=0,
+                     moderator_banned=False,
+                     banned_before_moderator=False,
+                     media_object=None,
+                     promoted=None,
+                     pending=False,
+                     disable_comments=False,
+                     selftext='',
+                     noselfreply=False,
+                     ip='0.0.0.0',
+                     flair_text=None,
+                     flair_css_class=None)
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
     def __init__(self, *a, **kw):
         Thing.__init__(self, *a, **kw)
-    
+
     @property
     def has_thumbnail(self):
         return self._t.get('has_thumbnail', hasattr(self, 'thumbnail_url'))
-    
+
     @classmethod
     def _by_url(cls, url, sr):
         from subreddit import FakeSubreddit
@@ -90,7 +90,7 @@ class Link(Thing, Printable):
 
         link_id36s = lbu._values()
 
-        links = Link._byID36(link_id36s, data = True, return_dict = False)
+        links = Link._byID36(link_id36s, data=True, return_dict=False)
         links = [l for l in links if not l._deleted]
 
         if links and sr:
@@ -112,8 +112,8 @@ class Link(Thing, Printable):
     def already_submitted_link(self):
         return self.make_permalink_slow() + '?already_submitted=true'
 
-    def resubmit_link(self, sr_url = False):
-        submit_url  = self.subreddit_slow.path if sr_url else '/'
+    def resubmit_link(self, sr_url=False):
+        submit_url = self.subreddit_slow.path if sr_url else '/'
         submit_url += 'submit?resubmit=true&url=' + url_escape(self.url)
         return submit_url
 
@@ -121,14 +121,14 @@ class Link(Thing, Printable):
     def _submit(cls, title, url, author, sr, ip, spam=False):
         from r2.models import admintools
 
-        l = cls(_ups = 1,
-                title = title,
-                url = url,
-                _spam = spam,
-                author_id = author._id,
-                sr_id = sr._id,
-                lang = sr.lang,
-                ip = ip)
+        l = cls(_ups=1,
+                title=title,
+                url=url,
+                _spam=spam,
+                author_id=author._id,
+                sr_id=sr._id,
+                lang=sr.lang,
+                ip=ip)
         l._commit()
         l.set_url_cache()
         if author._spam:
@@ -138,8 +138,8 @@ class Link(Thing, Printable):
 
     @classmethod
     def _somethinged(cls, rel, user, link, name):
-        return rel._fast_query(tup(user), tup(link), name = name,
-                               thing_data=True, timestamp_optimize = True)
+        return rel._fast_query(tup(user), tup(link), name=name,
+                               thing_data=True, timestamp_optimize=True)
 
     def _something(self, rel, user, somethinged, name):
         try:
@@ -236,7 +236,7 @@ class Link(Thing, Printable):
 
             if is_nsfw or is_from_nsfw_sr:
                 return False
-                
+
         return True
 
     # none of these things will change over a link's lifetime
@@ -270,26 +270,26 @@ class Link(Thing, Printable):
 
         return s
 
-    def make_permalink(self, sr, force_domain = False):
+    def make_permalink(self, sr, force_domain=False):
         from r2.lib.template_helpers import get_domain
         p = "comments/%s/%s/" % (self._id36, title_to_url(self.title))
         # promoted links belong to a separate subreddit and shouldn't
         # include that in the path
         if self.promoted is not None:
             if force_domain:
-                res = "http://%s/%s" % (get_domain(cname = False,
-                                                   subreddit = False), p)
+                res = "http://%s/%s" % (get_domain(cname=False,
+                                                   subreddit=False), p)
             else:
                 res = "/%s" % p
         elif not c.cname and not force_domain:
             res = "/r/%s/%s" % (sr.name, p)
         elif sr != c.site or force_domain:
             if(c.cname and sr == c.site):
-                res = "http://%s/%s" % (get_domain(cname = True,
-                                                    subreddit = False),p)
+                res = "http://%s/%s" % (get_domain(cname=True,
+                                                    subreddit=False), p)
             else:
-                res = "http://%s/r/%s/%s" % (get_domain(cname = False,
-                                                    subreddit = False),sr.name,p)
+                res = "http://%s/r/%s/%s" % (get_domain(cname=False,
+                                                    subreddit=False), sr.name, p)
         else:
             res = "/%s" % p
 
@@ -299,9 +299,9 @@ class Link(Thing, Printable):
 
         return res
 
-    def make_permalink_slow(self, force_domain = False):
+    def make_permalink_slow(self, force_domain=False):
         return self.make_permalink(self.subreddit_slow,
-                                   force_domain = force_domain)
+                                   force_domain=force_domain)
 
     @staticmethod
     def _should_expunge_selftext(link):
@@ -317,7 +317,7 @@ class Link(Thing, Printable):
         if link.can_ban:
             return False
         return True
-    
+
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.pages import make_link_child
@@ -376,7 +376,7 @@ class Link(Thing, Printable):
             item.over_18 = bool(item.over_18 or item.subreddit.over_18 or
                                 item.nsfw_str)
             item.nsfw = item.over_18 and user.pref_label_nsfw
-            
+
             item.is_author = (user == item.author)
 
             item.thumbnail_sprited = False
@@ -410,7 +410,7 @@ class Link(Thing, Printable):
             item.urlprefix = ''
 
             if user_is_loggedin:
-                item.saved =  (user, item) in saved
+                item.saved = (user, item) in saved
                 item.hidden = (user, item) in hidden
 
                 item.clicked = bool(clicked.get((user, item, 'click')))
@@ -421,7 +421,7 @@ class Link(Thing, Printable):
             item.permalink = item.make_permalink(item.subreddit)
             if item.is_self:
                 item.url = item.make_permalink(item.subreddit,
-                                               force_domain = True)
+                                               force_domain=True)
 
             if g.shortdomain:
                 item.shortlink = g.shortdomain + '/' + item._id36
@@ -457,9 +457,9 @@ class Link(Thing, Printable):
 
             item.subreddit_path = item.subreddit.path
             if cname:
-                item.subreddit_path = ("http://" + 
-                     get_domain(cname = (site == item.subreddit),
-                                subreddit = False))
+                item.subreddit_path = ("http://" +
+                     get_domain(cname=(site == item.subreddit),
+                                subreddit=False))
                 if site != item.subreddit:
                     item.subreddit_path += item.subreddit.path
             item.domain_path = "/domain/%s/" % item.domain
@@ -470,7 +470,7 @@ class Link(Thing, Printable):
             item.link_child, item.editable = make_link_child(item)
 
             item.tblink = "http://%s/tb/%s" % (
-                get_domain(cname = cname, subreddit=False),
+                get_domain(cname=cname, subreddit=False),
                 item._id36)
 
             if item.is_self:
@@ -537,7 +537,7 @@ class Link(Thing, Printable):
                 item.expunged = Link._should_expunge_selftext(item)
 
             item.editted = getattr(item, "editted", False)
-            
+
             taglinetext = ''
             if item.different_sr:
                 author_text = (" <span>" + _("by %(author)s to %(reddit)s") +
@@ -582,7 +582,7 @@ class Link(Thing, Printable):
         """return's a link's subreddit. in most case the subreddit is already
         on the wrapped link (as .subreddit), and that should be used
         when possible. """
-        return Subreddit._byID(self.sr_id, True, return_dict = False)
+        return Subreddit._byID(self.sr_id, True, return_dict=False)
 
 class LinksByUrl(tdb_cassandra.View):
     _use_db = True
@@ -644,12 +644,12 @@ class Comment(Thing, Printable):
     def _new(cls, author, link, parent, body, ip):
         from r2.lib.db.queries import changed
 
-        c = Comment(_ups = 1,
-                    body = body,
-                    link_id = link._id,
-                    sr_id = link.sr_id,
-                    author_id = author._id,
-                    ip = ip)
+        c = Comment(_ups=1,
+                    body=body,
+                    link_id=link._id,
+                    sr_id=link.sr_id,
+                    author_id=author._id,
+                    ip=ip)
 
         c._spam = author._spam
 
@@ -700,7 +700,7 @@ class Comment(Thing, Printable):
         else:
             l = Link._byID(self.link_id, True)
             sr_id = l.sr_id
-        return Subreddit._byID(sr_id, True, return_dict = False)
+        return Subreddit._byID(sr_id, True, return_dict=False)
 
     def keep_item(self, wrapped):
         return True
@@ -734,11 +734,11 @@ class Comment(Thing, Printable):
         from r2.lib.pages import WrappedUser
 
         #fetch parent links
-        links = Link._byID(set(l.link_id for l in wrapped), data = True,
-                           return_dict = True, stale=True)
+        links = Link._byID(set(l.link_id for l in wrapped), data=True,
+                           return_dict=True, stale=True)
 
         # fetch authors
-        authors = Account._byID(set(l.author_id for l in links.values()), data=True, 
+        authors = Account._byID(set(l.author_id for l in links.values()), data=True,
                                 return_dict=True, stale=True)
 
         #get srs for comments that don't have them (old comments)
@@ -784,7 +784,7 @@ class Comment(Thing, Printable):
                 item.subreddit = item.subreddit_slow
             if item.author_id == item.link.author_id and not item.link._deleted:
                 add_attr(item.attribs, 'S',
-                         link = item.link.make_permalink(item.subreddit))
+                         link=item.link.make_permalink(item.subreddit))
             if not hasattr(item, 'target'):
                 item.target = "_top" if cname else None
             if item.parent_id:
@@ -827,9 +827,9 @@ class Comment(Thing, Printable):
 
                 item.subreddit_path = item.subreddit.path
                 if cname:
-                    item.subreddit_path = ("http://" + 
-                         get_domain(cname = (site == item.subreddit),
-                                    subreddit = False))
+                    item.subreddit_path = ("http://" +
+                         get_domain(cname=(site == item.subreddit),
+                                    subreddit=False))
                     if site != item.subreddit:
                         item.subreddit_path += item.subreddit.path
 
@@ -857,7 +857,7 @@ class Comment(Thing, Printable):
             item.permalink = item.make_permalink(item.link, item.subreddit)
 
             item.is_author = (user == item.author)
-            item.is_focal  = (focal_comment == item._id36)
+            item.is_focal = (focal_comment == item._id36)
 
             item_age = c.start_time - item._date
             if item_age.days > g.VOTE_AGE_LIMIT:
@@ -868,11 +868,11 @@ class Comment(Thing, Printable):
             #will seem less horrible when add_props is in pages.py
             from r2.lib.pages import UserText
             item.usertext = UserText(item, item.body,
-                                     editable = item.is_author,
-                                     nofollow = item.nofollow,
-                                     target = item.target,
-                                     extra_css = extra_css)
-                                     
+                                     editable=item.is_author,
+                                     nofollow=item.nofollow,
+                                     target=item.target,
+                                     extra_css=extra_css)
+
             item.lastedited = CachedVariable("lastedited")
 
         # Run this last
@@ -953,7 +953,7 @@ class MoreComments(Printable):
     def wrapped_cache_key(item, style):
         return False
 
-    def __init__(self, link, depth, parent_id = None):
+    def __init__(self, link, depth, parent_id=None):
         from r2.lib.wrapped import CachedVariable
 
         if parent_id is not None:
@@ -994,7 +994,7 @@ class Message(Thing, Printable):
                      to_collapse=None,
                      author_collapse=None,
                      from_sr=False)
-    _data_int_props = Thing._data_int_props + ('reported', )
+    _data_int_props = Thing._data_int_props + ('reported',)
     _essentials = ('author_id',)
     cache_ignore = set(["to", "subreddit"]).union(Printable.cache_ignore)
 
@@ -1095,7 +1095,7 @@ class Message(Thing, Printable):
                 # moderators can view messages on subreddits they moderate
                 if is_moderator:
                     return True
-                elif self.first_message: 
+                elif self.first_message:
                     first = Message._byID(self.first_message, True)
                     return (first.author_id == c.user._id)
 
@@ -1118,19 +1118,19 @@ class Message(Thing, Printable):
 
         # load the subreddit field if one exists:
         sr_ids = set(w.sr_id for w in wrapped if w.sr_id is not None)
-        m_subreddits = Subreddit._byID(sr_ids, data = True, return_dict = True)
+        m_subreddits = Subreddit._byID(sr_ids, data=True, return_dict=True)
 
         # load the links and their subreddits (if comment-as-message)
         links = Link._byID(set(l.link_id for l in wrapped if l.was_comment),
-                           data = True,
-                           return_dict = True)
+                           data=True,
+                           return_dict=True)
         # subreddits of the links (for comment-as-message)
         l_subreddits = Subreddit._byID(set(l.sr_id for l in links.values()),
-                                       data = True, return_dict = True)
+                                       data=True, return_dict=True)
 
         parents = Comment._byID(set(l.parent_id for l in wrapped
                                   if l.parent_id and l.was_comment),
-                                data = True, return_dict = True)
+                                data=True, return_dict=True)
 
         # load the unread list to determine message newness
         unread = set(queries.get_unread_inbox(user))
@@ -1147,7 +1147,7 @@ class Message(Thing, Printable):
                 item.recipient = (item.author_id != c.user._id)
             else:
                 item.recipient = (item.to_id == c.user._id)
-            
+
             # new-ness is stored on the relation
             if item.author_id == c.user._id:
                 item.new = False
@@ -1185,14 +1185,14 @@ class Message(Thing, Printable):
                     item.message_style = "post-reply"
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
-            
+
             item.hide_author = False
             if getattr(item, "from_sr", False):
                 if not (item.subreddit.is_moderator(c.user) or
                         c.user_is_admin):
                     item.author = item.subreddit
                     item.hide_author = True
-            
+
             item.is_collapsed = None
             if not item.new:
                 if item.recipient:
@@ -1325,7 +1325,7 @@ class Inbox(MultiRelation('inbox',
                           Relation(Account, Comment),
                           Relation(Account, Message))):
 
-    _defaults = dict(new = False)
+    _defaults = dict(new=False)
 
     @classmethod
     def _add(cls, to, obj, *a, **kw):
@@ -1387,7 +1387,7 @@ class ModeratorInbox(Relation(Subreddit, Message)):
             sr._load()
 
         moderators = Account._byID(sr.moderator_ids(), data=True,
-                                   return_dict = False)
+                                   return_dict=False)
         for m in moderators:
             if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
                 m.modmsgtime = obj._date

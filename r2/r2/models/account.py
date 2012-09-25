@@ -794,7 +794,7 @@ class DeletedUser(FakeAccount):
 class AccountsActiveBySR(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'
-    _ttl = 15*60
+    _ttl = timedelta(minutes=15)
 
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE)
 

@@ -116,6 +116,9 @@ def get_manager(seeds):
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
+        
+        if hasattr(cls, '_ttl') and hasattr(cls._ttl, 'total_seconds'):
+            cls._ttl = cls._ttl.total_seconds()
 
         if cls._use_db:
             if cls._type_prefix is None:

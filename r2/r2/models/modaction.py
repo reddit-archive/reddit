@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from datetime import timedelta
+
 from r2.lib.db import tdb_cassandra
 from r2.lib.utils import tup
 from r2.models import Account, Subreddit, Link, Comment, Printable
@@ -343,7 +345,7 @@ class ModActionBySR(tdb_cassandra.View):
     _connection_pool = 'main'
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
-    _ttl = 60*60*24*30*3  # 3 month ttl
+    _ttl = timedelta(days=90)
     _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
@@ -355,7 +357,7 @@ class ModActionBySRMod(tdb_cassandra.View):
     _connection_pool = 'main'
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
-    _ttl = 60*60*24*30*3  # 3 month ttl
+    _ttl = timedelta(days=90)
     _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
@@ -367,7 +369,7 @@ class ModActionBySRAction(tdb_cassandra.View):
     _connection_pool = 'main'
     _compare_with = TIME_UUID_TYPE
     _view_of = ModAction
-    _ttl = 60*60*24*30*3  # 3 month ttl
+    _ttl = timedelta(days=90)
     _read_consistency_level = tdb_cassandra.CL.ONE
 
     @classmethod
