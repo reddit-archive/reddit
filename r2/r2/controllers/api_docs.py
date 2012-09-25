@@ -31,6 +31,7 @@ from pylons.i18n import _
 from reddit_base import RedditController
 from r2.lib.utils import Storage
 from r2.lib.pages import BoringPage, ApiHelp
+from r2.controllers.validator import validate, VOneOf
 
 # API sections displayed in the documentation page.
 # Each section can have a title and a markdown-formatted description.
@@ -96,7 +97,7 @@ def api_doc(section, **kwargs):
 
 class ApidocsController(RedditController):
     @staticmethod
-    def docs_from_controller(controller, url_prefix='/api'):
+    def docs_from_controller(controller, url_prefix='/api', oauth_only=False):
         """
         Examines a controller for documentation.  A dictionary index of
         sections containing dictionaries of URLs is returned.  For each URL, a
@@ -142,12 +143,22 @@ class ApidocsController(RedditController):
 
                 # add every variant to the index -- the templates will filter
                 # out variants in the long-form documentation
-                for variant in chain([uri], docs.get('uri_variants', [])):
-                    api_docs[docs['section']][variant][method] = docs
+                if oauth_only:
+                    if not docs['oauth_scopes']:
+                        continue
+                    for scope in docs['oauth_scopes']:
+                        for variant in chain([uri],
+                                             docs.get('uri_variants', [])):
+                            api_docs[scope][variant][method] = docs
+                else:
+                    for variant in chain([uri], docs.get('uri_variants', [])):
+                        api_docs[docs['section']][variant][method] = docs
 
         return api_docs
 
-    def GET_docs(self):
+    @validate(
+        mode=VOneOf('mode', options=('methods', 'oauth'), default='methods'))
+    def GET_docs(self, mode):
         # controllers to gather docs from.
         from r2.controllers.api import ApiController, ApiminimalController
         from r2.controllers.apiv1 import APIv1Controller
@@ -166,14 +177,23 @@ class ApidocsController(RedditController):
 
         # merge documentation info together.
         api_docs = defaultdict(dict)
+        oauth_index = defaultdict(set)
         for controller, url_prefix in api_controllers:
-            for section, contents in self.docs_from_controller(controller, url_prefix).iteritems():
+            controller_docs = self.docs_from_controller(controller, url_prefix,
+                                                        mode == 'oauth')
+            for section, contents in controller_docs.iteritems():
                 api_docs[section].update(contents)
+                for variant, method_dict in contents.iteritems():
+                    for method, docs in method_dict.iteritems():
+                        for scope in docs['oauth_scopes']:
+                            oauth_index[scope].add((section, variant, method))
 
         return BoringPage(
             _('api documentation'),
             content=ApiHelp(
-                api_docs=api_docs
+                api_docs=api_docs,
+                oauth_index=oauth_index,
+                mode=mode,
             ),
             css_class="api-help",
             show_sidebar=False,

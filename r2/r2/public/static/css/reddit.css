@@ -5828,6 +5828,41 @@ tr.gold-accent + tr > td {
     text-decoration: underline;
 }
 
+.api-help .toc .mode-selector {
+    display: inline-block;
+    font-size: x-small;
+    border-radius: 5px;
+    border: 1px solid #888;
+    margin-top: 6px;
+    vertical-align: middle;
+}
+
+.api-help .toc .mode-selector .mode {
+    display: inline-block;
+    margin: 2px;
+    padding-top: 2px;
+    padding-bottom: 3px;
+    border-radius: 3px;
+    text-align: center;
+    width: 107px;
+    color: #ddd;
+}
+
+.api-help .toc .mode-selector .mode:hover {
+    background-color: #ccc;
+    color: black;
+    text-decoration: none;
+}
+
+.api-help .toc .mode-selector .mode-current {
+    color: black;
+    background-color: #eee;
+}
+
+.api-help .toc .mode-selector .mode-current:hover {
+    background-color: #ddd;
+}
+
 .api-help em.placeholder {
     font-style: italic;
     font-weight: normal;
@@ -5880,6 +5915,13 @@ tr.gold-accent + tr > td {
     margin-top: 1.5em;
     margin-bottom: 1em;
     border-bottom: 1px solid #aaa;
+}
+
+.api-help .methods h2 .scope-id {
+    margin-left: 1em;
+    font-size: small;
+    font-weight: normal;
+    font-style: italic;
 }
 
 .api-help .endpoint .info {

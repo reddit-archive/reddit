@@ -260,6 +260,8 @@ def make_map():
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
     mc('/dev/api', controller='apidocs', action='docs')
+    mc('/dev/api/:mode', controller='apidocs', action='docs',
+       requirements=dict(mode="oauth"))
 
     mc("/button_info", controller="api", action="info", limit=1)
 
