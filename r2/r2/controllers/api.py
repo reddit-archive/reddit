@@ -1274,11 +1274,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_html('#conflict_diff', e.htmldiff)
                 form.find('.errors').show()
                 return
-            except ValueError:
-                # Revision does not belong to page
-                return
-            except tdb_cassandra.NotFound:
-                # Previous revision not found
+            except (tdb_cassandra.NotFound, ValueError):
+                c.errors.add(errors.BAD_REVISION, field="prevstyle")
+                form.has_errors("prevstyle", errors.BAD_REVISION)
                 return
         jquery.apply_stylesheet(stylesheet_contents_parsed)
         if op == 'preview':
@@ -1478,6 +1476,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                         sponsor_text, sponsor_url, sponsor_name, **kw):
         
         def apply_wikid_field(sr, form, pagename, value, prev, field, error):
+            id_field_name = 'prev_%s_id' % field
             try:
                 wikipage = wiki.WikiPage.get(sr, pagename)
             except tdb_cassandra.NotFound:
@@ -1487,7 +1486,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 setattr(sr, field, value)
                 if not wr:
                     return True
-                setattr(sr, "prev_" + field + "_id", str(wikipage.revision))
+                setattr(sr, id_field_name, str(wikipage.revision))
                 ModAction.create(sr, c.user, 'wikirevise', details=wiki.modactions.get(pagename))
                 return True
             except ConflictException as e:
@@ -1495,14 +1494,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.has_errors(field, errors.CONFLICT)
                 form.parent().set_html('.status', error)
                 form.find('#%s_conflict_box' % field).show()
-                form.set_inputs(**{'prev_%s_id' % field: e.new_id, '%s_conflict_old' % field: e.your, field: e.new})
+                form.set_inputs(**{id_field_name: e.new_id, '%s_conflict_old' % field: e.your, field: e.new})
                 form.set_html('#%s_conflict_diff' % field, e.htmldiff)
-            except ValueError:
-                # Revision does not belong to page
-                pass
-            except tdb_cassandra.NotFound:
-                # Previous revision not found
-                pass
+            except (tdb_cassandra.NotFound, ValueError):
+                c.errors.add(errors.BAD_REVISION, field=id_field_name)
+                form.has_errors(id_field_name, errors.BAD_REVISION)
             return False
         
         # the status button is outside the form -- have to reset by hand

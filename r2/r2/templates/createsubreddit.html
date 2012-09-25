@@ -99,6 +99,8 @@
         <input type="hidden" name="prev_description_id" value="${thing.site.prev_description_id}"/>
         ${error_field("TOO_LONG", "prev_public_description_id")}
         ${error_field("TOO_LONG", "prev_description_id")}
+        ${error_field("BAD_REVISION", "prev_public_description_id")}
+        ${error_field("BAD_REVISION", "prev_description_id")}
   %endif
 
   <%utils:line_field title="${_('language')}">
