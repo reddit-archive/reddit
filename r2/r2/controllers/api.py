@@ -64,6 +64,7 @@ from r2.lib.scraper import str_to_image
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
+from r2.lib.system_messages import notify_user_added
 
 from r2.models import wiki
 from r2.lib.merge import ConflictException
@@ -643,33 +644,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             jquery("#" + type + "-table").show(
                 ).find("table").insert_table_rows(user_row)
 
-            if type != 'friend' and (type != 'banned' or
-                                     friend.has_interacted_with(container)):
-                msg = strings.msg_add_friend.get(type)
-                subj = strings.subj_add_friend.get(type)
-                if msg and subj and friend.name != c.user.name:
-                    # fullpath with domain needed or the markdown link
-                    # will break
-                    if isinstance(container, Subreddit):
-                        title = "%s: %s" % (container.path.rstrip("/"),
-                                            container.title)
-                    else:
-                        title = container.title
-                    d = dict(url = container.path,
-                             title = title)
-                    msg = msg % d
-                    subj = subj % d
-                    if type == 'banned':
-                        from_sr = True
-                        sr = container
-                    else:
-                        from_sr = False
-                        sr = None
-                    item, inbox_rel = Message._new(c.user, friend, subj, msg,
-                                                   ip, from_sr=from_sr, sr=sr)
-
-                    queries.new_message(item, inbox_rel)
-
+        if new:
+            notify_user_added(type, c.user, friend, container)
 
     @validatedForm(VGold(),
                    friend = VExistingUname('name'),

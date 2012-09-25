@@ -91,22 +91,6 @@ string_dict = dict(
     finished_trials = _("it's too late to change your vote on these things (the verdict has been issued):"),
     more_info_link = _("visit [%(link)s](%(link)s) for more information"),
 
-    msg_add_friend = dict(
-        friend = None,
-        moderator = _("you have been added as a moderator to [%(title)s](%(url)s)."),
-        contributor = _("you have been added as an approved submitter to [%(title)s](%(url)s)."),
-        banned = _("you have been banned from posting to [%(title)s](%(url)s)."),
-        traffic = _('you have been added to the list of users able to see [traffic for the sponsored link "%(title)s"](%(traffic_url)s).')
-        ),
-
-    subj_add_friend = dict(
-        friend = None,
-        moderator = _("you are a moderator"),
-        contributor = _("you are an approved submitter"),
-        banned = _("you've been banned"),
-        traffic = _("you can view traffic on a promoted link")
-        ),
-
     sr_messages = dict(
         empty =  _('you have not subscribed to any reddits.'),
         subscriber =  _('below are the reddits you have subscribed to'),
