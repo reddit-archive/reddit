@@ -1405,7 +1405,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 errors['IMAGE_ERROR'] = _("too many images (you only get %d)") % g.max_sr_images
 
         if any(errors.values()):
-            return UploadedImage("", "", "", errors=errors).render()
+            return UploadedImage("", "", "", errors=errors, form_id=form_id).render()
         else:
             try:
                 new_url = cssfilter.save_sr_image(c.site, file, suffix ='.' + img_type)
