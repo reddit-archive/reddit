@@ -95,13 +95,18 @@ class ToolbarController(RedditController):
 
     @validate(link = VLink('id'))
     def GET_tb(self, link):
+        '''/tb/$id36, show a given link with the toolbar
+        If the user doesn't have the toolbar enabled, redirect to comments
+        page.
+        
+        '''
         from r2.lib.media import thumbnail_url
-
-        "/tb/$id36, show a given link with the toolbar"
         if not link:
             return self.abort404()
         elif link.is_self:
             return self.redirect(link.url)
+        elif not (c.user_is_loggedin and c.user.pref_frame):
+            return self.redirect(link.make_permalink_slow(force_domain=True))
         
         # if the domain is shame-banned, bail out.
         if is_shamed_domain(link.url, request.ip)[0]:
