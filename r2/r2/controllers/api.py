@@ -1523,21 +1523,25 @@ class ApiController(RedditController, OAuth2ResourceController):
         prev_pubdesc = request.post.get('prev_public_description_id')
 
         def update_wiki_text(sr):
-            apply_wikid_field(sr,
-                              form,
-                              'config/sidebar',
-                              description,
-                              prev_desc,
-                              'description',
-                              _("Sidebar was not saved"))
+            error = False
+            if not apply_wikid_field(sr,
+                                     form,
+                                     'config/sidebar',
+                                     description,
+                                     prev_desc,
+                                     'description',
+                                     _("Sidebar was not saved")):
+                error = True
 
-            apply_wikid_field(sr,
-                              form,
-                              'config/description',
-                              public_description,
-                              prev_pubdesc,
-                              'public_description',
-                              _("Description was not saved"))
+            if not apply_wikid_field(sr,
+                                     form,
+                                     'config/description',
+                                     public_description,
+                                     prev_pubdesc,
+                                     'public_description',
+                                     _("Description was not saved")):
+                error = True
+            return not error
 
         
         #if a user is banned, return rate-limit errors
@@ -1609,7 +1613,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             #assume sr existed, or was just built
             old_domain = sr.domain
 
-            update_wiki_text(sr)
+            success = update_wiki_text(sr)
 
             if not sr.domain:
                 del kw['css_on_cname']
@@ -1627,7 +1631,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             # flag search indexer that something has changed
             changed(sr)
-            form.parent().set_html('.status', _("saved"))
+            if success:
+                form.parent().set_html('.status', _("saved"))
 
         if form.has_error():
             return
