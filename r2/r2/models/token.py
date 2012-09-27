@@ -108,7 +108,7 @@ class OAuth2Scope:
         },
         "modflair": {
             "id": "modflair",
-            "name": _("Moderating Flair"),
+            "name": _("Moderate Flair"),
             "description": _(
                 "Manage and assign flair in subreddits I moderate."),
         },
