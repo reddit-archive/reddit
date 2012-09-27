@@ -95,7 +95,7 @@ clean_ini:
 
 #################### CSS file lists
 SPRITED_STYLESHEETS += reddit.css compact.css
-OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css
+OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css highlight.css
 
 #################### Static Files
 STATIC_ROOT := r2/public

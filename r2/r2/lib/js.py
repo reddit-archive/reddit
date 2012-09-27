@@ -325,6 +325,11 @@ module["qrcode"] = Module("qrcode.js",
     "qrcode.js",
 )
 
+module["highlight"] = Module("highlight.js",
+    "lib/highlight.pack.js",
+    "highlight.js",
+)
+
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 

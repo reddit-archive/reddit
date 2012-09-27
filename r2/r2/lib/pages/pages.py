@@ -1606,6 +1606,11 @@ class SubredditStylesheet(Templated):
         Templated.__init__(self, site = site,
                          stylesheet_contents = stylesheet_contents)
 
+class SubredditStylesheetSource(Templated):
+    """A view of the unminified source of a subreddit's stylesheet."""
+    def __init__(self, stylesheet_contents):
+        Templated.__init__(self, stylesheet_contents=stylesheet_contents)
+
 class CssError(Templated):
     """Rendered error returned to the stylesheet editing page via ajax"""
     def __init__(self, error):

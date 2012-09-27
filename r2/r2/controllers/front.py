@@ -617,6 +617,12 @@ class FrontController(RedditController, OAuth2ResourceController):
             c.allow_styles = True
             pane = SubredditStylesheet(site = c.site,
                                        stylesheet_contents = stylesheet_contents)
+        elif (location == 'stylesheet'
+              and c.site.can_view(c.user)
+              and not g.css_killswitch):
+            stylesheet = (c.site.stylesheet_contents_user or
+                          c.site.stylesheet_contents)
+            pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
         elif (location in ('reports', 'spam', 'trials', 'modqueue', 'unmoderated')
               and is_moderator):
             c.allow_styles = True

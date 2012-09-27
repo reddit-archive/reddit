@@ -123,6 +123,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      details      = _("details"),
                      duplicates   = _("other discussions (%(num)s)"),
                      traffic      = _("traffic stats"),
+                     stylesheet   = _("stylesheet"),
 
                      # reddits
                      home         = _("home"),
