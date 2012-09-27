@@ -3327,7 +3327,7 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 /* CSS customisation page */
 
 .stylesheet-customize-container { }
-.stylesheet-customize-container textarea { margin: 0; padding: 0px; }
+.stylesheet-customize-container textarea { font-family: "Bitstream Vera Sans Mono", Consolas, monospace; margin: 0; padding: 0px; }
 .stylesheet-customize-container h2 { margin-top: 15px; margin-bottom: 10px;  }
 
 .image-upload .new-image { margin-left: 20px }
