@@ -818,7 +818,11 @@ class LoginPage(BoringPage):
             if u.path == '/api/v1/authorize':
                 client_id = u.query_dict.get("client_id")
                 self.client = client_id and OAuth2Client.get_token(client_id)
-                self.infobar = self.client and ClientInfoBar(self.client, strings.oauth_login_msg)
+                if self.client:
+                    self.infobar = ClientInfoBar(self.client,
+                                                 strings.oauth_login_msg)
+                else:
+                    self.infobar = None
 
     def content(self):
         kw = {}

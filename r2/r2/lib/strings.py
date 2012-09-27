@@ -76,7 +76,8 @@ string_dict = dict(
     cover_msg      = _("you'll need to login or register to do that"),
     cover_disclaim = _("(don't worry, it only takes a few seconds)"),
 
-    oauth_login_msg = _("Log in or register to connect your reddit account with [%(app_name)s](%(app_about_url)s)."),
+    oauth_login_msg = _(
+        "Log in or register to connect your reddit account with %(app)s."),
 
     login_fallback_msg = _("try using our secure login form."),
 

@@ -5487,13 +5487,13 @@ tr.gold-accent + tr > td {
     height: 48px;
 }
 
-.infobar.client-info .md {
+.infobar.client-info div {
     line-height: 48px;
     margin-left: 56px;
 }
 
-.infobar.client-info .md p {
-    margin: 0;
+.infobar.client-info div p {
+    white-space: nowrap;
 }
 
 .oauth2-authorize {
