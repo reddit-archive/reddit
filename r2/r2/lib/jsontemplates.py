@@ -402,7 +402,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
 class MoreCommentJsonTemplate(CommentJsonTemplate):
     _data_attrs_ = dict(id           = "_id36",
                         name         = "_fullname",
-                        children     = "children")
+                        children     = "children",
+                        count        = "count")
 
     def kind(self, wrapped):
         return "more"
