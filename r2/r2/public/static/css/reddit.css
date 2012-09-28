@@ -166,7 +166,7 @@ ul.flat-vert {text-align: left;}
     margin-bottom: 5px;
  }
 
-.separator { color: gray; margin: 0px .7ex 0px .7ex}
+.separator { color: gray; margin: 0px .7ex 0px .7ex; cursor: default; }
 
 .pref-lang { font-weight: bold; }
 .pref { font-weight: bold; }
