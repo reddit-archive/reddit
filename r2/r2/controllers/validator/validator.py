@@ -1157,11 +1157,13 @@ class VBoolean(Validator):
 
 class VNumber(Validator):
     def __init__(self, param, min=None, max=None, coerce = True,
-                 error = errors.BAD_NUMBER, *a, **kw):
+                 error=errors.BAD_NUMBER, num_default=None,
+                 *a, **kw):
         self.min = self.cast(min) if min is not None else None
         self.max = self.cast(max) if max is not None else None
         self.coerce = coerce
         self.error = error
+        self.num_default = num_default
         Validator.__init__(self, param, *a, **kw)
 
     def cast(self, val):
@@ -1169,7 +1171,7 @@ class VNumber(Validator):
 
     def run(self, val):
         if not val:
-            return
+            return self.num_default
         try:
             val = self.cast(val)
             if self.min is not None and val < self.min:
