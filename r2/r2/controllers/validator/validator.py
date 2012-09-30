@@ -59,7 +59,9 @@ def visible_promo(article):
     # promos are visible only if comments are not disabled and the
     # user is either the author or the link is live/previously live.
     if is_promo:
-        return (is_author or (not article.disable_comments and
+        return (c.user_is_sponsor or
+                is_author or
+                (not article.disable_comments and
                  article.promote_status >= promote.STATUS.promoted))
     # not a promo, therefore it is visible
     return True
