@@ -37,7 +37,6 @@ from r2.lib.cache import CMemcache, StaleCacheChain
 from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
 from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
 from r2.lib.utils import thread_dump
-from r2.lib.db.stats import QueryStats
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
@@ -384,9 +383,6 @@ class Globals(object):
 
         self.reset_caches = reset_caches
         self.reset_caches()
-
-        #make a query cache
-        self.stats_collector = QueryStats()
 
         # set the modwindow
         self.MODWINDOW = timedelta(self.MODWINDOW)

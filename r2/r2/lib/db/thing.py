@@ -880,7 +880,6 @@ class Query(object):
         self._read_cache = kw.get('read_cache')
         self._write_cache = kw.get('write_cache')
         self._cache_time = kw.get('cache_time', 0)
-        self._stats_collector = kw.get('stats_collector')
         self._limit = kw.get('limit')
         self._data = kw.get('data')
         self._sort = kw.get('sort', ())
@@ -984,9 +983,6 @@ class Query(object):
 
     def __iter__(self):
         used_cache = False
-
-        if self._stats_collector:
-            self._stats_collector.add(self)
 
         def _retrieve():
             return self._cursor().fetchall()
