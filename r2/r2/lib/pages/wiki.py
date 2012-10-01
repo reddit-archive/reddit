@@ -10,6 +10,7 @@ class WikiView(Templated):
         self.page_content_md = content
         self.diff = diff
         self.edit_by = edit_by
+        self.may_revise = c.wiki_may_revise
         self.edit_date = edit_date
         self.base_url = c.wiki_base_url
         Templated.__init__(self)
