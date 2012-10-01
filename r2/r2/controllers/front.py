@@ -431,6 +431,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         pane = listing.listing()
         return pane
 
+    @require_oauth2_scope("modlog")
     @prevent_framing_and_css(allow_cname_frame=True)
     @paginated_listing(max_page_size=500, backend='cassandra')
     @validate(mod=nop('mod'),

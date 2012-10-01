@@ -126,6 +126,12 @@ class OAuth2Scope:
                 "Manage the configuration, sidebar, and CSS"
                 " of subreddits I moderate."),
         },
+        "modlog": {
+            "id": "modlog",
+            "name": _("Moderation Log"),
+            "description": _(
+                "Access the moderation log in subreddits I moderate."),
+        },
         "modtraffic": {
             "id": "modtraffic",
             "name": _("Subreddit Traffic"),
