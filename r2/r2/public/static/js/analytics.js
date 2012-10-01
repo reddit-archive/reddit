@@ -10,6 +10,8 @@ r.analytics = {
         )
 
         $('.promotedlink.promoted:visible, .sponsorshipbox:visible').trigger('onshow')
+        $('form.google-checkout').on('submit', this.fireGoogleCheckout)
+        $('form.gold-checkout').one('submit', this.fireGoldCheckout)
     },
 
     fetchTrackingHashes: function(callback) {
@@ -121,6 +123,32 @@ r.analytics = {
                 r.analytics.breadcrumbs.toParams()
             )
         )
+    },
+
+    fireGoldCheckout: function(event) {
+        var form = $(this),
+            vendor = form.data('vendor')
+        form.parent().addClass('working')
+        
+        // Track a virtual pageview indicating user went off-site to "vendor."
+        // If GA is loaded, have GA process form submission after firing
+        // (and cancel the default).
+        _gaq.push(['_trackPageview', '/gold/external/' + vendor])
+        _gaq.push(function(){ form.submit() })
+        
+        if (_gat && _gat._getTracker){
+          // GA is loaded; form will submit via the _gaq.push'ed function
+          event.preventDefault()
+        }
+    },
+    
+    fireGoogleCheckout: function(event) {
+        var form = $(this)
+        form.parent().addClass('working')
+        _gaq.push(function(){
+          var pageTracker = _gaq._getAsyncTracker()
+          setUrchinInputCode(pageTracker)
+        })
     }
 }
 

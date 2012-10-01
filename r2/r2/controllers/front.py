@@ -1321,7 +1321,7 @@ class FormsController(RedditController):
             g.log.info("just set payment_blob-%s" % passthrough)
 
             return BoringPage(_("reddit gold"),
-                              show_sidebar = False,
+                              show_sidebar=False,
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,
                                                   giftmessage, passthrough)
