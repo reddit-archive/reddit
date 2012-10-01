@@ -107,6 +107,7 @@ class Validator(object):
         return param_info
 
     def __call__(self, url):
+        self.has_errors = False
         a = []
         if self.param:
             for p in utils.tup(self.param):
