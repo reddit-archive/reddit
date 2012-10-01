@@ -723,7 +723,10 @@ class VModhash(Validator):
         self.fatal = fatal
 
     def run(self, uh):
-        pass
+        if not c.user_is_loggedin or uh != c.user.name:
+            if self.fatal:
+                abort(403)
+            self.set_error('INVALID_MODHASH')
 
     def param_docs(self):
         return {
