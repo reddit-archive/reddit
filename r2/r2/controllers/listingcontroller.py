@@ -901,6 +901,12 @@ class RedditsController(ListingController):
     def title(self):
         return _('reddits')
 
+    def keep_fn(self):
+        base_keep_fn = ListingController.keep_fn(self)
+        def keep(item):
+            return base_keep_fn(item) and (c.over18 or not item.over_18)
+        return keep
+
     def query(self):
         if self.where == 'banned' and c.user_is_admin:
             reddits = Subreddit._query(Subreddit.c._spam == True,
@@ -927,9 +933,6 @@ class RedditsController(ListingController):
             if g.domain != 'reddit.com':
                 # don't try to render special subreddits (like promos)
                 reddits._filter(Subreddit.c.author_id != -1)
-
-            if not c.over18:
-                reddits._filter(Subreddit.c.over_18 == False)
 
         if self.where == 'popular':
             self.render_params = {"show_interestbar": True}
