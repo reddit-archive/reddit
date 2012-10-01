@@ -30,6 +30,7 @@
 <div class="fancy-settings">
     %if thing.show_settings:
         <form id="pagesettings" method="post">
+            <input type="hidden" name="uh" value="${c.modhash}" />
             <%utils:line_field title=" ${_('who can edit this page?')}">
                 <input type="radio" name="permlevel" id="permlevel0" value="0"
                     %if thing.permlevel == 0:

@@ -34,7 +34,7 @@ from r2.models.builder import WikiRevisionBuilder, WikiRecentRevisionBuilder
 from r2.lib.template_helpers import join_urls
 
 
-from r2.controllers.validator import VMarkdown, nop
+from r2.controllers.validator import VMarkdown, VModhash, nop
 
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
                                            VWikiModerator, VWikiPageRevise,
@@ -189,9 +189,10 @@ class WikiController(RedditController):
         settings = {'permlevel': page._get('permlevel', 0)}
         mayedit = page.get_editors()
         return WikiSettings(settings, mayedit, show_settings=not page.special).render()
-    
-    @wiki_validate(page=VWikiPage('page', restricted=True, modonly=True),\
-              permlevel=VInt('permlevel'))
+
+    @wiki_validate(VModhash(),
+                   page=VWikiPage('page', restricted=True, modonly=True),
+                   permlevel=VInt('permlevel'))
     def POST_wiki_settings(self, page, permlevel):
         oldpermlevel = page.permlevel
         try:
@@ -230,7 +231,8 @@ class WikiController(RedditController):
                 c.wikidisabled = True
 
 class WikiApiController(WikiController):
-    @wiki_validate(pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
+    @wiki_validate(VModhash(),
+                   pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
                    content=VMarkdown(('content')),   
                    page_name=nop('page'))
     def POST_wiki_edit(self, pageandprevious, content, page_name):
@@ -274,8 +276,9 @@ class WikiApiController(WikiController):
         except ConflictException as e:
             self.handle_error(409, 'EDIT_CONFLICT', newcontent=e.new, newrevision=page.revision, diffcontent=e.htmldiff)
         return json.dumps({})
-    
-    @wiki_validate(VWikiModerator(),
+
+    @wiki_validate(VModhash(),
+                   VWikiModerator(),
                    page=VWikiPage('page'),
                    act=VOneOf('act', ('del', 'add')),
                    user=VExistingUname('username'),
@@ -291,7 +294,8 @@ class WikiApiController(WikiController):
             self.handle_error(400, 'INVALID_ACTION')
         return json.dumps({})
     
-    @wiki_validate(VWikiModerator(),
+    @wiki_validate(VModhash(),
+                   VWikiModerator(),
                    pv=VWikiPageAndVersion(('page', 'revision')))
     def POST_wiki_revision_hide(self, pv):
         page, revision = pv
@@ -299,7 +303,8 @@ class WikiApiController(WikiController):
             self.handle_error(400, 'INVALID_REVISION')
         return json.dumps({'status': revision.toggle_hide()})
     
-    @wiki_validate(VWikiModerator(),
+    @wiki_validate(VModhash(),
+                   VWikiModerator(),
                    pv=VWikiPageAndVersion(('page', 'revision')))
     def POST_wiki_revision_revert(self, pv):
         page, revision = pv
