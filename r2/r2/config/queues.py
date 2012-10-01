@@ -83,6 +83,7 @@ def declare_queues():
         "log_q": MessageQueue(bind_to_self=True),
         "usage_q": MessageQueue(bind_to_self=True, durable=False),
         "cloudsearch_changes": MessageQueue(bind_to_self=True),
+        "update_promos_q": MessageQueue(bind_to_self=True),
     })
 
     queues.cloudsearch_changes << "search_changes"

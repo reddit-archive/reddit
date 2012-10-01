@@ -505,7 +505,7 @@ class OAuth2RefreshTokensByUser(tdb_cassandra.View):
 class EmailVerificationToken(ConsumableToken):
     _use_db = True
     _connection_pool = "main"
-    _ttl = timedelta(hours=12)
+    _ttl = datetime.timedelta(hours=12)
     token_size = 20
 
     @classmethod
@@ -520,7 +520,7 @@ class EmailVerificationToken(ConsumableToken):
 class PasswordResetToken(ConsumableToken):
     _use_db = True
     _connection_pool = "main"
-    _ttl = timedelta(hours=12)
+    _ttl = datetime.timedelta(hours=12)
     token_size = 20
 
     @classmethod

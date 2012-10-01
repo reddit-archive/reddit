@@ -22,6 +22,8 @@
 
 from __future__ import with_statement
 
+import json
+
 from r2.models import *
 from r2.models.bidding import SponsorBoxWeightings, WeightingRef
 from r2.lib.wrapped import Wrapped
@@ -30,9 +32,10 @@ from r2.lib import emailer, filters
 from r2.lib.memoize import memoize
 from r2.lib.template_helpers import get_domain
 from r2.lib.utils import Enum, UniqueIterator
-from organic import keep_fresh_links
+from r2.lib.organic import keep_fresh_links
 from pylons import g, c
 from datetime import datetime, timedelta
+from r2.lib import amqp
 from r2.lib.db.queries import make_results, db_sort, add_queries, merge_results
 import itertools
 
@@ -47,6 +50,10 @@ STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
               "pending", "promoted", "finished")
 
 CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
+
+UPDATE_QUEUE = 'update_promos_q'
+QUEUE_ALL = 'all'
+
 
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
@@ -548,9 +555,9 @@ def accept_promotion(link):
     now = promo_datetime_now(0)
     if link._fullname in set(l.thing_name for l in
                              PromotionWeights.get_campaigns(now)):
-        PromotionLog.add(link, 'requeued')
+        PromotionLog.add(link, 'Marked promotion for acceptance')
         charge_pending(0) # campaign must be charged before it will go live
-        make_daily_promotions()
+        queue_changed_promo(link, "accepted")
     if link._spam:
         link._spam = False
         link._commit()
@@ -564,24 +571,10 @@ def reject_promotion(link, reason = None):
     # while we're doing work here, it will correctly exclude it
     set_status(link, STATUS.rejected)
     
-    # Updates just the permacache list
-    # permacache doesn't check the srids list; send an empty list
-    links, weighted = get_live_promotions([], _use_cass=False)
+    links, = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
     if link._fullname in links:
-        links.remove(link._fullname)
-        for k in list(weighted.keys()):
-            weighted[k] = [(lid, w, cid) for lid, w, cid in weighted[k]
-                           if lid != link._fullname]
-            if not weighted[k]:
-                del weighted[k]
-        set_live_promotions(links, weighted, which=("permacache",))
-        PromotionLog.add(link, 'dequeued')
-    
-    # Updates just the Cassandra version
-    campaigns = PromoCampaign._by_link(link._id)
-    subreddits = Subreddit._by_name([c.sr_name for c in campaigns],
-                                    return_dict=False)
-    SponsorBoxWeightings.remove_link(link._fullname, subreddits)
+        PromotionLog.add(link, 'Marked promotion for rejection')
+        queue_changed_promo(link, "rejected")
     
     # Send a rejection email (unless the advertiser requested the reject)
     if not c.user or c.user._id != link.author_id:
@@ -735,8 +728,8 @@ def weight_schedule(by_sr):
 def promotion_key():
     return "current_promotions:1"
 
-def get_live_promotions(srids, _use_cass=False):
-    if _use_cass:
+def get_live_promotions(srids, from_permacache=True):
+    if not from_permacache:
         timer = g.stats.get_timer("promote.get_live.cass")
         timer.start()
         links = set()
@@ -744,17 +737,16 @@ def get_live_promotions(srids, _use_cass=False):
         find_srids = set(srids)
         if '' in find_srids:
             find_srids.remove('')
-            find_srids.add(SponsorBoxWeightings.DEFAULT_SR_ID)
+            find_srids.add(SponsorBoxWeightings.FRONT_PAGE)
         ads = SponsorBoxWeightings.load_multi(find_srids)
         for srid, refs in ads.iteritems():
-            links.update([ref.data['link'] for ref in refs])
+            links.update(ref.data['link'] for ref in refs)
             promos = [ref.to_promo() for ref in refs]
-            if srid == SponsorBoxWeightings.DEFAULT_SR_ID:
+            if srid == SponsorBoxWeightings.FRONT_PAGE:
                 srid = ''
             elif srid == SponsorBoxWeightings.ALL_ADS_ID:
                 srid = 'all'
             weights[srid] = promos
-            links.update([ad.data['link'] for ad in ads])
         timer.stop()
     else:
         timer = g.stats.get_timer("promote.get_live.permacache")
@@ -1038,8 +1030,42 @@ class PromotionLog(tdb_cassandra.View):
 
 
 def Run(offset = 0):
+    '''reddit-job-update_promos: Intended to be run hourly to pull in
+    scheduled changes to ads
+    
+    '''
     charge_pending(offset = offset + 1)
     charge_pending(offset = offset)
-    make_daily_promotions(offset = offset)
+    amqp.add_item(UPDATE_QUEUE, json.dumps(QUEUE_ALL),
+                  delivery_mode=amqp.DELIVERY_TRANSIENT)
 
 
+def run_changed(drain=False, limit=100, sleep_time=10, verbose=False):
+    '''reddit-consumer-update_promos: amqp consumer of update_promos_q
+    
+    Handles asynch accepting/rejecting of ads that are scheduled to be live
+    right now
+    
+    '''
+    @g.stats.amqp_processor(UPDATE_QUEUE)
+    def _run(msgs, chan):
+        items = [json.loads(msg.body) for msg in msgs]
+        if QUEUE_ALL in items:
+            # QUEUE_ALL is just an indicator to run make_daily_promotions.
+            # There's no promotion log to update in this case.
+            items.remove(QUEUE_ALL)
+        make_daily_promotions()
+        links = Link._by_fullname([i["link"] for i in items])
+        for item in items:
+            PromotionLog.add(links[c.link_id],
+                             "Finished remaking current promotions (this link "
+                             " was: %(message)s" % item,
+                             commit=True)
+    amqp.handle_items(UPDATE_QUEUE, _run, limit=limit, drain=drain,
+                      sleep_time=sleep_time, verbose=verbose)
+
+
+def queue_changed_promo(link, message):
+    msg = {"link": link._fullname, "message": message}
+    amqp.add_item(UPDATE_QUEUE, json.dumps(msg),
+                  delivery_mode=amqp.DELIVERY_TRANSIENT)

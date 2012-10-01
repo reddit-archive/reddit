@@ -641,13 +641,13 @@ class SponsorBoxWeightings(object):
     # the data if something goes wrong.
     _ttl = datetime.timedelta(days=1)
     
-    DEFAULT_SR_ID = 0
+    FRONT_PAGE = 0
     
     # TODO The concept of an "All ads row" should not be needed
     # after the permacache implementation is removed.
     ALL_ADS_ID = -1
     
-    _IDX_ROWKEY_FMT = '%s.latest'
+    _IDX_ROWKEY_FMT = '%s/index'
     _IDX_COLUMN_KEY = 0
     
     class ID(int):
@@ -661,35 +661,21 @@ class SponsorBoxWeightings(object):
         self.timeslot = tdb_cassandra.date_serializer.pack(timestamp)
     
     @classmethod
-    def index_column(cls, subreddit):
-        return subreddit._id
-    
-    @classmethod
     def index_rowkey(cls, subreddit):
         return cls._IDX_ROWKEY_FMT % subreddit._id
     
     def rowkey(self):
-        return '%s.%s' % (self.subreddit._id, self.timeslot)
+        return '%s/%s' % (self.subreddit._id, self.timeslot)
     
     @classmethod
     def get_latest_rowkey(cls, subreddit):
-        # This is a 2 layered function so the memoize key can be an ID instead
-        # of a Subreddit object
-        return cls._get_latest_rowkey(cls.index_rowkey(subreddit))
-    
-    @classmethod
-    @memoize('sponsor_box_weightings_rowkey', time=60 * 60, stale=False)
-    def _get_latest_rowkey(cls, idx_rowkey, _update=False):
-        if _update:
-            # Don't spoil the memoize cache with outdated data
-            rcl = tdb_cassandra.CL.QUORUM
-        else:
-            rcl = cls._read_consistency_level
+        idx_rowkey = cls.index_rowkey(subreddit)
         try:
-            return cls._cf.get(idx_rowkey, columns=[cls._IDX_COLUMN_KEY],
-                               read_consistency_level=rcl)[cls._IDX_COLUMN_KEY]
+            row = cls._cf.get(idx_rowkey, columns=[cls._IDX_COLUMN_KEY])
         except tdb_cassandra.NotFoundException:
             return None
+        else:
+            return row[cls._IDX_COLUMN_KEY]
     
     @classmethod
     def load_by_sr(cls, sr_id):
@@ -701,8 +687,7 @@ class SponsorBoxWeightings(object):
         return data
     
     @classmethod
-    @memoize('sponsor_box_weightings__load', time=60 * 60, stale=True)
-    def _load(cls, rowkey, _update=False):
+    def _load(cls, rowkey):
         return [WeightingRef.from_cass(val)
                 for dummy, val in cls._cf.xget(rowkey)]
     
@@ -721,9 +706,6 @@ class SponsorBoxWeightings(object):
         self._cf.insert(self.index_rowkey(self.subreddit),
                         {self._IDX_COLUMN_KEY: rowkey},
                         ttl=self._ttl)
-        
-        self._get_latest_rowkey(self.index_rowkey(self.subreddit),
-                                _update=True)
     
     @tdb_cassandra.will_write
     def set_timeslots(self):
@@ -756,7 +738,7 @@ class SponsorBoxWeightings(object):
         all_ads = itertools.chain.from_iterable(all_weights.itervalues())
         weights[cls.ALL_ADS_ID] = all_ads
         if '' in weights:
-            weights[cls.DEFAULT_SR_ID] = weights.pop('')
+            weights[cls.FRONT_PAGE] = weights.pop('')
         
         timeslot = datetime.datetime.now(g.tz)
         
@@ -783,7 +765,7 @@ class SponsorBoxWeightings(object):
         if include_all_sr:
             srs = itertools.chain(from_subreddits, [cls.ID(cls.ALL_ADS_ID)])
         else:
-            srs = iter(from_subreddits)
+            srs = from_subreddits
         for subreddit in srs:
             current = cls.load_by_sr(subreddit._id)
             updated = [r for r in current if r.data['link'] != link_fn]
