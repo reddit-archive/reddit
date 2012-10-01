@@ -997,6 +997,10 @@ a.author { margin-right: 0.5em; }
     padding-left: 10px;
 }
 
+#wiki_revision_reason {
+    width: 100%;
+}
+
 .wiki-page .revision {
     transition: opacity 500ms;
     -o-transition: opacity 500ms;

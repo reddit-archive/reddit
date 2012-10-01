@@ -43,7 +43,7 @@
     %if thing.show_reason_field:
         <br/><br/>
         <label for="reason">${_("reason for revision")}</label><br/>
-        <input type="text" name="reason" style="width: 100%" />
+        <input type="text" name="reason" id="wiki_revision_reason" />
     %endif
     <input type="hidden" id="previous" name="previous" value="${thing.previous}" /><br/><br/>
     <input type="submit" value="${_('save page')}" />
