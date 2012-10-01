@@ -213,9 +213,8 @@ class WikiController(RedditController):
         if not c.site._should_wiki:
             self.handle_error(404, 'NOT_WIKIABLE') # /r/mod for an example
         frontpage = isinstance(c.site, DefaultSR)
-        base = '' if frontpage else '/r/%s' % c.site.name
-        c.wiki_base_url = '%s/wiki' % base
-        c.wiki_api_url = '%s/api/wiki' % base
+        c.wiki_base_url = join_urls(c.site.path, 'wiki')
+        c.wiki_api_url = join_urls(c.site.path, '/api/wiki')
         c.wiki_id = g.default_sr if frontpage else c.site.name
         c.wiki_page = None
         c.show_wiki_actions = True
