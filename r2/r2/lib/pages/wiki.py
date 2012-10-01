@@ -14,7 +14,7 @@ class WikiView(Templated):
         self.edit_by = edit_by
         self.edit_date = edit_date
         self.base_url = c.wiki_base_url
-        self.may_revise = this_may_revise(c.page_obj)
+        self.may_revise = this_may_revise(c.wiki_page_obj)
         Templated.__init__(self)
 
 class WikiPageListing(Templated):
@@ -68,16 +68,16 @@ class WikiBase(Reddit):
     def __init__(self, content, actionless=False, alert=None, **context):
         pageactions = []
         
-        if not actionless and c.page:
-            pageactions += [(c.page, _("view"), False)]
-            if this_may_revise(c.page_obj):
+        if not actionless and c.wiki_page:
+            pageactions += [(c.wiki_page, _("view"), False)]
+            if this_may_revise(c.wiki_page_obj):
                 pageactions += [('edit', _("edit"), True)]
-            pageactions += [('revisions/%s' % c.page, _("history"), False)]
+            pageactions += [('revisions/%s' % c.wiki_page, _("history"), False)]
             pageactions += [('discussions', _("talk"), True)]
             if c.is_wiki_mod:
                 pageactions += [('settings', _("settings"), True)]
 
-        action = context.get('wikiaction', (c.page, 'wiki'))
+        action = context.get('wikiaction', (c.wiki_page, 'wiki'))
         
         context['title'] = c.site.name
         if alert:
@@ -90,7 +90,7 @@ class WikiBase(Reddit):
 class WikiPageView(WikiBase):
     def __init__(self, content, diff=None, **context):
         if not content and not context.get('alert'):
-            if this_may_revise(c.page_obj):
+            if this_may_revise(c.wiki_page_obj):
                 context['alert'] = _("this page is empty, edit it to add some content.")
         content = WikiView(content, context.get('edit_by'), context.get('edit_date'), diff=diff)
         WikiBase.__init__(self, content, **context)
@@ -117,7 +117,7 @@ class WikiSettings(WikiBase):
 class WikiRevisions(WikiBase):
     def __init__(self, revisions, **context):
         content = WikiPageRevisions(revisions)
-        context['wikiaction'] = ('revisions/%s' % c.page, _("revisions"))
+        context['wikiaction'] = ('revisions/%s' % c.wiki_page, _("revisions"))
         WikiBase.__init__(self, content, **context)
 
 class WikiRecent(WikiBase):

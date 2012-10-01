@@ -33,7 +33,7 @@
     %endif
     ">
     
-        %if c.page:
+        %if c.wiki_page:
             <td style="white-space: nowrap;">
                 <input type="radio" name="v1" value="${thing._id}" checked="yes">
                 <input type="radio" name="v2" value="${thing._id}" checked="yes">
@@ -44,7 +44,7 @@
         ${timestamp(thing.date)}&nbsp;ago
     </td>
     
-    %if not c.page:
+    %if not c.wiki_page:
         <td>
             <a href="${c.wiki_base_url}/${thing.page}">${thing.page}</a>
         </td>
@@ -62,7 +62,7 @@
         ${thing._get('reason')}
     </td>
    
-    %if c.page and c.is_wiki_mod:
+    %if c.wiki_page and c.is_wiki_mod:
         <td>
             <a href="#" class="revision_hide" data-revision="${thing._id}">hide</a>
         </td>

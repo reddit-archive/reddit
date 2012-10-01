@@ -63,7 +63,7 @@
             <li>
                 ${user}
                 &mdash;&nbsp;
-                ${ynbutton(_("delete"), _("done"), quote("..%s/alloweditor/del" % (c.wiki_api_url)), hidden_data=dict(username=user, page=c.page), post_callback="$.refresh")}
+                ${ynbutton(_("delete"), _("done"), quote("..%s/alloweditor/del" % (c.wiki_api_url)), hidden_data=dict(username=user, page=c.wiki_page), post_callback="$.refresh")}
             </li>
         %endfor
         </ul>

@@ -202,7 +202,7 @@ class VWikiPage(Validator):
         
         page = normalize_page(page)
         
-        c.page = page
+        c.wiki_page = page
         if (not c.is_wiki_mod) and self.modonly:
             return self.set_error('MOD_REQUIRED', code=403)
         
@@ -212,7 +212,7 @@ class VWikiPage(Validator):
             return
         
         # TODO: MAKE NOT REQUIRED
-        c.page_obj = wp
+        c.wiki_page_obj = wp
         
         return wp
     
