@@ -625,9 +625,7 @@ class MinimalController(BaseController):
             ratelimit_agents()
 
         c.allow_loggedin_cache = False
-        
-        c.show_wiki_actions = False
-        
+
         # the domain has to be set before Cookies get initialized
         set_subreddit()
         c.errors = ErrorSet()

@@ -596,10 +596,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
         elif is_moderator and location == 'wikibanned':
-            c.show_wiki_actions = True
             pane = WikiBannedList(editable = is_moderator)
         elif is_moderator and location == 'wikicontributors':
-            c.show_wiki_actions = True
             pane = WikiMayContributeList(editable = is_moderator)
         elif (location == 'contributors' and
               # On public reddits, only moderators can see the whitelist.
@@ -645,6 +643,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
 
         return EditReddit(content=pane,
+                          show_wiki_actions='wiki' in location,
                           location=location,
                           extension_handling=extension_handling).render()
 

@@ -93,7 +93,7 @@ class WikiBase(Reddit):
         elif c.wikidisabled:
             context['infotext'] = _("this wiki is currently disabled, only mods may interact with this wiki")
         context['content'] = WikiBasePage(content, action, pageactions, page=page, **context)
-        Reddit.__init__(self, **context)
+        Reddit.__init__(self, show_wiki_actions=True, **context)
 
 class WikiPageView(WikiBase):
     def __init__(self, content, page, diff=None, **context):
