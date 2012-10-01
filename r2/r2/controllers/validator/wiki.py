@@ -117,12 +117,12 @@ def may_revise(sr, user, page=None):
         return True
     
     karma = max(user.karma('link', sr), user.karma('comment', sr))
-    if karma < sr.wiki_edit_karma:
+    if karma < (sr.wiki_edit_karma or 0):
         # If the user has too few karma, they should not contribute
         return False
     
     age = (datetime.datetime.now(g.tz) - user._date).days
-    if age < sr.wiki_edit_age:
+    if age < (sr.wiki_edit_age or 0):
         # If they user's account is too young
         # They should not contribute
         return False

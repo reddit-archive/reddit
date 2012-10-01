@@ -102,7 +102,8 @@ class Subreddit(Thing, Printable):
                      allow_comment_gilding=True,
                      )
     _essentials = ('type', 'name', 'lang')
-    _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')
+    _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
+                      'wiki_edit_karma', 'wiki_edit_age')
 
     sr_limit = 50
     gold_limit = 100
