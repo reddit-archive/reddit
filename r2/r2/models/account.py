@@ -183,8 +183,7 @@ class Account(Thing):
 
     def can_wiki(self):
         if self.wiki_override is None:
-            # Legacy, None means user may wiki
-            return True
+            return self.link_karma() > 100 or self.comment_karma() > 100
         return self.wiki_override
 
     def all_karmas(self):
