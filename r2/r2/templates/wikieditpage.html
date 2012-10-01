@@ -45,7 +45,6 @@
         <label for="reason">${_("reason for revision")}</label><br/>
         <input type="text" name="reason" id="wiki_revision_reason" />
     %endif
-    <input type="hidden" id="page" name="page" value="${thing.page}" />
     <input type="hidden" id="previous" name="previous" value="${thing.previous}" />
     <br/><br/><input type="submit" value="${_('save page')}" />
     <input type="button" value="${_('cancel edit')}"  onclick="location.href='${thing.base_url}/${c.wiki_page}'" />

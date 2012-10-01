@@ -2,6 +2,7 @@ r.wiki = {
     request: function(req) {
         if (reddit.logged)
             req.data.uh = r.config.modhash
+        req.data.page = r.config.wiki_page
         $.ajax(req)
     },
 
@@ -36,8 +37,7 @@ r.wiki = {
             type: 'POST',
             dataType: 'json',
             data: {
-                revision: $this.data('revision'),
-                page: r.config.wiki_page
+                revision: $this.data('revision')
             },
             error: function() {
                 $this_parent.toggleClass('hidden')
@@ -61,8 +61,7 @@ r.wiki = {
             url: url,
             type: 'POST',
             data: {
-                username: $this.find('[name="username"]').val(),
-                page: r.config.wiki_page
+                username: $this.find('[name="username"]').val()
             },
             dataType: 'json',
             error: function() {
