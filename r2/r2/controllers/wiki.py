@@ -39,7 +39,7 @@ from r2.controllers.validator import VMarkdown, VModhash, nop
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
                                            VWikiModerator, VWikiPageRevise,
                                            this_may_view, wiki_validate)
-
+from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
                               WikiListing, WikiDiscussions)
@@ -234,8 +234,10 @@ class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
                    content=VMarkdown(('content')),   
-                   page_name=nop('page'))
-    def POST_wiki_edit(self, pageandprevious, content, page_name):
+                   page_name=nop('page'),
+                   reason=nop('reason'))
+    @api_doc(api_section.wiki, uri='/api/wiki/edit')
+    def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
         page, previous = pageandprevious
         
         if not page:
@@ -256,10 +258,10 @@ class WikiApiController(WikiController):
                 if report.errors:
                     error_items = [x.message for x in sorted(report.errors)]
                     self.handle_error(415, 'SPECIAL_ERRORS', special_errors=error_items)
-                c.site.change_css(content, parsed, previous, reason=request.POST.get('reason', ''))
+                c.site.change_css(content, parsed, previous, reason=reason)
             else:
                 try:
-                    page.revise(content, previous, c.user.name, reason=request.POST.get('reason', ''))
+                    page.revise(content, previous, c.user.name, reason=reason)
                 except ContentLengthError as e:
                     self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length = e.max_length)
 
@@ -283,6 +285,7 @@ class WikiApiController(WikiController):
                    act=VOneOf('act', ('del', 'add')),
                    user=VExistingUname('username'),
                    username=nop('username'))
+    @api_doc(api_section.wiki, uri='/api/wiki/alloweditor/:act')
     def POST_wiki_allow_editor(self, act, page, user, username):
         if act == 'del':
             page.remove_editor(username)
@@ -297,6 +300,7 @@ class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    VWikiModerator(),
                    pv=VWikiPageAndVersion(('page', 'revision')))
+    @api_doc(api_section.wiki, uri='/api/wiki/hide')
     def POST_wiki_revision_hide(self, pv):
         page, revision = pv
         if not revision:
@@ -306,6 +310,7 @@ class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    VWikiModerator(),
                    pv=VWikiPageAndVersion(('page', 'revision')))
+    @api_doc(api_section.wiki, uri='/api/wiki/revert')
     def POST_wiki_revision_revert(self, pv):
         page, revision = pv
         if not revision:

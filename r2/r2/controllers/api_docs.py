@@ -68,6 +68,9 @@ section_info = {
     },
     'users': {
         'title': _('users'),
+    },
+    'wiki': {
+        'title': _('wiki'),
     }
 }
 
@@ -163,12 +166,14 @@ class ApidocsController(RedditController):
         from r2.controllers.api import ApiController, ApiminimalController
         from r2.controllers.apiv1 import APIv1Controller
         from r2.controllers.front import FrontController
+        from r2.controllers.wiki import WikiApiController
         from r2.controllers import listingcontroller
 
         api_controllers = [
             (APIv1Controller, '/api/v1'),
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
+            (WikiApiController, '/api/wiki'),
             (FrontController, '')
         ]
         for name, value in vars(listingcontroller).iteritems():
