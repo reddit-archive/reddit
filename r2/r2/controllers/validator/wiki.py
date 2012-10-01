@@ -215,8 +215,6 @@ class VWikiPage(Validator):
         except AbortWikiError:
             return
 
-        c.wiki_may_revise = this_may_revise(wp)
-
         return wp
     
     def validpage(self, page):

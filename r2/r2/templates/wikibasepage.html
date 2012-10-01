@@ -28,7 +28,7 @@
         %endif
         "
         %if action[2]:
-            href="${thing.base_url}/${action[0]}/${c.wiki_page}"
+            href="${thing.base_url}/${action[0]}/${thing.page}"
         %else:
             href="${thing.base_url}/${action[0]}"
         %endif
@@ -41,8 +41,8 @@
         %if thing.title:
             ${thing.title}
         %endif
-        %if c.wiki_page:
-            <strong>${c.wiki_page}</strong>
+        %if thing.page:
+            <strong>${thing.page}</strong>
         %endif
     </h1>
     

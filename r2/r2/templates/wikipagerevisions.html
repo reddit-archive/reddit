@@ -21,7 +21,7 @@
 ###############################################################################
 
 ${thing.listing}
-%if c.wiki_page and thing.listing.things:
+%if thing.page and thing.listing.things:
     <button onclick="r.wiki.goCompare()">${_("compare selected")}</button>
 %endif
 <br/>

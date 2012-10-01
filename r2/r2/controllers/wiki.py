@@ -38,7 +38,8 @@ from r2.controllers.validator import VMarkdown, VModhash, nop
 
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
                                            VWikiModerator, VWikiPageRevise,
-                                           this_may_view, wiki_validate)
+                                           this_may_revise, this_may_view,
+                                           wiki_validate)
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
@@ -74,13 +75,14 @@ class WikiController(RedditController):
     allow_stylesheets = True
     
     @wiki_validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'), required=False, 
-                                                          restricted=False))
-    def GET_wiki_page(self, pv):
+                                          restricted=False),
+                   page_name=nop('page'))
+    def GET_wiki_page(self, pv, page_name):
         page, version, version2 = pv
         message = None
         
         if not page:
-            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', c.wiki_page))
+            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', page_name))
         
         if version:
             edit_by = version.author_name()
@@ -110,7 +112,8 @@ class WikiController(RedditController):
                 content = version.content
         
         return WikiPageView(content, alert=message, v=version, diff=diffcontent,
-                            edit_by=edit_by, edit_date=edit_date).render()
+                            may_revise=this_may_revise(page), edit_by=edit_by,
+                            edit_date=edit_date, page=page.name).render()
     
     @paginated_listing(max_page_size=100, backend='cassandra')
     @wiki_validate(page=VWikiPage(('page'), restricted=False))
@@ -118,7 +121,7 @@ class WikiController(RedditController):
         revisions = page.get_revisions()
         builder = WikiRevisionBuilder(revisions, num=num, reverse=reverse, count=count, after=after, skip=not c.is_wiki_mod, wrap=default_thing_wrapper())
         listing = WikiRevisionListing(builder).listing()
-        return WikiRevisions(listing).render()
+        return WikiRevisions(listing, page=page.name, may_revise=this_may_revise(page)).render()
     
     @wiki_validate(wp=VWikiPageRevise('page'),
                    page=nop('page'))
@@ -141,7 +144,7 @@ class WikiController(RedditController):
                 error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['MAX_SEPARATORS']
             return BoringPage(_("Wiki error"), infotext=error).render()
         else:
-            return WikiNotFound(page=page).render()
+            return WikiNotFound(page=page, may_revise=True).render()
     
     @wiki_validate(wp=VWikiPageRevise('page', restricted=True))
     def GET_wiki_revise(self, wp, page, message=None, **kw):
@@ -152,7 +155,8 @@ class WikiController(RedditController):
         content = kw.get('content', wp.content)
         if not message and wp.name in page_descriptions:
             message = page_descriptions[wp.name]
-        return WikiEdit(content, previous, alert=message).render()
+        return WikiEdit(content, previous, alert=message, page=wp.name,
+                        may_revise=True).render()
     
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
@@ -182,13 +186,15 @@ class WikiController(RedditController):
                             num = num, after = after, reverse = reverse,
                             count = count, skip = False)
         listing = LinkListing(builder).listing()
-        return WikiDiscussions(listing).render()
+        return WikiDiscussions(listing, page=page.name,
+                               may_revise=this_may_revise(page)).render()
     
     @wiki_validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
         settings = {'permlevel': page._get('permlevel', 0)}
         mayedit = page.get_editors()
-        return WikiSettings(settings, mayedit, show_settings=not page.special).render()
+        return WikiSettings(settings, mayedit, show_settings=not page.special,
+                            page=page.name, may_revise=True).render()
 
     @wiki_validate(VModhash(),
                    page=VWikiPage('page', restricted=True, modonly=True),
@@ -216,7 +222,6 @@ class WikiController(RedditController):
         c.wiki_base_url = join_urls(c.site.path, 'wiki')
         c.wiki_api_url = join_urls(c.site.path, '/api/wiki')
         c.wiki_id = g.default_sr if frontpage else c.site.name
-        c.wiki_page = None
         c.show_wiki_actions = True
         self.editconflict = False
         c.is_wiki_mod = (c.user_is_admin or c.site.is_moderator(c.user)) if c.user_is_loggedin else False
