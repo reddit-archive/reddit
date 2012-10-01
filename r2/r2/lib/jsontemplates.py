@@ -665,3 +665,14 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
         if attr.startswith('site.') and thing.site:
             return getattr(thing.site, attr[5:])
         return ThingJsonTemplate.thing_attr(self, thing, attr)
+
+class ModActionTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(sr_id36='sr_id36',
+                        mod_id36='mod_id36',
+                        action='action',
+                        details='details',
+                        description='description',
+                        target_fullname='target_fullname')
+
+    def kind(self, wrapped):
+        return 'modaction'

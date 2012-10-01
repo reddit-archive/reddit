@@ -67,4 +67,6 @@ api('flaircsv', FlairCsvJsonTemplate)
 api('subredditstylesheet', StylesheetTemplate)
 api('createsubreddit', SubredditSettingsTemplate)
 
+api('modaction', ModActionTemplate)
+
 tpm.add_handler('usertableitem', 'api-html', UserItemHTMLJsonTemplate())
