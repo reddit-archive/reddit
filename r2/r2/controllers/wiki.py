@@ -82,7 +82,8 @@ class WikiController(RedditController):
         message = None
         
         if not page:
-            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', page_name))
+            url = join_urls(c.wiki_base_url, '/notfound/', page_name or 'index')
+            return self.redirect(url)
         
         if version:
             edit_by = version.author_name()
