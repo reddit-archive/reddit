@@ -116,7 +116,7 @@ def s3_https_if_secure(url):
          replace = "https://%s/" % s3_direct_url
     return url.replace("http://", replace)
 
-def js_config():
+def js_config(extra_config={}):
     config = {
         # is the user logged in?
         "logged": c.user_is_loggedin and c.user.name,
@@ -151,8 +151,7 @@ def js_config():
         "static_root": static(''),
     }
 
-    if c.wiki_page:
-        config["wiki_page"] = c.wiki_page
+    config.update(extra_config)
 
     return config
 

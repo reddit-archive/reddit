@@ -45,7 +45,7 @@
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
     ${unsafe(js.use('jquery', 'mobile'))}
-    ${js_setup()}
+    ${js_setup(thing.extra_js_config)}
     ${googleanalytics('mobile')}
   </head>
   ${self.bodyHTML()}

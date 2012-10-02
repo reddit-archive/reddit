@@ -206,7 +206,6 @@ class VWikiPage(Validator):
         
         page = normalize_page(page)
         
-        c.wiki_page = page
         if (not c.is_wiki_mod) and self.modonly:
             return self.set_error('MOD_REQUIRED', code=403)
         

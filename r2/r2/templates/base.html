@@ -39,7 +39,7 @@
     ${self.pagemeta()}
     ${self.stylesheet()}
     ${self.javascript()}
-    ${js_setup()}
+    ${js_setup(getattr(thing, "extra_js_config", None))}
 
     ##things here may depend on globals, or included js, so we run them last
     <script type="text/javascript">
