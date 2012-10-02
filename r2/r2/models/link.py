@@ -26,7 +26,7 @@ from r2.lib.db.operators import desc
 from r2.lib.utils import base_url, tup, domain, title_to_url, UrlParser
 from r2.lib.utils.trial_utils import trial_info
 from account import Account, DeletedUser
-from subreddit import Subreddit
+from subreddit import Subreddit, DomainSR
 from printable import Printable
 from r2.config import cache, extensions
 from r2.lib.memoize import memoize
@@ -198,7 +198,8 @@ class Link(Thing, Printable):
     def keep_item(self, wrapped):
         user = c.user if c.user_is_loggedin else None
 
-        if not c.user_is_admin:
+        if not (c.user_is_admin or (isinstance(c.site, DomainSR) and
+                                    wrapped.subreddit.is_moderator(user))):
             if self._spam and (not user or
                                (user and self.author_id != user._id)):
                 return False
