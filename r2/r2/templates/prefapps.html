@@ -1,5 +1,6 @@
 <%!
   from r2.lib.template_helpers import static
+  from r2.lib.utils import timeuntil
 %>
 
 <%namespace name="utils" file="utils.html" />
@@ -165,9 +166,24 @@
   </li>
 </%def>
 
-<%def name="scope_details(scope, compact=False)">
+<%def name="sr_list(srs)">
+  %for i, name in enumerate(sorted(srs)):
+    %if i:
+      ,&#32;
+    %endif
+    <a href="/r/${name}">/r/${name}</a>
+  %endfor
+</%def>
+
+<%def name="scope_details(scope, compact=False, expiration=None)">
   <div class="app-permissions">
     <ul>
+      %if not compact and scope.subreddit_only:
+        <li>
+          ${_("Only in the subreddits:")}&#32;
+          ${sr_list(scope.subreddits)}.
+        </li>
+      %endif
       %for name, scope_info in scope.details():
         <li>
           %if compact:
@@ -178,22 +194,36 @@
           %endif
         </li>
       %endfor
-    </ul>
-    %if scope.subreddit_only:
-      <span class="app-permissions-subreddits">
-        ${_("Only on:")}&#32;
-        %for i, name in enumerate(sorted(scope.subreddits)):
-          %if i:
-            ,&#32;
+      %if not compact:
+        <li>
+          %if expiration:
+            ${_("Expires in:")}&#32;
+            ${timeuntil(expiration)}
+          %else:
+            ${_("Maintain this access indefinitely"
+                " (or until manually revoked).")}
           %endif
-          <a href="/r/${name}">/r/${name}</a>
-        %endfor
-      </span>
+        </li>
+      %endif
+    </ul>
+    %if compact and (scope.subreddit_only or expiration):
+      <div class="app-permissions-details">
+      %if scope.subreddit_only:
+        ${_("Only in:")}&#32;
+        ${sr_list(scope.subreddits)}
+        <br>
+      %endif
+      %if expiration:
+        ${_("Expires in:")}&#32;
+        ${timeuntil(expiration)}
+        <br>
+      %endif
+      </div>
     %endif
   </div>
 </%def>
 
-<%def name="authorized_app(app, scope)">
+<%def name="authorized_app(app, scope, expiration)">
   <div id="authorized-app-${app._id}" class="authorized-app rounded">
     ${icon(app)}
     <div class="app-details">
@@ -204,7 +234,7 @@
         ${app.name}
       %endif
       </h2>
-      ${scope_details(scope, compact=True)}
+      ${scope_details(scope, compact=True, expiration=expiration)}
     </div>
     <div class="app-description">${app.description}</div>
     ${developers(app)}
@@ -220,8 +250,8 @@
 %if thing.my_apps:
   <h1>${_("authorized applications")}</h1>
 
-  %for app, scope in thing.my_apps:
-    ${authorized_app(app, scope)}
+  %for app, scope, expiration in thing.my_apps:
+    ${authorized_app(app, scope, expiration)}
   %endfor
 %endif
 

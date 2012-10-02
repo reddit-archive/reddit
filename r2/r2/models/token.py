@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import datetime
 from os import urandom
 from base64 import urlsafe_b64encode
 
@@ -312,17 +313,30 @@ class OAuth2Client(Token):
 
     @classmethod
     def _by_user(cls, account):
-        """Returns a (possibly empty) list of client-scope pairs for which Account has outstanding access tokens."""
+        """Returns a (possibly empty) list of client-scope-expiration triples for which Account has outstanding access tokens."""
 
-        tokens = [token for token in OAuth2AccessToken._by_user(account)
-                  if token.check_valid()]
+        refresh_tokens = {
+            token._id: token for token in OAuth2RefreshToken._by_user(account)
+            if token.check_valid()}
+        access_tokens = [token for token in OAuth2AccessToken._by_user(account)
+                         if token.check_valid()]
+
+        tokens = refresh_tokens.values()
+        tokens.extend(token for token in access_tokens
+                      if token.refresh_token not in refresh_tokens)
+
         clients = cls._byID([token.client_id for token in tokens])
-        return [(clients[token.client_id], OAuth2Scope(token.scope))
+        return [(clients[token.client_id], OAuth2Scope(token.scope),
+                 token.date + datetime.timedelta(seconds=token._ttl)
+                     if token._ttl else None)
                 for token in tokens]
 
     def revoke(self, account):
         """Revoke all of the outstanding OAuth2AccessTokens associated with this client and user Account."""
 
+        for token in OAuth2RefreshToken._by_user(account):
+            if token.client_id == self._id:
+                token.revoke()
         for token in OAuth2AccessToken._by_user(account):
             if token.client_id == self._id:
                 token.revoke()
@@ -344,19 +358,20 @@ class OAuth2AuthorizationCode(ConsumableToken):
                          ("client_id", ""),
                          ("redirect_uri", ""),
                          ("scope", ""),
-                     ]
-                )
+                         ("refreshable", False)])
+    _bool_props = ConsumableToken._bool_props + ("refreshable",)
     _warn_on_partial_ttl = False
     _use_db = True
     _connection_pool = "main"
 
     @classmethod
-    def _new(cls, client_id, redirect_uri, user_id, scope):
+    def _new(cls, client_id, redirect_uri, user_id, scope, refreshable):
         return super(OAuth2AuthorizationCode, cls)._new(
                 client_id=client_id,
                 redirect_uri=redirect_uri,
                 user_id=user_id,
-                scope=str(scope))
+                scope=str(scope),
+                refreshable=refreshable)
 
     @classmethod
     def use_token(cls, _id, client_id, redirect_uri):
@@ -375,21 +390,27 @@ class OAuth2AccessToken(Token):
     _ttl = 10 * 60
     _defaults = dict(scope="",
                      token_type="bearer",
+                     refresh_token=None,
                     )
     _use_db = True
     _connection_pool = "main"
 
     @classmethod
-    def _new(cls, client_id, user_id, scope):
+    def _new(cls, client_id, user_id, scope, refresh_token=None):
         return super(OAuth2AccessToken, cls)._new(
                      client_id=client_id,
                      user_id=user_id,
-                     scope=str(scope))
+                     scope=str(scope),
+                     refresh_token=refresh_token)
+
+    @classmethod
+    def _by_user_view(cls):
+        return OAuth2AccessTokensByUser
 
     def _on_create(self):
-        """Updates the OAuth2AccessTokensByUser index upon creation."""
+        """Updates the by-user view upon creation."""
 
-        OAuth2AccessTokensByUser._set_values(str(self.user_id), {self._id: ''})
+        self._by_user_view()._set_values(str(self.user_id), {self._id: ''})
         return super(OAuth2AccessToken, self)._on_create()
 
     def check_valid(self):
@@ -424,7 +445,7 @@ class OAuth2AccessToken(Token):
         self._commit()
 
         try:
-            tba = OAuth2AccessTokensByUser._byID(self.user_id)
+            tba = self._by_user_view()._byID(self.user_id)
             del tba[self._id]
         except (tdb_cassandra.NotFound, KeyError):
             # Not fatal, since self.check_valid() will still be False.
@@ -444,7 +465,7 @@ class OAuth2AccessToken(Token):
         """Returns a (possibly empty) list of valid access tokens for a given user Account."""
 
         try:
-            tba = OAuth2AccessTokensByUser._byID(account._id36)
+            tba = cls._by_user_view()._byID(account._id36)
         except tdb_cassandra.NotFound:
             return []
 
@@ -459,6 +480,27 @@ class OAuth2AccessTokensByUser(tdb_cassandra.View):
     _type_prefix = 'OAuth2AccessTokensByUser'
     _view_of = OAuth2AccessToken
     _connection_pool = 'main'
+
+
+class OAuth2RefreshToken(OAuth2AccessToken):
+    """A refresh token for obtaining new access tokens for the same grant."""
+
+    _type_prefix = None
+    _ttl = None
+
+    @classmethod
+    def _by_user_view(cls):
+        return OAuth2RefreshTokensByUser
+
+class OAuth2RefreshTokensByUser(tdb_cassandra.View):
+    """Index listing the outstanding refresh tokens for an account."""
+
+    _use_db = True
+    _ttl = OAuth2RefreshToken._ttl
+    _type_prefix = 'OAuth2RefreshTokensByUser'
+    _view_of = OAuth2RefreshToken
+    _connection_pool = 'main'
+
 
 class EmailVerificationToken(ConsumableToken):
     _use_db = True

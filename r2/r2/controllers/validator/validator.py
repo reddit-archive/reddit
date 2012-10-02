@@ -1926,3 +1926,21 @@ class VOAuth2Scope(VRequired):
                 return parsed_scope
             else:
                 self.error()
+
+class VOAuth2RefreshToken(Validator):
+    def __init__(self, param, *a, **kw):
+        Validator.__init__(self, param, None, *a, **kw)
+
+    def run(self, refresh_token_id):
+        if refresh_token_id:
+            try:
+                token = OAuth2RefreshToken._byID(refresh_token_id)
+            except tdb_cassandra.NotFound:
+                self.set_error(errors.OAUTH2_INVALID_REFRESH_TOKEN)
+                return None
+            if not token.check_valid():
+                self.set_error(errors.OAUTH2_INVALID_REFRESH_TOKEN)
+                return None
+            return token
+        else:
+            return None

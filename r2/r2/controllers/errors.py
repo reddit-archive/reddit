@@ -98,6 +98,7 @@ error_list = dict((
         ('OAUTH2_INVALID_CLIENT', _('invalid client id')),
         ('OAUTH2_INVALID_REDIRECT_URI', _('invalid redirect_uri parameter')),
         ('OAUTH2_INVALID_SCOPE', _('invalid scope requested')),
+        ('OAUTH2_INVALID_REFRESH_TOKEN', _('invalid refresh token')),
         ('OAUTH2_ACCESS_DENIED', _('access denied by the user')),
         ('CONFIRM', _("please confirm the form")),
         ('CONFLICT', _("conflict error while saving")),

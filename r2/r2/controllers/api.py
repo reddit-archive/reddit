@@ -708,6 +708,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         # deauthorize all access tokens
         OAuth2AccessToken.revoke_all_by_user(c.user)
+        OAuth2RefreshToken.revoke_all_by_user(c.user)
 
         # run the change password command to get a new salt
         change_password(c.user, password)

@@ -27,7 +27,7 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
-from r2.models.token import OAuth2Client
+from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
@@ -866,11 +866,19 @@ class Register(Login):
     pass
 
 class OAuth2AuthorizationPage(BoringPage):
-    def __init__(self, client, redirect_uri, scope, state):
+    def __init__(self, client, redirect_uri, scope, state, duration):
+        if duration == "permanent":
+            expiration = None
+        else:
+            expiration = (
+                datetime.datetime.now(g.tz)
+                + datetime.timedelta(seconds=OAuth2AccessToken._ttl + 1))
         content = OAuth2Authorization(client=client,
                                       redirect_uri=redirect_uri,
                                       scope=scope,
-                                      state=state)
+                                      state=state,
+                                      duration=duration,
+                                      expiration=expiration)
         BoringPage.__init__(self, _("request for permission"),
                 show_sidebar=False, content=content)
 
