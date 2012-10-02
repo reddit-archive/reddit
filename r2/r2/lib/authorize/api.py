@@ -47,6 +47,8 @@ Errors = Storage(TESTMODE = "E00009",
                  TOO_MANY_PAY_PROFILES = "E00042",
                  TOO_MANY_SHIP_ADDRESSES = "E00043")
 
+PROFILE_LIMIT = 10 # max payment profiles per user allowed by authorize.net
+
 class AuthorizeNetException(Exception):
     def __init__(self, msg):
         # don't let CC info show up in logs

@@ -23,7 +23,7 @@
 from validator import *
 from pylons.i18n import _
 from r2.models import *
-from r2.lib.authorize import get_account_info, edit_profile
+from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.pages import *
 from r2.lib.pages.trafficpages import TrafficViewerList
 from r2.lib.pages.things import wrap_links
@@ -465,12 +465,12 @@ class PromoteController(ListingController):
 
         if not promote.is_valid_campaign(article, indx):
             return self.abort404()
-
         if g.authorizenetapi:
             data = get_account_info(c.user)
             content = PaymentForm(article, indx,
                                   customer_id = data.customerProfileId,
-                                  profiles = data.paymentProfiles)
+                                  profiles = data.paymentProfiles,
+                                  max_profiles = PROFILE_LIMIT)
         else:
             content = PaymentForm(article, 0, customer_id = 0,
                                   profiles = [])

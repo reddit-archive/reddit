@@ -59,7 +59,11 @@ ${unsafe(js.use('sponsored'))}
           Card: ${profile.payment.creditCard.cardNumber}
         </option>
       %endfor
-      <option value="">${_("create a new one...")}</option>
+      %if len(thing.profiles) >= thing.max_profiles:
+        <option disabled=true>${_("profile limit (%d) reached" % thing.max_profiles)}</option>
+      %else:
+        <option value="">${_("create a new one...")}</option>
+      %endif
     </select>
   </p>
   %else:
