@@ -501,14 +501,22 @@ class ApiController(RedditController, OAuth2ResourceController):
             container.remove_contributor(c.user)
             Subreddit.special_reddits(c.user, "contributor", _update=True)
 
+
+    _sr_friend_types = (
+        'moderator',
+        'contributor',
+        'banned',
+        'wikibanned',
+        'wikicontributor',
+    )
+
     @noresponse(VUser(),
                 VModhash(),
                 nuser = VExistingUname('name'),
                 iuser = VByName('id'),
                 container = nop('container'),
-                type = VOneOf('type', ('friend', 'enemy', 'moderator',
-                                       'wikicontributor', 'banned',
-                                       'wikibanned', 'contributor')))
+                type = VOneOf('type', ('friend', 'enemy') +
+                                      _sr_friend_types))
     @api_doc(api_section.users)
     def POST_unfriend(self, nuser, iuser, container, type):
         """
@@ -518,8 +526,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         or by fullname (iuser).  If type is friend or enemy, 'container'
         will be the current user, otherwise the subreddit must be set.
         """
-        sr_types = ('moderator', 'contributor', 'banned', 'wikibanned', 'wikicontributor')
-        if type in sr_types:
+        if type in self._sr_friend_types:
             container = c.site
         else:
             container = VByName('container').run(container)
@@ -530,7 +537,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # for the privilege change to succeed.
         victim = iuser or nuser
         if (not c.user_is_admin
-            and (type in sr_types and not container.is_moderator(c.user))):
+            and (type in self._sr_friend_types and not container.is_moderator(c.user))):
             abort(403, 'forbidden')
         if (type == 'moderator' and not
             (c.user_is_admin or container.can_demod(c.user, victim))):
@@ -543,7 +550,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         new = fn(victim)
 
         # Log this action
-        if new and type in sr_types:
+        if new and type in self._sr_friend_types:
             action = dict(banned='unbanuser', moderator='removemoderator',
                           wikicontributor='removewikicontributor',
                           wikibanned='wikiunbanned',
@@ -561,8 +568,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    ip = ValidIP(),
                    friend = VExistingUname('name'),
                    container = nop('container'),
-                   type = VOneOf('type', ('friend', 'moderator', 'wikicontributor',
-                                          'contributor', 'banned', 'wikibanned')),
+                   type = VOneOf('type', ('friend',) + _sr_friend_types),
                    note = VLength('note', 300))
     @api_doc(api_section.users)
     def POST_friend(self, form, jquery, ip, friend,
@@ -571,9 +577,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
         """
-        sr_types = ('moderator', 'contributor', 'banned',
-                    'wikicontributor', 'wikibanned')
-        if type in sr_types:
+        if type in self._sr_friend_types:
             container = c.site
         else:
             container = VByName('container').run(container)
@@ -584,10 +588,11 @@ class ApiController(RedditController, OAuth2ResourceController):
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
         if (not c.user_is_admin
-            and (type in sr_types and not container.is_moderator(c.user))):
+                and type in self._sr_friend_types
+                and not container.is_moderator(c.user)):
             abort(403,'forbidden')
-        
-        if type in sr_types and not c.user_is_admin:
+
+        if type in self._sr_friend_types and not c.user_is_admin:
             quota_key = "sr%squota-%s" % (str(type), container._id36)
             g.cache.add(quota_key, 0, time=g.sr_quota_time)
             subreddit_quota = g.cache.incr(quota_key)
@@ -609,7 +614,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         new = fn(friend)
 
         # Log this action
-        if new and type in sr_types:
+        if new and type in self._sr_friend_types:
             action = dict(banned='banuser', moderator='addmoderator',
                           wikicontributor='wikicontributor',
                           contributor='addcontributor',
