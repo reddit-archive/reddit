@@ -88,7 +88,7 @@ def may_revise(sr, user, page=None):
         # Users who are not allowed to view the page may not contribute to the page
         return False
     
-    if not user.can_wiki():
+    if not user.can_wiki(default=True):
         # Global wiki contributute ban
         return False
     
