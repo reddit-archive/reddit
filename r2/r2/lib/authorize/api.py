@@ -48,7 +48,16 @@ Errors = Storage(TESTMODE = "E00009",
                  TOO_MANY_SHIP_ADDRESSES = "E00043")
 
 class AuthorizeNetException(Exception):
-    pass
+    def __init__(self, msg):
+        # don't let CC info show up in logs
+        msg = re.sub("<cardNumber>\d+(\d{4})</cardNumber>", 
+                     "<cardNumber>...\g<1></cardNumber>",
+                     msg)
+        msg = re.sub("<cardCode>\d+</cardCode>",
+                     "<cardCode>omitted</cardCode>",
+                     msg)
+        super(AuthorizeNetException, self).__init__(msg)
+
 
 
 # xml tags whose content shouldn't be escaped 
