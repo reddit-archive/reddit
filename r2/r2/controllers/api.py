@@ -2034,6 +2034,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    code = VPrintable("code", 30))
     def POST_claimgold(self, form, jquery, code):
+        status = ''
         if not code:
             c.errors.add(errors.NO_TEXT, field = "code")
             form.has_errors("code", errors.NO_TEXT)
@@ -2066,17 +2067,18 @@ class ApiController(RedditController, OAuth2ResourceController):
             if code.startswith("cr_"):
                 c.user.gold_creddits += int(days / 31)
                 c.user._commit()
-                form.set_html(".status", _("claimed! now go to someone's userpage and give them a present!"))
+                status = 'claimed-creddits'
             else:
                 admintools.engolden(c.user, days)
 
                 g.cache.set("recent-gold-" + c.user.name, True, 600)
-                form.set_html(".status", _("claimed!"))
+                status = 'claimed-gold'
                 jquery(".lounge").show()
 
         # Activate any errors we just manually set
-        form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
-                        errors.NO_TEXT)
+        if not form.has_errors("code", errors.INVALID_CODE, errors.CLAIMED_CODE,
+                               errors.NO_TEXT):
+            form.redirect("/gold/thanks?v=%s" % status)
 
     @validatedForm(user = VUserWithEmail('name'))
     def POST_password(self, form, jquery, user):

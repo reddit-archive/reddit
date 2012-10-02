@@ -1640,13 +1640,11 @@ class Thanks(Templated):
         else:
             status = "mundane"
 
-        if g.lounge_reddit:
-            lounge_url = "/r/" + g.lounge_reddit
-            lounge_html = safemarkdown(strings.lounge_msg % dict(link=lounge_url))
-        else:
-            lounge_html = None
-        Templated.__init__(self, status=status, secret=secret,
-                           lounge_html=lounge_html)
+        Templated.__init__(self, status=status, secret=secret)
+
+class GoldThanks(Templated):
+    """An actual 'Thanks for buying gold!' landing page"""
+    pass
 
 class Gold(Templated):
     def __init__(self, goldtype, period, months, signed,

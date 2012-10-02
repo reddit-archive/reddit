@@ -1007,6 +1007,40 @@ class FrontController(RedditController, OAuth2ResourceController):
         return BoringPage(_("rules of reddit"), show_sidebar=False,
                           content=RulesPage(), page_classes=["rulespage-body"]
                           ).render()
+    
+    @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
+                                  "paypal", "google-checkout"),
+                            default="claimed-gold"))
+    def GET_goldthanks(self, vendor):
+        vendor_url = None
+        vendor_claim_msg = _("thanks for buying reddit gold! your transaction "
+                             "has been completed and emailed to you. you can "
+                             "check the details by logging into your account "
+                             "at:")
+        lounge_md = None
+        if vendor == "claimed-gold":
+            claim_msg = _("claimed! enjoy your reddit gold membership.")
+        elif vendor == "claimed-creddits":
+            claim_msg = _("your gold creddits have been claimed!")
+            lounge_md = _("now go to someone's userpage and give "
+                          "them a present!")
+        elif vendor == "paypal":
+            claim_msg = vendor_claim_msg
+            vendor_url = "https://www.paypal.com/us"
+        elif vendor == "google-checkout":
+            claim_msg = vendor_claim_msg
+            vendor_url = "https://wallet.google.com/manage"
+        else:
+            abort(404)
+        
+        if g.lounge_reddit and not lounge_md:
+            lounge_url = "/r/" + g.lounge_reddit
+            lounge_md = strings.lounge_msg % {'link': lounge_url}
+        
+        return BoringPage(_("thanks"), show_sidebar=False,
+                          content=GoldThanks(claim_msg=claim_msg,
+                                             vendor_url=vendor_url,
+                                             lounge_md=lounge_md)).render()
 
 
 class FormsController(RedditController):
@@ -1263,7 +1297,7 @@ class FormsController(RedditController):
 
     @validate(VUser(),
               secret=VPrintable("secret", 50))
-    def GET_thanks(self, secret):
+    def GET_claim(self, secret):
         """The page to claim reddit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
 
@@ -1326,4 +1360,3 @@ class FormsController(RedditController):
                                                   signed, recipient,
                                                   giftmessage, passthrough)
                               ).render()
-

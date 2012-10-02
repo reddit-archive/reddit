@@ -5236,8 +5236,25 @@ a.pretty-button.positive.pressed {
     margin: 5px auto; 
 }
 
-.lounge { display: none }
-.lounge p { margin-top: 5px; }
+.gold-thanks.gold-accent {
+    font-size: small;
+    margin: 35px auto 0;
+    padding: 20px;
+    width: 600px;
+    position: relative;
+    display: block;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.gold-thanks p { margin: 15px 0; text-align: center; }
+.gold-thanks .lounge-msg p { font-size: medium; }
+.gold-thanks .fancy-snoo img {
+    margin: 10px auto;
+    position: relative;
+    display: block;
+}
 
 .gold-accent {
     margin-top: 10px;

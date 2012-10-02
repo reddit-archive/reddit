@@ -176,10 +176,11 @@ def make_map():
     mc('/message/moderator/:subwhere', controller='message', action='listing',
        where='moderator')
 
-    mc('/thanks', controller='forms', action="thanks", secret='')
-    mc('/thanks/:secret', controller='forms', action="thanks")
+    mc('/thanks', controller='forms', action="claim", secret='')
+    mc('/thanks/:secret', controller='forms', action="claim")
 
     mc('/gold', controller='forms', action="gold")
+    mc('/gold/thanks', controller='front', action='goldthanks')
 
     mc('/password', controller='forms', action="password")
     mc('/:action', controller='front',
