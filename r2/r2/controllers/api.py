@@ -505,6 +505,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     _sr_friend_types = (
         'moderator',
+        'moderator_invite',
         'contributor',
         'banned',
         'wikibanned',
@@ -553,6 +554,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # Log this action
         if new and type in self._sr_friend_types:
             action = dict(banned='unbanuser', moderator='removemoderator',
+                          moderator_invite='uninvitemoderator',
                           wikicontributor='removewikicontributor',
                           wikibanned='wikiunbanned',
                           contributor='removecontributor').get(type, None)
@@ -584,6 +586,11 @@ class ApiController(RedditController, OAuth2ResourceController):
             container = VByName('container').run(container)
             if not container:
                 return
+
+        if type == "moderator" and not c.user_is_admin:
+            # attempts to add moderators now create moderator invites.
+            type = "moderator_invite"
+
         fn = getattr(container, 'add_' + type)
 
         # The user who made the request must be an admin or a moderator
@@ -612,11 +619,21 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
 
+        if type == "moderator_invite" and container.is_moderator(friend):
+            c.errors.add(errors.ALREADY_MODERATOR, field="name")
+            form.set_error(errors.ALREADY_MODERATOR, "name")
+            return
+
+        if type == "moderator":
+            container.remove_moderator_invite(friend)
+
         new = fn(friend)
 
         # Log this action
         if new and type in self._sr_friend_types:
-            action = dict(banned='banuser', moderator='addmoderator',
+            action = dict(banned='banuser',
+                          moderator='addmoderator',
+                          moderator_invite='invitemoderator',
                           wikicontributor='wikicontributor',
                           contributor='addcontributor',
                           wikibanned='wikibanned').get(type, None)
@@ -634,14 +651,16 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         cls = dict(friend=FriendList,
                    moderator=ModList,
+                   moderator_invite=ModList,
                    contributor=ContributorList,
                    wikicontributor=WikiMayContributeList,
                    banned=BannedList, wikibanned=WikiBannedList).get(type)
+        userlist = cls()
         form.set_inputs(name = "")
-        form.set_html(".status:first", _("added"))
+        form.set_html(".status:first", userlist.executed_message(type))
         if new and cls:
-            user_row = cls().user_row(friend)
-            jquery("#" + type + "-table").show(
+            user_row = userlist.user_row(type, friend)
+            jquery("." + type + "-table").show(
                 ).find("table").insert_table_rows(user_row)
 
         if new:
@@ -653,6 +672,20 @@ class ApiController(RedditController, OAuth2ResourceController):
     def POST_friendnote(self, form, jquery, friend, note):
         c.user.add_friend_note(friend, note)
         form.set_html('.status', _("saved"))
+
+    @validatedForm(VUser(),
+                   VModhash(),
+                   ip=ValidIP())
+    @api_doc(api_section.subreddits)
+    def POST_accept_moderator_invite(self, form, jquery, ip):
+        if not c.site.remove_moderator_invite(c.user):
+            return
+
+        ModAction.create(c.site, c.user, "acceptmoderatorinvite")
+        c.site.add_moderator(c.user)
+        Subreddit.special_reddits(c.user, "moderator", _update=True)
+        notify_user_added("accept_moderator_invite", c.user, c.user, c.site)
+        jquery.refresh()
 
     @validatedForm(VUser('curpass', default=''),
                    VModhash(),

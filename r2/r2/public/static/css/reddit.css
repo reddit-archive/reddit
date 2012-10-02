@@ -4879,6 +4879,10 @@ dd { margin-left: 20px;  }
     background-image: url(../shield.png); /* SPRITE */
 }
 
+.moderator.accept-invite .main:before {
+    background-image: url(../addmoderator.png); /* SPRITE */
+}
+
 .titlebox form.leavecontributor-button:before {
     background-image: url(../pencil.png); /* SPRITE */
 }
@@ -5670,6 +5674,9 @@ tr.gold-accent + tr > td {
 .modactions.approvecomment,
 .modactions.addmoderator,
 .modactions.removemoderator,
+.modactions.invitemoderator,
+.modactions.uninvitemoderator,
+.modactions.acceptmoderatorinvite,
 .modactions.addcontributor,
 .modactions.removecontributor,
 .modactions.editsettings,
@@ -5701,10 +5708,13 @@ tr.gold-accent + tr > td {
 .modactions.approvecomment {
     background-image: url(../modactions_approvecomment.png); /* SPRITE */
 }
-.modactions.addmoderator {
+.modactions.addmoderator,
+.modactions.invitemoderator,
+.modactions.acceptmoderatorinvite {
     background-image: url(../modactions_addmoderator.png); /* SPRITE */
 }
-.modactions.removemoderator {
+.modactions.removemoderator,
+.modactions.uninvitemoderator {
     background-image: url(../modactions_removemoderator.png); /* SPRITE */
 }
 .modactions.addcontributor {

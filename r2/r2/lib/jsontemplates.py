@@ -520,7 +520,7 @@ class UserListJsonTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         if attr == "users":
             res = []
-            for a in thing.users:
+            for a in thing.user_rows:
                 r = a.render()
                 res.append(r)
             return res

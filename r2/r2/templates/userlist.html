@@ -21,57 +21,44 @@
 ###############################################################################
 
 <%namespace file="utils.html" import="error_field"/>
-<%namespace file="printablebuttons.html" import="ynbutton" />
 <% from r2.lib.template_helpers import static %>
 
-<div class="${thing._class} usertable">
-  %if thing.can_remove_self():
-    ${ynbutton(op=thing.remove_action,
-               title=thing.remove_self_action,
-               executed=thing.remove_self_final,
-               question=thing.remove_self_confirm,
-               format=thing.remove_self_title,
-               format_arg='action',
-               _class=thing.type + ' remove-self',
-               hidden_data=dict(
-                 id=c.user._fullname,
-                 type=thing.type,
-                 container=thing.container_name))}
-  %endif
+<%def name="add_form(title, dest, add_type, container_name, verb=None)">
+  <form action="/post/${dest}"
+        method="post" class="pretty-form medium-text"
+        onsubmit="return post_form(this, '${dest}')"
+        id="${add_type}">
+    <h1>${title}</h1>
 
-  %if thing.addable:
-    <form action="/post/${thing.destination}"
-          method="post" class="pretty-form medium-text"
-          onsubmit="return post_form(this, '${thing.destination}');"
-          id="${thing.type}">
-      <h1>${thing.form_title}</h1>
+    <input type="hidden" name="action" value="add">
+    <input type="hidden" name="container" value="${container_name}">
+    <input type="hidden" name="type" value="${add_type}">
+    <input type="text" name="name" id="name">
+    <button class="btn" type="submit">${verb or _("add")}</button>
+    <span class="status"></span>
+    ${error_field("USER_DOESNT_EXIST", "name")}
+    %if caller:
+      ${caller.body()}
+    %endif
+  </form>
+</%def>
 
-      <input type="hidden" name="action" value="add"/>
-      <input type="hidden" name="container" value="${thing.container_name}"/>
-      <input type="hidden" name="type" value="${thing.type}"/>
-      <input type="text" name="name" id="name"/>
-      <button class="btn" type="submit">${_("add")}</button>
-      <span class="status"></span>
-      ${error_field("USER_DOESNT_EXIST", "name")}
-    </form>
-  %endif
-
-  <div id="${thing.type}-table" 
-       ${"style='display:none'" if not thing.users else ""}>
-    <h1> 
-      ${thing.table_title}
+<%def name="userlist(title, row_type, rows, headers=None)">
+  <div class="${row_type}-table">
+    <h1>
+      ${title}
     </h1>
 
     <table>
-      %if getattr(thing, "table_headers", None):
+      %if headers:
         <tr>
-        %for header in thing.table_headers:
+        %for header in headers:
            <th>${header}</th>
         %endfor
         </tr>
       %endif
-      %if thing.users:
-        %for item in thing.users:
+      %if rows:
+        %for item in rows:
           ${item}
         %endfor
       %else:
@@ -79,6 +66,12 @@
       %endif
     </table>
   </div>
+</%def>
 
+<div class="${thing._class} usertable">
+  %if thing.editable:
+    ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name)}
+  %endif
+
+  ${userlist(thing.table_title, thing.type, thing.user_rows, thing.table_headers)}
 </div>
-

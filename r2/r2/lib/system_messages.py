@@ -23,15 +23,27 @@
 from pylons import request
 from pylons.i18n import _
 
-from r2.models import Message
+from r2.models import Account, Message
 from r2.lib.db import queries
 
 
 user_added_messages = {
-    "moderator": {
+    "moderator_invite": {
         "pm": {
-            "subject": _("you are a moderator"),
-            "msg": _("you have been added as a moderator to [%(title)s](%(url)s)."),
+            "subject": _("invitation to moderate %(url)s"),
+            "msg": _("**gadzooks! you are invited to become a moderator of [%(title)s](%(url)s)!**\n\n"
+                     "*to accept*, visit the [moderators page for %(url)s](%(url)s/about/moderators) and click \"accept\".\n\n"
+                     "*otherwise,* if you did not expect to receive this, you can simply ignore this invitation or report it."),
+        },
+        "modmail": {
+            "subject": _("moderator invited"),
+            "msg": _("%(user)s has been invited by %(author)s to moderate %(url)s."),
+        },
+    },
+    "accept_moderator_invite": {
+        "modmail": {
+            "subject": _("moderator added"),
+            "msg": _("%(user)s has accepted an invitation to become moderator of %(url)s."),
         },
     },
     "contributor": {
@@ -71,10 +83,12 @@ def notify_user_added(rel_type, author, user, target):
     if "pm" in msgs and author != user:
         subject = msgs["pm"]["subject"] % d
         msg = msgs["pm"]["msg"] % d
-        if rel_type == "banned":
-            if not user.has_interacted_with(target):
-                return
 
+        if rel_type == "banned" and not user.has_interacted_with(target):
+            return
+
+        if rel_type in ("banned", "moderator_invite"):
+            # send the message from the subreddit
             item, inbox_rel = Message._new(author, user, subject, msg, request.ip,
                                            sr=target, from_sr=True)
         else:
@@ -85,6 +99,12 @@ def notify_user_added(rel_type, author, user, target):
     if "modmail" in msgs:
         subject = msgs["modmail"]["subject"] % d
         msg = msgs["modmail"]["msg"] % d
-        item, inbox_rel = Message._new(author, target, subject, msg, request.ip,
-                                       sr=target, from_sr=True)
+
+        if rel_type == "moderator_invite":
+            modmail_author = Account.system_user()
+        else:
+            modmail_author = author
+
+        item, inbox_rel = Message._new(modmail_author, target, subject, msg,
+                                       request.ip, sr=target)
         queries.new_message(item, inbox_rel)

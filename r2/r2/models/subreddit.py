@@ -427,8 +427,9 @@ class Subreddit(Thing, Printable):
         elif self.type in ('public', 'restricted', 'archived'):
             return True
         elif c.user_is_loggedin:
-            #private requires contributorship
-            return self.is_contributor(user) or self.is_moderator(user)
+            return (self.is_contributor(user) or
+                    self.is_moderator(user) or
+                    self.is_moderator_invite(user))
 
     def can_demod(self, bully, victim):
         # This works because the is_*() functions return the relation
@@ -1225,6 +1226,7 @@ Subreddit._specials.update(dict(friends = Friends,
 class SRMember(Relation(Subreddit, Account)): pass
 Subreddit.__bases__ += (
     UserRel('moderator', SRMember),
+    UserRel('moderator_invite', SRMember),
     UserRel('contributor', SRMember),
     UserRel('subscriber', SRMember, disable_ids_fn=True),
     UserRel('banned', SRMember),

@@ -2788,52 +2788,56 @@ class UserList(Templated):
     """base class for generating a list of users"""
     form_title     = ''
     table_title    = ''
+    table_headers  = None
     type           = ''
     container_name = ''
     cells          = ('user', 'sendmessage', 'remove')
     _class         = ""
     destination    = "friend"
     remove_action  = "unfriend"
-    editable_fn    = None
 
     def __init__(self, editable=True):
         self.editable = editable
         Templated.__init__(self)
 
-    def user_row(self, user):
+    def user_row(self, row_type, user, editable=True):
         """Convenience method for constructing a UserTableItem
         instance of the user with type, container_name, etc. of this
         UserList instance"""
         editable = self.editable
 
-        if self.editable_fn and not self.editable_fn(user):
-            editable = False
-
-        return UserTableItem(user, self.type, self.cells, self.container_name,
+        return UserTableItem(user, row_type, self.cells, self.container_name,
                              editable, self.remove_action)
 
-    @property
-    def users(self, site = None):
+    def _user_rows(self, row_type, uids, editable_fn=None):
         """Generates a UserTableItem wrapped list of the Account
         objects which should be present in this UserList."""
-        uids = self.user_ids()
+
         if uids:
-            users = Account._byID(uids, True, return_dict = False) 
-            return [self.user_row(u) for u in users]
+            users = Account._byID(uids, True, return_dict = False)
+            rows = []
+            for u in users:
+                editable = editable_fn(u) if editable_fn else self.editable
+                rows.append(self.user_row(row_type, u, editable))
+            return rows
         else:
             return []
+
+    @property
+    def user_rows(self):
+        return self._user_rows(self.type, self.user_ids())
 
     def user_ids(self):
         """virtual method for fetching the list of ids of the Accounts
         to be listing in this UserList instance"""
         raise NotImplementedError
 
-    def can_remove_self(self):
-        return False
-
     @property
     def container_name(self):
         return c.site._fullname
+
+    def executed_message(self, row_type):
+        return _("added")
 
 
 class FriendList(UserList):
@@ -2860,13 +2864,13 @@ class FriendList(UserList):
     def user_ids(self):
         return c.user.friends
 
-    def user_row(self, user):
+    def user_row(self, row_type, user, editable=True):
         if not getattr(self, "friend_rels", None):
-            return UserList.user_row(self, user)
+            return UserList.user_row(self, row_type, user, editable)
         else:
             rel = self.friend_rels[user._id]
-            return UserTableItem(user, self.type, self.cells, self.container_name,
-                                 True, self.remove_action, rel)
+            return UserTableItem(user, row_type, self.cells, self.container_name,
+                                 editable, self.remove_action, rel)
 
     @property
     def container_name(self):
@@ -2916,29 +2920,49 @@ class ContributorList(UserList):
 class ModList(UserList):
     """Moderator list for a reddit."""
     type = 'moderator'
-    remove_self_action = _('leave')
+    invite_type = 'moderator_invite'
+    invite_action = 'accept_moderator_invite'
+    form_title = _('add moderator')
+    invite_form_title = _('invite moderator')
     remove_self_title = _('you are a moderator of this subreddit. %(action)s')
-    remove_self_confirm = _('stop being a moderator?')
-    remove_self_final = _('you are no longer a moderator')
-
-    @property
-    def form_title(self):
-        return _('add moderator')
 
     @property
     def table_title(self):
-        return _("moderators of %(reddit)s") % dict(reddit = c.site.name)
+        return _("moderators of /r/%(reddit)s") % {"reddit": c.site.name}
 
+    def executed_message(self, row_type):
+        if row_type == "moderator_invite":
+            return _("invited")
+        else:
+            return _("added")
+
+    @property
+    def can_force_add(self):
+        return c.user_is_admin
+
+    @property
     def can_remove_self(self):
         return c.user_is_loggedin and c.site.is_moderator(c.user)
 
-    def editable_fn(self, user):
+    @property
+    def has_invite(self):
+        return c.user_is_loggedin and c.site.is_moderator_invite(c.user)
+
+    def moderator_editable(self, user):
         if not c.user_is_loggedin:
             return False
         elif c.user_is_admin:
             return True
         else:
             return c.site.can_demod(c.user, user)
+
+    @property
+    def user_rows(self):
+        return self._user_rows(self.type, self.user_ids(), self.moderator_editable)
+
+    @property
+    def invited_user_rows(self):
+        return self._user_rows(self.invite_type, c.site.moderator_invite_ids(), self.moderator_editable)
 
     def user_ids(self):
         return c.site.moderators
