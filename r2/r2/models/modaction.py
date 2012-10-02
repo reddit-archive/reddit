@@ -84,7 +84,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'removelink': _('removed'),
              'approvelink': _('approved'),
              'removecomment': _('removed'),
-             'approvecomment': _('approved'),                    
+             'approvecomment': _('approved'),
              'addmoderator': _('added moderator'),
              'removemoderator': _('removed moderator'),
              'addcontributor': _('added approved contributor'),
