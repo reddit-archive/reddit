@@ -235,7 +235,8 @@ class LocalizedModule(Module):
         if g.uncompressedJS:
             return embed + StringsSource().use()
         else:
-            url = LocalizedModule.languagize_path(self.name, get_lang()[0])
+            langs = get_lang() or [g.lang]
+            url = LocalizedModule.languagize_path(self.name, langs[0])
             return script_tag.format(src=static(url))
 
     @property
