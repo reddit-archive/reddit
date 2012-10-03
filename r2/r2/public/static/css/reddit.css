@@ -3202,6 +3202,19 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 #url-field button {margin: 10px 5px 0 0;}
 #url-field .title-status { color: red; font-size: small}
 
+.content.submit .info-notice {
+    background-color: #E4F2FB;
+    border: 1px solid #5F99CF;
+    padding: 9px;
+    margin-bottom: 12px;
+    font-size: larger;
+}
+
+.content.submit .info-notice a {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
 /*opt-out/in form*/
 .opt-form { font-size: larger }
 .opt-form form { display: inline; }
@@ -4855,7 +4868,8 @@ dd { margin-left: 20px;  }
 .gold-form h1.goldgift:before,
 .users-online:before,
 .notice-taken:before,
-.notice-available:before {
+.notice-available:before,
+.info-notice:before {
     height: 16px;
     width: 16px;
     display: block;
@@ -4944,6 +4958,10 @@ dd { margin-left: 20px;  }
 
 .notice-available:before {
     background-image: url(../icon-circle-check.png);  /* SPRITE */
+}
+
+.info-notice:before {
+    background-image: url(../icon-info.png);  /* SPRITE */
 }
 
 .linkinfo {
