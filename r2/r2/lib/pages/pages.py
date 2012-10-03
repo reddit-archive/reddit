@@ -2796,11 +2796,8 @@ class UserList(Templated):
     remove_action  = "unfriend"
     editable_fn    = None
 
-    def __init__(self, editable=True, addable=None):
+    def __init__(self, editable=True):
         self.editable = editable
-        if addable is None:
-            addable = editable
-        self.addable = addable
         Templated.__init__(self)
 
     def user_row(self, user):
@@ -2881,8 +2878,8 @@ class EnemyList(UserList):
     type = 'enemy'
     cells = ('user', 'remove')
     
-    def __init__(self, editable=True, addable=False):
-        UserList.__init__(self, editable, addable)
+    def __init__(self, editable=True):
+        UserList.__init__(self, editable)
 
     @property
     def table_title(self):
