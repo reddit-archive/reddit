@@ -30,23 +30,23 @@
   <p>use the following search parameters to narrow your results:</p>
 
   <dl>
-      <dt>reddit:{name}</dt>
-      <dd>${_('find things posted in {name} only')}</dd>
-      <dt>author:{username}</dt>
-      <dd>${_('return things submitted by {username} only')}</dd>
-      <dt>site:{domain}</dt>
-      <dd>${_('get links to pages on {domain} only')}</dd>
-      <dt>url:{text}</dt>
-      <dd>${_('search for {text} in url')}</dd>
-      <dt>selftext:{text}</dt>
-      <dd>${_('search for {text} in self post contents')}</dd>
-      <dt>self:{yes|no}</dt>
-      <dd>${_('include or exclude self posts')}</dd>
-      <dt>nsfw:{yes|no}</dt>
-      <dd>${_('include or exclude nsfw results')}</dd>
+      <dt>reddit:<i>subreddit</i></dt>
+      <dd>${_('find submissions in "subreddit"')}</dd>
+      <dt>author:<i>username</i></dt>
+      <dd>${_('find submissions by "username"')}</dd>
+      <dt>site:<i>example.com</i></dt>
+      <dd>${_('find submissions from "example.com"')}</dd>
+      <dt>url:<i>text</i></dt>
+      <dd>${_('search for "text" in url')}</dd>
+      <dt>selftext:<i>text</i></dt>
+      <dd>${_('search for "text" in self post contents')}</dd>
+      <dt>self:yes (or self:no)</dt>
+      <dd>${_('include (or exclude) self posts')}</dd>
+      <dt>nsfw:yes (or nsfw:no)</dt>
+      <dd>${_('include (or exclude) results marked as NSFW')}</dd>
   </dl>
 
-  <p>e.g. <code>reddit:pics site:imgur.com dog</code></p>
+  <p>e.g.&#32;<code>reddit:aww site:imgur.com dog</code></p>
   <p><a href="http://www.reddit.com/help/search">${_('see the search faq for details.')}</a></p>
   </div>
 
