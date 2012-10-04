@@ -297,7 +297,7 @@ class SubredditFields(FieldsBase):
     
     @field
     def sidebar(self):
-        return self.sr.sidebar
+        return self.sr.description
     
     @field
     def over18(self):
