@@ -5494,9 +5494,7 @@ tr.gold-accent + tr > td {
 }
 
 .oauth2-authorize h1 a {
-    display: block;
     font-weight: bold;
-    font-size: 1.5em;
     letter-spacing: -.04em;
 }
 

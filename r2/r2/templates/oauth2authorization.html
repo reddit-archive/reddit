@@ -25,13 +25,15 @@
    from r2.models import OAuth2AccessToken
    from r2.lib.template_helpers import static, s3_https_if_secure
 %>
+<%namespace file="clientinfobar.html" import="app_link" />
 <%namespace file="prefapps.html" import="scope_details" />
-<%namespace file="utils.html" import="_md" />
 <%
    if thing.client.icon_url:
      icon = s3_https_if_secure(thing.client.icon_url)
    else:
      icon = static("defaultapp.png")
+   app_name = (
+       "<!-- SC_OFF --> <b>%s</b> <!-- SC_ON -->" % websafe(thing.client.name))
 %>
 <div class="content oauth2-authorize">
   <div class="icon">
@@ -39,17 +41,18 @@
     <img src="${icon}" alt="${thing.client.name} icon" />
     &nbsp;
   </div>
-  %if thing.client.about_url:
-    ${_md("#[%(app_name)s](%(app_about_url)s) requests to connect with your reddit account."
-          % dict(app_name=thing.client.name, app_about_url=thing.client.about_url))}
-  %else:
-    ${_md("#%(app_name)s requests to connect with your reddit account."
-          % dict(app_name=thing.client.name))}
-  %endif
+  <h1>
+    ${unsafe(_("%(app)s requests to connect with your reddit account.")
+             % dict(app=app_link(thing.client)))}
+  </h1>
   <div class="access">
-    <h2>${_("Allow %(app_name)s to:") % dict(app_name=thing.client.name)}</h2>
-    ${scope_details(thing.scope)}
-    <p class="notice">${_("%(app_name)s will not be able to access your reddit password.") % dict(app_name=thing.client.name)}</p>
+    <h2>${unsafe(_("Allow %(app)s to:") % dict(app=app_name))}</h2>
+    ${scope_details(thing.scope, expiration=thing.expiration)}
+    <p class="notice">
+      ${unsafe(
+            _("%(app)s will not be able to access your reddit password.")
+            % dict(app=app_name))}
+    </p>
     <form method="post" action="/api/v1/authorize" class="pretty-form">
       <input type="hidden" name="client_id" value="${thing.client._id}" />
       <input type="hidden" name="redirect_uri" value="${thing.redirect_uri}" />
@@ -58,8 +61,10 @@
       <input type="hidden" name="duration" value="${thing.duration}" />
       <input type="hidden" name="uh" value="${c.modhash}"/>
       <div>
-        <input type="submit" class="fancybutton allow" name="authorize" value="${_("Allow")}" />
-        <input type="submit" class="fancybutton decline" value="${_("Decline")}" />
+        <input type="submit" class="fancybutton allow" name="authorize"
+               value="${_("Allow")}" />
+        <input type="submit" class="fancybutton decline"
+               value="${_("Decline")}" />
       </div>
     </form>
   </div>
