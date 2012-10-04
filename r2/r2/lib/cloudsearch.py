@@ -405,17 +405,18 @@ class CloudSearchUploader(object):
                 elif self.should_index(thing):
                     add_node = self.add_xml(thing, version)
                     batch.append(add_node)
-            except (AttributeError, KeyError):
-                # AttributeError may occur if a needed attribute is somehow
-                # missing from the DB
-                # KeyError will occur for whichever items (if any) triggered
-                #     the safe_get() call above, because the needed (but
-                #     invalid) Account or Subreddit is missing from the srs or
-                #     accounts dictionary
-                # In either case, the sanest approach is to simply not index
-                # the item. If it gets voted on later (or otherwise sent back
-                # to the queue), perhaps it will have been fixed.
-                pass
+            except (AttributeError, KeyError) as e:
+                # Problem! Bail out, which means these items won't get
+                # "consumed" from the queue. If the problem is from DB
+                # lag or a transient issue, then the queue consumer
+                # will succeed eventually. If it's something else,
+                # then manually run a consumer with 'use_safe_get'
+                # on to get past the bad Thing in the queue
+                if not self.use_safe_get:
+                    raise
+                else:
+                    g.log.warn("Ignoring problem on thing %r.\n\n%r",
+                               thing, e)
         return batch
     
     def should_index(self, thing):
