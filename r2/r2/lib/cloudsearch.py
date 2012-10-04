@@ -118,14 +118,15 @@ def field(name=None, cloudsearch_type=str, lucene_type=SAME_AS_CLOUDSEARCH):
 class FieldsMeta(type):
     def __init__(cls, name, bases, attrs):
         type.__init__(cls, name, bases, attrs)
+        fields = []
         for attr in attrs.itervalues():
             if hasattr(attr, "field"):
-                cls._fields.append(attr.field)
+                fields.append(attr.field)
+        cls._fields = tuple(fields)
 
 
 class FieldsBase(object):
     __metaclass__ = FieldsMeta
-    _fields = []
     
     def fields(self):
         data = {}
