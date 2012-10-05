@@ -4961,7 +4961,7 @@ dd { margin-left: 20px;  }
 }
 
 .info-notice:before {
-    background-image: url(../icon-info.png);  /* SPRITE */
+    background-image: url(../brick-small.png);  /* SPRITE */
 }
 
 .linkinfo {
