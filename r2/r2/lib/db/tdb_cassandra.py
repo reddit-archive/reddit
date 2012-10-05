@@ -215,7 +215,7 @@ class Counter(object):
 
 
 class ThingBase(object):
-    # base class for Thing and Relation
+    # base class for Thing
 
     __metaclass__ = ThingMeta
 
@@ -541,8 +541,6 @@ class ThingBase(object):
     def _from_columns(cls, t_id, columns):
         """Given a dictionary of freshly deserialized columns
            construct an instance of cls"""
-        # if modifying this, check Relation._from_columns and see if
-        # you should change it as well
         t = cls()
         t._orig = columns
         t._id = t_id
@@ -816,144 +814,6 @@ class UuidThing(ThingBase):
     @classmethod
     def _cache_key_id(cls, t_id):
         return cls._cache_prefix() + str(t_id)
-
-class Relation(ThingBase):
-    _timestamp_prop = 'date'
-
-    def __init__(self, thing1_id, thing2_id, **kw):
-        # NB! When storing relations between postgres-backed Thing
-        # objects, these IDs are actually ID36s
-        ThingBase.__init__(self,
-                           _id = self._rowkey(thing1_id, thing2_id),
-                           **kw)
-        self._orig['thing1_id'] = thing1_id
-        self._orig['thing2_id'] = thing2_id
-
-    @will_write
-    def _destroy(self, write_consistency_level = None):
-        # only implemented on relations right now, but at present
-        # there's no technical reason for this
-        self._cf.remove(self._id,
-                        write_consistency_level = self._wcl(write_consistency_level))
-        self._on_destroy()
-        thing_cache.delete(self._cache_key())
-
-    def _on_destroy(self):
-        """Called *after* the destruction of the Thing on the
-           destroyed Thing's mortal shell"""
-        # only implemented on relations right now, but at present
-        # there's no technical reason for this
-        pass
-
-    @classmethod
-    def _fast_query(cls, thing1s, thing2s, properties = None, **kw):
-        """Find all of the relations of this class between all of the
-           members of thing1_ids and thing2_ids"""
-        thing1s, thing1s_is_single = tup(thing1s, True)
-        thing2s, thing2s_is_single = tup(thing2s, True)
-
-        if not thing1s or not thing2s:
-            return {}
-
-        # grab the last time each thing1 modified this relation class so we can
-        # know which relations not to even bother looking up
-        if thing1s:
-            from r2.models.last_modified import LastModified
-            fullnames = [cls._thing1_cls._fullname_from_id36(thing1._id36)
-                         for thing1 in thing1s]
-            timestamps = LastModified.get_multi(fullnames,
-                                                cls._cf.column_family)
-
-        # build up a list of ids to look up, throwing out the ones that the
-        # timestamp fetched above indicates are pointless
-        ids = set()
-        thing1_ids, thing2_ids = {}, {}
-        for thing1 in thing1s:
-            last_modification = timestamps.get(thing1._fullname)
-
-            if not last_modification:
-                continue
-
-            for thing2 in thing2s:
-                key = cls._rowkey(thing1._id36, thing2._id36)
-
-                if key in ids:
-                    continue
-
-                if thing2._date > last_modification:
-                    continue
-
-                ids.add(key)
-                thing2_ids[thing2._id36] = thing2
-            thing1_ids[thing1._id36] = thing1
-
-        # all relations must load these properties, even if unrequested
-        if properties is not None:
-            properties = set(properties)
-
-            properties.add('thing1_id')
-            properties.add('thing2_id')
-
-        rels = {}
-        if ids:
-            rels = cls._byID(ids, properties=properties).values()
-
-        if thing1s_is_single and thing2s_is_single:
-            if rels:
-                assert len(rels) == 1
-                return rels[0]
-            else:
-                raise NotFound("<%s %r>" % (cls.__name__,
-                                            cls._rowkey(thing1s[0]._id36,
-                                                        thing2s[0]._id36)))
-
-        return dict(((thing1_ids[rel.thing1_id], thing2_ids[rel.thing2_id]), rel)
-                    for rel in rels)
-
-    @classmethod
-    def _from_columns(cls, t_id, columns):
-        # we deserialize relations a little specially so that we can
-        # throw our toys on the floor if they don't have thing1_id and
-        # thing2_id
-        if not ('thing1_id' in columns and 'thing2_id' in columns
-                and t_id == cls._rowkey(columns['thing1_id'], columns['thing2_id'])):
-            raise InvariantException("Looked up %r with unmatched IDs (%r)"
-                                     % (cls, t_id))
-
-        # if modifying this, check ThingBase._from_columns and see if
-        # you should change it as well
-        thing1_id, thing2_id = columns['thing1_id'], columns['thing2_id']
-        t = cls(thing1_id = thing1_id, thing2_id = thing2_id)
-        assert t._id == t_id
-        t._orig = columns
-        t._committed = True
-        return t
-
-    @staticmethod
-    def _rowkey(thing1_id36, thing2_id36):
-        assert isinstance(thing1_id36, basestring) and isinstance(thing2_id36, basestring)
-        return '%s_%s' % (thing1_id36, thing2_id36)
-
-    def _commit(self, *a, **kw):
-        assert self._id == self._rowkey(self.thing1_id, self.thing2_id)
-
-        retval = ThingBase._commit(self, *a, **kw)
-
-        from r2.models.last_modified import LastModified
-        fullname = self._thing1_cls._fullname_from_id36(self.thing1_id)
-        LastModified.touch(fullname, self._cf.column_family)
-
-        return retval
-
-    @classmethod
-    def _rel(cls, thing1_cls, thing2_cls):
-        # should be implemented by abstract relations, like Vote
-        raise NotImplementedError
-
-    @classmethod
-    def _datekey(cls, date):
-        # ick
-        return str(long(cls._serialize_date(date)))
 
 
 def view_of(cls):
