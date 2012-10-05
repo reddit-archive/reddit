@@ -2718,9 +2718,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             setattr(user, 'flair_%s_css_class' % site._id, css_class)
             user._commit()
 
-            if ((c.site.is_moderator(c.user) or c.user_is_admin)
+            if ((site.is_moderator(c.user) or c.user_is_admin)
                 and c.user != user):
-                ModAction.create(c.site, c.user, action='editflair',
+                ModAction.create(site, c.user, action='editflair',
                                  target=user, details='flair_edit')
 
             # Push some client-side updates back to the browser.
@@ -2740,8 +2740,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             link._commit()
             changed(link)
 
-            if ((c.site.is_moderator(c.user) or c.user_is_admin)):
-                ModAction.create(c.site, c.user, action='editflair',
+            if ((site.is_moderator(c.user) or c.user_is_admin)):
+                ModAction.create(site, c.user, action='editflair',
                                  target=link, details='flair_edit')
 
             # Push some client-side updates back to the browser.
@@ -2753,9 +2753,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             if flair_template:
                 flair = '<span class="linkflair %s">%s</span>' % (
                     ' '.join('linkflair-' + c for c in css_class.split()), text)
-                if c.site.link_flair_position == 'left':
+                if site.link_flair_position == 'left':
                     jquery(title_path).before(flair)
-                elif c.site.link_flair_position == 'right':
+                elif site.link_flair_position == 'right':
                     jquery(title_path).after(flair)
 
             # TODO: close the selector popup more gracefully
