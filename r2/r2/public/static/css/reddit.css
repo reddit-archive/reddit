@@ -5347,8 +5347,8 @@ tr.gold-accent + tr > td {
     background-image: url(../giftgold.png); /* SPRITE */
 }
 
-.gold-form h1:before {
-    margin-top: 3px;
+.gold-form p:first-child {
+    margin: 0 0 8px 0;
 }
 
 .tiny {
@@ -5374,11 +5374,6 @@ tr.gold-accent + tr > td {
     color: #6a4d00;
 }
 
-.gold-form .roundfield-content .gray a {
-    margin-left: 0.8em;
-    font-size: small;
-}
-
 .gold-form .note {
     font-size: 11px;
     font-style: italic;
@@ -5395,13 +5390,30 @@ tr.gold-accent + tr > td {
     position: absolute;
 }
 
+.gold-form.cloneable {
+    display: none;
+}
+
 .gold-form textarea, .gold-form input[type=text] {
     margin-top: 3px;
 }
 
+.gold-payment form {
+    display: inline;
+}
+
 .gold-logo {
     float: left;
-    margin-right: 15px;
+    margin: 5px 0;
+}
+
+.comment .gold-form {
+    margin: 0 0 10px 4px;
+    min-height: 0;
+}
+
+.gold-payment .roundfield-content {
+    margin-left: 80px;
 }
 
 .giftmessage {
@@ -5425,6 +5437,13 @@ tr.gold-accent + tr > td {
     font-family: Palatino,georgia,garamond,FreeSerif,serif;
     -webkit-appearance: none;
     text-shadow: 0px 1px 0px hsla(0,0%,100%,.7);
+}
+
+.gold-button.disabled {
+    color: #999;
+    background-color: #ccc;
+    border-color: #aaa;
+    text-shadow: none;
 }
 
 .gold-dropdown {
@@ -6252,6 +6271,21 @@ table.diff {font-size: small;}
 .diff_add {background-color:lightgreen}
 .diff_chg {background-color:yellow}
 .diff_sub {background-color:lightcoral}
+
+span.gilded-comment-icon {
+    display: inline-block;
+    background-image: url(../gold-coin.png); /* SPRITE */
+    height: 14px;
+    width: 14px;
+    margin: 0 0 -3px 8px;
+}
+
+.user-gilded > .entry span.gilded-comment-icon {
+    background-image: url(../gold-coin-yours.png); /* SPRITE */
+    height: 24px;
+    width: 24px;
+    margin-bottom: -8px;
+}
 
 .buttons li.comment-save-button { display: none; }
 .buttons li.comment-unsave-button { display: inline; }

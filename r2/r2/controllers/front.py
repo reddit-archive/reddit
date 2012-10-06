@@ -33,7 +33,6 @@ from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
-from r2.lib.utils import randstr
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode
 from r2.lib.emailer import has_opted_out, Email
@@ -52,6 +51,7 @@ from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from api_docs import api_doc, api_section
 from pylons import c, request, request, Response
 from r2.models.token import EmailVerificationToken
+from r2.controllers.ipn import generate_blob
 
 from operator import attrgetter
 import string
@@ -1268,9 +1268,16 @@ class FormsController(RedditController):
               # variables below are just for gifts
               signed = VBoolean("signed"),
               recipient_name = VPrintable("recipient", max_length = 50),
+              comment = VByName("comment", thing_cls=Comment),
               giftmessage = VLength("giftmessage", 10000))
     def GET_gold(self, goldtype, period, months,
-                 signed, recipient_name, giftmessage):
+                 signed, recipient_name, giftmessage, comment):
+
+        if comment:
+            comment_sr = Subreddit._byID(comment.sr_id, data=True)
+            if comment._deleted or not comment_sr.allow_comment_gilding:
+                comment = None
+
         start_over = False
         recipient = None
         if goldtype == "autorenew":
@@ -1282,10 +1289,18 @@ class FormsController(RedditController):
         elif goldtype == "gift":
             if months is None or months < 1:
                 start_over = True
-            try:
-                recipient = Account._by_name(recipient_name or "")
-            except NotFound:
-                start_over = True
+
+            if comment:
+                recipient = Account._byID(comment.author_id, data=True)
+                if recipient._deleted:
+                    comment = None
+                    recipient = None
+                    start_over = True
+            else:
+                try:
+                    recipient = Account._by_name(recipient_name or "")
+                except NotFound:
+                    start_over = True
         else:
             goldtype = ""
             start_over = True
@@ -1303,19 +1318,17 @@ class FormsController(RedditController):
 
             if goldtype == "gift":
                 payment_blob["signed"] = signed
-                payment_blob["recipient"] = recipient_name
+                payment_blob["recipient"] = recipient.name
                 payment_blob["giftmessage"] = giftmessage
+                if comment:
+                    payment_blob["comment"] = comment._fullname
 
-            passthrough = randstr(15)
-
-            g.hardcache.set("payment_blob-" + passthrough,
-                            payment_blob, 86400 * 30)
-
-            g.log.info("just set payment_blob-%s" % passthrough)
+            passthrough = generate_blob(payment_blob)
 
             return BoringPage(_("reddit gold"),
                               show_sidebar=False,
                               content=GoldPayment(goldtype, period, months,
                                                   signed, recipient,
-                                                  giftmessage, passthrough)
+                                                  giftmessage, passthrough,
+                                                  comment)
                               ).render()

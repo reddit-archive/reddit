@@ -111,6 +111,11 @@ ${parent.collapsed()}
     ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}
     ${edited(thing, thing.lastedited)}
   %endif
+
+  % if thing.gilded_message:
+  <span class="gilded-comment-icon" title="${thing.gilded_message}"></span>
+  % endif
+
   %if collapse:
     &nbsp;<a href="#" class="expand"
        onclick="return showcomment(this)">

@@ -143,6 +143,23 @@ class CommentButtons(PrintableButtons):
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
 
+        can_gild = (
+            # you can't gild your own comment
+            not is_author
+            # no point in showing the button for things you've already gilded
+            and not thing.user_gilded
+            # this is a way of checking if the user is logged in that works
+            # both within CommentPane instances and without.  e.g. CommentPane
+            # explicitly sets user_is_loggedin = False but can_reply is
+            # correct.  while on user overviews, you can't reply but will get
+            # the correct value for user_is_loggedin
+            and (c.user_is_loggedin or thing.can_reply)
+            # ick, if the author deleted their account we shouldn't waste gold
+            and not thing.author._deleted
+            # some subreddits can have gilding disabled
+            and thing.subreddit.allow_comment_gilding
+        )
+
         show_distinguish = is_author and (thing.can_ban or c.user_special_distinguish)
 
         PrintableButtons.__init__(self, "commentbuttons", thing,
@@ -155,6 +172,7 @@ class CommentButtons(PrintableButtons):
                                   deleted = thing.deleted,
                                   parent_permalink = thing.parent_permalink, 
                                   can_reply = thing.can_reply,
+                                  can_gild=can_gild,
                                   show_report = show_report,
                                   show_distinguish = show_distinguish,
                                   show_delete = show_delete)

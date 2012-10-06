@@ -77,10 +77,16 @@ ${self.RenderPrintable()}
      rowclass = thing.rowstyle + " reported"
    else:
      rowclass = thing.rowstyle
+   if hasattr(thing, "_deleted") and thing._deleted:
+     rowclass += " deleted"
    if hasattr(thing, "saved") and thing.saved:
      rowclass += " saved"
    if hasattr(thing, "hidden") and thing.hidden:
      rowclass += " hidden"
+   if hasattr(thing, "gildings") and thing.gildings > 0:
+     rowclass += " gilded"
+   if hasattr(thing, "user_gilded") and thing.user_gilded:
+     rowclass += " user-gilded"
  %>
 <div class="${self.thing_css_class(thing)} ${rowclass} ${unsafe(cls)} ${selflink}"
     ${thing.display} onclick="click_thing(this)"

@@ -97,6 +97,7 @@ class Subreddit(Thing, Printable):
                      public_description = "",
                      prev_description_id = "",
                      prev_public_description_id = "",
+                     allow_comment_gilding=True,
                      )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported')

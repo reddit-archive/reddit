@@ -186,7 +186,19 @@ class Reddit(Templated):
             self.srtopbar = SubredditTopBar()
 
         if c.user_is_loggedin and self.show_sidebar and not is_api():
-            self._content = PaneStack([ShareLink(), content])
+            # insert some form templates for js to use
+            # TODO: move these to client side templates
+            gold = GoldPayment("gift",
+                               "monthly",
+                               months=1,
+                               signed=False,
+                               recipient="",
+                               giftmessage=None,
+                               passthrough=None,
+                               comment=True,
+                               clone_template=True,
+                              )
+            self._content = PaneStack([ShareLink(), content, gold])
         else:
             self._content = content
 
@@ -1164,6 +1176,7 @@ class CommentPane(Templated):
             dislikes = []
             is_friend = set()
             saves = set()
+            gildings = {}
             for t in self.listing_iter(my_listing):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion
@@ -1174,11 +1187,14 @@ class CommentPane(Templated):
                     likes.append(t._fullname)
                 if t.likes is False:
                     dislikes.append(t._fullname)
+                if t.user_gilded:
+                    gildings[t._fullname] = t.gilded_message
                 if t.saved:
                     saves.add(t._fullname)
             self.rendered += ThingUpdater(likes = likes,
                                           dislikes = dislikes,
                                           is_friend = is_friend,
+                                          gildings = gildings,
                                           saves = saves).render()
             g.log.debug("using comment page cache")
         else:
@@ -1704,7 +1720,8 @@ class Gold(Templated):
 
 class GoldPayment(Templated):
     def __init__(self, goldtype, period, months, signed,
-                 recipient, giftmessage, passthrough):
+                 recipient, giftmessage, passthrough, comment,
+                 clone_template=False):
         pay_from_creddits = False
 
         if period == "monthly" or 1 <= months < 12:
@@ -1751,7 +1768,9 @@ class GoldPayment(Templated):
                 summary = strings.gold_summary_creddits % dict(
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
-                if signed:
+                if comment:
+                    format = strings.gold_summary_comment_gift
+                elif signed:
                     format = strings.gold_summary_signed_gift
                 else:
                     format = strings.gold_summary_anonymous_gift
@@ -1763,9 +1782,14 @@ class GoldPayment(Templated):
                     # buy by month or spend a multiple of 12 months
                     months = quantity * 12
 
-                summary = format % dict(
-                          amount=Score.somethings(months, "month"),
-                          recipient = recipient.name)
+                if not clone_template:
+                    summary = format % dict(
+                        amount=Score.somethings(months, "month"),
+                        recipient=recipient and recipient.name,
+                    )
+                else:
+                    # leave the replacements to javascript
+                    summary = format
             else:
                 raise ValueError("wtf is %r" % goldtype)
 
@@ -1777,6 +1801,7 @@ class GoldPayment(Templated):
                            pay_from_creddits=pay_from_creddits,
                            passthrough=passthrough,
                            google_id=google_id,
+                           comment=comment, clone_template=clone_template,
                            paypal_buttonid=paypal_buttonid)
 
 class GiftGold(Templated):

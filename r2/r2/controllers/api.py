@@ -64,6 +64,7 @@ from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.system_messages import notify_user_added
+from r2.controllers.ipn import generate_blob
 
 from r2.models import wiki
 from r2.lib.merge import ConflictException
@@ -3060,3 +3061,33 @@ class ApiController(RedditController, OAuth2ResourceController):
                        % client._id).hide()
                 jquery('#developed-app-%s .edit-app-icon-button'
                        % client._id).toggleClass('collapsed')
+
+    @json_validate(VUser(),
+                   VModhash(),
+                   comment=VByName("comment", thing_cls=Comment))
+    def POST_generate_payment_blob(self, responder, comment):
+        if not comment:
+            abort(400, "Bad Request")
+
+        comment_sr = Subreddit._byID(comment.sr_id, data=True)
+        if not comment_sr.allow_comment_gilding:
+            abort(403, "Forbidden")
+
+        try:
+            recipient = Account._byID(comment.author_id, data=True)
+        except NotFound:
+            self.abort404()
+
+        if recipient._deleted:
+            self.abort404()
+
+        return generate_blob(dict(
+            goldtype="gift",
+            account_id=c.user._id,
+            account_name=c.user.name,
+            status="initialized",
+            signed=False,
+            recipient=recipient.name,
+            giftmessage=None,
+            comment=comment._fullname,
+        ))

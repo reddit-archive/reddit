@@ -295,6 +295,14 @@
     %endif
     ${self.banbuttons()}
     ${self.distinguish()}
+    % if thing.can_gild:
+      <li>
+      <a href="/gold?goldtype=gift&months=1&comment=${thing.thing._fullname}"
+          title="${_("give reddit gold in appreciation of this comment.")}"
+          class="give-gold login-required"
+          >${_("give gold")}</a>
+      </li>
+    % endif
     %if not thing.profilepage and thing.can_reply:
       <li>
         ${self.simple_button(_("reply {verb}"), "reply")}

@@ -35,6 +35,11 @@
         });
   $.map(friends, show_friend);
 
+  var gildings = ${unsafe(simplejson.dumps(thing.gildings))};
+  for (var gilded_comment in gildings) {
+    r.gold.gildComment(gilded_comment, gildings[gilded_comment]);
+  }
+
   var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};
   $.map(saves, show_saved);
 

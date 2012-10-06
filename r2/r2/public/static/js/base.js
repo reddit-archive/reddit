@@ -16,4 +16,5 @@ $(function() {
     r.interestbar.init()
     r.apps.init()
     r.wiki.init()
+    r.gold.init()
 })

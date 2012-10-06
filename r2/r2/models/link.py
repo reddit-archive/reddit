@@ -618,12 +618,53 @@ class PromotedLink(Link):
         # Run this last
         Printable.add_props(user, wrapped)
 
+
+def make_comment_gold_message(comment, user_gilded):
+    author = Account._byID(comment.author_id, data=True)
+    if not comment._deleted and not author._deleted:
+        author_name = author.name
+    else:
+        author_name = _("[deleted]")
+
+    if comment.gildings == 0:
+        return None
+
+    if c.user_is_loggedin and comment.author_id == c.user._id:
+        gilded_message = ungettext(
+            "a redditor gifted you a month of reddit gold for this comment.",
+            "redditors have gifted you %(months)d months of reddit gold for "
+            "this comment.",
+            comment.gildings
+        )
+    elif user_gilded:
+        gilded_message = ungettext(
+            "you have gifted reddit gold to %(recipient)s for this comment.",
+            "you and other redditors have gifted %(months)d months of "
+            "reddit gold to %(recipient)s for this comment.",
+            comment.gildings
+        )
+    else:
+        gilded_message = ungettext(
+            "a redditor has gifted reddit gold to %(recipient)s for this "
+            "comment.",
+            "redditors have gifted %(months)d months of reddit gold to "
+            "%(recipient)s for this comment.",
+            comment.gildings
+        )
+
+    return gilded_message % dict(
+        recipient=author_name,
+        months=comment.gildings,
+    )
+
+
 class Comment(Thing, Printable):
-    _data_int_props = Thing._data_int_props + ('reported',)
+    _data_int_props = Thing._data_int_props + ('reported', 'gildings')
     _defaults = dict(reported=0,
                      parent_id=None,
                      moderator_banned=False,
                      new=False,
+                     gildings=0,
                      banned_before_moderator=False)
     _essentials = ('link_id', 'author_id')
 
@@ -722,6 +763,10 @@ class Comment(Thing, Printable):
         return self.make_permalink(l, l.subreddit_slow,
                                    context=context, anchor=anchor)
 
+    def _gild(self, user):
+        self._incr("gildings")
+        GildedCommentsByAccount.gild_comment(user, self)
+
     @classmethod
     def add_props(cls, user, wrapped):
         from r2.lib.template_helpers import add_attr, get_domain
@@ -765,12 +810,21 @@ class Comment(Thing, Printable):
         site = c.site
 
         if user_is_loggedin:
+            gilded = [comment for comment in wrapped if comment.gildings > 0]
+            try:
+                user_gildings = GildedCommentsByAccount.fast_query(user,
+                                                                   gilded)
+            except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
+                g.log.warning("Cassandra gilding lookup failed: %r", e)
+                user_gildings = {}
+
             try:
                 saved = CommentSavesByAccount.fast_query(user, wrapped)
             except tdb_cassandra.TRANSIENT_EXCEPTIONS as e:
                 g.log.warning("Cassandra comment save lookup failed: %r", e)
                 saved = {}
         else:
+            user_gildings = {}
             saved = {}
 
         for item in wrapped:
@@ -807,9 +861,13 @@ class Comment(Thing, Printable):
                     item.can_reply = True
 
             if user_is_loggedin:
+                item.user_gilded = (user, item) in user_gildings
                 item.saved = (user, item) in saved
             else:
+                item.user_gilded = False
                 item.saved = False
+            item.gilded_message = make_comment_gold_message(item,
+                                                            item.user_gilded)
 
             # not deleted on profile pages,
             # deleted if spam and not author or admin
@@ -1254,6 +1312,21 @@ class Message(Thing, Printable):
 
 class SaveHide(Relation(Account, Link)): pass
 class Click(Relation(Account, Link)): pass
+
+
+
+class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _last_modified_name = 'Gilding'
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        return ''
+
+    @classmethod
+    def gild_comment(cls, user, comment):
+        cls.create(user, [comment])
 
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
