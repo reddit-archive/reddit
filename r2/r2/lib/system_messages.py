@@ -82,3 +82,9 @@ def notify_user_added(rel_type, author, user, target):
 
         queries.new_message(item, inbox_rel)
 
+    if "modmail" in msgs:
+        subject = msgs["modmail"]["subject"] % d
+        msg = msgs["modmail"]["msg"] % d
+        item, inbox_rel = Message._new(author, target, subject, msg, request.ip,
+                                       sr=target, from_sr=True)
+        queries.new_message(item, inbox_rel)
