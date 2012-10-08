@@ -54,16 +54,20 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
   <%
    author = WrappedUser(thing.author, thing.attribs, thing).render()
    if thing.sr_id:
-     subreddit = '&nbsp;<a href="%s">%s</a>&nbsp;' % (thing.subreddit.path,
-                                                      thing.subreddit.path)
+     subreddit = '<a href="%s">%s</a>' % (thing.subreddit.path,
+                                          thing.subreddit.path)
      if not thing.dest:
        thing.dest = subreddit
-     author = thing.updated_author % dict(author=author, subreddit=subreddit)
-   
-   taglinetext = thing.taglinetext.replace(' ', '&nbsp;')
-   taglinetext = taglinetext % dict(when=capture(thing_timestamp, thing, thing.timesince),
-                                    author=u"<b>%s</b>" % author,
-                                    dest=u"<b>%s</b>" % thing.dest)
+     author = thing.updated_author % dict(
+       author=author,
+       subreddit=subreddit)
+
+   taglinetext = thing.taglinetext % dict(
+     when=capture(thing_timestamp, thing, thing.timesince),
+     author=u"<b>%s</b>" % author,
+     dest=u"<b>%s</b>" % thing.dest)
+
+   taglinetext = taglinetext.replace(' ', '&#32;')
   %>
   ${unsafe(taglinetext)}
   </span>
