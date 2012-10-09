@@ -29,6 +29,7 @@ from pylons.middleware import error_document_template, media_path
 from pylons import c, request, g
 from pylons.i18n import _
 import random as rand
+from r2.controllers.errors import ErrorSet
 from r2.lib.filters import safemarkdown, unsafe
 
 import json
@@ -149,6 +150,7 @@ class ErrorController(RedditController):
 
     def GET_document(self):
         try:
+            c.errors = c.errors or ErrorSet()
             # clear cookies the old fashioned way 
             c.cookies = Cookies()
 
