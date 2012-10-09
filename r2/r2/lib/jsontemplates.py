@@ -587,24 +587,33 @@ class WikiJsonTemplate(JsonTemplate):
         return ObjectTemplate(content.render() if thing else {})
 
 class WikiPageListingJsonTemplate(ThingJsonTemplate):
-    def render(self, thing, *a, **kw):
+    def kind(self, thing):
+        return "wikipagelisting"
+    
+    def data(self, thing):
         pages = [p.name for p in thing.linear_pages]
-        return ObjectTemplate(dict(pages=pages))
-
-class WikiSettingsJsonTemplate(ThingJsonTemplate):
-    def render(self, thing, *a, **kw):
-        return ObjectTemplate(dict(permlevel=thing.permlevel,
-                                   editors=thing.mayedit))
+        return pages
 
 class WikiViewJsonTemplate(ThingJsonTemplate):
-    def render(self, thing, *a, **kw):
+    def kind(self, thing):
+        return "wikipage"
+    
+    def data(self, thing):
         edit_date = time.mktime(thing.edit_date.timetuple()) if thing.edit_date else None
         edit_by = Wrapped(thing.edit_by).render() if thing.edit_by else None
-        return ObjectTemplate(dict(content_md=thing.page_content_md,
-                                   content_html=wikimarkdown(thing.page_content_md),
-                                   revision_by=edit_by,
-                                   revision_date=edit_date,
-                                   may_revise=thing.may_revise))
+        return dict(content_md=thing.page_content_md,
+                    content_html=wikimarkdown(thing.page_content_md),
+                    revision_by=edit_by,
+                    revision_date=edit_date,
+                    may_revise=thing.may_revise)
+
+class WikiSettingsJsonTemplate(ThingJsonTemplate):
+     def kind(self, thing):
+         return "wikipagesettings"
+    
+     def data(self, thing):
+         return dict(permlevel=thing.permlevel,
+                     editors=thing.mayedit)
 
 class WikiRevisionJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
