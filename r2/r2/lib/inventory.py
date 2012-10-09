@@ -20,29 +20,26 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import re
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from r2.models import traffic
-from r2.models.promo_metrics import PromoMetrics
+import re
+
 from pylons import g
 from sqlalchemy import func
 
+from r2.models import traffic
+from r2.models.promo_metrics import PromoMetrics
+
+
 NDAYS_TO_QUERY = 14  # how much history to use in the estimate
-
-
-class CassKeys:
-    MIN_DAILY = 'min_daily_pageviews.GET_listing'
-
+MIN_DAILY_CASS_KEY = 'min_daily_pageviews.GET_listing'
+PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
 
 def get_predicted_by_date(sr_name, start, stop=None):
-    '''
-    For now, use lowest pageviews in the subreddit any day the last two weeks
-    as a simple heuristic.
-    '''
+    """Return dict mapping datetime objects to predicted pageviews."""
     # lowest pageviews any day the last 2 weeks
-    min_daily = PromoMetrics.get(CassKeys.MIN_DAILY, sr_name).get(sr_name, 0)
+    min_daily = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_name).get(sr_name, 0)
     # expand out to the requested range of dates
     ndays = (stop - start).days if stop else 1  # default is one day
     predicted = OrderedDict()
@@ -53,15 +50,13 @@ def get_predicted_by_date(sr_name, start, stop=None):
 
 
 def update_prediction_data():
-    '''
-    Fetches prediction data and writes it to cassandra.
-    '''
+    """Fetch prediction data and write it to cassandra."""
     min_daily_by_sr = _min_daily_pageviews_by_sr(NDAYS_TO_QUERY)
-    PromoMetrics.set(CassKeys.MIN_DAILY, min_daily_by_sr)
+    PromoMetrics.set(MIN_DAILY_CASS_KEY, min_daily_by_sr)
 
 
 def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
-    '''Returns a dict mapping sr_name to min_pageviews over the last ndays'''
+    """Return dict mapping sr_name to min_pageviews over the last ndays."""
     if not end_date:
         end_date = datetime.now()
     stop = end_date.date()
@@ -77,7 +72,7 @@ def _min_daily_pageviews_by_sr(ndays=NDAYS_TO_QUERY, end_date=None):
     # row looks like: ('lightpainting-GET_listing', 16)
     retval = {}
     for row in q:
-        m = re.search('(.*)-GET_listing', row[0])
+        m = PAGEVIEWS_REGEXP.match(row[0])
         if m:
             retval[m.group(1)] = row[1]
     return retval
