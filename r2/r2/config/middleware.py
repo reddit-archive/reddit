@@ -63,7 +63,7 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
     if global_conf is None:
         global_conf = {}
-    codes = [304, 400, 401, 403, 404, 415, 429, 503]
+    codes = [304, 400, 401, 403, 404, 409, 415, 429, 503]
     if not asbool(global_conf.get('debug')):
         codes.append(500)
     if code in codes:
