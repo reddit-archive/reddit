@@ -70,10 +70,6 @@ def may_revise(sr, user, page=None):
     if sr.is_moderator(user):
         # Mods may always contribute
         return True
-    elif sr.wikimode != 'anyone':
-        # If the user is not a mod and the mode is not anyone,
-        # then the user may not edit.
-        return False
     
     if page and page.restricted and not page.special:
         # People may not contribute to restricted pages
@@ -95,6 +91,11 @@ def may_revise(sr, user, page=None):
     if page and page.has_editor(user.name):
         # If the user is an editor on the page, they may edit
         return True
+    
+    if sr.wikimode != 'anyone':
+        # If the user is not a page editor and the mode is not everyone,
+        # the user may not edit.
+        return False
     
     if not sr.can_submit(user):
         # If the user can not submit to the subreddit
