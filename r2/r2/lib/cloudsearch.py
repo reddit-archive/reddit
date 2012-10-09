@@ -267,6 +267,10 @@ class LinkFields(FieldsBase):
     def flair_text(self):
         return self.link.flair_text
 
+    @field(cloudsearch_type=None, lucene_type=str)
+    def flair(self):
+        return NotImplemented
+
 
 class SubredditFields(FieldsBase):
     def __init__(self, sr):
