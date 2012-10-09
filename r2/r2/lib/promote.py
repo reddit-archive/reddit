@@ -406,28 +406,13 @@ def get_transactions(link):
 def new_campaign(link, dates, bid, sr):
     # empty string for sr_name means target to all
     sr_name = sr.name if sr else ""
-    # dual-write campaigns as data Things
     campaign = PromoCampaign._new(link, sr_name, bid, dates[0], dates[1])
-    # note indx in link.campaigns is the Thing id now 
-    indx = campaign._id
-    with g.make_lock("promo_campaign", campaign_lock(link)):
-        # get a copy of the attr so that it'll be
-        # marked as dirty on the next write.
-        campaigns = getattr(link, "campaigns", {}).copy()
-        # add the campaign
-        campaigns[indx] = list(dates) + [bid, sr_name, 0]
-        PromotionWeights.add(link, indx, sr_name, dates[0], dates[1], bid)
-        link.campaigns = {}
-        link.campaigns = campaigns
-        promotion_log(link, "campaign %s created" % campaign._id)
-        link._commit()
-
-
+    PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
+    promotion_log(link, "campaign %s created" % campaign._id, commit=True)
     author = Account._byID(link.author_id, True)
     if getattr(author, "complimentary_promos", False):
-        free_campaign(link, indx, c.user)
-
-    return indx
+        free_campaign(link, campaign._id, c.user)
+    return campaign._id
 
 def free_campaign(link, campaign_id, user):
     auth_campaign(link, campaign_id, user, -1)
@@ -447,13 +432,6 @@ def edit_campaign(link, campaign_id, dates, bid, sr):
 
         # update values in the db
         campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id, commit=True)
-
-        # dual-write to link attribute in case we need to roll back
-        with g.make_lock("promo_campaign", campaign_lock(link)):
-            campaigns = getattr(link, 'campaigns', {}).copy()
-            campaigns[campaign_id] = (dates[0], dates[1], bid, sr_name, campaign.trans_id)
-            link.campaigns = campaigns
-            link._commit()
 
         # record the transaction
         promotion_log(link, "updated campaign %s. (bid: %0.2f)" % (campaign_id, bid), commit=True)
@@ -479,25 +457,16 @@ def complimentary(username, value = True):
     a.complimentary_promos = value
     a._commit()
 
-def delete_campaign(link, index):
-    with g.make_lock("promo_campaign", campaign_lock(link)):
-        campaigns = getattr(link, "campaigns", {}).copy()
-        if index in campaigns:
-            PromotionWeights.delete_unfinished(link, index)
-            del campaigns[index]
-            link.campaigns = {}
-            link.campaigns = campaigns
-            promotion_log(link, "deleted campaign %s" % index)
-            link._commit()
-            #TODO cancel any existing charges
-            void_campaign(link, index)
-    # dual-write update to campaign Thing if it exists
+def delete_campaign(link, campaign_id):
     try:
-        campaign = PromoCampaign._byID(index)
+        campaign = PromoCampaign._byID(campaign_id)
+        PromotionWeights.delete_unfinished(link, campaign_id)
+        void_campaign(link, campaign_id)
         campaign.delete()
+        promotion_log(link, "deleted campaign %s" % campaign_id, commit=True)
     except NotFound:
-        g.log.debug("Skipping deletion of non-existent PromoCampaign [link:%d, index:%d]" %
-                    (link._id, index))
+        g.log.debug("Skipping deletion of non-existent PromoCampaign [link:%d, campaign_id:%d]" %
+                    (link._id, campaign_id))
 
 def void_campaign(link, campaign_id):
     transactions = get_transactions(link)
@@ -555,16 +524,6 @@ def auth_campaign(link, campaign_id, user, pay_id):
 
     campaign.trans_id = trans_id
     campaign._commit()
-
-    # dual-write update to link attribute in case we need to roll back
-    with g.make_lock("promo_campaign", campaign_lock(link)):
-        campaigns = getattr(link, "campaigns", {}).copy()
-        if campaign_id in campaigns:
-            campaigns[campaign_id] = (campaign.start_date, campaign.end_date,
-                                      campaign.bid, campaign.sr_name, campaign.trans_id)
-            link.campaigns = {}
-            link.campaigns = campaigns
-            link._commit()
 
     return bool(trans_id), reason
 
