@@ -263,7 +263,7 @@ class WikiPage(tdb_cassandra.Thing):
 
     def get_editors(self, properties=None):
         try:
-            return WikiPageEditors._byID(self._id, properties=properties)._values() or []
+            return WikiPageEditors._byID(self._id, properties=properties)._values().keys() or []
         except tdb_cassandra.NotFoundException:
             return []
     
