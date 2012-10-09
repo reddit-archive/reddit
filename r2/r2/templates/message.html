@@ -58,16 +58,14 @@ ${parent.thing_css_class(what)} ${"new" if thing.new else ""} ${"was-comment" if
                                           thing.subreddit.path)
      if not thing.dest:
        thing.dest = subreddit
-     author = thing.updated_author % dict(
+     author = thing.updated_author.replace(' ', '&#32;') % dict(
        author=author,
        subreddit=subreddit)
 
-   taglinetext = thing.taglinetext % dict(
+   taglinetext = thing.taglinetext.replace(' ', '&#32;') % dict(
      when=capture(thing_timestamp, thing, thing.timesince),
      author=u"<b>%s</b>" % author,
      dest=u"<b>%s</b>" % thing.dest)
-
-   taglinetext = taglinetext.replace(' ', '&#32;')
   %>
   ${unsafe(taglinetext)}
   </span>
