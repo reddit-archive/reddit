@@ -86,10 +86,10 @@ class WikiController(RedditController):
             return self.redirect(url)
         
         if version:
-            edit_by = version.author_name()
+            edit_by = version.get_author()
             edit_date = version.date
         else:
-            edit_by = page.author_name()
+            edit_by = page.get_author()
             edit_date = page._get('last_edit_date')
         
         diffcontent = None

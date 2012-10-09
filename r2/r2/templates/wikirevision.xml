@@ -27,7 +27,7 @@
 <item>
     <title>${thing._id}</title>
     <link>http://${get_domain(subreddit=False)}/${c.wiki_base_url}/${thing.page}?v=${thing._id}</link>
-    <author>${thing._get('author', 'Unknown')}</author>
+    <author>${thing.printable_author}</author>
     <category>${thing.sr}/${thing.page}</category>
     <description>${thing._get('reason')}</description>
     <pubdate>${thing.date}</pubdate>

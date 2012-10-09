@@ -599,16 +599,19 @@ class WikiSettingsJsonTemplate(ThingJsonTemplate):
 class WikiViewJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
         edit_date = time.mktime(thing.edit_date.timetuple()) if thing.edit_date else None
+        edit_by = Wrapped(thing.edit_by).render() if thing.edit_by else None
         return ObjectTemplate(dict(content_md=thing.page_content_md,
                                    content_html=wikimarkdown(thing.page_content_md),
-                                   revision_by=thing.edit_by,
+                                   revision_by=edit_by,
                                    revision_date=edit_date,
                                    may_revise=thing.may_revise))
 
 class WikiRevisionJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
         timestamp = time.mktime(thing.date.timetuple()) if thing.date else None
-        return ObjectTemplate(dict(author=thing._get('author'),
+        author = thing.get_author()
+        author = Wrapped(author).render() if author else None
+        return ObjectTemplate(dict(author=author,
                                    id=str(thing._id),
                                    timestamp=timestamp,
                                    reason=thing._get('reason'),

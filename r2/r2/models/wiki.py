@@ -69,14 +69,6 @@ class WikiPageEditors(tdb_cassandra.View):
     _value_type = 'str'
     _connection_pool = 'main'
 
-def get_author_name(author_name):
-    if not author_name:
-        return "[unknown]"
-    try:
-        return Account._by_name(author_name).name
-    except NotFound:
-        return '[deleted]'
-
 class WikiRevision(tdb_cassandra.UuidThing, Printable):
     """ Contains content (markdown), author of the edit, page the edit belongs to, and datetime of the edit """
     
@@ -88,14 +80,21 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     
     cache_ignore = set(list(_str_props)).union(Printable.cache_ignore)
     
-    def author_name(self):
-        return get_author_name(self._get('author', None))
+    def get_author(self):
+        author = self._get('author')
+        return Account._by_name(author, allow_deleted=True) if author else None
     
     @classmethod
     def add_props(cls, user, wrapped):
+        from r2.lib.pages import WrappedUser
         for item in wrapped:
             item._hidden = item.is_hidden
             item._spam = False
+            author = item.get_author()
+            if author is None:
+                item.printable_author = '[unknown]'
+            else:
+                item.printable_author = WrappedUser(author)
             item.reported = False
     
     @classmethod
@@ -168,8 +167,10 @@ class WikiPage(tdb_cassandra.Thing):
     _int_props = ('permlevel')
     _bool_props = ('listed_')
     
-    def author_name(self):
-        return get_author_name(getattr(self, 'last_edit_by', None))
+    def get_author(self):
+        if self._get('last_edit_by'):
+            return Account._by_name(self.last_edit_by, allow_deleted=True)
+        return None
     
     @classmethod
     def get(cls, sr, name):
