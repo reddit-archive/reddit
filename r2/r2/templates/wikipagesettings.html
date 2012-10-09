@@ -25,6 +25,7 @@
 
 <%!
    from urllib import quote
+   from r2.lib.pages import WrappedUser
 %>
 
 <div class="fancy-settings">
@@ -62,9 +63,9 @@
         <ul>
         %for user in thing.mayedit:
             <li>
-                ${user}
+                ${WrappedUser(user)}
                 &mdash;&nbsp;
-                ${ynbutton(_("delete"), _("done"), quote("..%s/alloweditor/del" % (c.wiki_api_url)), hidden_data=dict(username=user, page=thing.page), post_callback="$.refresh")}
+                ${ynbutton(_("delete"), _("done"), quote("..%s/alloweditor/del" % (c.wiki_api_url)), hidden_data=dict(username=user.name, page=thing.page), post_callback="$.refresh")}
             </li>
         %endfor
         </ul>

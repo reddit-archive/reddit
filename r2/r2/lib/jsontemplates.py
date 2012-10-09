@@ -612,8 +612,9 @@ class WikiSettingsJsonTemplate(ThingJsonTemplate):
          return "wikipagesettings"
     
      def data(self, thing):
+         editors = [Wrapped(e).render() for e in thing.mayedit]
          return dict(permlevel=thing.permlevel,
-                     editors=thing.mayedit)
+                     editors=editors)
 
 class WikiRevisionJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):

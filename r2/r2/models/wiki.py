@@ -260,7 +260,14 @@ class WikiPage(tdb_cassandra.Thing):
                 cur_node[pagename] = [page, OrderedDict()]
 
         return page_tree, pages
-
+    
+    def get_editor_accounts(self):
+        editors = self.get_editors()
+        accounts = []
+        for editor in editors:
+            accounts.append(Account._by_name(editor, allow_deleted=True))
+        return accounts
+    
     def get_editors(self, properties=None):
         try:
             return WikiPageEditors._byID(self._id, properties=properties)._values().keys() or []

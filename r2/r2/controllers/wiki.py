@@ -193,7 +193,7 @@ class WikiController(RedditController):
     @wiki_validate(page=VWikiPage('page', restricted=True, modonly=True))
     def GET_wiki_settings(self, page):
         settings = {'permlevel': page._get('permlevel', 0)}
-        mayedit = page.get_editors()
+        mayedit = page.get_editor_accounts()
         return WikiSettings(settings, mayedit, show_settings=not page.special,
                             page=page.name, may_revise=True).render()
 
