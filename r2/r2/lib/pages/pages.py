@@ -1074,6 +1074,9 @@ class CommentPane(Templated):
         # keys: lang, num, can_reply, render_style
         # disable: admin
 
+        timer = g.stats.get_timer("service_time.CommentPaneCache")
+        timer.start()
+
         from r2.models import CommentBuilder, NestedListing
         from r2.controllers.reddit_base import UnloggedUser
 
@@ -1116,6 +1119,9 @@ class CommentPane(Templated):
                     try_cache = False
                     break
 
+        timer.intermediate("try_cache")
+        cache_hit = False
+
         if try_cache:
             # try to fetch the comment tree from the cache
             key = self.cache_key()
@@ -1140,6 +1146,8 @@ class CommentPane(Templated):
                     # undo the spoofing
                     c.user = user
                     c.user_is_loggedin = logged_in
+            else:
+                cache_hit = True
 
             # figure out what needs to be updated on the listing
             likes = []
@@ -1161,6 +1169,14 @@ class CommentPane(Templated):
             g.log.debug("using comment page cache")
         else:
             self.rendered = my_listing.render()
+
+        if try_cache:
+            if cache_hit:
+                timer.stop("hit")
+            else:
+                timer.stop("miss")
+        else:
+            timer.stop("uncached")
 
     def listing_iter(self, l):
         for t in l:
