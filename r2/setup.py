@@ -92,7 +92,6 @@ setup(
         "amqplib",
         "pylibmc>=1.2.1",
         "py-bcrypt",
-        "python-statsd",
         "snudown>=1.1.0",
         "l2cs>=2.0.2",
         "lxml",

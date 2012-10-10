@@ -134,7 +134,6 @@ python-pycaptcha
 python-amqplib
 python-pylibmc
 python-bcrypt
-python-statsd
 python-snudown
 python-l2cs
 python-lxml

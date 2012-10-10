@@ -725,7 +725,7 @@ class MinimalController(BaseController):
             # only report web timing data if an action handler was called
             g.stats.transact('web.%s' % action,
                              (end_time - c.start_time).total_seconds())
-        g.stats.flush_timing_stats()
+        g.stats.flush()
 
     def abort404(self):
         abort(404, "not found")
