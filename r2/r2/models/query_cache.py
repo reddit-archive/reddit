@@ -252,6 +252,7 @@ def cached_query(model, filter_fn=filter_identity, sort=None):
     def cached_query_decorator(fn):
         def cached_query_wrapper(*args):
             # build the row key from the function name and arguments
+            assert fn.__name__.startswith("get_")
             row_key_components = [fn.__name__[len('get_'):]]
 
             if len(args) > 0:
