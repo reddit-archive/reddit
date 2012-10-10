@@ -195,6 +195,13 @@ class CachedQuery(_CachedQueryBase):
         extraneous_ids = [t[0] for t in self.data[MAX_CACHED_ITEMS:]]
 
         if extraneous_ids:
+            # if something has gone wrong with previous prunings, there may be
+            # a lot of extraneous items.  we'll limit this pruning to the
+            # oldest N items to avoid a dangerously large operation.
+            # N = the average number of items to prune (doubled for safety)
+            prune_size = int(MAX_CACHED_ITEMS * PRUNE_CHANCE) * 2
+            extraneous_ids = extraneous_ids[-prune_size:]
+
             self.model.remove_if_unchanged(mutator, self.key,
                                            extraneous_ids, self.timestamps)
 
