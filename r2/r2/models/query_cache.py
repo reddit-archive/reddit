@@ -35,10 +35,12 @@ from r2.lib.db.sorts import epoch_seconds
 from r2.lib.utils import flatten, to36
 from r2.lib.db.tdb_cassandra import json
 
+
 CONNECTION_POOL = g.cassandra_pools['main']
 PRUNE_CHANCE = g.querycache_prune_chance
 MAX_CACHED_ITEMS = 1000
 LOG = g.log
+
 
 class ThingTupleComparator(object):
     def __init__(self, sorts):
@@ -151,11 +153,12 @@ class CachedQuery(CachedQueryBase):
 
         if extraneous_ids:
             self.model.remove_if_unchanged(mutator, self.key,
-                                        extraneous_ids, self.timestamps)
+                                           extraneous_ids, self.timestamps)
 
             cf_name = self.model.__name__
             query_name = self.key.split('.')[0]
-            counter = g.stats.get_counter('cache.%s.%s' % (cf_name, query_name))
+            counter_key = "cache.%s.%s" % (cf_name, query_name)
+            counter = g.stats.get_counter(counter_key)
             if counter:
                 counter.increment('pruned', delta=len(extraneous_ids))
 
@@ -188,8 +191,10 @@ class CachedQuery(CachedQueryBase):
 class SqlCachedQuery(CachedQuery):
     def __init__(self, model, key, query, filter_fn):
         self.query = query
-        self.query._limit = MAX_CACHED_ITEMS  # .update() should only get as many items as we need
-        super(SqlCachedQuery, self).__init__(model, key, query._sort, filter_fn)
+        # ensure that .update() doesn't fetch more items than we need
+        self.query._limit = MAX_CACHED_ITEMS
+        super(SqlCachedQuery, self).__init__(model, key, query._sort,
+                                             filter_fn)
 
     def update(self):
         things = list(self.query)
