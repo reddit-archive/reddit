@@ -33,7 +33,8 @@ from r2.models.promo import PROMOTE_STATUS, get_promote_srid
 from r2.models.query_cache import (cached_query, merged_cached_query,
                                    CachedQuery, CachedQueryMutator,
                                    MergedCachedQuery)
-from r2.models.query_cache import UserQueryCache, SubredditQueryCache
+from r2.models.query_cache import (UserQueryCache, SubredditQueryCache,
+                                   HotQueryCache)
 from r2.models.query_cache import ThingTupleComparator
 from r2.models.last_modified import LastModified
 from r2.lib.utils import SimpleSillyStub
@@ -469,10 +470,10 @@ def user_query(kind, user_id, sort, time):
         q._filter(db_times[time])
     return make_results(q)
 
+@cached_query(HotQueryCache)
 def get_all_comments():
     """the master /comments page"""
-    q = Comment._query(sort = desc('_date'))
-    return make_results(q)
+    return Comment._query(sort=desc('_date'))
 
 def get_sr_comments(sr):
     return _get_sr_comments(sr._id)
@@ -839,7 +840,7 @@ def new_comment(comment, inbox_rels):
         if comment._deleted:
             job_key = "delete_items"
             job.append(get_sr_comments(sr))
-            job.append(get_all_comments())
+            m.delete(get_all_comments(), [comment])
         else:
             job_key = "insert_items"
             if comment._spam:
@@ -1163,6 +1164,7 @@ def _common_del_ban(things):
 
 
 def unban(things, insert=True):
+    query_cache_inserts = []
     query_cache_deletes = []
 
     by_srid, srs = _by_srid(things)
@@ -1200,8 +1202,8 @@ def unban(things, insert=True):
             query_cache_deletes.append([get_spam_links(sr), links])
 
         if insert and comments:
-            add_queries([get_all_comments(), get_sr_comments(sr)],
-                        insert_items=comments)
+            query_cache_inserts.append((get_all_comments(), comments))
+            add_queries([get_sr_comments(sr)], insert_items=comments)
             query_cache_deletes.append([get_spam_comments(sr), comments])
 
         if links:
@@ -1212,6 +1214,9 @@ def unban(things, insert=True):
             query_cache_deletes.append([get_spam_filtered_comments(sr), comments])
 
     with CachedQueryMutator() as m:
+        for q, inserts in query_cache_inserts:
+            m.insert(q, inserts)
+
         for q, deletes in query_cache_deletes:
             m.delete(q, deletes)
 
@@ -1327,8 +1332,8 @@ def run_new_comments(limit=1000):
         fnames = [msg.body for msg in msgs]
 
         comments = Comment._by_fullname(fnames, data=True, return_dict=False)
-        add_queries([get_all_comments()],
-                    insert_items=comments)
+        with CachedQueryMutator() as m:
+            m.insert(get_all_comments(), comments)
 
         bysrid = _by_srid(comments, False)
         for srid, sr_comments in bysrid.iteritems():
