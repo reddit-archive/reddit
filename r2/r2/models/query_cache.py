@@ -64,7 +64,7 @@ class _CachedQueryBase(object):
         self.data = []
         self._fetched = False
 
-    def fetch(self, force=False, data=None):
+    def fetch(self, force=False):
         if not force and self._fetched:
             return
 
