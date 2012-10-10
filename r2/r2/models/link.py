@@ -799,7 +799,7 @@ class Comment(Thing, Printable):
             item.can_reply = False
             if c.can_reply or (item.sr_id in can_reply_srs):
                 age = datetime.now(g.tz) - item._date
-                if age.days < g.REPLY_AGE_LIMIT:
+                if item.link.promoted or age.days < g.REPLY_AGE_LIMIT:
                     item.can_reply = True
 
 

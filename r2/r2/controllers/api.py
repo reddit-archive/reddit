@@ -1037,7 +1037,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 or not sr.should_ratelimit(c.user, 'comment')):
                 should_ratelimit = False
             parent_age = c.start_time - parent._date
-            if parent_age.days > g.REPLY_AGE_LIMIT:
+            if not link.promoted and parent_age.days > g.REPLY_AGE_LIMIT:
                 c.errors.add(errors.TOO_OLD, field = "parent")
 
         #remove the ratelimit error if the user's karma is high

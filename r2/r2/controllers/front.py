@@ -306,7 +306,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             display = False
             if not comment:
                 age = c.start_time - article._date
-                if age.days < g.REPLY_AGE_LIMIT:
+                if article.promoted or age.days < g.REPLY_AGE_LIMIT:
                     display = True
             displayPane.append(UserText(item = article, creating = True,
                                         post_form = 'comment',
