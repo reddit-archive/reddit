@@ -57,7 +57,7 @@ class ThingTupleComparator(object):
         return 0
 
 
-class CachedQueryBase(object):
+class _CachedQueryBase(object):
     def __init__(self, sort):
         self.sort = sort
         self.sort_cols = [s.col for s in self.sort]
@@ -86,7 +86,7 @@ class CachedQueryBase(object):
             yield x[0]
 
 
-class CachedQuery(CachedQueryBase):
+class CachedQuery(_CachedQueryBase):
     def __init__(self, model, key, sort, filter_fn):
         self.model = model
         self.key = key
@@ -184,7 +184,7 @@ class CachedQuery(CachedQueryBase):
                                self.model.__name__, self.key)
 
 
-class MergedCachedQuery(CachedQueryBase):
+class MergedCachedQuery(_CachedQueryBase):
     def __init__(self, queries):
         self.queries = queries
 
@@ -283,7 +283,7 @@ def merged_cached_query(fn):
     return merge_wrapper
 
 
-class BaseQueryCache(object):
+class _BaseQueryCache(object):
     __metaclass__ = tdb_cassandra.ThingMeta
     _connection_pool = 'main'
     _extra_schema_creation_args = dict(key_validation_class=ASCII_TYPE,
@@ -333,9 +333,9 @@ class BaseQueryCache(object):
                            timestamp=timestamps.get(col))
 
 
-class UserQueryCache(BaseQueryCache):
+class UserQueryCache(_BaseQueryCache):
     _use_db = True
 
 
-class SubredditQueryCache(BaseQueryCache):
+class SubredditQueryCache(_BaseQueryCache):
     _use_db = True
