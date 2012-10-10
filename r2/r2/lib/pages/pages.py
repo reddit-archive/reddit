@@ -2818,8 +2818,6 @@ class UserList(Templated):
         """Convenience method for constructing a UserTableItem
         instance of the user with type, container_name, etc. of this
         UserList instance"""
-        editable = self.editable
-
         return UserTableItem(user, row_type, self.cells, self.container_name,
                              editable, self.remove_action)
 
@@ -2976,7 +2974,7 @@ class ModList(UserList):
 
     @property
     def invited_user_rows(self):
-        return self._user_rows(self.invite_type, c.site.moderator_invite_ids(), self.moderator_editable)
+        return self._user_rows(self.invite_type, c.site.moderator_invite_ids())
 
     def user_ids(self):
         return c.site.moderators
