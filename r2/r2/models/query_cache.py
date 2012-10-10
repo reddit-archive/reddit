@@ -90,7 +90,6 @@ class CachedQuery(CachedQueryBase):
     def __init__(self, model, key, sort, filter_fn):
         self.model = model
         self.key = key
-        self.sort = sort
         self.filter = filter_fn
         self.timestamps = None  # column timestamps, for safe pruning
         super(CachedQuery, self).__init__(sort)
@@ -162,9 +161,6 @@ class CachedQuery(CachedQueryBase):
             if counter:
                 counter.increment('pruned', delta=len(extraneous_ids))
 
-    def update(self):
-        raise NotImplementedError()
-
     @classmethod
     def _prune_multi(cls, queries):
         cls._fetch_multi(queries)
@@ -188,26 +184,6 @@ class CachedQuery(CachedQueryBase):
                                self.model.__name__, self.key)
 
 
-class SqlCachedQuery(CachedQuery):
-    def __init__(self, model, key, query, filter_fn):
-        self.query = query
-        # ensure that .update() doesn't fetch more items than we need
-        self.query._limit = MAX_CACHED_ITEMS
-        super(SqlCachedQuery, self).__init__(model, key, query._sort,
-                                             filter_fn)
-
-    def update(self):
-        things = list(self.query)
-
-        with Mutator(CONNECTION_POOL) as m:
-            self.model.remove(m, self.key, None)  # empty the whole row
-            self._insert(m, things)
-
-
-class CassandraCachedQuery(CachedQuery):
-    pass
-
-
 class MergedCachedQuery(CachedQueryBase):
     def __init__(self, queries):
         self.queries = queries
@@ -222,10 +198,6 @@ class MergedCachedQuery(CachedQueryBase):
     def _fetch(self):
         CachedQuery._fetch_multi(self.queries)
         self.data = flatten([q.data for q in self.queries])
-
-    def update(self):
-        for q in self.queries:
-            q.update()
 
 
 class CachedQueryMutator(object):
@@ -295,14 +267,11 @@ def cached_query(model, filter_fn=filter_identity, sort=None):
             row_key_components.extend(str(x) for x in args[1:])
             row_key = '.'.join(row_key_components)
 
-            if sort:
-                return CassandraCachedQuery(model, row_key, sort, filter_fn)
-            else:
-                # call the wrapped function to get a query
-                query = fn(*args)
+            query = fn(*args)
+            query_sort = query._sort if query else sort
+            assert query_sort
 
-                # cached results for everyone!
-                return SqlCachedQuery(model, row_key, query, filter_fn)
+            return CachedQuery(model, row_key, query_sort, filter_fn)
         return cached_query_wrapper
     return cached_query_decorator
 
