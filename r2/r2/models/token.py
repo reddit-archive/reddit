@@ -387,7 +387,7 @@ class OAuth2AuthorizationCode(ConsumableToken):
 class OAuth2AccessToken(Token):
     """An OAuth2 access token for accessing protected resources"""
     token_size = 20
-    _ttl = 10 * 60
+    _ttl = 60 * 60
     _defaults = dict(scope="",
                      token_type="bearer",
                      refresh_token=None,
