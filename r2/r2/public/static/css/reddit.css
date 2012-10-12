@@ -5450,8 +5450,8 @@ tr.gold-accent + tr > td {
     color: #482800;
     background-color: #fff088;
     font-size: 16px;
-    font-family: "Hoefler Text","Palatino Linotype","Book Antiqua",
-                  Palatino,georgia,garamond,FreeSerif,serif;
+    font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
+                 "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
 }
 
 .comment-visits-box .title {
