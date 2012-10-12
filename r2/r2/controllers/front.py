@@ -1051,6 +1051,10 @@ class FrontController(RedditController, OAuth2ResourceController):
                                              lounge_md=lounge_md)).render()
 
 
+    def GET_gold_info(self):
+        return GoldInfoPage(_("gold"), show_sidebar=False).render()
+
+
 class FormsController(RedditController):
 
     def GET_password(self):

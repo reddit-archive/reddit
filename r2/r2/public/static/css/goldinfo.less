@@ -1,0 +1,324 @@
+.transform(...) {
+    -webkit-transform: @arguments;
+    -moz-transform: @arguments;
+    -o-transform: @arguments;
+    -ms-transform: @arguments;
+    transform: @arguments;
+}
+
+section#about-gold, section#postcard, .or-box {
+    font-family: "Bitstream Charter", serif;
+}
+
+section#about-gold {
+    width: 960px;
+    margin: 40px auto;
+    background: url(../gold/inner-bg.jpg) 11px repeat-y;
+
+    h1 {
+        font-weight: bold;
+    }
+
+    p {
+        font-size: 18px;
+    }
+
+    .buy-gold-button, .postcard-button {
+        position: relative;
+        border-radius: 5px;
+        box-shadow: 0 3px 0 #bca88b;
+
+        &:active {
+            top: 2px;
+            box-shadow: none;
+            outline: none;
+        }
+    }
+
+    .buy-gold-button {
+        display: inline-block;
+        padding: 4px 14px;
+        color: #e3d2a2;
+        font-size: 22px;
+        font-weight: bold;
+        line-height: 26px;
+        background: url(../gold/gold-button-bg.png) left top repeat-x;
+        border: 3px solid #5a3f1a;
+        text-shadow: 0 1px 1px #2c2c2c;
+
+        &:after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: -4px;
+            display: block;
+            width: 18px;
+            height: 18px;
+            background: url(../gold/shiny.png) no-repeat;
+            opacity: .6;
+        }
+
+        &:hover {
+            background-position: left bottom;
+            color: #f2ead4;
+            &:after {
+                opacity: 1;
+            }
+        }
+    }
+
+    .postcard-button {
+        padding: 4px 10px 4px 5px;
+        color: #424242;
+        font-size: 18px;
+        background: #f5f0e6;
+        border: 3px solid #656158;
+        text-shadow: 0 1px 1px #bbb;
+
+        img {
+            margin-right: 9px;
+            width: 48px;
+            height: 58px;
+            vertical-align: middle;
+        }
+
+        &:hover {
+            border-color: #8d6411;
+            text-shadow: 0 1px #ecbe61;
+            img {
+                .transform(rotate(-8deg));
+            }
+        }
+    }
+
+    header {
+        // could use box-sizing here, but want to look semi-decent in IE7
+        @width: 960px;
+        @height: 164px;
+        @padding-left: 242px;
+        @padding-right: 50px;
+        @padding-top: 23px;
+        position: relative;
+        top: -10px;
+        width: @width - @padding-left - @padding-right;
+        height: @height - @padding-top;
+        padding-top: @padding-top;
+        padding-left: @padding-left;
+        padding-right: @padding-right;
+        background: url(../gold/header-bg.jpg) no-repeat center top;
+
+        .insignia {
+            position: absolute;
+            left: 38px;
+            top: 6px;
+        }
+
+        h1, p {
+            display: inline;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-right: .5em;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .or {
+            font-size: 18px;
+            margin: 0 16px;
+        }
+    }
+
+    section {
+        @section-height: 135px;
+        height: @section-height;
+        line-height: @section-height;
+        margin: 0 45px;
+        padding: 30px 25px;
+        border-bottom: 1px solid rgba(255,255,255,.65);
+        &.last {
+            border-bottom: none;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: normal;
+            margin: 0;
+            margin-bottom: .25em;
+        }
+
+        p, ul {
+            color: #555;
+            font-size: 16px;
+        }
+
+        .description, .sample {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .description {
+            position: relative;
+            width: 460px;
+            line-height: normal;
+
+            .new-mark {
+                position: absolute;
+                top: -24px;
+                color: #9a7d2e;
+                font-size: 17px;
+                font-weight: bold;
+                font-style: italic;
+            }
+        }
+
+        .sample {
+            @border-radius: 6px;
+            position: relative;
+            float: right;
+            width: 315px;
+            height: @section-height;
+            margin: 0;
+            background: white;
+            border-radius: @border-radius;
+            text-align: center;
+
+            & img {
+                vertical-align: middle;
+            }
+
+            &:after {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                border-radius: @border-radius;
+                box-shadow: 0 1px 5px #735121 inset;
+            }
+        }
+
+        &.lounge .sample {
+            background: white url(../gold/gold-pattern.png)
+        }
+    }
+
+    section.etc {
+        height: auto;
+        line-height: normal;
+        strong {
+            color: black;
+            font-size: 18px;
+            margin-right: .5em;
+        }
+    }
+
+    footer {
+        @height: 169px;
+        @padding-top: 18px;
+        position: relative;
+        top: 10px;
+        width: 960px;
+        height: @height - @padding-top;
+        padding-top: @padding-top;
+        background: url(../gold/footer-bg.jpg) no-repeat;
+        text-align: center;
+
+        h1 {
+            font-size: 26px;
+        }
+
+        p {
+            margin-bottom: 18px;
+        }
+    }
+
+    header, footer {
+        text-shadow: 0 2px 1px rgba(255,255,255,.5);
+    }
+}
+
+.or-box {
+    background: #817461;
+    margin: 0 auto;
+    padding: 3px 0;
+    width: 48px;
+    border-radius: 4px;
+    color: white;
+    font-size: 16px;
+    text-align: center;
+}
+
+a.postcard {
+    display: block;
+    width: 765px;
+    height: 502px;
+    margin: 20px auto;
+}
+
+section#postcard {
+    @height: 502px;
+    @padding-top: 78px;
+    position: relative;
+    height: @height - @padding-top;
+    padding-left: 34px;
+    padding-right: 390px;
+    padding-top: @padding-top;
+    margin-left: 32px;
+    background: url(../gold/postcard.jpg);
+    color: #444;
+    text-align: center;
+
+    h1 {
+        span, strong {
+            display: block;
+            font-size: 22px;
+        }
+
+        strong {
+            font-size: 32px;
+        }
+
+        .for {
+            margin-top: 8px;
+            margin-bottom: 0px;
+        }
+
+        .of {
+            font-size: 17px;
+            margin: 20px 0;
+        }
+
+        .gold-typo {
+            display: inline-block;
+            width: 170px;
+            height: 40px;
+            background: url(../gold/reddit-gold.png) no-repeat;
+            text-indent: -9999px;
+        }
+    }
+
+    .sticker {
+        position: absolute;
+        top: 174px;
+        left: 306px;
+        width: 85px;
+        height: 86px;
+        background: url(../gold/sticker.png) no-repeat;
+
+        div {
+            color: white;
+            padding: 20px 0;
+            font: bold 13px sans-serif;
+            .transform(rotate(-15deg));
+        }
+    }
+
+    &:hover .sticker {
+        background-position: 0 bottom;
+    }
+}

@@ -182,6 +182,7 @@ def make_map():
     mc('/thanks/:secret', controller='forms', action="claim")
 
     mc('/gold', controller='forms', action="gold")
+    mc('/gold/about', controller='front', action='gold_info')
     mc('/gold/thanks', controller='front', action='goldthanks')
 
     mc('/password', controller='forms', action="password")
@@ -189,6 +190,7 @@ def make_map():
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
        requirements=dict(action="help|blog|faq"))
+    mc('/help/gold', controller='redirect', action='redirect', dest='/gold/about')
     mc('/help/*anything', controller='embed', action='help')
     
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
