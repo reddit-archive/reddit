@@ -88,10 +88,6 @@
           title="applied_subreddit_stylesheet"
           type="text/css">
   %endif
-  %if getattr(thing, "additional_css", None):
-    <link rel="stylesheet" href="${static(thing.additional_css)}" 
-          type="text/css" />
-  %endif
 
   <!--[if lt IE 7]>
     <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"
@@ -128,13 +124,14 @@
         ${sidebar(content = thing.rightbox())}
       </div>
     %endif
-    
-    %if thing.content:
+
+    <% content = getattr(self, "content", None) or thing.content %>
+    %if content:
       ##<div class="fixedwidth"><!--IE6sux--></div>
       ##<div class="clearleft"><!--IE6sux--></div>
       <a name="content"></a>
       <div ${tags(id=thing.content_id)} class="content${css_class(thing)}">
-        ${thing.content()}
+        ${content()}
       </div>
     %endif
     

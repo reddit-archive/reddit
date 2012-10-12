@@ -132,7 +132,6 @@ class Reddit(Templated):
     show_firsttext     = True
     content_id         = None
     css_class          = None
-    additional_css     = None
     extra_page_classes = None
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
