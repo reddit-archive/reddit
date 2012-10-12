@@ -69,7 +69,7 @@
 </%def>
 
 <div class="${thing._class} usertable">
-  %if thing.editable:
+  %if thing.addable:
     ${add_form(thing.form_title, thing.destination, thing.type, thing.container_name)}
   %endif
 
