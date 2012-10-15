@@ -3158,20 +3158,6 @@ class PromoteLinkForm(Templated):
                            listing = listing, bids = bids, 
                            *a, **kw)
 
-class PromoteLinkFormOld(PromoteLinkForm):
-    def __init__(self, **kw):
-        PromoteLinkForm.__init__(self, **kw)
-        self.bid = g.min_promote_bid
-        campaign = {}
-        if self.link:
-            campaign = self.link.campaigns[0]
-            self.startdate = campaign.start_date
-            self.enddate = campaign.end_date
-
-        self.bid = campaign.get("bid", g.min_promote_bid)
-        self.freebie = campaign.get("status",{}).get("free", False)
-        self.complete = campaign.get("status",{}).get("complete", False)
-        self.paid = campaign.get("status",{}).get("paid", False)
 
 class Roadblocks(Templated):
     def __init__(self):
@@ -3359,7 +3345,7 @@ class PaymentForm(Templated):
         self.countries = [pycountry.countries.get(name=n) 
                           for n in g.allowed_pay_countries]
         self.link = promote.editable_add_props(link)
-        self.campaign = self.link.campaigns[indx]
+        self.campaign = self.link.campaigns[indx] # FIXME: is this broken?
         self.indx = indx
         Templated.__init__(self, **kw)
 
@@ -3438,7 +3424,7 @@ class Promote_Graph(Templated):
     def get_market(cls, user_id, start_date, end_date):
         market = {}
         promo_counter = {}
-        def callback(link, bid, bid_day, starti, endi, indx):
+        def callback(link, bid_day, starti, endi, dummy):
             for i in xrange(starti, endi):
                 if user_id is None or link.author_id == user_id:
                     if (not promote.is_unpaid(link) and 
@@ -3451,18 +3437,19 @@ class Promote_Graph(Templated):
     @classmethod
     def promo_iter(cls, start_date, end_date, callback):
         size = (end_date - start_date).days
-        for link, indx, s, e in cls.get_current_promos(start_date, end_date):
-            if indx in link.campaigns:
-                sdate, edate, bid, sr, trans_id = link.campaigns[indx]
-                if isinstance(sdate, datetime.datetime):
-                    sdate = sdate.date()
-                if isinstance(edate, datetime.datetime):
-                    edate = edate.date()
+        current_promos = cls.get_current_promos(start_date, end_date)
+        campaign_ids = [camp_id for link, camp_id, s, e in current_promos]
+        campaigns = PromoCampaign._byID(campaign_ids, data=True)
+        for link, campaign_id, s, e in current_promos:
+            if campaign_id in campaigns:
+                campaign = campaigns[campaign_id]
+                sdate = campaign.start_date.date()
+                edate = campaign.end_date.date()
                 starti = max((sdate - start_date).days, 0)
-                endi   = min((edate - start_date).days, size)
-                bid_day = bid / max((edate - sdate).days, 1)
-                callback(link, bid, bid_day, starti, endi, indx)
-
+                endi = min((edate - start_date).days, size)
+                bid_day = campaign.bid / max((edate - sdate).days, 1)
+                callback(link, bid_day, starti, endi, campaign)
+        
     @classmethod
     def get_current_promos(cls, start_date, end_date):
         # grab promoted links
@@ -3500,11 +3487,11 @@ class Promote_Graph(Templated):
 
         # determine the range of each link
         promote_blocks = []
-        def block_maker(link, bid, bid_day, starti, endi, indx):
+        def block_maker(link, bid_day, starti, endi, campaign):
             if ((c.user_is_sponsor or link.author_id == c.user._id)
                 and not promote.is_rejected(link)
                 and not promote.is_unpaid(link)):
-                promote_blocks.append( (link, bid, starti, endi, indx) )
+                promote_blocks.append((link, starti, endi, campaign))
         self.promo_iter(start_date, end_date, block_maker)
 
         # now sort the promoted_blocks into the most contiguous chuncks we can

@@ -137,39 +137,35 @@ ${load_timeseries_js()}
 <% 
    prev_end = 0
  %>
-%for link, bid, start, end, indx in thing.promote_blocks:
-  <% 
-     start += 1
-     end += 1
-     sr = '' 
-     if indx in getattr(link, "campaigns", {}):
-         sr = link.campaigns[indx][promote.CAMPAIGN.sr]
-     if sr:
-        sr += ':'
-   %>
- %if start != end:
+%for link, start, end, campaign in thing.promote_blocks:
+  <%
+    start += 1
+    end += 1
+    sr = campaign.sr_name + ':' if campaign.sr_name else ''
+  %>
+  %if start != end:
   %if prev_end > start:
     <% prev_end = 0 %>
     <div class="clearleft"></div>
   %endif
-  <%
-     margin = "%.2f" % (float(max_percent*(start-prev_end))/(thing.total_size+1))
-     width  = "%.2f" % (float(max_percent*(end-start))/(thing.total_size+1))
-     prev_end = end 
-   %>  
-  <div class="blob promotedlink ${link.rowstyle} rounded"
-       title="${link.title}"  
-       style="width: ${width}%; margin-left: ${margin}%">
-    <div class="bid">
-      ${sr}$${int(bid)}
+    <%
+       margin = "%.2f" % (float(max_percent*(start-prev_end))/(thing.total_size+1))
+       width  = "%.2f" % (float(max_percent*(end-start))/(thing.total_size+1))
+       prev_end = end 
+     %>  
+    <div class="blob promotedlink ${link.rowstyle} rounded"
+         title="${link.title}"  
+         style="width: ${width}%; margin-left: ${margin}%">
+      <div class="bid">
+        ${sr}$${int(campaign.bid)}
+      </div>
+      <a class="title" 
+         href="/promoted/edit_promo/${link._id36}"
+         title="${link.title}">
+        ${link.author.name}
+      </a>
     </div>
-    <a class="title" 
-       href="/promoted/edit_promo/${link._id36}"
-       title="${link.title}">
-      ${link.author.name}
-    </a>
-  </div>
- %endif
+  %endif
 %endfor
 </div>
 <div class="clear"></div>
