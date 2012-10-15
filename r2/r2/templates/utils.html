@@ -601,6 +601,10 @@ ${unsafe(txt)}
   %endif
 </%def>
 
+<%def name="md(text, wrap=False)">
+  ${unsafe(safemarkdown(text, wrap=wrap))}
+</%def>
+
 <%def name="_md(text, wrap=False)">
-  ${unsafe(safemarkdown(_(text), wrap=wrap))}
+  ${md(_(text), wrap=wrap)}
 </%def>
