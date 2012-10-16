@@ -3612,7 +3612,20 @@ class HouseAd(CachedTemplate):
         res = CachedTemplate.render(self, *a, **kw)
         return responsive(res, False)
 
-def render_ad(reddit_name=None, codename=None, keyword=None):
+
+def render_ad_by_codename(codename):
+    if codename == "DART":
+        return Dart_Ad("reddit.dart", g.default_sr).render()
+
+    try:
+        ad = Ad._by_codename(codename)
+    except NotFound:
+        abort(404)
+    attrs = ad.important_attrs()
+    return HouseAd(**attrs).render()
+
+
+def render_ad(reddit_name=None, keyword=None):
     if not reddit_name:
         reddit_name = g.default_sr
         if g.live_config["frontpage_dart"]:
@@ -3630,17 +3643,6 @@ def render_ad(reddit_name=None, codename=None, keyword=None):
 
     if keyword:
         return Dart_Ad(dartsite, reddit_name, keyword).render()
-
-    if codename:
-        if codename == "DART":
-            return Dart_Ad(dartsite, reddit_name).render()
-        else:
-            try:
-                ad = Ad._by_codename(codename)
-            except NotFound:
-                abort(404)
-            attrs = ad.important_attrs()
-            return HouseAd(**attrs).render()
 
     ads = {}
 

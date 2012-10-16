@@ -24,7 +24,7 @@ from validator import *
 from reddit_base import MinimalController
 
 from r2.lib.scraper import get_media_embed
-from r2.lib.pages import MediaEmbedBody, render_ad
+from r2.lib.pages import MediaEmbedBody, render_ad, render_ad_by_codename
 
 from pylons import request
 from pylons.controllers.util import abort
@@ -72,5 +72,5 @@ class AdController(MinimalController):
         if not codename:
             abort(404)
         c.render_style = "html"
-        return render_ad(codename=codename)
+        return render_ad_by_codename(codename)
 
