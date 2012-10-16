@@ -510,7 +510,7 @@ ${unsafe(js.use('sponsored'))}
       <input id="promote_note" name="note" value="" type="text" size="40" />
       <button type="submit">save</button>
       <div class="notes">
-        %for line in getattr(thing.link, "promotion_log", []):
+        %for line in thing.promotion_log:
           <p>${line}</p>
         %endfor
       </div>

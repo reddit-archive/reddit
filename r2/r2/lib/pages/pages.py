@@ -3148,6 +3148,7 @@ class PromoteLinkForm(Templated):
                                else g.default_sr)
             # have the promo code wrap the campaigns for rendering
             self.link = promote.editable_add_props(link)
+            self.promotion_log = promote.PromotionLog.get(link)
 
         if not c.user_is_sponsor:
             self.now = promote.promo_datetime_now().date()
