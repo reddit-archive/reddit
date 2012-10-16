@@ -4247,6 +4247,7 @@ table.lined-table {
 .sponsorshipbox div { 
     border: 1px solid #D0D0D0; 
     width: 300px; 
+    font-size: 0;
 }
 
 /* otherwise the pixel will cause a horizontal scrollbar in firefox */
