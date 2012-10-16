@@ -3111,8 +3111,8 @@ class PromotePage(Reddit):
         Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
 
 class PromoteLinkForm(Templated):
-    def __init__(self, sr = None, link = None, listing = '',
-                 timedeltatext = '', *a, **kw):
+    def __init__(self, sr=None, link=None, listing='',
+                 timedeltatext='', *a, **kw):
         bids = []
         if c.user_is_sponsor and link:
             self.author = Account._byID(link.author_id)
@@ -3127,32 +3127,32 @@ class PromoteLinkForm(Templated):
 
         # min date is the day before the first possible start date.
         self.promote_date_today = now
-        mindate = (make_offset_date(now, g.min_promote_future,
-                                    business_days = True) -
-                   datetime.timedelta(1))
+        mindate = make_offset_date(now, g.min_promote_future,
+                                  business_days=True)
+        mindate -= datetime.timedelta(1)
 
         startdate = mindate + datetime.timedelta(1)
-        enddate   = startdate + datetime.timedelta(3)
+        enddate = startdate + datetime.timedelta(3)
 
         self.startdate = startdate.strftime("%m/%d/%Y")
-        self.enddate   = enddate  .strftime("%m/%d/%Y")
+        self.enddate = enddate.strftime("%m/%d/%Y")
 
-        self.mindate   = mindate  .strftime("%m/%d/%Y")
+        self.mindate = mindate.strftime("%m/%d/%Y")
 
         self.link = None
         if link:
             self.sr_searches = simplejson.dumps(popular_searches())
             self.subreddits = (Subreddit.submit_sr_names(c.user) or
                                Subreddit.submit_sr_names(None))
-            self.default_sr = self.subreddits[0] if self.subreddits \
-                              else g.default_sr
+            self.default_sr = (self.subreddits[0] if self.subreddits
+                               else g.default_sr)
             # have the promo code wrap the campaigns for rendering
             self.link = promote.editable_add_props(link)
 
         if not c.user_is_sponsor:
             self.now = promote.promo_datetime_now().date()
-            start_date = promote.promo_datetime_now(offset = -14).date()
-            end_date = promote.promo_datetime_now(offset = 14).date()
+            start_date = promote.promo_datetime_now(offset=-14).date()
+            end_date = promote.promo_datetime_now(offset=14).date()
 
             self.promo_traffic = dict(promote.traffic_totals())
             self.market, self.promo_counter = \
@@ -3160,11 +3160,9 @@ class PromoteLinkForm(Templated):
 
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 
-        Templated.__init__(self, sr = sr, 
-                           datefmt = datefmt,
-                           timedeltatext = timedeltatext,
-                           listing = listing, bids = bids, 
-                           *a, **kw)
+        Templated.__init__(self, sr=sr, datefmt = datefmt,
+                           timedeltatext=timedeltatext, listing = listing,
+                           bids = bids, *a, **kw)
 
 
 class Roadblocks(Templated):
