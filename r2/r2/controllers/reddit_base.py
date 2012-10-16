@@ -325,20 +325,19 @@ def set_subreddit():
         c.site = Sub
     elif '+' in sr_name:
         sr_names = sr_name.split('+')
-        srs = set(Subreddit._by_name(sr_names, stale=can_stale).values())
+        srs = Subreddit._by_name(sr_names, stale=can_stale).values()
         if All in srs:
             c.site = All
         elif Friends in srs:
             c.site = Friends
         else:
             srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
-            if len(srs) == 0:
+            if not srs:
                 c.site = MultiReddit([], sr_name)
             elif len(srs) == 1:
-                c.site = srs.pop()
+                c.site = srs[0]
             else:
-                sr_ids = [sr._id for sr in srs]
-                c.site = MultiReddit(sr_ids, sr_name)
+                c.site = MultiReddit(srs, sr_name)
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         if not sr_names[0].lower() == All.name.lower():

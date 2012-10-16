@@ -1105,19 +1105,13 @@ class MultiReddit(_DefaultSR):
     name = 'multi'
     header = ""
 
-    def __init__(self, sr_ids, path):
+    def __init__(self, srs, path):
         _DefaultSR.__init__(self)
         self.real_path = path
-        self.sr_ids = sr_ids
-
-        self.srs = Subreddit._byID(self.sr_ids, return_dict=False)
-        self.banned_sr_ids = []
-        self.kept_sr_ids = []
-        for sr in self.srs:
-            if sr._spam:
-                self.banned_sr_ids.append(sr._id)
-            else:
-                self.kept_sr_ids.append(sr._id)
+        self.srs = srs
+        self.sr_ids = [sr._id for sr in srs]
+        self.banned_sr_ids = [sr._id for sr in srs if sr._spam]
+        self.kept_sr_ids = [sr._id for sr in srs if not sr._spam]
 
     def is_moderator(self, user):
         if not user:
@@ -1164,7 +1158,8 @@ class ModContribSR(MultiReddit):
     real_path = None
 
     def __init__(self):
-        MultiReddit.__init__(self, self.sr_ids, self.real_path)
+        # Can't lookup srs right now, c.user not set
+        MultiReddit.__init__(self, [], self.real_path)
 
     @property
     def sr_ids(self):
@@ -1174,8 +1169,16 @@ class ModContribSR(MultiReddit):
             return []
 
     @property
+    def srs(self):
+        return Subreddit._byID(self.sr_ids, data=True, return_dict=False)
+
+    @property
     def kept_sr_ids(self):
-        return self.sr_ids
+        return [sr._id for sr in self.srs if not sr._spam]
+
+    @property
+    def banned_sr_ids(self):
+        return [sr._id for sr in self.srs if sr._spam]
 
 class ModSR(ModContribSR):
     name  = "subreddits you moderate"
