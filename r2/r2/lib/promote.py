@@ -36,6 +36,7 @@ from r2.lib.db.queries import make_results, db_sort, add_queries, merge_results
 import itertools
 
 import random
+from uuid import uuid1
 
 promoted_memo_lifetime = 30
 promoted_memo_key = 'cached_promoted_links2'
@@ -331,22 +332,6 @@ def traffic_totals():
     traffic_data = traffic.zip_timeseries(impressions, clicks)
     return [(d.date(), v) for d, v in traffic_data]
 
-# logging routine for keeping track of diffs
-def promotion_log(thing, text, commit = False):
-    """
-    For logging all sorts of things
-    """
-    name = c.user.name if c.user_is_loggedin else "<MAGIC>"
-    log = list(getattr(thing, "promotion_log", []))
-    now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
-    text = "[%s: %s] %s" % (name, now, text)
-    log.append(text)
-    # copy (and fix encoding) to make _dirty
-    thing.promotion_log = map(filters._force_utf8, log)
-    if commit:
-        thing._commit()
-    return text
-
 def new_promotion(title, url, user, ip):
     """
     Creates a new promotion with the provided title, etc, and sets it
@@ -357,7 +342,7 @@ def new_promotion(title, url, user, ip):
     l.promoted = True
     l.disable_comments = False
     l.campaigns = {}
-    promotion_log(l, "promotion created")
+    PromotionLog.add(l, 'promotion created')
     l._commit()
 
     # set the status of the link, populating the query queue
@@ -408,7 +393,7 @@ def new_campaign(link, dates, bid, sr):
     sr_name = sr.name if sr else ""
     campaign = PromoCampaign._new(link, sr_name, bid, dates[0], dates[1])
     PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
-    promotion_log(link, "campaign %s created" % campaign._id, commit=True)
+    PromotionLog.add(link, 'campaign %s created' % campaign._id)
     author = Account._byID(link.author_id, True)
     if getattr(author, "complimentary_promos", False):
         free_campaign(link, campaign._id, c.user)
@@ -434,8 +419,9 @@ def edit_campaign(link, campaign_id, dates, bid, sr):
         campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id, commit=True)
 
         # record the transaction
-        promotion_log(link, "updated campaign %s. (bid: %0.2f)" % (campaign_id, bid), commit=True)
-       
+        text = 'updated campaign %s. (bid: %0.2f)' % (campaign_id, bid)
+        PromotionLog.add(link, text)
+
         # make it a freebie, if applicable
         author = Account._byID(link.author_id, True)
         if getattr(author, "complimentary_promos", False):
@@ -445,8 +431,9 @@ def edit_campaign(link, campaign_id, dates, bid, sr):
         g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" % 
                     (campaign_id, link._id, e))
         try: # wrapped in try/except so orig error won't be lost if commit fails
-            promotion_log(link, "update FAILED. (campaign: %s, bid: %.2f)" % 
-              (campaign_id, bid), commit=True)
+            text = 'update FAILED. (campaign: %s, bid: %.2f)' % (campaign_id,
+                                                                 bid)
+            PromotionLog.add(link, text)
         except:
             pass
         raise e
@@ -463,7 +450,7 @@ def delete_campaign(link, campaign_id):
         PromotionWeights.delete_unfinished(link, campaign_id)
         void_campaign(link, campaign_id)
         campaign.delete()
-        promotion_log(link, "deleted campaign %s" % campaign_id, commit=True)
+        PromotionLog.add(link, 'deleted campaign %s' % campaign_id)
     except NotFound:
         g.log.debug("Skipping deletion of non-existent PromoCampaign [link:%d, campaign_id:%d]" %
                     (link._id, campaign_id))
@@ -502,11 +489,12 @@ def auth_campaign(link, campaign_id, user, pay_id):
                                                   link, campaign_id, test=test)
 
     if trans_id and not reason:
-        promotion_log(link, "updated payment and/or bid for campaign %s: "
-                      "SUCCESS (trans_id: %d, amt: %0.2f)"
-                      % (campaign_id, trans_id, campaign.bid))
+        text = ('updated payment and/or bid for campaign %s: '
+                'SUCCESS (trans_id: %d, amt: %0.2f)' % (campaign_id, trans_id,
+                                                        campaign.bid))
+        PromotionLog.add(link, text)
         if trans_id < 0:
-            promotion_log(link, "FREEBIE (campaign: %s)" % campaign_id)
+            PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign_id)
 
         set_status(link,
                    max(STATUS.unseen if trans_id else STATUS.unpaid,
@@ -518,8 +506,9 @@ def auth_campaign(link, campaign_id, user, pay_id):
     
     else:
         # something bad happend.
-        promotion_log(link, "updated payment and/or bid for campaign %s: FAILED ('%s')" 
-                      % (campaign_id, reason))
+        text = ("updated payment and/or bid for campaign %s: FAILED ('%s')"
+                % (campaign_id, reason))
+        PromotionLog.add(link, text)
         trans_id = 0
 
     campaign.trans_id = trans_id
@@ -547,14 +536,14 @@ def accept_promotion(link):
 
     If a campagn is able to run, this also requeues it.
     """
-    promotion_log(link, "status update: accepted")
+    PromotionLog.add(link, 'status update: accepted')
     # update the query queue
 
     set_status(link, STATUS.accepted)
     now = promo_datetime_now(0)
     if link._fullname in set(l.thing_name for l in
                              PromotionWeights.get_campaigns(now)):
-        promotion_log(link, "requeued")
+        PromotionLog.add(link, 'requeued')
         charge_pending(0) # campaign must be charged before it will go live
         make_daily_promotions()
     if link._spam:
@@ -563,7 +552,7 @@ def accept_promotion(link):
     emailer.accept_promo(link)
 
 def reject_promotion(link, reason = None):
-    promotion_log(link, "status update: rejected")
+    PromotionLog.add(link, 'status update: rejected')
     # update the query queue
     set_status(link, STATUS.rejected)
     # check to see if this link is a member of the current live list
@@ -576,14 +565,14 @@ def reject_promotion(link, reason = None):
             if not weighted[k]:
                 del weighted[k]
         set_live_promotions((links, weighted))
-        promotion_log(link, "dequeued")
+        PromotionLog.add(link, 'dequeued')
     # don't send a rejection email when the rejection was user initiated.
     if not c.user or c.user._id != link.author_id:
         emailer.reject_promo(link, reason = reason)
 
 
 def unapprove_promotion(link):
-    promotion_log(link, "status update: unapproved")
+    PromotionLog.add(link, 'status update: unapproved')
     # update the query queue
     set_status(link, STATUS.unseen)
     links, weghts = get_live_promotions()
@@ -650,8 +639,9 @@ def charge_pending(offset=1):
             else:
                 set_status(l, STATUS.pending,
                     onchange=lambda: emailer.queue_promo(l, camp.bid, camp.trans_id))
-            promotion_log(l, "auth charge for campaign %s, trans_id: %d" % 
-                             (camp._id, camp.trans_id), commit=True)
+            text = ('auth charge for campaign %s, trans_id: %d' % 
+                    (camp._id, camp.trans_id))
+            PromotionLog.add(l, text)
         except:
             print "Error on %s, campaign %s" % (l, camp._id)
 
@@ -962,6 +952,41 @@ def get_total_run(link):
     latest = latest.replace(tzinfo=None) - timezone_offset
 
     return earliest, latest
+
+
+class PromotionLog(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _compare_with = TIME_UUID_TYPE
+
+    @classmethod
+    def _rowkey(cls, link):
+        return link._fullname
+
+    @classmethod
+    def add(cls, link, text):
+        name = c.user.name if c.user_is_loggedin else "<AUTOMATED>"
+        now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
+        text = "[%s: %s] %s" % (name, now, text)
+        rowkey = cls._rowkey(link)
+        column = {uuid1(): text}
+        cls._set_values(rowkey, column)
+
+        # Dual write to old promotion_log attribute
+        log = list(getattr(link, "promotion_log", []))
+        log.append(text)
+        link.promotion_log = map(filters._force_utf8, log)
+        link._commit()
+        return text
+
+    @classmethod
+    def get(cls, link):
+        rowkey = cls._rowkey(link)
+        try:
+            row = cls._byID(rowkey)
+        except tdb_cassandra.NotFound:
+            return []
+        return row._values().values()
 
 
 def Run(offset = 0):
