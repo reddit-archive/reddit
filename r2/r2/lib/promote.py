@@ -383,12 +383,12 @@ def campaign_lock(link):
     return "edit_promo_campaign_lock_" + str(link._id)
 
 def get_transactions(link):
-    '''
+    """
     Gets records from the bids table for all campaigns on link that have a
       non-zero transaction id. Note this set includes auth, charged, and void
       transactions, any of which could be freebies and/or finished running.
     Returns a dict mapping campaign ids to Bid objects.
-    '''
+    """
     campaigns = PromoCampaign._query(PromoCampaign.c.link_id == link._id,
                                      PromoCampaign.c.trans_id != 0,
                                      data=True)
@@ -612,7 +612,7 @@ def accepted_campaigns(offset=0):
         yield (link, campaign, pw.weight)
     
 def get_scheduled(offset=0):
-    '''  
+    """
     Arguments:
       offset - number of days after today you want the schedule for
     Returns:
@@ -622,7 +622,8 @@ def get_scheduled(offset=0):
       -error_campaigns is a list of (campaign_id, error_msg) tuples if any 
         exceptions were raised or an empty list if there were none
       Note: campaigns in error_campaigns will not be included in by_sr
-      '''
+
+    """
     by_sr = {} 
     error_campaigns = [] 
     links = set()
@@ -707,13 +708,13 @@ def get_traffic_weights(srnames):
     return res
 
 def weight_schedule(by_sr):
-    '''
+    """
     Arguments:
       by_sr - a dict mapping subreddit names to lists of (Link, bid) tuples. 
         Usually this data struct would come from the output of get_scheduled
     Returns:
       a dict just like by_sr but with bids replaced by weights 
-    '''
+    """
     weight_dict = get_traffic_weights(by_sr.keys())
     weighted = {}
     for sr_name, t_tuples in by_sr.iteritems():
@@ -772,12 +773,12 @@ def set_live_promotions(links, weights, which=("cass", "permacache")):
 # current promotions until they're actually charged, so make sure to call
 # charge_pending() before make_daily_promotions()
 def make_daily_promotions(offset = 0, test = False):
-    '''
+    """
     Arguments:
       offset - number of days after today to get the schedule for
       test - if True, new schedule will be generated but not launched
     Raises Exception with list of campaigns that had errors if there were any
-    '''
+    """
     schedule = get_scheduled(offset)
     all_links = set([l._fullname for l in schedule['links']])
     error_campaigns = schedule['error_campaigns']
@@ -1030,10 +1031,10 @@ class PromotionLog(tdb_cassandra.View):
 
 
 def Run(offset = 0):
-    '''reddit-job-update_promos: Intended to be run hourly to pull in
+    """reddit-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
     
-    '''
+    """
     charge_pending(offset = offset + 1)
     charge_pending(offset = offset)
     amqp.add_item(UPDATE_QUEUE, json.dumps(QUEUE_ALL),
@@ -1041,12 +1042,12 @@ def Run(offset = 0):
 
 
 def run_changed(drain=False, limit=100, sleep_time=10, verbose=False):
-    '''reddit-consumer-update_promos: amqp consumer of update_promos_q
+    """reddit-consumer-update_promos: amqp consumer of update_promos_q
     
     Handles asynch accepting/rejecting of ads that are scheduled to be live
     right now
     
-    '''
+    """
     @g.stats.amqp_processor(UPDATE_QUEUE)
     def _run(msgs, chan):
         items = [json.loads(msg.body) for msg in msgs]
