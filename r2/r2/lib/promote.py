@@ -1012,12 +1012,6 @@ class PromotionLog(tdb_cassandra.View):
         rowkey = cls._rowkey(link)
         column = {uuid1(): filters._force_utf8(text)}
         cls._set_values(rowkey, column)
-
-        # Dual write to old promotion_log attribute
-        log = list(getattr(link, "promotion_log", []))
-        log.append(text)
-        link.promotion_log = map(filters._force_utf8, log)
-        link._commit()
         return text
 
     @classmethod
