@@ -262,6 +262,7 @@ class Stats:
                     service_time = (time.time() - start) / len(msg_tup)
                     for msg in msg_tup:
                         self.transact('amqp.%s' % queue_name, service_time)
+                    self.flush()
             return wrap_processor
         return decorator
 
