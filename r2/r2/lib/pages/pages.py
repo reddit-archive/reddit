@@ -3146,8 +3146,8 @@ class PromoteLinkForm(Templated):
                                Subreddit.submit_sr_names(None))
             self.default_sr = (self.subreddits[0] if self.subreddits
                                else g.default_sr)
-            # have the promo code wrap the campaigns for rendering
-            self.link = promote.editable_add_props(link)
+            self.link = promote.wrap_promoted(link)
+            self.campaigns = promote.get_renderable_campaigns(link)
             self.promotion_log = promote.PromotionLog.get(link)
 
         if not c.user_is_sponsor:
@@ -3351,8 +3351,9 @@ class PaymentForm(Templated):
     def __init__(self, link, indx, **kw):
         self.countries = [pycountry.countries.get(name=n) 
                           for n in g.allowed_pay_countries]
-        self.link = promote.editable_add_props(link)
-        self.campaign = self.link.campaigns[indx]
+        self.link = promote.wrap_promoted(link)
+        campaigns = promote.get_renderable_campaigns(link)
+        self.campaign = campaigns[indx]
         self.indx = indx
         Templated.__init__(self, **kw)
 

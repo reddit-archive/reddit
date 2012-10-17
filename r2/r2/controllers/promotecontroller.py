@@ -377,12 +377,14 @@ class PromoteController(ListingController):
 
         if indx is not None:
             promote.edit_campaign(l, indx, dates, bid, sr)
-            l = promote.editable_add_props(l)
-            jquery.update_campaign(*l.campaigns[indx])
+            renderable_campaigns = promote.get_renderable_campaigns(l)
+            campaign = renderable_campaigns[indx]
+            jquery.update_campaign(*campaign)
         else:
             indx = promote.new_campaign(l, dates, bid, sr)
-            l = promote.editable_add_props(l)
-            jquery.new_campaign(*l.campaigns[indx])
+            renderable_campaigns = promote.get_renderable_campaigns(l)
+            campaign = renderable_campaigns[indx]
+            jquery.new_campaign(*campaign)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

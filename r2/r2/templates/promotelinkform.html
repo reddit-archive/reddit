@@ -84,7 +84,7 @@ ${unsafe(js.use('sponsored'))}
         </p></div>
       <div class="clear"></div>
    </div>
-    <div id="campaign" style="${'display:none' if thing.link.campaigns else ''}"
+    <div id="campaign" style="${'display:none' if thing.campaigns else ''}"
          class="campaign infotext rounded" method="post" action="/api/add_campaign">
 
 
@@ -217,7 +217,7 @@ ${unsafe(js.use('sponsored'))}
      <div class="clear"></div>
     </div>
    <div class="existing-campaigns infotext rounded">
-      <table style="${'display:none' if not thing.link.campaigns else ''}">
+      <table style="${'display:none' if not thing.campaigns else ''}">
         <tr>
           <th title="${start_title}">start</th>
           <th title="${end_title}">end</th>
@@ -233,7 +233,7 @@ ${unsafe(js.use('sponsored'))}
       </table>
       <script type="text/javascript">
         $(function() {
-           %for campaign in sorted(thing.link.campaigns.values(), \
+           %for campaign in sorted(thing.campaigns.values(), \
                                    key = lambda x: x.start_date):
             $.new_campaign(${unsafe(','.join(simplejson.dumps(x) for x in campaign))});
            %endfor
@@ -241,7 +241,7 @@ ${unsafe(js.use('sponsored'))}
           });
       </script>
       <p class="error" 
-         style="${'display:none' if thing.link.campaigns else ''}">
+         style="${'display:none' if thing.campaigns else ''}">
         You don't have any campaigns for this link yet.  You should add one.
       </p>
    </div>

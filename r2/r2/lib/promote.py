@@ -310,18 +310,22 @@ class RenderableCampaign():
         for s in self.__slots__:
             yield getattr(self, s)
 
-def editable_add_props(l):
-    if not isinstance(l, Wrapped):
-        l = Wrapped(l)
 
-    l.bids = get_transactions(l)
+def get_renderable_campaigns(link):
+    campaigns = PromoCampaign._by_link(link._id)
+    bids = get_transactions(link)
+    renderable = {}
+    for campaign in campaigns:
+        rc = RenderableCampaign(link, campaign, bids.get(campaign._id))
+        renderable[campaign._id] = rc
+    return renderable
 
-    campaigns = {}
-    for campaign in PromoCampaign._by_link(l._id):
-        campaigns[campaign._id] = RenderableCampaign(l, campaign, l.bids.get(campaign._id))
-    l.campaigns = campaigns
 
-    return l
+def wrap_promoted(link):
+    if not isinstance(link, Wrapped):
+        link = Wrapped(link)
+    return link
+
 
 # These could be done with relationships, but that seeks overkill as
 # we never query based on user and only check per-thing
