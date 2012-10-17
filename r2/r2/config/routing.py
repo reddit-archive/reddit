@@ -145,7 +145,7 @@ def make_map():
        controller='promote', action='edit_promo')
     mc('/promoted/edit_promo/pc/:campaign', controller='promote', # admin only
        action='edit_promo_campaign')
-    mc('/promoted/pay/:link/:indx',
+    mc('/promoted/pay/:link/:campaign',
        controller='promote', action='pay')
     mc('/promoted/graph',
        controller='promote', action='graph')

@@ -41,7 +41,7 @@ ${unsafe(js.use('sponsored'))}
       (from ${thing.campaign.start_date} to ${thing.campaign.end_date}).
     </p>
     <p id="bid-field">
-      <input type="hidden" name="indx" value="${thing.indx}" />
+      <input type="hidden" name="campaign" value="${thing.campaign.campaign_id36}" />
       <input type="hidden" name="link" value="${thing.link._fullname}" />
       ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=thing.campaign.bid))}
       ${error_field("BAD_BID", "bid")}

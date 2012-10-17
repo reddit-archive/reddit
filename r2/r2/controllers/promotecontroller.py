@@ -114,10 +114,10 @@ class PromoteController(ListingController):
     ### POST controllers below
     @validatedForm(VSponsorAdmin(),
                    link = VLink("link_id"),
-                   indx = VInt("indx"))
-    def POST_freebie(self, form, jquery, link, indx):
-        if promote.is_promo(link) and indx is not None:
-            promote.free_campaign(link, indx, c.user)
+                   campaign = VPromoCampaign("campaign_id36"))
+    def POST_freebie(self, form, jquery, link, campaign):
+        if promote.is_promo(link) and campaign:
+            promote.free_campaign(link, campaign, c.user)
             form.redirect(promote.promo_edit_url(link))
 
     @validatedForm(VSponsorAdmin(),
@@ -296,9 +296,9 @@ class PromoteController(ListingController):
                    bid   = VFloat('bid', min=0, max=g.max_promote_bid, 
                                   coerce=False, error=errors.BAD_BID),
                    sr = VSubmitSR('sr', promotion=True),
-                   indx = VInt("indx"), 
+                   campaign_id36 = nop("campaign_id36"), 
                    targeting = VLength("targeting", 10))
-    def POST_edit_campaign(self, form, jquery, l, indx,
+    def POST_edit_campaign(self, form, jquery, l, campaign_id36,
                           dates, bid, sr, targeting):
         if not l:
             return
@@ -341,7 +341,7 @@ class PromoteController(ListingController):
 
         # you cannot edit the bid of a live ad unless it's a freebie
         try:
-            campaign = PromoCampaign._byID(indx)
+            campaign = PromoCampaign._byID(campaign_id36)
             if (bid != campaign.bid and 
                 campaign.start_date < datetime.now(g.tz)
                 and not campaign.is_freebie()):
@@ -375,24 +375,25 @@ class PromoteController(ListingController):
         if targeting == 'none':
             sr = None
 
-        if indx is not None:
-            promote.edit_campaign(l, indx, dates, bid, sr)
-            renderable_campaigns = promote.get_renderable_campaigns(l)
-            campaign = renderable_campaigns[indx]
-            jquery.update_campaign(*campaign)
+        if campaign_id36 is not None:
+            campaign = PromoCampaign._byID36(campaign_id36)
+            promote.edit_campaign(l, campaign, dates, bid, sr)
+            r = promote.get_renderable_campaigns(l, campaign)
+            jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
+                                   r.duration, r.bid, r.sr, r.status)
         else:
-            indx = promote.new_campaign(l, dates, bid, sr)
-            renderable_campaigns = promote.get_renderable_campaigns(l)
-            campaign = renderable_campaigns[indx]
-            jquery.new_campaign(*campaign)
+            campaign = promote.new_campaign(l, dates, bid, sr)
+            r = promote.get_renderable_campaigns(l, campaign)
+            jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
+                                r.duration, r.bid, r.sr, r.status)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),
                    l     = VLink('link_id'),
-                   indx = VInt("indx"))
-    def POST_delete_campaign(self, form, jquery, l, indx):
-        if l and indx is not None:
-            promote.delete_campaign(l, indx)
+                   campaign = VPromoCampaign("campaign_id36"))
+    def POST_delete_campaign(self, form, jquery, l, campaign):
+        if l and campaign:
+            promote.delete_campaign(l, campaign)
 
 
     @validatedForm(VSponsor('container'),
@@ -439,7 +440,7 @@ class PromoteController(ListingController):
 
     @validatedForm(VSponsor('link'),
                    link = VByName("link"),
-                   indx = VInt("indx"),
+                   campaign = VPromoCampaign("campaign"),
                    customer_id = VInt("customer_id", min = 0),
                    pay_id = VInt("account", min = 0),
                    edit   = VBoolean("edit"),
@@ -449,7 +450,7 @@ class PromoteController(ListingController):
                     allowed_countries = g.allowed_pay_countries),
                    creditcard = ValidCard(["cardNumber", "expirationDate",
                                            "cardCode"]))
-    def POST_update_pay(self, form, jquery, link, indx, customer_id, pay_id,
+    def POST_update_pay(self, form, jquery, link, campaign, customer_id, pay_id,
                         edit, address, creditcard):
         address_modified = not pay_id or edit
         form_has_errors = False
@@ -470,7 +471,8 @@ class PromoteController(ListingController):
             # valid bid and created or existing bid id.
             # check if already a transaction
             if g.authorizenetapi:
-                success, reason = promote.auth_campaign(link, indx, c.user, pay_id)
+                success, reason = promote.auth_campaign(link, campaign, c.user,
+                                                        pay_id)
             else:
                 success = True
             if success:
@@ -481,25 +483,24 @@ class PromoteController(ListingController):
                               _("failed to authenticate card.  sorry."))
 
     @validate(VSponsor("link"),
-              article = VLink("link"),
-              indx = VInt("indx"))
-    def GET_pay(self, article, indx):
+              link = VLink("link"),
+              campaign = VPromoCampaign("campaign"))
+    def GET_pay(self, link, campaign):
         # no need for admins to play in the credit card area
-        if c.user_is_loggedin and c.user._id != article.author_id:
+        if c.user_is_loggedin and c.user._id != link.author_id:
             return self.abort404()
 
-        if not promote.is_valid_campaign(article, indx):
+        if not campaign.link_id == link._id:
             return self.abort404()
         if g.authorizenetapi:
             data = get_account_info(c.user)
-            content = PaymentForm(article, indx,
+            content = PaymentForm(link, campaign,
                                   customer_id = data.customerProfileId,
                                   profiles = data.paymentProfiles,
                                   max_profiles = PROFILE_LIMIT)
         else:
-            content = PaymentForm(article, 0, customer_id = 0,
-                                  profiles = [])
-        res =  LinkInfoPage(link = article,
+            content = None
+        res =  LinkInfoPage(link = link,
                             content = content,
                             show_sidebar = False)
         return res.render()

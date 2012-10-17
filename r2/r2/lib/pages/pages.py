@@ -3147,7 +3147,8 @@ class PromoteLinkForm(Templated):
             self.default_sr = (self.subreddits[0] if self.subreddits
                                else g.default_sr)
             self.link = promote.wrap_promoted(link)
-            self.campaigns = promote.get_renderable_campaigns(link)
+            campaigns = PromoCampaign._by_link(link._id)
+            self.campaigns = promote.get_renderable_campaigns(link, campaigns)
             self.promotion_log = promote.PromotionLog.get(link)
 
         if not c.user_is_sponsor:
@@ -3348,13 +3349,11 @@ class RedditAds(Templated):
         Templated.__init__(self, **kw)
 
 class PaymentForm(Templated):
-    def __init__(self, link, indx, **kw):
+    def __init__(self, link, campaign, **kw):
         self.countries = [pycountry.countries.get(name=n) 
                           for n in g.allowed_pay_countries]
         self.link = promote.wrap_promoted(link)
-        campaigns = promote.get_renderable_campaigns(link)
-        self.campaign = campaigns[indx]
-        self.indx = indx
+        self.campaign = promote.get_renderable_campaigns(link, campaign)
         Templated.__init__(self, **kw)
 
 class Promotion_Summary(Templated):
@@ -3472,8 +3471,8 @@ class Promote_Graph(Templated):
         links = dict((l._fullname, l) for l in links.things
                      if promote.is_accepted(l) or promote.is_unapproved(l))
         # filter promos accordingly
-        promos = [(links[thing_name], indx, s, e) 
-                  for thing_name, indx, s, e in promos
+        promos = [(links[thing_name], campaign_id, s, e) 
+                  for thing_name, campaign_id, s, e in promos
                   if links.has_key(thing_name)]
 
         return promos

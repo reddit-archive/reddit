@@ -122,7 +122,7 @@ function get_flag_class(flags) {
     return css_class
 }
 
-$.new_campaign = function(indx, start_date, end_date, duration, 
+$.new_campaign = function(campaign_id36, start_date, end_date, duration, 
                           bid, targeting, flags) {
     cancel_edit(function() {
       var data =('<input type="hidden" name="startdate" value="' + 
@@ -132,7 +132,7 @@ $.new_campaign = function(indx, start_date, end_date, duration,
                  '<input type="hidden" name="bid" value="' + bid + '"/>' +
                  '<input type="hidden" name="targeting" value="' + 
                  (targeting || '') + '"/>' +
-                 '<input type="hidden" name="indx" value="' + indx + '"/>');
+                 '<input type="hidden" name="campaign_id36" value="' + campaign_id36 + '"/>');
       if (flags && flags.pay_url) {
           data += ("<input type='hidden' name='pay_url' value='" + 
                    flags.pay_url + "'/>");
@@ -152,11 +152,11 @@ $.new_campaign = function(indx, start_date, end_date, duration,
    return $;
 };
 
-$.update_campaign = function(indx, start_date, end_date, 
+$.update_campaign = function(campaign_id36, start_date, end_date, 
                              duration, bid, targeting, flags) {
     cancel_edit(function() {
-            $('.existing-campaigns input[name="indx"]')
-                .filter('*[value="' + (indx || '0') + '"]')
+            $('.existing-campaigns input[name="campaign_id36"]')
+                .filter('*[value="' + (campaign_id36 || '0') + '"]')
                 .parents("tr").removeClass()
             .addClass(get_flag_class(flags))
                 .children(":first").html(start_date)
@@ -277,9 +277,10 @@ function cancel_edit(callback) {
 }
 
 function del_campaign(elem) {
-    var indx = $(elem).find('*[name="indx"]').val();
+    var campaign_id36 = $(elem).find('*[name="campaign_id36"]').val();
     var link_id = $("#campaign").find('*[name="link_id"]').val();
-    $.request("delete_campaign", {"indx": indx, "link_id": link_id},
+    $.request("delete_campaign", {"campaign_id36": campaign_id36,
+                                  "link_id": link_id},
               null, true, "json", false);
     $(elem).children(":first").delete_table_row();
 }
@@ -305,7 +306,7 @@ function edit_campaign(elem) {
                 .prev().fadeOut(function() { 
                         var data_tr = $(this);
                         var c = $("#campaign");
-                        $.map(['startdate', 'enddate', 'bid', 'indx'], 
+                        $.map(['startdate', 'enddate', 'bid', 'campaign_id36'], 
                               function(i) {
                                   i = '*[name="' + i + '"]';
                                   c.find(i).val(data_tr.find(i).val());
@@ -346,7 +347,7 @@ function create_campaign(elem) {
             $("#campaign")
                 .find('button[name="edit"]').hide().end()
                 .find('button[name="create"]').show().end()
-                .find('input[name="indx"]').val('').end()
+                .find('input[name="campaign"]').val('').end()
                 .find('input[name="sr"]').val('').end()
                 .find('input[name="targeting"][value="none"]')
                                 .prop("checked", "checked").end()
@@ -358,9 +359,9 @@ function create_campaign(elem) {
 }
 
 function free_campaign(elem) {
-    var indx = $(elem).find('*[name="indx"]').val();
+    var campaign_id36 = $(elem).find('*[name="campaign_id36"]').val();
     var link_id = $("#campaign").find('*[name="link_id"]').val();
-    $.request("freebie", {"indx": indx, "link_id": link_id},
+    $.request("freebie", {"campaign_id36": campaign_id36, "link_id": link_id},
               null, true, "json", false);
     $(elem).find(".free").fadeOut();
     return false; 

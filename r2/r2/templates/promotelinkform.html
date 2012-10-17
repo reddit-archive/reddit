@@ -199,7 +199,7 @@ ${unsafe(js.use('sponsored'))}
        ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}
      </div>
      <div class="buttons">
-       <input type="hidden" name="indx" value="" />
+       <input type="hidden" name="campaign_id36" value="" />
        <span class="status error"></span>
        <button name="cancel"
           onclick="return cancel_edit()" class="fancybutton">
@@ -233,9 +233,10 @@ ${unsafe(js.use('sponsored'))}
       </table>
       <script type="text/javascript">
         $(function() {
-           %for campaign in sorted(thing.campaigns.values(), \
-                                   key = lambda x: x.start_date):
-            $.new_campaign(${unsafe(','.join(simplejson.dumps(x) for x in campaign))});
+           %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
+            $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
+                [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
+                 rc.bid, rc.sr, rc.status]))});
            %endfor
            $.set_up_campaigns();
           });

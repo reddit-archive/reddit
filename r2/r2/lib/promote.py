@@ -33,7 +33,7 @@ from r2.lib import authorize
 from r2.lib import emailer, filters
 from r2.lib.memoize import memoize
 from r2.lib.template_helpers import get_domain
-from r2.lib.utils import Enum, UniqueIterator
+from r2.lib.utils import Enum, UniqueIterator, tup
 from r2.lib.organic import keep_fresh_links
 from pylons import g, c
 from datetime import datetime, timedelta
@@ -95,8 +95,8 @@ def promo_edit_url(l):
     domain = get_domain(cname = False, subreddit = False)
     return "http://%s/promoted/edit_promo/%s" % (domain, l._id36)
 
-def pay_url(l, indx):
-    return "%spromoted/pay/%s/%d" % (g.payment_domain, l._id36, indx)
+def pay_url(l, campaign):
+    return "%spromoted/pay/%s/%s" % (g.payment_domain, l._id36, campaign._id36)
 
 def view_live_url(l, srname):
     url = get_domain(cname=False, subreddit=False)
@@ -125,17 +125,6 @@ def is_rejected(link):
 
 def is_promoted(link):
     return is_promo(link) and link.promote_status == STATUS.promoted
-
-def is_valid_campaign(link, campaign_id):
-    # check for campaign in link data (old way)
-    if link and campaign_id in getattr(link, "campaigns", {}):
-        return True
-    # check for campaign in Thing data (new way)
-    try:
-        PromoCampaign._byID(campaign_id)
-        return True
-    except NotFound:
-        return False
 
 def is_live_on_sr(link, srname):
     if not is_promoted(link):
@@ -274,11 +263,8 @@ def get_roadblocks():
 # control functions
 
 class RenderableCampaign():
-    __slots__ = ["indx", "start_date", "end_date", "duration",
-                 "bid", "sr", "status"]
-    
     def __init__(self, link, campaign, transaction):
-        self.indx = campaign._id
+        self.campaign_id36 = campaign._id36
         self.start_date = campaign.start_date.strftime("%m/%d/%Y")
         self.end_date = campaign.end_date.strftime("%m/%d/%Y")
         ndays = (campaign.end_date - campaign.start_date).days
@@ -291,7 +277,7 @@ class RenderableCampaign():
         self.status = dict(paid = bool(transaction),
                            complete = False,
                            free = campaign.is_freebie(),
-                           pay_url = pay_url(link, campaign._id),
+                           pay_url = pay_url(link, campaign),
                            view_live_url = view_live_url(link, campaign.sr_name),
                            sponsor = c.user_is_sponsor,
                            live = live)
@@ -303,29 +289,19 @@ class RenderableCampaign():
             elif transaction.is_charged():
                 self.status['complete'] = True
 
-    def get(self, key, default):
-        return getattr(self, key, default)
 
-    def __iter__(self):
-        for s in self.__slots__:
-            yield getattr(self, s)
-
-
-def get_renderable_campaigns(link):
-    campaigns = PromoCampaign._by_link(link._id)
+def get_renderable_campaigns(link, campaigns):
+    campaigns, is_single = tup(campaigns, ret_is_single=True)
     bids = get_transactions(link)
-    renderable = {}
-    for campaign in campaigns:
-        rc = RenderableCampaign(link, campaign, bids.get(campaign._id))
-        renderable[campaign._id] = rc
-    return renderable
-
+    r = [RenderableCampaign(link, c, bids.get(c._id)) for c in campaigns]
+    if is_single:
+        r = r[0]
+    return r
 
 def wrap_promoted(link):
     if not isinstance(link, Wrapped):
         link = Wrapped(link)
     return link
-
 
 # These could be done with relationships, but that seeks overkill as
 # we never query based on user and only check per-thing
@@ -425,42 +401,40 @@ def new_campaign(link, dates, bid, sr):
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
     author = Account._byID(link.author_id, True)
     if getattr(author, "complimentary_promos", False):
-        free_campaign(link, campaign._id, c.user)
-    return campaign._id
+        free_campaign(link, campaign, c.user)
+    return campaign
 
-def free_campaign(link, campaign_id, user):
-    auth_campaign(link, campaign_id, user, -1)
+def free_campaign(link, campaign, user):
+    auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign_id, dates, bid, sr):
+def edit_campaign(link, campaign, dates, bid, sr):
     sr_name = sr.name if sr else '' # empty string means target to all
     try: 
-        campaign = PromoCampaign._byID(campaign_id)
-
         # if the bid amount changed, cancel any pending transactions
         if campaign.bid != bid:
-            void_campaign(link, campaign_id)
+            void_campaign(link, campaign)
 
         # update the schedule
-        PromotionWeights.reschedule(link, campaign_id, sr_name,
+        PromotionWeights.reschedule(link, campaign._id, sr_name,
                                     dates[0], dates[1], bid)
 
         # update values in the db
         campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id, commit=True)
 
         # record the transaction
-        text = 'updated campaign %s. (bid: %0.2f)' % (campaign_id, bid)
+        text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
         PromotionLog.add(link, text)
 
         # make it a freebie, if applicable
         author = Account._byID(link.author_id, True)
         if getattr(author, "complimentary_promos", False):
-            free_campaign(link, campaign._id, c.user)
+            free_campaign(link, campaign, c.user)
 
     except Exception, e: # record error and rethrow 
         g.log.error("Failed to update PromoCampaign %s on link %d. Error was: %r" % 
-                    (campaign_id, link._id, e))
+                    (campaign._id, link._id, e))
         try: # wrapped in try/except so orig error won't be lost if commit fails
-            text = 'update FAILED. (campaign: %s, bid: %.2f)' % (campaign_id,
+            text = 'update FAILED. (campaign: %s, bid: %.2f)' % (campaign._id,
                                                                  bid)
             PromotionLog.add(link, text)
         except:
@@ -473,30 +447,25 @@ def complimentary(username, value = True):
     a.complimentary_promos = value
     a._commit()
 
-def delete_campaign(link, campaign_id):
-    try:
-        campaign = PromoCampaign._byID(campaign_id)
-        PromotionWeights.delete_unfinished(link, campaign_id)
-        void_campaign(link, campaign_id)
-        campaign.delete()
-        PromotionLog.add(link, 'deleted campaign %s' % campaign_id)
-    except NotFound:
-        g.log.debug("Skipping deletion of non-existent PromoCampaign [link:%d, campaign_id:%d]" %
-                    (link._id, campaign_id))
+def delete_campaign(link, campaign):
+    PromotionWeights.delete_unfinished(link, campaign._id)
+    void_campaign(link, campaign)
+    campaign.delete()
+    PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
 
-def void_campaign(link, campaign_id):
+def void_campaign(link, campaign):
     transactions = get_transactions(link)
-    bid_record = transactions.get(campaign_id)
+    bid_record = transactions.get(campaign._id)
     if bid_record:
         a = Account._byID(link.author_id)
-        authorize.void_transaction(a, bid_record.transaction, campaign_id)
+        authorize.void_transaction(a, bid_record.transaction, campaign._id)
 
-def auth_campaign(link, campaign_id, user, pay_id):
+def auth_campaign(link, campaign, user, pay_id):
     """
     Authorizes (but doesn't charge) a bid with authorize.net.
     Args:
     - link: promoted link
-    - campaign_id: long id of the campaign on link to be authorized
+    - campaign: campaign to be authorized
     - user: Account obj of the user doing the auth (usually the currently
         logged in user)
     - pay_id: customer payment profile id to use for this transaction. (One
@@ -505,25 +474,18 @@ def auth_campaign(link, campaign_id, user, pay_id):
 
     Returns: (True, "") if successful or (False, error_msg) if not. 
     """
-    try:
-        campaign = PromoCampaign._byID(campaign_id, data=True)
-    except NotFound:
-        g.log.error("Ignoring attempt to auth non-existent campaign: %d" % 
-                    campaign_id)
-        return False, "Campaign not found."
-
-    void_campaign(link, campaign_id)
+    void_campaign(link, campaign)
     test = 1 if g.debug else None
     trans_id, reason = authorize.auth_transaction(campaign.bid, user, pay_id,
-                                                  link, campaign_id, test=test)
+                                                  link, campaign._id, test=test)
 
     if trans_id and not reason:
         text = ('updated payment and/or bid for campaign %s: '
-                'SUCCESS (trans_id: %d, amt: %0.2f)' % (campaign_id, trans_id,
+                'SUCCESS (trans_id: %d, amt: %0.2f)' % (campaign._id, trans_id,
                                                         campaign.bid))
         PromotionLog.add(link, text)
         if trans_id < 0:
-            PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign_id)
+            PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign._id)
 
         set_status(link,
                    max(STATUS.unseen if trans_id else STATUS.unpaid,
@@ -536,7 +498,7 @@ def auth_campaign(link, campaign_id, user, pay_id):
     else:
         # something bad happend.
         text = ("updated payment and/or bid for campaign %s: FAILED ('%s')"
-                % (campaign_id, reason))
+                % (campaign._id, reason))
         PromotionLog.add(link, text)
         trans_id = 0
 
