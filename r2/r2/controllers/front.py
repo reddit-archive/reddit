@@ -642,8 +642,10 @@ class FrontController(RedditController, OAuth2ResourceController):
         else:
             return self.abort404()
 
+        is_wiki_action = location in ['wikibanned', 'wikicontributors']
+
         return EditReddit(content=pane,
-                          show_wiki_actions='wiki' in location,
+                          show_wiki_actions=is_wiki_action,
                           location=location,
                           extension_handling=extension_handling).render()
 
