@@ -431,7 +431,7 @@ class OAuth2AccessToken(Token):
         # Is the user account still valid?
         try:
             account = Account._byID36(self.user_id)
-            if account._deleted or account._spam:
+            if account._deleted:
                 raise NotFound
         except NotFound:
             return False
