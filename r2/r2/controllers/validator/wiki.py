@@ -33,7 +33,7 @@ from r2.models.wiki import WikiPage, WikiRevision
 from r2.controllers.validator import (Validator, validate, VSrModerator,
                                       make_validated_kw, set_api_docs)
 from r2.lib.db import tdb_cassandra
-from r2.lib.utils import wraps_api
+from functools import wraps
 
 MAX_PAGE_NAME_LENGTH = g.wiki_max_page_name_length
 
@@ -41,7 +41,7 @@ MAX_SEPARATORS = g.wiki_max_page_separators
 
 def wiki_validate(*simple_vals, **param_vals):
     def val(fn):
-        @wraps_api(fn)
+        @wraps(fn)
         def newfn(self, *a, **env):
             kw = make_validated_kw(fn, simple_vals, param_vals, env)
             for e in c.errors:
