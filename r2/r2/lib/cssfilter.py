@@ -405,8 +405,10 @@ def rendered_link(links, media, compress):
     with c.user.safe_set_attr:
         c.user.pref_compress = compress
         c.user.pref_media    = media
-        links = wrap_links(links, show_nums = True, num = 1)
-        return links.render(style = "html")
+    links = wrap_links(links, show_nums = True, num = 1)
+    delattr(c.user, 'pref_compress')
+    delattr(c.user, 'pref_media') 
+    return links.render(style = "html")
 
 def rendered_comment(comments):
     return wrap_links(comments, num = 1).render(style = "html")
