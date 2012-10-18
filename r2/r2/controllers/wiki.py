@@ -287,14 +287,13 @@ class WikiApiController(WikiController):
                    VWikiModerator(),
                    page=VWikiPage('page'),
                    act=VOneOf('act', ('del', 'add')),
-                   user=VExistingUname('username'),
-                   username=nop('username'))
+                   user=VExistingUname('username'))
     @api_doc(api_section.wiki, uri='/api/wiki/alloweditor/:act')
-    def POST_wiki_allow_editor(self, act, page, user, username):
-        if act == 'del':
-            page.remove_editor(username)
-        elif not user:
+    def POST_wiki_allow_editor(self, act, page, user):
+        if not user:
             self.handle_error(404, 'UNKNOWN_USER')
+        elif act == 'del':
+            page.remove_editor(user.name)
         elif act == 'add':
             page.add_editor(user.name)
         else:

@@ -263,9 +263,10 @@ class WikiPage(tdb_cassandra.Thing):
     
     def get_editor_accounts(self):
         editors = self.get_editors()
-        accounts = []
-        for editor in editors:
-            accounts.append(Account._by_name(editor, allow_deleted=True))
+        accounts = [Account._by_name(editor, allow_deleted=True)
+                    for editor in self.get_editors()]
+        accounts = [account for account in accounts
+                    if not account._deleted]
         return accounts
     
     def get_editors(self, properties=None):
