@@ -27,7 +27,6 @@ from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 from r2.lib.media import s3_direct_url
 
 import babel.numbers
-from mako.filters import url_escape
 import simplejson
 import os.path
 from copy import copy
@@ -148,11 +147,6 @@ def js_config():
     }
     return config
 
-def generateurl(context, path, **kw):
-    if kw:
-        return path + '?' + '&'.join(["%s=%s"%(k, url_escape(v)) \
-                                      for k, v in kw.iteritems() if v])
-    return path
 
 def class_dict():
     t_cls = [Link, Comment, Message, Subreddit]

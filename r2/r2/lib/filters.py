@@ -132,13 +132,6 @@ def websafe(text=''):
     #wrap the response in _Unsafe so make_websafe doesn't unescape it
     return _Unsafe(c_websafe(text))
 
-from mako.filters import url_escape
-def edit_comment_filter(text = ''):
-    try:
-        text = unicode(text, 'utf-8')
-    except TypeError:
-        text = unicode(text)
-    return url_escape(text)
 
 valid_link_schemes = (
     '/',
