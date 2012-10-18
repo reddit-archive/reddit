@@ -85,7 +85,7 @@ def may_revise(sr, user, page=None):
         return False
     
     if not user.can_wiki(default=True):
-        # Global wiki contributute ban
+        # Global wiki contribute ban
         return False
     
     if page and page.has_editor(user.name):
