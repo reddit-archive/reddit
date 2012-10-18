@@ -30,7 +30,7 @@
   <channel>
     <title>${self.Title()}</title>        
     <link>${add_sr("/", force_hostname = True)}</link>
-    <description>${c.site.description or ''}</description>
+    <description>${c.site.public_description or ''}</description>
     <image>
       <%
         if g.css_killswitch or not c.site.header:
