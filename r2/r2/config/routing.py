@@ -208,7 +208,8 @@ def make_map():
     mc('/api/wiki/edit', controller='wikiapi', action='wiki_edit')
     mc('/api/wiki/hide', controller='wikiapi', action='wiki_revision_hide')
     mc('/api/wiki/revert', controller='wikiapi', action='wiki_revision_revert')
-    mc('/api/wiki/alloweditor/:act', controller='wikiapi', action='wiki_allow_editor')
+    mc('/api/wiki/alloweditor/:act', controller='wikiapi', 
+       requirements=dict(act="del|add"), action='wiki_allow_editor')
     
     mc('/wiki/*page', controller='wiki', action='wiki_page')
     mc('/wiki/', controller='wiki', action='wiki_page')
