@@ -137,7 +137,7 @@ class Reddit(Templated):
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, short_description='', title = '', robots = None, 
                  show_sidebar = True, footer = True, srbar = True, page_classes = None,
-                 show_wiki_actions = False, extra_js_config = {}, **context):
+                 show_wiki_actions = False, extra_js_config = None, **context):
         Templated.__init__(self, **context)
         self.title          = title
         self.short_description = short_description
