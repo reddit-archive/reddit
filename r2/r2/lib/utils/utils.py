@@ -367,8 +367,8 @@ def query_string(dict):
     for k,v in dict.iteritems():
         if v is not None:
             try:
-                k = url_escape(unicode(k).encode('utf-8'))
-                v = url_escape(unicode(v).encode('utf-8'))
+                k = url_escape(_force_unicode(k))
+                v = url_escape(_force_unicode(v))
                 pairs.append(k + '=' + v)
             except UnicodeDecodeError:
                 continue
