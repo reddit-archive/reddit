@@ -175,15 +175,3 @@ def charge_transaction(user, trans_id, campaign, test = None):
 
     # already charged
     return True
-
-
-def get_transactions(*trans_keys):
-    from sqlalchemy import and_, or_
-
-    if trans_keys:
-        f = or_(*[and_(Bid.transaction == trans_id, Bid.campaign == camp)
-                  for trans_id, camp in trans_keys])
-        q = Bid.query()
-        q = q.filter(f)
-        return dict(((p.transaction, p.campaign), p) for p in q)
-    return {}

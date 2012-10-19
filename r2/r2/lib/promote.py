@@ -289,7 +289,7 @@ class RenderableCampaign():
 
 def get_renderable_campaigns(link, campaigns):
     campaigns, is_single = tup(campaigns, ret_is_single=True)
-    bids = get_transactions(link)
+    bids = get_transactions(link, campaigns)
     r = [RenderableCampaign(link, c, bids.get(c._id)) for c in campaigns]
     if is_single:
         r = r[0]
@@ -371,23 +371,24 @@ def sponsor_wrapper(link):
 def campaign_lock(link):
     return "edit_promo_campaign_lock_" + str(link._id)
 
-def get_transactions(link):
-    """
-    Gets records from the bids table for all campaigns on link that have a
-      non-zero transaction id. Note this set includes auth, charged, and void
-      transactions, any of which could be freebies and/or finished running.
-    Returns a dict mapping campaign ids to Bid objects.
-    """
-    campaigns = PromoCampaign._query(PromoCampaign.c.link_id == link._id,
-                                     PromoCampaign.c.trans_id != 0,
-                                     data=True)
-    trans_tuples = [(camp.trans_id, camp._id) for camp in campaigns]
-    bids = authorize.get_transactions(*trans_tuples)
-    bids_by_campaign = {}
-    for trans_id, campaign_id in trans_tuples:
-        bids_by_campaign[campaign_id] = bids.get((trans_id, campaign_id))
-    return bids_by_campaign
+def get_transactions(link, campaigns):
+    """Return Bids for specified campaigns on the link.
 
+    A PromoCampaign can have several bids associated with it, but the most
+    recent one is recorded on the trans_id attribute. This is the one that will
+    be returned.
+
+    """
+
+    campaigns = [c for c in campaigns if (c.trans_id != 0
+                                          and c.link_id == link._id)]
+    if not campaigns:
+        return {}
+
+    bids = Bid.lookup(thing_id=link._id)
+    bid_dict = {(b.campaign, b.transaction): b for b in bids}
+    bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
+    return bids_by_campaign
 
 def new_campaign(link, dates, bid, sr):
     # empty string for sr_name means target to all
@@ -450,7 +451,7 @@ def delete_campaign(link, campaign):
     PromotionLog.add(link, 'deleted campaign %s' % campaign._id)
 
 def void_campaign(link, campaign):
-    transactions = get_transactions(link)
+    transactions = get_transactions(link, [campaign])
     bid_record = transactions.get(campaign._id)
     if bid_record:
         a = Account._byID(link.author_id)
