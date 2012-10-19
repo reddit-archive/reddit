@@ -38,6 +38,7 @@ from r2.lib.utils import make_offset_date
 from r2.lib.media import force_thumbnail, thumbnail_url
 from r2.lib.scraper import MediaEmbed
 from r2.lib import cssfilter
+from r2.lib.system_messages import user_added_messages
 from datetime import datetime
 
 class PromoteController(ListingController):
@@ -406,13 +407,13 @@ class PromoteController(ListingController):
             form.set_inputs(name = "")
             form.set_html(".status:first", _("added"))
             if promote.add_traffic_viewer(thing, user):
-                user_row = TrafficViewerList(thing).user_row(user)
+                user_row = TrafficViewerList(thing).user_row('traffic', user)
                 jquery("#traffic-table").show(
                     ).find("table").insert_table_rows(user_row)
 
                 # send the user a message
-                msg = strings.msg_add_friend.get("traffic")
-                subj = strings.subj_add_friend.get("traffic")
+                msg = user_added_messages['traffic']['pm']['msg']
+                subj = user_added_messages['traffic']['pm']['subject']
                 if msg and subj:
                     d = dict(url = thing.make_permalink_slow(),
                              traffic_url = promote.promo_traffic_url(thing),
