@@ -44,9 +44,6 @@ import itertools
 import random
 from uuid import uuid1
 
-promoted_memo_lifetime = 30
-promoted_memo_key = 'cached_promoted_links2'
-promoted_lock_key = 'cached_promoted_links_lock2'
 
 STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
               "pending", "promoted", "finished")

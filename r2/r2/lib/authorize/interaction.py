@@ -177,19 +177,6 @@ def charge_transaction(user, trans_id, campaign, test = None):
     return True
 
 
-#def refund_transaction(amount, user, trans_id, campaign, test = None):
-#    bid =  Bid.one(transaction = trans_id, campaign = campaign)
-#    if trans_id > 0:
-#        # create a new bid to identify the refund
-#        success, res = _make_transaction(ProfileTransRefund,
-#                                         amount, user, bid.pay_id,
-#                                         trans_id = trans_id,
-#                                         test = test)
-#        if success:
-#            bid = Bid._new(res.trans_id, user, -1, bid.thing_id, amount)
-#            bid.refund()
-#            return bool(res.trans_id)
-
 def get_transactions(*trans_keys):
     from sqlalchemy import and_, or_
 
