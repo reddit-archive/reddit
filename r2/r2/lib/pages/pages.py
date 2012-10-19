@@ -3351,7 +3351,7 @@ class PaymentForm(Templated):
         self.countries = [pycountry.countries.get(name=n) 
                           for n in g.allowed_pay_countries]
         self.link = promote.editable_add_props(link)
-        self.campaign = self.link.campaigns[indx] # FIXME: is this broken?
+        self.campaign = self.link.campaigns[indx]
         self.indx = indx
         Templated.__init__(self, **kw)
 
