@@ -276,8 +276,8 @@ def make_results(query, filter = filter_identity):
 
 def merge_results(*results):
     if not results:
-        return QueryishList([])
-    elif g.use_query_cache:
+        return []
+    if g.use_query_cache:
         return MergedCachedResults(results)
     else:
         assert all((results[0]._sort == r._sort
@@ -423,41 +423,6 @@ def get_unmoderated_links(sr_id):
     q._filter(or_(and_(Link.c._spam == True, Link.c.verdict != 'mod-removed'),
                   and_(Link.c._spam == False, Link.c.verdict != 'mod-approved')))
     return q
-
-# TODO: Wow, what a hack. I'm doing this in a hurry to make
-# /r/blah/about/trials and /r/blah/about/modqueue work. At some point
-# before the heat death of the universe, we should start precomputing
-# these things instead. That would require an "on_trial" attribute to be
-# maintained on Links, a precomputer that keeps track of such links,
-# and changes to:
-#   trial_utils.py:  trial_info(), end_trial(), indict()
-#   trial.py:        all_defendants_cache()
-class QueryishList(list):
-    prewrap_fn = None
-    _rules = None
-    _sort = None
-
-    @property
-    def sort(self):
-        return self._sort
-
-    def _cursor(self):
-        return self
-
-    def _filter(self):
-        return True
-
-    @property
-    def data(self):
-        return [ (t._fullname, 2145945600) for t in self ]
-                  # Jan 1 2038 ^^^^^^^^^^
-                  # so that trials show up before spam and reports
-
-    def fetchone(self):
-        if self:
-            return self.pop(0)
-        else:
-            raise StopIteration
 
 @merged_cached_query
 def get_modqueue(sr):
