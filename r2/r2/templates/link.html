@@ -42,9 +42,7 @@
 
 <%def name="make_link(name, css_class)">
   <a class="${css_class} ${ c.user_is_loggedin and 'loggedin' or ''} ${thing.clicked and 'click' or ''}"
-     %if not (getattr(thing, "trial_mode", None) and thing.is_self):
-       href="${thing.href_url}"
-     %endif
+     href="${thing.href_url}"
      %if thing.nofollow:
        rel="nofollow"
      %endif
@@ -133,8 +131,7 @@
   %>
 
   ## if we're not on a permalink page we'll render the buttons on top
-  ## (unless it's also a jury duty listing)
-  %if not (expand or getattr(thing, "trial_mode", None)):
+  %if not expand:
     ${bottom_buttons()}
   %endif
 
@@ -195,8 +192,6 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
     ${self.arrow(thing, 1, thing.likes)}
     %if thing.pref_compress:
       <div class="score-placeholder"></div>
-    %elif getattr(thing, "trial_mode", None):
-      <div class="score unvoted">&bull;</div> 
     %elif thing.hide_score:
       <div class="score likes">&bull;</div> 
       <div class="score unvoted">&bull;</div> 
@@ -242,7 +237,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 </%def>
 
 <%def name="thumbnail()">
-  %if thing.thumbnail and not getattr(thing, "trial_mode", None):
+  %if thing.thumbnail:
   <%call expr="make_link('thumbnail', 'thumbnail ' + (thing.thumbnail if thing.thumbnail_sprited else ''))">
     % if not thing.thumbnail_sprited:
         <%

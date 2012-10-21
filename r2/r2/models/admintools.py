@@ -369,10 +369,6 @@ def ip_span(ip):
     return '<!-- %s -->' % ip
 
 def filter_quotas(unfiltered):
-    from r2.lib.utils.trial_utils import trial_info
-
-    trials = trial_info(unfiltered)
-
     now = datetime.now(g.tz)
 
     baskets = {
@@ -408,9 +404,7 @@ def filter_quotas(unfiltered):
             'admin-approved', 'mod-approved')
 
         # Then, make sure it's worthy of quota-clogging
-        if trials.get(item._fullname):
-            pass
-        elif item._spam:
+        if item._spam:
             pass
         elif item._deleted:
             pass

@@ -177,12 +177,6 @@ class Account(Thing):
             # Legacy, None means user may wiki
             return True
         return self.wiki_override
-    
-    def jury_betatester(self):
-        if g.cache.get("jury-killswitch"):
-            return False
-        else:
-            return True
 
     def all_karmas(self):
         """returns a list of tuples in the form (name, hover-text, link_karma,

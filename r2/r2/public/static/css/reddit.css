@@ -3223,18 +3223,10 @@ form input[type=radio] {margin: 2px .5em 0 0; }
     border-radius: 3px;
 }
 
-.entry .buttons li.trial-stamp, .entry .buttons li.reported-stamp {
+.entry .buttons li.reported-stamp {
     border: 1px solid black !important;
     padding: 0 4px;
     background-color: #f6e69f;
-}
-
-.entry .buttons li.trial-stamp .spam {
-    color: #e00;
-}
-
-.entry .buttons li.trial-stamp .kosher {
-    color: #090;
 }
 
 .suspicious { background-color: #f6e69f }
@@ -5200,62 +5192,6 @@ a.pretty-button.positive {
 
 a.pretty-button.positive.pressed {
     background-image: url(../bg-button-positive-pressed.png); /* SPRITE stretch-x */
-}
-
-
-/*
-.jury-box .pretty-button a.pressed {
-    margin: -1px 4px -1px 1px;
-    border-width: 2px;
-    border-color: black;
-    color: white;
-}
-*/
-.organic-listing .ontrial, .help-cover.juryduty {
-    background-color: #ffecf8;
-}
-
-.organic-listing .ontrial a.title {
-    color: #555;
-}
-
-.organic-listing .ontrial .midcol {
-    margin-top: 20px;
-}
-
-.we-need-help {
-    font-size: larger;
-    font-weight: bold;
-    line-height: 18px;
-}
-
-.organic-listing .how-to-classify {
-    font-weight: bold;
-}
-
-.jury-box .arrow-msg {
-    display: none;
-    color: red;
-    margin-top:5px;
-}
-
-.jury-box .thanks-for-voting {
-    margin-left: 1em;
-    display: none;
-    color: red;
-}
-
-.jury-box .thanks-for-voting a {
-    margin-left: 1em;
-}
-
-.sitetable .linkontrial {
-/*    border-top: solid 1px #ccc; */
-    padding-top: 5px;
-}
-
-.sitetable .we-need-help {
-    display: none;
 }
 
 .oatmeal img { 

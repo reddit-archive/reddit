@@ -132,7 +132,7 @@
   <tr>
     <th>${_("link options")}</th>
     <td class="prefright">
-%if c.user_is_loggedin and c.user.jury_betatester():
+%if c.user_is_loggedin:
       <p>
         ${checkbox(_("show the spotlight box on the front page"), "organic")}
         &#32;

@@ -492,9 +492,6 @@ class FrontController(RedditController, OAuth2ResourceController):
             query = c.site.get_reported()
         elif location == 'spam':
             query = c.site.get_spam()
-        elif location == 'trials':
-            query = c.site.get_trials()
-            num = 1000
         elif location == 'modqueue':
             query = c.site.get_modqueue()
         elif location == 'unmoderated':
@@ -518,14 +515,12 @@ class FrontController(RedditController, OAuth2ResourceController):
                 return x.reported > 0 and not x._spam
             elif location == "spam":
                 return x._spam
-            elif location == "trials":
-                return not getattr(x, "verdict", None)
             elif location == "modqueue":
                 if x.reported > 0 and not x._spam:
                     return True # reported but not banned
                 verdict = getattr(x, "verdict", None)
                 if verdict is None:
-                    return True # anything without a verdict (i.e., trials)
+                    return True # anything without a verdict
                 if x._spam and verdict != 'mod-removed':
                     return True # spam, unless banned by a moderator
                 return False
@@ -564,11 +559,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         else:
             raise ValueError
 
-        if ((level == 'mod' and
-             location in ('reports', 'spam', 'trials', 'modqueue', 'unmoderated'))
-            or
-            (level == 'all' and
-             location == 'trials')):
+        if (level == 'mod' and
+            location in ('reports', 'spam', 'modqueue', 'unmoderated')):
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:
                 extension_handling = "private"
@@ -624,7 +616,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             stylesheet = (c.site.stylesheet_contents_user or
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
-        elif (location in ('reports', 'spam', 'trials', 'modqueue', 'unmoderated')
+        elif (location in ('reports', 'spam', 'modqueue', 'unmoderated')
               and is_moderator):
             c.allow_styles = True
             pane = self._make_spamlisting(location, num, after, reverse, count)
@@ -1133,55 +1125,6 @@ class FormsController(RedditController):
             return self.redirect("/password?expired=true")
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
-
-    @validate(VUser())
-    def GET_depmod(self):
-        displayPane = PaneStack()
-
-        active_trials = {}
-        finished_trials = {}
-
-        juries = Jury.by_account(c.user)
-
-        trials = trial_info([j._thing2 for j in juries])
-
-        for j in juries:
-            defendant = j._thing2
-
-            if trials.get(defendant._fullname, False):
-                active_trials[defendant._fullname] = j._name
-            else:
-                finished_trials[defendant._fullname] = j._name
-
-        if active_trials:
-            fullnames = sorted(active_trials.keys(), reverse=True)
-
-            def my_wrap(thing):
-                w = Wrapped(thing)
-                w.hide_score = True
-                w.likes = None
-                w.trial_mode = True
-                w.render_class = LinkOnTrial
-                w.juryvote = active_trials[thing._fullname]
-                return w
-
-            listing = wrap_links(fullnames, wrapper=my_wrap)
-            displayPane.append(InfoBar(strings.active_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        if finished_trials:
-            fullnames = sorted(finished_trials.keys(), reverse=True)
-            listing = wrap_links(fullnames)
-            displayPane.append(InfoBar(strings.finished_trials,
-                                       extra_class="mellow"))
-            displayPane.append(listing)
-
-        displayPane.append(InfoBar(strings.more_info_link %
-                                       dict(link="/help/deputies"),
-                                   extra_class="mellow"))
-
-        return Reddit(content = displayPane).render()
 
     @validate(VUser(),
               location = nop("location"))

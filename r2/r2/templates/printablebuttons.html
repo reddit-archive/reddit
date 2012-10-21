@@ -33,11 +33,6 @@
       ${ynbutton(_("delete"), _("deleted"), "del", "hide_thing")}
     </li>
   %endif
-  %if thing.show_indict:
-    <li>
-      ${ynbutton(_("indict"), _("indicted"), "indict")}
-    </li>
-  %endif
   %if thing.can_ban:
     %if not getattr(thing.thing, "use_big_modbuttons", False):
       %if not thing.show_spam:
@@ -238,24 +233,6 @@
         ${plain_link(_("traffic"), thing.traffic_url, _sr_path = False)}
       </li>
     %endif
-  %endif
-
-  %if getattr(thing.thing, "reveal_trial_info", False):
-   <li class="rounded trial-stamp stamp"
-       title='${_('questionable submission; you should remove it or approve it')}'
-       >
-     ${_("deputy opinion:")}
-     &#32;
-     <span class="spam">
-       ${_("%d spam") % thing.thing.trial_info.get("spams", "?")}
-     </span>
-     &#32;
-     /
-     &#32;
-     <span class="kosher">
-       ${_("%d kosher") % thing.thing.trial_info.get("koshers", "?")}
-     </span>
-   </li>
   %endif
 
   %if thing.show_reports and not thing.show_spam:

@@ -35,10 +35,9 @@ class PrintableButtons(Styled):
     def __init__(self, style, thing,
                  show_delete = False, show_report = True,
                  show_distinguish = False, show_marknsfw = False,
-                 show_unmarknsfw = False, show_indict = False, is_link=False,
+                 show_unmarknsfw = False, is_link=False,
                  show_flair = False, **kw):
-        show_ignore = (thing.show_reports or
-                       (thing.reveal_trial_info and not thing.show_spam))
+        show_ignore = thing.show_reports
         approval_checkmark = getattr(thing, "approval_checkmark", None)
         show_approve = (thing.show_spam or show_ignore or
                         (is_link and approval_checkmark is None)) and not thing._deleted
@@ -54,7 +53,6 @@ class PrintableButtons(Styled):
                         show_delete = show_delete,
                         show_approve = show_approve,
                         show_report = show_report,
-                        show_indict = show_indict,
                         show_distinguish = show_distinguish,
                         show_marknsfw = show_marknsfw,
                         show_unmarknsfw = show_unmarknsfw,
@@ -78,9 +76,6 @@ class LinkButtons(PrintableButtons):
 
         if c.user_is_admin and thing.promoted is None:
             show_report = False
-            show_indict = True
-        else:
-            show_indict = False
 
         if (thing.can_ban or is_author) and not thing.nsfw:
             show_marknsfw = True
@@ -129,7 +124,6 @@ class LinkButtons(PrintableButtons):
                                   hidden = thing.hidden, 
                                   show_delete = show_delete,
                                   show_report = show_report and c.user_is_loggedin,
-                                  show_indict = show_indict,
                                   show_distinguish = show_distinguish,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,

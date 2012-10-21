@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from r2.models import Account, Link, Comment, Trial, Vote, SaveHide, Report
+from r2.models import Account, Link, Comment, Vote, SaveHide, Report
 from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, MultiReddit
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
@@ -458,19 +458,6 @@ class QueryishList(list):
             return self.pop(0)
         else:
             raise StopIteration
-
-def get_trials_links(sr):
-    l = Trial.defendants_by_sr(sr)
-    s = QueryishList(l)
-    s._sort = [db_sort('new')]
-    return s
-
-def get_trials(sr):
-    if isinstance(sr, (ModContribSR, MultiReddit)):
-        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        return get_trials_links(srs)
-    else:
-        return get_trials_links(sr)
 
 @merged_cached_query
 def get_modqueue(sr):

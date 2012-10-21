@@ -42,7 +42,6 @@ from r2.lib.pages import (EnemyList, FriendList, ContributorList, ModList,
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
-from r2.lib.utils.trial_utils import indict, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 from r2.models.last_modified import LastModified
 
@@ -952,15 +951,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             return
         c.user.add_enemy(block_acct)
 
-    @noresponse(VAdmin(), VModhash(),
-                thing = VByName('id'))
-    def POST_indict(self, thing):
-        '''put something on trial'''
-        if not thing:
-            log_text("indict: no thing", level="warning")
-
-        indict(thing)
-
     @require_oauth2_scope("edit")
     @validatedForm(VUser(),
                    VModhash(),
@@ -1157,41 +1147,6 @@ class ApiController(RedditController, OAuth2ResourceController):
                 VRatelimit.ratelimit(rate_user=True, rate_ip = True,
                                      prefix = "rate_share_")
 
-    @noresponse(VUser(),
-                VModhash(),
-                ip = ValidIP(),
-                dir = VInt('dir', min=-1, max=1),
-                thing = VByName('id'))
-    def POST_juryvote(self, dir, thing, ip):
-        if not thing:
-            log_text("juryvote: no thing", level="warning")
-            return
-
-        if not ip:
-            log_text("juryvote: no ip", level="warning")
-            return
-
-        if dir is None:
-            log_text("juryvote: no dir", level="warning")
-            return
-
-        j = Jury.by_account_and_defendant(c.user, thing)
-
-        if not trial_info([thing]).get(thing._fullname,False):
-            log_text("juryvote: not on trial", level="warning")
-            return
-
-        if not j:
-            log_text("juryvote: not on the jury", level="warning")
-            return
-
-        log_text("juryvote",
-                 "%s cast a %d juryvote on %s" % (c.user.name, dir, thing._id36),
-                 level="info")
-
-        j._name = str(dir)
-        j._date = c.start_time
-        j._commit()
 
     @require_oauth2_scope("vote")
     @noresponse(VUser(),

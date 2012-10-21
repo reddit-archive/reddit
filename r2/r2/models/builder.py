@@ -228,7 +228,6 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
-            w.reveal_trial_info = False
             w.use_big_modbuttons = False
 
             if (c.user_is_admin
