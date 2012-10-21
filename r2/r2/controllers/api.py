@@ -42,7 +42,7 @@ from r2.lib.pages import (EnemyList, FriendList, ContributorList, ModList,
 from r2.lib.pages import FlairList, FlairCsv, FlairTemplateEditor, \
     FlairSelector
 from r2.lib.pages import PrefApps
-from r2.lib.utils.trial_utils import indict, end_trial, trial_info
+from r2.lib.utils.trial_utils import indict, trial_info
 from r2.lib.pages.things import wrap_links, default_thing_wrapper
 from r2.models.last_modified import LastModified
 
@@ -1685,8 +1685,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         if getattr(thing, "promoted", None):
             return
 
-        end_trial(thing, why + "-removed")
-
         filtered = thing._spam
         kw = {'target': thing}
 
@@ -1722,7 +1720,6 @@ class ApiController(RedditController, OAuth2ResourceController):
     def POST_approve(self, why, thing):
         if not thing: return
         if thing._deleted: return
-        end_trial(thing, why + "-approved")
         kw = {'target': thing}
         if thing._spam:
             kw['details'] = 'unspam'
@@ -1733,7 +1730,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             train_spam = False
             insert = False
 
-        admintools.unspam(thing, c.user.name, train_spam=train_spam,
+        admintools.unspam(thing, moderator_unbanned=not c.user_is_admin,
+                          unbanner=c.user.name, train_spam=train_spam,
                           insert=insert)
 
         if isinstance(thing, (Link, Comment)):

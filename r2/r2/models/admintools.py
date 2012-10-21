@@ -57,6 +57,11 @@ class AdminTools(object):
 
             t._spam = True
 
+            if moderator_banned:
+                t.verdict = 'mod-removed'
+            elif not auto:
+                t.verdict = 'admin-removed'
+
             ban_info = copy(getattr(t, 'ban_info', {}))
             if isinstance(banner, dict):
                 ban_info['banner'] = banner[t._fullname]
@@ -77,7 +82,8 @@ class AdminTools(object):
 
         queries.ban(all_things, filtered=auto)
 
-    def unspam(self, things, unbanner=None, train_spam=True, insert=True):
+    def unspam(self, things, moderator_unbanned=True, unbanner=None,
+               train_spam=True, insert=True):
         from r2.lib.db import queries
 
         things = tup(things)
@@ -105,6 +111,10 @@ class AdminTools(object):
                 ban_info['reset_used'] = True
             t.ban_info = ban_info
             t._spam = False
+            if moderator_unbanned:
+                t.verdict = 'mod-approved'
+            else:
+                t.verdict = 'admin-approved'
             t._commit()
 
         self.author_spammer(things, False)
