@@ -665,8 +665,12 @@ class TransSet(local):
         self.trans = True
 
     def add_engine(self, engine):
-        if self.trans:
-            return self.set.add(engine.begin())
+        if not self.trans:
+            return
+
+        if engine not in self.set:
+            engine.begin()
+            self.set.add(engine)
 
     def clear(self):
         return self.set.clear()
