@@ -27,7 +27,6 @@ import traceback
 from urllib import unquote_plus
 from urllib2 import urlopen
 from urlparse import urlparse, urlunparse
-from threading import local
 import signal
 from copy import deepcopy
 import cPickle as pickle
@@ -655,42 +654,6 @@ def to_js(content, callback="document.write", escape=True):
     if escape:
         content = string2js(content)
     return before + content + after
-
-class TransSet(local):
-    def __init__(self, items = ()):
-        self.set = set(items)
-        self.trans = False
-
-    def begin(self):
-        self.trans = True
-
-    def add_engine(self, engine):
-        if not self.trans:
-            return
-
-        if engine not in self.set:
-            engine.begin()
-            self.set.add(engine)
-
-    def clear(self):
-        self.set.clear()
-        self.trans = False
-
-    def __iter__(self):
-        return self.set.__iter__()
-
-    def commit(self):
-        for t in self:
-            t.commit()
-        self.clear()
-
-    def rollback(self):
-        for t in self:
-            t.rollback()
-        self.clear()
-
-    def __del__(self):
-        self.commit()
 
 def pload(fname, default = None):
     "Load a pickled object from a file"

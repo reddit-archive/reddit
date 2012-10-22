@@ -24,11 +24,12 @@ from datetime import datetime
 import cPickle as pickle
 from copy import deepcopy
 import random
+import threading
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgres
 
-from r2.lib.utils import storage, storify, iters, Results, tup, TransSet
+from r2.lib.utils import storage, storify, iters, Results, tup
 import operators
 from pylons import g, c
 dbm = g.dbm
@@ -39,7 +40,59 @@ log_format = logging.Formatter('sql: %(message)s')
 
 max_val_len = 1000
 
-transactions = TransSet()
+
+class TransactionSet(threading.local):
+    """A manager for SQL transactions.
+
+    This implements a thread local meta-transaction which may span multiple
+    databases.  The existing tdb_sql code calls add_engine before executing
+    writes.  If thing.py calls begin then these calls will actually kick in
+    and start a transaction that must be committed or rolled back by thing.py.
+
+    Because this involves creating transactions at the connection level, this
+    system implicitly relies on using the threadlocal strategy for the
+    sqlalchemy engines.
+
+    This system is a bit awkward, and should be replaced with something that
+    doesn't use module-globals when doing a cleanup of tdb_sql.
+
+    """
+
+    def __init__(self):
+        self.transacting_engines = set()
+        self.transaction_begun = False
+
+    def begin(self):
+        """Indicate that a transaction has begun."""
+        self.transaction_begun = True
+
+    def add_engine(self, engine):
+        """Add a database connection to the meta-transaction if active."""
+        if not self.transaction_begun:
+            return
+
+        if engine not in self.transacting_engines:
+            engine.begin()
+            self.transacting_engines.add(engine)
+
+    def commit(self):
+        """Commit the meta-transaction."""
+        for engine in self.transacting_engines:
+            engine.commit()
+        self._clear()
+
+    def rollback(self):
+        """Roll back the meta-transaction."""
+        for engine in self.transacting_engines:
+            engine.rollback()
+        self._clear()
+
+    def _clear(self):
+        self.transacting_engines.clear()
+        self.transaction_begun = False
+
+
+transactions = TransactionSet()
 
 MAX_THING_ID = 9223372036854775807 # http://www.postgresql.org/docs/8.3/static/datatype-numeric.html
 
