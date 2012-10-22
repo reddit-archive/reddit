@@ -221,7 +221,7 @@ class VWikiPage(Validator):
         try:
             wp = WikiPage.get(c.site, page)
             if self.restricted and wp.restricted:
-                if not wp.special:
+                if not (c.is_wiki_mod or wp.special):
                     self.set_error('RESTRICTED_PAGE', code=403)
                     raise AbortWikiError
             if not this_may_view(wp):
@@ -275,7 +275,7 @@ class VWikiPageRevise(VWikiPage):
     def may_not_create(self, page):
         if c.is_wiki_mod and WikiPage.is_special(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
-        elif WikiPage.is_restricted(page):
+        elif (not c.user_is_admin) and WikiPage.is_restricted(page):
             self.set_error('RESTRICTED_PAGE', code=403)
             return
         elif page.count('/') > MAX_SEPARATORS:
