@@ -232,17 +232,29 @@ class DataThing(object):
         return self._dirty
 
     def _commit(self, keys=None):
-        if not self._created:
-            self._create()
-            just_created = True
-        else:
-            just_created = False
+        lock = None
 
-        with g.make_lock("thing_commit", 'commit_' + self._fullname):
-            if not self._sync_latest():
+        try:
+            if not self._created:
+                begin()
+                self._create()
+                just_created = True
+            else:
+                just_created = False
+
+            lock = g.make_lock("thing_commit", 'commit_' + self._fullname)
+            lock.acquire()
+
+            if not just_created and not self._sync_latest():
                 #sync'd and we have nothing to do now, but we still cache anyway
                 self._cache_myself()
                 return
+
+            # begin is a no-op if already done, but in the not-just-created
+            # case we need to do this here because the else block is not
+            # executed when the try block is exited prematurely in any way
+            # (including the return in the above branch)
+            begin()
 
             if keys:
                 keys = tup(keys)
@@ -276,6 +288,14 @@ class DataThing(object):
                 self._dirties.clear()
 
             self._cache_myself()
+        except:
+            rollback()
+            raise
+        else:
+            commit()
+        finally:
+            if lock:
+                lock.release()
 
     @classmethod
     def _load_multi(cls, need):
