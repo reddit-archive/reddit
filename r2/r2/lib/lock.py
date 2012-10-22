@@ -57,6 +57,12 @@ class MemcacheLock(object):
         self.verbose = verbose
 
     def __enter__(self):
+        self.acquire()
+
+    def __exit__(self, type, value, tb):
+        self.release()
+
+    def acquire(self):
         start = datetime.now()
 
         my_info = (reddit_host, reddit_pid, simple_traceback())
@@ -93,7 +99,7 @@ class MemcacheLock(object):
         self.locks.add(self.key)
         self.have_lock = True
 
-    def __exit__(self, type, value, tb):
+    def release(self):
         #only release the lock if we gained it in the first place
         if self.have_lock:
             self.cache.delete(self.key)
