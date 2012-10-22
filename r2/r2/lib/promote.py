@@ -1010,7 +1010,7 @@ class PromotionLog(tdb_cassandra.View):
         now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
         text = "[%s: %s] %s" % (name, now, text)
         rowkey = cls._rowkey(link)
-        column = {uuid1(): text}
+        column = {uuid1(): filters._force_utf8(text)}
         cls._set_values(rowkey, column)
 
         # Dual write to old promotion_log attribute
