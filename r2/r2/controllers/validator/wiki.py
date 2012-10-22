@@ -207,6 +207,9 @@ class VWikiPage(Validator):
         
         page = normalize_page(page)
         
+        if WikiPage.is_impossible(page):
+            return self.set_error('INVALID_PAGE_NAME', code=400)
+        
         if (not c.is_wiki_mod) and self.modonly:
             return self.set_error('MOD_REQUIRED', code=403)
         

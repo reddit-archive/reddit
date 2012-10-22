@@ -40,6 +40,10 @@ WIKI_RECENT_DAYS = g.wiki_keep_recent_days
 # Max length of a single page in bytes
 MAX_PAGE_LENGTH_BYTES = g.wiki_max_page_length_bytes
 
+# Page names which should never be
+impossible_namespaces = ('edit/', 'revisions/', 'settings/', 'discussions/', 
+                         'revisions/', 'pages/')
+
 # Namespaces in which access is denied to do anything but view
 restricted_namespaces = ('reddit/', 'config/', 'special/')
 
@@ -190,6 +194,10 @@ class WikiPage(tdb_cassandra.Thing):
     @property
     def restricted(self):
         return WikiPage.is_restricted(self.name)
+
+    @classmethod
+    def is_impossible(cls, page):
+        return ("%s/" % page) in impossible_namespaces or page.startswith(impossible_namespaces)
     
     @classmethod
     def is_restricted(cls, page):
