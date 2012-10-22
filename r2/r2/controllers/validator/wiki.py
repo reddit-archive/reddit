@@ -180,13 +180,7 @@ class VWikiModerator(VSrModerator):
     def __init__(self, fatal=False, *a, **kw):
         VSrModerator.__init__(self, fatal=fatal, *a, **kw)
 
-class VWikiPage(Validator):
-    def __init__(self, param, required=True, restricted=True, modonly=False, **kw):
-        self.restricted = restricted
-        self.modonly = modonly
-        self.required = required
-        Validator.__init__(self, param, **kw)
-    
+class VWikiPageName(Validator):
     def run(self, page):
         if not page:
             # If no page is specified, give the index page
@@ -209,6 +203,21 @@ class VWikiPage(Validator):
         
         if WikiPage.is_impossible(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
+        
+        return page
+
+class VWikiPage(VWikiPageName):
+    def __init__(self, param, required=True, restricted=True, modonly=False, **kw):
+        self.restricted = restricted
+        self.modonly = modonly
+        self.required = required
+        Validator.__init__(self, param, **kw)
+    
+    def run(self, page):
+        page = VWikiPageName.run(self, page)
+        
+        if self.has_errors:
+            return
         
         if (not c.is_wiki_mod) and self.modonly:
             return self.set_error('MOD_REQUIRED', code=403)

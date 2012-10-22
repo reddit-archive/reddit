@@ -39,7 +39,7 @@ from r2.controllers.validator import VMarkdown, VModhash, nop
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
                                            VWikiModerator, VWikiPageRevise,
                                            this_may_revise, this_may_view,
-                                           wiki_validate)
+                                           VWikiPageName, wiki_validate)
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
@@ -76,7 +76,7 @@ class WikiController(RedditController):
     
     @wiki_validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'), required=False, 
                                           restricted=False),
-                   page_name=nop('page'))
+                   page_name=VWikiPageName('page'))
     def GET_wiki_page(self, pv, page_name):
         page, version, version2 = pv
         message = None
@@ -125,7 +125,7 @@ class WikiController(RedditController):
         return WikiRevisions(listing, page=page.name, may_revise=this_may_revise(page)).render()
     
     @wiki_validate(wp=VWikiPageRevise('page'),
-                   page=nop('page'))
+                   page=VWikiPageName('page'))
     def GET_wiki_notfound(self, wp, page):
         api = c.render_style in extensions.API_TYPES
         if wp[0]:
@@ -242,7 +242,7 @@ class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
                    content=VMarkdown(('content')),   
-                   page_name=nop('page'),
+                   page_name=VWikiPageName('page'),
                    reason=nop('reason'))
     @api_doc(api_section.wiki, uri='/api/wiki/edit')
     def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
