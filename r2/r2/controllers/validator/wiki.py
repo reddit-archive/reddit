@@ -282,7 +282,7 @@ class VWikiPageRevise(VWikiPage):
             self.set_error('RESTRICTED_PAGE', code=403)
             return
         elif page.count('/') > MAX_SEPARATORS:
-            return {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'MAX_SEPARATORS': MAX_SEPARATORS}
+            return {'reason': 'PAGE_NAME_MAX_SEPARATORS', 'max_separators': MAX_SEPARATORS}
         elif len(page) > MAX_PAGE_NAME_LENGTH:
             return {'reason': 'PAGE_NAME_LENGTH', 'max_length': MAX_PAGE_NAME_LENGTH}
     

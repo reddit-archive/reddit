@@ -142,7 +142,7 @@ class WikiController(RedditController):
             elif c.error['reason'] == 'PAGE_CREATED_ELSEWHERE':
                 error = _("this page is a special page, please go into the subreddit settings and save the field once to create this special page")
             elif c.error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
-                error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['MAX_SEPARATORS']
+                error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['max_separators']
             return BoringPage(_("Wiki error"), infotext=error).render()
         else:
             return WikiNotFound(page=page, may_revise=True).render()
