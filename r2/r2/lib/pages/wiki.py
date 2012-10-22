@@ -34,9 +34,11 @@ class WikiEditPage(Templated):
         Templated.__init__(self)
 
 class WikiPageSettings(Templated):
-    def __init__(self, settings, mayedit, show_settings=True, page=None, **context):
+    def __init__(self, settings, mayedit, show_editors=True,
+                 show_settings=True, page=None, **context):
         self.permlevel = settings['permlevel']
         self.show_settings = show_settings
+        self.show_editors = show_editors
         self.page = page
         self.base_url = c.wiki_base_url
         self.mayedit = mayedit
@@ -120,8 +122,10 @@ class WikiEdit(WikiBase):
         WikiBase.__init__(self, content, page=page, **context)
 
 class WikiSettings(WikiBase):
-    def __init__(self, settings, mayedit, page, **context):
+    def __init__(self, settings, mayedit, page, restricted, **context):
         content = WikiPageSettings(settings, mayedit, page=page, **context)
+        if restricted:
+            context['alert'] = _("This page is restricted, only moderators may edit it.")
         context['wikiaction'] = ('settings', _("settings"))
         WikiBase.__init__(self, content, page=page, **context)
 

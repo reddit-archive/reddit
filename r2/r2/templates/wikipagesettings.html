@@ -51,7 +51,7 @@
             </%utils:line_field>
         </form>
     %endif
-    %if thing.permlevel != 2:
+    %if thing.show_editors and thing.permlevel != 2:
     <br/>
     <%utils:line_field title="${_('allow users to edit page')}">
         <form id="WikiAllowEditor" onsubmit="r.wiki.addUser(event)">

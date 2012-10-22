@@ -194,8 +194,12 @@ class WikiController(RedditController):
     def GET_wiki_settings(self, page):
         settings = {'permlevel': page._get('permlevel', 0)}
         mayedit = page.get_editor_accounts()
+        restricted = (not page.special) and page.restricted
+        show_editors = not restricted
         return WikiSettings(settings, mayedit, show_settings=not page.special,
-                            page=page.name, may_revise=True).render()
+                            page=page.name, show_editors=show_editors, 
+                            restricted=restricted,
+                            may_revise=True).render()
 
     @wiki_validate(VModhash(),
                    page=VWikiPage('page', restricted=True, modonly=True),
