@@ -34,7 +34,7 @@ from r2.models.builder import WikiRevisionBuilder, WikiRecentRevisionBuilder
 from r2.lib.template_helpers import join_urls
 
 
-from r2.controllers.validator import VMarkdown, VModhash, nop
+from r2.controllers.validator import VMarkdown, VModhash, VPrintable
 
 from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
                                            VWikiModerator, VWikiPageRevise,
@@ -243,7 +243,7 @@ class WikiApiController(WikiController):
                    pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
                    content=VMarkdown(('content')),   
                    page_name=VWikiPageName('page'),
-                   reason=nop('reason'))
+                   reason=VPrintable('reason', 256))
     @api_doc(api_section.wiki, uri='/api/wiki/edit')
     def POST_wiki_edit(self, pageandprevious, content, page_name, reason):
         page, previous = pageandprevious
