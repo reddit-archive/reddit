@@ -1618,7 +1618,7 @@ class VDate(Validator):
     
     """
     def __init__(self, param, future=None, past = None,
-                 admin_override = False,
+                 sponsor_override = False,
                  reference_date = lambda : datetime.now(g.tz), 
                  business_days = False):
         self.future = future
@@ -1630,8 +1630,8 @@ class VDate(Validator):
         # function for generating "now"
         self.reference_date = reference_date
 
-        # do we let admins override date range checking?
-        self.override = admin_override
+        # do we let admins and sponsors override date range checking?
+        self.override = sponsor_override
         Validator.__init__(self, param)
 
     def run(self, date):
