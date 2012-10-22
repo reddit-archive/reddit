@@ -192,9 +192,7 @@ class VWikiPageName(Validator):
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
         if ' ' in page:
-            new_name = page.replace(' ', '_')
-            url = '%s/%s' % (c.wiki_base_url, new_name)
-            redirect_to(url)
+            page = page.replace(' ', '_')
         
         if not page_match_regex.match(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
