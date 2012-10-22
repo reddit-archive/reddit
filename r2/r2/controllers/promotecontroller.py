@@ -338,6 +338,18 @@ class PromoteController(ListingController):
         else:
             min_daily_bid = g.min_promote_bid
 
+        # you cannot edit the bid of a live ad unless it's a freebie
+        try:
+            campaign = PromoCampaign._byID(indx)
+            if (bid != campaign.bid and 
+                campaign.start_date < datetime.now(g.tz)
+                and not campaign.is_freebie()):
+                c.errors.add(errors.BID_LIVE, field='bid')
+                form.has_errors('bid', errors.BID_LIVE)
+                return
+        except NotFound:
+            pass
+
         if bid is None or bid / duration < min_daily_bid:
             c.errors.add(errors.BAD_BID, field = 'bid',
                          msg_params = {'min': min_daily_bid,

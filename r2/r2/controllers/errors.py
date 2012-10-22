@@ -111,6 +111,7 @@ error_list = dict((
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('BAD_HASH', _("i don't believe you.")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
+        ('BID_LIVE', _('you cannot edit the bid of a live ad'))
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

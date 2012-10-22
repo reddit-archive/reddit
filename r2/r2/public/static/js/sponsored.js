@@ -113,13 +113,11 @@ function get_flag_class(flags) {
     if(flags.complete) {
         css_class += " complete";
     }
-    else {
-        if(flags.sponsor) {
-            css_class += " sponsor";
-        }
-        if(flags.paid) {
+    else if (flags.paid) {
             css_class += " paid";
-        }
+    }
+    if (flags.sponsor) {
+        css_class += " sponsor";
     }
     return css_class
 }
@@ -220,6 +218,12 @@ $.set_up_campaigns = function() {
                 else {
                     $(td).append("<span class='info'>complete/live</span>");
                     $(bid_td).addClass("paid")
+                    /* sponsors can always edit */
+                    if (tr.hasClass("sponsor")) {
+                        var e = $(edit).addClass("edit fancybutton")
+                            .click(function() { edit_campaign(tr); });
+                        $(td).append(e);
+                    }
                 }
             }
         });

@@ -136,6 +136,7 @@ ${unsafe(js.use('sponsored'))}
         <th>total bid</th>
         <td class="prefright">
           ${error_field("BAD_BID", "bid", "div")}
+          ${error_field("BID_LIVE", "bid", "div")}
           $<input id="bid" name="bid" size="7" type="text" class="rounded styled-input"
                   style="width:auto"
                   onchange="update_bid(this)"
