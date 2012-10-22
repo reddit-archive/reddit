@@ -177,8 +177,8 @@ class AbortWikiError(Exception):
 page_match_regex = re.compile(r'^[\w_/]+\Z')
 
 class VWikiModerator(VSrModerator):
-    def __init__(self, *a, **kw):
-        VSrModerator.__init__(self, fatal=False, *a, **kw)
+    def __init__(self, fatal=False, *a, **kw):
+        VSrModerator.__init__(self, fatal=fatal, *a, **kw)
 
 class VWikiPage(Validator):
     def __init__(self, param, required=True, restricted=True, modonly=False, **kw):
@@ -272,8 +272,8 @@ class VWikiPageAndVersion(VWikiPage):
         return doc
 
 class VWikiPageRevise(VWikiPage):
-    def __init__(self, *k, **kw):
-        VWikiPage.__init__(self, required=False, *k, **kw)
+    def __init__(self, param, required=False, *k, **kw):
+        VWikiPage.__init__(self, param, required=required, *k, **kw)
     
     def may_not_create(self, page):
         if c.is_wiki_mod and WikiPage.is_special(page):
