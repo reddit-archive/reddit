@@ -81,8 +81,12 @@ class WikiController(RedditController):
         page, version, version2 = pv
         message = None
         
+        if page_name[1]:
+            url = join_urls(c.wiki_base_url, page_name[0])
+            return self.redirect(url)
+        
         if not page:
-            url = join_urls(c.wiki_base_url, '/notfound/', page_name or 'index')
+            url = join_urls(c.wiki_base_url, '/notfound/', page_name[0])
             return self.redirect(url)
         
         if version:
@@ -127,6 +131,7 @@ class WikiController(RedditController):
     @wiki_validate(wp=VWikiPageRevise('page'),
                    page=VWikiPageName('page'))
     def GET_wiki_notfound(self, wp, page):
+        page = page[0]
         api = c.render_style in extensions.API_TYPES
         if wp[0]:
             return self.redirect(join_urls(c.wiki_base_url, wp[0].name))
@@ -251,7 +256,7 @@ class WikiApiController(WikiController):
         if not page:
             if c.error:
                 self.handle_error(403, **c.error)
-            page = WikiPage.create(c.site, page_name)
+            page = WikiPage.create(c.site, page_name[0])
         
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
