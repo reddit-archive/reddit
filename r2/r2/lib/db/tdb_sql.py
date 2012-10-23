@@ -77,15 +77,19 @@ class TransactionSet(threading.local):
 
     def commit(self):
         """Commit the meta-transaction."""
-        for engine in self.transacting_engines:
-            engine.commit()
-        self._clear()
+        try:
+            for engine in self.transacting_engines:
+                engine.commit()
+        finally:
+            self._clear()
 
     def rollback(self):
         """Roll back the meta-transaction."""
-        for engine in self.transacting_engines:
-            engine.rollback()
-        self._clear()
+        try:
+            for engine in self.transacting_engines:
+                engine.rollback()
+        finally:
+            self._clear()
 
     def _clear(self):
         self.transacting_engines.clear()
