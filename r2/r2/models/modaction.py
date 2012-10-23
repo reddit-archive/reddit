@@ -79,7 +79,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'wikicontributor': _('add wiki contributor'),
              'removewikicontributor': _('remove wiki contributor'),
              'wikirevise': _('wiki revise page'),
-             'wikipermlevel': _('wiki page permlevel')}
+             'wikipermlevel': _('wiki page permissions')}
 
     _text = {'banuser': _('banned'),
              'wikibanned': _('wiki banned'),
