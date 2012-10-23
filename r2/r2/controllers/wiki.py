@@ -135,22 +135,25 @@ class WikiController(RedditController):
     def GET_wiki_create(self, wp, page):
         page = page[0]
         api = c.render_style in extensions.API_TYPES
+        error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
+        if error:
+            error = error.msg_params
         if wp[0]:
             return self.redirect(join_urls(c.wiki_base_url, wp[0].name))
         elif api:
-            if c.error:
-                self.handle_error(403, **c.error)
+            if error:
+                self.handle_error(403, **error)
             else:
                 self.handle_error(404, 'PAGE_NOT_CREATED')
-        elif c.error:
-            error = ''
-            if c.error['reason'] == 'PAGE_NAME_LENGTH':
-                error = _("this wiki cannot handle page names of that magnitude!  please select a page name shorter than %d characters") % c.error['max_length']
-            elif c.error['reason'] == 'PAGE_CREATED_ELSEWHERE':
-                error = _("this page is a special page, please go into the subreddit settings and save the field once to create this special page")
-            elif c.error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
-                error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['max_separators']
-            return BoringPage(_("Wiki error"), infotext=error).render()
+        elif error:
+            error_msg = ''
+            if error['reason'] == 'PAGE_NAME_LENGTH':
+                error_msg = _("this wiki cannot handle page names of that magnitude!  please select a page name shorter than %d characters") % error['max_length']
+            elif error['reason'] == 'PAGE_CREATED_ELSEWHERE':
+                error_msg = _("this page is a special page, please go into the subreddit settings and save the field once to create this special page")
+            elif error['reason'] == 'PAGE_NAME_MAX_SEPARATORS':
+                error_msg = _('a max of %d separators "/" are allowed in a wiki page name.') % error['max_separators']
+            return BoringPage(_("Wiki error"), infotext=error_msg).render()
         else:
             return WikiCreate(page=page, may_revise=True).render()
     
@@ -254,8 +257,9 @@ class WikiApiController(WikiController):
         page, previous = pageandprevious
         
         if not page:
-            if c.error:
-                self.handle_error(403, **c.error)
+            error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
+            if error:
+                self.handle_error(403, **(error.msg_params or {}))
             page = WikiPage.create(c.site, page_name[0])
         
         # Use the raw POST value as we need to tell the difference between
