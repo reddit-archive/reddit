@@ -49,9 +49,10 @@ class TimingStatBuffer:
         # so as to avoid inconsistency from a poorly timed context switch.
         self.data[key] += service_time_sec + 1j
 
-    def iteritems(self):
-        """Yields timing and counter data for sending to statsd."""
-        for k, v in self.data.iteritems():
+    def flush(self):
+        """Yields accumulated timing and counter data and resets the buffer."""
+        data, self.data = self.data, collections.defaultdict(complex)
+        for k, v in data.iteritems():
             total_time, count = v.real, v.imag
             yield k, str(int(count)) + '|c'
             divisor = count or 1
@@ -68,8 +69,10 @@ class CountingStatBuffer:
     def record(self, key, delta):
         self.data[key] += delta
 
-    def iteritems(self):
-        for k, v in self.data.iteritems():
+    def flush(self):
+        """Yields accumulated counter data and resets the buffer."""
+        data, self.data = self.data, collections.defaultdict(int)
+        for k, v in data.iteritems():
             yield k, str(v) + '|c'
 
 
@@ -114,10 +117,8 @@ class StatsdClient:
         self.conn = self._make_conn(None)
 
     def flush(self):
-        timings, self.timing_stats = self.timing_stats, TimingStatBuffer()
-        counts, self.counting_stats = self.counting_stats, CountingStatBuffer()
-        data = list(timings.iteritems())
-        data.extend(counts.iteritems())
+        data = list(self.timing_stats.flush())
+        data.extend(self.counting_stats.flush())
         self.conn.send(self._data_iterator(data))
 
 
