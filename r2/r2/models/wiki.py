@@ -42,7 +42,7 @@ MAX_PAGE_LENGTH_BYTES = g.wiki_max_page_length_bytes
 
 # Page names which should never be
 impossible_namespaces = ('edit/', 'revisions/', 'settings/', 'discussions/', 
-                         'revisions/', 'pages/')
+                         'revisions/', 'pages/', 'create/')
 
 # Namespaces in which access is denied to do anything but view
 restricted_namespaces = ('reddit/', 'config/', 'special/')

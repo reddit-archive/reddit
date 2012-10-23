@@ -43,7 +43,8 @@ from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
-                              WikiListing, WikiDiscussions)
+                              WikiListing, WikiDiscussions,
+                              WikiCreate)
 
 from r2.config.extensions import set_extension
 from r2.lib.template_helpers import add_sr
@@ -86,8 +87,9 @@ class WikiController(RedditController):
             return self.redirect(url)
         
         if not page:
-            url = join_urls(c.wiki_base_url, '/notfound/', page_name[0])
-            return self.redirect(url)
+            if c.render_style in extensions.API_TYPES:
+                self.handle_error(404, 'PAGE_NOT_CREATED')
+            return WikiNotFound(page=page_name[0]).render()
         
         if version:
             edit_by = version.get_author()
@@ -130,7 +132,7 @@ class WikiController(RedditController):
     
     @wiki_validate(wp=VWikiPageRevise('page'),
                    page=VWikiPageName('page'))
-    def GET_wiki_notfound(self, wp, page):
+    def GET_wiki_create(self, wp, page):
         page = page[0]
         api = c.render_style in extensions.API_TYPES
         if wp[0]:
@@ -150,13 +152,11 @@ class WikiController(RedditController):
                 error = _('a max of %d separators "/" are allowed in a wiki page name.') % c.error['max_separators']
             return BoringPage(_("Wiki error"), infotext=error).render()
         else:
-            return WikiNotFound(page=page, may_revise=True).render()
+            return WikiCreate(page=page, may_revise=True).render()
     
     @wiki_validate(wp=VWikiPageRevise('page', restricted=True))
     def GET_wiki_revise(self, wp, page, message=None, **kw):
         wp = wp[0]
-        if not wp:
-            return self.redirect(join_urls(c.wiki_base_url, '/notfound/', page))
         previous = kw.get('previous', wp._get('revision'))
         content = kw.get('content', wp.content)
         if not message and wp.name in page_descriptions:
