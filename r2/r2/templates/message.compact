@@ -22,7 +22,7 @@
 
 <%!
     from r2.lib.pages import WrappedUser 
-    from r2.lib.filters import edit_comment_filter, safemarkdown
+    from r2.lib.filters import safemarkdown
 %>
 <%namespace file="printable.html" import="arrow, score"/>
 <%namespace file="utils.html" import="plain_link" />
