@@ -148,6 +148,9 @@ class ErrorSet(object):
         see if it's in the errors list."""
         return self.errors.has_key(pair)
 
+    def get(self, name, default=None):
+        return self.errors.get(name, default)
+
     def __getitem__(self, name):
         return self.errors[name]
 
