@@ -668,7 +668,7 @@ def get_user_reported(user_id):
             get_user_reported_messages(user_id)]
 
 
-def set_promote_status(link, promote_status, onchange=None):
+def set_promote_status(link, promote_status):
     from r2.lib.promote import STATUS
     all_queries = [promote_query(link.author_id) for promote_query in 
                    (get_unpaid_links, get_unapproved_links, 
@@ -698,8 +698,6 @@ def set_promote_status(link, promote_status, onchange=None):
 
     link.promote_status = promote_status
     link._commit()
-    if onchange:
-        onchange()
 
 
 def _promoted_link_query(user_id, status):
