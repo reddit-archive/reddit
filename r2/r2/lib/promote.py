@@ -39,6 +39,7 @@ from pylons import g, c
 from datetime import datetime, timedelta
 from r2.lib import amqp
 from r2.lib.db.queries import make_results, db_sort, add_queries, merge_results
+from r2.lib.db.queries import set_promote_status
 import itertools
 
 import random
@@ -165,6 +166,9 @@ def set_status(l, status, onchange = None):
         l._commit()
         if onchange: 
             onchange()
+
+    # Dual write to UserQueryCache
+    set_promote_status(l, status)
 
 # query queue updates below
 

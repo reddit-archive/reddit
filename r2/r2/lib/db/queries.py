@@ -667,6 +667,124 @@ def get_user_reported(user_id):
             get_user_reported_comments(user_id),
             get_user_reported_messages(user_id)]
 
+
+def set_promote_status(link, promote_status, onchange=None):
+    from r2.lib.promote import STATUS
+    all_queries = [promote_query(link.author_id) for promote_query in 
+                   (get_unpaid_links, get_unapproved_links, 
+                    get_rejected_links, get_live_links, get_accepted_links)]
+    all_queries.extend([get_all_unpaid_links(), get_all_unapproved_links(),
+                        get_all_rejected_links(), get_all_live_links(),
+                        get_all_accepted_links()])
+
+    if promote_status == STATUS.unpaid:
+        inserts = [get_unpaid_links(link.author_id), get_all_unpaid_links()]
+    elif promote_status == STATUS.unseen:
+        inserts = [get_unapproved_links(link.author_id),
+                   get_all_unapproved_links()]
+    elif promote_status == STATUS.rejected:
+        inserts = [get_rejected_links(link.author_id), get_all_rejected_links()]
+    elif promote_status == STATUS.promoted:
+        inserts = [get_live_links(link.author_id), get_all_live_links()]
+    elif promote_status in (STATUS.accepted, STATUS.pending, STATUS.finished):
+        inserts = [get_accepted_links(link.author_id), get_all_accepted_links()]
+
+    deletes = list(set(all_queries) - set(inserts))
+    with CachedQueryMutator() as m:
+        for q in inserts:
+            m.insert(q, [link])
+        for q in deletes:
+            m.delete(q, [link])
+
+    if onchange:
+        onchange()
+
+
+def _promoted_link_query(user_id, status):
+    from r2.lib.promote import STATUS, get_promote_srid
+
+    STATUS_CODES = {'unpaid': STATUS.unpaid,
+                    'unapproved': STATUS.unseen,
+                    'rejected': STATUS.rejected,
+                    'live': STATUS.promoted,
+                    'accepted': (STATUS.accepted, STATUS.pending,
+                                 STATUS.finished)}
+
+    q = Link._query(Link.c.sr_id == get_promote_srid(),
+                    Link.c._spam == (True, False),
+                    Link.c._deleted == (True, False),
+                    Link.c.promote_status == STATUS_CODES[status],
+                    sort=db_sort('new'))
+    if user_id:
+        q._filter(Link.c.author_id == user_id)
+    return q
+
+
+@cached_query(UserQueryCache)
+def get_unpaid_links(user_id):
+    return _promoted_link_query(user_id, 'unpaid')
+
+
+@cached_query(UserQueryCache)
+def get_all_unpaid_links():
+    return _promoted_link_query(None, 'unpaid')
+
+
+@cached_query(UserQueryCache)
+def get_unapproved_links(user_id):
+    return _promoted_link_query(user_id, 'unapproved')
+
+
+@cached_query(UserQueryCache)
+def get_all_unapproved_links():
+    return _promoted_link_query(None, 'unapproved')
+
+
+@cached_query(UserQueryCache)
+def get_rejected_links(user_id):
+    return _promoted_link_query(user_id, 'rejected')
+
+
+@cached_query(UserQueryCache)
+def get_all_rejected_links():
+    return _promoted_link_query(None, 'rejected')
+
+
+@cached_query(UserQueryCache)
+def get_live_links(user_id):
+    return _promoted_link_query(user_id, 'live')
+
+
+@cached_query(UserQueryCache)
+def get_all_live_links():
+    return _promoted_link_query(None, 'live')
+
+
+@cached_query(UserQueryCache)
+def get_accepted_links(user_id):
+    return _promoted_link_query(user_id, 'accepted')
+
+
+@cached_query(UserQueryCache)
+def get_all_accepted_links():
+    return _promoted_link_query(None, 'accepted')
+
+
+@merged_cached_query
+def get_promoted_links(user_id):
+    queries = [get_unpaid_links(user_id), get_unapproved_links(user_id),
+               get_rejected_links(user_id), get_live_links(user_id),
+               get_accepted_links(user_id)]
+    return queries
+
+
+@merged_cached_query
+def get_all_promoted_links():
+    queries = [get_all_unpaid_links(), get_all_unapproved_links(),
+               get_all_rejected_links(), get_all_live_links(),
+               get_all_accepted_links()]
+    return queries
+
 def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
