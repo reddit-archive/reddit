@@ -692,7 +692,7 @@ def get_live_promotions(srids, from_permacache=True):
     return links, weights
 
 
-def set_live_promotions(links, weights, which=("permacache",)):
+def set_live_promotions(links, weights, which=("cass", "permacache")):
     if "permacache" in which:
         timer = g.stats.get_timer("promote.set_live.permacache")
         timer.start()
@@ -997,8 +997,8 @@ def run_changed(drain=False, limit=100, sleep_time=10, verbose=True):
         if QUEUE_ALL in items:
             # QUEUE_ALL is just an indicator to run make_daily_promotions.
             # There's no promotion log to update in this case.
-            print "Received QUEUE_ALL message"
-            items.remove(QUEUE_ALL)
+            print "Received %s QUEUE_ALL message(s)" % items.count(QUEUE_ALL)
+            items = [i for i in items if i != QUEUE_ALL]
         make_daily_promotions()
         links = Link._by_fullname([i["link"] for i in items])
         for item in items:
