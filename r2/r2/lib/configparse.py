@@ -48,6 +48,14 @@ class ConfigValue(object):
         return tuple(ConfigValue.to_iter(v))
 
     @staticmethod
+    def dict(key_type, value_type):
+        def parse(v, key=None, data=None):
+            return {key_type(x): value_type(y)
+                    for x, y in (
+                        i.split(':', 1) for i in ConfigValue.to_iter(v))}
+        return parse
+
+    @staticmethod
     def choice(v, key, data):
         if v not in data:
             raise ValueError("Unknown option for %r: %r not in %r" % (key, v, data))
