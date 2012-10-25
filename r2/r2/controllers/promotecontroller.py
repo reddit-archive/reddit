@@ -51,18 +51,30 @@ class PromoteController(ListingController):
         return _('promoted by you')
 
     def query(self):
-        author_id = None if c.user_is_sponsor else c.user._id
-        if self.sort == "future_promos":
-            return promote.get_unapproved_links(author_id)
-        elif self.sort == "pending_promos":
-            return promote.get_accepted_links(author_id)
-        elif self.sort == "unpaid_promos":
-            return promote.get_unpaid_links(author_id)
-        elif self.sort == "rejected_promos":
-            return promote.get_rejected_links(author_id)
-        elif self.sort == "live_promos":
-            return promote.get_live_links(author_id)
-        return promote.get_all_links(author_id)
+        if c.user_is_sponsor:
+            if self.sort == "future_promos":
+                return queries.get_all_unapproved_links()
+            elif self.sort == "pending_promos":
+                return queries.get_all_accepted_links()
+            elif self.sort == "unpaid_promos":
+                return queries.get_all_unpaid_links()
+            elif self.sort == "rejected_promos":
+                return queries.get_all_rejected_links()
+            elif self.sort == "live_promos":
+                return queries.get_all_live_links()
+            return queries.get_all_promoted_links()
+        else:
+            if self.sort == "future_promos":
+                return queries.get_unapproved_links(c.user._id)
+            elif self.sort == "pending_promos":
+                return queries.get_accepted_links(c.user._id)
+            elif self.sort == "unpaid_promos":
+                return queries.get_unpaid_links(c.user._id)
+            elif self.sort == "rejected_promos":
+                return queries.get_rejected_links(c.user._id)
+            elif self.sort == "live_promos":
+                return queries.get_live_links(c.user._id)
+            return queries.get_promoted_links(c.user._id)
 
     @validate(VSponsor())
     def GET_listing(self, sort = "", **env):
