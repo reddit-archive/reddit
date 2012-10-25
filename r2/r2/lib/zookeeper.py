@@ -46,7 +46,7 @@ def connect_to_zookeeper(hostlist, credentials):
     # convenient helper function for making credentials
     client.make_acl = functools.partial(make_digest_acl, *credentials)
 
-    client.connect()
+    client.start()
     client.add_auth("digest", ":".join(credentials))
     return client
 
