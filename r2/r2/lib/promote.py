@@ -23,9 +23,11 @@
 from __future__ import with_statement
 
 import json
+import time
 
 from r2.models import *
 from r2.models.bidding import SponsorBoxWeightings, WeightingRef
+from r2.models.keyvalue import NamedGlobals
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
 from r2.lib import emailer, filters
@@ -53,6 +55,16 @@ CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
 
 UPDATE_QUEUE = 'update_promos_q'
 QUEUE_ALL = 'all'
+
+PROMO_HEALTH_KEY = 'promotions_last_updated'
+
+
+def _mark_promos_updated():
+    NamedGlobals.set(PROMO_HEALTH_KEY, time.time())
+
+
+def health_check():
+    return NamedGlobals.get(PROMO_HEALTH_KEY, default=0)
 
 
 @memoize("get_promote_srid")
@@ -831,6 +843,7 @@ def make_daily_promotions(offset = 0, test = False):
 
     if not test:
         set_live_promotions(all_links, weighted)
+        _mark_promos_updated()
     else:
         print (all_links, weighted)
 

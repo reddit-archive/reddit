@@ -30,6 +30,7 @@ from pylons import c, g, response
 
 from reddit_base import MinimalController
 from r2.lib.amqp import worker
+from r2.lib import promote
 
 from validator import *
 
@@ -47,3 +48,7 @@ class HealthController(MinimalController):
         c.dontcache = True
         response.headers['Content-Type'] = 'text/plain'
         return json.dumps(g.versions, sort_keys=True, indent=4)
+
+    def GET_promohealth(self):
+        response.headers['Content-Type'] = 'text/plain'
+        return json.dumps(promote.health_check())

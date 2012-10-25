@@ -158,6 +158,7 @@ def make_map():
     mc('/promoted/', controller='promoted', action="listing", sort="")
 
     mc('/health', controller='health', action='health')
+    mc('/health/ads', controller='health', action='promohealth')
 
     mc('/', controller='hot', action='listing')
 
