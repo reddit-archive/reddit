@@ -1413,6 +1413,35 @@ def simple_traceback():
                      in stack_trace)
 
 
+def weighted_lottery(weights, _random=random.random):
+    """Randomly choose a key from a dict where values are weights.
+
+    Weights should be non-negative numbers, and at least one weight must be
+    non-zero. The probability that a key will be selected is proportional to
+    its weight relative to the sum of all weights. Keys with zero weight will
+    be ignored.
+
+    Raises ValueError if weights is empty or contains a negative weight.
+    """
+
+    total = sum(weights.itervalues())
+    if total <= 0:
+        raise ValueError("total weight must be positive")
+
+    r = _random() * total
+    t = 0
+    for key, weight in weights.iteritems():
+        if weight < 0:
+            raise ValueError("weight for %r must be non-negative" % key)
+        t += weight
+        if t > r:
+            return key
+
+    # this point should never be reached
+    raise ValueError(
+        "weighted_lottery messed up: r=%r, t=%r, total=%r" % (r, t, total))
+
+
 class GoldPrice(object):
     """Simple price math / formatting type.
 

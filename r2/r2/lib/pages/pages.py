@@ -52,7 +52,7 @@ from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, median, to36
-from r2.lib.utils import trunc_time, timesince, timeuntil
+from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
@@ -3611,33 +3611,20 @@ def render_ad(reddit_name=None, keyword=None):
         ad = adsr._thing1
         ads[ad.codename] = (ad, adsr.weight)
 
-    total_weight = sum(t[1] for t in ads.values())
+    try:
+        codename = weighted_lottery({k: v[1] for k, v in ads.iteritems()})
+    except ValueError, ex:
+        log_text(
+            "no winner",
+            "No winner found for /r/%s, error=%s" % (reddit_name, ex.message),
+            "error")
+        codename = "DART"
 
-    if total_weight == 0:
-        log_text("no ads", "No ads found for %s" % reddit_name, "error")
-        return ""
-
-    lotto = random.randint(0, total_weight - 1)
-    winner = None
-    for t in ads.values():
-        lotto -= t[1]
-        if lotto <= 0:
-            winner = t[0]
-
-            if winner.codename == "DART":
-                return Dart_Ad(dartsite, reddit_name).render()
-            else:
-                attrs = winner.important_attrs()
-                return HouseAd(**attrs).render()
-
-    # No winner?
-
-    log_text("no winner",
-             "No winner found for /r/%s, total_weight=%d" %
-             (reddit_name, total_weight),
-             "error")
-
-    return Dart_Ad(dartsite, reddit_name).render()
+    if codename == "DART":
+        return Dart_Ad(dartsite, reddit_name).render()
+    else:
+        attrs = ads[codename][0].important_attrs()
+        return HouseAd(**attrs).render()
 
 class TryCompact(Reddit):
     def __init__(self, dest, **kw):

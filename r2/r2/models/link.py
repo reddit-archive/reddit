@@ -128,16 +128,11 @@ class Link(Thing, Printable):
             weights = g.live_config['comment_tree_version_weights']
         except KeyError:
             return cls._defaults['comment_tree_version']
-        total = sum(weights.itervalues())
-        r = random.random() * total
-        t = 0
-        for version, weight in weights.iteritems():
-            t += weight
-            if t >= r:
-                return version
-        # this point should never be reached, but if it is, return the default
-        # for old links
-        return cls._defaults['comment_tree_version']
+        try:
+            return utils.weighted_lottery(weights)
+        except ValueError, ex:
+            g.log.error("error choosing comment tree version: %s", ex.message)
+            return cls._defaults['comment_tree_version']
 
     @classmethod
     def _submit(cls, title, url, author, sr, ip, spam=False):
