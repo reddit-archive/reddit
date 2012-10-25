@@ -504,10 +504,13 @@ class PromoTraffic(Templated):
     def __init__(self, link):
         self.thing = link
         self.summary_tab = PromoLinkTrafficSummary(link)
+        # any traffic viewer can see summary, details, and help tabs but the
+        # settings tab is only visible to owners and admins
         tabs = [('summary', 'summary', self.summary_tab),
-                ('details', 'traffic by campaign', PromoCampaignTrafficTable(link)),
-                ('settings', 'settings', PromoTrafficSettings(link)),
-                ('help', 'help', PromoTrafficHelp())]
+                ('details', 'traffic by campaign', PromoCampaignTrafficTable(link))]
+        if c.user_is_sponsor or c.user._id == link.author_id:
+            tabs.append(('settings', 'settings', PromoTrafficSettings(link)))
+        tabs.append(('help', 'help', PromoTrafficHelp()))
         Templated.__init__(self, tabs=TabbedPane(tabs, True))
 
     def as_csv(self):
@@ -565,8 +568,7 @@ class PromoCampaignTrafficTable(Templated):
 class PromoTrafficSettings(Templated):
     def __init__(self, thing):
         self.thing = thing
-        editable = c.user_is_sponsor or c.user._id == thing.author_id
-        self.viewer_list = TrafficViewerList(thing, editable) 
+        self.viewer_list = TrafficViewerList(thing, editable=True) 
         self.traffic_url = promote.promotraffic_url(thing)
         Templated.__init__(self)
 
