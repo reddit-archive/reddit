@@ -402,22 +402,24 @@ class PromotionWeights(Sessionized, Base):
             item._delete()
 
     @classmethod
-    def get_campaigns(cls, d):
-        d = to_date(d)
-        return list(cls.query(date = d))
+    def get_campaigns(cls, start, end=None, author_id=None):
+        start = to_date(start)
+        q = cls.query()
+        if end:
+            end = to_date(end)
+            q = q.filter(and_(cls.date >= start, cls.date < end))
+        else:
+            q = q.filter(cls.date == start)
+        
+        if author_id:
+            q = q.filter(cls.account_id == author_id)
+        
+        return list(q)
 
     @classmethod
     def get_schedule(cls, start_date, end_date, author_id = None):
-        start_date = to_date(start_date)
-        end_date   = to_date(end_date)
-        q = cls.query()
-        q = q.filter(and_(cls.date >= start_date, cls.date < end_date))
-
-        if author_id is not None:
-            q = q.filter(cls.account_id == author_id)
-
         res = {}
-        for x in q.all():
+        for x in cls.get_campaigns(start_date, end_date, author_id):
             res.setdefault((x.thing_name, x.promo_idx), []).append(x.date)
 
         return [(k[0], k[1], min(v), max(v)) for k, v in res.iteritems()]
