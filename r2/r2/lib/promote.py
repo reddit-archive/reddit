@@ -38,7 +38,6 @@ from r2.lib.organic import keep_fresh_links
 from pylons import g, c
 from datetime import datetime, timedelta
 from r2.lib import amqp
-from r2.lib.db.queries import make_results, db_sort, add_queries, merge_results
 from r2.lib.db.queries import set_promote_status
 import itertools
 
@@ -144,67 +143,6 @@ def campaign_is_live(link, campaign_index):
         return False
     live = scheduled_campaigns_by_link(link)
     return campaign_index in live
-
-
-# no references to promote_status below this function, pls
-def set_status(l, status, onchange = None):
-    # keep this out here.  Useful for updating the queue if there is a bug
-    # and for initial migration
-    add_queries([_sponsored_link_query(None, l.author_id),
-                 _sponsored_link_query(None),
-                 _sponsored_link_query(status, l.author_id),
-                 _sponsored_link_query(status)], insert_items = [l])
-
-    # no need to delete or commit of the status is unchanged
-    if status != getattr(l, "promote_status", None):
-        # new links won't even have a promote_status yet
-        if hasattr(l, "promote_status"):
-            add_queries([_sponsored_link_query(l.promote_status, l.author_id),
-                         _sponsored_link_query(l.promote_status)],
-                        delete_items = [l])
-        l.promote_status = status
-        l._commit()
-        if onchange: 
-            onchange()
-
-    # Dual write to UserQueryCache
-    set_promote_status(l, status)
-
-# query queue updates below
-
-def _sponsored_link_query(status, author_id = None):
-    q = Link._query(Link.c.sr_id == get_promote_srid(),
-                    Link.c._spam == (True, False),
-                    Link.c._deleted == (True,False),
-                    sort = db_sort('new'))
-    if status is not None:
-        q._filter(Link.c.promote_status == status)
-    if author_id is not None:
-        q._filter(Link.c.author_id == author_id)
-    return make_results(q)
-
-def get_unpaid_links(author_id = None):
-    return _sponsored_link_query(STATUS.unpaid, author_id = author_id)
-
-def get_unapproved_links(author_id = None):
-    return _sponsored_link_query(STATUS.unseen, author_id = author_id)
-
-def get_rejected_links(author_id = None):
-    return _sponsored_link_query(STATUS.rejected, author_id = author_id)
-
-def get_live_links(author_id = None):
-    return _sponsored_link_query(STATUS.promoted, author_id = author_id)
-
-def get_accepted_links(author_id = None):
-    return merge_results(_sponsored_link_query(STATUS.accepted,
-                                 author_id = author_id),
-                         _sponsored_link_query(STATUS.pending,
-                                 author_id = author_id),
-                         _sponsored_link_query(STATUS.finished,
-                                 author_id = author_id))
-
-def get_all_links(author_id = None):
-    return _sponsored_link_query(None, author_id = author_id)
 
 
 # subreddit roadblocking functions
@@ -352,9 +290,9 @@ def new_promotion(title, url, user, ip):
 
     # set the status of the link, populating the query queue
     if c.user_is_sponsor or user.trusted_sponsor:
-        set_status(l, STATUS.accepted)
+        set_promote_status(l, STATUS.accepted)
     else:
-        set_status(l, STATUS.unpaid)
+        set_promote_status(l, STATUS.unpaid)
 
     # the user has posted a promotion, so enable the promote menu unless
     # they have already opted out
@@ -488,7 +426,7 @@ def auth_campaign(link, campaign, user, pay_id):
         if trans_id < 0:
             PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign._id)
 
-        set_status(link,
+        set_promote_status(link,
                    max(STATUS.unseen if trans_id else STATUS.unpaid,
                        link.promote_status))
         # notify of campaign creation
@@ -531,7 +469,7 @@ def accept_promotion(link):
     PromotionLog.add(link, 'status update: accepted')
     # update the query queue
 
-    set_status(link, STATUS.accepted)
+    set_promote_status(link, STATUS.accepted)
     now = promo_datetime_now(0)
     if link._fullname in set(l.thing_name for l in
                              PromotionWeights.get_campaigns(now)):
@@ -549,7 +487,7 @@ def reject_promotion(link, reason = None):
     # Since status is updated first,
     # if make_daily_promotions happens to run
     # while we're doing work here, it will correctly exclude it
-    set_status(link, STATUS.rejected)
+    set_promote_status(link, STATUS.rejected)
     
     links, = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
     if link._fullname in links:
@@ -565,7 +503,7 @@ def reject_promotion(link, reason = None):
 def unapprove_promotion(link):
     PromotionLog.add(link, 'status update: unapproved')
     # update the query queue
-    set_status(link, STATUS.unseen)
+    set_promote_status(link, STATUS.unseen)
 
 def accepted_campaigns(offset=0):
     now = promo_datetime_now(offset=offset)
@@ -628,7 +566,7 @@ def charge_pending(offset=1):
             if is_promoted(l):
                 emailer.queue_promo(l, camp.bid, camp.trans_id)
             else:
-                set_status(l, STATUS.pending,
+                set_promote_status(l, STATUS.pending,
                     onchange=lambda: emailer.queue_promo(l, camp.bid, camp.trans_id))
             text = ('auth charge for campaign %s, trans_id: %d' % 
                     (camp._id, camp.trans_id))
@@ -790,7 +728,7 @@ def make_daily_promotions(offset = 0, test = False):
                 print "unpromote", l
             else:
                 # update the query queue
-                set_status(links[l], STATUS.finished, 
+                set_promote_status(links[l], STATUS.finished, 
                            onchange = lambda: emailer.finished_promo(links[l]))
 
     for l in new_links:
@@ -799,7 +737,7 @@ def make_daily_promotions(offset = 0, test = False):
                 print "promote2", l
             else:
                 # update the query queue
-                set_status(links[l], STATUS.promoted,
+                set_promote_status(links[l], STATUS.promoted,
                            onchange = lambda: emailer.live_promo(links[l]))
 
     # convert the weighted dict to use sr_ids which are more useful

@@ -696,6 +696,8 @@ def set_promote_status(link, promote_status, onchange=None):
         for q in deletes:
             m.delete(q, [link])
 
+    link.promote_status = promote_status
+    link._commit()
     if onchange:
         onchange()
 
