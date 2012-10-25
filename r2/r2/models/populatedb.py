@@ -38,7 +38,7 @@ def populate(num_srs = 10, num_users = 1000, num_links = 100, num_comments = 20,
     try:
         a = Account._by_name(g.system_user)
     except NotFound:
-        a = register(g.system_user, "password")
+        a = register(g.system_user, "password", "127.0.0.1")
 
     srs = []
     for i in range(num_srs):
@@ -60,7 +60,7 @@ def populate(num_srs = 10, num_users = 1000, num_links = 100, num_comments = 20,
                              in range(int(random.uniform(1, 10))) ])
         name = 'test_' + name_ext
         try:
-            a = register(name, name)
+            a = register(name, name, "127.0.0.1")
         except AccountExists:
             a = Account._by_name(name)
         accounts.append(a)

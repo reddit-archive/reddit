@@ -749,7 +749,7 @@ def change_password(user, newpassword):
     return True
 
 #TODO reset the cache
-def register(name, password):
+def register(name, password, registration_ip):
     try:
         a = Account._by_name(name)
         raise AccountExists
@@ -758,6 +758,7 @@ def register(name, password):
                     password = bcrypt_password(password))
         # new accounts keep the profanity filter settings until opting out
         a.pref_no_profanity = True
+        a.registration_ip = registration_ip
         a._commit()
 
         #clear the caches

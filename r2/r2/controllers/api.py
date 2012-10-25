@@ -451,14 +451,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 responder.has_errors('ratelimit', errors.RATELIMIT) or
                 (not g.disable_captcha and bad_captcha)):
             
-            user = register(name, password)
+            user = register(name, password, request.ip)
             VRatelimit.ratelimit(rate_ip = True, prefix = "rate_register_")
 
             #anything else we know (email, languages)?
             if email:
                 user.email = email
 
-            user.registration_ip = request.ip
             user.pref_lang = c.lang
             if c.content_langs == 'all':
                 user.pref_content_langs = 'all'
