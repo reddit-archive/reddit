@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+    from pylons import g
     from r2.lib.strings import strings
     from r2.lib.filters import safemarkdown
     from r2.lib.template_helpers import format_number, js_timestamp, html_datetime
@@ -35,5 +36,9 @@
     <p>
       ${_("Campaigns created before Sept 12, 2012 will not be included in " +
           "these totals.")}
+    </p>
+    <p>
+      ${_("Questions? Email self serve support:")}
+      <a href="mailto:${g.selfserve_support_email}">${g.selfserve_support_email}</a>
     </p>
 </div>
