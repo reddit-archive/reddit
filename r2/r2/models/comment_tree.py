@@ -248,9 +248,14 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
     @tdb_cassandra.will_write
     def delete_comment(cls, tree, comment):
         CommentTreeStorageBase.delete_comment(tree, comment)
+        pids = [int(pid_str, 36) if pid_str else -1
+                for pid_str in comment.parents.split(':')]
+        pids.append(comment._id)
+        updates = {}
+        for d, (pid, cid) in enumerate(zip(pids, pids[1:])):
+            updates[(d, pid, cid)] = -1
         with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-            m.insert(cls._cf, cls._key(tree.link_id),
-                     dict((c.parents + ':' + c._id36), '0'))
+            m.insert(cls._cf, cls._key(tree.link_id), updates)
 
     @classmethod
     @tdb_cassandra.will_write
@@ -392,8 +397,8 @@ class CommentTree:
     def add_comment(self, comment):
         return self.add_comments([comment])
 
-    def delete_comment(self, comment):
-        impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
+    def delete_comment(self, comment, link):
+        impl = self.IMPLEMENTATIONS[link.comment_tree_version]
         impl.delete_comment(self, comment)
         self.link._incr('num_comments', -1)
 

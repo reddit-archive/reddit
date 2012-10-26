@@ -91,10 +91,10 @@ def update_comment_votes(comments, write_consistency_level = None):
                                           write_consistency_level = write_consistency_level)
 
 def delete_comment(comment):
-    with CommentTree.mutation_context(comment.link_id):
-        link = Link._byID(comment.link_id, data=True)
+    link = Link._byID(comment.link_id, data=True)
+    with CommentTree.mutation_context(link):
         cache = get_comment_tree(link)
-        cache.delete_comment(comment)
+        cache.delete_comment(comment, link)
         from r2.lib.db.queries import changed
         changed(link)
 
