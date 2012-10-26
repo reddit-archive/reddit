@@ -96,7 +96,7 @@ def delete_comment(comment):
         cache = get_comment_tree(link)
         cache.delete_comment(comment, link)
         from r2.lib.db.queries import changed
-        changed(link)
+        changed([link])
 
 def _comment_sorter_from_cids(cids, sort):
     comments = Comment._byID(cids, data = False, return_dict = False)
@@ -191,7 +191,7 @@ def get_comment_tree(link, _update=False):
         # the tree rebuild updated the link's comment count, so schedule it for
         # search reindexing
         from r2.lib.db.queries import changed
-        changed(link)
+        changed([link])
         return cache
 
 # message conversation functions
