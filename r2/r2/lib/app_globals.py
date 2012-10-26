@@ -437,7 +437,7 @@ class Globals(object):
                     logging_name="main",
                     server_list=self.cassandra_seeds,
                     pool_size=self.cassandra_pool_size,
-                    timeout=2,
+                    timeout=4,
                     max_retries=3,
                     prefill=False
                 ),
