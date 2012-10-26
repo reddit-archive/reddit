@@ -832,7 +832,7 @@ class VSrCanAlter(VByName):
 class VSrCanBan(VByName):
     def run(self, thing_name):
         if c.user_is_admin:
-            return 'admin'
+            return True
         elif c.user_is_loggedin:
             item = VByName.run(self, thing_name)
             # will throw a legitimate 500 if this isn't a link or
@@ -840,9 +840,7 @@ class VSrCanBan(VByName):
             # comments
             subreddit = item.subreddit_slow
             if subreddit.is_moderator(c.user):
-                return 'mod'
-            # elif subreddit.is_contributor(c.user):
-            #     return 'contributor'
+                return True
         abort(403,'forbidden')
 
 class VSrSpecial(VByName):

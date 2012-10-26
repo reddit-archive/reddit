@@ -1675,11 +1675,11 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
-                why = VSrCanBan('id'),
+                VSrCanBan('id'),
                 thing = VByName('id'),
                 spam = VBoolean('spam', default=True))
     @api_doc(api_section.moderation)
-    def POST_remove(self, why, thing, spam):
+    def POST_remove(self, thing, spam):
 
         # Don't remove a promoted link
         if getattr(thing, "promoted", None):
@@ -1714,10 +1714,10 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modposts")
     @noresponse(VUser(), VModhash(),
-                why = VSrCanBan('id'),
+                VSrCanBan('id'),
                 thing = VByName('id'))
     @api_doc(api_section.moderation)
-    def POST_approve(self, why, thing):
+    def POST_approve(self, thing):
         if not thing: return
         if thing._deleted: return
         kw = {'target': thing}
