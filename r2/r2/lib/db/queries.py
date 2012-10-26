@@ -25,7 +25,7 @@ from r2.models import Message, Inbox, Subreddit, ModContribSR, ModeratorInbox, M
 from r2.lib.db.thing import Thing, Merge
 from r2.lib.db.operators import asc, desc, timeago
 from r2.lib.db.sorts import epoch_seconds
-from r2.lib.utils import fetch_things2, tup, UniqueIterator
+from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
