@@ -1224,39 +1224,6 @@ class VFloat(VNumber):
     def cast(self, val):
         return float(val)
 
-class VBid(VNumber):
-    '''
-    DEPRECATED. Use VFloat instead and check bid amount in function body.
-    '''
-    def __init__(self, bid, link_id, sr):
-        self.duration = 1
-        VNumber.__init__(self, (bid, link_id, sr),
-                         # targeting is a little more expensive
-                         min = g.min_promote_bid,
-                         max = g.max_promote_bid, coerce = False,
-                         error = errors.BAD_BID)
-
-    def cast(self, val):
-        return float(val)/self.duration
-
-    def run(self, bid, link_id, sr = None):
-        if link_id:
-            try:
-                link = Thing._by_fullname(link_id, return_dict = False,
-                                          data=True)
-                self.duration = max((link.promote_until - link._date).days, 1)
-            except NotFound:
-                pass
-        if VNumber.run(self, bid):
-            if sr:
-                if self.cast(bid) >= self.min * 1.5:
-                    return float(bid)
-                else:
-                    self.set_error(self.error, msg_params = dict(min=self.min * 1.5,
-                                                                 max=self.max))
-            else:
-                return float(bid)
-
 
 class VCssName(Validator):
     """
