@@ -343,7 +343,6 @@ def new_promotion(title, url, user, ip):
     l = Link._submit(title, url, user, sr, ip)
     l.promoted = True
     l.disable_comments = False
-    l.campaigns = {}
     PromotionLog.add(l, 'promotion created')
     l._commit()
 
