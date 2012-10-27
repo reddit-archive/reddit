@@ -411,8 +411,7 @@ class CommentTree:
                            Comment.c._spam == (True, False),
                            optimize_rules=True,
                            data=True)
-        comments = sorted(utils.fetch_things2(q, chunk_size=1000),
-                          key=lambda c: c.parent_id)
+        comments = sorted(q, key=lambda c: c.parent_id)
 
         # build tree from scratch (for V2 results in double-counting in cass)
         tree = cls(link, cids=[], tree={}, depth={}, num_children={},
