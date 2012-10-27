@@ -52,8 +52,7 @@ class PromoMetrics(tdb_cassandra.View):
 
     @classmethod
     def get(cls, metric_name, sr_names=None):
-        if isinstance(sr_names, str):
-            sr_names = (sr_names,)
+        sr_names = tup(sr_names)
         metric = cls._byID(metric_name, properties=sr_names)
         return metric._values()  # might have additional values
 

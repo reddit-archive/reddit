@@ -30,7 +30,7 @@ from sqlalchemy import func
 
 from r2.models import traffic
 from r2.models.promo_metrics import PromoMetrics
-
+from r2.models.subreddit import DefaultSR
 
 NDAYS_TO_QUERY = 14  # how much history to use in the estimate
 MIN_DAILY_CASS_KEY = 'min_daily_pageviews.GET_listing'
@@ -38,6 +38,8 @@ PAGEVIEWS_REGEXP = re.compile('(.*)-GET_listing')
 
 def get_predicted_by_date(sr_name, start, stop=None):
     """Return dict mapping datetime objects to predicted pageviews."""
+    if not sr_name:
+        sr_name = DefaultSR.name.lower()
     # lowest pageviews any day the last 2 weeks
     min_daily = PromoMetrics.get(MIN_DAILY_CASS_KEY, sr_name).get(sr_name, 0)
     # expand out to the requested range of dates
