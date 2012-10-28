@@ -240,30 +240,32 @@ var upmod_cls = "upmod";
 var down_cls = "down";
 var downmod_cls = "downmod";
 
-rate_limit = function() {
-    /* default rate-limit duration (in milliseconds) */
-    var default_rate_limit = 333;
-    /* rate limit on a per-action basis (also in ms, 0 = don't rate limit) */
-    var rate_limits = {"vote": 333, "comment": 5000,
-                       "ignore": 0, "ban": 0, "unban": 0,
-                       "assignad": 0 };
-    var last_dates = {};
+rate_limit = (function() {
+    var default_rate_limit = 333,  // default rate-limit duration (in ms)
+        rate_limits = {  // rate limit per-action (in ms, 0 = don't rate limit)
+            "vote": 333,
+            "comment": 5000,
+            "ignore": 0,
+            "ban": 0,
+            "unban": 0,
+            "assignad": 0
+        },
+        last_dates = {}
 
-    /* paranoia: copy global functions used to avoid tampering.  */
-    var defined = $.defined;
-    var with_default = $.with_default;
-    var _Date = Date;
+    // paranoia: copy global functions used to avoid tampering.
+    var _Date = Date
 
-    return function(action) {
-        var now = new _Date();
-        var last_date = last_dates[action];
-        var allowed_interval = with_default(rate_limits[action], 
-                                            default_rate_limit);
-        last_dates[action] = now;
-        /* true = being rate limited */
-        return (defined(last_date) && now - last_date < allowed_interval)
+    return function rate_limit(action) {
+        var now = new _Date(),
+            allowed_interval = action in rate_limits ?
+                               rate_limits[action] : default_rate_limit,
+            last_date = last_dates[action],
+            rate_limited = last_date && (now - last_date) < allowed_interval
+
+        last_dates[action] = now
+        return rate_limited
     };
-}()
+})()
 
 
 $.fn.vote = function(vh, callback, event, ui_only) {
