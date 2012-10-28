@@ -98,10 +98,14 @@ function get_form_fields(form, fields, filter_func) {
 };
 
 function form_error(form) {
-    return function(r) {
-        $(form).find(".status")
-            .html("an error occurred while posting " + 
-                  "(status: " + r.status + ")").end();
+    return function(req) {
+        var msg
+        if (req == 'ratelimit') {
+            msg = r.strings.rate_limit
+        } else {
+            msg = 'an error occurred while posting (status: ' + req.status + ')'
+        }
+        $(form).find('.status').text(msg)
     }
 }
 

@@ -169,8 +169,16 @@ $.request = function(op, parameters, worker_in, block, type,
     var action = op;
     var worker = worker_in;
 
-    if (rate_limit(op) || (window != window.top && !reddit.cnameframe && !reddit.external_frame))
-        return;
+    if (rate_limit(op)) {
+        if (errorhandler) {
+            errorhandler('ratelimit')
+        }
+        return
+    }
+
+    if (window != window.top && !reddit.cnameframe && !reddit.external_frame) {
+        return
+    }
 
     /* we have a lock if we are not blocking or if we have gotten a lock */
     var have_lock = !$.with_default(block, false) || acquire_ajax_lock(action);
