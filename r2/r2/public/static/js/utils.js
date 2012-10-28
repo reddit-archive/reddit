@@ -36,5 +36,15 @@ r.utils = {
             params[value.name] = value.value
         })
         return params
+    },
+
+    _pyStrFormatRe: /%\((\w+)\)s/,
+    pyStrFormat: function(format, params) {
+        return format.replace(this._pyStrFormatRe, function(match, fieldName) {
+            if (!(fieldName in params)) {
+                throw 'missing format parameter'
+            }
+            return params[fieldName]
+        })
     }
 }

@@ -196,7 +196,7 @@ class DataSource(Source):
 
 class StringsSource(DataSource):
     """A virtual source consisting of localized strings from r2.lib.strings."""
-    def __init__(self, lang=None, keys=None, wrap="r.strings = {content}"):
+    def __init__(self, lang=None, keys=None, wrap="r.strings.set({content})"):
         DataSource.__init__(self, wrap=wrap)
         self.lang = lang
         self.keys = keys
@@ -207,6 +207,15 @@ class StringsSource(DataSource):
         if isinstance(obj, strings.StringHandler):
             return obj.string_dict
         raise TypeError
+
+    invalid_formatting_specifier_re = re.compile(r"(?<!%)%\w|(?<!%)%\(\w+\)[^s]")
+    def _check_formatting_specifiers(self, key, string):
+        if not isinstance(string, str):
+            return
+
+        if self.invalid_formatting_specifier_re.search(string):
+            raise ValueError("Invalid string formatting specifier:"
+                             " strings[%r]" % key)
 
     def get_content(self):
         from pylons.i18n import get_lang
@@ -220,6 +229,7 @@ class StringsSource(DataSource):
         if self.keys is not None:
             for key in self.keys:
                 data[key] = strings.strings[key]
+                self._check_formatting_specifiers(key, data[key])
         else:
             data = dict(strings.strings)
 
@@ -232,7 +242,7 @@ class StringsSource(DataSource):
 class LocalizedModule(Module):
     """A module that is localized with r2.lib.strings.
 
-    References to `r.strings.<string>` are parsed out of the module source.
+    References to `r.strings(<string>)` are parsed out of the module source.
     A StringsSource is created and included which contains localized versions
     of the strings referenced in the module.
     """
@@ -246,7 +256,8 @@ class LocalizedModule(Module):
         Module.build(self, closure)
 
         reddit_source = open(self.path).read()
-        string_keys = re.findall("r\.strings\.([\w$_]+)", reddit_source)
+        string_keys = re.findall("r\.strings\(['\"]([\w$_]+)['\"]", reddit_source)
+        string_keys.append("permissions")
 
         print >> sys.stderr, "Creating language-specific files:"
         for lang, unused in iter_langs():
@@ -318,6 +329,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "jquery.reddit.js",
     "base.js",
     "utils.js",
+    "strings.js",
     "ui.js",
     "login.js",
     "analytics.js",

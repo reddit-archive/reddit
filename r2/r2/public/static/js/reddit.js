@@ -101,9 +101,9 @@ function form_error(form) {
     return function(req) {
         var msg
         if (req == 'ratelimit') {
-            msg = r.strings.rate_limit
+            msg = r.strings('rate_limit')
         } else {
-            msg = 'an error occurred while posting (status: ' + req.status + ')'
+            msg = r.strings('an_error_occurred', {status: req.status})
         }
         $(form).find('.status').text(msg)
     }

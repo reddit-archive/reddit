@@ -175,8 +175,8 @@ Note: there are a couple of places outside of your subreddit where someone can c
     go = _("go"),
     view_subreddit_traffic = _("view subreddit traffic"),
 
-    an_error_occurred = _("an error occurred"),
-    an_error_occurred_friendly = _("an error occurred. please try again later!"),
+    an_error_occurred = _("an error occurred (status: %(status)s)"),
+    an_error_occurred_friendly = _("an error occurred. please try again later! (status: %(status)s)"),
     rate_limit = _("please wait a few seconds and try again."),
     subscribed_multi = _("multireddit of your subscriptions"),
     mod_multi = _("multireddit of subreddits you moderate"),
