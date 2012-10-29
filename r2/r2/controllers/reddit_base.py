@@ -589,7 +589,7 @@ class MinimalController(BaseController):
         return c.response
 
     def pre(self):
-
+        c.response_wrappers = []
         c.start_time = datetime.now(g.tz)
         g.reset_caches()
 
@@ -817,7 +817,6 @@ class RedditController(MinimalController):
         c.cookies[g.admin_cookie] = Cookie(value='', expires=DELETE)
 
     def pre(self):
-        c.response_wrappers = []
         MinimalController.pre(self)
 
         set_cnameframe()
