@@ -23,6 +23,7 @@
 import os
 import base64
 import traceback
+import ConfigParser
 
 from urllib import unquote_plus
 from urllib2 import urlopen
@@ -31,6 +32,7 @@ import signal
 from copy import deepcopy
 import cPickle as pickle
 import re, math, random
+import boto
 from decimal import Decimal
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
@@ -1442,3 +1444,15 @@ class GoldPrice(object):
 def config_gold_price(v, key=None, data=None):
     return GoldPrice(v)
 
+
+def read_static_file_config(config_file):
+    parser = ConfigParser.RawConfigParser()
+    with open(config_file, "r") as cf:
+        parser.readfp(cf)
+    config = dict(parser.items("static_files"))
+
+    s3 = boto.connect_s3(config["aws_access_key_id"],
+                         config["aws_secret_access_key"])
+    bucket = s3.get_bucket(config["bucket"])
+
+    return bucket, config
