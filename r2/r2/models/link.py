@@ -129,7 +129,7 @@ class Link(Thing, Printable):
         except KeyError:
             return cls._defaults['comment_tree_version']
         try:
-            return utils.weighted_lottery(weights)
+            return int(utils.weighted_lottery(weights))
         except ValueError, ex:
             g.log.error("error choosing comment tree version: %s", ex.message)
             return cls._defaults['comment_tree_version']
