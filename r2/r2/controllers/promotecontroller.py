@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import json
+
 from validator import *
 from pylons.i18n import _
 from r2.models import *
@@ -112,6 +114,25 @@ class PromoteController(ListingController):
 
         return page.render()
 
+   
+    # For development. Should eventually replace GET_edit_promo
+    @validate(VSponsor('link'),
+              link = VLink('link'))
+    def GET_edit_promo_cpm(self, link):
+        if not link or link.promoted is None:
+            return self.abort404()
+        rendered = wrap_links(link, wrapper = promote.sponsor_wrapper,
+                              skip = False)
+
+        form = PromoteLinkFormCpm(link = link,
+                                  listing = rendered,
+                                  timedeltatext = "")
+
+        page = PromotePage('new_promo', content = form)
+
+        return page.render()
+
+
     # admin only because the route might change
     @validate(VSponsorAdmin('campaign'),
               campaign=VPromoCampaign('campaign'))
@@ -129,6 +150,28 @@ class PromoteController(ListingController):
             return c.response
         return PromotePage("graph", content = content).render()
 
+    
+    def GET_inventory(self, sr_name):
+        '''
+        Return available inventory data as json for use in ajax calls
+        '''
+        inv_start_date = promote.promo_datetime_now()
+        inv_end_date = inv_start_date + timedelta(60)
+        inventory = promote.get_available_impressions(sr_name, 
+                                                      inv_start_date, 
+                                                      inv_end_date, 
+                                                      fuzzed=(not c.user_is_admin))
+        dates = []
+        impressions = []
+        max_imps = 0
+        for date, imps in inventory.iteritems():
+            dates.append(date.strftime("%m/%d/%Y"))
+            impressions.append(imps)
+            max_imps = max(max_imps, imps)
+        return json.dumps({'sr':sr_name,
+                           'dates': dates,
+                           'imps':impressions, 
+                           'max_imps':max_imps})
 
     ### POST controllers below
     @validatedForm(VSponsorAdmin(),

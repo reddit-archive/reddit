@@ -35,10 +35,14 @@
 <%namespace name="utils" file="utils.html"/>
 
 ${unsafe(js.use('sponsored'))}
+
+<%def name="javascript_setup()">
 <script type="text/javascript">
   $(function() { update_bid("*[name=bid]"); }); 
 </script>
+</%def>
 
+${self.javascript_setup()}
 
 ## Create a datepicker for a form. min/maxDateSrc are the id of the
 ## element containing the min/max date - the '#' is added automatically
@@ -413,6 +417,7 @@ ${unsafe(js.use('sponsored'))}
 </div>
 </div>
 
+<%def name="right_panel()">
 %if thing.link and not c.user_is_sponsor:
   <div class="bidding-history" style="padding-top: 0px;">
     <%utils:line_field title="${_('promotion history')}" css_class="rounded">
@@ -457,6 +462,9 @@ ${unsafe(js.use('sponsored'))}
 </%utils:line_field>
   </div>
 %endif
+</%def>
+
+${self.right_panel()}
 
 %if thing.link and c.user_is_sponsor:
   <div class="spacer bidding-history">

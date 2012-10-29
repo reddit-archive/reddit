@@ -524,6 +524,11 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="reddit_selector(default_sr, sr_searches, subreddits)">
+    <%doc>
+      Fires custom event when subreddit selection changes. Add handler like:
+      $("#sr-autocomplete").bind("sr-changed", function() { dostuff; })
+    </%doc>
+
     <div id="sr-autocomplete-area">
       <input id="sr-autocomplete" name="sr" type="text"
              autocomplete="off"

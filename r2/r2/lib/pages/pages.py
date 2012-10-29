@@ -3164,6 +3164,12 @@ class PromotePage(Reddit):
 class PromoteLinkForm(Templated):
     def __init__(self, sr=None, link=None, listing='',
                  timedeltatext='', *a, **kw):
+        self.setup(sr, link, listing, timedeltatext, *a, **kw)
+        Templated.__init__(self, sr=sr, datefmt = datefmt,
+                           timedeltatext=timedeltatext, listing = listing,
+                           bids = self.bids, *a, **kw)
+
+    def setup(self, sr, link, listing, timedeltatext, *a, **kw):
         bids = []
         if c.user_is_sponsor and link:
             self.author = Account._byID(link.author_id)
@@ -3211,11 +3217,24 @@ class PromoteLinkForm(Templated):
             self.market, self.promo_counter = \
                 Promote_Graph.get_market(None, start_date, end_date)
 
+        self.bids = bids
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
+
+
+class PromoteLinkFormCpm(PromoteLinkForm):
+    def __init__(self, sr=None, link=None, listing='',
+                 timedeltatext='', *a, **kw):
+        self.setup(sr, link, listing, timedeltatext, *a, **kw)
+        
+        if not c.user_is_sponsor:
+            self.now = promote.promo_datetime_now().date()
+            start_date = self.now
+            end_date = self.now + datetime.timedelta(60) # two months
+            self.inventory = promote.get_available_impressions(sr, start_date, end_date)
 
         Templated.__init__(self, sr=sr, datefmt = datefmt,
                            timedeltatext=timedeltatext, listing = listing,
-                           bids = bids, *a, **kw)
+                           bids = self.bids, *a, **kw)
 
 
 class PromoAdminTool(Reddit):

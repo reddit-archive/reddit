@@ -142,14 +142,18 @@ def make_map():
     mc('/admin/promoted', controller='promote', action='admin')
     mc('/promoted/edit_promo/:link',
        controller='promote', action='edit_promo')
+    mc('/promoted/edit_promo_cpm/:link', # development only (don't link to url)
+       controller='promote', action='edit_promo_cpm')
     mc('/promoted/edit_promo/pc/:campaign', controller='promote', # admin only
        action='edit_promo_campaign')
     mc('/promoted/pay/:link/:campaign',
        controller='promote', action='pay')
     mc('/promoted/graph',
        controller='promote', action='graph')
-
-    mc('/promoted/traffic/headline/:link', controller='front', action='promo_traffic')
+    mc('/promoted/inventory/:sr_name', 
+       controller='promote', action='inventory')
+    mc('/promoted/traffic/headline/:link', 
+       controller='front', action='promo_traffic')
 
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))

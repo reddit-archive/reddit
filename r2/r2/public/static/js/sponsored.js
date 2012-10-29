@@ -374,3 +374,29 @@ function pay_campaign(elem) {
 function view_campaign(elem) {
     $.redirect($(elem).find('input[name="view_live_url"]').val());
 }
+
+// writes rows into inventory table when subreddit selector changes
+function update_inventory_table() {
+   var sr = $('#targeting').attr('checked') ? $('#sr-autocomplete').val() : ' reddit.com';
+   $.ajax({
+       url: '/promoted/inventory/' + sr,
+       type: 'GET',
+       dataType: 'json',
+       // on success, update title to show subreddit name and fill table rows
+       success: function(data) { // {'sr':'funny', 'dates':[...], 'imps':[...]}
+           var sr_name = (data['sr'] == ' reddit.com') ? 'front page' : data['sr'];
+           $('#inventory-title > span').text('available ' + sr_name + ' impressions'); // FIXME: i18n
+           $('#inventory').empty();
+           $('#inventory').append('<tr><th>date</th><th>imps</th><th></th></tr>');
+           $.each(data['imps'], function(i) {
+               var w = Math.round(50. * data['imps'][i] / data['max_imps']);
+               var row = ['<tr>',
+                          '<th>' + data['dates'][i] + '</th>',
+                          '<td>' + data['imps'][i] + '</td>',
+                          '<td><div class="graph" style="width:' + w.toString() + 'px" /></td>',
+                          '</tr>'];
+               $('#inventory > tbody').append(row.join(''))
+           });
+       }   
+   }); 
+}

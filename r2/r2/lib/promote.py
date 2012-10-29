@@ -22,6 +22,7 @@
 
 from __future__ import with_statement
 
+from collections import OrderedDict
 import json
 import time
 
@@ -31,8 +32,9 @@ from r2.models.keyvalue import NamedGlobals
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
 from r2.lib import emailer
+from r2.lib import inventory
 from r2.lib.template_helpers import get_domain
-from r2.lib.utils import Enum, UniqueIterator, tup
+from r2.lib.utils import Enum, UniqueIterator, tup, to_date
 from r2.lib.organic import keep_fresh_links
 from pylons import g, c
 from datetime import datetime, timedelta
@@ -538,6 +540,37 @@ def get_scheduled(offset=0):
             error_campaigns.append((campaign._id, e))
     return {'by_sr': by_sr, 'links': links, 'error_campaigns': error_campaigns}
 
+def fuzz_impressions(imps):
+    """Return imps rounded to one significant digit."""
+    if imps > 0:
+        ndigits = int(math.floor(math.log10(imps)))
+        return int(round(imps, -1*ndigits)) # note the negative
+    else:
+        return 0
+
+def get_scheduled_impressions(sr_name, start_date, end_date):
+    # FIXME: mock function for development
+    start_date = to_date(start_date)
+    end_date = to_date(end_date)
+    ndays = (end_date - start_date).days
+    scheduled = OrderedDict()
+    for i in range(ndays):
+        date = (start_date + timedelta(i))
+        scheduled[date] = random.randint(0, 100) # FIXME: fakedata
+    return scheduled 
+
+def get_available_impressions(sr_name, start_date, end_date, fuzzed=False):
+    # FIXME: mock function for development
+    start_date = to_date(start_date)
+    end_date = to_date(end_date)
+    available = inventory.get_predicted_by_date(sr_name, start_date, end_date)
+    scheduled = get_scheduled_impressions(sr_name, start_date, end_date)
+    for date in scheduled:
+        available[date] = int(available[date] - (available[date]*scheduled[date]/100.)) # DELETEME
+        #available[date] = max(0, available[date] - scheduled[date]) # UNCOMMENTME
+        if fuzzed:
+            available[date] = fuzz_impressions(available[date])
+    return available
 
 def charge_pending(offset=1):
     for l, camp, weight in accepted_campaigns(offset=offset):

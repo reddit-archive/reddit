@@ -810,6 +810,7 @@ function sr_name_down(e) {
         return false;
     }
     else if (e.keyCode == 13) {
+        $("#sr-autocomplete").trigger("sr-changed");
         hide_sr_name_list();
         input.parents("form").submit();
         return false;
@@ -830,12 +831,14 @@ function sr_dropdown_mup(row) {
         var name = $(row).text();
         $("#sr-autocomplete").val(name);
         $("#sr-drop-down").hide();
+        $("#sr-autocomplete").trigger("sr-changed");
     }
 }
 
 function set_sr_name(link) {
     var name = $(link).text();
     $("#sr-autocomplete").trigger('focus').val(name);
+    $("#sr-autocomplete").trigger("sr-changed");
 }
 
 /*** tabbed pane stuff ***/
