@@ -171,12 +171,35 @@ class Module(Source):
         return [self.path]
 
 
-class StringsSource(Source):
+class DataSource(Source):
+    """A generated source consisting of wrapped JSON data."""
+    def __init__(self, wrap, data=None):
+        self.wrap = wrap
+        self.data = data
+
+    def get_content(self):
+        return self.data
+
+    def get_source(self):
+        content = self.get_content()
+        encoder = getattr(self, '_encoder', None)
+        json_data = json.dumps(content, default=encoder)
+        return self.wrap.format(content=json_data) + "\n"
+
+    def use(self):
+        return inline_script_tag.format(content=self.get_source())
+
+    @property
+    def dependencies(self):
+        return []
+
+
+class StringsSource(DataSource):
     """A virtual source consisting of localized strings from r2.lib.strings."""
-    def __init__(self, lang=None, keys=None, prepend="r.strings = "):
+    def __init__(self, lang=None, keys=None, wrap="r.strings = {content}"):
+        DataSource.__init__(self, wrap=wrap)
         self.lang = lang
         self.keys = keys
-        self.prepend = prepend
 
     @staticmethod
     def _encoder(obj):
@@ -185,7 +208,7 @@ class StringsSource(Source):
             return obj.string_dict
         raise TypeError
 
-    def get_source(self):
+    def get_content(self):
         from pylons.i18n import get_lang
         from r2.lib import strings, translation
 
@@ -200,15 +223,10 @@ class StringsSource(Source):
         else:
             data = dict(strings.strings)
 
-        output = self.prepend + json.dumps(data, default=self._encoder) + "\n"
-
         if self.lang:
             translation.set_lang(old_lang)
 
-        return output
-
-    def use(self):
-        return inline_script_tag.format(content=self.get_source())
+        return data
 
 
 class LocalizedModule(Module):
