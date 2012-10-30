@@ -36,6 +36,7 @@ try:
 except ImportError:
     STATIC_ROOT = None
 else:
+    REDDIT_ROOT = config["pylons.paths"]["root"]
     STATIC_ROOT = config["pylons.paths"]["static_files"]
 
 # STATIC_ROOT will be None if pylons is uninitialized
@@ -284,6 +285,11 @@ class LocalizedModule(Module):
             langs = get_lang() or [g.lang]
             url = LocalizedModule.languagize_path(self.name, langs[0])
             return script_tag.format(src=static(url))
+
+    @property
+    def dependencies(self):
+        return (super(LocalizedModule, self).dependencies
+               + [os.path.join(REDDIT_ROOT, "lib/strings.py")])
 
     @property
     def outputs(self):
