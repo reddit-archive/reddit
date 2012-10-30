@@ -51,6 +51,10 @@ class CommentTreeStorageBase(object):
         raise NotImplementedError
 
     @classmethod
+    def rebuild(cls, tree, comments):
+        return cls.add_comments(tree, comments)
+
+    @classmethod
     def add_comments(cls, tree, comments):
         cids = tree.cids
         depth = tree.depth
@@ -162,8 +166,12 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
     COLUMN_WRITE_BATCH_SIZE = 1000
 
     @staticmethod
-    def _key(link_id):
-        return utils.to36(link_id)
+    def _key(link):
+        revision = getattr(link, 'comment_tree_id', 0)
+        if revision:
+            return '%s:%s' % (utils.to36(link._id), utils.to36(revision))
+        else:
+            return utils.to36(link._id)
 
     @staticmethod
     def _column_to_obj(cols):
@@ -174,7 +182,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
     @classmethod
     def by_link(cls, link):
         try:
-            row = cls.get_row(cls._key(link._id))
+            row = cls.get_row(cls._key(link))
         except ttypes.NotFoundException:
             row = {}
         return cls._from_row(row)
@@ -219,6 +227,30 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
 
     @classmethod
     @tdb_cassandra.will_write
+    def rebuild(cls, tree, comments):
+        with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
+            g.log.debug('removing tree from %s', cls._key(tree.link))
+            m.remove(cls._cf, cls._key(tree.link))
+        tree.link._incr('comment_tree_id')
+        g.log.debug('link %s comment tree revision bumped up to %s',
+                    tree.link._fullname, tree.link.comment_tree_id)
+
+        # make sure all comments have parents attribute filled in
+        parents = {c._id: c.parent_id for c in comments}
+        for c in comments:
+            if not c.parents:
+                path = []
+                pid = c.parent_id
+                while pid:
+                    path.insert(0, pid)
+                    pid = parents[pid]
+                c.parents = ':' + ':'.join(utils.to36(i) for i in path)
+                c._commit()
+
+        return cls.add_comments(tree, comments)
+
+    @classmethod
+    @tdb_cassandra.will_write
     def add_comments(cls, tree, comments):
         CommentTreeStorageBase.add_comments(tree, comments)
         g.log.debug('building updates dict')
@@ -231,7 +263,8 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
                 k = (d, pid, cid)
                 updates[k] = updates.get(k, 0) + 1
 
-        g.log.debug('writing %d updates', len(updates))
+        g.log.debug('writing %d updates to %s',
+                    len(updates), cls._key(tree.link))
         # increment counters in slices of 100
         cols = updates.keys()
         for i in xrange(0, len(updates), cls.COLUMN_WRITE_BATCH_SIZE):
@@ -240,7 +273,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
             update_batch = {c: updates[c]
                             for c in cols[i:i + cls.COLUMN_WRITE_BATCH_SIZE]}
             with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-                m.insert(cls._cf, cls._key(tree.link_id), update_batch)
+                m.insert(cls._cf, cls._key(tree.link), update_batch)
         g.log.debug('added %d comments with %d updates',
                     len(comments), len(updates))
 
@@ -255,7 +288,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
         for d, (pid, cid) in enumerate(zip(pids, pids[1:])):
             updates[(d, pid, cid)] = -1
         with batch.Mutator(g.cassandra_pools[cls._connection_pool]) as m:
-            m.insert(cls._cf, cls._key(tree.link_id), updates)
+            m.insert(cls._cf, cls._key(tree.link), updates)
 
     @classmethod
     @tdb_cassandra.will_write
@@ -417,7 +450,7 @@ class CommentTree:
         tree = cls(link, cids=[], tree={}, depth={}, num_children={},
                    parents={})
         impl = cls.IMPLEMENTATIONS[link.comment_tree_version]
-        impl.add_comments(tree, comments)
+        impl.rebuild(tree, comments)
 
         link.num_comments = sum(1 for c in comments if not c._deleted)
         link._commit()

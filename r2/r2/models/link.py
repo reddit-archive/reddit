@@ -53,7 +53,8 @@ class LinkExists(Exception): pass
 
 # defining types
 class Link(Thing, Printable):
-    _data_int_props = Thing._data_int_props + ('num_comments', 'reported')
+    _data_int_props = Thing._data_int_props + (
+        'num_comments', 'reported', 'comment_tree_id')
     _defaults = dict(is_self=False,
                      over_18=False,
                      nsfw_str=False,
@@ -69,7 +70,8 @@ class Link(Thing, Printable):
                      ip='0.0.0.0',
                      flair_text=None,
                      flair_css_class=None,
-                     comment_tree_version=1)
+                     comment_tree_version=1,
+                     comment_tree_id=0)
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
 
@@ -695,6 +697,8 @@ class Comment(Thing, Printable):
         kw = {}
         if link.comment_tree_version > 1:
             if parent:
+                if not parent.parents:
+                    parent._fill_in_parents()
                 kw['parents'] = parent.parents + ':' + parent._id36
             else:
                 kw['parents'] = ':'
@@ -790,6 +794,17 @@ class Comment(Thing, Printable):
     def _gild(self, user):
         self._incr("gildings")
         GildedCommentsByAccount.gild_comment(user, self)
+
+    def _fill_in_parents(self):
+        if not self.parent_id:
+            self.parents = ':'
+            self._commit()
+            return
+        parent = Comment._byID(self.parent_id)
+        if not parent.parents:
+            parent._fill_in_parents()
+        self.parents = parent.parents + ':' + parent._id36
+        self._commit()
 
     @classmethod
     def add_props(cls, user, wrapped):
