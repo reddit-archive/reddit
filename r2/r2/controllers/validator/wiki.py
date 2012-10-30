@@ -208,9 +208,11 @@ class VWikiPageName(Validator):
         return (page, page != original_page)
 
 class VWikiPage(VWikiPageName):
-    def __init__(self, param, required=True, restricted=True, modonly=False, **kw):
+    def __init__(self, param, required=True, restricted=True, modonly=False,
+                 allow_hidden_revision=True, **kw):
         self.restricted = restricted
         self.modonly = modonly
+        self.allow_hidden_revision = allow_hidden_revision
         self.required = required
         Validator.__init__(self, param, **kw)
     
@@ -254,7 +256,7 @@ class VWikiPage(VWikiPageName):
             return
         try:
             r = WikiRevision.get(version, pageid)
-            if r.is_hidden and not c.is_wiki_mod:
+            if not self.allow_hidden_revision and (r.is_hidden and not c.is_wiki_mod):
                 self.set_error('HIDDEN_REVISION', code=403)
                 raise AbortWikiError
             return r

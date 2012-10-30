@@ -76,7 +76,7 @@ class WikiController(RedditController):
     allow_stylesheets = True
     
     @wiki_validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'), required=False, 
-                                          restricted=False),
+                                          restricted=False, allow_hidden_revision=False),
                    page_name=VWikiPageName('page'))
     def GET_wiki_page(self, pv, page_name):
         page, version, version2 = pv
