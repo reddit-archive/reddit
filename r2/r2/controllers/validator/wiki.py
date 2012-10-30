@@ -64,6 +64,8 @@ def this_may_revise(page=None):
 
 def this_may_view(page):
     user = c.user if c.user_is_loggedin else None
+    if user and c.user_is_admin:
+        return True
     return may_view(c.site, user, page)
 
 def may_revise(sr, user, page=None):    
