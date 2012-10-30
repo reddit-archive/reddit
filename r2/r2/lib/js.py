@@ -30,6 +30,7 @@ import json
 from r2.lib.translation import iter_langs
 from r2.lib.plugin import PluginLoader
 
+
 try:
     from pylons import g, c, config
 except ImportError:
@@ -42,10 +43,14 @@ if not STATIC_ROOT:
     REDDIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     STATIC_ROOT = os.path.join(os.path.dirname(REDDIT_ROOT), "build/public")
 
+
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
 inline_script_tag = '<script type="text/javascript">{content}</script>\n'
 
+
 class ClosureError(Exception): pass
+
+
 class ClosureCompiler(object):
     def __init__(self, jarpath, args=None):
         self.jarpath = jarpath
@@ -67,6 +72,7 @@ class ClosureCompiler(object):
         the operation is unsuccessful."""
         return self._run(data, dest, args)[0]
 
+
 class Source(object):
     """An abstract collection of JavaScript code."""
     def get_source(self):
@@ -84,6 +90,7 @@ class Source(object):
     @property
     def outputs(self):
         raise NotImplementedError
+
 
 class FileSource(Source):
     """A JavaScript source file on disk."""
@@ -108,6 +115,7 @@ class FileSource(Source):
     @property
     def dependencies(self):
         return [self.path]
+
 
 class Module(Source):
     """A module of JS code consisting of a collection of sources."""
@@ -162,6 +170,7 @@ class Module(Source):
     def outputs(self):
         return [self.path]
 
+
 class StringsSource(Source):
     """A virtual source consisting of localized strings from r2.lib.strings."""
     def __init__(self, lang=None, keys=None, prepend="r.strings = "):
@@ -201,9 +210,10 @@ class StringsSource(Source):
     def use(self):
         return inline_script_tag.format(content=self.get_source())
 
+
 class LocalizedModule(Module):
     """A module that is localized with r2.lib.strings.
-    
+
     References to `r.strings.<string>` are parsed out of the module source.
     A StringsSource is created and included which contains localized versions
     of the strings referenced in the module.
@@ -251,6 +261,7 @@ class LocalizedModule(Module):
         for lang, unused in iter_langs():
             yield LocalizedModule.languagize_path(self.path, lang)
 
+
 class JQuery(Module):
     version = "1.7.2"
 
@@ -267,14 +278,18 @@ class JQuery(Module):
             ext = ".js" if g.uncompressedJS else ".min.js"
             return script_tag.format(src=self.cdn_src+ext)
 
+
 module = {}
 
+
 module["jquery"] = JQuery()
+
 
 module["html5shiv"] = Module("html5shiv.js",
     "lib/html5shiv.js",
     should_compile=False
 )
+
 
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/json2.js",
@@ -297,11 +312,13 @@ module["reddit"] = LocalizedModule("reddit.js",
     "spotlight.js",
 )
 
+
 module["mobile"] = LocalizedModule("mobile.js",
     module["reddit"],
     "lib/jquery.lazyload.js",
     "compact.js"
 )
+
 
 module["button"] = Module("button.js",
     "lib/jquery.cookie.js",
@@ -309,11 +326,13 @@ module["button"] = Module("button.js",
     "blogbutton.js"
 )
 
+
 module["sponsored"] = Module("sponsored.js",
     "lib/ui.core.js",
     "lib/ui.datepicker.js",
     "sponsored.js"
 )
+
 
 module["timeseries"] = Module("timeseries.js",
     "lib/jquery.flot.js",
@@ -321,19 +340,23 @@ module["timeseries"] = Module("timeseries.js",
     "timeseries.js",
 )
 
+
 module["timeseries-ie"] = Module("timeseries-ie.js",
     "lib/excanvas.min.js",
     module["timeseries"],
 )
 
+
 module["traffic"] = LocalizedModule("traffic.js",
     "traffic.js",
 )
+
 
 module["qrcode"] = Module("qrcode.js",
     "lib/jquery.qrcode.min.js",
     "qrcode.js",
 )
+
 
 module["highlight"] = Module("highlight.js",
     "lib/highlight.pack.js",
@@ -348,11 +371,13 @@ module["less"] = Module('less.js',
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 
+
 def load_plugin_modules(plugins=None):
     if not plugins:
         plugins = PluginLoader()
     for plugin in plugins:
         plugin.add_js(module)
+
 
 commands = {}
 def build_command(fn):
@@ -362,15 +387,18 @@ def build_command(fn):
     commands[fn.__name__] = wrapped
     return wrapped
 
+
 @build_command
 def enumerate_modules():
     for name, m in module.iteritems():
         print name
 
+
 @build_command
 def dependencies(name):
     for dep in module[name].dependencies:
         print dep
+
 
 @build_command
 def enumerate_outputs(*names):
@@ -383,10 +411,12 @@ def enumerate_outputs(*names):
         for output in m.outputs:
             print output
 
+
 @build_command
 def build_module(name):
     closure = ClosureCompiler("r2/lib/contrib/closure_compiler/compiler.jar")
     module[name].build(closure)
+
 
 if __name__ == "__main__":
     commands[sys.argv[1]](*sys.argv[2:])

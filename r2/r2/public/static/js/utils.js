@@ -29,7 +29,7 @@ r.utils = {
             })
             .toArray().join(' ')
     },
-    
+
     serializeForm: function(form) {
         var params = {}
         $.each(form.serializeArray(), function(index, value) {
