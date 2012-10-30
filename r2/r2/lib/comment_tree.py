@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
+from pylons import g, c
 from itertools import chain
 from r2.lib.utils import tup, to36
 from r2.lib.db.sorts import epoch_seconds
@@ -423,8 +423,11 @@ def _conversation(trees, parent):
     # if we get to this point, either we didn't find the conversation,
     # or the first child of the result was not the actual first child.
     # To the database!
-    m = Message._query(Message.c.first_message == parent._id,
-                       data = True)
+    rules = [Message.c.first_message == parent._id]
+    if c.user_is_admin:
+        rules.append(Message.c._spam == (True, False))
+        rules.append(Message.c._deleted == (True, False))
+    m = Message._query(*rules, data=True)
     return compute_message_trees([parent] + list(m))
 
 def conversation(user, parent):
