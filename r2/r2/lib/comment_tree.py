@@ -22,7 +22,7 @@
 
 from pylons import g, c
 from itertools import chain
-from r2.lib.utils import tup, to36
+from r2.lib.utils import SimpleSillyStub, tup, to36
 from r2.lib.db.sorts import epoch_seconds
 from r2.lib.cache import sgm
 from r2.models.comment_tree import CommentTree
@@ -58,17 +58,24 @@ def add_comments(comments):
 
     for link_id, coms in link_map.iteritems():
         link = links[link_id]
+        timer = g.stats.get_timer('comment_tree.add.%s'
+                                  % link.comment_tree_version)
+        timer.start()
         try:
             with CommentTree.mutation_context(link):
-                cache = get_comment_tree(link)
+                timer.intermediate('lock')
+                cache = get_comment_tree(link, timer=timer)
+                timer.intermediate('get')
                 cache.add_comments(coms)
+                timer.intermediate('update')
         except:
             g.log.exception(
                 'add_comments_nolock failed for link %s, recomputing tree',
                 link_id)
 
             # calculate it from scratch
-            get_comment_tree(link, _update=True)
+            get_comment_tree(link, _update=True, timer=timer)
+        timer.stop()
         update_comment_votes(coms)
 
 def update_comment_votes(comments, write_consistency_level = None):
@@ -92,11 +99,19 @@ def update_comment_votes(comments, write_consistency_level = None):
 
 def delete_comment(comment):
     link = Link._byID(comment.link_id, data=True)
+    timer = g.stats.get_timer('comment_tree.delete.%s'
+                              % link.comment_tree_version)
+    timer.start()
     with CommentTree.mutation_context(link):
+        timer.intermediate('lock')
         cache = get_comment_tree(link)
+        timer.intermediate('get')
         cache.delete_comment(comment, link)
+        timer.intermediate('update')
         from r2.lib.db.queries import changed
         changed([link])
+        timer.intermediate('changed')
+    timer.stop()
 
 def _comment_sorter_from_cids(cids, sort):
     comments = Comment._byID(cids, data = False, return_dict = False)
@@ -136,8 +151,11 @@ def link_comments_and_sort(link, sort):
     #    (CommentSortsCache) rather than a permacache key. One of
     #    these exists for each sort (hot, new, etc)
 
+    timer = g.stats.get_timer('comment_tree.get.%s' % link.comment_tree_version)
+    timer.start()
+
     link_id = link._id
-    cache = get_comment_tree(link)
+    cache = get_comment_tree(link, timer=timer)
     cids = cache.cids
     tree = cache.tree
     depth = cache.depth
@@ -163,6 +181,7 @@ def link_comments_and_sort(link, sort):
             update_comment_votes(Comment._byID(sorter_needed, data=True, return_dict=False))
 
         sorter.update(_comment_sorter_from_cids(sorter_needed, sort))
+        timer.intermediate('sort')
 
     if parents is None:
         g.log.debug("comment_tree.py: parents cache miss for Link %s"
@@ -176,22 +195,31 @@ def link_comments_and_sort(link, sort):
     if not parents and len(cids) > 0:
         with CommentTree.mutation_context(link):
             # reload under lock so the sorter and parents are consistent
-            cache = get_comment_tree(link)
+            timer.intermediate('lock')
+            cache = get_comment_tree(link, timer=timer)
             cache.parents = cache.parent_dict_from_tree(cache.tree)
+
+    timer.stop()
 
     return (cache.cids, cache.tree, cache.depth, cache.num_children,
             cache.parents, sorter)
 
-def get_comment_tree(link, _update=False):
+def get_comment_tree(link, _update=False, timer=None):
+    if timer is None:
+        timer = SimpleSillyStub()
     cache = CommentTree.by_link(link)
+    timer.intermediate('load')
     if cache and not _update:
         return cache
     with CommentTree.mutation_context(link, timeout=180):
+        timer.intermediate('lock')
         cache = CommentTree.rebuild(link)
+        timer.intermediate('rebuild')
         # the tree rebuild updated the link's comment count, so schedule it for
         # search reindexing
         from r2.lib.db.queries import changed
         changed([link])
+        timer.intermediate('changed')
         return cache
 
 # message conversation functions
