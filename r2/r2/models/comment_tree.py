@@ -238,13 +238,13 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
         # make sure all comments have parents attribute filled in
         parents = {c._id: c.parent_id for c in comments}
         for c in comments:
-            if not c.parents:
+            if c.parent_id and c.parents is None:
                 path = []
                 pid = c.parent_id
                 while pid:
                     path.insert(0, pid)
                     pid = parents[pid]
-                c.parents = ':' + ':'.join(utils.to36(i) for i in path)
+                c.parents = ':'.join(utils.to36(i) for i in path)
                 c._commit()
 
         return cls.add_comments(tree, comments)
@@ -256,8 +256,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
         g.log.debug('building updates dict')
         updates = {}
         for c in comments:
-            pids = [int(pid_str, 36) if pid_str else -1
-                    for pid_str in c.parents.split(':')]
+            pids = c.parent_path()
             pids.append(c._id)
             for d, (pid, cid) in enumerate(zip(pids, pids[1:])):
                 k = (d, pid, cid)
@@ -281,8 +280,7 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
     @tdb_cassandra.will_write
     def delete_comment(cls, tree, comment):
         CommentTreeStorageBase.delete_comment(tree, comment)
-        pids = [int(pid_str, 36) if pid_str else -1
-                for pid_str in comment.parents.split(':')]
+        pids = comment.parent_path()
         pids.append(comment._id)
         updates = {}
         for d, (pid, cid) in enumerate(zip(pids, pids[1:])):

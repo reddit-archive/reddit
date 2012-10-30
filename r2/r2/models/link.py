@@ -696,12 +696,16 @@ class Comment(Thing, Printable):
 
         kw = {}
         if link.comment_tree_version > 1:
+            # for top-level comments, parents is an empty string
+            # for all others, it looks like "<id36>:<id36>:...".
             if parent:
-                if not parent.parents:
-                    parent._fill_in_parents()
-                kw['parents'] = parent.parents + ':' + parent._id36
-            else:
-                kw['parents'] = ':'
+                if parent.parent_id:
+                    if parent.parents is None:
+                        parent._fill_in_parents()
+                    kw['parents'] = parent.parents + ':' + parent._id36
+                else:
+                    kw['parents'] = parent._id36
+
         c = Comment(_ups=1,
                     body=body,
                     link_id=link._id,
@@ -797,14 +801,39 @@ class Comment(Thing, Printable):
 
     def _fill_in_parents(self):
         if not self.parent_id:
-            self.parents = ':'
+            self.parents = ''
             self._commit()
             return
         parent = Comment._byID(self.parent_id)
-        if not parent.parents:
-            parent._fill_in_parents()
-        self.parents = parent.parents + ':' + parent._id36
+        if parent.parent_id:
+            if parent.parents is None:
+                parent._fill_in_parents()
+            self.parents = parent.parents + ':' + parent._id36
+        else:
+            self.parents = parent._id36
         self._commit()
+
+    def parent_path(self):
+        """Returns path of comment in tree as list of comment ids.
+
+        The returned list will always begin with -1, followed by comment ids in
+        path order. The return value for top-level comments will always be [-1].
+        """
+        if self.parent_id and self.parents is None:
+            self._fill_in_parents()
+
+        if self.parents is None:
+            return [-1]
+
+        # eliminate any leading colons from the path and parse
+        pids = [long(pid_str, 36) if pid_str else -1
+                for pid_str in self.parents.lstrip(':').split(':')]
+
+        # ensure path starts with -1
+        if pids[0] != -1:
+            pids.insert(0, -1)
+
+        return pids
 
     @classmethod
     def add_props(cls, user, wrapped):
