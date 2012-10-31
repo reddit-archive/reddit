@@ -976,8 +976,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                             comment=None,
                             content=content).render()
 
-    @validate(VSponsorAdmin(), # gated for development
-              VTrafficViewer('link'),
+    @validate(VTrafficViewer('link'),
               link=VLink('link'))
     def GET_promo_traffic(self, link):
         if link:
