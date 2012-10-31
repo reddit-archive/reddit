@@ -29,6 +29,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
+from r2.models.promo import PROMOTE_STATUS
 from r2.models.query_cache import (cached_query, merged_cached_query,
                                    CachedQuery, CachedQueryMutator,
                                    MergedCachedQuery)
@@ -669,7 +670,6 @@ def get_user_reported(user_id):
 
 
 def set_promote_status(link, promote_status):
-    from r2.lib.promote import STATUS
     all_queries = [promote_query(link.author_id) for promote_query in 
                    (get_unpaid_links, get_unapproved_links, 
                     get_rejected_links, get_live_links, get_accepted_links)]
@@ -677,16 +677,17 @@ def set_promote_status(link, promote_status):
                         get_all_rejected_links(), get_all_live_links(),
                         get_all_accepted_links()])
 
-    if promote_status == STATUS.unpaid:
+    if promote_status == PROMOTE_STATUS.unpaid:
         inserts = [get_unpaid_links(link.author_id), get_all_unpaid_links()]
-    elif promote_status == STATUS.unseen:
+    elif promote_status == PROMOTE_STATUS.unseen:
         inserts = [get_unapproved_links(link.author_id),
                    get_all_unapproved_links()]
-    elif promote_status == STATUS.rejected:
+    elif promote_status == PROMOTE_STATUS.rejected:
         inserts = [get_rejected_links(link.author_id), get_all_rejected_links()]
-    elif promote_status == STATUS.promoted:
+    elif promote_status == PROMOTE_STATUS.promoted:
         inserts = [get_live_links(link.author_id), get_all_live_links()]
-    elif promote_status in (STATUS.accepted, STATUS.pending, STATUS.finished):
+    elif promote_status in (PROMOTE_STATUS.accepted, PROMOTE_STATUS.pending,
+                            PROMOTE_STATUS.finished):
         inserts = [get_accepted_links(link.author_id), get_all_accepted_links()]
 
     deletes = list(set(all_queries) - set(inserts))
@@ -701,14 +702,15 @@ def set_promote_status(link, promote_status):
 
 
 def _promoted_link_query(user_id, status):
-    from r2.lib.promote import STATUS, get_promote_srid
+    from r2.lib.promote import get_promote_srid
 
-    STATUS_CODES = {'unpaid': STATUS.unpaid,
-                    'unapproved': STATUS.unseen,
-                    'rejected': STATUS.rejected,
-                    'live': STATUS.promoted,
-                    'accepted': (STATUS.accepted, STATUS.pending,
-                                 STATUS.finished)}
+    STATUS_CODES = {'unpaid': PROMOTE_STATUS.unpaid,
+                    'unapproved': PROMOTE_STATUS.unseen,
+                    'rejected': PROMOTE_STATUS.rejected,
+                    'live': PROMOTE_STATUS.promoted,
+                    'accepted': (PROMOTE_STATUS.accepted,
+                                 PROMOTE_STATUS.pending,
+                                 PROMOTE_STATUS.finished)}
 
     q = Link._query(Link.c.sr_id == get_promote_srid(),
                     Link.c._spam == (True, False),

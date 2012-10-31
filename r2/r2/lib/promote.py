@@ -45,10 +45,6 @@ import random
 from uuid import uuid1
 
 
-STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
-              "pending", "promoted", "finished")
-
-
 UPDATE_QUEUE = 'update_promos_q'
 QUEUE_ALL = 'all'
 
@@ -107,20 +103,21 @@ def is_promo(link):
             and hasattr(link, "promote_status"))
 
 def is_accepted(link):
-    return is_promo(link) and (link.promote_status != STATUS.rejected and
-                               link.promote_status >= STATUS.accepted)
+    return (is_promo(link) and
+            link.promote_status != PROMOTE_STATUS.rejected and
+            link.promote_status >= PROMOTE_STATUS.accepted)
 
 def is_unpaid(link):
-    return is_promo(link) and link.promote_status == STATUS.unpaid
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.unpaid
 
 def is_unapproved(link):
-    return is_promo(link) and link.promote_status <= STATUS.unseen
+    return is_promo(link) and link.promote_status <= PROMOTE_STATUS.unseen
 
 def is_rejected(link):
-    return is_promo(link) and link.promote_status == STATUS.rejected
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.rejected
 
 def is_promoted(link):
-    return is_promo(link) and link.promote_status == STATUS.promoted
+    return is_promo(link) and link.promote_status == PROMOTE_STATUS.promoted
 
 def is_live_on_sr(link, srname):
     if not is_promoted(link):
@@ -289,9 +286,9 @@ def new_promotion(title, url, user, ip):
 
     # set the status of the link, populating the query queue
     if c.user_is_sponsor or user.trusted_sponsor:
-        set_promote_status(l, STATUS.accepted)
+        set_promote_status(l, PROMOTE_STATUS.accepted)
     else:
-        set_promote_status(l, STATUS.unpaid)
+        set_promote_status(l, PROMOTE_STATUS.unpaid)
 
     # the user has posted a promotion, so enable the promote menu unless
     # they have already opted out
@@ -425,9 +422,11 @@ def auth_campaign(link, campaign, user, pay_id):
         if trans_id < 0:
             PromotionLog.add(link, 'FREEBIE (campaign: %s)' % campaign._id)
 
-        set_promote_status(link,
-                   max(STATUS.unseen if trans_id else STATUS.unpaid,
-                       link.promote_status))
+        if trans_id:
+            new_status = max(PROMOTE_STATUS.unseen, link.promote_status)
+        else:
+            new_status = max(PROMOTE_STATUS.unpaid, link.promote_status)
+        set_promote_status(link, new_status)
         # notify of campaign creation
         # update the query queue
         if user and (user._id == link.author_id) and trans_id > 0:
@@ -468,7 +467,7 @@ def accept_promotion(link):
     PromotionLog.add(link, 'status update: accepted')
     # update the query queue
 
-    set_promote_status(link, STATUS.accepted)
+    set_promote_status(link, PROMOTE_STATUS.accepted)
     now = promo_datetime_now(0)
     if link._fullname in set(l.thing_name for l in
                              PromotionWeights.get_campaigns(now)):
@@ -486,7 +485,7 @@ def reject_promotion(link, reason = None):
     # Since status is updated first,
     # if make_daily_promotions happens to run
     # while we're doing work here, it will correctly exclude it
-    set_promote_status(link, STATUS.rejected)
+    set_promote_status(link, PROMOTE_STATUS.rejected)
     
     links, = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
     if link._fullname in links:
@@ -502,7 +501,7 @@ def reject_promotion(link, reason = None):
 def unapprove_promotion(link):
     PromotionLog.add(link, 'status update: unapproved')
     # update the query queue
-    set_promote_status(link, STATUS.unseen)
+    set_promote_status(link, PROMOTE_STATUS.unseen)
 
 def accepted_campaigns(offset=0):
     now = promo_datetime_now(offset=offset)
@@ -565,7 +564,7 @@ def charge_pending(offset=1):
             if is_promoted(l):
                 emailer.queue_promo(l, camp.bid, camp.trans_id)
             else:
-                set_promote_status(l, STATUS.pending)
+                set_promote_status(l, PROMOTE_STATUS.pending)
                 emailer.queue_promo(l, camp.bid, camp.trans_id)
             text = ('auth charge for campaign %s, trans_id: %d' % 
                     (camp._id, camp.trans_id))
@@ -727,7 +726,7 @@ def make_daily_promotions(offset = 0, test = False):
                 print "unpromote", l
             else:
                 # update the query queue
-                set_promote_status(links[l], STATUS.finished)
+                set_promote_status(links[l], PROMOTE_STATUS.finished)
                 emailer.finished_promo(links[l])
 
     for l in new_links:
@@ -736,7 +735,7 @@ def make_daily_promotions(offset = 0, test = False):
                 print "promote2", l
             else:
                 # update the query queue
-                set_promote_status(links[l], STATUS.promoted)
+                set_promote_status(links[l], PROMOTE_STATUS.promoted)
                 emailer.live_promo(links[l])
 
     # convert the weighted dict to use sr_ids which are more useful

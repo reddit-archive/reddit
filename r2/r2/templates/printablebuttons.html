@@ -24,7 +24,7 @@
 
 <%!
    from r2.lib.strings import strings
-   from r2.lib.promote import STATUS
+   from r2.models.promo import PROMOTE_STATUS
  %>
 
 <%def name="banbuttons()">
@@ -227,7 +227,7 @@
                          _("reject"), _("cancel"), \
                          "reject_promo", "cancel_reject_promo")}
        </li>
-      %if thing.promote_status in (STATUS.unseen, STATUS.rejected):
+      %if thing.promote_status in (PROMOTE_STATUS.unseen, PROMOTE_STATUS.rejected):
         <li>
           ${ynbutton(_("accept"), _("accepted"), "promote")}
         </li>

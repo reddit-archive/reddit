@@ -28,6 +28,11 @@ from r2.lib.db.thing import Thing, NotFound
 from r2.lib.utils import Enum
 from r2.models import Link
 
+
+PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
+                      "pending", "promoted", "finished")
+
+
 NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):

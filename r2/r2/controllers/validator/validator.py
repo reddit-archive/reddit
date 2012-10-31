@@ -62,7 +62,7 @@ def visible_promo(article):
         return (c.user_is_sponsor or
                 is_author or
                 (not article.disable_comments and
-                 article.promote_status >= promote.STATUS.promoted))
+                 article.promote_status >= PROMOTE_STATUS.promoted))
     # not a promo, therefore it is visible
     return True
 
