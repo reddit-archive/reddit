@@ -31,7 +31,6 @@ from r2.models.keyvalue import NamedGlobals
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
 from r2.lib import emailer, filters
-from r2.lib.memoize import memoize
 from r2.lib.template_helpers import get_domain
 from r2.lib.utils import Enum, UniqueIterator, tup
 from r2.lib.organic import keep_fresh_links
@@ -761,7 +760,6 @@ def get_promotion_list(user, site):
     return get_promotions_cached(srids)
 
 
-#@memoize('get_promotions_cached', time = 10 * 60)
 def get_promotions_cached(sites):
     p = get_live_promotions(sites)
     if p:
