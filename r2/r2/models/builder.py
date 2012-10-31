@@ -251,10 +251,14 @@ class Builder(object):
                     if getattr(w, "author", None) and w.author._spam:
                         w.show_spam = "author"
 
+                    if c.user == w.author and c.user._spam:
+                        w.show_spam = False
+                        w._spam = False
+                        w.use_big_modbuttons = False
+
                 elif getattr(item, 'reported', 0) > 0:
                     w.show_reports = True
                     w.use_big_modbuttons = True
-
 
         # recache the user object: it may be None if user is not logged in,
         # whereas now we are happy to have the UnloggedUser object

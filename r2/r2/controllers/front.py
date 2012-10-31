@@ -507,6 +507,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             # no need to bother mods with banned users, or deleted content
             if getattr(x,'hidden',False) or x._deleted:
                 return False
+            if getattr(x,'author',None) == c.user and c.user._spam:
+                return False
 
             if location == "reports":
                 return x.reported > 0 and not x._spam

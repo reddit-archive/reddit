@@ -613,8 +613,12 @@ class ApiController(RedditController, OAuth2ResourceController):
         # for the privilege change to succeed.
         if (not c.user_is_admin
                 and type in self._sr_friend_types
-                and not container.is_moderator(c.user)):
-            abort(403,'forbidden')
+                and (not container.is_moderator(c.user)
+                     or c.user._spam)):
+            if c.user._spam:
+                abort(500, 'internal server error')
+            else:
+                abort(403, 'forbidden')
 
         if type in self._sr_friend_types and not c.user_is_admin:
             quota_key = "sr%squota-%s" % (str(type), container._id36)
