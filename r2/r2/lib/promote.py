@@ -48,7 +48,6 @@ from uuid import uuid1
 STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
               "pending", "promoted", "finished")
 
-CAMPAIGN = Enum("start", "end", "bid", "sr", "trans_id")
 
 UPDATE_QUEUE = 'update_promos_q'
 QUEUE_ALL = 'all'
