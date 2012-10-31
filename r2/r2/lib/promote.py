@@ -64,7 +64,8 @@ def _mark_promos_updated():
 
 
 def health_check():
-    return NamedGlobals.get(PROMO_HEALTH_KEY, default=0)
+    """Calculate the number of seconds since promotions were last updated"""
+    return time.time() - int(NamedGlobals.get(PROMO_HEALTH_KEY, default=0))
 
 
 @memoize("get_promote_srid")
