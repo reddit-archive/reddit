@@ -29,7 +29,7 @@ from r2.lib.utils import fetch_things2, tup, UniqueIterator, set_last_modified
 from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
-from r2.models.promo import PROMOTE_STATUS
+from r2.models.promo import PROMOTE_STATUS, get_promote_srid
 from r2.models.query_cache import (cached_query, merged_cached_query,
                                    CachedQuery, CachedQueryMutator,
                                    MergedCachedQuery)
@@ -702,8 +702,6 @@ def set_promote_status(link, promote_status):
 
 
 def _promoted_link_query(user_id, status):
-    from r2.lib.promote import get_promote_srid
-
     STATUS_CODES = {'unpaid': PROMOTE_STATUS.unpaid,
                     'unapproved': PROMOTE_STATUS.unseen,
                     'rejected': PROMOTE_STATUS.rejected,

@@ -25,12 +25,28 @@ from datetime import datetime
 from pylons import g
 
 from r2.lib.db.thing import Thing, NotFound
+from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
 from r2.models import Link
 
 
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
                       "pending", "promoted", "finished")
+
+
+@memoize("get_promote_srid")
+def get_promote_srid(name = 'promos'):
+    from r2.models.subreddit import Subreddit
+    try:
+        sr = Subreddit._by_name(name, stale=True)
+    except NotFound:
+        sr = Subreddit._new(name = name,
+                            title = "promoted links",
+                            # negative author_ids make this unlisable
+                            author_id = -1,
+                            type = "public", 
+                            ip = '0.0.0.0')
+    return sr._id
 
 
 NO_TRANSACTION = 0

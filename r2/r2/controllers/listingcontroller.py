@@ -41,7 +41,7 @@ from r2.lib import organic
 import r2.lib.search as search
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
-from r2.lib.promote import randomized_promotion_list, get_promote_srid
+from r2.lib.promote import randomized_promotion_list
 import socket
 
 from api_docs import api_doc, api_section

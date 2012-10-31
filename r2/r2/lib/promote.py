@@ -60,19 +60,6 @@ def health_check():
     return time.time() - int(NamedGlobals.get(PROMO_HEALTH_KEY, default=0))
 
 
-@memoize("get_promote_srid")
-def get_promote_srid(name = 'promos'):
-    try:
-        sr = Subreddit._by_name(name, stale=True)
-    except NotFound:
-        sr = Subreddit._new(name = name,
-                            title = "promoted links",
-                            # negative author_ids make this unlisable
-                            author_id = -1,
-                            type = "public", 
-                            ip = '0.0.0.0')
-    return sr._id
-
 # attrs
 
 def promo_traffic_url(l): # old traffic url
