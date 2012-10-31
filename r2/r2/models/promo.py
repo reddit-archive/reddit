@@ -21,9 +21,12 @@
 ###############################################################################
 
 from datetime import datetime
+from uuid import uuid1
 
-from pylons import g
+from pylons import g, c
 
+from r2.lib import filters
+from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
@@ -101,4 +104,34 @@ class PromoCampaign(Thing):
     def delete(self):
         self._deleted = True
         self._commit()
+
+class PromotionLog(tdb_cassandra.View):
+    _use_db = True
+    _connection_pool = 'main'
+    _compare_with = tdb_cassandra.TIME_UUID_TYPE
+
+    @classmethod
+    def _rowkey(cls, link):
+        return link._fullname
+
+    @classmethod
+    def add(cls, link, text):
+        name = c.user.name if c.user_is_loggedin else "<AUTOMATED>"
+        now = datetime.now(g.tz).strftime("%Y-%m-%d %H:%M:%S")
+        text = "[%s: %s] %s" % (name, now, text)
+        rowkey = cls._rowkey(link)
+        column = {uuid1(): filters._force_utf8(text)}
+        cls._set_values(rowkey, column)
+        return text
+
+    @classmethod
+    def get(cls, link):
+        rowkey = cls._rowkey(link)
+        try:
+            row = cls._byID(rowkey)
+        except tdb_cassandra.NotFound:
+            return []
+        tuples = sorted(row._values().items(), key=lambda t: t[0].time)
+        return [t[1] for t in tuples]
+
 

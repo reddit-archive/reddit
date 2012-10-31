@@ -27,6 +27,7 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
+from r2.models.promo import PromotionLog
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -3149,7 +3150,7 @@ class PromoteLinkForm(Templated):
             self.link = promote.wrap_promoted(link)
             campaigns = PromoCampaign._by_link(link._id)
             self.campaigns = promote.get_renderable_campaigns(link, campaigns)
-            self.promotion_log = promote.PromotionLog.get(link)
+            self.promotion_log = PromotionLog.get(link)
 
         if not c.user_is_sponsor:
             self.now = promote.promo_datetime_now().date()

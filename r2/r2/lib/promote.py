@@ -30,7 +30,7 @@ from r2.models.bidding import SponsorBoxWeightings, WeightingRef
 from r2.models.keyvalue import NamedGlobals
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
-from r2.lib import emailer, filters
+from r2.lib import emailer
 from r2.lib.template_helpers import get_domain
 from r2.lib.utils import Enum, UniqueIterator, tup
 from r2.lib.organic import keep_fresh_links
@@ -41,7 +41,6 @@ from r2.lib.db.queries import set_promote_status
 import itertools
 
 import random
-from uuid import uuid1
 
 
 UPDATE_QUEUE = 'update_promos_q'
@@ -897,6 +896,7 @@ def get_total_run(link):
     return earliest, latest
 
 
+<<<<<<< HEAD
 class PromotionLog(tdb_cassandra.View):
     _use_db = True
     _connection_pool = 'main'

@@ -144,7 +144,7 @@ class PromoteController(ListingController):
                    note = nop("note"))
     def POST_promote_note(self, form, jquery, link, note):
         if promote.is_promo(link):
-            text = promote.PromotionLog.add(link, note)
+            text = PromotionLog.add(link, note)
             form.find(".notes").children(":last").after(
                 "<p>" + text + "</p>")
 
