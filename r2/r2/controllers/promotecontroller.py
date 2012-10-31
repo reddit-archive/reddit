@@ -42,13 +42,20 @@ from r2.lib.system_messages import user_added_messages
 from datetime import datetime
 
 class PromoteController(ListingController):
-    skip = False
     where = 'promoted'
     render_cls = PromotePage
 
     @property
     def title_text(self):
         return _('promoted by you')
+
+    def keep_fn(self):
+        def keep(item):
+            if item.promoted and not item._deleted:
+                return True
+            else:
+                return False
+        return keep
 
     def query(self):
         if c.user_is_sponsor:
