@@ -20,16 +20,19 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid1
+import json
 
 from pylons import g, c
 
 from r2.lib import filters
+from r2.lib.cache import sgm
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
+from r2.models.subreddit import Subreddit
 
 
 PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
@@ -38,7 +41,6 @@ PROMOTE_STATUS = Enum("unpaid", "unseen", "accepted", "rejected",
 
 @memoize("get_promote_srid")
 def get_promote_srid(name = 'promos'):
-    from r2.models.subreddit import Subreddit
     try:
         sr = Subreddit._by_name(name, stale=True)
     except NotFound:
@@ -134,3 +136,90 @@ class PromotionLog(tdb_cassandra.View):
         return [t[1] for t in tuples]
 
 
+class LiveAdWeights(object):
+    """Data store for per-subreddit lists of currently running ads"""
+    __metaclass__ = tdb_cassandra.ThingMeta
+    _use_db = True
+    _connection_pool = 'main'
+    _type_prefix = None
+    _cf_name = None
+    _compare_with = tdb_cassandra.ASCII_TYPE
+    # TTL is 12 hours, to avoid unexpected ads running indefinitely
+    # See note in set_all_from_weights() for more information
+    _ttl = timedelta(hours=12)
+
+    column = 'adweights'
+    cache = g.cache
+    cache_prefix = 'live-adweights-'
+
+    ALL_ADS = 'all'
+    FRONT_PAGE = 'frontpage'
+
+    def __init__(self):
+        raise NotImplementedError()
+
+    @classmethod
+    def to_columns(cls, weights):
+        """Generate a serializable dict representation weights"""
+        return {cls.column: json.dumps(weights)}
+
+    @classmethod
+    def from_columns(cls, columns):
+        """Given a (serializable) dict, restore the weights"""
+        weights = json.loads(columns.get(cls.column, '[]')) if columns else []
+        # JSON doesn't have the concept of tuples; this restores the return
+        # value to being a list of tuples.
+        return [tuple(w) for w in weights]
+
+    @classmethod
+    def _load_multi(cls, sr_ids):
+        skeys = {sr_id: str(sr_id) for sr_id in sr_ids}
+        adweights = cls._cf.multiget(skeys.values(), columns=[cls.column])
+        res = {}
+        for sr_id in sr_ids:
+            # The returned dictionary should include all sr_ids, so
+            # that ad-less SRs are inserted into the cache
+            res[skeys[sr_id]] = adweights.get(sr_id, {})
+        return res
+
+    @classmethod
+    def get(cls, sr_ids):
+        """Return a dictionary of sr_id -> list of ads for each of sr_ids"""
+        # Mangling: Caller convention is to use empty string for FRONT_PAGE
+        sr_ids = [(sr_id or cls.FRONT_PAGE) for sr_id in sr_ids]
+        adweights = sgm(cls.cache, sr_ids, cls._load_multi,
+                        prefix=cls.cache_prefix)
+        results = {sr_id: cls.from_columns(adweights[sr_id])
+                   for sr_id in adweights}
+        if cls.FRONT_PAGE in results:
+            results[''] = results.pop(cls.FRONT_PAGE)
+        return results
+
+    @classmethod
+    def set_all_from_weights(cls, all_weights):
+        """Given a dictionary with all ads that should currently be running
+        (where the dictionary keys are the subreddit IDs, and the paired
+        value is the list of ads for that subreddit), update the ad system
+        to use those ads on those subreddits.
+
+        Note: Old ads are not cleared out. It is expected that the caller
+        include empty-list entries in `all_weights` for any Subreddits
+        that should be cleared.
+
+        """
+        weights = {}
+        all_ads = []
+        for sr_id, sr_ads in all_weights.iteritems():
+            all_ads.extend(sr_ads)
+            weights[str(sr_id)] = cls.to_columns(sr_ads)
+        weights[cls.ALL_ADS] = cls.to_columns(all_ads)
+
+        cls._cf.batch_insert(weights, ttl=cls._ttl)
+
+        # Prep the cache!
+        cls.cache.set_multi(weights, prefix=cls.cache_prefix)
+
+    @classmethod
+    def clear(cls, sr_id):
+        """Clear ad information from the Subreddit with ID `sr_id`"""
+        cls.set_all_from_weights({sr_id: []})

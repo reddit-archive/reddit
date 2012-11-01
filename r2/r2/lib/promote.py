@@ -27,8 +27,8 @@ import json
 import time
 
 from r2.models import *
-from r2.models.bidding import SponsorBoxWeightings, WeightingRef
 from r2.models.keyvalue import NamedGlobals
+from r2.models.promo import LiveAdWeights
 from r2.lib.wrapped import Wrapped
 from r2.lib import authorize
 from r2.lib import emailer
@@ -475,7 +475,7 @@ def reject_promotion(link, reason = None):
     # while we're doing work here, it will correctly exclude it
     set_promote_status(link, PROMOTE_STATUS.rejected)
     
-    links = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
+    links = get_live_promotions([LiveAdWeights.ALL_ADS])[0]
     if link._fullname in links:
         PromotionLog.add(link, 'Marked promotion for rejection')
         queue_changed_promo(link, "rejected")
@@ -669,20 +669,9 @@ def get_live_promotions(srids, from_permacache=True):
         timer = g.stats.get_timer("promote.get_live.cass")
         timer.start()
         links = set()
-        weights = {}
-        find_srids = set(srids)
-        if '' in find_srids:
-            find_srids.remove('')
-            find_srids.add(SponsorBoxWeightings.FRONT_PAGE)
-        ads = SponsorBoxWeightings.load_multi(find_srids)
-        for srid, refs in ads.iteritems():
-            links.update(ref.data['link'] for ref in refs)
-            promos = [ref.to_promo() for ref in refs]
-            if srid == SponsorBoxWeightings.FRONT_PAGE:
-                srid = ''
-            elif srid == SponsorBoxWeightings.ALL_ADS_ID:
-                srid = 'all'
-            weights[srid] = promos
+        weights = LiveAdWeights.get(srids)
+        for promos in weights.itervalues():
+            links.update(link_fn for link_fn, weight, campaign_fn in promos)
         timer.stop()
     else:
         timer = g.stats.get_timer("promote.get_live.permacache")
@@ -701,7 +690,23 @@ def set_live_promotions(links, weights, which=("cass", "permacache")):
     if "cass" in which:
         timer = g.stats.get_timer("promote.set_live.cass")
         timer.start()
-        SponsorBoxWeightings.set_from_weights(weights)
+
+        # First, figure out which subreddits have had ads recently
+        today = promo_datetime_now()
+        yesterday = today - timedelta(days=1)
+        tomorrow = today + timedelta(days=1)
+        promo_weights = PromotionWeights.get_campaigns(yesterday, tomorrow)
+        subreddit_names = set(p.sr_name for p in promo_weights)
+        subreddits = Subreddit._by_name(subreddit_names).values()
+        # Set the default for those subreddits to no ads
+        all_weights = {sr._id: [] for sr in subreddits}
+
+        # Mix in the currently live ads
+        all_weights.update(weights)
+        if '' in all_weights:
+            all_weights[LiveAdWeights.FRONT_PAGE] = all_weights.pop('')
+
+        LiveAdWeights.set_all_from_weights(all_weights)
         timer.stop()
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
@@ -729,7 +734,7 @@ def make_daily_promotions(offset = 0, test = False):
                     if not test:
                         l._commit()
 
-    old_links = get_live_promotions([SponsorBoxWeightings.ALL_ADS_ID])[0]
+    old_links = get_live_promotions([LiveAdWeights.ALL_ADS])[0]
     
     # links that need to be promoted
     new_links = all_links - old_links
@@ -794,7 +799,7 @@ def get_promotion_list(user, site):
 
 
 def get_promotions_cached(sites):
-    p = get_live_promotions(sites)
+    p = get_live_promotions(sites, from_permacache=True)
     if p:
         links, promo_dict = p
         available = {}
