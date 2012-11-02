@@ -552,3 +552,14 @@ class PromoteController(ListingController):
                                      errors = errors,
                                      form_id = "image-upload").render()
 
+    @validate(VSponsorAdmin(),
+              launchdate=VDate('ondate'),
+              dates=VDateRange(['startdate', 'enddate']),
+              query_type=VOneOf('q', ('started_on', 'between'), default=None))
+    def GET_admin(self, launchdate=None, dates=None, query_type=None):
+              return PromoAdminTool(query_type=query_type,
+                                    launchdate=launchdate,
+                                    start=dates[0],
+                                    end=dates[1]).render()
+
+    
