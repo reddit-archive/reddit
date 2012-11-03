@@ -26,7 +26,13 @@ from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 from r2.lib import pages, utils, filters, amqp, stats
-from r2.lib.utils import http_utils, is_subdomain, UniqueIterator, is_throttled
+from r2.lib.utils import (
+    SimpleSillyStub,
+    UniqueIterator,
+    http_utils,
+    is_subdomain,
+    is_throttled,
+)
 from r2.lib.cache import LocalCache, make_key, MemcachedError
 import random as rand
 from r2.models.account import FakeAccount, valid_feed, valid_admin_cookie
@@ -561,6 +567,11 @@ def prevent_framing_and_css(allow_cname_frame=False):
         return no_funny_business
     return wrap
 
+
+def request_timer_name(action):
+    return "service_time.web." + action
+
+
 class MinimalController(BaseController):
 
     allow_stylesheets = False
@@ -591,8 +602,15 @@ class MinimalController(BaseController):
         return c.response
 
     def pre(self):
+        action = request.environ["pylons.routes_dict"].get("action")
+        if action:
+            c.request_timer = g.stats.get_timer(request_timer_name(action))
+        else:
+            c.request_timer = SimpleSillyStub()
+
         c.response_wrappers = []
         c.start_time = datetime.now(g.tz)
+        c.request_timer.start()
         g.reset_caches()
 
         c.domain_prefix = request.environ.get("reddit-domain-prefix",
@@ -615,6 +633,7 @@ class MinimalController(BaseController):
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()
+        c.request_timer.intermediate("minimal-pre")
 
     def try_pagecache(self):
         #check content cache
@@ -639,6 +658,8 @@ class MinimalController(BaseController):
 
                 response.status_code = r.status_code
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
+                c.request_timer.name = request_timer_name("cached_response")
+
                 # make sure to carry over the content type
                 c.response_content_type = r.headers['content-type']
                 c.used_cache = True
@@ -647,6 +668,8 @@ class MinimalController(BaseController):
 
 
     def post(self):
+        c.request_timer.intermediate("action")
+
         response = c.response
         content = filter(None, response.content)
         if isinstance(content, (list, tuple)):
@@ -723,10 +746,7 @@ class MinimalController(BaseController):
         g.reset_caches()
 
         # push data to statsd
-        if 'pylons.action_method' in request.environ:
-            # only report web timing data if an action handler was called
-            g.stats.transact('web.%s' % action,
-                             (end_time - c.start_time).total_seconds())
+        c.request_timer.stop()
         g.stats.flush()
 
     def abort404(self):
@@ -957,6 +977,8 @@ class RedditController(MinimalController):
         #if the site has a cname, but we're not using it
         elif c.site.domain and c.site.css_on_cname and not c.cname:
             c.can_apply_styles = False
+
+        c.request_timer.intermediate("base-pre")
 
     def check_modified(self, thing, action,
                        private=True, max_age=0, must_revalidate=True):
