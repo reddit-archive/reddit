@@ -54,7 +54,6 @@ class AdminPage(Reddit):
             buttons.append(NavButton(menu.awards, "ads"))
             buttons.append(NavButton(menu.awards, "awards"))
             buttons.append(NavButton(menu.errors, "error log"))
-            buttons.append(NavButton(menu.usage,  "usage stats"))
 
             admin_menu = NavMenu(buttons, title='show', base_path = '/admin',
                                  type="lightdrop")

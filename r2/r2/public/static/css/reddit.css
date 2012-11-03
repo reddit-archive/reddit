@@ -5123,43 +5123,6 @@ a.adminbox:hover {
     color: red;
 }
 
-.usage-table .intersection {
-    color: #888;
-    font-family: monospace;
-    text-align: right;
-    border-left: none;
-    border-right: none;
-}
-
-.usage-table .intersection span {
-    padding: 1px 3px 0 2px;
-}
-
-.usage-table .empty.intersection {
-    text-align: center;
-    color: #ccc;
-}
-
-.usage-table .elapsed.intersection {
-    color: black;
-}
-
-.usage-table .count.intersection {
-    color: black;
-}
-
-.usage-table .average.intersection {
-    color: black;
-    border-right: solid #cdcdcd 1px;
-}
-
-.usage-table .empty.intersection, .usage-table .average.intersection {
-    padding-left: 0;
-    margin-left: 0;
-    border-right: solid #cdcdcd 1px;
-    padding-right: 5px;
-}
-
 a.pretty-button:hover { text-decoration: none !important }
 
 .pretty-button {

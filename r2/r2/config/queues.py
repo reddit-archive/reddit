@@ -81,7 +81,6 @@ def declare_queues(g):
         "vote_comment_q": MessageQueue(bind_to_self=True),
         "vote_fastlane_q": MessageQueue(bind_to_self=True),
         "log_q": MessageQueue(bind_to_self=True),
-        "usage_q": MessageQueue(bind_to_self=True, durable=False),
         "cloudsearch_changes": MessageQueue(bind_to_self=True),
         "update_promos_q": MessageQueue(bind_to_self=True),
     })

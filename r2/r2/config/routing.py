@@ -88,8 +88,6 @@ def make_map():
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq', controller='feedback', action='ad_inq')
 
-    mc('/admin/usage', controller='usage')
-
     # Used for editing ads
     mc('/admin/ads', controller='ads')
     mc('/admin/ads/:adcn/:action', controller='ads',
