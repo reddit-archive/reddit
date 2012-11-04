@@ -69,7 +69,12 @@ psql -F"\t" -A -t -d newreddit -U $USER -h $LINKDBHOST -p $DB_PORT \
                   where t.thing_id = d.thing_id
                     and not t.spam and not t.deleted
                     and d.key in ('url', 'sr_id')
-                    and t.date > now() - interval '1 $INTERVAL'
+                    and t.thing_id > (
+                      select thing_id from reddit_thing_link t WHERE  t.date > now ( ) - interval '1 $INTERVAL' LIMIT 1
+                    )
+                    and d.thing_id > (
+                      select thing_id from reddit_thing_link t WHERE  t.date > now ( ) - interval '1 $INTERVAL' LIMIT 1
+                    )
                   ) to '$DNAME'"
 
 function mrsort {
