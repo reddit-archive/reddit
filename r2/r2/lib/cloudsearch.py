@@ -304,9 +304,9 @@ class SubredditFields(FieldsBase):
     def sidebar(self):
         return self.sr.description
 
-    @field
+    @field(cloudsearch_type=int)
     def over18(self):
-        return self.sr.over_18
+        return 1 if self.sr.over_18 else 0
 
     @field
     def link_type(self):
