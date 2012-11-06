@@ -96,4 +96,3 @@ def subs_contribs(sr_name = 'betateam'):
     for rel in rels:
         if rel._name == 'subscriber':
             sr.add_contributor(rel._thing2)
-            Subreddit.special_reddits(rel._thing2, 'contributor', _update=True)

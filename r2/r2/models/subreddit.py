@@ -672,25 +672,13 @@ class Subreddit(Thing, Printable):
                                           limit=g.num_default_reddits,
                                           stale=stale)
 
-    @classmethod
-    @memoize('subreddit.special_reddits')
-    def special_reddits_cache(cls, user_id, query_param):
-        reddits = SRMember._query(SRMember.c._name == query_param,
-                                  SRMember.c._thing2_id == user_id,
-                                  #hack to prevent the query from
-                                  #adding it's own date
-                                  sort = (desc('_t1_ups'), desc('_t1_date')),
-                                  eager_load = True,
-                                  thing_data = True,
-                                  limit = 100)
-
-        return [ sr._thing1_id for sr in reddits ]
 
     # Used to pull all of the SRs a given user moderates or is a contributor
     # to (which one is controlled by query_param)
     @classmethod
-    def special_reddits(cls, user, query_param, _update=False):
-        return cls.special_reddits_cache(user._id, query_param, _update=_update)
+    def special_reddits(cls, user, query_param):
+        lookup = getattr(cls, 'reverse_%s_ids' % query_param)
+        return lookup(user)
 
     def is_subscriber_defaults(self, user):
         if user.has_subscribed:

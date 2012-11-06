@@ -484,7 +484,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if container and container.is_moderator(c.user):
             container.remove_moderator(c.user)
-            Subreddit.special_reddits(c.user, "moderator", _update=True)
             ModAction.create(container, c.user, 'removemoderator', target=c.user, 
                              details='remove_self')
 
@@ -498,7 +497,6 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         if container and container.is_contributor(c.user):
             container.remove_contributor(c.user)
-            Subreddit.special_reddits(c.user, "contributor", _update=True)
 
 
     _sr_friend_types = (
@@ -560,9 +558,6 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         if type == "friend" and c.user.gold:
             c.user.friend_rels_cache(_update=True)
-
-        if type in ("moderator", "contributor"):
-            Subreddit.special_reddits(victim, type, _update=True)
 
     @validatedForm(VUser(),
                    VModhash(),
@@ -644,9 +639,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             c.user.friend_rels_cache(_update=True)
             c.user.add_friend_note(friend, note or '')
 
-        if type in ("moderator", "contributor"):
-            Subreddit.special_reddits(friend, type, _update=True)
-
         cls = dict(friend=FriendList,
                    moderator=ModList,
                    moderator_invite=ModList,
@@ -681,7 +673,6 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         ModAction.create(c.site, c.user, "acceptmoderatorinvite")
         c.site.add_moderator(c.user)
-        Subreddit.special_reddits(c.user, "moderator", _update=True)
         notify_user_added("accept_moderator_invite", c.user, c.user, c.site)
         jquery.refresh()
 
