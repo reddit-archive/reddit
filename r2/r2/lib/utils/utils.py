@@ -31,6 +31,7 @@ import signal
 from copy import deepcopy
 import cPickle as pickle
 import re, math, random
+from decimal import Decimal
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
@@ -1410,3 +1411,34 @@ def simple_traceback():
                               ))
                      for filename, line_number, function_name, text
                      in stack_trace)
+
+
+class GoldPrice(object):
+    """Simple price math / formatting type.
+
+    Prices are assumed to be USD at the moment.
+
+    """
+    def __init__(self, decimal):
+        self.decimal = Decimal(decimal)
+
+    def __mul__(self, other):
+        return type(self)(self.decimal * other)
+
+    def __div__(self, other):
+        return type(self)(self.decimal / other)
+
+    def __str__(self):
+        return "$%s" % self.decimal.quantize(Decimal("1.00"))
+
+    def __repr__(self):
+        return "%s(%s)" % (type(self).__name__, self)
+
+    @property
+    def pennies(self):
+        return int(self.decimal * 100)
+
+
+def config_gold_price(v, key=None, data=None):
+    return GoldPrice(v)
+

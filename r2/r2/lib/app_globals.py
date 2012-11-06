@@ -42,6 +42,7 @@ from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.plugin import PluginLoader
+from r2.lib.utils import config_gold_price
 from r2.config import queues
 
 
@@ -180,6 +181,11 @@ class Globals(object):
                  'QUORUM': CL_QUORUM
              },
         },
+
+        config_gold_price: [
+            'gold_month_price',
+            'gold_year_price',
+        ],
     }
 
     live_config_spec = {

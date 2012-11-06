@@ -67,12 +67,12 @@
   <select name="months" class="gold-dropdown">
     %for i in range(1, 8):
        <option value="${i}">
-         ${unsafe(Score.somethings(i, what))}: $${"%0.2f" % (3.99 * i)}
+         ${unsafe(Score.somethings(i, what))}: ${g.gold_month_price * i}
        </option>
     %endfor
     %for i in range(1, 4):
        <option value="${i * 12}" ${"SELECTED" if i == 1 else ""}>
-         ${unsafe(Score.somethings(i * 12, what))} &#32; (special price!): $${"%0.2f" % (29.99 * i)}
+         ${unsafe(Score.somethings(i * 12, what))} &#32; (special price!): ${g.gold_year_price * i}
        </option>
     %endfor
   </select>
@@ -100,9 +100,10 @@
 
   <%self:goldsec goldtype="autorenew">
     <%utils:round_field title="${'Monthly or yearly?'}">
-      ${radio_type("period", "monthly", _("$3.99 / month"), "", False)}<br/>
-      ${radio_type("period", "yearly", _("$29.99 / year (which works out to just $2.50 / month!)"),
-      "", True)}<br/>
+      ${radio_type("period", "monthly", _("%s / month") % g.gold_month_price, "", False)}<br/>
+      ${radio_type("period", "yearly", _("%s / year (which works out to just %s / month!)")
+                                       % (g.gold_year_price, g.gold_year_price / 12),
+                   "", True)}<br/>
       <button type="submit" class="btn gold-button">${_("subscribe")}</button>
       <span class="status"></span>
     </%utils:round_field>

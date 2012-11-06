@@ -54,6 +54,7 @@ class ConfigValue(object):
     def to_iter(v, delim = ','):
         return (x.strip() for x in v.split(delim) if x)
 
+
 class ConfigValueParser(dict):
     def __init__(self, raw_data):
         dict.__init__(self, raw_data)

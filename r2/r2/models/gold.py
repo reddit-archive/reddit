@@ -312,14 +312,14 @@ def process_google_transaction(trans_id):
             pennies = int(float(auth.find("order-total").contents[0])*100)
             if is_creddits:
                 secret = "cr_"
-                if pennies >= 2999:
-                    days = 12 * 31 * int(pennies / 2999)
+                if pennies >= g.gold_year_price.pennies:
+                    days = 12 * 31 * int(pennies / g.gold_year_price.pennies)
                 else:
-                    days = 31 * int(pennies / 399)
-            elif pennies == 2999:
+                    days = 31 * int(pennies / g.gold_month_price.pennies)
+            elif pennies == g.gold_year_price.pennies:
                 secret = "ys_"
                 days = 366
-            elif pennies == 399:
+            elif pennies == g.gold_month_price.pennies:
                 secret = "m_"
                 days = 31
             else:

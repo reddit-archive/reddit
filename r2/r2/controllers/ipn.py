@@ -191,11 +191,12 @@ def existing_subscription(subscr_id, paying_id, custom):
     return account
 
 def months_and_days_from_pennies(pennies):
-    if pennies >= 2999:
-        months = 12 * (pennies / 2999)
-        days  = 366 * (pennies / 2999)
+    if pennies >= g.gold_year_price.pennies:
+        years = pennies / g.gold_year_price.pennies
+        months = 12 * years
+        days  = 366 * years
     else:
-        months = pennies / 399
+        months = pennies / g.gold_month_price.pennies
         days   = 31 * months
     return (months, days)
 
