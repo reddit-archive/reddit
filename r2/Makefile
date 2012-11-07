@@ -135,7 +135,7 @@ endef
 $(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
 
 #### Stylesheets
-LESSC := lessc
+LESSC := r2/lib/contrib/less.js/bin/lessc
 CSS_COMPRESS := $(PYTHON) r2/lib/contrib/rcssmin.py
 CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
 

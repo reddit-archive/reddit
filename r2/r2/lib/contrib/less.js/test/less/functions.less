@@ -1,0 +1,49 @@
+#functions {
+  @var: 10;
+  color: _color("evil red"); // #660000
+  width: increment(15);
+  height: undefined("self");
+  border-width: add(2, 3);
+  variable: increment(@var);
+}
+
+#built-in {
+  @r: 32;
+  escaped: e("-Some::weird(#thing, y)");
+  lighten: lighten(#ff0000, 40%);
+  darken: darken(#ff0000, 40%);
+  saturate: saturate(#29332f, 20%);
+  desaturate: desaturate(#203c31, 20%);
+  greyscale: greyscale(#203c31);
+  spin-p: spin(hsl(340, 50%, 50%), 40);
+  spin-n: spin(hsl(30, 50%, 50%), -40);
+  format: %("rgb(%d, %d, %d)", @r, 128, 64);
+  format-string: %("hello %s", "world");
+  format-multiple: %("hello %s %d", "earth", 2);
+  format-url-encode: %('red is %A', #ff0000);
+  eformat: e(%("rgb(%d, %d, %d)", @r, 128, 64));
+
+  hue: hue(hsl(98, 12%, 95%));
+  saturation: saturation(hsl(98, 12%, 95%));
+  lightness: lightness(hsl(98, 12%, 95%));
+  rounded: round(@r/3);
+  roundedpx: round(10px / 3);
+  percentage: percentage(10px / 50);
+  color: color("#ff0011");
+
+  .is-a {
+    color: iscolor(#ddd);
+    color1: iscolor(red);
+    color2: iscolor(rgb(0, 0, 0));
+    keyword: iskeyword(hello);
+    number: isnumber(32);
+    string: isstring("hello");
+    pixel: ispixel(32px);
+    percent: ispercentage(32%);
+    em: isem(32em);
+  }
+}
+
+#alpha {
+  alpha: darken(hsla(25, 50%, 50%, 0.6), 10%);
+}

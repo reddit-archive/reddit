@@ -1,0 +1,69 @@
+h1 a:hover,
+h2 a:hover,
+h3 a:hover,
+h1 p:hover,
+h2 p:hover,
+h3 p:hover {
+  color: red;
+}
+#all {
+  color: blue;
+}
+#the {
+  color: blue;
+}
+#same {
+  color: blue;
+}
+ul,
+li,
+div,
+q,
+blockquote,
+textarea {
+  margin: 0;
+}
+td {
+  margin: 0;
+  padding: 0;
+}
+td,
+input {
+  line-height: 1em;
+}
+a {
+  color: red;
+}
+a:hover {
+  color: blue;
+}
+div a {
+  color: green;
+}
+p a span {
+  color: yellow;
+}
+.foo .bar .qux,
+.foo .baz .qux {
+  display: block;
+}
+.qux .foo .bar,
+.qux .foo .baz {
+  display: inline;
+}
+.qux .foo .bar .biz,
+.qux .foo .baz .biz {
+  display: none;
+}
+.other ::fnord {
+  color: #ff0000;
+}
+.other::fnord {
+  color: #ff0000;
+}
+.other ::bnord {
+  color: #ff0000;
+}
+.other::bnord {
+  color: #ff0000;
+}
