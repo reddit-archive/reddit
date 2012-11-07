@@ -21,27 +21,30 @@
 ###############################################################################
 
 import datetime
-import itertools
-import json
-import random
 
-import pycassa
 from pylons import g, request
-from sqlalchemy import Column, String, DateTime, Date, Float, Integer, Boolean,\
-     BigInteger, func as safunc, and_, or_
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.schema import PrimaryKeyConstraint
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import (
+    and_,
+    Boolean,
+    BigInteger,
+    Column,
+    DateTime,
+    Date,
+    Float,
+    func as safunc,
+    Integer,
+    String,
+)
 from sqlalchemy.dialects.postgresql.base import PGInet as Inet
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 
+from r2.lib.db.thing import Thing, NotFound
+from r2.lib.memoize import memoize
 from r2.lib.utils import Enum
 from r2.models.account import Account
-from r2.models import Link, Subreddit
-from r2.lib.db.thing import Thing, NotFound
-import r2.lib.db.tdb_cassandra as tdb_cassandra
-from r2.lib.memoize import memoize
+from r2.models import Link
 
 from r2.lib.utils import Enum, fetch_things2, to_date
 
