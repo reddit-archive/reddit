@@ -215,7 +215,7 @@ def wrap_links(links, wrapper = default_thing_wrapper(),
                num = None, show_nums = False, nextprev = False,
                num_margin = None, mid_margin = None, **kw):
     links = tup(links)
-    if not all(isinstance(x, str) for x in links):
+    if not all(isinstance(x, basestring) for x in links):
         links = [x._fullname for x in links]
     b = IDBuilder(links, num = num, wrap = wrapper, **kw)
     l = listing_cls(b, nextprev = nextprev, show_nums = show_nums)

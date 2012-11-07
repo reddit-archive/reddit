@@ -799,7 +799,7 @@ def get_promotion_list(user, site):
 
 
 def get_promotions_cached(sites):
-    p = get_live_promotions(sites, from_permacache=True)
+    p = get_live_promotions(sites, from_permacache=False)
     if p:
         links, promo_dict = p
         available = {}

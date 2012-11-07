@@ -188,7 +188,7 @@ class LiveAdWeights(object):
         # Mangling: Caller convention is to use empty string for FRONT_PAGE
         sr_ids = [(sr_id or cls.FRONT_PAGE) for sr_id in sr_ids]
         adweights = sgm(cls.cache, sr_ids, cls._load_multi,
-                        prefix=cls.cache_prefix)
+                        prefix=cls.cache_prefix, stale=True)
         results = {sr_id: cls.from_columns(adweights[sr_id])
                    for sr_id in adweights}
         if cls.FRONT_PAGE in results:
