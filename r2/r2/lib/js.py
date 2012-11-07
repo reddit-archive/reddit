@@ -331,6 +331,11 @@ module["highlight"] = Module("highlight.js",
     "highlight.js",
 )
 
+module["less"] = Module('less.js',
+    'lib/less-1.3.0.min.js',
+    should_compile=False,
+)
+
 def use(*names):
     return "\n".join(module[name].use() for name in names)
 

@@ -42,6 +42,11 @@ def is_encoding_acceptable(encoding_to_check):
     header = request.headers.get('Accept-Encoding', '')
     return 'gzip' in desired_matches(['gzip'], header)
 
+static_text_extensions = {
+    '.js': 'js',
+    '.css': 'css',
+    '.less': 'css'
+}
 def static(path, allow_gzip=True):
     """
     Simple static file maintainer which automatically paths and
@@ -53,7 +58,7 @@ def static(path, allow_gzip=True):
     """
     dirname, filename = os.path.split(path)
     extension = os.path.splitext(filename)[1]
-    is_text = extension in ('.js', '.css')
+    is_text = extension in static_text_extensions
     can_gzip = is_text and is_encoding_acceptable('gzip')
     should_gzip = allow_gzip and can_gzip
 
@@ -79,7 +84,7 @@ def static(path, allow_gzip=True):
 
             # unminified static files are in type-specific subdirectories
             if not dirname and is_text:
-                path_components.append(extension[1:])
+                path_components.append(static_text_extensions[extension])
 
             actual_filename = filename
 

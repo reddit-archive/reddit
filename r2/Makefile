@@ -95,6 +95,7 @@ clean_ini:
 
 #################### CSS file lists
 SPRITED_STYLESHEETS += reddit.css compact.css
+LESS_STYLESHEETS :=
 OTHER_STYLESHEETS := reddit-ie6-hax.css reddit-ie7-hax.css mobile.css highlight.css
 
 #################### Static Files
@@ -134,15 +135,18 @@ endef
 $(foreach plugin,$(PLUGINS),$(eval $(call PLUGIN_STATIC_TEMPLATE,$(plugin))))
 
 #### Stylesheets
+LESSC := lessc
 CSS_COMPRESS := $(PYTHON) r2/lib/contrib/rcssmin.py
 CSS_SOURCE_DIR := $(STATIC_BUILD_DIR)/css
 
 PROCESSED_SPRITED_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(SPRITED_STYLESHEETS))
 SPRITES := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.css,sprite-%.png, $(SPRITED_STYLESHEETS)))
 
+LESS_OUTPUTS := $(addprefix $(STATIC_BUILD_DIR)/, $(patsubst %.less,%.css, $(LESS_STYLESHEETS)))
+
 MINIFIED_OTHER_STYLESHEETS := $(addprefix $(STATIC_BUILD_DIR)/, $(OTHER_STYLESHEETS))
 
-PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS)
+PROCESSED_STYLESHEETS := $(PROCESSED_SPRITED_STYLESHEETS) $(MINIFIED_OTHER_STYLESHEETS) $(LESS_OUTPUTS)
 RTL_STYLESHEETS := $(PROCESSED_STYLESHEETS:.css=-rtl.css)
 
 CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
@@ -151,6 +155,10 @@ CSS_OUTPUTS = $(PROCESSED_STYLESHEETS) $(RTL_STYLESHEETS) $(SPRITES)
 
 css: $(STATIC_BUILDSTAMP) $(CSS_OUTPUTS)
 
+
+$(LESS_OUTPUTS): $(STATIC_BUILD_DIR)/%.css : $(CSS_SOURCE_DIR)/%.less
+	rm -f $@
+	$(LESSC) $< | $(CSS_COMPRESS) > $@
 
 $(MINIFIED_OTHER_STYLESHEETS): $(STATIC_BUILD_DIR)/%.css: $(CSS_SOURCE_DIR)/%.css
 	# when static file names are mangled, the original becomes a symlink to the mangled name

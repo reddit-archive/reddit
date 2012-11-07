@@ -31,6 +31,7 @@
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
+<%namespace file="less.html" import="less_js"/>
 <%namespace file="utils.html" import="tags, css_class"/>
 <%inherit file="base.html"/>
 
@@ -109,6 +110,7 @@
   <!--[if lt IE 9]>
     ${unsafe(js.use('html5shiv'))}
   <![endif]-->
+  ${less_js()}
 </%def>
 
 <%def name="javascript_run()">

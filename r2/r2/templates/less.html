@@ -1,0 +1,24 @@
+<%!
+   from r2.lib.template_helpers import static
+   from r2.lib import js
+%>
+
+<%def name="less_stylesheet(*names)">
+  %for name in names:
+    <% name = name[:name.rfind('.less')] %>
+    %if g.uncompressedJS:
+      <link rel="stylesheet/less" type="text/css" href="${static(name+'.less')}" />
+    %else:
+      <link rel="stylesheet" type="text/css" href="${static(name+'.css')}" />
+    %endif
+  %endfor
+</%def>
+
+<%def name="less_js()">
+  %if g.uncompressedJS:
+    <script type="text/javascript">
+      less = {env: 'development'};
+    </script>
+    ${unsafe(js.use('less'))}
+  %endif
+</%def>
