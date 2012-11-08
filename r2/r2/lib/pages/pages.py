@@ -1073,6 +1073,17 @@ class LinkInfoPage(Reddit):
             rb.insert(1, LinkInfoBar(a = self.link))
         return rb
 
+    def page_classes(self):
+        classes = Reddit.page_classes(self)
+        time_ago = datetime.datetime.now(g.tz) - self.link._date
+        hours_ago = time_ago.total_seconds() / (60*60)
+        steps = [1, 6, 12, 24]
+        for step in steps:
+            if hours_ago < step:
+                classes.add("post-under-%sh-old" % step)
+                break
+        return classes
+
 class LinkCommentSep(Templated):
     pass
 
