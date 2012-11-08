@@ -617,3 +617,17 @@ class CreateCustomerProfileTransactionRequest(AuthorizeNetRequest):
                 pass
         return s
 
+class GetSettledBatchListRequest(AuthorizeNetRequest):
+    _keys = AuthorizeNetRequest._keys + ["includeStatistics", 
+                                         "firstSettlementDate", 
+                                         "lastSettlementDate"]
+    def __init__(self, start_date, end_date, **kw):
+        AuthorizeNetRequest.__init__(self, 
+                                     includeStatistics=1,
+                                     firstSettlementDate=start_date.isoformat(),
+                                     lastSettlementDate=end_date.isoformat(),
+                                     **kw)
+
+    def process_response(self, res):
+        return res
+
