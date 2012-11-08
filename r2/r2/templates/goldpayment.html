@@ -36,7 +36,7 @@
     %if thing.giftmessage:
       <p>${_("The following gift note will be attached:")}</p>
       <div class="giftmessage">
-        ${unsafe(safemarkdown(thing.giftmessage, wrap=False))}
+        ${unsafe(safemarkdown(thing.giftmessage))}
       </div>
     %endif
 
