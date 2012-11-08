@@ -6308,6 +6308,10 @@ span.gilded-comment-icon {
     width: 23px;
 }
 
+body.post-under-6h-old .gilded-comment-icon {
+    opacity: .55;
+}
+
 .buttons li.comment-save-button { display: none; }
 .buttons li.comment-unsave-button { display: inline; }
 
