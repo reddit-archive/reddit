@@ -29,6 +29,9 @@
 
 <div class="gold-form gold-payment ${'cloneable' if thing.clone_template else ''}">
   <div class="roundfield">
+    % if thing.clone_template:
+      <button class="close-button">${_('close')}</button>
+    % endif
     <img src="${static('reddit_gold-70.png')}" class="gold-logo">
     <div class="roundfield-content">
       ${unsafe(safemarkdown(thing.summary, wrap=False))}

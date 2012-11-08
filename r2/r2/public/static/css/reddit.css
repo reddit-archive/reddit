@@ -5416,6 +5416,26 @@ tr.gold-accent + tr > td {
     margin-left: 80px;
 }
 
+.gold-payment .close-button {
+    width: 13px;
+    height: 13px;
+    float: right;
+    margin: 6px 4px 6px 8px;
+    border: none;
+    background: url(../close.png) no-repeat;  /* SPRITE */
+    text-indent: -9999px;
+    opacity: .25;
+}
+
+.gold-payment .close-button:hover {
+    opacity: .55;
+}
+
+.gold-payment .close-button:active {
+    position: relative;
+    top: 1px;
+}
+
 .giftmessage {
     border: solid #888 1px;
     color: black;
