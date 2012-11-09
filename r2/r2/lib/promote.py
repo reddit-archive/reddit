@@ -663,7 +663,7 @@ def get_traffic_weights(srnames):
     for srname in srnames:
         if srname:
             res[srname] = (default_traffic /
-                          weigh(PageviewsBySubreddit.history("day", sr.name)))
+                           weigh(PageviewsBySubreddit.history("day", srname)))
         else:
             res[srname] = 1
     return res
