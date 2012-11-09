@@ -83,7 +83,6 @@ class Globals(object):
             'VOTE_AGE_LIMIT',
             'REPLY_AGE_LIMIT',
             'HOT_PAGE_AGE',
-            'MODWINDOW',
             'RATELIMIT',
             'QUOTA_THRESHOLD',
             'ADMIN_COOKIE_TTL',
@@ -182,6 +181,10 @@ class Globals(object):
                  'QUORUM': CL_QUORUM
              },
         },
+
+        ConfigValue.days: [
+            'MODWINDOW',
+        ],
 
         config_gold_price: [
             'gold_month_price',
@@ -391,9 +394,6 @@ class Globals(object):
 
         self.reset_caches = reset_caches
         self.reset_caches()
-
-        # set the modwindow
-        self.MODWINDOW = timedelta(self.MODWINDOW)
 
         self.REDDIT_MAIN = bool(os.environ.get('REDDIT_MAIN'))
 

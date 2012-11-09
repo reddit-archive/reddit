@@ -20,6 +20,9 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import datetime
+
+
 class ConfigValue(object):
     _bool_map = dict(true=True, false=False)
 
@@ -53,6 +56,10 @@ class ConfigValue(object):
     @staticmethod
     def to_iter(v, delim = ','):
         return (x.strip() for x in v.split(delim) if x)
+
+    @staticmethod
+    def days(v, key=None, data=None):
+        return datetime.timedelta(int(v))
 
 
 class ConfigValueParser(dict):
