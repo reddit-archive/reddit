@@ -644,56 +644,6 @@ def scheduled_campaigns_by_link(l, date=None):
 
     return accepted
 
-def get_traffic_weights(srnames):
-    """Get relative weights of traffic to subreddits vs traffic to defaults"""
-    from r2.models.traffic import PageviewsBySubreddit
-    def average_pageviews(tuples, npoints=7):
-        # Take recent npoints pageviews, skipping most recent (might be incomplete)
-        if tuples and len(tuples) > 1:
-            tuples.sort(key=lambda t: t[0], reverse=True)
-            recent_pageviews = [p for d, (u, p) in tuples[1:npoints+1]]
-            avg = float(sum(recent_pageviews)) / len(recent_pageviews)
-            return max(avg, 1)
-        else:
-            return 1.
-
-    top_srs = Subreddit.top_lang_srs('all', 10)
-    sr_tuples = [PageviewsBySubreddit.history('day', sr.name) for sr in top_srs]
-    top_traffic = [average_pageviews(sr_tuple) for sr_tuple in sr_tuples]
-    if len(top_traffic) > 0:
-        avg_top_traffic = sum(top_traffic) / len(top_traffic)
-    else:
-        avg_top_traffic = 1.
-
-    weights = {}
-    for srname in srnames:
-        if srname:
-            sr_tuples = PageviewsBySubreddit.history('day', srname)
-            sr_traffic = average_pageviews(sr_tuple)
-            weights[srname] = top_traffic / sr_traffic
-        else:
-            weights[srname] = 1.
-    return weights
-
-def weight_schedule(by_sr):
-    """
-    Arguments:
-      by_sr - a dict mapping subreddit names to lists of (Link, bid) tuples. 
-        Usually this data struct would come from the output of get_scheduled
-    Returns:
-      a dict just like by_sr but with bids replaced by weights 
-    """
-    weight_dict = get_traffic_weights(by_sr.keys())
-    weighted = {}
-    for sr_name, t_tuples in by_sr.iteritems():
-        weighted[sr_name] = []
-        for l, weight, cid in t_tuples:
-            weighted[sr_name].append(AdWeight(l._fullname,
-                                              weight * weight_dict[sr_name],
-                                              cid))
-    return weighted
-
-
 def promotion_key():
     return "current_promotions:1"
 
@@ -739,14 +689,26 @@ def make_daily_promotions(offset=0, test=False):
     """
     by_sr, links, error_campaigns = get_scheduled(offset)
     all_links = set([l._fullname for l in links])
-    weighted = weight_schedule(by_sr)
+
+    # convert AdWeights to use fullname (lost from weight_schedule)
+    for sr, adweights in by_sr.iteritems():
+        fixed_adweights = []
+        for a in adweights:
+            if isinstance(a.link, Link):
+                fixed_a = AdWeight(a.link._fullname, a.weight, a.campaign)
+                fixed_adweights.append(fixed_a)
+            else:
+                fixed_adweights.append(a)
+        by_sr[sr] = fixed_adweights
 
     # over18 check
-    for sr, links in weighted.iteritems():
+    for sr, adweights in by_sr.iteritems():
         if sr:
             sr = Subreddit._by_name(sr)
             if sr.over_18:
-                for l in Link._by_fullname([l[0] for l in links], return_dict=False):
+                sr_links = Link._by_fullname([a.link for a in adweights],
+                                             return_dict=False)
+                for l in sr_links:
                     l.over_18 = True
                     if not test:
                         l._commit()
@@ -781,17 +743,17 @@ def make_daily_promotions(offset=0, test=False):
                 emailer.live_promo(links[l])
 
     # convert the weighted dict to use sr_ids which are more useful
-    srs = {"":""}
-    for srname in weighted.keys():
-        if srname:
-            srs[srname] = Subreddit._by_name(srname)._id
-    weighted = dict((srs[k], v) for k, v in weighted.iteritems())
+    srs = Subreddit._by_name(by_sr.keys())
+    srname_to_id = {sr.name: sr._id for sr in srs.values()}
+    srname_to_id[''] = ''
+    by_sr = {srname_to_id[srname]: adweights for srname, adweights
+                                             in by_sr.iteritems()}
 
     if not test:
-        set_live_promotions(weighted)
+        set_live_promotions(by_sr)
         _mark_promos_updated()
     else:
-        print weighted
+        print by_sr
 
     # after launching as many campaigns as possible, raise an exception to 
     #   report any error campaigns. (useful for triggering alerts in irc)
