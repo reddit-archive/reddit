@@ -164,6 +164,13 @@ class Timer:
         self._last = None
         self._stop = None
 
+    def elapsed_seconds(self):
+        if self._start is None:
+            raise AssertionError("timer hasn't been started")
+        if self._stop is None:
+            raise AssertionError("timer hasn't been stopped")
+        return self._stop - self._start
+
     def send(self, subname, delta):
         name = _get_stat_name(self.name, subname)
         self.client.timing_stats.record(name, delta)
