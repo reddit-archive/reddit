@@ -620,14 +620,14 @@ class PromotedLink(Link):
 
 
 def make_comment_gold_message(comment, user_gilded):
+    if comment.gildings == 0 or comment._spam or comment._deleted:
+        return None
+
     author = Account._byID(comment.author_id, data=True)
-    if not comment._deleted and not author._deleted:
+    if not author._deleted:
         author_name = author.name
     else:
         author_name = _("[deleted]")
-
-    if comment.gildings == 0:
-        return None
 
     if c.user_is_loggedin and comment.author_id == c.user._id:
         gilded_message = ungettext(
