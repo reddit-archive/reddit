@@ -357,7 +357,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 banned_by    = "banned_by",
                                                 approved_by  = "approved_by",
                                                 parent_id    = "parent_id",
-                                                edited       = "editted"
+                                                edited       = "editted",
+                                                gilded       = "gilded",
                                                 )
 
     def thing_attr(self, thing, attr):
@@ -378,6 +379,8 @@ class CommentJsonTemplate(ThingJsonTemplate):
                 return make_fullname(Link, thing.link_id)
         elif attr == "body_html":
             return spaceCompress(safemarkdown(thing.body))
+        elif attr == "gilded":
+            return bool(thing.gildings)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):
