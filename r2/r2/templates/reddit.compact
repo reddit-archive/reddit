@@ -25,9 +25,10 @@
  %>
 <%inherit file="base.compact" />
 <%namespace file="login.html" import="login_form"/>
+<%namespace file="utils.html" import="tags"/>
 
 <%def name="bodyHTML()">
-<body>
+<body ${tags(_class=' '.join(thing.page_classes()))}>
     <%include file="redditheader.compact"/>
     %if thing.content:
       <div class="content">
