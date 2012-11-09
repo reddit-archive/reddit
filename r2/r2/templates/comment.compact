@@ -25,12 +25,12 @@
     from r2.lib.template_helpers import add_sr
 %>
 <%namespace file="printable.compact" import="delete_report_buttons"/>
-<%namespace file="printable.html" import="arrow, score"/>
+<%namespace file="printable.html" import="arrow, score, thing_css_rowclass"/>
 <%namespace file="utils.html" import="plain_link" />
 <%namespace file="utils.compact" import="icon_button" />
 <%namespace file="printablebuttons.html" import="simple_button"/>
 
-<div class="thing comment id-${thing._fullname}">
+<div class="thing comment id-${thing._fullname} ${thing_css_rowclass(thing)}">
   %if c.profilepage:
     %if thing.link: 
       %if thing.link.title:
