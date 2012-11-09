@@ -5364,8 +5364,12 @@ tr.gold-accent + tr > td {
     background-image: url(../giftgold.png); /* SPRITE */
 }
 
-.gold-form p:first-child {
-    margin: 0 0 8px 0;
+.gold-form p {
+    margin-bottom: 8px;
+}
+
+.gold-form .gold-button {
+    margin-top: 0;
 }
 
 .tiny {
