@@ -46,6 +46,8 @@ from datetime import datetime, timedelta
 from hashlib import md5
 
 import random, re
+import json
+import uuid
 
 class LinkExists(Exception): pass
 
@@ -1327,6 +1329,71 @@ class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
     @classmethod
     def gild_comment(cls, user, comment):
         cls.create(user, [comment])
+
+
+@view_of(GildedCommentsByAccount)
+class GildingsByThing(tdb_cassandra.View):
+    _use_db = True
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_name_class": tdb_cassandra.UTF8_TYPE,
+    }
+
+    @classmethod
+    def get_gilder_ids(cls, thing):
+        columns = cls.get_time_sorted_columns(thing._fullname)
+        return [int(account_id, 36) for account_id in columns.iterkeys()]
+
+    @classmethod
+    def create(cls, user, things, opaque):
+        for thing in things:
+            cls._set_values(thing._fullname, {user._id36: ""})
+
+    @classmethod
+    def delete(cls, user, things):
+        # gildings cannot be undone
+        raise NotImplementedError()
+
+
+@view_of(GildedCommentsByAccount)
+class GildingsByDay(tdb_cassandra.View):
+    _use_db = True
+    _compare_with = tdb_cassandra.TIME_UUID_TYPE
+    _extra_schema_creation_args = {
+        "key_validation_class": tdb_cassandra.ASCII_TYPE,
+        "column_name_class": tdb_cassandra.TIME_UUID_TYPE,
+        "default_validation_class": tdb_cassandra.UTF8_TYPE,
+    }
+
+    @staticmethod
+    def _rowkey(date):
+        return date.strftime("%Y-%m-%d")
+
+    @classmethod
+    def get_gildings(cls, date):
+        key = cls._rowkey(date)
+        columns = cls.get_time_sorted_columns(key)
+        gildings = [json.loads(v) for v in columns.itervalues()]
+        for gilding in gildings:
+            gilding["user"] = int(gilding["user"], 36)
+        return gildings
+
+    @classmethod
+    def create(cls, user, things, opaque):
+        key = cls._rowkey(datetime.now(g.tz))
+
+        columns = {}
+        for thing in things:
+            columns[uuid.uuid1()] = json.dumps({
+                "user": user._id36,
+                "thing": thing._fullname,
+            })
+        cls._set_values(key, columns)
+
+    @classmethod
+    def delete(cls, user, things):
+        # gildings cannot be undone
+        raise NotImplementedError()
 
 
 class _SaveHideByAccount(tdb_cassandra.DenormalizedRelation):
