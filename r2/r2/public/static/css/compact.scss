@@ -875,6 +875,29 @@ padding: 5px;
 }
 
 
+/** comment gilding */
+.gilded-comment-icon {
+    position: relative;
+    display: inline-block;
+    background-image: url(../gold-coin.png);  /* SPRITE */
+    background-repeat: no-repeat;
+    height: 14px;
+    width: 13px;
+    margin: 0 0 -14px 6px;
+    top: -8px;
+    vertical-align: middle;
+}
+
+.user-gilded > .entry .gilded-comment-icon {
+    width: 23px;
+}
+
+body.post-under-1h-old .gilded-comment-icon,
+body.post-under-6h-old .gilded-comment-icon {
+    opacity: .55;
+}
+
+
 /** messages and inbox */
 .message {
     background: white;
