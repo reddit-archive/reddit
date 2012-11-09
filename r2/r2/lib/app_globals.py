@@ -20,30 +20,43 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from __future__ import with_statement
-import ConfigParser
-from pylons import config
-import pytz, os, logging, sys, socket, re, subprocess, random
-import signal
-from datetime import timedelta, datetime
+from datetime import datetime
 from urlparse import urlparse
+import ConfigParser
 import json
-from r2.lib.contrib import ipaddress
-from sqlalchemy import engine
-from sqlalchemy import event
+import logging
+import os
+import signal
+import socket
+import subprocess
+import sys
+
+from sqlalchemy import engine, event
+import pytz
+
+from r2.config import queues
+from r2.lib.cache import (
+    CacheChain,
+    CassandraCache,
+    CassandraCacheChain,
+    CL_ONE,
+    CL_QUORUM,
+    CMemcache,
+    HardCache,
+    HardcacheChain,
+    LocalCache,
+    MemcacheChain,
+    SelfEmptyingCache,
+    StaleCacheChain,
+)
 from r2.lib.configparse import ConfigValue, ConfigValueParser
-from r2.lib.cache import LocalCache, SelfEmptyingCache
-from r2.lib.cache import CMemcache, StaleCacheChain
-from r2.lib.cache import HardCache, MemcacheChain, MemcacheChain, HardcacheChain
-from r2.lib.cache import CassandraCache, CassandraCacheChain, CacheChain, CL_ONE, CL_QUORUM
-from r2.lib.utils import thread_dump
-from r2.lib.translation import get_active_langs, I18N_PATH
+from r2.lib.contrib import ipaddress
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
-from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.plugin import PluginLoader
-from r2.lib.utils import config_gold_price
-from r2.config import queues
+from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
+from r2.lib.translation import get_active_langs, I18N_PATH
+from r2.lib.utils import config_gold_price, thread_dump
 
 
 LIVE_CONFIG_NODE = "/config/live"
