@@ -1505,4 +1505,6 @@ def process_votes(qname, limit=0):
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater, foreground=True, timer=timer)
 
+        timer.flush()
+
     amqp.consume_items(qname, _handle_vote, verbose = False)

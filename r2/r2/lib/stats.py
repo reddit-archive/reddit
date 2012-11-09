@@ -163,6 +163,12 @@ class Timer:
         self._start = None
         self._last = None
         self._stop = None
+        self._timings = []
+
+    def flush(self):
+        for timing in self._timings:
+            self.send(*timing)
+        self._timings = []
 
     def elapsed_seconds(self):
         if self._start is None:
@@ -184,7 +190,7 @@ class Timer:
         if self._stop is not None:
             raise AssertionError("timer is stopped")
         last, self._last = self._last, self._time()
-        self.send(subname, self._last - last)
+        self._timings.append((subname, self._last - last))
 
     def stop(self, subname='total'):
         if self._start is None:
@@ -192,6 +198,7 @@ class Timer:
         if self._stop is not None:
             raise AssertionError('timer is already stopped')
         self._stop = self._time()
+        self.flush()
         self.send(subname, self._stop - self._start)
 
 
