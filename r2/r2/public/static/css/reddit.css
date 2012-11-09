@@ -5463,7 +5463,6 @@ tr.gold-accent + tr > td {
     background-color: white;
     padding: 0 10px;
     margin-bottom: 15px;
-    display: inline-block;
     border-radius: 3px;
 }
 
