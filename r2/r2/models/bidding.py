@@ -36,13 +36,14 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.dialects.postgresql.base import PGInet as Inet
 from sqlalchemy.ext.declarative import declarative_base
 
-from r2.lib.utils import Enum, fetch_things2
-from r2.models.account import Account
-from r2.models import Link, Subreddit
 import r2.lib.db.operators as db_ops
 from r2.lib.db.thing import Thing, NotFound
 import r2.lib.db.tdb_cassandra as tdb_cassandra
 from r2.lib.memoize import memoize
+
+from r2.lib.utils import Enum, fetch_things2, to_date
+from r2.models.account import Account
+from r2.models import Link, Subreddit
 
 
 engine = g.dbm.get_engine('authorize')
@@ -641,11 +642,6 @@ class SponsorBoxWeightings(object):
             updated = [r for r in current if r.data['link'] != link_fn]
             cls(subreddit, now, updated).set_as_latest()
 
-
-def to_date(d):
-    if isinstance(d, datetime.datetime):
-        return d.date()
-    return d
 
 # do all the leg work of creating/connecting to tables
 if g.db_create_tables:
