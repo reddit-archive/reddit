@@ -42,7 +42,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
-from r2.lib.utils import Enum
+from r2.lib.utils import Enum, to_date
 from r2.models.account import Account
 from r2.models import Link
 
@@ -467,12 +467,6 @@ class PromotionWeights(Sessionized, Base):
             res.append([d, bid, refund])
             d += datetime.timedelta(1)
         return res
-
-
-def to_date(d):
-    if isinstance(d, datetime.datetime):
-        return d.date()
-    return d
 
 # do all the leg work of creating/connecting to tables
 if g.db_create_tables:
