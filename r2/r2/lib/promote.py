@@ -564,7 +564,7 @@ def get_scheduled(offset=0):
                 links.add(l)
         except Exception, e: # could happen if campaign things have corrupt data
             error_campaigns.append((campaign._id, e))
-    return {'by_sr': by_sr, 'links': links, 'error_campaigns': error_campaigns}
+    return by_sr, links, error_campaigns
 
 def fuzz_impressions(imps):
     """Return imps rounded to one significant digit."""
@@ -645,28 +645,35 @@ def scheduled_campaigns_by_link(l, date=None):
     return accepted
 
 def get_traffic_weights(srnames):
+    """Get relative weights of traffic to subreddits vs traffic to defaults"""
     from r2.models.traffic import PageviewsBySubreddit
+    def average_pageviews(tuples, npoints=7):
+        # Take recent npoints pageviews, skipping most recent (might be incomplete)
+        if tuples and len(tuples) > 1:
+            tuples.sort(key=lambda t: t[0], reverse=True)
+            recent_pageviews = [p for d, (u, p) in tuples[1:npoints+1]]
+            avg = float(sum(recent_pageviews)) / len(recent_pageviews)
+            return max(avg, 1)
+        else:
+            return 1.
 
-    # the weight is just the last 7 days of impressions (averaged)
-    def weigh(t, npoints=7):
-        if t and len(t) > 1:
-            t = [y[1] for x, y in t[-npoints - 1:-1]]
-            return max(float(sum(t)) / len(t), 1)
-        return 1
+    top_srs = Subreddit.top_lang_srs('all', 10)
+    sr_tuples = [PageviewsBySubreddit.history('day', sr.name) for sr in top_srs]
+    top_traffic = [average_pageviews(sr_tuple) for sr_tuple in sr_tuples]
+    if len(top_traffic) > 0:
+        avg_top_traffic = sum(top_traffic) / len(top_traffic)
+    else:
+        avg_top_traffic = 1.
 
-    default_traffic = [weigh(PageviewsBySubreddit.history("day", sr.name))
-                             for sr in Subreddit.top_lang_srs('all', 10)]
-    default_traffic = (float(max(sum(default_traffic), 1)) /
-                       max(len(default_traffic), 1))
-
-    res = {}
+    weights = {}
     for srname in srnames:
         if srname:
-            res[srname] = (default_traffic /
-                           weigh(PageviewsBySubreddit.history("day", srname)))
+            sr_tuples = PageviewsBySubreddit.history('day', srname)
+            sr_traffic = average_pageviews(sr_tuple)
+            weights[srname] = top_traffic / sr_traffic
         else:
-            res[srname] = 1
-    return res
+            weights[srname] = 1.
+    return weights
 
 def weight_schedule(by_sr):
     """
@@ -730,10 +737,9 @@ def make_daily_promotions(offset=0, test=False):
       test - if True, new schedule will be generated but not launched
     Raises Exception with list of campaigns that had errors if there were any
     """
-    schedule = get_scheduled(offset)
-    all_links = set([l._fullname for l in schedule['links']])
-    error_campaigns = schedule['error_campaigns']
-    weighted = weight_schedule(schedule['by_sr'])
+    by_sr, links, error_campaigns = get_scheduled(offset)
+    all_links = set([l._fullname for l in links])
+    weighted = weight_schedule(by_sr)
 
     # over18 check
     for sr, links in weighted.iteritems():
