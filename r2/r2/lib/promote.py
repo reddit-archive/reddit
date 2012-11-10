@@ -687,11 +687,11 @@ def make_daily_promotions(offset=0, test=False):
       test - if True, new schedule will be generated but not launched
     Raises Exception with list of campaigns that had errors if there were any
     """
-    by_sr, links, error_campaigns = get_scheduled(offset)
+    by_srname, links, error_campaigns = get_scheduled(offset)
     all_links = set([l._fullname for l in links])
 
     # convert AdWeights to use fullname (lost from weight_schedule)
-    for sr, adweights in by_sr.iteritems():
+    for sr, adweights in by_srname.iteritems():
         fixed_adweights = []
         for a in adweights:
             if isinstance(a.link, Link):
@@ -699,12 +699,12 @@ def make_daily_promotions(offset=0, test=False):
                 fixed_adweights.append(fixed_a)
             else:
                 fixed_adweights.append(a)
-        by_sr[sr] = fixed_adweights
+        by_srname[sr] = fixed_adweights
 
     # over18 check
-    for sr, adweights in by_sr.iteritems():
-        if sr:
-            sr = Subreddit._by_name(sr)
+    for srname, adweights in by_srname.iteritems():
+        if srname:
+            sr = Subreddit._by_name(srname)
             if sr.over_18:
                 sr_links = Link._by_fullname([a.link for a in adweights],
                                              return_dict=False)
@@ -743,17 +743,17 @@ def make_daily_promotions(offset=0, test=False):
                 emailer.live_promo(links[l])
 
     # convert the weighted dict to use sr_ids which are more useful
-    srs = Subreddit._by_name(by_sr.keys())
+    srs = Subreddit._by_name(by_srname.keys())
     srname_to_id = {sr.name: sr._id for sr in srs.values()}
     srname_to_id[''] = ''
-    by_sr = {srname_to_id[srname]: adweights for srname, adweights
-                                             in by_sr.iteritems()}
+    by_srid = {srname_to_id[srname]: adweights for srname, adweights
+                                               in by_srname.iteritems()}
 
     if not test:
-        set_live_promotions(by_sr)
+        set_live_promotions(by_srid)
         _mark_promos_updated()
     else:
-        print by_sr
+        print by_srid
 
     # after launching as many campaigns as possible, raise an exception to 
     #   report any error campaigns. (useful for triggering alerts in irc)
