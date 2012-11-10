@@ -1432,6 +1432,14 @@ class View(ThingBase):
         return self._t
 
     @classmethod
+    def get_time_sorted_columns(cls, rowkey, limit=None):
+        q = cls._cf.xget(rowkey, include_timestamp=True)
+        r = sorted(q, key=lambda i: i[1][1]) # (col_name, (col_val, timestamp))
+        if limit:
+            r = r[:limit]
+        return OrderedDict([(i[0], i[1][0]) for i in r])
+
+    @classmethod
     @will_write
     def _set_values(cls, row_key, col_values,
                     write_consistency_level = None,
