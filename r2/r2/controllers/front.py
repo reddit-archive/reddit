@@ -522,7 +522,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                     return True # spam, unless banned by a moderator
                 return False
             elif location == "unmoderated":
-                return True
+                return not getattr(x, 'verdict', None)
             else:
                 raise ValueError
 
