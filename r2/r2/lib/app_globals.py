@@ -234,7 +234,6 @@ class Globals(object):
         self.config = ConfigValueParser(global_conf)
         self.config.add_spec(self.spec)
         self.plugins = PluginLoader(self.config.get("plugins", []))
-        self.queues = queues.declare_queues(self)
 
         self.paths = paths
 
@@ -263,6 +262,8 @@ class Globals(object):
             raise AttributeError
 
     def setup(self):
+        self.queues = queues.declare_queues(self)
+
         # heavy load mode is read only mode with a different infobar
         if self.heavy_load_mode:
             self.read_only_mode = True
