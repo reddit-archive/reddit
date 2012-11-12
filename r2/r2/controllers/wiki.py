@@ -261,7 +261,9 @@ class WikiApiController(WikiController):
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
             page = WikiPage.create(c.site, page_name[0])
-        
+        if c.user._spam:
+            error =_("You are doing that too much, please try again later.")
+            self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed. 
