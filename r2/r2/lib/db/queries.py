@@ -1371,7 +1371,10 @@ def queue_vote(user, thing, dir, ip, organic = False,
                 if thing._id36 in g.live_config["fastlane_links"]:
                     qname = vote_fastlane_q
                 else:
-                    qname = vote_link_q
+                    if g.shard_link_vote_queues:
+                        qname = "vote_link_%s_q" % str(thing.sr_id)[-1]
+                    else:
+                        qname = vote_link_q
 
             elif isinstance(thing, Comment):
                 if utils.to36(thing.link_id) in g.live_config["fastlane_links"]:

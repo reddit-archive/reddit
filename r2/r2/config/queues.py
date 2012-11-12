@@ -71,7 +71,7 @@ class MessageQueue(object):
             self._bind(routing_key)
 
 
-def declare_queues():
+def declare_queues(g):
     queues = Queues({
         "scraper_q": MessageQueue(),
         "newcomments_q": MessageQueue(),
@@ -85,6 +85,12 @@ def declare_queues():
         "cloudsearch_changes": MessageQueue(bind_to_self=True),
         "update_promos_q": MessageQueue(bind_to_self=True),
     })
+
+    if g.shard_link_vote_queues:
+        sharded_vote_queues = {"vote_link_%d_q" % i :
+                               MessageQueue(bind_to_self=True)
+                               for i in xrange(10)}
+        queues.declare(sharded_vote_queues)
 
     queues.cloudsearch_changes << "search_changes"
     queues.scraper_q << "new_link"

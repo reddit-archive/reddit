@@ -148,6 +148,7 @@ class Globals(object):
             'static_pre_gzipped',
             'static_secure_pre_gzipped',
             'trust_local_proxies',
+            'shard_link_vote_queues',
         ],
 
         ConfigValue.tuple: [
@@ -233,7 +234,7 @@ class Globals(object):
         self.config = ConfigValueParser(global_conf)
         self.config.add_spec(self.spec)
         self.plugins = PluginLoader(self.config.get("plugins", []))
-        self.queues = queues.declare_queues()
+        self.queues = queues.declare_queues(self)
 
         self.paths = paths
 
