@@ -278,7 +278,7 @@ class WikiApiController(WikiController):
                 c.site.change_css(content, parsed, previous, reason=reason)
             else:
                 try:
-                    page.revise(content, previous, c.user.name, reason=reason)
+                    page.revise(content, previous, c.user._id36, reason=reason)
                 except ContentLengthError as e:
                     self.handle_error(403, 'CONTENT_LENGTH_ERROR', max_length = e.max_length)
 
@@ -306,9 +306,9 @@ class WikiApiController(WikiController):
         if not user:
             self.handle_error(404, 'UNKNOWN_USER')
         elif act == 'del':
-            page.remove_editor(user.name)
+            page.remove_editor(user._id36)
         elif act == 'add':
-            page.add_editor(user.name)
+            page.add_editor(user._id36)
         else:
             self.handle_error(400, 'INVALID_ACTION')
         return json.dumps({})

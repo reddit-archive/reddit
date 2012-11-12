@@ -90,7 +90,7 @@ def may_revise(sr, user, page=None):
         # Global wiki contribute ban
         return False
     
-    if page and page.has_editor(user.name):
+    if page and page.has_editor(user._id36):
         # If the user is an editor on the page, they may edit
         return True
     

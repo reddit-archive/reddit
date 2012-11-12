@@ -1597,7 +1597,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             except tdb_cassandra.NotFound:
                 wikipage = wiki.WikiPage.create(sr, pagename)
             try:
-                wr = wikipage.revise(value, previous=prev, author=c.user.name)
+                wr = wikipage.revise(value, previous=prev, author=c.user._id36)
                 setattr(sr, field, value)
                 if not wr:
                     return True

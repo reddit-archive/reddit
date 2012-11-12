@@ -364,7 +364,7 @@ class Subreddit(Thing, Printable):
 
     def change_css(self, content, parsed, prev=None, reason=None, author=None, force=False):
         from r2.models import ModAction
-        author = author if author else c.user.name
+        author = author if author else c.user._id36
         if content is None:
             content = ''
         try:
