@@ -95,6 +95,7 @@ class Globals(object):
             'MIN_RATE_LIMIT_COMMENT_KARMA',
             'VOTE_AGE_LIMIT',
             'REPLY_AGE_LIMIT',
+            'REPORT_AGE_LIMIT',
             'HOT_PAGE_AGE',
             'RATELIMIT',
             'QUOTA_THRESHOLD',

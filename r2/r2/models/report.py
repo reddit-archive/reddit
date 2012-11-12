@@ -25,6 +25,7 @@ from r2.lib.utils import tup
 from r2.lib.memoize import memoize
 from r2.models import Link, Comment, Message, Subreddit, Account
 from r2.models.vote import score_changes
+from datetime import datetime
 
 from pylons import g
 
@@ -70,12 +71,16 @@ class Report(MultiRelation('report',
             author = Account._byID(thing.author_id, data=True)
             author._incr('reported')
 
-        # update the reports queue if it exists
-        queries.new_report(thing, r)
+        item_age = datetime.now(g.tz) - thing._date
+        if item_age.days < g.REPORT_AGE_LIMIT:
+            # update the reports queue if it exists
+            queries.new_report(thing, r)
 
-        # if the thing is already marked as spam, accept the report
-        if thing._spam:
-            cls.accept(thing)
+            # if the thing is already marked as spam, accept the report
+            if thing._spam:
+                cls.accept(thing)
+        else:
+            g.log.debug("Ignoring old report %s" % r)
 
         return r
 
