@@ -1001,6 +1001,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         if isinstance(parent, Message):
             if not getattr(parent, "repliable", True):
                 abort(403, 'forbidden')
+            if not parent.can_view_slow():
+                abort(403, 'forbidden')
             is_message = True
             should_ratelimit = False
         else:
