@@ -664,50 +664,38 @@ def weight_schedule(by_sr):
 def promotion_key():
     return "current_promotions:1"
 
-def get_live_promotions(srids, from_permacache=True):
-    if not from_permacache:
-        timer = g.stats.get_timer("promote.get_live.cass")
-        timer.start()
-        links = set()
-        weights = LiveAdWeights.get(srids)
-        for promos in weights.itervalues():
-            links.update(link_fn for link_fn, weight, campaign_fn in promos)
-        timer.stop()
-    else:
-        timer = g.stats.get_timer("promote.get_live.permacache")
-        timer.start()
-        links, weights = g.permacache.get(promotion_key()) or (set(), {})
-        timer.stop()
+def get_live_promotions(srids):
+    timer = g.stats.get_timer("promote.get_live.cass")
+    timer.start()
+    links = set()
+    weights = LiveAdWeights.get(srids)
+    for promos in weights.itervalues():
+        links.update(link_fn for link_fn, weight, campaign_fn in promos)
+    timer.stop()
     return links, weights
 
 
-def set_live_promotions(links, weights, which=("cass", "permacache")):
-    if "permacache" in which:
-        timer = g.stats.get_timer("promote.set_live.permacache")
-        timer.start()
-        g.permacache.set(promotion_key(), (links, weights))
-        timer.stop()
-    if "cass" in which:
-        timer = g.stats.get_timer("promote.set_live.cass")
-        timer.start()
+def set_live_promotions(links, weights):
+    timer = g.stats.get_timer("promote.set_live.cass")
+    timer.start()
 
-        # First, figure out which subreddits have had ads recently
-        today = promo_datetime_now()
-        yesterday = today - timedelta(days=1)
-        tomorrow = today + timedelta(days=1)
-        promo_weights = PromotionWeights.get_campaigns(yesterday, tomorrow)
-        subreddit_names = set(p.sr_name for p in promo_weights)
-        subreddits = Subreddit._by_name(subreddit_names).values()
-        # Set the default for those subreddits to no ads
-        all_weights = {sr._id: [] for sr in subreddits}
+    # First, figure out which subreddits have had ads recently
+    today = promo_datetime_now()
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+    promo_weights = PromotionWeights.get_campaigns(yesterday, tomorrow)
+    subreddit_names = set(p.sr_name for p in promo_weights)
+    subreddits = Subreddit._by_name(subreddit_names).values()
+    # Set the default for those subreddits to no ads
+    all_weights = {sr._id: [] for sr in subreddits}
 
-        # Mix in the currently live ads
-        all_weights.update(weights)
-        if '' in all_weights:
-            all_weights[LiveAdWeights.FRONT_PAGE] = all_weights.pop('')
+    # Mix in the currently live ads
+    all_weights.update(weights)
+    if '' in all_weights:
+        all_weights[LiveAdWeights.FRONT_PAGE] = all_weights.pop('')
 
-        LiveAdWeights.set_all_from_weights(all_weights)
-        timer.stop()
+    LiveAdWeights.set_all_from_weights(all_weights)
+    timer.stop()
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
@@ -799,7 +787,7 @@ def get_promotion_list(user, site):
 
 
 def get_promotions_cached(sites):
-    p = get_live_promotions(sites, from_permacache=False)
+    p = get_live_promotions(sites)
     if p:
         links, promo_dict = p
         available = {}
