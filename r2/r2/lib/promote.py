@@ -23,26 +23,47 @@
 from __future__ import with_statement
 
 from collections import OrderedDict
+from datetime import datetime, timedelta
 import json
+import math
+import random
 import time
 
-from r2.models import *
-from r2.models.keyvalue import NamedGlobals
-from r2.models.promo import LiveAdWeights
-from r2.lib.wrapped import Wrapped
-from r2.lib import authorize
-from r2.lib import emailer
-from r2.lib import inventory
-from r2.lib.template_helpers import get_domain
-from r2.lib.utils import Enum, UniqueIterator, tup, to_date
-from r2.lib.organic import keep_fresh_links
 from pylons import g, c
-from datetime import datetime, timedelta
-from r2.lib import amqp
-from r2.lib.db.queries import set_promote_status
-import itertools
+from pylons.i18n import ungettext
 
-import random
+from r2.lib.wrapped import Wrapped
+from r2.lib import (
+    amqp,
+    authorize,
+    emailer,
+    inventory,
+)
+from r2.lib.db.queries import set_promote_status
+from r2.lib.organic import keep_fresh_links
+from r2.lib.strings import strings
+from r2.lib.template_helpers import get_domain
+from r2.lib.utils import UniqueIterator, tup, to_date
+from r2.models import (
+    Account,
+    Bid,
+    DefaultSR,
+    FakeAccount,
+    FakeSubreddit,
+    get_promote_srid,
+    IDBuilder,
+    Link,
+    LiveAdWeights,
+    MultiReddit,
+    NotFound,
+    PromoCampaign,
+    PROMOTE_STATUS,
+    PromotedLink,
+    PromotionLog,
+    PromotionWeights,
+    Subreddit,
+)
+from r2.models.keyvalue import NamedGlobals
 
 
 UPDATE_QUEUE = 'update_promos_q'
