@@ -46,6 +46,7 @@ from r2.lib.template_helpers import get_domain
 from r2.lib.utils import UniqueIterator, tup, to_date
 from r2.models import (
     Account,
+    AdWeight,
     Bid,
     DefaultSR,
     FakeAccount,
@@ -499,7 +500,7 @@ def reject_promotion(link, reason=None):
     set_promote_status(link, PROMOTE_STATUS.rejected)
 
     all_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
-    links = set(x[0] for x in all_ads[LiveAdWeights.ALL_ADS])
+    links = set(x.link for x in all_ads[LiveAdWeights.ALL_ADS])
     if link._fullname in links:
         PromotionLog.add(link, 'Marked promotion for rejection')
         queue_changed_promo(link, "rejected")
@@ -558,7 +559,8 @@ def get_scheduled(offset=0):
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
-                by_sr.setdefault(campaign.sr_name, []).append((l, weight, campaign._fullname))
+                adweight = AdWeight(l, weight, campaign._fullname)
+                by_sr.setdefault(campaign.sr_name, []).append(adweight)
                 links.add(l)
         except Exception, e: # could happen if campaign things have corrupt data
             error_campaigns.append((campaign._id, e))
@@ -679,9 +681,9 @@ def weight_schedule(by_sr):
     for sr_name, t_tuples in by_sr.iteritems():
         weighted[sr_name] = []
         for l, weight, cid in t_tuples:
-            weighted[sr_name].append((l._fullname,
-                                      weight * weight_dict[sr_name],
-                                      cid))
+            weighted[sr_name].append(AdWeight(l._fullname,
+                                              weight * weight_dict[sr_name],
+                                              cid))
     return weighted
 
 
@@ -744,7 +746,7 @@ def make_daily_promotions(offset=0, test=False):
                         l._commit()
 
     old_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
-    old_links = set(x[0] for x in old_ads[LiveAdWeights.ALL_ADS])
+    old_links = set(x.link for x in old_ads[LiveAdWeights.ALL_ADS])
 
     # links that need to be promoted
     new_links = all_links - old_links

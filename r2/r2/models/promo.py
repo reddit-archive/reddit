@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import namedtuple
 from datetime import datetime, timedelta
 from uuid import uuid1
 import json
@@ -136,6 +137,9 @@ class PromotionLog(tdb_cassandra.View):
         return [t[1] for t in tuples]
 
 
+AdWeight = namedtuple('AdWeight', 'link weight campaign')
+
+
 class LiveAdWeights(object):
     """Data store for per-subreddit lists of currently running ads"""
     __metaclass__ = tdb_cassandra.ThingMeta
@@ -169,7 +173,7 @@ class LiveAdWeights(object):
         weights = json.loads(columns.get(cls.column, '[]')) if columns else []
         # JSON doesn't have the concept of tuples; this restores the return
         # value to being a list of tuples.
-        return [tuple(w) for w in weights]
+        return [AdWeight(*w) for w in weights]
 
     @classmethod
     def _load_multi(cls, sr_ids):
