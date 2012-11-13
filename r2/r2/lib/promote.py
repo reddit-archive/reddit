@@ -475,7 +475,8 @@ def reject_promotion(link, reason = None):
     # while we're doing work here, it will correctly exclude it
     set_promote_status(link, PROMOTE_STATUS.rejected)
     
-    links = get_live_promotions([LiveAdWeights.ALL_ADS])[0]
+    all_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
+    links = set(x[0] for x in all_ads[LiveAdWeights.ALL_ADS])
     if link._fullname in links:
         PromotionLog.add(link, 'Marked promotion for rejection')
         queue_changed_promo(link, "rejected")
@@ -667,15 +668,12 @@ def promotion_key():
 def get_live_promotions(srids):
     timer = g.stats.get_timer("promote.get_live.cass")
     timer.start()
-    links = set()
     weights = LiveAdWeights.get(srids)
-    for promos in weights.itervalues():
-        links.update(link_fn for link_fn, weight, campaign_fn in promos)
     timer.stop()
-    return links, weights
+    return weights
 
 
-def set_live_promotions(links, weights):
+def set_live_promotions(weights):
     timer = g.stats.get_timer("promote.set_live.cass")
     timer.start()
 
@@ -722,8 +720,9 @@ def make_daily_promotions(offset = 0, test = False):
                     if not test:
                         l._commit()
 
-    old_links = get_live_promotions([LiveAdWeights.ALL_ADS])[0]
-    
+    old_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
+    old_links = set(x[0] for x in old_ads[LiveAdWeights.ALL_ADS])
+
     # links that need to be promoted
     new_links = all_links - old_links
     # links that have already been promoted
@@ -758,10 +757,10 @@ def make_daily_promotions(offset = 0, test = False):
     weighted = dict((srs[k], v) for k, v in weighted.iteritems())
 
     if not test:
-        set_live_promotions(all_links, weighted)
+        set_live_promotions(weighted)
         _mark_promos_updated()
     else:
-        print (all_links, weighted)
+        print weighted
 
     # after launching as many campaigns as possible, raise an exception to 
     #   report any error campaigns. (useful for triggering alerts in irc)
@@ -787,14 +786,13 @@ def get_promotion_list(user, site):
 
 
 def get_promotions_cached(sites):
-    p = get_live_promotions(sites)
-    if p:
-        links, promo_dict = p
+    weights = get_live_promotions(sites)
+    if weights:
         available = {}
         campaigns = {}
-        for k, links in promo_dict.iteritems():
-            if k in sites:
-                for l, w, cid in links:
+        for sr_id, sr_weights in weights.iteritems():
+            if sr_id in sites:
+                for l, w, cid in sr_weights:
                     available[l] = available.get(l, 0) + w
                     campaigns[l] = cid
         # sort the available list by weight
@@ -803,8 +801,8 @@ def get_promotions_cached(sites):
         norm = sum(available.values())
         # return a sorted list of (link, norm_weight)
         return [(l, available[l] / norm, campaigns[l]) for l in links]
-    
-    return []
+    else:
+        return []
 
 def randomized_promotion_list(user, site):
     promos = get_promotion_list(user, site)
