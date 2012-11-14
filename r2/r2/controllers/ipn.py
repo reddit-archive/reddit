@@ -346,7 +346,7 @@ class IpnController(RedditController):
         if comment:
             gilding_message = make_comment_gold_message(comment,
                                                         user_gilded=True)
-            jquery.gild_comment(comment_id, gilding_message)
+            jquery.gild_comment(comment_id, gilding_message, comment.gildings)
 
     @textresponse(full_sn = VLength('serial-number', 100))
     def POST_gcheckout(self, full_sn):

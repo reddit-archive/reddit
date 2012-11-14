@@ -882,14 +882,15 @@ padding: 5px;
     background-image: url(../gold-coin.png);  /* SPRITE */
     background-repeat: no-repeat;
     height: 14px;
-    width: 13px;
+    width: 0;
+    padding-left: 13px;
     margin: 0 0 -14px 6px;
     top: -8px;
     vertical-align: middle;
 }
 
 .user-gilded > .entry .gilded-comment-icon {
-    width: 23px;
+    padding-left: 23px;
 }
 
 body.post-under-1h-old .gilded-comment-icon,
@@ -897,6 +898,12 @@ body.post-under-6h-old .gilded-comment-icon {
     opacity: .55;
 }
 
+.gilded-comment-count {
+    color: #99895F;
+    padding-left: 2px;
+    font-size: .9em;
+    vertical-align: middle;
+}
 
 /** messages and inbox */
 .message {

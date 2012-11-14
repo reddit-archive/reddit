@@ -380,7 +380,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
         elif attr == "body_html":
             return spaceCompress(safemarkdown(thing.body))
         elif attr == "gilded":
-            return bool(thing.gildings)
+            return thing.gildings
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):

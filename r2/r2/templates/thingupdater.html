@@ -37,7 +37,8 @@
 
   var gildings = ${unsafe(simplejson.dumps(thing.gildings))};
   for (var gilded_comment in gildings) {
-    r.gold.gildComment(gilded_comment, gildings[gilded_comment]);
+    var gilding_data = gildings[gilded_comment];
+    r.gold.gildComment(gilded_comment, gilding_data[0], gilding_data[1]);
   }
 
   var saves = ${unsafe(simplejson.dumps(list(thing.saves)))};

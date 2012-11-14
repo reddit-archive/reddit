@@ -1199,7 +1199,7 @@ class CommentPane(Templated):
                 if t.likes is False:
                     dislikes.append(t._fullname)
                 if t.user_gilded:
-                    gildings[t._fullname] = t.gilded_message
+                    gildings[t._fullname] = (t.gilded_message, t.gildings)
                 if t.saved:
                     saves.add(t._fullname)
             self.rendered += ThingUpdater(likes = likes,

@@ -64,7 +64,7 @@ r.gold = {
         return false
     },
 
-    gildComment: function (comment_id, new_title) {
+    gildComment: function (comment_id, new_title, gilding_count) {
         var comment = $('.id-' + comment_id)
 
         if (!comment.length) {
@@ -75,13 +75,25 @@ r.gold = {
         var tagline = comment.children('.entry').find('p.tagline'),
             icon = tagline.find('.gilded-comment-icon')
 
+        gilding_count = gilding_count || icon.data('count') || 0
+        gilding_count++
+
         comment.addClass('gilded user-gilded')
         if (!icon.length) {
             icon = $('<span>')
                         .addClass('gilded-comment-icon')
             tagline.append(icon)
         }
-        icon.attr('title', new_title)
+        icon
+            .attr('title', new_title)
+            .data('count', gilding_count)
+        if (gilding_count > 1) {
+            icon.empty()
+            $('<span class="gilded-comment-count">')
+                .text('x' + gilding_count)
+                .appendTo(icon)
+        }
+
         comment.children('.entry').find('.give-gold').parent().remove()
     }
 };
