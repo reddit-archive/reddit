@@ -792,7 +792,8 @@ class RedditController(MinimalController):
     @staticmethod
     def login(user, rem=False):
         c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(),
-                                           expires = NEVER if rem else None)
+                                           expires = NEVER if rem else None,
+                                           httponly=True)
 
     @staticmethod
     def logout():
