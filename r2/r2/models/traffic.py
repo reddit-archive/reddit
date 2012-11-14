@@ -36,7 +36,7 @@ from r2.lib.memoize import memoize
 
 
 engine = g.dbm.get_engine("traffic")
-Session = scoped_session(sessionmaker(bind=engine))
+Session = scoped_session(sessionmaker(bind=engine, autocommit=True))
 Base = declarative_base(bind=engine)
 
 
