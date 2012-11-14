@@ -202,6 +202,18 @@ def consume_items(queue, callback, verbose=True):
 
     chan = connection_manager.get_channel()
 
+    # configure the amount of data rabbit will send down to our buffer before
+    # we're ready for it (to reduce network latency). by default, it will send
+    # as much as our buffers will allow.
+    chan.basic_qos(
+        # size in bytes of prefetch window. zero indicates no preference.
+        prefetch_size=0,
+        # maximum number of prefetched messages.
+        prefetch_count=10,
+        # if global, applies to the whole connection, else just this channel.
+        a_global=False
+    )
+
     def _callback(msg):
         if verbose:
             count_str = ''
