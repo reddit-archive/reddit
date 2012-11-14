@@ -11,12 +11,14 @@ r.gold = {
 
     _toggleCommentGoldForm: function (e) {
         var $link = $(e.target),
+            $thing = $link.thing(),
             commentId = $link.thing_id(),
             formId = 'gold_form_' + commentId,
             oldForm = $('#' + formId)
 
-        if ($link.thing().hasClass('user-gilded') ||
-            $link.thing().hasClass('deleted')) {
+        if ($thing.hasClass('user-gilded') ||
+            $thing.hasClass('deleted') ||
+            $thing.find('.author:first').text() == r.config.logged) {
             return false
         }
 
