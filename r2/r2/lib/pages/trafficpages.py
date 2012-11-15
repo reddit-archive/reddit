@@ -399,6 +399,9 @@ class PromotedLinkTraffic(RedditTraffic):
             self.history = []
             return
 
+        cutoff = end - datetime.timedelta(days=31)
+        start = max(start, cutoff)
+
         fullname = self.thing._fullname
         imps = traffic.AdImpressionsByCodename.promotion_history(fullname,
                                                                  start, end)
