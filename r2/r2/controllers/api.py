@@ -65,6 +65,7 @@ from r2.lib.search import SearchQuery
 from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.system_messages import notify_user_added
 from r2.controllers.ipn import generate_blob
+from r2.lib.template_helpers import add_sr, get_domain
 
 from r2.models import wiki
 from r2.lib.merge import ConflictException
@@ -1090,12 +1091,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VRatelimit(rate_user = True, rate_ip = True,
                               prefix = "rate_share_"),
                    share_from = VLength('share_from', max_length = 100),
-                   emails = ValidEmails("share_to"),
+                   emails = ValidEmailsOrExistingUnames("share_to"),
                    reply_to = ValidEmails("replyto", num = 1), 
                    message = VLength("message", max_length = 1000), 
-                   thing = VByName('parent'))
+                   thing = VByName('parent'),
+                   ip = ValidIP())
     def POST_share(self, shareform, jquery, emails, thing, share_from, reply_to,
-                   message):
+                   message, ip):
 
         # remove the ratelimit error if the user's karma is high
         sr = thing.subreddit_slow
@@ -1123,6 +1125,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif shareform.has_errors("ratelimit", errors.RATELIMIT):
             pass
         else:
+            emails, users = emails
             c.user.add_share_emails(emails)
             c.user._commit()
             link = jquery.things(thing._fullname)
@@ -1130,9 +1133,53 @@ class ApiController(RedditController, OAuth2ResourceController):
             shareform.html("<div class='clearleft'></div>"
                            "<p class='error'>%s</p>" % 
                            _("your link has been shared."))
-
+            
+            # Set up the parts that are common between e-mail and PMs
+            urlparts = (get_domain(cname=c.cname, subreddit=False),
+                        thing._id36)
+            url = "http://%s/tb/%s" % urlparts
+            
+            if message:
+                message = message + "\n\n"
+            else:
+                message = ""
+            message = message + '\n%s\n\n%s\n\n' % (thing.title,url)
+            
+            # Deliberately not translating this, as it'd be in the
+            # sender's language
+            if thing.num_comments:
+                count = ("There are currently %(num_comments)s comments on " +
+                         "this link.  You can view them here:")
+                if thing.num_comments == 1:
+                    count = ("There is currently %(num_comments)s comment " +
+                             "on this link.  You can view it here:")
+                
+                numcom = count % {'num_comments':thing.num_comments}
+                message = message + "%s\n\n" % numcom
+            else:
+                message = message + "You can leave a comment here:\n\n"
+                
+            url = add_sr(thing.make_permalink_slow(), force_hostname=True)
+            message = message + url
+            
+            # E-mail everyone
             emailer.share(thing, emails, from_name = share_from or "",
                           body = message or "", reply_to = reply_to or "")
+
+            # Send the PMs
+            subject = "%s has shared a link with you!" % c.user.name
+            # Prepend this subject to the message - we're repeating ourselves
+            # because it looks very abrupt without it.
+            message = "%s\n\n%s" % (subject,message)
+            
+            for target in users:
+                
+                m, inbox_rel = Message._new(c.user, target, subject,
+                                            message, ip)
+                # Queue up this PM
+                amqp.add_item('new_message', m._fullname)
+
+                queries.new_message(m, inbox_rel)
 
             #set the ratelimiter
             if should_ratelimit:

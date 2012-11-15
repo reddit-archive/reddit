@@ -21,18 +21,9 @@
 ###############################################################################
 
 <%! from r2.lib.template_helpers import get_domain%>
-%if not thing.body:
 ${thing.username} from http://${get_domain(cname = c.cname, subreddit = False)}/ has shared a link with you.
-%else:
+
 ${thing.body}
-%endif
-
-"${thing.link.title}"
-http://${get_domain(cname = c.cname, subreddit = False)}/tb/${thing.link._id36}
-
-<% from r2.lib.strings import strings, plurals %>${ungettext("There is currently %(num_comments)s on this link.  You can view it here:", "There are currently %(num_comments)s on this link.  You can view them here:", thing.link.num_comments) % dict(num_comments = strings.number_label % dict(num=thing.link.num_comments, thing=plurals.N_comments(thing.link.num_comments)))}
-
-<% from r2.lib.template_helpers import add_sr %>${add_sr(thing.link.make_permalink_slow(), force_hostname = True)}
 
 ___
 If you would not like to receive emails from reddit.com in the future, visit http://${g.domain}/mail/optout?x=${thing.msg_hash}

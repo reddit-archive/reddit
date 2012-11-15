@@ -98,7 +98,6 @@
         <td>
           <textarea id="message_${thing.link_name}" 
                     name="message" rows="4" cols="40">
-            ${_("%(user)s from http://%(site)s/ has shared a link with you.") % dict(user = c.user.name, site=c.site.domain if c.cname and hasattr(c.site, 'domain') else g.domain)}
           </textarea>
         </td>
         <td class="message-errors">

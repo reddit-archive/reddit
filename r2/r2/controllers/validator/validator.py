@@ -1488,6 +1488,70 @@ class ValidEmails(Validator):
             # return single email if one is expected, list otherwise
             return list(emails)[0] if self.num == 1 else emails
 
+class ValidEmailsOrExistingUnames(Validator):
+    """Validates a list of mixed email addresses and usernames passed in
+    as a string, delineated by whitespace, ',' or ';'.  Validates total
+    quantity too while we're at it.  Returns a tuple of the form 
+    (e-mail addresses, user account objects)"""
+    
+    def __init__(self, param, num=20, **kw):
+        self.num = num
+        Validator.__init__(self, param=param, **kw)
+        
+    def run(self, items):
+        # Use ValidEmails separator to break the list up
+        everything = set(ValidEmails.separator.findall(items) if items else [])
+        
+        # Use ValidEmails regex to divide the list into e-mail and other
+        emails = set(e for e in everything if ValidEmails.email_re.match(e))
+        failures = everything - emails
+        
+        # Run the rest of the validator against the e-mails list
+        ve = ValidEmails(self.param, self.num)
+        if len(emails) > 0:
+            ve.run(", ".join(emails))
+        
+        # ValidEmails will add to c.errors for us, so do nothing if that fails
+        # Elsewise, on with the users
+        if not ve.has_errors:
+            users = set()  # set of accounts
+            validusers = set()  # set of usernames to subtract from failures
+            
+            # Now steal from VExistingUname:
+            for uname in failures:
+                check = uname
+                if re.match('/u/', uname):
+                    check = check[3:]
+                veu = VExistingUname(check)
+                account = veu.run(check)
+                if account:
+                    validusers.add(uname)
+                    users.add(account)
+            
+            # We're fine if all our failures turned out to be valid users
+            if len(users) == len(failures):
+                # ValidEmails checked to see if there were too many addresses,
+                # check to see if there's enough left-over space for users
+                remaining = self.num - len(emails)
+                if len(users) > remaining:
+                    if self.num == 1:
+                        # We only wanted one, and we got it as an e-mail,
+                        # so complain.
+                        self.set_error(errors.BAD_EMAILS, 
+                                       {"emails": '"%s"' % items})
+                    else:
+                        # Too many total
+                        self.set_error(errors.TOO_MANY_EMAILS, 
+                                       {"num": self.num}) 
+                elif len(users) + len(emails) == 0:
+                    self.set_error(errors.NO_EMAILS)
+                else:
+                    # It's all good!
+                    return (emails, users)                       
+            else:
+                failures = failures - validusers
+                self.set_error(errors.BAD_EMAILS,
+                               {'emails': ', '.join(failures)})
 
 class VCnameDomain(Validator):
     domain_re  = re.compile(r'\A([\w\-_]+\.)+[\w]+\Z')
