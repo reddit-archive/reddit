@@ -691,7 +691,7 @@ def promotion_key():
     return "current_promotions:1"
 
 def get_live_promotions(srids):
-    timer = g.stats.get_timer("promote.get_live.cass")
+    timer = g.stats.get_timer("promote.get_live")
     timer.start()
     weights = LiveAdWeights.get(srids)
     timer.stop()
@@ -699,9 +699,7 @@ def get_live_promotions(srids):
 
 
 def set_live_promotions(weights):
-    timer = g.stats.get_timer("promote.set_live.cass")
-    timer.start()
-
+    start = time.time()
     # First, figure out which subreddits have had ads recently
     today = promo_datetime_now()
     yesterday = today - timedelta(days=1)
@@ -718,7 +716,9 @@ def set_live_promotions(weights):
         all_weights[LiveAdWeights.FRONT_PAGE] = all_weights.pop('')
 
     LiveAdWeights.set_all_from_weights(all_weights)
-    timer.stop()
+    end = time.time()
+    g.log.info("promote.set_live_promotions completed in %s seconds",
+               end - start)
 
 # Gotcha: even if links are scheduled and authorized, they won't be added to 
 # current promotions until they're actually charged, so make sure to call
