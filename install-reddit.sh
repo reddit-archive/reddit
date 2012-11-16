@@ -182,11 +182,11 @@ fi
 cd $REDDIT_HOME
 
 if [ ! -d $REDDIT_HOME/reddit ]; then
-    sudo -u $REDDIT_OWNER git clone git://github.com/reddit/reddit.git
+    sudo -u $REDDIT_OWNER git clone https://github.com/reddit/reddit.git
 fi
 
 if [ ! -d $REDDIT_HOME/reddit-i18n ]; then
-    sudo -u $REDDIT_OWNER git clone git://github.com/reddit/reddit-i18n.git
+    sudo -u $REDDIT_OWNER git clone https://github.com/reddit/reddit-i18n.git
 fi
 
 ###############################################################################
