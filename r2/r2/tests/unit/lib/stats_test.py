@@ -49,8 +49,8 @@ class StatsdConnectionUnderTest(stats.StatsdConnection):
 
 class StatsdConnectionTest(unittest.TestCase):
     @staticmethod
-    def connect():
-         return StatsdConnectionUnderTest('host:1000')
+    def connect(compress=False):
+         return StatsdConnectionUnderTest('host:1000', compress=compress)
 
     def test_parse_addr(self):
         self.assertEquals(
@@ -63,6 +63,20 @@ class StatsdConnectionTest(unittest.TestCase):
             ['1:1\n2:2\n3:3\n4:4\n5:5'],
             conn.sock.datagrams)
 
+        # verify compression
+        data = [('a.b.c.w', 1), ('a.b.c.x', 2), ('a.b.c.y', 3), ('a.b.z', 4),
+                ('bbb', 5), ('bbc', 6)]
+        conn = self.connect(compress=True)
+        conn.send(reversed(data))
+        self.assertEquals(
+            ['a.b.c.w:1\n^06x:2\n^06y:3\n^04z:4\nbbb:5\nbbc:6'],
+            conn.sock.datagrams)
+        conn = self.connect(compress=False)
+        conn.send(reversed(data))
+        self.assertEquals(
+            ['bbc:6\nbbb:5\na.b.z:4\na.b.c.y:3\na.b.c.x:2\na.b.c.w:1'],
+            conn.sock.datagrams)
+
         # ensure send is a no-op when not connected
         conn.sock = None
         conn.send((i, i) for i in xrange(1, 6))
@@ -72,7 +86,9 @@ class StatsdClientUnderTest(stats.StatsdClient):
     def _data_iterator(cls, x):
        return sorted(iter(x))
 
-    _make_conn = StatsdConnectionUnderTest
+    @classmethod
+    def _make_conn(cls, addr):
+        return StatsdConnectionUnderTest(addr, compress=False)
 
 class StatsdClientTest(unittest.TestCase):
     def test_flush(self):

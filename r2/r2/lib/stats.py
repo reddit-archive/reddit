@@ -21,6 +21,7 @@
 ###############################################################################
 
 import collections
+import os
 import random
 import socket
 import time
@@ -77,12 +78,13 @@ class CountingStatBuffer:
 
 
 class StatsdConnection:
-    def __init__(self, addr):
+    def __init__(self, addr, compress=True):
         if addr:
             self.host, self.port = self._parse_addr(addr)
             self.sock = self._make_socket()
         else:
             self.host = self.port = self.sock = None
+        self.compress = compress
 
     @classmethod
     def _make_socket(cls):
@@ -93,10 +95,28 @@ class StatsdConnection:
         host, port_str = addr.rsplit(':', 1)
         return host, int(port_str)
 
+    @staticmethod
+    def _compress(lines):
+        compressed_lines = []
+        previous = ''
+        for line in sorted(lines):
+            prefix = os.path.commonprefix([previous, line])
+            if len(prefix) > 3:
+                prefix_len = len(prefix)
+                compressed_lines.append(
+                    '^%02x%s' % (prefix_len, line[prefix_len:]))
+            else:
+                compressed_lines.append(line)
+            previous = line
+        return compressed_lines
+
     def send(self, data):
         if self.sock is None:
             return
-        payload = '\n'.join('%s:%s' % item for item in data)
+        data = ('%s:%s' % item for item in data)
+        if self.compress:
+            data = self._compress(data)
+        payload = '\n'.join(data)
         self.sock.sendto(payload, (self.host, self.port))
 
 
