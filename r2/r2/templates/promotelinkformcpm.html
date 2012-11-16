@@ -31,17 +31,17 @@
         $(function() { 
             update_bid("*[name=bid]"); 
 
-            // load available impressions viz
+            /* load available impressions viz */
             update_inventory_table();
 
-            // add change handler to radio that will load front-page imps when
-            // user switches from targeted to untargeted
+            /* add change handler to radio that will load front-page imps when
+               user switches from targeted to untargeted */
             $("#no_targeting").change(function() {
                 $("#sr-autocomplete").val("");
                 update_inventory_table();
             });
 
-            // wire sr selector to update inventory viz on selection change
+            /* wire sr selector to update inventory viz on selection change */
             $("#sr-autocomplete").bind("sr-changed", update_inventory_table);
         }); 
     </script> 
