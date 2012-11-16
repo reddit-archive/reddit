@@ -37,3 +37,13 @@
 #header-bottom-right {
 	clear: both;
 }
+
+.gilded-comment-icon {
+    background: url(gold-coin.png) no-repeat;
+    padding-left: 15px;
+    height: 14px;
+}
+
+.user-gilded > .entry .gilded-comment-icon {
+    padding-left: 25px;
+}

@@ -88,10 +88,7 @@ r.gold = {
             .attr('title', new_title)
             .data('count', gilding_count)
         if (gilding_count > 1) {
-            icon.empty()
-            $('<span class="gilded-comment-count">')
-                .text('x' + gilding_count)
-                .appendTo(icon)
+            icon.text('x' + gilding_count)
         }
 
         comment.children('.entry').find('.give-gold').parent().remove()
