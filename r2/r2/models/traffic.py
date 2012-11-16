@@ -117,7 +117,7 @@ def zip_timeseries(*series, **kwargs):
         yield current_slice, tuple(data)
 
 
-def decrement_month(date, amount=1):
+def decrement_month(date):
     """Given a truncated datetime, return a new one one month in the past."""
 
     if date.day != 1:
