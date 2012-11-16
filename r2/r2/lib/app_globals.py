@@ -535,11 +535,11 @@ class Globals(object):
 
         if self.log_start:
             self.log.error(
-                "reddit app %s:%s started %s at %s (took %.02f seconds)",
+                "%s:%s started %s at %s (took %.02fs)",
                 self.reddit_host,
                 self.reddit_pid,
                 self.short_version,
-                datetime.now(),
+                datetime.now().strftime("%H:%M:%S"),
                 self.startup_timer.elapsed_seconds()
             )
 
