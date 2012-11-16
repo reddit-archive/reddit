@@ -1470,10 +1470,13 @@ def handle_vote(user, thing, dir, ip, organic,
 
 def process_votes(qname, limit=0):
     # limit is taken but ignored for backwards compatibility
+    stats_qname = qname
+    if stats_qname.startswith("vote_link"):
+        stats_qname = "vote_link_q"
 
-    @g.stats.amqp_processor(qname)
+    @g.stats.amqp_processor(stats_qname)
     def _handle_vote(msg):
-        timer = stats.get_timer("service_time." + qname)
+        timer = stats.get_timer("service_time." + stats_qname)
         timer.start()
 
         #assert(len(msgs) == 1)
