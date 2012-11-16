@@ -605,7 +605,7 @@ class Subreddit(Thing, Printable):
         return random.sample(sr_ids, limit)
 
     @classmethod
-    def random_reddit(cls, limit = 1000, over18 = False):
+    def random_reddit(cls, limit = 2500, over18 = False):
         srs = cls.top_lang_srs(c.content_langs, limit,
                                filter_allow_top = False,
                                over18 = over18,

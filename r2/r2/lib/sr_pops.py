@@ -27,7 +27,7 @@ from r2.lib.utils import fetch_things2, flatten
 from r2.lib.memoize import memoize
 
 # the length of the stored per-language list
-limit = 1000
+limit = 2500
 
 def set_downs():
     sr_counts = count.get_sr_counts()
