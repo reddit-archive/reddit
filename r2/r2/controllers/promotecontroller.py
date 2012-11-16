@@ -394,7 +394,7 @@ class PromoteController(ListingController):
 
         # minimum bid depends on user privilege and targeting, checked here
         # instead of in the validator b/c current duration is needed
-        if c.user_is_admin:
+        if c.user_is_sponsor:
             min_daily_bid = 0
         elif targeting == 'one':
             min_daily_bid = g.min_promote_bid * 1.5
