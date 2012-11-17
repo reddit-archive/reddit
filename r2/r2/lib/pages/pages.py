@@ -1076,12 +1076,23 @@ class LinkInfoPage(Reddit):
     def page_classes(self):
         classes = Reddit.page_classes(self)
         time_ago = datetime.datetime.now(g.tz) - self.link._date
-        hours_ago = time_ago.total_seconds() / (60*60)
-        steps = [1, 6, 12, 24]
+        delta = datetime.timedelta
+        steps = [
+            delta(minutes=10),
+            delta(hours=1),
+            delta(hours=6),
+            delta(hours=12),
+            delta(hours=24),
+        ]
         for step in steps:
-            if hours_ago < step:
-                classes.add("post-under-%sh-old" % step)
+            if time_ago < step:
+                if step < delta(hours=1):
+                    step_str = "%dm" % (step.total_seconds() / 60)
+                else:
+                    step_str = "%dh" % (step.total_seconds() / (60 * 60))
+                classes.add("post-under-%s-old" % step_str)
                 break
+
         return classes
 
 class LinkCommentSep(Templated):
