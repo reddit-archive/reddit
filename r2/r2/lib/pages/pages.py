@@ -1075,6 +1075,10 @@ class LinkInfoPage(Reddit):
 
     def page_classes(self):
         classes = Reddit.page_classes(self)
+
+        if c.user_is_loggedin and self.link.author == c.user:
+            classes.add("post-submitter")
+
         time_ago = datetime.datetime.now(g.tz) - self.link._date
         delta = datetime.timedelta
         steps = [
