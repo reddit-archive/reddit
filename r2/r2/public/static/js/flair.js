@@ -207,8 +207,7 @@ $(function() {
     });
     $(".flairtoggle input").change(function() { $(this).parent().submit(); });
 
-    $(".tagline").delegate(".flairselectbtn", "click", openFlairSelector);
-    $(".thing").delegate(".flairselectbtn", "click", openFlairSelector);
+    $(document).on("click", ".tagline .flairselectbtn, .thing .flairselectbtn", openFlairSelector);
 
     $(".flairselector .dropdown").click(toggleFlairSelector);
 });
