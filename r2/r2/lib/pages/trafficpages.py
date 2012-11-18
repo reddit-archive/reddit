@@ -19,20 +19,21 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+"""View models for the traffic statistic pages on reddit."""
 
-import datetime
 import collections
+import datetime
 
 from pylons.i18n import _
 from pylons import g, c
 import babel.core
 
-from r2.lib.menus import menu
-from r2.lib.wrapped import Templated
-from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
-from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
 from r2.lib import promote
+from r2.lib.menus import menu
+from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
+from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
 from r2.lib.utils import Storage
+from r2.lib.wrapped import Templated
 from r2.models import Thing, Link, PromoCampaign, traffic
 from r2.models.subreddit import Subreddit, _DefaultSR
 
@@ -43,6 +44,8 @@ COLORS = Storage(UPVOTE_ORANGE="#ff5700",
 
 
 class TrafficPage(Reddit):
+    """Base page template for pages rendering traffic graphs."""
+
     extension_handling = False
     extra_page_classes = ["traffic"]
 
@@ -61,6 +64,8 @@ class TrafficPage(Reddit):
 
 
 class SitewideTrafficPage(TrafficPage):
+    """Base page for sitewide traffic overview."""
+
     extra_page_classes = TrafficPage.extra_page_classes + ["traffic-sitewide"]
 
     def __init__(self):
@@ -68,6 +73,8 @@ class SitewideTrafficPage(TrafficPage):
 
 
 class LanguageTrafficPage(TrafficPage):
+    """Base page for interface language traffic summaries or details."""
+
     def __init__(self, langcode):
         if langcode:
             content = LanguageTraffic(langcode)
@@ -78,6 +85,8 @@ class LanguageTrafficPage(TrafficPage):
 
 
 class AdvertTrafficPage(TrafficPage):
+    """Base page for advert traffic summaries or details."""
+
     def __init__(self, code):
         if code:
             content = AdvertTraffic(code)
@@ -87,6 +96,8 @@ class AdvertTrafficPage(TrafficPage):
 
 
 class RedditTraffic(Templated):
+    """A generalized content pane for traffic reporting."""
+
     def __init__(self, place):
         self.place = place
 
@@ -94,11 +105,18 @@ class RedditTraffic(Templated):
         self.traffic_lag = (datetime.datetime.utcnow() -
                             self.traffic_last_modified)
 
-        self.get_tables()
+        self.make_tables()
 
         Templated.__init__(self)
 
-    def get_tables(self):
+    def make_tables(self):
+        """Create tables to put in the main table area of the page.
+
+        See the stub implementations below for ways to hook into this process
+        without completely overriding this method.
+
+        """
+
         self.tables = []
 
         for interval in ("month", "day", "hour"):
@@ -157,13 +175,27 @@ class RedditTraffic(Templated):
             self.dow_means = (round(mean_uniques), round(mean_pageviews))
 
     def get_dow_summary(self):
+        """Return day-interval data to be aggregated by day of week.
+
+        If implemented, a summary table will be shown on the traffic page
+        with the average per day of week over the data interval given.
+
+        """
         raise NotImplementedError()
 
     def get_data_for_interval(self, interval, columns):
+        """Return data for the main overview at the interval given.
+
+        This data will be shown as a set of graphs at the top of the page and a
+        table for monthly and daily data (hourly is present but hidden by
+        default.)
+
+        """
         raise NotImplementedError()
 
 
 class SitewideTraffic(RedditTraffic):
+    """An overview of all traffic to the site."""
     def __init__(self):
         subreddit_summary = traffic.PageviewsBySubreddit.top_last_month()
         self.subreddit_summary = []
@@ -190,6 +222,8 @@ class SitewideTraffic(RedditTraffic):
 
 
 class LanguageTrafficSummary(Templated):
+    """An overview of traffic by interface language on the site."""
+
     def __init__(self):
         # convert language codes to real names
         language_summary = traffic.PageviewsByLanguage.top_last_month()
@@ -198,15 +232,16 @@ class LanguageTrafficSummary(Templated):
         for language_code, data in language_summary:
             name = LanguageTraffic.get_language_name(language_code, locale)
             self.language_summary.append(((language_code, name), data))
-
         Templated.__init__(self)
 
 
 class AdvertTrafficSummary(RedditTraffic):
+    """An overview of traffic for all adverts on the site."""
+
     def __init__(self):
         RedditTraffic.__init__(self, _("adverts"))
 
-    def get_tables(self):
+    def make_tables(self):
         # overall promoted link traffic
         impressions = traffic.AdImpressionsByCodename.historical_totals("day")
         clicks = traffic.ClickthroughsByCodename.historical_totals("day")
@@ -249,6 +284,7 @@ class AdvertTrafficSummary(RedditTraffic):
 
     @staticmethod
     def get_things(codes):
+        """Fetch relevant things for a list of ad codenames in batch."""
         fullnames = [AdvertTrafficSummary.split_codename(code)[0]
                      for code in codes
                      if code.startswith(Thing._type_prefix)]
@@ -256,6 +292,7 @@ class AdvertTrafficSummary(RedditTraffic):
 
     @staticmethod
     def get_sr_name(name):
+        """Return the display name for a subreddit."""
         if name == g.default_sr:
             return _("frontpage")
         else:
@@ -263,6 +300,13 @@ class AdvertTrafficSummary(RedditTraffic):
 
     @staticmethod
     def get_ad_name(code, things=None):
+        """Return a human-readable name for an ad given its codename.
+
+        Optionally, a dictionary of things can be passed in so lookups can
+        be done in batch upstream.
+
+        """
+
         if not things:
             things = AdvertTrafficSummary.get_things([code])
 
@@ -293,11 +337,10 @@ class AdvertTrafficSummary(RedditTraffic):
 
     @staticmethod
     def get_ad_url(code, things):
+        """Given a codename, return the canonical URL for its traffic page."""
         thing = things.get(code)
-
         if isinstance(thing, Link):
             return "/traffic/%s" % thing._id36
-
         return "/traffic/adverts/%s" % code
 
 
@@ -376,6 +419,41 @@ class SubredditTraffic(RedditTraffic):
             return pageviews
 
 
+def _clickthrough_rate(impressions, clicks):
+    """Return the click-through rate percentage."""
+    if impressions:
+        return (float(clicks) / impressions) * 100.
+    else:
+        return 0
+
+
+def _cost_per_mille(spend, impressions):
+    """Return the cost-per-mille given ad spend and impressions."""
+    if impressions:
+        return 1000. * float(spend) / impressions
+    else:
+        return 0
+
+
+def _cost_per_click(spend, clicks):
+    """Return the cost-per-click given ad spend and clicks."""
+    if clicks:
+        return float(spend) / clicks
+    else:
+        return 0
+
+
+def _is_promo_preliminary(end_date):
+    """Return if results are preliminary for this promotion.
+
+    Results are preliminary until 1 day after the promotion ends.
+
+    """
+
+    now = datetime.datetime.now(g.tz)
+    return end_date + datetime.timedelta(days=1) > now
+
+
 class PromotedLinkTraffic(RedditTraffic):
     def __init__(self, thing):
         self.thing = thing
@@ -385,14 +463,7 @@ class PromotedLinkTraffic(RedditTraffic):
 
         RedditTraffic.__init__(self, None)
 
-    @staticmethod
-    def calculate_clickthrough_rate(impressions, clicks):
-        if impressions:
-            return (float(clicks) / impressions) * 100.
-        else:
-            return 0
-
-    def get_tables(self):
+    def make_tables(self):
         start, end = promote.get_total_run(self.thing)
 
         if not start or not end:
@@ -418,8 +489,8 @@ class PromotedLinkTraffic(RedditTraffic):
         for date, data in history:
             u_imps, imps, u_clicks, clicks = data
 
-            u_ctr = self.calculate_clickthrough_rate(u_imps, u_clicks)
-            ctr = self.calculate_clickthrough_rate(imps, clicks)
+            u_ctr = _clickthrough_rate(u_imps, u_clicks)
+            ctr = _clickthrough_rate(imps, clicks)
 
             self.total_impressions += imps
             self.total_clicks += clicks
@@ -428,12 +499,15 @@ class PromotedLinkTraffic(RedditTraffic):
         self.history = computed_history
 
         if self.total_impressions > 0:
-            self.total_ctr = ((float(self.total_clicks) /
-                               self.total_impressions) * 100.)
+            self.total_ctr = _clickthrough_rate(self.total_impressions,
+                                                self.total_clicks)
 
-        # the results are preliminary until 1 day after the promotion ends
-        now = datetime.datetime.utcnow()
-        self.is_preliminary = end + datetime.timedelta(days=1) > now
+        # XXX: _is_promo_preliminary correctly expects tz-aware datetimes
+        # because it's also used with datetimes from promo code. this hack
+        # relies on the fact that we're storing UTC w/o timezone info.
+        # TODO: remove this when traffic is correctly using timezones.
+        end_aware = end.replace(tzinfo=g.tz)
+        self.is_preliminary = _is_promo_preliminary(end_aware)
 
         # we should only graph a sane number of data points (not everything)
         self.max_points = traffic.points_for_interval("hour")
@@ -441,13 +515,15 @@ class PromotedLinkTraffic(RedditTraffic):
         return computed_history
 
     def as_csv(self):
+        """Return the traffic data in CSV format for reports."""
+
         import csv
         import cStringIO
 
         out = cStringIO.StringIO()
         writer = csv.writer(out)
 
-        history = self.get_tables()
+        history = self.make_tables()
         writer.writerow((_("date and time (UTC)"),
                          _("unique impressions"),
                          _("total impressions"),
@@ -464,6 +540,7 @@ class PromotedLinkTraffic(RedditTraffic):
 
 class TrafficViewerList(UserList):
     """Traffic share list on /traffic/*"""
+
     destination = "traffic_viewer"
     remove_action = "rm_traffic_viewer"
     type = "traffic"
@@ -488,29 +565,15 @@ class TrafficViewerList(UserList):
         return self.link._fullname
 
 
-def ctr(impressions, clicks):
-    return (float(clicks) / impressions) * 100. if impressions else 0
-
-def cpc(spend, clicks):
-    return (float(spend) / clicks) if clicks else 0
-
-def cpm(spend, impressions):
-    return 1000. * float(spend) / impressions if impressions else 0
-
-def is_preliminary(end_date):
-    # the results are preliminary until 1 day after the promotion ends
-    now = datetime.datetime.now(g.tz)
-    return end_date + datetime.timedelta(days=1) > now
-
-
 class PromoTraffic(Templated):
     def __init__(self, link):
         self.thing = link
         self.summary_tab = PromoLinkTrafficSummary(link)
         # any traffic viewer can see summary, details, and help tabs but the
         # settings tab is only visible to owners and admins
+        traffic_table = PromoCampaignTrafficTable(link)
         tabs = [('summary', 'summary', self.summary_tab),
-                ('details', 'traffic by campaign', PromoCampaignTrafficTable(link))]
+                ('details', 'traffic by campaign', traffic_table)]
         if c.user_is_sponsor or c.user._id == link.author_id:
             tabs.append(('settings', 'settings', PromoTrafficSettings(link)))
         tabs.append(('help', 'help', PromoTrafficHelp()))
@@ -521,15 +584,16 @@ class PromoTraffic(Templated):
 
 
 class PromoLinkTrafficSummary(PromotedLinkTraffic):
-     def __init__(self, link):
-         self.thing = link
-         self.place = None
-         impq = traffic.AdImpressionsByCodename.total_by_codename(link._fullname)
-         clickq = traffic.ClickthroughsByCodename.total_by_codename(link._fullname)
-         self.total_imps = impq[0][1] if impq else 0
-         self.total_clicks = clickq[0][1] if clickq else 0
-         self.total_ctr = self.total_clicks / self.total_imps if self.total_imps else 0
-         PromotedLinkTraffic.__init__(self, link)
+    def __init__(self, link):
+        self.thing = link
+        self.place = None
+        fullname = link._fullname
+        impq = traffic.AdImpressionsByCodename.total_by_codename(fullname)
+        clickq = traffic.ClickthroughsByCodename.total_by_codename(fullname)
+        self.total_imps = impq[0][1] if impq else 0
+        self.total_clicks = clickq[0][1] if clickq else 0
+        self.total_ctr = _clickthrough_rate(self.total_imps, self.total_clicks)
+        PromotedLinkTraffic.__init__(self, link)
 
 
 class PromoCampaignTrafficTable(Templated):
@@ -543,14 +607,15 @@ class PromoCampaignTrafficTable(Templated):
         for campaign in campaigns:
             campaign.imps = 0
             campaign.clicks = 0
-            if not self.is_preliminary and is_preliminary(campaign.end_date):
-                self.is_preliminary = True
+            self.is_preliminary |= _is_promo_preliminary(campaign.end_date)
             camps[campaign._fullname] = campaign
             fullnames.append(campaign._fullname)
-        click_data = traffic.TargetedClickthroughsByCodename.total_by_codename(fullnames)
+        click_data = traffic.TargetedClickthroughsByCodename.total_by_codename(
+            fullnames)
         for fullname, clicks in click_data:
             camps[fullname].clicks = clicks
-        imp_data = traffic.TargetedImpressionsByCodename.total_by_codename(fullnames)
+        imp_data = traffic.TargetedImpressionsByCodename.total_by_codename(
+            fullnames)
         for fullname, imps in imp_data:
             camps[fullname].imps = imps
         self.campaigns = camps.values()
@@ -559,19 +624,19 @@ class PromoCampaignTrafficTable(Templated):
             self.total_clicks += camp.clicks
             self.total_imps += camp.imps
             self.total_spend += camp.bid
-            camp.ctr = ctr(camp.imps, camp.clicks)
-            camp.cpc = cpc(camp.bid, camp.clicks)
-            camp.cpm = cpm(camp.bid, camp.imps)
-        self.total_ctr = ctr(self.total_imps, self.total_clicks)
-        self.total_cpc = cpc(self.total_spend, self.total_clicks)
-        self.total_cpm = cpm(self.total_spend, self.total_imps)
+            camp.ctr = _clickthrough_rate(camp.imps, camp.clicks)
+            camp.cpc = _cost_per_click(camp.bid, camp.clicks)
+            camp.cpm = _cost_per_mille(camp.bid, camp.imps)
+        self.total_ctr = _clickthrough_rate(self.total_imps, self.total_clicks)
+        self.total_cpc = _cost_per_click(self.total_spend, self.total_clicks)
+        self.total_cpm = _cost_per_mille(self.total_spend, self.total_imps)
         Templated.__init__(self)
-   
+
 
 class PromoTrafficSettings(Templated):
     def __init__(self, thing):
         self.thing = thing
-        self.viewer_list = TrafficViewerList(thing, editable=True) 
+        self.viewer_list = TrafficViewerList(thing, editable=True)
         self.traffic_url = promote.promotraffic_url(thing)
         Templated.__init__(self)
 
@@ -579,5 +644,3 @@ class PromoTrafficSettings(Templated):
 class PromoTrafficHelp(Templated):
     def __init__(self):
         Templated.__init__(self)
-
-

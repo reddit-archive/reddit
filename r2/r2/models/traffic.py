@@ -19,6 +19,18 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+"""
+These models represent the traffic statistics stored for subreddits and
+promoted links.  They are written to by Pig-based MapReduce jobs and read from
+various places in the UI.
+
+All traffic statistics are divided up into three "intervals" of granularity,
+hourly, daily, and monthly.  Individual hits are tracked as pageviews /
+impressions, and can be safely summed.  Unique hits are tracked as well, but
+cannot be summed safely because there's no way to know overlap at this point in
+the data pipeline.
+
+"""
 
 import datetime
 
@@ -26,13 +38,13 @@ from pylons import g
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.schema import Column
-from sqlalchemy.types import DateTime, Integer, String, BigInteger
 from sqlalchemy.sql.expression import desc, distinct
 from sqlalchemy.sql.functions import sum
+from sqlalchemy.types import DateTime, Integer, String, BigInteger
 
+from r2.lib.memoize import memoize
 from r2.lib.utils import timedelta_by_name, tup
 from r2.models.link import Link
-from r2.lib.memoize import memoize
 
 
 engine = g.dbm.get_engine("traffic")
@@ -205,6 +217,7 @@ def points_for_interval(interval):
 
 def make_history_query(cls, interval):
     """Build a generic query showing the history of a given aggregate."""
+
     time_points = get_time_points(interval)
     q = (Session.query(cls)
                 .filter(cls.date.in_(time_points)))
@@ -225,6 +238,7 @@ def top_last_month(cls, key):
     therefore will be more meaningful.
 
     """
+
     cur_month = datetime.date.today().replace(day=1)
     last_month = decrement_month(cur_month)
 
@@ -258,7 +272,7 @@ def totals(cls, interval):
 
 
 def total_by_codename(cls, codenames):
-    """Return total lifetime pageviews (or clicks) for given codename(s)"""
+    """Return total lifetime pageviews (or clicks) for given codename(s)."""
     codenames = tup(codenames)
     # uses hour totals to get the most up-to-date count
     q = (Session.query(cls.codename, sum(cls.pageview_count))
@@ -266,6 +280,7 @@ def total_by_codename(cls, codenames):
                        .filter(cls.codename.in_(codenames))
                        .group_by(cls.codename))
     return list(q)
+
 
 def promotion_history(cls, codename, start, stop):
     """Get hourly traffic for a self-serve promotion across all campaigns."""
@@ -288,6 +303,8 @@ def get_traffic_last_modified():
 
 
 class SitewidePageviews(Base):
+    """Pageviews across all areas of the site."""
+
     __tablename__ = "traffic_aggregate"
 
     date = Column(DateTime(), nullable=False, primary_key=True)
@@ -303,6 +320,8 @@ class SitewidePageviews(Base):
 
 
 class PageviewsBySubreddit(Base):
+    """Pageviews within a subreddit (i.e. /r/something/...)."""
+
     __tablename__ = "traffic_subreddits"
 
     subreddit = Column(String(), nullable=False, primary_key=True)
@@ -325,6 +344,15 @@ class PageviewsBySubreddit(Base):
 
 
 class PageviewsBySubredditAndPath(Base):
+    """Pageviews within a subreddit with action included.
+
+    `srpath` is the subreddit name, a dash, then the controller method called
+    to render the page the user viewed. e.g. reddit.com-GET_listing. This is
+    useful to determine how many pageviews in a subreddit are on listing pages,
+    comment pages, or elsewhere.
+
+    """
+
     __tablename__ = "traffic_srpaths"
 
     srpath = Column(String(), nullable=False, primary_key=True)
@@ -335,6 +363,8 @@ class PageviewsBySubredditAndPath(Base):
 
 
 class PageviewsByLanguage(Base):
+    """Sitewide pageviews correlated by user's interface language."""
+
     __tablename__ = "traffic_lang"
 
     lang = Column(String(), nullable=False, primary_key=True)
@@ -357,6 +387,8 @@ class PageviewsByLanguage(Base):
 
 
 class ClickthroughsByCodename(Base):
+    """Clickthrough counts for ads."""
+
     __tablename__ = "traffic_click"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
@@ -389,6 +421,8 @@ class ClickthroughsByCodename(Base):
 
 
 class TargetedClickthroughsByCodename(Base):
+    """Clickthroughs for ads, correlated by ad campaign."""
+
     __tablename__ = "traffic_clicktarget"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
@@ -405,6 +439,8 @@ class TargetedClickthroughsByCodename(Base):
 
 
 class AdImpressionsByCodename(Base):
+    """Impressions for ads."""
+
     __tablename__ = "traffic_thing"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
@@ -442,6 +478,7 @@ class AdImpressionsByCodename(Base):
 
         The 300x100 ads get a codename that looks like "fullname_campaign".
         This function gets a list of recent campaigns.
+
         """
         time_points = get_time_points('day')
         query = (Session.query(distinct(cls.codename).label("codename"))
@@ -456,6 +493,8 @@ class AdImpressionsByCodename(Base):
 
 
 class TargetedImpressionsByCodename(Base):
+    """Impressions for ads, correlated by ad campaign."""
+
     __tablename__ = "traffic_thingtarget"
 
     codename = Column("fullname", String(), nullable=False, primary_key=True)
@@ -464,7 +503,7 @@ class TargetedImpressionsByCodename(Base):
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
     pageview_count = Column("total", Integer())
-    
+
     @classmethod
     @memoize_traffic(time=3600)
     def total_by_codename(cls, codenames):
@@ -472,6 +511,15 @@ class TargetedImpressionsByCodename(Base):
 
 
 class SubscriptionsBySubreddit(Base):
+    """Subscription statistics for subreddits.
+
+    This table is different from the rest of the traffic ones.  It only
+    contains data at a daily interval (hence no `interval` column) and is
+    updated separately in the subscribers cron job (see
+    reddit-job-subscribers).
+
+    """
+
     __tablename__ = "traffic_subscriptions"
 
     subreddit = Column(String(), nullable=False, primary_key=True)
@@ -484,6 +532,7 @@ class SubscriptionsBySubreddit(Base):
         time_points, q = make_history_query(cls, interval)
         q = q.filter(cls.subreddit == subreddit)
         return fill_gaps(time_points, q, "subscriber_count")
+
 
 # create the tables if they don't exist
 if g.db_create_tables:
