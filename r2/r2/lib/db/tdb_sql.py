@@ -29,7 +29,7 @@ import threading
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgres
 
-from r2.lib.utils import storage, storify, iters, Results, tup
+from r2.lib.utils import storage, storify, iters, Results, tup, simple_traceback
 import operators
 from pylons import g, c
 dbm = g.dbm
@@ -358,20 +358,15 @@ def get_write_table(tables):
     else:
         return tables[0]
 
-import re, traceback, cStringIO as StringIO
+import re
 _spaces = re.compile('[\s]+')
 def add_request_info(select):
     from pylons import request
     from r2.lib import filters
     def sanitize(txt):
         return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
-    s = StringIO.StringIO()
-    traceback.print_stack( file = s)
-    tb = s.getvalue()
-    if tb:
-        tb = tb.split('\n')[0::2]
-        tb = [x.split('/')[-1] for x in tb if "/r2/" in x]
-        tb = '\n'.join(tb[-15:-2])
+
+    tb = simple_traceback()
     try:
         if (hasattr(request, 'path') and
             hasattr(request, 'ip') and
