@@ -726,6 +726,8 @@ def sa_op(op):
         fn = lambda x,y: x >= y
     elif isinstance(op, operators.lte):
         fn = lambda x,y: x <= y
+    elif isinstance(op, operators.in_):
+        return sa.or_(op.lval.in_(op.rval))
 
     rval = tup(op.rval)
 

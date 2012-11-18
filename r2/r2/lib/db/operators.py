@@ -50,6 +50,7 @@ class lt(op): pass
 class lte(op): pass
 class gt(op): pass
 class gte(op): pass
+class in_(op): pass
 
 class Slot(object):
     def __init__(self, lval):
@@ -79,6 +80,9 @@ class Slot(object):
 
     def __ge__(self, other):
         return gte(self, self.name, other)
+
+    def in_(self, other):
+        return in_(self, self.name, other)
 
 class Slots(object):
     def __getattr__(self, attr):
