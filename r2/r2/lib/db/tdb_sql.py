@@ -20,24 +20,30 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from copy import deepcopy
 from datetime import datetime
 import cPickle as pickle
-from copy import deepcopy
-import random
+import logging
+import operators
+import re
 import threading
 
+from pylons import g, c, request
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgres
 
-from r2.lib.utils import storage, storify, iters, Results, tup, simple_traceback
-import operators
-from pylons import g, c
+from r2.lib import filters
+from r2.lib.utils import (
+    iters,
+    Results,
+    simple_traceback,
+    storage,
+    tup,
+)
+
+
 dbm = g.dbm
 predefined_type_ids = g.predefined_type_ids
-
-import logging
 log_format = logging.Formatter('sql: %(message)s')
-
 max_val_len = 1000
 
 
@@ -358,11 +364,8 @@ def get_write_table(tables):
     else:
         return tables[0]
 
-import re
 _spaces = re.compile('[\s]+')
 def add_request_info(select):
-    from pylons import request
-    from r2.lib import filters
     def sanitize(txt):
         return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
 
