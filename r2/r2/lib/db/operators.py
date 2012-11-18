@@ -29,6 +29,7 @@ class BooleanOp(object):
 
 class or_(BooleanOp): pass
 class and_(BooleanOp): pass
+class not_(BooleanOp): pass
 
 class op(object):
     def __init__(self, lval, lval_name, rval):

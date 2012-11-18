@@ -710,6 +710,8 @@ def sa_op(op):
         return sa.or_(*[sa_op(o) for o in op.ops])
     elif isinstance(op, operators.and_):
         return sa.and_(*[sa_op(o) for o in op.ops])
+    elif isinstance(op, operators.not_):
+        return sa.not_(*[sa_op(o) for o in op.ops])
 
     #else, assume op is an instance of op
     if isinstance(op, operators.eq):
