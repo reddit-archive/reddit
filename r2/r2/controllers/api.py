@@ -141,10 +141,10 @@ class ApiController(RedditController, OAuth2ResourceController):
     @json_validate()
     @api_doc(api_section.account, extensions=["json"])
     def GET_me(self, responder):
-        """
-        Get info about the currently authenticated user.
+        """Get info about the currently authenticated user.
 
         Response includes a modhash, karma, and new mail status.
+
         """
         if c.user_is_loggedin:
             return Wrapped(c.user).render()
@@ -426,12 +426,26 @@ class ApiController(RedditController, OAuth2ResourceController):
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_login)
     def POST_login(self, *args, **kwargs):
+        """Log in to an account.
+
+        `rem` specifies whether or not the session cookie returned should last
+        beyond the current browser session (that is, if `rem` is `True` the
+        cookie will have an explicit expiration far in the future indicating
+        that it is not a session cookie.)
+
+        """
         return self._handle_login(*args, **kwargs)
 
     @validatedForm(VCaptcha(),
                    VRatelimit(rate_ip = True, prefix = "rate_register_"),
                    name = VUname(['user']),
-                   email = ValidEmails("email", num = 1),
+                   email=ValidEmails(
+                       "email",
+                       num=1,
+                       docs={
+                           "email": _("(optional) the user's email address")
+                       },
+                   ),
                    password = VPassword(['passwd', 'passwd2']),
                    rem = VBoolean('rem'))
     def _handle_register(self, form, responder, name, email,
@@ -472,6 +486,14 @@ class ApiController(RedditController, OAuth2ResourceController):
     @cross_domain(allow_credentials=True)
     @api_doc(api_section.account, extends=_handle_register)
     def POST_register(self, *args, **kwargs):
+        """Register a new account.
+
+        `rem` specifies whether or not the session cookie returned should last
+        beyond the current browser session (that is, if `rem` is `True` the
+        cookie will have an explicit expiration far in the future indicating
+        that it is not a session cookie.)
+
+        """
         return self._handle_register(*args, **kwargs)
 
     @noresponse(VUser(),
@@ -679,14 +701,17 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @validatedForm(VUser('curpass', default=''),
                    VModhash(),
-                   password = VPassword(['curpass', 'curpass']),
+                   password=VPassword(
+                        ['curpass', 'curpass'],
+                        docs=dict(curpass=_("the user's current password"))
+                   ),
                    dest = VDestination())
     @api_doc(api_section.account)
     def POST_clear_sessions(self, form, jquery, password, dest):
-        """
-        Clear all session cookies and update the current one.
+        """Clear all session cookies and replace the current one.
 
         A valid password (`curpass`) must be supplied.
+
         """
         # password is required to proceed
         if form.has_errors("curpass", errors.WRONG_PASSWORD):
@@ -779,14 +804,14 @@ class ApiController(RedditController, OAuth2ResourceController):
                    confirm = VBoolean("confirm"))
     @api_doc(api_section.account)
     def POST_delete_user(self, form, jquery, delete_message, username, user, confirm):
-        """
-        Delete an account.
+        """Delete the currently logged in account.
 
         A valid username/password and confirmation must be supplied. An
         optional `delete_message` may be supplied to explain the reason the
         account is to be deleted.
 
         Called by /prefs/delete on the site.
+
         """
         if username and username.lower() != c.user.name.lower():
             c.errors.add(errors.NOT_USER, field="user")

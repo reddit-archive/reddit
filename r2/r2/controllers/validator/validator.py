@@ -671,6 +671,12 @@ class VCaptcha(Validator):
                 self.set_error(errors.BAD_CAPTCHA)
             g.stats.action_event_count("captcha", valid_captcha)
 
+    def param_docs(self):
+        return {
+            self.param[0]: _("the identifier of the CAPTCHA challenge"),
+            self.param[1]: _("the user's response to the CAPTCHA challenge"),
+        }
+
 class VUser(Validator):
     def run(self, password = None):
         if not c.user_is_loggedin:
@@ -957,6 +963,12 @@ class VPassword(Validator):
         else:
             return password.encode('utf8')
 
+    def param_docs(self):
+        return {
+            self.param[0]: _("the new password"),
+            self.param[1]: _("the password again (for verification)"),
+        }
+
 user_rx = re.compile(r"\A[\w-]{3,20}\Z", re.UNICODE)
 
 def chkuser(x):
@@ -987,6 +999,11 @@ class VUname(VRequired):
                    return self.error(errors.USERNAME_TAKEN)
             except NotFound:
                 return user_name
+
+    def param_docs(self):
+        return {
+            self.param[0]: _("a valid, unused, username"),
+        }
 
 class VLogin(VRequired):
     def __init__(self, item, *a, **kw):
@@ -1027,6 +1044,12 @@ class VThrottledLogin(VLogin):
             c.errors.add(errors.WRONG_PASSWORD, field=self.param[1])
         else:
             return user
+
+    def param_docs(self):
+        return {
+            self.param[0]: _("a username"),
+            self.param[1]: _("the user's password"),
+        }
 
 class VSanitizedUrl(Validator):
     def run(self, url):
