@@ -610,11 +610,39 @@ class Subreddit(Thing, Printable):
 
     @classmethod
     @memoize('random_reddits', time = 1800)
-    def random_reddits(cls, user_name, sr_ids, limit):
-        """This gets called when a user is subscribed to more than 50
-        reddits. Randomly choose 50 of those reddits and cache it for
-        a while so their front page doesn't jump around."""
+    def random_reddits_cached(cls, user_name, sr_ids, limit):
         return random.sample(sr_ids, limit)
+
+    @classmethod
+    def random_reddits(cls, user_name, sr_ids, limit):
+        """Select a random subset from sr_ids.
+
+        Used for limiting the number of subscribed subreddits shown on a user's
+        front page. Subreddits that are automatically subscribed aren't counted
+        against the limit. Selection is cached for a while so the front page
+        doesn't jump around.
+
+        """
+
+        if not limit:
+            return sr_ids
+
+        if g.automatic_reddits and len(sr_ids) > limit:
+            automatics = Subreddit._by_name(g.automatic_reddits).values()
+            automatic_ids = [sr._id for sr in automatics]
+            for sr_id in automatic_ids:
+                try:
+                    sr_ids.remove(sr_id)
+                except ValueError:
+                    automatic_ids.remove(sr_id)
+        else:
+            automatic_ids = []
+
+        if len(sr_ids) > limit:
+            sr_ids = sorted(sr_ids)
+            sr_ids = cls.random_reddits_cached(user_name, sr_ids, limit)
+
+        return sr_ids + automatic_ids
 
     @classmethod
     def random_reddit(cls, limit = 2500, over18 = False):
@@ -653,27 +681,7 @@ class Subreddit(Thing, Printable):
         # has_subscribed == False by default.
         if user and user.has_subscribed:
             sr_ids = Subreddit.reverse_subscriber_ids(user)
-
-            # don't count automatic reddits against the limit
-            if g.automatic_reddits:
-                subscribed_automatic = [sr._id for sr in
-                                        Subreddit._by_name(g.automatic_reddits,
-                                        stale=stale).itervalues()]
-
-                for sr_id in list(subscribed_automatic):
-                    try:
-                        sr_ids.remove(sr_id)
-                    except ValueError:
-                        subscribed_automatic.remove(sr_id)
-            else:
-                subscribed_automatic = []
-
-            if limit and len(sr_ids) > limit:
-                sr_ids.sort()
-                sr_ids = cls.random_reddits(user.name, sr_ids, limit)
-
-            # we can now add the automatic ones (that the user wants) back in
-            sr_ids += subscribed_automatic
+            sr_ids = cls.random_reddits(user.name, sr_ids, limit)
 
             return sr_ids if ids else Subreddit._byID(sr_ids,
                                                       data=True,
