@@ -5045,6 +5045,15 @@ tr.gold-accent + tr > td {
     padding-top: 10px; 
 }
 
+.allminus-box {
+    padding: 5px;
+    margin: 0;
+}
+
+.allminus-box a {
+    font-size: small;
+}
+
 #per-sr-karma {
     width: 300px;
     margin: .6em auto 0 auto;

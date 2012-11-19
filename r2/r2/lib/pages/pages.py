@@ -22,7 +22,7 @@
 
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
-from r2.models import FakeSubreddit, Subreddit, Ad, AdSR, SubSR
+from r2.models import FakeSubreddit, Subreddit, Ad, AdSR, SubSR, AllMinus, AllSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, MultiReddit, ModSR, Frontpage
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
@@ -318,6 +318,10 @@ class Reddit(Templated):
                 else:
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
+
+        if (isinstance(c.site, AllMinus) or
+            isinstance(c.site, AllSR) and c.user.gold):
+            ps.append(AllMinusBox(c.user))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
@@ -1693,6 +1697,22 @@ class SubscriptionBox(Templated):
     @property
     def reddits(self):
         return wrap_links(self.srs)
+
+
+class AllMinusBox(Templated):
+    def __init__(self, user):
+        if user.gold:
+            sr_ids = Subreddit.user_subreddits(user)
+            srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
+            path = '/r/all'
+            if srs:
+                path += '-' + '-'.join([sr.name for sr in srs])
+            text = _('See /r/all minus your subscribed subreddits')
+        else:
+            path = '/gold'
+            text = _('/r/all filtering is a gold only feature')
+        Templated.__init__(self, text=text, path=path)
+
 
 class CreateSubreddit(Templated):
     """reddit creation form."""
