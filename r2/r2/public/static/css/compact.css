@@ -290,7 +290,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 .user-gilded > .entry .gilded-comment-icon:before { width: 23px; }
 
-body.post-under-1h-old .gilded-comment-icon, body.post-under-6h-old .gilded-comment-icon { opacity: .55; }
+body.post-under-6h-old .gilded-comment-icon { opacity: .55; }
 
 /** messages and inbox */
 .message { background: white; position: relative; border: 1px solid #d9d9d9; margin: 10px; -moz-border-radius: 8px; -webkit-border-radius: 8px; -o-border-radius: 8px; -ms-border-radius: 8px; -khtml-border-radius: 8px; border-radius: 8px; padding: 5px; }

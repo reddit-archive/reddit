@@ -1083,9 +1083,7 @@ class LinkInfoPage(Reddit):
         delta = datetime.timedelta
         steps = [
             delta(minutes=10),
-            delta(hours=1),
             delta(hours=6),
-            delta(hours=12),
             delta(hours=24),
         ]
         for step in steps:
@@ -1095,7 +1093,6 @@ class LinkInfoPage(Reddit):
                 else:
                     step_str = "%dh" % (step.total_seconds() / (60 * 60))
                 classes.add("post-under-%s-old" % step_str)
-                break
 
         return classes
 
