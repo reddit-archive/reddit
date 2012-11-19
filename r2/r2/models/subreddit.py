@@ -993,7 +993,8 @@ class AllMinus(AllSR):
         from r2.models import Link
         from r2.lib.db.operators import not_
         q = AllSR.get_links(self, sort, time)
-        q._filter(not_(Link.c.sr_id.in_(self.sr_ids)))
+        if c.user.gold:
+            q._filter(not_(Link.c.sr_id.in_(self.sr_ids)))
         return q
 
 class _DefaultSR(FakeSubreddit):
