@@ -245,6 +245,7 @@ class AccountJsonTemplate(IdentityJsonTemplate):
     _data_attrs_ = IdentityJsonTemplate.data_attrs(has_mail = "has_mail",
                                                   has_mod_mail = "has_mod_mail",
                                                   is_mod = "is_mod",
+                                                  is_friend = "is_friend",
                                                   )
 
     def thing_attr(self, thing, attr):
@@ -256,6 +257,8 @@ class AccountJsonTemplate(IdentityJsonTemplate):
             if c.user_is_loggedin and thing._id == c.user._id:
                 return bool(c.have_mod_messages)
             return None
+        if attr == "is_friend":
+            return c.user_is_loggedin and thing._id in c.user.friends
         return IdentityJsonTemplate.thing_attr(self, thing, attr)
 
     def raw_data(self, thing):
