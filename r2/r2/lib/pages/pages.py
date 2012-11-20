@@ -187,6 +187,10 @@ class Reddit(Templated):
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
+        if isinstance(c.site, AllMinus) and not c.user.gold:
+            if not self.infobar:
+                self.infobar = InfoBar(message=strings.all_minus_gold_only)
+
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
             self.srtopbar = SubredditTopBar()
@@ -319,8 +323,8 @@ class Reddit(Templated):
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
 
-        if (isinstance(c.site, AllMinus) or
-            isinstance(c.site, AllSR) and c.user.gold):
+        if ((isinstance(c.site, AllMinus) or isinstance(c.site, AllSR)) and
+            c.user.gold):
             ps.append(AllMinusBox(c.user))
 
         # don't show the subreddit info bar on cnames unless the option is set
@@ -1701,16 +1705,12 @@ class SubscriptionBox(Templated):
 
 class AllMinusBox(Templated):
     def __init__(self, user):
-        if user.gold:
-            sr_ids = Subreddit.user_subreddits(user)
-            srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
-            path = '/r/all'
-            if srs:
-                path += '-' + '-'.join([sr.name for sr in srs])
-            text = _('See /r/all minus your subscribed subreddits')
-        else:
-            path = '/gold'
-            text = _('/r/all filtering is a gold only feature')
+        sr_ids = Subreddit.user_subreddits(user)
+        srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
+        path = '/r/all'
+        if srs:
+            path += '-' + '-'.join([sr.name for sr in srs])
+        text = _('See /r/all minus your subscribed subreddits')
         Templated.__init__(self, text=text, path=path)
 
 
