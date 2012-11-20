@@ -46,8 +46,6 @@ from r2.lib.utils import Enum, to_date
 from r2.models.account import Account
 from r2.models import Link
 
-from r2.lib.utils import Enum, fetch_things2, to_date
-
 
 engine = g.dbm.get_engine('authorize')
 # Allocate a session maker for communicating object changes with the back end  

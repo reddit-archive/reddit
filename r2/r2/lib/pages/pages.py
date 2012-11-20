@@ -1198,8 +1198,8 @@ class CommentPane(Templated):
             likes = []
             dislikes = []
             is_friend = set()
-            saves = set()
             gildings = {}
+            saves = set()
             for t in self.listing_iter(my_listing):
                 if not hasattr(t, "likes"):
                     # this is for MoreComments and MoreRecursion

@@ -37,8 +37,8 @@ from r2.lib.strings import strings, Score
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.tdb_cassandra import NotFoundException, view_of
 from r2.models.subreddit import MultiReddit
-from r2.models.promo import PROMOTE_STATUS, get_promote_srid
 from r2.models.query_cache import CachedQueryMutator
+from r2.models.promo import PROMOTE_STATUS, get_promote_srid
 
 from pylons import c, g, request
 from pylons.i18n import ungettext, _

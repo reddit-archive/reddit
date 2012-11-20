@@ -1442,6 +1442,19 @@ def weighted_lottery(weights, _random=random.random):
         "weighted_lottery messed up: r=%r, t=%r, total=%r" % (r, t, total))
 
 
+def read_static_file_config(config_file):
+    parser = ConfigParser.RawConfigParser()
+    with open(config_file, "r") as cf:
+        parser.readfp(cf)
+    config = dict(parser.items("static_files"))
+
+    s3 = boto.connect_s3(config["aws_access_key_id"],
+                         config["aws_secret_access_key"])
+    bucket = s3.get_bucket(config["bucket"])
+
+    return bucket, config
+
+
 class GoldPrice(object):
     """Simple price math / formatting type.
 
@@ -1471,15 +1484,3 @@ class GoldPrice(object):
 def config_gold_price(v, key=None, data=None):
     return GoldPrice(v)
 
-
-def read_static_file_config(config_file):
-    parser = ConfigParser.RawConfigParser()
-    with open(config_file, "r") as cf:
-        parser.readfp(cf)
-    config = dict(parser.items("static_files"))
-
-    s3 = boto.connect_s3(config["aws_access_key_id"],
-                         config["aws_secret_access_key"])
-    bucket = s3.get_bucket(config["bucket"])
-
-    return bucket, config
