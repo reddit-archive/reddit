@@ -1401,10 +1401,14 @@ def parse_http_basic(authorization_header):
     return require_split(auth_data, 2, ":")
 
 
-def simple_traceback():
-    """Generate a pared-down traceback that's human readable but small."""
+def simple_traceback(limit):
+    """Generate a pared-down traceback that's human readable but small.
 
-    stack_trace = traceback.extract_stack(limit=7)[:-2]
+    `limit` is how many frames of the stack to put in the traceback.
+
+    """
+
+    stack_trace = traceback.extract_stack(limit=limit)[:-2]
     return "\n".join(":".join((os.path.basename(filename),
                                function_name,
                                str(line_number),

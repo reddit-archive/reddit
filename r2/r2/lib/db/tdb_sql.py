@@ -369,7 +369,7 @@ def add_request_info(select):
     def sanitize(txt):
         return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
 
-    tb = simple_traceback()
+    tb = simple_traceback(limit=12)
     try:
         if (hasattr(request, 'path') and
             hasattr(request, 'ip') and

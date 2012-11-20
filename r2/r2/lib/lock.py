@@ -65,7 +65,7 @@ class MemcacheLock(object):
     def acquire(self):
         start = datetime.now()
 
-        my_info = (reddit_host, reddit_pid, simple_traceback())
+        my_info = (reddit_host, reddit_pid, simple_traceback(limit=7))
 
         #if this thread already has this lock, move on
         if self.key in self.locks:
