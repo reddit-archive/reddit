@@ -619,7 +619,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 and (not container.is_moderator(c.user)
                      or c.user._spam)):
             if c.user._spam:
-                abort(500, 'internal server error')
+                return
             else:
                 abort(403, 'forbidden')
 
