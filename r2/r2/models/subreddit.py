@@ -941,16 +941,17 @@ class AllSR(FakeSubreddit):
     title = 'all'
 
     def get_links(self, sort, time):
-        from r2.lib import promote
         from r2.models import Link
         from r2.lib.db import queries
-        q = Link._query(Link.c.sr_id > 0,
-                        sort = queries.db_sort(sort),
-                        read_cache = True,
-                        write_cache = True,
-                        cache_time = 60,
-                        data = True,
-                        filter_primary_sort_only=True)
+        q = Link._query(
+            Link.c.sr_id > 0,
+            sort=queries.db_sort(sort),
+            read_cache=True,
+            write_cache=True,
+            cache_time=60,
+            data=True,
+            filter_primary_sort_only=True,
+        )
         if time != 'all':
             q._filter(queries.db_times[time])
         return q
