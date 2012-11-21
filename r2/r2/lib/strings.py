@@ -182,6 +182,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     an_error_occurred_friendly = _("an error occurred. please try again later!"),
     rate_limit = _("please wait a few seconds and try again."),
     subscribed_multi = _("multireddit of your subscriptions"),
+    mod_multi = _("multireddit of subreddits you moderate"),
 )
 
 class StringHandler(object):

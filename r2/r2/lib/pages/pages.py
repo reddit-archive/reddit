@@ -311,8 +311,11 @@ class Reddit(Templated):
                 ps.append(self.sr_admin_menu())
 
             if srs:
-                ps.append(SideContentBox(_('these subreddits'),
-                                         [SubscriptionBox(srs)]))
+                if isinstance(c.site, ModSR):
+                    box = SubscriptionBox(srs, multi_text=strings.mod_multi)
+                else:
+                    box = SubscriptionBox(srs)
+                ps.append(SideContentBox(_('these subreddits'), [box]))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
