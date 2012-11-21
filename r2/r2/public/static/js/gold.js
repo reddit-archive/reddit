@@ -75,8 +75,10 @@ r.gold = {
         var tagline = comment.children('.entry').find('p.tagline'),
             icon = tagline.find('.gilded-comment-icon')
 
-        gilding_count = gilding_count || icon.data('count') || 0
-        gilding_count++
+        if (gilding_count == null) {
+            gilding_count = icon.data('count') || 0
+            gilding_count++
+        }
 
         comment.addClass('gilded user-gilded')
         if (!icon.length) {
