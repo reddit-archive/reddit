@@ -101,7 +101,7 @@ class Account(Thing):
                      has_subscribed = False,
                      pref_media = 'subreddit',
                      share = {},
-                     wiki_override = True,
+                     wiki_override = None,
                      email = "",
                      email_verified = False,
                      ignorereports = False,
@@ -184,7 +184,7 @@ class Account(Thing):
 
     def can_wiki(self):
         if self.wiki_override is None:
-            return self.link_karma() > 100 or self.comment_karma() > 100
+            return self.link_karma > 100 or self.comment_karma > 100
         return self.wiki_override
 
     def all_karmas(self):
