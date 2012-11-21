@@ -174,10 +174,8 @@ def make_map():
 
     mc('/', controller='hot', action='listing')
 
-    listing_controllers = "hot|new|rising|randomrising|comments"
-
     mc('/:controller', action='listing',
-       requirements=dict(controller=listing_controllers))
+       requirements=dict(controller="hot|new|rising|randomrising|comments"))
     mc('/saved', controller='user', action='saved_redirect')
 
     mc('/by_id/:names', controller='byId', action='listing')
