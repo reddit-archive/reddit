@@ -50,8 +50,8 @@
     <div class="box-separator"></div>
   % endif
     <ul>
-    %if thing.subscription_multi_path:
-      ${plain_link("MultiReddit of your subscriptions", thing.subscription_multi_path, _class="title")}
+    %if thing.multi_path and thing.multi_text:
+      ${plain_link(thing.multi_text, thing.multi_path, _class="title")}
       <div class="box-separator"></div>
     %endif
     %for sr in thing.reddits:

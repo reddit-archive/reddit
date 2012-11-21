@@ -305,13 +305,14 @@ class Reddit(Templated):
 
         no_ads_yet = True
         if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
-            srs = Subreddit._byID(c.site.sr_ids,data=True,
+            srs = Subreddit._byID(c.site.sr_ids, data=True,
                                   return_dict=False)
             if c.user_is_admin or c.site.is_moderator(c.user):
                 ps.append(self.sr_admin_menu())
 
             if srs:
-                ps.append(SideContentBox(_('these subreddits'),[SubscriptionBox(srs=srs)]))
+                ps.append(SideContentBox(_('these subreddits'),
+                                         [SubscriptionBox(srs)]))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
@@ -1330,7 +1331,10 @@ class SubredditsPage(Reddit):
 
     def rightbox(self):
         ps = Reddit.rightbox(self)
-        subscribe_box = SubscriptionBox(make_multi=True)
+        srs = Subreddit.user_subreddits(c.user, ids=False, limit=None)
+        srs.sort(key=lambda sr: sr.name.lower())
+        subscribe_box = SubscriptionBox(srs,
+                                        multi_text=strings.subscribed_multi)
         num_reddits = len(subscribe_box.srs)
         ps.append(SideContentBox(_("your front page reddits (%s)") %
                                  num_reddits, [subscribe_box]))
@@ -1644,21 +1648,17 @@ class SubredditTopBar(CachedTemplate):
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
     the right pane."""
-    def __init__(self, srs=None, make_multi=False):
-        if srs is None:
-            srs = Subreddit.user_subreddits(c.user, ids = False, limit=None)
-        srs.sort(key = lambda sr: sr.name.lower())
+    def __init__(self, srs, multi_text=None):
         self.srs = srs
         self.goldlink = None
         self.goldmsg = None
         self.prelink = None
+        self.multi_path = None
+        self.multi_text = multi_text
 
         # Construct MultiReddit path
-        if make_multi:
-            mr_path = '/r/' + '+'.join([sr.name for sr in srs])
-            subscription_multi_path = mr_path 
-        else:
-            subscription_multi_path = None
+        if multi_text:
+            self.multi_path = '/r/' + '+'.join([sr.name for sr in srs])
 
         if len(srs) > Subreddit.sr_limit and c.user_is_loggedin:
             if not c.user.gold:
@@ -1677,8 +1677,7 @@ class SubscriptionBox(Templated):
                                 _("%s visible") % visible]
 
         Templated.__init__(self, srs=srs, goldlink=self.goldlink,
-                           goldmsg=self.goldmsg, 
-                           subscription_multi_path=subscription_multi_path)
+                           goldmsg=self.goldmsg)
 
     @property
     def reddits(self):
