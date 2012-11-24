@@ -156,7 +156,7 @@ $(function() {
         };
 
         var infoTarget = "/button_info.json";
-        if (querydict.sr) {
+        if (querydict.sr && /^\w+$/.test(querydict.sr)) {
             infoTarget = "/r/" + querydict.sr + infoTarget;
         }
 
