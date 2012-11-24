@@ -38,7 +38,7 @@ import random as rand
 from r2.models.account import FakeAccount, valid_feed, valid_admin_cookie
 from r2.models.subreddit import Subreddit, Frontpage
 from r2.models import *
-from errors import ErrorSet, ForbiddenError, errors
+from errors import ErrorSet, BadRequestError, ForbiddenError, errors
 from validator import *
 from r2.lib.template_helpers import add_sr
 from r2.config.extensions import is_api
@@ -349,9 +349,11 @@ def set_content_type():
                 c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these 
-    if (is_api() and request.method.upper() == "GET" and
-        request.GET.get("jsonp")):
-        c.allowed_callback = request.GET['jsonp']
+    callback = request.GET.get("jsonp")
+    if is_api() and request.method.upper() == "GET" and callback:
+        if not valid_jsonp_callback(callback):
+            abort(BadRequestError(errors.BAD_JSONP_CALLBACK))
+        c.allowed_callback = callback
         c.user = UnloggedUser(get_browser_langs())
         c.user_is_loggedin = False
 

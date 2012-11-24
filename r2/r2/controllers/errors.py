@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from paste.httpexceptions import HTTPForbidden, HTTPError
+from paste.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPError
 from r2.lib.utils import Storage, tup
 from pylons import request
 from pylons.i18n import _
@@ -112,7 +112,8 @@ error_list = dict((
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('BAD_HASH', _("i don't believe you.")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
-        ('BID_LIVE', _('you cannot edit the bid of a live ad'))
+        ('BID_LIVE', _('you cannot edit the bid of a live ad')),
+        ('BAD_JSONP_CALLBACK', _('that jsonp callback contains invalid characters')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 
@@ -183,6 +184,14 @@ class ForbiddenError(HTTPForbidden):
     def __init__(self, error):
         HTTPForbidden.__init__(self)
         self.explanation = error_list[error]
+
+class BadRequestError(HTTPBadRequest):
+    def __init__(self, error):
+        HTTPBadRequest.__init__(self)
+        self.error_data = {
+            'reason': error,
+            'explanation': error_list[error],
+        }
 
 class UserRequiredException(Exception): pass
 class VerifiedUserRequiredException(Exception): pass
