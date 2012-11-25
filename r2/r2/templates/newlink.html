@@ -59,7 +59,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('title')}" id="title-field">
-    <textarea name="title" rows="2" cols="1" wrap="hard">${thing.title}</textarea>
+    <textarea name="title" rows="2" cols="1" wrap="hard" required>${thing.title}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
   </%utils:round_field>
@@ -69,7 +69,7 @@ ${thing.formtabs_menu}
 <div class="spacer">
   <%utils:round_field title="${_('url')}" id="url-field">
     <input name="kind" value="link" type="hidden"/>
-    <input id="url" name="url" type="text" value="${thing.url}"/>
+    <input id="url" name="url" type="url" value="${thing.url}" required>
     ${error_field("NO_URL", "url", "div")}
     ${error_field("BAD_URL", "url", "div")}
     ${error_field("DOMAIN_BANNED", "url", "div")}
