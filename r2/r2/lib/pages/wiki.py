@@ -125,7 +125,7 @@ class WikiCreate(WikiBase):
     def __init__(self, page, **context):
         context['alert'] = _("page %s does not exist in this subreddit") % page
         context['actionless'] = True
-        content = WikiEditPage(show_reason_field=False, page=page)
+        content = WikiEditPage(show_reason_field=True, page=page)
         WikiBase.__init__(self, content, page, **context)
 
 class WikiEdit(WikiBase):
