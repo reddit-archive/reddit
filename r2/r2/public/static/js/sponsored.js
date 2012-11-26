@@ -239,10 +239,8 @@ function detach_campaign_form() {
             $(this).datepicker("destroy").siblings().unbind();
         });
 
-    /* clone and remove original */
-    var orig = $("#campaign");
-    var campaign = orig.clone(true);
-    orig.remove();
+    /* detach and return */
+    var campaign = $("#campaign").detach();
     return campaign;
 }
 
