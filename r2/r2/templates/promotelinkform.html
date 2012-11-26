@@ -189,7 +189,7 @@ ${self.javascript_setup()}
           init_startdate();
           init_enddate();
           $("#campaign").find("button[name=create]").show().end()
-               .find("button[name=edit]").hide().end();
+               .find("button[name=save]").hide().end();
           update_bid("*[name=bid]");
        })
      </script>
@@ -209,9 +209,9 @@ ${self.javascript_setup()}
           onclick="return cancel_edit()" class="fancybutton">
          cancel
        </button>
-       <button name="edit"
+       <button name="save"
           onclick="return post_pseudo_form('.campaign', 'edit_campaign')" class="fancybutton">
-         edit
+         save
        </button>
        <button name="create"
           onclick="return post_pseudo_form('.campaign', 'edit_campaign')" class="fancybutton">
@@ -399,7 +399,7 @@ ${self.javascript_setup()}
 <div class="save-button">
   <%
       if thing.link:
-          name = "edit"
+          name = "save"
           text = _("save options")
       else:
           name = "create"

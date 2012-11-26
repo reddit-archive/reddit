@@ -22,12 +22,12 @@ function update_bid(elem) {
             $("#no_targeting_minimum").addClass("error");
         }
 
-        form.find('button[name="create"], button[name="edit"]')
+        form.find('button[name="create"], button[name="save"]')
             .prop("disabled", "disabled")
             .addClass("disabled");
     } else {
         $(".bid-info").removeClass("error");
-        form.find('button[name="create"], button[name="edit"]')
+        form.find('button[name="create"], button[name="save"]')
             .removeProp("disabled")
             .removeClass("disabled");
     }
@@ -330,7 +330,7 @@ function edit_campaign(elem) {
                         /* attach the dates to the date widgets */
                         init_startdate();
                         init_enddate();
-                        c.find('button[name="edit"]').show().end()
+                        c.find('button[name="save"]').show().end()
                             .find('button[name="create"]').hide().end();
                         update_bid('*[name="bid"]');
                         c.fadeIn();
