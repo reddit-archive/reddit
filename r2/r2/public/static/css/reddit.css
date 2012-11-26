@@ -5986,10 +5986,24 @@ tr.gold-accent + tr > td {
     border-collapse: separate;
     border-radius: 3px;
     padding: 5px 10px;
+    border-spacing: 0;
     width: 100%;
 }
 
-.api-help .parameters .name {
+.api-help .parameters th,
+.api-help .parameters td {
+    vertical-align: top;
+    border-bottom: 1px dotted #ccc;
+    padding: 5px 0;
+    margin: 0;
+}
+
+.api-help .parameters tr:last-child th,
+.api-help .parameters tr:last-child td {
+    border: none;
+}
+
+.api-help .parameters th {
     font-family: 'Courier New', monospace;
     width: 50%;
 }

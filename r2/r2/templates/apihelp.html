@@ -186,16 +186,16 @@
                 %if params:
                   %for param in sorted(params):
                     <tr>
-                      <td class="name">${param}</td>
-                      <td class="desc">${params[param]}</td>
+                      <th scope="row">${param}</td>
+                      <td>${params[param]}</td>
                     </tr>
                   %endfor
                 %endif
                 %if base_params:
                   %for param in sorted(base_params):
                     <tr class="base-param">
-                      <td class="name">${param}</td>
-                      <td class="desc">${base_params[param]}</td>
+                      <th scope="row">${param}</td>
+                      <td>${base_params[param]}</td>
                     </tr>
                   %endfor
                 %endif
