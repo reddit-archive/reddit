@@ -77,19 +77,20 @@ class WikiController(RedditController):
     
     @wiki_validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'), required=False, 
                                           restricted=False, allow_hidden_revision=False),
-                   page_name=VWikiPageName('page'))
+                   page_name=VWikiPageName(('page'), error_on_different=True))
     def GET_wiki_page(self, pv, page_name):
-        page, version, version2 = pv
         message = None
         
-        if page_name[1]:
-            url = join_urls(c.wiki_base_url, page_name[0])
+        if c.errors.get(('PAGE_NAME_MOVED', 'page')):
+            url = join_urls(c.wiki_base_url, page_name)
             return self.redirect(url)
+        
+        page, version, version2 = pv
         
         if not page:
             if c.render_style in extensions.API_TYPES:
                 self.handle_error(404, 'PAGE_NOT_CREATED')
-            return WikiNotFound(page=page_name[0]).render()
+            return WikiNotFound(page=page_name).render()
         
         if version:
             edit_by = version.get_author()
@@ -133,7 +134,6 @@ class WikiController(RedditController):
     @wiki_validate(wp=VWikiPageRevise('page'),
                    page=VWikiPageName('page'))
     def GET_wiki_create(self, wp, page):
-        page = page[0]
         api = c.render_style in extensions.API_TYPES
         error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
         if error:
@@ -260,7 +260,7 @@ class WikiApiController(WikiController):
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
-            page = WikiPage.create(c.site, page_name[0])
+            page = WikiPage.create(c.site, page_name)
         if c.user._spam:
             error =_("You are doing that too much, please try again later.")
             self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])

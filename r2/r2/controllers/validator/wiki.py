@@ -185,6 +185,10 @@ class VWikiModerator(VSrModerator):
         VSrModerator.__init__(self, fatal=fatal, *a, **kw)
 
 class VWikiPageName(Validator):
+    def __init__(self, param, error_on_different=False, *a, **kw):
+        self.error_on_different = error_on_different
+        Validator.__init__(self, param, *a, **kw)
+    
     def run(self, page):
         original_page = page
         if not page:
@@ -207,7 +211,10 @@ class VWikiPageName(Validator):
         if WikiPage.is_impossible(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
-        return (page, page != original_page)
+        if self.error_on_different and page != original_page:
+            self.set_error('PAGE_NAME_MOVED')
+        
+        return page
 
 class VWikiPage(VWikiPageName):
     def __init__(self, param, required=True, restricted=True, modonly=False,
@@ -216,15 +223,13 @@ class VWikiPage(VWikiPageName):
         self.modonly = modonly
         self.allow_hidden_revision = allow_hidden_revision
         self.required = required
-        Validator.__init__(self, param, **kw)
+        VWikiPageName.__init__(self, param, **kw)
     
     def run(self, page):
         page = VWikiPageName.run(self, page)
         
         if self.has_errors:
             return
-        
-        page = page[0]
         
         if (not c.is_wiki_mod) and self.modonly:
             return self.set_error('MOD_REQUIRED', code=403)
