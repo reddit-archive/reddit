@@ -969,19 +969,30 @@ class RedditController(MinimalController):
 
         c.request_timer.intermediate("base-pre")
 
-    def check_modified(self, thing, action,
-                       private=True, max_age=0, must_revalidate=True):
+    def check_modified(self, thing, action):
+        # this is a legacy shim until the old last_modified system is dead
+        last_modified = utils.last_modified_date(thing, action)
+        return self.abort_if_not_modified(last_modified)
+
+    def abort_if_not_modified(self, last_modified, private=True,
+                              max_age=timedelta(0),
+                              must_revalidate=True):
+        """Check If-Modified-Since and abort(304) if appropriate."""
+
         if c.user_is_loggedin and not c.allow_loggedin_cache:
             return
 
-        last_modified = utils.last_modified_date(thing, action)
+        # HTTP timestamps round to nearest second. truncate this value for
+        # comparisons.
+        last_modified = last_modified.replace(microsecond=0)
+
         date_str = http_utils.http_date_str(last_modified)
         c.response.headers['last-modified'] = date_str
 
         cache_control = []
         if private:
             cache_control.append('private')
-        cache_control.append('max-age=%d' % max_age)
+        cache_control.append('max-age=%d' % max_age.total_seconds())
         if must_revalidate:
             cache_control.append('must-revalidate')
         c.response.headers['cache-control'] = ', '.join(cache_control)
