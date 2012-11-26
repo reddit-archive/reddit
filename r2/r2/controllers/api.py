@@ -446,7 +446,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                        "email",
                        num=1,
                        docs={
-                           "email": _("(optional) the user's email address")
+                           "email": "(optional) the user's email address",
                        },
                    ),
                    password = VPassword(['passwd', 'passwd2']),
@@ -710,7 +710,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    password=VPassword(
                         ['curpass', 'curpass'],
-                        docs=dict(curpass=_("the user's current password"))
+                        docs=dict(curpass="the user's current password")
                    ),
                    dest = VDestination())
     @api_doc(api_section.account)
@@ -3006,7 +3006,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(VUser(),
                    VModhash(),
                    name=VRequired('name', errors.NO_TEXT,
-                                  docs=dict(name=_("a name for the app"))),
+                                  docs=dict(name="a name for the app")),
                    about_url=VSanitizedUrl('about_url'),
                    icon_url=VSanitizedUrl('icon_url'),
                    redirect_uri=VSanitizedUrl('redirect_uri'))
@@ -3109,7 +3109,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                             client=VOAuth2ClientDeveloper(),
                             icon_file=VLength(
                                 'file', max_length=1024*128,
-                                docs=dict(file=_("an icon (72x72)"))))
+                                docs=dict(file="an icon (72x72)")))
     @api_doc(api_section.apps)
     def POST_setappicon(self, form, jquery, client, icon_file):
         if not media.can_upload_icon():

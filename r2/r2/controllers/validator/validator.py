@@ -654,7 +654,7 @@ class VByName(Validator):
 
     def param_docs(self):
         return {
-            self.param: _('an existing thing id')
+            self.param: 'an existing thing id',
         }
 
 class VByNameIfAuthor(VByName):
@@ -678,8 +678,8 @@ class VCaptcha(Validator):
 
     def param_docs(self):
         return {
-            self.param[0]: _("the identifier of the CAPTCHA challenge"),
-            self.param[1]: _("the user's response to the CAPTCHA challenge"),
+            self.param[0]: "the identifier of the CAPTCHA challenge",
+            self.param[1]: "the user's response to the CAPTCHA challenge",
         }
 
 class VUser(Validator):
@@ -701,7 +701,7 @@ class VModhash(Validator):
 
     def param_docs(self):
         return {
-            self.param: _('a modhash')
+            self.param: 'a modhash',
         }
 
 class VVotehash(Validator):
@@ -897,7 +897,7 @@ class VSubmitParent(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: _('id of parent thing')
+            self.param[0]: 'id of a parent thing',
         }
 
 class VSubmitSR(Validator):
@@ -970,8 +970,8 @@ class VPassword(Validator):
 
     def param_docs(self):
         return {
-            self.param[0]: _("the new password"),
-            self.param[1]: _("the password again (for verification)"),
+            self.param[0]: "the new password",
+            self.param[1]: "the password again (for verification)",
         }
 
 user_rx = re.compile(r"\A[\w-]{3,20}\Z", re.UNICODE)
@@ -1007,7 +1007,7 @@ class VUname(VRequired):
 
     def param_docs(self):
         return {
-            self.param[0]: _("a valid, unused, username"),
+            self.param[0]: "a valid, unused, username",
         }
 
 class VLogin(VRequired):
@@ -1052,8 +1052,8 @@ class VThrottledLogin(VLogin):
 
     def param_docs(self):
         return {
-            self.param[0]: _("a username"),
-            self.param[1]: _("the user's password"),
+            self.param[0]: "a username",
+            self.param[1]: "the user's password",
         }
 
 class VSanitizedUrl(Validator):
@@ -1061,7 +1061,7 @@ class VSanitizedUrl(Validator):
         return utils.sanitize_url(url)
 
     def param_docs(self):
-        return {self.param: _("a valid URL")}
+        return {self.param: "a valid URL"}
 
 class VUrl(VRequired):
     def __init__(self, item, allow_self = True, lookup = True, *a, **kw):
@@ -1108,9 +1108,9 @@ class VUrl(VRequired):
             param_names = [self.param]
         params = {}
         try:
-            params[param_names[0]] = _('a valid URL')
-            params[param_names[1]] = _('a subreddit')
-            params[param_names[2]] = _('boolean value')
+            params[param_names[0]] = 'a valid URL'
+            params[param_names[1]] = 'a subreddit'
+            params[param_names[2]] = 'boolean value'
         except IndexError:
             pass
         return params
@@ -1151,7 +1151,7 @@ class VExistingUname(VRequired):
 
     def param_docs(self):
         return {
-            self.param: _('the name of an existing user')
+            self.param: 'the name of an existing user'
         }
 
 class VMessageRecipient(VExistingUname):
@@ -1199,7 +1199,7 @@ class VBoolean(Validator):
 
     def param_docs(self):
         return {
-            self.param: _('boolean value')
+            self.param: 'boolean value',
         }
 
 class VNumber(Validator):
@@ -1459,7 +1459,7 @@ class VOneOf(Validator):
 
     def param_docs(self):
         return {
-            self.param: _('one of (%s)') % ', '.join(self.options)
+            self.param: 'one of (%s)' % ', '.join(self.options)
         }
 
 class VImageType(Validator):
@@ -1713,7 +1713,7 @@ class VDestination(Validator):
 
     def param_docs(self):
         return {
-            self.param: _('destination url (must be same-domain)')
+            self.param: 'destination url (must be same-domain)',
         }
 
 class ValidAddress(Validator):
