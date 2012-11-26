@@ -89,16 +89,26 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
         return Account._byID36(author) if author else None
     
     @classmethod
-    def add_props(cls, user, wrapped):
+    def get_authors(cls, revisions):
+        authors = [r._get('author') for r in revisions]
+        authors = filter(None, authors)
+        return Account._byID36(authors)
+    
+    @classmethod
+    def get_printable_authors(cls, revisions):
         from r2.lib.pages import WrappedUser
+        authors = cls.get_authors(revisions)
+        return dict([(v._id36, WrappedUser(v))
+                     for k, v in authors.items() if v])
+    
+    @classmethod
+    def add_props(cls, user, wrapped):
+        authors = cls.get_printable_authors(wrapped)
         for item in wrapped:
             item._hidden = item.is_hidden
             item._spam = False
-            author = item.get_author()
-            if author is None:
-                item.printable_author = '[unknown]'
-            else:
-                item.printable_author = WrappedUser(author)
+            author = item._get('author')
+            item.printable_author = authors.get(author, '[unknown]')
             item.reported = False
     
     @classmethod
