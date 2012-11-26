@@ -465,6 +465,13 @@ class VLimit(Validator):
 
         return min(max(i, 1), self.max_limit)
 
+    def param_docs(self):
+        return {
+            self.param: "the maximum number of items desired "
+                        "(default: %d, maximum: %d)" % (self.default_limit,
+                                                        self.max_limit),
+        }
+
 class VCssMeasure(Validator):
     measure = re.compile(r"\A\s*[\d\.]+\w{0,3}\s*\Z")
     def run(self, value):
@@ -525,6 +532,12 @@ class VTitle(VLength):
     def __init__(self, param, max_length = 300, **kw):
         VLength.__init__(self, param, max_length, **kw)
 
+    def param_docs(self):
+        return {
+            self.param: "title of the submission. "
+                        "up to %d characters long" % self.max_length,
+        }
+
 class VMarkdown(VLength):
     def __init__(self, param, max_length = 10000, **kw):
         VLength.__init__(self, param, max_length, **kw)
@@ -544,6 +557,11 @@ class VMarkdown(VLength):
             s = sys.exc_info()
             # reraise the original error with the original stack trace
             raise s[1], None, s[2]
+
+    def param_docs(self):
+        return {
+            tup(self.param)[0]: "raw markdown text",
+        }
 
 class VSelfText(VMarkdown):
 
@@ -668,6 +686,11 @@ class VByNameIfAuthor(VByName):
                 return thing
         return self.set_error(errors.NOT_AUTHOR)
 
+    def param_docs(self):
+        return {
+            self.param: "fullname of a thing created by the user",
+        }
+
 class VCaptcha(Validator):
     default_param = ('iden', 'captcha')
     
@@ -709,6 +732,11 @@ class VModhash(Validator):
 class VVotehash(Validator):
     def run(self, vh, thing_name):
         return True
+
+    def param_docs(self):
+        return {
+            self.param[0]: "ignored",
+        }
 
 class VAdmin(Validator):
     def run(self):
@@ -940,6 +968,11 @@ class VSubmitSR(Validator):
                 return
 
         return sr
+
+    def param_docs(self):
+        return {
+            self.param[0]: "name of a subreddit",
+        }
 
 class VSubscribeSR(VByName):
     def __init__(self, srid_param, srname_param):
@@ -1303,6 +1336,11 @@ class VMenu(Validator):
 
         return sort
 
+    def param_docs(self):
+        return {
+            self.param[0]: 'one of (%s)' % ', '.join(self.nav.options),
+        }
+
 
 class VRatelimit(Validator):
     def __init__(self, rate_user = False, rate_ip = False,
@@ -1414,13 +1452,17 @@ class VDelay(Validator):
                 g.cache.set(key, prev_violations, max_duration)
 
 class VCommentIDs(Validator):
-    #id_str is a comma separated list of id36's
     def run(self, id_str):
         if id_str:
             cids = [int(i, 36) for i in id_str.split(',')]
             comments = Comment._byID(cids, data=True, return_dict = False)
             return comments
         return []
+
+    def param_docs(self):
+        return {
+            self.param: "a comma-delimited list of comment ID36s",
+        }
 
 
 class CachedUser(object):

@@ -125,8 +125,14 @@ class ApiController(RedditController, OAuth2ResourceController):
               count = VLimit('limit'))
     @api_doc(api_section.links_and_comments)
     def GET_info(self, link1, link2, count):
-        """
-        Gets a listing of links which have the provided url.  
+        """Get a link by fullname or a list of links by URL.
+
+        If `id` is provided, the link with the given fullname will be returned.
+        If `url` is provided, a list of links with the given URL will be
+        returned.
+
+        If both `url` and `id` are provided, `id` will take precedence.
+
         """
 
         c.dont_update_last_visit = True
@@ -231,10 +237,30 @@ class ApiController(RedditController, OAuth2ResourceController):
                    kind = VOneOf('kind', ['link', 'self']),
                    then = VOneOf('then', ('tb', 'comments'),
                                  default='comments'),
-                   extension = VLength("extension", 20))
+                   extension=VLength("extension", 20, docs={"extension":
+                       "extension used for redirects"}),
+                  )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
                     save, sr, ip, then, extension):
+        """Submit a link to a subreddit.
+
+        Submit will create a link or self-post in the subreddit `sr` with the
+        title `title`. If `kind` is `"link"`, then `url` is expected to be a
+        valid URL to link to. Otherwise, `text`, if present, will be the
+        body of the self-post.
+
+        If a link with the same URL has already been submitted to the specified
+        subreddit an error will be returned unless `resubmit` is true.
+        `extension` is used for determining which view-type (e.g. `json`,
+        `compact` etc.) to use for the redirect that is generated if the
+        `resubmit` error occurs.
+
+        If `save` is true, the link will be implicitly saved after submission
+        (see [/api/save](#POST_api_save) for more information).
+
+        """
+
         from r2.models.admintools import is_banned_domain
 
         if isinstance(url, (unicode, str)):
@@ -840,8 +866,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByNameIfAuthor('id'))
     @api_doc(api_section.links_and_comments)
     def POST_del(self, thing):
+        """Delete a Link or Comment."""
         if not thing: return
-        '''for deleting all sorts of things'''
         was_deleted = thing._deleted
         thing._deleted = True
         if (getattr(thing, "promoted", None) is not None and
@@ -888,6 +914,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_marknsfw(self, thing):
+        """Mark a link NSFW.
+
+        See also: [/api/unmarknsfw](#POST_api_unmarknsfw).
+
+        """
         thing.over_18 = True
         thing._commit()
 
@@ -905,6 +936,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_unmarknsfw(self, thing):
+        """Remove the NSFW marking from a link.
+
+        See also: [/api/marknsfw](#POST_api_marknsfw).
+
+        """
         thing.over_18 = False
         thing._commit()
 
@@ -919,7 +955,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_report(self, thing):
-        '''for reporting...'''
+        """Report a link or comment.
+
+        Reporting a thing brings it to the attention of the subreddit's
+        moderators. The thing is implicitly hidden as well (see
+        [/api/hide](#POST_api_hide) for details).
+
+        """
         if not thing or thing._deleted:
             return
         elif getattr(thing, 'promoted', False):
@@ -981,6 +1023,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    text = VSelfText('text'))
     @api_doc(api_section.links_and_comments)
     def POST_editusertext(self, form, jquery, item, text):
+        """Edit the body text of a comment or self-post."""
         if (not form.has_errors("text",
                                 errors.NO_TEXT, errors.TOO_LONG) and
             not form.has_errors("thing_id", errors.NOT_AUTHOR)):
@@ -1028,6 +1071,20 @@ class ApiController(RedditController, OAuth2ResourceController):
                    comment = VMarkdown(['text', 'comment']))
     @api_doc(api_section.links_and_comments)
     def POST_comment(self, commentform, jquery, parent, comment, ip):
+        """Submit a new comment or reply to a message.
+
+        `parent` is the fullname of the thing being replied to. Its value
+        changes the kind of object created by this request:
+
+        * the fullname of a Link: a top-level comment in that Link's thread.
+        * the fullname of a Comment: a comment reply to that comment.
+        * the fullname of a Message: a message reply to that message.
+
+        `text` should be the raw markdown body of the comment or message.
+
+        To start a new message thread, use [/api/compose](#POST_api_compose).
+
+        """
         should_ratelimit = True
         #check the parent type here cause we need that for the
         #ratelimit checks
@@ -1224,10 +1281,26 @@ class ApiController(RedditController, OAuth2ResourceController):
                 VModhash(),
                 vote_type = VVotehash(('vh', 'id')),
                 ip = ValidIP(),
-                dir = VInt('dir', min=-1, max=1),
+                dir=VInt('dir', min=-1, max=1, docs={"dir":
+                    "vote direction. one of (1, 0, -1)"}),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_vote(self, dir, thing, ip, vote_type):
+        """Cast a vote on a thing.
+
+        `id` should be the fullname of the Link or Comment to vote on.
+
+        `dir` indicates the direction of the vote. Voting `1` is an upvote,
+        `-1` is a downvote, and `0` is equivalent to "un-voting" by clicking
+        again on a highlighted arrow.
+
+        **Note: votes must be cast by humans.** That is, API clients proxying a
+        human's action one-for-one are OK, but bots deciding how to vote on
+        content or amplifying a human's vote are not. See [the reddit
+        rules](/rules) for more details on what constitutes vote cheating.
+
+        """
+
         ip = request.ip
         user = c.user
         store = True
@@ -1805,6 +1878,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_save(self, thing):
+        """Save a link or comment.
+
+        Saved things are kept in the user's saved listing for later perusal.
+
+        See also: [/api/unsave](#POST_api_unsave).
+
+        """
         if not thing: return
         if isinstance(thing, Comment) and not c.user.gold: return
         r = thing._save(c.user)
@@ -1814,6 +1894,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_unsave(self, thing):
+        """Unsave a link or comment.
+
+        This removes the thing from the user's saved listings as well.
+
+        See also: [/api/save](#POST_api_save).
+
+        """
         if not thing: return
         r = thing._unsave(c.user)
 
@@ -1907,6 +1994,13 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id', thing_cls=Link))
     @api_doc(api_section.links_and_comments)
     def POST_hide(self, thing):
+        """Hide a link.
+
+        This removes it from the user's default view of subreddit listings.
+
+        See also: [/api/unhide](#POST_api_unhide).
+
+        """
         if not thing: return
         r = thing._hide(c.user)
 
@@ -1915,6 +2009,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)
     def POST_unhide(self, thing):
+        """Unhide a link.
+
+        See also: [/api/hide](#POST_api_hide).
+
+        """
         if not thing: return
         r = thing._unhide(c.user)
 
@@ -1944,11 +2043,36 @@ class ApiController(RedditController, OAuth2ResourceController):
     @validatedForm(link = VByName('link_id'),
                    sort = VMenu('where', CommentSortMenu),
                    children = VCommentIDs('children'),
-                   pv_hex = VPrintable('pv_hex', 40),
-                   mc_id = nop('id'))
+                   pv_hex=VPrintable("pv_hex", 40, docs={"pv_hex":
+                       "(optional) a previous-visits token"}),
+                   mc_id=nop("id", docs={"id":
+                       "(optional) id of the associated MoreChildren object"}),
+                  )
     @api_doc(api_section.links_and_comments)
     def POST_morechildren(self, form, jquery, link, sort, children,
                           pv_hex, mc_id):
+        """Retrieve additional comments omitted from a base comment tree.
+
+        When a comment tree is rendered, the most relevant comments are
+        selected for display first. Remaining comments are stubbed out with
+        "MoreComments" links. This API call is used to retrieve the additional
+        comments represented by those stubs, up to 20 at a time.
+
+        The two core parameters required are `link` and `children`.  `link` is
+        the fullname of the link whose comments are being fetched. `children`
+        is a comma-delimited list of comment ID36s that need to be fetched.
+
+        If `id` is passed, it should be the ID of the MoreComments object this
+        call is replacing. This is needed only for the HTML UI's purposes and
+        is optional otherwise.
+
+        `pv_hex` is part of the reddit gold "previous visits" feature. It is
+        optional and deprecated.
+
+        """
+
+        CHILD_FETCH_COUNT = 20
+
         user = c.user if c.user_is_loggedin else None
 
         mc_key = "morechildren-%s" % request.ip
@@ -1979,7 +2103,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             builder = CommentBuilder(link, CommentSortMenu.operator(sort),
                                      children)
             listing = Listing(builder, nextprev = False)
-            items = listing.get_items(num = 20)
+            items = listing.get_items(num=CHILD_FETCH_COUNT)
             def _children(cur_items):
                 items = []
                 for cm in cur_items:
