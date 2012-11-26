@@ -617,6 +617,7 @@ class VByName(Validator):
         # Limit param only applies when multiple is True
         if not multiple and limit is not None:
             raise TypeError('multiple must be True when limit is set')
+        self.thing_cls = thing_cls
         self.re = fullname_regex(thing_cls)
         self.multiple = multiple
         self.limit = limit
@@ -653,8 +654,9 @@ class VByName(Validator):
         return self.set_error(self._error)
 
     def param_docs(self):
+        thingtype = (self.thing_cls or Thing).__name__.lower()
         return {
-            self.param: 'an existing thing id',
+            self.param: "fullname of a %s" % thingtype,
         }
 
 class VByNameIfAuthor(VByName):
@@ -897,7 +899,7 @@ class VSubmitParent(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: 'id of a parent thing',
+            self.param[0]: "fullname of parent thing",
         }
 
 class VSubmitSR(Validator):
