@@ -401,6 +401,15 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         if stylesheet_contents:
             c.allow_loggedin_cache = True
+
+            if c.site.stylesheet_modified:
+                self.abort_if_not_modified(
+                    c.site.stylesheet_modified,
+                    private=False,
+                    max_age=timedelta(days=7),
+                    must_revalidate=False,
+                )
+
             c.response_content_type = 'text/css'
             c.response.content =  stylesheet_contents
             if c.site.type == 'private':

@@ -23,6 +23,7 @@
 from __future__ import with_statement
 
 import base64
+import datetime
 import hashlib
 
 from pylons import c, g
@@ -64,6 +65,7 @@ class Subreddit(Thing, Printable):
                      stylesheet_rtl = None,
                      stylesheet_contents = '',
                      stylesheet_hash     = '',
+                     stylesheet_modified = None,
                      firsttext = strings.firsttext,
                      header = None,
                      header_size = None,
@@ -386,13 +388,15 @@ class Subreddit(Thing, Printable):
                               )
 
                 self.stylesheet_contents = ""
+                self.stylesheet_modified = None
             else:
                 self.stylesheet_hash = hashlib.md5(minified).hexdigest()
                 self.stylesheet_contents = minified
-                set_last_modified(self, 'stylesheet_contents')
+                self.stylesheet_modified = datetime.datetime.now(g.tz)
         else:
             self.stylesheet_contents = ""
             self.stylesheet_hash = ""
+            self.stylesheet_modified = datetime.datetime.now(g.tz)
         self.stylesheet_contents_user = ""  # reads from wiki; ensure pg clean
         self._commit()
 
