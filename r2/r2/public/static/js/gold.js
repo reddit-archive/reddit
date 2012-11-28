@@ -64,7 +64,7 @@ r.gold = {
         return false
     },
 
-    gildComment: function (comment_id, new_title, gilding_count) {
+    gildComment: function (comment_id, new_title, specified_gilding_count) {
         var comment = $('.id-' + comment_id)
 
         if (!comment.length) {
@@ -75,7 +75,17 @@ r.gold = {
         var tagline = comment.children('.entry').find('p.tagline'),
             icon = tagline.find('.gilded-comment-icon')
 
-        if (gilding_count == null) {
+        // when a comment is gilded interactively, we need to increment the
+        // gilding count displayed by the UI. however, when gildings are
+        // instantiated from a cached comment page via thingupdater, we can't
+        // simply increment the gilding count because we do not know if the
+        // cached comment page already includes the gilding in its count. To
+        // resolve this ambiguity, thingupdater will provide the correct
+        // gilding count as specified_gilding_count when calling this function.
+        var gilding_count
+        if (specified_gilding_count != null) {
+            gilding_count = specified_gilding_count
+        } else {
             gilding_count = icon.data('count') || 0
             gilding_count++
         }
