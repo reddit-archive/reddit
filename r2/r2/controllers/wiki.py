@@ -77,7 +77,7 @@ class WikiController(RedditController):
     
     @wiki_validate(pv=VWikiPageAndVersion(('page', 'v', 'v2'), required=False, 
                                           restricted=False, allow_hidden_revision=False),
-                   page_name=VWikiPageName('page', error_on_different=True))
+                   page_name=VWikiPageName('page', error_on_name_normalized=True))
     def GET_wiki_page(self, pv, page_name):
         message = None
         

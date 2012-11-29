@@ -185,8 +185,8 @@ class VWikiModerator(VSrModerator):
         VSrModerator.__init__(self, fatal=fatal, *a, **kw)
 
 class VWikiPageName(Validator):
-    def __init__(self, param, error_on_different=False, *a, **kw):
-        self.error_on_different = error_on_different
+    def __init__(self, param, error_on_name_normalized=False, *a, **kw):
+        self.error_on_name_normalized = error_on_name_normalized
         Validator.__init__(self, param, *a, **kw)
     
     def run(self, page):
@@ -211,7 +211,7 @@ class VWikiPageName(Validator):
         if WikiPage.is_impossible(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
-        if self.error_on_different and page != original_page:
+        if self.error_on_name_normalized and page != original_page:
             self.set_error('PAGE_NAME_MOVED')
         
         return page
