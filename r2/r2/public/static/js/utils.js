@@ -28,5 +28,13 @@ r.utils = {
                 return parts.join('')
             })
             .toArray().join(' ')
+    },
+    
+    serializeForm: function(form) {
+        var params = {}
+        $.each(form.serializeArray(), function(index,value) {
+            params[value.name] = value.value
+        })
+        return params
     }
 }

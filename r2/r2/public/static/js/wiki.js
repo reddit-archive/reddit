@@ -77,15 +77,12 @@ r.wiki = {
     submitEdit: function(event) {
         event.preventDefault()
         var $this = $(event.target),
-            params = {},
             url = r.wiki.baseApiUrl() + '/edit',
             conflict = $('#wiki_edit_conflict'),
             special = $('#wiki_special_error')
         conflict.hide()
         special.hide()
-        $.each($this.serializeArray(), function(index,value) {
-            params[value.name] = value.value
-        })
+        params = r.utils.serializeForm($this);
         r.wiki.request({
             url: url,
             type: 'POST',
