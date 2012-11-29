@@ -86,13 +86,13 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     
     def get_author(self):
         author = self._get('author')
-        return Account._byID36(author) if author else None
+        return Account._byID36(author, data=True) if author else None
     
     @classmethod
     def get_authors(cls, revisions):
         authors = [r._get('author') for r in revisions]
         authors = filter(None, authors)
-        return Account._byID36(authors)
+        return Account._byID36(authors, data=True)
     
     @classmethod
     def get_printable_authors(cls, revisions):
@@ -183,7 +183,7 @@ class WikiPage(tdb_cassandra.Thing):
     
     def get_author(self):
         if self._get('last_edit_by'):
-            return Account._byID36(self.last_edit_by)
+            return Account._byID36(self.last_edit_by, data=True)
         return None
     
     @classmethod
@@ -281,7 +281,7 @@ class WikiPage(tdb_cassandra.Thing):
     
     def get_editor_accounts(self):
         editors = self.get_editors()
-        accounts = [Account._byID36(editor)
+        accounts = [Account._byID36(editor, data=True)
                     for editor in self.get_editors()]
         accounts = [account for account in accounts
                     if not account._deleted]
