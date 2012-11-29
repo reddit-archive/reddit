@@ -189,7 +189,7 @@ class Reddit(Templated):
 
         if isinstance(c.site, AllMinus) and not c.user.gold:
             if not self.infobar:
-                self.infobar = InfoBar(message=strings.all_minus_gold_only)
+                self.infobar = InfoBar(message=strings.all_minus_gold_only, extra_class="gold")
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():

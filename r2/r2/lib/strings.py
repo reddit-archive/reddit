@@ -183,7 +183,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     rate_limit = _("please wait a few seconds and try again."),
     subscribed_multi = _("multireddit of your subscriptions"),
     mod_multi = _("multireddit of subreddits you moderate"),
-    all_minus_gold_only = _('/r/all filtering is a [gold only feature](/help/gold)'),
+    all_minus_gold_only = _('Filtering /r/all is a feature only available to [reddit gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
 )
 
 class StringHandler(object):

@@ -1148,6 +1148,17 @@ a.author { margin-right: 0.5em; }
     border: 1px solid #bfe0ff;
 }
 
+.infobar.gold {
+    background-color: #fffdcc;
+    border: 1px solid #e1b000;
+    color: #9a7d2e;
+}
+
+.content .infobar.gold:before {
+    margin-top: 5px;
+    margin-right: 7px;
+}
+
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
 .md p, .md h1 { margin: 5px 0}
@@ -4732,6 +4743,7 @@ dd { margin-left: 20px;  }
 .icon-menu .reddit-contributors:before,
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
+.infobar.gold:before,
 .gold-form h1.goldgift:before,
 .users-online:before,
 .notice-taken:before,
@@ -5162,7 +5174,9 @@ tr.gold-accent + tr > td {
     font-weight: bold;
 }
 .giftgold a:before,
-.gold-form h1.goldgift:before {
+.gold-form h1.goldgift:before,
+.infobar.gold:before
+{
     background-image: url(../giftgold.png); /* SPRITE */
 }
 
