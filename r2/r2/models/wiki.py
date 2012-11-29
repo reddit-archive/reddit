@@ -99,7 +99,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
         from r2.lib.pages import WrappedUser
         authors = cls.get_authors(revisions)
         return dict([(v._id36, WrappedUser(v))
-                     for k, v in authors.items() if v])
+                     for v in authors.itervalues() if v])
     
     @classmethod
     def add_props(cls, user, wrapped):
