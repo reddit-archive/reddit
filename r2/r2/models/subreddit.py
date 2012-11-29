@@ -956,7 +956,7 @@ class FriendsSR(FakeSubreddit):
 
 class AllSR(FakeSubreddit):
     name = 'all'
-    title = 'all'
+    title = 'all subreddits'
 
     def get_links(self, sort, time):
         from r2.models import Link
@@ -991,7 +991,7 @@ class AllMinus(AllSR):
 
     @property
     def title(self):
-        return 'all minus ' + ' '.join(sr.name for sr in self.srs)
+        return 'all subreddits except ' + ', '.join(sr.name for sr in self.srs)
 
     @property
     def path(self):
