@@ -1,7 +1,8 @@
 r.wiki = {
     request: function(req) {
-        if (reddit.logged)
+        if (reddit.logged) {
             req.data.uh = r.config.modhash
+        }
         req.data.page = r.config.wiki_page
         $.ajax(req)
     },
