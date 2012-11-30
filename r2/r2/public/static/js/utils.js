@@ -32,7 +32,7 @@ r.utils = {
     
     serializeForm: function(form) {
         var params = {}
-        $.each(form.serializeArray(), function(index,value) {
+        $.each(form.serializeArray(), function(index, value) {
             params[value.name] = value.value
         })
         return params

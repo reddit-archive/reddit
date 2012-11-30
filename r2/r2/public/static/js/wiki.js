@@ -1,6 +1,6 @@
 r.wiki = {
     request: function(req) {
-        if (reddit.logged) {
+        if (r.config.logged) {
             req.data.uh = r.config.modhash
         }
         req.data.page = r.config.wiki_page
