@@ -82,7 +82,7 @@ r.wiki = {
             special = $('#wiki_special_error')
         conflict.hide()
         special.hide()
-        params = r.utils.serializeForm($this);
+        params = r.utils.serializeForm($this)
         r.wiki.request({
             url: url,
             type: 'POST',
