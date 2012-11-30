@@ -81,7 +81,7 @@ class WikiController(RedditController):
     def GET_wiki_page(self, pv, page_name):
         message = None
         
-        if c.errors.get(('PAGE_NAME_MOVED', 'page')):
+        if c.errors.get(('PAGE_NAME_NORMALIZED', 'page')):
             url = join_urls(c.wiki_base_url, page_name)
             return self.redirect(url)
         

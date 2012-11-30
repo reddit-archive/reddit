@@ -212,7 +212,7 @@ class VWikiPageName(Validator):
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
         if self.error_on_name_normalized and page != original_page:
-            self.set_error('PAGE_NAME_MOVED')
+            self.set_error('PAGE_NAME_NORMALIZED')
         
         return page
 
