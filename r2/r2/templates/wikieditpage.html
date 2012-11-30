@@ -40,11 +40,9 @@
 
 <form method="post" id="editform" onsubmit="r.wiki.submitEdit(event)">
     <textarea name="content" rows="20" cols="20" style="width: 100%" id="content">${keep_space(thing.page_content)}</textarea>
-    %if thing.show_reason_field:
-        <br/><br/>
-        <label for="reason">${_("reason for revision")}</label><br/>
-        <input type="text" name="reason" maxlength="256" id="wiki_revision_reason" />
-    %endif
+    <br/><br/>
+    <label for="reason">${_("reason for revision")}</label><br/>
+    <input type="text" name="reason" maxlength="256" id="wiki_revision_reason" />
     <input type="hidden" id="previous" name="previous" value="${thing.previous}" />
     <br/><br/><input type="submit" value="${_('save page')}" />
 </form>

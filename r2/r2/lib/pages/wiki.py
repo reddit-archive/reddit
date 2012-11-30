@@ -31,12 +31,11 @@ class WikiPageListing(Templated):
         Templated.__init__(self)
 
 class WikiEditPage(Templated):
-    def __init__(self, page_content='', previous='', page=None, show_reason_field=True):
+    def __init__(self, page_content='', previous='', page=None):
         self.page_content = page_content
         self.page = page
         self.previous = previous
         self.base_url = c.wiki_base_url
-        self.show_reason_field = show_reason_field
         Templated.__init__(self)
 
 class WikiPageSettings(Templated):
@@ -125,7 +124,7 @@ class WikiCreate(WikiBase):
     def __init__(self, page, **context):
         context['alert'] = _("page %s does not exist in this subreddit") % page
         context['actionless'] = True
-        content = WikiEditPage(show_reason_field=True, page=page)
+        content = WikiEditPage(page=page)
         WikiBase.__init__(self, content, page, **context)
 
 class WikiEdit(WikiBase):
