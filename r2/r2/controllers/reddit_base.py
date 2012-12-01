@@ -640,7 +640,7 @@ class MinimalController(BaseController):
     def try_pagecache(self):
         #check content cache
         if request.method.upper() == 'GET' and not c.user_is_loggedin:
-            r = g.rendercache.get(self.request_key())
+            r = g.pagecache.get(self.request_key())
             if r:
                 r, c.cookies = r
                 response = c.response
@@ -698,7 +698,7 @@ class MinimalController(BaseController):
             and response.status_code not in (429, 503)
             and response.content and response.content[0]):
             try:
-                g.rendercache.set(self.request_key(),
+                g.pagecache.set(self.request_key(),
                                   (response, c.cookies),
                                   g.page_cache_time)
             except MemcachedError as e:

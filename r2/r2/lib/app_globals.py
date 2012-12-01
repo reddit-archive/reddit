@@ -170,6 +170,7 @@ class Globals(object):
             'lockcaches',
             'permacache_memcaches',
             'rendercaches',
+            'pagecaches',
             'cassandra_seeds',
             'admins',
             'sponsors',
@@ -416,10 +417,17 @@ class Globals(object):
         else:
             stalecaches = None
 
-        # rendercache holds rendered partial templates as well as fully
-        # cached pages.
+        # rendercache holds rendered partial templates.
         rendercaches = CMemcache(
             self.rendercaches,
+            noreply=True,
+            no_block=True,
+            num_clients=num_mc_clients,
+        )
+
+        # pagecaches hold fully rendered pages
+        pagecaches = CMemcache(
+            self.pagecaches,
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
@@ -484,6 +492,12 @@ class Globals(object):
             rendercaches,
         ))
         self.cache_chains.update(rendercache=self.rendercache)
+
+        self.pagecache = MemcacheChain((
+            localcache_cls(),
+            pagecaches,
+        ))
+        self.cache_chains.update(pagecache=self.pagecache)
 
         # the thing_cache is used in tdb_cassandra.
         self.thing_cache = CacheChain((localcache_cls(),))
