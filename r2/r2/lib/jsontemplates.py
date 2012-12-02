@@ -156,8 +156,12 @@ class ThingJsonTemplate(JsonTemplate):
         things).
         """
         if attr == "author":
+            if thing.author._deleted:
+                return None
             return thing.author.name
         if attr == "author_flair_text":
+            if thing.author._deleted:
+                return None
             if thing.author.flair_enabled_in_sr(thing.subreddit._id):
                 return getattr(thing.author,
                                'flair_%s_text' % (thing.subreddit._id),
@@ -165,6 +169,8 @@ class ThingJsonTemplate(JsonTemplate):
             else:
                 return None
         if attr == "author_flair_css_class":
+            if thing.author._deleted:
+                return None
             if thing.author.flair_enabled_in_sr(thing.subreddit._id):
                 return getattr(thing.author,
                                'flair_%s_css_class' % (thing.subreddit._id),
