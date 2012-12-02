@@ -936,7 +936,7 @@ class DenormalizedRelation(object):
         else:
             if results:
                 assert len(results) == 1
-                return results[0]
+                return results.values()[0]
             else:
                 raise NotFound("<%s %r>" % (cls.__name__, (thing1._id36,
                                                            thing2._id36)))
