@@ -916,9 +916,11 @@ def new_vote(vote, foreground=False, timer=None):
                             get_links(sr, 'controversial', 'all'),
                             ])
 
-            for domain in utils.UrlParser(item.url).domain_permutations():
-                for sort in ("hot", "top", "controversial"):
-                    results.append(get_domain_links(domain, sort, "all"))
+            parsed = utils.UrlParser(item.url)
+            if parsed.hostname and not parsed.hostname.endswith('imgur.com'):
+                for domain in parsed.domain_permutations():
+                    for sort in ("hot", "top", "controversial"):
+                        results.append(get_domain_links(domain, sort, "all"))
 
         add_queries(results, insert_items = item, foreground=foreground)
 

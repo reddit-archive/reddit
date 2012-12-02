@@ -178,6 +178,12 @@ class Reddit(Templated):
             elif c.firsttime and c.site.firsttext:
                 infotext = c.site.firsttext
 
+        if isinstance(c.site, DomainSR) and c.site.domain.endswith("imgur.com"):
+            self.infobar = InfoBar(
+                message=_("imgur.com domain listings (including this one) are "
+                          "currently disabled to speed up vote processing.")
+            )
+
         if infotext:
             self.infobar = InfoBar(message = infotext)
 
