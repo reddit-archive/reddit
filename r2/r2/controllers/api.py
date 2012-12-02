@@ -128,6 +128,9 @@ class ApiController(RedditController, OAuth2ResourceController):
         """
         Gets a listing of links which have the provided url.  
         """
+
+        c.dont_update_last_visit = True
+
         links = []
         if link2:
             links = filter_links(tup(link2), filter_spam = False)
