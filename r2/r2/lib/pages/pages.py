@@ -1168,7 +1168,7 @@ class CommentPane(Templated):
         my_listing = renderer()
 
         # for now, disable the cache if the user happens to be an author of anything.
-        if try_cache:
+        if try_cache and c.user_is_loggedin:
             for t in self.listing_iter(my_listing):
                 if getattr(t, "is_author", False):
                     try_cache = False
@@ -1205,30 +1205,31 @@ class CommentPane(Templated):
                 cache_hit = True
 
             # figure out what needs to be updated on the listing
-            likes = []
-            dislikes = []
-            is_friend = set()
-            gildings = {}
-            saves = set()
-            for t in self.listing_iter(my_listing):
-                if not hasattr(t, "likes"):
-                    # this is for MoreComments and MoreRecursion
-                    continue
-                if getattr(t, "friend", False) and not t.author._deleted:
-                    is_friend.add(t.author._fullname)
-                if t.likes:
-                    likes.append(t._fullname)
-                if t.likes is False:
-                    dislikes.append(t._fullname)
-                if t.user_gilded:
-                    gildings[t._fullname] = (t.gilded_message, t.gildings)
-                if t.saved:
-                    saves.add(t._fullname)
-            self.rendered += ThingUpdater(likes = likes,
-                                          dislikes = dislikes,
-                                          is_friend = is_friend,
-                                          gildings = gildings,
-                                          saves = saves).render()
+            if c.user_is_loggedin:
+                likes = []
+                dislikes = []
+                is_friend = set()
+                gildings = {}
+                saves = set()
+                for t in self.listing_iter(my_listing):
+                    if not hasattr(t, "likes"):
+                        # this is for MoreComments and MoreRecursion
+                        continue
+                    if getattr(t, "friend", False) and not t.author._deleted:
+                        is_friend.add(t.author._fullname)
+                    if t.likes:
+                        likes.append(t._fullname)
+                    if t.likes is False:
+                        dislikes.append(t._fullname)
+                    if t.user_gilded:
+                        gildings[t._fullname] = (t.gilded_message, t.gildings)
+                    if t.saved:
+                        saves.add(t._fullname)
+                self.rendered += ThingUpdater(likes = likes,
+                                              dislikes = dislikes,
+                                              is_friend = is_friend,
+                                              gildings = gildings,
+                                              saves = saves).render()
             g.log.debug("using comment page cache")
         else:
             self.rendered = my_listing.render()
