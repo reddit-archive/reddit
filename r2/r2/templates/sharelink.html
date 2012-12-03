@@ -35,11 +35,15 @@
         <th>
           <label for="share_to_${thing.link_name}">
             ${_("send this link to")}
-          </label>
+          </label>&nbsp;
+          <span class="little gray">
+            ${_("(list of emails or usernames)")}
+          </span>
         </th>
         <td>
           <textarea id="share_to_${thing.link_name}" 
-                    name="share_to" rows="4" cols="40">
+                    name="share_to" rows="4" cols="40"
+                    placeholder="${unsafe('email@example.com, /u/%s, &hellip;' % g.system_user)}">
             ${unsafe('&#x0D;&#x0A;'.join(websafe(e) for e in thing.emails))}
           </textarea>
         </td>
