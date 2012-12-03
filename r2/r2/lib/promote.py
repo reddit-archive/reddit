@@ -689,6 +689,7 @@ def make_daily_promotions(offset=0, test=False):
     """
     by_srname, links, error_campaigns = get_scheduled(offset)
     all_links = set([l._fullname for l in links])
+    srs = Subreddit._by_name(by_srname.keys())
 
     # convert AdWeights to use fullname (lost from weight_schedule)
     for sr, adweights in by_srname.iteritems():
@@ -704,7 +705,7 @@ def make_daily_promotions(offset=0, test=False):
     # over18 check
     for srname, adweights in by_srname.iteritems():
         if srname:
-            sr = Subreddit._by_name(srname)
+            sr = srs[srname]
             if sr.over_18:
                 sr_links = Link._by_fullname([a.link for a in adweights],
                                              return_dict=False)
@@ -743,11 +744,11 @@ def make_daily_promotions(offset=0, test=False):
                 emailer.live_promo(links[l])
 
     # convert the weighted dict to use sr_ids which are more useful
-    srs = Subreddit._by_name(by_srname.keys())
-    srname_to_id = {sr.name: sr._id for sr in srs.values()}
-    srname_to_id[''] = ''
-    by_srid = {srname_to_id[srname]: adweights for srname, adweights
-                                               in by_srname.iteritems()}
+    by_srid = {srs[srname]._id: adweights for srname, adweights
+                                          in by_srname.iteritems()
+                                          if srname != ''}
+    if '' in by_srname:
+        by_srid[''] = by_srname['']
 
     if not test:
         set_live_promotions(by_srid)
