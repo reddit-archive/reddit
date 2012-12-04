@@ -157,7 +157,7 @@ class ThingJsonTemplate(JsonTemplate):
         """
         if attr == "author":
             if thing.author._deleted:
-                return None
+                return "[deleted]"
             return thing.author.name
         if attr == "author_flair_text":
             if thing.author._deleted:
