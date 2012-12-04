@@ -559,7 +559,7 @@ def get_scheduled(offset=0):
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
-                adweight = AdWeight(l, weight, campaign._fullname)
+                adweight = AdWeight(l._fullname, weight, campaign._fullname)
                 by_sr.setdefault(campaign.sr_name, []).append(adweight)
                 links.add(l)
         except Exception, e: # could happen if campaign things have corrupt data
@@ -690,17 +690,6 @@ def make_daily_promotions(offset=0, test=False):
     by_srname, links, error_campaigns = get_scheduled(offset)
     all_links = set([l._fullname for l in links])
     srs = Subreddit._by_name(by_srname.keys())
-
-    # convert AdWeights to use fullname (lost from weight_schedule)
-    for sr, adweights in by_srname.iteritems():
-        fixed_adweights = []
-        for a in adweights:
-            if isinstance(a.link, Link):
-                fixed_a = AdWeight(a.link._fullname, a.weight, a.campaign)
-                fixed_adweights.append(fixed_a)
-            else:
-                fixed_adweights.append(a)
-        by_srname[sr] = fixed_adweights
 
     # over18 check
     for srname, adweights in by_srname.iteritems():
