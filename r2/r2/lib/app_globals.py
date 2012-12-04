@@ -221,6 +221,9 @@ class Globals(object):
         ConfigValue.dict(ConfigValue.int, ConfigValue.float): [
             'comment_tree_version_weights',
         ],
+        ConfigValue.messages: [
+            'goldvertisement_blurbs',
+        ],
     }
 
     def __init__(self, global_conf, app_conf, paths, **extra):

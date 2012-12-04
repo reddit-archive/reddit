@@ -21,6 +21,7 @@
 ###############################################################################
 
 import datetime
+import re
 
 
 class ConfigValue(object):
@@ -68,6 +69,11 @@ class ConfigValue(object):
     @staticmethod
     def days(v, key=None, data=None):
         return datetime.timedelta(int(v))
+
+    messages_re = re.compile(r'"([^"]+)"')
+    @staticmethod
+    def messages(v, key=None, data=None):
+        return ConfigValue.messages_re.findall(v)
 
 
 class ConfigValueParser(dict):

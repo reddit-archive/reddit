@@ -304,6 +304,7 @@ class Reddit(Templated):
             ps.append(SponsorshipBox())
 
         no_ads_yet = True
+        show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
         if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
             srs = Subreddit._byID(c.site.sr_ids, data=True,
                                   return_dict=False)
@@ -326,7 +327,7 @@ class Reddit(Templated):
                 ps.append(self.wiki_actions_menu(moderator=moderator))
             if moderator:
                 ps.append(self.sr_admin_menu())
-            if (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads:
+            if show_adbox:
                 ps.append(Ads())
             no_ads_yet = False
         elif c.show_wiki_actions:
@@ -374,10 +375,10 @@ class Reddit(Templated):
                                          more_href = mod_href,
                                          more_text = more_text))
 
-
-        if no_ads_yet and not g.disable_ads:
-            if c.user.pref_show_adbox or not c.user.gold:
-                ps.append(Ads())
+        if no_ads_yet and show_adbox:
+            ps.append(Ads())
+            if g.live_config["goldvertisement_blurbs"]:
+                ps.append(Goldvertisement())
 
         if c.user.pref_clickgadget and c.recent_clicks:
             ps.append(SideContentBox(_("Recently viewed links"),
@@ -3702,3 +3703,11 @@ class GoldInfoPage(BoringPage):
             "gold_year_price": g.gold_year_price,
         }
         BoringPage.__init__(self, *args, **kwargs)
+
+
+class Goldvertisement(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+        blurbs = g.live_config["goldvertisement_blurbs"]
+        blurb = random.choice(blurbs)
+        self.blurb_title, sep, self.blurb_aside = blurb.partition("|")

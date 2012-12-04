@@ -5450,12 +5450,15 @@ tr.gold-accent + tr > td {
     text-shadow: none;
 }
 
+.gold-dropdown, .goldvertisement {
+    font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
+                 "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
+}
+
 .gold-dropdown {
     color: #482800;
     background-color: #fff088;
     font-size: 16px;
-    font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
-                 "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
 }
 
 .comment-visits-box .title {
@@ -6323,3 +6326,41 @@ body.post-under-6h-old .gilded-comment-icon {
 .buttons li.comment-unsave-button { display: inline; }
 
 body.gold .buttons li.comment-save-button { display: inline; }
+
+.goldvertisement {
+    height: 50px;
+    border: 1px solid #c4b487;
+    text-align: center;
+    line-height: 1.3em;
+    box-shadow: 0 0 10px #dad0b3 inset;
+    color: #333;
+}
+
+.goldvertisement .inner {
+    margin: 1px;
+    border: 1px solid #dbd1b5;
+    height: 46px;
+    line-height: 44px;
+}
+
+.goldvertisement p {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 4px;
+    line-height: 14px;
+}
+
+.goldvertisement strong {
+    font-size: 15px;
+}
+
+.goldvertisement a {
+    color: #9a7d2e;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.goldvertisement i {
+    font-size: 11px;
+    font-variant: italic;
+}
