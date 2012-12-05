@@ -59,7 +59,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('title')}" id="title-field">
-    <textarea name="title" rows="2" cols="1" wrap="hard" required>${thing.title}</textarea>
+    <textarea name="title" rows="2" required>${thing.title}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
   </%utils:round_field>
