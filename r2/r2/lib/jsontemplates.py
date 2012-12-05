@@ -213,6 +213,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
                                                 url          = "path",
                                                 over18       = "over_18",
                                                 description  = "description",
+                                                description_html = "description_html",
                                                 public_description = "public_description",
                                                 display_name = "name",
                                                 header_img   = "header",
@@ -229,6 +230,8 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         # Don't return accounts_active counts in /reddits
         elif (attr == "accounts_active" and isinstance(c.site, SubSR)):
             return None
+        elif attr == 'description_html':
+            return safemarkdown(thing.description)
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 

@@ -692,6 +692,11 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
         return Reddit(content = Wrapped(c.site)).render()
 
+    @require_oauth2_scope("read")
+    def GET_sidebar(self):
+        usertext = UserText(c.site, c.site.description)
+        return Reddit(content=usertext).render()
+
     def GET_awards(self):
         """The awards page."""
         return BoringPage(_("awards"), content = UserAwards()).render()

@@ -61,6 +61,7 @@ def make_map():
 
     mc('/about/message/:where', controller='message', action='listing')
     mc('/about/log', controller='front', action='moderationlog')
+    mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about', controller='front', action='about')
     mc('/about/:location', controller='front', action='editreddit',
        location='about')
