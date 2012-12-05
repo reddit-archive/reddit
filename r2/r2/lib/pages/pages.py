@@ -1180,7 +1180,7 @@ class CommentPane(Templated):
         if try_cache:
             # try to fetch the comment tree from the cache
             key = self.cache_key()
-            self.rendered = g.cache.get(key)
+            self.rendered = g.rendercache.get(key)
             if not self.rendered:
                 # spoof an unlogged in user
                 user = c.user
@@ -1194,8 +1194,11 @@ class CommentPane(Templated):
 
                     # render as if not logged in (but possibly with reply buttons)
                     self.rendered = renderer().render()
-                    g.cache.set(key, self.rendered,
-                                time=g.commentpane_cache_time)
+                    g.rendercache.set(
+                        key,
+                        self.rendered,
+                        time=g.commentpane_cache_time
+                    )
 
                 finally:
                     # undo the spoofing
