@@ -20,77 +20,128 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import functools
+import types
+
 from r2.lib.memoize import memoize
 
-def UserRel(name, relation, disable_ids_fn = False, disable_reverse_ids_fn = False):
 
-    exists_fn_name = 'is_' + name
-    def userrel_exists(self, user):
-        if not user:
-            return False
+class UserRelManager(object):
+    """Manages access to a relation between a type of thing and users."""
 
-        r = relation._fast_query([self], [user], name)
-        r = r.get((self, user, name))
+    def __init__(self, name, relation):
+        self.name = name
+        self.relation = relation
+
+    def get(self, thing, user):
+        if user:
+            q = self.relation._fast_query([thing], [user], self.name)
+            return q.get((thing, user, self.name))
+
+    def add(self, thing, user, **attrs):
+        if self.get(thing, user):
+            return None
+        r = self.relation(thing, user, self.name, **attrs)
+        r._commit()
+        return r
+
+    def remove(self, thing, user):
+        r = self.get(thing, user)
         if r:
-            return r
-
-    update_caches_fn_name = name + 'update_' + name + '_caches'
-    def update_caches(self, user):
-        if not disable_ids_fn:
-            getattr(self, ids_fn_name)(_update = True)
-
-        if not disable_reverse_ids_fn:
-            getattr(self, reverse_ids_fn_name)(user, _update = True)
-
-    add_fn_name =  'add_' + name
-    def userrel_add(self, user):
-        fn = getattr(self, exists_fn_name)
-        if not fn(user):
-            s = relation(self, user, name)
-            s._commit()
-
-            #update caches
-            getattr(self, update_caches_fn_name)(user)
-            return s
-    
-    remove_fn_name = 'remove_' + name
-    def userrel_remove(self, user):
-        fn = getattr(self, exists_fn_name)
-        s = fn(user)
-        if s:
-            s._delete()
-
-            #update caches
-            getattr(self, update_caches_fn_name)(user)
+            r._delete()
             return True
+        return False
 
-    ids_fn_name = name + '_ids'
-    @memoize(ids_fn_name)
-    def userrel_ids(self):
-        q = relation._query(relation.c._thing1_id == self._id,
-                            relation.c._name == name,
-                            sort = "_date")
-        #removed set() here, shouldn't be required
+    def mutate(self, thing, user, **attrs):
+        r = self.get(thing, user)
+        if r:
+            for k, v in attrs.iteritems():
+                setattr(r, k, v)
+            r._commit()
+            return r
+        else:
+            return self.add(thing, user, **attrs)
+
+    def ids(self, thing):
+        q = self.relation._query(self.relation.c._thing1_id == thing._id,
+                                 self.relation.c._name == self.name,
+                                 sort='_date')
         return [r._thing2_id for r in q]
 
-    reverse_ids_fn_name = 'reverse_' + name + '_ids'
-    @staticmethod
-    @memoize(reverse_ids_fn_name)
-    def reverse_ids(user):
-        q = relation._query(relation.c._thing2_id == user._id,
-                            relation.c._name == name)
+    def reverse_ids(self, user):
+        q = self.relation._query(self.relation.c._thing2_id == user._id,
+                                 self.relation.c._name == self.name)
         return [r._thing1_id for r in q]
 
-    class UR: pass
 
-    setattr(UR, update_caches_fn_name, update_caches)
-    setattr(UR, exists_fn_name, userrel_exists)
-    setattr(UR, add_fn_name, userrel_add)
-    setattr(UR, remove_fn_name, userrel_remove)
+class MemoizedUserRelManager(UserRelManager):
+    """Memoized manager for a relation to users."""
+
+    def __init__(self, name, relation,
+                 disable_ids_fn=False, disable_reverse_ids_fn=False):
+        super(MemoizedUserRelManager, self).__init__(name, relation)
+
+        self.disable_ids_fn = disable_ids_fn
+        self.disable_reverse_ids_fn = disable_reverse_ids_fn
+        self.ids_fn_name = self.name + '_ids'
+        self.reverse_ids_fn_name = 'reverse_' + self.name + '_ids'
+
+        sup = super(MemoizedUserRelManager, self)
+        self.ids = memoize(self.ids_fn_name)(sup.ids)
+        self.reverse_ids = memoize(self.reverse_ids_fn_name)(sup.reverse_ids)
+        self.add = self._update_caches_on_success(sup.add)
+        self.remove = self._update_caches_on_success(sup.remove)
+
+    def _update_caches(self, thing):
+        if not self.disable_ids_fn:
+            self.ids(thing, _update=True)
+        if not self.disable_reverse_ids_fn:
+            self.reverse_ids(thing, _update=True)
+
+    def _update_caches_on_success(self, method):
+        @functools.wraps(method)
+        def wrapper(thing, *args, **kwargs):
+            try:
+                result = method(thing, *args, **kwargs)
+            except:
+                raise
+            else:
+                self._update_caches(thing)
+            return result
+        return wrapper
+
+
+def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False):
+    """Mixin for Thing subclasses for managing a relation to users.
+
+    Provides the following suite of methods for a relation named "<relation>":
+
+      - is_<relation>(self, user) - whether user is related to self
+      - add_<relation>(self, user) - relates user to self
+      - remove_<relation>(self, user) - dissolves relation of user to self
+
+    This suite also usually includes (unless explicitly disabled):
+
+      - <relation>_ids(self) - list of user IDs related to self
+      - (static) reverse_<relation>_ids(user) - list of thing IDs user is
+          related to
+    """
+    mgr = MemoizedUserRelManager(
+        name, relation, disable_ids_fn, disable_reverse_ids_fn)
+
+    class UR:
+        @classmethod
+        def _bind(cls, fn):
+            return types.UnboundMethodType(fn, None, cls)
+
+    setattr(UR, 'is_' + name, UR._bind(mgr.get))
+    setattr(UR, 'get_' + name, UR._bind(mgr.get))
+    setattr(UR, 'add_' + name, UR._bind(mgr.add))
+    setattr(UR, 'remove_' + name, UR._bind(mgr.remove))
+    setattr(UR, name + '_permission_class', permission_class)
     if not disable_ids_fn:
-        setattr(UR, ids_fn_name, userrel_ids)
+        setattr(UR, mgr.ids_fn_name, UR._bind(mgr.ids))
     if not disable_reverse_ids_fn:
-        setattr(UR, reverse_ids_fn_name, reverse_ids)
+        setattr(UR, mgr.reverse_ids_fn_name, staticmethod(mgr.reverse_ids))
 
     return UR
-        
