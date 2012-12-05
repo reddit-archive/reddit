@@ -24,6 +24,7 @@
    from r2.lib.strings import strings
    from r2.lib.pages import UserText
    from r2.lib.template_helpers import add_sr
+   from r2.controllers.validator import VTitle
 %>
 
 <%namespace file="utils.html" import="error_field, submit_form, _a_buffered, reddit_selector, text_with_links"/>
@@ -59,7 +60,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('title')}" id="title-field">
-    <textarea name="title" rows="2" required>${thing.title}</textarea>
+    <textarea name="title" rows="2" maxlength="${VTitle.max_length}" required>${thing.title}</textarea>
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
   </%utils:round_field>

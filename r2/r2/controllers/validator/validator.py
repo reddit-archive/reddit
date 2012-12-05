@@ -529,8 +529,9 @@ class VPrintable(VLength):
 
 
 class VTitle(VLength):
-    def __init__(self, param, max_length = 300, **kw):
-        VLength.__init__(self, param, max_length, **kw)
+    max_length = 300
+    def __init__(self, param, **kw):
+        VLength.__init__(self, param, self.max_length, **kw)
 
     def param_docs(self):
         return {
