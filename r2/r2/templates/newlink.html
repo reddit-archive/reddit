@@ -100,7 +100,7 @@ ${thing.formtabs_menu}
 
 <div class="spacer">
   <%utils:round_field title="${_('choose a subreddit')}" id="reddit-field">
-    ${reddit_selector(thing.default_sr.name if thing.default_sr else None, thing.sr_searches, thing.subreddits)}
+    ${reddit_selector(thing.default_sr.name if thing.default_sr else None, thing.sr_searches, thing.subreddits, required=True)}
   </%utils:round_field>
 </div>
 

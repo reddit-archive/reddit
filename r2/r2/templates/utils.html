@@ -523,7 +523,7 @@ ${unsafe(txt)}
   </tr>
 </%def>
 
-<%def name="reddit_selector(default_sr, sr_searches, subreddits)">
+<%def name="reddit_selector(default_sr, sr_searches, subreddits, required=False)">
     <%doc>
       Fires custom event when subreddit selection changes. Add handler like:
       $("#sr-autocomplete").bind("sr-changed", function() { dostuff; })
@@ -535,7 +535,11 @@ ${unsafe(txt)}
              onkeyup="sr_name_up(event)"
              onkeydown="return sr_name_down(event)"
              onblur="hide_sr_name_list()"
-             value = "${default_sr}" />
+             value = "${default_sr}"
+             % if required:
+             required
+             % endif
+             />
       <ul id="sr-drop-down">
         <li class="sr-name-row"
             onmouseover="highlight_reddit(this)"
