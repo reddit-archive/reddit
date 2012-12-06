@@ -1168,11 +1168,11 @@ class CommentPane(Templated):
                                     parent_name = article._fullname)
             return listing.listing()
 
-        # generate the listing we would make for this user if caching is disabled.
-        my_listing = renderer()
-
-        # for now, disable the cache if the user happens to be an author of anything.
+        # disable the cache if the user is the author of anything in the
+        # thread because of edit buttons etc.
+        my_listing = None
         if try_cache and c.user_is_loggedin:
+            my_listing = renderer()
             for t in self.listing_iter(my_listing):
                 if getattr(t, "is_author", False):
                     try_cache = False
@@ -1239,6 +1239,7 @@ class CommentPane(Templated):
                                               saves = saves).render()
             g.log.debug("using comment page cache")
         else:
+            my_listing = my_listing or renderer()
             self.rendered = my_listing.render()
 
         if try_cache:
