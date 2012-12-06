@@ -735,8 +735,6 @@ class Comment(Thing, Printable):
 
         c._commit()
 
-        CommentParticipationByAccount.register(author, link)
-
         changed(link, True)  # link's number of comments changed
 
         inbox_rel = None
@@ -1382,21 +1380,6 @@ class Message(Thing, Printable):
 
 class SaveHide(Relation(Account, Link)): pass
 class Click(Relation(Account, Link)): pass
-
-
-class CommentParticipationByAccount(tdb_cassandra.DenormalizedRelation):
-    _use_db = True
-    _last_modified_name = 'Commented'
-    _write_last_modified = False
-    _views = []
-
-    @classmethod
-    def value_for(cls, thing1, thing2, opaque):
-        return ''
-
-    @classmethod
-    def register(cls, user, link):
-        cls.create(user, [link])
 
 
 class GildedCommentsByAccount(tdb_cassandra.DenormalizedRelation):
