@@ -208,39 +208,55 @@ def get_roadblocks():
 # control functions
 
 class RenderableCampaign():
-    def __init__(self, link, campaign, transaction):
-        self.campaign_id36 = campaign._id36
-        self.start_date = campaign.start_date.strftime("%m/%d/%Y")
-        self.end_date = campaign.end_date.strftime("%m/%d/%Y")
-        ndays = (campaign.end_date - campaign.start_date).days
-        self.duration = strings.time_label % dict(num=ndays,
-                          time=ungettext("day", "days", ndays))
-        self.bid = "%.2f" % campaign.bid
-        self.sr = campaign.sr_name
-        live = campaign_is_live(link, campaign._id)
+    def __init__(self, campaign_id36, start_date, end_date, duration, bid, sr,
+                 status):
+        self.campaign_id36 = campaign_id36
+        self.start_date = start_date
+        self.end_date = end_date
+        self.duration = duration
+        self.bid = bid
+        self.sr = sr
+        self.status = status
 
-        self.status = dict(
-            paid=bool(transaction),
-            complete=False,
-            free=campaign.is_freebie(),
-            pay_url=pay_url(link, campaign),
-            view_live_url=view_live_url(link, campaign.sr_name),
-            sponsor=c.user_is_sponsor,
-            live=live,
-        )
+    @classmethod
+    def create(cls, link, campaigns):
+        transactions = get_transactions(link, campaigns)
+        live_campaigns = scheduled_campaigns_by_link(link)
+        user_is_sponsor = c.user_is_sponsor
+        r = []
+        for camp in campaigns:
+            transaction = transactions.get(camp._id)
+            campaign_id36 = camp._id36
+            start_date = camp.start_date.strftime("%m/%d/%Y")
+            end_date = camp.end_date.strftime("%m/%d/%Y")
+            ndays = (camp.end_date - camp.start_date).days
+            duration = strings.time_label % dict(num=ndays,
+                            time=ungettext("day", "days", ndays))
+            bid = "%.2f" % camp.bid
+            sr = camp.sr_name
+            status = {'paid': bool(transaction),
+                      'complete': False,
+                      'free': camp.is_freebie(),
+                      'pay_url': pay_url(link, camp),
+                      'view_live_url': view_live_url(link, sr),
+                      'sponsor': user_is_sponsor,
+                      'live': camp._id in live_campaigns}
+            if transaction:
+                if transaction.is_void():
+                    status['paid'] = False
+                    status['free'] = False
+                elif transaction.is_charged():
+                    status['complete'] = True
 
-        if transaction:
-            if transaction.is_void():
-                self.status['paid'] = False
-                self.status['free'] = False
-            elif transaction.is_charged():
-                self.status['complete'] = True
+            rc = cls(campaign_id36, start_date, end_date, duration, bid, sr,
+                     status)
+            r.append(rc)
+        return r
 
 
 def get_renderable_campaigns(link, campaigns):
     campaigns, is_single = tup(campaigns, ret_is_single=True)
-    bids = get_transactions(link, campaigns)
-    r = [RenderableCampaign(link, c, bids.get(c._id)) for c in campaigns]
+    r = RenderableCampaign.create(link, campaigns)
     if is_single:
         r = r[0]
     return r
