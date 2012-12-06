@@ -600,7 +600,9 @@ class WikiViewJsonTemplate(ThingJsonTemplate):
     
     def data(self, thing):
         edit_date = time.mktime(thing.edit_date.timetuple()) if thing.edit_date else None
-        edit_by = Wrapped(thing.edit_by).render() if thing.edit_by else None
+        edit_by = None
+        if thing.edit_by and not thing.edit_by._deleted:
+             edit_by = Wrapped(thing.edit_by).render()
         return dict(content_md=thing.page_content_md,
                     content_html=wikimarkdown(thing.page_content_md),
                     revision_by=edit_by,
@@ -620,7 +622,10 @@ class WikiRevisionJsonTemplate(ThingJsonTemplate):
     def render(self, thing, *a, **kw):
         timestamp = time.mktime(thing.date.timetuple()) if thing.date else None
         author = thing.get_author()
-        author = Wrapped(author).render() if author else None
+        if author and not author._deleted:
+            author = Wrapped(author).render()
+        else:
+            author = None
         return ObjectTemplate(dict(author=author,
                                    id=str(thing._id),
                                    timestamp=timestamp,
