@@ -3712,6 +3712,9 @@ class GoldInfoPage(BoringPage):
 class Goldvertisement(Templated):
     def __init__(self):
         Templated.__init__(self)
-        blurbs = g.live_config["goldvertisement_blurbs"]
+        if not c.user.gold:
+            blurbs = g.live_config["goldvertisement_blurbs"]
+        else:
+            blurbs = g.live_config["goldvertisement_has_gold_blurbs"]
         self.blurb = random.choice(blurbs)
 
