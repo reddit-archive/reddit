@@ -73,7 +73,7 @@ class ConfigValue(object):
     messages_re = re.compile(r'"([^"]+)"')
     @staticmethod
     def messages(v, key=None, data=None):
-        return ConfigValue.messages_re.findall(v)
+        return ConfigValue.messages_re.findall(v.decode("string_escape"))
 
 
 class ConfigValueParser(dict):

@@ -3713,5 +3713,5 @@ class Goldvertisement(Templated):
     def __init__(self):
         Templated.__init__(self)
         blurbs = g.live_config["goldvertisement_blurbs"]
-        blurb = random.choice(blurbs)
-        self.blurb_title, sep, self.blurb_aside = blurb.partition("|")
+        self.blurb = random.choice(blurbs)
+

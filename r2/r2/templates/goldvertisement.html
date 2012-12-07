@@ -20,18 +20,10 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="tags, text_with_links"/>
+<%namespace file="utils.html" import="text_with_links, md"/>
 
 <div class="goldvertisement">
   <div class="inner">
-    <p>
-      <strong>
-        ${text_with_links(thing.blurb_title,
-            reddit_gold=dict(link_text="reddit gold", path="/gold/about"))}
-      </strong>
-      % if thing.blurb_aside:
-        <br><i>${thing.blurb_aside}</i>
-      % endif
-    </p>
+    ${md(thing.blurb)}
   </div>
 </div>
