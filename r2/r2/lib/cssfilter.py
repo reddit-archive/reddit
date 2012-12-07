@@ -233,7 +233,7 @@ def valid_url(prop,value,report):
         try:
             u = urlparse(url)
             valid_scheme = u.scheme and u.scheme in valid_url_schemes
-            valid_domain = strip_www(u.netloc) in g.allowed_css_linked_domains
+            valid_domain = u.netloc in g.allowed_css_linked_domains
         except ValueError:
             u = False
 
