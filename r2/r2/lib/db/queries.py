@@ -1437,9 +1437,10 @@ def handle_vote(user, thing, dir, ip, organic,
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
 
+    new_vote(v, foreground=foreground, timer=timer)
+
     timestamps = []
     if isinstance(thing, Link):
-        new_vote(v, foreground=foreground, timer=timer)
 
         #update the modified flags
         if user._id == thing.author_id:
