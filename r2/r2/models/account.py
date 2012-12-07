@@ -570,7 +570,7 @@ class Account(Thing):
         return which.get(canon, None)
 
     def canonical_email(self):
-        email = str(self.email.lower())
+        email = self.email.lower().encode('utf-8')
         if email.count("@") != 1:
             return "invalid@invalid.invalid"
 
