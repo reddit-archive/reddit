@@ -152,9 +152,9 @@ class CommentTreeStorageV2(CommentTreeStorageBase):
 
     # column keys are tuples of (depth, parent_id, comment_id)
     _compare_with = types.CompositeType(
-        types.IntegerType(),
-        types.IntegerType(),
-        types.IntegerType())
+        types.LongType(),
+        types.LongType(),
+        types.LongType())
 
     # column values are counters
     _extra_schema_creation_args = {
