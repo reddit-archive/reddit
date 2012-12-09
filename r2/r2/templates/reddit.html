@@ -146,25 +146,21 @@
         <div class="login-popup cover-overlay" style="display: none">
           <div class="cover" onclick="return hidecover(this)"></div>
           <div class="popup">
+            <a href="#" onclick="return hidecover(this)" class="hidecover">
+              ${_("close this window")}
+            </a>
             <h1 class="cover-msg">${strings.cover_msg}</h1>
             ${login_panel(login_form)}
-            <div class="close-popup">
-              <a href="#" onclick="return hidecover(this)">
-                ${_("close this window")}
-              </a>
-            </div>
           </div>
         </div>
         %endif
         <div class="lang-popup cover-overlay" style="display: none">
           <div class="cover" onclick="return hidecover(this)"></div>
           <div class="popup">
+            <a href="#" onclick="return hidecover(this)" class="hidecover">
+              ${_("close this window")}
+            </a>
             <%include file="prefoptions.html" />
-            <div style="text-align:center; clear:both;">
-              <a href="#" onclick="return hidecover(this)">
-                ${_("close this window")}
-              </a>
-            </div>
           </div>
         </div>
       %endif

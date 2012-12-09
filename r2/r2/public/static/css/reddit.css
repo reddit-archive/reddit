@@ -2198,10 +2198,9 @@ li.searchfacet {
 }
 
 .popup h1 {
-    text-align: center;
-    font-size: large; 
+    font-size: large;
     font-weight: normal;
-    color: orangered;
+    margin-left: 1em;
 }
 
 .popup h2 {
@@ -2212,9 +2211,9 @@ li.searchfacet {
     font-weight: normal;
 }
 
-.popup .close-popup {
-    text-align: center;
-    margin-top: 10px;
+.popup .hidecover {
+    float: right;
+    margin-right: 3px;
 }
 
 .usertable { margin-left: 10px;} 
