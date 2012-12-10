@@ -53,7 +53,7 @@
   <p><a href="http://www.reddit.com/help/search" id="search_showmore">${_('advanced search: by author, community...')}</a></p>
 </%def>
 
-<form action="${add_sr('/search')}" id="search">
+<form action="${add_sr('/search')}" id="search" role="search">
   <input type="text" 
          %if thing.prev_search:
            value="${thing.prev_search}" style="color:black"

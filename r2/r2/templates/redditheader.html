@@ -29,7 +29,7 @@
 %>
 <%namespace file="utils.html" import="plain_link, img_link, text_with_links, separator, logout"/>
 
-<div id="header">
+<div id="header" role="banner">
   <a tabindex="1" href="#content" id="jumpToContent">${_('jump to content')}</a>
   ${thing.srtopbar}
   <div id="header-bottom-${'right' if c.lang_rtl else 'left'}">
