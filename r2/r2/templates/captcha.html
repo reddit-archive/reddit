@@ -36,7 +36,7 @@ ${rounded_captcha()}
   <input name="iden" value="${iden}" type="hidden"/>
 
   <img class="capimage"
-       alt="i wonder if these things even work" 
+       alt="visual CAPTCHA"
        %if hasattr(thing, "iden"):
        src="/captcha/${thing.iden}.png" 
        %else:
