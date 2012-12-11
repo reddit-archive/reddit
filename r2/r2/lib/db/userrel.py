@@ -63,15 +63,18 @@ class UserRelManager(object):
             return self.add(thing, user, **attrs)
 
     def ids(self, thing):
-        q = self.relation._query(self.relation.c._thing1_id == thing._id,
-                                 self.relation.c._name == self.name,
-                                 sort='_date')
-        return [r._thing2_id for r in q]
+        return [r._thing2_id for r in self.by_thing(thing)]
 
     def reverse_ids(self, user):
         q = self.relation._query(self.relation.c._thing2_id == user._id,
                                  self.relation.c._name == self.name)
         return [r._thing1_id for r in q]
+
+    def by_thing(self, thing):
+        return self.relation._query(self.relation.c._thing1_id == thing._id,
+                                    self.relation.c._name == self.name,
+                                    sort='_date')
+
 
 
 class MemoizedUserRelManager(UserRelManager):
@@ -138,6 +141,7 @@ def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False):
     setattr(UR, 'get_' + name, UR._bind(mgr.get))
     setattr(UR, 'add_' + name, UR._bind(mgr.add))
     setattr(UR, 'remove_' + name, UR._bind(mgr.remove))
+    setattr(UR, 'each_' + name, UR._bind(mgr.by_thing))
     setattr(UR, name + '_permission_class', permission_class)
     if not disable_ids_fn:
         setattr(UR, mgr.ids_fn_name, UR._bind(mgr.ids))
