@@ -922,6 +922,7 @@ class SearchPage(BoringPage):
                  num_results, search_params={},
                  simple=False, restrict_sr=False, site=None,
                  syntax=None, converted_data=None, facets={}, sort=None,
+                 recent=None,
                  *a, **kw):
         self.searchbar = SearchBar(prev_search=prev_search,
                                    elapsed_time=elapsed_time,
@@ -930,7 +931,7 @@ class SearchPage(BoringPage):
                                    show_feedback=True, site=site,
                                    simple=simple, restrict_sr=restrict_sr,
                                    syntax=syntax, converted_data=converted_data,
-                                   facets=facets, sort=sort)
+                                   facets=facets, sort=sort, recent=recent)
         BoringPage.__init__(self, pagename, robots='noindex', *a, **kw)
 
     def content(self):
@@ -1939,7 +1940,7 @@ class SearchBar(Templated):
                  elapsed_time=0, search_params={}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None, syntax=None,
                  subreddit_search=False, converted_data=None, facets={}, 
-                 sort=None, **kw):
+                 sort=None, recent=None, **kw):
         if header is None:
             header = _("previous search")
         self.header = header
@@ -1959,7 +1960,7 @@ class SearchBar(Templated):
                            site=site, syntax=syntax,
                            converted_data=converted_data,
                            subreddit_search=subreddit_search, facets=facets,
-                           sort=sort)
+                           sort=sort, recent=recent)
 
 class Frame(Wrapped):
     """Frameset for the FrameToolbar used when a user hits /tb/. The

@@ -516,7 +516,7 @@ def add_attr(attrs, kind, label=None, link=None, cssclass=None, symbol=None):
     attrs.append( (priority, symbol, cssclass, label, link, img) )
 
 
-def search_url(query, subreddit, restrict_sr="off", sort=None):
+def search_url(query, subreddit, restrict_sr="off", sort=None, recent=None):
     import urllib
     query = _force_utf8(query)
     url_query = {"q": query}
@@ -524,6 +524,8 @@ def search_url(query, subreddit, restrict_sr="off", sort=None):
         url_query["restrict_sr"] = restrict_sr
     if sort:
         url_query["sort"] = sort
+    if recent:
+        url_query["t"] = recent
     path = "/r/%s/search?" % subreddit if subreddit else "/search?"
     path += urllib.urlencode(url_query)
     return path

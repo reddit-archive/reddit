@@ -22,7 +22,7 @@
 
 import collections
 import cPickle as pickle
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import httplib
 import json
@@ -36,6 +36,7 @@ import l2cs
 
 from r2.lib import amqp, filters
 from r2.lib.db.operators import desc
+from r2.lib.db.sorts import epoch_seconds
 import r2.lib.utils as r2utils
 from r2.models import (Account, Link, Subreddit, Thing, All, DefaultSR,
                        MultiReddit, DomainSR, Friends, ModContribSR,
@@ -797,12 +798,13 @@ class CloudSearchQuery(object):
     search_api = None
     sorts = {}
     sorts_menu_mapping = {}
+    recents = {None: None}
     known_syntaxes = ("cloudsearch", "lucene", "plain")
     default_syntax = "plain"
     lucene_parser = None
 
     def __init__(self, query, sr=None, sort=None, syntax=None, raw_sort=None,
-                 faceting=None):
+                 faceting=None, recent=None):
         if syntax is None:
             syntax = self.default_syntax
         elif syntax not in self.known_syntaxes:
@@ -816,6 +818,8 @@ class CloudSearchQuery(object):
             self.sort = raw_sort
         else:
             self.sort = self.sorts[sort]
+        self._recent = recent
+        self.recent = self.recents[recent]
         self.faceting = faceting
         self.bq = u''
         self.results = None
@@ -936,7 +940,14 @@ class LinkSearchQuery(CloudSearchQuery):
                           'top': 4,
                           'comments': 5,
                           }
-
+    recents = {
+        'hour': timedelta(hours=1),
+        'day': timedelta(days=1),
+        'week': timedelta(days=7),
+        'month': timedelta(days=31),
+        'year': timedelta(days=366),
+        'all': None,
+    }
     schema = l2cs.make_schema(LinkFields.lucene_fieldnames())
     lucene_parser = l2cs.make_parser(
              int_fields=LinkFields.lucene_fieldnames(type_=int),
@@ -946,28 +957,29 @@ class LinkSearchQuery(CloudSearchQuery):
     default_syntax = "lucene"
 
     def customize_query(self, bq):
+        queries = [bq]
         subreddit_query = self._get_sr_restriction(self.sr)
-        return self.create_boolean_query(bq, subreddit_query)
+        if subreddit_query:
+            queries.append(subreddit_query)
+        if self.recent:
+            recent_query = self._restrict_recent(self.recent)
+            queries.append(recent_query)
+        return self.create_boolean_query(queries)
 
     @classmethod
-    def create_boolean_query(cls, query, subreddit_query):
-        '''Join a (user-entered) text query with the generated subreddit query
-        
-        Input:
-            base_query: user input from the search textbox
-            subreddit_query: output from _get_sr_restriction(sr)
-        
-        Test cases:
-            base_query: simple, simple with quotes, boolean, boolean w/ parens
-            subreddit_query: None, in parens '(or sr_id:1 sr_id:2 ...)',
-                             without parens "author:'foo'"
-        
-        '''
-        if subreddit_query:
-            bq = "(and %s %s)" % (query, subreddit_query)
+    def create_boolean_query(cls, queries):
+        '''Return an AND clause combining all queries'''
+        if len(queries) > 1:
+            bq = '(and ' + ' '.join(queries) + ')'
         else:
-            bq = query
+            bq = queries[0]
         return bq
+
+    @staticmethod
+    def _restrict_recent(recent):
+        now = datetime.now(g.tz)
+        since = epoch_seconds(now - recent)
+        return 'timestamp:%i..' % since
 
     @staticmethod
     def _get_sr_restriction(sr):

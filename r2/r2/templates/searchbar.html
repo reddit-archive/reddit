@@ -80,7 +80,7 @@
   <ol class="list">
   %for subreddit, count in thing.facets:
     <li class="searchfacet reddit">
-      <a class="facet title word" href="${search_url(thing.prev_search, subreddit.name, restrict_sr='on', sort=thing.sort)}">/r/${subreddit.name}</a>&nbsp;
+      <a class="facet title word" href="${search_url(thing.prev_search, subreddit.name, restrict_sr='on', sort=thing.sort, recent=thing.recent)}">/r/${subreddit.name}</a>&nbsp;
       <span class="facet count number">(${count})</span>
     </li>&nbsp;
   %endfor

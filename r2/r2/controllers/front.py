@@ -776,11 +776,12 @@ class FrontController(RedditController, OAuth2ResourceController):
     @base_listing
     @validate(query=VLength('q', max_length=512),
               sort=VMenu('sort', SearchSortMenu, remember=False),
+              recent=VMenu('t', TimeMenu, remember=False),
               restrict_sr=VBoolean('restrict_sr', default=False),
               syntax=VOneOf('syntax', options=SearchQuery.known_syntaxes))
     @api_doc(api_section.search, extensions=['json', 'xml'])
-    def GET_search(self, query, num, reverse, after, count, sort, restrict_sr,
-                   syntax):
+    def GET_search(self, query, num, reverse, after, count, sort, recent,
+                   restrict_sr, syntax):
         """Search links page."""
         if query and '.' in query:
             url = sanitize_url(query, require_scheme = True)
@@ -798,7 +799,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         try:
             cleanup_message = None
             try:
-                q = SearchQuery(query, site, sort, syntax=syntax)
+                q = SearchQuery(query, site, sort,
+                                recent=recent, syntax=syntax)
                 results, etime, spane = self._search(q, num=num, after=after,
                                                      reverse=reverse,
                                                      count=count)
@@ -810,7 +812,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                 cleaned = re.sub("[^\w\s]+", " ", query)
                 cleaned = cleaned.lower().strip()
 
-                q = SearchQuery(cleaned, site, sort)
+                q = SearchQuery(cleaned, site, sort, recent=recent)
                 results, etime, spane = self._search(q, num=num,
                                                      after=after,
                                                      reverse=reverse,
@@ -828,8 +830,9 @@ class FrontController(RedditController, OAuth2ResourceController):
             
             res = SearchPage(_('search results'), query, etime, results.hits,
                              content=spane,
-                             nav_menus=[SearchSortMenu(default=sort)],
-                             search_params=dict(sort=sort),
+                             nav_menus=[SearchSortMenu(default=sort),
+                                        TimeMenu(default=recent)],
+                             search_params=dict(sort=sort, t=recent),
                              infotext=cleanup_message,
                              simple=False, site=c.site,
                              restrict_sr=restrict_sr,
@@ -837,6 +840,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                              converted_data=q.converted_data,
                              facets=results.subreddit_facets,
                              sort=sort,
+                             recent=recent,
                              ).render()
 
             return res
