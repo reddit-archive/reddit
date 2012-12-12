@@ -172,6 +172,9 @@ def normalize_page(page):
     # Ensure there is no side effect if page is None
     page = page or ""
     
+    # Replace spaces with underscores
+    page = page.replace(' ', '_')
+    
     # Case insensitive page names
     page = page.lower()
     
@@ -206,13 +209,10 @@ class VWikiPageName(Validator):
         except UnicodeEncodeError:
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
-        if ' ' in page:
-            page = page.replace(' ', '_')
+        page = normalize_page(page)
         
         if page and not page_match_regex.match(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
-        
-        page = normalize_page(page)
         
         # If no page is specified, give the index page
         page = page or "index"
