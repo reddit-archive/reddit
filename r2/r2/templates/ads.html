@@ -26,18 +26,8 @@
    import random
  %>
 
-<%
-
-name = ''
-if c.custom_dart_keyword:
-    name = "r/%s/%s" % (c.site.name, c.custom_dart_keyword)
-elif not c.default_sr:
-    name = "r/%s/" % c.site.name
-
-%>
-
-<iframe id="ad-frame" frameborder="0" scrolling="no" name="ad-frame"
-        src="${g.ad_domain}/ads/${name}">
+<iframe id="${thing.frame_id}" frameborder="0" scrolling="no" name="${thing.frame_id}"
+        src="${thing.ad_url}">
 </iframe>
 
 <script type="text/javascript">

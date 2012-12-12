@@ -2339,7 +2339,16 @@ class AdminAwardWinners(Templated):
         Templated.__init__(self, award = award, trophies = trophies)
 
 class Ads(Templated):
-    pass
+    def __init__(self):
+        Templated.__init__(self)
+        path = ""
+        if c.custom_dart_keyword:
+            path = "r/%s/%s" % (c.site.path, c.custom_dart_keyword)
+        elif not c.default_sr:
+            path = "r/%s/" % c.site.path
+        self.ad_url = g.ad_domain + "/ads/" + path
+        self.frame_id = "ad-frame"
+
 
 class Embed(Templated):
     """wrapper for embedding /help into reddit as if it were not on a separate wiki."""
