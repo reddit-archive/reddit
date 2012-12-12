@@ -310,6 +310,9 @@ class VWikiPageRevise(VWikiPage):
             # Should not happen, but just in case
             self.set_error('EMPTY_PAGE_NAME', 403)
             return
+        
+        page = normalize_page(page)
+        
         if c.is_wiki_mod and WikiPage.is_special(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif (not c.user_is_admin) and WikiPage.is_restricted(page):
