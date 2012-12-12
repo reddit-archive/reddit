@@ -947,6 +947,7 @@ class LinkSearchQuery(CloudSearchQuery):
         'month': timedelta(days=31),
         'year': timedelta(days=366),
         'all': None,
+        None: None,
     }
     schema = l2cs.make_schema(LinkFields.lucene_fieldnames())
     lucene_parser = l2cs.make_parser(
