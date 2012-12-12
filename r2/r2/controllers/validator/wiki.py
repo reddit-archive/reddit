@@ -165,11 +165,15 @@ def may_view(sr, user, page):
     return False
 
 def normalize_page(page):
+    # Ensure there is no side effect if page is None
+    page = page or ""
+    
     # Case insensitive page names
     page = page.lower()
     
-    # Normalize path
-    page = normpath(page)
+    # Normalize path (And avoid normalizing empty to ".")
+    if page:
+        page = normpath(page)
     
     # Chop off initial "/", just in case it exists
     page = page.lstrip('/')
@@ -192,22 +196,22 @@ class VWikiPageName(Validator):
     
     def run(self, page):
         original_page = page
-        if not page:
-            # If no page is specified, give the index page
-            page = "index"
         
         try:
-            page = str(page)
+            page = str(page) if page else ""
         except UnicodeEncodeError:
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
         if ' ' in page:
             page = page.replace(' ', '_')
         
-        if not page_match_regex.match(page):
+        if page and not page_match_regex.match(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
         
         page = normalize_page(page)
+        
+        # If no page is specified, give the index page
+        page = page or "index"
         
         if WikiPage.is_impossible(page):
             return self.set_error('INVALID_PAGE_NAME', code=400)
@@ -298,6 +302,10 @@ class VWikiPageRevise(VWikiPage):
         VWikiPage.__init__(self, param, required=required, *k, **kw)
     
     def may_not_create(self, page):
+        if not page:
+            # Should not happen, but just in case
+            self.set_error('EMPTY_PAGE_NAME', 403)
+            return
         if c.is_wiki_mod and WikiPage.is_special(page):
             return {'reason': 'PAGE_CREATED_ELSEWHERE'}
         elif (not c.user_is_admin) and WikiPage.is_restricted(page):

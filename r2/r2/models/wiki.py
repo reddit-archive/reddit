@@ -195,6 +195,9 @@ class WikiPage(tdb_cassandra.Thing):
     
     @classmethod
     def create(cls, sr, name):
+        # Sanity check for a page name and subreddit
+        if not name or not sr:
+            raise ValueError
         name = name.lower()
         kw = dict(sr=sr._id36, name=name, permlevel=0, content='', listed_=False)
         page = cls(**kw)
