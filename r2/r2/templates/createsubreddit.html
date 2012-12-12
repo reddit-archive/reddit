@@ -161,7 +161,7 @@
                            _("Wiki is disabled for all users except mods"),
                            (not thing.site or thing.site.wikimode == 'disabled'))}
         ${utils.radio_type('wikimode', "modonly", _("mod editing"),
-                           _("Only mods or those on a pages edit list may edit"),
+                           _("Only mods, approved wiki contributors, or those on a page's edit list may edit"),
                            (thing.site and thing.site.wikimode == 'modonly'))}
         ${utils.radio_type('wikimode', "anyone", _("anyone"),
                            _("Anyone who can submit to the subreddit may edit"),

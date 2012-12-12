@@ -37,12 +37,12 @@
                     %if thing.permlevel == 0:
                         checked
                     %endif
-                /><label for="permlevel0">${_('anyone may edit')}</label><br/>
+                /><label for="permlevel0">${_('use subreddit wiki permissions')}</label><br/>
                 <input type="radio" name="permlevel" id="permlevel1" value="1"
                 %if thing.permlevel == 1:
                     checked
                 %endif
-                /><label for="permlevel1">${_('only approved wiki contributors may edit')}</label><br/>
+                /><label for="permlevel1">${_('only approved wiki contributors for this page may edit')}</label><br/>
                 <input type="radio" name="permlevel" id="permlevel2" value="2"
                 %if thing.permlevel == 2:
                     checked
