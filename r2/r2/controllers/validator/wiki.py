@@ -84,6 +84,10 @@ def may_revise(sr, user, page=None):
         # Users who are wiki banned in the subreddit may not contribute
         return False
     
+    if sr.is_banned(user):
+        # If the user is banned from the subreddit, do not allow them to contribute
+        return False
+    
     if page and not may_view(sr, user, page):
         # Users who are not allowed to view the page may not contribute to the page
         return False
