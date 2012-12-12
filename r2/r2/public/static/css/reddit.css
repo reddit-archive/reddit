@@ -1936,11 +1936,18 @@ textarea.gray { color: gray; }
 
 #noresults { margin-right: 310px;  }
 
-#ad-frame {
+#ad-frame, #ad_main {
     border: 0px;
     overflow: hidden;
     width: 300px;
     height: 280px;
+}
+
+#ad_sponsorship {
+    border: 0px;
+    overflow: hidden;
+    width: 300px;
+    height: 100px;
 }
 
 
