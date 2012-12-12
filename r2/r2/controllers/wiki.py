@@ -157,7 +157,7 @@ class WikiController(RedditController):
         else:
             return WikiCreate(page=page, may_revise=True).render()
     
-    @wiki_validate(wp=VWikiPageRevise('page', restricted=True))
+    @wiki_validate(wp=VWikiPageRevise('page', restricted=True, required=True))
     def GET_wiki_revise(self, wp, page, message=None, **kw):
         wp = wp[0]
         previous = kw.get('previous', wp._get('revision'))
