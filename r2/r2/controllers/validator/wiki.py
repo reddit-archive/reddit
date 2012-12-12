@@ -96,16 +96,6 @@ def may_revise(sr, user, page=None):
         # If the user is an editor on the page, they may edit
         return True
     
-    if sr.wikimode != 'anyone':
-        # If the user is not a page editor and the mode is not everyone,
-        # the user may not edit.
-        return False
-    
-    if not sr.can_submit(user):
-        # If the user can not submit to the subreddit
-        # They should not be able to contribute
-        return False
-    
     if page and page.special:
         # If this is a special page
         # (and the user is not a mod or page editor)
@@ -120,6 +110,17 @@ def may_revise(sr, user, page=None):
     if sr.is_wikicontributor(user):
         # If the user is a wiki contributor, they may revise
         return True
+    
+    if sr.wikimode != 'anyone':
+        # If the user is not a page editor or wiki contributor,
+        # and the mode is not everyone,
+        # the user may not edit.
+        return False
+    
+    if not sr.can_submit(user):
+        # If the user can not submit to the subreddit
+        # They should not be able to contribute
+        return False
     
     karma = max(user.karma('link', sr), user.karma('comment', sr))
     if karma < (sr.wiki_edit_karma or 0):
