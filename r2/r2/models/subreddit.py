@@ -419,15 +419,15 @@ class Subreddit(Thing, Printable):
         else:
             return False
 
-    def can_ban(self,user):
+    def can_ban(self, user):
         return (user
                 and (c.user_is_admin
-                     or self.is_moderator(user)))
+                     or self.is_moderator_with_perms(user, 'posts')))
 
     def can_distinguish(self,user):
         return (user
                 and (c.user_is_admin
-                     or self.is_moderator(user)))
+                     or self.is_moderator_with_perms(user, 'posts')))
 
     def can_change_stylesheet(self, user):
         if c.user_is_loggedin:

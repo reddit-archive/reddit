@@ -641,7 +641,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
         elif (location in ('reports', 'spam', 'modqueue', 'unmoderated')
-              and is_moderator):
+              and is_moderator_with_perms('posts')):
             c.allow_styles = True
             pane = self._make_spamlisting(location, num, after, reverse, count)
             if c.user.pref_private_feeds:

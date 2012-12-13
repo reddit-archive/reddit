@@ -918,7 +918,7 @@ class VSrCanBan(VByName):
             # comment, because this should only be used on links and
             # comments
             subreddit = item.subreddit_slow
-            if subreddit.is_moderator(c.user):
+            if subreddit.is_moderator_with_perms(c.user, 'posts'):
                 return True
         abort(403,'forbidden')
 

@@ -269,17 +269,20 @@ class Reddit(Templated):
 
             buttons.append(NamedButton("traffic", css_class="reddit-traffic"))
 
-        buttons += [NamedButton("modqueue", css_class="reddit-modqueue"),
-                    NamedButton("reports", css_class="reddit-reported"),
-                    NamedButton("spam", css_class="reddit-spam")]
+        if c.site.is_moderator_with_perms(c.user, 'posts'):
+            buttons += [NamedButton("modqueue", css_class="reddit-modqueue"),
+                        NamedButton("reports", css_class="reddit-reported"),
+                        NamedButton("spam", css_class="reddit-spam")]
 
         if is_single_subreddit:
             buttons.append(NamedButton("banned", css_class="reddit-ban"))
             if c.site.is_moderator_with_perms(c.user, 'flair'):
                 buttons.append(NamedButton("flair", css_class="reddit-flair"))
 
-        buttons += [NamedButton("log", css_class="reddit-moderationlog"),
-                    NamedButton("unmoderated", css_class="reddit-unmoderated")]
+        buttons.append(NamedButton("log", css_class="reddit-moderationlog"))
+        if c.site.is_moderator_with_perms(c.user, 'posts'):
+            buttons.append(
+                NamedButton("unmoderated", css_class="reddit-unmoderated"))
 
         return SideContentBox(_('moderation tools'),
                               [NavMenu(buttons,
