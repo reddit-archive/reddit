@@ -1079,7 +1079,7 @@ a.author { margin-right: 0.5em; }
 
 /* wiki table of contents */
 
-.md.wiki > ul:first-child {
+.md.wiki > .toc > ul {
     float: right;
     padding: 10px 25px;
     margin-right: 0;
@@ -1087,7 +1087,7 @@ a.author { margin-right: 0.5em; }
     list-style: none;
 }
 
-.md.wiki > ul:first-child ul {
+.md.wiki > .toc > ul ul {
     margin: 4px 0;
     padding-left: 25px;
     border-left: 1px dotted #cce;
