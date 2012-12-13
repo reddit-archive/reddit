@@ -2513,7 +2513,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         form.set_html(".status", _('saved'))
 
     @require_oauth2_scope("modflair")
-    @validatedForm(VFlairManager(),
+    @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    user = VFlairAccount("name"),
                    link = VFlairLink('link'),
@@ -2528,7 +2528,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             else:
                 site = Subreddit._byID(link.sr_id, data=True)
                 # make sure c.user has permission to set flair on this link
-                if not c.user_is_admin and not site.is_moderator(c.user):
+                if not (c.user_is_admin 
+                        or site.is_moderator_with_perms(c.user, 'flair')):
                     abort(403, 'forbidden')
         else:
             flair_type = USER_FLAIR
@@ -2587,7 +2588,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_html('.status', _('saved'))
 
     @require_oauth2_scope("modflair")
-    @validatedForm(VFlairManager(),
+    @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    user = VFlairAccount("name"))
     @api_doc(api_section.flair)
@@ -2609,7 +2610,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         jquery('.tagline .id-%s' % user._fullname).parent().html(unflair)
 
     @require_oauth2_scope("modflair")
-    @validate(VFlairManager(),
+    @validate(VSrModerator(perms='flair'),
               VModhash(),
               flair_csv = nop('flair_csv'))
     @api_doc(api_section.flair)
@@ -2687,7 +2688,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modflair")
     @validatedForm(
-        VFlairManager(),
+        VSrModerator(perms='flair'),
         VModhash(),
         flair_enabled = VBoolean("flair_enabled"),
         flair_position = VOneOf("flair_position", ("left", "right")),
@@ -2734,7 +2735,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         return BoringPage(_("API"), content = flair).render()
 
     @require_oauth2_scope("modflair")
-    @validatedForm(VFlairManager(),
+    @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'),
                    text = VFlairText('text'),
@@ -2804,7 +2805,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                              details='flair_template')
 
     @require_oauth2_scope("modflair")
-    @validatedForm(VFlairManager(),
+    @validatedForm(VSrModerator(perms='flair'),
                    VModhash(),
                    flair_template = VFlairTemplateByID('flair_template_id'))
     @api_doc(api_section.flair)
@@ -2816,7 +2817,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                              details='flair_delete_template')
 
     @require_oauth2_scope("modflair")
-    @validatedForm(VFlairManager(), VModhash(),
+    @validatedForm(VSrModerator(perms='flair'), VModhash(),
                    flair_type = VOneOf('flair_type', (USER_FLAIR, LINK_FLAIR),
                                        default=USER_FLAIR))
     @api_doc(api_section.flair)
@@ -2836,7 +2837,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             else:
                 site = Subreddit._byID(link.sr_id, data=True)
             return FlairSelector(link=link, site=site).render()
-        if user and not (c.user_is_admin or c.site.is_moderator(c.user)):
+        if user and not (c.user_is_admin
+                         or c.site.is_moderator_with_perms(c.user, 'flair')):
             # ignore user parameter if c.user is not mod/admin
             user = None
         return FlairSelector(user=user).render()
@@ -2874,7 +2876,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             flair_template = None
             text = None
 
-        if not site.is_moderator(c.user) and not c.user_is_admin:
+        if not (c.user_is_admin
+                or site.is_moderator_with_perms(c.user, 'flair')):
             if not self_assign_enabled:
                 # TODO: serve error to client
                 g.log.debug('flair self-assignment not permitted')
@@ -2900,7 +2903,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             setattr(user, 'flair_%s_css_class' % site._id, css_class)
             user._commit()
 
-            if ((site.is_moderator(c.user) or c.user_is_admin)
+            if ((c.user_is_admin
+                 or site.is_moderator_with_perms(c.user, 'flair'))
                 and c.user != user):
                 ModAction.create(site, c.user, action='editflair',
                                  target=user, details='flair_edit')
@@ -2922,7 +2926,7 @@ class ApiController(RedditController, OAuth2ResourceController):
             link._commit()
             changed(link)
 
-            if ((site.is_moderator(c.user) or c.user_is_admin)):
+            if c.user_is_admin or site.is_moderator_with_perms(c.user, 'flair'):
                 ModAction.create(site, c.user, action='editflair',
                                  target=link, details='flair_edit')
 

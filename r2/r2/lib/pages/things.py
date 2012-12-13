@@ -87,8 +87,6 @@ class LinkButtons(PrintableButtons):
         else:
             show_unmarknsfw = False
 
-        show_flair = thing.can_ban or is_author
-
         # do we show the delete button?
         show_delete = is_author and delete and not thing._deleted
         # disable the delete button for live sponsored links
@@ -128,7 +126,7 @@ class LinkButtons(PrintableButtons):
                                   show_distinguish = show_distinguish,
                                   show_marknsfw = show_marknsfw,
                                   show_unmarknsfw = show_unmarknsfw,
-                                  show_flair = show_flair,
+                                  show_flair = thing.can_flair,
                                   show_comments = comments,
                                   # promotion
                                   promoted = thing.promoted,

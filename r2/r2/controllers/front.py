@@ -590,7 +590,15 @@ class FrontController(RedditController, OAuth2ResourceController):
     def _edit_normal_reddit(self, location, num, after, reverse, count, created,
                             name, user):
         # moderator is either reddit's moderator or an admin
-        is_moderator = c.user_is_loggedin and c.site.is_moderator(c.user) or c.user_is_admin
+        moderator_rel = c.user_is_loggedin and c.site.get_moderator(c.user)
+        is_moderator = c.user_is_admin or moderator_rel
+        is_unlimited_moderator = c.user_is_admin or (
+            moderator_rel and moderator_rel.is_superuser())
+        is_moderator_with_perms = lambda *perms: (
+            c.user_is_admin
+            or moderator_rel and all(moderator_rel.has_permission(perm)
+                                     for perm in perms))
+
         extension_handling = False
         if is_moderator and location == 'edit':
             pane = PaneStack()
@@ -600,7 +608,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
             pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
-            pane = ModList(editable = is_moderator)
+            pane = ModList(editable=is_unlimited_moderator)
         elif is_moderator and location == 'banned':
             pane = BannedList(editable = is_moderator)
         elif is_moderator and location == 'wikibanned':
@@ -640,7 +648,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                 extension_handling = "private"
         elif (is_moderator or c.user_is_sponsor) and location == 'traffic':
             pane = trafficpages.SubredditTraffic()
-        elif is_moderator and location == 'flair':
+        elif is_moderator_with_perms('flair') and location == 'flair':
             c.allow_styles = True
             pane = FlairPane(num, after, reverse, name, user)
         elif c.user_is_sponsor and location == 'ads':

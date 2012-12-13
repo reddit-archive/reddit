@@ -274,8 +274,9 @@ class Reddit(Templated):
                     NamedButton("spam", css_class="reddit-spam")]
 
         if is_single_subreddit:
-            buttons += [NamedButton("banned", css_class="reddit-ban"),
-                        NamedButton("flair", css_class="reddit-flair")]
+            buttons.append(NamedButton("banned", css_class="reddit-ban"))
+            if c.site.is_moderator_with_perms(c.user, 'flair'):
+                buttons.append(NamedButton("flair", css_class="reddit-flair"))
 
         buttons += [NamedButton("log", css_class="reddit-moderationlog"),
                     NamedButton("unmoderated", css_class="reddit-unmoderated")]
@@ -2509,7 +2510,8 @@ class WrappedUser(CachedTemplate):
 
         if include_flair_selector:
             if (not getattr(c.site, 'flair_self_assign_enabled', True)
-                and not (c.user_is_admin or c.site.is_moderator(c.user))):
+                and not (c.user_is_admin
+                         or c.site.is_moderator_with_perms(c.user, 'flair'))):
                 include_flair_selector = False
 
         target = None
@@ -2734,7 +2736,8 @@ class FlairPrefs(CachedTemplate):
 class FlairSelectorLinkSample(CachedTemplate):
     def __init__(self, link, site, flair_template):
         flair_position = getattr(site, 'link_flair_position', 'right')
-        admin = bool(c.user_is_admin or site.is_moderator(c.user))
+        admin = bool(c.user_is_admin
+                     or site.is_moderator_with_perms(c.user, 'flair'))
         CachedTemplate.__init__(
             self,
             title=link.title,
@@ -2752,7 +2755,8 @@ class FlairSelector(CachedTemplate):
             user = c.user
         if site is None:
             site = c.site
-        admin = bool(c.user_is_admin or site.is_moderator(c.user))
+        admin = bool(c.user_is_admin
+                     or site.is_moderator_with_perms(c.user, 'flair'))
 
         if link:
             flair_type = LINK_FLAIR

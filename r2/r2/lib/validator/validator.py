@@ -873,14 +873,6 @@ class VSrModerator(Validator):
                 abort(403, "forbidden")
             return self.set_error('MODERATOR_REQUIRED', code=403)
 
-class VFlairManager(VSrModerator):
-    """Validates that a user is permitted to manage flair for a subreddit.
-       
-    Currently this is the same as VSrModerator. It's a separate class to act as
-    a placeholder if we ever need to give mods a way to delegate this aspect of
-    subreddit administration."""
-    pass
-
 class VCanDistinguish(VByName):
     def run(self, thing_name, how):
         if c.user_is_admin:
