@@ -356,6 +356,16 @@ def filter_thing2(x):
     return x._thing2
 
 
+def filter_thing(x):
+    """Return "thing" from a proxy object.
+
+    Use this as the filter_fn when some object that's not a Thing or Relation
+    is used as the basis of a cached query.
+
+    """
+    return x.thing
+
+
 def _is_query_precomputed(query):
     """Return if this query must be updated offline in a batch job.
 

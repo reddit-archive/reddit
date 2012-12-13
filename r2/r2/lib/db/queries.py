@@ -30,11 +30,17 @@ from r2.lib import utils
 from r2.lib import amqp, sup, filters
 from r2.lib.comment_tree import add_comments, update_comment_votes
 from r2.models.promo import PROMOTE_STATUS, get_promote_srid
-from r2.models.query_cache import (cached_query, merged_cached_query,
-                                   CachedQuery, CachedQueryMutator,
-                                   MergedCachedQuery)
-from r2.models.query_cache import UserQueryCache, SubredditQueryCache
-from r2.models.query_cache import ThingTupleComparator
+from r2.models.query_cache import (
+    cached_query,
+    CachedQuery,
+    CachedQueryMutator,
+    filter_thing,
+    merged_cached_query,
+    MergedCachedQuery,
+    SubredditQueryCache,
+    ThingTupleComparator,
+    UserQueryCache,
+)
 from r2.models.last_modified import LastModified
 from r2.lib.utils import SimpleSillyStub
 
@@ -748,6 +754,12 @@ def get_all_promoted_links():
                get_all_rejected_links(), get_all_live_links(),
                get_all_accepted_links()]
     return queries
+
+
+@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+def get_gilded_comments():
+    return
+
 
 def add_queries(queries, insert_items=None, delete_items=None, foreground=False):
     """Adds multiple queries to the query queue. If insert_items or

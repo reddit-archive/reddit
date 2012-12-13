@@ -27,6 +27,9 @@ import os
 from routes import Mapper
 from pylons import config
 
+def not_in_sr(environ, results):
+    return 'subreddit' not in environ and 'sub_domain' not in environ
+
 def make_map():
     map = Mapper()
     mc = map.connect
@@ -117,6 +120,9 @@ def make_map():
        action='oldinfo', dest='comments', type='ancient')
     mc('/info/:article/:dest/:comment', controller='front',
        action='oldinfo', type='old', dest='comments', comment=None)
+
+    mc("/comments/gilded", action="listing", controller="gilded",
+       conditions={"function": not_in_sr})
 
     mc('/related/:article/:title', controller='front',
        action='related', title=None)

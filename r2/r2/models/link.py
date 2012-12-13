@@ -44,6 +44,7 @@ from pylons import c, g, request
 from pylons.i18n import ungettext, _
 from datetime import datetime, timedelta
 from hashlib import md5
+from pycassa.util import convert_uuid_to_time
 
 import random, re
 import json
@@ -796,8 +797,16 @@ class Comment(Thing, Printable):
                                    context=context, anchor=anchor)
 
     def _gild(self, user):
+        now = datetime.now(g.tz)
+
         self._incr("gildings")
+
         GildedCommentsByAccount.gild_comment(user, self)
+
+        from r2.lib.db import queries
+        with CachedQueryMutator() as m:
+            gilding = utils.Storage(thing=self, date=now)
+            m.insert(queries.get_gilded_comments(), [gilding])
 
     def _fill_in_parents(self):
         if not self.parent_id:
@@ -1438,9 +1447,15 @@ class GildingsByDay(tdb_cassandra.View):
     def get_gildings(cls, date):
         key = cls._rowkey(date)
         columns = cls.get_time_sorted_columns(key)
-        gildings = [json.loads(v) for v in columns.itervalues()]
-        for gilding in gildings:
+        gildings = []
+        for name, json_blob in columns.iteritems():
+            timestamp = convert_uuid_to_time(name)
+            date = datetime.utcfromtimestamp(timestamp).replace(tzinfo=g.tz)
+
+            gilding = json.loads(json_blob)
+            gilding["date"] = date
             gilding["user"] = int(gilding["user"], 36)
+            gildings.append(gilding)
         return gildings
 
     @classmethod

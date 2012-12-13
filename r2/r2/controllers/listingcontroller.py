@@ -1049,3 +1049,9 @@ class CommentsController(ListingController):
         c.profilepage = True
         return ListingController.GET_listing(self, **env)
 
+
+class GildedController(ListingController):
+    title_text = _("gilded comments")
+
+    def query(self):
+        return queries.get_gilded_comments()
