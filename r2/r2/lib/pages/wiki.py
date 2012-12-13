@@ -61,29 +61,14 @@ class WikiPageDiscussions(Templated):
         self.page = page
         Templated.__init__(self)
 
-class WikiBasePage(Templated):
-    def __init__(self, content, action, pageactions, page=None, showtitle=False,
-                description=None, **context):
-        self.pageactions = pageactions
-        self.page = page
-        self.base_url = c.wiki_base_url
-        self.action = action
-        self.description = description
-        if showtitle:
-            self.title = action[1]
-        else:
-            self.title = None
-        self.content = content
-        Templated.__init__(self)
-
-class WikiBase(Reddit):
+class WikiBasePage(Reddit):
     extra_page_classes = ['wiki-page']
     
-    def __init__(self, content, page=None, may_revise=False, actionless=False, alert=None, **context):
+    def __init__(self, inner_content, page=None, may_revise=False,
+                 actionless=False, alert=None, description=None, 
+                 showtitle=False, **context):
         pageactions = []
-        title = c.site.name
         if not actionless and page:
-            title = '%s - %s' % (title, page)
             pageactions += [(page, _("view"), False)]
             if may_revise:
                 pageactions += [('edit', _("edit"), True)]
@@ -93,17 +78,29 @@ class WikiBase(Reddit):
                 pageactions += [('settings', _("settings"), True)]
 
         action = context.get('wikiaction', (page, 'wiki'))
-        context['title'] = title
         
         if alert:
             context['infotext'] = alert
         elif c.wikidisabled:
             context['infotext'] = _("this wiki is currently disabled, only mods may interact with this wiki")
-        context['content'] = WikiBasePage(content, action, pageactions, page=page, **context)
+        
+        self.pageactions = pageactions
+        self.page = page
+        self.base_url = c.wiki_base_url
+        self.action = action
+        self.description = description
+        
+        if showtitle:
+            self.pagetitle = action[1]
+        else:
+            self.pagetitle = None
+        
+        self.inner_content = inner_content
+        
         Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
                         show_wiki_actions=True, **context)
 
-class WikiPageView(WikiBase):
+class WikiPageView(WikiBasePage):
     def __init__(self, content, page, diff=None, **context):
         may_revise = context.get('may_revise')
         if not content and not context.get('alert'):
@@ -111,60 +108,60 @@ class WikiPageView(WikiBase):
                 context['alert'] = _("this page is empty, edit it to add some content.")
         content = WikiView(content, context.get('edit_by'), context.get('edit_date'), 
                            may_revise=may_revise, page=page, diff=diff)
-        WikiBase.__init__(self, content, page=page, **context)
+        WikiBasePage.__init__(self, content, page=page, **context)
 
-class WikiNotFound(WikiBase):
+class WikiNotFound(WikiBasePage):
     def __init__(self, page, **context):
         content = WikiPageNotFound(page)
         context['alert'] = _("page %s does not exist in this subreddit") % page
         context['actionless'] = True
-        WikiBase.__init__(self, content, page=page, **context)
+        WikiBasePage.__init__(self, content, page=page, **context)
 
-class WikiCreate(WikiBase):
+class WikiCreate(WikiBasePage):
     def __init__(self, page, **context):
         context['alert'] = _("page %s does not exist in this subreddit") % page
         context['actionless'] = True
         content = WikiEditPage(page=page)
-        WikiBase.__init__(self, content, page, **context)
+        WikiBasePage.__init__(self, content, page, **context)
 
-class WikiEdit(WikiBase):
+class WikiEdit(WikiBasePage):
     def __init__(self, content, previous, page, **context):
         content = WikiEditPage(content, previous, page)
         context['wikiaction'] = ('edit', _("editing"))
-        WikiBase.__init__(self, content, page=page, **context)
+        WikiBasePage.__init__(self, content, page=page, **context)
 
-class WikiSettings(WikiBase):
+class WikiSettings(WikiBasePage):
     def __init__(self, settings, mayedit, page, restricted, **context):
         content = WikiPageSettings(settings, mayedit, page=page, **context)
         if restricted:
             context['alert'] = _("This page is restricted, only moderators may edit it.")
         context['wikiaction'] = ('settings', _("settings"))
-        WikiBase.__init__(self, content, page=page, **context)
+        WikiBasePage.__init__(self, content, page=page, **context)
 
-class WikiRevisions(WikiBase):
+class WikiRevisions(WikiBasePage):
     def __init__(self, revisions, page, **context):
         content = WikiPageRevisions(revisions, page)
         context['wikiaction'] = ('revisions/%s' % page, _("revisions"))
-        WikiBase.__init__(self, content, page=page, **context)
+        WikiBasePage.__init__(self, content, page=page, **context)
 
-class WikiRecent(WikiBase):
+class WikiRecent(WikiBasePage):
     def __init__(self, revisions, **context):
         content = WikiPageRevisions(revisions)
         context['wikiaction'] = ('revisions', _("Viewing recent revisions for /r/%s") % c.wiki_id)
-        WikiBase.__init__(self, content, showtitle=True, **context)
+        WikiBasePage.__init__(self, content, showtitle=True, **context)
 
-class WikiListing(WikiBase):
+class WikiListing(WikiBasePage):
     def __init__(self, pages, linear_pages, **context):
         content = WikiPageListing(pages, linear_pages)
         context['wikiaction'] = ('pages', _("Viewing pages for /r/%s") % c.wiki_id)
         description = [_("Below is a list of pages in this wiki visible to you in this subreddit.")]
-        WikiBase.__init__(self, content, description=description, showtitle=True, **context)
+        WikiBasePage.__init__(self, content, description=description, showtitle=True, **context)
 
-class WikiDiscussions(WikiBase):
+class WikiDiscussions(WikiBasePage):
     def __init__(self, listing, page, **context):
         content = WikiPageDiscussions(listing, page)
         context['wikiaction'] = ('discussions', _("discussions"))
         description = [_("Discussions are site-wide links to this wiki page."),
                        _("Submit a link to this wiki page or see other discussions about this wiki page.")]
-        WikiBase.__init__(self, content, page=page, description=description, **context)
+        WikiBasePage.__init__(self, content, page=page, description=description, **context)
 

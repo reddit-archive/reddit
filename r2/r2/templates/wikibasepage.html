@@ -19,6 +19,12 @@
 ## All portions of the code written by reddit are Copyright (c) 2006-2012
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
+<%namespace file="less.html" import="less_stylesheet"/>
+<%inherit file="reddit.html"/>
+
+<%def name="stylesheet()">
+    ${parent.stylesheet()}
+</%def>
 
 <%def name="actionsbar(actions)">
     %for action in actions:
@@ -36,34 +42,37 @@
     %endfor
 </%def>
 
-<span>
-    <h1 class="wikititle">
-        %if thing.title:
-            ${thing.title}
+<%def name="content()">
+    ${thing.infobar}
+    <span>
+        <h1 class="wikititle">
+            %if thing.pagetitle:
+                ${thing.pagetitle}
+            %endif
+            %if thing.page:
+                <strong>${thing.page}</strong>
+            %endif
+        </h1>
+        
+        %if thing.pageactions:
+            <span class="pageactions">
+                ${actionsbar(thing.pageactions)}
+            </span>
         %endif
-        %if thing.page:
-            <strong>${thing.page}</strong>
+    </span>
+        
+    <div class="wiki-page-content">
+        %if thing.description:
+            <div class="description">
+                <h2>
+                    %for desc in thing.description:
+                        ${desc}<br/>
+                    %endfor
+                </h2>
+            </div>
         %endif
-    </h1>
-    
-    %if thing.pageactions:
-        <span class="pageactions">
-            ${actionsbar(thing.pageactions)}
-        </span>
-    %endif
-</span>
-    
-<div class="wiki-page-content">
-    %if thing.description:
-        <div class="description">
-            <h2>
-                %for desc in thing.description:
-                    ${desc}<br/>
-                %endfor
-            </h2>
-        </div>
-    %endif
-    ${thing.content}
-</div>
+        ${thing.inner_content}
+    </div>
 
-<!--reddit wikis are powered by Cray-1™ supercomputers-->
+    <!--reddit wikis are powered by Cray-1™ supercomputers-->
+</%def>
