@@ -56,6 +56,81 @@ from r2.models.wiki import WikiPage
 import os.path
 import random
 
+class PermissionSet(dict):
+    ALL = 'all'
+
+    info = None
+
+    def __init__(self, *args, **kwargs):
+        super(PermissionSet, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def loads(cls, encoded, validate=False):
+        if not encoded:
+            return cls()
+        result = cls(((term[1:], term[0] == '+')
+                     for term in encoded.split(',')))
+        if result.get(cls.ALL) == False:
+            del result[cls.ALL]
+        if validate and not result.is_valid():
+            raise ValueError
+        return result
+
+    def dumps(self):
+        if self.is_superuser():
+            return '+all'
+        return ','.join('-+'[bool(v)] + k for k, v in sorted(self.iteritems()))
+
+    def is_superuser(self):
+        return super(PermissionSet, self).get(self.ALL)
+
+    def is_valid(self):
+        if not self.info:
+            return False
+        for k in self:
+            if k != self.ALL and k not in self.info:
+                return False
+        return True
+
+    def get(self, key, default=None):
+        if self.info and self.is_superuser():
+            return True if key in self.info else default
+        return super(PermissionSet, self).get(key, default)
+
+    def __getitem__(self, key):
+        if self.info and self.is_superuser():
+            return key in self.info
+        return super(PermissionSet, self).get(key, False)
+
+
+class ModeratorPermissionSet(PermissionSet):
+    info = dict(
+        access=dict(
+            title=_('access'),
+            description=_('manage the lists of contributors and banned users'),
+        ),
+        config=dict(
+            title=_('config'),
+            description=_('edit settings, sidebar, css, and images'),
+        ),
+        flair=dict(
+            title=_('flair'),
+            description=_('manage user flair, link flair, and flair templates'),
+        ),
+        posts=dict(
+            title=_('posts'),
+            description=_(
+                'use the approve, remove, spam, distinguish, and nsfw buttons'),
+        ),
+    )
+
+    @classmethod
+    def loads(cls, encoded, **kwargs):
+        if encoded is None:
+            return cls(all=True)
+        return super(ModeratorPermissionSet, cls).loads(encoded, **kwargs)
+
+
 class SubredditExists(Exception): pass
 
 class Subreddit(Thing, Printable):
@@ -825,6 +900,29 @@ class Subreddit(Thing, Printable):
         # is really slow
         return [rel._thing2_id for rel in list(merged)]
 
+    def is_moderator_with_perms(self, user, *perms):
+        rel = self.is_moderator(user)
+        if rel:
+            return all(rel.has_permission(perm) for perm in perms)
+
+    def is_limited_moderator(self, user):
+        rel = self.is_moderator(user)
+        return rel and rel.permissions is not None
+
+    def update_moderator_permissions(self, user, **kwargs):
+        """Grants or denies permissions to this moderator.
+
+        Does nothing if the given user is not a moderator.
+
+        Args are named parameters with bool or None values (use None to disable
+        granting or denying the permission).
+        """
+        rel = self.get_moderator(user)
+        if rel:
+            rel.update_permissions(**kwargs)
+            rel._commit()
+
+
 class FakeSubreddit(Subreddit):
     over_18 = False
     _nodb = True
@@ -1261,16 +1359,61 @@ Subreddit._specials.update(dict(friends = Friends,
                                 contrib = Contrib,
                                 all = All))
 
-class SRMember(Relation(Subreddit, Account)): pass
+class SRMember(Relation(Subreddit, Account)):
+    _defaults = dict(encoded_permissions=None)
+    _permission_class = None
+
+    def has_permission(self, perm):
+        """Returns whether this member has explicitly been granted a permission.
+        """
+        return self.get_permissions().get(perm, False)
+
+    def get_permissions(self):
+        """Returns permission set for this member (or None if N/A)."""
+        if not self._permission_class:
+            raise NotImplementedError
+        return self._permission_class.loads(self.encoded_permissions)
+
+    def update_permissions(self, **kwargs):
+        """Grants or denies permissions to this member.
+
+        Args are named parameters with bool or None values (use None to disable
+        granting or denying the permission). After calling this method,
+        the relation will be _dirty until _commit is called.
+        """
+        if not self._permission_class:
+            raise NotImplementedError
+        perm_set = self._permission_class.loads(self.encoded_permissions)
+        if perm_set is None:
+            perm_set = self._permission_class()
+        for k, v in kwargs.iteritems():
+            if v is None:
+                if k in perm_set:
+                    del perm_set[k]
+            else:
+                perm_set[k] = v
+        self.encoded_permissions = perm_set.dumps()
+
+    def set_permissions(self, perm_set):
+        """Assigns a permission set to this relation."""
+        self.encoded_permissions = perm_set.dumps()
+
+    def is_superuser(self):
+        return self.get_permissions().is_superuser()
+
+
 Subreddit.__bases__ += (
-    UserRel('moderator', SRMember),
-    UserRel('moderator_invite', SRMember),
+    UserRel('moderator', SRMember,
+            permission_class=ModeratorPermissionSet),
+    UserRel('moderator_invite', SRMember,
+            permission_class=ModeratorPermissionSet),
     UserRel('contributor', SRMember),
     UserRel('subscriber', SRMember, disable_ids_fn=True),
     UserRel('banned', SRMember),
     UserRel('wikibanned', SRMember),
     UserRel('wikicontributor', SRMember),
 )
+
 
 class SubredditPopularityByLanguage(tdb_cassandra.View):
     _use_db = True

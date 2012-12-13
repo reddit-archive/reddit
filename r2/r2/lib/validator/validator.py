@@ -859,13 +859,15 @@ class VTrafficViewer(VSponsor):
                 promote.is_traffic_viewer(thing, c.user))
 
 class VSrModerator(Validator):
-    def __init__(self, fatal=True, *a, **kw):
-        Validator.__init__(self, *a, **kw)
+    def __init__(self, fatal=True, perms=(), *a, **kw):
         # If True, abort rather than setting an error
         self.fatal = fatal
+        self.perms = utils.tup(perms)
+        super(VSrModerator, self).__init__(*a, **kw)
 
     def run(self):
-        if not (c.user_is_loggedin and c.site.is_moderator(c.user) 
+        if not (c.user_is_loggedin
+                and c.site.is_moderator_with_perms(c.user, *self.perms)
                 or c.user_is_admin):
             if self.fatal:
                 abort(403, "forbidden")

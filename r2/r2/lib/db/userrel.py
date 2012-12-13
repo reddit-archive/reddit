@@ -29,20 +29,25 @@ from r2.lib.memoize import memoize
 class UserRelManager(object):
     """Manages access to a relation between a type of thing and users."""
 
-    def __init__(self, name, relation):
+    def __init__(self, name, relation, permission_class):
         self.name = name
         self.relation = relation
+        self.permission_class = permission_class
 
     def get(self, thing, user):
         if user:
             q = self.relation._fast_query([thing], [user], self.name)
-            return q.get((thing, user, self.name))
+            rel = q.get((thing, user, self.name))
+            if rel:
+                rel._permission_class = self.permission_class
+            return rel
 
     def add(self, thing, user, **attrs):
         if self.get(thing, user):
             return None
         r = self.relation(thing, user, self.name, **attrs)
         r._commit()
+        r._permission_class = self.permission_class
         return r
 
     def remove(self, thing, user):
@@ -58,6 +63,7 @@ class UserRelManager(object):
             for k, v in attrs.iteritems():
                 setattr(r, k, v)
             r._commit()
+            r._permission_class = self.permission_class
             return r
         else:
             return self.add(thing, user, **attrs)
@@ -71,18 +77,20 @@ class UserRelManager(object):
         return [r._thing1_id for r in q]
 
     def by_thing(self, thing):
-        return self.relation._query(self.relation.c._thing1_id == thing._id,
-                                    self.relation.c._name == self.name,
-                                    sort='_date')
-
+        for r in self.relation._query(self.relation.c._thing1_id == thing._id,
+                                      self.relation.c._name == self.name,
+                                      sort='_date'):
+            r._permission_class = self.permission_class
+            yield r
 
 
 class MemoizedUserRelManager(UserRelManager):
     """Memoized manager for a relation to users."""
 
-    def __init__(self, name, relation,
+    def __init__(self, name, relation, permission_class,
                  disable_ids_fn=False, disable_reverse_ids_fn=False):
-        super(MemoizedUserRelManager, self).__init__(name, relation)
+        super(MemoizedUserRelManager, self).__init__(
+            name, relation, permission_class)
 
         self.disable_ids_fn = disable_ids_fn
         self.disable_reverse_ids_fn = disable_reverse_ids_fn
@@ -114,7 +122,8 @@ class MemoizedUserRelManager(UserRelManager):
         return wrapper
 
 
-def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False):
+def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False,
+            permission_class=None):
     """Mixin for Thing subclasses for managing a relation to users.
 
     Provides the following suite of methods for a relation named "<relation>":
@@ -130,7 +139,8 @@ def UserRel(name, relation, disable_ids_fn=False, disable_reverse_ids_fn=False):
           related to
     """
     mgr = MemoizedUserRelManager(
-        name, relation, disable_ids_fn, disable_reverse_ids_fn)
+        name, relation, permission_class,
+        disable_ids_fn, disable_reverse_ids_fn)
 
     class UR:
         @classmethod
