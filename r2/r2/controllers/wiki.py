@@ -79,7 +79,8 @@ from r2.lib.errors import WikiError
 import json
 
 page_descriptions = {'config/stylesheet':_("This page is the subreddit stylesheet, changes here apply to the subreddit css"),
-                     'config/sidebar':_("The contents of this page appear on the subreddit sidebar")}
+                     'config/sidebar':_("The contents of this page appear on the subreddit sidebar"),
+                     'config/description':_("The contents of this page appear in the public subreddit description")}
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
                      "config/description": "public_description"}
