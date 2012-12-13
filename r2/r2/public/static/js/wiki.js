@@ -94,7 +94,7 @@ r.wiki = {
             statusCode: {
                 409: function(xhr) {
                     var info = JSON.parse(xhr.responseText)
-                        ,content = $this.children('#content')
+                        ,content = $this.children('#wiki_page_content')
                     conflict.children('#youredit').val(content.val())
                     conflict.children('#yourdiff').html(info.diffcontent)
                     $this.children('#previous').val(info.newrevision)
