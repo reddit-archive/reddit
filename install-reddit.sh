@@ -345,6 +345,7 @@ service haproxy restart
 ###############################################################################
 # Upstart Environment
 ###############################################################################
+CONSUMER_CONFIG_ROOT=$REDDIT_HOME/consumer-count.d
 cp $REDDIT_HOME/reddit/upstart/* /etc/init/
 
 if [ ! -f /etc/default/reddit ]; then
@@ -353,7 +354,7 @@ export REDDIT_ROOT=$REDDIT_HOME/reddit/r2
 export REDDIT_INI=$REDDIT_HOME/reddit/r2/run.ini
 export REDDIT_USER=$REDDIT_USER
 export REDDIT_GROUP=$REDDIT_GROUP
-export REDDIT_CONSUMER_CONFIG=$REDDIT_HOME/consumer-counts
+export REDDIT_CONSUMER_CONFIG=$CONSUMER_CONFIG_ROOT
 alias wrap-job=$REDDIT_HOME/reddit/scripts/wrap-job
 alias manage-consumers=$REDDIT_HOME/reddit/scripts/manage-consumers
 DEFAULT
@@ -362,17 +363,21 @@ fi
 ###############################################################################
 # Queue Processors
 ###############################################################################
-if [ ! -f $REDDIT_HOME/consumer-counts ]; then
-    cat > $REDDIT_HOME/consumer-counts <<COUNTS
-log_q           0
-cloudsearch_q   0
-scraper_q       0
-commentstree_q  1
-newcomments_q   1
-vote_comment_q  1
-vote_link_q     1
-COUNTS
-fi
+mkdir -p $CONSUMER_CONFIG_ROOT
+
+function set_consumer_count {
+    if [ ! -f $CONSUMER_CONFIG_ROOT/$1 ]; then
+        echo $2 > $CONSUMER_CONFIG_ROOT/$1
+    fi
+}
+
+set_consumer_count log_q 0
+set_consumer_count cloudsearch_q 0
+set_consumer_count scraper_q 0
+set_consumer_count commentstree_q 1
+set_consumer_count newcomments_q 1
+set_consumer_count vote_link_q 1
+set_consumer_count vote_comment_q 1
 
 initctl emit reddit-start
 
