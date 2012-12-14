@@ -1055,3 +1055,7 @@ class GildedController(ListingController):
 
     def query(self):
         return queries.get_gilded_comments()
+
+    def GET_listing(self, **env):
+        c.profilepage = True
+        return ListingController.GET_listing(self, **env)
