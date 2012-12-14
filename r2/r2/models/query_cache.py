@@ -554,14 +554,3 @@ class UserQueryCache(_BaseQueryCache):
 class SubredditQueryCache(_BaseQueryCache):
     """A query cache column family for subreddit-keyed queries."""
     _use_db = True
-
-class HotQueryCache(_BaseQueryCache):
-    """A query cache for very hot single-key queries.
-
-    Some queries such as all_comments appear to cause rowcache related issues
-    due to the high volume of writes happening to the single row.  This column
-    family is intended to house such queries. The row cache should be disabled
-    here to prevent these issues.
-
-    """
-    _use_db = True
