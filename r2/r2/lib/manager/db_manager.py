@@ -20,31 +20,40 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import sqlalchemy as sa
-import logging, traceback
-import time, random
+import logging
+import random
+import sqlalchemy
+import time
+import traceback
+
 
 logger = logging.getLogger('dm_manager')
 logger.addHandler(logging.StreamHandler())
 
+
 def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
-               pool_size = 5, max_overflow = 5):
+               pool_size=5, max_overflow=5):
     db_port = int(db_port)
 
-    host = db_host if db_host else '' 
+    host = db_host or ''
     if db_user:
         if db_pass:
             host = "%s:%s@%s:%s" % (db_user, db_pass, db_host, db_port)
         else:
-            host = "%s@%s:%s" % (db_user, db_host,db_port)
-    return sa.create_engine('postgres://%s/%s' % (host, name),
-                            strategy='threadlocal',
-                            pool_size = int(pool_size),
-                            max_overflow = int(max_overflow),
-                            # our code isn't ready for unicode to appear
-                            # in place of strings yet
-                            use_native_unicode=False,
-                            )
+            host = "%s@%s:%s" % (db_user, db_host, db_port)
+    return sqlalchemy.create_engine(
+        'postgres://%s/%s' % (
+            host,
+            name,
+        ),
+        strategy='threadlocal',
+        pool_size=int(pool_size),
+        max_overflow=int(max_overflow),
+        # our code isn't ready for unicode to appear
+        # in place of strings yet
+        use_native_unicode=False,
+    )
+
 
 class db_manager:
     def __init__(self):
@@ -56,14 +65,14 @@ class db_manager:
         self.avoid_master_reads = {}
         self.dead = {}
 
-    def add_thing(self, name, thing_dbs, avoid_master = False, **kw):
+    def add_thing(self, name, thing_dbs, avoid_master=False, **kw):
         """thing_dbs is a list of database engines. the first in the
         list is assumed to be the master, the rest are slaves."""
         self._things[name] = thing_dbs
         self.avoid_master_reads[name] = avoid_master
 
     def add_relation(self, name, type1, type2, relation_dbs,
-                     avoid_master = False, **kw):
+                     avoid_master=False, **kw):
         self._relations[name] = (type1, type2, relation_dbs)
         self.avoid_master_reads[name] = avoid_master
 
@@ -76,25 +85,27 @@ class db_manager:
         for name, engines in self._things.iteritems():
             # ensure we ALWAYS return the actual master as the first,
             # regardless of if we think it's dead or not.
-            yield name, [engines[0]] + [e for e in engines[1:] if e not in self.dead]
+            yield name, [engines[0]] + [e for e in engines[1:]
+                                        if e not in self.dead]
 
     def rels_iter(self):
-        for name, (type1_name, type2_name, engines) in self._relations.iteritems():
+        for name, (t1_name, t2_name, engines) in self._relations.iteritems():
             engines = [e for e in engines if e not in self.dead]
-            yield name, (type1_name, type2_name, engines) 
+            yield name, (t1_name, t2_name, engines)
 
     def mark_dead(self, engine, g_override=None):
-        logger.error("db_manager: marking connection dead: %r" % engine)
+        logger.error("db_manager: marking connection dead: %r", engine)
         self.dead[engine] = time.time()
 
     def test_engine(self, engine, g_override=None):
         try:
             list(engine.execute("select 1"))
             if engine in self.dead:
-                logger.error("db_manager: marking connection alive: %r" % engine)
+                logger.error("db_manager: marking connection alive: %r",
+                             engine)
                 del self.dead[engine]
             return True
-        except Exception, e:
+        except Exception:
             logger.error(traceback.format_exc())
             logger.error("connection failure: %r" % engine)
             self.mark_dead(engine, g_override)
@@ -110,4 +121,3 @@ class db_manager:
         if len(tables) == 1:
             return tables[0]
         return  random.choice(list(tables))
-
