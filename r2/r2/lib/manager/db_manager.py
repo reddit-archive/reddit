@@ -90,7 +90,8 @@ class db_manager:
 
     def rels_iter(self):
         for name, (t1_name, t2_name, engines) in self._relations.iteritems():
-            engines = [e for e in engines if e not in self.dead]
+            engines = [engines[0]] + [e for e in engines[1:]
+                                      if e not in self.dead]
             yield name, (t1_name, t2_name, engines)
 
     def mark_dead(self, engine, g_override=None):
