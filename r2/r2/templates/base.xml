@@ -26,7 +26,8 @@
    from r2.lib.template_helpers import get_domain, add_sr
 %>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" 
-     xmlns:media="http://search.yahoo.com/mrss/">
+    xmlns:media="http://search.yahoo.com/mrss/"
+    xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>${self.Title()}</title>        
     <link>${add_sr("/", force_hostname = True)}</link>
@@ -44,6 +45,7 @@
       <title>${self.Title()}</title>
       <link>${add_sr("/", force_hostname = True)}</link>
     </image>
+    <atom:link rel="self" href="${add_sr(request.fullpath, sr_path=False, force_hostname=True)}" type="application/rss+xml" />
     ${next.body()}
   </channel>
 </rss>  
