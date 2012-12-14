@@ -33,6 +33,7 @@
    else:
       url = permalink
    use_thumbs = thing.has_thumbnail and thing.thumbnail and not request.GET.has_key("nothumbs")
+   use_thumbs = use_thumbs and not thing.thumbnail_sprited
  %>
 <item>
   <title>${thing.title}</title>
