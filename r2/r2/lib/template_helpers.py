@@ -367,13 +367,13 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
     parses the path and updates it to include the subreddit path
     according to the rules set by its arguments:
 
-     * force_hostname: if True, force the url's hotname to be updated
+     * force_hostname: if True, force the url's hostname to be updated
        even if it is already set in the path, and subject to the
        c.cname/nocname combination.  If false, the path will still
        have its domain updated if no hostname is specified in the url.
-    
+
      * nocname: when updating the hostname, overrides the value of
-       c.cname to set the hotname to g.domain.  The default behavior
+       c.cname to set the hostname to g.domain.  The default behavior
        is to set the hostname consistent with c.cname.
 
      * sr_path: if a cname is not used for the domain, updates the
@@ -396,7 +396,7 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
         else:
             u.hostname = get_domain(cname = (c.cname and not nocname),
                                     subreddit = False)
-    
+
     if c.secure:
         u.scheme = "https"
 
@@ -413,7 +413,7 @@ def join_urls(*urls):
     """joins a series of urls together without doubles slashes"""
     if not urls:
         return
-    
+
     url = urls[0]
     for u in urls[1:]:
         if not url.endswith('/'):
