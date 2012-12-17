@@ -31,7 +31,7 @@ from r2.config import extensions
 from pylons.i18n import _
 import random as rand
 from r2.controllers.errors import ErrorSet
-from r2.lib.filters import safemarkdown, unsafe
+from r2.lib.filters import safemarkdown, unsafe, websafe_json
 
 import json
 
@@ -172,7 +172,7 @@ class ErrorController(RedditController):
                 return c.response
             elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
-                c.response.content = json.dumps(data)
+                c.response.content = websafe_json(json.dumps(data))
                 return c.response
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)
