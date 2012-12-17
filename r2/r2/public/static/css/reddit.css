@@ -609,6 +609,7 @@ ul.flat-vert {text-align: left;}
     width: 15px;
     margin-left: auto;
     margin-right: auto; 
+    outline: none;
 }
 
 .arrow.upmod { 
