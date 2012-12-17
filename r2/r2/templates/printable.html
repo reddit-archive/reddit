@@ -148,6 +148,13 @@ ${self.RenderPrintable()}
        %else:
          onclick="$(this).show_unvotable_message()"
        %endif
+       role="button"
+       % if dir > 0:
+       aria-label="${_("upvote")}"
+       % else:
+       aria-label="${_("downvote")}"
+       % endif
+       tabindex="0"
        >
   </div>
 </%def>
