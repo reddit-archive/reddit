@@ -322,7 +322,9 @@ class Stats:
 
     def pg_after_cursor_execute(self, conn, cursor, statement, parameters,
                               context, executemany):
-        self.pg_event(context.engine.url.host, context.engine.url.database,
+        dsn = dict(part.split('=', 1)
+                   for part in context.engine.url.query['dsn'].split())
+        self.pg_event(dsn['host'], dsn['dbname'],
                       time.time() - context._query_start_time)
 
     def pg_event(self, db_server, db_name, service_time):
