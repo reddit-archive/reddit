@@ -100,7 +100,7 @@ from r2.models import (
 NEVER = 'Thu, 31 Dec 2037 23:59:59 GMT'
 DELETE = 'Thu, 01-Jan-1970 00:00:01 GMT'
 
-cache_affecting_cookies = ('reddit_first','over18','_options')
+cache_affecting_cookies = ('reddit_first', 'over18', '_options')
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -200,7 +200,7 @@ def set_user_cookie(name, val, **kwargs):
     c.cookies[uname + '_' + name] = Cookie(value=val,
                                            **kwargs)
 
-    
+
 valid_click_cookie = fullname_regex(Link, True).match
 def set_recent_clicks():
     c.recent_clicks = []
@@ -219,8 +219,8 @@ def set_recent_clicks():
             names = names[:5]
 
             try:
-                c.recent_clicks = Link._by_fullname(names, data = True,
-                                                    return_dict = False)
+                c.recent_clicks = Link._by_fullname(names, data=True,
+                                                    return_dict=False)
             except NotFound:
                 # clear their cookie because it's got bad links in it
                 set_user_cookie('recentclicks2', '')
@@ -236,17 +236,17 @@ def read_mod_cookie():
 def firsttime():
     if (request.user_agent and
         ('iphone' in request.user_agent.lower() or
-         'android' in request.user_agent.lower()) and 
+         'android' in request.user_agent.lower()) and
         not get_redditfirst('mobile_suggest')):
-        set_redditfirst('mobile_suggest','first')
+        set_redditfirst('mobile_suggest', 'first')
         return 'mobile_suggest'
     elif get_redditfirst('firsttime'):
         return False
     else:
-        set_redditfirst('firsttime','first')
+        set_redditfirst('firsttime', 'first')
         return True
 
-def get_redditfirst(key,default=None):
+def get_redditfirst(key, default=None):
     try:
         val = c.cookies['reddit_first'].value
         # on cookie presence, return as much
@@ -254,22 +254,22 @@ def get_redditfirst(key,default=None):
             default = True
         cookie = simplejson.loads(val)
         return cookie[key]
-    except (ValueError,TypeError,KeyError),e:
+    except (ValueError, TypeError, KeyError), e:
         # it's not a proper json dict, or the cookie isn't present, or
         # the key isn't part of the cookie; we don't really want a
         # broken cookie to propogate an exception up
         return default
 
-def set_redditfirst(key,val):
+def set_redditfirst(key, val):
     try:
         cookie = simplejson.loads(c.cookies['reddit_first'].value)
         cookie[key] = val
-    except (ValueError,TypeError,KeyError),e:
+    except (ValueError, TypeError, KeyError), e:
         # invalid JSON data; we'll just construct a new cookie
         cookie = {key: val}
 
     c.cookies['reddit_first'] = Cookie(simplejson.dumps(cookie),
-                                       expires = NEVER)
+                                       expires=NEVER)
 
 # this cookie is also accessed by organic.js, so changes to the format
 # will have to be made there as well
@@ -306,7 +306,7 @@ def set_subreddit():
     sr_name = request.environ.get("subreddit", request.POST.get('r'))
     domain = request.environ.get("domain")
 
-    can_stale = request.method.upper() in ('GET','HEAD')
+    can_stale = request.method.upper() in ('GET', 'HEAD')
 
     c.site = Frontpage
     if not sr_name:
@@ -333,7 +333,7 @@ def set_subreddit():
             if len(srs) == 0:
                 c.site = MultiReddit([], sr_name)
             elif len(srs) == 1:
-                c.site = srs.pop()    
+                c.site = srs.pop()
             else:
                 sr_ids = [sr._id for sr in srs]
                 c.site = MultiReddit(sr_ids, sr_name)
@@ -363,7 +363,7 @@ def set_content_type():
         c.extension = ext = e['extension']
         if ext in ('embed', 'wired', 'widget'):
             def to_js(content):
-                return utils.to_js(content,callback = request.params.get(
+                return utils.to_js(content, callback=request.params.get(
                     "callback", "document.write"))
             c.response_wrappers.append(to_js)
         if ext in ("rss", "api", "json") and request.method.upper() == "GET":
@@ -382,7 +382,7 @@ def set_content_type():
                 c.suggest_compact = True
         if ext in ("mobile", "m", "compact"):
             if request.GET.get("keep_extension"):
-                c.cookies['reddit_mobility'] = Cookie(ext, expires = NEVER)
+                c.cookies['reddit_mobility'] = Cookie(ext, expires=NEVER)
     # allow JSONP requests to generate callbacks, but do not allow
     # the user to be logged in for these 
     callback = request.GET.get("jsonp")
@@ -463,7 +463,7 @@ def set_content_lang():
         c.content_langs = c.user.pref_content_langs
 
 def set_cnameframe():
-    if (bool(request.params.get(utils.UrlParser.cname_get)) 
+    if (bool(request.params.get(utils.UrlParser.cname_get))
         or not request.host.split(":")[0].endswith(g.domain)):
         c.cname = True
         request.environ['REDDIT_CNAME'] = 1
@@ -471,7 +471,7 @@ def set_cnameframe():
             del request.params[utils.UrlParser.cname_get]
         if request.get.has_key(utils.UrlParser.cname_get):
             del request.get[utils.UrlParser.cname_get]
-    c.frameless_cname  = request.environ.get('frameless_cname',  False)
+    c.frameless_cname = request.environ.get('frameless_cname', False)
     if hasattr(c.site, 'domain'):
         c.authorized_cname = request.environ.get('authorized_cname', False)
 
@@ -495,7 +495,6 @@ def ratelimit_agent(agent):
     if g.cache.incr(key) > SLICE_SIZE:
         request.environ['retry_after'] = SLICE_SIZE - remainder
         abort(429)
-
 
 appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: s~([a-z0-9-]{6,30})\)\Z')
 def ratelimit_agents():
@@ -563,7 +562,7 @@ def is_trusted_origin(origin):
         origin = urlparse(origin)
     except ValueError:
         return False
-    
+
     return any(is_subdomain(origin.hostname, domain) for domain in g.trusted_domains)
 
 def cross_domain(origin_check=is_trusted_origin, **options):
@@ -623,7 +622,7 @@ class MinimalController(BaseController):
         # note that this references the cookie at request time, not
         # the current value of it
         try:
-            cookies_key = [(x, request.cookies.get(x,''))
+            cookies_key = [(x, request.cookies.get(x, ''))
                            for x in cache_affecting_cookies]
         except CookieError:
             cookies_key = ''
@@ -689,13 +688,13 @@ class MinimalController(BaseController):
                 for x in r.cookies.keys():
                     if x in cache_affecting_cookies:
                         cookie = r.cookies[x]
-                        response.set_cookie(key     = x,
-                                            value   = cookie.value,
-                                            domain  = cookie.get('domain',None),
-                                            expires = cookie.get('expires',None),
-                                            path    = cookie.get('path',None),
-                                            secure  = cookie.get('secure', False),
-                                            httponly = cookie.get('httponly', False))
+                        response.set_cookie(key=x,
+                                            value=cookie.value,
+                                            domain=cookie.get('domain', None),
+                                            expires=cookie.get('expires', None),
+                                            path=cookie.get('path', None),
+                                            secure=cookie.get('secure', False),
+                                            httponly=cookie.get('httponly', False))
 
                 response.status_code = r.status_code
                 request.environ['pylons.routes_dict']['action'] = 'cached_response'
@@ -747,14 +746,14 @@ class MinimalController(BaseController):
                               "write for %r", e, request.path)
 
         # send cookies
-        for k,v in c.cookies.iteritems():
+        for k, v in c.cookies.iteritems():
             if v.dirty:
-                response.set_cookie(key     = k,
-                                    value   = quote(v.value),
-                                    domain  = v.domain,
-                                    expires = v.expires,
-                                    secure  = getattr(v, 'secure', False),
-                                    httponly = getattr(v, 'httponly', False))
+                response.set_cookie(key=k,
+                                    value=quote(v.value),
+                                    domain=v.domain,
+                                    expires=v.expires,
+                                    secure=getattr(v, 'secure', False),
+                                    httponly=getattr(v, 'httponly', False))
 
         end_time = datetime.now(g.tz)
 
@@ -839,8 +838,8 @@ class RedditController(MinimalController):
 
     @staticmethod
     def login(user, rem=False):
-        c.cookies[g.login_cookie] = Cookie(value = user.make_cookie(),
-                                           expires = NEVER if rem else None,
+        c.cookies[g.login_cookie] = Cookie(value=user.make_cookie(),
+                                           expires=NEVER if rem else None,
                                            httponly=True)
 
     @staticmethod
@@ -875,7 +874,7 @@ class RedditController(MinimalController):
         # populate c.cookies unless we're on the unsafe media_domain
         if request.host != g.media_domain or g.media_domain == g.domain:
             try:
-                for k,v in request.cookies.iteritems():
+                for k, v in request.cookies.iteritems():
                     # minimalcontroller can still set cookies
                     if k not in c.cookies:
                         # we can unquote even if it's not quoted
@@ -955,9 +954,9 @@ class RedditController(MinimalController):
             c.site = Subreddit.random_reddit()
             redirect_to("/" + c.site.path.strip('/') + request.path)
         elif c.site == RandomNSFW:
-            c.site = Subreddit.random_reddit(over18 = True)
+            c.site = Subreddit.random_reddit(over18=True)
             redirect_to("/" + c.site.path.strip('/') + request.path)
-        
+
         if not request.path.startswith("/api/login/"):
             # is the subreddit banned?
             if c.site.spammy() and not c.user_is_admin and not c.error_page:
