@@ -20,7 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from reddit_base import RedditController, proxyurl
+from r2.controllers.reddit_base import RedditController
+from r2.lib.base import proxyurl
 from r2.lib.template_helpers import get_domain
 from r2.lib.pages import Embed, BoringPage, HelpPage
 from r2.lib.filters import websafe, SC_OFF, SC_ON
