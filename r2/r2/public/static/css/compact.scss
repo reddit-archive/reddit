@@ -488,6 +488,7 @@ body[orient="landscape"] > #topbar > h1 {
         cursor: pointer;
         display: block;
         margin: 1px auto 0px;
+        outline: none;
 
         //Unvoted
         &.up {

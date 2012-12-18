@@ -141,7 +141,7 @@ body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
 /*Things*/
 /*Arrows*/
-.link .arrow, .comment .arrow, .message .arrow { width: 28px; height: 28px; cursor: pointer; display: block; margin: 1px auto 0px; }
+.link .arrow, .comment .arrow, .message .arrow { width: 28px; height: 28px; cursor: pointer; display: block; margin: 1px auto 0px; outline: none; }
 .link .arrow.up, .comment .arrow.up, .message .arrow.up { background-image: url("../compact/upvote.png"); /*SPRITE*/ }
 .link .arrow.down, .comment .arrow.down, .message .arrow.down { background-image: url("../compact/downvote.png"); /*SPRITE*/ }
 .link .arrow.upmod, .comment .arrow.upmod, .message .arrow.upmod { background-image: url("../compact/upvote-active.png"); /*SPRITE*/ }
