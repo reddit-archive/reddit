@@ -57,6 +57,7 @@ import simplejson
 import locale, socket
 import babel.core
 from functools import wraps
+import time
 
 from r2.lib.tracking import encrypt, decrypt
 from pylons import Response
@@ -448,13 +449,18 @@ def set_colors():
     if color_rx.match(request.get.get('bordercolor') or ''):
         c.bordercolor = request.get.get('bordercolor')
 
+
 def ratelimit_agent(agent):
-    key = 'rate_agent_' + agent
-    if g.cache.get(key):
-        request.environ['retry_after'] = 1
+    SLICE_SIZE = 10
+    slice, remainder = map(int, divmod(time.time(), SLICE_SIZE))
+    time_slice = time.gmtime(slice * SLICE_SIZE)
+    key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
+
+    g.cache.add(key, 0, time=SLICE_SIZE)
+    if g.cache.incr(key) > SLICE_SIZE:
+        request.environ['retry_after'] = SLICE_SIZE - remainder
         abort(429)
-    else:
-        g.cache.set(key, 't', time = 1)
+
 
 appengine_re = re.compile(r'AppEngine-Google; \(\+http://code.google.com/appengine; appid: s~([a-z0-9-]{6,30})\)\Z')
 def ratelimit_agents():
