@@ -20,206 +20,141 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from base64 import standard_b64decode as b64dec, \
-     standard_b64encode as b64enc
-from pylons import request
 from Crypto.Cipher import AES
-from random import choice
-from pylons import g, c
-from urllib import quote_plus, unquote_plus
+from Crypto.Random import get_random_bytes
+import base64
 import hashlib
 import urllib
 
-key_len = 16
-pad_len = 32
+from pylons import c, g, request
 
-def pkcs5pad(text, padlen = 8):
-    '''Insures the string is an integer multiple of padlen by appending to its end
-    N characters which are chr(N).'''
-    l = (padlen - len(text) % padlen) or padlen
-    padding = ''.join([chr(l) for x in xrange(0,l)])
+from r2.lib.filters import _force_utf8
+
+
+KEY_SIZE = 16  # AES-128
+SALT_SIZE = KEY_SIZE * 2  # backwards compatibility
+
+
+def _pad_message(text):
+    """Return `text` padded out to a multiple of block_size bytes.
+
+    This uses the PKCS7 padding algorithm. The pad-bytes have a value of N
+    where N is the number of bytes of padding added. If the input string is
+    already a multiple of the block size, it will be padded with one full extra
+    block to make an unambiguous output string.
+
+    """
+    block_size = AES.block_size
+    padding_size = (block_size - len(text) % block_size) or block_size
+    padding = chr(padding_size) * padding_size
     return text + padding
 
-def pkcs5unpad(text, padlen = 8):
-    '''Undoes padding of pkcs5pad'''
-    if text:
-        key = ord(text[-1])
-        if (key <= padlen and key > 0 and
-            all(ord(x) == key for x in text[-key:])):
-            text = text[:-key]
-    return text
 
-def cipher(lv):
-    '''returns a pycrypto object used by encrypt and decrypt, with the key based on g.tracking_secret'''
-    key = g.tracking_secret
-    return AES.new(key[:key_len], AES.MODE_CBC, lv[:key_len])
+def _unpad_message(text):
+    """Return `text` with padding removed. The inverse of _pad_message."""
+    if not text:
+        return ""
 
-def encrypt(text):
-    '''generates an encrypted version of text.  The encryption is salted using the pad_len characters
-    that randomly make up the front of the resulting string.  The string is base64 encoded, and url escaped
-    so as to be suitable to be used as a GET parameter'''
-    randstr = ''.join(choice('1234567890abcdefghijklmnopqrstuvwxyz' +
-                             'ABCDEFGHIJKLMNOPQRSTUVWXYZ+/')
-                      for x in xrange(pad_len))
-    cip = cipher(randstr)
-    text = b64enc(cip.encrypt(pkcs5pad(text, key_len)))
-    return quote_plus(randstr + text, safe='')
+    padding_size = ord(text[-1])
+    if padding_size > AES.block_size:
+        return ""
 
-def decrypt(text):
-    '''Inverts encrypt'''
-    # we can unquote even if text is not quoted.  
-    text = unquote_plus(text)
-    # grab salt
-    randstr = text[:pad_len]
-    # grab message
-    text = text[pad_len:]
-    cip = cipher(randstr)
-    return pkcs5unpad(cip.decrypt(b64dec(text)), key_len)
+    unpadded, padding = text[:-padding_size], text[-padding_size:]
+    if any(ord(x) != padding_size for x in padding):
+        return ""
+
+    return unpadded
 
 
-def safe_str(text):
-    '''That pesky function always needed to make sure nothing breaks if text is unicode.  if it is,
-    it returns the utf8 transcode of it and returns a python str.'''
-    try:
-        if isinstance(text, unicode):
-            return text.encode('utf8')
-    except:
-        g.log.error("unicode encoding exception in safe_str")
-        return ''
-    return str(text)
-
-class Info(object): 
-    '''Class for generating and reading user tracker information.'''
-    _tracked = []
-    tracker_url = ""
-
-    def __init__(self, text = '', **kw):
-        for s in self._tracked:
-            setattr(self, s, '')
-            
-        if text:
-            try:
-                data = decrypt(text).split('|')
-            except:
-                g.log.error("decryption failure on '%s'" % text)
-                data = []
-            for i, d in enumerate(data):
-                if i < len(self._tracked):
-                    setattr(self, self._tracked[i], d)
-        else:
-            self.init_defaults(**kw)
-            
-    def init_defaults(self, **kw):
-        raise NotImplementedError
-    
-    def tracking_url(self):
-        data = '|'.join(getattr(self, s) for s in self._tracked)
-        data = encrypt(data)
-        return "%s?v=%s" % (self.tracker_url, data)
-
-    @classmethod
-    def gen_url(cls, **kw):
-        try:
-            return cls(**kw).tracking_url()
-
-        except Exception,e:
-            g.log.error(e)
-            try:
-                randstr = ''.join(choice('1234567890abcdefghijklmnopqrstuvwxyz' +
-                                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ+')
-                                  for x in xrange(pad_len))
-                return "%s?v=%s" % (cls.tracker_url, randstr)
-            except:
-                g.log.error("fallback rendering failed as well")
-                return ""
-
-class UserInfo(Info):
-    '''Class for generating and reading user tracker information.'''
-    _tracked = ['name', 'site', 'lang', 'cname']
-    tracker_url = g.tracker_url
-
-    @staticmethod
-    def get_site():
-        return safe_str(c.site.name if c.site else '')
-
-    @staticmethod
-    def get_srpath():
-        name = UserInfo.get_site()
-
-        action = None
-        if c.render_style in ("mobile", "compact"):
-            action = c.render_style
-        else:
-            try:
-                action = request.environ['pylons.routes_dict'].get('action')
-            except Exception,e:
-                g.log.error(e)
-
-        if not action:
-            return name
-        return '-'.join((name, action))
-
-    @staticmethod
-    def get_usertype():
-        return "loggedin" if c.user_is_loggedin else "guest"
-
-    def init_defaults(self):
-        self.name = safe_str(c.user.name if c.user_is_loggedin else '')
-        self.site = UserInfo.get_srpath()
-        self.lang = safe_str(c.lang if c.lang else '')
-        self.cname = safe_str(c.cname)
-
-class PromotedLinkInfo(Info):
-    _tracked = []
-    tracker_url = g.adtracker_url
-
-    def __init__(self, text = "", ip = "0.0.0.0", **kw):
-        self.ip = ip
-        Info.__init__(self, text = text, **kw)
-
-    def init_defaults(self, fullname):
-        self.fullname = fullname
-
-    @classmethod
-    def make_hash(cls, ip, fullname):
-        return hashlib.sha1("%s%s%s" % (ip, fullname,
-                                        g.tracking_secret)).hexdigest()
-
-    def tracking_url(self):
-        return (self.tracker_url + "?hash=" +
-                self.make_hash(self.ip, self.fullname)
-                + "&id=" + self.fullname)
-
-class PromotedLinkClickInfo(PromotedLinkInfo):
-    _tracked = []
-    tracker_url = g.clicktracker_url
-
-    def init_defaults(self, dest, **kw):
-        self.dest = dest
-
-        return PromotedLinkInfo.init_defaults(self, **kw)
-
-    def tracking_url(self):
-        s = (PromotedLinkInfo.tracking_url(self) + '&url=' +
-             urllib.quote_plus(self.dest))
-        return s
-
-class AdframeInfo(PromotedLinkInfo):
-    tracker_url = g.adframetracker_url
-
-    @classmethod
-    def make_hash(cls, ip, fullname):
-        return hashlib.sha1("%s%s" % (fullname,
-                                      g.tracking_secret)).hexdigest()
+def _make_cipher(initialization_vector):
+    """Return a block cipher object for use in `encrypt` and `decrypt`."""
+    return AES.new(g.tracking_secret[:KEY_SIZE], AES.MODE_CBC,
+                   initialization_vector[:AES.block_size])
 
 
+def encrypt(plaintext):
+    """Return the message `plaintext` encrypted.
 
-def benchmark(n = 10000):
-    """on my humble desktop machine, this gives ~150 microseconds per gen_url"""
-    import time
-    t = time.time()
-    for x in xrange(n):
-        gen_url()
-    t = time.time() - t
-    print ("%d generations in %5.3f seconds (%5.3f us/gen)" % 
-           (n, t, 10**6 * t/n))
+    The encrypted message will have its salt prepended and will be URL encoded
+    to make it suitable for use in URLs and Cookies.
+
+    NOTE: this function is here for backwards compatibility. Please do not
+    use it for new code.
+
+    """
+
+    # we want SALT_SIZE letters of salt text, but we're generating random bytes
+    # so we'll calculate how many bytes we need to get SALT_SIZE characters of
+    # base64 output. because of padding, this only works for SALT_SIZE % 4 == 0
+    assert SALT_SIZE % 4 == 0
+    salt_byte_count = (SALT_SIZE / 4) * 3
+
+    salt_bytes = get_random_bytes(salt_byte_count)
+    salt = base64.b64encode(salt_bytes)
+    cipher = _make_cipher(salt)
+
+    padded = _pad_message(plaintext)
+    ciphertext = cipher.encrypt(padded)
+    encoded = base64.b64encode(ciphertext)
+
+    return urllib.quote_plus(salt + encoded, safe="")
+
+
+def decrypt(encrypted):
+    """Decrypt `encrypted` and return the plaintext.
+
+    NOTE: like `encrypt` above, please do not use this function for new code.
+
+    """
+
+    encrypted = urllib.unquote_plus(encrypted)
+    salt, encoded = encrypted[:SALT_SIZE], encrypted[SALT_SIZE:]
+    ciphertext = base64.b64decode(encoded)
+    cipher = _make_cipher(salt)
+    padded = cipher.decrypt(ciphertext)
+    return _unpad_message(padded)
+
+
+def get_site():
+    """Return the name of the current "site" (subreddit)."""
+    return c.site.name if c.site else ""
+
+
+def get_srpath():
+    """Return the srpath of the current request.
+
+    The srpath is Subredditname-Action. e.g. sophiepotamus-GET_listing.
+
+    """
+    name = get_site()
+    action = None
+    if c.render_style in ("mobile", "compact"):
+        action = c.render_style
+    else:
+        action = request.environ['pylons.routes_dict'].get('action')
+
+    if not action:
+        return name
+    return '-'.join((name, action))
+
+
+def get_pageview_pixel_url():
+    """Return a URL to use for tracking pageviews for the current request."""
+    data = [
+        c.user.name if c.user_is_loggedin else "",
+        get_srpath(),
+        c.lang or "",
+        c.cname,
+    ]
+    encrypted = encrypt("|".join(_force_utf8(s) for s in data))
+    return g.tracker_url + "?v=" + encrypted
+
+
+def get_impression_pixel_url(codename):
+    """Return a URL to use for tracking impressions of the given advert."""
+    # TODO: use HMAC here
+    mac = codename + hashlib.sha1(codename + g.tracking_secret).hexdigest()
+    return g.adframetracker_url + "?" + urllib.urlencode({
+        "hash": mac,
+        "id": codename,
+    })

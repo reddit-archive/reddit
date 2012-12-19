@@ -26,7 +26,7 @@
    from r2.lib.filters import spaceCompress, unsafe, safemarkdown
    from r2.lib.template_helpers import add_sr, js_config, static, html_datetime
    from r2.lib.utils import cols, long_datetime, timesince
-   from r2.lib.tracking import UserInfo
+   from r2.lib import tracking
    from datetime import datetime
 %>
 <%def name="tags(**kw)">
@@ -420,9 +420,9 @@ ${unsafe(txt)}
     var _gaq = _gaq || [];
     _gaq.push(
         ['_setAccount', '${g.googleanalytics}'],
-        ['_setCustomVar', 1, 'site', '${UserInfo.get_site()}', 3],
-        ['_setCustomVar', 2, 'srpath', '${UserInfo.get_srpath()}', 3],
-        ['_setCustomVar', 3, 'usertype', '${UserInfo.get_usertype()}', 2],
+        ['_setCustomVar', 1, 'site', '${tracking.get_site()}', 3],
+        ['_setCustomVar', 2, 'srpath', '${tracking.get_srpath()}', 3],
+        ['_setCustomVar', 3, 'usertype', '${"loggedin" if c.user_is_loggedin else "guest"}', 2],
         ['_setCustomVar', 4, 'uitype', '${uitype}', 3],
         ['_trackPageview']
     );

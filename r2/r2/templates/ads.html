@@ -22,7 +22,7 @@
 
 <%!
    from r2.lib.template_helpers import get_domain, static
-   from r2.lib.tracking import AdframeInfo
+   from r2.lib import tracking
    import random
  %>
 
@@ -32,7 +32,7 @@
 
 <script type="text/javascript">
     <% 
-      tracker_url = AdframeInfo.gen_url(fullname = "adblock", ip = request.ip)
+      tracker_url = tracking.get_impression_pixel_url("adblock")
      %>
     $(function() {
       var ad = $("#ad-frame");

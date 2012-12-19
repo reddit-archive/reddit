@@ -35,14 +35,13 @@ from r2.models import Thing
 from r2.config import cache
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
-from r2.lib.tracking import AdframeInfo
 from r2.lib.jsonresponse import json_respond
 from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
 from r2.lib import media
-from r2.lib import promote
+from r2.lib import promote, tracking
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
 from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
@@ -3584,8 +3583,7 @@ class Dart_Ad(CachedTemplate):
     def __init__(self, dartsite, tag, custom_keyword=None):
         tag = tag or "homepage"
         keyword = custom_keyword or tag
-        tracker_url = AdframeInfo.gen_url(fullname = "dart_" + tag,
-                                          ip = request.ip)
+        tracker_url = tracking.get_impression_pixel_url("dart_" + tag)
         Templated.__init__(self, tag = tag, dartsite = dartsite,
                            tracker_url = tracker_url, keyword=keyword)
 

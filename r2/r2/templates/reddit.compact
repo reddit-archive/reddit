@@ -51,7 +51,7 @@
       %endif
     %endif
     %if g.tracker_url and thing.site_tracking and not c.secure:
-      <img alt="" src="${tracking.UserInfo.gen_url()}"/>
+      <img alt="" src="${tracking.get_pageview_pixel_url()}"/>
     %endif
 </body>
 </%def>

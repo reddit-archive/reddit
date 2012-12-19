@@ -24,7 +24,7 @@
 <%!
    from r2.lib.template_helpers import static
    from r2.models import Link, Comment, Subreddit
-   from r2.lib.tracking import UserInfo
+   from r2.lib import tracking
 %>
 <%namespace file="utils.html" import="js_setup, googleanalytics"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}" 
@@ -79,7 +79,7 @@ reddit, reddit.com, vote, comment, submit
 %if g.tracker_url and thing.site_tracking and not c.secure:
 <script type="text/javascript">
     (function() {
-        var url = '${UserInfo.gen_url()}';
+        var url = '${tracking.get_pageview_pixel_url()}';
         var cachebuster = Math.round(Math.random() * 2147483647);
         var cachebusted_url = url + "&r=" + cachebuster;
         var img = new Image();
