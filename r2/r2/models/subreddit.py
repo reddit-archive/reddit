@@ -982,7 +982,7 @@ class AllSR(FakeSubreddit):
 
 
 class AllMinus(AllSR):
-    name = 'minus'
+    name = _("%s (filtered)") % "all"
 
     def __init__(self, srs):
         AllSR.__init__(self)
