@@ -49,7 +49,6 @@ from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
 from r2.config.extensions import set_extension
 from r2.lib.template_helpers import add_sr
 from r2.lib.db import tdb_cassandra
-from r2.controllers.errors import errors
 from r2.models.listing import WikiRevisionListing
 from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.pages import BoringPage
@@ -62,7 +61,7 @@ from r2.lib.pages import PaneStack
 from r2.lib.utils import timesince
 from r2.config import extensions
 from r2.lib.base import abort
-from r2.controllers.errors import WikiError
+from r2.lib.errors import WikiError
 
 import json
 

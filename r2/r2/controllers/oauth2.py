@@ -34,7 +34,7 @@ from r2.models import Account
 from r2.models.token import (
     OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken,
     OAuth2RefreshToken, OAuth2Scope)
-from r2.controllers.errors import ForbiddenError, errors
+from r2.lib.errors import ForbiddenError, errors
 from validator import (
     nop, validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID,
     VOAuth2Scope, VOAuth2RefreshToken)

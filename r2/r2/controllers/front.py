@@ -45,7 +45,7 @@ from r2.lib.search import (SearchQuery, SubredditSearchQuery, SearchException,
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing
-from errors import errors
+from r2.lib.errors import errors
 from listingcontroller import ListingController
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from api_docs import api_doc, api_section

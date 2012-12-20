@@ -36,9 +36,9 @@ from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
 
-from r2.controllers.errors import errors, UserRequiredException
-from r2.controllers.errors import VerifiedUserRequiredException
-from r2.controllers.errors import GoldRequiredException
+from r2.lib.errors import errors, UserRequiredException
+from r2.lib.errors import VerifiedUserRequiredException
+from r2.lib.errors import GoldRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta

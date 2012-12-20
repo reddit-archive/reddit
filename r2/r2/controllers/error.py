@@ -30,7 +30,7 @@ from pylons import c, request, g
 from r2.config import extensions
 from pylons.i18n import _
 import random as rand
-from r2.controllers.errors import ErrorSet
+from r2.lib.errors import ErrorSet
 from r2.lib.filters import safemarkdown, unsafe, websafe_json
 
 import json

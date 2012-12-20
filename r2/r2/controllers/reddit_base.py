@@ -42,12 +42,6 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
 from r2.config.extensions import is_api
-from r2.controllers.errors import (
-    ErrorSet,
-    BadRequestError,
-    ForbiddenError,
-    errors,
-)
 from r2.controllers.validator import (
     build_arg_list,
     chksrname,
@@ -64,6 +58,12 @@ from r2.lib import filters, pages, utils
 from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController
 from r2.lib.cache import make_key, MemcachedError
+from r2.lib.errors import (
+    ErrorSet,
+    BadRequestError,
+    ForbiddenError,
+    errors,
+)
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr
 from r2.lib.tracking import encrypt, decrypt

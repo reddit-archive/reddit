@@ -34,6 +34,7 @@ from account import Account, AccountsActiveBySR
 from printable import Printable
 from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
+from r2.lib.errors import UserRequiredException
 from r2.lib.memoize import memoize
 from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
 from r2.lib.utils import timeago, summarize_markdown
@@ -875,7 +876,6 @@ class FriendsSR(FakeSubreddit):
     def get_links(self, sort, time):
         from r2.lib.db import queries
         from r2.models import Link
-        from r2.controllers.errors import UserRequiredException
 
         if not c.user_is_loggedin:
             raise UserRequiredException
@@ -910,7 +910,6 @@ class FriendsSR(FakeSubreddit):
     def get_all_comments(self):
         from r2.lib.db import queries
         from r2.models import Comment
-        from r2.controllers.errors import UserRequiredException
 
         if not c.user_is_loggedin:
             raise UserRequiredException
