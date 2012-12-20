@@ -44,57 +44,15 @@
     %endif
 
     %if thing.pay_from_creddits:
-      <form id="giftgold" action="/api/spendcreddits" method="post"
-            class="content"
-            onsubmit="return post_form(this, 'spendcreddits');">
-        <input type="hidden" name="months" value="${thing.months}">
-        <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
-        <button class="btn gold-button">${_("give")}</button>
-        <span class="status"></span>
-        <div class="throbber"></div>
-      </form>
+      ${self.creddits_button()}
     %else:
       <p>${_("Please select a payment method.")}</p>
 
       %if thing.google_id:
-      <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}"
-            id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm"
-            class="gold-checkout google-checkout"
-            data-vendor="google-checkout"
-            target="${'_blank' if thing.clone_template else '_top'}">
-        <input name="item_name_1" type="hidden" value="creddits">
-        <input name="item_description_1" type="hidden"
-               %if thing.months != thing.quantity:
-                 value="${thing.quantity} year(s) of reddit gold"
-               %else:
-                 value="${thing.quantity} month(s) of reddit gold"
-               %endif
-               >
-        <input name="item_quantity_1" type="hidden"
-               value="${thing.quantity}">
-        <input name="item_price_1" type="hidden"
-               value="${thing.price}">
-        <input type="hidden"
-               name="shopping-cart.items.item-1.merchant-private-item-data"
-               value="${thing.passthrough}" class="passthrough">
-        <input name="item_currency_1" type="hidden" value="USD">
-        <input name="_charset_" type="hidden" value="utf-8">
-        <input type="hidden" name="analyticsdata" value="">
-        <button class="btn gold-button">${_("Google Checkout")}</button>
-      </form>
+        ${self.google_button()}
       %endif
 
-      <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
-            class="gold-checkout"
-            data-vendor="paypal" target="${'_blank' if thing.clone_template else '_top'}">
-        <input type="hidden" name="cmd" value="_s-xclick">
-        <input type="hidden" name="custom" value="${thing.passthrough}" class="passthrough">
-        %if thing.quantity:
-          <input type="hidden" name="quantity" value="${thing.quantity}">
-        %endif
-        <input type="hidden" name="hosted_button_id" value="${thing.paypal_buttonid}">
-        <button type="submit" class="btn gold-button">${_("PayPal")}</button>
-      </form>
+      ${self.paypal_button()}
 
       <div class="throbber"></div>
 
@@ -105,6 +63,60 @@
     </div>
   </div>
 </div>
+
+<%def name="creddits_button()">
+  <form id="giftgold" action="/api/spendcreddits" method="post"
+        class="content"
+        onsubmit="return post_form(this, 'spendcreddits');">
+    <input type="hidden" name="months" value="${thing.months}">
+    <input type="hidden" name="passthrough" value="${thing.passthrough}" class="passthrough">
+    <button class="btn gold-button">${_("give")}</button>
+    <span class="status"></span>
+    <div class="throbber"></div>
+  </form>
+</%def>
+
+<%def name="google_button()">
+  <form action="https://checkout.google.com/api/checkout/v2/checkoutForm/Merchant/${thing.google_id}"
+        id="BB_BuyButtonForm" method="post" name="BB_BuyButtonForm"
+        class="gold-checkout google-checkout"
+        data-vendor="google-checkout"
+        target="${'_blank' if thing.clone_template else '_top'}">
+    <input name="item_name_1" type="hidden" value="creddits">
+    <input name="item_description_1" type="hidden"
+           %if thing.months != thing.quantity:
+             value="${thing.quantity} year(s) of reddit gold"
+           %else:
+             value="${thing.quantity} month(s) of reddit gold"
+           %endif
+           >
+    <input name="item_quantity_1" type="hidden"
+           value="${thing.quantity}">
+    <input name="item_price_1" type="hidden"
+           value="${thing.price}">
+    <input type="hidden"
+           name="shopping-cart.items.item-1.merchant-private-item-data"
+           value="${thing.passthrough}" class="passthrough">
+    <input name="item_currency_1" type="hidden" value="USD">
+    <input name="_charset_" type="hidden" value="utf-8">
+    <input type="hidden" name="analyticsdata" value="">
+    <button class="btn gold-button">${_("Google Checkout")}</button>
+  </form>
+</%def>
+
+<%def name="paypal_button()">
+  <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
+        class="gold-checkout"
+        data-vendor="paypal" target="${'_blank' if thing.clone_template else '_top'}">
+    <input type="hidden" name="cmd" value="_s-xclick">
+    <input type="hidden" name="custom" value="${thing.passthrough}" class="passthrough">
+    %if thing.quantity:
+      <input type="hidden" name="quantity" value="${thing.quantity}">
+    %endif
+    <input type="hidden" name="hosted_button_id" value="${thing.paypal_buttonid}">
+    <button type="submit" class="btn gold-button">${_("PayPal")}</button>
+  </form>
+</%def>
 
 % if not thing.clone_template:
 <script src="//checkout.google.com/files/digital/ga_post.js"
