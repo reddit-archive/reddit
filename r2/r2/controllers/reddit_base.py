@@ -42,18 +42,6 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
 from r2.config.extensions import is_api
-from r2.controllers.validator import (
-    build_arg_list,
-    chksrname,
-    fullname_regex,
-    valid_jsonp_callback,
-    validate,
-    VByName,
-    VCount,
-    VLength,
-    VLimit,
-    VTarget,
-)
 from r2.lib import filters, pages, utils
 from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController
@@ -74,6 +62,18 @@ from r2.lib.utils import (
     http_utils,
     is_subdomain,
     is_throttled,
+)
+from r2.lib.validator import (
+    build_arg_list,
+    chksrname,
+    fullname_regex,
+    valid_jsonp_callback,
+    validate,
+    VByName,
+    VCount,
+    VLength,
+    VLimit,
+    VTarget,
 )
 from r2.models import (
     All,

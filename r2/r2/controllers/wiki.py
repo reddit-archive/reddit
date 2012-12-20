@@ -34,12 +34,26 @@ from r2.models.builder import WikiRevisionBuilder, WikiRecentRevisionBuilder
 from r2.lib.template_helpers import join_urls
 
 
-from r2.controllers.validator import VMarkdown, VModhash, VPrintable
+from r2.lib.validator import (
+    VExistingUname,
+    VInt,
+    VMarkdown,
+    VModhash,
+    VOneOf,
+    VPrintable,
+    VRatelimit,
+)
 
-from r2.controllers.validator.wiki import (VWikiPage, VWikiPageAndVersion,
-                                           VWikiModerator, VWikiPageRevise,
-                                           this_may_revise, this_may_view,
-                                           VWikiPageName, wiki_validate)
+from r2.lib.validator.wiki import (
+    VWikiPage,
+    VWikiPageAndVersion,
+    VWikiModerator,
+    VWikiPageRevise,
+    this_may_revise,
+    this_may_view,
+    VWikiPageName,
+    wiki_validate,
+)
 from r2.controllers.api_docs import api_doc, api_section
 from r2.lib.pages.wiki import (WikiPageView, WikiNotFound, WikiRevisions,
                               WikiEdit, WikiSettings, WikiRecent,
@@ -54,7 +68,6 @@ from r2.lib.pages.things import default_thing_wrapper
 from r2.lib.pages import BoringPage
 from reddit_base import base_listing
 from r2.models import IDBuilder, LinkListing, DefaultSR
-from validator.validator import VInt, VExistingUname, VRatelimit, VOneOf
 from r2.lib.merge import ConflictException, make_htmldiff
 from pylons.i18n import _
 from r2.lib.pages import PaneStack

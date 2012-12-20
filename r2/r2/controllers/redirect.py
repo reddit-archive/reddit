@@ -19,11 +19,12 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-
-from pylons.controllers.util import abort, redirect_to
-from r2.lib.base import BaseController
 from pylons import c
-from validator import chkuser, chksrname
+from pylons.controllers.util import abort, redirect_to
+
+from r2.lib.base import BaseController
+from r2.lib.validator import chkuser, chksrname
+
 
 class RedirectController(BaseController):
     def GET_redirect(self, dest):

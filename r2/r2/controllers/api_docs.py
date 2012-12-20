@@ -31,7 +31,7 @@ from pylons.i18n import _
 from reddit_base import RedditController
 from r2.lib.utils import Storage
 from r2.lib.pages import BoringPage, ApiHelp
-from r2.controllers.validator import validate, VOneOf
+from r2.lib.validator import validate, VOneOf
 
 # API sections displayed in the documentation page.
 # Each section can have a title and a markdown-formatted description.

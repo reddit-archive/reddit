@@ -29,9 +29,9 @@ from pylons.controllers.util import abort
 from pylons import c, g, response
 from pylons.i18n import _
 
-from validator import *
 from r2.models import *
 from r2.lib.utils import randstr
+from r2.lib.validator import *
 
 from reddit_base import RedditController
 

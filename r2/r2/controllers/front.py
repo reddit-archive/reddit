@@ -20,7 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from validator import *
 from pylons.i18n import _, ungettext
 from pylons.controllers.util import redirect_to
 from reddit_base import RedditController, base_listing, paginated_listing, prevent_framing_and_css
@@ -42,6 +41,7 @@ from r2.lib.db.tdb_cassandra import MultiColumnQuery
 from r2.lib.strings import strings
 from r2.lib.search import (SearchQuery, SubredditSearchQuery, SearchException,
                            InvalidQuery)
+from r2.lib.validator import *
 from r2.lib import jsontemplates
 from r2.lib import sup
 import r2.lib.db.thing as thing

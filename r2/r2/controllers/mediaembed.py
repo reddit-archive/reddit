@@ -20,11 +20,11 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from validator import *
 from reddit_base import MinimalController
 
 from r2.lib.scraper import get_media_embed
 from r2.lib.pages import MediaEmbedBody, render_ad, render_ad_by_codename
+from r2.lib.validator import *
 
 from pylons import request
 from pylons.controllers.util import abort

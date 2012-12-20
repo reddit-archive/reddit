@@ -26,8 +26,8 @@ from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
 from r2.lib.pages.things import wrap_links
 from r2.models import *
 from r2.lib.utils import tup
+from r2.lib.validator import *
 from pylons import c, request
-from validator import *
 from pylons.i18n import _
 
 class ButtonsController(RedditController):

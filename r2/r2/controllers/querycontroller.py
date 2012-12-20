@@ -19,9 +19,11 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+from pylons import g
+from pylons.controllers.util import abort
 
 from reddit_base import RedditController
-from validator import *
+from r2.lib.validator import nop, validate
 from r2.lib.db.queries import CachedResults
 
 import cPickle as pickle

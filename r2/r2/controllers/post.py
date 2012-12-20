@@ -25,8 +25,8 @@ from reddit_base import cross_domain
 from api import ApiController
 from r2.lib.utils import Storage, query_string, UrlParser
 from r2.lib.emailer import opt_in, opt_out
+from r2.lib.validator import *
 from pylons import request, c, g
-from validator import *
 from pylons.i18n import _
 from r2.models import *
 import hashlib

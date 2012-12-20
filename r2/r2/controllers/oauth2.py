@@ -35,12 +35,20 @@ from r2.models.token import (
     OAuth2Client, OAuth2AuthorizationCode, OAuth2AccessToken,
     OAuth2RefreshToken, OAuth2Scope)
 from r2.lib.errors import ForbiddenError, errors
-from validator import (
-    nop, validate, VRequired, VOneOf, VUser, VModhash, VOAuth2ClientID,
-    VOAuth2Scope, VOAuth2RefreshToken)
 from r2.lib.pages import OAuth2AuthorizationPage
 from r2.lib.require import RequirementException, require, require_split
 from r2.lib.utils import parse_http_basic
+from r2.lib.validator import (
+    nop,
+    validate,
+    VRequired,
+    VOneOf,
+    VUser,
+    VModhash,
+    VOAuth2ClientID,
+    VOAuth2Scope,
+    VOAuth2RefreshToken,
+)
 
 class OAuth2FrontendController(RedditController):
     def pre(self):

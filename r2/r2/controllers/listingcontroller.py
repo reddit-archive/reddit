@@ -22,7 +22,6 @@
 
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from reddit_base import RedditController, base_listing, organic_pos
-from validator import *
 
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
@@ -42,6 +41,7 @@ import r2.lib.search as search
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 from r2.lib.promote import randomized_promotion_list
+from r2.lib.validator import *
 import socket
 
 from api_docs import api_doc, api_section

@@ -31,9 +31,12 @@ from pylons.controllers.util import redirect_to
 from pylons import c, g, request
 
 from r2.models.wiki import WikiPage, WikiRevision
-from r2.controllers.validator import (
-    Validator, validate, VSrModerator,
-    make_validated_kw, set_api_docs
+from r2.lib.validator import (
+    Validator,
+    validate,
+    VSrModerator,
+    make_validated_kw,
+    set_api_docs,
 )
 from r2.lib.db import tdb_cassandra
 

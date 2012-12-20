@@ -29,7 +29,7 @@ from r2.lib.filters import spaceCompress, safemarkdown
 from r2.lib.memoize import memoize
 from r2.lib.template_helpers import add_sr
 from r2.lib import utils
-from validator import *
+from r2.lib.validator import *
 from pylons import c, Response
 from r2.models.admintools import is_shamed_domain
 

@@ -23,7 +23,6 @@
 from validator import *
 
 try:
-    from r2admin.controllers.validator import *
+    from r2admin.lib.validator import *
 except ImportError:
     pass
-    

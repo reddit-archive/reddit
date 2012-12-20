@@ -23,7 +23,7 @@
 from pylons import request, g
 from reddit_base import RedditController
 from r2.lib.pages import AdminPage, AdminAds, AdminAdAssign, AdminAdSRs
-from validator import *
+from r2.lib.validator import *
 
 class AdsController(RedditController):
 

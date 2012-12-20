@@ -2,7 +2,7 @@ from r2.lib.pages.pages import Reddit
 from pylons import c
 from r2.lib.wrapped import Templated
 from r2.lib.menus import PageNameNav
-from r2.controllers.validator.wiki import this_may_revise
+from r2.lib.validator.wiki import this_may_revise
 from pylons.i18n import _
 
 class WikiView(Templated):

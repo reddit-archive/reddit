@@ -26,7 +26,7 @@ from reddit_base import cross_domain, paginated_listing
 from pylons.i18n import _
 from pylons import c, request, response
 
-from validator import *
+from r2.lib.validator import *
 
 from r2.models import *
 

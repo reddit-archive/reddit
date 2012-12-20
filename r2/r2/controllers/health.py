@@ -30,9 +30,9 @@ from pylons import c, g, response
 
 from reddit_base import MinimalController
 from r2.lib.amqp import worker
+from r2.lib.validator import *
 from r2.lib import promote
 
-from validator import *
 
 class HealthController(MinimalController):
     def post(self):
