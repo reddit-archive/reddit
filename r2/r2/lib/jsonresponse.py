@@ -32,12 +32,6 @@ from r2.models import IDBuilder, Listing
 import simplejson
 from pylons import c, g
 
-def json_respond(x):
-    if g.debug:
-        return websafe_json(simplejson.dumps(x or '',
-                                             sort_keys=True, indent=4))
-    else:
-        return websafe_json(simplejson.dumps(x or ''))
 
 class JsonResponse(object):
     """

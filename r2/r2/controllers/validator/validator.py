@@ -30,7 +30,7 @@ from r2.lib.filters import markdown_souptest
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.operators import asc, desc
 from r2.lib.template_helpers import add_sr
-from r2.lib.jsonresponse import json_respond, JQueryResponse, JsonResponse
+from r2.lib.jsonresponse import JQueryResponse, JsonResponse
 from r2.lib.log import log_text
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard

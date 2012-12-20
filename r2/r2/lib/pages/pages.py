@@ -35,7 +35,6 @@ from r2.models import Thing
 from r2.config import cache
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
-from r2.lib.jsonresponse import json_respond
 from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
@@ -89,7 +88,7 @@ def responsive(res, space_compress = False):
     controller so that it becomes compatible with the page cache.
     """
     if is_api():
-        res = json_respond(res)
+        res = websafe_json(simplejson.dumps(res or ''))
         if c.allowed_callback:
             res = "%s(%s)" % (websafe_json(c.allowed_callback), res)
     elif space_compress:
