@@ -62,24 +62,6 @@ class EmbedController(RedditController):
             if link.has_key('href') and link['href'].startswith("/wiki/help"):
                 link['href'] = link['href'][5:]
 
-        # Add "edit this page" link if the user is allowed to edit the wiki
-        if c.user_is_loggedin and c.user.can_wiki():
-            edit_text = _('edit this page')
-            yes_you_can = _("yes, it's okay!")
-            read_first = _('just read this first.')
-            url = "http://code.reddit.com/wiki" + websafe(fp) + "?action=edit"
-
-            edittag = """
-            <div class="editlink">
-             <hr/>
-             <a href="%s">%s</a>&#32;
-             (<b>%s&#32;
-             <a href="/help/editing_help">%s</a></b>)
-            </div>
-            """ % (url, edit_text, yes_you_can, read_first)
-
-            output.append(edittag)
-
         output = SC_OFF + unicode(output) + SC_ON
 
         return HelpPage(_("help"),
