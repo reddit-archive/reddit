@@ -52,7 +52,9 @@
         ${self.google_button()}
       %endif
 
-      ${self.paypal_button()}
+      %if thing.paypal_buttonid:
+        ${self.paypal_button()}
+      %endif
 
       <div class="throbber"></div>
 
