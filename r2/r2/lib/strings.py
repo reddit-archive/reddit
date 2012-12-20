@@ -183,6 +183,9 @@ Note: there are a couple of places outside of your subreddit where someone can c
     rate_limit = _("please wait a few seconds and try again."),
     subscribed_multi = _("multireddit of your subscriptions"),
     mod_multi = _("multireddit of subreddits you moderate"),
+
+    r_all_description = _("/r/all displays content from all of reddit, including subreddits you aren't subscribed to."),
+    r_all_minus_description = _("Displaying content from /r/all of reddit, except the following subreddits:"),
     all_minus_gold_only = _('Filtering /r/all is a feature only available to [reddit gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
 )
 

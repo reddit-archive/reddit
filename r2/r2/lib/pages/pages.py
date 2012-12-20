@@ -323,9 +323,8 @@ class Reddit(Templated):
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
 
-        if ((isinstance(c.site, AllMinus) or isinstance(c.site, AllSR)) and
-            c.user.gold):
-            ps.append(AllMinusBox(c.user))
+        if isinstance(c.site, AllSR):
+            ps.append(AllInfoBar(c.site, c.user))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
@@ -1703,15 +1702,22 @@ class SubscriptionBox(Templated):
         return wrap_links(self.srs)
 
 
-class AllMinusBox(Templated):
-    def __init__(self, user):
-        sr_ids = Subreddit.user_subreddits(user)
-        srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
-        path = '/r/all'
-        if srs:
-            path += '-' + '-'.join([sr.name for sr in srs])
-        text = _('See /r/all minus your subscribed subreddits')
-        Templated.__init__(self, text=text, path=path)
+class AllInfoBar(Templated):
+    def __init__(self, site, user):
+        self.sr = site
+        self.allminus_url = None
+        self.css_class = None
+        if isinstance(site, AllMinus) and c.user.gold:
+            self.description = (strings.r_all_minus_description + "\n\n" +
+                                " ".join("/r/" + sr.name for sr in site.srs))
+            self.css_class = "gold-accent"
+        else:
+            self.description = strings.r_all_description
+            sr_ids = Subreddit.user_subreddits(user)
+            srs = Subreddit._byID(sr_ids, data=True, return_dict=False)
+            if srs:
+                self.allminus_url = '/r/all-' + '-'.join([sr.name for sr in srs])
+        Templated.__init__(self)
 
 
 class CreateSubreddit(Templated):

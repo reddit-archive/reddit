@@ -20,8 +20,20 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<div class="allminus-box gold-accent rounded">
-  <span class="giftgold">
-    <a href="${thing.path}">${thing.text}</a>
-  </span>
+<%namespace file="utils.html" import="plain_link, css_class, _md"/>
+
+<div class="titlebox rounded${css_class(thing)}">
+  <h1 class="hover redditname special">
+    ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
+  </h1>
+
+  <div class="usertext">
+    ${_md(thing.description, wrap=True)}
+  </div>
 </div>
+
+%if thing.allminus_url:
+  <div class="giftgold allminus-link">
+    <a href="${thing.allminus_url}">${_("Exclude your subscribed subreddits")}</a>
+  </div>
+%endif

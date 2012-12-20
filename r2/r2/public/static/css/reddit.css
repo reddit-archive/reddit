@@ -5057,13 +5057,21 @@ tr.gold-accent + tr > td {
     padding-top: 10px; 
 }
 
-.allminus-box {
-    padding: 5px;
-    margin: 0;
+.gold-accent.titlebox {
+    margin-top: 0;
+    padding-top: .5em;
 }
 
-.allminus-box a {
-    font-size: small;
+.allminus-link {
+    margin-top: 1em;
+}
+
+body:not(.gold) .allminus-link {
+    opacity: .75;
+}
+
+.allminus-link a {
+    font-size: 1.15em;
 }
 
 #per-sr-karma {
