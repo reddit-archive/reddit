@@ -125,3 +125,4 @@ class sort(object):
 
 class asc(sort): pass
 class desc(sort):pass
+class shuffled(desc): pass

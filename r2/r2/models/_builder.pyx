@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from random import shuffle
+
 from builder import Builder, MAX_RECURSION, empty_listing
 from r2.lib.wrapped import Wrapped
 from r2.lib.comment_tree import link_comments_and_sort, tree_sort_fn, MAX_ITERATIONS
@@ -272,6 +274,9 @@ class _CommentBuilder(Builder):
 
             mc2.count += 1
             iteration_count += 1
+
+        if isinstance(self.sort, operators.shuffled):
+            shuffle(final)
 
         return final
 

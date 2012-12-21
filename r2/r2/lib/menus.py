@@ -64,6 +64,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      relevance    = _('relevance'),
                      controversial  = _('controversial'),
                      confidence   = _('best'),
+                     random       = _('random'),
                      saved        = _('saved {toolbar}'),
                      recommended  = _('recommended'),
                      rising       = _('rising'), 
@@ -414,14 +415,20 @@ class SimplePostMenu(NavMenu):
     of NavButtons contained in this Menu instance.  The goal here is
     to have a menu object which 'out of the box' is self validating."""
     options   = []
+    hidden_options = []
     name      = ''
     title     = ''
     default = None
     type = 'lightdrop'
 
     def __init__(self, **kw):
-        buttons = [NavButton(self.make_title(n), n, opt=self.name, style='post')
-                   for n in self.options]
+        buttons = []
+        for name in self.options:
+            css_class = 'hidden' if name in self.hidden_options else ''
+            button = NavButton(self.make_title(name), name, opt=self.name,
+                               style='post', css_class=css_class)
+            buttons.append(button)
+
         kw['default'] = kw.get('default', self.default)
         kw['base_path'] = kw.get('base_path') or request.path
         NavMenu.__init__(self, buttons, type = self.type, **kw)
@@ -458,6 +465,8 @@ class SortMenu(SimplePostMenu):
             return operators.desc('_controversy')
         elif sort == 'confidence':
             return operators.desc('_confidence')
+        elif sort == 'random':
+            return operators.shuffled('_confidence')
 
 class ProfileSortMenu(SortMenu):
     default   = 'new'
@@ -466,7 +475,9 @@ class ProfileSortMenu(SortMenu):
 class CommentSortMenu(SortMenu):
     """Sort menu for comments pages"""
     default   = 'confidence'
-    options   = ('confidence', 'top', 'new', 'hot', 'controversial', 'old')
+    options   = ('confidence', 'top', 'new', 'hot', 'controversial', 'old',
+                 'random')
+    hidden_options = ('random',)
     use_post  = True
 
 class SearchSortMenu(SortMenu):

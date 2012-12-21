@@ -338,6 +338,10 @@ ul.flat-vert {text-align: left;}
 .drop-choices.tabdrop {margin-top: 2px;}
 .dropdown-title.tabdrop { display: none }
 
+.drop-choices .choice.hidden {
+    display: none;
+}
+
 .tabmenu {
     list-style-type: none;
     white-space: nowrap;
