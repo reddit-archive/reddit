@@ -323,6 +323,9 @@ class FrontController(RedditController, OAuth2ResourceController):
         # Used in template_helpers
         c.previous_visits = previous_visits
 
+        if article.contest_mode:
+            sort = "random"
+
         # finally add the comment listing
         displayPane.append(CommentPane(article, CommentSortMenu.operator(sort),
                                        comment, context, num, **kw))
@@ -352,7 +355,8 @@ class FrontController(RedditController, OAuth2ResourceController):
                            page_classes = ['comments-page'],
                            subtitle = subtitle,
                            subtitle_buttons = subtitle_buttons,
-                           nav_menus = [CommentSortMenu(default = sort)],
+                           nav_menus = [CommentSortMenu(default = sort),
+                                        LinkCommentsSettings(article)],
                            infotext = infotext).render()
         return res
 

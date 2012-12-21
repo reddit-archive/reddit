@@ -955,6 +955,17 @@ class ApiController(RedditController, OAuth2ResourceController):
         # flag search indexer that something has changed
         changed(thing)
 
+    @require_oauth2_scope("modposts")
+    @validatedForm(VUser(),
+                   VModhash(),
+                   VSrCanBan('id'),
+                   thing=VByName('id'),
+                   state=VBoolean('state'))
+    def POST_set_contest_mode(self, form, jquery, thing, state):
+        thing.contest_mode = state
+        thing._commit()
+        jquery.refresh()
+
     @noresponse(VUser(), VModhash(),
                 thing = VByName('id'))
     @api_doc(api_section.links_and_comments)

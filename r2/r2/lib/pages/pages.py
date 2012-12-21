@@ -1132,6 +1132,7 @@ class CommentPane(Templated):
         elif num > 100:
             num = (num / 10) * 10
         return "_".join(map(str, ["commentpane", self.article._fullname,
+                                  self.article.contest_mode,
                                   num, self.sort, self.num, c.lang,
                                   self.can_reply, c.render_style,
                                   c.user.pref_show_flair,
@@ -3809,3 +3810,11 @@ class Goldvertisement(Templated):
             blurbs = g.live_config["goldvertisement_has_gold_blurbs"]
         self.blurb = random.choice(blurbs)
 
+class LinkCommentsSettings(Templated):
+    def __init__(self, link):
+        Templated.__init__(self)
+        self.link = link
+        self.contest_mode = link.contest_mode
+        self.can_edit = (c.user_is_loggedin
+                           and (c.user_is_admin or
+                                link.subreddit_slow.is_moderator(c.user)))

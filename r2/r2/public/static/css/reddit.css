@@ -1117,6 +1117,16 @@ a.author { margin-right: 0.5em; }
     color: gray;
 }
 
+.commentarea .menuarea .toggle {
+    display: inline-block;
+}
+
+.commentarea .menuarea .toggle a {
+    color: gray;
+    font-weight: bold;
+    font-size: x-small;
+}
+
 .commentarea > .usertext {
     margin: 0 0 10px 10px;
     overflow: auto;
@@ -1393,10 +1403,17 @@ a.star { text-decoration: none; color: #ff8b60 }
 }
 
 .comment .score { font-size: x-small; }
-.comment .child {
+.comment .child, .comment .showreplies {
     margin-top: 10px; 
     margin-left: 15px; 
     border-left: 1px dotted #DDF;
+}
+
+.comment .showreplies {
+    display: block;
+    margin-top: 7px;
+    margin-bottom: 15px;
+    padding: 5px;
 }
 
 textarea.gray { color: gray; }

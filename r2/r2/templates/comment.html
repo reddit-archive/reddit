@@ -105,7 +105,7 @@ ${parent.collapsed()}
   %if collapse and thing.collapsed and show:
     ${thing.collapsed_reason}
   %else:
-    %if show:
+    %if show and not (thing.link.contest_mode and thing.score_hidden):
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
     ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}
@@ -130,7 +130,17 @@ ${parent.collapsed()}
 </%def>
 
 <%def name="Child()">
-${parent.Child(not thing.collapsed)}
+%if thing.link.contest_mode and hasattr(thing, "child") and not thing.parent_id:
+  <a href="#" class="showreplies"
+     onclick="$(this).hide();$(this).parent().find('.noncollapsed').show();return false;">
+    [${_("show replies")}]
+  </a>
+  <div class="child noncollapsed" style="display:none">
+%else:
+  <div class="child" ${thing.collapsed and "style='display:none'" or ""}>
+%endif
+    ${thing.childlisting}
+  </div>
 </%def>
 
 <%def name="commentBody()">
