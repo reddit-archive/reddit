@@ -2341,9 +2341,9 @@ class Ads(Templated):
         Templated.__init__(self)
         path = ""
         if c.custom_dart_keyword:
-            path = "r/%s/%s" % (c.site.path, c.custom_dart_keyword)
+            path = "r/%s/%s" % (c.site.name, c.custom_dart_keyword)
         elif not c.default_sr:
-            path = "r/%s/" % c.site.path
+            path = "r/%s/" % c.site.name
         self.ad_url = g.ad_domain + "/ads/" + path
         self.frame_id = "ad-frame"
 
