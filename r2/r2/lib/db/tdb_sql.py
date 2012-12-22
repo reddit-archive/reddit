@@ -364,10 +364,10 @@ def get_write_table(tables):
     else:
         return tables[0]
 
-_spaces = re.compile('[\s]+')
 def add_request_info(select):
     def sanitize(txt):
-        return _spaces.sub(' ', txt).replace("/", "|").replace("-", "_").replace(';', "").replace("*", "").replace(r"/", "")
+        return "".join(x if x.isalnum() else "."
+                       for x in filters._force_utf8(txt))
 
     tb = simple_traceback(limit=12)
     try:
@@ -376,7 +376,7 @@ def add_request_info(select):
             hasattr(request, 'user_agent')):
             comment = '/*\n%s\n%s\n%s\n*/' % (
                 tb or "", 
-                filters._force_utf8(sanitize(request.fullpath)),
+                sanitize(request.fullpath),
                 sanitize(request.ip))
             return select.prefix_with(comment)
     except UnicodeDecodeError:
