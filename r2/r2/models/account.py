@@ -27,7 +27,7 @@ from r2.lib.db           import tdb_cassandra
 from r2.lib.memoize      import memoize
 from r2.lib.utils        import modhash, valid_hash, randstr, timefromnow
 from r2.lib.utils        import UrlParser
-from r2.lib.utils        import constant_time_compare
+from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm
 from r2.lib import filters
 from r2.lib.log import log_text
@@ -570,19 +570,7 @@ class Account(Thing):
         return which.get(canon, None)
 
     def canonical_email(self):
-        email = self.email.lower().encode('utf-8')
-        if email.count("@") != 1:
-            return "invalid@invalid.invalid"
-
-        localpart, domain = email.split("@")
-
-        # a.s.d.f+something@gmail.com --> asdf@gmail.com
-        localpart.replace(".", "")
-        plus = localpart.find("+")
-        if plus > 0:
-            localpart = localpart[:plus]
-
-        return localpart + "@" + domain
+        return canonicalize_email(self.email)
 
     def cromulent(self):
         """Return whether the user has validated their email address and

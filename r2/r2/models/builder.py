@@ -74,13 +74,10 @@ class Builder(object):
 
         authors = {}
         cup_infos = {}
-        email_attrses = {}
         friend_rels = None
         if aids:
             authors = Account._byID(aids, data=True, stale=self.stale) if aids else {}
             cup_infos = Account.cup_info_multi(aids)
-            if c.user_is_admin:
-                email_attrses = admintools.email_attrs(aids, return_dict=True)
             if user and user.gold:
                 friend_rels = user.friend_rels()
 
@@ -167,10 +164,6 @@ class Builder(object):
                 if not args.get('kind'):
                     args['kind'] = 'special'
                 add_attr(w.attribs, **args)
-
-            if False and w.author and c.user_is_admin:
-                for attr in email_attrses[w.author._id]:
-                    add_attr(w.attribs, attr[2], label=attr[1])
 
             if w.author and w.author._id in cup_infos and not c.profilepage:
                 cup_info = cup_infos[w.author._id]

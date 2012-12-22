@@ -1488,3 +1488,27 @@ class GoldPrice(object):
 def config_gold_price(v, key=None, data=None):
     return GoldPrice(v)
 
+
+def canonicalize_email(email):
+    """Return the given email address without various localpart manglings.
+
+    a.s.d.f+something@gmail.com --> asdf@gmail.com
+
+    This is not at all RFC-compliant or correct. It's only intended to be a
+    quick heuristic to remove commonly used mangling techniques.
+
+    """
+
+    if not email:
+        return ""
+
+    email = _force_utf8(email.lower())
+
+    localpart, at, domain = email.partition("@")
+    if not at or "@" in domain:
+        return ""
+
+    localpart = localpart.replace(".", "")
+    localpart = localpart.partition("+")[0]
+
+    return localpart + "@" + domain
