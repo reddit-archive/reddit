@@ -514,7 +514,7 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         def keep_fn(x):
             # no need to bother mods with banned users, or deleted content
-            if getattr(x,'hidden',False) or x._deleted:
+            if x._deleted:
                 return False
             if getattr(x,'author',None) == c.user and c.user._spam:
                 return False
