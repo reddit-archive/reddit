@@ -312,6 +312,12 @@ class Subreddit(Thing, Printable):
     def spammy(self):
         return self._spam
 
+    def is_contributor(self, user):
+        if self.name.lower() == g.lounge_reddit.lower():
+            return user.gold or user.gold_charter
+        else:
+            return super(Subreddit, self).is_contributor(user)
+
     def can_comment(self, user):
         if c.user_is_admin:
             return True

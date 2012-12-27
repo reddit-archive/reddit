@@ -178,10 +178,6 @@ class AdminTools(object):
 
         account.friend_rels_cache(_update=True)
 
-        if g.lounge_reddit:
-            sr = Subreddit._by_name(g.lounge_reddit)
-            sr.add_contributor(account)
-
     def degolden(self, account, severe=False):
 
         if severe:
@@ -191,10 +187,6 @@ class AdminTools(object):
         Award.take_away("reddit_gold", account)
         account.gold = False
         account._commit()
-
-        if g.lounge_reddit and not getattr(account, "gold_charter", False):
-            sr = Subreddit._by_name(g.lounge_reddit)
-            sr.remove_contributor(account)
 
     def admin_list(self):
         return list(g.admins)
