@@ -36,6 +36,7 @@ load-plugins=
 # E1103: X has no Y member (but some types could not be inferred)
 # W0212: Access to a protected member of X class
 # W0223: Method Y is abstract in class X but not overridden
+# C0103: Invalid name "%s" (should match %s)
 # C0111: Missing docstring
 # W0142: Used * or ** magic
 # R0201: Method could be a function
