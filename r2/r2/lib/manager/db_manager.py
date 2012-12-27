@@ -51,7 +51,7 @@ def get_engine(name, db_host='', db_user='', db_pass='', db_port='5432',
     dsn = "%20".join("%s=%s" % x for x in arguments.iteritems())
 
     return sqlalchemy.create_engine(
-        'postgres:///?dsn=' + dsn,
+        'postgresql:///?dsn=' + dsn,
         strategy='threadlocal',
         pool_size=int(pool_size),
         max_overflow=int(max_overflow),
