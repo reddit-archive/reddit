@@ -152,6 +152,7 @@ class Link(Thing, Printable):
                 comment_tree_version=cls._choose_comment_tree_version())
         l._commit()
         l.set_url_cache()
+        LinksByAccount.add_link(author, l)
         if author._spam:
             g.stats.simple_event('spam.autoremove.link')
             admintools.spam(l, banner='banned user')
@@ -737,6 +738,8 @@ class Comment(Thing, Printable):
         c._commit()
 
         changed(link, True)  # link's number of comments changed
+
+        CommentsByAccount.add_comment(author, c)
 
         inbox_rel = None
         # only global admins can be message spammed.
@@ -1707,3 +1710,30 @@ class ModeratorInbox(Relation(Subreddit, Message)):
                 i._commit()
                 res.append(i)
         return res
+
+class CommentsByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _write_last_modified = False
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        return ''
+
+    @classmethod
+    def add_comment(cls, account, comment):
+        cls.create(account, [comment])
+
+
+class LinksByAccount(tdb_cassandra.DenormalizedRelation):
+    _use_db = True
+    _write_last_modified = False
+    _views = []
+
+    @classmethod
+    def value_for(cls, thing1, thing2, opaque):
+        return ''
+
+    @classmethod
+    def add_link(cls, account, link):
+        cls.create(account, [link])
