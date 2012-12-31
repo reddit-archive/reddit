@@ -24,10 +24,12 @@ import os
 import json
 import urllib
 import functools
+from collections import MutableMapping
 
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 from kazoo.exceptions import NoNodeException
+from pylons import g
 
 
 def connect_to_zookeeper(hostlist, credentials):
@@ -138,3 +140,66 @@ class LiveList(object):
     def __repr__(self):
         return "<LiveList %r (%s)>" % (self.data,
                                        "push" if self.is_watching else "pull")
+
+
+class LiveDict(MutableMapping):
+    """Zookeeper-backed dictionary - similar to LiveList in that it can be
+    shared by all apps.
+    """
+
+    def __init__(self, client, path, watch=True):
+        self.client = client
+        self.path = path
+        self.is_watching = watch
+        self.lock_group = "LiveDict"
+
+        acl = [self.client.make_acl(read=True, write=True)]
+        self.client.ensure_path(self.path, acl)
+
+        if watch:
+            self._data = {}
+
+            @client.DataWatch(path)
+            def watcher(data, stat):
+                self._set_data(data)
+
+    def fetch_data(self):
+        self._refresh()
+        return self._data
+
+    def _refresh(self):
+        if not self.is_watching:
+            self._set_data(self.client.get(self.path)[0])
+
+    def _set_data(self, json_string):
+        self._data = json.loads(json_string or "{}")
+
+    def __getitem__(self, key):
+        self._refresh()
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        with g.make_lock(self.lock_group, self.path):
+            self._refresh()
+            self._data[key] = value
+            json_data = json.dumps(self._data)
+            self.client.set(self.path, json_data)
+
+    def __delitem__(self, key):
+        with g.make_lock(self.lock_group, self.path):
+            self._refresh()
+            del self._data[key]
+            json_data = json.dumps(self._data)
+            self.client.set(self.path, json_data)
+
+    def __repr__(self):
+        self._refresh()
+        return "<LiveDict {}>".format(self._data)
+
+    def __iter__(self):
+        self._refresh()
+        return iter(self._data)
+
+    def __len__(self):
+        self._refresh()
+        return len(self._data)
