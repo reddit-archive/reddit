@@ -4683,6 +4683,9 @@ table.lined-table {
         margin-top: 0px;
     }
 
+.create-promo .hidden { display: none; }
+button.new-campaign:disabled { color: gray; }
+
 .bidding-history { padding-top: 10px; }
 .bidding-history .linefield {
     width: auto; 

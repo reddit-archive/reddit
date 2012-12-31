@@ -88,6 +88,7 @@ class Globals(object):
             'page_cache_time',
             'commentpane_cache_time',
             'num_mc_clients',
+            'MAX_CAMPAIGNS_PER_LINK',
             'MIN_DOWN_LINK',
             'MIN_UP_KARMA',
             'MIN_DOWN_KARMA',

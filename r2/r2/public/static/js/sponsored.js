@@ -103,7 +103,7 @@ function targeting_off(elem) {
 (function($) {
 
 function get_flag_class(flags) {
-    var css_class = "";
+    var css_class = "campaign-row";
     if(flags.free) {
         css_class += " free";
     }
@@ -147,6 +147,7 @@ $.new_campaign = function(campaign_id36, start_date, end_date, duration,
       $(".existing-campaigns table").show()
       .insert_table_rows([{"id": "", "css_class": css_class, 
                            "cells": row}], -1);
+      check_number_of_campaigns();
       $.set_up_campaigns()
         });
    return $;
@@ -280,7 +281,7 @@ function del_campaign(elem) {
     $.request("delete_campaign", {"campaign_id36": campaign_id36,
                                   "link_id": link_id},
               null, true, "json", false);
-    $(elem).children(":first").delete_table_row();
+    $(elem).children(":first").delete_table_row(check_number_of_campaigns);
 }
 
 
@@ -338,7 +339,22 @@ function edit_campaign(elem) {
     }
 }
 
+function check_number_of_campaigns(){
+    if ($(".campaign-row").length >= $(".existing-campaigns").data("max-campaigns")){
+      $(".error.TOO_MANY_CAMPAIGNS").fadeIn();
+      $("button.new-campaign").attr("disabled", "disabled");
+      return true;
+    } else {
+      $(".error.TOO_MANY_CAMPAIGNS").fadeOut();
+      $("button.new-campaign").removeAttr("disabled");
+      return false;
+    }
+}
+
 function create_campaign(elem) {
+    if (check_number_of_campaigns()){
+        return;
+    }
     cancel_edit(function() {;
             init_startdate();
             init_enddate();

@@ -220,7 +220,13 @@ ${self.javascript_setup()}
      </div>
      <div class="clear"></div>
     </div>
-   <div class="existing-campaigns infotext rounded">
+   <div class="error TOO_MANY_CAMPAIGNS field-title infotext rounded
+        ${'hidden' if len(thing.campaigns) < g.MAX_CAMPAIGNS_PER_LINK else ''}"
+        data-MAX="${g.MAX_CAMPAIGNS_PER_LINK}" data-CAMP="${len(thing.campaigns)}">
+      <p>${_("You have too many campaigns for this link.")}&#32;
+      <a href="/promoted/new_promo/">${_("It's time to start fresh!")}</a></p>
+   </div>
+   <div class="existing-campaigns infotext rounded" data-max-campaigns="${g.MAX_CAMPAIGNS_PER_LINK}">
       <table style="${'display:none' if not thing.campaigns else ''}">
         <tr>
           <th title="${start_title}">start</th>
@@ -230,6 +236,7 @@ ${self.javascript_setup()}
           <th title="${targeting_title}">targeting</th>
           <th style="align:right">
             <button class="new-campaign fancybutton" 
+                    ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
                     title="${newcamp_title}"
                     onclick="return create_campaign(this)">+ add new</button>
           </th>

@@ -387,6 +387,17 @@ class PromoteController(ListingController):
                             errors.BAD_FUTURE_DATE, errors.BAD_DATE_RANGE)):
             return
 
+        # Limit the number of PromoCampaigns a Link can have
+        # Note that the front end should prevent the user from getting
+        # this far
+        existing_campaigns = list(PromoCampaign._by_link(l._id))
+        if len(existing_campaigns) > g.MAX_CAMPAIGNS_PER_LINK:
+            c.errors.add(errors.TOO_MANY_CAMPAIGNS,
+                         msg_params={'count': g.MAX_CAMPAIGNS_PER_LINK},
+                         field='title')
+            form.has_errors('title', errors.TOO_MANY_CAMPAIGNS)
+            return
+
         duration = max((end - start).days, 1)
 
         if form.has_errors('bid', errors.BAD_BID):

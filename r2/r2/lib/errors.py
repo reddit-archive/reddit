@@ -113,6 +113,7 @@ error_list = dict((
         ('BAD_HASH', _("i don't believe you.")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
         ('BID_LIVE', _('you cannot edit the bid of a live ad')),
+        ('TOO_MANY_CAMPAIGNS', _('you have too many campaigns for that promotion')),
         ('BAD_JSONP_CALLBACK', _('that jsonp callback contains invalid characters')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
