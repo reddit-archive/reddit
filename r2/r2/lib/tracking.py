@@ -66,9 +66,9 @@ def _unpad_message(text):
     return unpadded
 
 
-def _make_cipher(initialization_vector):
+def _make_cipher(initialization_vector, secret):
     """Return a block cipher object for use in `encrypt` and `decrypt`."""
-    return AES.new(g.tracking_secret[:KEY_SIZE], AES.MODE_CBC,
+    return AES.new(secret[:KEY_SIZE], AES.MODE_CBC,
                    initialization_vector[:AES.block_size])
 
 
@@ -83,15 +83,22 @@ def encrypt(plaintext):
 
     """
 
+    salt = _make_salt()
+    return _encrypt(salt, plaintext, g.tracking_secret)
+
+
+def _make_salt():
     # we want SALT_SIZE letters of salt text, but we're generating random bytes
     # so we'll calculate how many bytes we need to get SALT_SIZE characters of
     # base64 output. because of padding, this only works for SALT_SIZE % 4 == 0
     assert SALT_SIZE % 4 == 0
     salt_byte_count = (SALT_SIZE / 4) * 3
-
     salt_bytes = get_random_bytes(salt_byte_count)
-    salt = base64.b64encode(salt_bytes)
-    cipher = _make_cipher(salt)
+    return base64.b64encode(salt_bytes)
+
+
+def _encrypt(salt, plaintext, secret):
+    cipher = _make_cipher(salt, secret)
 
     padded = _pad_message(plaintext)
     ciphertext = cipher.encrypt(padded)
@@ -107,10 +114,14 @@ def decrypt(encrypted):
 
     """
 
+    return _decrypt(encrypted, g.tracking_secret)
+
+
+def _decrypt(encrypted, secret):
     encrypted = urllib.unquote_plus(encrypted)
     salt, encoded = encrypted[:SALT_SIZE], encrypted[SALT_SIZE:]
     ciphertext = base64.b64decode(encoded)
-    cipher = _make_cipher(salt)
+    cipher = _make_cipher(salt, secret)
     padded = cipher.decrypt(ciphertext)
     return _unpad_message(padded)
 
