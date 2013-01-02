@@ -5708,7 +5708,13 @@ tr.gold-accent + tr > td {
 .modactions.editsettings,
 .modactions.editflair,
 .modactions.distinguish,
-.modactions.marknsfw {
+.modactions.marknsfw,
+.modactions.wikirevise,
+.modactions.wikipermlevel,
+.modactions.wikibanned,
+.modactions.wikiunbanned,
+.modactions.wikicontributor,
+.modactions.removewikicontributor {
     height: 16px;
     width: 16px;
     display: block;
@@ -5760,6 +5766,24 @@ tr.gold-accent + tr > td {
 }
 .modactions.marknsfw {
     background-image: url(../modactions_marknsfw.png); /* SPRITE */
+}
+.modactions.wikirevise {
+    background-image: url(../modactions_wikirevise.png); /* SPRITE */
+}
+.modactions.wikipermlevel {
+    background-image: url(../modactions_wikipermlevel.png); /* SPRITE */
+}
+.modactions.wikibanned {
+    background-image: url(../modactions_banuser.png); /* SPRITE */
+}
+.modactions.wikiunbanned {
+    background-image: url(../modactions_unbanuser.png); /* SPRITE */
+}
+.modactions.wikicontributor {
+    background-image: url(../modactions_addcontributor.png); /* SPRITE */
+}
+.modactions.removewikicontributor {
+    background-image: url(../modactions_removecontributor.png); /* SPRITE */
 }
 
 .adminpasswordform {
