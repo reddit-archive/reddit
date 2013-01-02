@@ -116,7 +116,5 @@ setup(
     [paste.paster_command]
     run = r2.commands:RunCommand
     shell = pylons.commands:ShellCommand
-    controller = pylons.commands:ControllerCommand
-    restcontroller = pylons.commands:RestControllerCommand
     """,
 )
