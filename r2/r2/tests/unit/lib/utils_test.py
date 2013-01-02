@@ -63,7 +63,3 @@ class TestCanonicalizeEmail(unittest.TestCase):
         # to be byte strings with non-ascii in 'em.
         canonical = utils.canonicalize_email("\xe2\x9c\x93@example.com")
         self.assertEquals(canonical, "\xe2\x9c\x93@example.com")
-
-
-if __name__ == '__main__':
-    unittest.main()

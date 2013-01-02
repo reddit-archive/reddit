@@ -113,8 +113,6 @@ setup(
     entry_points="""
     [paste.app_factory]
     main=r2:make_app
-    [paste.app_install]
-    main=pylons.util:PylonsInstaller
     [paste.paster_command]
     run = r2.commands:RunCommand
     shell = pylons.commands:ShellCommand

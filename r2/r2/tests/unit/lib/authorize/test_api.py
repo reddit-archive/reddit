@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import unittest
+from r2.tests import RedditTestCase
 
-class AuthorizeNetExceptionTest(unittest.TestCase):
+
+class AuthorizeNetExceptionTest(RedditTestCase):
 
     def test_exception_message(self):
         from r2.lib.authorize.api import AuthorizeNetException
@@ -15,7 +16,7 @@ class AuthorizeNetExceptionTest(unittest.TestCase):
         self.assertNotEqual(str(exp), (full_msg % card_number))
         self.assertEqual(str(exp), (full_msg % expected))
 
-class SimpleXMLObjectTest(unittest.TestCase):
+class SimpleXMLObjectTest(RedditTestCase):
 
     def setUp(self):
         from r2.lib.authorize.api import SimpleXMLObject
@@ -128,7 +129,7 @@ class SimpleXMLObjectTest(unittest.TestCase):
                     "</transaction>")
         self.assertEqual(transaction.toXML(), expected)
     
-class ImportTest(unittest.TestCase):
+class ImportTest(RedditTestCase):
 
     def test_importable(self):
         #validator
@@ -146,23 +147,3 @@ class ImportTest(unittest.TestCase):
                                       is_charged_transaction,
                                       void_transaction,
                                       )
-
-
-def get_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(AuthorizeNetExceptionTest('test_exception_message'))
-    suite.addTest(SimpleXMLObjectTest('test_to_xml'))
-    suite.addTest(SimpleXMLObjectTest('test_simple_tag'))
-    suite.addTest(SimpleXMLObjectTest('test_from_xml'))
-    suite.addTest(SimpleXMLObjectTest('test_address'))
-    suite.addTest(SimpleXMLObjectTest('test_credit_card'))
-    suite.addTest(SimpleXMLObjectTest('test_payment_profile'))
-    suite.addTest(SimpleXMLObjectTest('test_transation'))
-    suite.addTest(ImportTest('test_importable'))
-    return suite
-
-def run_tests():
-    unittest.TextTestRunner(verbosity=2).run(get_suite())
-
-if __name__ == '__main__':
-    run_tests()

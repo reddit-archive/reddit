@@ -23,6 +23,7 @@
 import unittest
 
 from r2.lib import tracking
+from r2.tests import RedditTestCase
 
 
 KEY_SIZE = tracking.KEY_SIZE
@@ -55,11 +56,7 @@ class TestPadding(unittest.TestCase):
         self.assertEquals(MESSAGE, tested)
 
 
-class TestEncryption(unittest.TestCase):
+class TestEncryption(RedditTestCase):
     def test_encryption_roundtrip(self):
         tested = tracking.decrypt(tracking.encrypt(MESSAGE))
         self.assertEquals(MESSAGE, tested)
-
-
-if __name__ == '__main__':
-    unittest.main()
