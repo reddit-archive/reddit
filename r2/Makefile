@@ -87,7 +87,7 @@ INIFILES := $(UPDATE_FILES:.update=.ini)
 
 ini: $(INIFILES)
 
-$(INIFILES): %.ini: %.update
+$(INIFILES): %.ini: %.update example.ini
 	  ./updateini.py example.ini $< > $@ || rm $@ 
 
 clean_ini:
