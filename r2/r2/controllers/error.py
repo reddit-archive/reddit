@@ -28,7 +28,7 @@ import pylons
 
 from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
 from pylons.i18n import _
-from pylons import c, g, request
+from pylons import c, g, request, response
 
 try:
     # place all r2 specific imports in here.  If there is a code error, it'll
@@ -133,8 +133,9 @@ class ErrorController(RedditController):
     def send429(self):
         c.response.status_code = 429
 
-        if 'retry_after' in request.environ:
-            c.response.headers['Retry-After'] = str(request.environ['retry_after'])
+        retry_after = request.environ.get("retry_after")
+        if retry_after:
+            response.headers["Retry-After"] = str(retry_after)
             template_name = '/ratelimit_toofast.html'
         else:
             template_name = '/ratelimit_throttled.html'
