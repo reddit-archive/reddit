@@ -491,7 +491,7 @@ def ratelimit_agent(agent):
     time_slice = time.gmtime(slice * SLICE_SIZE)
     key = "rate_agent_" + agent + time.strftime("_%S", time_slice)
 
-    g.cache.add(key, 0, time=SLICE_SIZE)
+    g.cache.add(key, 0, time=SLICE_SIZE + 1)
     if g.cache.incr(key) > SLICE_SIZE:
         request.environ['retry_after'] = SLICE_SIZE - remainder
         abort(429)
