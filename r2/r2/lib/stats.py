@@ -53,8 +53,12 @@ class TimingStatBuffer:
     def flush(self):
         """Yields accumulated timing and counter data and resets the buffer."""
         data, self.data = self.data, collections.defaultdict(complex)
-        while data:
-            k, v = data.popitem()
+        while True:
+            try:
+                k, v = data.popitem()
+            except KeyError:
+                break
+
             total_time, count = v.real, v.imag
             yield k, str(int(count)) + '|c'
             divisor = count or 1
