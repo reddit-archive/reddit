@@ -825,9 +825,6 @@ class CloudSearchQuery(object):
         self.results = None
 
     def run(self, after=None, reverse=False, num=1000, _update=False):
-        if not self.query:
-            return Results([], 0, {})
-
         results = self._run(_update=_update)
 
         docs, hits, facets = results.docs, results.hits, results._facets
@@ -907,6 +904,8 @@ class CloudSearchQuery(object):
                    u'rank': u'-text_relevance'}
         
         '''
+        if not query and not bq:
+            return Results([], 0, {})
         response = basic_query(query=query, bq=bq, size=num, start=start,
                                rank=sort, search_api=cls.search_api,
                                faceting=faceting, record_stats=True)
