@@ -66,6 +66,7 @@ from r2.controllers.oauth2 import OAuth2ResourceController, require_oauth2_scope
 from r2.lib.template_helpers import add_sr, get_domain
 from r2.lib.system_messages import notify_user_added
 from r2.controllers.ipn import generate_blob
+from r2.lib.lock import TimeoutExpired
 
 from r2.models import wiki
 from r2.lib.merge import ConflictException
@@ -2072,69 +2073,65 @@ class ApiController(RedditController, OAuth2ResourceController):
         `pv_hex` is part of the reddit gold "previous visits" feature. It is
         optional and deprecated.
 
+        **NOTE:** you may only make one request at a time to this API endpoint.
+        Higher concurrency will result in an error being returned.
+
         """
 
         CHILD_FETCH_COUNT = 20
 
-        user = c.user if c.user_is_loggedin else None
+        lock = None
+        if c.user_is_loggedin:
+            lock = g.make_lock("morechildren", "morechildren-" + c.user.name,
+                               timeout=0)
+            try:
+                lock.acquire()
+            except TimeoutExpired:
+                abort(429)
 
-        mc_key = "morechildren-%s" % request.ip
         try:
-            count = g.cache.incr(mc_key)
-        except:
-            g.cache.set(mc_key, 1, time=30)
-            count = 1
-
-        # Anything above 15 hits in 30 seconds violates the
-        # "1 request per 2 seconds" rule of the API
-        if count > 15:
-            if user:
-                name = user.name
-            else:
-                name = "(unlogged user)"
-            g.log.warning("%s on %s hit morechildren %d times in 30 seconds"
-                          % (name, request.ip, count))
-            # TODO: redirect to rickroll or something
-
-        if not link or not link.subreddit_slow.can_view(user):
-            return abort(403,'forbidden')
-
-        if pv_hex:
-            c.previous_visits = g.cache.get(pv_hex)
-
-        if children:
-            builder = CommentBuilder(link, CommentSortMenu.operator(sort),
-                                     children)
-            listing = Listing(builder, nextprev = False)
-            items = listing.get_items(num=CHILD_FETCH_COUNT)
-            def _children(cur_items):
-                items = []
-                for cm in cur_items:
-                    items.append(cm)
-                    if hasattr(cm, 'child'):
-                        if hasattr(cm.child, 'things'):
-                            items.extend(_children(cm.child.things))
-                            cm.child = None
-                        else:
-                            items.append(cm.child)
-
-                return items
-            # assumes there is at least one child
-            # a = _children(items[0].child.things)
-            a = []
-            for item in items:
-                a.append(item)
-                if hasattr(item, 'child'):
-                    a.extend(_children(item.child.things))
-                    item.child = None
-
-            # the result is not always sufficient to replace the 
-            # morechildren link
-            jquery.things(str(mc_id)).remove()
-            jquery.insert_things(a, append = True)
+            if not link or not link.subreddit_slow.can_view(c.user):
+                return abort(403,'forbidden')
 
             if pv_hex:
-                jquery.rehighlight_new_comments()
+                c.previous_visits = g.cache.get(pv_hex)
+
+            if children:
+                builder = CommentBuilder(link, CommentSortMenu.operator(sort),
+                                         children)
+                listing = Listing(builder, nextprev = False)
+                items = listing.get_items(num=CHILD_FETCH_COUNT)
+                def _children(cur_items):
+                    items = []
+                    for cm in cur_items:
+                        items.append(cm)
+                        if hasattr(cm, 'child'):
+                            if hasattr(cm.child, 'things'):
+                                items.extend(_children(cm.child.things))
+                                cm.child = None
+                            else:
+                                items.append(cm.child)
+
+                    return items
+                # assumes there is at least one child
+                # a = _children(items[0].child.things)
+                a = []
+                for item in items:
+                    a.append(item)
+                    if hasattr(item, 'child'):
+                        a.extend(_children(item.child.things))
+                        item.child = None
+
+                # the result is not always sufficient to replace the
+                # morechildren link
+                jquery.things(str(mc_id)).remove()
+                jquery.insert_things(a, append = True)
+
+                if pv_hex:
+                    jquery.rehighlight_new_comments()
+        finally:
+            if lock:
+                lock.release()
 
 
     @validate(uh = nop('uh'), # VModHash() will raise, check manually
