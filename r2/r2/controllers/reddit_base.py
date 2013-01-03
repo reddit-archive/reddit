@@ -20,7 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import babel.core
 import locale
 import re
 import simplejson
@@ -34,6 +33,8 @@ from functools import wraps
 from hashlib import sha1
 from urllib import quote, unquote
 from urlparse import urlparse
+
+import babel.core
 
 from mako.filters import url_escape
 from pylons import c, g, request, response
