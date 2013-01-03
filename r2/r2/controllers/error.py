@@ -20,30 +20,29 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import os.path
+import json
+import os
+import random
 
 import pylons
-import paste.fileapp
-from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
-from pylons.middleware import error_document_template, media_path
-from pylons import c, request, g
-from r2.config import extensions
-from pylons.i18n import _
-import random as rand
-from r2.lib.errors import ErrorSet
-from r2.lib.filters import safemarkdown, unsafe, websafe_json
 
-import json
+from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
+from pylons.i18n import _
+from pylons import c, g, request
 
 try:
-    # place all r2 specific imports in here.  If there is a code error, it'll get caught and
-    # the stack trace won't be presented to the user in production
-    from reddit_base import RedditController, Cookies
-    from r2.models.subreddit import DefaultSR, Subreddit
-    from r2.models.link import Link
+    # place all r2 specific imports in here.  If there is a code error, it'll
+    # get caught and the stack trace won't be presented to the user in
+    # production
+    from r2.config import extensions
+    from r2.controllers.reddit_base import RedditController, Cookies
+    from r2.lib.errors import ErrorSet
+    from r2.lib.filters import websafe_json
     from r2.lib import pages
-    from r2.lib.strings import strings, rand_strings
+    from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
+    from r2.models.link import Link
+    from r2.models.subreddit import DefaultSR, Subreddit
 except Exception, e:
     if g.debug:
         # if debug mode, let the error filter up to pylons to be handled
@@ -52,8 +51,8 @@ except Exception, e:
         # production environment: protect the code integrity!
         print "HuffmanEncodingError: make sure your python compiles before deploying, stupid!"
         # kill this app
-        import os
         os._exit(1)
+
 
 NUM_FAILIENS = 3
 
@@ -182,8 +181,8 @@ class ErrorController(RedditController):
             elif code == 429:
                 return self.send429()
             elif code == 500:
-                randmin = {'admin': rand.choice(self.admins)}
-                failien_name = 'youbrokeit%d.png' % rand.randint(1, NUM_FAILIENS)
+                randmin = {'admin': random.choice(self.admins)}
+                failien_name = 'youbrokeit%d.png' % random.randint(1, NUM_FAILIENS)
                 failien_url = static(failien_name)
                 return redditbroke % (failien_url, rand_strings.sadmessages % randmin)
             elif code == 503:
@@ -218,7 +217,7 @@ def handle_awful_failure(fail_text):
         import traceback
         g.log.error("FULLPATH: %s" % fail_text)
         g.log.error(traceback.format_exc())
-        return redditbroke % (rand.randint(1,NUM_FAILIENS), fail_text)
+        return redditbroke % (random.randint(1,NUM_FAILIENS), fail_text)
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
