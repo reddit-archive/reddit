@@ -38,14 +38,14 @@ import babel.core
 
 from mako.filters import url_escape
 from pylons import c, g, request, response
-from pylons.controllers.util import abort, redirect_to
+from pylons.controllers.util import redirect_to
 from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
 from r2.config.extensions import is_api
 from r2.lib import filters, pages, utils
 from r2.lib.authentication import authenticate_user
-from r2.lib.base import BaseController
+from r2.lib.base import BaseController, abort
 from r2.lib.cache import make_key, MemcachedError
 from r2.lib.errors import (
     ErrorSet,
