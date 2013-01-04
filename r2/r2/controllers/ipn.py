@@ -155,24 +155,6 @@ def check_txn_type(txn_type, psl):
                          ((txn_type, psl),))
 
 
-def verify_ipn(parameters):
-    paraemeters['cmd'] = '_notify-validate'
-    try:
-        safer = dict([k, v.encode('utf-8')] for k, v in parameters.items())
-        params = urllib.urlencode(safer)
-    except UnicodeEncodeError:
-        g.log.error("problem urlencoding %r" % (parameters,))
-        raise
-    req = urllib2.Request(g.PAYPAL_URL, params)
-    req.add_header("Content-type", "application/x-www-form-urlencoded")
-
-    response = urllib2.urlopen(req)
-    status = response.read()
-
-    if status != "VERIFIED":
-        raise ValueError("Invalid IPN response: %r" % status)
-
-
 def existing_subscription(subscr_id, paying_id, custom):
     if subscr_id is None:
         return None
@@ -475,10 +457,6 @@ class IpnController(RedditController):
         if g.cache.get("ipn-debug"):
             g.cache.delete("ipn-debug")
             dump_parameters(parameters)
-
-        # More sanity checks...
-        if False: # TODO: remove this line
-            verify_ipn(parameters)
 
         if mc_currency != 'USD':
             raise ValueError("Somehow got non-USD IPN %r" % mc_currency)
