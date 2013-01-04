@@ -47,7 +47,6 @@ import socket
 from api_docs import api_doc, api_section
 
 from pylons.i18n import _
-from pylons import Response
 from pylons.controllers.util import redirect_to
 
 import random

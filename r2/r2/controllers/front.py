@@ -49,7 +49,7 @@ from r2.lib.errors import errors
 from listingcontroller import ListingController
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from api_docs import api_doc, api_section
-from pylons import c, request, request, Response
+from pylons import c, request, request
 from r2.models.token import EmailVerificationToken
 from r2.controllers.ipn import generate_blob
 

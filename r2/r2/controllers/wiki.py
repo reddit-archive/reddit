@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import request, g, c, Response
+from pylons import request, g, c
 from pylons.controllers.util import redirect_to
 from reddit_base import RedditController
 from r2.lib.utils import url_links
