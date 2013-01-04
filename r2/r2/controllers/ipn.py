@@ -20,21 +20,43 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from xml.dom.minidom import Document
 from httplib import HTTPSConnection
 from urlparse import urlparse
+from xml.dom.minidom import Document
+
 import base64
 
-from pylons.controllers.util import abort
-from pylons import c, g, response
+from BeautifulSoup import BeautifulStoneSoup
+from pylons import c, g, request
 from pylons.i18n import _
 
-from r2.models import *
+from r2.controllers.reddit_base import RedditController
 from r2.lib.filters import _force_unicode
-from r2.lib.utils import randstr
-from r2.lib.validator import *
-
-from reddit_base import RedditController
+from r2.lib.log import log_text
+from r2.lib.strings import strings
+from r2.lib.utils import randstr, tup
+from r2.lib.validator import (
+    textresponse,
+    validatedForm,
+    VFloat,
+    VInt,
+    VLength,
+    VPrintable,
+    VUser,
+)
+from r2.models import (
+    Account,
+    account_by_payingid,
+    accountid_from_paypalsubscription,
+    admintools,
+    cancel_subscription,
+    create_claimed_gold,
+    create_gift_gold,
+    make_comment_gold_message,
+    NotFound,
+    send_system_message,
+    Thing,
+)
 
 
 def generate_blob(data):
