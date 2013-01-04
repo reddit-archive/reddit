@@ -33,7 +33,7 @@ from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
 from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
 from r2.lib.template_helpers import get_domain
-from r2.lib.filters import unsafe, _force_unicode
+from r2.lib.filters import unsafe, _force_unicode, _force_utf8
 from r2.lib.emailer import has_opted_out, Email
 from r2.lib.db.operators import desc
 from r2.lib.db import queries
@@ -1343,7 +1343,7 @@ class FormsController(RedditController):
             if goldtype == "gift":
                 payment_blob["signed"] = signed
                 payment_blob["recipient"] = recipient.name
-                payment_blob["giftmessage"] = giftmessage
+                payment_blob["giftmessage"] = _force_utf8(giftmessage)
                 if comment:
                     payment_blob["comment"] = comment._fullname
 

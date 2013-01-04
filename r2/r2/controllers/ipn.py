@@ -30,6 +30,7 @@ from pylons import c, g, response
 from pylons.i18n import _
 
 from r2.models import *
+from r2.lib.filters import _force_unicode
 from r2.lib.utils import randstr
 from r2.lib.validator import *
 
@@ -300,7 +301,7 @@ class IpnController(RedditController):
                              (passthrough, payment_blob["goldtype"]))
 
         signed = payment_blob["signed"]
-        giftmessage = payment_blob["giftmessage"]
+        giftmessage = _force_unicode(payment_blob["giftmessage"])
         recipient_name = payment_blob["recipient"]
 
         if payment_blob["account_id"] != c.user._id:
@@ -536,7 +537,7 @@ class IpnController(RedditController):
                 raise ValueError("Invalid recipient_name %s in IPN/GC with custom='%s'"
                                  % (recipient_name, custom))
             signed = payment_blob.get("signed", False)
-            giftmessage = payment_blob.get("giftmessage", False)
+            giftmessage = _force_unicode(payment_blob.get("giftmessage", ""))
             comment_id = payment_blob.get("comment")
             send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id)
             instagift = True
