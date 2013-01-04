@@ -30,7 +30,7 @@ from r2.lib.memoize import memoize
 from r2.lib.template_helpers import add_sr
 from r2.lib import utils
 from r2.lib.validator import *
-from pylons import c, Response
+from pylons import c
 from r2.models.admintools import is_shamed_domain
 
 import string
@@ -174,11 +174,8 @@ class ToolbarController(RedditController):
 
         # we don't want clients to think that this URL is actually a
         # valid URL for search-indexing or the like
-        c.response = Response()
-        c.response.status_code = 404
         request.environ['usable_error_content'] = spaceCompress(res.render())
-
-        return c.response
+        abort(404)
 
     @validate(link = VLink('id'))
     def GET_comments(self, link):
