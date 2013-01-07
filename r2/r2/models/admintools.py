@@ -378,6 +378,24 @@ def filter_quotas(unfiltered):
 def check_request(end_time):
     pass
 
+
+def send_system_message(user, subject, body):
+    from r2.lib.db import queries
+
+    system_user = Account.system_user()
+    if not system_user:
+        g.log.warning("g.system_user isn't set properly. Can't send system message.")
+        return
+
+    item, inbox_rel = Message._new(system_user, user, subject, body,
+                                   ip='0.0.0.0')
+    item.distinguished = 'admin'
+    item.repliable = False
+    item._commit()
+
+    queries.new_message(item, inbox_rel)
+
+
 try:
     from r2admin.models.admintools import *
 except ImportError:
