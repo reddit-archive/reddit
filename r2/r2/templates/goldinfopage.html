@@ -55,6 +55,11 @@
         <a class="postcard-button" href="#postcard"><img src="${static('gold/stamp.png')}" alt=""> ${_('send us a postcard')}</a>
       </div>
     </header>
+    ${feature_item(static('gold/sample-filterall.png'),
+      _(
+        "# Filter specific subreddits from /r/all.\n"
+        "Are there subreddits you don't want to see? Customize /r/all by removing them."
+      ), 'new')}
     ${feature_item(static('gold/sample-morecomments.png'),
       _(
         '# More subreddits and comments per page.\n'
