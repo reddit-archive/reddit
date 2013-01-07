@@ -144,11 +144,15 @@ class PromoteController(ListingController):
 
     @validate(VSponsor())
     def GET_graph(self):
-        content = Promote_Graph()
-        if c.user_is_sponsor and c.render_style == 'csv':
+        return PromotePage("graph", content=Promote_Graph()).render()
+
+    @validate(VSponsorAdmin())
+    def GET_admingraph(self):
+        content = Promote_Graph(admin_view=True)
+        if c.render_style == 'csv':
             c.response.content = content.as_csv()
             return c.response
-        return PromotePage("graph", content = content).render()
+        return PromotePage("admingraph", content=content).render()
 
     
     def GET_inventory(self, sr_name):

@@ -155,6 +155,7 @@ def make_map():
        controller='promote', action='pay')
     mc('/promoted/graph',
        controller='promote', action='graph')
+    mc('/promoted/admin/graph', controller='promote', action='admingraph')
     mc('/promoted/inventory/:sr_name', 
        controller='promote', action='inventory')
     mc('/promoted/traffic/headline/:link', 
