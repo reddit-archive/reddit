@@ -5337,6 +5337,7 @@ body:not(.gold) .allminus-link {
     border: 1px solid #E1B000;
     background-color: #fffdcc;
     color: #6a4d00;
+    width: 510px;
 }
 
 .gold-form .note {

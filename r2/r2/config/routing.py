@@ -264,6 +264,8 @@ def make_map():
     mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
     mc('/api/stripewebhook/gold/:secret', controller='stripe',
        action='goldwebhook')
+    mc('/api/coinbasewebhook/gold/:secret', controller='coinbase',
+       action='goldwebhook')
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',

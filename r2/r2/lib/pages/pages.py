@@ -1860,15 +1860,20 @@ class GoldPayment(Templated):
             quantity = None
             google_id = None
             stripe_key = None
+            coinbase_button_id = None
 
         elif goldtype == "onetime":
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
                 quantity = months
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
+                coinbase_button_id = getattr(g, coinbase_name, None)
             else:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYYEAR
                 quantity = months / 12
                 months = quantity * 12
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
+                coinbase_button_id = getattr(g, coinbase_name, None)
 
             summary = strings.gold_summary_onetime % dict(user=c.user.name,
                                      amount=Score.somethings(months, "month"))
@@ -1880,9 +1885,13 @@ class GoldPayment(Templated):
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
                 quantity = months
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sMO' % quantity
+                coinbase_button_id = getattr(g, coinbase_name, None)
             else:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYYEAR
                 quantity = months / 12
+                coinbase_name = 'COINBASE_BUTTONID_ONETIME_%sYR' % quantity
+                coinbase_button_id = getattr(g, coinbase_name, None)
 
             if goldtype == "creddits":
                 summary = strings.gold_summary_creddits % dict(
@@ -1927,7 +1936,8 @@ class GoldPayment(Templated):
                            google_id=google_id,
                            comment=comment, clone_template=clone_template,
                            paypal_buttonid=paypal_buttonid,
-                           stripe_key=stripe_key)
+                           stripe_key=stripe_key,
+                           coinbase_button_id=coinbase_button_id)
 
 
 class CreditGild(Templated):

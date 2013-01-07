@@ -44,7 +44,8 @@ r.gold = {
         var form = $('.gold-form.cloneable:first').clone(),
             authorName = $link.thing().find('.entry .author:first').text(),
             message = r.strings.gold_summary_comment_gift.replace('%(recipient)s', authorName),
-            passthroughs = form.find('.passthrough')
+            passthroughs = form.find('.passthrough'),
+            cbBaseUrl = form.find('[name="cbbaseurl"]').val()
 
         form.removeClass('cloneable')
             .attr('id', formId)
@@ -65,6 +66,7 @@ r.gold = {
             form.removeClass('working')
             passthroughs.val(token)
             form.find('.stripe-gold').on('click', function() { window.open('/gold/creditgild/' + token) })
+            form.find('.coinbase-gold').on('click', function() { window.open(cbBaseUrl + "?c=" + token) })
             form.find('button').removeAttr('disabled').removeClass('disabled')
         })
 

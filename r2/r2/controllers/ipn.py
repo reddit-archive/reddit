@@ -765,6 +765,26 @@ class StripeController(GoldPaymentController):
             send_system_message(c.user, subject, msg)
 
 
+class CoinbaseController(GoldPaymentController):
+    name = 'coinbase'
+    webhook_secret = g.COINBASE_WEBHOOK_SECRET
+    event_type_mappings = {
+        'completed': 'succeeded',
+        'cancelled': 'cancelled',
+    }
+
+    @classmethod
+    def process_response(cls):
+        event_dict = json.loads(request.body)
+        g.log.debug('event_dict: %s' % event_dict)
+        order = event_dict['order']
+        transaction_id = 'C%s' % order['id']
+        status = order['status']    # new/completed/cancelled
+        pennies = int(order['total_native']['cents'])
+        passthrough = order['custom']
+        return status, passthrough, transaction_id, pennies
+
+
 class GoldException(Exception): pass
 
 

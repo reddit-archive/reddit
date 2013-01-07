@@ -1041,7 +1041,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                           ).render()
     
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
-                                  "paypal", "google-checkout"),
+                                  "paypal", "google-checkout", "coinbase"),
                             default="claimed-gold"))
     def GET_goldthanks(self, vendor):
         vendor_url = None
@@ -1062,6 +1062,11 @@ class FrontController(RedditController, OAuth2ResourceController):
         elif vendor == "google-checkout":
             claim_msg = vendor_claim_msg
             vendor_url = "https://wallet.google.com/manage"
+        elif vendor == "coinbase":
+            claim_msg = _("thanks for buying reddit gold! your transaction is "
+                          "being processed. if you have any questions please "
+                          "email us at %(gold_email)s")
+            claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
         else:
             abort(404)
         

@@ -61,6 +61,10 @@
         ${self.paypal_button()}
       %endif
 
+      %if thing.coinbase_button_id:
+        ${self.coinbase_button()}
+      %endif
+
       %if thing.stripe_key:
         ${self.stripe_button()}
       %endif
@@ -222,6 +226,16 @@
     <button class="btn gold-button stripe-submit">${_('Submit')}</button>
     <span class="status"></span>
   </form>
+</%def>
+
+<%def name="coinbase_button()">
+  <button class="btn coinbase-gold gold-button gold-checkout"
+          data-vendor="coinbase"
+          %if not thing.clone_template:
+            onclick="window.open('https://coinbase.com/checkouts/${thing.coinbase_button_id}?c=${thing.passthrough}')"
+          %endif
+          >${_('Bitcoin')}</button>
+  <input type="hidden" name="cbbaseurl" value="https://coinbase.com/checkouts/${thing.coinbase_button_id}">
 </%def>
 
 % if not thing.clone_template:

@@ -82,5 +82,6 @@ def load_controllers():
     from redirect import RedirectController
     from ipn import IpnController
     from ipn import StripeController
+    from ipn import CoinbaseController
 
     _reddit_controllers.update((name.lower(), obj) for name, obj in locals().iteritems())
