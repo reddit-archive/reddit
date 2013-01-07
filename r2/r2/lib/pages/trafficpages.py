@@ -470,6 +470,9 @@ class PromotedLinkTraffic(RedditTraffic):
             self.history = []
             return
 
+        now = datetime.datetime.utcnow().replace(minute=0, second=0,
+                                                 microsecond=0)
+        end = min(end, now)
         cutoff = end - datetime.timedelta(days=31)
         start = max(start, cutoff)
 
