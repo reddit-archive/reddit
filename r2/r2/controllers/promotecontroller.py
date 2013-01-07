@@ -193,10 +193,12 @@ class PromoteController(ListingController):
         '''
         inv_start_date = promote.promo_datetime_now()
         inv_end_date = inv_start_date + timedelta(60)
-        inventory = promote.get_available_impressions(sr_name,
-                                                      inv_start_date,
-                                                      inv_end_date,
-                                                      fuzzed=(not c.user_is_admin))
+        inventory = promote.get_available_impressions(
+            sr_name,
+            inv_start_date,
+            inv_end_date,
+            fuzzed=(not c.user_is_admin)
+        )
         dates = []
         impressions = []
         max_imps = 0
@@ -403,7 +405,8 @@ class PromoteController(ListingController):
 
         start, end = dates or (None, None)
 
-        if start and end and not promote.is_accepted(l) and not c.user_is_sponsor:
+        if (start and end and not promote.is_accepted(l) and
+            not c.user_is_sponsor):
             # if the ad is not approved already, ensure the start date
             # is at least 2 days in the future
             start = start.date()
@@ -477,9 +480,10 @@ class PromoteController(ListingController):
                 return
             oversold = promote.is_roadblocked(sr.name, start, end)
             if oversold and not c.user_is_sponsor:
+                msg_params = {"start": oversold[0].strftime('%m/%d/%Y'),
+                              "end": oversold[1].strftime('%m/%d/%Y')}
                 c.errors.add(errors.OVERSOLD, field='sr',
-                             msg_params={"start": oversold[0].strftime('%m/%d/%Y'),
-                                           "end": oversold[1].strftime('%m/%d/%Y')})
+                             msg_params=msg_params)
                 form.has_errors('sr', errors.OVERSOLD)
                 return
         if targeting == 'none':
@@ -532,7 +536,6 @@ class PromoteController(ListingController):
                              traffic_url=promote.promo_traffic_url(thing),
                              title=thing.title)
                     msg = msg % d
-                    subk = msg % d
                     item, inbox_rel = Message._new(c.user, user,
                                                    subj, msg, request.ip)
                     if g.write_query_queue:
@@ -648,9 +651,9 @@ class PromoteController(ListingController):
               dates=VDateRange(['startdate', 'enddate']),
               query_type=VOneOf('q', ('started_on', 'between'), default=None))
     def GET_admin(self, launchdate=None, dates=None, query_type=None):
-              return PromoAdminTool(query_type=query_type,
-                                    launchdate=launchdate,
-                                    start=dates[0],
-                                    end=dates[1]).render()
+        return PromoAdminTool(query_type=query_type,
+                              launchdate=launchdate,
+                              start=dates[0],
+                              end=dates[1]).render()
 
 
