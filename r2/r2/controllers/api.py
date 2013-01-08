@@ -725,6 +725,8 @@ class ApiController(RedditController, OAuth2ResourceController):
     @api_doc(api_section.subreddits)
     def POST_accept_moderator_invite(self, form, jquery, ip):
         if not c.site.remove_moderator_invite(c.user):
+            c.errors.add(errors.NO_INVITE_FOUND)
+            form.set_error(errors.NO_INVITE_FOUND, None)
             return
 
         ModAction.create(c.site, c.user, "acceptmoderatorinvite")

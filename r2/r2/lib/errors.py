@@ -112,6 +112,7 @@ error_list = dict((
         ('TOO_MANY_DEVELOPERS', _('too many developers')),
         ('BAD_HASH', _("i don't believe you.")),
         ('ALREADY_MODERATOR', _('that user is already a moderator')),
+        ('NO_INVITE_FOUND', _('there is no pending invite for that subreddit')),
         ('BID_LIVE', _('you cannot edit the bid of a live ad')),
         ('TOO_MANY_CAMPAIGNS', _('you have too many campaigns for that promotion')),
         ('BAD_JSONP_CALLBACK', _('that jsonp callback contains invalid characters')),
