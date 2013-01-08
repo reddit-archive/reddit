@@ -5121,8 +5121,13 @@ body:not(.gold) .allminus-link {
     display: none;
 }
 
-.giftgold.karma-breakdown {
+.karma-breakdown {
     margin-top: .6em;
+    margin-bottom: 5px;
+}
+
+.karma-breakdown a {
+    font-weight: bold;
 }
 
 .friend-note button[type=submit] { 

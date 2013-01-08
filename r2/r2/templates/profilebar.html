@@ -66,7 +66,7 @@
   &#32;
   ${_("comment karma")}
 
-  %if c.user_is_admin or (c.user.gold and c.user == thing.user):
+  %if c.user_is_admin or c.user == thing.user:
     <table id="per-sr-karma"
       % if not c.user_is_admin:
       class="more-karmas"
@@ -101,7 +101,7 @@
       </tbody>
     </table>
     % if not c.user_is_admin or len(karmas) > 5:
-    <div class="giftgold karma-breakdown">
+    <div class="karma-breakdown">
       <a href="javascript:void(0)"
          onclick="$('.more-karmas').show();$(this).hide();return false">
          show karma breakdown by subreddit
