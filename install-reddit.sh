@@ -139,6 +139,7 @@ python-l2cs
 python-lxml
 python-zope.interface
 python-kazoo
+python-stripe
 
 gettext
 make

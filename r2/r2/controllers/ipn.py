@@ -20,16 +20,19 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from datetime import datetime, timedelta
 from httplib import HTTPSConnection
 from urlparse import urlparse
 from xml.dom.minidom import Document
 
 import base64
+import json
 
 from BeautifulSoup import BeautifulStoneSoup
 from pylons import c, g, request
 from pylons.i18n import _
 from sqlalchemy.exc import IntegrityError
+import stripe
 
 from r2.controllers.reddit_base import RedditController
 from r2.lib.filters import _force_unicode
@@ -37,6 +40,7 @@ from r2.lib.log import log_text
 from r2.lib.strings import strings
 from r2.lib.utils import randstr, tup
 from r2.lib.validator import (
+    nop,
     textresponse,
     validatedForm,
     VFloat,
@@ -661,6 +665,104 @@ class GoldPaymentController(RedditController):
             send_system_message(buyer, subject, msg)
             reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
                                   recipient)
+
+
+class StripeController(GoldPaymentController):
+    name = 'stripe'
+    webhook_secret = g.STRIPE_WEBHOOK_SECRET
+    event_type_mappings = {
+        'charge.succeeded': 'succeeded',
+        'charge.failed': 'failed',
+        'charge.refunded': 'refunded',
+        'customer.created': 'noop',
+    }
+
+    @classmethod
+    def process_response(cls):
+        event_dict = json.loads(request.body)
+        event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
+        status = event.type
+        if status == 'customer.created':
+            return status, None, None, None
+
+        charge = event.data.object
+        description = charge.description
+        passthrough, buyer_name = description.split('-')
+        transaction_id = 'S%s' % charge.id
+        pennies = charge.amount
+        return status, passthrough, transaction_id, pennies
+
+    @validatedForm(VUser(),
+                   token=nop('stripeToken'),
+                   passthrough=VPrintable("passthrough", max_length=50),
+                   pennies=VInt('pennies'),
+                   months=VInt("months"))
+    def POST_goldcharge(self, form, jquery, token, passthrough, pennies, months):
+        """
+        Submit charge to stripe.
+
+        Called by GoldPayment form. This submits the charge to stripe, and gold
+        will be applied once we receive a webhook from stripe.
+
+        """
+
+        try:
+            payment_blob = validate_blob(passthrough)
+        except GoldException as e:
+            # This should never happen. All fields in the payment_blob
+            # are validated on creation
+            form.set_html('.status',
+                          _('something bad happened, try again later'))
+            g.log.debug('POST_goldcharge: %s' % e.message)
+            return
+
+        penny_months, days = months_and_days_from_pennies(pennies)
+        if not months or months != penny_months:
+            form.set_html('.status', _('stop trying to trick the form'))
+            return
+
+        stripe.api_key = g.STRIPE_SECRET_KEY
+
+        try:
+            customer = stripe.Customer.create(card=token)
+
+            if (customer['active_card']['address_line1_check'] == 'fail' or
+                customer['active_card']['address_zip_check'] == 'fail'):
+                form.set_html('.status',
+                              _('error: address verification failed'))
+                form.find('.stripe-submit').removeClass("disabled").end()
+                return
+
+            if customer['active_card']['cvc_check'] == 'fail':
+                form.set_html('.status', _('error: cvc check failed'))
+                form.find('.stripe-submit').removeClass("disabled").end()
+                return
+
+            charge = stripe.Charge.create(
+                amount=pennies,
+                currency="usd",
+                customer=customer['id'],
+                description='%s-%s' % (passthrough, c.user.name)
+            )
+        except stripe.CardError as e:
+            form.set_html('.status', 'error: %s' % e.message)
+        except stripe.InvalidRequestError as e:
+            form.set_html('.status', _('invalid request'))
+        except stripe.APIConnectionError as e:
+            form.set_html('.status', _('api error'))
+        except stripe.AuthenticationError as e:
+            form.set_html('.status', _('connection error'))
+        except stripe.StripeError as e:
+            form.set_html('.status', _('error'))
+            g.log.error('stripe error: %s' % e)
+        else:
+            form.set_html('.status', _('payment submitted'))
+
+            # webhook usually sends near instantly, send a message in case
+            subject = _('gold payment')
+            msg = _('your payment is being processed and gold will be'
+                    ' delivered shortly')
+            send_system_message(c.user, subject, msg)
 
 
 class GoldException(Exception): pass

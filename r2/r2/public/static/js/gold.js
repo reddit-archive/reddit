@@ -7,6 +7,12 @@ r.gold = {
             'a.give-gold, .gilded-comment-icon, .gold-payment .close-button',
             $.proxy(this, '_toggleCommentGoldForm')
         )
+
+        $('.stripe-gold').click(function(){
+            $("#stripe-payment").show()
+        })
+
+        $('.stripe-submit').on('click', this.makeStripeToken)
     },
 
     _toggleCommentGoldForm: function (e) {
@@ -58,6 +64,7 @@ r.gold = {
             clearTimeout(workingTimer)
             form.removeClass('working')
             passthroughs.val(token)
+            form.find('.stripe-gold').on('click', function() { window.open('/gold/creditgild/' + token) })
             form.find('button').removeAttr('disabled').removeClass('disabled')
         })
 
@@ -104,6 +111,77 @@ r.gold = {
         }
 
         comment.children('.entry').find('.give-gold').parent().remove()
+    },
+
+    makeStripeToken: function () {
+        var form = $('#stripe-payment'),
+            publicKey = form.find('[name="stripePublicKey"]').val(),
+            submit = form.find('.stripe-submit'),
+            status = form.find('.status'),
+            token = form.find('[name="stripeToken"]'),
+            cardName = form.find('.card-name').val(),
+            cardNumber = form.find('.card-number').val(),
+            cardCvc = form.find('.card-cvc').val(),
+            expiryMonth = form.find('.card-expiry-month').val(),
+            expiryYear = form.find('.card-expiry-year').val(),
+            cardAddress1 = form.find('.card-address_line1').val(),
+            cardAddress2 = form.find('.card-address_line2').val(),
+            cardCity = form.find('.card-address_city').val(),
+            cardState = form.find('.card-address_state').val(),
+            cardCountry = form.find('.card-address_country').val(),
+            cardZip = form.find('.card-address_zip').val()
+
+        var stripeResponseHandler = function(status, response) {
+            window.clearTimeout(workingTimer)
+            if (response.error) {
+                submit.removeClass("disabled")
+                status.html(response.error.message)
+            } else {
+                token.val(response.id)
+                post_form(form, 'stripecharge/gold')
+            }
+        }
+
+        Stripe.setPublishableKey(publicKey)
+
+        if (!cardName) {
+            status.text(r.strings.missing_credit_name)
+        } else if (!(Stripe.validateCardNumber(cardNumber))) {
+            status.text(r.strings.bad_credit_number)
+        } else if (!Stripe.validateExpiry(expiryMonth, expiryYear)) {
+            status.text(r.strings.bad_credit_expiry)
+        } else if (!Stripe.validateCVC(cardCvc)) {
+            status.text(r.strings.bad_credit_cvc)
+        } else if (!cardAddress1) {
+            status.text(r.strings.missing_credit_address)
+        } else if (!cardCity) {
+            status.text(r.strings.missing_credit_city)
+        } else if (!cardState) {
+            status.text(r.strings.missing_credit_state)
+        } else if (!cardZip) {
+            status.text(r.strings.missing_credit_zip)
+        } else {
+
+            var workingTimer = setTimeout(function () {
+                submit.addClass('disabled')
+            }, 200)
+
+            Stripe.createToken({
+                    name: cardName,
+                    number: cardNumber,
+                    cvc: cardCvc,
+                    exp_month: expiryMonth,
+                    exp_year: expiryYear,
+                    address_line1: cardAddress1,
+                    address_line2: cardAddress2,
+                    address_city: cardCity,
+                    address_state: cardState,
+                    address_country: cardCountry,
+                    address_zip: cardZip
+                }, stripeResponseHandler
+            )
+        }
+        return false
     }
 };
 

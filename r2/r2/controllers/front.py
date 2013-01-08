@@ -51,7 +51,7 @@ from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from api_docs import api_doc, api_section
 from pylons import c, request, response
 from r2.models.token import EmailVerificationToken
-from r2.controllers.ipn import generate_blob
+from r2.controllers.ipn import generate_blob, validate_blob, GoldException
 
 from operator import attrgetter
 import string
@@ -1276,6 +1276,41 @@ class FormsController(RedditController):
     def GET_claim(self, secret):
         """The page to claim reddit gold trophies"""
         return BoringPage(_("thanks"), content=Thanks(secret)).render()
+
+    @validate(VUser(),
+              passthrough=nop('passthrough'))
+    def GET_creditgild(self, passthrough):
+        """Used only for setting up credit card payments for gilding."""
+        try:
+            payment_blob = validate_blob(passthrough)
+        except GoldException:
+            self.abort404()
+
+        if c.user != payment_blob['buyer']:
+            self.abort404()
+
+        if not payment_blob['goldtype'] == 'gift':
+            self.abort404()
+
+        recipient = payment_blob['recipient']
+        comment = payment_blob['comment']
+        summary = strings.gold_summary_comment_page
+        summary = summary % {'recipient': recipient.name}
+        months = 1
+        price = g.gold_month_price * months
+
+        content = CreditGild(
+            summary=summary,
+            price=price,
+            months=months,
+            stripe_key=g.STRIPE_PUBLIC_KEY,
+            passthrough=passthrough,
+            comment=comment,
+        )
+
+        return BoringPage(_("reddit gold"),
+                          show_sidebar=False,
+                          content=content).render()
 
     @validate(VUser(),
               goldtype = VOneOf("goldtype",

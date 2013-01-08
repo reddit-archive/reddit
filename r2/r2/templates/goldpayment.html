@@ -35,6 +35,11 @@
     <img src="${static('reddit_gold-70.png')}" class="gold-logo">
     <div class="roundfield-content">
       ${unsafe(safemarkdown(thing.summary, wrap=False))}
+      %if thing.comment and not thing.clone_template:
+        <div class="giftmessage">
+          ${unsafe(safemarkdown(thing.comment.body))}
+        </div>
+      %endif
 
     %if thing.giftmessage:
       <p>${_("The following gift note will be attached:")}</p>
@@ -56,12 +61,20 @@
         ${self.paypal_button()}
       %endif
 
+      %if thing.stripe_key:
+        ${self.stripe_button()}
+      %endif
+
+      %if thing.stripe_key and not thing.clone_template:
+        ${self.stripe_form()}
+      %endif
+
       <div class="throbber"></div>
 
-    %if not thing.google_id:
-      <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</div>
+      %if not thing.google_id:
+        <div class="note">${_("Note: Google Checkout does not support ongoing subscriptions at this time.")}</div>
+      %endif
     %endif
-  %endif
     </div>
   </div>
 </div>
@@ -95,7 +108,7 @@
     <input name="item_quantity_1" type="hidden"
            value="${thing.quantity}">
     <input name="item_price_1" type="hidden"
-           value="${thing.price}">
+           value="${thing.unit_price.decimal}">
     <input type="hidden"
            name="shopping-cart.items.item-1.merchant-private-item-data"
            value="${thing.passthrough}" class="passthrough">
@@ -117,6 +130,97 @@
     %endif
     <input type="hidden" name="hosted_button_id" value="${thing.paypal_buttonid}">
     <button type="submit" class="btn gold-button">${_("PayPal")}</button>
+  </form>
+</%def>
+
+<%def name="stripe_button()">
+  <button class="btn stripe-gold gold-button">${_('Credit Card')}</button>
+</%def>
+
+<%def name="stripe_form(display=False)">
+  <script type="text/javascript" src="https://js.stripe.com/v1/"></script>
+
+  <form action="/api/stripecharge/gold" method="POST"
+        id="stripe-payment"
+        class="gold-checkout"
+        data-vendor="stripe"
+        ${not display and "style='display:none'" or ''}>
+    <hr>
+    <div class="stripe-note">
+      <a class="icon" href="https://stripe.com/help/security">powered by stripe</a>
+      <div>${_('Stripe is PCI compliant and your credit card information is sent directly to them.')}</div>
+    </div>
+    <table class="credit-card-input">
+      <tr>
+        <th><label>${_('name')}</label></th>
+        <td><input type="text" autocomplete="off" class="card-name"></td>
+      </tr>
+      <tr>
+        <th><label>${_('card number')}</label></th>
+        <td><input type="text" autocomplete="off" class="card-number"></td>
+      </tr>
+      <tr>
+        <th><label>${_('cvc')}</label></th>
+        <td><input type="text" autocomplete="off" class="card-cvc"></td>
+      </tr>
+      <tr>
+        <th><label>${_('expiration date')}</label></th>
+        <td>
+          <% 
+             import datetime
+             months = ['%02d' % m for m in xrange(1, 13)]
+             years = ['%04d' % y for y in xrange(datetime.datetime.now().year,
+                                                 datetime.datetime.now().year + 25)]
+           %>
+          <select class="card-expiry-month" title=${_('month')}>
+            %for m in months:
+              <option value="${m}">${m}</option>
+            %endfor
+          </select>
+          <select class="card-expiry-year" title=${_('year')}>
+            %for y in years:
+              <option value="${y}">${y}</option>
+            %endfor
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th><label>${_('address line 1')}</label></th>
+        <td><input type="text" class="card-address_line1"></td>
+      </tr>
+      <tr>
+        <th><label>${_('address line 2')}</label></th>
+        <td><input type="text" class="card-address_line2"></td>
+      </tr>
+      <tr>
+        <th><label>${_('city')}</label></th>
+        <td><input type="text" class="card-address_city"></td>
+      </tr>
+      <tr>
+        <th><label>${_('state/province')}</label></th>
+        <td><input type="text" class="card-address_state"></td>
+      </tr>
+      <tr>
+        <th><label>${_('country')}</label></th>
+        <td>
+          <select class="card-address_country" title=${_('country')}>
+            <option value="US">United States</option>
+            <option value="Canada">Canada</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th><label>${_('zip')}</label></th>
+        <td><input type="text" class="card-address_zip"></td>
+      </tr>
+    </table>
+    <input type="hidden" name="stripePublicKey" value="${thing.stripe_key}">
+    <input type="hidden" name="stripeToken" value="">
+    <input type="hidden" name="pennies" value="${thing.price.pennies}">
+    <input type="hidden" name="months" value="${thing.months}">
+    <input type="hidden" name="passthrough" value="${thing.passthrough}">
+    <button class="btn gold-button stripe-submit">${_('Submit')}</button>
+    <span class="status"></span>
   </form>
 </%def>
 

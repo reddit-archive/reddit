@@ -207,7 +207,7 @@ class Reddit(Templated):
                                recipient="",
                                giftmessage=None,
                                passthrough=None,
-                               comment=True,
+                               comment=None,
                                clone_template=True,
                               )
             self._content = PaneStack([ShareLink(), content, gold])
@@ -1832,9 +1832,18 @@ class GoldPayment(Templated):
         pay_from_creddits = False
 
         if period == "monthly" or 1 <= months < 12:
-            price = g.gold_month_price.decimal
+            unit_price = g.gold_month_price
+            if period == 'monthly':
+                price = unit_price
+            else:
+                price = unit_price * months
         else:
-            price = g.gold_year_price.decimal
+            unit_price = g.gold_year_price
+            if period == 'yearly':
+                price = unit_price
+            else:
+                years = months / 12
+                price = unit_price * years
 
         if c.user_is_admin:
             user_creddits = 50
@@ -1850,6 +1859,8 @@ class GoldPayment(Templated):
 
             quantity = None
             google_id = None
+            stripe_key = None
+
         elif goldtype == "onetime":
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_ONETIME_BYMONTH
@@ -1863,6 +1874,8 @@ class GoldPayment(Templated):
                                      amount=Score.somethings(months, "month"))
 
             google_id = g.GOOGLE_ID
+            stripe_key = g.STRIPE_PUBLIC_KEY
+
         else:
             if months < 12:
                 paypal_buttonid = g.PAYPAL_BUTTONID_CREDDITS_BYMONTH
@@ -1875,8 +1888,10 @@ class GoldPayment(Templated):
                 summary = strings.gold_summary_creddits % dict(
                           amount=Score.somethings(months, "month"))
             elif goldtype == "gift":
-                if comment:
+                if clone_template:
                     format = strings.gold_summary_comment_gift
+                elif comment:
+                    format = strings.gold_summary_comment_page
                 elif signed:
                     format = strings.gold_summary_signed_gift
                 else:
@@ -1901,15 +1916,24 @@ class GoldPayment(Templated):
                 raise ValueError("wtf is %r" % goldtype)
 
             google_id = g.GOOGLE_ID
+            stripe_key = g.STRIPE_PUBLIC_KEY
 
         Templated.__init__(self, goldtype=goldtype, period=period,
-                           months=months, quantity=quantity, price=price,
+                           months=months, quantity=quantity,
+                           unit_price=unit_price, price=price,
                            summary=summary, giftmessage=giftmessage,
                            pay_from_creddits=pay_from_creddits,
                            passthrough=passthrough,
                            google_id=google_id,
                            comment=comment, clone_template=clone_template,
-                           paypal_buttonid=paypal_buttonid)
+                           paypal_buttonid=paypal_buttonid,
+                           stripe_key=stripe_key)
+
+
+class CreditGild(Templated):
+    """Page for credit card payments for comment gilding."""
+    pass
+
 
 class GiftGold(Templated):
     """The page to gift reddit gold trophies"""

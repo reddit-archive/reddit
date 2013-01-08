@@ -196,6 +196,7 @@ def make_map():
     mc('/thanks/:secret', controller='forms', action="claim")
 
     mc('/gold', controller='forms', action="gold")
+    mc('/gold/creditgild/:passthrough', controller='forms', action='creditgild')
     mc('/gold/about', controller='front', action='gold_info')
     mc('/gold/thanks', controller='front', action='goldthanks')
 
@@ -260,6 +261,9 @@ def make_map():
     # wherever this is, google has to agree.
     mc('/api/gcheckout', controller='ipn', action='gcheckout')
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
+    mc('/api/stripecharge/gold', controller='stripe', action='goldcharge')
+    mc('/api/stripewebhook/gold/:secret', controller='stripe',
+       action='goldwebhook')
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',

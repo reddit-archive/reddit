@@ -81,5 +81,6 @@ def load_controllers():
     from oauth2 import OAuth2AccessController
     from redirect import RedirectController
     from ipn import IpnController
+    from ipn import StripeController
 
     _reddit_controllers.update((name.lower(), obj) for name, obj in locals().iteritems())

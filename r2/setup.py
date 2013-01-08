@@ -97,6 +97,7 @@ setup(
         "l2cs>=2.0.2",
         "lxml",
         "kazoo",
+        "stripe",
     ],
     dependency_links=[
         "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",

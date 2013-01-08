@@ -6376,3 +6376,36 @@ body.gold .buttons li.comment-save-button { display: inline; }
     font-size: 11px;
     font-variant: italic;
 }
+
+#stripe-payment th {
+    padding:5px; 
+    vertical-align:top;
+    text-align:right;
+    white-space:nowrap;
+    font-size:smaller;
+}
+
+#stripe-payment th label { display:inline; }
+#stripe-payment td input {
+    font-size:small;
+    width:200px;
+}
+
+#stripe-payment input.card-cvc { width:5ex; }
+#stripe-payment input.card-address_zip { width:6ex; }
+
+.stripe-note a.icon {
+    position: relative;
+    float: left;
+    text-indent: -9999px;
+    margin-right: 10px;
+    width: 119px;
+    height: 33px;
+    background-image: url(../stripe.png);
+}
+
+.stripe-note div {
+    float: left;
+    width: 250px;
+    font-size: small;
+}

@@ -147,6 +147,7 @@ string_dict = dict(
     gold_summary_signed_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s, who will be told that it came from you."),
     gold_summary_anonymous_gift = _("You're about to give %(amount)s of reddit gold to %(recipient)s. It will be an anonymous gift."),
     gold_summary_comment_gift = _("Want to say thanks to *%(recipient)s* for this comment? Give them a month of [reddit gold](/help/gold)."),
+    gold_summary_comment_page = _("Give *%(recipient)s* a month of [reddit gold](/help/gold) for this comment:"),
     unvotable_message = _("sorry, this has been archived and can no longer be voted on"),
     account_activity_blurb = _("This page shows a history of recent activity on your account. If you notice unusual activity, you should change your password immediately. Location information is guessed from your computer's IP address and may be wildly wrong, especially for visits from mobile devices. Note: due to a bug, private-use addresses (starting with 10.) sometimes show up erroneously in this list after regular use of the site."),
     your_current_ip_is = _("You are currently accessing reddit from this IP address: %(address)s."),
@@ -182,6 +183,15 @@ Note: there are a couple of places outside of your subreddit where someone can c
     r_all_description = _("/r/all displays content from all of reddit, including subreddits you aren't subscribed to."),
     r_all_minus_description = _("Displaying content from /r/all of reddit, except the following subreddits:"),
     all_minus_gold_only = _('Filtering /r/all is a feature only available to [reddit gold](/gold/about) subscribers. Displaying unfiltered results from /r/all.'),
+
+    missing_credit_name = _("missing name"),
+    bad_credit_number = _("invalid credit card number"),
+    bad_credit_expiry = _("invalid expiration date"),
+    bad_credit_cvc = _("invalid cvc"),
+    missing_credit_address = _("missing address"),
+    missing_credit_city = _("missing city"),
+    missing_credit_state = _("missing state or province"),
+    missing_credit_zip = _("missing zip code"),
 )
 
 class StringHandler(object):
