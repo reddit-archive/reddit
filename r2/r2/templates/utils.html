@@ -53,7 +53,9 @@
 id="${arg}_${thing and thing._fullname or ''}"
 </%def>
 
-<%def name="css_class(thing)">${' '+thing.css_class if hasattr(thing, 'css_class') and thing.css_class else ''}</%def>
+<%def name="classes(*class_names)">
+class="${" ".join(filter(None, class_names))}"
+</%def>
 
 <%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
 <form class="${_class or ''}" onsubmit="${onsubmit or ''}" 

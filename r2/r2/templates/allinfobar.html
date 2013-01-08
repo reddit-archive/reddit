@@ -20,9 +20,9 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link, css_class, _md"/>
+<%namespace file="utils.html" import="plain_link, classes, _md"/>
 
-<div class="titlebox rounded${css_class(thing)}">
+<div ${classes("titlebox", "rounded", thing.css_class)}>
   <h1 class="hover redditname special">
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
   </h1>

@@ -32,7 +32,7 @@
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
 <%namespace file="less.html" import="less_js"/>
-<%namespace file="utils.html" import="tags, css_class"/>
+<%namespace file="utils.html" import="tags, classes"/>
 <%inherit file="base.html"/>
 
 <%def name="Title()">
@@ -99,7 +99,7 @@
 
 <%def name="javascript()">
   <% from r2.lib import js %>
-  ${unsafe(js.use('jquery', 'reddit'))}
+  ${unsafe(js.use('jquery', 'reddit-init'))}
   % if c.deny_frames:
     <script>if (window != top) top.location = window.location</script>
   % endif
@@ -109,61 +109,64 @@
   ${less_js()}
 </%def>
 
+<%def name="javascript_bottom()">
+  <% from r2.lib import js %>
+  ${unsafe(js.use('reddit'))}
+</%def>
+
 <%def name="javascript_run()">
    reddit.cur_site = "${c.site._fullname if hasattr(c.site, '_fullname') else ''}";
 </%def>
 
-<%def name="bodyHTML()">
-  <body ${tags(_class=' '.join(thing.page_classes()))}>
-    <%include file="redditheader.html"/>
-  
-    %if thing.show_sidebar:
-      <div class="side">
-        ${sidebar(content = thing.rightbox())}
-      </div>
-    %endif
+<%def name="bodyContent()">
+  <%include file="redditheader.html"/>
 
-    <% content = getattr(self, "content", None) or thing.content %>
-    %if content:
-      ##<div class="fixedwidth"><!--IE6sux--></div>
-      ##<div class="clearleft"><!--IE6sux--></div>
-      <a name="content"></a>
-      <div ${tags(id=thing.content_id)} class="content${css_class(thing)}" role="main">
-        ${content()}
+  %if thing.show_sidebar:
+    <div class="side">
+      ${sidebar(content = thing.rightbox())}
+    </div>
+  %endif
+
+  <% content = getattr(self, "content", None) or thing.content %>
+  %if content:
+    ##<div class="fixedwidth"><!--IE6sux--></div>
+    ##<div class="clearleft"><!--IE6sux--></div>
+    <a name="content"></a>
+    <div ${tags(id=thing.content_id)} ${classes("content", thing.css_class)} role="main">
+      ${content()}
+    </div>
+  %endif
+
+  %if thing.footer:
+
+    ${thing.footer}
+
+    %if not c.user_is_loggedin and not g.read_only_mode:
+      %if thing.enable_login_cover:
+      <div class="login-popup cover-overlay" style="display: none">
+        <div class="cover" onclick="return hidecover(this)"></div>
+        <div class="popup">
+          <a href="#" onclick="return hidecover(this)" class="hidecover">
+            ${_("close this window")}
+          </a>
+          <h1 class="cover-msg">${strings.cover_msg}</h1>
+          ${login_panel(login_form)}
+        </div>
+      </div>
+      %endif
+      <div class="lang-popup cover-overlay" style="display: none">
+        <div class="cover" onclick="return hidecover(this)"></div>
+        <div class="popup">
+          <a href="#" onclick="return hidecover(this)" class="hidecover">
+            ${_("close this window")}
+          </a>
+          <%include file="prefoptions.html" />
+        </div>
       </div>
     %endif
-    
-    %if thing.footer:
-  
-      ${thing.footer}
-  
-      %if not c.user_is_loggedin and not g.read_only_mode:
-        %if thing.enable_login_cover:
-        <div class="login-popup cover-overlay" style="display: none">
-          <div class="cover" onclick="return hidecover(this)"></div>
-          <div class="popup">
-            <a href="#" onclick="return hidecover(this)" class="hidecover">
-              ${_("close this window")}
-            </a>
-            <h1 class="cover-msg">${strings.cover_msg}</h1>
-            ${login_panel(login_form)}
-          </div>
-        </div>
-        %endif
-        <div class="lang-popup cover-overlay" style="display: none">
-          <div class="cover" onclick="return hidecover(this)"></div>
-          <div class="popup">
-            <a href="#" onclick="return hidecover(this)" class="hidecover">
-              ${_("close this window")}
-            </a>
-            <%include file="prefoptions.html" />
-          </div>
-        </div>
-      %endif
-    %endif
-    ${framebuster()}
-    <p class="bottommenu debuginfo"><span class="icon">&pi;</span>&nbsp;<span class="content">Rendered by PID ${g.reddit_pid} on ${g.reddit_host} at ${c.start_time} running ${g.short_version}.</span></p>
-  </body>
+  %endif
+  ${framebuster()}
+  <p class="bottommenu debuginfo"><span class="icon">&pi;</span>&nbsp;<span class="content">Rendered by PID ${g.reddit_pid} on ${g.reddit_host} at ${c.start_time} running ${g.short_version}.</span></p>
 </%def>
 
 <%def name="sidebar(content=None)">

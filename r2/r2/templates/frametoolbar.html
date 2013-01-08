@@ -36,8 +36,7 @@
   toolbar = new toolbar_p("${panel_size('expanded')}", "${panel_size('collapsed')}");
 </%def>
 
-<%def name="bodyHTML()">
-<body class="toolbar">
+<%def name="bodyContent()">
   <div class="preload">
     ## everything in here will get rendered off screen for pre-fetching purposes.
     <div class="arrow up"></div>
@@ -151,7 +150,6 @@
       </div>
     </div>
   </div>
-</body>
 </%def>
 
 

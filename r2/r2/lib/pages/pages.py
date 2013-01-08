@@ -643,6 +643,10 @@ class RedditMin(Reddit):
     show_sidebar = False
     show_firsttext = False
 
+    def page_classes(self):
+        return ('min-body',)
+
+
 class LoginFormWide(CachedTemplate):
     """generates a login form suitable for the 300px rightbox."""
     def __init__(self):
@@ -2145,6 +2149,8 @@ class FrameToolbar(Wrapped):
         # run to set scores with current score format (for example)
         Printable.add_props(user, nonempty)
 
+    def page_classes(self):
+        return ("toolbar",)
 
 
 class NewLink(Templated):

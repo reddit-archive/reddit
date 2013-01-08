@@ -25,7 +25,7 @@
    from r2.lib.template_helpers import static
    from r2.lib import js
 %>
-<%namespace file="utils.html" import="js_setup, googleanalytics"/>
+<%namespace file="utils.html" import="js_setup, googleanalytics, classes"/>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${c.lang}">
   <head>
     <link rel="apple-touch-icon" 
@@ -44,15 +44,17 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     ${self.robots()}
     <link rel="stylesheet" href="${static('compact.css')}" type="text/css" media="screen" />
-    ${unsafe(js.use('jquery', 'mobile'))}
+    ${unsafe(js.use('jquery', 'reddit-init'))}
     ${js_setup(thing.extra_js_config)}
     ${googleanalytics('mobile')}
   </head>
-  ${self.bodyHTML()}
+  <body ${classes(*thing.page_classes())}>
+    ${self.bodyContent()}
+    ${unsafe(js.use('mobile'))}
+  </body>
 </html>
 
-<%def name="bodyHTML()">
-
+<%def name="bodyContent()">
 </%def>
 
 <%def name="Title()">

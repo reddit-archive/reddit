@@ -22,12 +22,10 @@
 
 <%inherit file="reddit.html"/>
 
-<%def name="bodyHTML()">
-  <body class="min-body">
-    %if thing.content:
-      <div class="content">
-        ${thing.content()}
-      </div>
-    %endif
-  </body>
+<%def name="bodyContent()">
+  %if thing.content:
+    <div class="content">
+      ${thing.content()}
+    </div>
+  %endif
 </%def>
