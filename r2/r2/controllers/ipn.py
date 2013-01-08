@@ -29,6 +29,7 @@ import base64
 from BeautifulSoup import BeautifulStoneSoup
 from pylons import c, g, request
 from pylons.i18n import _
+from sqlalchemy.exc import IntegrityError
 
 from r2.controllers.reddit_base import RedditController
 from r2.lib.filters import _force_unicode
@@ -50,12 +51,14 @@ from r2.models import (
     accountid_from_paypalsubscription,
     admintools,
     cancel_subscription,
+    Comment,
     create_claimed_gold,
     create_gift_gold,
     make_comment_gold_message,
     NotFound,
     send_system_message,
     Thing,
+    update_gold_transaction,
 )
 
 
@@ -564,3 +567,152 @@ class IpnController(RedditController):
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
+
+
+class GoldException(Exception): pass
+
+
+def validate_blob(custom):
+    """Validate payment_blob and return a dict with everything looked up."""
+    ret = {}
+
+    if not custom:
+        raise GoldException('no custom')
+
+    payment_blob = g.hardcache.get('payment_blob-%s' % str(custom))
+    if not payment_blob:
+        raise GoldException('no payment_blob')
+
+    if not ('account_id' in payment_blob and
+            'account_name' in payment_blob):
+        raise GoldException('no account_id')
+
+    try:
+        buyer = Account._byID(payment_blob['account_id'], data=True)
+        ret['buyer'] = buyer
+    except NotFound:
+        raise GoldException('bad account_id')
+
+    if not buyer.name.lower() == payment_blob['account_name'].lower():
+        raise GoldException('buyer mismatch')
+
+    goldtype = payment_blob['goldtype']
+    ret['goldtype'] = goldtype
+
+    if goldtype == 'gift':
+        recipient_name = payment_blob.get('recipient', None)
+        if not recipient_name:
+            raise GoldException('gift missing recpient')
+        try:
+            recipient = Account._by_name(recipient_name)
+            ret['recipient'] = recipient
+        except NotFound:
+            raise GoldException('bad recipient')
+        comment_fullname = payment_blob.get('comment', None)
+        if comment_fullname:
+            try:
+                ret['comment'] = Comment._by_fullname(comment_fullname)
+            except NotFound:
+                raise GoldException('bad comment')
+        ret['signed'] = payment_blob.get('signed', False)
+        ret['giftmessage'] = payment_blob.get('giftmessage', False)
+    elif goldtype not in ('onetime', 'autorenew', 'creddits'):
+        raise GoldException('bad goldtype')
+
+    return ret
+
+
+def gold_lock(user):
+    return g.make_lock('gold_purchase', 'gold_%s' % user._id)
+
+
+def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
+                           subscription_id, pennies, goldtype, buyer, recipient,
+                           signed, giftmessage, comment):
+    """After receiving a message from a payment processor, apply gold.
+
+    Shared endpoint for all payment processing systems. Validation of gold
+    purchase (sender, recipient, etc.) should happen before hitting this.
+
+    """
+
+    gold_recipient = recipient or buyer
+    with gold_lock(gold_recipient):
+        gold_recipient._sync_latest()
+        months, days = months_and_days_from_pennies(pennies)
+
+        if goldtype in ('onetime', 'autorenew'):
+            admintools.engolden(buyer, days)
+            if goldtype == 'onetime':
+                subject = "thanks for buying reddit gold!"
+                if g.lounge_reddit:
+                    lounge_url = "/r/" + g.lounge_reddit
+                    message = strings.lounge_msg % dict(link=lounge_url)
+                else:
+                    message = ":)"
+                send_system_message(buyer, subject, message)
+            else:
+                subject = "your reddit gold has been renewed!"
+                message = ("see the details of your subscription on "
+                           "[your userpage](/u/%s)" % buyer.name)
+                send_system_message(buyer, subject, message)
+
+        elif goldtype == 'creddits':
+            buyer._incr('gold_creddits', months)
+            subject = "thanks for buying creddits!"
+            message = ("To spend them, visit http://%s/gold or your favorite "
+                       "person's userpage." % (g.domain))
+            send_system_message(buyer, subject, message)
+
+        elif goldtype == 'gift':
+            send_gift(buyer, recipient, months, days, signed, giftmessage,
+                      comment)
+            subject = "thanks for giving reddit gold!"
+            message = "Your gift to %s has been delivered." % recipient.name
+            send_system_message(buyer, subject, message)
+
+        status = 'processed'
+        secret_pieces = [goldtype]
+        if goldtype == 'gift':
+            secret_pieces.append(recipient.name)
+        secret_pieces.append(secret)
+        secret = '-'.join(secret_pieces)
+
+        try:
+            create_claimed_gold(transaction_id, payer_email, payer_id, pennies,
+                                days, secret_pieces, buyer._id, c.start_time,
+                                subscr_id=subscription_id, status=status)
+        except IntegrityError:
+            g.log.error('gold: got duplicate gold transaction')
+
+
+def subtract_gold_days(user, days):
+    user.gold_expiration -= timedelta(days=days)
+    if user.gold_expiration < datetime.now(g.display_tz):
+        user.gold = False
+    user._commit()
+
+
+def subtract_gold_creddits(user, num):
+    user._incr('gold_creddits', -num)
+
+
+def reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                          recipient=None):
+    gold_recipient = recipient or buyer
+    with gold_lock(gold_recipient):
+        gold_recipient._sync_latest()
+        months, days = months_and_days_from_pennies(pennies)
+
+        if goldtype in ('onetime', 'autorenew'):
+            subtract_gold_days(buyer, days)
+
+        elif goldtype == 'creddits':
+            subtract_gold_creddits(buyer, months)
+
+        elif goldtype == 'gift':
+            subtract_gold_days(recipient, days)
+            subject = 'your gifted gold has been reversed'
+            message = 'sorry, but the payment was reversed'
+            send_system_message(recipient, subject, message)
+    update_gold_transaction(transaction_id, 'reversed')
