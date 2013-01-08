@@ -21,26 +21,15 @@
 ###############################################################################
 
 <%!
-   from r2.lib.template_helpers import static, format_number
-   from r2.lib import js
-   import datetime
-   from r2.lib import promote
-   import babel.numbers
-
-   locale = c.locale
-
-   def num(x):
-      return format_number(x, locale)
-   def money(x):
-      return babel.numbers.format_currency(x, 'USD', locale)
- %>
+   from r2.lib.template_helpers import static
+%>
 
 <%namespace file="reddittraffic.html" import="load_timeseries_js"/>
 ${load_timeseries_js()}
 
 <h1>${_("Sponsored link calendar")}</h1>
 
-%if not c.user_is_sponsor:
+%if not thing.admin_view:
 <div class="instructions">
   <p>Below is a calendar of your scheduled and completed promotions (if you have any, of course), along with some site-wide averages to use as a guide for setting up future promotions.  These values are:</p>
   <dl>
@@ -57,117 +46,100 @@ ${load_timeseries_js()}
 
 %endif
 
-<% max_percent = 97. %>
+<table class="calendar">
+  <thead>
+  <tr>
+    <th>${_("DATE")}</th>
+    %for date in thing.dates:
+      <th scope="col" class="${"today" if date == thing.today else ""}">
+        <time>${date}</time>
+      </th>
+    %endfor
+  </tr>
+  <tr>
+    <th>${_("COUNT")}</th>
+    %for date in thing.dates:
+      <td class="${"today" if date == thing.today else ""}">
+        ${thing.promo_counter[date]}
+      </td>
+    %endfor
+  </tr>
+  <tr>
+    <th>
+      %if thing.admin_view:
+        ${_("DELIVERED IMPRESSIONS")}<br/>
+      %endif
+      ${_("CPM")}
+    </th>
+    %for date in thing.dates:
+      <td class="${"today" if date == thing.today else ""}">
+        ${thing.delivered[date]}<br/>
+        ${thing.cpm[date]}
+      </td>
+    %endfor
+  </tr>
+  <tr>
+    <th>
+      %if thing.admin_view:
+        ${_("CLICKS")}<br/>
+      %endif
+      ${_("CPC")}
+    </th>
+    %for date in thing.dates:
+      <td class="${"today" if date == thing.today else ""}">
+        %if thing.admin_view:
+          ${thing.clicked[date]}<br/>
+        %endif
+        ${thing.cpc[date]}
+      </td>
+    %endfor
+  </tr>
+  <tr>
+    <th>
+      %if c.user_is_sponsor:
+        ${_("TOTAL COMMIT")}
+      %else:
+        ${_("YOUR COMMIT")}
+      %endif
+    </th>
+    %for date in thing.dates:
+      <td class="${"today" if date == thing.today else ""}">
+        ${thing.my_market[date]}
+      </td>
+    %endfor
+  </tr>
+  </thead>
 
-<div class="calendar">
-  <%
-     today = thing.now.date()
-   %>
-    <div class="grid" 
-         style="left:0; right:${'%.2f'%(100 - max_percent/(thing.total_size+1))}%">
-      <div class="header">
-        DATE
-      </div>
-      <div class="header total">
-        COUNT
-      </div>
-      <div class="header total">
-        %if c.user_is_sponsor:
-        IMPRESSIONS<br/>
-        %endif
-        CPM
-      </div>
-      <div class="header total">
-        %if c.user_is_sponsor:
-        CLICKS<br/>
-        %endif
-        CPC
-      </div>
-      <div class="header total">
-        %if c.user_is_sponsor:
-          TOTAL COMMIT
-        %else:
-          YOUR COMMIT
-        %endif
-      </div>
-    </div>
-  %for i in xrange(thing.total_size):
-    <%
-       left = "%.2f" % (max_percent*float(i+1)/(thing.total_size+1))
-       right = "%.2f" %  (100 - max_percent*float(i+2)/(thing.total_size+1))
-       day = thing.start_date + datetime.timedelta(i)
-       CPC = CPM = imp_traffic = cli_traffic = "---"
-       if thing.promo_traffic.has_key(day):
-           imp_traffic, cli_traffic = thing.promo_traffic[day]
-           if thing.market.has_key(i) and day < today:
-              CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
-              CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
-           imp_traffic = num(imp_traffic)
-           cli_traffic = num(cli_traffic)
-           if day == today:
-              imp_traffic = "(%s)" % imp_traffic
-              cli_traffic = "(%s)" % cli_traffic
-     %>
-    <div class="grid ${'today' if day == today else ''}" 
-         style="left:${left}%; right:${right}%">
-      <div class="header">
-        ${day}
-      </div>
-      <div class="header total">
-        ${thing.promo_counter.get(i, unsafe("&nbsp;"))}
-      </div>
-      <div class="header total">
-        %if c.user_is_sponsor:
-          ${imp_traffic}<br/>
-        %endif
-        ${CPM}
-      </div>
-      <div class="header total">
-        %if c.user_is_sponsor:
-          ${cli_traffic}<br/>
-        %endif
-        ${CPC}
-      </div>
-      <div class="header total">
-        ${"$%.2f" % thing.my_market[i] if thing.my_market.has_key(i) else "---"}
-      </div>      
-    </div>
-  %endfor
+  <tbody>
+    %for link, start, end, campaign in thing.promote_blocks:
+      <tr>
+        <th class="placeholder"></th>
+        %for i in xrange(start):
+          <td class="placeholder
+              ${"today" if thing.dates[i] == thing.today else ""}"></td>
+        %endfor
+        <td colspan="${end - start}">
+          <div class="blob promotedlink ${link.rowstyle} rounded"
+               title="${link.title}">
+            <div class="bid">
+              ${campaign.sr_name + ':' if campaign.sr_name else ''}
+              $${int(campaign.bid)}
+            </div>
+            <a class="title" href="/promoted/edit_promo/${link._id36}"
+                title="${link.title}">
+              ${link.author.name}
+            </a>
+          </div>
+        </td>
+        %for i in xrange(end, len(thing.dates)):
+          <td class="placeholder
+              ${"today" if thing.dates[i] == thing.today else ""}"></td>
+        %endfor
+      </tr>
+    %endfor
+  </tbody>
+</table>
 
-<% 
-   prev_end = 0
- %>
-%for link, start, end, campaign in thing.promote_blocks:
-  <%
-    start += 1
-    end += 1
-    sr = campaign.sr_name + ':' if campaign.sr_name else ''
-  %>
-  %if start != end:
-  %if prev_end > start:
-    <% prev_end = 0 %>
-    <div class="clearleft"></div>
-  %endif
-    <%
-       margin = "%.2f" % (float(max_percent*(start-prev_end))/(thing.total_size+1))
-       width  = "%.2f" % (float(max_percent*(end-start))/(thing.total_size+1))
-       prev_end = end 
-     %>  
-    <div class="blob promotedlink ${link.rowstyle} rounded"
-         title="${link.title}"  
-         style="width: ${width}%; margin-left: ${margin}%">
-      <div class="bid">
-        ${sr}$${int(campaign.bid)}
-      </div>
-      <a class="title" 
-         href="/promoted/edit_promo/${link._id36}"
-         title="${link.title}">
-        ${link.author.name}
-      </a>
-    </div>
-  %endif
-%endfor
-</div>
 <div class="clear"></div>
 
 <h1>${_("historical site performance")}</h1>

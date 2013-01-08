@@ -39,7 +39,7 @@ from pylons.i18n import _, ungettext
 from pylons import c, request, g
 from pylons.controllers.util import abort
 
-from r2.lib import media
+from r2.lib import media, inventory
 from r2.lib import promote, tracking
 from r2.lib.captcha import get_iden
 from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
@@ -3518,6 +3518,7 @@ class Promote_Graph(Templated):
 
 
         size = (end_date - start_date).days
+        self.dates = [start_date + datetime.timedelta(i) for i in xrange(size)]
 
         # these will be cached queries
         market, promo_counter = self.get_market(None, start_date, end_date)
@@ -3589,13 +3590,38 @@ class Promote_Graph(Templated):
 
         self.promo_traffic = dict(self.promo_traffic)
 
-        Templated.__init__(self,
-                           total_size = size,
-                           market = market,
-                           my_market = my_market, 
-                           promo_counter = promo_counter,
-                           start_date = start_date,
-                           promote_blocks = sorted_blocks)
+        self.cpc = {}
+        self.cpm = {}
+        self.delivered = {}
+        self.clicked = {}
+        self.my_market = {}
+        self.promo_counter = {}
+
+        today = self.now.date()
+        for i in xrange(size):
+            day = start_date + datetime.timedelta(i)
+            cpc = cpm = delivered = clicks = "---"
+            if day in self.promo_traffic:
+                delivered, clicks = self.promo_traffic[day]
+                if i in market and day < today:
+                    cpm = "$%.2f" % (market[i] * 1000. / max(delivered, 1))
+                    cpc = "$%.2f" % (market[i] * 1. / max(clicks, 1))
+                delivered = format_number(delivered, c.locale)
+                clicks = format_number(clicks, c.locale)
+                if day == today:
+                    delivered = "(%s)" % delivered
+                    clicks = "(%s)" % clicks
+            self.cpc[day] = cpc
+            self.cpm[day] = cpm
+            self.delivered[day] = delivered
+            self.clicked[day] = clicks
+            if day in my_market:
+                self.my_market[day] = "$%.2f" % my_market[day]
+            else:
+                self.my_market[day] = "---"
+            self.promo_counter[day] = promo_counter.get(i, "---")
+
+        Templated.__init__(self, today=today, promote_blocks=sorted_blocks)
 
     def to_iter(self, localize = True):
         locale = c.locale
