@@ -184,10 +184,8 @@ class PromoteController(ListingController):
     def GET_admingraph(self):
         content = Promote_Graph(admin_view=True)
         if c.render_style == 'csv':
-            c.response.content = content.as_csv()
-            return c.response
+            return content.as_csv()
         return PromotePage("admingraph", content=content).render()
-
 
     def GET_inventory(self, sr_name):
         '''

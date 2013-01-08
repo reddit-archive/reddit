@@ -24,7 +24,7 @@ import _pylibmc
 import pycassa.pool
 import sqlalchemy.exc
 
-from pylons import Response, c, g, request, session, config
+from pylons import c, g, request, session, config, response
 from pylons.controllers import WSGIController, Controller
 from pylons.i18n import N_, _, ungettext, get_lang
 from paste import httpexceptions
@@ -141,7 +141,6 @@ class BaseController(WSGIController):
             request.environ['pylons.routes_dict']['action_name'] = action
             request.environ['pylons.routes_dict']['action'] = handler_name
                     
-        c.response = Response()
         try:
             res = WSGIController.__call__(self, environ, start_response)
         except Exception as e:
@@ -221,14 +220,8 @@ class BaseController(WSGIController):
         sends the user to that location with the provided HTTP code.
         """
         dest = cls.format_output_url(dest or "/")
-        c.response.headers['Location'] = dest
-        c.response.status_code = code
-        return c.response
-
-    def sendjs(self,js, callback="document.write", escape=True):
-        c.response.headers['Content-Type'] = 'text/javascript'
-        c.response.content = to_js(js, callback, escape)
-        return c.response
+        response.status_code = code
+        response.headers['Location'] = dest
 
 class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler,
                    urllib2.HTTPErrorProcessor, urllib2.HTTPDefaultErrorHandler):

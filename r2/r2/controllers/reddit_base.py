@@ -53,6 +53,7 @@ from r2.lib.errors import (
     ForbiddenError,
     errors,
 )
+from r2.lib.filters import _force_utf8
 from r2.lib.strings import strings
 from r2.lib.template_helpers import add_sr
 from r2.lib.tracking import encrypt, decrypt
@@ -63,6 +64,7 @@ from r2.lib.utils import (
     http_utils,
     is_subdomain,
     is_throttled,
+    tup,
 )
 from r2.lib.validator import (
     build_arg_list,
@@ -368,7 +370,7 @@ def set_subreddit():
 def set_content_type():
     e = request.environ
     c.render_style = e['render_style']
-    c.response_content_type = e['content_type']
+    response.content_type = e['content_type']
 
     if e.has_key('extension'):
         c.extension = ext = e['extension']
@@ -376,7 +378,7 @@ def set_content_type():
             def to_js(content):
                 return utils.to_js(content, callback=request.params.get(
                     "callback", "document.write"))
-            c.response_wrappers.append(to_js)
+            c.response_wrapper = to_js
         if ext in ("rss", "api", "json") and request.method.upper() == "GET":
             user = valid_feed(request.GET.get("user"),
                               request.GET.get("feed"),
@@ -591,10 +593,9 @@ def cross_domain(origin_check=is_trusted_origin, **options):
                 if cors_perms["origin_check"](g.origin):
                     name = request.environ["pylons.routes_dict"]["action_name"]
                     resp = fn(self, *args, **kwargs)
-                    c.cookies.add('hoist_%s' % name, ''.join(resp.content))
-                    c.response_content_type = 'text/html'
-                    resp.content = ''
-                    return resp
+                    c.cookies.add('hoist_%s' % name, ''.join(tup(resp)))
+                    response.content_type = 'text/html'
+                    return ""
                 else:
                     abort(403)
             else:
@@ -638,7 +639,7 @@ class MinimalController(BaseController):
         except CookieError:
             cookies_key = ''
 
-        return make_key('request_key_',
+        return make_key('request_',
                         c.lang,
                         c.content_langs,
                         request.host,
@@ -652,7 +653,7 @@ class MinimalController(BaseController):
                         cookies_key)
 
     def cached_response(self):
-        return c.response
+        return response.content
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
@@ -661,7 +662,7 @@ class MinimalController(BaseController):
         else:
             c.request_timer = SimpleSillyStub()
 
-        c.response_wrappers = []
+        c.response_wrapper = None
         c.start_time = datetime.now(g.tz)
         c.request_timer.start()
         g.reset_caches()
@@ -692,7 +693,6 @@ class MinimalController(BaseController):
             r = g.pagecache.get(self.request_key())
             if r:
                 r, c.cookies = r
-                response = c.response
                 response.headers = r.headers
                 response.content = r.content
 
@@ -712,24 +712,19 @@ class MinimalController(BaseController):
                 c.request_timer.name = request_timer_name("cached_response")
 
                 # make sure to carry over the content type
-                c.response_content_type = r.headers['content-type']
+                response.content_type = r.headers['content-type']
                 c.used_cache = True
                 # response wrappers have already been applied before cache write
-                c.response_wrappers = []
-
+                c.response_wrapper = None
 
     def post(self):
         c.request_timer.intermediate("action")
 
-        response = c.response
-        content = filter(None, response.content)
-        if isinstance(content, (list, tuple)):
-            content = ''.join(content)
-        for w in c.response_wrappers:
-            content = w(content)
-        response.content = content
-        if c.response_content_type:
-            response.headers['Content-Type'] = c.response_content_type
+        if c.response_wrapper:
+            content = "".join(_force_utf8(x)
+                              for x in tup(response.content) if x)
+            wrapped_content = c.response_wrapper(content)
+            response.content = wrapped_content
 
         if c.user_is_loggedin and not c.allow_loggedin_cache:
             response.headers['Cache-Control'] = 'no-cache'
@@ -738,18 +733,16 @@ class MinimalController(BaseController):
         if c.deny_frames:
             response.headers["X-Frame-Options"] = "DENY"
 
-        #return
         #set content cache
         if (g.page_cache_time
             and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and response.status_code not in (429, 503)
-            and response.content and response.content[0]):
+            and response.status_code not in (429, 503)):
             try:
                 g.pagecache.set(self.request_key(),
-                                  (response, c.cookies),
-                                  g.page_cache_time)
+                                (response._current_obj(), c.cookies),
+                                g.page_cache_time)
             except MemcachedError as e:
                 # this codepath will actually never be hit as long as
                 # the pagecache memcached client is in no_reply mode.
@@ -819,11 +812,6 @@ class MinimalController(BaseController):
         """Return empty responses for CORS preflight requests"""
         self.check_cors()
 
-    def sendpng(self, string):
-        c.response_content_type = 'image/png'
-        c.response.content = string
-        return c.response
-
     def update_qstring(self, dict):
         merged = copy(request.get)
         merged.update(dict)
@@ -831,18 +819,7 @@ class MinimalController(BaseController):
 
     def api_wrapper(self, kw):
         data = simplejson.dumps(kw)
-        c.response.content = filters.websafe_json(data)
-        return c.response
-
-    def iframe_api_wrapper(self, kw):
-        data = simplejson.dumps(kw)
-        c.response_content_type = 'text/html'
-        c.response.content = (
-            '<html><head><script type="text/javascript">\n'
-            'parent.$.handleResponse().call('
-            'parent.$("#" + window.frameElement.id).parent(), %s)\n'
-            '</script></head></html>') % filters.websafe_json(data)
-        return c.response
+        return filters.websafe_json(data)
 
 
 class RedditController(MinimalController):
@@ -1036,7 +1013,7 @@ class RedditController(MinimalController):
         last_modified = last_modified.replace(microsecond=0)
 
         date_str = http_utils.http_date_str(last_modified)
-        c.response.headers['last-modified'] = date_str
+        response.headers['last-modified'] = date_str
 
         cache_control = []
         if private:
@@ -1044,7 +1021,7 @@ class RedditController(MinimalController):
         cache_control.append('max-age=%d' % max_age.total_seconds())
         if must_revalidate:
             cache_control.append('must-revalidate')
-        c.response.headers['cache-control'] = ', '.join(cache_control)
+        response.headers['cache-control'] = ', '.join(cache_control)
 
         modified_since = request.if_modified_since
         if modified_since and modified_since >= last_modified:

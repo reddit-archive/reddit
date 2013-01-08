@@ -31,7 +31,7 @@ from paste.cascade import Cascade
 from paste.registry import RegistryManager
 from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
-from pylons import config
+from pylons import config, response
 from pylons.error import error_template
 from pylons.middleware import ErrorDocuments, ErrorHandler, StaticJavascripts
 from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
@@ -86,14 +86,8 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
         #preserve x-sup-id when 304ing
         if code == 304:
-            #check to see if c is useable
-            try:
-                c.test
-            except TypeError:
-                pass
-            else:
-                if c.response.headers.has_key('x-sup-id'):
-                    d['x-sup-id'] = c.response.headers['x-sup-id']
+            if response.headers.has_key('x-sup-id'):
+                d['x-sup-id'] = response.headers['x-sup-id']
 
         extension = environ.get("extension")
         if extension:

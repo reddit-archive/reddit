@@ -30,7 +30,7 @@ import simplejson
 from r2.lib.utils import rfc3339_date_str, http_date_str, to36
 from r2.lib.memoize import memoize
 from r2.lib.template_helpers import get_domain
-from pylons import g, c
+from pylons import g, c, response
 
 PERIODS = [600, 300, 60]
 MIN_PERIOD = min(PERIODS)
@@ -104,10 +104,10 @@ def sup_json(period):
 
 def set_sup_header(user, action):
     sup_id = make_sup_id(user, action)
-    c.response.headers['x-sup-id'] = sup_url() + '#' + sup_id
+    response.headers['x-sup-id'] = sup_url() + '#' + sup_id
 
 def set_expires_header():
     seconds = make_cur_time(MIN_PERIOD) + MIN_PERIOD
     expire_time = datetime.fromtimestamp(seconds, g.tz)
-    c.response.headers['expires'] = http_date_str(expire_time)
+    response.headers['expires'] = http_date_str(expire_time)
 

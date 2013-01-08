@@ -40,7 +40,7 @@ class JsonResponse(object):
     api func.
     """
 
-    content_type = 'application/json; charset=UTF-8'
+    content_type = 'application/json'
 
     def __init__(self):
         self._clear()

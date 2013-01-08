@@ -213,7 +213,7 @@ def api_validate(response_type=None):
                     else:
                         responder = JsonResponse()
 
-                    c.response_content_type = responder.content_type
+                    response.content_type = responder.content_type
 
                     try:
                         kw = _make_validated_kw(fn, simple_vals, param_vals, env)
@@ -291,7 +291,12 @@ def validatedMultipartForm(self, self_method, responder, simple_vals,
         if val:
             return val
         else:
-            return self.iframe_api_wrapper(responder.make_response())
+            data = simplejson.dumps(responder.make_response())
+            response.content_type = "text/html"
+            return ('<html><head><script type="text/javascript">\n'
+                    'parent.$.handleResponse().call('
+                    'parent.$("#" + window.frameElement.id).parent(), %s)\n'
+                    '</script></head></html>') % filters.websafe_json(data)
     return _validatedForm(self, wrapped_self_method, responder, simple_vals,
                           param_vals, *a, **kw)
 

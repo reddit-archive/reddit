@@ -23,12 +23,13 @@
 from reddit_base import RedditController
 import StringIO
 import r2.lib.captcha as captcha
-from pylons import c
+from pylons import c, response
 
 class CaptchaController(RedditController):
     def GET_captchaimg(self, iden):
         image = captcha.get_image(iden)
         f = StringIO.StringIO()
         image.save(f, "PNG")
-        return self.sendpng(f.getvalue())
+        response.content_type = "image/png;"
+        return f.getvalue()
     

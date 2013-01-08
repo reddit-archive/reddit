@@ -32,9 +32,6 @@ from r2.models import *
 import hashlib
 
 class PostController(ApiController):
-    def api_wrapper(self, kw):
-        return Storage(**kw)
-
     def set_options(self, all_langs, pref_lang, **kw):
         if c.errors.errors:
             print "fucker"
@@ -180,7 +177,7 @@ class PostController(ApiController):
     def POST_login(self, dest, *a, **kw):
         ApiController._handle_login(self, *a, **kw)
         c.render_style = "html"
-        c.response_content_type = ""
+        response.content_type = "text/html"
 
         if c.errors:
             return LoginPage(user_login = request.post.get('user'),
@@ -192,7 +189,7 @@ class PostController(ApiController):
     def POST_reg(self, dest, *a, **kw):
         ApiController._handle_register(self, *a, **kw)
         c.render_style = "html"
-        c.response_content_type = ""
+        response.content_type = "text/html"
 
         if c.errors:
             return LoginPage(user_reg = request.post.get('user'),

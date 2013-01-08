@@ -49,7 +49,7 @@ from r2.lib.errors import errors
 from listingcontroller import ListingController
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
 from api_docs import api_doc, api_section
-from pylons import c, request, request
+from pylons import c, request, response
 from r2.models.token import EmailVerificationToken
 from r2.controllers.ipn import generate_blob
 
@@ -410,11 +410,10 @@ class FrontController(RedditController, OAuth2ResourceController):
                     must_revalidate=False,
                 )
 
-            c.response_content_type = 'text/css'
-            c.response.content =  stylesheet_contents
+            response.content_type = 'text/css'
             if c.site.type == 'private':
-                c.response.headers['X-Private-Subreddit'] = 'private'
-            return c.response
+                response.headers['X-Private-Subreddit'] = 'private'
+            return stylesheet_contents
         else:
             return self.abort404()
 
@@ -979,8 +978,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         sup.set_expires_header()
 
         if c.extension == 'json':
-            c.response.content = sup.sup_json(period)
-            return c.response
+            return sup.sup_json(period)
         else:
             return self.abort404()
 
@@ -991,8 +989,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_traffic(self, article):
         content = trafficpages.PromotedLinkTraffic(article)
         if c.render_style == 'csv':
-            c.response.content = content.as_csv()
-            return c.response
+            return content.as_csv()
 
         return LinkInfoPage(link=article,
                             page_classes=["promoted-traffic"],
@@ -1005,8 +1002,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         if link:
             content = trafficpages.PromoTraffic(link)
             if c.render_style == 'csv':
-                c.response.content = content.as_csv()
-                return c.response
+                return content.as_csv()
             return LinkInfoPage(link=link,
                                 page_classes=["promo-traffic"],
                                 comment=None,
@@ -1237,14 +1233,13 @@ class FormsController(RedditController):
     def GET_validuser(self):
         """checks login cookie to verify that a user is logged in and
         returns their user name"""
-        c.response_content_type = 'text/plain'
+        response.content_type = 'text/plain'
         if c.user_is_loggedin:
             # Change cookie based on can_wiki trac permissions
             perm = str(c.user.can_wiki(default=False))
-            c.response.content = c.user.name + "," + perm
+            return c.user.name + "," + perm
         else:
-            c.response.content = ''
-        return c.response
+            return ""
 
     def _render_opt_in_out(self, msg_hash, leave):
         """Generates the form for an optin/optout page"""

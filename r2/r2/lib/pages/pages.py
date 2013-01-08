@@ -93,8 +93,7 @@ def responsive(res, space_compress = False):
             res = "%s(%s)" % (websafe_json(c.allowed_callback), res)
     elif space_compress:
         res = spaceCompress(res)
-    c.response.content = res
-    return c.response
+    return res
 
 class Reddit(Templated):
     '''Base class for rendering a page on reddit.  Handles toolbar creation,

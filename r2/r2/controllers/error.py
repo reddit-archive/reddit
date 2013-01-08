@@ -112,7 +112,6 @@ class ErrorController(RedditController):
 
 
     def send403(self):
-        c.response.status_code = 403
         c.site = DefaultSR()
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
@@ -124,15 +123,12 @@ class ErrorController(RedditController):
             return res.render()
 
     def send404(self):
-        c.response.status_code = 404
         if 'usable_error_content' in request.environ:
             return request.environ['usable_error_content']
         return pages.RedditError(_("page not found"),
                                  _("the page you requested does not exist")).render()
 
     def send429(self):
-        c.response.status_code = 429
-
         retry_after = request.environ.get("retry_after")
         if retry_after:
             response.headers["Retry-After"] = str(retry_after)
@@ -145,8 +141,7 @@ class ErrorController(RedditController):
         return template.render(logo_url=static(g.default_header_url))
 
     def send503(self):
-        c.response.status_code = 503
-        c.response.headers['Retry-After'] = request.environ['retry_after']
+        response.headers["Retry-After"] = str(request.environ["retry_after"])
         return request.environ['usable_error_content']
 
     def GET_document(self):
@@ -167,13 +162,12 @@ class ErrorController(RedditController):
                 c.site = Subreddit._by_name(srname)
             if c.render_style not in self.allowed_render_styles:
                 if code not in (204, 304):
-                     c.response.content = str(code)
-                c.response.status_code = code
-                return c.response
+                    return str(code)
+                else:
+                    return ""
             elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
-                c.response.content = websafe_json(json.dumps(data))
-                return c.response
+                return websafe_json(json.dumps(data))
             elif takedown and code == 404:
                 link = Link._by_fullname(takedown)
                 return pages.TakedownPage(link).render()
@@ -192,8 +186,8 @@ class ErrorController(RedditController):
                 if request.GET.has_key('x-sup-id'):
                     x_sup_id = request.GET.get('x-sup-id')
                     if '\r\n' not in x_sup_id:
-                        c.response.headers['x-sup-id'] = x_sup_id
-                return c.response
+                        response.headers['x-sup-id'] = x_sup_id
+                return ""
             elif c.site:
                 return self.send404()
             else:
