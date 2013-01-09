@@ -64,6 +64,18 @@ ${load_timeseries_js()}
       </td>
     %endfor
   </tr>
+  %if thing.scheduled_impressions:
+    <tr>
+      <th>${_("SCHEDULED IMPRESSIONS")}<br/>
+      ${_("INVENTORY")}</th>
+      %for date in thing.dates:
+        <td class="${"today" if date == thing.today else ""}">
+          ${thing.scheduled_impressions.get(date, "---")}<br/>
+          ${thing.impression_inventory.get(date, "---")}
+        </td>
+      %endfor
+    </tr>
+  %endif
   <tr>
     <th>
       %if thing.admin_view:
@@ -73,7 +85,9 @@ ${load_timeseries_js()}
     </th>
     %for date in thing.dates:
       <td class="${"today" if date == thing.today else ""}">
-        ${thing.delivered[date]}<br/>
+        %if thing.admin_view:
+          ${thing.delivered[date]}<br/>
+        %endif
         ${thing.cpm[date]}
       </td>
     %endfor

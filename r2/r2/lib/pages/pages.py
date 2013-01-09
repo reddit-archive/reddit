@@ -3590,6 +3590,16 @@ class Promote_Graph(Templated):
 
         self.promo_traffic = dict(self.promo_traffic)
 
+        if self.admin_view:
+            predicted = inventory.get_predicted_by_date(None, start_date,
+                                                        end_date)
+            self.impression_inventory = predicted
+            # TODO: Real data
+            self.scheduled_impressions = dict.fromkeys(predicted, 0)
+        else:
+            self.scheduled_impressions = None
+            self.impression_inventory = None
+
         self.cpc = {}
         self.cpm = {}
         self.delivered = {}
