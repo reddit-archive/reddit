@@ -1159,6 +1159,68 @@ a.author { margin-right: 0.5em; }
     margin-right: 7px;
 }
 
+.infobar.welcome {
+    background: url(../welcome-lines.png) top center;
+    border: 1px solid #ff8b60;
+    padding: 0;
+    height: 80px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.infobar.welcome h1, .infobar.welcome h2 {
+    display: inline-block;
+    font-weight: normal;
+    margin: 0;
+}
+
+.infobar.welcome h1 {
+    margin-top: 14px;
+    margin-left: 2%;
+    padding: 7px 16px;
+    font-size: 16px;
+    background: white;
+    border-bottom: 2px solid #5f99cf;
+}
+
+.infobar.welcome .button-row {
+    position: relative;
+    top: -8px;
+    margin-left: 10%;
+}
+
+.infobar.welcome h2 {
+    padding: 4px 14px;
+    padding-left: 38px;
+    background: white url(../welcome-upvote.png) 12px center no-repeat;
+    font-size: 13px;
+    color: #222;
+    border-bottom: 2px solid #ff4500;
+}
+
+.infobar.welcome a {
+    margin-left: 2%;
+    background: #e75018;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border-bottom: 2px solid #a73a11;
+}
+
+.infobar.welcome a:hover {
+    background: #f0571e;
+    border-bottom-color: #c74514;
+}
+
+.infobar.welcome a:active {
+    position: relative;
+    top: 1px;
+    background: #df531f;
+    border-bottom: 1px solid #a73a11;
+}
+
 /* markdown */
 .md { max-width: 60em; overflow: auto; font-size: small; }
 .md p, .md h1 { margin: 5px 0}

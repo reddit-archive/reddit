@@ -175,8 +175,6 @@ class Reddit(Templated):
                 infotext = strings.iphone_first
             elif g.announcement_message:
                 infotext = g.announcement_message
-            elif c.firsttime and c.site.firsttext:
-                infotext = c.site.firsttext
 
         if isinstance(c.site, DomainSR) and c.site.domain.endswith("imgur.com"):
             self.infobar = InfoBar(
@@ -190,6 +188,9 @@ class Reddit(Templated):
         if isinstance(c.site, AllMinus) and not c.user.gold:
             if not self.infobar:
                 self.infobar = InfoBar(message=strings.all_minus_gold_only, extra_class="gold")
+
+        if c.firsttime:
+            self.infobar = PaneStack([WelcomeBar(), self.infobar])
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
@@ -1520,6 +1521,16 @@ class InfoBar(Templated):
     """Draws the yellow box at the top of a page for info"""
     def __init__(self, message = '', extra_class = ''):
         Templated.__init__(self, message = message, extra_class = extra_class)
+
+class WelcomeBar(InfoBar):
+    def __init__(self):
+        messages = g.live_config.get("welcomebar_messages")
+        if messages:
+            message = random.choice(messages).split(" / ")
+        else:
+            message = (_("reddit is a platform for internet communities"),
+                       _("where your votes shape what the world is talking about."))
+        InfoBar.__init__(self, message=message)
 
 class ClientInfoBar(InfoBar):
     """Draws the message the top of a login page before OAuth2 authorization"""

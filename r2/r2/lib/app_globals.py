@@ -225,6 +225,7 @@ class Globals(object):
         ConfigValue.messages: [
             'goldvertisement_blurbs',
             'goldvertisement_has_gold_blurbs',
+            'welcomebar_messages',
         ],
     }
 

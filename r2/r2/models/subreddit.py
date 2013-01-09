@@ -67,7 +67,6 @@ class Subreddit(Thing, Printable):
                      stylesheet_contents = '',
                      stylesheet_hash     = '',
                      stylesheet_modified = None,
-                     firsttext = strings.firsttext,
                      header = None,
                      header_size = None,
                      header_title = "",
