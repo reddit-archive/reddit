@@ -154,6 +154,7 @@ class Reddit(Templated):
         self.nav_menu = MenuArea(menus = nav_menus) if nav_menus else None
 
         #add the infobar
+        self.welcomebar = None
         self.infobar = None
         # generate a canonical link for google
         self.canonical_link = request.fullpath
@@ -190,7 +191,7 @@ class Reddit(Templated):
                 self.infobar = InfoBar(message=strings.all_minus_gold_only, extra_class="gold")
 
         if c.firsttime:
-            self.infobar = PaneStack([WelcomeBar(), self.infobar])
+            self.welcomebar = WelcomeBar()
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
@@ -490,7 +491,8 @@ class Reddit(Templated):
 
     def content(self):
         """returns a Wrapped (or renderable) item for the main content div."""
-        return self.content_stack((self.infobar, self.nav_menu, self._content))
+        return self.content_stack((
+            self.welcomebar, self.infobar, self.nav_menu, self._content))
 
     def page_classes(self):
         classes = set()
