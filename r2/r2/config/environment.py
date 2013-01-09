@@ -23,6 +23,8 @@
 import os
 import mimetypes
 
+from mako.lookup import TemplateLookup
+from pylons.error import handle_mako_error
 from pylons import config
 
 import r2.config
@@ -72,28 +74,39 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     #override the default response options
     config['pylons.response_options']['headers'] = {}
 
-    # The following template options are passed to your template engines
-    tmpl_options = config['buffet.template_options']
-    tmpl_options['mako.filesystem_checks'] = getattr(g, 'reload_templates', False)
-    tmpl_options['mako.default_filters'] = ["mako_websafe"]
-    tmpl_options['mako.imports'] = \
-                                 ["from r2.lib.filters import websafe, unsafe, mako_websafe",
-                                  "from pylons import c, g, request",
-                                  "from pylons.i18n import _, ungettext"]
-
     # when mako loads a previously compiled template file from its cache, it
     # doesn't check that the original template path matches the current path.
     # in the event that a new plugin defines a template overriding a reddit
     # template, unless the mtime newer, mako doesn't update the compiled
     # template. as a workaround, this makes mako store compiled templates with
     # the original path in the filename, forcing it to update with the path.
-    def mako_module_path(filename, uri):
-        module_directory = tmpl_options['mako.module_directory']
-        filename = filename.lstrip('/').replace('/', '-')
-        path = os.path.join(module_directory, filename + ".py")
-        return os.path.abspath(path)
+    if "cache_dir" in app_conf:
+        module_directory = os.path.join(app_conf['cache_dir'], 'templates')
 
-    tmpl_options['mako.modulename_callable'] = mako_module_path
+        def mako_module_path(filename, uri):
+            filename = filename.lstrip('/').replace('/', '-')
+            path = os.path.join(module_directory, filename + ".py")
+            return os.path.abspath(path)
+    else:
+        # we're probably in "paster run standalone" mode. we'll just avoid
+        # caching templates since we don't know where they should go.
+        module_directory = mako_module_path = None
+
+    # set up the templating system
+    config["pylons.g"].mako_lookup = TemplateLookup(
+        directories=paths["templates"],
+        error_handler=handle_mako_error,
+        module_directory=module_directory,
+        input_encoding="utf-8",
+        default_filters=["mako_websafe"],
+        filesystem_checks=getattr(g, "reload_templates", False),
+        imports=[
+            "from r2.lib.filters import websafe, unsafe, mako_websafe",
+            "from pylons import c, g, request",
+            "from pylons.i18n import _, ungettext",
+        ],
+        modulename_callable=mako_module_path,
+    )
 
     if setup_globals:
         g.setup_complete()
