@@ -31,7 +31,7 @@
 %>
 <%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
-<%namespace file="less.html" import="less_js"/>
+<%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="tags, classes"/>
 <%inherit file="base.html"/>
 
@@ -71,8 +71,7 @@
             type="text/css" />
     %endif
   %else:
-    <link rel="stylesheet" href="${static(g.stylesheet)}" 
-          type="text/css" />
+    ${less_stylesheet(g.stylesheet)}
       %if c.site.stylesheet:
       <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
             type="text/css" />
