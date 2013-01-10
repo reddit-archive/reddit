@@ -1165,6 +1165,7 @@ a.author { margin-right: 0.5em; }
     padding: 0;
     height: 80px;
     overflow: hidden;
+    margin-right: 0;  /* work around safari 5 width issue */
     white-space: nowrap;
 }
 
