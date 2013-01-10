@@ -49,7 +49,7 @@ ${load_timeseries_js()}
 <table class="calendar">
   <thead>
   <tr>
-    <th>${_("DATE")}</th>
+    <th scope="row">${_("DATE")}</th>
     %for date in thing.dates:
       <th scope="col" class="${"today" if date == thing.today else ""}">
         <time>${date}</time>
@@ -57,7 +57,7 @@ ${load_timeseries_js()}
     %endfor
   </tr>
   <tr>
-    <th>${_("COUNT")}</th>
+    <th scope="row">${_("COUNT")}</th>
     %for date in thing.dates:
       <td class="${"today" if date == thing.today else ""}">
         ${thing.promo_counter[date]}
@@ -66,7 +66,7 @@ ${load_timeseries_js()}
   </tr>
   %if thing.scheduled_impressions:
     <tr>
-      <th>${_("SCHEDULED IMPRESSIONS")}<br/>
+      <th scope="row">${_("SCHEDULED IMPRESSIONS")}<br/>
       ${_("INVENTORY")}</th>
       %for date in thing.dates:
         <td class="${"today" if date == thing.today else ""}">
@@ -77,7 +77,7 @@ ${load_timeseries_js()}
     </tr>
   %endif
   <tr>
-    <th>
+    <th scope="row">
       %if thing.admin_view:
         ${_("DELIVERED IMPRESSIONS")}<br/>
       %endif
@@ -93,7 +93,7 @@ ${load_timeseries_js()}
     %endfor
   </tr>
   <tr>
-    <th>
+    <th scope="row">
       %if thing.admin_view:
         ${_("CLICKS")}<br/>
       %endif
@@ -109,7 +109,7 @@ ${load_timeseries_js()}
     %endfor
   </tr>
   <tr>
-    <th>
+    <th scope="row">
       %if c.user_is_sponsor:
         ${_("TOTAL COMMIT")}
       %else:
