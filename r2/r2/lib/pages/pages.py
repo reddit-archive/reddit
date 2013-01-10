@@ -3614,8 +3614,8 @@ class Promote_Graph(Templated):
             if day in self.promo_traffic:
                 delivered, clicks = self.promo_traffic[day]
                 if i in market and day < today:
-                    cpm = "$%.2f" % (market[i] * 1000. / max(delivered, 1))
-                    cpc = "$%.2f" % (market[i] * 1. / max(clicks, 1))
+                    cpm = "$%.2f" % promote.cost_per_mille(market[i], delivered)
+                    cpc = "$%.2f" % promote.cost_per_click(market[i], clicks)
                 delivered = format_number(delivered, c.locale)
                 clicks = format_number(clicks, c.locale)
                 if day == today:
