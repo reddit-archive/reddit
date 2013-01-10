@@ -32,6 +32,7 @@ from r2.lib import promote
 from r2.lib.menus import menu
 from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
 from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
+from r2.lib.promote import cost_per_mille, cost_per_click
 from r2.lib.utils import Storage
 from r2.lib.wrapped import Templated
 from r2.models import Thing, Link, PromoCampaign, traffic
@@ -427,22 +428,6 @@ def _clickthrough_rate(impressions, clicks):
         return 0
 
 
-def _cost_per_mille(spend, impressions):
-    """Return the cost-per-mille given ad spend and impressions."""
-    if impressions:
-        return 1000. * float(spend) / impressions
-    else:
-        return 0
-
-
-def _cost_per_click(spend, clicks):
-    """Return the cost-per-click given ad spend and clicks."""
-    if clicks:
-        return float(spend) / clicks
-    else:
-        return 0
-
-
 def _is_promo_preliminary(end_date):
     """Return if results are preliminary for this promotion.
 
@@ -628,11 +613,11 @@ class PromoCampaignTrafficTable(Templated):
             self.total_imps += camp.imps
             self.total_spend += camp.bid
             camp.ctr = _clickthrough_rate(camp.imps, camp.clicks)
-            camp.cpc = _cost_per_click(camp.bid, camp.clicks)
-            camp.cpm = _cost_per_mille(camp.bid, camp.imps)
+            camp.cpc = cost_per_click(camp.bid, camp.clicks)
+            camp.cpm = cost_per_mille(camp.bid, camp.imps)
         self.total_ctr = _clickthrough_rate(self.total_imps, self.total_clicks)
-        self.total_cpc = _cost_per_click(self.total_spend, self.total_clicks)
-        self.total_cpm = _cost_per_mille(self.total_spend, self.total_imps)
+        self.total_cpc = cost_per_click(self.total_spend, self.total_clicks)
+        self.total_cpm = cost_per_mille(self.total_spend, self.total_imps)
         Templated.__init__(self)
 
 

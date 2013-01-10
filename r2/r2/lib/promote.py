@@ -82,6 +82,22 @@ def health_check():
     return time.time() - int(NamedGlobals.get(PROMO_HEALTH_KEY, default=0))
 
 
+def cost_per_mille(spend, impressions):
+    """Return the cost-per-mille given ad spend and impressions."""
+    if impressions:
+        return 1000. * float(spend) / impressions
+    else:
+        return 0
+
+
+def cost_per_click(spend, clicks):
+    """Return the cost-per-click given ad spend and clicks."""
+    if clicks:
+        return float(spend) / clicks
+    else:
+        return 0
+
+
 # attrs
 
 def promo_traffic_url(l): # old traffic url
