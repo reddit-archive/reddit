@@ -119,7 +119,7 @@
 
   <%self:goldsec goldtype="gift">
     <%utils:round_field title="${_('How much gold do you wish to bestow?')}">
-      %if thing.user_creddits:
+      %if thing.user_creddits > 0:
         <select name="months" class="gold-dropdown">
           %for i in range(1, thing.user_creddits + 1):
              <option value="${i}">
