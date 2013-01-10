@@ -86,6 +86,18 @@ function attach_calendar(where, min_date_src, max_date_src, callback, min_date_o
      });
 }
 
+function check_enddate(startdate, enddate) {
+  var startdate = $(startdate)
+  var enddate = $(enddate);
+  if(dateFromInput(startdate) >= dateFromInput(enddate)) {
+    var newd = new Date();
+    newd.setTime(startdate.datepicker('getDate').getTime() + 86400*1000);
+    enddate.val((newd.getMonth()+1) + "/" +
+      newd.getDate() + "/" + newd.getFullYear());
+  }
+  $("#datepicker-" + enddate.attr("id")).datepicker("destroy");
+}
+
 function targeting_on(elem) {
     $(elem).parents(".campaign").find(".targeting")
         .find('*[name="sr"]').prop("disabled", "").end().slideDown();

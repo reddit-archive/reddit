@@ -56,7 +56,7 @@ from r2.lib.subreddit_search import popular_searches
 from r2.lib.scraper import get_media_embed
 from r2.lib.log import log_text
 from r2.lib.memoize import memoize
-from r2.lib.utils import trunc_string as _truncate
+from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 
 import sys, random, datetime, calendar, simplejson, re, time
@@ -3515,22 +3515,22 @@ class Promote_Graph(Templated):
 
         return promos
 
-    def __init__(self, admin_view=False):
+    def __init__(self, start_date, end_date, bad_dates=None, admin_view=False):
         self.admin_view = admin_view and c.user_is_sponsor
         self.now = promote.promo_datetime_now()
 
-        start_date = promote.promo_datetime_now(offset = -7).date()
-        end_date = promote.promo_datetime_now(offset = 7).date()
+        start_date = to_date(start_date)
+        end_date = to_date(end_date)
+        end_before = end_date + datetime.timedelta(days=1)
 
-
-        size = (end_date - start_date).days
+        size = (end_before - start_date).days
         self.dates = [start_date + datetime.timedelta(i) for i in xrange(size)]
 
         # these will be cached queries
-        market, promo_counter = self.get_market(None, start_date, end_date)
+        market, promo_counter = self.get_market(None, start_date, end_before)
         my_market = market
         if not self.admin_view:
-            my_market = self.get_market(c.user._id, start_date, end_date)[0]
+            my_market = self.get_market(c.user._id, start_date, end_before)[0]
 
         # determine the range of each link
         promote_blocks = []
@@ -3539,7 +3539,7 @@ class Promote_Graph(Templated):
                 and not promote.is_rejected(link)
                 and not promote.is_unpaid(link)):
                 promote_blocks.append((link, starti, endi, campaign))
-        self.promo_iter(start_date, end_date, block_maker)
+        self.promo_iter(start_date, end_before, block_maker)
 
         # now sort the promoted_blocks into the most contiguous chuncks we can
         sorted_blocks = []
@@ -3598,7 +3598,7 @@ class Promote_Graph(Templated):
 
         if self.admin_view:
             predicted = inventory.get_predicted_by_date(None, start_date,
-                                                        end_date)
+                                                        end_before)
             self.impression_inventory = predicted
             # TODO: Real data
             self.scheduled_impressions = dict.fromkeys(predicted, 0)
@@ -3637,7 +3637,9 @@ class Promote_Graph(Templated):
                 self.my_market[day] = "---"
             self.promo_counter[day] = promo_counter.get(i, "---")
 
-        Templated.__init__(self, today=today, promote_blocks=sorted_blocks)
+        Templated.__init__(self, today=today, promote_blocks=sorted_blocks,
+                           start_date=start_date, end_date=end_date,
+                           bad_dates=bad_dates)
 
     def to_iter(self, localize = True):
         locale = c.locale

@@ -21,11 +21,15 @@
 ###############################################################################
 
 <%!
+   from r2.lib import js
    from r2.lib.template_helpers import static
 %>
 
 <%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+<%namespace name="pr" file="promotelinkform.html" />
+
 ${load_timeseries_js()}
+${unsafe(js.use('sponsored'))}
 
 <h1>${_("Sponsored link calendar")}</h1>
 
@@ -45,6 +49,39 @@ ${load_timeseries_js()}
 </div>
 
 %endif
+<%
+  if thing.admin_view:
+    form_path = "/promoted/admin/graph"
+  else:
+    form_path = "/promoted/graph"
+%>
+
+<div class="calendar-lead">
+<h2>${_("Viewing calendar for dates:")}</h2>
+
+%if thing.bad_dates and all(thing.bad_dates):
+<div class="error">
+  ${_("Sorry, I couldn't make sense of the date range: %(start)s - %(end)s") %\
+    dict(start=thing.bad_dates[0].strftime('%m/%d/%Y'),
+         end=thing.bad_dates[1].strftime('%m/%d/%Y'))}
+</div>
+%endif
+
+<form action="${form_path}" method="get">
+  <%pr:datepicker name="startdate" value="${thing.start_date.strftime('%m/%d/%Y')}"
+    minDateSrc="date-min" initfuncname="init_startdate"
+    min_date_offset="86400000">
+      function(elem) { check_enddate(elem, $("#enddate")); return elem; }
+  </%pr:datepicker>
+  &nbsp;&ndash;&nbsp;
+  <%pr:datepicker name="enddate" value="${thing.end_date.strftime('%m/%d/%Y')}"
+    minDateSrc="startdate" initfuncname="init_enddate"
+    min_date_offset="86400000">
+      function(elem) { return elem; }
+  </%pr:datepicker>
+  <input type="submit" value="${_("go")}"></input>
+</form>
+</div>
 
 <table class="calendar">
   <thead>
@@ -169,6 +206,11 @@ ${load_timeseries_js()}
 ${thing.performance_table}
 
 <script type="text/javascript">
-    r.timeseries.init()
+    $(function() {
+      init_startdate();
+      init_enddate();
+    });
+    r.timeseries.init();
+
 </script>
 </div>

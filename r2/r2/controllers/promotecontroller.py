@@ -21,6 +21,7 @@
 ###############################################################################
 from datetime import datetime, timedelta
 
+import itertools
 import json
 
 from pylons import c, g, request
@@ -75,6 +76,27 @@ from r2.lib.validator import (
     VUrl,
 )
 from r2.models import Link, Message, NotFound, PromoCampaign, PromotionLog
+
+
+def _check_dates(dates):
+    params = ('startdate', 'enddate')
+    error_types = (errors.BAD_DATE,
+                   errors.BAD_FUTURE_DATE,
+                   errors.BAD_PAST_DATE,
+                   errors.BAD_DATE_RANGE,
+                   errors.DATE_RANGE_TOO_LARGE)
+    for error_case in itertools.product(error_types, params):
+        if error_case in c.errors:
+            bad_dates = dates
+            start, end = None, None
+            break
+    else:
+        bad_dates = None
+        start, end = dates
+    if not start or not end:
+        start = promote.promo_datetime_now(offset=-7).date()
+        end = promote.promo_datetime_now(offset=6).date()
+    return start, end, bad_dates
 
 
 class PromoteController(ListingController):
@@ -176,13 +198,25 @@ class PromoteController(ListingController):
         link = Link._byID(campaign.link_id)
         return self.redirect(promote.promo_edit_url(link))
 
-    @validate(VSponsor())
-    def GET_graph(self):
-        return PromotePage("graph", content=Promote_Graph()).render()
+    @validate(VSponsor(),
+              dates=VDateRange(["startdate", "enddate"],
+                               max_range=timedelta(days=28),
+                               required=False))
+    def GET_graph(self, dates):
+        start, end, bad_dates = _check_dates(dates)
+        return PromotePage("graph",
+                           content=Promote_Graph(
+                                start, end, bad_dates=bad_dates)
+                           ).render()
 
-    @validate(VSponsorAdmin())
-    def GET_admingraph(self):
-        content = Promote_Graph(admin_view=True)
+    @validate(VSponsorAdmin(),
+              dates=VDateRange(["startdate", "enddate"],
+                               max_range=timedelta(days=28),
+                               required=False))
+    def GET_admingraph(self, dates):
+        start, end, bad_dates = _check_dates(dates)
+        content = Promote_Graph(start, end, bad_dates=bad_dates,
+                                admin_view=True)
         if c.render_style == 'csv':
             return content.as_csv()
         return PromotePage("admingraph", content=content).render()

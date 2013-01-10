@@ -1753,14 +1753,34 @@ class VDateRange(VDate):
     future/past requirements in VDate, two date fields must be
     provided and they must be in order.
 
+    If required is False, then the dates may be omitted without
+    causing an error (but if a start date is provided, an end
+    date MUST be provided as well).
+
     Additional Error conditions:
       * BAD_DATE_RANGE if start_date is not less than end_date
     """
+    def __init__(self, param, max_range=None, required=True, **kw):
+        self.max_range = max_range
+        self.required = required
+        VDate.__init__(self, param, **kw)
+
+
     def run(self, *a):
         try:
             start_date, end_date = [VDate.run(self, x) for x in a]
-            if not start_date or not end_date or end_date < start_date:
+            # If either date is missing and dates are "required",
+            # it's a bad range. Additionally, if one date is missing,
+            # but the other is provided, it's always an error.
+            if not start_date or not end_date:
+                if self.required or (not start_date and not end_date):
+                    self.set_error(errors.BAD_DATE_RANGE)
+                return (start_date, end_date)
+            elif end_date < start_date:
                 self.set_error(errors.BAD_DATE_RANGE)
+            elif self.max_range and end_date - start_date > self.max_range:
+                self.set_error(errors.DATE_RANGE_TOO_LARGE,
+                               {'days': self.max_range})
             return (start_date, end_date)
         except ValueError:
             # insufficient number of arguments provided (expect 2)

@@ -112,14 +112,7 @@ ${self.javascript_setup()}
           <%self:datepicker name="startdate", value="${thing.startdate}"
                             minDateSrc="date-min" initfuncname="init_startdate">
           function(elem) {
-            var other = $("#enddate");
-            if(dateFromInput("#startdate") >= dateFromInput("#enddate")) {
-               var newd = new Date();
-               newd.setTime($(elem).datepicker('getDate').getTime() + 86400*1000);
-               $("#enddate").val((newd.getMonth()+1) + "/" + 
-                                 newd.getDate() + "/" + newd.getFullYear());
-            }
-            $("#datepicker-enddate").datepicker("destroy");
+            check_enddate(elem, $("#enddate"));
             update_bid(elem);
           }
           </%self:datepicker>

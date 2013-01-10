@@ -80,6 +80,7 @@ error_list = dict((
         ('OVERSOLD', _('that reddit has already been oversold on %(start)s to %(end)s. Please pick another reddit or date.')),
         ('BAD_DATE', _('please provide a date of the form mm/dd/yyyy')),
         ('BAD_DATE_RANGE', _('the dates need to be in order and not identical')),
+        ('DATE_RANGE_TOO_LARGE', _('you must choose a date range of less than %(days)s days')),
         ('BAD_FUTURE_DATE', _('please enter a date at least %(day)s days in the future')),
         ('BAD_PAST_DATE', _('please enter a date at least %(day)s days in the past')),
         ('BAD_ADDRESS', _('address problem: %(message)s')),

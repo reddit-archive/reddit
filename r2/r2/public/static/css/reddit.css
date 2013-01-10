@@ -4652,6 +4652,10 @@ button.new-campaign:disabled { color: gray; }
 dt { margin-left: 10px; font-weight: bold;  }
 dd { margin-left: 20px;  }
 
+.calendar-lead {
+    margin: 15px;
+}
+
 table.calendar {
     white-space: nowrap;
     width: 90%;
