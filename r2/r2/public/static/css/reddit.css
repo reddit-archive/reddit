@@ -4618,13 +4618,13 @@ dd { margin-left: 20px;  }
 
 table.calendar {
     white-space: nowrap;
-    overflow: hidden;
     width: 90%;
     margin-top: 20px;
     position: relative;
     padding-top: 120px;
     padding-bottom: 100px;
     empty-cells: show;
+    table-layout: fixed;
 }
 
 .calendar .today {
@@ -4638,12 +4638,11 @@ table.calendar {
 .calendar thead th, .calendar thead td {
     font-weight: bold;
     text-align: center;
-    min-width: 125px;
+    text-transform: uppercase;
 }
 
 .calendar td, .calendar th[scope="col"] {
     border-left: 1px dashed gray;
-    min-width: 125px;
 }
 
 .calendar .blob {

@@ -49,7 +49,7 @@ ${load_timeseries_js()}
 <table class="calendar">
   <thead>
   <tr>
-    <th scope="row">${_("DATE")}</th>
+    <th scope="row">${_("Date")}</th>
     %for date in thing.dates:
       <th scope="col" class="${"today" if date == thing.today else ""}">
         <time>${date}</time>
@@ -57,7 +57,8 @@ ${load_timeseries_js()}
     %endfor
   </tr>
   <tr>
-    <th scope="row">${_("COUNT")}</th>
+    ## TRANSLATORS: Noun
+    <th scope="row">${_("Count")}</th>
     %for date in thing.dates:
       <td class="${"today" if date == thing.today else ""}">
         ${thing.promo_counter[date]}
@@ -66,8 +67,9 @@ ${load_timeseries_js()}
   </tr>
   %if thing.scheduled_impressions:
     <tr>
-      <th scope="row">${_("SCHEDULED IMPRESSIONS")}<br/>
-      ${_("INVENTORY")}</th>
+      ## TRANSLATORS: Advertising term; "ad impressions scheduled for delivery"
+      <th scope="row">${_("Scheduled")}<br/>
+      ${_("Inventory")}</th>
       %for date in thing.dates:
         <td class="${"today" if date == thing.today else ""}">
           ${thing.scheduled_impressions.get(date, "---")}<br/>
@@ -79,8 +81,10 @@ ${load_timeseries_js()}
   <tr>
     <th scope="row">
       %if thing.admin_view:
-        ${_("DELIVERED IMPRESSIONS")}<br/>
+        ## TRANSLATORS: Advertising term; "ad impressions delivered / shown"
+        ${_("Impressions")}<br/>
       %endif
+      ## TRANSLATORS: Advertising term: "cost per mille"
       ${_("CPM")}
     </th>
     %for date in thing.dates:
@@ -95,8 +99,9 @@ ${load_timeseries_js()}
   <tr>
     <th scope="row">
       %if thing.admin_view:
-        ${_("CLICKS")}<br/>
+        ${_("Clicks")}<br/>
       %endif
+      ## TRANSLATORS: Advertising term: "cost per click"
       ${_("CPC")}
     </th>
     %for date in thing.dates:
@@ -111,9 +116,11 @@ ${load_timeseries_js()}
   <tr>
     <th scope="row">
       %if c.user_is_sponsor:
-        ${_("TOTAL COMMIT")}
+        ## TRANSLATORS: Advertising term: Total value of scheduled ads
+        ${_("Total Commit")}
       %else:
-        ${_("YOUR COMMIT")}
+        ## TRANSLATORS: Advertising term: Amount spent on scheduled ads
+        ${_("Your Commit")}
       %endif
     </th>
     %for date in thing.dates:
