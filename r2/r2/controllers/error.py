@@ -54,8 +54,6 @@ except Exception, e:
         os._exit(1)
 
 
-NUM_FAILIENS = 3
-
 redditbroke =  \
 '''<html>
   <head>
@@ -74,6 +72,14 @@ redditbroke =  \
   </body>
 </html>
 '''
+
+
+FAILIEN_COUNT = 3
+def make_failien_url():
+    failien_number = random.randint(1, FAILIEN_COUNT)
+    failien_name = "youbrokeit%d.png" % failien_number
+    return static(failien_name)
+
 
 class ErrorController(RedditController):
     """Generates error documents as and when they are required.
@@ -183,8 +189,7 @@ class ErrorController(RedditController):
                 return self.send429()
             elif code == 500:
                 randmin = {'admin': random.choice(self.admins)}
-                failien_name = 'youbrokeit%d.png' % random.randint(1, NUM_FAILIENS)
-                failien_url = static(failien_name)
+                failien_url = make_failien_url()
                 return redditbroke % (failien_url, rand_strings.sadmessages % randmin)
             elif code == 503:
                 return self.send503()
@@ -212,7 +217,7 @@ def handle_awful_failure(fail_text):
         import traceback
         g.log.error("FULLPATH: %s" % fail_text)
         g.log.error(traceback.format_exc())
-        return redditbroke % (random.randint(1,NUM_FAILIENS), fail_text)
+        return redditbroke % (make_failien_url(), fail_text)
     except:
         # we are doomed.  Admit defeat
         return "This is an error that should never occur.  You win."
