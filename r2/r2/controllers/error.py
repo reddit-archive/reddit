@@ -160,11 +160,17 @@ class ErrorController(RedditController):
             
             if srname:
                 c.site = Subreddit._by_name(srname)
-            if c.render_style not in self.allowed_render_styles:
-                if code not in (204, 304):
-                    return str(code)
-                else:
-                    return ""
+
+            if code in (204, 304):
+                # NEVER return a content body on 204/304 or downstream
+                # caches may become very confused.
+                if request.GET.has_key('x-sup-id'):
+                    x_sup_id = request.GET.get('x-sup-id')
+                    if '\r\n' not in x_sup_id:
+                        response.headers['x-sup-id'] = x_sup_id
+                return ""
+            elif c.render_style not in self.allowed_render_styles:
+                return str(code)
             elif c.render_style in extensions.API_TYPES:
                 data = request.environ.get('extra_error_data', {'error': code})
                 return websafe_json(json.dumps(data))
@@ -182,12 +188,6 @@ class ErrorController(RedditController):
                 return redditbroke % (failien_url, rand_strings.sadmessages % randmin)
             elif code == 503:
                 return self.send503()
-            elif code == 304:
-                if request.GET.has_key('x-sup-id'):
-                    x_sup_id = request.GET.get('x-sup-id')
-                    if '\r\n' not in x_sup_id:
-                        response.headers['x-sup-id'] = x_sup_id
-                return ""
             elif c.site:
                 return self.send404()
             else:
