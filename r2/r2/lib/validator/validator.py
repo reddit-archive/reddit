@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import json
+
 from pylons import c, g, request, response
 from pylons.i18n import _
 from pylons.controllers.util import abort
@@ -291,7 +293,7 @@ def validatedMultipartForm(self, self_method, responder, simple_vals,
         if val:
             return val
         else:
-            data = simplejson.dumps(responder.make_response())
+            data = json.dumps(responder.make_response())
             response.content_type = "text/html"
             return ('<html><head><script type="text/javascript">\n'
                     'parent.$.handleResponse().call('
