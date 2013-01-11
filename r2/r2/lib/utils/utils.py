@@ -648,15 +648,6 @@ class UrlParser(object):
                            u.path, u.params, u.query, fragment))
 
 
-def to_js(content, callback="document.write", escape=True):
-    before = after = ''
-    if callback:
-        before = callback + "("
-        after = ");"
-    if escape:
-        content = string2js(content)
-    return before + content + after
-
 def pload(fname, default = None):
     "Load a pickled object from a file"
     try:

@@ -25,7 +25,7 @@ from r2.lib.pages import (ButtonLite, ButtonDemoPanel, WidgetDemoPanel,
                           Bookmarklets, BoringPage)
 from r2.lib.pages.things import wrap_links
 from r2.models import *
-from r2.lib.utils import tup, to_js
+from r2.lib.utils import tup
 from r2.lib.validator import *
 from pylons import c, request, response
 from pylons.i18n import _
@@ -99,7 +99,7 @@ class ButtonsController(RedditController):
 
         bjs = self.get_wrapped_link(url, wrapper = builder_wrapper)
         response.content_type = "text/javascript"
-        return to_js(bjs.render(), callback='', escape=False)
+        return bjs.render()
 
     def GET_button_demo_page(self):
         # no buttons for domain listings -> redirect to top level

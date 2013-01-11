@@ -375,9 +375,12 @@ def set_content_type():
     if e.has_key('extension'):
         c.extension = ext = e['extension']
         if ext in ('embed', 'wired', 'widget'):
+            wrapper = request.params.get("callback", "document.write")
+            wrapper = filters._force_utf8(wrapper)
+
             def to_js(content):
-                return utils.to_js(content, callback=request.params.get(
-                    "callback", "document.write"))
+                return wrapper + "(" + utils.string2js(content) + ");"
+
             c.response_wrapper = to_js
         if ext in ("rss", "api", "json") and request.method.upper() == "GET":
             user = valid_feed(request.GET.get("user"),

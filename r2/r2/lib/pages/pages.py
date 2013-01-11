@@ -48,7 +48,7 @@ from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
-from r2.lib.utils import title_to_url, query_string, UrlParser, to_js, vote_hash
+from r2.lib.utils import title_to_url, query_string, UrlParser, vote_hash
 from r2.lib.utils import link_duplicates, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import add_sr, get_domain, format_number

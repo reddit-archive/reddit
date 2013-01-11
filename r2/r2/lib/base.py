@@ -28,7 +28,6 @@ from pylons import c, g, request, session, config, response
 from pylons.controllers import WSGIController, Controller
 from pylons.i18n import N_, _, ungettext, get_lang
 from paste import httpexceptions
-from r2.lib.utils import to_js
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
