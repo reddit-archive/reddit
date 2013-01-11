@@ -52,6 +52,11 @@ def load_environment(global_conf={}, app_conf={}, setup_globals=True):
     config.init_app(global_conf, app_conf, package='r2',
                     template_engine='mako', paths=paths)
 
+    # don't put action arguments onto c automatically
+    config['pylons.c_attach_args'] = False
+    # when accessing non-existent attributes on c, return "" instead of dying
+    config['pylons.strict_c'] = False
+
     g = config['pylons.g'] = Globals(global_conf, app_conf, paths)
     if setup_globals:
         g.setup()

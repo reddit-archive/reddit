@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from paste.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPError
+from webob.exc import HTTPBadRequest, HTTPForbidden, HTTPError
 from r2.lib.utils import Storage, tup
 from pylons import request
 from pylons.i18n import _

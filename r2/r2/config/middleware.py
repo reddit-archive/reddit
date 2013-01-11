@@ -32,9 +32,9 @@ from paste.registry import RegistryManager
 from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
 from pylons import config, response
-from pylons.error import error_template
-from pylons.middleware import ErrorDocuments, ErrorHandler, StaticJavascripts
-from pylons.wsgiapp import PylonsApp, PylonsBaseWSGIApp
+from pylons.middleware import ErrorDocuments, ErrorHandler
+from pylons.wsgiapp import PylonsApp
+from routes.middleware import RoutesMiddleware
 
 from r2.config.environment import load_environment
 from r2.config.rewrites import rewrites
@@ -42,16 +42,17 @@ from r2.config.extensions import extension_mapping, set_extension
 from r2.lib.utils import is_subdomain
 
 
-# hack in Paste support for HTTP 429 "Too Many Requests"
-from paste import httpexceptions, wsgiwrappers
+# patch in WebOb support for HTTP 429 "Too Many Requests"
+import webob.exc
+import webob.util
 
-class HTTPTooManyRequests(httpexceptions.HTTPClientError):
+class HTTPTooManyRequests(webob.exc.HTTPClientError):
     code = 429
     title = 'Too Many Requests'
     explanation = ('The server has received too many requests from the client.')
 
-httpexceptions._exceptions[429] = HTTPTooManyRequests
-wsgiwrappers.STATUS_CODE_TEXT[429] = HTTPTooManyRequests.title
+webob.exc.status_map[429] = HTTPTooManyRequests
+webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
@@ -288,7 +289,7 @@ class StaticTestMiddleware(object):
         if environ['HTTP_HOST'] == self.domain:
             environ['PATH_INFO'] = self.static_path.rstrip('/') + environ['PATH_INFO']
             return self.app(environ, start_response)
-        raise httpexceptions.HTTPNotFound()
+        raise webob.exc.HTTPNotFound()
 
 class LimitUploadSize(object):
     """
@@ -301,7 +302,8 @@ class LimitUploadSize(object):
 
     def __call__(self, environ, start_response):
         cl_key = 'CONTENT_LENGTH'
-        if environ['REQUEST_METHOD'] == 'POST':
+        is_error = environ.get("pylons.error_call", False)
+        if not is_error and environ['REQUEST_METHOD'] == 'POST':
             if cl_key not in environ:
                 start_response("411 Length Required", [])
                 return ['<html><body>length required</body></html>']
@@ -354,8 +356,8 @@ class CleanupMiddleware(object):
             return start_response(status, fixed, exc_info)
         return self.app(environ, custom_start_response)
 
-#god this shit is disorganized and confusing
-class RedditApp(PylonsBaseWSGIApp):
+
+class RedditApp(PylonsApp):
     def __init__(self, *args, **kwargs):
         super(RedditApp, self).__init__(*args, **kwargs)
         self._loading_lock = Lock()
@@ -403,7 +405,8 @@ def make_app(global_conf, full_stack=True, **app_conf):
     g = config['pylons.g']
 
     # The Pylons WSGI app
-    app = PylonsApp(base_wsgi_app=RedditApp)
+    app = RedditApp()
+    app = RoutesMiddleware(app, config["routes.map"])
 
     # CUSTOM MIDDLEWARE HERE (filtered by the error handling middlewares)
 
@@ -423,8 +426,7 @@ def make_app(global_conf, full_stack=True, **app_conf):
 
     if asbool(full_stack):
         # Handle Python exceptions
-        app = ErrorHandler(app, global_conf, error_template=error_template,
-                           **config['pylons.errorware'])
+        app = ErrorHandler(app, global_conf, **config['pylons.errorware'])
 
         # Display error documents for 401, 403, 404 status codes (and 500 when
         # debug is disabled)
@@ -434,9 +436,8 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = RegistryManager(app)
 
     # Static files
-    javascripts_app = StaticJavascripts()
     static_app = StaticURLParser(config['pylons.paths']['static_files'])
-    static_cascade = [static_app, javascripts_app, app]
+    static_cascade = [static_app, app]
 
     if config['r2.plugins'] and g.config['uncompressedJS']:
         plugin_static_apps = Cascade([StaticURLParser(plugin.static_dir)

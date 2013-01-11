@@ -26,7 +26,7 @@ import random
 
 import pylons
 
-from paste.httpexceptions import HTTPFound, HTTPMovedPermanently
+from webob.exc import HTTPFound, HTTPMovedPermanently
 from pylons.i18n import _
 from pylons import c, g, request, response
 
@@ -165,7 +165,11 @@ class ErrorController(RedditController):
                 code = 404
             srname = request.GET.get('srname', '')
             takedown = request.GET.get('takedown', "")
-            
+
+            # StatusBasedRedirect will override this anyway, but we need this
+            # here for pagecache to see.
+            response.status_int = code
+
             if srname:
                 c.site = Subreddit._by_name(srname)
 

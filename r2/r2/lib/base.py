@@ -25,9 +25,9 @@ import pycassa.pool
 import sqlalchemy.exc
 
 from pylons import c, g, request, session, config, response
-from pylons.controllers import WSGIController, Controller
+from pylons.controllers import WSGIController
 from pylons.i18n import N_, _, ungettext, get_lang
-from paste import httpexceptions
+from webob.exc import HTTPException, status_map
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
@@ -62,20 +62,23 @@ def is_local_address(ip):
     # TODO: support the /20 and /24 private networks? make this configurable?
     return ip.startswith('10.')
 
-def abort(code_or_exception=None, detail="", headers=None, comment=None):
+def abort(code_or_exception=None, detail="", headers=None, comment=None,
+          **kwargs):
     """Raise an HTTPException and save it in environ for use by error pages."""
     # Pylons 0.9.6 makes it really hard to get your raised HTTPException,
     # so this helper implements it manually using a familiar syntax.
     # FIXME: when we upgrade Pylons, we can replace this with raise
     #        and access environ['pylons.controller.exception']
-    if isinstance(code_or_exception, httpexceptions.HTTPException):
+    # NOTE: when we say "upgrade Pylons" we mean to 0.10+
+    if isinstance(code_or_exception, HTTPException):
         exc = code_or_exception
     else:
-        if type(code_or_exception) is type and issubclass(code_or_exception, httpexceptions.HTTPException):
+        if type(code_or_exception) is type and issubclass(code_or_exception,
+                                                          HTTPException):
             exc_cls = code_or_exception
         else:
-            exc_cls = httpexceptions.get_exception(code_or_exception)
-        exc = exc_cls(detail, headers, comment)
+            exc_cls = status_map[code_or_exception]
+        exc = exc_cls(detail, headers, comment, **kwargs)
     request.environ['r2.controller.exception'] = exc
     raise exc
 
@@ -114,7 +117,6 @@ class BaseController(WSGIController):
         request.get = storify(request.GET)
         request.post = storify(request.POST)
         request.referer = environ.get('HTTP_REFERER')
-        request.path = environ.get('PATH_INFO')
         request.user_agent = environ.get('HTTP_USER_AGENT')
         request.fullpath = environ.get('FULLPATH', request.path)
         request.port = environ.get('request_port')
@@ -210,7 +212,7 @@ class BaseController(WSGIController):
 
         path = add_sr(cls.format_output_url(form_path) +
                       query_string(params))
-        abort(302, path)
+        abort(302, location=path)
 
     @classmethod
     def redirect(cls, dest, code = 302):
@@ -219,7 +221,7 @@ class BaseController(WSGIController):
         sends the user to that location with the provided HTTP code.
         """
         dest = cls.format_output_url(dest or "/")
-        response.status_code = code
+        response.status_int = code
         response.headers['Location'] = dest
 
 class EmbedHandler(urllib2.BaseHandler, urllib2.HTTPHandler,

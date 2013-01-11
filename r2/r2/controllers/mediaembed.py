@@ -56,7 +56,7 @@ class MediaembedController(MinimalController):
 
 class AdController(MinimalController):
     def request_key(self):
-        return make_key('request_',
+        return make_key('request',
                         c.lang,
                         c.content_langs,
                         request.host,

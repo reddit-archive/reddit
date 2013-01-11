@@ -72,9 +72,10 @@ setup(
     name="r2",
     version="",
     install_requires=[
-        "Routes<=1.8",
-        "Pylons==0.9.6.2",
-        "webhelpers==0.6.4",
+        "webob==1.0.8",
+        "Pylons==0.9.7",
+        "Routes==1.11",
+        "mako>=0.5",
         "boto >= 2.0",
         "pytz",
         "pycrypto",
