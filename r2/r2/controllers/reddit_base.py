@@ -377,6 +377,8 @@ def set_content_type():
         if ext in ('embed', 'wired', 'widget'):
             wrapper = request.params.get("callback", "document.write")
             wrapper = filters._force_utf8(wrapper)
+            if not valid_jsonp_callback(wrapper):
+                abort(BadRequestError(errors.BAD_JSONP_CALLBACK))
 
             def to_js(content):
                 return wrapper + "(" + utils.string2js(content) + ");"
