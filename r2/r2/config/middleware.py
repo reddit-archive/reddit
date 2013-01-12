@@ -86,8 +86,15 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
 
         #preserve x-sup-id when 304ing
         if code == 304:
-            if response.headers.has_key('x-sup-id'):
-                d['x-sup-id'] = response.headers['x-sup-id']
+            try:
+                # make sure that we're in a context where we can use SOP
+                # objects (error page statics appear to not be in this context)
+                response.headers
+            except TypeError:
+                pass
+            else:
+                if response.headers.has_key('x-sup-id'):
+                    d['x-sup-id'] = response.headers['x-sup-id']
 
         extension = environ.get("extension")
         if extension:
