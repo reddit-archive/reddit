@@ -806,6 +806,8 @@ class MinimalController(BaseController):
         # around taking up memory
         g.reset_caches()
 
+        c.request_timer.intermediate("post")
+
         # push data to statsd
         c.request_timer.stop()
         g.stats.flush()
