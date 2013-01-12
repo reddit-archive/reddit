@@ -809,7 +809,8 @@ class Comment(Thing, Printable):
         from r2.lib.db import queries
         with CachedQueryMutator() as m:
             gilding = utils.Storage(thing=self, date=now)
-            m.insert(queries.get_gilded_comments(), [gilding])
+            m.insert(queries.get_all_gilded_comments(), [gilding])
+            m.insert(queries.get_gilded_comments(self.sr_id), [gilding])
 
     def _fill_in_parents(self):
         if not self.parent_id:

@@ -1052,9 +1052,18 @@ class CommentsController(ListingController):
 class GildedController(ListingController):
     title_text = _("gilded comments")
 
+    def keep_fn(self):
+        def keep(item):
+            return item.gildings > 0 and not item._deleted and not item._spam
+        return keep
+
     def query(self):
-        return queries.get_gilded_comments()
+        try:
+            return c.site.get_gilded_comments()
+        except NotImplementedError:
+            abort(404)
 
     def GET_listing(self, **env):
-        c.profilepage = True
+        if isinstance(c.site, FakeSubreddit):
+            c.profilepage = True
         return ListingController.GET_listing(self, **env)

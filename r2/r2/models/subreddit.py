@@ -47,6 +47,7 @@ from r2.lib.merge import ConflictException
 from r2.lib.cache import CL_ONE
 from r2.lib.contrib.rcssmin import cssmin
 from r2.lib import s3cp
+from r2.models.query_cache import MergedCachedQuery
 
 import math
 
@@ -504,6 +505,10 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_sr_comments(self)
 
+    def get_gilded_comments(self):
+        from r2.lib.db import queries
+        return queries.get_gilded_comments(self)
+
     @classmethod
     def get_modactions(cls, srs, mod=None, action=None):
         # Get a query that will yield ModAction objects with mod and action 
@@ -861,6 +866,9 @@ class FakeSubreddit(Subreddit):
         from r2.lib.db import queries
         return queries.get_all_comments()
 
+    def get_gilded_comments(self):
+        raise NotImplementedError()
+
     def spammy(self):
         return False
 
@@ -975,6 +983,10 @@ class AllSR(FakeSubreddit):
     def get_all_comments(self):
         from r2.lib.db import queries
         return queries.get_all_comments()
+
+    def get_gilded_comments(self):
+        from r2.lib.db import queries
+        return queries.get_all_gilded_comments()
 
     def rising_srs(self):
         return None
@@ -1152,6 +1164,11 @@ class MultiReddit(_DefaultSR):
         srs = Subreddit._byID(self.kept_sr_ids, return_dict=False)
         results = [get_sr_comments(sr) for sr in srs]
         return merge_results(*results)
+
+    def get_gilded_comments(self):
+        from r2.lib.db.queries import get_gilded_comments
+        queries = [get_gilded_comments(sr_id) for sr_id in self.kept_sr_ids]
+        return MergedCachedQuery(queries)
 
 class RandomReddit(FakeSubreddit):
     name = 'random'

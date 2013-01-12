@@ -757,7 +757,12 @@ def get_all_promoted_links():
 
 
 @cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
-def get_gilded_comments():
+def get_all_gilded_comments():
+    return
+
+
+@cached_query(SubredditQueryCache, sort=[desc("date")], filter_fn=filter_thing)
+def get_gilded_comments(sr_id):
     return
 
 

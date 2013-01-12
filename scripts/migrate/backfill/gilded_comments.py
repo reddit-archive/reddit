@@ -29,33 +29,30 @@ import datetime
 
 from pylons import g
 
-from r2.lib.db.queries import get_gilded_comments
+from r2.lib.db.queries import get_gilded_comments, get_all_gilded_comments
 from r2.lib.utils import Storage
 from r2.models import GildingsByDay, Thing, Comment
-from r2.models.query_cache import MAX_CACHED_ITEMS, CachedQueryMutator
+from r2.models.query_cache import CachedQueryMutator
 
 
 date = datetime.datetime.now(g.tz)
 earliest_date = datetime.datetime(2012, 10, 01, tzinfo=g.tz)
 
 already_seen = set()
-to_insert = []
-
-while date > earliest_date and len(to_insert) < MAX_CACHED_ITEMS:
-    gildings = GildingsByDay.get_gildings(date)
-    fullnames = [x["thing"] for x in gildings]
-    things = Thing._by_fullname(fullnames, data=True, return_dict=False)
-    comments = {t._fullname: t for t in things if isinstance(t, Comment)}
-
-    counter = 0
-    for gilding in gildings:
-        fullname = gilding["thing"]
-        if fullname in comments and fullname not in already_seen:
-            gilding["thing"] = comments[fullname]
-            to_insert.append(Storage(gilding))
-            already_seen.add(fullname)
-            counter += 1
-    date -= datetime.timedelta(days=1)
 
 with CachedQueryMutator() as m:
-    m.insert(get_gilded_comments(), to_insert)
+    while date > earliest_date:
+        gildings = GildingsByDay.get_gildings(date)
+        fullnames = [x["thing"] for x in gildings]
+        things = Thing._by_fullname(fullnames, data=True, return_dict=False)
+        comments = {t._fullname: t for t in things if isinstance(t, Comment)}
+
+        for gilding in gildings:
+            fullname = gilding["thing"]
+            if fullname in comments and fullname not in already_seen:
+                thing = gilding["thing"] = comments[fullname]
+                gilding_object = Storage(gilding)
+                m.insert(get_gilded_comments(thing.sr_id), [gilding_object])
+                m.insert(get_all_gilded_comments(), [gilding_object])
+                already_seen.add(fullname)
+        date -= datetime.timedelta(days=1)

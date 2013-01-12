@@ -122,8 +122,9 @@ def make_map():
     mc('/info/:article/:dest/:comment', controller='front',
        action='oldinfo', type='old', dest='comments', comment=None)
 
-    mc("/comments/gilded", action="listing", controller="gilded",
+    mc("/comments/gilded", controller="redirect", action="gilded_comments",
        conditions={"function": not_in_sr})
+    mc("/comments/gilded", action="listing", controller="gilded")
 
     mc('/related/:article/:title', controller='front',
        action='related', title=None)
