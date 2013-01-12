@@ -37,3 +37,9 @@
     <a href="${thing.allminus_url}">${_("Exclude your subscribed subreddits")}</a>
   </div>
 %endif
+
+%if not thing.gilding_listing:
+<div class="gilded-comments-link">
+  <a href="/r/all/comments/gilded">${_("See gilded comments")}</a>
+</div>
+%endif

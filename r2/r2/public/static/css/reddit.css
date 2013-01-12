@@ -4804,6 +4804,7 @@ table.calendar {
 .icon-menu .reddit-contributors:before,
 .icon-menu .reddit-modqueue:before,
 .giftgold a:before,
+.gilded-comments-link a:before,
 .infobar.gold:before,
 .gold-form h1.goldgift:before,
 .users-online:before,
@@ -5133,6 +5134,23 @@ body:not(.gold) .allminus-link {
 
 .allminus-link a {
     font-size: 1.15em;
+}
+
+.gilded-comments-link {
+    margin-top: 1em;
+}
+
+.gilded-comments-link a {
+    color: #9a7d2e;
+    font-weight: bold;
+    font-size: 1.15em;
+}
+
+.gilded-comments-link a:before {
+    height: 14px;
+    width: 14px;
+    margin: 0 6px 0 1px;
+    background-image: url(../gold-coin.png); /* SPRITE */
 }
 
 #per-sr-karma {
