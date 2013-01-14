@@ -3995,6 +3995,20 @@ ul.tabmenu.formtab {
 .traffic-table tbody tr:nth-child(even) { background-color: #E0E0E0; }
 .traffic-table tr.mean { font-style: italic; border-top: 1px solid; }
 
+/* this injects a blank space between weeks so that weekly patterns
+ * are more visible. since the borders are collapsed, we need to use
+ * cell padding to achieve the effect. however, the zebra-striping of
+ * the table makes for ugly extra-wide stripes when a stripe and week
+ * gap coincide. the nth-child rules put the padding on the top of
+ * the next row instead of the bottom of the current one if the current
+ * one is a zebra stripe. */
+.traffic-table .dow-6 th,
+.traffic-table .dow-6 td { padding-bottom: 1em; }
+.traffic-table tr:nth-child(odd).dow-5 th,
+.traffic-table tr:nth-child(odd).dow-5 td { padding-top: 1em; }
+.traffic-table tr:nth-child(even).dow-6 th,
+.traffic-table tr:nth-child(even).dow-6 td { padding-bottom: 0; }
+
 .traffic-tables-side {
     float: left;
     min-height: 50em;

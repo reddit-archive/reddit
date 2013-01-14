@@ -46,7 +46,11 @@
 </thead>
 <tbody>
 % for date, data in thing.rows:
-<tr>
+<tr
+  % if thing.interval == "day" and date.weekday() in (5, 6):
+  class="dow-${date.weekday()}"
+  % endif
+  >
   <th data-value="${js_timestamp(date)}" scope="row">
       % if thing.interval == "hour":
       ${babel.dates.format_datetime(date, format="short", locale=c.locale)}
