@@ -1064,6 +1064,5 @@ class GildedController(ListingController):
             abort(404)
 
     def GET_listing(self, **env):
-        if isinstance(c.site, FakeSubreddit):
-            c.profilepage = True
+        c.profilepage = True
         return ListingController.GET_listing(self, **env)
