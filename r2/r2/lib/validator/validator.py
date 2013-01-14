@@ -571,14 +571,15 @@ class VTitle(VLength):
         }
 
 class VMarkdown(VLength):
-    def __init__(self, param, max_length = 10000, **kw):
+    def __init__(self, param, max_length = 10000, renderer=None, **kw):
         VLength.__init__(self, param, max_length, **kw)
+        self.renderer = renderer
 
     def run(self, text, text2 = ''):
         text = text or text2
         VLength.run(self, text)
         try:
-            markdown_souptest(text)
+            markdown_souptest(text, renderer=self.renderer)
             return text
         except ValueError:
             import sys

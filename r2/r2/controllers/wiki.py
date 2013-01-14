@@ -274,7 +274,7 @@ class WikiController(RedditController):
 class WikiApiController(WikiController):
     @wiki_validate(VModhash(),
                    pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
-                   content=VMarkdown(('content')),
+                   content=VMarkdown(('content'), renderer='wiki'),
                    page_name=VWikiPageName('page'),
                    reason=VPrintable('reason', 256))
     @api_doc(api_section.wiki, uri='/api/wiki/edit')

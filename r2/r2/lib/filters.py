@@ -194,11 +194,14 @@ markdown_xhtml_dtd_path = os.path.join(
 
 markdown_dtd = '<!DOCTYPE div- SYSTEM "file://%s">' % markdown_xhtml_dtd_path
 
-def markdown_souptest(text, nofollow=False, target=None):
+def markdown_souptest(text, nofollow=False, target=None, renderer=None):
     if not text:
         return text
-
-    smd = safemarkdown(text, nofollow=nofollow, target=target)
+    
+    if not renderer:
+        smd = safemarkdown(text, nofollow=nofollow, target=target)
+    elif renderer == 'wiki':
+        smd = wikimarkdown(text)
 
     # Prepend a DTD reference so we can load up definitions of all the standard
     # XHTML entities (&nbsp;, etc.).
