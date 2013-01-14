@@ -171,7 +171,7 @@ class SouptestSaxHandler(ContentHandler):
 
 markdown_ok_tags = {
     'div': ('class'),
-    'a': set(('href', 'title', 'target', 'nofollow')),
+    'a': set(('href', 'title', 'target', 'nofollow', 'rel')),
     
     }
 
