@@ -24,13 +24,16 @@ import cgi
 import os
 import urllib
 import re
+
+from collections import Counter
+
 import snudown
 from cStringIO import StringIO
 
 from xml.sax.handler import ContentHandler
 from lxml.sax import saxify
 import lxml.etree
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, Tag
 
 from pylons import g, c
 
@@ -252,7 +255,7 @@ def wikimarkdown(text):
     target = None
     
     text = snudown.markdown(_force_utf8(text), nofollow, target,
-                            renderer=snudown.RENDERER_WIKI, enable_toc=True)
+                            renderer=snudown.RENDERER_WIKI)
     
     # TODO: We should test how much of a load this adds to the app
     soup = BeautifulSoup(text)
@@ -260,9 +263,68 @@ def wikimarkdown(text):
     
     if images:
         [img_swap(image) for image in images]
-        text = str(soup)
+    
+    inject_table_of_contents(soup, prefix="wiki")
+    
+    text = str(soup)
     
     return SC_OFF + WIKI_MD_START + text + WIKI_MD_END + SC_ON
+
+title_re = re.compile('\w|-')
+header_re = re.compile('^h[1-6]$')
+def inject_table_of_contents(soup, prefix):
+    header_ids = Counter()
+    headers = soup.findAll(header_re)
+    if not headers:
+        return
+    tocdiv = Tag(soup, "div", [("class", "toc")])
+    parent = Tag(soup, "ul")
+    tocdiv.append(parent)
+    level = 0
+    previous = 0
+    for header in headers:
+        contents = u''.join(header.findAll(text=True))
+        
+        # In the event of an empty header, skip
+        if not contents:
+            continue
+        
+        # Convert html entities to avoid ugly header ids
+        aid = unicode(BeautifulSoup(contents, convertEntities=BeautifulSoup.XML_ENTITIES))
+        # Prefix with PREFIX_ to avoid ID conflict with the rest of the page
+        aid = u'%s_%s' % (prefix, aid.replace(" ", "_").lower())
+        # Convert down to ascii by url encoding
+        aid = urllib.quote(aid.encode('utf-8'))
+        
+        # Check to see if a tag with the same ID exists
+        id_num = header_ids[aid] + 1
+        header_ids[aid] += 1
+        # Only start numbering ids with the second instance of an id
+        if id_num > 1:
+            aid = '%s%d' % (aid, id_num)
+        
+        header['id'] = aid
+        
+        li = Tag(soup, "li")
+        a = Tag(soup, "a", [("href", "#%s" % aid)])
+        a.string = contents
+        li.append(a)
+        
+        thislevel = int(header.name[-1])
+        
+        if previous and thislevel > previous:
+            newul = Tag(soup, "ul")
+            parent.append(newul)
+            parent = newul
+            level += 1
+        elif level and thislevel < previous:
+            parent = parent.findParent("ul")
+            level -= 1
+        
+        previous = thislevel
+        parent.append(li)
+    
+    soup.insert(0, tocdiv)
 
 def keep_space(text):
     text = websafe(text)
