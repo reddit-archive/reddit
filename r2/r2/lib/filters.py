@@ -183,7 +183,7 @@ markdown_user_tags = ('table', 'th', 'tr', 'td', 'tbody', 'img',
                      'tbody', 'thead', 'tr', 'tfoot', 'caption')
 
 for bt in markdown_boring_tags:
-    markdown_ok_tags[bt] = ()
+    markdown_ok_tags[bt] = ('id')
 
 for bt in markdown_user_tags:
     markdown_ok_tags[bt] = ('colspan', 'rowspan', 'cellspacing', 'cellpadding', 'align', 'scope')
