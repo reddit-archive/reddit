@@ -75,8 +75,6 @@ def cached_organic_links(*sr_ids):
     return link_names
 
 def organic_links(user):
-    from r2.controllers.reddit_base import organic_pos
-
     sr_ids = Subreddit.user_subreddits(user)
     # make sure that these are sorted so the cache keys are constant
     sr_ids.sort()
@@ -90,8 +88,3 @@ def organic_links(user):
     sr_ids.sort()
     return cached_organic_links(*sr_ids)[:organic_max_length]
 
-def update_pos(pos):
-    "Update the user's current position within the cached organic list."
-    from r2.controllers import reddit_base
-
-    reddit_base.set_organic_pos(pos)

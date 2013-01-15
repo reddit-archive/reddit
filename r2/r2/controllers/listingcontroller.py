@@ -21,7 +21,7 @@
 ###############################################################################
 
 from oauth2 import OAuth2ResourceController, require_oauth2_scope
-from reddit_base import RedditController, base_listing, organic_pos
+from reddit_base import RedditController, base_listing
 
 from r2.models import *
 from r2.models.query_cache import CachedQuery, MergedCachedQuery
@@ -274,82 +274,42 @@ class HotController(FixListing, ListingController):
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
             spotlight_links = organic.organic_links(c.user)
-            
-            pos = organic_pos()
-
-            if not spotlight_links:
-                pos = 0
-            elif pos != 0:
-                pos = pos % len(spotlight_links)
-            num_links = organic.organic_length
+            random.shuffle(spotlight_links)
 
             # If prefs allow it, mix in promoted links and sr discovery content
             if c.user.pref_show_sponsors or not c.user.gold:
                 if g.live_config['sr_discovery_links']:
                     spotlight_links.extend(g.live_config['sr_discovery_links'])
                     random.shuffle(spotlight_links)
-                    num_links = len(spotlight_links)
-                spotlight_links, pos, campaigns_by_link = promote.insert_promoted(spotlight_links,
-                                                                                  pos) 
-
-            # Need to do this again, because if there was a duplicate removed,
-            # pos might be pointing outside the list.
-            if not spotlight_links:
-                pos = 0
-            elif pos != 0:
-                pos = pos % len(spotlight_links)
+                spotlight_links, campaigns_by_link = promote.insert_promoted(spotlight_links)
 
             if not spotlight_links:
                 return None
 
-            # get links in proximity to pos
-            num_tl = len(spotlight_links)
-            if num_tl <= 3:
-                disp_links = spotlight_links
-            else:
-                left_side = max(-1, min(num_tl - 3, 8))
-                disp_links = [spotlight_links[(i + pos) % num_tl]
-                              for i in xrange(-2, left_side)]
-
+            disp_links = spotlight_links[-2:] + spotlight_links[:8]
             b = IDBuilder(disp_links,
                           wrap = self.builder_wrapper,
-                          num = num_links,
                           keep_fn = organic.keep_fresh_links,
                           skip = True)
 
-            try:
-                vislink = spotlight_links[pos]
-            except IndexError:
-                g.log.error("spotlight_links = %r" % spotlight_links)
-                g.log.error("pos = %d" % pos)
-                raise
-
+            vislink = spotlight_links[0]
             s = SpotlightListing(b, spotlight_items = spotlight_links,
                                  visible_item = vislink,
                                  max_num = self.listing_obj.max_num,
                                  max_score = self.listing_obj.max_score).listing()
 
-            if vislink not in s.lookup:
-                # FIXME: spotlight vislink is missing from the items returned
-                # by the builder.
-                # This may result in an empty spotlight box.
-                pass
-            else:
-                has_subscribed = c.user.has_subscribed
-                promo_visible = promote.is_promo(s.lookup[vislink])
-                if not promo_visible:
-                    prob = g.live_config['spotlight_interest_sub_p'
-                                         if has_subscribed else
-                                         'spotlight_interest_nosub_p']
-                    if random.random() < prob:
-                        bar = InterestBar(has_subscribed)
-                        s.spotlight_items.insert(pos, bar)
-                        s.visible_item = bar
+            has_subscribed = c.user.has_subscribed
+            promo_visible = promote.is_promo(s.lookup[vislink])
+            if not promo_visible:
+                prob = g.live_config['spotlight_interest_sub_p'
+                                     if has_subscribed else
+                                     'spotlight_interest_nosub_p']
+                if random.random() < prob:
+                    bar = InterestBar(has_subscribed)
+                    s.spotlight_items.insert(0, bar)
+                    s.visible_item = bar
 
             if len(s.things) > 0:
-                # only pass through a listing if the links made it
-                # through our builder
-                organic.update_pos(pos+1)
                 # add campaign id to promoted links for tracking
                 for thing in s.things:
                     thing.campaign = campaigns_by_link.get(thing._fullname, None)

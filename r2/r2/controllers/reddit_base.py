@@ -325,20 +325,6 @@ def set_redditfirst(key, val):
     c.cookies['reddit_first'] = Cookie(simplejson.dumps(cookie),
                                        expires=NEVER)
 
-# this cookie is also accessed by organic.js, so changes to the format
-# will have to be made there as well
-organic_pos_key = 'organic_pos'
-def organic_pos():
-    "organic_pos() -> (calc_date = str(), pos  = int())"
-    pos = get_redditfirst(organic_pos_key, 0)
-    if not isinstance(pos, int):
-        pos = 0
-    return pos
-
-def set_organic_pos(pos):
-    "set_organic_pos(str(), int()) -> None"
-    set_redditfirst(organic_pos_key, pos)
-
 
 def over18():
     if c.user.pref_over_18 or c.user_is_admin:
