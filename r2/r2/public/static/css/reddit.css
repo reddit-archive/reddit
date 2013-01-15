@@ -3990,7 +3990,7 @@ ul.tabmenu.formtab {
 .traffic-table tfoot th,
 .traffic-table tfoot td { font-style: italic; }
 
-.traffic-table tr.max  { border: 2px solid #FF8B60; }
+.traffic-table tr.max  { border-width: 2px; border-style: solid; }
 .traffic-table tr.min  { border: 2px solid #336699; }
 .traffic-table tbody tr:nth-child(even) { background-color: #E0E0E0; }
 .traffic-table tr.mean { font-style: italic; border-top: 1px solid; }

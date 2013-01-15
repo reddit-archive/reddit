@@ -77,8 +77,10 @@ r.timeseries = {
                 if (datum > 0)
                     newcol.append(bar)
 
-                if (i === 0 && datum !== 0 && datum === s.maxValue)
+                if (datum !== 0 && datum === s.maxValue) {
                     row.addClass('max')
+                       .css('border-color', s.color)
+                }
             })
 
             row.append(newcol)
