@@ -22,6 +22,7 @@
 
 <%inherit file="reddittraffic.html"/>
 <%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+<%namespace file="utils.html" import="_md"/>
 
 <%!
     from r2.lib.filters import safemarkdown
@@ -49,6 +50,7 @@
   </div>
   % else:
   ${unsafe(safemarkdown(strings.traffic_subreddit_explanation % dict(subreddit=thing.place)))}
+  <p>${_md("All times are in [UTC](http://en.wikipedia.org/wiki/UTC).", wrap=True)}</p>
   % endif
 
   ${load_timeseries_js()}
