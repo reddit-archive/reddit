@@ -48,7 +48,7 @@ class AdminPage(Reddit):
         if c.user_is_admin:
             buttons = []
 
-            buttons.append(NavButton(menu.awards, "ads"))
+            buttons.append(NavButton(menu.ads, "ads"))
             buttons.append(NavButton(menu.awards, "awards"))
             buttons.append(NavButton(menu.errors, "error log"))
 
