@@ -32,7 +32,6 @@ import random
 from time import time
 
 organic_lifetime = 5*60
-organic_length   = 30
 organic_max_length= 50
 
 def keep_fresh_links(item):
