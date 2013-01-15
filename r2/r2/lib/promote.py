@@ -836,7 +836,7 @@ def randomized_promotion_list(user, site):
     return [(l, cid) for l, w, cid in promos]
 
 
-def insert_promoted(link_names, promoted_every_n=5):
+def insert_promoted(link_names, promoted_every_n=6):
     """
     Inserts promoted links into an existing organic list. Destructive
     on `link_names'
@@ -866,8 +866,7 @@ def insert_promoted(link_names, promoted_every_n=5):
 
     if promoted_items:
         for i, item in enumerate(promoted_items):
-            # Note: this is actually promoted every 6th link, not 5th
-            p = i * (promoted_every_n + 1)
+            p = i * promoted_every_n
             p += pos
             link_names.insert(p, item._fullname)
 
