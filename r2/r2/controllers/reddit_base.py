@@ -658,7 +658,7 @@ class MinimalController(BaseController):
                         cookies_key)
 
     def cached_response(self):
-        return response.content
+        return ""
 
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
