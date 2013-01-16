@@ -319,8 +319,10 @@ def over18():
     else:
         if 'over18' in c.cookies:
             cookie = c.cookies['over18'].value
-            if cookie == sha1(request.ip).hexdigest():
+            if cookie == "1":
                 return True
+            else:
+                c.cookies["over18"] = Cookie(value="", expires=DELETE)
 
 def set_obey_over18():
     "querystring parameter for API to obey over18 filtering rules"
