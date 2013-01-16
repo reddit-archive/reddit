@@ -98,7 +98,7 @@ setup(
         "kazoo",
     ],
     dependency_links=[
-        "https://nodeload.github.com/reddit/snudown/tarball/v1.1.0#egg=snudown-1.1.0",
+        "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",
     ],
     packages=find_packages(exclude=["ez_setup"]),
     cmdclass=commands,
