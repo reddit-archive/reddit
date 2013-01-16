@@ -720,10 +720,20 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
 class ModActionTemplate(ThingJsonTemplate):
     _data_attrs_ = dict(sr_id36='sr_id36',
                         mod_id36='mod_id36',
+                        id='_fullname',
+                        subreddit='sr_name',
+                        mod='author',
+                        created_utc='date',
                         action='action',
                         details='details',
                         description='description',
                         target_fullname='target_fullname')
+
+    def thing_attr(self, thing, attr):
+        if attr == 'date':
+            return (time.mktime(thing.date.astimezone(pytz.UTC).timetuple())
+                    - time.timezone)
+        return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def kind(self, wrapped):
         return 'modaction'
