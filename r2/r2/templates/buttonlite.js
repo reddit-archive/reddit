@@ -30,7 +30,7 @@
 
 <% 
     if thing._fullname:
-        path = thing.make_permalink_slow()
+        path = thing.make_permalink_slow(force_domain=True)
     else:
         path = capture(submiturl, thing.url, thing.title)
 %>
