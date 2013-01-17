@@ -199,7 +199,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    VModhash(),
                    ip = ValidIP(),
                    to = VMessageRecipient('to'),
-                   subject = VRequired('subject', errors.NO_SUBJECT),
+                   subject = VLength('subject', 100, empty_error=errors.NO_SUBJECT),
                    body = VMarkdown(['text', 'message']))
     @api_doc(api_section.messages)
     def POST_compose(self, form, jquery, to, subject, body, ip):
@@ -210,6 +210,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                                 errors.NO_USER, errors.SUBREDDIT_NOEXIST,
                                 errors.USER_BLOCKED) or
                 form.has_errors("subject", errors.NO_SUBJECT) or
+                form.has_errors("subject", errors.TOO_LONG) or
                 form.has_errors("text", errors.NO_TEXT, errors.TOO_LONG) or
                 form.has_errors("captcha", errors.BAD_CAPTCHA)):
 

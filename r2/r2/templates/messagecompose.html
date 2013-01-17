@@ -66,6 +66,7 @@ function admincheck(elem) {
   <%utils:round_field title="${_('subject')}">
     <input type="text" name="subject" value="${thing.subject or ''}"/>
     ${error_field("NO_SUBJECT", "subject", "span")}
+    ${error_field("TOO_LONG", "subject", "span")}
   </%utils:round_field>
 </div>
 
