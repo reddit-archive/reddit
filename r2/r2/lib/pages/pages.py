@@ -3630,8 +3630,8 @@ class Promote_Graph(Templated):
             self.cpm[day] = cpm
             self.delivered[day] = delivered
             self.clicked[day] = clicks
-            if day in my_market:
-                self.my_market[day] = "$%.2f" % my_market[day]
+            if i in my_market:
+                self.my_market[day] = "$%.2f" % my_market[i]
             else:
                 self.my_market[day] = "---"
             self.promo_counter[day] = promo_counter.get(i, "---")
