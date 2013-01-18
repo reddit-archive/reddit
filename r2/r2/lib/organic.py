@@ -36,7 +36,17 @@ organic_length   = 30
 organic_max_length= 50
 
 def keep_fresh_links(item):
-    return (c.user_is_loggedin and c.user._id == item.author_id) or item.fresh
+    if c.user_is_loggedin and c.user._id == item.author_id:
+        return True
+
+    if item._spam or item._deleted:
+        return False
+
+    from r2.lib.promote import is_promo
+    if is_promo(item):
+        return True
+
+    return item.fresh
 
 @memoize('cached_organic_links', time = organic_lifetime)
 def cached_organic_links(*sr_ids):

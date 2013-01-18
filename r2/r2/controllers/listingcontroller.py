@@ -253,7 +253,8 @@ class HotController(FixListing, ListingController):
 
             if link_ids:
                 res = wrap_links(link_ids, wrapper=self.builder_wrapper,
-                                 num=1, keep_fn=lambda x: x.fresh, skip=True)
+                                 num=1, keep_fn=organic.keep_fresh_links,
+                                 skip=True)
                 res.parent_name = "promoted"
                 if res.things:
                     # store campaign id for tracking
@@ -273,7 +274,6 @@ class HotController(FixListing, ListingController):
                 pos = 0
             elif pos != 0:
                 pos = pos % len(spotlight_links)
-            spotlight_keep_fn = organic.keep_fresh_links
             num_links = organic.organic_length
 
             # If prefs allow it, mix in promoted links and sr discovery content
@@ -281,7 +281,6 @@ class HotController(FixListing, ListingController):
                 if g.live_config['sr_discovery_links']:
                     spotlight_links.extend(g.live_config['sr_discovery_links'])
                     random.shuffle(spotlight_links)
-                    spotlight_keep_fn = lambda l: promote.is_promo(l) or organic.keep_fresh_links(l)
                     num_links = len(spotlight_links)
                 spotlight_links, pos, campaigns_by_link = promote.insert_promoted(spotlight_links,
                                                                                   pos) 
@@ -308,7 +307,7 @@ class HotController(FixListing, ListingController):
             b = IDBuilder(disp_links,
                           wrap = self.builder_wrapper,
                           num = num_links,
-                          keep_fn = spotlight_keep_fn,
+                          keep_fn = organic.keep_fresh_links,
                           skip = True)
 
             try:
