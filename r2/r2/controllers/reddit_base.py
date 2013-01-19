@@ -184,7 +184,7 @@ class UnloggedUser(FakeAccount):
             d = simplejson.loads(decrypt(z))
             return dict((k, v) for k, v in d.iteritems()
                         if k in self.allowed_prefs)
-        except ValueError:
+        except (ValueError, TypeError):
             return {}
 
     def _to_cookie(self, data):
