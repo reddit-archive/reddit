@@ -314,10 +314,35 @@ class nop(Validator):
         return x
 
 class VLang(Validator):
-    def run(self, lang):
+    @staticmethod
+    def validate_lang(lang, strict=False):
         if lang in g.all_languages:
             return lang
-        return g.lang
+        else:
+            if not strict:
+                return g.lang
+            else:
+                raise ValueError("invalid language %r" % lang)
+
+    @staticmethod
+    def validate_content_langs(langs):
+        if langs == "all":
+            return langs
+
+        validated = []
+        for lang in langs:
+            try:
+                validated.append(VLang.validate_lang(lang, strict=True))
+            except ValueError:
+                pass
+
+        if not validated:
+            raise ValueError("no valid languages")
+
+        return validated
+
+    def run(self, lang):
+        return VLang.validate_lang(lang)
 
 class VRequired(Validator):
     def __init__(self, param, error, *a, **kw):

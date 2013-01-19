@@ -21,6 +21,7 @@
 ###############################################################################
 
 import collections
+import json
 import locale
 import re
 import simplejson
@@ -75,6 +76,7 @@ from r2.lib.validator import (
     validate,
     VByName,
     VCount,
+    VLang,
     VLength,
     VLimit,
     VTarget,
@@ -153,8 +155,12 @@ class Cookie(object):
                 % (self.value, self.expires, self.domain, self.dirty))
 
 class UnloggedUser(FakeAccount):
-    _cookie = 'options'
-    allowed_prefs = ('pref_content_langs', 'pref_lang', 'pref_frame_commentspanel')
+    COOKIE_NAME = "_options"
+    allowed_prefs = {
+        "pref_lang": VLang.validate_lang,
+        "pref_content_langs": VLang.validate_content_langs,
+        "pref_frame_commentspanel": bool,
+    }
 
     def __init__(self, browser_langs, *a, **kw):
         FakeAccount.__init__(self, *a, **kw)
@@ -178,21 +184,43 @@ class UnloggedUser(FakeAccount):
     def name(self):
         raise NotImplementedError
 
+    def _decode_json(self, json_blob):
+        data = json.loads(json_blob)
+        validated = {}
+        for k, v in data.iteritems():
+            validator = self.allowed_prefs.get(k)
+            if validator:
+                try:
+                    validated[k] = validator(v)
+                except ValueError:
+                    pass  # don't override defaults for bad data
+        return validated
+
     def _from_cookie(self):
-        z = read_user_cookie(self._cookie)
-        try:
-            d = simplejson.loads(decrypt(z))
-            return dict((k, v) for k, v in d.iteritems()
-                        if k in self.allowed_prefs)
-        except (ValueError, TypeError):
+        cookie = c.cookies.get(self.COOKIE_NAME)
+        if not cookie:
             return {}
 
+        try:
+            return self._decode_json(cookie.value)
+        except ValueError:
+            # old-style _options cookies are encrypted
+            try:
+                plaintext = decrypt(cookie.value)
+                values = self._decode_json(plaintext)
+            except (TypeError, ValueError):
+                # this cookie is totally invalid, delete it
+                c.cookies[self.COOKIE_NAME] = Cookie(value="", expires=DELETE)
+                return {}
+            else:
+                self._to_cookie(values)  # upgrade the cookie
+                return values
+
     def _to_cookie(self, data):
-        data = data.copy()
-        for k in data.keys():
-            if k not in self.allowed_prefs:
-                del k
-        set_user_cookie(self._cookie, encrypt(simplejson.dumps(data)))
+        allowed_data = {k: v for k, v in data.iteritems()
+                        if k in self.allowed_prefs}
+        jsonified = json.dumps(allowed_data, sort_keys=True)
+        c.cookies[self.COOKIE_NAME] = Cookie(value=jsonified)
 
     def _subscribe(self, sr):
         pass
