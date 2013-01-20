@@ -2263,6 +2263,10 @@ class ApiController(RedditController, OAuth2ResourceController):
             form.redirect('/password?expired=true')
             return
 
+        # Prevent banned users from resetting, and thereby logging in
+        if user._banned:
+            return
+
         # successfully entered user name and valid new password
         change_password(user, password)
         g.log.warning("%s did a password reset for %s via %s",
