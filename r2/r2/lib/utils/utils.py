@@ -24,6 +24,7 @@ import os
 import base64
 import traceback
 import ConfigParser
+import codecs
 
 from urllib import unquote_plus
 from urllib2 import urlopen
@@ -255,18 +256,26 @@ def get_title(url):
 
     try:
         opener = urlopen(url, timeout=15)
-        
-        # Attempt to find the title in the first 1kb
-        data = opener.read(1024)
-        title = extract_title(data)
-        
-        # Title not found in the first kb, try searching an additional 2kb
-        if not title:
-            data += opener.read(2048)
+
+        # determine the encoding of the response
+        for param in opener.info().getplist():
+            if param.startswith("charset="):
+                param_name, sep, charset = param.partition("=")
+                codec = codecs.getreader(charset)
+                break
+        else:
+            codec = codecs.getreader("utf-8")
+
+        with codec(opener, "ignore") as reader:
+            # Attempt to find the title in the first 1kb
+            data = reader.read(1024)
             title = extract_title(data)
-        
-        opener.close()
-        
+
+            # Title not found in the first kb, try searching an additional 2kb
+            if not title:
+                data += reader.read(2048)
+                title = extract_title(data)
+
         return title
 
     except:
