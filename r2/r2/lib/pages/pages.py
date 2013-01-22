@@ -164,30 +164,31 @@ class Reddit(Templated):
             if g.domain_prefix:
                 u.hostname = "%s.%s" % (g.domain_prefix, u.hostname)
             self.canonical_link = u.unparse()
-        if self.show_infobar and not infotext:
-            if g.heavy_load_mode:
-                # heavy load mode message overrides read only
-                infotext = strings.heavy_load_msg
-            elif g.read_only_mode:
-                infotext = strings.read_only_msg
-            elif g.live_config.get("announcement_message"):
-                infotext = g.live_config["announcement_message"]
 
-        if isinstance(c.site, DomainSR) and c.site.domain.endswith("imgur.com"):
-            self.infobar = InfoBar(
-                message=_("imgur.com domain listings (including this one) are "
-                          "currently disabled to speed up vote processing.")
-            )
+        if self.show_infobar:
+            if not infotext:
+                if g.heavy_load_mode:
+                    # heavy load mode message overrides read only
+                    infotext = strings.heavy_load_msg
+                elif g.read_only_mode:
+                    infotext = strings.read_only_msg
+                elif g.live_config.get("announcement_message"):
+                    infotext = g.live_config["announcement_message"]
 
-        if infotext:
-            self.infobar = InfoBar(message = infotext)
+            if infotext:
+                self.infobar = InfoBar(message=infotext)
+            elif (isinstance(c.site, DomainSR) and
+                    c.site.domain.endswith("imgur.com")):
+                self.infobar = InfoBar(message=
+                    _("imgur.com domain listings (including this one) are "
+                      "currently disabled to speed up vote processing.")
+                )
+            elif isinstance(c.site, AllMinus) and not c.user.gold:
+                self.infobar = InfoBar(message=strings.all_minus_gold_only,
+                                       extra_class="gold")
 
-        if isinstance(c.site, AllMinus) and not c.user.gold:
-            if not self.infobar:
-                self.infobar = InfoBar(message=strings.all_minus_gold_only, extra_class="gold")
-
-        if not c.user_is_loggedin:
-            self.welcomebar = WelcomeBar()
+            if not c.user_is_loggedin:
+                self.welcomebar = WelcomeBar()
 
         self.srtopbar = None
         if srbar and not c.cname and not is_api():
