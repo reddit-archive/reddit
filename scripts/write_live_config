@@ -117,7 +117,7 @@ def main():
     else:
         if not confirm_config(live):
             print "Oh, well, never mind then. Bye :("
-            return 0
+            return 1
 
     password = getpass.getpass("Password: ")
 
