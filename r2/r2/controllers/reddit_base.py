@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import collections
 import locale
 import re
 import simplejson
@@ -125,6 +126,27 @@ class Cookie(object):
             self.domain = utils.common_subdomain(request.host, c.site.domain)
         else:
             self.domain = g.domain
+
+    @staticmethod
+    def classify(cookie_name):
+        if cookie_name == g.login_cookie:
+            return "session"
+        elif cookie_name == g.admin_cookie:
+            return "admin"
+        elif cookie_name == "reddit_first":
+            return "first"
+        elif cookie_name == "over18":
+            return "over18"
+        elif cookie_name.endswith("_last_thing"):
+            return "last_thing"
+        elif cookie_name.endswith("_options"):
+            return "options"
+        elif cookie_name.endswith("_recentclicks2"):
+            return "clicks"
+        elif cookie_name.startswith("__utm"):
+            return "ga"
+        else:
+            return "other"
 
     def __repr__(self):
         return ("Cookie(value=%r, expires=%r, domain=%r, dirty=%r)"
@@ -866,16 +888,21 @@ class RedditController(MinimalController):
 
         # populate c.cookies unless we're on the unsafe media_domain
         if request.host != g.media_domain or g.media_domain == g.domain:
+            cookie_counts = collections.Counter()
             try:
                 for k, v in request.cookies.iteritems():
                     # minimalcontroller can still set cookies
                     if k not in c.cookies:
                         # we can unquote even if it's not quoted
                         c.cookies[k] = Cookie(value=unquote(v), dirty=False)
+                        cookie_counts[Cookie.classify(k)] += 1
             except CookieError:
                 #pylons or one of the associated retarded libraries
                 #can't handle broken cookies
                 request.environ['HTTP_COOKIE'] = ''
+
+            for cookietype, count in cookie_counts.iteritems():
+                g.stats.simple_event("cookie.%s" % cookietype, count)
 
         c.firsttime = firsttime()
 
