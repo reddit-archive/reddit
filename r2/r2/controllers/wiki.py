@@ -196,7 +196,7 @@ class WikiController(RedditController):
         pages, linear_pages = WikiPage.get_listing(c.site, filter_check=check_hidden)
         return WikiListing(pages, linear_pages).render()
 
-    def GET_wiki_redirect(self, page):
+    def GET_wiki_redirect(self, page='index'):
         return redirect_to(str("%s/%s" % (c.wiki_base_url, page)), _code=301)
     
     @base_listing
@@ -258,6 +258,12 @@ class WikiController(RedditController):
                 self.handle_error(403, 'WIKI_DISABLED')
             else:
                 c.wikidisabled = True
+
+    # Redirects from the old wiki
+    def GET_faq(self):
+        return self.GET_wiki_redirect(page='faq')
+
+    GET_help = GET_wiki_redirect
 
 class WikiApiController(WikiController):
     @wiki_validate(VModhash(),

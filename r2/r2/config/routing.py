@@ -201,10 +201,10 @@ def make_map():
     mc('/:action', controller='front',
        requirements=dict(action="random|framebuster|selfserviceoatmeal"))
     mc('/:action', controller='embed',
-       requirements=dict(action="help|blog|faq"))
-    mc('/help/gold', controller='redirect', action='redirect', dest='/gold/about')
-    mc('/help/*anything', controller='embed', action='help')
-    
+       requirements=dict(action="blog"))
+    mc('/help/gold', controller='redirect', action='redirect',
+       dest='/gold/about')
+
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
     mc('/wiki/revisions/*page', controller='wiki', action='wiki_revisions')
@@ -222,7 +222,9 @@ def make_map():
     
     mc('/wiki/*page', controller='wiki', action='wiki_page')
     mc('/wiki/', controller='wiki', action='wiki_page')
-    
+
+    mc('/:action', controller='wiki', requirements=dict(action="help|faq"))
+    mc('/help/*page', controller='wiki', action='wiki_redirect')
     mc('/w/*page', controller='wiki', action='wiki_redirect')
     
     mc('/goto', controller='toolbar', action='goto')
