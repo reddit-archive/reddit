@@ -1088,6 +1088,10 @@ class DefaultSR(_DefaultSR):
         return "t5_6"
     
     @property
+    def images(self):
+        return self._base.images
+    
+    @property
     def _id36(self):
         return self._base._id36
 
