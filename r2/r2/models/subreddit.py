@@ -1077,6 +1077,9 @@ class DefaultSR(_DefaultSR):
     def wiki_edit_karma(self):
         return self._base.wiki_edit_karma
     
+    def is_wikicontributor(self, user):
+        return self._base.is_wikicontributor(user)
+    
     def is_wikibanned(self, user):
         return self._base.is_banned(user)
     
