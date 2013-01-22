@@ -52,7 +52,7 @@ from pylons.controllers.util import redirect_to
 import random
 from functools import partial
 
-class ListingController(RedditController):
+class ListingController(RedditController, OAuth2ResourceController):
     """Generalized controller for pages with lists of links."""
 
     # toggle skipping of links based on the users' save/hide/vote preferences
@@ -83,6 +83,10 @@ class ListingController(RedditController):
     #extra parameters to send to the render_cls constructor
     render_params = {}
     extra_page_classes = ['listing-page']
+
+    def pre(self):
+        self.check_for_bearer_token()
+        RedditController.pre(self)
 
     @property
     def menus(self):
@@ -180,6 +184,7 @@ class ListingController(RedditController):
 
     builder_wrapper = staticmethod(default_thing_wrapper())
 
+    @require_oauth2_scope("read")
     @base_listing
     @api_doc(api_section.listings, extensions=['json', 'xml'])
     def GET_listing(self, **env):
@@ -389,6 +394,7 @@ class HotController(FixListing, ListingController):
     def title(self):
         return c.site.title
 
+    @require_oauth2_scope("read")
     @listing_api_doc(uri='/hot')
     def GET_listing(self, **env):
         self.requested_ad = request.get.get('ad')
@@ -437,6 +443,7 @@ class NewController(ListingController):
         # point. Now just redirect to GET mode.
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
+    @require_oauth2_scope("read")
     @validate(sort = VMenu('controller', NewMenu))
     @listing_api_doc(uri='/new')
     def GET_listing(self, sort, **env):
@@ -471,6 +478,7 @@ class BrowseController(ListingController):
         return self.redirect(
             request.fullpath + query_string(dict(sort=sort, t=t)))
 
+    @require_oauth2_scope("read")
     @validate(t = VMenu('sort', ControversyTimeMenu))
     @listing_api_doc(uri='/{sort}', uri_variants=['/top', '/controversial'])
     def GET_listing(self, sort, t, **env):
@@ -514,6 +522,7 @@ class ByIDController(ListingController):
     def query(self):
         return self.names
 
+    @require_oauth2_scope("read")
     @validate(links = VByName("names", thing_cls = Link, multiple = True))
     def GET_listing(self, links, **env):
         if not links:
@@ -718,17 +727,13 @@ class UserController(ListingController):
             dest += "?" + query_string
         return redirect_to(dest)
 
-class MessageController(ListingController, OAuth2ResourceController):
+class MessageController(ListingController):
     show_nums = False
     render_cls = MessagePage
     allow_stylesheets = False
     # note: this intentionally replaces the listing-page class which doesn't
     # conceptually fit for styling these pages.
     extra_page_classes = ['messages-page']
-
-    def pre(self):
-        self.check_for_bearer_token()
-        ListingController.pre(self)
 
     @property
     def show_sidebar(self):
@@ -1043,6 +1048,7 @@ class CommentsController(ListingController):
     def query(self):
         return c.site.get_all_comments()
 
+    @require_oauth2_scope("read")
     def GET_listing(self, **env):
         c.profilepage = True
         return ListingController.GET_listing(self, **env)
@@ -1062,6 +1068,7 @@ class GildedController(ListingController):
         except NotImplementedError:
             abort(404)
 
+    @require_oauth2_scope("read")
     def GET_listing(self, **env):
         c.profilepage = True
         return ListingController.GET_listing(self, **env)
