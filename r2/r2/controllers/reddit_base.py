@@ -282,10 +282,10 @@ def set_recent_clicks():
             #if the cookie wasn't valid, clear it
             set_user_cookie('recentclicks2', '')
 
-def read_mod_cookie():
-    cook = [s.split('=')[0:2] for s in read_user_cookie('mod').split(':') if s]
-    if cook:
-        set_user_cookie('mod', '')
+def delete_obsolete_cookies():
+    for cookie_name in c.cookies:
+        if cookie_name.endswith(("_last_thing", "_mod")):
+            c.cookies[cookie_name] = Cookie("", expires=DELETE)
 
 def over18():
     if c.user.pref_over_18 or c.user_is_admin:
@@ -900,6 +900,8 @@ class RedditController(MinimalController):
             for cookietype, count in cookie_counts.iteritems():
                 g.stats.simple_event("cookie.%s" % cookietype, count)
 
+        delete_obsolete_cookies()
+
         # the user could have been logged in via one of the feeds 
         maybe_admin = False
         is_otpcookie_valid = False
@@ -935,8 +937,6 @@ class RedditController(MinimalController):
             if not c.user._loaded:
                 c.user._load()
             c.modhash = c.user.modhash()
-            if request.method.upper() == 'GET':
-                read_mod_cookie()
             if hasattr(c.user, 'msgtime') and c.user.msgtime:
                 c.have_messages = c.user.msgtime
             c.show_mod_mail = Subreddit.reverse_moderator_ids(c.user)
