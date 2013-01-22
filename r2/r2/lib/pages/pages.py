@@ -173,8 +173,8 @@ class Reddit(Templated):
             elif (c.firsttime == 'mobile_suggest' and
                   c.render_style != 'compact'):
                 infotext = strings.iphone_first
-            elif g.announcement_message:
-                infotext = g.announcement_message
+            elif g.live_config.get("announcement_message"):
+                infotext = g.live_config["announcement_message"]
 
         if isinstance(c.site, DomainSR) and c.site.domain.endswith("imgur.com"):
             self.infobar = InfoBar(
