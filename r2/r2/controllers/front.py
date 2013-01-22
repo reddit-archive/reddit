@@ -385,7 +385,10 @@ class FrontController(RedditController, OAuth2ResourceController):
                        ).render()
         return res
 
+    @require_oauth2_scope("modconfig")
+    @api_doc(api_section.moderation)
     def GET_stylesheet(self):
+        """Fetches a subreddit's current stylesheet."""
         if g.css_killswitch:
             self.abort404()
 
