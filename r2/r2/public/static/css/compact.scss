@@ -47,7 +47,7 @@ textarea {
 .newbutton {
     @include appearance(none);
     border-width: 8px;
-    @include border-image(url($static + 'border-button.png') 8 stretch);
+    @include border-image(url($static + 'border-button.png') 8 fill);
     color: white;
     font: {
         family: inherit;
@@ -59,7 +59,7 @@ textarea {
     background: none;
 
     &:active, &:hover, &[selected], &.expanded, &.active {
-        @include border-image(url($static + 'border-button-active.png') 8 stretch);
+        @include border-image(url($static + 'border-button-active.png') 8 fill);
         color: white;
     }
 }
@@ -705,7 +705,7 @@ body[orient="landscape"] > #topbar > h1 {
 }
 .commentcount > .comments {
     border-width: 8px;
-    @include border-image(url($static + 'border-button.png') 8 stretch);
+    @include border-image(url($static + 'border-button.png') 8 fill);
 
     color: white; font-family: inherit; font-size: 12px;
     font-weight: bold;
@@ -713,7 +713,7 @@ body[orient="landscape"] > #topbar > h1 {
     text-shadow: 0px 1px 1px rgba(255,255,255,.1), 0px -1px 1px rgba(0,0,0,.4);
 
     &:active, &:hover, &[selected], &.preloaded {
-        @include border-image(url($static + 'border-button-active.png') 8 stretch);
+        @include border-image(url($static + 'border-button-active.png') 8 fill);
     }
 }
 /* Comment styles */
