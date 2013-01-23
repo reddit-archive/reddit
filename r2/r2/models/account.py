@@ -182,13 +182,6 @@ class Account(Thing):
         karma = self.link_karma
         return max(karma, 1) if karma > -1000 else karma
 
-    def can_wiki(self, default=False):
-        if self.wiki_override is None:
-            if not default:
-                return self.link_karma > 100 or self.comment_karma > 100
-            return default
-        return self.wiki_override
-
     def all_karmas(self):
         """returns a list of tuples in the form (name, hover-text, link_karma,
         comment_karma)"""

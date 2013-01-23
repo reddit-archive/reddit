@@ -791,8 +791,7 @@ class MinimalController(BaseController):
         # update last_visit
         if (c.user_is_loggedin and not g.disallow_db_writes and
             request.method.upper() != "POST" and
-            not c.dont_update_last_visit and
-            request.path != '/validuser'):
+            not c.dont_update_last_visit):
             c.user.update_last_visit(c.start_time)
 
         check_request(end_time)

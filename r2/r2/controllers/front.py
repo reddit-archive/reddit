@@ -1233,17 +1233,6 @@ class FormsController(RedditController):
         self.disable_admin_mode(c.user)
         return self.redirect(dest)
 
-    def GET_validuser(self):
-        """checks login cookie to verify that a user is logged in and
-        returns their user name"""
-        response.content_type = 'text/plain'
-        if c.user_is_loggedin:
-            # Change cookie based on can_wiki trac permissions
-            perm = str(c.user.can_wiki(default=False))
-            return c.user.name + "," + perm
-        else:
-            return ""
-
     def _render_opt_in_out(self, msg_hash, leave):
         """Generates the form for an optin/optout page"""
         email = Email.handler.get_recipient(msg_hash)
