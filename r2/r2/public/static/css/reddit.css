@@ -986,9 +986,6 @@ a.author { margin-right: 0.5em; }
     /* This is a really weird value, but it needs to be low to hide text without affecting layout in IE. */
     text-indent: 50px;
 }
-.organic-listing .nextprev .arrow.prev {
-    background-image: url(../prev_organic.png); /* SPRITE */
-}
 .organic-listing .nextprev .arrow.next {
     background-image: url(../next_organic.png); /* SPRITE */
 }

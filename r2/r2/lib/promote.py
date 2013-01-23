@@ -22,7 +22,7 @@
 
 from __future__ import with_statement
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from datetime import datetime, timedelta
 import json
 import math
@@ -834,6 +834,23 @@ def randomized_promotion_list(user, site):
                 break
     # fall thru for the length 1 case here as well
     return [(l, cid) for l, w, cid in promos]
+
+
+PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
+
+
+def get_promoted_links(user, site, n=10):
+    """Return a random selection of promoted links.
+
+    Does not factor weights, as that will be done client side.
+
+    """
+
+    promos = get_promotion_list(user, site)
+    if n >= len(promos):
+        return [PromoTuple(*p) for p in promos]
+    else:
+        return [PromoTuple(*p) for p in random.sample(promos, n)]
 
 
 def insert_promoted(link_names, promoted_every_n=6):

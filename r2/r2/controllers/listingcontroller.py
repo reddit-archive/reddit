@@ -225,6 +225,29 @@ class HotController(FixListing, ListingController):
     extra_page_classes = ListingController.extra_page_classes + ['hot-page']
 
     def spotlight(self):
+        """Build the Spotlight or a single promoted link.
+
+        The frontpage gets a Spotlight box that contains promoted and organic
+        links from the user's subscribed subreddits and promoted links targeted
+        to the frontpage. Other subreddits get a single promoted link. In either
+        case if the user has disabled ads promoted links will not be shown.
+
+        The content of the Spotlight box is a bit tricky because a single
+        version of the frontpage is cached and displayed to all logged out
+        users. Because of the caching we must include many promoted links and
+        select one to display on the client side. Otherwise, each logged out
+        user would see the same promoted link and we would not get the desired
+        distribution of promoted link views. Most of the promoted links are
+        included as stubs to reduce the size of the page. When a promoted link
+        stub is selected by the lottery the full link is fetched and displayed.
+
+        There are only ~1000 cache resets per day so it is necessary to use
+        a large subset of the eligible promoted links when choosing stubs for
+        the Spotlight box. Using 100 stubs works great when there are fewer than
+        100 possible promoted links and allows room for growth.
+
+        """
+
         campaigns_by_link = {}
         if (self.requested_ad or
             not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors):
@@ -273,47 +296,53 @@ class HotController(FixListing, ListingController):
             and (not c.user_is_loggedin
                  or (c.user_is_loggedin and c.user.pref_organic))):
 
-            spotlight_links = organic.organic_links(c.user)
-            random.shuffle(spotlight_links)
+            organic_fullnames = organic.organic_links(c.user)
+            promoted_links = []
 
             # If prefs allow it, mix in promoted links and sr discovery content
             if c.user.pref_show_sponsors or not c.user.gold:
                 if g.live_config['sr_discovery_links']:
-                    spotlight_links.extend(g.live_config['sr_discovery_links'])
-                    random.shuffle(spotlight_links)
-                spotlight_links, campaigns_by_link = promote.insert_promoted(spotlight_links)
+                    organic_fullnames.extend(g.live_config['sr_discovery_links'])
 
-            if not spotlight_links:
+                n_promoted = 100
+                n_build = 10
+                promo_tuples = promote.get_promoted_links(c.user, c.site,
+                                                          n_promoted)
+                promo_tuples = sorted(promo_tuples,
+                                      key=lambda p: p.weight,
+                                      reverse=True)
+                promo_build = promo_tuples[:n_build]
+                promo_stub = promo_tuples[n_build:]
+                b = CampaignBuilder(promo_build,
+                                    wrap=self.builder_wrapper,
+                                    keep_fn=promote.is_promoted)
+                promoted_links = b.get_items()[0]
+                promoted_links.extend(promo_stub)
+
+            if not (organic_fullnames or promoted_links):
                 return None
 
-            disp_links = spotlight_links[-2:] + spotlight_links[:8]
-            b = IDBuilder(disp_links,
+            random.shuffle(organic_fullnames)
+            organic_fullnames = organic_fullnames[:10]
+            b = IDBuilder(organic_fullnames,
                           wrap = self.builder_wrapper,
                           keep_fn = organic.keep_fresh_links,
                           skip = True)
-
-            vislink = spotlight_links[0]
-            s = SpotlightListing(b, spotlight_items = spotlight_links,
-                                 visible_item = vislink,
-                                 max_num = self.listing_obj.max_num,
-                                 max_score = self.listing_obj.max_score).listing()
+            organic_links = b.get_items()[0]
 
             has_subscribed = c.user.has_subscribed
-            promo_visible = promote.is_promo(s.lookup[vislink])
-            if not promo_visible:
-                prob = g.live_config['spotlight_interest_sub_p'
-                                     if has_subscribed else
-                                     'spotlight_interest_nosub_p']
-                if random.random() < prob:
-                    bar = InterestBar(has_subscribed)
-                    s.spotlight_items.insert(0, bar)
-                    s.visible_item = bar
+            interestbar_prob = g.live_config['spotlight_interest_sub_p'
+                                             if has_subscribed else
+                                             'spotlight_interest_nosub_p']
+            interestbar = InterestBar(has_subscribed)
 
-            if len(s.things) > 0:
-                # add campaign id to promoted links for tracking
-                for thing in s.things:
-                    thing.campaign = campaigns_by_link.get(thing._fullname, None)
-                return s
+            s = SpotlightListing(organic_links=organic_links,
+                                 promoted_links=promoted_links,
+                                 interestbar=interestbar,
+                                 interestbar_prob=interestbar_prob,
+                                 max_num = self.listing_obj.max_num,
+                                 max_score = self.listing_obj.max_score).listing()
+            return s
 
     def query(self):
         #no need to worry when working from the cache

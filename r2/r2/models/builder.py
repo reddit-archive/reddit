@@ -39,6 +39,7 @@ from r2.lib import utils
 from r2.lib.db import operators, tdb_cassandra
 from r2.lib.filters import _force_unicode
 from copy import deepcopy
+from r2.lib.utils import Storage
 
 from r2.models.wiki import WIKI_RECENT_DAYS
 
@@ -483,6 +484,43 @@ class IDBuilder(QueryBuilder):
         self.names, new_names = names[slice_size:], names[:slice_size]
         new_items = self.thing_lookup(new_names)
         return done, new_items
+
+
+class CampaignBuilder(IDBuilder):
+    """Build on a list of PromoTuples."""
+
+    def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None):
+        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
+        self.query = query
+        self.skip = False
+        self.num = None
+        self.start_count = 0
+        self.after = None
+        self.reverse = False
+        self.prewrap_fn = prewrap_fn
+
+    def thing_lookup(self, tuples):
+        links = Link._by_fullname([t.link for t in tuples], data=True,
+                                  return_dict=True, stale=self.stale)
+
+        return [Storage({'thing': links[t.link],
+                         '_id': links[t.link]._id,
+                         'weight': t.weight,
+                         'campaign': t.campaign}) for t in tuples]
+
+    def wrap_items(self, items):
+        links = [i.thing for i in items]
+        wrapped = IDBuilder.wrap_items(self, links)
+        by_link = {w._fullname: w for w in wrapped}
+
+        ret = []
+        for i in items:
+            w = by_link[i.thing._fullname]
+            w.campaign = i.campaign
+            w.weight = i.weight
+            ret.append(w)
+
+        return ret
 
 
 class SimpleBuilder(IDBuilder):

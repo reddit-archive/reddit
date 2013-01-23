@@ -284,79 +284,6 @@ function cancelToggleForm(elem, form_class, button_class, on_hide) {
     return false;
 };
 
-/* organic listing */
-
-function get_organic(elem, next) {
-    var listing = $(elem).parents(".organic-listing");
-    var thing = listing.find(".thing:visible");
-    if(listing.find(":animated").length) 
-        return false;
-    
-    /* note we are looking for .thing.link while empty entries (if the
-     * loader isn't working) will be .thing.stub -> no visual
-     * glitches */
-    var next_thing;
-    if (next) {
-        next_thing = thing.nextAll(".thing:not(.stub)").filter(":first");
-        if (next_thing.length == 0)
-            next_thing = thing.siblings(".thing:not(.stub)").filter(":first");
-    }
-    else {
-        next_thing = thing.prevAll(".thing:not(.stub)").filter(":first");
-        if (next_thing.length == 0)
-            next_thing = thing.siblings(".thing:not(.stub)").filter(":last");
-    }    
-
-    organic_help(listing, next_thing)
-    thing.fadeOut('fast', function() {
-            if(next_thing.length)
-                next_thing.fadeIn('fast', function() {
-
-                        /* make sure the next n are loaded */
-                        var n = 5;
-                        var t = thing;
-                        var to_fetch = [];
-                        for(var i = 0; i < 2*n; i++) {
-                            t = (next) ? t.nextAll(".thing:first") : 
-                                t.prevAll(".thing:first"); 
-                            if(t.length == 0) 
-                                t = t.end().parent()
-                                    .children( (next) ? ".thing:first" : 
-                                               ".thing:last");
-                            if(t.filter(".stub").length)
-                                to_fetch.push(t.thing_id());
-                            if(i >= n && to_fetch.length == 0)
-                                break;
-                        }
-                        if(to_fetch.length) {
-                            $.request("fetch_links",  
-                                      {links: to_fetch.join(','),
-                                              listing: listing.attr("id")}); 
-                        }
-                    })
-                    });
-};
-
-function organic_help(listing, thing) {
-    listing = listing || $('.organic-listing')
-    thing = thing || listing.find('.thing:visible')
-
-    var help = $('#spotlight-help')
-    if (!help.length) {
-        return
-    }
-
-    help.data('HelpBubble').hide(function() {
-        help.find('.help-section').hide()
-        if (thing.hasClass('promoted')) {
-            help.find('.help-promoted').show()
-        } else if (thing.hasClass('interestbar')) {
-            help.find('.help-interestbar').show()
-        } else {
-            help.find('.help-organic').show()
-        }
-    })
-}
 
 /* links */
 
@@ -598,25 +525,20 @@ function updateEventHandlers(thing) {
            .click(function() {
                    var a = $(this).get(0);
                    change_state(a, 'hide', 
-                                function() { get_organic(a, 1); });
+                                function() { r.spotlight.shuffle() });
                 });
         thing.find(".del-button a.yes")
             .click(function() {
                     var a = $(this).get(0);
-                    change_state(a, 'del', function() { get_organic(a, 1); });
+                    change_state(a, 'del',
+                                 function() { r.spotlight.shuffle() });
                 });
         thing.find(".report-button a.yes")
             .click(function() {
                     var a = $(this).get(0);
                     change_state(a, 'report', 
-                                 function() { get_organic(a, 1); });
+                                 function() { r.spotlight.shuffle() });
                     }); 
-
-        /*thing.find(".arrow.down")
-            .one("click", function() {
-                    var a = $(this).get(0);
-                    get_organic($(this).get(0), 1);
-                    }); */
     }
 };
 
@@ -1287,7 +1209,7 @@ $(function() {
             $(this).select();
         });
 
-        organic_help()
+        r.spotlight.shuffle();
 
         /* ajax ynbutton */
         function toggleThis() { return toggle(this); }

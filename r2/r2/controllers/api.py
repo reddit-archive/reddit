@@ -3095,6 +3095,26 @@ class ApiController(RedditController, OAuth2ResourceController):
         Trophy.by_account(recipient, _update=True)
         Trophy.by_award(award, _update=True)
 
+
+    @validatedForm(link=nop('link'),
+                   campaign=nop('campaign'),
+                   show=VBoolean('show'))
+    def GET_fetch_promo(self, form, jquery, link, campaign, show):
+        promo_tuples = [promote.PromoTuple(link, 1., campaign)]
+        builder = CampaignBuilder(promo_tuples,
+                                  wrap=default_thing_wrapper(),
+                                  keep_fn=promote.is_promoted)
+        promoted_links = builder.get_items()[0]
+        listing = SpotlightListing(organic_links=[],
+                                   promoted_links=promoted_links,
+                                   interestbar=None).listing()
+        jquery(".content").replace_things(listing)
+
+        if show:
+            jquery('.organic-listing .thing:visible').hide()
+            jquery('.organic-listing .id-%s' % link).show()
+
+
     @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
                    show = VByName('show', thing_cls = Link, multiple = False))
     def POST_fetch_links(self, form, jquery, links, show):

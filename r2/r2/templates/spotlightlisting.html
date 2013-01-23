@@ -22,33 +22,31 @@
 
 <%namespace file="printablebuttons.html" import="ynbutton"/>
 <%namespace file="utils.html" import="tags, text_with_links"/>
-<% 
+<%
+   import json
    from r2.lib.template_helpers import static
    from r2.lib.wrapped import Templated
 %>
 
 <div id="siteTable_organic" class="organic-listing">
-  <%
-     seen = set([])
-   %>
-  %for name in thing.spotlight_items:
-    %if isinstance(name, Templated):
-      <div class="thing ${type(name).__name__.lower()}" ${tags(style="display:none" if thing.visible_item != name else None)}>
-        ${unsafe(name.render())}
-      </div>
-    %elif name in seen:
-      <% pass %>
-    %elif name in thing.lookup:
-      <% seen.add(name) %>
-      ${unsafe(thing.lookup[name].render(display = (thing.visible_item == name)))}
-    %else:
-      <div class="thing id-${name} stub" style="display:none"></div>
-    %endif
-  %endfor
+  %if thing.links:
+    %for tup in thing.links:
+      %if tup.link in thing.lookup:
+        ${unsafe(thing.lookup[tup.link].render(display=False))}
+      %else:
+        <div class="thing id-${tup.link} stub" style="display:none"></div>
+      %endif
+    %endfor
+  %endif
+
+  %if thing.interestbar:
+    <div class="thing interestbar" style="display:none">
+      ${unsafe(thing.interestbar.render())}
+    </div>
+  %endif
 
   <div class="nextprev">
-    <button class="arrow prev" onclick="get_organic(this, false)">prev</button>
-    <button class="arrow next" onclick="get_organic(this, true)">next</button>
+    <button class="arrow next" onclick="r.spotlight.shuffle()">next</button>
   </div>
 
   <div class="help help-hoverable">
@@ -93,5 +91,12 @@
       </div>
     </div>
   </div>
+  <script>
+    r.spotlight.init(
+      ${unsafe(json.dumps(thing.links))},
+      ${unsafe(json.dumps(thing.interestbar_prob))},
+      ${unsafe(json.dumps(thing.promotion_prob))}
+    )
+  </script>
 </div>
 
