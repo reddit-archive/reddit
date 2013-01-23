@@ -117,6 +117,8 @@ error_list = dict((
         ('BID_LIVE', _('you cannot edit the bid of a live ad')),
         ('TOO_MANY_CAMPAIGNS', _('you have too many campaigns for that promotion')),
         ('BAD_JSONP_CALLBACK', _('that jsonp callback contains invalid characters')),
+        ('INVALID_PERMISSION_TYPE', _("permissions don't apply to that type of user")),
+        ('INVALID_PERMISSIONS', _('invalid permissions string')),
     ))
 errors = Storage([(e, e) for e in error_list.keys()])
 

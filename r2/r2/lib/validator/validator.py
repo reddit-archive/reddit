@@ -2106,3 +2106,24 @@ class VOAuth2RefreshToken(Validator):
             return token
         else:
             return None
+
+class VPermissions(Validator):
+    types = dict(
+        moderator=ModeratorPermissionSet,
+        moderator_invite=ModeratorPermissionSet,
+    )
+
+    def __init__(self, type_param, permissions_param, *a, **kw):
+        Validator.__init__(self, (type_param, permissions_param), *a, **kw)
+
+    def run(self, type, permissions):
+        permission_class = self.types.get(type)
+        if not permission_class:
+            self.set_error(errors.INVALID_PERMISSION_TYPE, field=self.param[0])
+            return (None, None)
+        try:
+            perm_set = permission_class.loads(permissions, validate=True)
+        except ValueError:
+            self.set_error(errors.INVALID_PERMISSIONS, field=self.param[1])
+            return (None, None)
+        return type, perm_set

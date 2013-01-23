@@ -23,6 +23,7 @@
 from __future__ import with_statement
 
 import base64
+import collections
 import datetime
 import hashlib
 
@@ -82,7 +83,7 @@ class PermissionSet(dict):
         return ','.join('-+'[bool(v)] + k for k, v in sorted(self.iteritems()))
 
     def is_superuser(self):
-        return super(PermissionSet, self).get(self.ALL)
+        return bool(super(PermissionSet, self).get(self.ALL))
 
     def is_valid(self):
         if not self.info:
@@ -294,6 +295,16 @@ class Subreddit(Thing, Printable):
     @property
     def moderators(self):
         return self.moderator_ids()
+
+    def moderators_with_perms(self):
+        return collections.OrderedDict(
+            (r._thing2_id, r.get_permissions())
+            for r in self.each_moderator())
+
+    def moderator_invites_with_perms(self):
+        return collections.OrderedDict(
+            (r._thing2_id, r.get_permissions())
+            for r in self.each_moderator_invite())
 
     @property
     def stylesheet_is_static(self):
@@ -520,13 +531,13 @@ class Subreddit(Thing, Printable):
                     self.is_moderator_invite(user))
 
     def can_demod(self, bully, victim):
-        # This works because the is_*() functions return the relation
-        # when True. So we can compare the dates on the relations.
-        bully_rel = self.is_moderator(bully)
-        victim_rel = self.is_moderator(victim)
-        if bully_rel is None or victim_rel is None:
-            return False
-        return bully_rel._date <= victim_rel._date
+        bully_rel = self.get_moderator(bully)
+        victim_rel = self.get_moderator(victim)
+        return (
+            bully_rel is not None
+            and victim_rel is not None
+            and bully_rel.is_superuser()  # limited mods can't demod
+            and bully_rel._date <= victim_rel._date)
 
     @classmethod
     def load_subreddits(cls, links, return_dict = True, stale=False):
@@ -907,15 +918,18 @@ class Subreddit(Thing, Printable):
 
     def is_limited_moderator(self, user):
         rel = self.is_moderator(user)
-        return rel and rel.permissions is not None
+        return bool(rel and not rel.is_superuser())
+
+    def is_unlimited_moderator(self, user):
+        rel = self.is_moderator(user)
+        return bool(rel and rel.is_superuser())
 
     def update_moderator_permissions(self, user, **kwargs):
         """Grants or denies permissions to this moderator.
 
-        Does nothing if the given user is not a moderator.
-
-        Args are named parameters with bool or None values (use None to disable
-        granting or denying the permission).
+        Does nothing if the given user is not a moderator. Args are named
+        parameters with bool or None values (use None to all back to the default
+        for a permission).
         """
         rel = self.get_moderator(user)
         if rel:

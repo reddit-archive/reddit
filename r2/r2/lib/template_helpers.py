@@ -144,6 +144,14 @@ def js_config(extra_config=None):
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,
         "static_root": static(''),
+        "permissions": {
+            "info": {
+                "moderator": ModeratorPermissionSet.info,
+                "moderator_invite": ModeratorPermissionSet.info,
+            },
+            "all_msg": _("full permissions"),
+            "none_msg": _("no permissions"),
+        },
     }
 
     if extra_config:

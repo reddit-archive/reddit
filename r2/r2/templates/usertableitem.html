@@ -75,5 +75,13 @@
       <span title="${thing.rel._date.strftime('%Y-%m-%d %H:%M:%S')}">
         ${timesince(thing.rel._date)}
       </span>
+  %elif thing.name == "permissions":
+      ${thing.rel}
+  %elif thing.name == "permissionsctl":
+    %if thing.editable:
+      <span class="permissions-edit">
+        (<a href="javascript:void(0)">${_('change')}</a>)
+      </span>
+    %endif
   %endif
 </%def>

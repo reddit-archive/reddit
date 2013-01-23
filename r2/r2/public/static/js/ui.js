@@ -202,3 +202,218 @@ r.ui.HelpBubble.prototype = $.extend(new r.ui.Base(), {
         this.timeout = setTimeout($.proxy(this, 'hide'), this.hideDelay)
     }
 })
+
+r.ui.PermissionEditor = function(el) {
+    r.ui.Base.call(this, el)
+    var params = {}
+    this.$el.find('input[type="hidden"]').each(function(idx, el) {
+        params[el.name] = el.value
+    })
+    var permission_type = params.type
+    var name = params.name
+    this.form_id = permission_type + "-permissions-" + name
+    this.permission_info = r.config.permissions.info[permission_type]
+    this.sorted_perm_keys = $.map(this.permission_info,
+                                  function(v, k) { return k })
+    this.sorted_perm_keys.sort()
+    this.original_perms = this._parsePerms(params.permissions)
+    this.embedded = this.$el.find("form").length == 0
+    this.$menu = null
+    if (this.embedded) {
+        this.$permissions_field = this.$el.find('input[name="permissions"]')
+        this.$menu_controller = this.$el.siblings('.permissions-edit')
+    } else {
+        this.$menu_controller = this.$el.closest('tr').find('.permissions-edit')
+    }
+    this.$menu_controller.find('a').click($.proxy(this, 'show'))
+    this.updateSummary()
+}
+r.ui.PermissionEditor.init = function() {
+    function activate(target) {
+        $(target).find('.permissions').each(function(idx, el) {
+            $(el).data('PermissionEditor', new r.ui.PermissionEditor(el))
+        })
+    }
+    activate('body')
+    for (var permission_type in r.config.permissions.info) {
+        $('.' + permission_type + '-table')
+            .on('insert-row', 'tr', function(e) { activate(this) })
+    }
+}
+r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
+    _parsePerms: function(permspec) {
+        var perms = {}
+        permspec.split(",").forEach(function(str) {
+            perms[str.substring(1)] = str[0] == "+"
+        })
+        return perms.all ? {"all": true} : perms
+    },
+
+    _serializePerms: function(perms) {
+        if (perms.all) {
+            return "+all"
+        } else {
+            var parts = []
+            for (var perm in perms) {
+                parts.push((perms[perm] ? "+" : "-") + perm)
+            }
+            return parts.join(",")
+        }
+    },
+
+    _getNewPerms: function() {
+        if (!this.$menu) {
+            return null
+        }
+        var perms = {}
+        this.$menu.find('input[type="checkbox"]').each(function(idx, el) {
+            perms[$(el).attr("name")] = $(el).prop("checked")
+        })
+        return perms
+    },
+
+    _makeMenuLabel: function(perm) {
+        var update = $.proxy(this, "updateSummary")
+        var info = this.permission_info[perm]
+        var $input = $('<input type="checkbox">')
+            .attr("name", perm)
+            .prop("checked", this.original_perms[perm])
+        var $label = $('<label>')
+            .append($input)
+            .click(function(e) { e.stopPropagation() })
+        if (perm == "all") {
+            $input.change(function() {
+                var disabled = $input.is(":checked")
+                $label.siblings()
+                    .toggleClass("disabled", disabled)
+                    .find('input[type="checkbox"]').prop("disabled", disabled)
+                update()
+            })
+            $label.append(
+                document.createTextNode(r.config.permissions.all_msg))
+        } else if (info) {
+            $input.change(update)
+            $label.append(document.createTextNode(info.title))
+            $label.attr("title", info.description)
+        }
+        return $label
+    },
+
+    show: function(e) {
+        close_menus(e)
+        this.$menu = $('<div class="permission-selector drop-choices">')
+        this.$menu.append(this._makeMenuLabel("all"))
+        for (var i in this.sorted_perm_keys) {
+            this.$menu.append(this._makeMenuLabel(this.sorted_perm_keys[i]))
+        }
+
+        this.$menu
+            .on("close_menu", $.proxy(this, "hide"))
+            .find("input").first().change().end()
+        if (!this.embedded) {
+            var $form = this.$el.find("form").clone()
+            $form.attr("id", this.form_id)
+            $form.click(function(e) { e.stopPropagation() })
+            this.$menu.append('<hr>', $form)
+            this.$permissions_field =
+                this.$menu.find('input[name="permissions"]')
+        }
+        this.$menu_controller.parent().append(this.$menu)
+        open_menu(this.$menu_controller[0])
+        return false
+    },
+
+    hide: function() {
+        if (this.$menu) {
+            this.$menu.remove()
+            this.$menu = null
+            this.updateSummary()
+        }
+    },
+
+    _renderBit: function(perm) {
+        var info = this.permission_info[perm]
+        var text
+        if (perm == "all") {
+            text = r.config.permissions.all_msg
+        } else if (info) {
+            text = info.title
+        } else {
+            text = perm
+        }
+        var $span = $('<span class="permission-bit"/>').text(text)
+        if (info) {
+            $span.attr("title", info.description)
+        }
+        return $span
+    },
+
+    updateSummary: function() {
+        var new_perms = this._getNewPerms()
+        var spans = []
+        if (new_perms && new_perms.all) {
+            spans.push(this._renderBit("all")
+                .toggleClass("added", this.original_perms.all != true))
+        } else {
+            if (this.original_perms.all) {
+                if (!this.embedded || !new_perms) {
+                    spans.push(this._renderBit("all")
+                        .toggleClass("removed",
+                                    !this.embedded && new_perms != null))
+                }
+            } else {
+                for (var perm in this.original_perms) {
+                    if (this.original_perms[perm]) {
+                        if (this.embedded && !(new_perms && !new_perms[perm])) {
+                            spans.push(this._renderBit(perm))
+                        }
+                        if (!this.embedded) {
+                            spans.push(this._renderBit(perm)
+                                .toggleClass("removed",
+                                             new_perms != null
+                                             && !new_perms[perm]))
+                        }
+                    }
+                }
+            }
+            if (new_perms) {
+                for (var perm in new_perms) {
+                    if (this.permission_info[perm] && new_perms[perm]
+                        && !this.original_perms[perm]) {
+                        spans.push(this._renderBit(perm)
+                            .toggleClass("added", !this.embedded))
+                    }
+                }
+            }
+        }
+        if (!spans.length) {
+            spans.push($('<span class="permission-bit">')
+                .text(r.config.permissions.none_msg)
+                .addClass("none"))
+        }
+        var $new_summary = $('<div class="permission-summary">')
+        for (var i = 0; i < spans.length; i++) {
+            if (i > 0) {
+                $new_summary.append(", ")
+            }
+            $new_summary.append(spans[i])
+        }
+        $new_summary.toggleClass("edited", this.$menu != null)
+        this.$el.find(".permission-summary").replaceWith($new_summary)
+
+        if (new_perms && this.$permissions_field) {
+            this.$permissions_field.val(this._serializePerms(new_perms))
+        }
+    },
+
+    onCommit: function(perms) {
+        this.$el.find('input[name="permissions"]').val(perms)
+        this.original_perms = this._parsePerms(perms)
+        this.hide()
+    }
+})
+
+r.ui.init = function() {
+    r.ui.HelpBubble.init()
+    r.ui.PermissionEditor.init()
+}

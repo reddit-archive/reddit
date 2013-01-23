@@ -2968,6 +2968,16 @@ class ModList(UserList):
     invite_form_title = _('invite moderator')
     remove_self_title = _('you are a moderator of this subreddit. %(action)s')
 
+    def __init__(self, editable=True):
+        super(ModList, self).__init__(editable=editable)
+        self.perms_by_type = {
+            self.type: c.site.moderators_with_perms(),
+            self.invite_type: c.site.moderator_invites_with_perms(),
+        }
+        self.cells = ('user', 'permissions', 'permissionsctl', 'sendmessage')
+        if editable:
+            self.cells += ('remove',)
+
     @property
     def table_title(self):
         return _("moderators of /r/%(reddit)s") % {"reddit": c.site.name}
@@ -2990,24 +3000,50 @@ class ModList(UserList):
     def has_invite(self):
         return c.user_is_loggedin and c.site.is_moderator_invite(c.user)
 
-    def moderator_editable(self, user):
+    def moderator_editable(self, user, row_type):
         if not c.user_is_loggedin:
             return False
         elif c.user_is_admin:
             return True
-        else:
+        elif row_type == self.type:
             return c.site.can_demod(c.user, user)
+        elif row_type == self.invite_type:
+            return c.site.is_unlimited_moderator(c.user)
+        else:
+            return False
+
+    def user_row(self, row_type, user, editable=True):
+        perms = ModeratorPermissions(
+            user, row_type, self.perms_by_type[row_type].get(user._id),
+            editable=editable and self.moderator_editable(user, row_type))
+        return UserTableItem(user, row_type, self.cells, self.container_name,
+                             editable, self.remove_action, rel=perms)
 
     @property
     def user_rows(self):
-        return self._user_rows(self.type, self.user_ids(), self.moderator_editable)
+        return self._user_rows(
+            self.type, self.user_ids(),
+            lambda u: self.moderator_editable(u, self.type))
 
     @property
     def invited_user_rows(self):
-        return self._user_rows(self.invite_type, c.site.moderator_invite_ids())
+        return self._user_rows(
+            self.invite_type, self.invited_user_ids(),
+            lambda u: self.moderator_editable(u, self.invite_type))
+
+    def _sort_user_ids(self, row_type):
+        for user_id, perms in self.perms_by_type[row_type].iteritems():
+            if perms is None:
+                yield user_id
+        for user_id, perms in self.perms_by_type[row_type].iteritems():
+            if perms is not None:
+                yield user_id
 
     def user_ids(self):
-        return c.site.moderators
+        return list(self._sort_user_ids(self.type))
+
+    def invited_user_ids(self):
+        return list(self._sort_user_ids(self.invite_type))
 
 class BannedList(UserList):
     """List of users banned from a given reddit"""
@@ -3865,7 +3901,6 @@ class GoldInfoPage(BoringPage):
         }
         BoringPage.__init__(self, *args, **kwargs)
 
-
 class Goldvertisement(Templated):
     def __init__(self):
         Templated.__init__(self)
@@ -3883,3 +3918,11 @@ class LinkCommentsSettings(Templated):
         self.can_edit = (c.user_is_loggedin
                            and (c.user_is_admin or
                                 link.subreddit_slow.is_moderator(c.user)))
+
+class ModeratorPermissions(Templated):
+    def __init__(self, user, permissions_type, permissions,
+                 editable=False, embedded=False):
+        self.user = user
+        self.permissions = permissions
+        Templated.__init__(self, permissions_type=permissions_type,
+                           editable=editable, embedded=embedded)

@@ -42,10 +42,12 @@ class UserRelManager(object):
                 rel._permission_class = self.permission_class
             return rel
 
-    def add(self, thing, user, **attrs):
+    def add(self, thing, user, permissions=None, **attrs):
         if self.get(thing, user):
             return None
         r = self.relation(thing, user, self.name, **attrs)
+        if permissions is not None:
+            r.set_permissions(permissions)
         r._commit()
         r._permission_class = self.permission_class
         return r

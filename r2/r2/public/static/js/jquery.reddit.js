@@ -565,8 +565,10 @@ $.fn.insert_table_rows = function(rows, index) {
                       /* insert cells */
                       $.map(thing.cells, function(cell) {
                               $(row.insertCell(row.cells.length))
-                                  .html($.unsafe(cell));
+                                  .html($.unsafe(cell))
+                                  .trigger("insert-cell");
                           });
+                      $(row).trigger("insert-row");
                       /* reveal! */
                       $(row).fadeIn();
                   });

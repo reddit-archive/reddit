@@ -6410,3 +6410,44 @@ body.gold .buttons li.comment-save-button { display: inline; }
     width: 250px;
     font-size: small;
 }
+
+.permissions {
+    display: inline-block;
+    font-size: small;
+    text-align: right;
+    width: 44ex;
+}
+#moderator_invite .permissions { width: 30ex; }
+.permissions > form { display: none; }
+
+.permission-summary {
+    display: inline-block;
+    font-size: small;
+    border: 1px solid white;
+}
+.permission-summary.edited { border: dashed 1px black; }
+.permission-bit.added { font-weight: bold; }
+.permission-bit.removed { text-decoration: line-through; }
+.permission-bit.none { font-style: italic; }
+
+.permissions-edit { font-size: x-small; }
+
+.permission-selector {
+    border: 1px solid black;
+    background-color: white;
+    position: absolute;
+    width: 24ex;
+}
+.permission-selector.active { display: block; }
+.permission-selector label {
+    display: block; text-align: left;
+    padding: 0px 2px 1px 2px;
+}
+.permission-selector label:first-child { border-bottom: 1px solid black; }
+.permission-selector label:hover { background-color: #bbb; }
+.permission-selector label.disabled { background-color: #ddd; }
+.permission-selector form { text-align: right; }
+.permission-selector .status, .permission-selector .error {
+    text-align: left;
+    white-space: normal;
+}

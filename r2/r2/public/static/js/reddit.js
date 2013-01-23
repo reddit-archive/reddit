@@ -12,7 +12,7 @@ function open_menu(menu) {
 function close_menus(event) {
     $(".drop-choices.inuse").not(".active")
         .removeClass("inuse");
-    $(".drop-choices.active").removeClass("active");
+    $(".drop-choices.active").removeClass("active").trigger("close_menu")
 
     // Clear any flairselectors that may have been opened.
     $(".flairselector").empty();

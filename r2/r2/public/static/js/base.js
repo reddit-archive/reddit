@@ -12,7 +12,7 @@ r.setup = function(config) {
 $(function() {
     r.login.ui.init()
     r.analytics.init()
-    r.ui.HelpBubble.init()
+    r.ui.init()
     r.interestbar.init()
     r.apps.init()
     r.wiki.init()

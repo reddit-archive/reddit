@@ -24,6 +24,8 @@
 <% from r2.lib.template_helpers import static %>
 
 <%def name="add_form(title, dest, add_type, container_name, verb=None)">
+  <% from r2.models import ModeratorPermissionSet %>
+  <% from r2.lib.pages import ModeratorPermissions %>
   <form action="/post/${dest}"
         method="post" class="pretty-form medium-text"
         onsubmit="return post_form(this, '${dest}')"
@@ -34,6 +36,15 @@
     <input type="hidden" name="container" value="${container_name}">
     <input type="hidden" name="type" value="${add_type}">
     <input type="text" name="name" id="name">
+    %if add_type == "moderator_invite":
+      ${ModeratorPermissions(None, 'moderator',
+                             ModeratorPermissionSet(all=True),
+                             editable=True, embedded=True)}
+      &#32;
+      <span class="permissions-edit">
+        (<a href="javascript:void(0)">${_('change')}</a>)
+      </span>
+    %endif
     <button class="btn" type="submit">${verb or _("add")}</button>
     <span class="status"></span>
     ${error_field("USER_DOESNT_EXIST", "name")}

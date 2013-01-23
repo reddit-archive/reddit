@@ -562,6 +562,11 @@ class ApiController(RedditController, OAuth2ResourceController):
         'wikicontributor',
     )
 
+    _sr_friend_types_with_permissions = (
+        'moderator',
+        'moderator_invite',
+    )
+
     @noresponse(VUser(),
                 VModhash(),
                 nuser = VExistingUname('name'),
@@ -613,16 +618,55 @@ class ApiController(RedditController, OAuth2ResourceController):
         if type == "friend" and c.user.gold:
             c.user.friend_rels_cache(_update=True)
 
+    @validatedForm(VSrModerator(), VModhash(),
+                   target=VExistingUname('name'),
+                   type_and_permissions=VPermissions('type', 'permissions'))
+    @api_doc(api_section.users)
+    def POST_setpermissions(self, form, jquery, target, type_and_permissions):
+        if form.has_errors('name', errors.USER_DOESNT_EXIST, errors.NO_USER):
+            return
+        if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
+            return
+        if form.has_errors('permissions', errors.INVALID_PERMISSIONS):
+            return
+
+        type, permissions = type_and_permissions
+        update = None
+
+        if type in ("moderator", "moderator_invite"):
+            if not c.user_is_admin:
+                if type == "moderator" and not c.site.can_demod(c.user, target):
+                    abort(403, 'forbidden')
+                if (type == "moderator_invite"
+                    and not c.site.is_unlimited_moderator(c.user)):
+                    abort(403, 'forbidden')
+            if type == "moderator":
+                rel = c.site.get_moderator(target)
+            if type == "moderator_invite":
+                rel = c.site.get_moderator_invite(target)
+            rel.set_permissions(permissions)
+            rel._commit()
+            update = rel.encoded_permissions
+            ModAction.create(c.site, c.user, action='setpermissions',
+                             target=target, details='permission_' + type,
+                             description=update)
+
+        if update:
+            row = form.closest('tr')
+            editor = row.find('.permissions').data('PermissionEditor')
+            editor.onCommit(update)
+
     @validatedForm(VUser(),
                    VModhash(),
                    ip = ValidIP(),
                    friend = VExistingUname('name'),
                    container = nop('container'),
                    type = VOneOf('type', ('friend',) + _sr_friend_types),
+                   type_and_permissions = VPermissions('type', 'permissions'),
                    note = VLength('note', 300))
     @api_doc(api_section.users)
     def POST_friend(self, form, jquery, ip, friend,
-                    container, type, note):
+                    container, type, type_and_permissions, note):
         """
         Complement to POST_unfriend: handles friending as well as
         privilege changes on subreddits.
@@ -670,6 +714,14 @@ class ApiController(RedditController, OAuth2ResourceController):
         elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
 
+        if type in self._sr_friend_types_with_permissions:
+            if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
+                return
+            if form.has_errors('permissions', errors.INVALID_PERMISSIONS):
+                return
+        else:
+            permissions = None
+
         if type == "moderator_invite" and container.is_moderator(friend):
             c.errors.add(errors.ALREADY_MODERATOR, field="name")
             form.set_error(errors.ALREADY_MODERATOR, "name")
@@ -678,7 +730,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         if type == "moderator":
             container.remove_moderator_invite(friend)
 
-        new = fn(friend)
+        new = fn(friend, permissions=type_and_permissions[1])
 
         # Log this action
         if new and type in self._sr_friend_types:
@@ -726,13 +778,15 @@ class ApiController(RedditController, OAuth2ResourceController):
                    ip=ValidIP())
     @api_doc(api_section.subreddits)
     def POST_accept_moderator_invite(self, form, jquery, ip):
+        rel = c.site.get_moderator_invite(c.user)
         if not c.site.remove_moderator_invite(c.user):
             c.errors.add(errors.NO_INVITE_FOUND)
             form.set_error(errors.NO_INVITE_FOUND, None)
             return
 
+        permissions = rel.get_permissions()
         ModAction.create(c.site, c.user, "acceptmoderatorinvite")
-        c.site.add_moderator(c.user)
+        c.site.add_moderator(c.user, permissions=rel.get_permissions())
         notify_user_added("accept_moderator_invite", c.user, c.user, c.site)
         jquery.refresh()
 
