@@ -20,19 +20,80 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2012 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
+"""
+This is a tiny Flask app used for a couple of self-serve ad tracking
+mechanisms. The URLs it provides are:
+
+/fetch-trackers
+
+    Given a list of Ad IDs, generate tracking hashes specific to the user's
+    IP address. This must run outside the original request because the HTML
+    may be cached by the CDN.
+
+/click
+
+    Promoted links have their URL replaced with a /click URL by the JS
+    (after a call to /fetch-trackers). Redirect to the actual URL after logging
+    the click. This must be run in a place whose logs are stored for traffic
+    analysis.
+
+For convenience, the script can compile itself into a Zip archive suitable for
+use on Amazon Elastic Beanstalk (and possibly other systems).
+
+"""
 
 
-import time
+import cStringIO
 import hashlib
+import time
+
 from ConfigParser import RawConfigParser
 from wsgiref.handlers import format_date_time
 
 from flask import Flask, request, json, make_response, abort, redirect
 
-application = Flask(__name__)
 
-# fullname can include the sr name and a codename, leave room for those
-MAX_FULLNAME_LENGTH = 128
+application = Flask(__name__)
+MAX_FULLNAME_LENGTH = 128  # can include srname and codename, leave room
+REQUIRED_PACKAGES = [
+    "flask",
+]
+
+
+class ApplicationConfig(object):
+    """A thin wrapper around ConfigParser that remembers what we read.
+
+    The remembered settings can then be written out to a minimal config file
+    when building the Elastic Beanstalk zipfile.
+
+    """
+    def __init__(self):
+        self.input = RawConfigParser()
+        with open("production.ini") as f:
+            self.input.readfp(f)
+        self.output = RawConfigParser()
+
+    def get(self, section, key):
+        value = self.input.get(section, key)
+
+        # remember that we needed this configuration value
+        if (section.upper() != "DEFAULT" and
+            not self.output.has_section(section)):
+            self.output.add_section(section)
+        self.output.set(section, key, value)
+
+        return value
+
+    def to_config(self):
+        io = cStringIO.StringIO()
+        self.output.write(io)
+        return io.getvalue()
+
+
+config = ApplicationConfig()
+tracking_secret = config.get('DEFAULT', 'tracking_secret')
+adtracker_url = config.get('DEFAULT', 'adtracker_url')
+
 
 def jsonpify(callback_name, data):
     data = callback_name + '(' + json.dumps(data) + ')'
@@ -40,10 +101,11 @@ def jsonpify(callback_name, data):
     response.mimetype = 'text/javascript'
     return response
 
-config = RawConfigParser()
-config.read(['production.ini'])
-tracking_secret = config.get('DEFAULT', 'tracking_secret')
-adtracker_url = config.get('DEFAULT', 'adtracker_url')
+
+@application.route("/")
+def healthcheck():
+    return "I am healthy."
+
 
 @application.route('/fetch-trackers')
 def fetch_trackers():
@@ -61,6 +123,7 @@ def fetch_trackers():
         text = ''.join((ip, fullname, tracking_secret))
         hashed[fullname] = hashlib.sha1(text).hexdigest()
     return jsonpify(jsonp_callback, hashed)
+
 
 @application.route('/click')
 def click_redirect():
@@ -83,5 +146,12 @@ def click_redirect():
     response.headers['Expires'] = now
     return response
 
+
 if __name__ == "__main__":
-    application.run()
+    # package up for elastic beanstalk
+    import zipfile
+
+    with zipfile.ZipFile("/tmp/tracker.zip", "w", zipfile.ZIP_DEFLATED) as zip:
+        zip.write(__file__, "application.py")
+        zip.writestr("production.ini", config.to_config())
+        zip.writestr("requirements.txt", "\n".join(REQUIRED_PACKAGES) + "\n")
