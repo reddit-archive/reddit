@@ -199,7 +199,7 @@ class Account(Thing):
                            self._t.get(sr_name + link_suffix, 0),
                            self._t.get(sr_name + comment_suffix, 0)))
 
-        karmas.sort(key = lambda x: abs(x[2] + x[3]), reverse=True)
+        karmas.sort(key = lambda x: x[2] + x[3], reverse=True)
 
         old_link_karma = self._t.get('link_karma', 0)
         old_comment_karma = self._t.get('comment_karma', 0)
