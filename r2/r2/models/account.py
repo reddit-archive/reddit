@@ -31,6 +31,7 @@ from r2.lib.utils        import constant_time_compare, canonicalize_email
 from r2.lib.cache        import sgm
 from r2.lib import filters
 from r2.lib.log import log_text
+from r2.lib.zookeeper import LiveDict
 from r2.models.last_modified import LastModified
 
 from pylons import c, g, request
@@ -547,11 +548,10 @@ class Account(Thing):
                 canons_by_subdomain[whole].extend(canons)
                 parts.pop(0)
 
-        banned_subdomains = {}
-        sub_dict = g.hardcache.get_multi(canons_by_subdomain.keys(),
-                                         prefix="domain-")
-        for subdomain, d in sub_dict.iteritems():
-            if d and d.get("no_email", None):
+        bans = LiveDict(g.zookeeper, "/banned-domains", watch=False)
+        for subdomain, d in bans.iteritems():
+            if(d and d.get("no_email", None) and
+                    subdomain in canons_by_subdomain):
                 for canon in canons_by_subdomain[subdomain]:
                     rv[canon] = "domain"
 

@@ -200,6 +200,14 @@ class LiveDict(MutableMapping):
         self._refresh()
         return iter(self._data)
 
+    def items(self):
+        self._refresh()
+        return self._data.items()
+
+    def iteritems(self):
+        self._refresh()
+        return self._data.iteritems()
+
     def __len__(self):
         self._refresh()
         return len(self._data)
