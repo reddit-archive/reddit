@@ -102,6 +102,23 @@ def jsonpify(callback_name, data):
     return response
 
 
+def get_client_ip():
+    """Figure out the IP address of the remote client.
+
+    If the remote address is on the 10.* network, we'll assume that it is a
+    trusted load balancer and that the last component of X-Forwarded-For is
+    trustworthy.
+
+    """
+
+    if request.remote_addr.startswith("10."):
+        # it's a load balancer, use x-forwarded-for
+        return request.access_route[-1]
+    else:
+        # direct connection to someone outside
+        return request.remote_addr
+
+
 @application.route("/")
 def healthcheck():
     return "I am healthy."
@@ -109,7 +126,7 @@ def healthcheck():
 
 @application.route('/fetch-trackers')
 def fetch_trackers():
-    ip = request.environ['REMOTE_ADDR']
+    ip = get_client_ip()
     jsonp_callback = request.args['callback']
     ids = request.args.getlist('ids[]')
 
@@ -127,7 +144,7 @@ def fetch_trackers():
 
 @application.route('/click')
 def click_redirect():
-    ip = request.environ['REMOTE_ADDR']
+    ip = get_client_ip()
     destination = request.args['url'].encode('utf-8')
     fullname = request.args['id']
     observed_hash = request.args['hash']
