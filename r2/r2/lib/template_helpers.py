@@ -144,7 +144,7 @@ def js_config(extra_config=None):
           "loading": _("loading...")
         },
         "is_fake": isinstance(c.site, FakeSubreddit),
-        "tracking_domain": g.tracking_domain,
+        "fetch_trackers_url": g.fetch_trackers_url,
         "adtracker_url": g.adtracker_url,
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,

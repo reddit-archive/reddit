@@ -48,7 +48,7 @@ r.analytics = {
             })
 
         $.ajax({
-            url: 'http://' + r.config.tracking_domain + '/fetch-trackers',
+            url: r.config.fetch_trackers_url,
             type: 'get',
             dataType: 'jsonp',
             data: { 'ids': fullnames },
