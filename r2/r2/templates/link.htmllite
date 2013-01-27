@@ -56,8 +56,13 @@
     %if c.site.link_flair_position == 'left' and thing.flair_text:
       ${flair()}
     %endif
-    <a href="${thing.href_url}" class="reddit-link-title"
+    <a class="reddit-link-title"
       ${optionalstyle("text-decoration:none;color:#336699;font-size:small;")}
+       %if thing.is_self:
+         href="${permalink}"
+       %else:
+         href="${thing.href_url}"
+       %endif
        %if thing.nofollow:
          rel="nofollow"
        %endif
