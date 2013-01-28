@@ -1,8 +1,9 @@
 #!/bin/bash
 
 command=${UPSTART_JOB#reddit-consumers-}
-for consumer in $REDDIT_CONSUMER_CONFIG/*; do
-    instance_count=$(cat $REDDIT_CONSUMER_CONFIG/$consumer)
+for consumerpath in $REDDIT_CONSUMER_CONFIG/*; do
+    instance_count=$(cat $consumerpath)
+    consumer=$(basename $consumerpath)
 
     # allow targeting which consumer the event is meant for (defaulting to 'all')
     if [ ! -z "$TARGET" -a "x$TARGET" != "xall" -a "x$TARGET" != "x$consumer" ]; then
