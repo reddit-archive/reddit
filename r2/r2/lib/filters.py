@@ -270,7 +270,7 @@ def wikimarkdown(text):
     
     return SC_OFF + WIKI_MD_START + text + WIKI_MD_END + SC_ON
 
-title_re = re.compile('\w|-')
+title_re = re.compile('[^\w-]')
 header_re = re.compile('^h[1-6]$')
 def inject_table_of_contents(soup, prefix):
     header_ids = Counter()
@@ -293,8 +293,8 @@ def inject_table_of_contents(soup, prefix):
         aid = unicode(BeautifulSoup(contents, convertEntities=BeautifulSoup.XML_ENTITIES))
         # Prefix with PREFIX_ to avoid ID conflict with the rest of the page
         aid = u'%s_%s' % (prefix, aid.replace(" ", "_").lower())
-        # Convert down to ascii by url encoding
-        aid = urllib.quote(aid.encode('utf-8'))
+        # Convert down to ascii replacing special characters with hex
+        aid = str(title_re.sub(lambda c: '.%X' % ord(c.group()), aid))
         
         # Check to see if a tag with the same ID exists
         id_num = header_ids[aid] + 1
