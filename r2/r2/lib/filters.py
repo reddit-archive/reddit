@@ -270,7 +270,7 @@ def wikimarkdown(text):
     
     return SC_OFF + WIKI_MD_START + text + WIKI_MD_END + SC_ON
 
-title_re = re.compile('[^\w-]')
+title_re = re.compile('[^\w.-]')
 header_re = re.compile('^h[1-6]$')
 def inject_table_of_contents(soup, prefix):
     header_ids = Counter()
