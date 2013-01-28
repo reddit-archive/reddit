@@ -56,6 +56,7 @@ from r2.models import (
     create_gift_gold,
     make_comment_gold_message,
     NotFound,
+    retrieve_gold_transaction,
     send_system_message,
     Thing,
     update_gold_transaction,
@@ -567,6 +568,99 @@ class IpnController(RedditController):
 
         payment_blob["status"] = "processed"
         g.hardcache.set(blob_key, payment_blob, 86400 * 30)
+
+
+class GoldPaymentController(RedditController):
+    name = ''
+    webhook_secret = ''
+    event_type_mappings = {}
+
+    @textresponse(secret=VPrintable('secret', 50))
+    def POST_goldwebhook(self, secret):
+        self.validate_secret(secret)
+        status, passthrough, transaction_id, pennies = self.process_response()
+
+        try:
+            event_type = self.event_type_mappings[status]
+        except KeyError:
+            g.log.error('%s %s: unknown status %s' % (self.name,
+                                                      transaction_id,
+                                                      status))
+            self.abort403()
+        self.process_webhook(event_type, passthrough, transaction_id, pennies)
+
+    def validate_secret(self, secret):
+        if secret != self.webhook_secret:
+            g.log.error('%s: invalid webhook secret from %s' % (self.name,
+                                                                request.ip))
+            self.abort403() 
+
+    @classmethod
+    def process_response(cls):
+        """Extract status, passthrough, transaction_id, pennies."""
+        raise NotImplementedError
+
+    def process_webhook(self, event_type, passthrough, transaction_id, pennies):
+        if event_type == 'noop':
+            return
+
+        try:
+            payment_blob = validate_blob(passthrough)
+        except GoldError as e:
+            g.log.error('%s %s: bad payment_blob %s' % (self.name,
+                                                        transaction_id,
+                                                        e))
+            self.abort403()
+
+        goldtype = payment_blob['goldtype']
+        buyer = payment_blob['buyer']
+        recipient = payment_blob.get('recipient', None)
+        signed = payment_blob.get('signed', False)
+        giftmessage = payment_blob.get('giftmessage', None)
+        comment = payment_blob.get('comment', None)
+        comment = comment._fullname if comment else None
+        existing = retrieve_gold_transaction(transaction_id)
+
+        if event_type == 'cancelled':
+            subject = 'gold payment cancelled'
+            msg = ('your gold payment has been cancelled, contact '
+                   '%(gold_email)s for details' % {'gold_email':
+                                                   g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            if existing:
+                # note that we don't check status on existing, probably
+                # should update gold_table when a cancellation happens
+                reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                                      recipient)
+        elif event_type == 'succeeded':
+            if existing and existing.status == 'processed':
+                g.log.info('POST_goldwebhook skipping %s' % transaction_id)
+                return
+
+            payer_email = ''
+            payer_id = ''
+            subscription_id = None
+            complete_gold_purchase(passthrough, transaction_id, payer_email,
+                                   payer_id, subscription_id, pennies, goldtype,
+                                   buyer, recipient, signed, giftmessage,
+                                   comment)
+        elif event_type == 'failed':
+            subject = 'gold payment failed'
+            msg = ('your gold payment has failed, contact %(gold_email)s for '
+                   'details' % {'gold_email': g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            # probably want to update gold_table here
+        elif event_type == 'refunded':
+            if not (existing and existing.status == 'processed'):
+                return
+
+            subject = 'gold refund'
+            msg = ('your gold payment has been refunded, contact '
+                   '%(gold_email)s for details' % {'gold_email':
+                                                   g.goldthanks_email})
+            send_system_message(buyer, subject, msg)
+            reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
+                                  recipient)
 
 
 class GoldException(Exception): pass
