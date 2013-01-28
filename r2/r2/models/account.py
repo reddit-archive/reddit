@@ -548,8 +548,7 @@ class Account(Thing):
                 canons_by_subdomain[whole].extend(canons)
                 parts.pop(0)
 
-        bans = LiveDict(g.zookeeper, "/banned-domains", watch=False)
-        for subdomain, d in bans.iteritems():
+        for subdomain, d in g.banned_domains.iteritems():
             if(d and d.get("no_email", None) and
                     subdomain in canons_by_subdomain):
                 for canon in canons_by_subdomain[subdomain]:

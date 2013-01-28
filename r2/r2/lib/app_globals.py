@@ -57,7 +57,7 @@ from r2.lib.plugin import PluginLoader
 from r2.lib.stats import Stats, CacheStats, StatsCollectingConnectionPool
 from r2.lib.translation import get_active_langs, I18N_PATH
 from r2.lib.utils import config_gold_price, thread_dump
-
+from r2.lib.zookeeper import LiveDict
 
 LIVE_CONFIG_NODE = "/config/live"
 
@@ -387,12 +387,16 @@ class Globals(object):
             self.throttles = LiveList(self.zookeeper, "/throttles",
                                       map_fn=ipaddress.ip_network,
                                       reduce_fn=ipaddress.collapse_addresses)
+            self.banned_domains = LiveDict(self.zookeeper, 
+                                           "/banned-domains",
+                                           watch=True)
         else:
             self.zookeeper = None
             parser = ConfigParser.RawConfigParser()
             parser.read([self.config["__file__"]])
             self.live_config = extract_live_config(parser, self.plugins)
             self.throttles = tuple()  # immutable since it's not real
+            self.banned_domains = dict()
         self.startup_timer.intermediate("zookeeper")
 
         ################# MEMCACHE
