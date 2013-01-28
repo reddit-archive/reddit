@@ -309,6 +309,25 @@ class Reddit(Templated):
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
 
+        user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
+        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
+            kwargs = {
+                "title": _("Submit a post"),
+                "css_class": "submit",
+                "show_cover": True
+            }
+            if not c.user_is_loggedin or c.site.can_submit(c.user) or isinstance(c.site, FakeSubreddit):
+                kwargs["link"] = "/submit"
+                kwargs["sr_path"] = isinstance(c.site, DefaultSR) or not isinstance(c.site, FakeSubreddit),
+                kwargs["subtitles"] = [strings.submit_box_text]
+            else:
+                kwargs["disabled"] = True
+                if c.site.type == "archived":
+                    kwargs["subtitles"] = [strings.submit_box_archived_text]
+                else:
+                    kwargs["subtitles"] = [strings.submit_box_restricted_text]
+            ps.append(SideBox(**kwargs))
+
         no_ads_yet = True
         show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
         if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
@@ -341,25 +360,6 @@ class Reddit(Templated):
             no_ads_yet = False
         elif self.show_wiki_actions:
             ps.append(self.wiki_actions_menu())
-
-        user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
-        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
-            kwargs = {
-                "title": _("Submit a post"),
-                "css_class": "submit",
-                "show_cover": True
-            }
-            if not c.user_is_loggedin or c.site.can_submit(c.user) or isinstance(c.site, FakeSubreddit):
-                kwargs["link"] = "/submit"
-                kwargs["sr_path"] = isinstance(c.site, DefaultSR) or not isinstance(c.site, FakeSubreddit),
-                kwargs["subtitles"] = [strings.submit_box_text]
-            else:
-                kwargs["disabled"] = True
-                if c.site.type == "archived":
-                    kwargs["subtitles"] = [strings.submit_box_archived_text]
-                else:
-                    kwargs["subtitles"] = [strings.submit_box_restricted_text]
-            ps.append(SideBox(**kwargs))
 
         if self.create_reddit_box and c.user_is_loggedin:
             delta = datetime.datetime.now(g.tz) - c.user._date
