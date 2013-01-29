@@ -181,7 +181,12 @@ class MessageButtons(PrintableButtons):
     def __init__(self, thing, delete = False, report = True):
         was_comment = getattr(thing, 'was_comment', False)
         permalink = thing.permalink
-        can_reply = c.user_is_loggedin and getattr(thing, "repliable", True)
+        # don't allow replying to self unless it's modmail
+        valid_recipient = (thing.author_id != c.user._id or
+                           thing.sr_id)
+        can_reply = (c.user_is_loggedin and
+                     getattr(thing, "repliable", True) and
+                     valid_recipient)
 
         PrintableButtons.__init__(self, "messagebuttons", thing,
                                   profilepage = c.profilepage,
