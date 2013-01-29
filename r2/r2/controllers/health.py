@@ -39,9 +39,9 @@ class HealthController(MinimalController):
         pass
 
     def GET_health(self):
-        response.headers['Content-Type'] = 'text/plain'
+        response.content_type = "application/json"
         return json.dumps(g.versions, sort_keys=True, indent=4)
 
     def GET_promohealth(self):
-        response.headers['Content-Type'] = 'text/plain'
+        response.content_type = "application/json"
         return json.dumps(promote.health_check())
