@@ -69,6 +69,7 @@ api('flairlist', FlairListJsonTemplate)
 api('flaircsv', FlairCsvJsonTemplate)
 
 api('subredditstylesheet', StylesheetTemplate)
+api('subredditstylesheetsource', StylesheetTemplate)
 api('createsubreddit', SubredditSettingsTemplate)
 
 api('modaction', ModActionTemplate)
