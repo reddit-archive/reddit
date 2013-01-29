@@ -21,8 +21,10 @@
 ###############################################################################
 
 import json
+import os
 
-from pylons import g, response
+from pylons import g, request, response
+from pylons.controllers.util import abort
 
 from r2.controllers.reddit_base import MinimalController
 from r2.lib import promote
@@ -39,6 +41,10 @@ class HealthController(MinimalController):
         pass
 
     def GET_health(self):
+        if os.path.exists("/var/opt/reddit/quiesce"):
+            request.environ["usable_error_content"] = "No thanks, I'm full."
+            abort(503)
+
         response.content_type = "application/json"
         return json.dumps(g.versions, sort_keys=True, indent=4)
 

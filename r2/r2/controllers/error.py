@@ -147,7 +147,9 @@ class ErrorController(RedditController):
         return template.render(logo_url=static(g.default_header_url))
 
     def send503(self):
-        response.headers["Retry-After"] = str(request.environ["retry_after"])
+        retry_after = request.environ.get("retry_after")
+        if retry_after:
+            response.headers["Retry-After"] = str(retry_after)
         return request.environ['usable_error_content']
 
     def GET_document(self):
