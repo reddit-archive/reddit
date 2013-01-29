@@ -582,7 +582,8 @@ class GoldPaymentController(RedditController):
     @textresponse(secret=VPrintable('secret', 50))
     def POST_goldwebhook(self, secret):
         self.validate_secret(secret)
-        status, passthrough, transaction_id, pennies = self.process_response()
+        res = self.process_response()
+        status, passthrough, transaction_id, pennies, months = res
 
         try:
             event_type = self.event_type_mappings[status]
@@ -591,7 +592,8 @@ class GoldPaymentController(RedditController):
                                                       transaction_id,
                                                       status))
             self.abort403()
-        self.process_webhook(event_type, passthrough, transaction_id, pennies)
+        self.process_webhook(event_type, passthrough, transaction_id, pennies,
+                             months)
 
     def validate_secret(self, secret):
         if secret != self.webhook_secret:
@@ -604,7 +606,8 @@ class GoldPaymentController(RedditController):
         """Extract status, passthrough, transaction_id, pennies."""
         raise NotImplementedError
 
-    def process_webhook(self, event_type, passthrough, transaction_id, pennies):
+    def process_webhook(self, event_type, passthrough, transaction_id, pennies,
+                        months):
         if event_type == 'noop':
             return
 
@@ -645,9 +648,9 @@ class GoldPaymentController(RedditController):
             payer_id = ''
             subscription_id = None
             complete_gold_purchase(passthrough, transaction_id, payer_email,
-                                   payer_id, subscription_id, pennies, goldtype,
-                                   buyer, recipient, signed, giftmessage,
-                                   comment)
+                                   payer_id, subscription_id, pennies, months,
+                                   goldtype, buyer, recipient, signed,
+                                   giftmessage, comment)
         elif event_type == 'failed':
             subject = 'gold payment failed'
             msg = ('your gold payment has failed, contact %(gold_email)s for '
@@ -683,14 +686,15 @@ class StripeController(GoldPaymentController):
         event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
         status = event.type
         if status == 'customer.created':
-            return status, None, None, None
+            return status, None, None, None, None
 
         charge = event.data.object
         description = charge.description
         passthrough, buyer_name = description.split('-', 1)
         transaction_id = 'S%s' % charge.id
         pennies = charge.amount
-        return status, passthrough, transaction_id, pennies
+        months, days = months_and_days_from_pennies(pennies)
+        return status, passthrough, transaction_id, pennies, months
 
     @validatedForm(VUser(),
                    token=nop('stripeToken'),
@@ -781,8 +785,9 @@ class CoinbaseController(GoldPaymentController):
         transaction_id = 'C%s' % order['id']
         status = order['status']    # new/completed/cancelled
         pennies = int(order['total_native']['cents'])
+        months, days = months_and_days_from_pennies(pennies)
         passthrough = order['custom']
-        return status, passthrough, transaction_id, pennies
+        return status, passthrough, transaction_id, pennies, months
 
 
 class GoldException(Exception): pass
@@ -844,9 +849,19 @@ def gold_lock(user):
     return g.make_lock('gold_purchase', 'gold_%s' % user._id)
 
 
+def days_from_months(months):
+    if months >= 12:
+        assert months % 12 == 0
+        years = months / 12
+        days = years * 366
+    else:
+        days = months * 31
+    return days
+
+
 def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
-                           subscription_id, pennies, goldtype, buyer, recipient,
-                           signed, giftmessage, comment):
+                           subscription_id, pennies, months, goldtype, buyer,
+                           recipient, signed, giftmessage, comment):
     """After receiving a message from a payment processor, apply gold.
 
     Shared endpoint for all payment processing systems. Validation of gold
@@ -857,7 +872,7 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
     gold_recipient = recipient or buyer
     with gold_lock(gold_recipient):
         gold_recipient._sync_latest()
-        months, days = months_and_days_from_pennies(pennies)
+        days = days_from_months(months)
 
         if goldtype in ('onetime', 'autorenew'):
             admintools.engolden(buyer, days)
