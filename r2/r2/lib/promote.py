@@ -40,6 +40,7 @@ from r2.lib import (
     inventory,
 )
 from r2.lib.db.queries import set_promote_status
+from r2.lib.memoize import memoize
 from r2.lib.organic import keep_fresh_links
 from r2.lib.strings import strings
 from r2.lib.template_helpers import get_domain
@@ -784,40 +785,6 @@ def make_daily_promotions(offset=0, test=False):
                         "promotions: %r" % error_campaigns)
 
 
-def get_promotion_list(user, site):
-    # site is specified, pick an ad from that site
-    if not isinstance(site, FakeSubreddit):
-        srids = set([site._id])
-    elif isinstance(site, MultiReddit):
-        srids = set(site.sr_ids)
-    # site is Fake, user is not.  Pick based on their subscriptions.
-    elif user and not isinstance(user, FakeAccount):
-        srids = set(Subreddit.reverse_subscriber_ids(user) + [""])
-    # both site and user are "fake" -- get the default subscription list
-    else:
-        srids = set(Subreddit.user_subreddits(None, True) + [""])
-
-    return get_promotions_cached(srids)
-
-
-def get_promotions_cached(sites):
-    weights = get_live_promotions(sites)
-    if not weights:
-        return []
-
-    promos = []
-    total = 0.
-    for sr_id, sr_weights in weights.iteritems():
-        if sr_id not in sites:
-            continue
-        for link, weight, campaign in sr_weights:
-            total += weight
-            promos.append((link, weight, campaign))
-
-    return [(link, weight / total, campaign)
-            for link, weight, campaign in promos]
-
-
 def randomized_promotion_list(user, site):
     promos = get_promotion_list(user, site)
     # no promos, no problem
@@ -838,6 +805,42 @@ def randomized_promotion_list(user, site):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
+def get_promotion_list(user, site):
+    # site is specified, pick an ad from that site
+    if not isinstance(site, FakeSubreddit):
+        srids = set([site._id])
+    elif isinstance(site, MultiReddit):
+        srids = set(site.sr_ids)
+    # site is Fake, user is not.  Pick based on their subscriptions.
+    elif user and not isinstance(user, FakeAccount):
+        srids = set(Subreddit.reverse_subscriber_ids(user) + [""])
+    # both site and user are "fake" -- get the default subscription list
+    else:
+        srids = set(Subreddit.user_subreddits(None, True) + [""])
+
+    tuples = get_promotion_list_cached(srids)
+    return [PromoTuple(*t) for t in tuples]
+
+
+@memoize('promotion_list', time=60)
+def get_promotion_list_cached(sites):
+    weights = get_live_promotions(sites)
+    if not weights:
+        return []
+
+    promos = []
+    total = 0.
+    for sr_id, sr_weights in weights.iteritems():
+        if sr_id not in sites:
+            continue
+        for link, weight, campaign in sr_weights:
+            total += weight
+            promos.append((link, weight, campaign))
+
+    return [(link, weight / total, campaign)
+            for link, weight, campaign in promos]
+
+
 def sample_promoted_links(user, site, n=10):
     """Return a random selection of promoted links.
 
@@ -845,11 +848,11 @@ def sample_promoted_links(user, site, n=10):
 
     """
 
-    promos = get_promotion_list(user, site)
-    if n >= len(promos):
-        return [PromoTuple(*p) for p in promos]
+    promo_tuples = get_promotion_list(user, site)
+    if n >= len(promo_tuples):
+        return promo_tuples
     else:
-        return [PromoTuple(*p) for p in random.sample(promos, n)]
+        return random.sample(promo_tuples, n)
 
 
 def get_total_run(link):
