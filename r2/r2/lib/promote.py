@@ -806,17 +806,14 @@ PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
 def get_promotion_list(user, site):
-    # site is specified, pick an ad from that site
     if not isinstance(site, FakeSubreddit):
         srids = set([site._id])
     elif isinstance(site, MultiReddit):
         srids = set(site.sr_ids)
-    # site is Fake, user is not.  Pick based on their subscriptions.
     elif user and not isinstance(user, FakeAccount):
         srids = set(Subreddit.reverse_subscriber_ids(user) + [""])
-    # both site and user are "fake" -- get the default subscription list
     else:
-        srids = set(Subreddit.user_subreddits(None, True) + [""])
+        srids = set(Subreddit.user_subreddits(None, ids=True) + [""])
 
     tuples = get_promotion_list_cached(srids)
     return [PromoTuple(*t) for t in tuples]
