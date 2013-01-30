@@ -890,22 +890,6 @@ def insert_promoted(link_names, promoted_every_n=6):
     return link_names, campaigns_by_link
 
 
-def benchmark_promoted(user, site, link_sample=50, attempts=100):
-    c.user = user
-    c.site = site
-    link_names = ["blah%s" % i for i in xrange(link_sample)]
-    res = {}
-    for i in xrange(attempts):
-        names, campaigns_by_link = insert_promoted(link_names[::])
-        name = names[0]
-        res[name] = res.get(name, 0) + 1
-    res = list(res.iteritems())
-    res.sort(key=lambda x: x[1], reverse=True)
-    expected = dict(get_promotion_list(user, site))
-    for l, v in res:
-        print "%s: %5.3f %3.5f" % (l, float(v) / attempts, expected.get(l, 0))
-
-
 def get_total_run(link):
     """Return the total time span this promotion has run for.
 
