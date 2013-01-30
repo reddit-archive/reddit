@@ -274,9 +274,9 @@ def get_title(url):
             data = reader.read(1024)
             title = extract_title(data)
 
-            # Title not found in the first kb, try searching an additional 2kb
+            # Title not found in the first kb, try searching an additional 10kb
             if not title:
-                data += reader.read(2048)
+                data += reader.read(10240)
                 title = extract_title(data)
 
         return title
@@ -295,7 +295,20 @@ def extract_title(data):
     if not title_bs or not title_bs.string:
         return
 
-    return title_bs.string.encode('utf-8').strip()
+    title = title_bs.string
+
+    # remove end part that's likely to be the site's name
+    # looks for last delimiter char between spaces in strings
+    # delimiters: |, -, emdash, endash,
+    #             left- and right-pointing double angle quotation marks
+    reverse_title = title[::-1]
+    to_trim = re.search(u'\s[\u00ab\u00bb\u2013\u2014|-]\s',
+                        reverse_title,
+                        flags=re.UNICODE)
+    if to_trim:
+        title = title[:-(to_trim.end())]
+
+    return title.encode('utf-8').strip()
     
 valid_schemes = ('http', 'https', 'ftp', 'mailto')
 valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
