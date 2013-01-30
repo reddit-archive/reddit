@@ -306,8 +306,8 @@ class HotController(FixListing, ListingController):
 
                 n_promoted = 100
                 n_build = 10
-                promo_tuples = promote.get_promoted_links(c.user, c.site,
-                                                          n_promoted)
+                promo_tuples = promote.sample_promoted_links(c.user, c.site,
+                                                             n_promoted)
                 promo_tuples = sorted(promo_tuples,
                                       key=lambda p: p.weight,
                                       reverse=True)

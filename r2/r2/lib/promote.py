@@ -838,7 +838,7 @@ def randomized_promotion_list(user, site):
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
-def get_promoted_links(user, site, n=10):
+def sample_promoted_links(user, site, n=10):
     """Return a random selection of promoted links.
 
     Does not factor weights, as that will be done client side.
