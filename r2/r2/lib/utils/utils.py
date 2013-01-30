@@ -27,7 +27,7 @@ import ConfigParser
 import codecs
 
 from urllib import unquote_plus
-from urllib2 import urlopen
+from urllib2 import urlopen, Request
 from urlparse import urlparse, urlunparse
 import signal
 from copy import deepcopy
@@ -255,7 +255,10 @@ def get_title(url):
         return None
 
     try:
-        opener = urlopen(url, timeout=15)
+        req = Request(url)
+        if g.useragent:
+            req.add_header('User-Agent', g.useragent)
+        opener = urlopen(req, timeout=15)
 
         # determine the encoding of the response
         for param in opener.info().getplist():
