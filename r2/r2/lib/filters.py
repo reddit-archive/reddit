@@ -279,6 +279,7 @@ def inject_table_of_contents(soup, prefix):
         return
     tocdiv = Tag(soup, "div", [("class", "toc")])
     parent = Tag(soup, "ul")
+    parent.level = 0
     tocdiv.append(parent)
     level = 0
     previous = 0
@@ -314,12 +315,14 @@ def inject_table_of_contents(soup, prefix):
         
         if previous and thislevel > previous:
             newul = Tag(soup, "ul")
+            newul.level = thislevel
             parent.append(newul)
             parent = newul
             level += 1
         elif level and thislevel < previous:
-            parent = parent.findParent("ul")
-            level -= 1
+            while level and parent.level > thislevel:
+                parent = parent.findParent("ul")
+                level -= 1
         
         previous = thislevel
         parent.append(li)
