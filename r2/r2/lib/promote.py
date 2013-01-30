@@ -853,43 +853,6 @@ def get_promoted_links(user, site, n=10):
         return [PromoTuple(*p) for p in random.sample(promos, n)]
 
 
-def insert_promoted(link_names, promoted_every_n=6):
-    """
-    Inserts promoted links into an existing organic list. Destructive
-    on `link_names'
-    """
-    promo_tuples = randomized_promotion_list(c.user, c.site)
-    promoted_link_names, campaign_ids = zip(*promo_tuples) if promo_tuples else ([], [])
-
-    if not promoted_link_names:
-        return link_names, {}
-
-    campaigns_by_link = dict(promo_tuples)
-
-    max_promoted = max(1, len(link_names) / promoted_every_n)
-    builder = IDBuilder(promoted_link_names, keep_fn=keep_fresh_links,
-                        num=max_promoted, skip=True)
-    promoted_items = builder.get_items()[0]
-
-    # don't insert one at the head of the list 50% of the time for
-    # logged in users, and 50% of the time for logged-off users when
-    # the pool of promoted links is less than 3 (to avoid showing the
-    # same promoted link to the same person too often)
-    if ((c.user_is_loggedin or len(promoted_items) < 3) and
-        random.choice((True, False))):
-        pos = 1
-    else:
-        pos = 0
-
-    if promoted_items:
-        for i, item in enumerate(promoted_items):
-            p = i * promoted_every_n
-            p += pos
-            link_names.insert(p, item._fullname)
-
-    return link_names, campaigns_by_link
-
-
 def get_total_run(link):
     """Return the total time span this promotion has run for.
 
