@@ -802,22 +802,21 @@ def get_promotion_list(user, site):
 
 def get_promotions_cached(sites):
     weights = get_live_promotions(sites)
-    if weights:
-        available = {}
-        campaigns = {}
-        for sr_id, sr_weights in weights.iteritems():
-            if sr_id in sites:
-                for l, w, cid in sr_weights:
-                    available[l] = available.get(l, 0) + w
-                    campaigns[l] = cid
-        # sort the available list by weight
-        links = available.keys()
-        links.sort(key=lambda x: -available[x])
-        norm = sum(available.values())
-        # return a sorted list of (link, norm_weight)
-        return [(l, available[l] / norm, campaigns[l]) for l in links]
-    else:
+    if not weights:
         return []
+
+    promos = []
+    total = 0.
+    for sr_id, sr_weights in weights.iteritems():
+        if sr_id not in sites:
+            continue
+        for link, weight, campaign in sr_weights:
+            total += weight
+            promos.append((link, weight, campaign))
+
+    return [(link, weight / total, campaign)
+            for link, weight, campaign in promos]
+
 
 def randomized_promotion_list(user, site):
     promos = get_promotion_list(user, site)
