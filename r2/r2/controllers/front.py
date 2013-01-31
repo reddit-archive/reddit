@@ -609,19 +609,23 @@ class FrontController(RedditController, OAuth2ResourceController):
             pane.append(CreateSubreddit(site = c.site))
         elif location == 'moderators':
             pane = ModList(editable=is_unlimited_moderator)
-        elif is_moderator and location == 'banned':
-            pane = BannedList(editable = is_moderator)
-        elif is_moderator and location == 'wikibanned':
-            pane = WikiBannedList(editable = is_moderator)
-        elif is_moderator and location == 'wikicontributors':
-            pane = WikiMayContributeList(editable = is_moderator)
+        elif is_moderator_with_perms('access') and location == 'banned':
+            pane = BannedList(editable=is_moderator_with_perms('access'))
+        elif is_moderator_with_perms('access') and location == 'wikibanned':
+            pane = WikiBannedList(editable=is_moderator_with_perms('access'))
+        elif (is_moderator_with_perms('access')
+              and location == 'wikicontributors'):
+            pane = WikiMayContributeList(
+                editable=is_moderator_with_perms('access'))
         elif (location == 'contributors' and
               # On public reddits, only moderators can see the whitelist.
               # On private reddits, all contributors can see each other.
               (c.site.type != 'public' or
                (c.user_is_loggedin and
-                (c.site.is_moderator(c.user) or c.user_is_admin)))):
-                pane = ContributorList(editable = is_moderator)
+                (c.site.is_moderator_with_perms(c.user, 'access')
+                 or c.user_is_admin)))):
+                pane = ContributorList(
+                    editable=is_moderator_with_perms('access'))
         elif (location == 'stylesheet'
               and c.site.can_change_stylesheet(c.user)
               and not g.css_killswitch):

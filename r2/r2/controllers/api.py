@@ -594,7 +594,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         # for the privilege change to succeed.
         victim = iuser or nuser
         if (not c.user_is_admin
-            and (type in self._sr_friend_types and not container.is_moderator(c.user))):
+            and (type in self._sr_friend_types
+                 and not container.is_moderator_with_perms(c.user, 'access'))):
             abort(403, 'forbidden')
         if (type == 'moderator' and not
             (c.user_is_admin or container.can_demod(c.user, victim))):
@@ -688,7 +689,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # for the privilege change to succeed.
         if (not c.user_is_admin
                 and type in self._sr_friend_types
-                and (not container.is_moderator(c.user)
+                and (not container.is_moderator_with_perms(c.user, 'access')
                      or c.user._spam)):
             if c.user._spam:
                 return

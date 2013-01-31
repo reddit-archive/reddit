@@ -256,16 +256,17 @@ class Reddit(Templated):
                                    css_class="moderator-mail"))
 
         if is_single_subreddit:
-            buttons.append(NamedButton("moderators",
-                                       css_class="reddit-moderators"))
+            if c.site.is_moderator_with_perms(c.user, 'access'):
+                buttons.append(NamedButton("moderators",
+                                           css_class="reddit-moderators"))
 
-            if c.site.type != "public":
-                buttons.append(NamedButton("contributors",
-                                           css_class="reddit-contributors"))
-            else:
-                buttons.append(NavButton(menu.contributors,
-                                         "contributors",
-                                         css_class="reddit-contributors"))
+                if c.site.type != "public":
+                    buttons.append(NamedButton("contributors",
+                                               css_class="reddit-contributors"))
+                else:
+                    buttons.append(NavButton(menu.contributors,
+                                             "contributors",
+                                             css_class="reddit-contributors"))
 
             buttons.append(NamedButton("traffic", css_class="reddit-traffic"))
 
@@ -275,7 +276,8 @@ class Reddit(Templated):
                         NamedButton("spam", css_class="reddit-spam")]
 
         if is_single_subreddit:
-            buttons.append(NamedButton("banned", css_class="reddit-ban"))
+            if c.site.is_moderator_with_perms(c.user, 'access'):
+                buttons.append(NamedButton("banned", css_class="reddit-ban"))
             if c.site.is_moderator_with_perms(c.user, 'flair'):
                 buttons.append(NamedButton("flair", css_class="reddit-flair"))
 
