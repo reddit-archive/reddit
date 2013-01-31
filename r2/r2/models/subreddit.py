@@ -471,15 +471,9 @@ class Subreddit(Thing, Printable):
 
         return subreddits if return_dict else subreddits.values()
 
-    #rising uses this to know which subreddits to include, doesn't
-    #work for all/friends atm
-    def rising_srs(self):
-        if c.default_sr or not hasattr(self, '_id'):
-            user = c.user if c.user_is_loggedin else None
-            sr_ids = self.user_subreddits(user)
-        else:
-            sr_ids = (self._id,)
-        return sr_ids
+    def keep_for_rising(self, sr_id):
+        """Return whether or not to keep a thing in rising for this SR."""
+        return sr_id == self._id
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
@@ -840,6 +834,9 @@ class FakeSubreddit(Subreddit):
         self.title = ''
         self.link_flair_position = 'right'
 
+    def keep_for_rising(self, sr_id):
+        return False
+
     @property
     def _should_wiki(self):
         return False
@@ -965,6 +962,9 @@ class AllSR(FakeSubreddit):
     name = 'all'
     title = 'all subreddits'
 
+    def keep_for_rising(self, sr_id):
+        return True
+
     def get_links(self, sort, time):
         from r2.models import Link
         from r2.lib.db import queries
@@ -988,9 +988,6 @@ class AllSR(FakeSubreddit):
         from r2.lib.db import queries
         return queries.get_all_gilded_comments()
 
-    def rising_srs(self):
-        return None
-
 
 class AllMinus(AllSR):
     name = _("%s (filtered)") % "all"
@@ -999,6 +996,9 @@ class AllMinus(AllSR):
         AllSR.__init__(self)
         self.srs = srs
         self.sr_ids = [sr._id for sr in srs]
+
+    def keep_for_rising(self, sr_id):
+        return sr_id not in self.sr_ids
 
     @property
     def title(self):
@@ -1024,6 +1024,15 @@ class _DefaultSR(FakeSubreddit):
     path = '/'
     header = g.default_header_url
 
+    def _get_sr_ids(self):
+        if not hasattr(self, "_cached_sr_ids"):
+            user = c.user if c.user_is_loggedin else None
+            self._cached_sr_ids = Subreddit.user_subreddits(user)
+        return self._cached_sr_ids
+
+    def keep_for_rising(self, sr_id):
+        return sr_id in self._get_sr_ids()
+
     def is_moderator(self, user):
         return False
 
@@ -1048,8 +1057,7 @@ class _DefaultSR(FakeSubreddit):
             return q
 
     def get_links(self, sort, time):
-        user = c.user if c.user_is_loggedin else None
-        sr_ids = Subreddit.user_subreddits(user)
+        sr_ids = self._get_sr_ids()
         return self.get_links_sr_ids(sr_ids, sort, time)
 
     @property
@@ -1142,6 +1150,9 @@ class MultiReddit(_DefaultSR):
         self.banned_sr_ids = [sr._id for sr in srs if sr._spam]
         self.kept_sr_ids = [sr._id for sr in srs if not sr._spam]
 
+    def keep_for_rising(self, sr_id):
+        return sr_id in self.kept_sr_ids
+
     def is_moderator(self, user):
         if not user:
             return False
@@ -1162,9 +1173,6 @@ class MultiReddit(_DefaultSR):
 
     def get_links(self, sort, time):
         return self.get_links_sr_ids(self.kept_sr_ids, sort, time)
-
-    def rising_srs(self):
-        return self.kept_sr_ids
 
     def get_all_comments(self):
         from r2.lib.db.queries import get_sr_comments, merge_results

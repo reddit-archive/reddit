@@ -20,14 +20,16 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g, c
-from r2.models.link import Link, Subreddit
-from r2.lib import utils
-from r2.lib import count
-
 from datetime import datetime
 
-cache = g.cache
+from pylons import g
+
+from r2.lib import count
+from r2.models.link import Link
+
+
+CACHE_KEY = "rising"
+
 
 def calc_rising():
     sr_count = count.get_link_counts()
@@ -38,7 +40,7 @@ def calc_rising():
     counts = link_count.values()
     counts.sort(reverse=True)
     maxcount = sum(counts[:10]) / 20
-    
+
     #prune the list
     rising = [(n, link_names[n].sr_id)
               for n in link_names.keys() if link_count[n] < maxcount]
@@ -57,15 +59,11 @@ def calc_rising():
     rising.sort(lambda x, y: r(score(y) - score(x)))
     return rising
 
+
 def set_rising():
-    rising = calc_rising()
-    cache.set('rising', rising)
+    g.cache.set(CACHE_KEY, calc_rising())
+
 
 def get_rising(sr):
-    #get the sr_ids
-    sr_ids = sr.rising_srs()
-    if sr_ids:
-        rising = cache.get('rising', [])
-        return [p[0] for p in filter(lambda pair: pair[1] in sr_ids, rising)]
-    else:
-        return []
+    rising = g.cache.get(CACHE_KEY)
+    return [link for link, sr_id in rising if sr.keep_for_rising(sr_id)]

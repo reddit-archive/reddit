@@ -136,7 +136,7 @@ cdef dict timeintervald = dict(second = 1,
                                week   = 60 * 60 * 24 * 7,
                                month  = 60 * 60 * 24 * 30,
                                year   = 60 * 60 * 24 * 365)
-cdef timeinterval_fromstr(str interval):
+cpdef timeinterval_fromstr(str interval):
     "Used by timeago and timefromnow to generate timedeltas from friendly text"
     parts = interval.strip().split(' ')
     if len(parts) == 1:
