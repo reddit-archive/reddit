@@ -600,7 +600,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                                      for perm in perms))
 
         extension_handling = False
-        if is_moderator and location == 'edit':
+        if is_moderator_with_perms('config') and location == 'edit':
             pane = PaneStack()
             if created == 'true':
                 pane.append(InfoBar(message = strings.sr_created))

@@ -442,7 +442,8 @@ class Subreddit(Thing, Printable):
 
     def can_change_stylesheet(self, user):
         if c.user_is_loggedin:
-            return c.user_is_admin or self.is_moderator(user)
+            return (
+                c.user_is_admin or self.is_moderator_with_perms(user, 'config'))
         else:
             return False
     

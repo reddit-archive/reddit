@@ -246,7 +246,8 @@ class Reddit(Templated):
         buttons = []
         is_single_subreddit = not isinstance(c.site, (ModSR, MultiReddit))
 
-        if is_single_subreddit:
+        if (is_single_subreddit
+            and c.site.is_moderator_with_perms(c.user, 'config')):
             buttons.append(NavButton(menu.community_settings,
                                      css_class="reddit-edit",
                                      dest="edit"))
