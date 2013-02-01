@@ -77,9 +77,9 @@ ${thing.formtabs_menu}
     ${error_field("NO_LINKS", "sr")}
     ${error_field("NO_SELFS", "sr")}
 
-    <div>
-      <button type="button" tabindex="100" onclick="fetch_title()">${_("suggest title")}</button>
+    <div id="suggest-title">
       <span class="title-status"></span>
+      <button type="button" tabindex="100" onclick="fetch_title()">${_("suggest title")}</button>
     </div>
   </%utils:round_field>
 </div>

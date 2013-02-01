@@ -3092,7 +3092,8 @@ form input[type=radio] {margin: 2px .5em 0 0; }
 
 /*submit*/
 
-#url-field button {margin: 10px 5px 0 0;}
+#url-field #suggest-title { text-align: right; }
+#url-field button {margin: 10px 0 0 5px;}
 #url-field .title-status { color: red; font-size: small}
 
 .content.submit .info-notice {
