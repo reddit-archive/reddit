@@ -244,6 +244,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
                                                 comment_karma = "comment_karma",
                                                 is_gold = "gold",
                                                 is_mod = "is_mod",
+                                                over_18 = "pref_over_18",
                                                 )
 
     def thing_attr(self, thing, attr):
