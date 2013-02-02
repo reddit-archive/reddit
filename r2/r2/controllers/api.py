@@ -3097,9 +3097,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
 
     @validatedForm(link=nop('link'),
-                   campaign=nop('campaign'),
-                   show=VBoolean('show'))
-    def GET_fetch_promo(self, form, jquery, link, campaign, show):
+                   campaign=nop('campaign'))
+    def GET_fetch_promo(self, form, jquery, link, campaign):
         promo_tuples = [promote.PromoTuple(link, 1., campaign)]
         builder = CampaignBuilder(promo_tuples,
                                   wrap=default_thing_wrapper(),
@@ -3110,9 +3109,6 @@ class ApiController(RedditController, OAuth2ResourceController):
                                    interestbar=None).listing()
         jquery(".content").replace_things(listing)
 
-        if show:
-            jquery('.organic-listing .thing:visible').hide()
-            jquery('.organic-listing .id-%s' % link).show()
 
     @noresponse(VUser(),
               ui_elem = VOneOf('id', ('organic',)))

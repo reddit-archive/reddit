@@ -1,15 +1,53 @@
 r.spotlight = {}
 
-r.spotlight.link_by_camp = {}
-r.spotlight.weights = {}
-r.spotlight.organics = []
-r.spotlight.interest_prob = 0
-r.spotlight.promotion_prob = 1
+r.spotlight.init = function() {
+    var listing = $('.organic-listing')
+    if (!listing.length) {
+        return
+    }
 
-r.spotlight.init = function(links, interest_prob, promotion_prob) {
-    var link_by_camp = {},
-        weights = {},
-        organics = []
+    $('.organic-listing .arrow.prev').on('click', $.proxy(this, 'prev'))
+    $('.organic-listing .arrow.next').on('click', $.proxy(this, 'next'))
+
+    _.each(this.link_by_camp, function(fullname, campaign) {
+        if (!listing.find('.id-' + fullname).length) {
+            this.createStub(fullname, campaign)
+        }
+    }, this)
+
+    var selectedThing,
+        lastClickFullname = r.analytics.breadcrumbs.lastClickFullname(),
+        lastClickThing = $(lastClickFullname ? '.id-' + lastClickFullname : null)
+    if (lastClickThing.length && listing.has(lastClickThing).length) {
+        r.debug('restoring spotlight selection to last click')
+        selectedThing = lastClickThing
+    } else {
+        selectedThing = this.chooseRandom()
+    }
+
+    this.lineup = _.chain(listing.find('.thing'))
+        .reject(function(el) { return selectedThing.is(el) })
+        .shuffle()
+        .unshift(selectedThing)
+        .map(function(el) {
+            var fullname = $(el).data('fullname')
+            if (fullname) {
+                // convert things with ids to queries to handle stub replacement
+                return '.id-' + fullname
+            } else {
+                return el
+            }
+        })
+        .value()
+
+    this.lineup.pos = 0
+    r.spotlight._advance(0)
+}
+
+r.spotlight.setup = function(links, interest_prob, promotion_prob) {
+    this.link_by_camp = {},
+    this.weights = {},
+    this.organics = []
 
     for (var index in links) {
         var link = links[index][0],
@@ -18,66 +56,80 @@ r.spotlight.init = function(links, interest_prob, promotion_prob) {
             weight = links[index][3]
 
         if (is_promo) {
-            link_by_camp[campaign] = link
-            weights[campaign] = weight
+            this.link_by_camp[campaign] = link
+            this.weights[campaign] = weight
         } else {
-            organics.push(link)
+            this.organics.push(link)
         }
     }
 
-    _.extend(r.spotlight.link_by_camp, link_by_camp)
-    _.extend(r.spotlight.weights, weights)
-    _.extend(r.spotlight.organics, organics)
-    r.spotlight.interest_prob = interest_prob
-    r.spotlight.promotion_prob = promotion_prob
+    this.interest_prob = interest_prob
+    this.promotion_prob = promotion_prob
 }
 
-r.spotlight.shuffle = function() {
-    var listing = $('.organic-listing'),
-        visible = listing.find(".thing:visible")
+r.spotlight.createStub = function(fullname, campaign) {
+    var stub = $('<div>')
+            .addClass('thing stub')
+            .addClass('id-'+fullname)
+            .data('fullname', fullname)
+            .data('cid', campaign)
+            .prependTo('.organic-listing')
+}
 
-    if (listing.length == 0) {
-        $.debug('exiting, no organic listing')
-        return
-    }
-
-    if(Math.random() < r.spotlight.promotion_prob) {
-        $.debug('showing promoted link')
-        var campaign_name = r.spotlight.weighted_lottery(r.spotlight.weights),
-            link_name = r.spotlight.link_by_camp[campaign_name],
-            thing = listing.find(".id-" + link_name)
-        $.debug('showing ' + campaign_name)
-        if (thing.hasClass('stub')) {
-            $.debug('fetching')
-            $.request("fetch_promo", {
-                    link: link_name,
-                    campaign: campaign_name,
-                    show: true,
-                    listing: listing.attr("id")
-                },
-                null, null, null, true
-            )
-        } else {
-            $.debug('no need to fetch')
-            $.debug('setting cid')
-            thing.data('cid', campaign_name)
-        }
-        r.spotlight.help('promoted')
-    } else if (Math.random() < r.spotlight.interest_prob) {
-        $.debug('showing interest bar')
-        var thing = listing.find(".interestbar")
-        r.spotlight.help('interestbar')
+r.spotlight.chooseRandom = function() {
+    var listing = $('.organic-listing')
+    if (!_.isEmpty(this.weights)
+            && Math.random() < this.promotion_prob) {
+        var campaign_name = this.weighted_lottery(this.weights),
+            link_name = this.link_by_camp[campaign_name]
+        return listing.find('.id-' + link_name)
+    } else if (Math.random() < this.interest_prob) {
+        return listing.find('.interestbar')
     } else {
-        $.debug('showing organic link')
-        var name = r.spotlight.organics[Math.floor(Math.random() * r.spotlight.organics.length)],
-            thing = listing.find(".id-" + name)
-        r.spotlight.help('organic')
+        var name = this.organics[Math.floor(Math.random() * this.organics.length)]
+        return listing.find('.id-' + name)
     }
-    visible.hide()
-    thing.show()
 }
 
-r.spotlight.help = function(type) {
+r.spotlight._advance = function(dir) {
+    var listing = $('.organic-listing'),
+        visible = listing.find('.thing:visible'),
+        nextPos = (this.lineup.pos + dir + this.lineup.length) % this.lineup.length,
+        next = listing.find(this.lineup[nextPos])
+
+    if (next.hasClass('stub')) {
+        var fullname = next.data('fullname'),
+            campaign = next.data('cid')
+        r.debug('fetching promo %s from campaign %s', fullname, campaign)
+
+        next = $.getJSON('/api/fetch_promo', {
+            link: fullname,
+            campaign: campaign
+        }).pipe(function(resp) {
+            $.handleResponse('fetch_promo')(resp)
+            return listing.find('.id-' + fullname)
+        })
+    }
+
+    $.when(next).done(_.bind(function(next) {
+        // size the rank element so that spotlight box
+        // items line up with the main page listing
+        next.find('.rank')
+            .width($('#siteTable .rank').width())
+            .end()
+
+        visible.hide()
+        next.show()
+
+        this.lineup.pos = nextPos
+        this.help(next)
+    }, this))
+}
+
+r.spotlight.next = $.proxy(r.spotlight, '_advance', 1)
+r.spotlight.prev = $.proxy(r.spotlight, '_advance', -1)
+
+r.spotlight.help = function(thing) {
     var help = $('#spotlight-help')
 
     if (!help.length) {
@@ -86,9 +138,9 @@ r.spotlight.help = function(type) {
 
     help.data('HelpBubble').hide(function() {
         help.find('.help-section').hide()
-        if (type == 'promoted') {
+        if (thing.hasClass('promoted')) {
             help.find('.help-promoted').show()
-        } else if (type == 'interestbar') {
+        } else if (thing.hasClass('interestbar')) {
             help.find('.help-interestbar').show()
         } else {
             help.find('.help-organic').show()
@@ -100,15 +152,12 @@ r.spotlight.weighted_lottery = function(weights) {
     var seed_rand = Math.random(),
         t = 0
 
-    $.debug('random: ' + seed_rand)
     for (var name in weights) {
         weight = weights[name]
         t += weight
-        $.debug(name + ': ' + weight)
         if (t > seed_rand) {
-            $.debug('picked ' + name)
             return name
         }
     }
-    $.debug('whoops, fell through!')
+    r.warn('weighted_lottery fell through!')
 }

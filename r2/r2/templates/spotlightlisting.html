@@ -33,8 +33,6 @@
     %for tup in thing.links:
       %if tup.link in thing.lookup:
         ${unsafe(thing.lookup[tup.link].render(display=False))}
-      %else:
-        <div class="thing id-${tup.link} stub" style="display:none"></div>
       %endif
     %endfor
   %endif
@@ -46,7 +44,8 @@
   %endif
 
   <div class="nextprev">
-    <button class="arrow next" onclick="r.spotlight.shuffle()">next</button>
+    <button class="arrow prev">${_("prev")}</button>
+    <button class="arrow next">${_("next")}</button>
   </div>
 
   <div class="help help-hoverable">
@@ -92,7 +91,7 @@
     </div>
   </div>
   <script>
-    r.spotlight.init(
+    r.spotlight.setup(
       ${unsafe(json.dumps(thing.links))},
       ${unsafe(json.dumps(thing.interestbar_prob))},
       ${unsafe(json.dumps(thing.promotion_prob))}
