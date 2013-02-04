@@ -1355,7 +1355,16 @@ def run_commentstree(qname="commentstree_q", limit=100):
                                         data = True, return_dict = False)
         print 'Processing %r' % (comments,)
 
-        add_comments(comments)
+        # when fastlaning a thread, we may need to have this qproc ignore
+        # messages that were put into the non-fastlane queue and are causing
+        # both to back up. a full recompute of the old thread will fix these
+        # missed messages.
+        links = Link._byID([com.link_id for com in comments], data=True)
+        comments = [com for com in comments
+                    if links[com.link_id].skip_commentstree_q != qname]
+
+        if comments:
+            add_comments(comments)
 
     amqp.handle_items(qname, _run_commentstree, limit = limit)
 

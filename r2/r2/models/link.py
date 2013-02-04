@@ -74,6 +74,7 @@ class Link(Thing, Printable):
                      comment_tree_version=1,
                      comment_tree_id=0,
                      contest_mode=False,
+                     skip_commentstree_q="",
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
