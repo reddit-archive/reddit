@@ -32,6 +32,9 @@ r.analytics = {
                     sponsorship = thing.data('sponsorship'),
                     campaign = thing.data('cid')
 
+                if (!fullname)
+                    return
+
                 if (sponsorship)
                     fullname += '_' + sponsorship
 
@@ -62,6 +65,9 @@ r.analytics = {
     fetchTrackersOrFirePixel: function(e) {
         var target = $(e.target),
             fullname = target.data('fullname')
+
+        if (!fullname)
+            return
 
         if (fullname in this.trackers) {
             this.fireTrackingPixel(target)
