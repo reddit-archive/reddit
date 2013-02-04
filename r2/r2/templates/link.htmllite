@@ -37,6 +37,12 @@
   %endif
 </%def>
 
+<%def name="hide_if_appropriate(state)">
+  %if thing.like_cls != state:
+   ${optionalstyle("display: none;")}
+  %endif
+</%def>
+
 <%def name="entry()">
 <% 
    from r2.lib.strings import Score
@@ -96,13 +102,13 @@
       <%
        score_dislikes, score_unvoted, score_likes = thing.display_score
        %>
-      <span class="score dislikes">
+      <span class="score dislikes" ${hide_if_appropriate('dislikes')}>
          ${score_dislikes}
       </span>
-      <span class="score unvoted">
+      <span class="score unvoted" ${hide_if_appropriate('unvoted')}>
          ${score_unvoted}
       </span>
-      <span class="score likes">
+      <span class="score likes" ${hide_if_appropriate('likes')}>
          ${score_likes}
       </span>
       &#32;|&#32;
