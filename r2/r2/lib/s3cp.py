@@ -40,7 +40,9 @@ def send_file(bucketname, filename, content, content_type='text/plain', never_ex
 
     # TODO: add ACL support instead of always using public-read
 
-    connection = S3Connection(KEY_ID, SECRET_KEY)
+    # the "or None" business is so that a blank string becomes None to cause
+    # boto to look for credentials in other places.
+    connection = S3Connection(KEY_ID or None, SECRET_KEY or None)
     bucket = connection.get_bucket(bucketname, validate=False)
     k = bucket.new_key(filename)
 
