@@ -5,6 +5,12 @@ r.setup = function(config) {
     // Set the legacy config global
     reddit = config
 
+    _.each(['debug', 'warn', 'error'], function(name) {
+        r[name] = config.debug && window.console && console[name]
+                ? _.bind(console[name], console)
+                : function() {}
+    })
+
     r.config.currentOrigin = location.protocol+'//'+location.host
     r.analytics.breadcrumbs.init()
 }
