@@ -32,7 +32,7 @@ r.analytics = {
                     sponsorship = thing.data('sponsorship'),
                     campaign = thing.data('cid')
 
-                if (!fullname)
+                if (!fullname || fullname in r.analytics.trackers)
                     return
 
                 if (sponsorship)
@@ -45,9 +45,7 @@ r.analytics = {
                     fullname += '-' + r.config.post_site
 
                 thing.data('trackingName', fullname)
-
-                if (!(fullname in r.analytics.trackers))
-                    fullnames.push(fullname)
+                fullnames.push(fullname)
             })
 
         $.ajax({
