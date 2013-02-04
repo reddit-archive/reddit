@@ -1025,10 +1025,10 @@ class _DefaultSR(FakeSubreddit):
     header = g.default_header_url
 
     def _get_sr_ids(self):
-        if not hasattr(self, "_cached_sr_ids"):
+        if not c.defaultsr_cached_sr_ids:
             user = c.user if c.user_is_loggedin else None
-            self._cached_sr_ids = Subreddit.user_subreddits(user)
-        return self._cached_sr_ids
+            c.defaultsr_cached_sr_ids = Subreddit.user_subreddits(user)
+        return c.defaultsr_cached_sr_ids
 
     def keep_for_rising(self, sr_id):
         return sr_id in self._get_sr_ids()
