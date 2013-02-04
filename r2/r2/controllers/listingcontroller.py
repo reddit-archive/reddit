@@ -335,11 +335,13 @@ class HotController(FixListing, ListingController):
                                              if has_subscribed else
                                              'spotlight_interest_nosub_p']
             interestbar = InterestBar(has_subscribed)
+            promotion_prob = 0.5 if c.user_is_loggedin else 1.
 
             s = SpotlightListing(organic_links=organic_links,
                                  promoted_links=promoted_links,
                                  interestbar=interestbar,
                                  interestbar_prob=interestbar_prob,
+                                 promotion_prob=promotion_prob,
                                  max_num = self.listing_obj.max_num,
                                  max_score = self.listing_obj.max_score).listing()
             return s
