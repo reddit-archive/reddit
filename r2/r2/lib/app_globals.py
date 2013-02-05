@@ -107,7 +107,6 @@ class Globals(object):
             'max_comments',
             'max_comments_gold',
             'num_default_reddits',
-            'num_query_queue_workers',
             'max_sr_images',
             'num_serendipity',
             'sr_dropdown_threshold',
@@ -193,10 +192,6 @@ class Globals(object):
                  'QUORUM': CL_QUORUM
              },
         },
-
-        ConfigValue.days: [
-            'MODWINDOW',
-        ],
 
         config_gold_price: [
             'gold_month_price',
