@@ -274,24 +274,12 @@ class MergedCachedResults(object):
             x.update()
 
 def make_results(query, filter = filter_identity):
-    if g.use_query_cache:
-        return CachedResults(query, filter)
-    else:
-        query.prewrap_fn = filter
-        return query
+    return CachedResults(query, filter)
 
 def merge_results(*results):
     if not results:
         return []
-    if g.use_query_cache:
-        return MergedCachedResults(results)
-    else:
-        assert all((results[0]._sort == r._sort
-                    and results[0].prewrap_fn == r.prewrap_fn)
-                   for r in results)
-        m = Merge(results, sort = results[0]._sort)
-        m.prewrap_fn = results[0].prewrap_fn
-        return m
+    return MergedCachedResults(results)
 
 def migrating_cached_query(model, filter_fn=filter_identity):
     """Returns a CachedResults object that has a new-style cached query
@@ -513,7 +501,6 @@ def rel_query(rel, thing_id, name, filters = []):
                    rel.c._name == name,
                    sort = desc('_date'),
                    eager_load = True,
-                   thing_data = not g.use_query_cache
                    )
     if filters:
         q._filter(*filters)
@@ -770,9 +757,6 @@ def add_queries(queries, insert_items=None, delete_items=None, foreground=False)
     """Adds multiple queries to the query queue. If insert_items or
        delete_items is specified, the query may not need to be
        recomputed against the database."""
-    if not g.write_query_queue:
-        return
-
     for q in queries:
         if insert_items and q.can_insert():
             log.debug("Inserting %s into query %s" % (insert_items, q))

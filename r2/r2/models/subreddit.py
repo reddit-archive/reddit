@@ -893,7 +893,6 @@ class FriendsSR(FakeSubreddit):
 
     def get_links(self, sort, time):
         from r2.lib.db import queries
-        from r2.models import Link
 
         if not c.user_is_loggedin:
             raise UserRequiredException
@@ -903,31 +902,21 @@ class FriendsSR(FakeSubreddit):
         if not friends:
             return []
 
-        if g.use_query_cache:
-            # with the precomputer enabled, this Subreddit only supports
-            # being sorted by 'new'. it would be nice to have a
-            # cleaner UI than just blatantly ignoring their sort,
-            # though
-            sort = 'new'
-            time = 'all'
+        # with the precomputer enabled, this Subreddit only supports
+        # being sorted by 'new'. it would be nice to have a
+        # cleaner UI than just blatantly ignoring their sort,
+        # though
+        sort = 'new'
+        time = 'all'
 
-            friends = Account._byID(friends, return_dict=False)
+        friends = Account._byID(friends, return_dict=False)
 
-            crs = [queries.get_submitted(friend, sort, time)
-                   for friend in friends]
-            return queries.MergedCachedResults(crs)
-
-        else:
-            q = Link._query(Link.c.author_id == friends,
-                            sort = queries.db_sort(sort),
-                            data = True)
-            if time != 'all':
-                q._filter(queries.db_times[time])
-            return q
+        crs = [queries.get_submitted(friend, sort, time)
+               for friend in friends]
+        return queries.MergedCachedResults(crs)
 
     def get_all_comments(self):
         from r2.lib.db import queries
-        from r2.models import Comment
 
         if not c.user_is_loggedin:
             raise UserRequiredException
@@ -937,26 +926,20 @@ class FriendsSR(FakeSubreddit):
         if not friends:
             return []
 
-        if g.use_query_cache:
-            # with the precomputer enabled, this Subreddit only supports
-            # being sorted by 'new'. it would be nice to have a
-            # cleaner UI than just blatantly ignoring their sort,
-            # though
-            sort = 'new'
-            time = 'all'
+        # with the precomputer enabled, this Subreddit only supports
+        # being sorted by 'new'. it would be nice to have a
+        # cleaner UI than just blatantly ignoring their sort,
+        # though
+        sort = 'new'
+        time = 'all'
 
-            friends = Account._byID(friends,
-                                    return_dict=False)
+        friends = Account._byID(friends,
+                                return_dict=False)
 
-            crs = [queries.get_comments(friend, sort, time)
-                   for friend in friends]
-            return queries.MergedCachedResults(crs)
+        crs = [queries.get_comments(friend, sort, time)
+               for friend in friends]
+        return queries.MergedCachedResults(crs)
 
-        else:
-            q = Comment._query(Comment.c.author_id == friends,
-                               sort = desc('_date'),
-                               data = True)
-            return q
 
 class AllSR(FakeSubreddit):
     name = 'all'
@@ -1038,23 +1021,15 @@ class _DefaultSR(FakeSubreddit):
 
     def get_links_sr_ids(self, sr_ids, sort, time):
         from r2.lib.db import queries
-        from r2.models import Link
 
         if not sr_ids:
             return []
         else:
             srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
 
-        if g.use_query_cache:
-            results = [queries.get_links(sr, sort, time)
-                       for sr in srs]
-            return queries.merge_results(*results)
-        else:
-            q = Link._query(Link.c.sr_id == sr_ids,
-                            sort = queries.db_sort(sort), data=True)
-            if time != 'all':
-                q._filter(queries.db_times[time])
-            return q
+        results = [queries.get_links(sr, sort, time)
+                   for sr in srs]
+        return queries.merge_results(*results)
 
     def get_links(self, sort, time):
         sr_ids = self._get_sr_ids()

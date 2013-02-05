@@ -355,8 +355,8 @@ class HotController(FixListing, ListingController):
 
     def query(self):
         #no need to worry when working from the cache
-        if g.use_query_cache or isinstance(c.site, DefaultSR):
-            self.fix_listing = False
+        # TODO: just remove this then since we're always using the query cache
+        self.fix_listing = False
 
         if isinstance(c.site, DefaultSR):
             if c.user_is_loggedin:
@@ -373,13 +373,6 @@ class HotController(FixListing, ListingController):
 
         elif isinstance(c.site, MultiReddit):
             return normalized_hot(c.site.kept_sr_ids, obey_age_limit=False)
-
-        #if not using the query_cache we still want cached front pages
-        elif (not g.use_query_cache
-              and not isinstance(c.site, FakeSubreddit)
-              and self.after is None
-              and self.count == 0):
-            return get_hot([c.site])
         else:
             return c.site.get_links('hot', 'all')
 

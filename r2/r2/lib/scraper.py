@@ -1789,8 +1789,7 @@ def submit_all():
         except Exception, e:
             print e
 
-        if g.write_query_queue:
-            queries.new_link(l)
+        queries.new_link(l)
 
         links.append(l)
 

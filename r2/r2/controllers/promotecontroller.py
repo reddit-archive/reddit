@@ -572,8 +572,7 @@ class PromoteController(ListingController):
                     msg = msg % d
                     item, inbox_rel = Message._new(c.user, user,
                                                    subj, msg, request.ip)
-                    if g.write_query_queue:
-                        queries.new_message(item, inbox_rel)
+                    queries.new_message(item, inbox_rel)
 
 
     @validatedForm(VSponsor('container'),

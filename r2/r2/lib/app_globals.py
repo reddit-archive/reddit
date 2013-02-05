@@ -141,8 +141,6 @@ class Globals(object):
             'template_debug',
             'reload_templates',
             'uncompressedJS',
-            'use_query_cache',
-            'write_query_queue',
             'css_killswitch',
             'db_create_tables',
             'disallow_db_writes',
@@ -300,12 +298,6 @@ class Globals(object):
         # AMQP is required
         if not self.amqp_host:
             raise ValueError("amqp_host not set in the .ini")
-
-        # This requirement doesn't *have* to be a requirement, but there are
-        # bugs at the moment that will pop up if you violate it
-        # XXX: get rid of these options. new query cache is always on.
-        if self.write_query_queue and not self.use_query_cache:
-            raise Exception("write_query_queue requires use_query_cache")
 
         if not self.cassandra_seeds:
             raise ValueError("cassandra_seeds not set in the .ini")
