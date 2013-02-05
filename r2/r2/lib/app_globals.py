@@ -136,7 +136,6 @@ class Globals(object):
 
         ConfigValue.bool: [
             'debug',
-            'translator',
             'log_start',
             'sqlprinting',
             'template_debug',

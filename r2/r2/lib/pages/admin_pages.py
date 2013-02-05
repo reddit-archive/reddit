@@ -48,9 +48,6 @@ class AdminPage(Reddit):
         if c.user_is_admin:
             buttons = []
 
-            if g.translator:
-                buttons.append(NavButton(menu.i18n, "i18n"))
-
             buttons.append(NavButton(menu.awards, "ads"))
             buttons.append(NavButton(menu.awards, "awards"))
             buttons.append(NavButton(menu.errors, "error log"))
