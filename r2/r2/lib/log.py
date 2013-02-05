@@ -20,26 +20,32 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import g
-from r2.lib import amqp
-from datetime import datetime
-import cPickle as pickle
+import cPickle
 import traceback
 
-tz = g.display_tz
+from datetime import datetime
 
-Q = 'log_q'
+from pylons import g
+
+
+QUEUE_NAME = 'log_q'
+
 
 def _default_dict():
-    return dict(time=datetime.now(tz),
+    return dict(time=datetime.now(g.display_tz),
                 host=g.reddit_host,
                 port="default",
                 pid=g.reddit_pid)
+
 
 # e_value and e should actually be the same thing.
 # e_type is the just the type of e_value
 # So e and e_traceback are the interesting ones.
 def log_exception(e, e_type, e_value, e_traceback):
+    """Send an exception to log_q for error reporting."""
+
+    from r2.lib import amqp
+
     d = _default_dict()
 
     d['type'] = 'exception'
@@ -49,10 +55,20 @@ def log_exception(e, e_type, e_value, e_traceback):
     s = str(e)
     d['exception_desc'] = s[:10000]
 
-    amqp.add_item(Q, pickle.dumps(d))
+    amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
+
 
 def log_text(classification, text=None, level="info"):
+    """Send some log text to log_q for appearance in the streamlog.
+
+    This is deprecated. All logging should be done through python's stdlib
+    logging library.
+
+    """
+
+    from r2.lib import amqp
     from r2.lib.filters import _force_utf8
+
     if text is None:
         text = classification
 
@@ -66,4 +82,4 @@ def log_text(classification, text=None, level="info"):
     d['text'] = _force_utf8(text)
     d['classification'] = classification
 
-    amqp.add_item(Q, pickle.dumps(d))
+    amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
