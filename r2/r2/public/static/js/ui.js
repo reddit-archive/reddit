@@ -212,7 +212,7 @@ r.ui.PermissionEditor = function(el) {
     var permission_type = params.type
     var name = params.name
     this.form_id = permission_type + "-permissions-" + name
-    this.permission_info = r.config.permissions.info[permission_type]
+    this.permission_info = r.strings.permissions.info[permission_type]
     this.sorted_perm_keys = $.map(this.permission_info,
                                   function(v, k) { return k })
     this.sorted_perm_keys.sort()
@@ -235,7 +235,7 @@ r.ui.PermissionEditor.init = function() {
         })
     }
     activate('body')
-    for (var permission_type in r.config.permissions.info) {
+    for (var permission_type in r.strings.permissions.info) {
         $('.' + permission_type + '-table')
             .on('insert-row', 'tr', function(e) { activate(this) })
     }
@@ -290,7 +290,7 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
                 update()
             })
             $label.append(
-                document.createTextNode(r.config.permissions.all_msg))
+                document.createTextNode(r.strings.permissions.all_msg))
         } else if (info) {
             $input.change(update)
             $label.append(document.createTextNode(info.title))
@@ -335,7 +335,7 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         var info = this.permission_info[perm]
         var text
         if (perm == "all") {
-            text = r.config.permissions.all_msg
+            text = r.strings.permissions.all_msg
         } else if (info) {
             text = info.title
         } else {
@@ -388,7 +388,7 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         }
         if (!spans.length) {
             spans.push($('<span class="permission-bit">')
-                .text(r.config.permissions.none_msg)
+                .text(r.strings.permissions.none_msg)
                 .addClass("none"))
         }
         var $new_summary = $('<div class="permission-summary">')

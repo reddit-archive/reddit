@@ -169,6 +169,13 @@ class StringsSource(Source):
         self.keys = keys
         self.prepend = prepend
 
+    @staticmethod
+    def _encoder(obj):
+        from r2.lib import strings, translation
+        if isinstance(obj, strings.StringHandler):
+            return obj.string_dict
+        raise TypeError
+
     def get_source(self):
         from pylons.i18n import get_lang
         from r2.lib import strings, translation
@@ -184,7 +191,7 @@ class StringsSource(Source):
         else:
             data = dict(strings.strings)
 
-        output = self.prepend + json.dumps(data) + "\n"
+        output = self.prepend + json.dumps(data, default=self._encoder) + "\n"
 
         if self.lang:
             translation.set_lang(old_lang)

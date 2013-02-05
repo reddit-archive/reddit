@@ -33,6 +33,7 @@ from pylons.i18n import _, ungettext, get_lang
 import random
 import babel.numbers
 
+from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.translation import set_lang
 
 __all__ = ['StringHandler', 'strings', 'PluralManager', 'plurals',
@@ -192,6 +193,15 @@ Note: there are a couple of places outside of your subreddit where someone can c
     missing_credit_city = _("missing city"),
     missing_credit_state = _("missing state or province"),
     missing_credit_zip = _("missing zip code"),
+
+    permissions = dict(
+        info=dict(
+            moderator=ModeratorPermissionSet.info,
+            moderator_invite=ModeratorPermissionSet.info,
+        ),
+        all_msg=_("full permissions"),
+        none_msg=_("no permissions"),
+    ),
 )
 
 class StringHandler(object):
@@ -213,7 +223,7 @@ class StringHandler(object):
         if isinstance(rval, (str, unicode)):
             return _(rval)
         elif isinstance(rval, dict):
-            return dict((k, _(v)) for k, v in rval.iteritems())
+            return StringHandler(**rval)
         else:
             raise AttributeError
     

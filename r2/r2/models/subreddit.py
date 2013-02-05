@@ -37,6 +37,7 @@ from r2.lib.db.userrel import UserRel
 from r2.lib.db.operators import lower, or_, and_, desc
 from r2.lib.errors import UserRequiredException
 from r2.lib.memoize import memoize
+from r2.lib.permissions import ModeratorPermissionSet
 from r2.lib.utils import tup, interleave_lists, last_modified_multi, flatten
 from r2.lib.utils import timeago, summarize_markdown
 from r2.lib.cache import sgm
@@ -56,81 +57,6 @@ from r2.lib.utils import set_last_modified
 from r2.models.wiki import WikiPage
 import os.path
 import random
-
-class PermissionSet(dict):
-    ALL = 'all'
-
-    info = None
-
-    def __init__(self, *args, **kwargs):
-        super(PermissionSet, self).__init__(*args, **kwargs)
-
-    @classmethod
-    def loads(cls, encoded, validate=False):
-        if not encoded:
-            return cls()
-        result = cls(((term[1:], term[0] == '+')
-                     for term in encoded.split(',')))
-        if result.get(cls.ALL) == False:
-            del result[cls.ALL]
-        if validate and not result.is_valid():
-            raise ValueError
-        return result
-
-    def dumps(self):
-        if self.is_superuser():
-            return '+all'
-        return ','.join('-+'[bool(v)] + k for k, v in sorted(self.iteritems()))
-
-    def is_superuser(self):
-        return bool(super(PermissionSet, self).get(self.ALL))
-
-    def is_valid(self):
-        if not self.info:
-            return False
-        for k in self:
-            if k != self.ALL and k not in self.info:
-                return False
-        return True
-
-    def get(self, key, default=None):
-        if self.info and self.is_superuser():
-            return True if key in self.info else default
-        return super(PermissionSet, self).get(key, default)
-
-    def __getitem__(self, key):
-        if self.info and self.is_superuser():
-            return key in self.info
-        return super(PermissionSet, self).get(key, False)
-
-
-class ModeratorPermissionSet(PermissionSet):
-    info = dict(
-        access=dict(
-            title=_('access'),
-            description=_('manage the lists of contributors and banned users'),
-        ),
-        config=dict(
-            title=_('config'),
-            description=_('edit settings, sidebar, css, and images'),
-        ),
-        flair=dict(
-            title=_('flair'),
-            description=_('manage user flair, link flair, and flair templates'),
-        ),
-        posts=dict(
-            title=_('posts'),
-            description=_(
-                'use the approve, remove, spam, distinguish, and nsfw buttons'),
-        ),
-    )
-
-    @classmethod
-    def loads(cls, encoded, **kwargs):
-        if encoded is None:
-            return cls(all=True)
-        return super(ModeratorPermissionSet, cls).loads(encoded, **kwargs)
-
 
 class SubredditExists(Exception): pass
 
