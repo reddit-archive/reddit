@@ -73,8 +73,6 @@ def load_controllers():
     from wiki import WikiController
     from wiki import WikiApiController
 
-    from querycontroller import QueryController
-
     from api import ApiController
     from api import ApiminimalController
     from api_docs import ApidocsController

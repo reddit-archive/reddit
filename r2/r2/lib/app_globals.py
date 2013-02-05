@@ -142,7 +142,6 @@ class Globals(object):
             'template_debug',
             'reload_templates',
             'uncompressedJS',
-            'enable_doquery',
             'use_query_cache',
             'write_query_queue',
             'css_killswitch',
