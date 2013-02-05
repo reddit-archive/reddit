@@ -61,6 +61,11 @@ def update_static_names(names_file, files):
         if not os.path.islink(path):
             mangled_path = os.path.join(base, mangled_name)
             shutil.move(path, mangled_path)
+            # When on NFS, cp has a bad habit of turning our symlinks into
+            # hardlinks. shutil.move will then call rename which will noop in
+            # the case of hardlinks to the same inode.
+            if os.path.exists(path):
+                os.unlink(path)
             os.symlink(mangled_name, path)
 
     json_enc = json.JSONEncoder(indent=2, sort_keys=True)
