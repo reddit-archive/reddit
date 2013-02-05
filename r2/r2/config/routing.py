@@ -209,10 +209,10 @@ def make_map():
 
     mc('/wiki/create/*page', controller='wiki', action='wiki_create')
     mc('/wiki/edit/*page', controller='wiki', action='wiki_revise')
+    mc('/wiki/revisions', controller='wiki', action='wiki_recent')
     mc('/wiki/revisions/*page', controller='wiki', action='wiki_revisions')
     mc('/wiki/settings/*page', controller='wiki', action='wiki_settings')
     mc('/wiki/discussions/*page', controller='wiki', action='wiki_discussions')
-    mc('/wiki/revisions', controller='wiki', action='wiki_recent')
     mc('/wiki/pages', controller='wiki', action='wiki_listing')
 
     mc('/api/wiki/create', controller='wikiapi', action='wiki_create')
