@@ -32,6 +32,8 @@ import subprocess
 import sys
 
 from sqlalchemy import engine, event
+
+import cssutils
 import pytz
 
 from r2.config import queues
@@ -143,7 +145,6 @@ class Globals(object):
             'css_killswitch',
             'db_create_tables',
             'disallow_db_writes',
-            'exception_logging',
             'disable_ratelimit',
             'amqp_logging',
             'read_only_mode',
@@ -157,6 +158,7 @@ class Globals(object):
             'static_secure_pre_gzipped',
             'trust_local_proxies',
             'shard_link_vote_queues',
+            'old_uwsgi_load_logging_config',
         ],
 
         ConfigValue.tuple: [
@@ -323,16 +325,39 @@ class Globals(object):
         else:
             self.static_names = {}
 
-        #setup the logger
-        self.log = logging.getLogger('reddit')
-        self.log.addHandler(logging.StreamHandler())
-        if self.debug:
-            self.log.setLevel(logging.DEBUG)
-        else:
-            self.log.setLevel(logging.INFO)
+        # if we're a web app running on old uwsgi, force load the logging
+        # config from the file since uwsgi didn't do it for us
+        if not self.running_as_script and self.old_uwsgi_load_logging_config:
+            logging.config.fileConfig(self.config["__file__"])
 
-        # set log level for pycountry which is chatty
-        logging.getLogger('pycountry.db').setLevel(logging.CRITICAL)
+        # make python warnings go through the logging system
+        logging.captureWarnings(capture=True)
+
+        log = logging.getLogger('reddit')
+
+        # when we're a script (paster run) just set up super simple logging
+        if self.running_as_script:
+            log.setLevel(logging.INFO)
+            log.addHandler(logging.StreamHandler())
+
+        # if in debug mode, override the logging level to DEBUG
+        if self.debug:
+            log.setLevel(logging.DEBUG)
+
+        # attempt to figure out which pool we're in and add that to the
+        # LogRecords.
+        try:
+            with open("/etc/ec2_asg", "r") as f:
+                pool = f.read().strip()
+            # clean up the pool name since we're putting stuff after "-"
+            pool = pool.partition("-")[0]
+        except IOError:
+            pool = "reddit-app"
+        self.log = logging.LoggerAdapter(log, {"pool": pool})
+
+        # make cssutils use the real logging system
+        csslog = logging.getLogger("cssutils")
+        cssutils.log.setLog(csslog)
 
         if not self.media_domain:
             self.media_domain = self.domain

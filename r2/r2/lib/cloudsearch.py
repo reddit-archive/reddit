@@ -421,8 +421,8 @@ class CloudSearchUploader(object):
                 if not self.use_safe_get:
                     raise
                 else:
-                    g.log.warn("Ignoring problem on thing %r.\n\n%r",
-                               thing, e)
+                    g.log.warning("Ignoring problem on thing %r.\n\n%r",
+                                  thing, e)
         return batch
 
     def should_index(self, thing):
@@ -912,7 +912,7 @@ class CloudSearchQuery(object):
 
         warnings = response['info'].get('messages', [])
         for warning in warnings:
-            g.log.warn("%(code)s (%(severity)s): %(message)s" % warning)
+            g.log.warning("%(code)s (%(severity)s): %(message)s" % warning)
 
         hits = response['hits']['found']
         docs = [doc['id'] for doc in response['hits']['hit']]

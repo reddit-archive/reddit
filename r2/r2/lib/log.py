@@ -21,11 +21,11 @@
 ###############################################################################
 
 import cPickle
-import traceback
 
 from datetime import datetime
 
 from pylons import g
+from weberror.reporter import Reporter
 
 
 QUEUE_NAME = 'log_q'
@@ -36,26 +36,6 @@ def _default_dict():
                 host=g.reddit_host,
                 port="default",
                 pid=g.reddit_pid)
-
-
-# e_value and e should actually be the same thing.
-# e_type is the just the type of e_value
-# So e and e_traceback are the interesting ones.
-def log_exception(e, e_type, e_value, e_traceback):
-    """Send an exception to log_q for error reporting."""
-
-    from r2.lib import amqp
-
-    d = _default_dict()
-
-    d['type'] = 'exception'
-    d['traceback'] = traceback.extract_tb(e_traceback)
-
-    d['exception_type'] = e.__class__.__name__
-    s = str(e)
-    d['exception_desc'] = s[:10000]
-
-    amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
 
 
 def log_text(classification, text=None, level="info"):
@@ -83,3 +63,68 @@ def log_text(classification, text=None, level="info"):
     d['classification'] = classification
 
     amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
+
+
+class LogQueueErrorReporter(Reporter):
+    """ErrorMiddleware-compatible reporter that writes exceptions to log_q.
+
+    The log_q queue processor then picks these up, updates the /admin/errors
+    overview, and decides whether or not to send out emails about them.
+
+    """
+
+    @staticmethod
+    def _operational_exceptions():
+        """Get a list of exceptions caused by transient operational stuff.
+
+        These errors aren't terribly useful to track in /admin/errors because
+        they aren't directly bugs in the code but rather symptoms of
+        operational issues.
+
+        """
+
+        import _pylibmc
+        import sqlalchemy.exc
+        import pycassa.pool
+        import r2.lib.db.thing
+        import r2.lib.lock
+
+        return (
+            _pylibmc.MemcachedError,
+            r2.lib.db.thing.NotFound,
+            r2.lib.lock.TimeoutExpired,
+            sqlalchemy.exc.OperationalError,
+            sqlalchemy.exc.IntegrityError,
+            pycassa.pool.AllServersUnavailable,
+            pycassa.pool.NoConnectionAvailable,
+            pycassa.pool.MaximumRetryException,
+        )
+
+    def report(self, exc_data):
+        from r2.lib import amqp
+
+        if issubclass(exc_data.exception_type, self._operational_exceptions()):
+            return
+
+        d = _default_dict()
+        d["type"] = "exception"
+        d["exception_type"] = exc_data.exception_type.__name__
+        d["exception_desc"] = exc_data.exception_value
+        # use the format that log_q expects; same as traceback.extract_tb
+        d["traceback"] = [(f.filename, f.lineno, f.name,
+                           f.get_source_line().strip())
+                          for f in exc_data.frames]
+
+        amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
+
+
+class LoggingErrorReporter(Reporter):
+    """ErrorMiddleware-compatible reporter that writes exceptions to g.log."""
+
+    def report(self, exc_data):
+        text, extra = self.format_text(exc_data)
+        # TODO: send this all in one burst so that error reports aren't
+        # interleaved / individual lines aren't dropped. doing so will take
+        # configuration on the syslog side and potentially in apptail as well
+        for line in text.splitlines():
+            g.log.warning(line)

@@ -20,10 +20,6 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-import _pylibmc
-import pycassa.pool
-import sqlalchemy.exc
-
 from pylons import c, g, request, session, config, response
 from pylons.controllers import WSGIController
 from pylons.i18n import N_, _, ungettext, get_lang
@@ -31,25 +27,11 @@ from webob.exc import HTTPException, status_map
 from r2.lib.filters import spaceCompress, _force_unicode
 from r2.lib.template_helpers import get_domain
 from utils import storify, string2js, read_http_date
-from r2.lib.log import log_exception
-import r2.lib.db.thing
-import r2.lib.lock
 
 import re, hashlib
 from urllib import quote
 import urllib2
 import sys
-
-
-OPERATIONAL_EXCEPTIONS = (_pylibmc.MemcachedError,
-                          r2.lib.db.thing.NotFound,
-                          r2.lib.lock.TimeoutExpired,
-                          sqlalchemy.exc.OperationalError,
-                          sqlalchemy.exc.IntegrityError,
-                          pycassa.pool.AllServersUnavailable,
-                          pycassa.pool.NoConnectionAvailable,
-                          pycassa.pool.MaximumRetryException,
-                         )
 
 
 #TODO hack
@@ -141,18 +123,8 @@ class BaseController(WSGIController):
 
             request.environ['pylons.routes_dict']['action_name'] = action
             request.environ['pylons.routes_dict']['action'] = handler_name
-                    
-        try:
-            res = WSGIController.__call__(self, environ, start_response)
-        except Exception as e:
-            if g.exception_logging and not isinstance(e, OPERATIONAL_EXCEPTIONS):
-                try:
-                    log_exception(e, *sys.exc_info())
-                except Exception as f:
-                    print "log_exception() freaked out: %r" % f
-                    print "sorry for breaking the stack trace:"
-            raise
-        return res
+
+        return WSGIController.__call__(self, environ, start_response)
 
     def pre(self): pass
     def post(self): pass
