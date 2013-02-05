@@ -118,7 +118,7 @@ class Globals(object):
             'sr_banned_quota',
             'sr_wikibanned_quota',
             'sr_wikicontributor_quota',
-            'sr_moderator_quota',
+            'sr_moderator_invite_quota',
             'sr_contributor_quota',
             'sr_quota_time',
             'wiki_keep_recent_days',
