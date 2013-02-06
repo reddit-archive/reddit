@@ -165,6 +165,8 @@ r.analytics = {
 
 r.analytics.breadcrumbs = {
     selector: '.thing, .side, .sr-list, .srdrop, .tagline, .md, .organic-listing, .gadget, .sr-interest-bar, a, button, input',
+    maxLength: 2,
+    sendLength: 2,
 
     init: function() {
         this.hasSessionStorage = this._checkSessionStorage()
@@ -231,7 +233,7 @@ r.analytics.breadcrumbs = {
         }
 
         this.data.unshift(cur)
-        this.data = this.data.slice(0, 2)
+        this.data = this.data.slice(0, this.maxLength)
         this.store()
     },
 
@@ -247,7 +249,7 @@ r.analytics.breadcrumbs = {
 
     toParams: function() {
         params = []
-        for (var i = 0; i < this.data.length; i++) {
+        for (var i = 0; i < this.sendLength; i++) {
             _.each(this.data[i], function(v, k) {
                 params['c'+i+'_'+k] = v
             })
