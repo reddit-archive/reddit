@@ -18,6 +18,6 @@ Alternatively, refer to our [Install Guide](https://github.com/reddit/reddit/wik
 
 ### APIs
 
-To learn more about reddit's API, check out our [Automated API documentation](http://www.reddit.com/dev/api), and the [API wiki page](https://github.com/reddit/reddit/wiki/API). Please use a unique User-Agent string and take care to abide by our [API rules](https://github.com/reddit/reddit/wiki/API#wiki-rules).
+To learn more about reddit's API, check out our [automated API documentation](http://www.reddit.com/dev/api) and the [API wiki page](https://github.com/reddit/reddit/wiki/API). Please use a unique User-Agent string and take care to abide by our [API rules](https://github.com/reddit/reddit/wiki/API#wiki-rules).
 
 Happy hacking!
