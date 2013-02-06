@@ -856,7 +856,9 @@ class MessageController(ListingController):
         elif self.where == 'moderator' and self.subwhere == 'unread':
             if c.default_sr:
                 srids = Subreddit.reverse_moderator_ids(c.user)
-                srs = Subreddit._byID(srids, data = False, return_dict = False)
+                srs = [sr for sr in Subreddit._byID(srids, data=False,
+                                                    return_dict=False)
+                       if sr.is_moderator_with_perms(c.user, 'mail')]
                 q = queries.get_unread_subreddit_messages_multi(srs)
             else:
                 q = queries.get_unread_subreddit_messages(c.site)
@@ -884,7 +886,9 @@ class MessageController(ListingController):
                      uri='/message/{where}',
                      uri_variants=['/message/inbox', '/message/unread', '/message/sent'])
     def GET_listing(self, where, mark, message, subwhere = None, **env):
-        if not (c.default_sr or c.site.is_moderator(c.user) or c.user_is_admin):
+        if not (c.default_sr
+                or c.site.is_moderator_with_perms(c.user, 'mail')
+                or c.user_is_admin):
             abort(403, "forbidden")
         if isinstance(c.site, MultiReddit):
             if not (c.user_is_admin or c.site.is_moderator(c.user)):

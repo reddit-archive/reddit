@@ -1258,7 +1258,7 @@ class Message(Thing, Printable):
                 return True
             elif self.sr_id:
                 sr = Subreddit._byID(self.sr_id)
-                is_moderator = sr.is_moderator(c.user)
+                is_moderator = sr.is_moderator_with_perms(c.user, 'mail')
                 # moderators can view messages on subreddits they moderate
                 if is_moderator:
                     return True
@@ -1710,8 +1710,10 @@ class ModeratorInbox(Relation(Subreddit, Message)):
         if not sr._loaded:
             sr._load()
 
-        moderators = Account._byID(sr.moderator_ids(), data=True,
-                                   return_dict=False)
+        mod_perms = sr.moderators_with_perms()
+        mod_ids = set(mod_id for mod_id, perms in mod_perms.iteritems()
+                      if perms.get('mail', False))
+        moderators = Account._byID(mod_ids, data=True, return_dict=False)
         for m in moderators:
             if obj.author_id != m._id and not getattr(m, 'modmsgtime', None):
                 m.modmsgtime = obj._date

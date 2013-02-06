@@ -83,6 +83,10 @@ class ModeratorPermissionSet(PermissionSet):
             title=_('flair'),
             description=_('manage user flair, link flair, and flair templates'),
         ),
+        mail=dict(
+            title=_('mail'),
+            description=_('read and reply to moderator mail'),
+        ),
         posts=dict(
             title=_('posts'),
             description=_(

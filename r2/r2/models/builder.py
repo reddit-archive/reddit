@@ -646,6 +646,7 @@ class TopCommentBuilder(CommentBuilder):
     def get_items(self, num = 10):
         final = CommentBuilder.get_items(self, num = num)
         return [ cm for cm in final if not cm.deleted ]
+
 class SrMessageBuilder(MessageBuilder):
     def __init__(self, sr, **kw):
         self.sr = sr

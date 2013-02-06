@@ -252,9 +252,10 @@ class Reddit(Templated):
                                      css_class="reddit-edit",
                                      dest="edit"))
 
-        buttons.append(NamedButton("modmail",
-                                   dest="message/inbox",
-                                   css_class="moderator-mail"))
+        if c.site.is_moderator_with_perms(c.user, 'mail'):
+            buttons.append(NamedButton("modmail",
+                                    dest="message/inbox",
+                                    css_class="moderator-mail"))
 
         if is_single_subreddit:
             if c.site.is_moderator_with_perms(c.user, 'access'):

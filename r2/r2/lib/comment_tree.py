@@ -357,13 +357,16 @@ def subreddit_messages(sr, update = False):
 def moderator_messages(sr_ids):
     from r2.models import Subreddit
 
+    srs = Subreddit._byID(sr_ids)
+    sr_ids = [sr_id for sr_id, sr in srs.iteritems()
+              if sr.is_moderator_with_perms(c.user, 'mail')]
+
     def multi_load_tree(sr_ids):
-        srs = Subreddit._byID(sr_ids, return_dict = False)
         res = {}
-        for sr in srs:
-            trees = subreddit_messages_nocache(sr)
+        for sr_id in sr_ids:
+            trees = subreddit_messages_nocache(srs[sr_id])
             if trees:
-                res[sr._id] = trees
+                res[sr_id] = trees
         return res
 
     res = sgm(g.permacache, sr_ids, miss_fn = multi_load_tree,

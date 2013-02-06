@@ -311,7 +311,7 @@ class _MessageBuilder(Builder):
 
         # m is wrapped at this time, so it should have an SR
         subreddit = getattr(m, "subreddit", None)
-        if subreddit and subreddit.is_moderator(c.user):
+        if subreddit and subreddit.is_moderator_with_perms(c.user, 'mail'):
             return True
 
         return False
