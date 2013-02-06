@@ -513,9 +513,6 @@ function updateEventHandlers(thing) {
             $(this).addClass("click");
             /* set the click cookie. */
             add_thing_to_cookie(this, "recentclicks2");
-            /* remember this as the last thing clicked */
-            var wasorganic = $(this).parents('.organic-listing').length > 0;
-            last_click(thing, wasorganic);
         });
 
     if (listing.filter(".organic-listing").length) {
@@ -542,65 +539,13 @@ function updateEventHandlers(thing) {
     }
 };
 
-function last_click(thing, organic) {
-  /* called with zero arguments, marks the last-clicked item on this
-     page (to which the user probably clicked the 'back' button in
-     their browser). Otherwise sets the last-clicked item to the
-     arguments passed */
-  var cookie = "last_thing";
-  if(thing) {
-    var data = {href: window.location.href, 
-                what: $(thing).thing_id(),
-                organic: organic};
-    $.cookie_write({name: cookie, data: data});
-  } else {
-    var current = $.cookie_read(cookie).data;
-    if(current && current.href == window.location.href) {
-      /* if they got there organically, make sure that it's in the
-         organic box */
-      var olisting = $('.organic-listing');
-      if(current.organic && olisting.length == 1) {
-        if(olisting.find('.thing:visible').thing_id() == current.what) {
-          /* if it's available in the organic box, *and* it's the one
-             that's already shown, do nothing */
-
-        } else {
-          var thing = olisting.things(current.what);
-
-          if(thing.length > 0 && !thing.hasClass('stub')) {
-            /* if it's available in the organic box and not a stub,
-               switch index to it */
-            olisting.find('.thing:visible').hide();
-            thing.show();
-          } else {
-              /* either it's available in the organic box, but the
-                 data there is a stub, or it's not available at
-                 all. either way, we need a server round-trip */
-
-              /* remove the stub if it's there */
-              thing.remove();
-
-              /* add a new stub */
-              olisting.find('.thing:visible')
-                  .before('<div class="thing id-'+current.what+' stub" style="display: none"></div');
-              
-              /* and ask the server to fill it in */
-              $.request('fetch_links',
-                        {links: current.what,
-                                show: current.what,
-                                listing: olisting.attr('id')});
-          }
-        }
-      }
-      
-      /* mark it in the list */
-      $.things(current.what).addClass("last-clicked");
-
-      /* and wipe the cookie */
-      $.cookie_write({name: cookie, data: ""});
+function last_click() {
+    var fullname = r.analytics.breadcrumbs.lastClickFullname()
+    if (fullname && $('body').hasClass('listing-page')) {
+        $('.last-clicked').removeClass('last-clicked')
+        $('.id-' + fullname).last().addClass('last-clicked')
     }
-  }
-};
+}
 
 function login(elem) {
     if(cnameframe)

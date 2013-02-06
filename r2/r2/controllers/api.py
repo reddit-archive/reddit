@@ -3114,18 +3114,6 @@ class ApiController(RedditController, OAuth2ResourceController):
             jquery('.organic-listing .thing:visible').hide()
             jquery('.organic-listing .id-%s' % link).show()
 
-
-    @validatedForm(links = VByName('links', thing_cls = Link, multiple = True),
-                   show = VByName('show', thing_cls = Link, multiple = False))
-    def POST_fetch_links(self, form, jquery, links, show):
-        l = wrap_links(links, listing_cls = SpotlightListing,
-                       num_margin = 0, mid_margin = 0)
-        jquery(".content").replace_things(l, stubs = True)
-
-        if show:
-            jquery('.organic-listing .link:visible').hide()
-            jquery('.organic-listing .id-%s' % show._fullname).show()
-
     @noresponse(VUser(),
               ui_elem = VOneOf('id', ('organic',)))
     def POST_disable_ui(self, ui_elem):

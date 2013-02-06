@@ -165,7 +165,7 @@ r.analytics = {
 
 r.analytics.breadcrumbs = {
     selector: '.thing, .side, .sr-list, .srdrop, .tagline, .md, .organic-listing, .gadget, .sr-interest-bar, a, button, input',
-    maxLength: 2,
+    maxLength: 3,
     sendLength: 2,
 
     init: function() {
@@ -244,6 +244,16 @@ r.analytics.breadcrumbs = {
             this.store()
         } catch (e) {
             // Band-aid for Firefox NS_ERROR_DOM_SECURITY_ERR until fixed.
+        }
+    },
+
+    lastClickFullname: function() {
+        var lastClick = _.find(this.data, function(crumb) {
+            return crumb.click
+        })
+        if (lastClick) {
+            var match = lastClick.click.match(/.*data-fullname="(\w+)"/)
+            return match && match[1]
         }
     },
 
