@@ -1298,7 +1298,7 @@ a.star { text-decoration: none; color: #ff8b60 }
 .toggle .option.active { display: inline; }
 
 .thing .stub { display: none; }
-.link.last-clicked { border: 1px dashed gray; }
+.link.last-clicked { border: 1px dashed gray; overflow: hidden; }
 
 .link { margin: 0; margin-bottom: 8px; padding-left: 3px; }
 .link .score {text-align: center; color: #c6c6c6;}
