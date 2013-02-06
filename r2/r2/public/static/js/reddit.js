@@ -1127,6 +1127,9 @@ $(function() {
         
         /* visually mark the last-clicked entry */
         last_click();
+        $(window).on('pageshow', function() {
+            last_click()
+        })
 
         /* search form help expando */
         /* TODO: use focusin and focusout in jQuery 1.4 */
