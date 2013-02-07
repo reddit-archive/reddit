@@ -162,7 +162,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         else:
             return {}
 
-    @json_validate(user=VUname("user"))
+    @json_validate(user=VUname(("user",)))
     @api_doc(api_section.users, extensions=["json"])
     def GET_username_available(self, responder, user):
         """
