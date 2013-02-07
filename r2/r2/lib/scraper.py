@@ -659,6 +659,19 @@ class OEmbed(Scraper):
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.url)
 
+    def utf8_encode(self, input):
+        """UTF-8 encodes any strings in an object (from json.loads)"""
+        if isinstance(input, dict):
+            return {self.utf8_encode(key): self.utf8_encode(value)
+                    for key, value in input.iteritems()}
+        elif isinstance(input, list):
+            return [self.utf8_encode(item)
+                    for item in input]
+        elif isinstance(input, unicode):
+            return input.encode('utf-8')
+        else:
+            return input
+
     def download(self):
         self.api_params.update( { 'url':self.url})
         query = urllib.urlencode(self.api_params)      
@@ -674,7 +687,8 @@ class OEmbed(Scraper):
             return None
 
         try:
-            self.oembed  = json.loads(self.content)
+            self.oembed = json.loads(self.content,
+                                     object_hook=self.utf8_encode)
         except ValueError, e:
             log.error('oEmbed call (%s) return invalid json for %s' 
                       %(api_url, self.url))
