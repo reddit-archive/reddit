@@ -212,7 +212,7 @@ r.analytics.breadcrumbs = {
         return data
     },
 
-    store: function(data) {
+    store: function() {
         if (this.hasSessionStorage) {
             sessionStorage['breadcrumbs'] = JSON.stringify(this.data)
         }
