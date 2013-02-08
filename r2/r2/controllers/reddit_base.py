@@ -823,6 +823,12 @@ class MinimalController(BaseController):
         c.request_timer.stop()
         g.stats.flush()
 
+    def on_validation_error(self, error):
+        if error.name == errors.USER_REQUIRED:
+            self.intermediate_redirect('/login')
+        elif error.name == errors.VERIFIED_USER_REQUIRED:
+            self.intermediate_redirect('/verify')
+
     def abort404(self):
         abort(404, "not found")
 

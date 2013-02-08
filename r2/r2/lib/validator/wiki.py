@@ -33,9 +33,7 @@ from pylons import c, g, request
 from r2.models.wiki import WikiPage, WikiRevision
 from r2.lib.validator import (
     Validator,
-    validate,
     VSrModerator,
-    make_validated_kw,
     set_api_docs,
 )
 from r2.lib.db import tdb_cassandra
@@ -43,20 +41,6 @@ from r2.lib.db import tdb_cassandra
 MAX_PAGE_NAME_LENGTH = g.wiki_max_page_name_length
 
 MAX_SEPARATORS = g.wiki_max_page_separators
-
-def wiki_validate(*simple_vals, **param_vals):
-    def val(fn):
-        @wraps(fn)
-        def newfn(self, *a, **env):
-            kw = make_validated_kw(fn, simple_vals, param_vals, env)
-            for e in c.errors:
-                e = c.errors[e]
-                if e.code:
-                    self.handle_error(e.code, e.name)
-            return fn(self, *a, **kw)
-        set_api_docs(newfn, simple_vals, param_vals)
-        return newfn
-    return val
 
 def this_may_revise(page=None):
     if not c.user_is_loggedin:

@@ -39,7 +39,7 @@ from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
 
-from r2.lib.errors import errors, UserRequiredException
+from r2.lib.errors import errors, RedditError, UserRequiredException
 from r2.lib.errors import VerifiedUserRequiredException
 
 from copy import copy
@@ -167,19 +167,29 @@ def set_api_docs(fn, simple_vals, param_vals):
         param_info.update(validator.param_docs())
     doc['parameters'] = param_info
 
-make_validated_kw = _make_validated_kw
 
 def validate(*simple_vals, **param_vals):
+    """Validation decorator that delegates error handling to the controller.
+
+    Runs the validators specified and calls self.on_validation_error to
+    process each error. This allows controllers to define their own fatal
+    error processing logic.
+    """
     def val(fn):
         @wraps(fn)
         def newfn(self, *a, **env):
             try:
                 kw = _make_validated_kw(fn, simple_vals, param_vals, env)
+            except RedditError as err:
+                self.on_validation_error(err)
+
+            for err in c.errors:
+                self.on_validation_error(c.errors[err])
+
+            try:
                 return fn(self, *a, **kw)
-            except UserRequiredException:
-                return self.intermediate_redirect('/login')
-            except VerifiedUserRequiredException:
-                return self.intermediate_redirect('/verify')
+            except RedditError as err:
+                self.on_validation_error(err)
 
         set_api_docs(newfn, simple_vals, param_vals)
         return newfn
