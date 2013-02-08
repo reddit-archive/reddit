@@ -739,6 +739,8 @@ class MinimalController(BaseController):
         # GET param is included
         set_content_type()
         c.request_timer.intermediate("minimal-pre")
+        # True/False forces. None updates for most non-POST requests
+        c.update_last_visit = None
 
     def try_pagecache(self):
         #check content cache
@@ -806,10 +808,7 @@ class MinimalController(BaseController):
 
         end_time = datetime.now(g.tz)
 
-        # update last_visit
-        if (c.user_is_loggedin and not g.disallow_db_writes and
-            request.method.upper() != "POST" and
-            not c.dont_update_last_visit):
+        if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
 
         check_request(end_time)
@@ -864,6 +863,18 @@ class MinimalController(BaseController):
     def api_wrapper(self, kw):
         data = simplejson.dumps(kw)
         return filters.websafe_json(data)
+
+    def should_update_last_visit(self):
+        if g.disallow_db_writes:
+            return False
+
+        if not c.user_is_loggedin:
+            return False
+
+        if c.update_last_visit is not None:
+            return c.update_last_visit
+
+        return request.method.upper() != "POST"
 
 
 class RedditController(MinimalController):

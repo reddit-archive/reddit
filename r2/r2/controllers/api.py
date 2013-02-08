@@ -136,7 +136,7 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         """
 
-        c.dont_update_last_visit = True
+        c.update_last_visit = False
 
         links = []
         if link2:
