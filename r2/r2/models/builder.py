@@ -49,10 +49,11 @@ EXTRA_FACTOR = 1.5
 MAX_RECURSION = 10
 
 class Builder(object):
-    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True):
+    def __init__(self, wrap=Wrapped, keep_fn=None, stale=True, spam_listing=False):
         self.stale = stale
         self.wrap = wrap
         self.keep_fn = keep_fn
+        self.spam_listing = spam_listing
 
     def keep_item(self, item):
         if self.keep_fn:
@@ -221,7 +222,7 @@ class Builder(object):
             w.show_reports = False
             w.show_spam    = False
             w.can_ban      = False
-            w.use_big_modbuttons = False
+            w.use_big_modbuttons = self.spam_listing
 
             if (c.user_is_admin
                 or (user
@@ -249,7 +250,8 @@ class Builder(object):
                         w._spam = False
                         w.use_big_modbuttons = False
 
-                elif getattr(item, 'reported', 0) > 0:
+                elif (getattr(item, 'reported', 0) > 0
+                      and (not getattr(item, 'ignore_reports', False) or c.user_is_admin)):
                     w.show_reports = True
                     w.use_big_modbuttons = True
 
@@ -280,8 +282,9 @@ class Builder(object):
             return True
 
 class QueryBuilder(Builder):
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False, **kw):
-        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
+    def __init__(self, query, wrap=Wrapped, keep_fn=None, skip=False,
+                 spam_listing=False, **kw):
+        Builder.__init__(self, wrap=wrap, keep_fn=keep_fn, spam_listing=spam_listing)
         self.query = query
         self.skip = skip
         self.num = kw.get('num')

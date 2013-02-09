@@ -548,7 +548,9 @@ class FrontController(RedditController, OAuth2ResourceController):
                               num = num, after = after,
                               keep_fn = keep_fn,
                               count = count, reverse = reverse,
-                              wrap = ListingController.builder_wrapper)
+                              wrap = ListingController.builder_wrapper,
+                              spam_listing = True,
+                             )
         listing = LinkListing(builder)
         pane = listing.listing()
 
