@@ -5668,7 +5668,9 @@ body:not(.gold) .allminus-link {
 .modactions.wikibanned,
 .modactions.wikiunbanned,
 .modactions.wikicontributor,
-.modactions.removewikicontributor {
+.modactions.removewikicontributor,
+.modactions.ignorereports,
+.modactions.unignorereports {
     height: 16px;
     width: 16px;
     display: block;
@@ -5738,6 +5740,12 @@ body:not(.gold) .allminus-link {
 }
 .modactions.removewikicontributor {
     background-image: url(../modactions_removecontributor.png); /* SPRITE */
+}
+.modactions.ignorereports {
+    background-image: url(../modactions_mute.png); /* SPRITE */
+}
+.modactions.unignorereports {
+    background-image: url(../modactions_unmute.png); /* SPRITE */
 }
 
 .adminpasswordform {

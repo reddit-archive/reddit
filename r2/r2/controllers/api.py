@@ -1062,6 +1062,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                 or (item._ups + item._downs > 2)):
                 item.editted = c.start_time
 
+            item.ignore_reports = False
+
             item._commit()
 
             changed(item)
@@ -1854,6 +1856,38 @@ class ApiController(RedditController, OAuth2ResourceController):
             sr = thing.subreddit_slow
             action = 'approve' + thing.__class__.__name__.lower()
             ModAction.create(sr, c.user, action, **kw)
+
+    @require_oauth2_scope("modposts")
+    @noresponse(VUser(), VModhash(),
+                VSrCanBan('id'),
+                thing=VByName('id'))
+    @api_doc(api_section.moderation)
+    def POST_ignore_reports(self, thing):
+        if not thing: return
+        if thing._deleted: return
+        if thing.ignore_reports: return
+
+        thing.ignore_reports = True
+        thing._commit()
+
+        sr = thing.subreddit_slow
+        ModAction.create(sr, c.user, 'ignorereports', target=thing)
+
+    @require_oauth2_scope("modposts")
+    @noresponse(VUser(), VModhash(),
+                VSrCanBan('id'),
+                thing=VByName('id'))
+    @api_doc(api_section.moderation)
+    def POST_unignore_reports(self, thing):
+        if not thing: return
+        if thing._deleted: return
+        if not thing.ignore_reports: return
+
+        thing.ignore_reports = False
+        thing._commit()
+
+        sr = thing.subreddit_slow
+        ModAction.create(sr, c.user, 'unignorereports', target=thing)
 
     @require_oauth2_scope("modposts")
     @validatedForm(VUser(), VModhash(),

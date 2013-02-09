@@ -55,7 +55,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                'removemoderator', 'addcontributor', 'removecontributor',
                'editsettings', 'editflair', 'distinguish', 'marknsfw', 
                'wikibanned', 'wikicontributor', 'wikiunbanned',
-               'removewikicontributor', 'wikirevise', 'wikipermlevel')
+               'removewikicontributor', 'wikirevise', 'wikipermlevel',
+               'ignorereports', 'unignorereports')
 
     _menu = {'banuser': _('ban user'),
              'unbanuser': _('unban user'),
@@ -79,7 +80,9 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'wikicontributor': _('add wiki contributor'),
              'removewikicontributor': _('remove wiki contributor'),
              'wikirevise': _('wiki revise page'),
-             'wikipermlevel': _('wiki page permissions')}
+             'wikipermlevel': _('wiki page permissions'),
+             'ignorereports': _('ignore reports'),
+             'unignorereports': _('unignore reports')}
 
     _text = {'banuser': _('banned'),
              'wikibanned': _('wiki banned'),
@@ -103,7 +106,9 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
              'wikirevise': _('edited wiki page'),
              'wikipermlevel': _('changed wiki page permission level'),
              'distinguish': _('distinguished'),
-             'marknsfw': _('marked nsfw')}
+             'marknsfw': _('marked nsfw'),
+             'ignorereports': _('ignored reports'),
+             'unignorereports': _('unignored reports')}
 
     _details_text = {# approve comment/link
                      'unspam': _('unspam'),
@@ -146,7 +151,8 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'flair_delete_template': _('delete flair template'),
                      'flair_clear_template': _('clear flair templates'),
                      # distinguish/nsfw
-                     'remove': _('remove')}
+                     'remove': _('remove'),
+                     'ignore_reports': _('ignore reports')}
 
     # This stuff won't change
     cache_ignore = set(['subreddit', 'target']).union(Printable.cache_ignore)

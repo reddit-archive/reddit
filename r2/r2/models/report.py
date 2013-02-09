@@ -72,7 +72,7 @@ class Report(MultiRelation('report',
             author._incr('reported')
 
         item_age = datetime.now(g.tz) - thing._date
-        if item_age.days < g.REPORT_AGE_LIMIT:
+        if item_age.days < g.REPORT_AGE_LIMIT and not thing.ignore_reports:
             # update the reports queue if it exists
             queries.new_report(thing, r)
 
@@ -80,7 +80,7 @@ class Report(MultiRelation('report',
             if thing._spam:
                 cls.accept(thing)
         else:
-            g.log.debug("Ignoring old report %s" % r)
+            g.log.debug("Ignoring report %s" % r)
 
         return r
 

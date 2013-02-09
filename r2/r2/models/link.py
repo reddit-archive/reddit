@@ -75,6 +75,7 @@ class Link(Thing, Printable):
                      comment_tree_id=0,
                      contest_mode=False,
                      skip_commentstree_q="",
+                     ignore_reports=False,
                      )
     _essentials = ('sr_id', 'author_id')
     _nsfw = re.compile(r"\bnsfw\b", re.I)
@@ -689,7 +690,9 @@ class Comment(Thing, Printable):
                      new=False,
                      gildings=0,
                      banned_before_moderator=False,
-                     parents=None)
+                     parents=None,
+                     ignore_reports=False,
+                     )
     _essentials = ('link_id', 'author_id')
 
     def _markdown(self):

@@ -1195,6 +1195,8 @@ function big_mod_action(elem, dir) {
       } else if (dir == 1) {
         $.request("approve", d, null, true);
         elem.siblings(".approved").show();
+      } else if (dir == 2) {
+        $.request("ignore_reports", d, null, true);
       }
    }
    elem.siblings(".pretty-button").removeClass("pressed");

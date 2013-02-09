@@ -124,22 +124,29 @@
 
 <%def name="big_modbuttons(thing, kind)">
   <span class="big-mod-buttons">
-    %if getattr(thing, "moderator_banned", None):
-      <!-- pass -->
-    %elif thing._spam:
-      ${pretty_button(_("confirm spam"), "big_mod_action", -2, "negative")}
-      ${pretty_button(_("remove ham"), "big_mod_action", -1, "neutral")}
-    %else:
-      ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
-      ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
-    %endif
+    <span role="radiogroup">
+      %if getattr(thing, "moderator_banned", None):
+        <!-- pass -->
+      %elif thing._spam:
+        ${pretty_button(_("confirm spam"), "big_mod_action", -2, "negative")}
+        ${pretty_button(_("remove ham"), "big_mod_action", -1, "neutral")}
+      %else:
+        ${pretty_button(_("spam"), "big_mod_action", -2, "negative")}
+        ${pretty_button(_("remove"), "big_mod_action", -1, "neutral")}
+      %endif
+  
+      %if getattr(thing, "approval_checkmark", None):
+        ${pretty_button(_("reapprove %(obj)s") % dict(obj=kind),
+        "big_mod_action",  1, "positive")}
+      %else:
+        ${pretty_button(_("approve %(obj)s") % dict(obj=kind),
+        "big_mod_action",  1, "positive")}
+      %endif
+    </span>
 
-    %if getattr(thing, "approval_checkmark", None):
-      ${pretty_button(_("reapprove %(obj)s") % dict(obj=kind),
-      "big_mod_action",  1, "positive")}
-    %else:
-      ${pretty_button(_("approve %(obj)s") % dict(obj=kind),
-      "big_mod_action",  1, "positive")}
+    %if not thing.ignore_reports:
+      ${pretty_button(_("ignore reports"),
+      "big_mod_action",  2, "neutral")}
     %endif
 
     &#32;
