@@ -881,6 +881,8 @@ class RedditController(MinimalController):
 
     @staticmethod
     def login(user, rem=False):
+        # This can't be handled in post() due to PRG and ErrorController fun.
+        user.update_last_visit(c.start_time)
         c.cookies[g.login_cookie] = Cookie(value=user.make_cookie(),
                                            expires=NEVER if rem else None,
                                            httponly=True)
