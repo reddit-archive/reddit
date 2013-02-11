@@ -110,9 +110,6 @@ string_dict = dict(
         invalid_property_list = _('invalid CSS property list "%(proplist)s"'),
         unknown_rule_type = _('unknown CSS rule type "%(ruletype)s"')
     ),
-    submit_box_text = _('for anything interesting: news, article, blog entry, video, picture, story, question...'),
-    submit_box_restricted_text = _('submission in this subreddit is restricted to approved submitters.'),
-    submit_box_archived_text = _('this subreddit is archived and no longer accepting submissions.'),
     permalink_title = _("%(author)s comments on %(title)s"),
     link_info_title = _("%(title)s : %(site)s"),
     banned_subreddit_title = _("this subreddit has been banned"),

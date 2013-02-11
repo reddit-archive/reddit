@@ -310,23 +310,42 @@ class Reddit(Templated):
             ps.append(SponsorshipBox())
 
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
-        if self.submit_box and (c.user_is_loggedin or not g.read_only_mode) and not user_banned:
-            kwargs = {
-                "title": _("Submit a post"),
-                "css_class": "submit",
-                "show_cover": True
-            }
-            if not c.user_is_loggedin or c.site.can_submit(c.user) or isinstance(c.site, FakeSubreddit):
-                kwargs["link"] = "/submit"
-                kwargs["sr_path"] = isinstance(c.site, DefaultSR) or not isinstance(c.site, FakeSubreddit),
-                kwargs["subtitles"] = [strings.submit_box_text]
-            else:
-                kwargs["disabled"] = True
+
+        if (self.submit_box
+                and (c.user_is_loggedin or not g.read_only_mode)
+                and not user_banned):
+            if (not isinstance(c.site, FakeSubreddit)
+                    and c.site.type in ("archived", "restricted")
+                    and not (c.user_is_loggedin
+                             and c.site.can_submit(c.user))):
                 if c.site.type == "archived":
-                    kwargs["subtitles"] = [strings.submit_box_archived_text]
+                    subtitle = _('this subreddit is archived '
+                                 'and no longer accepting submissions.')
+                    ps.append(SideBox(title=_('Submissions disabled'),
+                                      css_class="submit",
+                                      disabled=True,
+                                      subtitles=[subtitle]))
                 else:
-                    kwargs["subtitles"] = [strings.submit_box_restricted_text]
-            ps.append(SideBox(**kwargs))
+                    subtitle = _('submission in this subreddit '
+                                 'is restricted to approved submitters.')
+                    ps.append(SideBox(title=_('Submissions restricted'),
+                                      css_class="submit",
+                                      disabled=True,
+                                      subtitles=[subtitle]))
+            else:
+                fake_sub = isinstance(c.site, FakeSubreddit)
+                if c.site.link_type != 'self':
+                    ps.append(SideBox(title=_("Submit a new link"),
+                                      css_class="submit submit-link",
+                                      link="/submit",
+                                      sr_path=not fake_sub,
+                                      show_cover=True))
+                if c.site.link_type != 'link':
+                    ps.append(SideBox(title=_("Submit a new text post"),
+                                      css_class="submit submit-text",
+                                      link="/submit?selftext=true",
+                                      sr_path=not fake_sub,
+                                      show_cover=True))
 
         no_ads_yet = True
         show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
