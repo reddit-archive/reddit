@@ -68,8 +68,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         self.check_for_bearer_token()
         RedditController.pre(self)
 
-    @validate(article = VLink('article'),
-              comment = VCommentID('comment'))
+    @validate(article=VLink('article'),
+              comment=VCommentID('comment'))
     def GET_oldinfo(self, article, type, dest, rest=None, comment=''):
         """Legacy: supporting permalink pages from '06,
            and non-search-engine-friendly links"""
@@ -109,9 +109,9 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         rand.shuffle(links)
 
-        builder = IDBuilder(links, skip = True,
-                            keep_fn = lambda x: x.fresh,
-                            num = 1)
+        builder = IDBuilder(links, skip=True,
+                            keep_fn=lambda x: x.fresh,
+                            num=1)
         links = builder.get_items()[0]
 
         if links:
@@ -122,8 +122,8 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @prevent_framing_and_css()
     @validate(VAdmin(),
-              thing = VByName('article'),
-              oldid36 = nop('article'),
+              thing=VByName('article'),
+              oldid36=nop('article'),
               after=nop('after'),
               before=nop('before'),
               count=VCount('count'))
@@ -149,11 +149,11 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     def GET_selfserviceoatmeal(self):
         return BoringPage(_("self service help"), 
-                          show_sidebar = False,
-                          content = SelfServiceOatmeal()).render()
+                          show_sidebar=False,
+                          content=SelfServiceOatmeal()).render()
 
 
-    @validate(article = VLink('article'))
+    @validate(article=VLink('article'))
     def GET_shirt(self, article):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
@@ -190,24 +190,24 @@ class FrontController(RedditController, OAuth2ResourceController):
         return old_visits
 
 
-    @validate(article      = VLink('article'),
-              comment      = VCommentID('comment'),
-              context      = VInt('context', min = 0, max = 8),
-              sort         = VMenu('controller', CommentSortMenu),
-              limit        = VInt('limit'),
-              depth        = VInt('depth'))
+    @validate(article=VLink('article'),
+              comment=VCommentID('comment'),
+              context=VInt('context', min=0, max=8),
+              sort=VMenu('controller', CommentSortMenu),
+              limit=VInt('limit'),
+              depth=VInt('depth'))
     def POST_comments(self, article, comment, context, sort, limit, depth):
         # VMenu validator will save the value of sort before we reach this
         # point. Now just redirect to GET mode.
         return self.redirect(request.fullpath + query_string(dict(sort=sort)))
 
     @require_oauth2_scope("read")
-    @validate(article      = VLink('article'),
-              comment      = VCommentID('comment'),
-              context      = VInt('context', min = 0, max = 8),
-              sort         = VMenu('controller', CommentSortMenu),
-              limit        = VInt('limit'),
-              depth        = VInt('depth'))
+    @validate(article=VLink('article'),
+              comment=VCommentID('comment'),
+              context=VInt('context', min=0, max=8),
+              sort=VMenu('controller', CommentSortMenu),
+              limit=VInt('limit'),
+              depth=VInt('depth'))
     @api_doc(api_section.listings,
              uri='/comments/{article}',
              extensions=['json', 'xml'])
@@ -308,10 +308,10 @@ class FrontController(RedditController, OAuth2ResourceController):
                 age = c.start_time - article._date
                 if article.promoted or age.days < g.REPLY_AGE_LIMIT:
                     display = True
-            displayPane.append(UserText(item = article, creating = True,
-                                        post_form = 'comment',
-                                        display = display,
-                                        cloneable = True))
+            displayPane.append(UserText(item=article, creating=True,
+                                        post_form='comment',
+                                        display=display,
+                                        cloneable=True))
 
         if previous_visits:
             displayPane.append(CommentVisitsBox(previous_visits))
@@ -350,14 +350,14 @@ class FrontController(RedditController, OAuth2ResourceController):
                 self._add_show_comments_link(subtitle_buttons, article, num,
                                              g.max_comments_gold, gold=True)
 
-        res = LinkInfoPage(link = article, comment = comment,
-                           content = displayPane,
-                           page_classes = ['comments-page'],
-                           subtitle = subtitle,
-                           subtitle_buttons = subtitle_buttons,
-                           nav_menus = [CommentSortMenu(default = sort),
+        res = LinkInfoPage(link=article, comment=comment,
+                           content=displayPane,
+                           page_classes=['comments-page'],
+                           subtitle=subtitle,
+                           subtitle_buttons=subtitle_buttons,
+                           nav_menus=[CommentSortMenu(default=sort),
                                         LinkCommentsSettings(article)],
-                           infotext = infotext).render()
+                           infotext=infotext).render()
         return res
 
     def _add_show_comments_link(self, array, article, num, max_comm, gold=False):
@@ -379,13 +379,13 @@ class FrontController(RedditController, OAuth2ResourceController):
         array.append( (link_text, more_link, link_class) )
 
     @validate(VUser(),
-              name = nop('name'))
+              name=nop('name'))
     def GET_newreddit(self, name):
         """Create a community form"""
         title = _('create a reddit')
-        content=CreateSubreddit(name = name or '')
+        content=CreateSubreddit(name=name or '')
         res = FormPage(_("create a community"),
-                       content = content,
+                       content=content,
                        ).render()
         return res
 
@@ -544,13 +544,12 @@ class FrontController(RedditController, OAuth2ResourceController):
                 raise ValueError
 
         builder = builder_cls(query,
-                              skip = True,
-                              num = num, after = after,
-                              keep_fn = keep_fn,
-                              count = count, reverse = reverse,
-                              wrap = ListingController.builder_wrapper,
-                              spam_listing = True,
-                             )
+                              skip=True,
+                              num=num, after=after,
+                              keep_fn=keep_fn,
+                              count=count, reverse=reverse,
+                              wrap=ListingController.builder_wrapper,
+                              spam_listing=True)
         listing = LinkListing(builder)
         pane = listing.listing()
 
@@ -603,10 +602,10 @@ class FrontController(RedditController, OAuth2ResourceController):
         if is_moderator_with_perms('config') and location == 'edit':
             pane = PaneStack()
             if created == 'true':
-                pane.append(InfoBar(message = strings.sr_created))
+                pane.append(InfoBar(message=strings.sr_created))
             c.allow_styles = True
             c.site = Subreddit._byID(c.site._id, data=True, stale=False)
-            pane.append(CreateSubreddit(site = c.site))
+            pane.append(CreateSubreddit(site=c.site))
         elif location == 'moderators':
             pane = ModList(editable=is_unlimited_moderator)
         elif is_moderator_with_perms('access') and location == 'banned':
@@ -636,8 +635,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             else:
                 stylesheet_contents = ''
             c.allow_styles = True
-            pane = SubredditStylesheet(site = c.site,
-                                       stylesheet_contents = stylesheet_contents)
+            pane = SubredditStylesheet(site=c.site,
+                                       stylesheet_contents=stylesheet_contents)
         elif (location == 'stylesheet'
               and c.site.can_view(c.user)
               and not g.css_killswitch):
@@ -671,10 +670,10 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
-    @validate(location = nop('location'),
-              created = VOneOf('created', ('true','false'),
-                               default = 'false'),
-              name = nop('name'))
+    @validate(location=nop('location'),
+              created=VOneOf('created', ('true','false'),
+                             default='false'),
+              name=nop('name'))
     def GET_editreddit(self, location, num, after, reverse, count, created,
                        name):
         """Edit reddit form."""
@@ -710,7 +709,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         Data includes the subscriber count, description, and header image."""
         if not is_api() or isinstance(c.site, FakeSubreddit):
             return self.abort404()
-        return Reddit(content = Wrapped(c.site)).render()
+        return Reddit(content=Wrapped(c.site)).render()
 
     @require_oauth2_scope("read")
     def GET_sidebar(self):
@@ -719,14 +718,14 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     def GET_awards(self):
         """The awards page."""
-        return BoringPage(_("awards"), content = UserAwards()).render()
+        return BoringPage(_("awards"), content=UserAwards()).render()
 
     # filter for removing punctuation which could be interpreted as search syntax
     related_replace_regex = re.compile(r'[?\\&|!{}+~^()"\':*-]+')
-    related_replace_with  = ' '
+    related_replace_with = ' '
 
     @base_listing
-    @validate(article = VLink('article'))
+    @validate(article=VLink('article'))
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query.
@@ -756,7 +755,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                             subtitle=_('related')).render()
 
     @base_listing
-    @validate(article = VLink('article'))
+    @validate(article=VLink('article'))
     def GET_duplicates(self, article, num, after, reverse, count):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
@@ -768,25 +767,25 @@ class FrontController(RedditController, OAuth2ResourceController):
                             count = count, skip = False)
         listing = LinkListing(builder).listing()
 
-        res = LinkInfoPage(link = article,
-                           comment = None,
-                           duplicates = links,
-                           content = listing,
+        res = LinkInfoPage(link=article,
+                           comment=None,
+                           duplicates=links,
+                           content=listing,
                            page_classes=['other-discussions-page'],
-                           subtitle = _('other discussions')).render()
+                           subtitle=_('other discussions')).render()
         return res
 
 
     @base_listing
-    @validate(query = nop('q'))
+    @validate(query=nop('q'))
     @api_doc(api_section.subreddits, uri='/reddits/search', extensions=['json', 'xml'])
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search reddits by title and description."""
         q = SubredditSearchQuery(query)
 
         results, etime, spane = self._search(q, num=num, reverse=reverse,
-                                            after=after, count=count,
-                                            skip_deleted_authors=False)
+                                             after=after, count=count,
+                                             skip_deleted_authors=False)
         
         res = SubredditsPage(content=spane,
                              prev_search=query,
@@ -811,7 +810,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                    restrict_sr, syntax):
         """Search links page."""
         if query and '.' in query:
-            url = sanitize_url(query, require_scheme = True)
+            url = sanitize_url(query, require_scheme=True)
             if url:
                 return self.redirect("/submit" + query_string({'url':url}))
 
@@ -880,9 +879,9 @@ class FrontController(RedditController, OAuth2ResourceController):
            thin wrapper for SearchBuilder."""
 
         builder = SearchBuilder(query_obj,
-                                after = after, num = num, reverse = reverse,
-                                count = count,
-                                wrap = ListingController.builder_wrapper,
+                                after=after, num=num, reverse=reverse,
+                                count=count,
+                                wrap=ListingController.builder_wrapper,
                                 skip_deleted_authors=skip_deleted_authors)
 
         listing = LinkListing(builder, show_nums=True)
@@ -898,16 +897,16 @@ class FrontController(RedditController, OAuth2ResourceController):
         return builder.results, timing, res
 
     @validate(VAdmin(),
-              comment = VCommentByID('comment_id'))
+              comment=VCommentByID('comment_id'))
     def GET_comment_by_id(self, comment):
         href = comment.make_permalink_slow(context=5, anchor=True)
         return self.redirect(href)
 
-    @validate(url = VRequired('url', None),
-              title = VRequired('title', None),
-              text = VRequired('text', None),
-              selftext = VRequired('selftext', None),
-              then = VOneOf('then', ('tb','comments'), default = 'comments'))
+    @validate(url=VRequired('url', None),
+              title=VRequired('title', None),
+              text=VRequired('text', None),
+              selftext=VRequired('selftext', None),
+              then=VOneOf('then', ('tb','comments'), default='comments'))
     def GET_submit(self, url, title, text, selftext, then):
         """Submit form."""
         resubmit = request.get.get('resubmit')
@@ -920,8 +919,8 @@ class FrontController(RedditController, OAuth2ResourceController):
                 infotext = (strings.multiple_submitted
                             % links[0].resubmit_link())
                 res = BoringPage(_("seen it"),
-                                 content = wrap_links(links),
-                                 infotext = infotext).render()
+                                 content=wrap_links(links),
+                                 infotext=infotext).render()
                 return res
 
         if not c.user_is_loggedin:
@@ -937,17 +936,17 @@ class FrontController(RedditController, OAuth2ResourceController):
         never_show_self = request.get.get('no_self')
         
         return FormPage(_("submit"),
-                        show_sidebar = True,
+                        show_sidebar=True,
                         page_classes=['submit-page'],
                         content=NewLink(url=url or '',
                                         title=title or '',
                                         text=text or '',
                                         selftext=selftext or '',
-                                        subreddits = sr_names,
+                                        subreddits=sr_names,
                                         captcha=captcha,
                                         resubmit=resubmit,
-                                        never_show_self = never_show_self,
-                                        then = then)).render()
+                                        never_show_self=never_show_self,
+                                        then=then)).render()
 
     def GET_frame(self):
         """used for cname support.  makes a frame and
@@ -958,7 +957,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         return Cnameframe(original_path, sr, sub_domain).render()
 
 
-    def GET_framebuster(self, what = None, blah = None):
+    def GET_framebuster(self, what=None, blah=None):
         """
         renders the contents of the iframe which, on a cname, checks
         if the user is currently logged into reddit.
@@ -976,25 +975,25 @@ class FrontController(RedditController, OAuth2ResourceController):
         if not c.site.domain:
             return ""
         elif c.cname:
-            return FrameBuster(login = (what == "login")).render()
+            return FrameBuster(login=(what == "login")).render()
         else:
             path = "/framebuster/"
             if c.user_is_loggedin:
                 path += "login/"
             u = UrlParser(path + str(random.random()))
-            u.mk_cname(require_frame = False, subreddit = c.site,
-                       port = request.port)
+            u.mk_cname(require_frame=False, subreddit=c.site,
+                       port=request.port)
             return self.redirect(u.unparse())
         # the user is not logged in or there is no cname.
-        return FrameBuster(login = False).render()
+        return FrameBuster(login=False).render()
 
     def GET_catchall(self):
         return self.abort404()
 
-    @validate(period = VInt('seconds',
-                            min = sup.MIN_PERIOD,
-                            max = sup.MAX_PERIOD,
-                            default = sup.MIN_PERIOD))
+    @validate(period=VInt('seconds',
+                          min=sup.MIN_PERIOD,
+                          max=sup.MAX_PERIOD,
+                          default=sup.MIN_PERIOD))
     def GET_sup(self, period):
         #dont cache this, it's memoized elsewhere
         c.used_cache = True
@@ -1008,9 +1007,9 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modtraffic")
     @validate(VTrafficViewer('article'),
-              article = VLink('article'),
-              before = VDate('before', format='%Y%m%d%H'),
-              after = VDate('after', format='%Y%m%d%H'))
+              article=VLink('article'),
+              before=VDate('before', format='%Y%m%d%H'),
+              after=VDate('after', format='%Y%m%d%H'))
     def GET_traffic(self, article, before, after):
         if before:
             before = before.replace(tzinfo=None)
@@ -1112,11 +1111,11 @@ class FormsController(RedditController):
         return BoringPage(_("password"), content=Password()).render()
 
     @validate(VUser(),
-              dest = VDestination(),
-              reason = nop('reason'))
+              dest=VDestination(),
+              reason=nop('reason'))
     def GET_verify(self, dest, reason):
         if c.user.email_verified:
-            content = InfoBar(message = strings.email_verified)
+            content = InfoBar(message=strings.email_verified)
             if dest:
                 return self.redirect(dest)
         else:
@@ -1126,10 +1125,10 @@ class FormsController(RedditController):
                 infomsg = strings.verify_email
 
             content = PaneStack(
-                [InfoBar(message = infomsg),
-                 PrefUpdate(email = True, verify = True,
-                            password = False)])
-        return BoringPage(_("verify email"), content = content).render()
+                [InfoBar(message=infomsg),
+                 PrefUpdate(email=True, verify=True,
+                            password=False)])
+        return BoringPage(_("verify email"), content=content).render()
 
     @validate(VUser(),
               token=VOneTimeToken(EmailVerificationToken, "key"),
@@ -1181,7 +1180,7 @@ class FormsController(RedditController):
                           content=ResetPassword(key=key, done=done)).render()
 
     @validate(VUser(),
-              location = nop("location"))
+              location=nop("location"))
     def GET_prefs(self, location=''):
         """Preference page"""
         content = None
@@ -1207,10 +1206,10 @@ class FormsController(RedditController):
         else:
             return self.abort404()
 
-        return PrefsPage(content = content, infotext=infotext).render()
+        return PrefsPage(content=content, infotext=infotext).render()
 
 
-    @validate(dest = VDestination())
+    @validate(dest=VDestination())
     def GET_login(self, dest):
         """The /login form.  No link to this page exists any more on
         the site (all actions invoking it now go through the login
@@ -1220,25 +1219,25 @@ class FormsController(RedditController):
         if (c.user_is_loggedin and
             not request.environ.get('extension') == 'embed'):
             return self.redirect(dest)
-        return LoginPage(dest = dest).render()
+        return LoginPage(dest=dest).render()
 
 
-    @validate(dest = VDestination())
+    @validate(dest=VDestination())
     def GET_register(self, dest):
         if (c.user_is_loggedin and
             not request.environ.get('extension') == 'embed'):
             return self.redirect(dest)
-        return RegisterPage(dest = dest).render()
+        return RegisterPage(dest=dest).render()
 
     @validate(VUser(),
               VModhash(),
-              dest = VDestination())
+              dest=VDestination())
     def GET_logout(self, dest):
         return self.redirect(dest)
 
     @validate(VUser(),
               VModhash(),
-              dest = VDestination())
+              dest=VDestination())
     def POST_logout(self, dest):
         """wipe login cookie and redirect to referer."""
         self.logout()
@@ -1246,7 +1245,7 @@ class FormsController(RedditController):
 
 
     @validate(VUser(),
-              dest = VDestination())
+              dest=VDestination())
     def GET_adminon(self, dest):
         """Enable admin interaction with site"""
         #check like this because c.user_is_admin is still false
@@ -1257,7 +1256,7 @@ class FormsController(RedditController):
         return AdminModeInterstitial(dest=dest).render()
 
     @validate(VAdmin(),
-              dest = VDestination())
+              dest=VDestination())
     def GET_adminoff(self, dest):
         """disable admin interaction with site."""
         if not c.user.name in g.admins:
@@ -1272,11 +1271,11 @@ class FormsController(RedditController):
             return self.abort404()
         sent = (has_opted_out(email) == leave)
         return BoringPage(_("opt out") if leave else _("welcome back"),
-                          content = OptOut(email = email, leave = leave, 
-                                           sent = sent, 
-                                           msg_hash = msg_hash)).render()
+                          content=OptOut(email=email, leave=leave, 
+                                           sent=sent, 
+                                           msg_hash=msg_hash)).render()
 
-    @validate(msg_hash = nop('x'))
+    @validate(msg_hash=nop('x'))
     def GET_optout(self, msg_hash):
         """handles /mail/optout to add an email to the optout mailing
         list.  The actual email addition comes from the user posting
@@ -1284,7 +1283,7 @@ class FormsController(RedditController):
         ApiController.POST_optout."""
         return self._render_opt_in_out(msg_hash, True)
 
-    @validate(msg_hash = nop('x'))
+    @validate(msg_hash=nop('x'))
     def GET_optin(self, msg_hash):
         """handles /mail/optin to remove an email address from the
         optout list. The actual email removal comes from the user
@@ -1292,10 +1291,10 @@ class FormsController(RedditController):
         ApiController.POST_optin."""
         return self._render_opt_in_out(msg_hash, False)
 
-    @validate(dest = VDestination("dest"))
+    @validate(dest=VDestination("dest"))
     def GET_try_compact(self, dest):
         c.render_style = "compact"
-        return TryCompact(dest = dest).render()
+        return TryCompact(dest=dest).render()
 
     @validate(VUser(),
               secret=VPrintable("secret", 50))
@@ -1339,15 +1338,15 @@ class FormsController(RedditController):
                           content=content).render()
 
     @validate(VUser(),
-              goldtype = VOneOf("goldtype",
-                                ("autorenew", "onetime", "creddits", "gift")),
-              period = VOneOf("period", ("monthly", "yearly")),
-              months = VInt("months"),
+              goldtype=VOneOf("goldtype",
+                              ("autorenew", "onetime", "creddits", "gift")),
+              period=VOneOf("period", ("monthly", "yearly")),
+              months=VInt("months"),
               # variables below are just for gifts
-              signed = VBoolean("signed"),
-              recipient_name = VPrintable("recipient", max_length = 50),
-              comment = VByName("comment", thing_cls=Comment),
-              giftmessage = VLength("giftmessage", 10000))
+              signed=VBoolean("signed"),
+              recipient_name=VPrintable("recipient", max_length=50),
+              comment=VByName("comment", thing_cls=Comment),
+              giftmessage=VLength("giftmessage", 10000))
     def GET_gold(self, goldtype, period, months,
                  signed, recipient_name, giftmessage, comment):
 
@@ -1385,14 +1384,14 @@ class FormsController(RedditController):
 
         if start_over:
             return BoringPage(_("reddit gold"),
-                              show_sidebar = False,
+                              show_sidebar=False,
                               content=Gold(goldtype, period, months, signed,
                                            recipient, recipient_name)).render()
         else:
-            payment_blob = dict(goldtype     = goldtype,
-                                account_id   = c.user._id,
-                                account_name = c.user.name,
-                                status       = "initialized")
+            payment_blob = dict(goldtype=goldtype,
+                                account_id=c.user._id,
+                                account_name=c.user.name,
+                                status="initialized")
 
             if goldtype == "gift":
                 payment_blob["signed"] = signed
