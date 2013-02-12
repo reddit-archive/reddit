@@ -894,7 +894,8 @@ class RedditController(MinimalController):
     @staticmethod
     def enable_admin_mode(user, first_login=None):
         # no expiration time so the cookie dies with the browser session
-        c.cookies[g.admin_cookie] = Cookie(value=user.make_admin_cookie(first_login=first_login))
+        admin_cookie = user.make_admin_cookie(first_login=first_login)
+        c.cookies[g.admin_cookie] = Cookie(value=admin_cookie, httponly=True)
 
     @staticmethod
     def remember_otp(user):
