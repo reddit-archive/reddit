@@ -34,7 +34,7 @@ from pycassa.cassandra.ttypes import ConsistencyLevel, NotFoundException
 from pycassa.system_manager import (SystemManager, UTF8_TYPE,
                                     COUNTER_COLUMN_TYPE, TIME_UUID_TYPE,
                                     ASCII_TYPE)
-from pycassa.types import DateType
+from pycassa.types import DateType, LongType, IntegerType
 from r2.lib.utils import tup, Storage
 from r2.lib import cache
 from uuid import uuid1, UUID
@@ -646,7 +646,9 @@ class ThingBase(object):
         self._column_ttls.clear()
 
     def __getattr__(self, attr):
-        if attr.startswith('_'):
+        if isinstance(attr, basestring) and attr.startswith('_'):
+            # TODO: I bet this interferes with Views whose column names can
+            # start with a _
             try:
                 return self.__dict__[attr]
             except KeyError:
@@ -669,7 +671,9 @@ class ThingBase(object):
         if attr == '_id' and self._committed:
             raise ValueError('cannot change _id on a committed %r' % (self.__class__))
 
-        if attr.startswith('_'):
+        if isinstance(attr, basestring) and attr.startswith('_'):
+            # TODO: I bet this interferes with Views whose column names can
+            # start with a _
             return object.__setattr__(self, attr, val)
 
         try:
