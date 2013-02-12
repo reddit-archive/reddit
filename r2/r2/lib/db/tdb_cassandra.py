@@ -116,7 +116,7 @@ def get_manager(seeds):
 class ThingMeta(type):
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
-        
+
         if hasattr(cls, '_ttl') and hasattr(cls._ttl, 'total_seconds'):
             cls._ttl = cls._ttl.total_seconds()
 
@@ -772,17 +772,16 @@ class ThingBase(object):
                               comm_str, part_str)
 
     if debug:
-        # we only want this with g.debug because overriding __del__
-        # can play hell with memory leaks
+        # we only want this with g.debug because overriding __del__ can play
+        # hell with memory leaks
         def __del__(self):
-                if not self._committed:
-                    # normally we'd log this with g.log or something,
-                    # but we can't guarantee that the thread
-                    # destructing us has access to g
-                    print "Warning: discarding uncomitted %r; this is usually a bug" % (self,)
-                elif self._dirty:
-                    print ("Warning: discarding dirty %r; this is usually a bug (_dirties=%r, _deletes=%r)"
-                           % (self,self._dirties,self._deletes))
+            if not self._committed:
+                # normally we'd log this with g.log or something, but we can't
+                # guarantee that the thread destructing us has access to g
+                print "Warning: discarding uncomitted %r; this is usually a bug" % (self,)
+            elif self._dirty:
+                print ("Warning: discarding dirty %r; this is usually a bug (_dirties=%r, _deletes=%r)"
+                       % (self,self._dirties,self._deletes))
 
 class Thing(ThingBase):
     _timestamp_prop = 'date'
@@ -948,8 +947,8 @@ class ColumnQuery(object):
     """
     _chunk_size = 100
 
-    def __init__(self, cls, rowkeys, column_start="", column_finish="", 
-                 column_count=100, column_reversed=True, 
+    def __init__(self, cls, rowkeys, column_start="", column_finish="",
+                 column_count=100, column_reversed=True,
                  column_to_obj=None,
                  obj_to_column=None):
         self.cls = cls
@@ -978,10 +977,10 @@ class ColumnQuery(object):
     @staticmethod
     def default_column_to_obj(columns):
         """
-        Mapping from column --> object. 
-        
-        This default doesn't actually return the underlying object but we don't 
-        know how to do that without more information. 
+        Mapping from column --> object.
+
+        This default doesn't actually return the underlying object but we don't
+        know how to do that without more information.
         """
         return columns
 
@@ -1074,7 +1073,7 @@ class ColumnQuery(object):
                 yield r
 
     def __repr__(self):
-        return "<%s(%s-%r)>" % (self.__class__.__name__, self.cls.__name__, 
+        return "<%s(%s-%r)>" % (self.__class__.__name__, self.cls.__name__,
                                 self.rowkeys)
 
 class MultiColumnQuery(object):
@@ -1104,7 +1103,7 @@ class MultiColumnQuery(object):
 
         if self.sort_key:
             def sort_key(tup):
-                # Need to point the supplied sort key at the correct item in 
+                # Need to point the supplied sort key at the correct item in
                 # the (sortable, item, generator) tuple
                 return self.sort_key(tup[0])
         else:
@@ -1224,7 +1223,7 @@ class Query(object):
 
 class View(ThingBase):
     # Views are Things like any other, but may have special key
-    # characteristics. Uses ColumnQuery for queries across a row. 
+    # characteristics. Uses ColumnQuery for queries across a row.
 
     _timestamp_prop = None
     _value_type = 'str'
@@ -1243,7 +1242,7 @@ class View(ThingBase):
 
     @classmethod
     def _obj_to_column(cls, objs):
-        """Mapping from _view_of object --> view column. Returns a 
+        """Mapping from _view_of object --> view column. Returns a
         single item dict {column name:column value} or list of dicts."""
         objs, is_single = tup(objs, ret_is_single=True)
 
@@ -1279,7 +1278,7 @@ class View(ThingBase):
 
         column_reversed = not reverse   # Reverse convention for cassandra is opposite
 
-        q = cls._query_cls(cls, rowkeys, column_count=count, 
+        q = cls._query_cls(cls, rowkeys, column_count=count,
                            column_reversed=column_reversed,
                            column_to_obj=cls._column_to_obj,
                            obj_to_column=cls._obj_to_column)
@@ -1327,7 +1326,7 @@ class View(ThingBase):
 
         # can we be smarter here?
         thing_cache.delete(cls._cache_key_id(row_key))
-    
+
     @classmethod
     @will_write
     def _remove(cls, key, columns):

@@ -124,7 +124,7 @@ class Reddit(Templated):
         loginbox -- enable/disable rendering of the small login box in the right margin
           (only if no user is logged in; login box will be disabled for a logged in user)
         show_sidebar -- enable/disable content in the right margin
-        
+
         infotext -- text to display in a <p class="infotext"> above the content
         nav_menus -- list of Menu objects to be shown in the area below the header
         content -- renderable object to fill the main content well in the page.
@@ -152,7 +152,7 @@ class Reddit(Templated):
     extra_stylesheets  = []
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
-                 infotext = '', content = None, short_description='', title = '', robots = None, 
+                 infotext = '', content = None, short_description='', title = '', robots = None,
                  show_sidebar = True, footer = True, srbar = True, page_classes = None,
                  show_wiki_actions = False, extra_js_config = None, **context):
         Templated.__init__(self, **context)
@@ -233,25 +233,25 @@ class Reddit(Templated):
             self._content = content
 
         self.toolbars = self.build_toolbars()
-    
+
     def wiki_actions_menu(self, moderator=False):
         buttons = []
-        
-        buttons.append(NamedButton("wikirecentrevisions", 
+
+        buttons.append(NamedButton("wikirecentrevisions",
                                    css_class="wikiaction-revisions",
                                    dest="/wiki/revisions"))
-        
-        buttons.append(NamedButton("wikipageslist", 
+
+        buttons.append(NamedButton("wikipageslist",
                            css_class="wikiaction-pages",
                            dest="/wiki/pages"))
         if moderator:
-            buttons += [NamedButton('wikibanned', css_class='reddit-ban', 
+            buttons += [NamedButton('wikibanned', css_class='reddit-ban',
                                     dest='/about/wikibanned'),
-                        NamedButton('wikicontributors', 
-                                    css_class='reddit-contributors', 
+                        NamedButton('wikicontributors',
+                                    css_class='reddit-contributors',
                                     dest='/about/wikicontributors')
                         ]
-                           
+
         return SideContentBox(_('wiki tools'),
                       [NavMenu(buttons,
                                type="flat_vert",
@@ -259,7 +259,7 @@ class Reddit(Templated):
                                separator="")],
                       _id="wikiactions",
                       collapsible=True)
-    
+
     def sr_admin_menu(self):
         buttons = []
         is_single_subreddit = not isinstance(c.site, (ModSR, MultiReddit))
@@ -416,7 +416,7 @@ class Reddit(Templated):
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
             ps.append(SubredditInfoBar())
-            moderator = c.user_is_loggedin and (c.user_is_admin or 
+            moderator = c.user_is_loggedin and (c.user_is_admin or
                                           c.site.is_moderator(c.user))
             wiki_moderator = c.user_is_loggedin and (
                 c.user_is_admin
@@ -456,7 +456,7 @@ class Reddit(Templated):
                 helplink = ("/message/compose?to=%%2Fr%%2F%s" % c.site.name,
                             label)
                 ps.append(SideContentBox(_('moderators'), moderators,
-                                         helplink = helplink, 
+                                         helplink = helplink,
                                          more_href = mod_href,
                                          more_text = more_text))
 
@@ -484,7 +484,7 @@ class Reddit(Templated):
         """
         res = Templated.render(self, *a, **kw)
         return responsive(res, self.space_compress)
-    
+
     def corner_buttons(self):
         """set up for buttons in upper right corner of main page."""
         buttons = []
@@ -524,7 +524,7 @@ class Reddit(Templated):
                             NamedButton('comments')]
         else:
             main_buttons = [NamedButton('hot', dest='', aliases=['/hot']),
-                            NamedButton('new'), 
+                            NamedButton('new'),
                             NamedButton('rising'),
                             NamedButton('controversial'),
                             NamedButton('top'),
@@ -795,7 +795,7 @@ class PrefsPage(Reddit):
         #if CustomerID.get_id(user):
         #    buttons += [NamedButton('payment')]
         buttons += [NamedButton('delete')]
-        return [PageNameNav('nomenu', title = _("preferences")), 
+        return [PageNameNav('nomenu', title = _("preferences")),
                 NavMenu(buttons, base_path = "/prefs", type="tabmenu")]
 
 class PrefOptions(Templated):
@@ -842,7 +842,7 @@ class MessagePage(Reddit):
             self.replybox = UserText(item = None, creating = True,
                                      post_form = 'comment', display = False,
                                      cloneable = True)
-            
+
 
     def content(self):
         return self.content_stack((self.replybox,
@@ -866,12 +866,12 @@ class MessagePage(Reddit):
                 _("%(site)s mail") % {'site': c.site.name}, "moderator",
                 aliases = ["/about/message/inbox",
                            "/about/message/unread"]))
-        return [PageNameNav('nomenu', title = _("message")), 
+        return [PageNameNav('nomenu', title = _("message")),
                 NavMenu(buttons, base_path = "/message", type="tabmenu")]
 
 class MessageCompose(Templated):
     """Compose message form."""
-    def __init__(self,to='', subject='', message='', success='', 
+    def __init__(self,to='', subject='', message='', success='',
                  captcha = None):
         from r2.models.admintools import admintools
 
@@ -880,15 +880,15 @@ class MessageCompose(Templated):
                          captcha = captcha,
                          admins = admintools.admin_list())
 
-    
+
 class BoringPage(Reddit):
     """parent class For rendering all sorts of uninteresting,
     sortless, navless form-centric pages.  The top navmenu is
     populated only with the text provided with pagename and the page
     title is 'reddit.com: pagename'"""
-    
+
     extension_handling= False
-    
+
     def __init__(self, pagename, css_class=None, **context):
         self.pagename = pagename
         name = c.site.name or g.default_sr
@@ -916,7 +916,7 @@ class FormPage(BoringPage):
     def __init__(self, pagename, show_sidebar = False, *a, **kw):
         BoringPage.__init__(self, pagename,  show_sidebar = show_sidebar,
                             *a, **kw)
-        
+
 
 class LoginPage(BoringPage):
     enable_login_cover = False
@@ -1052,7 +1052,7 @@ class SearchPage(BoringPage):
 
 class TakedownPage(BoringPage):
     def __init__(self, link):
-        BoringPage.__init__(self, getattr(link, "takedown_title", _("bummer")), 
+        BoringPage.__init__(self, getattr(link, "takedown_title", _("bummer")),
                             content = TakedownPane(link))
 
     def render(self, *a, **kw):
@@ -1063,7 +1063,7 @@ class TakedownPage(BoringPage):
 class TakedownPane(Templated):
     def __init__(self, link, *a, **kw):
         self.link = link
-        self.explanation = getattr(self.link, "explanation", 
+        self.explanation = getattr(self.link, "explanation",
                                    _("this page is no longer available due to a copyright claim."))
         Templated.__init__(self, *a, **kw)
 
@@ -1131,7 +1131,7 @@ class LinkInfoPage(Reddit):
                 params = {'author' : author.name, 'title' : _force_unicode(link_title)}
                 title = strings.permalink_title % params
                 short_description = _truncate(comment.body.strip(), MAX_DESCRIPTION_LENGTH) if comment.body else None
-                
+
 
         self.subtitle = subtitle
 
@@ -1236,7 +1236,7 @@ class CommentPane(Templated):
         num = self.article.num_comments
         # bit of triage: we don't care about 10% changes in comment
         # trees once they get to a certain length.  The cache is only a few
-        # min long anyway. 
+        # min long anyway.
         if num > 1000:
             num = (num / 100) * 100
         elif num > 100:
@@ -1407,7 +1407,7 @@ class EditReddit(Reddit):
                      _('about %(site)s') % dict(site=c.site.name))
 
         Reddit.__init__(self, title=title, *a, **kw)
-    
+
     def build_toolbars(self):
         if not c.cname:
             return [PageNameNav('subreddit', title=self.title)]
@@ -1473,7 +1473,7 @@ class SubredditsPage(Reddit):
 
 class MySubredditsPage(SubredditsPage):
     """Same functionality as SubredditsPage, without the search box."""
-    
+
     def content(self):
         return self.content_stack((self.nav_menu, self.infobar, self._content))
 
@@ -1597,7 +1597,7 @@ class ProfileBar(Templated):
                         self.gold_remaining = _("less than a day")
                     else:
                         # "X months, Y days" if less than 2 months left, otherwise "X months"
-                        precision = 60 * 60 * 24 * 30 if gold_days_left > 60 else 60 * 60 * 24 
+                        precision = 60 * 60 * 24 * 30 if gold_days_left > 60 else 60 * 60 * 24
                         self.gold_remaining = timeuntil(self.gold_expiration, precision)
 
                 if hasattr(user, "gold_subscr_id"):
@@ -1663,7 +1663,7 @@ class RedditError(BoringPage):
     def __init__(self, title, message, image=None, sr_description=None,
                  explanation=None):
         BoringPage.__init__(self, title, loginbox=False,
-                            show_sidebar = False, 
+                            show_sidebar = False,
                             content=ErrorPage(title=title,
                                               message=message,
                                               image=image,
@@ -1777,7 +1777,7 @@ class SubredditTopBar(CachedTemplate):
                         for sr in reddits],
                        type = 'flatlist', separator = '-',
                        css_class = 'sr-bar')
-    
+
     def sr_bar (self):
         sep = '<span class="separator">&nbsp;|&nbsp;</span>'
         menus = []
@@ -2144,7 +2144,7 @@ class SearchBar(Templated):
     def __init__(self, header=None, num_results=0, prev_search='',
                  elapsed_time=0, search_params={}, show_feedback=False,
                  simple=False, restrict_sr=False, site=None, syntax=None,
-                 subreddit_search=False, converted_data=None, facets={}, 
+                 subreddit_search=False, converted_data=None, facets={},
                  sort=None, recent=None, **kw):
         if header is None:
             header = _("previous search")
@@ -2208,7 +2208,7 @@ class FrameToolbar(Wrapped):
         Wrapped.__init__(self, link)
         if link is None:
             self.add_props(c.user, [self])
-    
+
     @classmethod
     def add_props(cls, user, wrapped):
         # unlike most wrappers we can guarantee that there is a link
@@ -2257,7 +2257,7 @@ class NewLink(Templated):
         if self.show_self and self.show_link:
             all_fields = set(chain(*(parts for (tab, parts) in tabs)))
             buttons = []
-            
+
             if selftext == 'true' or text != '':
                 self.default_tab = tabs[1][0]
             else:
@@ -2295,7 +2295,7 @@ class ShareLink(CachedTemplate):
         Templated.__init__(self, link_name = link_name,
                            emails = c.user.recent_share_emails())
 
-        
+
 
 class Share(Templated):
     pass
@@ -2988,7 +2988,7 @@ class EnemyList(UserList):
     """Blacklist on /pref/friends"""
     type = 'enemy'
     cells = ('user', 'remove')
-    
+
     def __init__(self, editable=True, addable=False):
         UserList.__init__(self, editable, addable)
 
@@ -3135,7 +3135,7 @@ class BannedList(UserList):
 
     def user_ids(self):
         return self.rels.keys()
- 
+
 class WikiBannedList(BannedList):
     """List of users banned from editing a given wiki"""
     type = 'wikibanned'
@@ -3293,7 +3293,7 @@ class PromoteLinkFormCpm(PromoteLinkForm):
     def __init__(self, sr=None, link=None, listing='',
                  timedeltatext='', *a, **kw):
         self.setup(sr, link, listing, timedeltatext, *a, **kw)
-        
+
         if not c.user_is_sponsor:
             self.now = promote.promo_datetime_now().date()
             start_date = self.now
@@ -3313,7 +3313,7 @@ class PromoAdminTool(Reddit):
         self.end = end if end else self.start + datetime.timedelta(1)
         # started_on shows promos that were scheduled to launch on start date
         if query_type == "started_on" and self.start:
-            all_promos = self.get_promo_info(self.start, 
+            all_promos = self.get_promo_info(self.start,
                     self.start + datetime.timedelta(1)) # exactly one day
             promos = {}
             start_date_string = self.start.strftime("%Y/%m/%d")
@@ -3326,13 +3326,13 @@ class PromoAdminTool(Reddit):
             promos = self.get_promo_info(self.start, self.end)
         else:
             promos = {}
-      
+
         for camp_id, promo in promos.iteritems():
             link_id36 = promo["link_fullname"].split('_')[1]
             promo["campaign_id"] = camp_id
             promo["edit_link"] = promote.promo_edit_url(None, id36=link_id36)
 
-        self.promos = sorted(promos.values(), 
+        self.promos = sorted(promos.values(),
                              key=lambda x: (x['username'], x['campaign_start']))
 
         Reddit.__init__(self, title="Promo Admin Tool", show_sidebar=False)
@@ -3340,7 +3340,7 @@ class PromoAdminTool(Reddit):
 
     def get_promo_info(self, start_date, end_date):
         promo_info = {}
-        scheduled = Promote_Graph.get_current_promos(start_date, 
+        scheduled = Promote_Graph.get_current_promos(start_date,
                             end_date + datetime.timedelta(1))
         campaign_ids = [x[1] for x in scheduled]
         campaigns = PromoCampaign._byID(campaign_ids, data=True, return_dict=True)
@@ -3351,7 +3351,7 @@ class PromoAdminTool(Reddit):
             days = (campaign.end_date - campaign.start_date).days
             bid_per_day = float(campaign.bid) / days
             account = accounts[campaign.owner_id]
-            promo_info[campaign._id] = { 
+            promo_info[campaign._id] = {
                 'username': account.name,
                 'user_email': account.email,
                 'link_title': link.title,
@@ -3359,8 +3359,8 @@ class PromoAdminTool(Reddit):
                 'campaign_start': campaign.start_date.strftime("%Y/%m/%d"),
                 'campaign_end': campaign.end_date.strftime("%Y/%m/%d"),
                 'bid_per_day': bid_per_day,
-            }            
-        return promo_info 
+            }
+        return promo_info
 
 
 
@@ -3442,7 +3442,7 @@ def make_link_child(item):
 
         editable = (expand and
                     item.author == c.user and
-                    not item._deleted)    
+                    not item._deleted)
         link_child = SelfTextChild(item, expand = expand,
                                    nofollow = item.nofollow)
 
@@ -3503,7 +3503,7 @@ class UserText(CachedTemplate):
             text = ''
 
         CachedTemplate.__init__(self,
-                                fullname = item._fullname if item else "", 
+                                fullname = item._fullname if item else "",
                                 text = text,
                                 have_form = have_form,
                                 editable = editable,
@@ -3555,7 +3555,7 @@ class Promotion_Summary(Templated):
                 campaign_bid = campaign.bid
             except AttributeError, e:
                 g.log.error("Corrupt PromoCampaign (link: %d, camp_id, %d) "
-                            "omitted from promotion summary. Error was: %r" % 
+                            "omitted from promotion summary. Error was: %r" %
                             (link._id, camp_id, e))
                 continue
 
@@ -3563,17 +3563,17 @@ class Promotion_Summary(Templated):
                 links.add(link)
                 link.bid = getattr(link, "bid", 0) + campaign_bid
                 link.ncampaigns = getattr(link, "ncampaigns", 0) + 1
-                
+
                 bid_per_day = campaign_bid / (campaign_end_date - campaign_start_date).days
 
                 sd = max(start_date, campaign_start_date.date())
                 ed = min(end_date, campaign_end_date.date())
-                
+
                 self.total += bid_per_day * (ed - sd).days
-                    
+
                 authors.setdefault(link.author.name, []).append(link)
                 author_score[link.author.name] = author_score.get(link.author.name, 0) + link._score
-            
+
         links = list(links)
         links.sort(key = lambda x: x._score, reverse = True)
         author_score = list(sorted(((v, k) for k,v in author_score.iteritems()),
@@ -3599,7 +3599,7 @@ def force_datetime(d):
 
 
 class Promote_Graph(Templated):
-    
+
     @classmethod
     @memoize('get_market', time = 60)
     def get_market(cls, user_id, start_date, end_date):
@@ -3608,7 +3608,7 @@ class Promote_Graph(Templated):
         def callback(link, bid_day, starti, endi, campaign):
             for i in xrange(starti, endi):
                 if user_id is None or link.author_id == user_id:
-                    if (not promote.is_unpaid(link) and 
+                    if (not promote.is_unpaid(link) and
                         not promote.is_rejected(link) and
                         campaign.trans_id != NO_TRANSACTION):
                         market[i] = market.get(i, 0) + bid_day
@@ -3631,7 +3631,7 @@ class Promote_Graph(Templated):
                 endi = min((edate - start_date).days, size)
                 bid_day = campaign.bid / max((edate - sdate).days, 1)
                 callback(link, bid_day, starti, endi, campaign)
-        
+
     @classmethod
     def get_current_promos(cls, start_date, end_date):
         # grab promoted links
@@ -3646,7 +3646,7 @@ class Promote_Graph(Templated):
         links = dict((l._fullname, l) for l in links.things
                      if promote.is_accepted(l) or promote.is_unapproved(l))
         # filter promos accordingly
-        promos = [(links[thing_name], campaign_id, s, e) 
+        promos = [(links[thing_name], campaign_id, s, e)
                   for thing_name, campaign_id, s, e in promos
                   if links.has_key(thing_name)]
 
@@ -3787,7 +3787,7 @@ class Promote_Graph(Templated):
         for link, uimp, nimp, ucli, ncli in self.recent:
             yield (link._date.strftime("%Y-%m-%d"),
                    num(uimp), num(nimp), num(ucli), num(ncli),
-                   num(link._ups - link._downs), 
+                   num(link._ups - link._downs),
                    "$%.2f" % link.promote_bid,
                    _force_unicode(link.title))
 

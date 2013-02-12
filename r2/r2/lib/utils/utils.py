@@ -47,9 +47,9 @@ from mako.filters import url_escape
 from r2.lib.contrib import ipaddress
 from r2.lib.require import require, require_split
 import snudown
- 
+
 from r2.lib.utils._utils import *
-        
+
 iters = (list, tuple, set)
 
 def randstr(len, reallyrandom = False):
@@ -67,7 +67,7 @@ class Storage(dict):
     """
     A Storage object is like a dictionary except `obj.foo` can be used
     in addition to `obj['foo']`.
-    
+
         >>> o = storage(a=1)
         >>> o.a
         1
@@ -81,15 +81,15 @@ class Storage(dict):
         Traceback (most recent call last):
             ...
         AttributeError: 'a'
-    
+
     """
-    def __getattr__(self, key): 
+    def __getattr__(self, key):
         try:
             return self[key]
         except KeyError, k:
             raise AttributeError, k
 
-    def __setattr__(self, key, value): 
+    def __setattr__(self, key, value):
         self[key] = value
 
     def __delattr__(self, key):
@@ -98,7 +98,7 @@ class Storage(dict):
         except KeyError, k:
             raise AttributeError, k
 
-    def __repr__(self):     
+    def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
 
 storage = Storage
@@ -106,16 +106,16 @@ storage = Storage
 def storify(mapping, *requireds, **defaults):
     """
     Creates a `storage` object from dictionary `mapping`, raising `KeyError` if
-    d doesn't have all of the keys in `requireds` and using the default 
+    d doesn't have all of the keys in `requireds` and using the default
     values for keys found in `defaults`.
 
     For example, `storify({'a':1, 'c':3}, b=2, c=0)` will return the equivalent of
     `storage({'a':1, 'b':2, 'c':3})`.
-    
-    If a `storify` value is a list (e.g. multiple values in a form submission), 
-    `storify` returns the last element of the list, unless the key appears in 
+
+    If a `storify` value is a list (e.g. multiple values in a form submission),
+    `storify` returns the last element of the list, unless the key appears in
     `defaults` as a list. Thus:
-    
+
         >>> storify({'a':[1, 2]}).a
         2
         >>> storify({'a':[1, 2]}, a=[]).a
@@ -124,24 +124,24 @@ def storify(mapping, *requireds, **defaults):
         [1]
         >>> storify({}, a=[]).a
         []
-    
+
     Similarly, if the value has a `value` attribute, `storify will return _its_
     value, unless the key appears in `defaults` as a dictionary.
-    
+
         >>> storify({'a':storage(value=1)}).a
         1
         >>> storify({'a':storage(value=1)}, a={}).a
         <Storage {'value': 1}>
         >>> storify({}, a={}).a
         {}
-    
+
     """
     def getvalue(x):
         if hasattr(x, 'value'):
             return x.value
         else:
             return x
-    
+
     stor = Storage()
     for key in requireds + tuple(mapping.keys()):
         value = mapping[key]
@@ -158,12 +158,12 @@ def storify(mapping, *requireds, **defaults):
 
     for (key, value) in defaults.iteritems():
         result = value
-        if hasattr(stor, key): 
+        if hasattr(stor, key):
             result = stor[key]
-        if value == () and not isinstance(result, tuple): 
+        if value == () and not isinstance(result, tuple):
             result = (result,)
         setattr(stor, key, result)
-    
+
     return stor
 
 class Enum(Storage):
@@ -175,7 +175,7 @@ class Enum(Storage):
             return item in self.values()
         else:
             return Storage.__contains__(self, item)
-            
+
 
 class Results():
     def __init__(self, sa_ResultProxy, build_fn, do_batch=False):
@@ -289,7 +289,7 @@ def extract_title(data):
     bs = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
     if not bs:
         return
-    
+
     title_bs = bs.html.head.title
 
     if not title_bs or not title_bs.string:
@@ -314,7 +314,7 @@ def extract_title(data):
     title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
 
     return title.encode('utf-8').strip()
-    
+
 valid_schemes = ('http', 'https', 'ftp', 'mailto')
 valid_dns = re.compile('\A[-a-zA-Z0-9]+\Z')
 def sanitize_url(url, require_scheme = False):
@@ -509,7 +509,7 @@ class UrlParser(object):
             q.update(self._url_updates)
             q = query_string(q).lstrip('?')
 
-        # make sure the port is not doubly specified 
+        # make sure the port is not doubly specified
         if self.port and ":" in self.hostname:
             self.hostname = self.hostname.split(':')[0]
 
@@ -600,7 +600,7 @@ class UrlParser(object):
         if require_frame and not self.query_dict.has_key(self.cname_get):
             return self
 
-        # fetch the subreddit and make sure it 
+        # fetch the subreddit and make sure it
         subreddit = subreddit or self.get_subreddit()
         if subreddit and subreddit.domain:
 
@@ -756,7 +756,7 @@ def fetch_things(t_class,since,until,batch_fn=None,
 
     q = t_class._query(*query_params,
                         **query_dict)
-    
+
     orig_rules = deepcopy(q._rules)
 
     things = list(q)
@@ -914,7 +914,7 @@ def valid_hash(user, hash):
 
 def check_cheating(loc):
     pass
-        
+
 def vote_hash(user, thing, note='valid'):
     return user.name
 
@@ -1383,7 +1383,7 @@ def thread_dump(*a):
 def constant_time_compare(actual, expected):
     """
     Returns True if the two strings are equal, False otherwise
-    
+
     The time taken is dependent on the number of characters provided
     instead of the number of characters that match.
     """

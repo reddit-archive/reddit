@@ -62,7 +62,7 @@ class ListingController(RedditController, OAuth2ResourceController):
     # allow stylesheets on listings
     allow_stylesheets = True
 
-    # toggles showing numbers 
+    # toggles showing numbers
     show_nums = True
 
     # any text that should be shown on the top of the page
@@ -122,7 +122,7 @@ class ListingController(RedditController, OAuth2ResourceController):
     def content(self):
         """Renderable object which will end up as content of the render_cls"""
         return self.listing_obj
-        
+
     def query(self):
         """Query to execute to generate the listing"""
         raise NotImplementedError
@@ -165,7 +165,7 @@ class ListingController(RedditController, OAuth2ResourceController):
 
     def listing(self):
         """Listing to generate from the builder"""
-        if (getattr(c.site, "_id", -1) == get_promote_srid() and 
+        if (getattr(c.site, "_id", -1) == get_promote_srid() and
             not c.user_is_sponsor):
             abort(403, 'forbidden')
         pane = LinkListing(self.builder_obj, show_nums = self.show_nums).listing()
@@ -210,7 +210,7 @@ class FixListing(object):
         if self.after and self.after._hot == 0:
             self.abort404()
 
-        #don't draw next/prev links for 
+        #don't draw next/prev links for
         if listing.things:
             if listing.things[-1]._hot == 0:
                 listing.next = None
@@ -365,7 +365,7 @@ class HotController(FixListing, ListingController):
             spotlight = None
             show_sponsors = not (not c.user.pref_show_sponsors and c.user.gold)
             show_organic = c.user.pref_organic
-            on_frontpage = isinstance(c.site, DefaultSR) 
+            on_frontpage = isinstance(c.site, DefaultSR)
 
             if self.requested_ad:
                 spotlight = self.make_requested_ad()
@@ -560,7 +560,7 @@ class UserController(ListingController):
                 for srname in srnames:
                     sr_buttons.append(NavButton(srname, srname, opt='sr'))
                 base_path = request.path
-                sr_menu = NavMenu(sr_buttons, base_path=base_path, 
+                sr_menu = NavMenu(sr_buttons, base_path=base_path,
                                   title=_('filter by subreddit'),
                                   type='lightdrop')
                 res.append(sr_menu)
@@ -680,7 +680,7 @@ class UserController(ListingController):
         if where in ('liked', 'disliked') and not votes_visible(vuser):
             return self.abort403()
 
-        if (where in ('saved', 'hidden') and not 
+        if (where in ('saved', 'hidden') and not
             ((c.user_is_loggedin and c.user._id == vuser._id) or
               c.user_is_admin)):
             return self.abort403()
@@ -833,7 +833,7 @@ class MessageController(ListingController):
         return ListingController.builder(self)
 
     def listing(self):
-        if (self.where == 'messages' and 
+        if (self.where == 'messages' and
             (c.user.pref_threaded_messages or self.message)):
             return Listing(self.builder_obj).listing()
         pane = ListingController.listing(self)
