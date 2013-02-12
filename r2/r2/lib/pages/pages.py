@@ -49,7 +49,7 @@ from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
 from r2.lib.strings import plurals, rand_strings, strings, Score
 from r2.lib.utils import title_to_url, query_string, UrlParser, vote_hash
-from r2.lib.utils import link_duplicates, make_offset_date, median, to36
+from r2.lib.utils import url_links_builder, make_offset_date, median, to36
 from r2.lib.utils import trunc_time, timesince, timeuntil, weighted_lottery
 from r2.lib.template_helpers import add_sr, get_domain, format_number
 from r2.lib.subreddit_search import popular_searches
@@ -1034,7 +1034,7 @@ class LinkInfoPage(Reddit):
     extra_page_classes = ['single-page']
 
     def __init__(self, link = None, comment = None,
-                 link_title = '', subtitle = None, duplicates = None,
+                 link_title = '', subtitle = None, num_duplicates = None,
                  *a, **kw):
 
         c.permalink_page = True
@@ -1076,10 +1076,12 @@ class LinkInfoPage(Reddit):
 
         # if we're already looking at the 'duplicates' page, we can
         # avoid doing this lookup twice
-        if duplicates is None:
-            self.duplicates = link_duplicates(self.link)
+        if num_duplicates is None:
+            builder = url_links_builder(self.link.url,
+                                        exclude=self.link._fullname)
+            self.num_duplicates = len(builder.get_items()[0])
         else:
-            self.duplicates = duplicates
+            self.num_duplicates = num_duplicates
 
         robots = "noindex,nofollow" if link._deleted else None
         Reddit.__init__(self, title = title, short_description=short_description, robots=robots, *a, **kw)
@@ -1098,9 +1100,8 @@ class LinkInfoPage(Reddit):
             buttons.extend([info_button('comments'),
                             info_button('related')])
 
-            if not self.link.is_self and self.duplicates:
-                buttons.append(info_button('duplicates',
-                                           num = len(self.duplicates)))
+            if not self.link.is_self and self.num_duplicates > 0:
+                buttons.append(info_button('duplicates', num=self.num_duplicates))
 
         if c.user_is_admin:
             buttons.append(NamedButton("details", dest="/details/"+self.link._fullname))

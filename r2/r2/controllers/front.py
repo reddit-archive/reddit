@@ -31,7 +31,7 @@ from r2.lib.pages.things import wrap_links
 from r2.lib.pages import trafficpages
 from r2.lib.menus import *
 from r2.lib.utils import to36, sanitize_url, check_cheating, title_to_url
-from r2.lib.utils import query_string, UrlParser, link_from_url, link_duplicates
+from r2.lib.utils import query_string, UrlParser, link_from_url, url_links_builder
 from r2.lib.template_helpers import get_domain
 from r2.lib.filters import unsafe, _force_unicode, _force_utf8
 from r2.lib.emailer import has_opted_out, Email
@@ -760,16 +760,19 @@ class FrontController(RedditController, OAuth2ResourceController):
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
 
-        links = link_duplicates(article)
-        links.sort(key=attrgetter('num_comments'), reverse=True)
-        builder = IDBuilder([ link._fullname for link in links ],
-                            num = num, after = after, reverse = reverse,
-                            count = count, skip = False)
-        listing = LinkListing(builder).listing()
+        # only look up duplicates if it's not a self-post
+        if not getattr(article, 'is_self', False):
+            builder = url_links_builder(article.url,
+                                        exclude=article._fullname)
+            num_duplicates = len(builder.get_items()[0])
+            listing = LinkListing(builder).listing()
+        else:
+            num_duplicates = 0
+            listing = None
 
         res = LinkInfoPage(link=article,
                            comment=None,
-                           duplicates=links,
+                           num_duplicates=num_duplicates,
                            content=listing,
                            page_classes=['other-discussions-page'],
                            subtitle=_('other discussions')).render()
