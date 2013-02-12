@@ -56,6 +56,9 @@ class SRRecommendation(tdb_cassandra.View):
     # N runs didn't generate recommendations for a given subreddit
     _ttl = timedelta(days=2)
 
+    # we know that we mess with these but it's okay
+    _warn_on_partial_ttl = False
+
     @classmethod
     def for_sr(cls, srid36, count=5):
         """
@@ -63,8 +66,10 @@ class SRRecommendation(tdb_cassandra.View):
         """
 
         cq = tdb_cassandra.ColumnQuery(cls, [srid36],
-                                       column_count = count+1)
-        recs = [ r[1] for r in cq if r[1] != srid36 ][:count]
+                                       column_count = count+1,
+                                       column_reversed = True)
+
+        recs = [ r.values()[0] for r in cq if r.values()[0] != srid36 ][:count]
 
         return recs
 
