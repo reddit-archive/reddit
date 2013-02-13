@@ -286,6 +286,7 @@ class Link(Thing, Printable):
         s.append(getattr(wrapped, 'media_object', {}))
         s.append(wrapped.flair_text)
         s.append(wrapped.flair_css_class)
+        s.append(wrapped.ignore_reports)
 
         # if browsing a single subreddit, incorporate link flair position
         # in the key so 'flair' buttons show up appropriately for mods
