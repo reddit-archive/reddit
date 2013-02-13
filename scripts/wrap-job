@@ -16,8 +16,7 @@ REDDIT_GROUP
 
 REDDIT_ROOT
 
-    The root directory of the reddit repo. Should contain
-    r2/, scripts/ etc.
+    The root directory of the reddit package. It's where the makefile lives.
 
 REDDIT_LOG_FACILITY
 
@@ -45,9 +44,8 @@ os.setgid(gid)
 os.setuid(uid)
 
 # change directory to the reddit code root
-root = os.environ.get("REDDIT_ROOT", "/opt/reddit/lib/public")
-r2_root = os.path.join(root, "r2")
-os.chdir(r2_root)
+root = os.environ.get("REDDIT_ROOT", "/opt/reddit/lib/public/r2")
+os.chdir(root)
 
 # configure syslog
 job_name = os.environ.get("UPSTART_JOB", "-".join(sys.argv[1:]))
