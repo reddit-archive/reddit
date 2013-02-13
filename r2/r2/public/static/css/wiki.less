@@ -47,6 +47,10 @@
             .revision.hidden {
                 opacity: .5;
             }
+            // Opera does not inherit the opacity to the td
+            .revision.hidden td {
+                opacity: inherit;
+            }
         }
 
         // Page content 
