@@ -30,9 +30,13 @@
   </div>
 
   %if thing.subtitles:
-    <div class="spacer">
+    %if thing.show_icon:
+      <div class="spacer">
       ${plain_link('', thing.link, _sr_path=thing.sr_path,
                    _class='login-required' if thing.show_cover else None, nocname=thing.nocname)}
+    %else:
+      <div class="spacer no-icon">
+    %endif
       %for subtitle in thing.subtitles:
         <div class="subtitle">${subtitle}</div>
       %endfor

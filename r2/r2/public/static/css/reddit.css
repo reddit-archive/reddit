@@ -461,10 +461,6 @@ ul.flat-vert {text-align: left;}
     background-image: url(../gradient-nub-gray.png);  /* SPRITE */
 }
 
-.sidebox.submit.disabled .spacer a {
-    opacity: .5;
-}
-
 /* raised box */
 
 .raisedbox {
@@ -482,6 +478,11 @@ ul.flat-vert {text-align: left;}
     padding: 5px 0 0 44px;
     min-height: 41px;
     background: white none no-repeat scroll top left;
+}
+
+.sidebox .spacer.no-icon {
+    padding: 0;
+    min-height: 0;
 }
 
 .sidebox .spacer a {
@@ -526,11 +527,6 @@ ul.flat-vert {text-align: left;}
 
 .sidebox.gold .morelink .nub {
     display: none;
-}
-
-.sidebox.submit .spacer a {
-    background-image: url(../submit-alien.png);  /* SPRITE */
-    background-repeat:no-repeat;
 }
 
 .sidebox .subtitle {

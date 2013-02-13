@@ -324,14 +324,16 @@ class Reddit(Templated):
                     ps.append(SideBox(title=_('Submissions disabled'),
                                       css_class="submit",
                                       disabled=True,
-                                      subtitles=[subtitle]))
+                                      subtitles=[subtitle],
+                                      show_icon=False))
                 else:
                     subtitle = _('submission in this subreddit '
                                  'is restricted to approved submitters.')
                     ps.append(SideBox(title=_('Submissions restricted'),
                                       css_class="submit",
                                       disabled=True,
-                                      subtitles=[subtitle]))
+                                      subtitles=[subtitle],
+                                      show_icon=False))
             else:
                 fake_sub = isinstance(c.site, FakeSubreddit)
                 if c.site.link_type != 'self':
@@ -693,12 +695,13 @@ class SideBox(CachedTemplate):
     Generic sidebox used to generate the 'submit' and 'create a reddit' boxes.
     """
     def __init__(self, title, link=None, css_class='', subtitles = [],
-                 show_cover = False, nocname=False, sr_path = False, disabled=False):
+                 show_cover = False, nocname=False, sr_path = False,
+                 disabled=False, show_icon=True):
         CachedTemplate.__init__(self, link = link, target = '_top',
                            title = title, css_class = css_class,
                            sr_path = sr_path, subtitles = subtitles,
                            show_cover = show_cover, nocname=nocname,
-                           disabled=disabled)
+                           disabled=disabled, show_icon=show_icon)
 
 
 class PrefsPage(Reddit):
