@@ -1696,7 +1696,7 @@ class ValidIP(Validator):
 
 class VDate(Validator):
     """
-    Date checker that accepts string inputs in %m/%d/%Y format.
+    Date checker that accepts string inputs.
 
     Optional parameters include 'past' and 'future' which specify how
     far (in days) into the past or future the date must be to be
@@ -1712,12 +1712,15 @@ class VDate(Validator):
     def __init__(self, param, future=None, past = None,
                  sponsor_override = False,
                  reference_date = lambda : datetime.now(g.tz), 
-                 business_days = False):
+                 business_days = False,
+                 format = "%m/%d/%Y"):
         self.future = future
         self.past   = past
 
         # are weekends to be exluded from the interval?
         self.business_days = business_days
+
+        self.format = format
 
         # function for generating "now"
         self.reference_date = reference_date
@@ -1730,7 +1733,7 @@ class VDate(Validator):
         now = self.reference_date()
         override = c.user_is_sponsor and self.override
         try:
-            date = datetime.strptime(date, "%m/%d/%Y")
+            date = datetime.strptime(date, self.format)
             if not override:
                 # can't put in __init__ since we need the date on the fly
                 future = utils.make_offset_date(now, self.future,
