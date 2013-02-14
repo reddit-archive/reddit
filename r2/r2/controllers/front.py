@@ -994,9 +994,16 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modtraffic")
     @validate(VTrafficViewer('article'),
-              article = VLink('article'))
-    def GET_traffic(self, article):
-        content = trafficpages.PromotedLinkTraffic(article)
+              article = VLink('article'),
+              before = VDate('before', format='%Y%m%d%H'),
+              after = VDate('after', format='%Y%m%d%H'))
+    def GET_traffic(self, article, before, after):
+        if before:
+            before = before.replace(tzinfo=None)
+        if after:
+            after = after.replace(tzinfo=None)
+
+        content = trafficpages.PromotedLinkTraffic(article, before, after)
         if c.render_style == 'csv':
             return content.as_csv()
 

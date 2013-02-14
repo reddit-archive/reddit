@@ -22,6 +22,7 @@
 
 <%inherit file="reddittraffic.html"/>
 <%namespace file="reddittraffic.html" import="load_timeseries_js"/>
+<%namespace file="utils.html" import="plain_link" />
 
 <%!
     from r2.lib.strings import strings
@@ -100,4 +101,23 @@
   % if thing.is_preliminary:
   <p class="totals-are-preliminary">* ${_("totals are preliminary until 24 hours after the end of the promotion.")}</p>
   % endif
+
+  ${nextprev()}
+
+</%def>
+
+<%def name="nextprev()">
+  %if thing.prev or thing.next:
+    <p class="nextprev"> ${_("view more:")}&#32;
+    %if thing.prev:
+      ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path=False, rel="nofollow prev")}  
+    %endif
+    %if thing.prev and thing.next:
+      <span class="separator"></span>
+    %endif
+    %if thing.next:
+      ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path=False, rel="nofollow next")}  
+    %endif
+    </p>
+  %endif
 </%def>

@@ -23,9 +23,10 @@
 
 import collections
 import datetime
+import urllib
 
 from pylons.i18n import _
-from pylons import g, c
+from pylons import g, c, request
 import babel.core
 
 from r2.lib import promote
@@ -440,8 +441,13 @@ def _is_promo_preliminary(end_date):
 
 
 class PromotedLinkTraffic(RedditTraffic):
-    def __init__(self, thing):
+    def __init__(self, thing, before=None, after=None):
         self.thing = thing
+        self.before = before
+        self.after = after
+        self.period = datetime.timedelta(days=31)
+        self.prev = None
+        self.next = None
 
         editable = c.user_is_sponsor or c.user._id == thing.author_id
         self.viewer_list = TrafficViewerList(thing, editable)
@@ -449,17 +455,42 @@ class PromotedLinkTraffic(RedditTraffic):
         RedditTraffic.__init__(self, None)
 
     def make_tables(self):
-        start, end = promote.get_total_run(self.thing)
+        now = datetime.datetime.utcnow().replace(minute=0, second=0,
+                                                 microsecond=0)
 
-        if not start or not end:
+        promo_start, promo_end = promote.get_total_run(self.thing)
+        promo_end = min(now, promo_end)
+
+        if not promo_start or not promo_end:
             self.history = []
             return
 
-        now = datetime.datetime.utcnow().replace(minute=0, second=0,
-                                                 microsecond=0)
-        end = min(end, now)
-        cutoff = end - datetime.timedelta(days=31)
-        start = max(start, cutoff)
+        start = self.after
+        end = self.before
+
+        if not start and not end:
+            end = promo_end
+            start = end - self.period
+
+        elif not end:
+            end = start + self.period
+
+        elif not start:
+            start = end - self.period
+
+        if start > promo_start:
+            p = request.get.copy()
+            p.update({'after':None, 'before':start.strftime('%Y%m%d%H')})
+            self.prev = '%s?%s' % (request.path, urllib.urlencode(p))
+        else:
+            start = promo_start
+
+        if end < promo_end:
+            p = request.get.copy()
+            p.update({'after':end.strftime('%Y%m%d%H'), 'before':None})
+            self.next = '%s?%s' % (request.path, urllib.urlencode(p))
+        else:
+            end = promo_end
 
         fullname = self.thing._fullname
         imps = traffic.AdImpressionsByCodename.promotion_history(fullname,
