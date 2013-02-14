@@ -465,32 +465,35 @@ class PromotedLinkTraffic(RedditTraffic):
             self.history = []
             return
 
-        start = self.after
-        end = self.before
+        if self.period:
+            start = self.after
+            end = self.before
 
-        if not start and not end:
-            end = promo_end
-            start = end - self.period
+            if not start and not end:
+                end = promo_end
+                start = end - self.period
 
-        elif not end:
-            end = start + self.period
+            elif not end:
+                end = start + self.period
 
-        elif not start:
-            start = end - self.period
+            elif not start:
+                start = end - self.period
 
-        if start > promo_start:
-            p = request.get.copy()
-            p.update({'after':None, 'before':start.strftime('%Y%m%d%H')})
-            self.prev = '%s?%s' % (request.path, urllib.urlencode(p))
+            if start > promo_start:
+                p = request.get.copy()
+                p.update({'after':None, 'before':start.strftime('%Y%m%d%H')})
+                self.prev = '%s?%s' % (request.path, urllib.urlencode(p))
+            else:
+                start = promo_start
+
+            if end < promo_end:
+                p = request.get.copy()
+                p.update({'after':end.strftime('%Y%m%d%H'), 'before':None})
+                self.next = '%s?%s' % (request.path, urllib.urlencode(p))
+            else:
+                end = promo_end
         else:
-            start = promo_start
-
-        if end < promo_end:
-            p = request.get.copy()
-            p.update({'after':end.strftime('%Y%m%d%H'), 'before':None})
-            self.next = '%s?%s' % (request.path, urllib.urlencode(p))
-        else:
-            end = promo_end
+            start, end = promo_start, promo_end
 
         fullname = self.thing._fullname
         imps = traffic.AdImpressionsByCodename.promotion_history(fullname,
@@ -542,6 +545,7 @@ class PromotedLinkTraffic(RedditTraffic):
         out = cStringIO.StringIO()
         writer = csv.writer(out)
 
+        self.period = None
         history = self.make_tables()
         writer.writerow((_("date and time (UTC)"),
                          _("unique impressions"),
