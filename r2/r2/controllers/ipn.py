@@ -898,7 +898,7 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
 
         try:
             create_claimed_gold(transaction_id, payer_email, payer_id, pennies,
-                                days, secret_pieces, buyer._id, c.start_time,
+                                days, secret, buyer._id, c.start_time,
                                 subscr_id=subscription_id, status=status)
         except IntegrityError:
             g.log.error('gold: got duplicate gold transaction')
