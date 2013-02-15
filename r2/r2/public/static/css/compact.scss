@@ -324,11 +324,13 @@ button.button {
         bottom: 3px;
         overflow: hidden;
         max-height: 40px;
+        z-index: 1;
     }
     .right {
         position: absolute;
         right: 10px;
         bottom: 1px;
+        z-index: 3;
     }
 
     & > h1 {
@@ -348,8 +350,10 @@ button.button {
 }
 
 #topbar > h1 a {
+    position: relative;
     color: inherit;
     text-decoration: inherit;
+    z-index: 2;
 }
 body[orient="landscape"] > #topbar > h1 {
     margin-left: -125px;

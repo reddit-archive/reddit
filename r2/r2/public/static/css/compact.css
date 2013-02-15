@@ -91,11 +91,11 @@ button.button { padding: 0 5px; }
 /*Toolbar*/
 #topbar { background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #cee3f8), color-stop(100%, #a8c4e0)); background: -webkit-linear-gradient(top, #cee3f8, #a8c4e0); background: -moz-linear-gradient(top, #cee3f8, #a8c4e0); background: -o-linear-gradient(top, #cee3f8, #a8c4e0); background: linear-gradient(top, #cee3f8, #a8c4e0); background-color: #bbd3ec; border-bottom: 1px solid #7599BD; border-top: 1px solid #DCEAF7; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; padding: 0px 10px; height: 40px; position: relative; }
 #topbar #header-img { height: 32px; width: auto; }
-#topbar .left { position: absolute; left: 0; bottom: 3px; overflow: hidden; max-height: 40px; }
-#topbar .right { position: absolute; right: 10px; bottom: 1px; }
+#topbar .left { position: absolute; left: 0; bottom: 3px; overflow: hidden; max-height: 40px; z-index: 1; }
+#topbar .right { position: absolute; right: 10px; bottom: 1px; z-index: 3; }
 #topbar > h1 { color: #444; font-size: 18px; font-weight: bold; text-align: center; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 10px; padding: 0; padding-top: 16px; text-shadow: rgba(255, 255, 255, 0.5) 0px 1px 0px, rgba(0, 0, 0, 0.1) 0px -1px 0px; -webkit-box-flex: 1; -moz-box-flex: 1; -ms-box-flex: 1; box-flex: 1; }
 
-#topbar > h1 a { color: inherit; text-decoration: inherit; }
+#topbar > h1 a { position: relative; color: inherit; text-decoration: inherit; z-index: 2; }
 
 body[orient="landscape"] > #topbar > h1 { margin-left: -125px; width: 250px; }
 
