@@ -637,8 +637,7 @@ class GoldPaymentController(RedditController):
             if existing:
                 # note that we don't check status on existing, probably
                 # should update gold_table when a cancellation happens
-                reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
-                                      recipient)
+                reverse_gold_purchase(transaction_id)
         elif event_type == 'succeeded':
             if existing and existing.status == 'processed':
                 g.log.info('POST_goldwebhook skipping %s' % transaction_id)
@@ -666,8 +665,7 @@ class GoldPaymentController(RedditController):
                    '%(gold_email)s for details' % {'gold_email':
                                                    g.goldthanks_email})
             send_system_message(buyer, subject, msg)
-            reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
-                                  recipient)
+            reverse_gold_purchase(transaction_id)
 
 
 class StripeController(GoldPaymentController):
@@ -930,12 +928,31 @@ def subtract_gold_creddits(user, num):
     user._incr('gold_creddits', -num)
 
 
-def reverse_gold_purchase(transaction_id, goldtype, buyer, pennies,
-                          recipient=None):
+def reverse_gold_purchase(transaction_id):
+    transaction = retrieve_gold_transaction(transaction_id)
+
+    if not transaction:
+        raise GoldException('gold_table %s not found' % transaction_id)
+
+    buyer = Account._byID(int(transaction.account_id), data=True)
+    recipient = None
+    days = transaction.days
+    months = days / 31
+
+    secret = transaction.secret
+    if '{' in secret:
+        secret.strip('{}') # I goofed
+        pieces = secret.split(',')
+    else:
+        pieces = secret.split('-')
+    goldtype = pieces[0]
+    if goldtype == 'gift':
+        recipient_name, secret = pieces[1:]
+        recipient = Account._by_name(recipient_name)
+
     gold_recipient = recipient or buyer
     with gold_lock(gold_recipient):
         gold_recipient._sync_latest()
-        months, days = months_and_days_from_pennies(pennies)
 
         if goldtype in ('onetime', 'autorenew'):
             subtract_gold_days(buyer, days)
