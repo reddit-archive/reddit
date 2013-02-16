@@ -41,7 +41,6 @@ from r2.lib.utils import constant_time_compare
 
 from r2.lib.errors import errors, UserRequiredException
 from r2.lib.errors import VerifiedUserRequiredException
-from r2.lib.errors import GoldRequiredException
 
 from copy import copy
 from datetime import datetime, timedelta
