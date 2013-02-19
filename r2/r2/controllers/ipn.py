@@ -831,7 +831,9 @@ def validate_blob(custom):
             except NotFound:
                 raise GoldException('bad comment')
         ret['signed'] = payment_blob.get('signed', False)
-        ret['giftmessage'] = payment_blob.get('giftmessage', False)
+        giftmessage = payment_blob.get('giftmessage')
+        giftmessage = _force_unicode(giftmessage) if giftmessage else None
+        ret['giftmessage'] = giftmessage
     elif goldtype not in ('onetime', 'autorenew', 'creddits'):
         raise GoldException('bad goldtype')
 
