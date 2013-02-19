@@ -958,9 +958,6 @@ def new_vote(vote, foreground=False, timer=None):
     if timer is None:
         timer = SimpleSillyStub()
 
-    if not isinstance(item, (Link, Comment)):
-        return
-
     if vote.valid_thing and not item._spam and not item._deleted:
         sr = item.subreddit_slow
         results = []
@@ -1557,6 +1554,9 @@ def handle_vote(user, thing, dir, ip, vote_info,
             timestamps.append('Commented')
             #update sup listings
             sup.add_update(user, 'commented')
+
+    else:
+        raise NotImplementedError
 
     timer.intermediate("sup")
 

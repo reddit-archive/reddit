@@ -1651,6 +1651,9 @@ class ApiController(RedditController):
 
         hooks.get_hook("vote.validate").call(thing=thing)
 
+        if not isinstance(thing, (Link, Comment)):
+            return
+
         if vote_info == 'rejected':
             reject_vote(thing)
             store = False
