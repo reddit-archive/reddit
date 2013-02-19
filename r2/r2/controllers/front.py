@@ -784,7 +784,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                              simple=True).render()
         return res
 
-    search_help_page = "/help/search"
+    search_help_page = "/wiki/search"
     verify_langs_regex = re.compile(r"\A[a-z][a-z](,[a-z][a-z])*\Z")
     @base_listing
     @validate(query=VLength('q', max_length=512),

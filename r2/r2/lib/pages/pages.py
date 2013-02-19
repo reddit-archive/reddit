@@ -568,9 +568,9 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    NamedButton("help", False, nocname=True),
-                    OffsiteButton(_("FAQ"), dest = "/help/faq", nocname=True),
-                    OffsiteButton(_("reddiquette"), nocname=True, dest = "/help/reddiquette"),
+                    NamedButton("wiki", False, nocname=True),
+                    OffsiteButton(_("FAQ"), dest = "/wiki/faq", nocname=True),
+                    OffsiteButton(_("reddiquette"), nocname=True, dest = "/wiki/reddiquette"),
                     NamedButton("rules", False, nocname=True),
                     NamedButton("feedback", False),
                 ],
@@ -1448,7 +1448,7 @@ class ProfilePage(Reddit):
         rb = Reddit.rightbox(self)
 
         tc = TrophyCase(self.user)
-        helplink = ( "/help/awards", _("what's this?") )
+        helplink = ( "/wiki/awards", _("what's this?") )
         scb = SideContentBox(title=_("trophy case"),
                  helplink=helplink, content=[tc],
                  extra_class="trophy-area")
@@ -1717,7 +1717,7 @@ class SubscriptionBox(Templated):
             if not c.user.gold:
                 self.goldlink = "/gold"
                 self.goldmsg = _("raise it to %s") % Subreddit.gold_limit
-                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
+                self.prelink = ["/wiki/faq#wiki_how_many_reddits_can_i_subscribe_to.3F",
                                 _("%s visible") % Subreddit.sr_limit]
             else:
                 self.goldlink = "/gold/about"
@@ -1726,7 +1726,7 @@ class SubscriptionBox(Templated):
                 visible = min(len(srs), Subreddit.gold_limit)
                 bonus = {"bonus": extra}
                 self.goldmsg = _("%(bonus)s bonus reddits") % bonus
-                self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
+                self.prelink = ["/wiki/faq#wiki_how_many_reddits_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
         Templated.__init__(self, srs=srs, goldlink=self.goldlink,

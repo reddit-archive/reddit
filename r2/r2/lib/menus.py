@@ -85,7 +85,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      # reddit header strings
                      prefs        = _("preferences"), 
                      submit       = _("submit"),
-                     help         = _("help"),
+                     wiki         = _("wiki"),
                      blog         = _("blog"),
                      logout       = _("logout"),
                      
