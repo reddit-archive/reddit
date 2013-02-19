@@ -687,7 +687,7 @@ class StripeController(GoldPaymentController):
 
         charge = event.data.object
         description = charge.description
-        passthrough, buyer_name = description.split('-')
+        passthrough, buyer_name = description.split('-', 1)
         transaction_id = 'S%s' % charge.id
         pennies = charge.amount
         return status, passthrough, transaction_id, pennies
