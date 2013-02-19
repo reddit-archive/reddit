@@ -30,6 +30,7 @@ import ConfigParser
 
 import kazoo.client
 from kazoo.security import make_acl, make_digest_acl
+from kazoo.exceptions import NoAuthException
 
 from r2.lib.zookeeper import connect_to_zookeeper
 from r2.lib.app_globals import extract_live_config, LIVE_CONFIG_NODE
@@ -121,9 +122,16 @@ def main():
 
     password = getpass.getpass("Password: ")
 
-    write_config_to_zookeeper(LIVE_CONFIG_NODE,
-                              USERNAME, password,
-                              config, live)
+    try:
+        write_config_to_zookeeper(LIVE_CONFIG_NODE,
+                                  USERNAME, password,
+                                  config, live)
+    except NoAuthException:
+        print >> sys.stderr, "%s: incorrect password" % progname
+        return 1
+    except Exception as e:
+        print >> sys.stderr, "%s: %s" % (progname, e)
+        return 1
 
     print "Succesfully updated live config!"
 
