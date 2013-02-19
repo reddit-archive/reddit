@@ -590,7 +590,7 @@ class RedditFooter(CachedTemplate):
                 separator = ""),
 
             NavMenu([
-                    NamedButton("gold", False, nocname=True, dest = "/help/gold", css_class = "buygold"),
+                    NamedButton("gold", False, nocname=True, dest = "/gold/about", css_class = "buygold"),
                     NamedButton("store", False, nocname=True),
                     OffsiteButton(_("redditgifts"), "http://redditgifts.com"),
                     OffsiteButton(_("reddit.tv"), "http://reddit.tv"),
@@ -1720,7 +1720,7 @@ class SubscriptionBox(Templated):
                 self.prelink = ["/help/faq#HowmanyredditscanIsubscribeto",
                                 _("%s visible") % Subreddit.sr_limit]
             else:
-                self.goldlink = "/help/gold#WhatdoIgetforjoining"
+                self.goldlink = "/gold/about"
                 extra = min(len(srs) - Subreddit.sr_limit,
                             Subreddit.gold_limit - Subreddit.sr_limit)
                 visible = min(len(srs), Subreddit.gold_limit)

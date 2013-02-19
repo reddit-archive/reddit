@@ -170,7 +170,7 @@ class AdminTools(object):
         description = "Since " + now.strftime("%B %Y")
         trophy = Award.give_if_needed("reddit_gold", account,
                                      description=description,
-                                     url="/help/gold")
+                                     url="/gold/about")
         if trophy and trophy.description.endswith("Member Emeritus"):
             trophy.description = description
             trophy._commit()
