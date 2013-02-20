@@ -881,7 +881,8 @@ class FakeSubreddit(Subreddit):
         return False
 
     def is_moderator(self, user):
-        return c.user_is_loggedin and c.user_is_admin
+        if c.user_is_loggedin and c.user_is_admin:
+            return FakeSRMember(ModeratorPermissionSet)
 
     def can_view(self, user):
         return True
@@ -1179,7 +1180,7 @@ class MultiReddit(_DefaultSR):
         if None in mod_rels.values():
             return False
         else:
-            return True
+            return FakeSRMember(ModeratorPermissionSet)
 
     @property
     def path(self):
@@ -1243,7 +1244,7 @@ class ModSR(ModContribSR):
     real_path = "mod"
 
     def is_moderator(self, user):
-        return True
+        return FakeSRMember(ModeratorPermissionSet)
 
 class ContribSR(ModContribSR):
     name  = "contrib"
@@ -1341,6 +1342,21 @@ class SRMember(Relation(Subreddit, Account)):
 
     def is_superuser(self):
         return self.get_permissions().is_superuser()
+
+
+class FakeSRMember:
+    """All-permission granting stub for SRMember, used by FakeSubreddits."""
+    def __init__(self, permission_class):
+        self.permission_class = permission_class
+
+    def has_permission(self, perm):
+        return True
+
+    def get_permissions(self):
+        return self.permission_class(all=True)
+
+    def is_superuser(self):
+        return True
 
 
 Subreddit.__bases__ += (
