@@ -266,6 +266,8 @@ def make_map():
        action='goldwebhook')
     mc('/api/coinbasewebhook/gold/:secret', controller='coinbase',
        action='goldwebhook')
+    mc('/api/rgwebhook/gold/:secret', controller='redditgifts',
+       action='goldwebhook')
     mc('/api/ipn/:secret', controller='ipn', action='ipn')
     mc('/ipn/:secret', controller='ipn', action='ipn')
     mc('/api/:action/:url_user', controller='api',

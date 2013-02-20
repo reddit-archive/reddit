@@ -35,7 +35,7 @@ from sqlalchemy.exc import IntegrityError
 import stripe
 
 from r2.controllers.reddit_base import RedditController
-from r2.lib.filters import _force_unicode
+from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
 from r2.lib.strings import strings
 from r2.lib.utils import randstr, tup
@@ -785,6 +785,62 @@ class CoinbaseController(GoldPaymentController):
         pennies = int(order['total_native']['cents'])
         months, days = months_and_days_from_pennies(pennies)
         passthrough = order['custom']
+        return status, passthrough, transaction_id, pennies, months
+
+
+class RedditGiftsController(GoldPaymentController):
+    """Handle notifications of gold purchases from reddit gifts.
+
+    Payment is handled by reddit gifts. Once an order is complete they can hit
+    this route to apply gold to a user's account.
+
+    The post should include data in the form:
+    {
+        'transaction_id', transaction_id,
+        'goldtype': goldtype,
+        'buyer': buyer name,
+        'pennies': pennies,
+        'months': months,
+        ['recipient': recipient name,]
+        ['giftmessage': message,]
+        ['signed': bool,]
+    }
+
+    """
+
+    name = 'redditgifts'
+    webhook_secret = g.RG_SECRET
+    event_type_mappings = {'succeeded': 'succeeded'}
+
+    def process_response(self):
+        data = request.POST
+
+        transaction_id = 'RG%s' % data['transaction_id']
+        pennies = int(data['pennies'])
+        months = int(data['months'])
+        status = 'succeeded'
+
+        buyer_name = data['buyer']
+        goldtype = data['goldtype']
+
+        buyer = Account._by_name(buyer_name)
+
+        blob = {
+            'goldtype': goldtype,
+            'account_id': buyer._id,
+            'account_name': buyer.name,
+            'status': 'initialized',
+        }
+
+        if goldtype == 'gift':
+            blob['recipient'] = data['recipient']
+            giftmessage = data.get('giftmessage', None)
+            blob['giftmessage'] = _force_utf8(giftmessage)
+            signed = data.get('signed')
+            blob['signed'] = True if signed == 'True' else False
+
+        passthrough = generate_blob(blob)
+
         return status, passthrough, transaction_id, pennies, months
 
 
