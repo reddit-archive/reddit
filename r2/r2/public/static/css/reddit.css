@@ -2031,7 +2031,8 @@ li.searchfacet {
 .user-form input.logtxt { width: 125px; }
 
 .user-form input[type=text],
-.user-form input[type=password] {
+.user-form input[type=password],
+.user-form input[type=email] {
     width: 125px;
     border: 1px solid #A0A0A0;
     margin-top: 2px; 
