@@ -494,19 +494,19 @@ class Subreddit(Thing, Printable):
 
     def get_spam(self):
         from r2.lib.db import queries
-        return queries.get_spam(self)
+        return queries.get_spam(self, user=c.user)
 
     def get_reported(self):
         from r2.lib.db import queries
-        return queries.get_reported(self)
+        return queries.get_reported(self, user=c.user)
 
     def get_modqueue(self):
         from r2.lib.db import queries
-        return queries.get_modqueue(self)
+        return queries.get_modqueue(self, user=c.user)
 
     def get_unmoderated(self):
         from r2.lib.db import queries
-        return queries.get_unmoderated(self)
+        return queries.get_unmoderated(self, user=c.user)
 
     def get_all_comments(self):
         from r2.lib.db import queries

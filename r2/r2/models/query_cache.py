@@ -453,8 +453,8 @@ def merged_cached_query(fn):
     results will be merged together into a final listing.
 
     """
-    def merge_wrapper(*args):
-        queries = fn(*args)
+    def merge_wrapper(*args, **kwargs):
+        queries = fn(*args, **kwargs)
         return MergedCachedQuery(queries)
     return merge_wrapper
 

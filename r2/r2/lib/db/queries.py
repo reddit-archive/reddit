@@ -349,9 +349,12 @@ def get_spam_comments(sr_id):
                           Comment.c._spam == True,
                           sort = db_sort('new'))
 @merged_cached_query
-def get_spam(sr):
+def get_spam(sr, user=None):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        if user:
+            srs = [sr for sr in srs
+                   if sr.is_moderator_with_perms(user, 'posts')]
         q = []
         q.extend(get_spam_links(sr) for sr in srs)
         q.extend(get_spam_comments(sr) for sr in srs)
@@ -396,9 +399,12 @@ def get_reported_comments(sr_id):
                           sort = db_sort('new'))
 
 @merged_cached_query
-def get_reported(sr):
+def get_reported(sr, user=None):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        if user:
+            srs = [sr for sr in srs
+                   if sr.is_moderator_with_perms(user, 'posts')]
         q = []
         q.extend(get_reported_links(sr) for sr in srs)
         q.extend(get_reported_comments(sr) for sr in srs)
@@ -419,10 +425,13 @@ def get_unmoderated_links(sr_id):
     return q
 
 @merged_cached_query
-def get_modqueue(sr):
+def get_modqueue(sr, user=None):
     q = []
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        if user:
+            srs = [sr for sr in srs
+                   if sr.is_moderator_with_perms(user, 'posts')]
         q.extend(get_reported_links(sr) for sr in srs)
         q.extend(get_reported_comments(sr) for sr in srs)
         q.extend(get_spam_filtered_links(sr) for sr in srs)
@@ -435,10 +444,13 @@ def get_modqueue(sr):
     return q
 
 @merged_cached_query
-def get_unmoderated(sr):
+def get_unmoderated(sr, user=None):
     q = []
     if isinstance(sr, MultiReddit):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
+        if user:
+            srs = [sr for sr in srs
+                   if sr.is_moderator_with_perms(user, 'posts')]
         q.extend(get_unmoderated_links(sr) for sr in srs)
     else:
         q.append(get_unmoderated_links(sr))
