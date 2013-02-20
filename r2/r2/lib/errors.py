@@ -204,26 +204,26 @@ class ErrorSet(object):
 
 
 class ForbiddenError(HTTPForbidden):
-    def __init__(self, error):
+    def __init__(self, error_name):
         HTTPForbidden.__init__(self)
-        self.explanation = error_list[error]
+        self.explanation = error_list[error_name]
 
 
 class BadRequestError(HTTPBadRequest):
-    def __init__(self, error):
+    def __init__(self, error_name):
         HTTPBadRequest.__init__(self)
         self.error_data = {
-            'reason': error,
-            'explanation': error_list[error],
+            'reason': error_name,
+            'explanation': error_list[error_name],
         }
 
 
-def reddit_http_error(code=400, error='UNKNOWN_ERROR', **data):
+def reddit_http_error(code=400, error_name='UNKNOWN_ERROR', **data):
     exc = status_map[code]()
 
-    data['reason'] = exc.explanation = error
-    if error in error_list:
-        data['explanation'] = exc.explanation = error_list[error]
+    data['reason'] = exc.explanation = error_name
+    if error_name in error_list:
+        data['explanation'] = exc.explanation = error_list[error_name]
 
     # omit 'fields' json attribute if it is empty
     if 'fields' in data and not data['fields']:
