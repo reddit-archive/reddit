@@ -212,6 +212,12 @@ class StringHandler(object):
     def __init__(self, **sdict):
         self.string_dict = sdict
 
+    def get(self, attr, default=None):
+        try:
+            return self[attr]
+        except KeyError:
+            return default
+
     def __getitem__(self, attr):
         try:
             return self.__getattr__(attr)
