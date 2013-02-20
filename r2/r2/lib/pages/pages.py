@@ -245,20 +245,22 @@ class Reddit(Templated):
     def sr_admin_menu(self):
         buttons = []
         is_single_subreddit = not isinstance(c.site, (ModSR, MultiReddit))
+        is_admin = c.user_is_loggedin and c.user_is_admin
+        is_moderator_with_perms = lambda *perms: (
+            is_admin or c.site.is_moderator_with_perms(c.user, *perms))
 
-        if (is_single_subreddit
-            and c.site.is_moderator_with_perms(c.user, 'config')):
+        if is_single_subreddit and is_moderator_with_perms('config'):
             buttons.append(NavButton(menu.community_settings,
                                      css_class="reddit-edit",
                                      dest="edit"))
 
-        if c.site.is_moderator_with_perms(c.user, 'mail'):
+        if is_moderator_with_perms('mail'):
             buttons.append(NamedButton("modmail",
                                     dest="message/inbox",
                                     css_class="moderator-mail"))
 
         if is_single_subreddit:
-            if c.site.is_moderator_with_perms(c.user, 'access'):
+            if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("moderators",
                                            css_class="reddit-moderators"))
 
@@ -272,19 +274,19 @@ class Reddit(Templated):
 
             buttons.append(NamedButton("traffic", css_class="reddit-traffic"))
 
-        if c.site.is_moderator_with_perms(c.user, 'posts'):
+        if is_moderator_with_perms('posts'):
             buttons += [NamedButton("modqueue", css_class="reddit-modqueue"),
                         NamedButton("reports", css_class="reddit-reported"),
                         NamedButton("spam", css_class="reddit-spam")]
 
         if is_single_subreddit:
-            if c.site.is_moderator_with_perms(c.user, 'access'):
+            if is_moderator_with_perms('access'):
                 buttons.append(NamedButton("banned", css_class="reddit-ban"))
-            if c.site.is_moderator_with_perms(c.user, 'flair'):
+            if is_moderator_with_perms('flair'):
                 buttons.append(NamedButton("flair", css_class="reddit-flair"))
 
         buttons.append(NamedButton("log", css_class="reddit-moderationlog"))
-        if c.site.is_moderator_with_perms(c.user, 'posts'):
+        if is_moderator_with_perms('posts'):
             buttons.append(
                 NamedButton("unmoderated", css_class="reddit-unmoderated"))
 
