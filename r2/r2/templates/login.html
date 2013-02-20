@@ -78,10 +78,11 @@
       %if register:
         <li>
           <label for="email_${op}">
-            ${_('email')}: &nbsp;<i>(${_('optional')})
+            ${_('account recovery email')}: &nbsp;<i>(${_('optional')})
           </i></label>
           <input value="" name="email" id="email_${op}" 
                  type="text" maxlength="50" tabindex="${tabindex}"/>
+          <label for="email_${op}" class="note">${_('we will only send email at your request')}</label>
           %if register:
             ${error_field("BAD_EMAILS", "email", kind="span")}
           %endif

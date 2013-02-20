@@ -2016,6 +2016,10 @@ li.searchfacet {
     color: #606060; 
 }
 
+.user-form label.note {
+    font-weight: normal;
+}
+
 .user-form .error {
     margin-left: 5px;
 }
