@@ -105,21 +105,21 @@ class MemoizedUserRelManager(UserRelManager):
         self.add = self._update_caches_on_success(sup.add)
         self.remove = self._update_caches_on_success(sup.remove)
 
-    def _update_caches(self, thing):
+    def _update_caches(self, thing, user):
         if not self.disable_ids_fn:
             self.ids(thing, _update=True)
         if not self.disable_reverse_ids_fn:
-            self.reverse_ids(thing, _update=True)
+            self.reverse_ids(user, _update=True)
 
     def _update_caches_on_success(self, method):
         @functools.wraps(method)
-        def wrapper(thing, *args, **kwargs):
+        def wrapper(thing, user, *args, **kwargs):
             try:
-                result = method(thing, *args, **kwargs)
+                result = method(thing, user, *args, **kwargs)
             except:
                 raise
             else:
-                self._update_caches(thing)
+                self._update_caches(thing, user)
             return result
         return wrapper
 
