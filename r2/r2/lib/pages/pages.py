@@ -382,9 +382,11 @@ class Reddit(Templated):
             ps.append(SubredditInfoBar())
             moderator = c.user_is_loggedin and (c.user_is_admin or 
                                           c.site.is_moderator(c.user))
+            wiki_moderator = c.user_is_loggedin and (
+                c.user_is_admin
+                or c.site.is_moderator_with_perms(c.user, 'wiki'))
             if self.show_wiki_actions:
-                menu = self.wiki_actions_menu(
-                    moderator=c.site.is_moderator_with_perms(c.user, 'wiki'))
+                menu = self.wiki_actions_menu(moderator=wiki_moderator)
                 ps.append(menu)
             if moderator:
                 ps.append(self.sr_admin_menu())
