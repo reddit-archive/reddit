@@ -192,6 +192,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     missing_credit_address = _("missing address"),
     missing_credit_city = _("missing city"),
     missing_credit_state = _("missing state or province"),
+    missing_credit_country = _("missing country"),
     missing_credit_zip = _("missing zip code"),
 
     permissions = dict(

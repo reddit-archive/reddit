@@ -159,6 +159,8 @@ r.gold = {
             status.text(r.strings('missing_credit_city'))
         } else if (!cardState) {
             status.text(r.strings('missing_credit_state'))
+        } else if (!cardCountry) {
+            status.text(r.strings('missing_credit_country'))
         } else if (!cardZip) {
             status.text(r.strings('missing_credit_zip'))
         } else {
