@@ -770,6 +770,9 @@ def fetch_things2(query, chunk_size = 100, batch_fn = None, chunks = False):
     """Incrementally run query with a limit of chunk_size until there are
     no results left. batch_fn transforms the results for each chunk
     before returning."""
+
+    assert query._sort, "you must specify the sort order in your query!"
+
     orig_rules = deepcopy(query._rules)
     query._limit = chunk_size
     items = list(query)
