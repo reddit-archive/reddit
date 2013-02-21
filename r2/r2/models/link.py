@@ -414,6 +414,10 @@ class Link(Thing, Printable):
                     item.thumbnail = ""
             elif not show_media:
                 item.thumbnail = ""
+            elif (item._deleted or
+                  item._spam and item._date < timeago("6 hours")):
+                item.thumbnail = "default"
+                item.thumbnail_sprited = True
             elif item.has_thumbnail:
                 item.thumbnail = media.thumbnail_url(item)
             elif item.is_self:
