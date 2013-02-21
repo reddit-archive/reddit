@@ -92,6 +92,10 @@ class ModeratorPermissionSet(PermissionSet):
             description=_(
                 'use the approve, remove, spam, distinguish, and nsfw buttons'),
         ),
+        wiki=dict(
+            title=_('wiki'),
+            description=_('manage the wiki and access to the wiki'),
+        ),
     )
 
     @classmethod

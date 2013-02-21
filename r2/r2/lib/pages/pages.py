@@ -383,7 +383,9 @@ class Reddit(Templated):
             moderator = c.user_is_loggedin and (c.user_is_admin or 
                                           c.site.is_moderator(c.user))
             if self.show_wiki_actions:
-                ps.append(self.wiki_actions_menu(moderator=moderator))
+                menu = self.wiki_actions_menu(
+                    moderator=c.site.is_moderator_with_perms(c.user, 'wiki'))
+                ps.append(menu)
             if moderator:
                 ps.append(self.sr_admin_menu())
             if show_adbox:
@@ -483,7 +485,8 @@ class Reddit(Templated):
 
             mod = False
             if c.user_is_loggedin:
-                mod = bool(c.user_is_admin or c.site.is_moderator(c.user))
+                mod = bool(c.user_is_admin
+                           or c.site.is_moderator_with_perms(c.user, 'wiki'))
             if c.site._should_wiki and (c.site.wikimode != 'disabled' or mod):
                 if not g.disable_wiki:
                     main_buttons.append(NavButton('wiki', 'wiki'))

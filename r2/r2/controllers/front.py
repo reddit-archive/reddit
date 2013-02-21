@@ -611,12 +611,12 @@ class FrontController(RedditController, OAuth2ResourceController):
             pane = ModList(editable=is_unlimited_moderator)
         elif is_moderator_with_perms('access') and location == 'banned':
             pane = BannedList(editable=is_moderator_with_perms('access'))
-        elif is_moderator_with_perms('access') and location == 'wikibanned':
+        elif is_moderator_with_perms('wiki') and location == 'wikibanned':
             pane = WikiBannedList(editable=is_moderator_with_perms('access'))
-        elif (is_moderator_with_perms('access')
+        elif (is_moderator_with_perms('wiki')
               and location == 'wikicontributors'):
             pane = WikiMayContributeList(
-                editable=is_moderator_with_perms('access'))
+                editable=is_moderator_with_perms('wiki'))
         elif (location == 'contributors' and
               # On public reddits, only moderators can see the whitelist.
               # On private reddits, all contributors can see each other.
