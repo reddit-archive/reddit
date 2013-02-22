@@ -1507,16 +1507,16 @@ def process_votes(qname, limit=0):
         votee = Thing._by_fullname(tid, data = True)
         timer.intermediate("preamble")
 
-        if isinstance(votee, Comment):
-            update_comment_votes([votee])
-            timer.intermediate("update_comment_votes")
-
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
                         cheater = cheater, foreground=True, timer=timer)
+
+        if isinstance(votee, Comment):
+            update_comment_votes([votee])
+            timer.intermediate("update_comment_votes")
 
         timer.flush()
 
