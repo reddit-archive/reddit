@@ -58,7 +58,9 @@
                                     id = thing.user._fullname,
                                     container = thing.container_name))}
     %else:
-      <span class="gray">${_("can't remove")}</span>
+      %if c.user != thing.user:
+        <span class="gray">${_("can't remove")}</span>
+      %endif
     %endif
   %elif thing.name == "note":
     <form action="/post/friendnote" id="friendnote-${thing.rel._fullname}"

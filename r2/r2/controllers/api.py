@@ -644,7 +644,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         if type in ("moderator", "moderator_invite"):
             if not c.user_is_admin:
-                if type == "moderator" and not c.site.can_demod(c.user, target):
+                if type == "moderator" and (
+                    c.user == target or not c.site.can_demod(c.user, target)):
                     abort(403, 'forbidden')
                 if (type == "moderator_invite"
                     and not c.site.is_unlimited_moderator(c.user)):

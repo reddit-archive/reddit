@@ -3019,7 +3019,7 @@ class ModList(UserList):
         elif c.user_is_admin:
             return True
         elif row_type == self.type:
-            return c.site.can_demod(c.user, user)
+            return c.user != user and c.site.can_demod(c.user, user)
         elif row_type == self.invite_type:
             return c.site.is_unlimited_moderator(c.user)
         else:
@@ -3028,7 +3028,7 @@ class ModList(UserList):
     def user_row(self, row_type, user, editable=True):
         perms = ModeratorPermissions(
             user, row_type, self.perms_by_type[row_type].get(user._id),
-            editable=editable and self.moderator_editable(user, row_type))
+            editable=editable)
         return UserTableItem(user, row_type, self.cells, self.container_name,
                              editable, self.remove_action, rel=perms)
 
