@@ -20,11 +20,13 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Report, Account, Subreddit
 
+from _pylibmc import MemcachedError
 from pylons import g
 
 from datetime import datetime, timedelta
@@ -393,7 +395,10 @@ def send_system_message(user, subject, body):
     item.repliable = False
     item._commit()
 
-    queries.new_message(item, inbox_rel)
+    try:
+        queries.new_message(item, inbox_rel)
+    except MemcachedError:
+        raise MessageError('reddit_inbox')
 
 
 try:
