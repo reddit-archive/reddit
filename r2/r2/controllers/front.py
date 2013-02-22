@@ -1182,6 +1182,7 @@ class FormsController(RedditController):
         return BoringPage(_("reset password"),
                           content=ResetPassword(key=key, done=done)).render()
 
+    @prevent_framing_and_css()
     @validate(VUser(),
               location=nop("location"))
     def GET_prefs(self, location=''):
