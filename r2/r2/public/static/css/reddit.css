@@ -6420,7 +6420,7 @@ body.gold .buttons li.comment-save-button { display: inline; }
     display: inline-block;
     font-size: small;
     text-align: right;
-    width: 44ex;
+    width: 36ex;
 }
 #moderator_invite .permissions { width: 30ex; }
 .permissions > form { display: none; }

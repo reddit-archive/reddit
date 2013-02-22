@@ -2987,7 +2987,7 @@ class ModList(UserList):
             self.type: c.site.moderators_with_perms(),
             self.invite_type: c.site.moderator_invites_with_perms(),
         }
-        self.cells = ('user', 'permissions', 'permissionsctl', 'sendmessage')
+        self.cells = ('user', 'permissions', 'permissionsctl')
         if editable:
             self.cells += ('remove',)
 

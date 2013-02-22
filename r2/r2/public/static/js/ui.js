@@ -360,13 +360,9 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
             spans.push(this._renderBit("all")
                 .toggleClass("added", this.original_perms.all != true))
         } else {
-            if (this.original_perms.all) {
-                if (!this.embedded || !new_perms) {
-                    spans.push(this._renderBit("all")
-                        .toggleClass("removed",
-                                    !this.embedded && new_perms != null))
-                }
-            } else {
+            if (this.original_perms.all && !new_perms) {
+                spans.push(this._renderBit("all"))
+            } else if (!this.original_perms.all) {
                 for (var perm in this.original_perms) {
                     if (this.original_perms[perm]) {
                         if (this.embedded && !(new_perms && !new_perms[perm])) {
