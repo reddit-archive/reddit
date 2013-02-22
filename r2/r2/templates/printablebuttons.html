@@ -186,8 +186,7 @@
   %if thing.is_loggedin:
     <li>
     %if thing.saved:
-       ${self.state_button("unsave", _("unsave"), \
-          "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
+       ${ynbutton(_("unsave"), _("unsaved"), "unsave", "unsave_thing")}
     %else:
        ${self.state_button("save", _("save"), \
           "return change_state(this, 'save', save_thing);", _("saved"))}
@@ -262,8 +261,7 @@
   </li>
   %if thing.saved:
     <li class="comment-unsave-button">
-       ${self.state_button("unsave", _("unsave"), \
-         "return change_state(this, 'unsave', unsave_thing);", _("unsaved"))}
+       ${ynbutton(_("unsave"), _("unsaved"), "unsave", "unsave_thing")}
     </li>
   %else:
     <li class="comment-save-button">
