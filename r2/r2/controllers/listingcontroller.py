@@ -28,7 +28,7 @@ from r2.models.query_cache import CachedQuery, MergedCachedQuery
 from r2.config.extensions import is_api
 from r2.lib.pages import *
 from r2.lib.pages.things import wrap_links
-from r2.lib.menus import NewMenu, TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
+from r2.lib.menus import TimeMenu, SortMenu, RecSortMenu, ProfileSortMenu
 from r2.lib.menus import ControversyTimeMenu
 from r2.lib.rising import get_rising
 from r2.lib.wrapped import Wrapped
@@ -398,10 +398,6 @@ class NewController(ListingController):
     where = 'new'
     title_text = _('newest submissions')
 
-    @property
-    def menus(self):
-        return [NewMenu(default = self.sort)]
-
     def keep_fn(self):
         def keep(item):
             """Avoid showing links that are too young, to give time
@@ -425,23 +421,26 @@ class NewController(ListingController):
         return keep
 
     def query(self):
-        if self.sort == 'rising':
-            return get_rising(c.site)
-        else:
-            return c.site.get_links('new', 'all')
+        return c.site.get_links('new', 'all')
 
-    @validate(sort = VMenu('controller', NewMenu))
-    def POST_listing(self, sort, **env):
-        # VMenu validator will save the value of sort before we reach this
-        # point. Now just redirect to GET mode.
-        return self.redirect(request.fullpath + query_string(dict(sort=sort)))
+    def POST_listing(self, **env):
+        # Redirect to GET mode in case of any legacy requests
+        return self.redirect(request.fullpath)
 
     @require_oauth2_scope("read")
-    @validate(sort = VMenu('controller', NewMenu))
     @listing_api_doc(uri='/new')
-    def GET_listing(self, sort, **env):
-        self.sort = sort
+    def GET_listing(self, **env):
+        if request.params.get('sort') == 'rising':
+            return self.redirect('/rising')
+
         return ListingController.GET_listing(self, **env)
+
+class RisingController(NewController):
+    where = 'rising'
+    title_text = _('rising submissions')
+
+    def query(self):
+        return get_rising(c.site)
 
 class BrowseController(ListingController):
     where = 'browse'

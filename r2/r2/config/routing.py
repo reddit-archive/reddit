@@ -174,7 +174,7 @@ def make_map():
 
     mc('/', controller='hot', action='listing')
 
-    listing_controllers = "hot|new|randomrising|comments"
+    listing_controllers = "hot|new|rising|randomrising|comments"
 
     mc('/:controller', action='listing',
        requirements=dict(controller=listing_controllers))
