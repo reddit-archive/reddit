@@ -694,6 +694,10 @@ function fetch_title() {
     var status = url_field.find(".title-status");
     var url = $("#url").val();
     if (url) {
+        if ($('form#newlink textarea[name="title"]').val() &&
+            !confirm("This will replace your existing title, proceed?")) {
+                return
+        }
         status.show().text(reddit.status_msg.loading);
         error.hide();
         $.request("fetch_title", {url: url});
