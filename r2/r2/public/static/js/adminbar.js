@@ -1,3 +1,5 @@
+(function(Backbone) {
+
 r.adminbar = {}
 
 r.adminbar.AdminBar = Backbone.View.extend({
@@ -209,3 +211,5 @@ $(function() {
         r.adminbar.browserTimings.fetch()
     }, 0)
 })
+
+})(Backbone.noConflict())
