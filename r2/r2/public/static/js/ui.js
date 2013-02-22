@@ -325,6 +325,11 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
 
     hide: function() {
         if (this.$menu) {
+            if (this.embedded) {
+                this.original_perms = this._getNewPerms()
+                this.$permissions_field
+                    .val(this._serializePerms(this.original_perms))
+            }
             this.$menu.remove()
             this.$menu = null
             this.updateSummary()
