@@ -107,7 +107,9 @@ class WikiController(RedditController):
         if not page:
             if c.render_style in extensions.API_TYPES:
                 self.handle_error(404, 'PAGE_NOT_CREATED')
-            return WikiNotFound(page=page_name).render()
+            errorpage = WikiNotFound(page=page_name)
+            request.environ['usable_error_content'] = errorpage.render()
+            self.abort404()
 
         if version:
             edit_by = version.get_author()
