@@ -108,7 +108,7 @@ def may_revise(sr, user, page=None):
         # the user may not edit.
         return False
     
-    if not sr.can_submit(user):
+    if not sr.wiki_can_submit(user):
         # If the user can not submit to the subreddit
         # They should not be able to contribute
         return False

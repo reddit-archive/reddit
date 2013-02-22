@@ -350,6 +350,9 @@ class Subreddit(Thing, Printable):
         else:
             return False
 
+    def wiki_can_submit(self, user):
+        return self.can_submit(user)
+
     def can_submit(self, user, promotion=False):
         if c.user_is_admin:
             return True
@@ -1120,7 +1123,10 @@ class DefaultSR(_DefaultSR):
             self._base = Subreddit._by_name(g.default_sr, stale=True)
         except NotFound:
             self._base = None
-    
+
+    def wiki_can_submit(self, user):
+        return True
+
     @property
     def wiki_use_subreddit_karma(self):
         return False
