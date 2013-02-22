@@ -305,7 +305,9 @@ def extract_title(data):
     to_trim = re.search(u'\s[\u00ab\u00bb\u2013\u2014|-]\s',
                         reverse_title,
                         flags=re.UNICODE)
-    if to_trim:
+
+    # only trim if it won't take off over half the title
+    if to_trim and to_trim.end() < len(title) / 2:
         title = title[:-(to_trim.end())]
 
     return title.encode('utf-8').strip()
