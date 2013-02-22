@@ -592,11 +592,18 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         # The user who made the request must be an admin or a moderator
         # for the privilege change to succeed.
+        # (Exception: a user can remove privilege from oneself)
         victim = iuser or nuser
-        perm = 'wiki' if type.startswith('wiki') else 'access'
+        required_perms = []
+        if c.user != victim:
+            if type.startswith('wiki'):
+                required_perms.append('wiki')
+            else:
+                required_perms.append('access')
         if (not c.user_is_admin
             and (type in self._sr_friend_types
-                 and not container.is_moderator_with_perms(c.user, perm))):
+                 and not container.is_moderator_with_perms(
+                     c.user, *required_perms))):
             abort(403, 'forbidden')
         if (type == 'moderator' and not
             (c.user_is_admin or container.can_demod(c.user, victim))):

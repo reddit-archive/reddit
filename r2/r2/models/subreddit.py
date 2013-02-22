@@ -459,6 +459,9 @@ class Subreddit(Thing, Printable):
 
     def can_demod(self, bully, victim):
         bully_rel = self.get_moderator(bully)
+        if bully_rel is not None and bully == victim:
+            # mods can always demod themselves
+            return True
         victim_rel = self.get_moderator(victim)
         return (
             bully_rel is not None
