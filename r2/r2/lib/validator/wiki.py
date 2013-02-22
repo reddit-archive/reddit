@@ -112,8 +112,13 @@ def may_revise(sr, user, page=None):
         # If the user can not submit to the subreddit
         # They should not be able to contribute
         return False
-    
-    karma = max(user.karma('link', sr), user.karma('comment', sr))
+
+    # Use global karma for the frontpage wiki
+    karma_sr = sr if sr.wiki_use_subreddit_karma else None
+
+    # Use link or comment karma, whichever is greater
+    karma = max(user.karma('link', karma_sr), user.karma('comment', karma_sr))
+
     if karma < (sr.wiki_edit_karma or 0):
         # If the user has too few karma, they should not contribute
         return False

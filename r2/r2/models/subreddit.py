@@ -303,6 +303,10 @@ class Subreddit(Thing, Printable):
     def accounts_active(self):
         return self.get_accounts_active()[0]
 
+    @property
+    def wiki_use_subreddit_karma(self):
+        return True
+
     def get_accounts_active(self):
         fuzzed = False
         count = AccountsActiveBySR.get_count(self)
@@ -1117,6 +1121,10 @@ class DefaultSR(_DefaultSR):
         except NotFound:
             self._base = None
     
+    @property
+    def wiki_use_subreddit_karma(self):
+        return False
+
     @property
     def _should_wiki(self):
         return True
