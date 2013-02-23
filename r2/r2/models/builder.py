@@ -490,11 +490,12 @@ class IDBuilder(QueryBuilder):
 class CampaignBuilder(IDBuilder):
     """Build on a list of PromoTuples."""
 
-    def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None):
+    def __init__(self, query, wrap=Wrapped, keep_fn=None, prewrap_fn=None,
+                 skip=False, num=None):
         Builder.__init__(self, wrap=wrap, keep_fn=keep_fn)
         self.query = query
-        self.skip = False
-        self.num = None
+        self.skip = skip
+        self.num = num
         self.start_count = 0
         self.after = None
         self.reverse = False

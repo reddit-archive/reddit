@@ -44,7 +44,7 @@ from r2.lib.memoize import memoize
 from r2.lib.organic import keep_fresh_links
 from r2.lib.strings import strings
 from r2.lib.template_helpers import get_domain
-from r2.lib.utils import UniqueIterator, tup, to_date
+from r2.lib.utils import UniqueIterator, tup, to_date, weighted_lottery
 from r2.models import (
     Account,
     AdWeight,
@@ -838,15 +838,22 @@ def get_promotion_list_cached(sites):
             for link, weight, campaign in promos]
 
 
-def sample_promoted_links(user, site, n=10):
-    """Return a random selection of promoted links.
-
-    Does not factor weights, as that will be done client side.
-
-    """
-
+def lottery_promoted_links(user, site, n=10):
+    """Run weighted_lottery to order and choose a subset of promoted links."""
     promo_tuples = get_promotion_list(user, site)
-    if n >= len(promo_tuples):
+    weights = {p: p.weight for p in promo_tuples}
+    selected = []
+    while weights and len(selected) < n:
+        s = weighted_lottery(weights)
+        del weights[s]
+        selected.append(s)
+    return selected
+
+
+def sample_promoted_links(user, site, n=10):
+    """Return a selection of promoted links."""
+    promo_tuples = get_promotion_list(user, site)
+    if len(promo_tuples) <= n:
         return promo_tuples
     else:
         return random.sample(promo_tuples, n)

@@ -41,7 +41,6 @@ import r2.lib.search as search
 from r2.lib.template_helpers import add_sr
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
-from r2.lib.promote import randomized_promotion_list
 from r2.lib.validator import *
 import socket
 
@@ -224,13 +223,40 @@ class HotController(FixListing, ListingController):
     where = 'hot'
     extra_page_classes = ListingController.extra_page_classes + ['hot-page']
 
-    def spotlight(self):
-        """Build the Spotlight or a single promoted link.
+    def make_requested_ad(self):
+        try:
+            link = Link._by_fullname(self.requested_ad, data=True)
+        except NotFound:
+            self.abort404()
+
+        if not (link.promoted and
+                (c.user_is_sponsor or
+                 c.user_is_loggedin and link.author_id == c.user._id)):
+            self.abort403()
+
+        if not promote.is_live_on_sr(link, c.site.name):
+            self.abort403()
+
+        res = wrap_links([link._fullname], wrapper=self.builder_wrapper,
+                         skip=False)
+        if res.things:
+            return res
+
+    def make_single_ad(self):
+        promo_tuples = promote.lottery_promoted_links(c.user, c.site, n=10)
+        b = CampaignBuilder(promo_tuples, wrap=self.builder_wrapper,
+                            keep_fn=organic.keep_fresh_links, num=1, skip=True)
+        res = LinkListing(b, nextprev=False).listing()
+        if res.things:
+            return res
+
+    def make_spotlight(self):
+        """Build the Spotlight.
 
         The frontpage gets a Spotlight box that contains promoted and organic
         links from the user's subscribed subreddits and promoted links targeted
-        to the frontpage. Other subreddits get a single promoted link. In either
-        case if the user has disabled ads promoted links will not be shown.
+        to the frontpage. If the user has disabled ads promoted links will not
+        be shown.
 
         The content of the Spotlight box is a bit tricky because a single
         version of the frontpage is cached and displayed to all logged out
@@ -248,103 +274,55 @@ class HotController(FixListing, ListingController):
 
         """
 
-        campaigns_by_link = {}
-        if (self.requested_ad or
-            not isinstance(c.site, DefaultSR) and c.user.pref_show_sponsors):
+        organic_fullnames = organic.organic_links(c.user)
+        promoted_links = []
 
-            link_ids = None
+        # If prefs allow it, mix in promoted links and sr discovery content
+        if c.user.pref_show_sponsors or not c.user.gold:
+            if g.live_config['sr_discovery_links']:
+                organic_fullnames.extend(g.live_config['sr_discovery_links'])
 
-            if self.requested_ad:
-                link = None
-                try:
-                    link = Link._by_fullname(self.requested_ad)
-                except NotFound:
-                    pass
+            n_promoted = 100
+            n_build = 10
+            promo_tuples = promote.sample_promoted_links(c.user, c.site,
+                                                         n=n_promoted)
+            promo_tuples = sorted(promo_tuples,
+                                  key=lambda p: p.weight,
+                                  reverse=True)
+            promo_build = promo_tuples[:n_build]
+            promo_stub = promo_tuples[n_build:]
+            b = CampaignBuilder(promo_build,
+                                wrap=self.builder_wrapper,
+                                keep_fn=promote.is_promoted)
+            promoted_links = b.get_items()[0]
+            promoted_links.extend(promo_stub)
 
-                if not (link and link.promoted and
-                        (c.user_is_sponsor or
-                         c.user_is_loggedin and link.author_id == c.user._id)):
-                    return self.abort404()
+        if not (organic_fullnames or promoted_links):
+            return None
 
-                # check if we can show the requested ad
-                if promote.is_live_on_sr(link, c.site.name):
-                    link_ids = [link._fullname]
-                else:
-                    return _("requested campaign not eligible for display")
-            else:
-                # no organic box on a hot page, then show a random promoted link
-                promo_tuples = randomized_promotion_list(c.user, c.site)
-                link_ids, camp_ids = zip(*promo_tuples) if promo_tuples else ([],[])
+        random.shuffle(organic_fullnames)
+        organic_fullnames = organic_fullnames[:10]
+        b = IDBuilder(organic_fullnames,
+                      wrap=self.builder_wrapper,
+                      keep_fn=organic.keep_fresh_links,
+                      skip=True)
+        organic_links = b.get_items()[0]
 
-                # save campaign-to-link mapping so campaign can be added to 
-                # link data later (for tracking.) Gotcha: assumes each link 
-                # appears for only campaign
-                campaigns_by_link = dict(promo_tuples)
+        has_subscribed = c.user.has_subscribed
+        interestbar_prob = g.live_config['spotlight_interest_sub_p'
+                                         if has_subscribed else
+                                         'spotlight_interest_nosub_p']
+        interestbar = InterestBar(has_subscribed)
+        promotion_prob = 0.5 if c.user_is_loggedin else 1.
 
-            if link_ids:
-                res = wrap_links(link_ids, wrapper=self.builder_wrapper,
-                                 num=1, keep_fn=organic.keep_fresh_links,
-                                 skip=True)
-                res.parent_name = "promoted"
-                if res.things:
-                    # store campaign id for tracking
-                    for thing in res.things:
-                        thing.campaign = campaigns_by_link.get(thing._fullname, None)
-                    return res
-
-        elif (isinstance(c.site, DefaultSR)
-            and (not c.user_is_loggedin
-                 or (c.user_is_loggedin and c.user.pref_organic))):
-
-            organic_fullnames = organic.organic_links(c.user)
-            promoted_links = []
-
-            # If prefs allow it, mix in promoted links and sr discovery content
-            if c.user.pref_show_sponsors or not c.user.gold:
-                if g.live_config['sr_discovery_links']:
-                    organic_fullnames.extend(g.live_config['sr_discovery_links'])
-
-                n_promoted = 100
-                n_build = 10
-                promo_tuples = promote.sample_promoted_links(c.user, c.site,
-                                                             n_promoted)
-                promo_tuples = sorted(promo_tuples,
-                                      key=lambda p: p.weight,
-                                      reverse=True)
-                promo_build = promo_tuples[:n_build]
-                promo_stub = promo_tuples[n_build:]
-                b = CampaignBuilder(promo_build,
-                                    wrap=self.builder_wrapper,
-                                    keep_fn=promote.is_promoted)
-                promoted_links = b.get_items()[0]
-                promoted_links.extend(promo_stub)
-
-            if not (organic_fullnames or promoted_links):
-                return None
-
-            random.shuffle(organic_fullnames)
-            organic_fullnames = organic_fullnames[:10]
-            b = IDBuilder(organic_fullnames,
-                          wrap = self.builder_wrapper,
-                          keep_fn = organic.keep_fresh_links,
-                          skip = True)
-            organic_links = b.get_items()[0]
-
-            has_subscribed = c.user.has_subscribed
-            interestbar_prob = g.live_config['spotlight_interest_sub_p'
-                                             if has_subscribed else
-                                             'spotlight_interest_nosub_p']
-            interestbar = InterestBar(has_subscribed)
-            promotion_prob = 0.5 if c.user_is_loggedin else 1.
-
-            s = SpotlightListing(organic_links=organic_links,
-                                 promoted_links=promoted_links,
-                                 interestbar=interestbar,
-                                 interestbar_prob=interestbar_prob,
-                                 promotion_prob=promotion_prob,
-                                 max_num = self.listing_obj.max_num,
-                                 max_score = self.listing_obj.max_score).listing()
-            return s
+        s = SpotlightListing(organic_links=organic_links,
+                             promoted_links=promoted_links,
+                             interestbar=interestbar,
+                             interestbar_prob=interestbar_prob,
+                             promotion_prob=promotion_prob,
+                             max_num = self.listing_obj.max_num,
+                             max_score = self.listing_obj.max_score).listing()
+        return s
 
     def query(self):
         #no need to worry when working from the cache
@@ -372,9 +350,21 @@ class HotController(FixListing, ListingController):
     def content(self):
         # only send a spotlight listing for HTML rendering
         if c.render_style == "html":
-            spotlight = self.spotlight()
+            spotlight = None
+            show_sponsors = not (not c.user.pref_show_sponsors and c.user.gold)
+            show_organic = c.user.pref_organic
+            on_frontpage = isinstance(c.site, DefaultSR) 
+
+            if self.requested_ad:
+                spotlight = self.make_requested_ad()
+            elif on_frontpage and show_organic:
+                spotlight = self.make_spotlight()
+            elif show_sponsors:
+                spotlight = self.make_single_ad()
+
             if spotlight:
-                return PaneStack([spotlight, self.listing_obj], css_class='spacer')
+                return PaneStack([spotlight, self.listing_obj],
+                                 css_class='spacer')
         return self.listing_obj
 
     def title(self):
