@@ -43,17 +43,6 @@ class MenuHandler(StringHandler):
         except KeyError:
             return getattr(plurals, attr)
 
-# selected menu styles, primarily used on the main nav bar
-menu_selected=StringHandler(hot          = _("what's hot"),
-                            new          = _("what's new"),
-                            rising       = _("what's rising"),
-                            top          = _("top scoring"),
-                            controversial= _("most controversial"),
-                            saved        = _("saved"),
-                            recommended  = _("recommended"),
-                            promote      = _('promote'),
-                            )
-
 # translation strings for every menu on the site
 menu =   MenuHandler(hot          = _('hot'),
                      new          = _('new'),
@@ -373,13 +362,6 @@ class NamedButton(NavButton):
         menutext = menu[self.name] % fmt_args
         NavButton.__init__(self, menutext, name if dest is None else dest,
                            sr_path = sr_path, nocname=nocname, **kw)
-
-    def selected_title(self):
-        """Overrides selected_title to use menu_selected dictionary"""
-        try:
-            return menu_selected[self.name]
-        except KeyError:
-            return NavButton.selected_title(self)
 
 class JsButton(NavButton):
     """A button which fires a JS event and thus has no path and cannot
