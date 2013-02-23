@@ -752,6 +752,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                             count=count)[2]
 
         return LinkInfoPage(link=article, content=pane,
+                            page_classes=['related-page'],
                             subtitle=_('related')).render()
 
     @base_listing
@@ -771,6 +772,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                            comment = None,
                            duplicates = links,
                            content = listing,
+                           page_classes=['other-discussions-page'],
                            subtitle = _('other discussions')).render()
         return res
 
