@@ -1957,20 +1957,40 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         log_modaction = True
         log_kw = {}
-        original = thing.distinguished if hasattr(thing, 'distinguished') else 'no'
-        if how == original:
-            log_modaction = False   # Distinguish unchanged
-        elif how in ('admin', 'special'):
-            log_modaction = False   # Add admin/special
-        elif original in ('admin', 'special') and how == 'no':
-            log_modaction = False  # Remove admin/special
-        elif how == 'no':
-            log_kw['details'] = 'remove'    # yes --> no
-        else:
-            pass    # no --> yes
+        send_message = False
+        original = getattr(thing, 'distinguished', 'no')
+        if how == original: # Distinguish unchanged
+            log_modaction = False
+        elif how in ('admin', 'special'): # Add admin/special
+            log_modaction = False
+            send_message = True
+        elif (original in ('admin', 'special') and
+                how == 'no'): # Remove admin/special
+            log_modaction = False
+        elif how == 'no': # From yes to no
+            log_kw['details'] = 'remove'
+        else: # From no to yes
+            send_message = True
+
+        # Send a message if this is a top-level comment on a link,
+        # if it's the first distinguish for this comment,
+        # and if the user isn't banned or blocked by the link author
+        if isinstance(thing, Comment):
+            link = Link._byID(thing.link_id, data=True)
+            to = Account._byID(link.author_id, data=True)
+            if (send_message and
+                    thing.parent_id is None and
+                    not link.is_self and
+                    not hasattr(thing, 'distinguished') and
+                    not c.user._spam and
+                    c.user._id not in to.enemies and
+                    to.name != c.user.name):
+                inbox_rel = Inbox._add(to, thing, 'selfreply')
+                queries.new_comment(thing, inbox_rel)
 
         thing.distinguished = how
         thing._commit()
+
         wrapper = default_thing_wrapper(expand_children = True)
         w = wrap_links(thing, wrapper)
         jquery(".content").replace_things(w, True, True)
