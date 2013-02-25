@@ -144,6 +144,7 @@ class SpotlightListing(Listing):
 
         promoted_links = kw.get('promoted_links', [])
         organic_links = kw.get('organic_links', [])
+        predetermined_winner = kw.get('predetermined_winner', False)
 
         self.links = []
         for l in organic_links:
@@ -157,14 +158,18 @@ class SpotlightListing(Listing):
             )
 
         total = sum(float(l.weight) for l in promoted_links)
-        for l in promoted_links:
+        for i, l in enumerate(promoted_links):
             link = l._fullname if isinstance(l, Wrapped) else l.link
+            if predetermined_winner:
+                weight = 1 if i == 0 else 0
+            else:
+                weight = l.weight / total
             self.links.append(
                 SpotlightTuple(
                     link=link,
                     is_promo=True,
                     campaign=l.campaign,
-                    weight=l.weight / total,
+                    weight=weight,
                 )
             )
 

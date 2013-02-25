@@ -283,19 +283,27 @@ class HotController(FixListing, ListingController):
                 organic_fullnames.extend(g.live_config['sr_discovery_links'])
 
             n_promoted = 100
-            n_build = 10
-            promo_tuples = promote.sample_promoted_links(c.user, c.site,
-                                                         n=n_promoted)
-            promo_tuples = sorted(promo_tuples,
-                                  key=lambda p: p.weight,
-                                  reverse=True)
-            promo_build = promo_tuples[:n_build]
-            promo_stub = promo_tuples[n_build:]
-            b = CampaignBuilder(promo_build,
-                                wrap=self.builder_wrapper,
-                                keep_fn=promote.is_promoted)
-            promoted_links = b.get_items()[0]
-            promoted_links.extend(promo_stub)
+            n_build = 1 if c.user_is_loggedin else 10
+            picker = (promote.lottery_promoted_links if c.user_is_loggedin else
+                      promote.sample_promoted_links)
+            promo_tuples = picker(c.user, c.site, n=n_promoted)
+
+            if not c.user_is_loggedin:
+                promo_tuples.sort(key=lambda t: t.weight, reverse=True)
+
+            b = CampaignBuilder(
+                    promo_tuples,
+                    wrap=self.builder_wrapper,
+                    keep_fn=organic.keep_fresh_links,
+                    num=n_build,
+                    skip=True,
+            )
+            promoted_links, first, last, before, after = b.get_items()
+            if promoted_links and last:
+                lookup = {t.campaign: i for i, t in enumerate(promo_tuples)}
+                last_index = lookup[last.campaign]
+                stubs = promo_tuples[last_index + 1:]
+                promoted_links.extend(stubs)
 
         if not (organic_fullnames or promoted_links):
             return None
@@ -321,7 +329,8 @@ class HotController(FixListing, ListingController):
                              interestbar_prob=interestbar_prob,
                              promotion_prob=promotion_prob,
                              max_num = self.listing_obj.max_num,
-                             max_score = self.listing_obj.max_score).listing()
+                             max_score = self.listing_obj.max_score,
+                             predetermined_winner=c.user_is_loggedin).listing()
         return s
 
     def query(self):
