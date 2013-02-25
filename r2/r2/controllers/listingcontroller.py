@@ -38,6 +38,7 @@ from r2.lib.db import queries
 from r2.lib.strings import Score
 from r2.lib import organic
 import r2.lib.search as search
+from r2.lib.template_helpers import add_sr
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 from r2.lib.promote import randomized_promotion_list
@@ -433,7 +434,7 @@ class NewController(ListingController):
     @listing_api_doc(uri='/new')
     def GET_listing(self, **env):
         if request.params.get('sort') == 'rising':
-            return self.redirect('/rising')
+            return self.redirect(add_sr('/rising'))
 
         return ListingController.GET_listing(self, **env)
 
