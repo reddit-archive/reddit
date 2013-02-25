@@ -30,10 +30,15 @@ r.spotlight.init = function() {
         .shuffle()
         .unshift(selectedThing)
         .map(function(el) {
-            var fullname = $(el).data('fullname')
+            var fullname = $(el).data('fullname'),
+                campaign = $(el).data('cid')
             if (fullname) {
                 // convert things with ids to queries to handle stub replacement
-                return '.id-' + fullname
+                if (campaign) {
+                    return '[data-cid="' + campaign + '"]'
+                } else {
+                    return '.id-' + fullname
+                }
             } else {
                 return el
             }
@@ -82,7 +87,7 @@ r.spotlight.chooseRandom = function() {
             && Math.random() < this.promotion_prob) {
         var campaign_name = this.weighted_lottery(this.weights),
             link_name = this.link_by_camp[campaign_name]
-        return listing.find('.id-' + link_name)
+        return listing.find('[data-cid="' + campaign_name + '"]')
     } else if (Math.random() < this.interest_prob) {
         return listing.find('.interestbar')
     } else {
@@ -102,12 +107,14 @@ r.spotlight._advance = function(dir) {
             campaign = next.data('cid')
         r.debug('fetching promo %s from campaign %s', fullname, campaign)
 
-        next = $.getJSON('/api/fetch_promo', {
+        next = $.get('/api/fetch_promo', {
             link: fullname,
             campaign: campaign
-        }).pipe(function(resp) {
-            $.handleResponse('fetch_promo')(resp)
-            return listing.find('.id-' + fullname)
+        }).pipe(function (data) {
+            var oldNext = $('[data-cid="' + campaign + '"]'),
+                newNext = $(data)
+            oldNext.replaceWith(newNext)
+            return newNext
         })
     }
 
