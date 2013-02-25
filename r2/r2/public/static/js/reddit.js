@@ -202,12 +202,18 @@ function read_thing(elem) {
     $.request("read_message", {"id": $(t).thing_id()});
 }
 
-function save_thing(elem) {
-    $(elem).thing().addClass("saved");
-}
-
-function unsave_thing(elem) {
-    $(elem).thing().removeClass("saved");
+function toggle_save(elem) {
+    var form = $(elem).parents("form").first()
+    var next_text = form.find('[name="executed"]')
+    var text = next_text.val()
+    if ($(elem).thing().hasClass("saved")) {
+        change_state(elem, 'unsave', undefined, true)
+    } else {
+        change_state(elem, 'save', undefined, true)
+    }
+    $(elem).thing().toggleClass("saved")
+    next_text.val($(elem).text())
+    $(elem).text(text)
 }
 
 function click_thing(elem) {
