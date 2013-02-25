@@ -222,7 +222,7 @@ class FixListing(object):
 
 class HotController(FixListing, ListingController):
     where = 'hot'
-    extra_page_classes = ['hot-page']
+    extra_page_classes = ListingController.extra_page_classes + ['hot-page']
 
     def spotlight(self):
         campaigns_by_link = {}
@@ -399,7 +399,7 @@ class HotController(FixListing, ListingController):
 class NewController(ListingController):
     where = 'new'
     title_text = _('newest submissions')
-    extra_page_classes = ['new-page']
+    extra_page_classes = ListingController.extra_page_classes + ['new-page']
 
     def keep_fn(self):
         def keep(item):
@@ -441,7 +441,7 @@ class NewController(ListingController):
 class RisingController(NewController):
     where = 'rising'
     title_text = _('rising submissions')
-    extra_page_classes = ['rising-page']
+    extra_page_classes = ListingController.extra_page_classes + ['rising-page']
 
     def query(self):
         return get_rising(c.site)
@@ -481,10 +481,10 @@ class BrowseController(ListingController):
         self.sort = sort
         if sort == 'top':
             self.title_text = _('top scoring links')
-            self.extra_page_classes = ['top-page']
+            self.extra_page_classes += ['top-page']
         elif sort == 'controversial':
             self.title_text = _('most controversial links')
-            self.extra_page_classes = ['controversial-page']
+            self.extra_page_classes += ['controversial-page']
         else:
             # 'sort' is forced to top/controversial by routing.py,
             # but in case something has gone wrong...
