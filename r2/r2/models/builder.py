@@ -43,6 +43,7 @@ from r2.lib.utils import Storage
 
 from r2.models.wiki import WIKI_RECENT_DAYS
 
+from collections import defaultdict
 import time
 from admintools import compute_votes, admintools, ip_span
 
@@ -511,11 +512,13 @@ class CampaignBuilder(IDBuilder):
     def wrap_items(self, items):
         links = [i.thing for i in items]
         wrapped = IDBuilder.wrap_items(self, links)
-        by_link = {w._fullname: w for w in wrapped}
+        by_link = defaultdict(list)
+        for w in wrapped:
+            by_link[w._fullname].append(w)
 
         ret = []
         for i in items:
-            w = by_link[i.thing._fullname]
+            w = by_link[i.thing._fullname].pop()
             w.campaign = i.campaign
             w.weight = i.weight
             ret.append(w)
