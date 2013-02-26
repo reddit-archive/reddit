@@ -185,6 +185,12 @@ class ThingJsonTemplate(JsonTemplate):
         elif attr == "child":
             return CachedVariable("childlisting")
 
+        if attr == 'distinguished':
+            distinguished = getattr(thing, attr, 'no')
+            if distinguished == 'no':
+                return None
+            return distinguished
+        
         if attr in ["num_reports", "banned_by", "approved_by"]:
             if c.user_is_loggedin and thing.subreddit.is_moderator(c.user):
                 if attr == "num_reports":
@@ -306,6 +312,7 @@ class LinkJsonTemplate(ThingJsonTemplate):
                                                 media_embed  = "media_embed",
                                                 selftext     = "selftext",
                                                 selftext_html= "selftext_html",
+                                                distinguished= "distinguished",
                                                 num_comments = "num_comments",
                                                 num_reports  = "num_reports",
                                                 banned_by    = "banned_by",
@@ -364,6 +371,7 @@ class CommentJsonTemplate(ThingJsonTemplate):
                                                 replies      = "child",
                                                 body         = "body",
                                                 body_html    = "body_html",
+                                                distinguished= "distinguished",
                                                 likes        = "likes",
                                                 author       = "author", 
                                                 author_flair_text =
