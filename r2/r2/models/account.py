@@ -538,11 +538,11 @@ class Account(Thing):
             canons_by_domain[domain].append(canon)
 
         # Now, build a list of subdomains to check for ban status; for
-        # abc@foo.bar.com, we need to check foo.bar.com and bar.com
+        # abc@foo.bar.com, we need to check foo.bar.com, bar.com, and .com
         canons_by_subdomain = {}
         for domain, canons in canons_by_domain.iteritems():
             parts = domain.rstrip(".").split(".")
-            while len(parts) >= 2:
+            while len(parts) >= 1:
                 whole = ".".join(parts)
                 canons_by_subdomain.setdefault(whole, [])
                 canons_by_subdomain[whole].extend(canons)
