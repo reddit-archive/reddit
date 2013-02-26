@@ -1,12 +1,15 @@
 r.analytics = {
     trackers: {},
+    _pendingTrackers: {},
 
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.promotedlink.promoted, .sponsorshipbox',
+            '.promotedlink.promoted, .sponsorshipbox[data-fullname]',
             'onshow',
-            $.proxy(this, 'fetchTrackersOrFirePixel')
+            _.bind(function(ev) {
+                this.fetchTrackersOrFirePixel(ev.target)
+            }, this)
         )
 
         $('.promotedlink.promoted:visible, .sponsorshipbox:visible').trigger('onshow')
@@ -14,9 +17,7 @@ r.analytics = {
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
     },
 
-    fetchTrackingHashes: function() {
-        var fullnames = {}
-
+    fetchTrackingHash: function(el) {
         /*------------------------------------------* 
            Generates a trackingName like:
            t3_ab-t8_99-pics if targeted with campaign
@@ -25,68 +26,56 @@ r.analytics = {
            t3_ab-           not targeted, no campaign 
          *------------------------------------------*/
 
-        $('.promotedlink.promoted, .sponsorshipbox')
-            .each(function() {
-                var thing = $(this),
-                    fullname = thing.data('fullname'),
-                    sponsorship = thing.data('sponsorship'),
-                    campaign = thing.data('cid')
+        var $el = $(el),
+            fullname = $el.data('fullname'),
+            sponsorship = $el.data('sponsorship'),
+            campaign = $el.data('cid'),
+            trackingName = fullname
 
-                if (!fullname || fullname in r.analytics.trackers)
-                    return
+        if (sponsorship)
+            trackingName += '_' + sponsorship
 
-                var trackingName = fullname
+        // append a hyphen even if there's no campaign
+        trackingName += '-' + (campaign || '')
 
-                if (sponsorship)
-                    trackingName += '_' + sponsorship
+        if (!r.config.is_fake)
+            trackingName += '-' + r.config.post_site
 
-                // append a hyphen even if there's no campaign
-                trackingName += '-' + (campaign || '')
-
-                if (!r.config.is_fake)
-                    trackingName += '-' + r.config.post_site
-
-                thing.data('trackingName', trackingName)
-                fullnames[fullname] = trackingName
-            })
-
-        var xhr = $.ajax({
-                url: r.config.fetch_trackers_url,
-                type: 'get',
-                dataType: 'jsonp',
-                data: { 'ids': _.values(fullnames) },
-                success: function(data) {
-                    $.extend(r.analytics.trackers, data)
-                }
-            })
-
-        _.each(fullnames, function(trackingName, fullname) {
-            this.trackers[fullname] = xhr
-        }, this)
-    },
-
-    fetchTrackersOrFirePixel: function(e) {
-        var target = $(e.target),
-            fullname = target.data('fullname')
-
-        if (!fullname)
-            return
-
-        if (!(fullname in this.trackers)) {
+        // if we don't have a hash or a deferred fetch, queue a fetch
+        if (!(trackingName in this.trackers)) {
+            this._pendingTrackers[trackingName] = this.trackers[trackingName] = new $.Deferred
             this.fetchTrackingHashes()
         }
 
-        $.when(this.trackers[fullname]).done(_.bind(function() {
-            this.fireTrackingPixel(target)
+        return this.trackers[trackingName]
+    },
+
+    fetchTrackingHashes: _.debounce(function() {
+        var toFetch = this._pendingTrackers
+        $.ajax({
+            url: r.config.fetch_trackers_url,
+            type: 'get',
+            dataType: 'jsonp',
+            data: {'ids': _.keys(toFetch)},
+            success: function(data) {
+                _.each(data, function(hash, trackingName) {
+                    toFetch[trackingName].resolve(trackingName, hash)
+                })
+            }
+        })
+        this._pendingTrackers = {}
+    }, 0),
+
+    fetchTrackersOrFirePixel: function(el) {
+        this.fetchTrackingHash(el).done(_.bind(function(trackingName, hash) {
+            this.fireTrackingPixel(el, trackingName, hash)
         }, this))
     },
 
-    fireTrackingPixel: function(thing) {
-        if (thing.data('trackerFired'))
+    fireTrackingPixel: function(el, trackingName, hash) {
+        var $el = $(el)
+        if ($el.data('trackerFired'))
             return
-
-        var trackingName = thing.data('trackingName'),
-            hash = this.trackers[trackingName]
 
         var pixel = new Image()
         pixel.src = r.config.adtracker_url + '?' + $.param({
@@ -99,7 +88,7 @@ r.analytics = {
         // (e.g. it has an @ in it), then setting the href replaces the
         // text as well. We'll store the original text and replace it to
         // hack around this. Distilled reproduction in: http://jsfiddle.net/JU2Vj/1/
-        var link = thing.find('a.title'),
+        var link = $el.find('a.title'),
             old_html = link.html(),
             dest = link.attr('href'),
             click_url = r.config.clicktracker_url + '?' + $.param({
@@ -115,11 +104,11 @@ r.analytics = {
             link.html(old_html)
 
         // also do the thumbnail
-        var thumb = thing.find('a.thumbnail')
+        var thumb = $el.find('a.thumbnail')
         save_href(thumb)
         thumb.attr('href', click_url)
 
-        thing.data('trackerFired', true)
+        $el.data('trackerFired', true)
     },
 
     fireUITrackingPixel: function(action, srname) {
