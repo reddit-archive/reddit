@@ -68,6 +68,7 @@ class Link(Thing, Printable):
                      disable_comments=False,
                      selftext='',
                      noselfreply=False,
+                     sendreplies=True,
                      ip='0.0.0.0',
                      flair_text=None,
                      flair_css_class=None,
@@ -142,7 +143,7 @@ class Link(Thing, Printable):
             return cls._defaults['comment_tree_version']
 
     @classmethod
-    def _submit(cls, title, url, author, sr, ip, spam=False):
+    def _submit(cls, title, url, author, sr, ip, spam=False, sendreplies=True):
         from r2.models import admintools
 
         l = cls(_ups=1,
@@ -150,6 +151,7 @@ class Link(Thing, Printable):
                 url=url,
                 _spam=spam,
                 author_id=author._id,
+                sendreplies=sendreplies,
                 sr_id=sr._id,
                 lang=sr.lang,
                 ip=ip,

@@ -235,6 +235,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    url = VUrl(['url', 'sr', 'resubmit']),
                    title = VTitle('title'),
                    save = VBoolean('save'),
+                   sendreplies = VBoolean('sendreplies'),
                    selftext = VSelfText('text'),
                    kind = VOneOf('kind', ['link', 'self']),
                    then = VOneOf('then', ('tb', 'comments'),
@@ -244,7 +245,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                   )
     @api_doc(api_section.links_and_comments)
     def POST_submit(self, form, jquery, url, selftext, kind, title,
-                    save, sr, ip, then, extension):
+                    save, sr, ip, then, extension, sendreplies):
         """Submit a link to a subreddit.
 
         Submit will create a link or self-post in the subreddit `sr` with the
@@ -373,9 +374,11 @@ class ApiController(RedditController, OAuth2ResourceController):
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
 
+        sendreplies = kind == 'self'
+
         # well, nothing left to do but submit it
         l = Link._submit(request.post.title, url if kind == 'link' else 'self',
-                         c.user, sr, ip, spam=c.user._spam)
+                         c.user, sr, ip, spam=c.user._spam, sendreplies=sendreplies)
 
         if banmsg:
             g.stats.simple_event('spam.domainban.link_url')
