@@ -67,7 +67,6 @@ class Link(Thing, Printable):
                      pending=False,
                      disable_comments=False,
                      selftext='',
-                     noselfreply=False,
                      sendreplies=True,
                      ip='0.0.0.0',
                      flair_text=None,
@@ -744,7 +743,7 @@ class Comment(Thing, Printable):
         name = 'inbox'
         if parent:
             to = Account._byID(parent.author_id, True)
-        elif link.is_self and not link.noselfreply:
+        elif link.sendreplies:
             to = Account._byID(link.author_id, True)
             name = 'selfreply'
 

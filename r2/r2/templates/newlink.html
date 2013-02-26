@@ -103,6 +103,18 @@ ${thing.formtabs_menu}
   </%utils:round_field>
 </div>
 
+%if c.user.gold:
+  <div class="spacer">
+    <%utils:round_field title="${_('options')}" css_class="gold-accent">
+      <input class="nomargin" type="checkbox" checked="checked" name="sendreplies" id="sendreplies" data-send-checked="true"/>
+      <label for="sendreplies">
+        ${_("send replies to my inbox")}
+      </label>
+      &#32;<span class="little gray">(${_("beta")})</span>
+    </%utils:round_field>
+  </div>
+%endif
+
 ${thing.captcha}
     
 </div>
