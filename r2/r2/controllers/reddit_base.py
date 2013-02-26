@@ -107,7 +107,7 @@ from r2.models import (
 NEVER = datetime(2037, 12, 31, 23, 59, 59)
 DELETE = datetime(1970, 01, 01, 0, 0, 1)
 
-cache_affecting_cookies = ('reddit_first', 'over18', '_options')
+cache_affecting_cookies = ('over18', '_options')
 
 class Cookies(dict):
     def add(self, name, value, *k, **kw):
@@ -286,45 +286,6 @@ def read_mod_cookie():
     cook = [s.split('=')[0:2] for s in read_user_cookie('mod').split(':') if s]
     if cook:
         set_user_cookie('mod', '')
-
-def firsttime():
-    if (request.user_agent and
-        ('iphone' in request.user_agent.lower() or
-         'android' in request.user_agent.lower()) and
-        not get_redditfirst('mobile_suggest')):
-        set_redditfirst('mobile_suggest', 'first')
-        return 'mobile_suggest'
-    elif get_redditfirst('firsttime'):
-        return False
-    else:
-        set_redditfirst('firsttime', 'first')
-        return True
-
-def get_redditfirst(key, default=None):
-    try:
-        val = c.cookies['reddit_first'].value
-        # on cookie presence, return as much
-        if default is None:
-            default = True
-        cookie = simplejson.loads(val)
-        return cookie[key]
-    except (ValueError, TypeError, KeyError), e:
-        # it's not a proper json dict, or the cookie isn't present, or
-        # the key isn't part of the cookie; we don't really want a
-        # broken cookie to propogate an exception up
-        return default
-
-def set_redditfirst(key, val):
-    try:
-        cookie = simplejson.loads(c.cookies['reddit_first'].value)
-        cookie[key] = val
-    except (ValueError, TypeError, KeyError), e:
-        # invalid JSON data; we'll just construct a new cookie
-        cookie = {key: val}
-
-    c.cookies['reddit_first'] = Cookie(simplejson.dumps(cookie),
-                                       expires=NEVER)
-
 
 def over18():
     if c.user.pref_over_18 or c.user_is_admin:
@@ -693,7 +654,6 @@ class MinimalController(BaseController):
                         c.cname,
                         request.fullpath,
                         c.over18,
-                        c.firsttime,
                         c.extension,
                         c.render_style,
                         cookies_key)
@@ -939,8 +899,6 @@ class RedditController(MinimalController):
 
             for cookietype, count in cookie_counts.iteritems():
                 g.stats.simple_event("cookie.%s" % cookietype, count)
-
-        c.firsttime = firsttime()
 
         # the user could have been logged in via one of the feeds 
         maybe_admin = False

@@ -170,9 +170,6 @@ class Reddit(Templated):
                 infotext = strings.heavy_load_msg
             elif g.read_only_mode:
                 infotext = strings.read_only_msg
-            elif (c.firsttime == 'mobile_suggest' and
-                  c.render_style != 'compact'):
-                infotext = strings.iphone_first
             elif g.live_config.get("announcement_message"):
                 infotext = g.live_config["announcement_message"]
 
@@ -189,7 +186,7 @@ class Reddit(Templated):
             if not self.infobar:
                 self.infobar = InfoBar(message=strings.all_minus_gold_only, extra_class="gold")
 
-        if c.firsttime:
+        if not c.user_is_loggedin:
             self.welcomebar = WelcomeBar()
 
         self.srtopbar = None

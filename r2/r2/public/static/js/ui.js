@@ -1,3 +1,33 @@
+r.ui.init = function() {
+    // welcome bar
+    if ($.cookie('reddit_first')) {
+        // save welcome seen state and delete obsolete cookie
+        $.cookie('reddit_first', null, {domain: r.config.cur_domain})
+        store.set('ui.shown.welcome', true)
+    } else if (store.get('ui.shown.welcome') != true) {
+        $('.infobar.welcome').show()
+        store.set('ui.shown.welcome', true)
+    }
+
+    // mobile suggest infobar
+    var smallScreen = window.matchMedia
+                      ? matchMedia('(max-device-width: 700px)').matches
+                      : $(window).width() < 700,
+        onFrontPage = $.url().attr('path') == '/'
+    if (smallScreen && onFrontPage && r.config.renderstyle != 'compact') {
+        var infobar = $('<div class="infobar mellow">')
+            .html(r.utils.formatMarkdownLinks(
+                r.strings('compact_suggest', {
+                    url: location + '.compact'
+                })
+            ))
+        $('body > .content > :not(.infobar):first').before(infobar)
+    }
+
+    r.ui.HelpBubble.init()
+    r.ui.PermissionEditor.init()
+}
+
 r.ui.Form = function(el) {
     r.ui.Base.call(this, el)
     this.$el.submit($.proxy(function(e) {
@@ -369,8 +399,3 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         this.hide()
     }
 })
-
-r.ui.init = function() {
-    r.ui.HelpBubble.init()
-    r.ui.PermissionEditor.init()
-}

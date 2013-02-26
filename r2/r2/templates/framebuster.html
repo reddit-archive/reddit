@@ -32,8 +32,6 @@
   </head>
   <body>
     <script type="text/javascript">
-      $.cookie_write({name: "reddit_first", data: {firsttime: true},
-                      domain: "${c.site.domain}" });
       %if thing.login:
         $.cookie_write({name: "redditSession", data: "cname",
                         domain: "${c.site.domain}" });

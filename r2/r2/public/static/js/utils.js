@@ -46,5 +46,12 @@ r.utils = {
             }
             return params[fieldName]
         })
+    },
+
+    _mdLinkRe: /\[(.*?)\]\((.*?)\)/g,
+    formatMarkdownLinks: function(str) {
+        return _.escape(str).replace(this._mdLinkRe, function(match, text, url) {
+            return '<a href="' + url + '">' + text + '</a>'
+        })
     }
 }
