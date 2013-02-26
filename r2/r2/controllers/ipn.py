@@ -376,6 +376,13 @@ class IpnController(RedditController):
             # get the financial details
             auth = trans.find("authorization-amount-notification")
 
+            custom = None
+            cart = trans.find("shopping-cart")
+            if cart:
+                private_item_data = cart.find("merchant-private-item-data")
+                if private_item_data:
+                    custom = str(private_item_data.contents[0])
+
             if not auth:
                 # see if the payment was declinded
                 status = trans.findAll('financial-order-state')
@@ -390,17 +397,22 @@ class IpnController(RedditController):
                     g.log.error(("google transaction status: " +
                                  "'%s', status: %s")
                                 % (short_sn, [x.contents[0] for x in status]))
+                    if custom:
+                        payment_blob = validate_blob(custom)
+                        buyer = payment_blob['buyer']
+                        subject = _('gold order')
+                        msg = _('your order has been received and gold will'
+                                ' be delivered shortly. please bear with us'
+                                ' as google wallet payments can take up to an'
+                                ' hour to complete')
+                        try:
+                            send_system_message(buyer, subject, msg)
+                        except MessageError:
+                            g.log.error('gcheckout send_system_message failed')
             elif auth.find("financial-order-state"
                            ).contents[0] == "CHARGEABLE":
                 email = str(auth.find("email").contents[0])
                 payer_id = str(auth.find('buyer-id').contents[0])
-                # get the "secret"
-                custom = None
-                cart = trans.find("shopping-cart")
-                if cart:
-                    for item in cart.findAll("merchant-private-item-data"):
-                        custom = str(item.contents[0])
-                        break
                 if custom:
                     days = None
                     try:
