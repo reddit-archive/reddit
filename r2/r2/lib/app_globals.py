@@ -53,6 +53,7 @@ from r2.lib.cache import (
 )
 from r2.lib.configparse import ConfigValue, ConfigValueParser
 from r2.lib.contrib import ipaddress
+from r2.lib.countries import get_countries_and_codes
 from r2.lib.lock import make_lock_factory
 from r2.lib.manager import db_manager
 from r2.lib.plugin import PluginLoader
@@ -358,6 +359,16 @@ class Globals(object):
         # make cssutils use the real logging system
         csslog = logging.getLogger("cssutils")
         cssutils.log.setLog(csslog)
+
+        # load the country list
+        countries_file_path = os.path.join(static_files, "countries.json")
+        try:
+            with open(countries_file_path) as handle:
+                self.countries = json.load(handle)
+            self.log.debug("Using countries.json.")
+        except IOError:
+            self.log.warning("Couldn't find countries.json. Using pycountry.")
+            self.countries = get_countries_and_codes()
 
         if not self.media_domain:
             self.media_domain = self.domain

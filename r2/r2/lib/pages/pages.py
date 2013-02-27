@@ -60,7 +60,7 @@ from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 
 import sys, random, datetime, calendar, simplejson, re, time
-import pycountry, time
+import time
 from itertools import chain
 from urllib import quote
 
@@ -3500,8 +3500,6 @@ class RedditAds(Templated):
 
 class PaymentForm(Templated):
     def __init__(self, link, campaign, **kw):
-        self.countries = [pycountry.countries.get(name=n) 
-                          for n in g.allowed_pay_countries]
         self.link = promote.wrap_promoted(link)
         self.campaign = promote.get_renderable_campaigns(link, campaign)
         Templated.__init__(self, **kw)

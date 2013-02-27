@@ -46,7 +46,6 @@ from copy import copy
 from datetime import datetime, timedelta
 from curses.ascii import isprint
 import re, inspect
-import pycountry
 from itertools import chain
 from functools import wraps
 
@@ -1856,8 +1855,8 @@ class ValidAddress(Validator):
         elif not country:
             self.set_error(_("please pick a country"), "country")
         else:
-            country = pycountry.countries.get(alpha2=country)
-            if country.name not in self.allowed_countries:
+            country_name = g.countries.get(country)
+            if country_name not in self.allowed_countries:
                 self.set_error(_("Our ToS don't cover your country (yet). Sorry."), "country")
 
         # Make sure values don't exceed max length defined in the authorize.net
@@ -1882,7 +1881,7 @@ class ValidAddress(Validator):
                            company = company or "",
                            address = address,
                            city = city, state = state,
-                           zip = zipCode, country = country.name,
+                           zip = zipCode, country = country_name,
                            phoneNumber = phoneNumber or "")
 
 class ValidCard(Validator):
