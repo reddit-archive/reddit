@@ -447,9 +447,22 @@ class ApiController(RedditController, OAuth2ResourceController):
             responder._send_data(modhash = user.modhash())
             responder._send_data(cookie  = user.make_cookie())
 
-    @validatedForm(user = VThrottledLogin(['user', 'passwd']),
+    @validatedForm(VLoggedOut(),
+                   user = VThrottledLogin(['user', 'passwd']),
                    rem = VBoolean('rem'))
     def _handle_login(self, form, responder, user, rem):
+        exempt_ua = (request.user_agent and
+                     any(ua in request.user_agent for ua
+                         in g.config.get('exempt_login_user_agents', ())))
+        if (errors.LOGGED_IN, None) in c.errors:
+            if user == c.user or exempt_ua:
+                # Allow funky clients to re-login as the current user.
+                c.errors.remove((errors.LOGGED_IN, None))
+            else:
+                from r2.lib.base import abort
+                from r2.lib.errors import reddit_http_error
+                abort(reddit_http_error(409, errors.LOGGED_IN))
+
         if not (responder.has_errors("vdelay", errors.RATELIMIT) or
                 responder.has_errors("passwd", errors.WRONG_PASSWORD)):
             self._login(responder, user, rem)

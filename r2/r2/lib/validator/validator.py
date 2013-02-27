@@ -1091,6 +1091,11 @@ class VUname(VRequired):
             self.param[0]: "a valid, unused, username",
         }
 
+class VLoggedOut(Validator):
+    def run(self):
+        if c.user_is_loggedin:
+            self.set_error(errors.LOGGED_IN)
+
 class VLogin(VRequired):
     def __init__(self, item, *a, **kw):
         VRequired.__init__(self, item, errors.WRONG_PASSWORD, *a, **kw)

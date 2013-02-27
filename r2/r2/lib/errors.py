@@ -42,6 +42,7 @@ error_list = dict((
         ('TOO_MANY_THING_IDS', _('you provided too many ids')),
         ('NOT_AUTHOR', _("you can't do that")),
         ('NOT_USER', _("you are not logged in as that user")),
+        ('LOGGED_IN', _("you are already logged in")),
         ('DELETED_LINK', _('the link you are commenting on has been deleted')),
         ('DELETED_COMMENT', _('that comment has been deleted')),
         ('DELETED_THING', _('that element has been deleted')),

@@ -183,6 +183,7 @@ class Globals(object):
             'case_sensitive_domains',
             'reserved_subdomains',
             'TRAFFIC_LOG_HOSTS',
+            'exempt_login_user_agents',
         ],
 
         ConfigValue.choice: {
