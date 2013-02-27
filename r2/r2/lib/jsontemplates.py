@@ -463,7 +463,8 @@ class MessageJsonTemplate(ThingJsonTemplate):
                                                 context      = "context", 
                                                 created      = "created",
                                                 parent_id    = "parent_id",
-                                                first_message= "first_message")
+                                                first_message= "first_message",
+                                                first_message_name = "first_message_name")
 
     def thing_attr(self, thing, attr):
         from r2.models import Message
@@ -488,6 +489,9 @@ class MessageJsonTemplate(ThingJsonTemplate):
         elif attr == "parent_id":
             if getattr(thing, "parent_id", None):
                 return make_fullname(Message, thing.parent_id)
+        elif attr == "first_message_name":
+            if getattr(thing, "first_message", None):
+                return make_fullname(Message, thing.first_message)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
     def rendered_data(self, wrapped):
