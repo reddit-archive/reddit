@@ -85,11 +85,17 @@ function get_form_fields(form, fields, filter_func) {
         filter_func = function(x) { return true; };
     /* consolidate the form's inputs for submission */
     $(form).find("select, input, textarea").not(".gray, :disabled").each(function() {
-            var type = $(this).attr("type");
-            if (filter_func(this) && 
-                ( (type != "radio" && type != "checkbox") || 
-                  $(this).is(":checked")) )
-                fields[$(this).attr("name")] = $(this).val();
+            var $el = $(this),
+                type = $el.attr("type");
+            if (!filter_func(this)) {
+                return;
+            }
+            if ($el.data('send-checked')) {
+                val = $el.is(':checked');
+            } else if ((type != "radio" && type != "checkbox") || $el.is(":checked")) {
+                val = $el.val();
+            }
+            fields[$el.attr("name")] = val;
         });
     if (fields.id == null) {
         fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
