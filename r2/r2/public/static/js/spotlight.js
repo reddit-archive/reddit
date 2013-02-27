@@ -71,8 +71,8 @@ r.spotlight.createStub = function(fullname, campaign) {
     var stub = $('<div>')
             .addClass('thing stub')
             .addClass('id-'+fullname)
-            .data('fullname', fullname)
-            .data('cid', campaign)
+            .attr('data-fullname', fullname)
+            .attr('data-cid', campaign)
             .prependTo('.organic-listing')
 }
 
