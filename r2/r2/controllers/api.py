@@ -1675,6 +1675,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
                    type = VOneOf('type', ('public', 'private', 'restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
+                   submit_link_label=VLength('submit_link_label', max_length=60),
+                   submit_text_label=VLength('submit_text_label', max_length=60),
                    wikimode = VOneOf('wikimode', ('disabled', 'modonly', 'anyone')),
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
@@ -1715,11 +1717,11 @@ class ApiController(RedditController, OAuth2ResourceController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description',
-                           'show_media', 'show_cname_sidebar', 'type', 'link_type', 'lang',
-                           'css_on_cname', 'header_title', 'over_18',
-                           'exclude_banned_modqueue',
-                           'wikimode', 'wiki_edit_karma', 'wiki_edit_age',
-                           'allow_top', 'public_description'))
+                           'show_media', 'show_cname_sidebar', 'type',
+                           'link_type', 'submit_link_label',
+                           'submit_text_label', 'lang', 'css_on_cname',
+                           'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
+                           'wiki_edit_age', 'allow_top', 'public_description'))
 
         public_description = kw.pop('public_description')
         description = kw.pop('description')

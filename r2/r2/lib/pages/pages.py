@@ -346,13 +346,15 @@ class Reddit(Templated):
             else:
                 fake_sub = isinstance(c.site, FakeSubreddit)
                 if c.site.link_type != 'self':
-                    ps.append(SideBox(title=_("Submit a new link"),
+                    ps.append(SideBox(title=c.site.submit_link_label or
+                                            strings.submit_link_label,
                                       css_class="submit submit-link",
                                       link="/submit",
                                       sr_path=not fake_sub,
                                       show_cover=True))
                 if c.site.link_type != 'link':
-                    ps.append(SideBox(title=_("Submit a new text post"),
+                    ps.append(SideBox(title=c.site.submit_text_label or
+                                            strings.submit_text_label,
                                       css_class="submit submit-text",
                                       link="/submit?selftext=true",
                                       sr_path=not fake_sub,

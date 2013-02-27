@@ -718,6 +718,8 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         prev_public_description_id = 'site.prev_public_description_id',
                         language = 'site.lang',
                         subreddit_type = 'site.type',
+                        submit_link_label = 'site.submit_link_label',
+                        submit_text_label = 'site.submit_text_label',
                         content_options = 'site.link_type',
                         over_18 = 'site.over_18',
                         default_set = 'site.allow_top',

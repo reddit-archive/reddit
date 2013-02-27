@@ -89,6 +89,8 @@ class Subreddit(Thing, Printable):
                      mod_actions = 0,
                      # do we allow self-posts, links only, or any?
                      link_type = 'any', # one of ('link', 'self', 'any')
+                     submit_link_label = '',
+                     submit_text_label = '',
                      flair_enabled = True,
                      flair_position = 'right', # one of ('left', 'right')
                      link_flair_position = '', # one of ('', 'left', 'right')

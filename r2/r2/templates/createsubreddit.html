@@ -23,6 +23,7 @@
 <%!
    from r2.lib.filters import keep_space
    from r2.lib.pages import UserText
+   from r2.lib.strings import strings
 %>
 <%namespace file="utils.html" import="error_field, language_tool, plain_link"/>
 <%namespace file="utils.html" import="image_upload"/>
@@ -151,6 +152,24 @@
                            (thing.site and thing.site.link_type=='self'))}
       </table>
       ${error_field("INVALID_OPTION", "link_type")}
+    </div>
+    <div class="usertext-edit">
+      <div class="delete-field">
+        <label for="submit_link_label">${_('Custom label for submit link button (blank for default):')}</label>
+        <input id="submit_link_label" type="text" name="submit_link_label" maxlength="60" placeholder="${strings.submit_link_label}"
+            %if thing.site:
+                value="${thing.site.submit_link_label}"
+            %endif
+        >
+      </div>
+      <div class="delete-field">
+        <label for="submit_text_label">${_('Custom label for submit text post button (blank for default):')}</label>
+        <input id="submit_text_label" type="text" name="submit_text_label" maxlength="60" placeholder="${strings.submit_text_label}"
+            %if thing.site:
+                value="${thing.site.submit_text_label}"
+            %endif
+        >
+      </div>
     </div>
   </%utils:line_field>
   <%utils:line_field title="${_('wiki')}">
