@@ -29,11 +29,9 @@
 %>
 
 <div id="siteTable_organic" class="organic-listing">
-  %if thing.links:
-    %for tup in thing.links:
-      %if tup.link in thing.lookup:
-        ${unsafe(thing.lookup[tup.link].render(display=False))}
-      %endif
+  %if thing.things:
+    %for link in thing.things:
+      ${unsafe(link.render(display=False))}
     %endfor
   %endif
 

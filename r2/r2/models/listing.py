@@ -191,5 +191,4 @@ class SpotlightListing(Listing):
         res = Listing.listing(self)
         for t in res.things:
             t.num = ""
-        self.lookup = {t._fullname: t for t in res.things}
         return Wrapped(self)
