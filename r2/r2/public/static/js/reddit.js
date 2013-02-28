@@ -91,11 +91,10 @@ function get_form_fields(form, fields, filter_func) {
                 return;
             }
             if ($el.data('send-checked')) {
-                val = $el.is(':checked');
+                fields[$el.attr("name")] = $el.is(':checked');
             } else if ((type != "radio" && type != "checkbox") || $el.is(":checked")) {
-                val = $el.val();
+                fields[$el.attr("name")] = $el.val();
             }
-            fields[$el.attr("name")] = val;
         });
     if (fields.id == null) {
         fields.id = $(form).attr("id") ? ("#" + $(form).attr("id")) : "";
