@@ -134,9 +134,8 @@ r.gold = {
             cardZip = form.find('.card-address_zip').val()
 
         var stripeResponseHandler = function(status, response) {
-            window.clearTimeout(workingTimer)
             if (response.error) {
-                submit.removeClass("disabled")
+                submit.removeAttr('disabled')
                 status.html(response.error.message)
             } else {
                 token.val(response.id)
@@ -164,10 +163,8 @@ r.gold = {
             status.text(r.strings('missing_credit_zip'))
         } else {
 
-            var workingTimer = setTimeout(function () {
-                submit.addClass('disabled')
-            }, 200)
-
+            status.text('')
+            submit.attr('disabled', 'disabled')
             Stripe.createToken({
                     name: cardName,
                     number: cardNumber,
