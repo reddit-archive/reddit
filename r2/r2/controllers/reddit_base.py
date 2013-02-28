@@ -677,6 +677,14 @@ class MinimalController(BaseController):
                                               g.domain_prefix)
         c.secure = request.host in g.secure_domains
 
+        # wsgi.url_scheme is used in generating absolute urls, such as by webob
+        # for translating some of our relative-url redirects to rfc compliant
+        # absolute-url ones. TODO: consider using one of webob's methods of
+        # setting wsgi.url_scheme based on incoming request headers added by
+        # upstream things like stunnel/haproxy.
+        if c.secure:
+            request.environ["wsgi.url_scheme"] = "https"
+
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
             ratelimit_throttled()
