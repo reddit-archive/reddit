@@ -24,7 +24,7 @@ import cPickle
 
 from datetime import datetime
 
-from pylons import g
+from pylons import g, c, request
 from weberror.reporter import Reporter
 
 
@@ -122,6 +122,19 @@ class LoggingErrorReporter(Reporter):
     """ErrorMiddleware-compatible reporter that writes exceptions to g.log."""
 
     def report(self, exc_data):
+        # exception_formatted is the output of traceback.format_exception_only
+        exception = exc_data.exception_formatted[-1].strip()
+
+        # This is still within the RegistryManager middleware
+        fullpath = request.environ.get('FULLPATH', request.path)
+        uid = '-'
+        if c.user_is_loggedin:
+            uid = c.user._id
+
+        # First emit a single-line summary.  This is great for grepping the
+        # streaming log for errors.
+        g.log.error("E: %s U: %s FP: %s", exception, uid, fullpath)
+
         text, extra = self.format_text(exc_data)
         # TODO: send this all in one burst so that error reports aren't
         # interleaved / individual lines aren't dropped. doing so will take
