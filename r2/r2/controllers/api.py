@@ -1997,15 +1997,15 @@ class ApiController(RedditController, OAuth2ResourceController):
         else: # From no to yes
             send_message = True
 
-        # Send a message if this is a top-level comment on a link,
-        # if it's the first distinguish for this comment,
-        # and if the user isn't banned or blocked by the link author
+        # Send a message if this is a top-level comment on a submission that
+        # does not have sendreplies set, if it's the first distinguish for this
+        # comment, and if the user isn't banned or blocked by the author
         if isinstance(thing, Comment):
             link = Link._byID(thing.link_id, data=True)
             to = Account._byID(link.author_id, data=True)
             if (send_message and
                     thing.parent_id is None and
-                    not link.is_self and
+                    not link.sendreplies and
                     not hasattr(thing, 'distinguished') and
                     not c.user._spam and
                     c.user._id not in to.enemies and
