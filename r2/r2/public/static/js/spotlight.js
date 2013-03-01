@@ -10,7 +10,7 @@ r.spotlight.init = function() {
     $('.organic-listing .arrow.next').on('click', $.proxy(this, 'next'))
 
     _.each(this.link_by_camp, function(fullname, campaign) {
-        if (!listing.find('.id-' + fullname).length) {
+        if (!listing.find('[data-cid="' + campaign + '"]').length) {
             this.createStub(fullname, campaign)
         }
     }, this)
