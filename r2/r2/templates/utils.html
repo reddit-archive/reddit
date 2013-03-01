@@ -137,7 +137,7 @@ ${first_defined(kw[1:])}
   <% 
      if (not target or target == '_parent') and c.cname:
          target = '_top'
-     if c.cname and path.startswith('http://'):
+     if c.cname and path and path.startswith('http://'):
          target = '_top'
      if target:
          kw['target'] = target
