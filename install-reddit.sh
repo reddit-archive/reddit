@@ -141,6 +141,7 @@ python-zope.interface
 python-kazoo
 python-stripe
 
+nodejs
 gettext
 make
 optipng
