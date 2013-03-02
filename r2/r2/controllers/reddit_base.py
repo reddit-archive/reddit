@@ -96,6 +96,7 @@ from r2.models import (
     NotFound,
     Random,
     RandomNSFW,
+    RandomSubscription,
     Sub,
     Subreddit,
     valid_admin_cookie,
@@ -975,6 +976,12 @@ class RedditController(MinimalController):
         if c.site == Random:
             c.site = Subreddit.random_reddit()
             redirect_to("/" + c.site.path.strip('/') + request.path)
+        elif c.site == RandomSubscription:
+            if c.user.gold:
+                c.site = Subreddit.random_subscription(c.user)
+                redirect_to('/' + c.site.path.strip('/') + request.path)
+            else:
+                redirect_to('/gold/about')
         elif c.site == RandomNSFW:
             c.site = Subreddit.random_reddit(over18=True)
             redirect_to("/" + c.site.path.strip('/') + request.path)

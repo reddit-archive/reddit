@@ -670,6 +670,12 @@ class Subreddit(Thing, Printable):
                 if srs else Subreddit._by_name(g.default_sr))
 
     @classmethod
+    def random_subscription(cls, user):
+        srs = Subreddit.reverse_subscriber_ids(user)
+        return (Subreddit._byID(random.choice(srs))
+                if srs else Subreddit._by_name(g.default_sr))
+
+    @classmethod
     def user_subreddits(cls, user, ids=True, over18=False, limit=DEFAULT_LIMIT,
                         stale=False):
         """
@@ -1212,6 +1218,10 @@ class RandomNSFWReddit(FakeSubreddit):
     name = 'randnsfw'
     header = ""
 
+class RandomSubscriptionReddit(FakeSubreddit):
+    name = 'myrandom'
+    header = ""
+
 class ModContribSR(MultiReddit):
     name  = None
     title = None
@@ -1297,9 +1307,11 @@ Contrib = ContribSR()
 All = AllSR()
 Random = RandomReddit()
 RandomNSFW = RandomNSFWReddit()
+RandomSubscription = RandomSubscriptionReddit()
 
 Subreddit._specials.update(dict(friends = Friends,
                                 randnsfw = RandomNSFW,
+                                myrandom = RandomSubscription,
                                 random = Random,
                                 mod = Mod,
                                 contrib = Contrib,
