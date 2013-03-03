@@ -37,6 +37,18 @@ from pylons import g, c, request
 from pylons.i18n import _, ungettext
 
 
+def static_mtime(path):
+    static_dirs = set(plugin.static_dir for plugin in g.plugins)
+    static_dirs.add(g.paths['static_files'])
+
+    for static_dir in static_dirs:
+        file_path = os.path.join(static_dir, path.lstrip('/'))
+        try:
+            return os.path.getmtime(file_path)
+        except OSError:
+            continue
+
+
 static_text_extensions = {
     '.js': 'js',
     '.css': 'css',
@@ -56,6 +68,7 @@ def static(path, allow_gzip=True):
     is_text = extension in static_text_extensions
     can_gzip = is_text and 'gzip' in request.accept_encoding
     should_gzip = allow_gzip and can_gzip
+    should_cache_bust = False
 
     path_components = []
     actual_filename = None
@@ -63,24 +76,20 @@ def static(path, allow_gzip=True):
     if not c.secure and g.static_domain:
         scheme = 'http'
         domain = g.static_domain
-        query = None
         suffix = '.gzip' if should_gzip and g.static_pre_gzipped else ''
     elif c.secure and g.static_secure_domain:
         scheme = 'https'
         domain = g.static_secure_domain
-        query = None
         suffix = '.gzip' if should_gzip and g.static_secure_pre_gzipped else ''
     else:
         path_components.append(c.site.static_path)
-        query = None
 
         if g.uncompressedJS:
-            query = 'v=' + str(random.randint(1, 1000000))
-
             # unminified static files are in type-specific subdirectories
             if not dirname and is_text:
                 path_components.append(static_text_extensions[extension])
 
+            should_cache_bust = True
             actual_filename = filename
 
         scheme = None
@@ -93,6 +102,12 @@ def static(path, allow_gzip=True):
     path_components.append(actual_filename + suffix)
 
     actual_path = os.path.join(*path_components)
+
+    query = None
+    if should_cache_bust:
+        file_id = static_mtime(actual_path) or random.randint(0, 1000000)
+        query = 'v=' + str(file_id)
+
     return urlparse.urlunsplit((
         scheme,
         domain,
