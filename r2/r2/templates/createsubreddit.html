@@ -196,26 +196,47 @@
     <div class="delete-field">
       <ul>
         <li>
-          <input class="nomargin" type="checkbox" name="over_18" id="over_18"
-                 ${thing.site and thing.site.over_18 and "checked='checked'" or ""}/>
+          <input class="nomargin" type="checkbox"
+                 name="over_18" id="over_18"
+                 %if thing.site and thing.site.over_18:
+                   checked="checked"
+                 %endif
+          >
           <label for="over_18">
             ${_("viewers must be over eighteen years old")}
           </label>
         </li>
         <li>
-          <input class="nomargin" type="checkbox" 
+          <input class="nomargin" type="checkbox"
                  name="allow_top" id="allow_top"
-                 ${(not thing.site or thing.site.allow_top) and "checked='checked'" or ""}/>
+                 %if not thing.site or thing.site.allow_top:
+                   checked="checked"
+                 %endif
+          >
           <label for="allow_top">
             ${_("allow this reddit to be shown in the default set")}
           </label>
         </li>
         <li>
-          <input class="nomargin" type="checkbox" 
+          <input class="nomargin" type="checkbox"
                  name="show_media" id="show_media"
-                 ${thing.site and thing.site.show_media and "checked='checked'" or ""}/>
+                 %if thing.site and thing.site.show_media:
+                   checked="checked"
+                 %endif
+          >
           <label for="show_media">
             ${_("show thumbnail images of content")}
+          </label>
+        </li>
+        <li>
+          <input class="nomargin" type="checkbox"
+                 name="exclude_banned_modqueue" id="exclude_banned_modqueue"
+                 %if thing.site and thing.site.exclude_banned_modqueue:
+                   checked="checked"
+                 %endif
+          >
+          <label for="exclude_banned_modqueue">
+            ${_("exclude posts by site-wide banned users from modqueue")}
           </label>
         </li>
       </ul>
@@ -228,14 +249,20 @@
       %if thing.site and c.site.domain:
           <input class="nomargin" type="checkbox" 
                  name="css_on_cname" id="css_on_cname"
-                 ${thing.site.css_on_cname and "checked='checked'" or ""}/>
+                 %if thing.site.css_on_cname:
+                   checked="checked"
+                 %endif
+          >
           <label for="css_on_cname">
             ${_("make custom CSS styles apply only when accessed from the cname.")}
           </label>
           <br/>
           <input class="nomargin" type="checkbox"
                  name="show_cname_sidebar" id="show_cname_sidebar"
-                 ${thing.site and thing.site.show_cname_sidebar and "checked='checked'" or ""}/>
+                 %if thing.site.show_cname_sidebar:
+                   checked="checked"
+                 %endif
+          >
           <label for="show_cname_sidebar">
             ${_("show sidebar when accessed from the cname.")}
           </label>

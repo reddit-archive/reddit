@@ -857,7 +857,8 @@ def new_comment(comment, inbox_rels):
             job_key = "insert_items"
             if comment._spam:
                 m.insert(get_spam_comments(sr), [comment])
-            if was_spam_filtered(comment):
+            if (was_spam_filtered(comment) and
+                    not (sr.exclude_banned_modqueue and author._spam)):
                 m.insert(get_spam_filtered_comments(sr), [comment])
 
             if utils.to36(comment.link_id) in g.live_config["fastlane_links"]:
@@ -1124,27 +1125,46 @@ def ban(things, filtered=True):
     by_srid = _by_srid(things, srs=False)
 
     for sr_id, sr_things in by_srid.iteritems():
-        links = [x for x in sr_things if isinstance(x, Link)]
-        comments = [x for x in sr_things if isinstance(x, Comment)]
+        links = []
+        modqueue_links = []
+        comments = []
+        modqueue_comments = []
+        for item in sr_things:
+            # don't add posts by banned users if subreddit prefs exclude them
+            add_to_modqueue = (filtered and
+                       not (item.subreddit_slow.exclude_banned_modqueue and
+                            item.author_slow._spam))
+
+            if isinstance(item, Link):
+                links.append(item)
+                if add_to_modqueue:
+                    modqueue_links.append(item)
+            elif isinstance(item, Comment):
+                comments.append(item)
+                if add_to_modqueue:
+                    modqueue_comments.append(item)
 
         if links:
             query_cache_inserts.append((get_spam_links(sr_id), links))
-            if filtered:
-                query_cache_inserts.append((get_spam_filtered_links(sr_id),
-                                            links))
-            else:
-                query_cache_deletes.append((get_spam_filtered_links(sr_id),
-                                            links))
-                query_cache_deletes.append((get_unmoderated_links(sr_id),
-                                            links))
+            if not filtered:
+                query_cache_deletes.append(
+                        (get_spam_filtered_links(sr_id), links))
+                query_cache_deletes.append(
+                        (get_unmoderated_links(sr_id), links))
+
+        if modqueue_links:
+            query_cache_inserts.append(
+                    (get_spam_filtered_links(sr_id), modqueue_links))
+
         if comments:
             query_cache_inserts.append((get_spam_comments(sr_id), comments))
-            if filtered:
-                query_cache_inserts.append((get_spam_filtered_comments(sr_id),
-                                            comments))
-            else:
-                query_cache_deletes.append((get_spam_filtered_comments(sr_id),
-                                            comments))
+            if not filtered:
+                query_cache_deletes.append(
+                        (get_spam_filtered_comments(sr_id), comments))
+
+        if modqueue_comments:
+            query_cache_inserts.append(
+                    (get_spam_filtered_comments(sr_id), modqueue_comments))
 
     with CachedQueryMutator() as m:
         for q, inserts in query_cache_inserts:

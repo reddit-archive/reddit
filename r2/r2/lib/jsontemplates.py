@@ -714,6 +714,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         over_18 = 'site.over_18',
                         default_set = 'site.allow_top',
                         show_media = 'site.show_media',
+                        exclude_banned_modqueue = 'site.exclude_banned_modqueue',
                         domain = 'site.domain',
                         domain_css = 'site.css_on_cname',
                         wikimode = 'site.wikimode',

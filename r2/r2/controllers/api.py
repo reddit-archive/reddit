@@ -1673,6 +1673,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                    over_18 = VBoolean('over_18'),
                    allow_top = VBoolean('allow_top'),
                    show_media = VBoolean('show_media'),
+                   exclude_banned_modqueue = VBoolean('exclude_banned_modqueue'),
                    show_cname_sidebar = VBoolean('show_cname_sidebar'),
                    type = VOneOf('type', ('public', 'private', 'restricted', 'archived')),
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
@@ -1723,6 +1724,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                   if k in ('name', 'title', 'domain', 'description',
                            'show_media', 'show_cname_sidebar', 'type', 'link_type', 'lang',
                            'css_on_cname', 'header_title', 'over_18',
+                           'exclude_banned_modqueue',
                            'wikimode', 'wiki_edit_karma', 'wiki_edit_age',
                            'allow_top', 'public_description'))
 

@@ -600,11 +600,17 @@ class Link(Thing, Printable):
 
     @property
     def subreddit_slow(self):
-        from subreddit import Subreddit
-        """return's a link's subreddit. in most case the subreddit is already
-        on the wrapped link (as .subreddit), and that should be used
-        when possible. """
-        return Subreddit._byID(self.sr_id, True, return_dict=False)
+        """Returns the link's subreddit."""
+        # The subreddit is often already on the wrapped link as .subreddit
+        # If available, that should be used instead of calling this
+        return Subreddit._byID(self.sr_id, data=True, return_dict=False)
+
+    @property
+    def author_slow(self):
+        """Returns the link's author."""
+        # The author is often already on the wrapped link as .author
+        # If available, that should be used instead of calling this
+        return Account._byID(self.author_id, data=True, return_dict=False)
 
 class LinksByUrl(tdb_cassandra.View):
     _use_db = True

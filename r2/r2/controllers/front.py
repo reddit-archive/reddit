@@ -532,6 +532,10 @@ class FrontController(RedditController, OAuth2ResourceController):
             elif location == "modqueue":
                 if x.reported > 0 and not x._spam:
                     return True # reported but not banned
+                if x.author._spam and x.subreddit.exclude_banned_modqueue:
+                    # banned user, don't show if subreddit pref excludes
+                    return False
+
                 verdict = getattr(x, "verdict", None)
                 if verdict is None:
                     return True # anything without a verdict

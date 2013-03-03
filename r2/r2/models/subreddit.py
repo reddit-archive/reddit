@@ -85,6 +85,7 @@ class Subreddit(Thing, Printable):
                      wiki_edit_karma = 100,
                      wiki_edit_age = 0,
                      over_18 = False,
+                     exclude_banned_modqueue = False,
                      mod_actions = 0,
                      sponsorship_text = "this reddit is sponsored by",
                      sponsorship_url = None,
