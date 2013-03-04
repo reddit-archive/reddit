@@ -785,23 +785,6 @@ def make_daily_promotions(offset=0, test=False):
                         "promotions: %r" % error_campaigns)
 
 
-def randomized_promotion_list(user, site):
-    promos = get_promotion_list(user, site)
-    # no promos, no problem
-    if not promos:
-        return []
-    # more than two: randomize
-    elif len(promos) > 1:
-        n = random.uniform(0, 1)
-        for i, (l, w, cid) in enumerate(promos):
-            n -= w
-            if n < 0:
-                promos = promos[i:] + promos[:i]
-                break
-    # fall thru for the length 1 case here as well
-    return [(l, cid) for l, w, cid in promos]
-
-
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
