@@ -371,7 +371,7 @@ class PageviewsByLanguage(Base):
     date = Column(DateTime(), nullable=False, primary_key=True)
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
-    pageview_count = Column("total", Integer())
+    pageview_count = Column("total", BigInteger())
 
     @classmethod
     @memoize_traffic(time=3600)
