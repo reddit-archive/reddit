@@ -187,7 +187,8 @@ class _CommentBuilder(Builder):
 
         for cm in wrapped:
             # don't show spam with no children
-            if cm.deleted and not cid_tree.has_key(cm._id):
+            if (cm.deleted and not cid_tree.has_key(cm._id)
+                and not c.user_is_admin):
                 continue
             cm.num_children = num_children[cm._id]
             if cm.collapsed and cm._id in dont_collapse:
