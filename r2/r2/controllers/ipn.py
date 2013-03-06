@@ -710,7 +710,11 @@ class StripeController(GoldPaymentController):
 
         charge = event.data.object
         description = charge.description
-        passthrough, buyer_name = description.split('-', 1)
+        try:
+            passthrough, buyer_name = description.split('-', 1)
+        except ValueError:
+            g.log.error('stripe_error on charge: %s', charge)
+            raise
         transaction_id = 'S%s' % charge.id
         pennies = charge.amount
         months, days = months_and_days_from_pennies(pennies)
