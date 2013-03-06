@@ -35,6 +35,7 @@ from sqlalchemy.exc import IntegrityError
 import stripe
 
 from r2.controllers.reddit_base import RedditController
+from r2.lib.errors import MessageError
 from r2.lib.filters import _force_unicode, _force_utf8
 from r2.lib.log import log_text
 from r2.lib.strings import strings
@@ -247,7 +248,11 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         )
 
     subject = sender + " just sent you reddit gold!"
-    send_system_message(recipient, subject, message)
+
+    try:
+        send_system_message(recipient, subject, message)
+    except MessageError:
+        g.log.error('send_gift: could not send system message')
 
     g.log.info("%s gifted %s to %s" % (buyer.name, amount, recipient.name))
     return comment
@@ -937,26 +942,22 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
                     message = strings.lounge_msg % dict(link=lounge_url)
                 else:
                     message = ":)"
-                send_system_message(buyer, subject, message)
             else:
                 subject = "your reddit gold has been renewed!"
                 message = ("see the details of your subscription on "
                            "[your userpage](/u/%s)" % buyer.name)
-                send_system_message(buyer, subject, message)
 
         elif goldtype == 'creddits':
             buyer._incr('gold_creddits', months)
             subject = "thanks for buying creddits!"
             message = ("To spend them, visit http://%s/gold or your favorite "
                        "person's userpage." % (g.domain))
-            send_system_message(buyer, subject, message)
 
         elif goldtype == 'gift':
             send_gift(buyer, recipient, months, days, signed, giftmessage,
                       comment)
             subject = "thanks for giving reddit gold!"
             message = "Your gift to %s has been delivered." % recipient.name
-            send_system_message(buyer, subject, message)
 
         status = 'processed'
         secret_pieces = [goldtype]
@@ -971,6 +972,11 @@ def complete_gold_purchase(secret, transaction_id, payer_email, payer_id,
                                 subscr_id=subscription_id, status=status)
         except IntegrityError:
             g.log.error('gold: got duplicate gold transaction')
+
+        try:
+            send_system_message(buyer, subject, message)
+        except MessageError:
+            g.log.error('complete_gold_purchase: could not send system message')
 
 
 def subtract_gold_days(user, days):
