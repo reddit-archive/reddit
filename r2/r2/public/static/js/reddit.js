@@ -207,6 +207,14 @@ function read_thing(elem) {
     $.request("read_message", {"id": $(t).thing_id()});
 }
 
+function save_thing(elem) {
+    $(elem).thing().addClass("saved");
+}
+
+function unsave_thing(elem) {
+    $(elem).thing().removeClass("saved");
+}
+
 function toggle_save(elem) {
     var form = $(elem).parents("form").first()
     var next_text = form.find('[name="executed"]')
