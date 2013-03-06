@@ -93,7 +93,9 @@ def declare_queues(g):
 
     queues.cloudsearch_changes << "search_changes"
     queues.scraper_q << "new_link"
-    queues.newcomments_q << "new_comment"
+    queues.newcomments_q << ("new_comment",
+                             "new_fastlane_comment",
+                            )
     queues.commentstree_q << "new_comment"
     queues.commentstree_fastlane_q << "new_fastlane_comment"
     return queues
