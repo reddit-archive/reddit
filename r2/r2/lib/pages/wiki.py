@@ -95,7 +95,7 @@ class WikiPageDiscussions(Templated):
 class WikiBasePage(Reddit):
     extra_page_classes = ['wiki-page']
     
-    def __init__(self, inner_content, page=None, may_revise=False,
+    def __init__(self, content, page=None, may_revise=False,
                  actionless=False, alert=None, description=None, 
                  showtitle=False, **context):
         pageactions = []
@@ -125,8 +125,6 @@ class WikiBasePage(Reddit):
             self.pagetitle = action[1]
         else:
             self.pagetitle = None
-        
-        self.inner_content = inner_content
 
         page_classes = None
 
@@ -138,7 +136,7 @@ class WikiBasePage(Reddit):
 
         Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
                         show_wiki_actions=True, page_classes=page_classes,
-                        **context)
+                        content=content, **context)
 
 class WikiPageView(WikiBasePage):
     def __init__(self, content, page, diff=None, renderer='wiki', **context):

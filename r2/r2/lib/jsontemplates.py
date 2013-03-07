@@ -626,7 +626,7 @@ class TrafficJsonTemplate(JsonTemplate):
 class WikiJsonTemplate(JsonTemplate):
     def render(self, thing, *a, **kw):
         try:
-            content = thing.inner_content
+            content = thing.content()
         except AttributeError:
             content = thing.listing
         return ObjectTemplate(content.render() if thing else {})
