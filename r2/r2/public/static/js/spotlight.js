@@ -117,16 +117,25 @@ r.spotlight._materializePos = function(pos) {
 
 r.spotlight._advance = function(dir) {
     var listing = $('.organic-listing'),
+        $nextprev = listing.find('.nextprev'),
         visible = listing.find('.thing:visible'),
         nextPos = this._advancePos(dir),
         $next = this._materializePos(nextPos)
 
+    var showWorking = setTimeout(function() {
+        $nextprev.toggleClass('working', $next.state && $next.state() == 'pending')
+    }, 200)
+
     this.lineup.pos = nextPos
     $.when($next).done(_.bind(function($next) {
+        clearTimeout(showWorking)
+
         if (this.lineup.pos != nextPos) {
             // we've been passed!
             return
         }
+
+        $nextprev.removeClass('working')
 
         // size the rank element so that spotlight box
         // items line up with the main page listing
