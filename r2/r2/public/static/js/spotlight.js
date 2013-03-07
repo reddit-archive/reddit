@@ -139,6 +139,12 @@ r.spotlight._advance = function(dir) {
         $next.show()
 
         this.help($next)
+
+        // prefetch forward and backward if advanced beyond default state
+        if (this.lineup.pos != 0) {
+            this._materializePos(this._advancePos(1))
+            this._materializePos(this._advancePos(-1))
+        }
     }, this))
 }
 
