@@ -136,6 +136,7 @@ r.spotlight._advance = function(dir) {
         }
 
         $nextprev.removeClass('working')
+        listing.removeClass('loading')
 
         // size the rank element so that spotlight box
         // items line up with the main page listing

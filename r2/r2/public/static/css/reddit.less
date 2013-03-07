@@ -957,6 +957,15 @@ a.author { margin-right: 0.5em; }
     overflow: hidden; 
     position: relative;
     min-height: 50px; 
+
+    &.loading {
+        height: 62px;
+        opacity: .5;
+
+        & .help, & .throbber {
+            display: none;
+        }
+    }
 }
 
 .organic-listing .link {
