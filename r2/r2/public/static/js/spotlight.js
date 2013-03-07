@@ -9,40 +9,20 @@ r.spotlight.init = function() {
     $('.organic-listing .arrow.prev').on('click', $.proxy(this, 'prev'))
     $('.organic-listing .arrow.next').on('click', $.proxy(this, 'next'))
 
-    _.each(this.link_by_camp, function(fullname, campaign) {
-        if (!listing.find('[data-cid="' + campaign + '"]').length) {
-            this.createStub(fullname, campaign)
-        }
-    }, this)
-
     var selectedThing,
         lastClickFullname = r.analytics.breadcrumbs.lastClickFullname(),
         lastClickThing = $(lastClickFullname ? '.id-' + lastClickFullname : null)
     if (lastClickThing.length && listing.has(lastClickThing).length) {
         r.debug('restoring spotlight selection to last click')
-        selectedThing = lastClickThing
+        selectedThing = {fullname: lastClickFullname}
     } else {
         selectedThing = this.chooseRandom()
     }
 
-    this.lineup = _.chain(listing.find('.thing'))
-        .reject(function(el) { return selectedThing.is(el) })
+    this.lineup = _.chain(this.lineup)
+        .reject(function(el) { return _.isEqual(selectedThing, el) })
         .shuffle()
         .unshift(selectedThing)
-        .map(function(el) {
-            var fullname = $(el).data('fullname'),
-                campaign = $(el).data('cid')
-            if (fullname) {
-                // convert things with ids to queries to handle stub replacement
-                if (campaign) {
-                    return '[data-cid="' + campaign + '"]'
-                } else {
-                    return '.id-' + fullname
-                }
-            } else {
-                return el
-            }
-        })
         .value()
 
     this.lineup.pos = 0
@@ -53,6 +33,7 @@ r.spotlight.setup = function(links, interest_prob, promotion_prob) {
     this.link_by_camp = {},
     this.weights = {},
     this.organics = []
+    this.lineup = []
 
     for (var index in links) {
         var link = links[index][0],
@@ -63,22 +44,16 @@ r.spotlight.setup = function(links, interest_prob, promotion_prob) {
         if (is_promo) {
             this.link_by_camp[campaign] = link
             this.weights[campaign] = weight
+            this.lineup.push({fullname: link, campaign: campaign})
         } else {
             this.organics.push(link)
+            this.lineup.push({fullname: link})
         }
     }
+    this.lineup.push('.interestbar')
 
     this.interest_prob = interest_prob
     this.promotion_prob = promotion_prob
-}
-
-r.spotlight.createStub = function(fullname, campaign) {
-    var stub = $('<div>')
-            .addClass('thing stub')
-            .addClass('id-'+fullname)
-            .attr('data-fullname', fullname)
-            .attr('data-cid', campaign)
-            .prependTo('.organic-listing')
 }
 
 r.spotlight.chooseRandom = function() {
@@ -87,49 +62,83 @@ r.spotlight.chooseRandom = function() {
             && Math.random() < this.promotion_prob) {
         var campaign_name = this.weighted_lottery(this.weights),
             link_name = this.link_by_camp[campaign_name]
-        return listing.find('[data-cid="' + campaign_name + '"]')
+        return {fullname: link_name, campaign: campaign_name}
     } else if (Math.random() < this.interest_prob) {
-        return listing.find('.interestbar')
+        return '.interestbar'
     } else {
         var name = this.organics[Math.floor(Math.random() * this.organics.length)]
-        return listing.find('.id-' + name)
+        return {fullname: name}
     }
+}
+
+r.spotlight._materialize = function(item) {
+    if (!item || item instanceof $ || item.promise) {
+        return item
+    }
+
+    var listing = $('.organic-listing'),
+        itemSel
+
+    if (_.isString(item)) {
+        itemSel = item
+    } else {
+        itemSel = '[data-fullname="' + item.fullname + '"]'
+        if (item.campaign) {
+            itemSel += '[data-cid="' + item.campaign + '"]'
+        }
+    }
+    var $item = listing.find(itemSel)
+
+    if ($item.length) {
+        return $item
+    } else if (item.campaign) {
+        r.debug('fetching promo %s from campaign %s', item.fullname, item.campaign)
+
+        return $.get('/api/fetch_promo', {
+            link: item.fullname,
+            campaign: item.campaign
+        }).pipe(function (data) {
+            $item = $(data)
+            $item.hide().appendTo(listing)
+            return $item
+        })
+    } else {
+        r.error('unable to locate spotlight item', itemSel, item)
+    }
+}
+
+r.spotlight._advancePos = function(dir) {
+    return (this.lineup.pos + dir + this.lineup.length) % this.lineup.length
+}
+
+r.spotlight._materializePos = function(pos) {
+    return this.lineup[pos] = this._materialize(this.lineup[pos])
 }
 
 r.spotlight._advance = function(dir) {
     var listing = $('.organic-listing'),
         visible = listing.find('.thing:visible'),
-        nextPos = (this.lineup.pos + dir + this.lineup.length) % this.lineup.length,
-        next = listing.find(this.lineup[nextPos])
+        nextPos = this._advancePos(dir),
+        $next = this._materializePos(nextPos)
 
-    if (next.hasClass('stub')) {
-        var fullname = next.data('fullname'),
-            campaign = next.data('cid')
-        r.debug('fetching promo %s from campaign %s', fullname, campaign)
+    this.lineup.pos = nextPos
+    $.when($next).done(_.bind(function($next) {
+        if (this.lineup.pos != nextPos) {
+            // we've been passed!
+            return
+        }
 
-        next = $.get('/api/fetch_promo', {
-            link: fullname,
-            campaign: campaign
-        }).pipe(function (data) {
-            var oldNext = $('[data-cid="' + campaign + '"]'),
-                newNext = $(data)
-            oldNext.replaceWith(newNext)
-            return newNext
-        })
-    }
-
-    $.when(next).done(_.bind(function(next) {
         // size the rank element so that spotlight box
         // items line up with the main page listing
-        next.find('.rank')
+        $next
+            .find('.rank')
             .width($('#siteTable .rank').width())
             .end()
 
         visible.hide()
-        next.show()
+        $next.show()
 
-        this.lineup.pos = nextPos
-        this.help(next)
+        this.help($next)
     }, this))
 }
 
