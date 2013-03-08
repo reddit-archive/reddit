@@ -793,6 +793,13 @@ class Comment(Thing, Printable):
             sr_id = l.sr_id
         return Subreddit._byID(sr_id, True, return_dict=False)
 
+    @property
+    def author_slow(self):
+        """Returns the comment's author."""
+        # The author is often already on the wrapped comment as .author
+        # If available, that should be used instead of calling this
+        return Account._byID(self.author_id, data=True, return_dict=False)
+
     def keep_item(self, wrapped):
         return True
 
