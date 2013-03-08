@@ -239,6 +239,7 @@ class HotController(FixListing, ListingController):
 
         res = wrap_links([link._fullname], wrapper=self.builder_wrapper,
                          skip=False)
+        res.parent_name = "promoted"
         if res.things:
             return res
 
@@ -247,6 +248,7 @@ class HotController(FixListing, ListingController):
         b = CampaignBuilder(promo_tuples, wrap=self.builder_wrapper,
                             keep_fn=organic.keep_fresh_links, num=1, skip=True)
         res = LinkListing(b, nextprev=False).listing()
+        res.parent_name = "promoted"
         if res.things:
             return res
 
