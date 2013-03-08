@@ -1106,6 +1106,39 @@ class FrontController(RedditController, OAuth2ResourceController):
                                              vendor_url=vendor_url,
                                              lounge_md=lounge_md)).render()
 
+    @validate(VUser(),
+              token=VOneTimeToken(AwardClaimToken, "code"))
+    def GET_confirm_award_claim(self, token):
+        if not token:
+            abort(403)
+
+        award = Award._by_fullname(token.awardfullname)
+        trophy = FakeTrophy(c.user, award, token.description, token.url)
+        content = ConfirmAwardClaim(trophy=trophy, user=c.user.name,
+                                    token=token)
+        return BoringPage(_("claim this award?"), content=content).render()
+
+    @validate(VUser(),
+              token=VOneTimeToken(AwardClaimToken, "code"))
+    def POST_claim_award(self, token):
+        if not token:
+            abort(403)
+
+        token.consume()
+
+        award = Award._by_fullname(token.awardfullname)
+        trophy, preexisting = Trophy.claim(c.user, token.uid, award,
+                                           token.description, token.url)
+        redirect = '/awards/received?trophy=' + trophy._id36
+        if preexisting:
+            redirect += '&duplicate=true'
+        self.redirect(redirect)
+
+    @validate(trophy=VTrophy('trophy'),
+              preexisting=VBoolean('duplicate'))
+    def GET_received_award(self, trophy, preexisting):
+        content = AwardReceived(trophy=trophy, preexisting=preexisting)
+        return BoringPage(_("award claim"), content=content).render()
 
     def GET_gold_info(self):
         return GoldInfoPage(_("gold"), show_sidebar=False).render()

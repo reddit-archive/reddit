@@ -100,6 +100,10 @@ def make_map():
     mc('/bookmarklets', controller='buttons', action='bookmarklets')
 
     mc('/awards', controller='front', action='awards')
+    mc('/awards/confirm/:code', controller='front',
+       action='confirm_award_claim')
+    mc('/awards/claim/:code', controller='front', action='claim_award')
+    mc('/awards/received', controller='front', action='received_award')
 
     mc('/i18n', controller='redirect', action='redirect',
        dest='http://www.reddit.com/r/i18n')

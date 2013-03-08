@@ -3895,6 +3895,12 @@ class ApiHelp(Templated):
 class RulesPage(Templated):
     pass
 
+class AwardReceived(Templated):
+    pass
+
+class ConfirmAwardClaim(Templated):
+    pass
+
 class TimeSeriesChart(Templated):
     def __init__(self, id, title, interval, columns, rows,
                  latest_available_data=None, classes=[]):

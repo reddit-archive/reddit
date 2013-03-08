@@ -26,6 +26,7 @@ from base64 import urlsafe_b64encode
 
 from pycassa.system_manager import ASCII_TYPE, DATE_TYPE, UTF8_TYPE
 
+from pylons import g
 from pylons.i18n import _
 
 from r2.lib.db import tdb_cassandra
@@ -532,3 +533,46 @@ class PasswordResetToken(ConsumableToken):
     def valid_for_user(self, user):
         return (self.email_address == user.email and
                 self.password == user.password)
+
+
+class AwardClaimToken(ConsumableToken):
+    token_size = 20
+    _ttl = datetime.timedelta(days=30)
+    _defaults = dict(ConsumableToken._defaults.items() + [
+                         ("awardfullname", ""),
+                         ("description", ""),
+                         ("url", ""),
+                         ("uid", "")])
+    _use_db = True
+    _connection_pool = "main"
+
+    @classmethod
+    def _new(cls, uid, award, description, url):
+        '''Create an AwardClaimToken with the given parameters
+
+        `uid` - A string that uniquely identifies the kind of
+                Trophy the user would be claiming.*
+        `award_codename` - The codename of the Award the user will claim
+        `description` - The description the Trophy will receive
+        `url` - The URL the Trophy will receive
+
+        *Note that this differs from Award codenames, because it may be
+        desirable to allow users to have multiple copies of the same Award,
+        but restrict another aspect of the Trophy. For example, users
+        are allowed to have multiple Translator awards, but should only get
+        one for each language, so the `unique_award_id`s for those would be
+        of the form "i18n_%(language)s"
+
+        '''
+        return super(AwardClaimToken, cls)._new(
+            awardfullname=award._fullname,
+            description=description or "",
+            url=url or "",
+            uid=uid,
+        )
+
+    def claim_url(self):
+        return "http://%s/awards/claim/%s" % (g.domain, self._id)
+
+    def confirm_url(self):
+        return "http://%s/awards/confirm/%s" % (g.domain, self._id)

@@ -25,6 +25,7 @@ from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
 from r2.models import Report, Account, Subreddit
+from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
 from pylons import g
@@ -192,6 +193,22 @@ class AdminTools(object):
 
     def admin_list(self):
         return list(g.admins)
+
+    def create_award_claim_code(self, unique_award_id, award_codename,
+                                description, url):
+        '''Create a one-time-use claim URL for a user to claim a trophy.
+
+        `unique_award_id` - A string that uniquely identifies the kind of
+                            Trophy the user would be claiming.
+                            See: token.py:AwardClaimToken.uid
+        `award_codename` - The codename of the Award the user will claim
+        `description` - The description the Trophy will receive
+        `url` - The URL the Trophy will receive
+
+        '''
+        award = Award._by_codename(award_codename)
+        token = AwardClaimToken._new(unique_award_id, award, description, url)
+        return token.confirm_url()
 
 admintools = AdminTools()
 

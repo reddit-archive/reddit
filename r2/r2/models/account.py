@@ -620,6 +620,23 @@ class Account(Thing):
         if not self._spam:
             AccountsActiveBySR.touch(self, sr)
 
+    def get_trophy_id(self, uid):
+        '''Return the ID of the Trophy associated with the given "uid"
+
+        `uid` - The unique identifier for the Trophy to look up
+
+        '''
+        return getattr(self, 'received_trophy_%s' % uid, None)
+
+    def set_trophy_id(self, uid, trophy_id):
+        '''Recored that a user has received a Trophy with "uid"
+
+        `uid` - The trophy "type" that the user should only have one of
+        `trophy_id` - The ID of the corresponding Trophy object
+
+        '''
+        return setattr(self, 'received_trophy_%s' % uid, trophy_id)
+
 class FakeAccount(Account):
     _nodb = True
     pref_no_profanity = True
