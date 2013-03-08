@@ -128,10 +128,13 @@ def select_files(files):
         if re.match(PYFILE, f):
             yield f
         else:
-            with open(f) as f_:
-                first = f_.readline()
-                if first.startswith('#!') and 'python' in first:
-                    yield f
+            try:
+                with open(f) as f_:
+                    first = f_.readline()
+                    if first.startswith('#!') and 'python' in first:
+                        yield f
+            except (IOError, OSError):
+                logging.exception("Unable to check-code against %s", f)
 
 
 def extract_errtype(violation, tool):
