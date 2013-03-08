@@ -51,7 +51,10 @@ r.adminbar.AdminBar = Backbone.View.extend({
 
         this.$('.timelines').toggleClass('zoomed', this.zoomTimings)
 
-        this.$el.parent().css('height', this.$el.outerHeight())
+        $('body').css({
+            'margin-top': this.$el.outerHeight(),
+            'position': 'relative'
+        })
 
         if (r.adminbar.timings.isEmpty()) {
             return

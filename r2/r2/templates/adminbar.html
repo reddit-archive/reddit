@@ -39,38 +39,36 @@
 </%def>
 
 %if c.show_admin_bar:
-  <div class="top-bar-container">
-    <div id="admin-bar" ${classes('admin' if c.user_is_admin else None, 'debug' if g.debug else None)}>
-      <div class="status-bar">
-        <span class="caption">${_('status')}</span>
-        ${indicator('admin', _('admin mode enabled'), c.user_is_admin)}
+  <div id="admin-bar" ${classes('admin' if c.user_is_admin else None, 'debug' if g.debug else None)}>
+    <div class="status-bar">
+      <span class="caption">${_('status')}</span>
+      ${indicator('admin', _('admin mode enabled'), c.user_is_admin)}
+      %if c.user_is_admin:
+        <span class="admin-off">${_('admin off')}</span>
+      %endif
+      ${indicator('debug', _('debug mode'), g.debug)}
+      ${indicator('secure', _('secure'), c.secure)}
+      ${indicator('dev-statics', _('development statics'), g.uncompressedJS)}
+      ${indicator('prod-statics', _('production statics'), g.debug and not g.uncompressedJS)}
+      ${indicator('disabled', _('ads disabled'), g.disable_ads)}
+      ${indicator('disabled', _('captcha disabled'), g.disable_captcha)}
+      ${indicator('disabled', _('ratelimit disabled'), g.disable_ratelimit)}
+      <span class="controls">
         %if c.user_is_admin:
-          <span class="admin-off">${_('admin off')}</span>
+          ${admin_menu(selected=None)}
         %endif
-        ${indicator('debug', _('debug mode'), g.debug)}
-        ${indicator('secure', _('secure'), c.secure)}
-        ${indicator('dev-statics', _('development statics'), g.uncompressedJS)}
-        ${indicator('prod-statics', _('production statics'), g.debug and not g.uncompressedJS)}
-        ${indicator('disabled', _('ads disabled'), g.disable_ads)}
-        ${indicator('disabled', _('captcha disabled'), g.disable_captcha)}
-        ${indicator('disabled', _('ratelimit disabled'), g.disable_ratelimit)}
-        <span class="controls">
-          %if c.user_is_admin:
-            ${admin_menu(selected=None)}
-          %endif
-          <span class="timings-button"><span class="state">-</span>${_('timings')}</span>
-          <span class="hide-button">${_('hide')}</span>
-        </span>
-      </div>
-      <div class="timings-bar">
-        <div class="expand-button">+</div>
-        <div class="timelines">
-          <div class="timeline timeline-browser"></div>
-          <div class="timeline timeline-server"></div>
-        </div>
-      </div>
-      <div class="show-button"></div>
+        <span class="timings-button"><span class="state">-</span>${_('timings')}</span>
+        <span class="hide-button">${_('hide')}</span>
+      </span>
     </div>
+    <div class="timings-bar">
+      <div class="expand-button">+</div>
+      <div class="timelines">
+        <div class="timeline timeline-browser"></div>
+        <div class="timeline timeline-server"></div>
+      </div>
+    </div>
+    <div class="show-button"></div>
   </div>
   <% from r2.lib import js %>
   ${unsafe(js.use('admin'))}
