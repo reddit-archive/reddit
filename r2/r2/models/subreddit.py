@@ -58,9 +58,49 @@ from r2.models.wiki import WikiPage
 import os.path
 import random
 
+
+def get_links_sr_ids(sr_ids, sort, time):
+    from r2.lib.db import queries
+
+    if not sr_ids:
+        return []
+    else:
+        srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
+
+    results = [queries.get_links(sr, sort, time)
+               for sr in srs]
+    return queries.merge_results(*results)
+
+
+class BaseSite(object):
+    static_path = g.static_path
+    stylesheet = None
+    stylesheet_hash = None
+    header = None
+    header_title = None
+
+    @property
+    def path(self):
+        return "/r/%s/" % self.name
+
+    def is_moderator_with_perms(self, user, *perms):
+        rel = self.is_moderator(user)
+        if rel:
+            return all(rel.has_permission(perm) for perm in perms)
+
+    def is_limited_moderator(self, user):
+        rel = self.is_moderator(user)
+        return bool(rel and not rel.is_superuser())
+
+    def is_unlimited_moderator(self, user):
+        rel = self.is_moderator(user)
+        return bool(rel and rel.is_superuser())
+
+
 class SubredditExists(Exception): pass
 
-class Subreddit(Thing, Printable):
+
+class Subreddit(BaseSite, Thing, Printable):
     # Note: As of 2010/03/18, nothing actually overrides the static_path
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
@@ -781,11 +821,6 @@ class Subreddit(Thing, Printable):
 
         return names
 
-    @property
-    def path(self):
-        return "/r/%s/" % self.name
-
-
     def keep_item(self, wrapped):
         if c.user_is_admin:
             return True
@@ -870,19 +905,6 @@ class Subreddit(Thing, Printable):
         # is really slow
         return [rel._thing2_id for rel in list(merged)]
 
-    def is_moderator_with_perms(self, user, *perms):
-        rel = self.is_moderator(user)
-        if rel:
-            return all(rel.has_permission(perm) for perm in perms)
-
-    def is_limited_moderator(self, user):
-        rel = self.is_moderator(user)
-        return bool(rel and not rel.is_superuser())
-
-    def is_unlimited_moderator(self, user):
-        rel = self.is_moderator(user)
-        return bool(rel and rel.is_superuser())
-
     def update_moderator_permissions(self, user, **kwargs):
         """Grants or denies permissions to this moderator.
 
@@ -902,14 +924,19 @@ class Subreddit(Thing, Printable):
         rel.note = note
         rel._commit()
 
-class FakeSubreddit(Subreddit):
+class FakeSubreddit(BaseSite):
+    domain = None
     over_18 = False
-    _nodb = True
+    title = ''
+    description = ''
+    link_type = "any"
+    sponsorship_url = None
+    flair_enabled = True
+    flair_position = "right"
+    link_flair_position = ""
 
     def __init__(self):
-        Subreddit.__init__(self)
-        self.title = ''
-        self.link_flair_position = 'right'
+        BaseSite.__init__(self)
 
     def keep_for_rising(self, sr_id):
         return False
@@ -1095,21 +1122,9 @@ class _DefaultSR(FakeSubreddit):
     def is_moderator(self, user):
         return False
 
-    def get_links_sr_ids(self, sr_ids, sort, time):
-        from r2.lib.db import queries
-
-        if not sr_ids:
-            return []
-        else:
-            srs = Subreddit._byID(sr_ids, data=True, return_dict = False)
-
-        results = [queries.get_links(sr, sort, time)
-                   for sr in srs]
-        return queries.merge_results(*results)
-
     def get_links(self, sort, time):
         sr_ids = self._get_sr_ids()
-        return self.get_links_sr_ids(sr_ids, sort, time)
+        return get_links_sr_ids(sr_ids, sort, time)
 
     @property
     def title(self):
@@ -1137,7 +1152,7 @@ class DefaultSR(_DefaultSR):
     
     @property
     def wikimode(self):
-        return self._base.wikimode
+        return self._base.wikimode if self._base else "disabled"
     
     @property
     def wiki_edit_karma(self):
@@ -1193,17 +1208,31 @@ class DefaultSR(_DefaultSR):
         return self._base.stylesheet_hash if self._base else ""
 
 
-class MultiReddit(_DefaultSR):
+class MultiReddit(FakeSubreddit):
     name = 'multi'
     header = ""
 
-    def __init__(self, srs, path):
-        _DefaultSR.__init__(self)
-        self.real_path = path
-        self.srs = srs
-        self.sr_ids = [sr._id for sr in srs]
-        self.banned_sr_ids = [sr._id for sr in srs if sr._spam]
-        self.kept_sr_ids = [sr._id for sr in srs if not sr._spam]
+    def __init__(self, path=None, srs=None):
+        FakeSubreddit.__init__(self)
+        if path is not None:
+            self._path = path
+        self._srs = srs or []
+
+    @property
+    def srs(self):
+        return self._srs
+
+    @property
+    def sr_ids(self):
+        return [sr._id for sr in self.srs]
+
+    @property
+    def kept_sr_ids(self):
+        return [sr._id for sr in self.srs if not sr._spam]
+
+    @property
+    def banned_sr_ids(self):
+        return [sr._id for sr in self.srs if sr._spam]
 
     def keep_for_rising(self, sr_id):
         return sr_id in self.kept_sr_ids
@@ -1224,10 +1253,10 @@ class MultiReddit(_DefaultSR):
 
     @property
     def path(self):
-        return '/r/' + self.real_path
+        return self._path
 
     def get_links(self, sort, time):
-        return self.get_links_sr_ids(self.kept_sr_ids, sort, time)
+        return get_links_sr_ids(self.kept_sr_ids, sort, time)
 
     def get_all_comments(self):
         from r2.lib.db.queries import get_sr_comments, merge_results
@@ -1256,11 +1285,10 @@ class ModContribSR(MultiReddit):
     name  = None
     title = None
     query_param = None
-    real_path = None
 
     def __init__(self):
         # Can't lookup srs right now, c.user not set
-        MultiReddit.__init__(self, [], self.real_path)
+        MultiReddit.__init__(self)
 
     @property
     def sr_ids(self):
@@ -1273,19 +1301,11 @@ class ModContribSR(MultiReddit):
     def srs(self):
         return Subreddit._byID(self.sr_ids, data=True, return_dict=False)
 
-    @property
-    def kept_sr_ids(self):
-        return [sr._id for sr in self.srs if not sr._spam]
-
-    @property
-    def banned_sr_ids(self):
-        return [sr._id for sr in self.srs if sr._spam]
-
 class ModSR(ModContribSR):
     name  = "subreddits you moderate"
     title = "subreddits you moderate"
     query_param = "moderator"
-    real_path = "mod"
+    path = "/r/mod"
 
     def is_moderator(self, user):
         return FakeSRMember(ModeratorPermissionSet)
@@ -1294,7 +1314,7 @@ class ContribSR(ModContribSR):
     name  = "contrib"
     title = "communities you're approved on"
     query_param = "contributor"
-    real_path = "contrib"
+    path = "/r/contrib"
 
 class SubSR(FakeSubreddit):
     stylesheet = 'subreddit.css'
