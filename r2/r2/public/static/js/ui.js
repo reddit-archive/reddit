@@ -31,6 +31,19 @@ r.ui.init = function() {
     r.ui.PermissionEditor.init()
 }
 
+r.ui.refreshListing = function() {
+    var url = $.url(),
+        params = url.param()
+    params['bare'] = 'y'
+    $.ajax({
+        type: 'GET',
+        url: url.attr('base') + url.attr('path'),
+        data: params
+    }).done(function(resp) {
+        $('#siteTable').replaceWith(resp)
+    })
+}
+
 r.ui.Form = function(el) {
     r.ui.Base.call(this, el)
     this.$el.submit($.proxy(function(e) {

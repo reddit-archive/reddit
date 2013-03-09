@@ -33,21 +33,21 @@
   %for a in thing.things:
       ${a}
   %endfor
-</div>
 
-%if thing.nextprev and (thing.prev or thing.next):
-  <p class="nextprev"> ${_("view more:")}&#32;
-  %if thing.prev:
-    ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}  
+  %if thing.nextprev and (thing.prev or thing.next):
+    <p class="nextprev"> ${_("view more:")}&#32;
+    %if thing.prev:
+      ${plain_link(unsafe("&lsaquo; " + _("prev")), thing.prev, _sr_path = (c.site != Sub), rel="nofollow prev")}
+    %endif
+    %if thing.prev and thing.next:
+      <span class="separator"></span>
+    %endif
+    %if thing.next:
+      ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}
+    %endif
+    </p>
   %endif
-  %if thing.prev and thing.next:
-    <span class="separator"></span>
+  %if not thing.things:
+    <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
   %endif
-  %if thing.next:
-    ${plain_link(unsafe(_("next") + " &rsaquo;"), thing.next,  _sr_path = (c.site != Sub), rel="nofollow next")}  
-  %endif
-  </p>
-%endif
-%if not thing.things:
-  <p id="noresults" class="error">${_("there doesn't seem to be anything here")}</p>
-%endif
+</div>

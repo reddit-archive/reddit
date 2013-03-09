@@ -88,6 +88,7 @@ class ListingController(RedditController, OAuth2ResourceController):
     def pre(self):
         self.check_for_bearer_token()
         RedditController.pre(self)
+        self.bare = request.get.pop('bare', False)
 
     @property
     def menus(self):
@@ -109,15 +110,16 @@ class ListingController(RedditController, OAuth2ResourceController):
         self.listing_obj = self.listing()
         content = self.content()
 
-        res = self.render_cls(content = content,
-                              page_classes = self.extra_page_classes,
-                              show_sidebar = self.show_sidebar,
-                              nav_menus = self.menus,
-                              title = self.title(),
-                              robots = getattr(self, "robots", None),
-                              **self.render_params).render()
-        return res
-
+        if self.bare:
+            return responsive(content.render())
+        else:
+            return self.render_cls(content=content,
+                                   page_classes=self.extra_page_classes,
+                                   show_sidebar=self.show_sidebar,
+                                   nav_menus=self.menus,
+                                   title=self.title(),
+                                   robots=getattr(self, "robots", None),
+                                   **self.render_params).render()
 
     def content(self):
         """Renderable object which will end up as content of the render_cls"""
