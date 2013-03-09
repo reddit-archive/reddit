@@ -226,10 +226,12 @@
                 %endif
                 %if base_params:
                   %for param in sorted(base_params):
-                    <tr class="base-param">
-                      <th scope="row">${param}</th>
-                      <td>${unsafe(safemarkdown(base_params[param], wrap=False))}</td>
-                    </tr>
+                    %if param not in params:
+                      <tr class="base-param">
+                        <th scope="row">${param}</th>
+                        <td>${unsafe(safemarkdown(base_params[param], wrap=False))}</td>
+                      </tr>
+                    %endif
                   %endfor
                 %endif
                 </table>
