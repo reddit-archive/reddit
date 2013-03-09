@@ -42,8 +42,7 @@
     <%utils:line_field title="${_('name')}"
                         description='${_("no spaces, e.g., slashdot")}'>
      <input type="text" name="name" id="name" class="text"
-            value="${thing.name}"
-            onchange="update_title(this)"/>
+            value="${thing.name}"/>
       %if not thing.site:
         ${error_field("SUBREDDIT_EXISTS", "name")}
         ${error_field("BAD_SR_NAME", "name")}
