@@ -128,7 +128,7 @@ def _decrypt(encrypted, secret):
 
 def get_site():
     """Return the name of the current "site" (subreddit)."""
-    return c.site.name if c.site else ""
+    return c.site.analytics_name if c.site else ""
 
 
 def get_srpath():

@@ -85,6 +85,10 @@ class BaseSite(object):
     def path(self):
         return "/r/%s/" % self.name
 
+    @property
+    def analytics_name(self):
+        return self.name
+
     def is_moderator_with_perms(self, user, *perms):
         rel = self.is_moderator(user)
         if rel:
@@ -1363,6 +1367,12 @@ class LabeledMulti(MultiReddit, tdb_cassandra.Thing):
     @property
     def name(self):
         return self.path.split('/')[-1]
+
+    @property
+    def analytics_name(self):
+        # classify as "multi" (as for unnamed multis) until our traffic system
+        # is smarter
+        return 'multi'
 
     def can_view(self, user):
         return user == self.owner or self.visibility == 'public'
