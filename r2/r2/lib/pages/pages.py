@@ -1552,6 +1552,14 @@ class ProfilePage(Reddit):
 
         rb.push(scb)
 
+        multis = [m for m in LabeledMulti.by_owner(self.user)
+                  if m.can_view(c.user)]
+        if multis:
+            scb = SideContentBox(title=_("multireddits"), content=[
+                SidebarMultiList(multis)
+            ])
+            rb.push(scb)
+
         if c.user_is_admin:
             from admin_pages import AdminSidebar
             rb.push(AdminSidebar(self.user))
@@ -1579,6 +1587,13 @@ class TrophyCase(Templated):
 
         self.cup_info = user.cup_info()
         Templated.__init__(self)
+
+
+class SidebarMultiList(Templated):
+    def __init__(self, multis):
+        Templated.__init__(self)
+        self.multis = multis
+
 
 class ProfileBar(Templated):
     """Draws a right box for info about the user (karma, etc)"""
