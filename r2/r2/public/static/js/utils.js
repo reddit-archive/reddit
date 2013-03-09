@@ -7,6 +7,15 @@ r.utils = {
         return r.config.static_root + '/' + item
     },
 
+    joinURLs: function(/* arguments */) {
+        return _.map(arguments, function(url, idx) {
+            if (idx > 0 && url && url[0] != '/') {
+                url = '/' + url
+            }
+            return url
+        }).join('')
+    },
+
     querySelectorFromEl: function(targetEl, selector) {
         return $(targetEl).parents().andSelf()
             .filter(selector || '*')

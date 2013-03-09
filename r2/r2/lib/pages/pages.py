@@ -25,7 +25,7 @@ from collections import OrderedDict
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
-from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage
+from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage, LabeledMulti
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
@@ -91,7 +91,7 @@ except ImportError:
     def ips_by_account_id(account_id):
         return []
 
-from things import wrap_links, default_thing_wrapper
+from things import wrap_links, wrap_things, default_thing_wrapper
 
 datefmt = _force_utf8(_('%d %b %Y'))
 
@@ -350,18 +350,23 @@ class Reddit(Templated):
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
 
-        if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
+        if isinstance(c.site, (MultiReddit, ModSR)):
             srs = Subreddit._byID(c.site.sr_ids, data=True,
                                   return_dict=False)
-            if c.user_is_admin or c.site.is_moderator(c.user):
-                ps.append(self.sr_admin_menu())
 
-            if srs:
+            if isinstance(c.site, LabeledMulti):
+                ps.append(MultiInfoBar(c.site, srs, c.user))
+                c.js_preload.set_wrapped(
+                    '/api/multi/%s' % c.site.path.lstrip('/'), c.site)
+            elif srs:
                 if isinstance(c.site, ModSR):
                     box = SubscriptionBox(srs, multi_text=strings.mod_multi)
                 else:
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
+
+                if c.user_is_admin or c.site.is_moderator(c.user):
+                    ps.append(self.sr_admin_menu())
 
         if isinstance(c.site, AllSR):
             ps.append(AllInfoBar(c.site, c.user))
@@ -1800,6 +1805,15 @@ class SubredditTopBar(CachedTemplate):
             menus.append(self.popular_reddits(exclude=self.my_reddits))
 
         return menus
+
+
+class MultiInfoBar(Templated):
+    def __init__(self, multi, srs, user):
+        Templated.__init__(self)
+        self.multi = wrap_things(multi)[0]
+        self.can_edit = multi.can_edit(user)
+        self.srs = srs
+
 
 class SubscriptionBox(Templated):
     """The list of reddits a user is currently subscribed to to go in
@@ -4062,6 +4076,38 @@ class ModeratorPermissions(Templated):
         Templated.__init__(self, permissions_type=permissions_type,
                            editable=editable, embedded=embedded)
 
+class ListingChooser(Templated):
+    def __init__(self):
+        Templated.__init__(self)
+        self.sections = defaultdict(list)
+        self.add_item("global", _("subscribed"), '/',
+                      description=_("your front page"))
+        self.add_item("other", _("everything"), '/r/all',
+                      description=_("from all subreddits"))
+
+        if c.user_is_loggedin:
+            multis = LabeledMulti.by_owner(c.user)
+            multis.sort(key=lambda multi: multi.name)
+            for multi in multis:
+                self.add_item("multi", multi.name, multi.path)
+        self.selected_item = self.find_selected()
+        self.selected_item["selected"] = True
+
+    def add_item(self, section, name, path, description=None):
+        self.sections[section].append({
+            "name": name,
+            "description": description,
+            "path": path,
+            "selected": False,
+        })
+
+    def find_selected(self):
+        path = request.path
+        matching = [item for item in chain(*self.sections.values())
+                    if path.startswith(item["path"]) or
+                       c.site.path.startswith(item["path"])]
+        matching.sort(key=lambda item: len(item["path"]), reverse=True)
+        return matching[0]
 
 class PolicyView(Templated):
     pass

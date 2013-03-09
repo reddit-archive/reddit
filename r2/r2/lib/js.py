@@ -376,6 +376,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "wiki.js",
     "apps.js",
     "gold.js",
+    "multi.js",
 )
 
 module["admin"] = Module("admin.js",

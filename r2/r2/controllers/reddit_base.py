@@ -91,6 +91,7 @@ from r2.models import (
     FakeSubreddit,
     Friends,
     Frontpage,
+    LabeledMulti,
     Link,
     MultiReddit,
     NotFound,
@@ -103,6 +104,7 @@ from r2.models import (
     valid_feed,
     valid_otp_cookie,
 )
+from r2.lib.db import tdb_cassandra
 
 
 NEVER = datetime(2037, 12, 31, 23, 59, 59)
@@ -385,6 +387,14 @@ def set_subreddit():
                 redirect_to("/subreddits/search?q=%s" % sr_name)
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
+
+    routes_dict = request.environ["pylons.routes_dict"]
+    if "multi" in routes_dict and "username" in routes_dict:
+        try:
+            path = '/user/%s/m/%s' % (routes_dict["username"], routes_dict["multi"])
+            c.site = LabeledMulti._byID(path)
+        except tdb_cassandra.NotFound:
+            abort(404)
 
     #if we didn't find a subreddit, check for a domain listing
     if not sr_name and isinstance(c.site, DefaultSR) and domain:
@@ -1068,13 +1078,19 @@ class RedditController(MinimalController):
 
             # check if the user has access to this subreddit
             if not c.site.can_view(c.user) and not c.error_page:
-                public_description = c.site.public_description
-                errpage = pages.RedditError(strings.private_subreddit_title,
-                                            strings.private_subreddit_message,
-                                            image="subreddit-private.png",
-                                            sr_description=public_description)
-                request.environ['usable_error_content'] = errpage.render()
-                self.abort403()
+                if isinstance(c.site, LabeledMulti):
+                    # do not leak the existence of multis via 403.
+                    self.abort404()
+                else:
+                    public_description = c.site.public_description
+                    errpage = pages.RedditError(
+                        strings.private_subreddit_title,
+                        strings.private_subreddit_message,
+                        image="subreddit-private.png",
+                        sr_description=public_description,
+                    )
+                    request.environ['usable_error_content'] = errpage.render()
+                    self.abort403()
 
             #check over 18
             if (c.site.over_18 and not c.over18 and

@@ -101,6 +101,7 @@ class PostController(ApiController):
               pref_show_adbox = VBoolean("show_adbox"),
               pref_show_sponsors = VBoolean("show_sponsors"),
               pref_show_sponsorships = VBoolean("show_sponsorships"),
+              pref_show_left_bar = VBoolean("show_left_bar"),
               pref_highlight_new_comments = VBoolean("highlight_new_comments"),
               pref_monitor_mentions=VBoolean("monitor_mentions"),
               all_langs = VOneOf('all-langs', ('all', 'some'), default='all'))

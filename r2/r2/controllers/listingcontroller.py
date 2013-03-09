@@ -77,6 +77,7 @@ class ListingController(RedditController, OAuth2ResourceController):
 
     # login box, subreddit box, submit box, etc, visible
     show_sidebar = True
+    show_chooser = False
 
     # class (probably a subclass of Reddit) to use to render the page.
     render_cls = Reddit
@@ -112,14 +113,22 @@ class ListingController(RedditController, OAuth2ResourceController):
 
         if self.bare:
             return responsive(content.render())
-        else:
-            return self.render_cls(content=content,
-                                   page_classes=self.extra_page_classes,
-                                   show_sidebar=self.show_sidebar,
-                                   nav_menus=self.menus,
-                                   title=self.title(),
-                                   robots=getattr(self, "robots", None),
-                                   **self.render_params).render()
+
+        page_classes = self.extra_page_classes
+
+        if (self.show_chooser and
+                c.user_is_loggedin and c.user.pref_show_left_bar and
+                isinstance(c.site, (DefaultSR, AllSR, LabeledMulti))):
+            page_classes = page_classes + ['with-listing-chooser']
+            content = PaneStack([ListingChooser(), content])
+
+        return self.render_cls(content=content,
+                               page_classes=page_classes,
+                               show_sidebar=self.show_sidebar,
+                               nav_menus=self.menus,
+                               title=self.title(),
+                               robots=getattr(self, "robots", None),
+                               **self.render_params).render()
 
     def content(self):
         """Renderable object which will end up as content of the render_cls"""
@@ -225,6 +234,7 @@ class FixListing(object):
 class HotController(FixListing, ListingController):
     where = 'hot'
     extra_page_classes = ListingController.extra_page_classes + ['hot-page']
+    show_chooser = True
 
     def make_requested_ad(self):
         try:
@@ -395,6 +405,7 @@ class NewController(ListingController):
     where = 'new'
     title_text = _('newest submissions')
     extra_page_classes = ListingController.extra_page_classes + ['new-page']
+    show_chooser = True
 
     def keep_fn(self):
         def keep(item):
@@ -443,6 +454,7 @@ class RisingController(NewController):
 
 class BrowseController(ListingController):
     where = 'browse'
+    show_chooser = True
 
     def keep_fn(self):
         """For merged time-listings, don't show items that are too old

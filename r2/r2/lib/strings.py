@@ -209,6 +209,10 @@ Note: there are a couple of places outside of your subreddit where someone can c
         all_msg=_("full permissions"),
         none_msg=_("no permissions"),
     ),
+    categorize = _('categorize'),
+    are_you_sure = _('are you sure?'),
+    yes = _('yes'),
+    no = _('no'),
 )
 
 class StringHandler(object):

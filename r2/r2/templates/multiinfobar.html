@@ -1,0 +1,73 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2012
+## reddit Inc. All Rights Reserved.
+###############################################################################
+
+<%!
+   from r2.lib.strings import strings, Score
+   from r2.lib.pages import WrappedUser, ModList
+ %>
+
+<%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
+<%namespace file="printablebuttons.html" import="ynbutton, state_button" />
+
+<div class="titlebox multi-details" data-path="${thing.multi.path}">
+  <h1 class="hover redditname">
+    <a href="${thing.multi.path}">${_('%s subreddits') % thing.multi.name}</a><div class="throbber"></div>
+  </h1>
+  <h2><a href="/user/${thing.multi.owner.name}">${_('curated by /u/%s') % thing.multi.owner.name}</a></h2>
+  %if thing.can_edit:
+    <div class="gray-buttons settings">
+      <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
+      <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
+      <button class="delete">${_('delete')}</button>
+    </div>
+  %endif
+
+  <h3>${_('subreddits in this multi:')}</h3>
+  <ul class="subreddits">
+  %for sr in thing.srs:
+    <li data-name="${sr.name}">
+      <a href="/r/${sr.name}">/r/${sr.name}</a>
+      %if thing.can_edit:
+        <button class="remove-sr">${_('remove')}</button>
+      %endif
+    </li>
+  %endfor
+  </ul>
+
+  %if thing.can_edit:
+    <form class="add-sr">
+      <input type="text" class="sr-name" placeholder="${_('add subreddit')}"><button class="add">${_('add')}</button>
+      <div class="error add-error"></div>
+    </form>
+  %endif
+
+  <div class="bottom">
+    %if thing.multi.owner:
+      ${unsafe(_("created by&#32;%(user)s") % dict(user = unsafe(WrappedUser(thing.multi.owner).render())))}
+    %endif
+
+    <span class="age">
+      ${_("a multireddit for")}&#32;${thing_timestamp(thing.multi)}
+    </span>
+  </div>
+</div>
+

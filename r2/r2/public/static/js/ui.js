@@ -557,3 +557,40 @@ r.ui.scrollFixed.prototype = {
         }
     }
 }
+
+r.ui.ConfirmButton = Backbone.View.extend({
+    confirmTemplate: _.template('<span class="confirmation"><span class="prompt"><%= are_you_sure %></span><button class="yes"><%= yes %></button> / <button class="no"><%= no %></button></div>'),
+    events: {
+        'click': 'click'
+    },
+
+    initialize: function() {
+        // wrap the specified element in a <span> and move its classes over to
+        // the wrapper. this is intended for progressive enhancement of a bare
+        // <button> element.
+        this.$target = this.$el
+        this.$target.wrap('<span>')
+        this.setElement(this.$target.parent())
+        this.$el
+            .attr('class', this.$target.attr('class'))
+            .addClass('confirm-button')
+        this.$target.attr('class', null)
+    },
+
+    click: function(ev) {
+        var target = $(ev.target)
+        if (this.$target.is(target)) {
+            this.$target.hide()
+            this.$el.append(this.confirmTemplate({
+                are_you_sure: r.strings('are_you_sure'),
+                yes: r.strings('yes'),
+                no: r.strings('no')
+            }))
+        } else if (target.is('.no')) {
+            this.$('.confirmation').remove()
+            this.$target.show()
+        } else if (target.is('.yes')) {
+            this.$target.trigger('confirm')
+        }
+    }
+})
