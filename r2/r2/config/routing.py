@@ -126,12 +126,14 @@ def make_map():
        where='overview')
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
-    mc('/u/:username', controller='redirect', action='user_redirect')
 
     mc('/user/:username/m/:multi', controller='hot', action='listing')
     mc('/user/:username/m/:multi/new', controller='new', action='listing')
     mc('/user/:username/m/:multi/:sort', controller='browse', sort='top',
        action='listing', requirements=dict(sort='top|controversial'))
+
+    mc('/u/:username', controller='redirect', action='user_redirect')
+    mc('/u/:username/*rest', controller='redirect', action='user_redirect')
 
     # preserve timereddit URLs from 4/1/2012
     mc('/t/:timereddit', controller='redirect', action='timereddit_redirect')

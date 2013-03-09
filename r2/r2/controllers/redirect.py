@@ -29,11 +29,14 @@ class RedirectController(BaseController):
     def GET_redirect(self, dest):
         return redirect_to(str(dest))
 
-    def GET_user_redirect(self, username):
+    def GET_user_redirect(self, username, rest=None):
         user = chkuser(username)
         if not user:
             abort(400)
-        return redirect_to("/user/" + user, _code=301)
+        url = "/user/" + user
+        if rest:
+            url += "/" + rest
+        return redirect_to(str(url), _code=301)
 
     def GET_timereddit_redirect(self, timereddit, rest=None):
         tr_name = chksrname(timereddit)
