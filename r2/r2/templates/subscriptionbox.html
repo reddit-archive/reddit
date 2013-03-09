@@ -21,10 +21,11 @@
 ###############################################################################
 
 <%namespace file="utils.html" import="plain_link"/>
-<%namespace file="subreddit.html" import="addremove_button, permission_icons"/>
+<%namespace file="subreddit.html" import="permission_icons"/>
 
 <%
   from r2.models import MultiReddit
+  from r2.lib.pages import SubscribeButton
   is_multi = isinstance(c.site, MultiReddit)
 %>
 
@@ -63,10 +64,10 @@
           </span>
           <span class="title banned">${sr.name}</span>
         %elif is_spam:
-          ${addremove_button(sr)}
+          ${SubscribeButton(sr)}
           <span class="title banned">${sr.name}</span>
         %else:
-          ${addremove_button(sr)}
+          ${SubscribeButton(sr)}
           ${plain_link(sr.name, sr.path, _class="title")}
           ${permission_icons(sr)}
         %endif

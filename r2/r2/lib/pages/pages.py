@@ -4084,3 +4084,9 @@ class PolicyPage(BoringPage):
                                 base_path='/help')
         toolbars.append(policies_menu)
         return toolbars
+
+
+class SubscribeButton(Templated):
+    def __init__(self, sr):
+        Templated.__init__(self)
+        self.sr = sr

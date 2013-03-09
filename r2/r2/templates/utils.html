@@ -57,6 +57,12 @@ id="${arg}_${thing and thing._fullname or ''}"
 class="${" ".join(filter(None, class_names))}"
 </%def>
 
+<%def name="data(**data_attrs)">
+%for name, value in data_attrs.iteritems():
+data-${name}="${value}"
+%endfor
+</%def>
+
 <%def name="submit_form(onsubmit='', action='', _class='', method='post', _id='', **params)">
 <form class="${_class or ''}" onsubmit="${onsubmit or ''}" 
       action="${action or ''}" ${_id and "id='" + _id + "'" or ""} method="${method}"

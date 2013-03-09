@@ -22,11 +22,10 @@
 
 <%!
    from r2.lib.strings import strings, Score
-   from r2.lib.pages import WrappedUser, ModList
+   from r2.lib.pages import WrappedUser, ModList, SubscribeButton
  %>
 
 <%namespace file="utils.html" import="plain_link, thing_timestamp, text_with_links"/>
-<%namespace file="subreddit.html" import="addremove_button" />
 <%namespace file="printablebuttons.html" import="ynbutton, state_button" />
 
 <div class="titlebox">
@@ -34,7 +33,7 @@
     ${plain_link(thing.sr.name, thing.sr.path, _sr_path=False, _class="hover")}
   </h1>
 
-  ${addremove_button(thing.sr)}
+  ${SubscribeButton(thing.sr)}
   <span class="subscribers">${unsafe(Score.readers(thing.subscribers))}</span>
   <p class="users-online ${'fuzzed' if thing.accounts_active_fuzzed else ''}" title="${_('logged-in users viewing this subreddit in the past 15 minutes')}">
       ${unsafe(Score.users_here_now(thing.accounts_active, prepend='~' if thing.accounts_active_fuzzed else ''))}

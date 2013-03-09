@@ -20,7 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-<%namespace file="utils.html" import="plain_link, pretty_button" />
+<%namespace file="utils.html" import="plain_link, pretty_button, data" />
 
 <%!
    from r2.lib.strings import strings
@@ -463,7 +463,7 @@
                     css_class = '', alt_css_class = '',
                     reverse = False,
                     login_required = False,
-                    style = '', )">
+                    style = '', data_attrs=None)">
 <%
    if reverse:
        callback, cancelback = cancelback, callback
@@ -471,7 +471,7 @@
        css_class, alt_css_class = alt_css_class, css_class
    extra_class = "login-required" if login_required else ""
  %>
-<span class="${class_name} toggle" style="${style}">
+<span class="${class_name} toggle" style="${style}" ${data(**data_attrs or dict())}>
  <a class="option active ${css_class} ${extra_class}" href="#" tabindex="100"
     %if not login_required or c.user_is_loggedin:
       onclick="return toggle(this, ${callback}, ${cancelback})"
