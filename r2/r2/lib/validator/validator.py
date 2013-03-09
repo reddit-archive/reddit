@@ -623,6 +623,24 @@ class VSubredditName(VRequired):
             except NotFound:
                 return name
 
+
+class VSRByName(Validator):
+    def run(self, sr_name):
+        if not sr_name:
+            self.set_error(errors.BAD_SR_NAME)
+        else:
+            try:
+                sr = Subreddit._by_name(sr_name)
+                return sr
+            except NotFound:
+                self.set_error(errors.SUBREDDIT_NOEXIST)
+
+    def param_docs(self):
+        return {
+            self.param: "subreddit name",
+        }
+
+
 class VSubredditTitle(Validator):
     def run(self, title):
         if not title:
