@@ -24,7 +24,10 @@ r.ui.init = function() {
         $('body > .content > :not(.infobar):first').before(infobar)
     }
 
-    r.ui.HelpBubble.init()
+    $('.help-bubble').each(function(idx, el) {
+        $(el).data('HelpBubble', new r.ui.Bubble({el: el}))
+    })
+
     r.ui.PermissionEditor.init()
 }
 
@@ -131,44 +134,120 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
     }
 })
 
-r.ui.HelpBubble = function(el) {
-    r.ui.Base.call(this, el)
-    this.$el.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
-    this.$parent = this.$el.parent()
-    this.$parent.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
-    this.$parent.click($.proxy(this, 'queueShow'))
-}
-r.ui.HelpBubble.init = function() {
-    $('.help-bubble').each(function(idx, el) {
-        $(el).data('HelpBubble', new r.ui.HelpBubble(el))
-    })
-}
-r.ui.HelpBubble.prototype = $.extend(new r.ui.Base(), {
+r.ui.Bubble = Backbone.View.extend({
     showDelay: 150,
     hideDelay: 750,
+    animateDuration: 150,
+
+    initialize: function() {
+        this.$el.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+        this.$parent = this.options.parent || this.$el.parent()
+        this.$parent.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+        this.$parent.click($.proxy(this, 'queueShow'))
+    },
+
+    position: function() {
+        var parentPos = this.$parent.offset(),
+            bodyOffset = $('body').offset(),
+            offsetX, offsetY
+        if (this.$el.is('.anchor-top')) {
+            offsetX = this.$parent.outerWidth(true) - this.$el.outerWidth(true)
+            offsetY = this.$parent.outerHeight(true) + 5
+            this.$el.css({
+                left: parentPos.left + offsetX,
+                top: parentPos.top + offsetY - bodyOffset.top
+            })
+        } else if (this.$el.is('.anchor-right')) {
+            offsetX = 16
+            offsetY = 0
+            parentPos.right = $(window).width() - parentPos.left
+            this.$el.css({
+                right: parentPos.right + offsetX,
+                top: parentPos.top + offsetY - bodyOffset.top
+            })
+        }
+    },
 
     show: function() {
         this.cancelTimeout()
+        if (this.$el.is(':visible')) {
+            return
+        }
+
+        this.trigger('show')
 
         $('body').append(this.$el)
 
-        var parentPos = this.$parent.offset()
-        this.$el
-            .show()
-            .offset({
-                left: parentPos.left + this.$parent.outerWidth(true) - this.$el.outerWidth(true),
-                top: parentPos.top + this.$parent.outerHeight(true) + 5
-            })
+        this.render()
+        this.position()
+        this.$el.css('opacity', 1).show()
+
+        var isSwitch = this.options.group && this.options.group.current && this.options.group.current != this
+        if (isSwitch) {
+            this.options.group.current.hideNow()
+        } else {
+            this._animate('show')
+        }
+
+        if (this.options.group) {
+            this.options.group.current = this
+        }
+    },
+
+    hideNow: function() {
+        this.cancelTimeout()
+        if (this.options.group) {
+            this.options.group.current = null
+        }
+        this.$el.hide()
+        this.$parent.append(this.$el)
     },
 
     hide: function(callback) {
-        this.$el.fadeOut(150, $.proxy(function() {
-            this.$el.hide()
-            this.$parent.append(this.$el)
-            if (callback) {
-                callback()
-            }
+        if (!this.$el.is(':visible')) {
+            callback && callback()
+            return
+        }
+
+        this._animate('hide', $.proxy(function() {
+            this.hideNow()
+            callback && callback()
         }, this))
+    },
+
+    _animate: function(action, callback) {
+        if (!this.animateDuration) {
+            callback && callback()
+            return
+        }
+
+        var animProp, animOffset
+        if (this.$el.is('.anchor-top')) {
+            animProp = 'top'
+            animOffset = '-=5'
+        } else if (this.$el.is('.anchor-right')) {
+            animProp = 'right'
+            animOffset = '-=5'
+        }
+        var curOffset = this.$el.css(animProp)
+
+        hideProps = {'opacity': 0}
+        hideProps[animProp] = animOffset
+        showProps = {'opacity': 1}
+        showProps[animProp] = curOffset
+
+        var start, end
+        if (action == 'show') {
+            start = hideProps
+            end = showProps
+        } else if (action == 'hide') {
+            start = showProps
+            end = hideProps
+        }
+
+        this.$el
+            .css(start)
+            .animate(end, this.animateDuration, callback)
     },
 
     cancelTimeout: function() {
