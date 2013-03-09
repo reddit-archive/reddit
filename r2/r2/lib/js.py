@@ -342,6 +342,7 @@ module["reddit-init"] = Module("reddit-init.js",
 module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.cookie.js",
     "lib/jquery.url.js",
+    "lib/backbone-0.9.10.js",
     "utils.js",
     "ui.js",
     "login.js",
@@ -353,6 +354,7 @@ module["reddit"] = LocalizedModule("reddit.js",
 )
 
 module["admin"] = Module("admin.js",
+    # include Backbone so it is available early to render admin bar fast.
     "lib/backbone-0.9.10.js",
     "adminbar.js",
 )
