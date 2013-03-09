@@ -125,8 +125,9 @@ class ApidocsController(RedditController):
             if not action:
                 continue
 
+            valid_methods = ('GET', 'POST', 'PUT', 'DELETE')
             api_doc = getattr(func, '_api_doc', None)
-            if api_doc and 'section' in api_doc and method in ('GET', 'POST'):
+            if api_doc and 'section' in api_doc and method in valid_methods:
                 docs = {}
                 docs['doc'] = inspect.getdoc(func)
 
