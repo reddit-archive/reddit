@@ -101,11 +101,14 @@ def get_captcha():
     if not c.user_is_loggedin or c.user.needs_captcha():
         return get_iden()
 
-def responsive(res, space_compress = False):
+def responsive(res, space_compress=None):
     """
     Use in places where the template is returned as the result of the
     controller so that it becomes compatible with the page cache.
     """
+    if space_compress is None:
+        space_compress = not g.template_debug
+
     if is_api():
         res = websafe_json(simplejson.dumps(res or ''))
         if c.allowed_callback:
@@ -151,7 +154,7 @@ class Reddit(Templated):
     extra_page_classes = None
     extra_stylesheets  = []
 
-    def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
+    def __init__(self, space_compress = None, nav_menus = None, loginbox = True,
                  infotext = '', content = None, short_description='', title = '', robots = None,
                  show_sidebar = True, footer = True, srbar = True, page_classes = None,
                  show_wiki_actions = False, extra_js_config = None, **context):
@@ -164,7 +167,7 @@ class Reddit(Templated):
         self.show_wiki_actions = show_wiki_actions
         self.loginbox       = True
         self.show_sidebar   = show_sidebar
-        self.space_compress = space_compress and not g.template_debug
+        self.space_compress = space_compress
         # instantiate a footer
         self.footer         = RedditFooter() if footer else None
         self.supplied_page_classes = page_classes or []
