@@ -66,6 +66,9 @@ section_info = {
     'subreddits': {
         'title': _('subreddits'),
     },
+    'multis': {
+        'title': _('multis'),
+    },
     'users': {
         'title': _('users'),
     },
@@ -172,6 +175,7 @@ class ApidocsController(RedditController):
         from r2.controllers.captcha import CaptchaController
         from r2.controllers.front import FrontController
         from r2.controllers.wiki import WikiApiController
+        from r2.controllers.multi import MultiApiController
         from r2.controllers import listingcontroller
 
         api_controllers = [
@@ -179,6 +183,7 @@ class ApidocsController(RedditController):
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
             (WikiApiController, '/api/wiki'),
+            (MultiApiController, '/api/multi'),
             (CaptchaController, ''),
             (FrontController, '')
         ]

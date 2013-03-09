@@ -309,6 +309,10 @@ def make_map():
        action='relnote')
     mc('/api/:action', controller='api')
 
+    mc("/api/multi/mine", controller="multiapi", action="my_multis")
+    mc("/api/multi/*path/r/:sr_name", controller="multiapi", action="multi_subreddit")
+    mc("/api/multi/*path", controller="multiapi", action="multi")
+
     mc("/api/v1/:action", controller="oauth2frontend",
        requirements=dict(action="authorize"))
     mc("/api/v1/:action", controller="oauth2access",

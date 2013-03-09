@@ -38,6 +38,7 @@ from r2.lib.permissions import ModeratorPermissionSet
 from r2.models import *
 from r2.lib.authorize import Address, CreditCard
 from r2.lib.utils import constant_time_compare
+from r2.lib.require import require, require_split, RequirementException
 
 from r2.lib.errors import errors, RedditError, UserRequiredException
 from r2.lib.errors import VerifiedUserRequiredException
@@ -2165,3 +2166,71 @@ class VPermissions(Validator):
             self.set_error(errors.INVALID_PERMISSIONS, field=self.param[1])
             return (None, None)
         return type, perm_set
+
+
+class VJSON(VRequired):
+    def __init__(self, item, *args, **kwargs):
+        VRequired.__init__(self, item, errors.BAD_JSON, *args, **kwargs)
+
+    def run(self, json_str):
+        if not json_str:
+            return self.error()
+        else:
+            try:
+                return json.loads(json_str)
+            except ValueError:
+                return self.error()
+
+    def param_docs(self):
+        return {
+            self.param: "JSON data",
+        }
+
+
+class VMultiPath(Validator):
+    @classmethod
+    def normalize(self, path):
+        if path[0] != '/':
+            path = '/' + path
+        path = path.lower().rstrip('/')
+        return path
+
+    def run(self, path):
+        try:
+            require(path)
+            path = self.normalize(path)
+            require(path.startswith('/user/'))
+            user, username, m, name = require_split(path, 5, sep='/')[1:]
+            require(m == 'm')
+            username = chkuser(username)
+            require(username)
+            require(subreddit_rx.match(name))
+            return {'path': path, 'username': username, 'name': name}
+        except RequirementException:
+            self.set_error('BAD_MULTI_NAME', code=400)
+
+    def param_docs(self):
+        return {
+            self.param: "multireddit url path",
+        }
+
+
+class VMultiByPath(Validator):
+    def __init__(self, param, require_view=True, require_edit=False):
+        Validator.__init__(self, param)
+        self.require_view = require_view
+        self.require_edit = require_edit
+
+    def run(self, path):
+        path = VMultiPath.normalize(path)
+        multi = LabeledMulti._byID(path)
+        if not multi or (self.require_view and not multi.can_view(c.user)):
+            return self.set_error('MULTI_NOT_FOUND', code=404)
+        if self.require_edit and not multi.can_edit(c.user):
+            return self.set_error('MULTI_CANNOT_EDIT', code=403)
+        return multi
+
+    def param_docs(self):
+        return {
+            self.param: "multireddit url path",
+        }

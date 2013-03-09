@@ -250,6 +250,24 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
+class LabeledMultiJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = ThingJsonTemplate.data_attrs(
+        path="path",
+        name="name",
+        subreddits="srs",
+        visibility="visibility",
+    )
+    del _data_attrs_["id"]
+
+    def kind(self, wrapped):
+        return "LabeledMulti"
+
+    def thing_attr(self, thing, attr):
+        if attr == "srs":
+            return [{"name": sr.name} for sr in thing.srs]
+        else:
+            return ThingJsonTemplate.thing_attr(self, thing, attr)
+
 class IdentityJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(name = "name",
                                                 link_karma = "safe_karma",

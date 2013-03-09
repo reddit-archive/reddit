@@ -121,6 +121,11 @@ error_list = dict((
         ('BAD_JSONP_CALLBACK', _('that jsonp callback contains invalid characters')),
         ('INVALID_PERMISSION_TYPE', _("permissions don't apply to that type of user")),
         ('INVALID_PERMISSIONS', _('invalid permissions string')),
+        ('BAD_MULTI_NAME', _('that name isn\'t going to work')),
+        ('MULTI_NOT_FOUND', _('that multireddit doesn\'t exist')),
+        ('MULTI_CANNOT_EDIT', _('you can\'t change that multireddit')),
+        ('MULTI_TOO_MANY_SUBREDDITS', _('no more space for subreddits in that multireddit')),
+        ('BAD_JSON', _('unable to parse JSON data')),
     ))
 
 errors = Storage([(e, e) for e in error_list.keys()])
