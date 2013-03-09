@@ -1,5 +1,5 @@
 r.login = {
-    post: function(form, action, callback) {
+    post: function(form, action) {
         if (r.config.cnameframe && !r.config.https_endpoint) {
             form.$el.unbind()
             form.$el.submit()
@@ -13,15 +13,11 @@ r.login = {
         if (r.config.currentOrigin == endpoint || $.support.cors) {
             var params = form.serialize()
             params.push({name:'api_type', value:'json'})
-            $.ajax({
+            return $.ajax({
                 url: apiTarget,
                 type: 'POST',
                 dataType: 'json',
                 data: params,
-                success: callback,
-                error: function(xhr, err) {
-                    callback(false, err, xhr)
-                },
                 xhrFields: {
                     withCredentials: true
                 }
@@ -61,23 +57,25 @@ r.login = {
                 })
                 .appendTo(postForm)
 
-            r.login.hoist.watch(action, function(result) {
-                if (!r.config.debug) {
+            var deferred = r.login.hoist.watch(action)
+            if (!r.config.debug) {
+                deferred.done(function() {
                     iframe.remove()
                     postForm.remove()
-                }
-                callback(result)
-            })
+                })
+            }
 
             postForm.submit()
+            return deferred
         }
     }
 }
 
 r.login.hoist = {
     type: 'cookie',
-    watch: function(name, callback) {
-        var cookieName = 'hoist_'+name
+    watch: function(name) {
+        var cookieName = 'hoist_'+name,
+            deferred = new $.Deferred
 
         var interval = setInterval(function() {
             data = $.cookie(cookieName)
@@ -89,7 +87,7 @@ r.login.hoist = {
                 }
                 $.cookie(cookieName, null, {domain:r.config.cur_domain, path:'/'})
                 clearInterval(interval)
-                callback(data)
+                deferred.resolve(data)
             }
         }, 100)
     }
@@ -130,9 +128,10 @@ r.login.ui = {
                 }
             }
 
-            this.popup.showLogin(true, dest && function() {
+            this.popup.showLogin(true, dest && $.proxy(function() {
+                this.popup.loginForm.$el.addClass('working')
                 window.location = dest
-            })
+            }, this))
 
             return false
         }
@@ -169,7 +168,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _submit: function() {
-        r.login.post(this, 'login', $.proxy(this, 'handleResult'))
+        return r.login.post(this, 'login')
     },
 
     _handleResult: function(result) {
@@ -178,6 +177,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
             if (this.successCallback) {
                 this.successCallback(result)
             } else {
+                this.$el.addClass('working')
                 var base = r.config.extension ? '/.'+r.config.extension : '/',
                     defaultDest = /\/login\/?$/.test($.url().attr('path')) ? base : window.location,
                     destParam = this.$el.find('input[name="dest"]').val()
@@ -188,7 +188,7 @@ r.ui.LoginForm.prototype = $.extend(new r.ui.Form(), {
         }
     },
 
-    _handleNetError: function(result, err, xhr) {
+    _handleNetError: function(xhr) {
         r.ui.Form.prototype._handleNetError.apply(this, arguments)
         if (xhr.status == 0 && r.config.currentOrigin != r.config.https_endpoint) {
             $('<p>').append(
@@ -253,7 +253,7 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
     },
 
     _submit: function() {
-        r.login.post(this, 'register', $.proxy(this, 'handleResult'))
+        return r.login.post(this, 'register')
     },
 
     _handleResult: r.ui.LoginForm.prototype._handleResult,

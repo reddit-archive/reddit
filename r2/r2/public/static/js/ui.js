@@ -31,6 +31,32 @@ r.ui.init = function() {
     r.ui.PermissionEditor.init()
 }
 
+r.ui.showWorkingDeferred = function(el, deferred) {
+    var flickerDelay = 200,
+        key = '_workingCount',
+        $el = $(el)
+
+    // keep a count of active calls on this element so we can track multiple
+    // deferreds at the same time.
+    $el.data(key, ($el.data(key) || 0) + 1)
+
+    // prevent flicker
+    var flickerTimeout = setTimeout(function() {
+        $el.addClass('working')
+    }, flickerDelay)
+
+    deferred.always(function() {
+        clearTimeout(flickerTimeout)
+        var count = Math.max(0, $el.data(key) - 1)
+        $el.data(key, count)
+        if (count == 0) {
+            $el.removeClass('working')
+        }
+    })
+
+    return deferred
+}
+
 r.ui.refreshListing = function() {
     var url = $.url(),
         params = url.param()
@@ -52,26 +78,6 @@ r.ui.Form = function(el) {
     }, this))
 }
 r.ui.Form.prototype = $.extend(new r.ui.Base(), {
-    workingDelay: 200,
-
-    setWorking: function(isWorking) {
-        // Delay the initial throbber display to prevent flashes for fast
-        // operations
-        if (isWorking) {
-            if (!this.$el.hasClass('working') && !this._workingTimer) {
-                this._workingTimer = setTimeout($.proxy(function() {
-                    this.$el.addClass('working')
-                }, this), this.workingDelay)
-            }
-        } else {
-            if (this._workingTimer) {
-                clearTimeout(this._workingTimer)
-                delete this._workingTimer
-            }
-            this.$el.removeClass('working')
-        }
-    },
-
     showStatus: function(msg, isError) {
         this.$el.find('.status')
             .show()
@@ -121,28 +127,23 @@ r.ui.Form.prototype = $.extend(new r.ui.Base(), {
 
     submit: function() {
         this.resetErrors()
-        this.setWorking(true)
-        this._submit()
+        r.ui.showWorkingDeferred(this.$el, this._submit())
+            .done($.proxy(this, 'handleResult'))
+            .fail($.proxy(this, '_handleNetError'))
     },
 
     _submit: function() {},
 
-    handleResult: function(result, err, xhr) {
-        if (result) {
-            this.checkCaptcha(result.json.errors)
-            this._handleResult(result)
-        } else {
-            this.setWorking(false)
-            this._handleNetError(result, err, xhr)
-        }
+    handleResult: function(result) {
+        this.checkCaptcha(result.json.errors)
+        this._handleResult(result)
     },
 
     _handleResult: function(result) {
         this.showErrors(result.json.errors)
-        this.setWorking(false)
     },
 
-    _handleNetError: function(result, err, xhr) {
+    _handleNetError: function(xhr) {
         this.showStatus(r.strings('an_error_occurred', {status: xhr.status}), true)
     }
 })
