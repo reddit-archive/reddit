@@ -28,7 +28,7 @@ import subprocess
 
 from r2.lib.static import generate_static_name
 
-SPRITE_PADDING = 1
+SPRITE_PADDING = 6
 sprite_line = re.compile(r"background-image: *url\((.*)\) *.*/\* *SPRITE *(stretch-x)? *\*/")
 
 
