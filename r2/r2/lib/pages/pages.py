@@ -539,9 +539,6 @@ class Reddit(Templated):
                             NamedButton('top'),
                             ]
 
-            if c.user_is_loggedin:
-                main_buttons.append(NamedButton('saved', False))
-
             mod = False
             if c.user_is_loggedin:
                 mod = bool(c.user_is_admin
@@ -4099,6 +4096,7 @@ class ListingChooser(Templated):
                       description=_("your front page"))
         self.add_item("other", _("everything"), '/r/all',
                       description=_("from all subreddits"))
+        self.add_item("other", _("saved"), '/user/%s/saved' % c.user.name)
 
         if c.user_is_loggedin:
             multis = LabeledMulti.by_owner(c.user)

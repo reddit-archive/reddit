@@ -703,6 +703,9 @@ class UserController(ListingController):
               c.user_is_admin)):
             return self.abort403()
 
+        if where == 'saved':
+            self.show_chooser = True
+
         check_cheating('user')
 
         self.vuser = vuser
