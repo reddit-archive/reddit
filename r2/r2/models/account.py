@@ -607,7 +607,7 @@ class Account(Thing):
             return None
 
     def flair_enabled_in_sr(self, sr_id):
-        return getattr(self, 'flair_%d_enabled' % sr_id, True)
+        return getattr(self, 'flair_%s_enabled' % sr_id, True)
 
     def update_sr_activity(self, sr):
         if not self._spam:
