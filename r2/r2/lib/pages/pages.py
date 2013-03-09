@@ -350,6 +350,22 @@ class Reddit(Templated):
         if c.user.pref_show_sponsorships or not c.user.gold:
             ps.append(SponsorshipBox())
 
+        if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
+            srs = Subreddit._byID(c.site.sr_ids, data=True,
+                                  return_dict=False)
+            if c.user_is_admin or c.site.is_moderator(c.user):
+                ps.append(self.sr_admin_menu())
+
+            if srs:
+                if isinstance(c.site, ModSR):
+                    box = SubscriptionBox(srs, multi_text=strings.mod_multi)
+                else:
+                    box = SubscriptionBox(srs)
+                ps.append(SideContentBox(_('these subreddits'), [box]))
+
+        if isinstance(c.site, AllSR):
+            ps.append(AllInfoBar(c.site, c.user))
+
         user_banned = c.user_is_loggedin and c.site.is_banned(c.user)
 
         if (self.submit_box
@@ -400,21 +416,6 @@ class Reddit(Templated):
 
         no_ads_yet = True
         show_adbox = (c.user.pref_show_adbox or not c.user.gold) and not g.disable_ads
-        if isinstance(c.site, (MultiReddit, ModSR)) and c.user_is_loggedin:
-            srs = Subreddit._byID(c.site.sr_ids, data=True,
-                                  return_dict=False)
-            if c.user_is_admin or c.site.is_moderator(c.user):
-                ps.append(self.sr_admin_menu())
-
-            if srs:
-                if isinstance(c.site, ModSR):
-                    box = SubscriptionBox(srs, multi_text=strings.mod_multi)
-                else:
-                    box = SubscriptionBox(srs)
-                ps.append(SideContentBox(_('these subreddits'), [box]))
-
-        if isinstance(c.site, AllSR):
-            ps.append(AllInfoBar(c.site, c.user))
 
         # don't show the subreddit info bar on cnames unless the option is set
         if not isinstance(c.site, FakeSubreddit) and (not c.cname or c.site.show_cname_sidebar):
