@@ -235,7 +235,7 @@ def reddit_http_error(code=400, error_name='UNKNOWN_ERROR', **data):
     exc = status_map[code]()
 
     data['reason'] = exc.explanation = error_name
-    if error_name in error_list:
+    if 'explanation' not in data and error_name in error_list:
         data['explanation'] = exc.explanation = error_list[error_name]
 
     # omit 'fields' json attribute if it is empty
