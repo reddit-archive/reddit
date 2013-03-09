@@ -574,7 +574,8 @@ class UrlParser(object):
         Adds the subreddit's path to the path if another subreddit's
         prefix is not already present.
         """
-        if not self.path_has_subreddit():
+        if not (self.path_has_subreddit()
+                or self.path.startswith(subreddit.path)):
             self.path = (subreddit.path + self.path)
         return self
 
