@@ -790,6 +790,11 @@ class ThingBase(object):
 class Thing(ThingBase):
     _timestamp_prop = 'date'
 
+    # alias _date property for consistency with tdb_sql things.
+    @property
+    def _date(self):
+        return self.date
+
 class UuidThing(ThingBase):
     _timestamp_prop = 'date'
     _extra_schema_creation_args = {
