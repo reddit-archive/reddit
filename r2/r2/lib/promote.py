@@ -802,7 +802,6 @@ def get_promotion_list(user, site):
     return [PromoTuple(*t) for t in tuples]
 
 
-@memoize('promotion_list', time=60)
 def get_promotion_list_cached(sites):
     weights = get_live_promotions(sites)
     if not weights:
