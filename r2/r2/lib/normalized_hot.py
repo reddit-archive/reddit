@@ -27,7 +27,6 @@ from r2.lib import _normalized_hot
 
 from r2.lib._normalized_hot import get_hot # pull this into our namespace
 
-@memoize('normalize_hot', time = g.page_cache_time)
 def normalized_hot_cached(sr_ids, obey_age_limit=True):
     return _normalized_hot.normalized_hot_cached(sr_ids, obey_age_limit)
 
