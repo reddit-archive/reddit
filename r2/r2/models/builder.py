@@ -613,8 +613,8 @@ class WikiRevisionBuilder(QueryBuilder):
     
     def keep_item(self, item):
         from r2.lib.validator.wiki import may_view
-        return (not item.is_hidden and may_view(self.sr, self.user,
-                    wiki.WikiPage.get(self.sr, item.page)))
+        return ((not item.is_hidden) and
+                may_view(self.sr, self.user, item.wikipage))
 
 class WikiRecentRevisionBuilder(WikiRevisionBuilder):
     show_extended = False

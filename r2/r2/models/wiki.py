@@ -82,7 +82,7 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     _str_props = ('pageid', 'content', 'author', 'reason')
     _bool_props = ('hidden')
     
-    cache_ignore = set(list(_str_props)).union(Printable.cache_ignore)
+    cache_ignore = set(list(_str_props)).union(Printable.cache_ignore).union(['wikipage'])
     
     def get_author(self):
         author = self._get('author')
@@ -104,9 +104,12 @@ class WikiRevision(tdb_cassandra.UuidThing, Printable):
     @classmethod
     def add_props(cls, user, wrapped):
         authors = cls.get_printable_authors(wrapped)
+        pages = {r.page: None for r in wrapped}
+        pages = WikiPage.get_multiple((c.site, page) for page in pages)
         for item in wrapped:
             item._hidden = item.is_hidden
             item._spam = False
+            item.wikipage = pages[item.pageid]
             author = item._get('author')
             item.printable_author = authors.get(author, '[unknown]')
             item.reported = False
@@ -187,11 +190,24 @@ class WikiPage(tdb_cassandra.Thing):
         return None
     
     @classmethod
-    def get(cls, sr, name):
+    def id_for(cls, sr, name):
         id = getattr(sr, '_id36', None)
         if not id:
             raise tdb_cassandra.NotFound
-        return cls._byID(wiki_id(id, name))
+        return wiki_id(id, name)
+    
+    @classmethod
+    def get_multiple(cls, pages):
+        """Get multiple wiki pages.
+        
+        Arguments:
+        pages -- list of tuples in the form of [(sr, names),..]
+        """
+        return cls._byID([cls.id_for(sr, name) for sr, name in pages])
+    
+    @classmethod
+    def get(cls, sr, name):
+        return cls._byID(cls.id_for(sr, name))
     
     @classmethod
     def create(cls, sr, name):
