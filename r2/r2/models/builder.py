@@ -41,7 +41,7 @@ from r2.lib.filters import _force_unicode
 from copy import deepcopy
 from r2.lib.utils import Storage
 
-from r2.models.wiki import WIKI_RECENT_DAYS
+from r2.models import wiki
 
 from collections import defaultdict
 import time
@@ -591,6 +591,11 @@ class SearchBuilder(IDBuilder):
 class WikiRevisionBuilder(QueryBuilder):
     show_extended = True
     
+    def __init__(self, *k, **kw):
+        self.user = kw.pop('user', None)
+        self.sr = kw.pop('sr', None)
+        QueryBuilder.__init__(self, *k, **kw)
+    
     def wrap_items(self, items):
         types = {}
         wrapped = []
@@ -607,13 +612,15 @@ class WikiRevisionBuilder(QueryBuilder):
         return wrapped
     
     def keep_item(self, item):
-        return not item.is_hidden
+        from r2.lib.validator.wiki import may_view
+        return (not item.is_hidden and may_view(self.sr, self.user,
+                    wiki.WikiPage.get(self.sr, item.page)))
 
 class WikiRecentRevisionBuilder(WikiRevisionBuilder):
     show_extended = False
     
     def must_skip(self, item):
-        return (datetime.datetime.now(g.tz) - item.date).days >= WIKI_RECENT_DAYS
+        return (datetime.datetime.now(g.tz) - item.date).days >= wiki.WIKI_RECENT_DAYS
         
 
 def empty_listing(*things):

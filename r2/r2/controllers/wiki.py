@@ -156,7 +156,11 @@ class WikiController(RedditController):
     @validate(page=VWikiPage(('page'), restricted=False))
     def GET_wiki_revisions(self, num, after, reverse, count, page):
         revisions = page.get_revisions()
-        builder = WikiRevisionBuilder(revisions, num=num, reverse=reverse, count=count, after=after, skip=not c.is_wiki_mod, wrap=default_thing_wrapper())
+        wikiuser = c.user if c.user_is_loggedin else None
+        builder = WikiRevisionBuilder(revisions, user=wikiuser, sr=c.site,
+                                      num=num, reverse=reverse, count=count,
+                                      after=after, skip=not c.is_wiki_mod,
+                                      wrap=default_thing_wrapper())
         listing = WikiRevisionListing(builder).listing()
         return WikiRevisions(listing, page=page.name, may_revise=this_may_revise(page)).render()
 
@@ -199,10 +203,12 @@ class WikiController(RedditController):
     @paginated_listing(max_page_size=100, backend='cassandra')
     def GET_wiki_recent(self, num, after, reverse, count):
         revisions = WikiRevision.get_recent(c.site)
+        wikiuser = c.user if c.user_is_loggedin else None
         builder = WikiRecentRevisionBuilder(revisions,  num=num, count=count,
                                             reverse=reverse, after=after,
                                             wrap=default_thing_wrapper(),
-                                            skip=not c.is_wiki_mod)
+                                            skip=not c.is_wiki_mod,
+                                            user=wikiuser, sr=c.site)
         listing = WikiRevisionListing(builder).listing()
         return WikiRecent(listing).render()
 
