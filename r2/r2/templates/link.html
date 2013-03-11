@@ -78,7 +78,7 @@
 
 <%def name="flair()">
   %if c.user.pref_show_link_flair and thing.flair_text:
-    <span class="linkflairlabel">${thing.flair_text}</span>
+    <span class="linkflairlabel" title="${thing.flair_text}">${thing.flair_text}</span>
   %endif
 </%def>
 
