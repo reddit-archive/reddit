@@ -698,6 +698,7 @@ class StripeController(GoldPaymentController):
         'charge.failed': 'failed',
         'charge.refunded': 'refunded',
         'customer.created': 'noop',
+        'transfer.created': 'noop',
     }
 
     @classmethod
@@ -705,7 +706,7 @@ class StripeController(GoldPaymentController):
         event_dict = json.loads(request.body)
         event = stripe.Event.construct_from(event_dict, g.STRIPE_SECRET_KEY)
         status = event.type
-        if status == 'customer.created':
+        if cls.event_type_mappings.get(status) == 'noop':
             return status, None, None, None, None
 
         charge = event.data.object
