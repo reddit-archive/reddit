@@ -1935,7 +1935,8 @@ class GoldPayment(Templated):
                 if not clone_template:
                     summary = format % dict(
                         amount=Score.somethings(months, "month"),
-                        recipient=recipient and recipient.name,
+                        recipient=recipient and
+                                  recipient.name.replace('_', '&#95;'),
                     )
                 else:
                     # leave the replacements to javascript
