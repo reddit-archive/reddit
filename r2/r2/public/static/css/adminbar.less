@@ -276,7 +276,7 @@
 
         .event-color(@color) {
             background: @color;
-            border-color: darken(saturate(@color, 30%), 20%);
+            border-color: darken(saturate(@color, 30%), 23%);
             box-shadow: 0 -2px 0px darken(@color, 4%) inset;
         }
 
@@ -340,6 +340,15 @@
             .event.web {
                 z-index: 1;
                 .event-color(rgb(50, 150, 20));
+            }
+
+            .event.render {
+                &.nocache {
+                    .event-color(rgb(240, 200, 17));
+                }
+                &.cached {
+                    .event-color(rgb(200, 170, 50));
+                }
             }
 
             .event.cassandra {

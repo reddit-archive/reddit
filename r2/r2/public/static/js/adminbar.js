@@ -144,6 +144,7 @@ r.adminbar.TimingBarGraph = Backbone.View.extend({
             eventsEl.append($('<li class="event">')
                 .addClass(keyParts[0])
                 .addClass(keyParts[1])
+                .addClass(keyParts[2])
                 .attr('title', key + ': ' + eventDuration + 's')
                 .css({
                     left: pos(timing.get('start') - startBound) + '%',
