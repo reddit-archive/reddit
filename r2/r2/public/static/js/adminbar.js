@@ -165,7 +165,6 @@ r.adminbar.TimingBarGraph = Backbone.View.extend({
 
 r.adminbar.Timings = Backbone.Collection.extend({
     model: Backbone.Model.extend({
-        idAttribute: 'key',
         duration: function() {
             return this.get('end') - this.get('start')
         }
