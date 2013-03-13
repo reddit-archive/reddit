@@ -68,7 +68,7 @@ string_dict = dict(
 
     already_submitted = _("that link has already been submitted, but you can try to [submit it again](%s)."),
 
-    multiple_submitted = _("that link has been submitted to multiple reddits. you can try to [submit it again](%s)."),
+    multiple_submitted = _("that link has been submitted to multiple subreddits. you can try to [submit it again](%s)."),
 
     user_deleted = _("your account has been deleted, but we won't judge you for it."),
 
@@ -84,21 +84,21 @@ string_dict = dict(
 
     friends = _('to view reddit with only submissions from your friends, use [reddit.com/r/friends](%s)'),
 
-    sr_created = _('your reddit has been created'),
+    sr_created = _('your subreddit has been created'),
 
     more_info_link = _("visit [%(link)s](%(link)s) for more information"),
 
     sr_messages = dict(
-        empty =  _('you have not subscribed to any reddits.'),
-        subscriber =  _('below are the reddits you have subscribed to'),
-        contributor =  _('below are the reddits that you are an approved submitter on.'),
-        moderator = _('below are the reddits that you have moderator access to.')
+        empty =  _('you have not subscribed to any subreddits.'),
+        subscriber =  _('below are the subreddits you have subscribed to'),
+        contributor =  _('below are the subreddits that you are an approved submitter on.'),
+        moderator = _('below are the subreddits that you have moderator access to.')
         ),
 
-    sr_subscribe =  _('click the `subscribe` or `unsubscribe` buttons to choose which reddits appear on your front page.'),
+    sr_subscribe =  _('click the `subscribe` or `unsubscribe` buttons to choose which subreddits appear on your front page.'),
 
-    searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) reddit. '+
-                           'you can also search within [all reddits](%(all_reddits_link)s)'),
+    searching_a_reddit = _('you\'re searching within the [%(reddit_name)s](%(reddit_link)s) subreddit. '+
+                           'you can also search within [all subreddits](%(all_reddits_link)s)'),
 
     css_validator_messages = dict(
         broken_url = _('"%(brokenurl)s" is not a valid URL'),

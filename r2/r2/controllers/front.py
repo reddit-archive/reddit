@@ -381,10 +381,10 @@ class FrontController(RedditController, OAuth2ResourceController):
     @validate(VUser(),
               name=nop('name'))
     def GET_newreddit(self, name):
-        """Create a community form"""
-        title = _('create a reddit')
+        """Create a subreddit form"""
+        title = _('create a subreddit')
         content=CreateSubreddit(name=name or '')
-        res = FormPage(_("create a community"),
+        res = FormPage(_("create a subreddit"),
                        content=content,
                        ).render()
         return res
@@ -785,7 +785,7 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @base_listing
     @validate(query=nop('q'))
-    @api_doc(api_section.subreddits, uri='/reddits/search', extensions=['json', 'xml'])
+    @api_doc(api_section.subreddits, uri='/subreddits/search', extensions=['json', 'xml'])
     def GET_search_reddits(self, query, reverse, after, count, num):
         """Search reddits by title and description."""
         q = SubredditSearchQuery(query)

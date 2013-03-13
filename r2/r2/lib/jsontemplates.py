@@ -236,7 +236,7 @@ class SubredditJsonTemplate(ThingJsonTemplate):
         if (attr == "_ups" and g.lounge_reddit
             and thing.name == g.lounge_reddit):
             return 0
-        # Don't return accounts_active counts in /reddits
+        # Don't return accounts_active counts in /subreddits
         elif (attr == "accounts_active" and isinstance(c.site, SubSR)):
             return None
         elif attr == 'description_html':

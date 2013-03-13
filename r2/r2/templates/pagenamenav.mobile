@@ -26,9 +26,9 @@
   </span>
 </%def>
 
-<%def name="reddits()">
+<%def name="subreddits()">
   <span class="hover pagename redditname">
-    <a href="/reddits/">${_("reddits")}</a>
+    <a href="/subreddits/">${_("subreddits")}</a>
   </span>
 </%def>
 

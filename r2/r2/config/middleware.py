@@ -206,7 +206,7 @@ class SubredditMiddleware(object):
         if sr:
             environ['subreddit'] = sr.groups()[0]
             environ['PATH_INFO'] = self.sr_pattern.sub('', path) or '/'
-        elif path.startswith("/reddits"):
+        elif path.startswith(('/subreddits', '/reddits')):
             environ['subreddit'] = 'r'
         return self.app(environ, start_response)
 

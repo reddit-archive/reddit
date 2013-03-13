@@ -924,7 +924,7 @@ class RedditsController(ListingController):
     render_cls = SubredditsPage
 
     def title(self):
-        return _('reddits')
+        return _('subreddits')
 
     def keep_fn(self):
         base_keep_fn = ListingController.keep_fn(self)
@@ -965,8 +965,8 @@ class RedditsController(ListingController):
         return reddits
 
     @listing_api_doc(section=api_section.subreddits,
-                     uri='/reddits/{where}',
-                     uri_variants=['/reddits/popular', '/reddits/new', '/reddits/banned'])
+                     uri='/subreddits/{where}',
+                     uri_variants=['/subreddits/popular', '/subreddits/new', '/subreddits/banned'])
     def GET_listing(self, where, **env):
         self.where = where
         return ListingController.GET_listing(self, **env)
@@ -984,11 +984,11 @@ class MyredditsController(ListingController, OAuth2ResourceController):
                     NavButton(getattr(plurals, "approved submitter"), 'contributor'),
                     NavButton(plurals.moderator,   'moderator'))
 
-        return [NavMenu(buttons, base_path = '/reddits/mine/',
+        return [NavMenu(buttons, base_path = '/subreddits/mine/',
                         default = 'subscriber', type = "flatlist")]
 
     def title(self):
-        return _('reddits: ') + self.where
+        return _('subreddits: ') + self.where
 
     def query(self):
         reddits = SRMember._query(SRMember.c._name == self.where,
@@ -1030,8 +1030,8 @@ class MyredditsController(ListingController, OAuth2ResourceController):
     @require_oauth2_scope("mysubreddits")
     @validate(VUser())
     @listing_api_doc(section=api_section.subreddits,
-                     uri='/reddits/mine/{where}',
-                     uri_variants=['/reddits/mine/subscriber', '/reddits/mine/contributor', '/reddits/mine/moderator'])
+                     uri='/subreddits/mine/{where}',
+                     uri_variants=['/subreddits/mine/subscriber', '/subreddits/mine/contributor', '/subreddits/mine/moderator'])
     def GET_listing(self, where='subscriber', **env):
         self.where = where
         return ListingController.GET_listing(self, **env)

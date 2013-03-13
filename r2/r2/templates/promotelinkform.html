@@ -160,7 +160,7 @@ ${self.javascript_setup()}
                   type="radio"  value="one" name="targeting"
                   onclick="return targeting_on(this)" /> 
            <label for="targeting">
-             enable targeting (runs on a specific reddit)
+             enable targeting (runs on a specific subreddit)
            </label>
            <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
            <script type="text/javascript">
@@ -188,9 +188,9 @@ ${self.javascript_setup()}
      </script>
      <div class="targeting" style="display:none">
        <ul>
-         <li>By targeting, your ad will only appear in front of users who subscribe to the reddit that you specify.</li>
-         <li>Your ad will also appear at the top of the hot listing for that reddit</li>
-         <li>You can only target one reddit per campaign.  If you would like to submit to more than one reddit, add a new campaign (its easy, you just fill this form out again).</li>
+         <li>By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.</li>
+         <li>Your ad will also appear at the top of the hot listing for that subreddit</li>
+         <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
        </ul>
        ${error_field("OVERSOLD", "sr", "div")}
        ${reddit_selector(thing.default_sr, thing.sr_searches, thing.subreddits)}

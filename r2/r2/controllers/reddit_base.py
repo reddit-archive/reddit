@@ -343,7 +343,7 @@ def set_subreddit():
     elif '-' in sr_name:
         sr_names = sr_name.split('-')
         if not sr_names[0].lower() == All.name.lower():
-            redirect_to("/reddits/search?q=%s" % sr_name)
+            redirect_to("/subreddits/search?q=%s" % sr_name)
         srs = Subreddit._by_name(sr_names[1:], stale=can_stale).values()
         srs = [sr for sr in srs if not isinstance(sr, FakeSubreddit)]
         if not srs:
@@ -356,7 +356,7 @@ def set_subreddit():
         except NotFound:
             sr_name = chksrname(sr_name)
             if sr_name:
-                redirect_to("/reddits/search?q=%s" % sr_name)
+                redirect_to("/subreddits/search?q=%s" % sr_name)
             elif not c.error_page and not request.path.startswith("/api/login/") :
                 abort(404)
 

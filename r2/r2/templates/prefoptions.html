@@ -116,7 +116,7 @@
       %if not c.user.pref_compress:
       ${media_radio("on", _("show thumbnails next to links"))}
       ${media_radio("off", _("don't show thumbnails next to links"))}
-      ${media_radio("subreddit", _("show thumbnails based on that reddit's media preferences"))}
+      ${media_radio("subreddit", _("show thumbnails based on that subreddit's media preferences"))}
      ${checkbox(_("make safe(r) for work "), "no_profanity", disabled = not c.user.pref_over_18, disabled_text = "(requires over 18)")}
       &#32;
       <span class="little gray">
@@ -230,7 +230,7 @@
   <tr>
     <th>${_("display options")}</th>
     <td class="prefright">
-      ${checkbox(_("allow reddits to show me custom styles"), "show_stylesheets")}
+      ${checkbox(_("allow subreddits to show me custom styles"), "show_stylesheets")}
       <br/>
       ${checkbox(_("show user flair"), "show_flair")}
       <br/>
@@ -246,7 +246,7 @@
     <th>${_("content options")}</th>
     <td class="prefright">
       ${checkbox(_("I am over eighteen years old and willing to view adult content"), "over_18")}
-      &#32;<span class="little gray">(${_("required to view some reddits")})</span>
+      &#32;<span class="little gray">(${_("required to view some subreddits")})</span>
       <br/>
         ${checkbox(_("label posts that are not safe for work (NSFW)"), "label_nsfw", disabled = c.user.pref_no_profanity, disabled_text = "(requires not 'safer for work' mode)")}
       <br/>

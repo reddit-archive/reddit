@@ -397,8 +397,8 @@ class Reddit(Templated):
         if self.create_reddit_box and c.user_is_loggedin:
             delta = datetime.datetime.now(g.tz) - c.user._date
             if delta.days >= g.min_membership_create_community:
-                ps.append(SideBox(_('Create your own community'),
-                           '/reddits/create', 'create',
+                ps.append(SideBox(_('Create your own subreddit'),
+                           '/subreddits/create', 'create',
                            subtitles = rand_strings.get("create_reddit", 2),
                            show_cover = True, nocname=True))
 
@@ -1376,12 +1376,12 @@ class SubredditsPage(Reddit):
         if c.user_is_loggedin:
             #add the aliases to "my reddits" stays highlighted
             buttons.append(NamedButton("mine",
-                                       aliases=['/reddits/mine/subscriber',
-                                                '/reddits/mine/contributor',
-                                                '/reddits/mine/moderator']))
+                                       aliases=['/subreddits/mine/subscriber',
+                                                '/subreddits/mine/contributor',
+                                                '/subreddits/mine/moderator']))
 
-        return [PageNameNav('reddits'),
-                NavMenu(buttons, base_path = '/reddits', type="tabmenu")]
+        return [PageNameNav('subreddits'),
+                NavMenu(buttons, base_path = '/subreddits', type="tabmenu")]
 
     def content(self):
         return self.content_stack((self.interestbar, self.searchbar,
@@ -1395,7 +1395,7 @@ class SubredditsPage(Reddit):
         subscribe_box = SubscriptionBox(srs,
                                         multi_text=strings.subscribed_multi)
         num_reddits = len(subscribe_box.srs)
-        ps.append(SideContentBox(_("your front page reddits (%s)") %
+        ps.append(SideContentBox(_("your front page subreddits (%s)") %
                                  num_reddits, [subscribe_box]))
         return ps
 
@@ -1656,9 +1656,9 @@ class SubredditTopBar(CachedTemplate):
         drop_down_buttons.append(NavButton(menu.edit_subscriptions,
                                            sr_path = False,
                                            css_class = 'bottom-option',
-                                           dest = '/reddits/'))
+                                           dest = '/subreddits/'))
         return SubredditMenu(drop_down_buttons,
-                             title = _('my reddits'),
+                             title = _('my subreddits'),
                              type = 'srdrop')
 
     def subscribed_reddits(self):
@@ -1744,7 +1744,7 @@ class SubscriptionBox(Templated):
                             Subreddit.gold_limit - Subreddit.sr_limit)
                 visible = min(len(srs), Subreddit.gold_limit)
                 bonus = {"bonus": extra}
-                self.goldmsg = _("%(bonus)s bonus reddits") % bonus
+                self.goldmsg = _("%(bonus)s bonus subreddits") % bonus
                 self.prelink = ["/wiki/faq#wiki_how_many_reddits_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
@@ -2050,7 +2050,7 @@ class SearchForm(Templated):
 
 
 class SearchBar(Templated):
-    """More detailed search box for /search and /reddits pages.
+    """More detailed search box for /search and /subreddits pages.
     Displays the previous search as well as info of the elapsed_time
     and num_results if any."""
     def __init__(self, header=None, num_results=0, prev_search='',

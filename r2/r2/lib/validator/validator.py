@@ -1257,7 +1257,7 @@ class VMessageRecipient(VExistingUname):
                 if isinstance(s, FakeSubreddit):
                     raise NotFound, "fake subreddit"
                 if s._spam:
-                    raise NotFound, "banned community"
+                    raise NotFound, "banned subreddit"
                 return s
             except NotFound:
                 self.set_error(errors.SUBREDDIT_NOEXIST)

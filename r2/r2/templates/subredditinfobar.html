@@ -56,7 +56,7 @@
                title=_('leave'),
                executed=_('you are no longer an approved submitter'),
                question=_('stop being an approved submitter?'),
-               format=_('you are an approved submitter on this reddit. (%(leave)s)'),
+               format=_('you are an approved submitter on this subreddit. (%(leave)s)'),
                format_arg='leave',
                hidden_data=dict(
                  id=thing.sr._fullname))}
@@ -82,7 +82,7 @@
 
   %if c.user_is_admin:
     %if thing.sr._spam:
-      ${state_button("approve", _("approve this reddit"),
+      ${state_button("approve", _("approve this subreddit"),
         "return change_state(this, 'approve');", _("approved"),
         hidden_data = dict(id = thing.sr._fullname))}
       %if thing.sr._spam and hasattr(thing.sr, "banner"):
@@ -90,7 +90,7 @@
       %endif
 
     %else:
-      ${state_button("remove", _("ban this reddit"),
+      ${state_button("remove", _("ban this subreddit"),
         "return change_state(this, 'remove');", _("banned"),
         hidden_data = dict(id = thing.sr._fullname))}
     %endif
