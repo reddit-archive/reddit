@@ -169,6 +169,7 @@ r.adminbar.Timings = Backbone.Collection.extend({
             return this.get('end') - this.get('start')
         }
     }),
+    comparator: 'start',
 
     initialize: function() {
         this.on('reset', this.calculate, this)
