@@ -378,7 +378,7 @@ def add_sr(path, sr_path = True, nocname=False, force_hostname = False, retain_e
       c.cname, c.render_style, c.site.name
     """
     # don't do anything if it is just an anchor
-    if path.startswith('#') or path.startswith('javascript:'):
+    if path.startswith(('#', 'javascript:')):
         return path
 
     u = UrlParser(path)
