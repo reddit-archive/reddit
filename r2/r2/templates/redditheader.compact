@@ -91,7 +91,7 @@
       &nbsp;(<b>${c.user.safe_karma}</b>)
     </div>
     <div class="menuitem">
-      ${plain_link("reddits", "/reddits/mine", _sr_path=False)}
+      ${plain_link("subreddits", "/subreddits/mine", _sr_path=False)}
     </div>
     <div class="menuitem">
       ${plain_link("submit", "/submit", _sr_path=False)}
@@ -109,7 +109,7 @@
       ${plain_link("register", "/register", _sr_path=False)}
     </div>
     <div class="menuitem">
-      ${plain_link("reddits", "/reddits/", _sr_path=False)}
+      ${plain_link("subreddits", "/subreddits/", _sr_path=False)}
     </div>
    %endif
     <div class="menuitem">
