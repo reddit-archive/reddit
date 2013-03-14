@@ -1152,6 +1152,10 @@ class DefaultSR(_DefaultSR):
         return self._base.stylesheet_contents if self._base else ""
 
     @property
+    def stylesheet_hash(self):
+        return self._base.stylesheet_hash if self._base else ""
+
+    @property
     def sponsorship_url(self):
         return self._base.sponsorship_url if self._base else ""
 
