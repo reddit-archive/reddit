@@ -22,6 +22,7 @@
 
 from r2.lib.db.thing import Thing, Relation, NotFound
 from r2.lib.db.operators import asc, desc, lower
+from r2.lib.filters import _force_unicode
 from r2.lib.memoize import memoize
 from r2.models import Subreddit
 from pylons import c, g, request
@@ -73,7 +74,7 @@ class Ad (Thing):
         from mako.filters import url_escape
 
         d = get_domain(subreddit=False)
-        u = self.url()
+        u = _force_unicode(self.url())
 
         return "http://%s/r/ads/submit?url=%s" % (d, url_escape(u))
 
