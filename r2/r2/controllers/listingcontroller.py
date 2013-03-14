@@ -1039,6 +1039,15 @@ class MyredditsController(ListingController, OAuth2ResourceController):
 class CommentsController(ListingController):
     title_text = _('comments')
 
+    def keep_fn(self):
+        def keep(item):
+            return (not item._spam or
+                    (c.user_is_loggedin and
+                     (item.author_id == c.user._id or
+                      c.user_is_admin or
+                      item.subreddit.is_moderator(c.user))))
+        return keep
+
     def query(self):
         return c.site.get_all_comments()
 
