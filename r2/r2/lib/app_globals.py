@@ -184,6 +184,7 @@ class Globals(object):
             'reserved_subdomains',
             'TRAFFIC_LOG_HOSTS',
             'exempt_login_user_agents',
+            'timed_templates',
         ],
 
         ConfigValue.choice: {

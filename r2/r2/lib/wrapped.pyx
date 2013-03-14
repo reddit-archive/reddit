@@ -192,8 +192,8 @@ class Templated(object):
         raise NotImplementedError
 
     @property
-    def render_timer_name(self):
-        return 'render.%s' % self.render_class.__name__
+    def render_class_name(self):
+        return self.render_class.__name__
 
     def render_nocache(self, attr, style):
         """
@@ -205,13 +205,17 @@ class Templated(object):
         from filters import unsafe
         from pylons import g, c
 
-        timer = g.stats.get_timer(self.render_timer_name + '.nocache')
-        timer.start()
+        if self.render_class_name in g.timed_templates:
+            timer = g.stats.get_timer('render.%s.nocache' %
+                                      self.render_class_name)
+            timer.start()
+        else:
+            timer = None
 
         # the style has to default to the global render style
         # fetch template
         template = self.template(style)
-        timer.intermediate('template')
+        if timer: timer.intermediate('template')
         if template:
             # store the global render style (since child templates)
             render_style = c.render_style
@@ -221,12 +225,12 @@ class Templated(object):
                 template = template.get_def(attr)
             # render the template
             res = template.render(thing = self)
-            timer.intermediate('render')
+            if timer: timer.intermediate('render')
             if not isinstance(res, StringTemplate):
                 res = StringTemplate(res)
             # reset the global render style
             c.render_style = render_style
-            timer.stop()
+            if timer: timer.stop()
             return res
         else:
             # timings for not found templates will not be sent.
@@ -255,7 +259,7 @@ class Templated(object):
         and will substituted last.
         """
         from pylons import c, g
-        timer = g.stats.get_timer(self.render_timer_name + '.cached')
+        timer = g.stats.get_timer('render.%s.cached' % self.render_class_name)
         timer.start()
 
         style = style or c.render_style or 'html'
