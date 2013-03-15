@@ -32,7 +32,7 @@ class TimingStatBufferTest(unittest.TestCase):
 
         for i in xrange(1, 4):
             for j in xrange(i):
-                tsb.record(str(i), 0.1 * (j + 1))
+                tsb.record(str(i), 0, 0.1 * (j + 1))
         self.assertEquals(
             set([('1', '1|c'),
                  ('1', '100.0|ms'),
@@ -137,7 +137,7 @@ class StatsdClientUnderTest(stats.StatsdClient):
 class StatsdClientTest(unittest.TestCase):
     def test_flush(self):
         client = StatsdClientUnderTest('host:1000')
-        client.timing_stats.record('t', 1)
+        client.timing_stats.record('t', 0, 1)
         client.counting_stats.record('c', 1)
         client.flush()
         self.assertEquals(
@@ -185,7 +185,7 @@ class CounterAndTimerTest(unittest.TestCase):
 
         self.assertRaises(AssertionError, t.intermediate, 'fail')
         self.assertRaises(AssertionError, t.stop)
-        t.send('x', 0.5)
+        t.send('x', 0, 0.5)
 
         self.assertEquals(
             set([('t.a', '1|c'),
