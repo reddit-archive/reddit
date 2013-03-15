@@ -21,6 +21,7 @@
 ###############################################################################
 
 import collections
+import functools
 import os
 import random
 import socket
@@ -99,6 +100,34 @@ class CountingStatBuffer:
             yield k, str(v) + '|c'
 
 
+class StringCountBuffer:
+    """Dictionary of keys to counts of various values."""
+
+    def __init__(self):
+        self.data = collections.defaultdict(
+            functools.partial(collections.defaultdict, int))
+
+    @staticmethod
+    def _encode_string(string):
+        # escape \ -> \\, | -> \&, : -> \;, and newline -> \n
+        return (
+            string.replace('\\', '\\\\')
+                .replace('\n', '\\n')
+                .replace('|', '\\&')
+                .replace(':', '\\;'))
+
+    def record(self, key, value, count=1):
+        self.data[key][value] += count
+
+    def flush(self):
+        new_data = collections.defaultdict(
+            functools.partial(collections.defaultdict, int))
+        data, self.data = self.data, new_data
+        for k, counts in data.iteritems():
+            for v, count in counts.iteritems():
+                yield k, str(count) + '|s|' + self._encode_string(v)
+
+
 class StatsdConnection:
     def __init__(self, addr, compress=True):
         if addr:
@@ -150,6 +179,7 @@ class StatsdClient:
         self.sample_rate = sample_rate
         self.timing_stats = TimingStatBuffer()
         self.counting_stats = CountingStatBuffer()
+        self.string_counts = StringCountBuffer()
         self.connect(addr)
 
     def connect(self, addr):
@@ -161,6 +191,7 @@ class StatsdClient:
     def flush(self):
         data = list(self.timing_stats.flush())
         data.extend(self.counting_stats.flush())
+        data.extend(self.string_counts.flush())
         self.conn.send(self._data_iterator(data))
 
 
@@ -365,6 +396,9 @@ class Stats:
             return
         key = '.'.join(['pg', db_server.replace('.', '-'), db_name])
         self.client.timing_stats.record(key, start, end)
+
+    def count_string(self, key, value, count=1):
+        self.client.string_counts.record(key, value, count=count)
    
 
 class CacheStats:

@@ -56,6 +56,29 @@ class CountingStatBufferTest(unittest.TestCase):
                  ('3', '6|c')]),
             set(csb.flush()))
 
+class StringCountBufferTest(unittest.TestCase):
+    def test_encode_string(self):
+        enc = stats.StringCountBuffer._encode_string
+        self.assertEquals('test', enc('test'))
+        self.assertEquals('\\n\\&\\\\&', enc('\n|\\&'))
+
+    def test_scb(self):
+        scb = stats.StringCountBuffer()
+        self.assertEquals([], list(scb.flush()))
+
+        for i in xrange(1, 4):
+            for j in xrange(i):
+                for k in xrange(j + 1):
+                    scb.record(str(i), str(j))
+        self.assertEquals(
+            set([('1', '1|s|0'),
+                 ('2', '1|s|0'),
+                 ('2', '2|s|1'),
+                 ('3', '1|s|0'),
+                 ('3', '2|s|1'),
+                 ('3', '3|s|2')]),
+            set(scb.flush()))
+
 class FakeUdpSocket:
     def __init__(self, *ignored_args):
         self.host = None

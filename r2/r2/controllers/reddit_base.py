@@ -707,6 +707,8 @@ class MinimalController(BaseController):
         # True/False forces. None updates for most non-POST requests
         c.update_last_visit = None
 
+        g.stats.count_string('user_agents', request.user_agent)
+
     def try_pagecache(self):
         #check content cache
         if request.method.upper() == 'GET' and not c.user_is_loggedin:
