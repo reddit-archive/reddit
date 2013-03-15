@@ -50,10 +50,11 @@ class TimingStatBuffer:
         self.data = collections.defaultdict(complex)
         self.log = threading.local()
 
-    def record(self, key, start, end):
-        # Add to the total time and total count with a single complex value,
-        # so as to avoid inconsistency from a poorly timed context switch.
-        self.data[key] += (end - start) + 1j
+    def record(self, key, start, end, publish=True):
+        if publish:
+            # Add to the total time and total count with a single complex value,
+            # so as to avoid inconsistency from a poorly timed context switch.
+            self.data[key] += (end - start) + 1j
 
         if getattr(self.log, 'timings', None) is not None:
             self.log.timings.append(self.Timing(key, start, end))
@@ -198,9 +199,10 @@ class Counter:
 class Timer:
     _time = time.time
 
-    def __init__(self, client, name):
+    def __init__(self, client, name, publish=True):
         self.client = client
         self.name = name
+        self.publish = publish
         self._start = None
         self._last = None
         self._stop = None
@@ -220,7 +222,8 @@ class Timer:
 
     def send(self, subname, start, end):
         name = _get_stat_name(self.name, subname)
-        self.client.timing_stats.record(name, start, end)
+        self.client.timing_stats.record(name, start, end,
+                                        publish=self.publish)
 
     def start(self):
         self._last = self._start = self._time()
@@ -253,8 +256,8 @@ class Stats:
     def __init__(self, addr, sample_rate):
         self.client = StatsdClient(addr, sample_rate)
 
-    def get_timer(self, name):
-        return Timer(self.client, name)
+    def get_timer(self, name, publish=True):
+        return Timer(self.client, name, publish)
 
     def transact(self, action, start, end):
         timer = self.get_timer('service_time')

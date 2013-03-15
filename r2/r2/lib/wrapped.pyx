@@ -207,7 +207,8 @@ class Templated(object):
 
         if self.render_class_name in g.timed_templates:
             timer = g.stats.get_timer('render.%s.nocache' %
-                                      self.render_class_name)
+                                      self.render_class_name,
+                                      publish=False)
             timer.start()
         else:
             timer = None
@@ -259,7 +260,8 @@ class Templated(object):
         and will substituted last.
         """
         from pylons import c, g
-        timer = g.stats.get_timer('render.%s.cached' % self.render_class_name)
+        timer = g.stats.get_timer('render.%s.cached' % self.render_class_name,
+                                  publish=False)
         timer.start()
 
         style = style or c.render_style or 'html'
