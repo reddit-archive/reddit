@@ -73,10 +73,10 @@
     %endif
   %else:
     ${less_stylesheet(g.stylesheet)}
-      %if c.site.stylesheet:
-      <link rel="stylesheet" href="${static(c.site.stylesheet)}" 
-            type="text/css" />
-      %endif
+    %if c.site.stylesheet:
+    <link rel="stylesheet" href="${static(c.site.stylesheet)}"
+          type="text/css" >
+    %endif
   %endif
 
   %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_hash:
