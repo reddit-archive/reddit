@@ -252,7 +252,7 @@ class Link(Thing, Printable):
         if is_api and not c.obey_over18:
             return True
 
-        # hide NSFW links from non-logged users and under 18 logged users 
+        # hide NSFW links from non-logged users and under 18 logged users
         # if they're not explicitly visiting an NSFW subreddit or a multireddit
         if (((not c.user_is_loggedin and c.site != wrapped.subreddit)
             or (c.user_is_loggedin and not c.over18))

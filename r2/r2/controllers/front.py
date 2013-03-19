@@ -82,7 +82,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.redirect('/info/' + to36(new_id) + '/' + rest)
         if type == 'old':
             new_url = "/%s/%s/%s" % \
-                      (dest, article._id36, 
+                      (dest, article._id36,
                        quote_plus(title_to_url(article.title).encode('utf-8')))
             if not c.default_sr:
                 new_url = "/r/%s%s" % (c.site.name, new_url)
@@ -148,7 +148,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         return DetailsPage(thing=thing, expand_children=False, **kw).render()
 
     def GET_selfserviceoatmeal(self):
-        return BoringPage(_("self service help"), 
+        return BoringPage(_("self service help"),
                           show_sidebar=False,
                           content=SelfServiceOatmeal()).render()
 
@@ -435,8 +435,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             def keep_fn(ma):
                 return True
 
-        builder = QueryBuilder(query, skip=True, num=num, after=after, 
-                               keep_fn=keep_fn, count=count, 
+        builder = QueryBuilder(query, skip=True, num=num, after=after,
+                               keep_fn=keep_fn, count=count,
                                reverse=reverse,
                                wrap=default_thing_wrapper())
         listing = ModActionListing(builder)
@@ -484,15 +484,15 @@ class FrontController(RedditController, OAuth2ResourceController):
         action_buttons = [NavButton(_('all'), None, opt='type', css_class='primary')]
         for a in ModAction.actions:
             action_buttons.append(NavButton(ModAction._menu[a], a, opt='type'))
-        
+
         mod_buttons = [NavButton(_('all'), None, opt='mod', css_class='primary')]
         for mod_id in mod_ids:
             mod = mods[mod_id]
             mod_buttons.append(NavButton(mod.name, mod.name, opt='mod'))
         base_path = request.path
-        menus = [NavMenu(action_buttons, base_path=base_path, 
+        menus = [NavMenu(action_buttons, base_path=base_path,
                          title=_('filter by action'), type='lightdrop', css_class='modaction-drop'),
-                NavMenu(mod_buttons, base_path=base_path, 
+                NavMenu(mod_buttons, base_path=base_path,
                         title=_('filter by moderator'), type='lightdrop')]
         return EditReddit(content=panes,
                           nav_menus=menus,
@@ -731,7 +731,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_related(self, num, article, after, reverse, count):
         """Related page: performs a search using title of article as
         the search query.
-        
+
         """
         if not can_view_link_comments(article):
             abort(403, 'forbidden')
@@ -791,7 +791,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         results, etime, spane = self._search(q, num=num, reverse=reverse,
                                              after=after, count=count,
                                              skip_deleted_authors=False)
-        
+
         res = SubredditsPage(content=spane,
                              prev_search=query,
                              elapsed_time=etime,
@@ -823,7 +823,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             site = DefaultSR()
         else:
             site = c.site
-        
+
         if not syntax:
             syntax = SearchQuery.default_syntax
 
@@ -858,7 +858,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                                                               }
                 else:
                     cleanup_message = strings.completely_invalid_search_query
-            
+
             res = SearchPage(_('search results'), query, etime, results.hits,
                              content=spane,
                              nav_menus=[SearchSortMenu(default=sort),
@@ -937,9 +937,9 @@ class FrontController(RedditController, OAuth2ResourceController):
         captcha = Captcha() if c.user.needs_captcha() else None
         sr_names = (Subreddit.submit_sr_names(c.user) or
                     Subreddit.submit_sr_names(None))
-        
+
         never_show_self = request.get.get('no_self')
-        
+
         return FormPage(_("submit"),
                         show_sidebar=True,
                         page_classes=['submit-page'],
@@ -966,7 +966,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         """
         renders the contents of the iframe which, on a cname, checks
         if the user is currently logged into reddit.
-        
+
         if this page is hit from the primary domain, redirects to the
         cnamed domain version of the site.  If the user is logged in,
         this cnamed version will drop a boolean session cookie on that
@@ -1059,12 +1059,12 @@ class FrontController(RedditController, OAuth2ResourceController):
     @validate(VUser())
     def GET_account_activity(self):
         return AccountActivityPage().render()
-    
+
     def GET_rules(self):
         return BoringPage(_("rules of reddit"), show_sidebar=False,
                           content=RulesPage(), page_classes=["rulespage-body"]
                           ).render()
-    
+
     @validate(vendor=VOneOf("v", ("claimed-gold", "claimed-creddits",
                                   "paypal", "google-checkout", "coinbase"),
                             default="claimed-gold"))
@@ -1094,11 +1094,11 @@ class FrontController(RedditController, OAuth2ResourceController):
             claim_msg = claim_msg % {'gold_email': g.goldthanks_email}
         else:
             abort(404)
-        
+
         if g.lounge_reddit and not lounge_md:
             lounge_url = "/r/" + g.lounge_reddit
             lounge_md = strings.lounge_msg % {'link': lounge_url}
-        
+
         return BoringPage(_("thanks"), show_sidebar=False,
                           content=GoldThanks(claim_msg=claim_msg,
                                              vendor_url=vendor_url,
@@ -1310,8 +1310,8 @@ class FormsController(RedditController):
             return self.abort404()
         sent = (has_opted_out(email) == leave)
         return BoringPage(_("opt out") if leave else _("welcome back"),
-                          content=OptOut(email=email, leave=leave, 
-                                           sent=sent, 
+                          content=OptOut(email=email, leave=leave,
+                                           sent=sent,
                                            msg_hash=msg_hash)).render()
 
     @validate(msg_hash=nop('x'))
