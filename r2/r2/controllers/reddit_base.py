@@ -172,6 +172,8 @@ class Cookie(object):
             return "clicks"
         elif cookie_name.startswith("__utm"):
             return "ga"
+        elif cookie_name.startswith("beta_"):
+            return "beta"
         else:
             return "other"
 
