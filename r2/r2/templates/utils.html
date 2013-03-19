@@ -438,7 +438,7 @@ ${unsafe(txt)}
 </%def>
 
 <%def name="logout(top=False,dest=None,a_class='')">
-  <form method="post" action="/logout" class="logout hover"
+  <form method="post" action="${add_sr('/logout', sr_path=False)}" class="logout hover"
     %if top:
       target="_top"
     %endif
