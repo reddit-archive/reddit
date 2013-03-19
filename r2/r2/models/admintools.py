@@ -24,7 +24,8 @@ from r2.lib.errors import MessageError
 from r2.lib.utils import tup, fetch_things2
 from r2.lib.filters import websafe
 from r2.lib.log import log_text
-from r2.models import Report, Account, Subreddit
+from r2.models import Account, Message, Report, Subreddit
+from r2.models.award import Award
 from r2.models.token import AwardClaimToken
 
 from _pylibmc import MemcachedError
