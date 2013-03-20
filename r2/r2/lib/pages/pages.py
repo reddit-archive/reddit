@@ -130,6 +130,7 @@ class Reddit(Templated):
     content_id         = None
     css_class          = None
     extra_page_classes = None
+    extra_stylesheets  = []
 
     def __init__(self, space_compress = True, nav_menus = None, loginbox = True,
                  infotext = '', content = None, short_description='', title = '', robots = None, 
