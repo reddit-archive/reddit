@@ -28,6 +28,10 @@ class ConfigValue(object):
     _bool_map = dict(true=True, false=False)
 
     @staticmethod
+    def str(v, key=None, data=None):
+        return str(v)
+
+    @staticmethod
     def int(v, key=None, data=None):
         return int(v)
 
