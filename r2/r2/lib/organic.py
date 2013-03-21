@@ -41,7 +41,7 @@ def keep_fresh_links(item):
 
     from r2.lib.promote import is_promo
     if is_promo(item):
-        return not item.hidden
+        return (not item.over_18 or c.over18) and not item.hidden
 
     return item.fresh
 
