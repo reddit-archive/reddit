@@ -78,8 +78,6 @@ class Plugin(object):
     def load_controllers(self):
         pass
 
-    def on_thing_commit(self, thing, changes):
-        pass
 
 
 class PluginLoader(object):
@@ -149,7 +147,3 @@ class PluginLoader(object):
     def load_controllers(self):
         for plugin in self:
             plugin.load_controllers()
-
-    def on_thing_commit(self, thing, changes):
-        for plugin in self:
-            plugin.on_thing_commit(thing, changes)

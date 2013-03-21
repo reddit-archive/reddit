@@ -35,7 +35,7 @@ from .. utils import iters, Results, tup, to36, Storage, thing_utils, timefromno
 from r2.config import cache
 from r2.lib.cache import sgm
 from r2.lib.log import log_text
-from r2.lib import stats
+from r2.lib import stats, hooks
 from pylons import g
 
 
@@ -297,7 +297,7 @@ class DataThing(object):
             if lock:
                 lock.release()
 
-        g.plugins.on_thing_commit(self, to_set)
+        hooks.get_hook("thing.commit").call(thing=self, changes=to_set)
 
     @classmethod
     def _load_multi(cls, need):
