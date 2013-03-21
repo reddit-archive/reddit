@@ -298,15 +298,15 @@ class HotController(FixListing, ListingController):
                     promo_tuples,
                     wrap=self.builder_wrapper,
                     keep_fn=organic.keep_fresh_links,
-                    num=n_build,
                     skip=True,
             )
             promoted_links, first, last, before, after = b.get_items()
-            if promoted_links and last:
-                lookup = {t.campaign: i for i, t in enumerate(promo_tuples)}
-                last_index = lookup[last.campaign]
-                stubs = promo_tuples[last_index + 1:]
-                promoted_links.extend(stubs)
+            if promoted_links:
+                stubs = promoted_links[n_build:]
+                stubs = [promote.PromoTuple(item._fullname, item.weight,
+                                            item.campaign)
+                         for item in stubs]
+                promoted_links = promoted_links[:n_build] + stubs
 
         if not (organic_fullnames or promoted_links):
             return None
