@@ -45,7 +45,7 @@ from pylons.i18n import _
 from pylons.i18n.translation import LanguageError
 
 from r2.config.extensions import is_api
-from r2.lib import filters, pages, utils
+from r2.lib import filters, pages, utils, hooks
 from r2.lib.authentication import authenticate_user
 from r2.lib.base import BaseController, abort
 from r2.lib.cache import make_key, MemcachedError
@@ -84,7 +84,6 @@ from r2.lib.validator import (
 from r2.models import (
     All,
     AllMinus,
-    check_request,
     DefaultSR,
     DomainSR,
     FakeAccount,
@@ -703,6 +702,7 @@ class MinimalController(BaseController):
         # if an rss feed, this will also log the user in if a feed=
         # GET param is included
         set_content_type()
+
         c.request_timer.intermediate("minimal-pre")
         # True/False forces. None updates for most non-POST requests
         c.update_last_visit = None
@@ -771,12 +771,10 @@ class MinimalController(BaseController):
                                     secure=getattr(v, 'secure', False),
                                     httponly=getattr(v, 'httponly', False))
 
-        end_time = datetime.now(g.tz)
-
         if self.should_update_last_visit():
             c.user.update_last_visit(c.start_time)
 
-        check_request(end_time)
+        hooks.get_hook("reddit.request.end").call()
 
         # this thread is probably going to be reused, but it could be
         # a while before it is. So we might as well dump the cache in
@@ -1040,6 +1038,8 @@ class RedditController(MinimalController):
         c.show_admin_bar = admin_bar_eligible and (c.user_is_admin or g.debug)
         if not c.show_admin_bar:
             g.stats.end_logging_timings()
+
+        hooks.get_hook("reddit.request.begin").call()
 
         c.request_timer.intermediate("base-pre")
 

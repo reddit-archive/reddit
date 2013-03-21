@@ -395,9 +395,6 @@ def filter_quotas(unfiltered):
     else:
         return baskets, None
 
-def check_request(end_time):
-    pass
-
 
 def send_system_message(user, subject, body):
     from r2.lib.db import queries
