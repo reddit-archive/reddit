@@ -27,7 +27,7 @@ from strings import StringHandler, plurals
 from r2.lib.db import operators
 import r2.lib.search as search
 from r2.lib.filters import _force_unicode
-from pylons.i18n import _
+from pylons.i18n import _, N_
 
 
 
@@ -330,14 +330,18 @@ class OffsiteButton(NavButton):
 
 class SubredditButton(NavButton):
     from r2.models.subreddit import Frontpage, Mod
+    # Translation is deferred (N_); must be done per-request,
+    # not at import/class definition time.
     # TRANSLATORS: This refers to /r/mod
-    name_overrides = {Mod: _("mod"),
+    name_overrides = {Mod: N_("mod"),
     # TRANSLATORS: This refers to the user's front page
-                      Frontpage: _("front")}
+                      Frontpage: N_("front")}
 
     def __init__(self, sr, **kw):
         self.path = sr.path
-        name = self.name_overrides.get(sr, sr.name)
+        name = self.name_overrides.get(sr)
+        # Run the name through deferred translation
+        name = _(name) if name else sr.name
         NavButton.__init__(self, name, sr.path, False,
                            isselected = (c.site == sr), **kw)
 
