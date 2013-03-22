@@ -55,7 +55,7 @@ class Plugin(object):
     def static_dir(self):
         return os.path.join(self.path, 'public')
 
-    def on_load(self):
+    def on_load(self, g):
         pass
 
     def add_js(self, module_registry=None):
@@ -142,7 +142,7 @@ class PluginLoader(object):
             g.config.add_spec(plugin.config)
             config['pylons.paths']['templates'].insert(0, plugin.template_dir)
             plugin.add_js()
-            plugin.on_load()
+            plugin.on_load(g)
 
     def load_controllers(self):
         for plugin in self:
