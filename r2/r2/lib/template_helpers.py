@@ -24,6 +24,7 @@ from r2.models import *
 from filters import unsafe, websafe, _force_unicode, _force_utf8
 from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
+from r2.lib import hooks
 from r2.lib.media import s3_direct_url
 
 import babel.numbers
@@ -163,6 +164,8 @@ def js_config(extra_config=None):
 
     if extra_config:
         config.update(extra_config)
+
+    hooks.get_hook("js_config").call(config=config)
 
     return config
 
