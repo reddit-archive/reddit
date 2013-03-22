@@ -645,6 +645,10 @@ class ThingBase(object):
         self._deletes.clear()
         self._column_ttls.clear()
 
+    def _destroy(self):
+        self._cf.remove(self._id,
+                        write_consistency_level=self._write_consistency_level)
+
     def __getattr__(self, attr):
         if isinstance(attr, basestring) and attr.startswith('_'):
             # TODO: I bet this interferes with Views whose column names can
