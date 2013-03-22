@@ -825,7 +825,7 @@ class UuidThing(ThingBase):
 
 
 def view_of(cls):
-    """Register a class as a view of a DenormalizedRelation.
+    """Register a class as a view of a Thing.
 
     Views are expected to implement two methods:
 
@@ -838,6 +838,7 @@ def view_of(cls):
     """
     def view_of_decorator(view_cls):
         cls._views.append(view_cls)
+        view_cls._view_of = cls
         return view_cls
     return view_of_decorator
 
