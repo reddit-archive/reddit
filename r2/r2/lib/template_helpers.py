@@ -168,6 +168,12 @@ class JSPreload(js.DataSource):
     def set(self, url, data):
         self.data[url] = data
 
+    def set_wrapped(self, url, wrapped):
+        from r2.lib.pages.things import wrap_things
+        if not isinstance(wrapped, Wrapped):
+            wrapped = wrap_things(wrapped)[0]
+        self.data[url] = wrapped.render_nocache('', style='api').finalize()
+
     def use(self):
         hooks.get_hook("js_preload.use").call(js_preload=self)
 

@@ -232,3 +232,14 @@ def wrap_links(links, wrapper = default_thing_wrapper(),
     return l.listing()
 
 
+def wrap_things(*things):
+    """Instantiate Wrapped for each thing, calling add_props if available."""
+    if not things:
+        return []
+
+    wrapped = [Wrapped(thing) for thing in things]
+    if hasattr(things[0], 'add_props'):
+        # assume all things are of the same type and use the first thing's
+        # add_props to process the list.
+        things[0].add_props(c.user, wrapped)
+    return wrapped
