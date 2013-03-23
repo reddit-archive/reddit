@@ -99,7 +99,8 @@ class FileSource(Source):
         self.name = name
 
     def get_source(self):
-        return open(self.path).read()
+        with open(self.path) as f:
+            return f.read()
 
     @property
     def path(self):
@@ -256,7 +257,8 @@ class LocalizedModule(Module):
     def build(self, closure):
         Module.build(self, closure)
 
-        reddit_source = open(self.path).read()
+        with open(self.path) as f:
+            reddit_source = f.read()
         string_keys = re.findall("r\.strings\(['\"]([\w$_]+)['\"]", reddit_source)
         string_keys.append("permissions")
 
