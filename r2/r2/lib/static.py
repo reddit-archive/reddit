@@ -62,6 +62,7 @@ def generate_static_name(name, base=None):
     name, ext = os.path.splitext(name)
     return name + '.' + shorthash + ext
 
+
 def update_static_names(names_file, files):
     """Generate a unique file name mapping for ``files`` and write it to a
     JSON file at ``names_file``."""
@@ -90,6 +91,7 @@ def update_static_names(names_file, files):
     open(names_file, "w").write(json_enc.encode(names))
 
     return names
+
 
 if __name__ == "__main__":
     update_static_names(sys.argv[1], sys.argv[2:])
