@@ -196,6 +196,25 @@ class DataSource(Source):
         return []
 
 
+class TemplateFileSource(DataSource, FileSource):
+    """A JavaScript template file on disk."""
+    def __init__(self, name, wrap="r.templates.set({content})"):
+        DataSource.__init__(self, wrap)
+        FileSource.__init__(self, name)
+        self.name = name
+
+    def get_content(self):
+        from r2.lib.static import locate_static_file
+        name, style = os.path.splitext(self.name)
+        path = locate_static_file(os.path.join('static/js', self.name))
+        with open(path) as f:
+            return [{
+                "name": name,
+                "style": style.lstrip('.'),
+                "template": f.read()
+            }]
+
+
 class StringsSource(DataSource):
     """A virtual source consisting of localized strings from r2.lib.strings."""
     def __init__(self, lang=None, keys=None, wrap="r.strings.set({content})"):
@@ -345,6 +364,7 @@ module["reddit"] = LocalizedModule("reddit.js",
     "lib/jquery.cookie.js",
     "lib/jquery.url.js",
     "lib/backbone-0.9.10.js",
+    "templates.js",
     "utils.js",
     "ui.js",
     "login.js",
