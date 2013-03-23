@@ -25,6 +25,7 @@ from filters import unsafe, websafe, _force_unicode, _force_utf8
 from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 
 from r2.lib import hooks
+from r2.lib.static import static_mtime
 from r2.lib.media import s3_direct_url
 
 import babel.numbers
@@ -36,18 +37,6 @@ import urlparse
 import calendar
 from pylons import g, c, request
 from pylons.i18n import _, ungettext
-
-
-def static_mtime(path):
-    static_dirs = set(plugin.static_dir for plugin in g.plugins)
-    static_dirs.add(g.paths['static_files'])
-
-    for static_dir in static_dirs:
-        file_path = os.path.join(static_dir, path.lstrip('/'))
-        try:
-            return os.path.getmtime(file_path)
-        except OSError:
-            continue
 
 
 static_text_extensions = {

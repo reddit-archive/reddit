@@ -28,6 +28,24 @@ import json
 import base64
 import shutil
 
+
+def locate_static_file(name):
+    from pylons import g
+    static_dirs = set(plugin.static_dir for plugin in g.plugins)
+    static_dirs.add(g.paths['static_files'])
+
+    for static_dir in static_dirs:
+        file_path = os.path.join(static_dir, name.lstrip('/'))
+        if os.path.exists(file_path):
+            return file_path
+
+
+def static_mtime(name):
+    path = locate_static_file(name)
+    if path:
+        return os.path.getmtime(path)
+
+
 def generate_static_name(name, base=None):
     """Generate a unique filename.
     
