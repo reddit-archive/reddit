@@ -22,6 +22,9 @@
 
 from pylons import c, request
 from r2.lib.strings import Score
+from r2.lib import hooks
+
+
 class Printable(object):
     show_spam = False
     show_reports = False
@@ -65,6 +68,8 @@ class Printable(object):
                 item.display_score = map(CachedVariable,
                                          ["scoredislikes", "scoreunvoted",
                                           "scorelikes"])
+
+        hooks.get_hook("add_props").call(items=wrapped)
 
     @property
     def permalink(self, *a, **kw):
