@@ -27,6 +27,7 @@ from r2.lib.utils import vote_hash, UrlParser, timesince, is_subdomain
 from r2.lib import hooks
 from r2.lib.static import static_mtime
 from r2.lib.media import s3_direct_url
+from r2.lib import js
 
 import babel.numbers
 import simplejson
@@ -157,6 +158,22 @@ def js_config(extra_config=None):
     hooks.get_hook("js_config").call(config=config)
 
     return config
+
+
+class JSPreload(js.DataSource):
+    def __init__(self, data=None):
+        if data is None:
+            data = {}
+        js.DataSource.__init__(self, "r.preload.set({content})", data)
+
+    def set(self, url, data):
+        self.data[url] = data
+
+    def use(self):
+        if self.data:
+            return js.DataSource.use(self)
+        else:
+            return ''
 
 
 def class_dict():

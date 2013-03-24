@@ -57,7 +57,7 @@ from r2.lib.errors import (
 )
 from r2.lib.filters import _force_utf8
 from r2.lib.strings import strings
-from r2.lib.template_helpers import add_sr
+from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
@@ -887,6 +887,9 @@ class RedditController(MinimalController):
         admin_bar_eligible = response.content_type == 'text/html'
         if admin_bar_eligible and record_timings:
             g.stats.start_logging_timings()
+
+        # set up stuff needed in base templates at error time here.
+        c.js_preload = JSPreload()
 
         MinimalController.pre(self)
 

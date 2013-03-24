@@ -118,6 +118,7 @@
 <%def name="javascript_bottom()">
   <% from r2.lib import js %>
   ${unsafe(js.use('reddit'))}
+  ${unsafe(c.js_preload.use())}
 </%def>
 
 <%def name="javascript_run()">
