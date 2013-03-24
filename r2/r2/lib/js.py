@@ -349,7 +349,7 @@ module["html5shiv"] = Module("html5shiv.js",
 
 module["reddit-init"] = Module("reddit-init.js",
     "lib/json2.js",
-    "lib/underscore-1.3.3.js",
+    "lib/underscore-1.4.4.js",
     "lib/store.js",
     "base.js",
     "uibase.js",
