@@ -30,7 +30,7 @@ from printable import Printable
 from r2.config import cache, extensions
 from r2.lib.memoize import memoize
 from r2.lib.filters import _force_utf8, _force_unicode
-from r2.lib import utils
+from r2.lib import hooks, utils
 from r2.lib.log import log_text
 from mako.filters import url_escape
 from r2.lib.strings import strings, Score
@@ -838,6 +838,8 @@ class Comment(Thing, Printable):
             gilding = utils.Storage(thing=self, date=now)
             m.insert(queries.get_all_gilded_comments(), [gilding])
             m.insert(queries.get_gilded_comments(self.sr_id), [gilding])
+
+        hooks.get_hook('comment.gild').call(comment=self, gilder=user)
 
     def _fill_in_parents(self):
         if not self.parent_id:
