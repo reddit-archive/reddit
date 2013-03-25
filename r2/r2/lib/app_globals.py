@@ -501,7 +501,7 @@ class Globals(object):
         # initialize caches. Any cache-chains built here must be added
         # to cache_chains (closed around by reset_caches) so that they
         # can properly reset their local components
-        self.cache_chains = {}
+        cache_chains = {}
         localcache_cls = (SelfEmptyingCache if self.running_as_script
                           else LocalCache)
 
@@ -513,23 +513,23 @@ class Globals(object):
             )
         else:
             self.cache = MemcacheChain((localcache_cls(), self.memcache))
-        self.cache_chains.update(cache=self.cache)
+        cache_chains.update(cache=self.cache)
 
         self.rendercache = MemcacheChain((
             localcache_cls(),
             rendercaches,
         ))
-        self.cache_chains.update(rendercache=self.rendercache)
+        cache_chains.update(rendercache=self.rendercache)
 
         self.pagecache = MemcacheChain((
             localcache_cls(),
             pagecaches,
         ))
-        self.cache_chains.update(pagecache=self.pagecache)
+        cache_chains.update(pagecache=self.pagecache)
 
         # the thing_cache is used in tdb_cassandra.
         self.thing_cache = CacheChain((localcache_cls(),))
-        self.cache_chains.update(thing_cache=self.thing_cache)
+        cache_chains.update(thing_cache=self.thing_cache)
 
         self.permacache = CassandraCacheChain(
             localcache_cls(),
@@ -537,7 +537,7 @@ class Globals(object):
             memcache=permacache_memcaches,
             lock_factory=self.make_lock,
         )
-        self.cache_chains.update(permacache=self.permacache)
+        cache_chains.update(permacache=self.permacache)
 
         # hardcache is used for various things that tend to expire
         # TODO: replace hardcache w/ cassandra stuff
@@ -545,17 +545,17 @@ class Globals(object):
             (localcache_cls(), self.memcache, HardCache(self)),
             cache_negative_results=True,
         )
-        self.cache_chains.update(hardcache=self.hardcache)
+        cache_chains.update(hardcache=self.hardcache)
 
         # I know this sucks, but we need non-request-threads to be
         # able to reset the caches, so we need them be able to close
         # around 'cache_chains' without being able to call getattr on
         # 'g'
-        cache_chains = self.cache_chains.copy()
         def reset_caches():
             for name, chain in cache_chains.iteritems():
                 chain.reset()
                 chain.stats = CacheStats(self.stats, name)
+        self.cache_chains = cache_chains
 
         self.reset_caches = reset_caches
         self.reset_caches()
