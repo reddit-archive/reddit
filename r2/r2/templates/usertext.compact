@@ -22,11 +22,12 @@
 
 <%!
    from r2.lib.filters import unsafe, safemarkdown, keep_space
+   from r2.lib.strings import strings
    from r2.lib.utils import randstr
 %>
 
 <%namespace file="printablebuttons.html" import="toggle_button" />
-<%namespace file="utils.html" import="error_field"/>
+<%namespace file="utils.html" import="error_field, md"/>
 
 <%def name="action_button(name, btn_type, onclick, display)">
   <button type="${btn_type}" onclick="${onclick}" class="${name}"
@@ -89,6 +90,7 @@
         ${error_field("USER_BLOCKED", "parent", "span")}
       </div>
       <div class="markhelp-parent">
+      <p>${md(strings.formatting_help_info)}</p>
       <table class="markhelp">
         <tr style="background-color: #ffff99; text-align: center">
           <td><em>${_( "you type:")}</em></td>

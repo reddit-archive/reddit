@@ -3741,18 +3741,20 @@ ul.tabmenu.formtab {
     width: 100%;
 }
 
-.usertext table.markhelp {
-    background-color: white;
-    margin: 5px 0px; 
-    width: 100%;
-}
-
-.usertext .markhelp, 
-.usertext .markhelp td, 
-.usertext .markhelp tr {
-    border: 1px solid #C0C0C0;
+.usertext .markhelp {
     padding: 4px;
-    margin: 0px;
+    margin: 5px 0px;
+    border-top: 1px dotted #c0c0c0;
+
+    table {
+        width: 100%;
+        margin: 5px 0px;
+    }
+
+    tr, td {
+        width: 50%;
+        border: 1px solid #c0c0c0;
+    }
 }
 
 .usertext .markhelp .spaces {background-color: #c0c0c0}
