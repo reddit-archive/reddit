@@ -20,14 +20,13 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from reddit_base import MinimalController
-
-from r2.lib.scraper import get_media_embed
-from r2.lib.pages import MediaEmbedBody
-from r2.lib.validator import *
-
-from pylons import request
+from pylons import request, g
 from pylons.controllers.util import abort
+
+from r2.controllers.reddit_base import MinimalController
+from r2.lib.pages import MediaEmbedBody
+from r2.lib.scraper import get_media_embed
+from r2.lib.validator import validate, VLink
 
 
 class MediaembedController(MinimalController):
