@@ -251,6 +251,7 @@ class IdentityJsonTemplate(ThingJsonTemplate):
                                                 is_gold = "gold",
                                                 is_mod = "is_mod",
                                                 over_18 = "pref_over_18",
+                                                has_verified_email = "email_verified",
                                                 )
 
     def thing_attr(self, thing, attr):
