@@ -1041,11 +1041,15 @@ class CommentsController(ListingController):
 
     def keep_fn(self):
         def keep(item):
-            return (not item._spam or
-                    (c.user_is_loggedin and
-                     (item.author_id == c.user._id or
-                      c.user_is_admin or
-                      item.subreddit.is_moderator(c.user))))
+            can_see_spam = (c.user_is_loggedin and
+                            (item.author_id == c.user._id or
+                             c.user_is_admin or
+                             item.subreddit.is_moderator(c.user)))
+            can_see_deleted = c.user_is_loggedin and c.user_is_admin
+
+            return ((not item._spam or can_see_spam) and
+                    (not item._deleted or can_see_deleted))
+
         return keep
 
     def query(self):
