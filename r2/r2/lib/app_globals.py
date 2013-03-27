@@ -159,7 +159,6 @@ class Globals(object):
             'static_secure_pre_gzipped',
             'trust_local_proxies',
             'shard_link_vote_queues',
-            'old_uwsgi_load_logging_config',
         ],
 
         ConfigValue.tuple: [
@@ -327,11 +326,6 @@ class Globals(object):
                 self.static_names = json.load(handle)
         else:
             self.static_names = {}
-
-        # if we're a web app running on old uwsgi, force load the logging
-        # config from the file since uwsgi didn't do it for us
-        if not self.running_as_script and self.old_uwsgi_load_logging_config:
-            logging.config.fileConfig(self.config["__file__"])
 
         # make python warnings go through the logging system
         logging.captureWarnings(capture=True)
