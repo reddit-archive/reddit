@@ -658,8 +658,6 @@ class FrontController(RedditController, OAuth2ResourceController):
         elif is_moderator_with_perms('flair') and location == 'flair':
             c.allow_styles = True
             pane = FlairPane(num, after, reverse, name, user)
-        elif c.user_is_sponsor and location == 'ads':
-            pane = RedditAds()
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
         else:

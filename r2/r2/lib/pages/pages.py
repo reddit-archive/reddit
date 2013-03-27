@@ -22,7 +22,7 @@
 
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
-from r2.models import FakeSubreddit, Subreddit, Ad, AdSR, SubSR, AllMinus, AllSR
+from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
 from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, RandomNSFW, RandomSubscription, MultiReddit, ModSR, Frontpage
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
@@ -2400,41 +2400,6 @@ class AdminErrorLog(Templated):
 
         Templated.__init__(self)
 
-class AdminAds(Templated):
-    """The admin page for editing ads"""
-    def __init__(self):
-        from r2.models import Ad
-        Templated.__init__(self)
-        self.ads = Ad._all_ads()
-
-class AdminAdAssign(Templated):
-    """The interface for assigning an ad to a community"""
-    def __init__(self, ad):
-        self.weight = 100
-        Templated.__init__(self, ad = ad)
-
-class AdminAdSRs(Templated):
-    """View the communities an ad is running on"""
-    def __init__(self, ad):
-        self.adsrs = AdSR.by_ad(ad)
-
-        # Create a dictionary of
-        #       SR => total weight of all its ads
-        # for all SRs that this ad is running on
-        self.sr_totals = {}
-        for adsr in self.adsrs:
-            sr = adsr._thing2
-
-            if sr.name not in self.sr_totals:
-                # We haven't added up this SR yet.
-                self.sr_totals[sr.name] = 0
-                # Get all its ads and total them up.
-                sr_adsrs = AdSR.by_sr_merged(sr)
-                for adsr2 in sr_adsrs:
-                    self.sr_totals[sr.name] += adsr2.weight
-
-        Templated.__init__(self, ad = ad)
-
 class AdminAwards(Templated):
     """The admin page for editing awards"""
     def __init__(self):
@@ -2464,15 +2429,11 @@ class AdminAwardWinners(Templated):
         trophies = Trophy.by_award(award)
         Templated.__init__(self, award = award, trophies = trophies)
 
+
 class Ads(Templated):
     def __init__(self):
         Templated.__init__(self)
-        path = ""
-        if c.custom_dart_keyword:
-            path = "r/%s/%s" % (c.site.name, c.custom_dart_keyword)
-        elif not c.default_sr:
-            path = "r/%s/" % c.site.name
-        self.ad_url = g.ad_domain + "/ads/" + path
+        self.ad_url = g.ad_domain + "/ads/"
         self.frame_id = "ad-frame"
 
 
@@ -3487,27 +3448,6 @@ class MediaEmbedBody(CachedTemplate):
         res = CachedTemplate.render(self, *a, **kw)
         return responsive(res, True)
 
-class RedditAds(Templated):
-    def __init__(self, **kw):
-        self.sr_name = c.site.name
-        self.adsrs = AdSR.by_sr_merged(c.site)
-        self.total = 0
-
-        self.adsrs.sort(key=lambda a: a._thing1.codename)
-
-        seen = {}
-        for adsr in self.adsrs:
-            seen[adsr._thing1.codename] = True
-            self.total += adsr.weight
-
-        self.other_ads = []
-        all_ads = Ad._all_ads()
-        all_ads.sort(key=lambda a: a.codename)
-        for ad in all_ads:
-            if ad.codename not in seen:
-                self.other_ads.append(ad)
-
-        Templated.__init__(self, **kw)
 
 class PaymentForm(Templated):
     def __init__(self, link, campaign, **kw):
@@ -3786,80 +3726,6 @@ class RawString(Templated):
    def render(self, *a, **kw):
        return unsafe(self.s)
 
-class Dart_Ad(CachedTemplate):
-    def __init__(self, dartsite, tag, custom_keyword=None):
-        tag = tag or "homepage"
-        keyword = custom_keyword or tag
-        tracker_url = tracking.get_impression_pixel_url("dart_" + tag)
-        Templated.__init__(self, tag = tag, dartsite = dartsite,
-                           tracker_url = tracker_url, keyword=keyword)
-
-    def render(self, *a, **kw):
-        res = CachedTemplate.render(self, *a, **kw)
-        return responsive(res, False)
-
-class HouseAd(CachedTemplate):
-    def __init__(self, rendering, linkurl, submit_link):
-        Templated.__init__(self, rendering=rendering,
-                           linkurl = linkurl,
-                           submit_link = submit_link)
-
-    def render(self, *a, **kw):
-        res = CachedTemplate.render(self, *a, **kw)
-        return responsive(res, False)
-
-
-def render_ad_by_codename(codename):
-    if codename == "DART":
-        return Dart_Ad("reddit.dart", g.default_sr).render()
-
-    try:
-        ad = Ad._by_codename(codename)
-    except NotFound:
-        abort(404)
-    attrs = ad.important_attrs()
-    return HouseAd(**attrs).render()
-
-
-def render_ad(reddit_name=None, keyword=None):
-    if not reddit_name:
-        reddit_name = g.default_sr
-        if g.live_config["frontpage_dart"]:
-            return Dart_Ad("reddit.dart", reddit_name, keyword).render()
-
-    try:
-        sr = Subreddit._by_name(reddit_name, stale=True)
-    except NotFound:
-        return Dart_Ad("reddit.dart", g.default_sr, keyword).render()
-
-    if sr.over_18:
-        dartsite = "reddit.dart.nsfw"
-    else:
-        dartsite = "reddit.dart"
-
-    if keyword:
-        return Dart_Ad(dartsite, reddit_name, keyword).render()
-
-    ads = {}
-
-    for adsr in AdSR.by_sr_merged(sr):
-        ad = adsr._thing1
-        ads[ad.codename] = (ad, adsr.weight)
-
-    try:
-        codename = weighted_lottery({k: v[1] for k, v in ads.iteritems()})
-    except ValueError, ex:
-        log_text(
-            "no winner",
-            "No winner found for /r/%s, error=%s" % (reddit_name, ex.message),
-            "error")
-        codename = "DART"
-
-    if codename == "DART":
-        return Dart_Ad(dartsite, reddit_name).render()
-    else:
-        attrs = ads[codename][0].important_attrs()
-        return HouseAd(**attrs).render()
 
 class TryCompact(Reddit):
     def __init__(self, dest, **kw):

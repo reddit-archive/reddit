@@ -29,7 +29,6 @@ from report import *
 from subreddit import *
 from flair import *
 from award import *
-from ad import *
 from bidding import *
 from mail_queue import Email, has_opted_out, opt_count
 from gold import *

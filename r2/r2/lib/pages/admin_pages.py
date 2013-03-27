@@ -34,7 +34,6 @@ from r2.lib.menus import (
 def admin_menu(**kwargs):
     buttons = [
         OffsiteButton("traffic", "/traffic"),
-        NavButton(menu.ads, "ads"),
         NavButton(menu.awards, "awards"),
         NavButton(menu.errors, "error log"),
     ]

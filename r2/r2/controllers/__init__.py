@@ -65,7 +65,6 @@ def load_controllers():
     from post import PostController
     from toolbar import ToolbarController
     from awards import AwardsController
-    from ads import AdsController
     from errorlog import ErrorlogController
     from promotecontroller import PromoteController
     from mediaembed import MediaembedController

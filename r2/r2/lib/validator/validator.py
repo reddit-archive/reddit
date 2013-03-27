@@ -402,24 +402,6 @@ class VCommentByID(VThing):
     def __init__(self, param, redirect = True, *a, **kw):
         VThing.__init__(self, param, Comment, redirect=redirect, *a, **kw)
 
-class VAd(VThing):
-    def __init__(self, param, redirect = True, *a, **kw):
-        VThing.__init__(self, param, Ad, redirect=redirect, *a, **kw)
-
-class VAdByCodename(Validator):
-    def run(self, codename, required_fullname=None):
-        if not codename:
-            return self.set_error(errors.NO_TEXT)
-
-        try:
-            a = Ad._by_codename(codename)
-        except NotFound:
-            a = None
-
-        if a and required_fullname and a._fullname != required_fullname:
-            return self.set_error(errors.INVALID_OPTION)
-        else:
-            return a
 
 class VAward(VThing):
     def __init__(self, param, redirect = True, *a, **kw):

@@ -110,11 +110,6 @@ def make_map():
     mc('/feedback', controller='feedback', action='feedback')
     mc('/ad_inq', controller='feedback', action='ad_inq')
 
-    # Used for editing ads
-    mc('/admin/ads', controller='ads')
-    mc('/admin/ads/:adcn/:action', controller='ads',
-       requirements=dict(action="assign|srs"))
-
     mc('/admin/awards', controller='awards')
     mc('/admin/awards/:awardcn/:action', controller='awards',
        requirements=dict(action="give|winners"))
@@ -334,9 +329,6 @@ def make_map():
 
     # Used for showing ads
     mc("/ads/", controller="ad", action="ad")
-    mc("/ads/r/:reddit_name/:keyword", controller="ad", action="ad",
-       keyword=None)
-    mc("/ads/:codename", controller="ad", action="ad_by_codename")
 
     mc("/try", controller="forms", action="try_compact")
 
