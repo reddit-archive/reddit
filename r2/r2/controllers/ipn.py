@@ -241,11 +241,14 @@ def send_gift(buyer, recipient, months, days, signed, giftmessage, comment_id):
         message = strings.youve_got_gold % dict(sender=md_sender, amount=amount)
 
         if giftmessage and giftmessage.strip():
-            message += "\n\n" + strings.giftgold_note + giftmessage
+            message += "\n\n" + strings.giftgold_note + giftmessage + '\n\n----'
     else:
         message = strings.youve_got_comment_gold % dict(
             url=comment.make_permalink_slow(),
         )
+
+    message += '\n\n' + strings.gold_benefits_msg
+    message += '\n\n' + strings.lounge_msg % {'link': '/r/'+g.lounge_reddit}
 
     subject = sender + " just sent you reddit gold!"
 
