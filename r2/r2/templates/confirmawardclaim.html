@@ -25,7 +25,7 @@
 
 <%namespace file="trophycase.html" import="trophy_info" />
 
-<form action="${thing.token.claim_url()}" method="post"
+<form action="${thing.token.post_url()}" method="post"
     class="centered confirm-award-claim">
 
 ${unsafe(safemarkdown(_("# Claim this award for /u/%s? #") % thing.user))}

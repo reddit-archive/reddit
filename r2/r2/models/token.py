@@ -571,8 +571,10 @@ class AwardClaimToken(ConsumableToken):
             uid=uid,
         )
 
-    def claim_url(self):
-        return "http://%s/awards/claim/%s" % (g.domain, self._id)
+    def post_url(self):
+        # Relative URL; should be used on an on-site form
+        return "/awards/claim/%s" % self._id
 
     def confirm_url(self):
+        # Full URL; for emailing, PM'ing, etc.
         return "http://%s/awards/confirm/%s" % (g.domain, self._id)
