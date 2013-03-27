@@ -1545,14 +1545,15 @@ class ProfileBar(Templated):
 
             if user._id != c.user._id:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
-                self.giftmsg = _("buy %(user)s a month of reddit gold" %
-                                 dict(user=user.name))
+                self.giftmsg = _("give reddit gold to %(user)s to show "
+                                 "your appreciation") % {'user': user.name}
             elif running_out_of_gold:
-                self.goldlink = "/gold"
+                self.goldlink = "/gold/about"
                 self.giftmsg = _("renew your reddit gold")
             elif not c.user.gold:
-                self.goldlink = "/gold"
-                self.giftmsg = _("treat yourself to reddit gold")
+                self.goldlink = "/gold/about"
+                self.giftmsg = _("get extra features and help support reddit "
+                                 "with a reddit gold subscription")
 
             self.my_fullname = c.user._fullname
             self.is_friend = self.user._id in c.user.friends
