@@ -771,6 +771,8 @@ class Comment(Thing, Printable):
             orangered = (to.name != author.name)
             inbox_rel = Inbox._add(to, c, name, orangered=orangered)
 
+        hooks.get_hook('comment.new').call(comment=c)
+
         return (c, inbox_rel)
 
     def _save(self, user):
