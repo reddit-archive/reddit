@@ -699,6 +699,7 @@ class StripeController(GoldPaymentController):
         'charge.refunded': 'refunded',
         'customer.created': 'noop',
         'transfer.created': 'noop',
+        'transfer.paid': 'noop',
     }
 
     @classmethod
