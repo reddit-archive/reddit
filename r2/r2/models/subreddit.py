@@ -161,7 +161,8 @@ class Subreddit(Thing, Printable):
         ret = {}
 
         for name in names:
-            lname = name.lower()
+            ascii_only = str(name.decode("ascii", errors="ignore"))
+            lname = ascii_only.lower()
 
             if lname in cls._specials:
                 ret[name] = cls._specials[lname]
