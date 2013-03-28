@@ -75,6 +75,7 @@ import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
 import hashlib
+import re
 import urllib
 import urllib2
 
@@ -377,8 +378,12 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not c.user.gold or not hasattr(request.post, 'sendreplies'):
             sendreplies = kind == 'self'
 
+        # get rid of extraneous whitespace in the title
+        cleaned_title = re.sub(r'\s+', ' ', request.post.title, flags=re.UNICODE)
+        cleaned_title = cleaned_title.strip()
+
         # well, nothing left to do but submit it
-        l = Link._submit(request.post.title, url if kind == 'link' else 'self',
+        l = Link._submit(cleaned_title, url if kind == 'link' else 'self',
                          c.user, sr, ip, spam=c.user._spam, sendreplies=sendreplies)
 
         if banmsg:

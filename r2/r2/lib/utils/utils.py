@@ -310,6 +310,9 @@ def extract_title(data):
     if to_trim and to_trim.end() < len(title) / 2:
         title = title[:-(to_trim.end())]
 
+    # get rid of extraneous whitespace in the title
+    title = re.sub(r'\s+', ' ', title, flags=re.UNICODE)
+
     return title.encode('utf-8').strip()
     
 valid_schemes = ('http', 'https', 'ftp', 'mailto')
