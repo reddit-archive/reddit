@@ -87,10 +87,6 @@ class Subreddit(Thing, Printable):
                      over_18 = False,
                      exclude_banned_modqueue = False,
                      mod_actions = 0,
-                     sponsorship_text = "this subreddit is sponsored by",
-                     sponsorship_url = None,
-                     sponsorship_img = None,
-                     sponsorship_name = None,
                      # do we allow self-posts, links only, or any?
                      link_type = 'any', # one of ('link', 'self', 'any')
                      flair_enabled = True,
@@ -1155,17 +1151,6 @@ class DefaultSR(_DefaultSR):
     def stylesheet_hash(self):
         return self._base.stylesheet_hash if self._base else ""
 
-    @property
-    def sponsorship_url(self):
-        return self._base.sponsorship_url if self._base else ""
-
-    @property
-    def sponsorship_text(self):
-        return self._base.sponsorship_text if self._base else ""
-
-    @property
-    def sponsorship_img(self):
-        return self._base.sponsorship_img if self._base else ""
 
 class MultiReddit(_DefaultSR):
     name = 'multi'

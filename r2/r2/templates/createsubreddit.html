@@ -329,59 +329,6 @@
         </li>
       </ul>
     </%utils:line_field>
-
-  %if c.user_is_admin:
-    <%utils:line_field title="${_('sponsorship')}">
-      <ul class="upload">
-        <li>
-          <input type="text" name="sponsorship-text"
-                 value="${thing.site.sponsorship_text}"
-                 />
-        </li>
-        <li>
-          <input type="text" name="sponsorship-name"
-                 %if thing.site.sponsorship_name:
-                     value="${thing.site.sponsorship_name}"
-                 %else:
-                     placeholder="${_('name this campaign (for traffic)')}" 
-                 %endif
-                 />
-        </li>
-        <li>
-          <input type="text" name="sponsorship-url" 
-                 %if thing.site.sponsorship_url:
-                     value="${thing.site.sponsorship_url}"
-                 %else:
-                     placeholder="${_('enter link url here')}"
-                 %endif
-                 />
-        </li>
-        <li>
-          <%utils:image_upload post_target="/api/upload_sr_img" 
-                               current_image="${thing.site.sponsorship_img}"
-                               label="${_('upload sponsorship image')}"
-                               form_id="sponsor-upload",
-                               ask_type="${True}">
-            <br/>
-            <button id="delete-sponsor" class="delete-img"
-                   %if not thing.site.sponsorship_img:
-                      style="display: none;"
-                   %endif
-                   onclick="return post_form(this.form, 'delete_sr_header');">
-              ${_('delete')}
-            </button>
-            
-            <div class="clearleft"></div>
-            <input type="hidden" name="uh" value="${c.modhash}" />
-            <input type="hidden" name="r"  value="${c.site.name}" />
-            <input type="hidden" name="sponsor" value="1" />
-          </%utils:image_upload>
-        </li>
-      </ul>
-    </%utils:line_field>
-
-  %endif
-
 %endif
 
 

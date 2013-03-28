@@ -5,14 +5,14 @@ r.analytics = {
     init: function() {
         // these guys are relying on the custom 'onshow' from jquery.reddit.js
         $(document).delegate(
-            '.promotedlink.promoted, .sponsorshipbox[data-fullname]',
+            '.promotedlink.promoted',
             'onshow',
             _.bind(function(ev) {
                 this.fetchTrackersOrFirePixel(ev.target)
             }, this)
         )
 
-        $('.promotedlink.promoted:visible, .sponsorshipbox:visible').trigger('onshow')
+        $('.promotedlink.promoted:visible').trigger('onshow')
         $('form.google-checkout').on('submit', this.fireGoogleCheckout)
         $('form.gold-checkout').one('submit', this.fireGoldCheckout)
     },
@@ -28,12 +28,8 @@ r.analytics = {
 
         var $el = $(el),
             fullname = $el.data('fullname'),
-            sponsorship = $el.data('sponsorship'),
             campaign = $el.data('cid'),
             trackingName = fullname
-
-        if (sponsorship)
-            trackingName += '_' + sponsorship
 
         // append a hyphen even if there's no campaign
         trackingName += '-' + (campaign || '')

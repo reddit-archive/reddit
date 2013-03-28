@@ -20,26 +20,4 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 
-%if c.site.sponsorship_url and c.site.sponsorship_img:
-<%
-   from r2.models.subreddit import FakeSubreddit
-   from r2.lib.template_helpers import s3_https_if_secure
-   name = c.site._fullname
-%>
-<div class="thing sponsorshipbox id-${name}" data-fullname="${name}" data-sponsorship="${c.site.sponsorship_name}">
-  <span>${c.site.sponsorship_text}</span>
-  <div>
-    <a class="title" href="${c.site.sponsorship_url}">
-    <%
-        if not hasattr(c.site, 'sponsorship_size'):
-            size_str = ''
-        else:
-            size_str = "width='%d' height='%d'" % (c.site.sponsorship_size[0], c.site.sponsorship_size[1])
-    %>
-       <img alt="sponsor" ${size_str} src="${s3_https_if_secure(c.site.sponsorship_img)}" />
-    </a>
-  </div>
-</div>
-%else:
 <div class="sponsorshipbox"></div>
-%endif

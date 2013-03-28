@@ -1545,14 +1545,6 @@ class VImageType(Validator):
             return 'png'
         return img_type
 
-class VSubredditSponsorship(VInt):
-    max = 1
-    min = 0
-    def run(self, val):
-        s = super(VSubredditSponsorship, self).run(val)
-        if s and not c.user_is_admin:
-            abort(403, "forbidden")
-        return s
 
 class ValidEmails(Validator):
     """Validates a list of email addresses passed in as a string and

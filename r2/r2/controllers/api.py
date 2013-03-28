@@ -1541,21 +1541,16 @@ class ApiController(RedditController, OAuth2ResourceController):
 
     @require_oauth2_scope("modconfig")
     @validatedForm(VSrModerator(perms='config'),
-                   VModhash(),
-                   sponsor = VInt("sponsor", min = 0, max = 1))
+                   VModhash())
     @api_doc(api_section.subreddits)
-    def POST_delete_sr_header(self, form, jquery, sponsor):
+    def POST_delete_sr_header(self, form, jquery):
         """
         Called when the user request that the header on a sr be reset.
         """
         # just in case we need to kill this feature from XSS
         if g.css_killswitch:
             return self.abort(403,'forbidden')
-        if sponsor and c.user_is_admin:
-            c.site.sponsorship_img = None
-            c.site.sponsorship_size = None
-            c.site._commit()
-        elif c.site.header:
+        if c.site.header:
             c.site.header = None
             c.site.header_size = None
             c.site._commit()
@@ -1588,10 +1583,9 @@ class ApiController(RedditController, OAuth2ResourceController):
               name = VCssName("name"),
               img_type = VImageType('img_type'),
               form_id = VLength('formid', max_length = 100), 
-              header = VInt('header', max=1, min=0),
-              sponsor = VSubredditSponsorship('sponsor'))
+              header = VInt('header', max=1, min=0))
     @api_doc(api_section.subreddits)
-    def POST_upload_sr_img(self, file, header, sponsor, name, form_id, img_type):
+    def POST_upload_sr_img(self, file, header, name, form_id, img_type):
         """
         Called on /about/stylesheet when an image needs to be replaced
         or uploaded, as well as on /about/edit for updating the
@@ -1614,7 +1608,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         add_image_to_sr = False
         size = None
         
-        if not sponsor and not header:
+        if not header:
             add_image_to_sr = True
             if not name:
                 # error if the name wasn't specified and the image was not for a sponsored link or header
@@ -1637,19 +1631,15 @@ class ApiController(RedditController, OAuth2ResourceController):
             if header:
                 c.site.header = new_url
                 c.site.header_size = size
-            elif sponsor and c.user_is_admin:
-                c.site.sponsorship_img = new_url
-                c.site.sponsorship_size = size
             if add_image_to_sr:
                 c.site.add_image(name, url = new_url)
             c.site._commit()
 
-            if not sponsor:
-                if header:
-                    kw = dict(details='upload_image_header')
-                else:
-                    kw = dict(details='upload_image', description=name)
-                ModAction.create(c.site, c.user, action='editsettings', **kw)
+            if header:
+                kw = dict(details='upload_image_header')
+            else:
+                kw = dict(details='upload_image', description=name)
+            ModAction.create(c.site, c.user, action='editsettings', **kw)
 
             return UploadedImage(_('saved'), new_url, name, 
                                  errors=errors, form_id=form_id).render()
@@ -1681,15 +1671,10 @@ class ApiController(RedditController, OAuth2ResourceController):
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
                    ip = ValidIP(),
-                   sponsor_text =VLength('sponsorship-text', max_length = 500),
-                   sponsor_name =VLength('sponsorship-name', max_length = 64),
-                   sponsor_url = VLength('sponsorship-url', max_length = 500),
                    css_on_cname = VBoolean("css_on_cname"),
                    )
     @api_doc(api_section.subreddits)
-    def POST_site_admin(self, form, jquery, name, ip, sr,
-                        sponsor_text, sponsor_url, sponsor_name, **kw):
-        
+    def POST_site_admin(self, form, jquery, name, ip, sr, **kw):
         def apply_wikid_field(sr, form, pagename, value, prev, field, error):
             id_field_name = 'prev_%s_id' % field
             try:
@@ -1820,12 +1805,6 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         #editting an existing reddit
         elif sr.is_moderator_with_perms(c.user, 'config') or c.user_is_admin:
-
-            if c.user_is_admin:
-                sr.sponsorship_text = sponsor_text or ""
-                sr.sponsorship_url = sponsor_url or None
-                sr.sponsorship_name = sponsor_name or None
-
             #assume sr existed, or was just built
             old_domain = sr.domain
 
