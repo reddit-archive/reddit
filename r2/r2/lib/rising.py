@@ -65,5 +65,5 @@ def set_rising():
 
 
 def get_rising(sr):
-    rising = g.cache.get(CACHE_KEY)
+    rising = g.cache.get(CACHE_KEY, [])
     return [link for link, sr_id in rising if sr.keep_for_rising(sr_id)]
