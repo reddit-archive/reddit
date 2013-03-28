@@ -100,7 +100,16 @@ class PluginLoader(object):
 
         self.plugins = OrderedDict()
         for entry_point in entry_points:
-            plugin_cls = entry_point.load()
+            try:
+                plugin_cls = entry_point.load()
+            except Exception as e:
+                if plugin_names:
+                    # if this plugin was specifically requested, fail.
+                    raise e
+                else:
+                    print >> sys.stderr, ("Error loading plugin %s (%s)."
+                                          " Skipping." % (entry_point.name, e))
+                    continue
             self.plugins[entry_point.name] = plugin_cls(entry_point)
 
     def __len__(self):
