@@ -170,6 +170,8 @@ class JSPreload(js.DataSource):
         self.data[url] = data
 
     def use(self):
+        hooks.get_hook("js_preload.use").call(js_preload=self)
+
         if self.data:
             return js.DataSource.use(self)
         else:
