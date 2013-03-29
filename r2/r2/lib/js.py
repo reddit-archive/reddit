@@ -46,7 +46,7 @@ if not STATIC_ROOT:
 
 
 script_tag = '<script type="text/javascript" src="{src}"></script>\n'
-inline_script_tag = '<script type="text/javascript">{content}</script>\n'
+inline_script_tag = '<script type="text/javascript">{content}</script>'
 
 
 class ClosureError(Exception): pass
@@ -189,7 +189,9 @@ class DataSource(Source):
         return self.wrap.format(content=json_data) + "\n"
 
     def use(self):
-        return inline_script_tag.format(content=self.get_source())
+        from r2.lib.filters import SC_OFF, SC_ON
+        return (SC_OFF + inline_script_tag.format(content=self.get_source()) +
+                SC_ON + "\n")
 
     @property
     def dependencies(self):
