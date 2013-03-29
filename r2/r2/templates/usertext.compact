@@ -71,11 +71,11 @@
 
       <div class="bottom-area">
         <div class="usertext-buttons">
-          <a href="#" class="help-toggle newbutton">help</a>
-          <button type="submit" class="save newbutton">Save</button>
+          <a href="#" class="help-toggle newbutton">${_("help")}</a>
+          <button type="submit" class="save newbutton">${_("Send")}</button>
           <button type="button" class="cancel newbutton" style="display: none;"
             onclick="return cancel_usertext(this)">
-            Cancel</button>
+            ${_("Cancel")}</button>
           %if thing.have_form:
             <span class="status"></span>
           %endif
