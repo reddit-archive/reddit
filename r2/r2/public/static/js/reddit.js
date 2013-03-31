@@ -777,11 +777,13 @@ function expando_child(elem) {
                   function(r) {
                       child_cache[key] = r;
                       expando.html($.unsafe(r));
+                      $(document).trigger('expando_thing', thing)
                   },
                   false, "html");
     }
     else {
         expando.html($.unsafe(child_cache[key]));
+        $(document).trigger('expando_thing', thing)
     }
     expando.show();
     return false;
