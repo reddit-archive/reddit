@@ -165,6 +165,17 @@ r.ui.Bubble = Backbone.View.extend({
                 right: parentPos.right + offsetX,
                 top: parentPos.top + offsetY - bodyOffset.top
             })
+        } else if (this.$el.is('.anchor-right-fixed')) {
+            offsetX = 32
+            offsetY = 0
+
+            parentPos.top -= $(document).scrollTop()
+            parentPos.left -= $(document).scrollLeft()
+
+            this.$el.css({
+                top: r.utils.clamp(parentPos.top - offsetY, 0, $(window).height() - this.$el.outerHeight()),
+                left: r.utils.clamp(parentPos.left - offsetX - this.$el.width(), 0, $(window).width())
+            })
         }
     },
 
@@ -178,9 +189,13 @@ r.ui.Bubble = Backbone.View.extend({
 
         $('body').append(this.$el)
 
+        this.$el.css('visibility', 'hidden').show()
         this.render()
         this.position()
-        this.$el.css('opacity', 1).show()
+        this.$el.css({
+            'opacity': 1,
+            'visibility': 'visible'
+        })
 
         var isSwitch = this.options.group && this.options.group.current && this.options.group.current != this
         if (isSwitch) {
@@ -226,6 +241,9 @@ r.ui.Bubble = Backbone.View.extend({
             animProp = 'top'
             animOffset = '-=5'
         } else if (this.$el.is('.anchor-right')) {
+            animProp = 'right'
+            animOffset = '-=5'
+        } else if (this.$el.is('.anchor-right-fixed')) {
             animProp = 'right'
             animOffset = '-=5'
         }

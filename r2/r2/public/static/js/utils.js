@@ -1,4 +1,8 @@
 r.utils = {
+    clamp: function(val, min, max) {
+        return Math.max(min, Math.min(max, val))
+    },
+
     staticURL: function (item) {
         return r.config.static_root + '/' + item
     },
