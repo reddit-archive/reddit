@@ -510,6 +510,7 @@ $.fn.replace_things = function(things, keep_children, reveal, stubs) {
 
             /* lastly, set the event handlers for these new things */
             thing_init_func(new_thing);
+            $(document).trigger('new_thing', new_thing)
             return new_thing;
         });
     
