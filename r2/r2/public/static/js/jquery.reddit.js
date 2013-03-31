@@ -526,7 +526,9 @@ $.insert_things = function(things, append) {
                 s = s.append($.unsafe(data.content)).children(".thing:last");
             else
                 s = s.prepend($.unsafe(data.content)).children(".thing:first");
+
             thing_init_func(s.hide().show());
+            $(document).trigger('new_thing', s)
             return s;
         });
 };
