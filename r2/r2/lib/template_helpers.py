@@ -95,7 +95,7 @@ def static(path, allow_gzip=True):
     actual_path = os.path.join(*path_components)
 
     query = None
-    if should_cache_bust:
+    if path and should_cache_bust:
         file_id = static_mtime(actual_path) or random.randint(0, 1000000)
         query = 'v=' + str(file_id)
 
