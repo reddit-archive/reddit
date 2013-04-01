@@ -1391,7 +1391,9 @@ class FormsController(RedditController):
 
         if comment:
             comment_sr = Subreddit._byID(comment.sr_id, data=True)
-            if comment._deleted or not comment_sr.allow_comment_gilding:
+            if (comment._deleted or
+                    comment._spam or
+                    not comment_sr.allow_comment_gilding):
                 comment = None
 
         start_over = False
