@@ -824,7 +824,7 @@ def get_promotion_list_cached(sites):
 def lottery_promoted_links(user, site, n=10):
     """Run weighted_lottery to order and choose a subset of promoted links."""
     promo_tuples = get_promotion_list(user, site)
-    weights = {p: p.weight for p in promo_tuples}
+    weights = {p: p.weight for p in promo_tuples if p.weight}
     selected = []
     while weights and len(selected) < n:
         s = weighted_lottery(weights)
