@@ -1042,9 +1042,7 @@ class AllMinus(AllSR):
         from r2.lib.db.operators import not_
         q = AllSR.get_links(self, sort, time)
         if c.user.gold:
-            excluded_ids = self.random_reddits(c.user.name, self.sr_ids,
-                                               self.gold_limit)
-            q._filter(not_(Link.c.sr_id.in_(excluded_ids)))
+            q._filter(not_(Link.c.sr_id.in_(self.sr_ids)))
         return q
 
 class _DefaultSR(FakeSubreddit):
