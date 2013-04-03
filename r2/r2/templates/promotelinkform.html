@@ -307,7 +307,8 @@ ${self.javascript_setup()}
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
                            current_image="${thumb}"
-                           label="${_('upload header image:')}">
+                           label="${_('upload header image:')}"
+                           ask_type="True">
        <input type="hidden" name="link_id" value="${thing.link._fullname}" />
        ## overwrite the completed image function
        <script type="text/javascript">

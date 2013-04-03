@@ -65,6 +65,7 @@ from r2.lib.validator import (
     VDateRange,
     VExistingUname,
     VFloat,
+    VImageType,
     VInt,
     VLength,
     VLink,
@@ -726,14 +727,15 @@ class PromoteController(ListingController):
 
     @validate(VSponsor("link_id"),
               link=VByName('link_id'),
-              file=VLength('file', 500 * 1024))
-    def POST_link_thumb(self, link=None, file=None):
+              file=VLength('file', 500 * 1024),
+              img_type=VImageType('img_type'))
+    def POST_link_thumb(self, link=None, file=None, img_type='jpg'):
         if link and (not promote.is_promoted(link) or
                      c.user_is_sponsor or c.user.trusted_sponsor):
             errors = dict(BAD_CSS_NAME="", IMAGE_ERROR="")
             try:
                 # thumnails for promoted links can change and therefore expire
-                force_thumbnail(link, file, file_type=".jpg")
+                force_thumbnail(link, file, file_type=".%s" % img_type)
             except cssfilter.BadImage:
                 # if the image doesn't clean up nicely, abort
                 errors["IMAGE_ERROR"] = _("bad image")
