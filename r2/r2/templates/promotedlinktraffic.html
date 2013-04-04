@@ -67,9 +67,9 @@
   </tr>
   </thead>
   <tbody>
-  % for date, data in thing.history:
+  % for date, datestr, data in thing.history:
   <tr>
-    <th scope="col" data-value="${js_timestamp(date)}">${date}</th>
+    <th scope="col" data-value="${js_timestamp(date)}">${datestr}</th>
     % for datum in data:
     <td data-value="${datum}">${format_number(datum)}</td>
     % endfor

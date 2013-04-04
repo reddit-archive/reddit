@@ -23,11 +23,13 @@
 
 import collections
 import datetime
+import pytz
 import urllib
 
 from pylons.i18n import _
 from pylons import g, c, request
 import babel.core
+from babel.dates import format_datetime
 
 from r2.lib import promote
 from r2.lib.menus import menu
@@ -526,7 +528,15 @@ class PromotedLinkTraffic(RedditTraffic):
 
             self.total_impressions += imps
             self.total_clicks += clicks
-            computed_history.append((date, data + (u_ctr, ctr)))
+
+            date = date.replace(tzinfo=pytz.utc)
+            datestr = format_datetime(
+                date,
+                tzinfo=pytz.timezone("US/Eastern"),
+                locale=c.locale,
+                format="yyyy-MM-dd HH:mm zzz",
+            )
+            computed_history.append((date, datestr, data + (u_ctr, ctr)))
 
         self.history = computed_history
 
