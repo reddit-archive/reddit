@@ -52,6 +52,7 @@ from r2.lib.cache import CL_ONE
 from r2.lib.contrib.rcssmin import cssmin
 from r2.lib import s3cp
 from r2.models.query_cache import MergedCachedQuery
+import pycassa
 
 import math
 
@@ -1289,6 +1290,9 @@ class LabeledMulti(MultiReddit, tdb_cassandra.Thing):
         "key_validation_class": tdb_cassandra.UTF8_TYPE,
         "column_name_class": tdb_cassandra.UTF8_TYPE,
         "default_validation_class": tdb_cassandra.UTF8_TYPE,
+        "column_validation_classes": {
+            "date": pycassa.system_manager.DATE_TYPE,
+        },
     }
     _compare_with = tdb_cassandra.UTF8_TYPE
 
