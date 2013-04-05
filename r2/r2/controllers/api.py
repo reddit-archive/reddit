@@ -896,7 +896,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         # user is removing their email
         if (not email and c.user.email and 
-            form.has_errors("email", errors.NO_EMAILS)):
+            (errors.NO_EMAILS, 'email') in c.errors):
+            c.errors.remove((errors.NO_EMAILS, 'email'))
             c.user.email = ''
             c.user.email_verified = None
             c.user._commit()
