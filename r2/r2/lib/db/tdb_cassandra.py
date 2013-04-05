@@ -831,13 +831,10 @@ class UuidThing(ThingBase):
 def view_of(cls):
     """Register a class as a view of a Thing.
 
-    Views are expected to implement two methods:
-
-        create - called on relationship creation. takes a thing1, a list
-                 of thing2s and opaque, extra data passed from above.
-
-        delete - called on relationship destruction. takes a thing1, a list
-                 of things2 and opaque.
+    When a Thing is created or destroyed the appropriate View method must be
+    called to update the View. This can be done using Thing._on_create() for
+    general Thing classes or create()/destroy() for DenormalizedRelation
+    classes.
 
     """
     def view_of_decorator(view_cls):
