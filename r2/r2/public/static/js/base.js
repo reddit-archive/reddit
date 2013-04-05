@@ -18,6 +18,7 @@ r.setup = function(config) {
 }
 
 r.setupBackbone = function() {
+    Backbone.emulateJSON = true
     Backbone.ajax = function(request) {
         var url = request.url,
             preloaded = r.preload.read(url)
