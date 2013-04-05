@@ -188,6 +188,15 @@ class ApiController(RedditController, OAuth2ResourceController):
         if not (responder.has_errors("user", errors.BAD_USERNAME)):
             return bool(user)
 
+    @json_validate()
+    @api_doc(api_section.captcha, extensions=["json"])
+    def GET_needs_captcha(self, responder):
+        """
+        Check whether CAPTCHAs are needed for API methods that define the
+        "captcha" and "iden" parameters.
+        """
+        return bool(c.user.needs_captcha())
+
     @validatedForm(VCaptcha(),
                    name=VRequired('name', errors.NO_NAME),
                    email=ValidEmails('email', num = 1),
