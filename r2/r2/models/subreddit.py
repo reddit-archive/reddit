@@ -1425,7 +1425,7 @@ class LabeledMulti(MultiReddit, tdb_cassandra.Thing):
         if len(self._srs) + len(sr_columns) > self.MAX_SR_COUNT:
             raise TooManySubredditsException
 
-        for attr, val in sr_columns.items():
+        for attr, val in sr_columns.iteritems():
             self.__setattr__(attr, val)
         self._commit()
 
