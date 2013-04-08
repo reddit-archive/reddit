@@ -1379,6 +1379,12 @@ class LabeledMulti(MultiReddit, tdb_cassandra.Thing):
         # is smarter
         return 'multi'
 
+    @property
+    def title(self):
+        if isinstance(self.owner, Account):
+            return _('%s subreddits curated by /u/%s') % (self.name, self.owner.name)
+        return _('%s subreddits') % self.name
+
     def can_view(self, user):
         return user == self.owner or self.visibility == 'public'
 
