@@ -937,7 +937,6 @@ class FakeSubreddit(BaseSite):
     title = ''
     description = ''
     link_type = "any"
-    sponsorship_url = None
     flair_enabled = True
     flair_position = "right"
     link_flair_position = ""
