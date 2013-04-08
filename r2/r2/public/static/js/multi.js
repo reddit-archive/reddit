@@ -87,9 +87,10 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     initialize: function() {
+        this.showWorkingDeferred = _.partial(r.ui.showWorkingDeferred, this.$el)
         this.model.subreddits.on('add remove', this.render, this)
         this.model.on('request', function(model, xhr) {
-            r.ui.showWorkingDeferred(this.$el, xhr)
+            this.showWorkingDeferred(xhr)
         }, this)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
     },
@@ -118,7 +119,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.model.addSubreddit(srName, {
             wait: true,
             success: _.bind(function() {
-                r.ui.refreshListing()
+                this.showWorkingDeferred(r.ui.refreshListing())
                 this.$('.add-error').hide()
             }, this),
             error: _.bind(function(model, xhr) {
@@ -133,7 +134,9 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     removeSubreddit: function(ev) {
         var srName = $(ev.target).parent().data('name')
-        this.model.removeSubreddit(srName, {success: r.ui.refreshListing})
+        this.model.removeSubreddit(srName, {
+            success: _.compose(this.showWorkingDeferred, r.ui.refreshListing)
+        })
     },
 
     setVisibility: function() {

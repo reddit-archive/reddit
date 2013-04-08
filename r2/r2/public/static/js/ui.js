@@ -61,7 +61,7 @@ r.ui.refreshListing = function() {
     var url = $.url(),
         params = url.param()
     params['bare'] = 'y'
-    $.ajax({
+    return $.ajax({
         type: 'GET',
         url: url.attr('base') + url.attr('path'),
         data: params
