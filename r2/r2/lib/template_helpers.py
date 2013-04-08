@@ -137,8 +137,6 @@ def js_config(extra_config=None):
         "https_endpoint": is_subdomain(request.host, g.domain) and g.https_endpoint,
         # debugging?
         "debug": g.debug,
-        "vl": {},
-        "sr": {},
         "status_msg": {
           "fetching": _("fetching title..."),
           "submitting": _("submitting..."),

@@ -177,9 +177,6 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
   ${plain_link(thing.subreddit.name, thing.subreddit_path, sr_path = False,
                cname = False, _class = "subreddit hover",
                target='_blank' if thing.newwindow else '')}
-  <script type="text/javascript">
-    reddit.sr['${thing._fullname}'] = '${thing.subreddit._fullname}';
-  </script>
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
