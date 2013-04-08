@@ -109,13 +109,12 @@ class ListingController(RedditController, OAuth2ResourceController):
         self.query_obj = self.query()
         self.builder_obj = self.builder()
         self.listing_obj = self.listing()
-        content = self.content()
 
         if self.bare:
-            return responsive(content.render())
+            return responsive(self.listing_obj.render())
 
+        content = self.content()
         page_classes = self.extra_page_classes
-
         if (self.show_chooser and
                 c.user_is_loggedin and c.user.pref_show_left_bar and
                 isinstance(c.site, (DefaultSR, AllSR, LabeledMulti))):
