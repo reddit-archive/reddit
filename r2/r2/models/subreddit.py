@@ -76,11 +76,18 @@ def get_links_sr_ids(sr_ids, sort, time):
 
 
 class BaseSite(object):
-    static_path = g.static_path
-    stylesheet = None
-    stylesheet_hash = None
-    header = None
-    header_title = None
+    _defaults = dict(
+        static_path=g.static_path,
+        stylesheet=None,
+        stylesheet_hash='',
+        header=None,
+        header_title='',
+    )
+
+    def __getattr__(self, name):
+        if name in self._defaults:
+            return self._defaults[name]
+        raise AttributeError
 
     @property
     def path(self):
@@ -107,52 +114,48 @@ class BaseSite(object):
 class SubredditExists(Exception): pass
 
 
-class Subreddit(BaseSite, Thing, Printable):
+class Subreddit(Thing, Printable, BaseSite):
     # Note: As of 2010/03/18, nothing actually overrides the static_path
     # attribute, even on a cname. So c.site.static_path should always be
     # the same as g.static_path.
-    _defaults = dict(static_path = g.static_path,
-                     stylesheet = None,
-                     stylesheet_rtl = None,
-                     stylesheet_contents = '',
-                     stylesheet_hash     = '',
-                     stylesheet_modified = None,
-                     header = None,
-                     header_size = None,
-                     header_title = "",
-                     allow_top = False, # overridden in "_new"
-                     images = {},
-                     reported = 0,
-                     valid_votes = 0,
-                     show_media = False,
-                     show_cname_sidebar = False,
-                     css_on_cname = True,
-                     domain = None,
-                     wikimode = "disabled",
-                     wiki_edit_karma = 100,
-                     wiki_edit_age = 0,
-                     over_18 = False,
-                     exclude_banned_modqueue = False,
-                     mod_actions = 0,
-                     # do we allow self-posts, links only, or any?
-                     link_type = 'any', # one of ('link', 'self', 'any')
-                     submit_link_label = '',
-                     submit_text_label = '',
-                     comment_score_hide_mins = 0,
-                     flair_enabled = True,
-                     flair_position = 'right', # one of ('left', 'right')
-                     link_flair_position = '', # one of ('', 'left', 'right')
-                     flair_self_assign_enabled = False,
-                     link_flair_self_assign_enabled = False,
-                     use_quotas = True,
-                     description = "",
-                     public_description = "",
-                     prev_description_id = "",
-                     prev_public_description_id = "",
-                     allow_comment_gilding=True,
-                     hide_subscribers=False,
-                     public_traffic=False,
-                     )
+    _defaults = dict(BaseSite._defaults,
+        stylesheet_rtl = None,
+        stylesheet_contents = '',
+        stylesheet_modified = None,
+        header_size = None,
+        allow_top = False, # overridden in "_new"
+        images = {},
+        reported = 0,
+        valid_votes = 0,
+        show_media = False,
+        show_cname_sidebar = False,
+        css_on_cname = True,
+        domain = None,
+        wikimode = "disabled",
+        wiki_edit_karma = 100,
+        wiki_edit_age = 0,
+        over_18 = False,
+        exclude_banned_modqueue = False,
+        mod_actions = 0,
+        # do we allow self-posts, links only, or any?
+        link_type = 'any', # one of ('link', 'self', 'any')
+        submit_link_label = '',
+        submit_text_label = '',
+        comment_score_hide_mins = 0,
+        flair_enabled = True,
+        flair_position = 'right', # one of ('left', 'right')
+        link_flair_position = '', # one of ('', 'left', 'right')
+        flair_self_assign_enabled = False,
+        link_flair_self_assign_enabled = False,
+        use_quotas = True,
+        description = "",
+        public_description = "",
+        prev_description_id = "",
+        prev_public_description_id = "",
+        allow_comment_gilding=True,
+        hide_subscribers=False,
+        public_traffic=False,
+    )
     _essentials = ('type', 'name', 'lang')
     _data_int_props = Thing._data_int_props + ('mod_actions', 'reported',
                                                'wiki_edit_karma', 'wiki_edit_age')
@@ -932,14 +935,9 @@ class Subreddit(BaseSite, Thing, Printable):
         rel._commit()
 
 class FakeSubreddit(BaseSite):
-    domain = None
-    over_18 = False
-    title = ''
-    description = ''
-    link_type = "any"
-    flair_enabled = True
-    flair_position = "right"
-    link_flair_position = ""
+    _defaults = dict(Subreddit._defaults,
+        link_flair_position='right',
+    )
 
     def __init__(self):
         BaseSite.__init__(self)
@@ -1280,11 +1278,13 @@ class TooManySubredditsException(Exception):
     pass
 
 
-class LabeledMulti(MultiReddit, tdb_cassandra.Thing):
+class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     """Thing with special columns that hold Subreddit ids and properties."""
     _use_db = True
     _views = []
-    _defaults = {'visibility': 'private'}
+    _defaults = dict(MultiReddit._defaults,
+        visibility='private',
+    )
     _extra_schema_creation_args = {
         "key_validation_class": tdb_cassandra.UTF8_TYPE,
         "column_name_class": tdb_cassandra.UTF8_TYPE,
