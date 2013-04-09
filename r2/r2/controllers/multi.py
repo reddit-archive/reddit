@@ -95,7 +95,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     )
     def PUT_multi(self, info, data):
         """Create or update a multi."""
-        if info['username'] != c.user.name:
+        if info['username'].lower() != c.user.name.lower():
             raise RedditError('BAD_MULTI_NAME', code=400, fields="path")
 
         try:
