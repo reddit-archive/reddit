@@ -1176,9 +1176,11 @@ class FormsController(RedditController):
             # wrong user. log them out and try again.
             self.logout()
             return self.redirect(request.fullpath)
-        elif token and c.user.email_verified:
-            # they've already verified. consume and ignore this token.
-            token.consume()
+        elif c.user.email_verified:
+            # they've already verified.
+            if token:
+                # consume and ignore this token (if not already consumed).
+                token.consume()
             return self.redirect(dest)
         elif token and token.valid_for_user(c.user):
             # successful verification!
