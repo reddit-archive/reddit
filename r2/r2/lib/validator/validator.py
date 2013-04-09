@@ -1774,8 +1774,7 @@ class VDateRange(VDate):
 
 class VDestination(Validator):
     def __init__(self, param = 'dest', default = "", **kw):
-        self.default = default
-        Validator.__init__(self, param, **kw)
+        Validator.__init__(self, param, default, **kw)
 
     def run(self, dest):
         if not dest:
