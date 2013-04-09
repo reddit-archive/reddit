@@ -1256,6 +1256,10 @@ class MultiReddit(FakeSubreddit):
             return FakeSRMember(ModeratorPermissionSet)
 
     @property
+    def title(self):
+        return _('posts from %s') % ', '.join(sr.name for sr in self.srs)
+
+    @property
     def path(self):
         return self._path
 
