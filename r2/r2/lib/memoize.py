@@ -66,6 +66,7 @@ def memoize(iden, time = 0, stale=False, timeout=30):
 
             return res
 
+        new_fn.memoized_fn = fn
         return new_fn
     return memoize_fn
 
