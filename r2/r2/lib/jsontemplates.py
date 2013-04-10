@@ -499,6 +499,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
         d = ThingJsonTemplate.raw_data(self, thing)
         if thing.was_comment:
             d['link_title'] = thing.link_title
+            d['likes'] = thing.likes
         return d
 
     def rendered_data(self, wrapped):
