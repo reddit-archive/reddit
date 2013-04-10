@@ -980,7 +980,7 @@ class RedditController(MinimalController):
 
         # random reddit trickery -- have to do this after the content lang is set
         if c.site == Random:
-            c.site = Subreddit.random_reddit()
+            c.site = Subreddit.random_reddit(user=c.user)
             redirect_to("/" + c.site.path.strip('/') + request.path)
         elif c.site == RandomSubscription:
             if c.user.gold:
@@ -989,7 +989,7 @@ class RedditController(MinimalController):
             else:
                 redirect_to('/gold/about')
         elif c.site == RandomNSFW:
-            c.site = Subreddit.random_reddit(over18=True)
+            c.site = Subreddit.random_reddit(over18=True, user=c.user)
             redirect_to("/" + c.site.path.strip('/') + request.path)
 
         if not request.path.startswith("/api/login/"):

@@ -660,12 +660,15 @@ class Subreddit(Thing, Printable):
         return sr_ids + automatic_ids
 
     @classmethod
-    def random_reddit(cls, limit = 2500, over18 = False):
+    def random_reddit(cls, limit=2500, over18=False, user=None):
         srs = cls.top_lang_srs(c.content_langs, limit,
                                filter_allow_top = False,
                                over18 = over18,
                                over18_only = over18,
                                ids=True)
+        if user:
+            excludes = cls.user_subreddits(user, over18=over18, limit=None)
+            srs = list(set(srs) - set(excludes))
         return (Subreddit._byID(random.choice(srs))
                 if srs else Subreddit._by_name(g.default_sr))
 
