@@ -888,7 +888,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                 updated = True
             if verify:
                 # TODO: rate limit this?
-                emailer.verify_email(c.user, request.referer)
+                emailer.verify_email(c.user)
                 form.set_html('.status',
                      _("you should be getting a verification email shortly."))
             else:
