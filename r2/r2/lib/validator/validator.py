@@ -277,7 +277,7 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
     # add data to the output on some errors
     for validator in simple_vals:
         if (isinstance(validator, VCaptcha) and
-            form.has_errors('captcha', errors.BAD_CAPTCHA)):
+            (form.has_errors('captcha', errors.BAD_CAPTCHA) or c.errors)):
             form.new_captcha()
         elif (isinstance(validator, VRatelimit) and
               form.has_errors('ratelimit', errors.RATELIMIT)):
