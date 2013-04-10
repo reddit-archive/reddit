@@ -495,6 +495,12 @@ class MessageJsonTemplate(ThingJsonTemplate):
                 return make_fullname(Message, thing.first_message)
         return ThingJsonTemplate.thing_attr(self, thing, attr)
 
+    def raw_data(self, thing):
+        d = ThingJsonTemplate.raw_data(self, thing)
+        if thing.was_comment:
+            d['link_title'] = thing.link_title
+        return d
+
     def rendered_data(self, wrapped):
         from r2.models import Message
         parent_id = wrapped.parent_id
