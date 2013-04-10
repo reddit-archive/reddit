@@ -347,6 +347,8 @@ class Subreddit(Thing, Printable):
             return True
         elif self.is_banned(user) and not promotion:
             return False
+        elif self.spammy():
+            return False
         elif self.type == 'public':
             return True
         elif self.is_moderator(user) or self.is_contributor(user):
