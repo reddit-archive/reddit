@@ -1390,9 +1390,15 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return _('%s subreddits') % self.name
 
     def can_view(self, user):
+        if c.user_is_admin:
+            return True
+
         return user == self.owner or self.visibility == 'public'
 
     def can_edit(self, user):
+        if c.user_is_admin:
+            return True
+
         return user == self.owner
 
     @classmethod
