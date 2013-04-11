@@ -146,7 +146,7 @@ def add_error_codes(new_codes):
 class RedditError(Exception):
     name = None
     fields = None
-    code = 400
+    code = None
 
     def __init__(self, name=None, msg_params=None, fields=None, code=None):
         Exception.__init__(self)
