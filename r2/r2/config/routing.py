@@ -28,8 +28,9 @@ from pylons import config
 
 
 def not_in_sr(environ, results):
-    return 'subreddit' not in environ and 'sub_domain' not in environ
-
+    return ('subreddit' not in environ and
+            'sub_domain' not in environ and
+            'domain' not in environ)
 
 def make_map():
     map = Mapper()
