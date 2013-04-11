@@ -30,13 +30,15 @@ from pylons.i18n import _
 from pylons import g, c, request
 import babel.core
 from babel.dates import format_datetime
+from babel.numbers import format_currency
 
 from r2.lib import promote
 from r2.lib.menus import menu
 from r2.lib.menus import NavButton, NamedButton, PageNameNav, NavMenu
 from r2.lib.pages.pages import Reddit, TimeSeriesChart, UserList, TabbedPane
 from r2.lib.promote import cost_per_mille, cost_per_click
-from r2.lib.utils import Storage
+from r2.lib.template_helpers import format_number
+from r2.lib.utils import Storage, to_date
 from r2.lib.wrapped import Templated
 from r2.models import Thing, Link, PromoCampaign, traffic
 from r2.models.subreddit import Subreddit, _DefaultSR
@@ -452,82 +454,223 @@ def _is_promo_preliminary(end_date):
     return end_date + datetime.timedelta(days=1) > now
 
 
-class PromotedLinkTraffic(RedditTraffic):
-    def __init__(self, thing, before=None, after=None):
+def get_traffic_dates(thing):
+    """Retrieve the start and end of a Promoted Link or PromoCampaign."""
+    now = datetime.datetime.now(g.tz).replace(minute=0, second=0,
+                                              microsecond=0)
+
+    if isinstance(thing, Link):
+        start, end = promote.get_total_run(thing)
+        start, end = start.replace(tzinfo=g.tz), end.replace(tzinfo=g.tz)
+    elif isinstance(thing, PromoCampaign):
+        # PromoCampaigns store their dates as UTC, promote changes occur
+        # at 12 AM EST
+        promo_tz = pytz.timezone("US/Eastern")
+        start = (thing.start_date.replace(tzinfo=promo_tz)
+                        .astimezone(pytz.utc))
+        end = (thing.end_date.replace(tzinfo=promo_tz)
+                        .astimezone(pytz.utc))
+
+    end = min(now, end)
+    return start, end
+
+
+def get_promo_traffic(thing, start, end):
+    """Get traffic for a Promoted Link or PromoCampaign"""
+    if isinstance(thing, Link):
+        imp_fn = traffic.AdImpressionsByCodename.promotion_history
+        click_fn = traffic.ClickthroughsByCodename.promotion_history
+    elif isinstance(thing, PromoCampaign):
+        imp_fn = traffic.TargetedImpressionsByCodename.promotion_history
+        click_fn = traffic.TargetedClickthroughsByCodename.promotion_history
+
+    imps = imp_fn(thing._fullname, start.replace(tzinfo=None),
+                  end.replace(tzinfo=None))
+    clicks = click_fn(thing._fullname, start.replace(tzinfo=None),
+                      end.replace(tzinfo=None))
+
+    if imps and not clicks:
+        clicks = [(imps[0][0], (0,))]
+
+    history = traffic.zip_timeseries(imps, clicks, order="ascending")
+    return history
+
+
+def get_billable_traffic(campaign):
+    """Get traffic for dates when PromoCampaign is active."""
+    start, end = get_traffic_dates(campaign)
+    return get_promo_traffic(campaign, start, end)
+
+
+def is_early_campaign(campaign):
+    # traffic by campaign was only recorded starting 2012/9/12
+    return campaign.end_date < datetime.datetime(2012, 9, 12, 0, 0, tzinfo=g.tz)
+
+
+def is_launched_campaign(campaign):
+    now = datetime.datetime.now(g.tz).date()
+    return bool(campaign.trans_id) and campaign.start_date.date() <= now
+
+
+class PromotedLinkTraffic(Templated):
+    def __init__(self, thing, campaign, before, after):
         self.thing = thing
+        self.campaign = campaign
         self.before = before
         self.after = after
-        self.period = datetime.timedelta(days=31)
+        self.period = datetime.timedelta(days=7)
         self.prev = None
         self.next = None
+        self.has_live_campaign = False
+        self.has_early_campaign = False
+        self.detail_name = ('campaign %s' % campaign._id36 if campaign
+                                                           else 'all campaigns')
 
         editable = c.user_is_sponsor or c.user._id == thing.author_id
         self.viewer_list = TrafficViewerList(thing, editable)
 
-        RedditTraffic.__init__(self, None)
+        self.traffic_last_modified = traffic.get_traffic_last_modified()
+        self.traffic_lag = (datetime.datetime.utcnow() -
+                            self.traffic_last_modified)
+        self.make_hourly_table(campaign or thing)
+        self.make_campaign_table()
+        Templated.__init__(self)
 
-    def make_tables(self):
-        now = datetime.datetime.utcnow().replace(minute=0, second=0,
-                                                 microsecond=0)
+    @classmethod
+    def make_campaign_table_row(cls, id, start, end, target, bid, impressions,
+                                clicks, is_live, is_active, url, is_total):
+        if impressions:
+            cpm = format_currency(promote.cost_per_mille(bid, impressions),
+                                  'USD', locale=c.locale)
+        else:
+            cpm = '---'
 
-        promo_start, promo_end = promote.get_total_run(self.thing)
-        promo_end = min(now, promo_end)
+        if clicks:
+            cpc = format_currency(promote.cost_per_click(bid, clicks), 'USD',
+                                  locale=c.locale)
+            ctr = format_number(_clickthrough_rate(impressions, clicks))
+        else:
+            cpc = '---'
+            ctr = '---'
 
-        if not promo_start or not promo_end:
-            self.history = []
-            return
+        return {
+            'id': id,
+            'start': start,
+            'end': end,
+            'target': target,
+            'bid': format_currency(bid, 'USD', locale=c.locale),
+            'impressions': format_number(impressions),
+            'cpm': cpm,
+            'clicks': format_number(clicks),
+            'cpc': cpc,
+            'ctr': ctr,
+            'live': is_live,
+            'active': is_active,
+            'url': url,
+            'csv': url + '.csv',
+            'total': is_total,
+        }
+
+    def make_campaign_table(self):
+        campaigns = PromoCampaign._by_link(self.thing._id)
+
+        total_bid = 0
+        total_impressions = 0
+        total_clicks = 0
+
+        self.campaign_table = []
+        for camp in campaigns:
+            if not is_launched_campaign(camp):
+                continue
+
+            is_live = camp.is_live_now()
+            self.has_early_campaign |= is_early_campaign(camp)
+            self.has_live_campaign |= is_live
+
+            history = get_billable_traffic(camp)
+            impressions, clicks = 0, 0
+            for date, (imp, click) in history:
+                impressions += imp
+                clicks += click
+
+            start = to_date(camp.start_date).strftime('%Y-%m-%d')
+            end = to_date(camp.end_date).strftime('%Y-%m-%d')
+            target = camp.sr_name or 'frontpage'
+            is_active = self.campaign and self.campaign._id36 == camp._id36
+            url = '/traffic/%s/%s' % (self.thing._id36, camp._id36)
+            is_total = False
+            row = self.make_campaign_table_row(camp._id36, start, end, target,
+                                               camp.bid, impressions, clicks,
+                                               is_live, is_active, url,
+                                               is_total)
+            self.campaign_table.append(row)
+
+            total_bid += camp.bid
+            total_impressions += impressions
+            total_clicks += clicks
+
+        # total row
+        start = '---'
+        end = '---'
+        target = '---'
+        is_live = False
+        is_active = not self.campaign
+        url = '/traffic/%s' % self.thing._id36
+        is_total = True
+        row = self.make_campaign_table_row(_('total'), start, end, target,
+                                           total_bid, total_impressions,
+                                           total_clicks, is_live, is_active,
+                                           url, is_total)
+        self.campaign_table.append(row)
+
+    def check_dates(self, thing):
+        """Shorten range for display and add next/prev buttons."""
+        start, end = get_traffic_dates(thing)
 
         if self.period:
-            start = self.after
-            end = self.before
+            display_start = self.after
+            display_end = self.before
 
-            if not start and not end:
-                end = promo_end
-                start = end - self.period
+            if not display_start and not display_end:
+                display_end = end
+                display_start = end - self.period
+            elif not display_end:
+                display_end = display_start + self.period
+            elif not display_start:
+                display_start = display_end - self.period
 
-            elif not end:
-                end = start + self.period
-
-            elif not start:
-                start = end - self.period
-
-            if start > promo_start:
+            if display_start > start:
                 p = request.get.copy()
-                p.update({'after':None, 'before':start.strftime('%Y%m%d%H')})
+                p.update({
+                    'after': None,
+                    'before': display_start.strftime('%Y%m%d%H'),
+                })
                 self.prev = '%s?%s' % (request.path, urllib.urlencode(p))
             else:
-                start = promo_start
+                display_start = start
 
-            if end < promo_end:
+            if display_end < end:
                 p = request.get.copy()
-                p.update({'after':end.strftime('%Y%m%d%H'), 'before':None})
+                p.update({
+                    'after': display_end.strftime('%Y%m%d%H'),
+                    'before': None,
+                })
                 self.next = '%s?%s' % (request.path, urllib.urlencode(p))
             else:
-                end = promo_end
+                display_end = end
         else:
-            start, end = promo_start, promo_end
+            display_start, display_end = start, end
 
-        fullname = self.thing._fullname
-        imps = traffic.AdImpressionsByCodename.promotion_history(fullname,
-                                                                 start, end)
-        clicks = traffic.ClickthroughsByCodename.promotion_history(fullname,
-                                                                   start, end)
+        return display_start, display_end
 
-        # promotion might have no clicks, zip_timeseries needs valid columns
-        if imps and not clicks:
-            clicks = [(imps[0][0], (0, 0))]
-
-        history = traffic.zip_timeseries(imps, clicks, order="ascending")
+    @classmethod
+    def get_hourly_traffic(cls, thing, start, end):
+        """Retrieve hourly traffic for a Promoted Link or PromoCampaign."""
+        history = get_promo_traffic(thing, start, end)
         computed_history = []
-        self.total_impressions, self.total_clicks = 0, 0
         for date, data in history:
-            u_imps, imps, u_clicks, clicks = data
-
-            u_ctr = _clickthrough_rate(u_imps, u_clicks)
+            imps, clicks = data
             ctr = _clickthrough_rate(imps, clicks)
-
-            self.total_impressions += imps
-            self.total_clicks += clicks
 
             date = date.replace(tzinfo=pytz.utc)
             date = date.astimezone(pytz.timezone("US/Eastern"))
@@ -536,14 +679,21 @@ class PromotedLinkTraffic(RedditTraffic):
                 locale=c.locale,
                 format="yyyy-MM-dd HH:mm zzz",
             )
-            computed_history.append((date, datestr, data + (u_ctr, ctr)))
+            computed_history.append((date, datestr, data + (ctr,)))
+        return computed_history
 
-        self.history = computed_history
+    def make_hourly_table(self, thing):
+        start, end = self.check_dates(thing)
+        self.history = self.get_hourly_traffic(thing, start, end)
 
+        self.total_impressions, self.total_clicks = 0, 0
+        for date, datestr, data in self.history:
+            imps, clicks, ctr = data
+            self.total_impressions += imps
+            self.total_clicks += clicks
         if self.total_impressions > 0:
             self.total_ctr = _clickthrough_rate(self.total_impressions,
                                                 self.total_clicks)
-
         # XXX: _is_promo_preliminary correctly expects tz-aware datetimes
         # because it's also used with datetimes from promo code. this hack
         # relies on the fact that we're storing UTC w/o timezone info.
@@ -551,31 +701,25 @@ class PromotedLinkTraffic(RedditTraffic):
         end_aware = end.replace(tzinfo=g.tz)
         self.is_preliminary = _is_promo_preliminary(end_aware)
 
-        # we should only graph a sane number of data points (not everything)
-        self.max_points = traffic.points_for_interval("hour")
-
-        return computed_history
-
-    def as_csv(self):
+    @classmethod
+    def as_csv(cls, thing):
         """Return the traffic data in CSV format for reports."""
 
         import csv
         import cStringIO
 
+        start, end = get_traffic_dates(thing)
+        history = cls.get_hourly_traffic(thing, start, end)
+
         out = cStringIO.StringIO()
         writer = csv.writer(out)
 
-        self.period = None
-        history = self.make_tables()
         writer.writerow((_("date and time (UTC)"),
-                         _("unique impressions"),
-                         _("total impressions"),
-                         _("unique clicks"),
-                         _("total clicks"),
-                         _("unique click-through rate (%)"),
-                         _("total click-through rate (%)")))
+                         _("impressions"),
+                         _("clicks"),
+                         _("click-through rate (%)")))
         for date, datestr, values in history:
-            # flatten (date, value-tuple) to (date, value1, value2...)
+            # flatten (date, datestr, value-tuple) to (date, value1, value2...)
             writer.writerow((date,) + values)
 
         return out.getvalue()

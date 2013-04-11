@@ -149,8 +149,8 @@ def make_map():
        action='related', title=None)
     mc('/details/:article/:title', controller='front',
        action='details', title=None)
-    mc('/traffic/:article/:title', controller='front',
-       action='traffic', title=None)
+    mc('/traffic/:link/:campaign', controller='front', action='traffic',
+       campaign=None)
     mc('/comments/:article/:title/:comment', controller='front',
        action='comments', title=None, comment=None)
     mc('/duplicates/:article/:title', controller='front',
