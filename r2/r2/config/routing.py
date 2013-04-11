@@ -64,16 +64,6 @@ def make_map():
        action='subreddit_traffic_report')
     mc('/account-activity', controller='front', action='account_activity')
 
-    mc('/about/message/:where', controller='message', action='listing')
-    mc('/about/log', controller='front', action='moderationlog')
-    mc('/about/sidebar', controller='front', action='sidebar')
-    mc('/about', controller='front', action='about')
-    mc('/about/flair', controller='front', action='flairlisting')
-    mc('/about/:location', controller='front', action='spamlisting',
-       requirements=dict(location='reports|spam|modqueue|unmoderated'))
-    mc('/about/:location', controller='front', action='editreddit',
-       location='about')
-
     mc('/subreddits/create', controller='front', action='newreddit')
     mc('/subreddits/search', controller='front', action='search_reddits')
     mc('/subreddits/login', controller='forms', action='login')
@@ -132,6 +122,23 @@ def make_map():
     mc('/user/:username/m/:multi/:sort', controller='browse', sort='top',
        action='listing', requirements=dict(sort='top|controversial'))
 
+    mc('/about/sidebar', controller='front', action='sidebar')
+    mc('/about/flair', controller='front', action='flairlisting')
+    mc('/about', controller='front', action='about')
+    mc('/comments/gilded', controller='redirect', action='gilded_comments',
+       conditions={'function': not_in_sr})
+    for prefix in ('', '/user/:username/m/:multi'):
+       mc(prefix + '/about/message/:where', controller='message',
+          action='listing')
+       mc(prefix + '/about/log', controller='front', action='moderationlog')
+       mc(prefix + '/about/:location', controller='front',
+          action='spamlisting',
+          requirements=dict(location='reports|spam|modqueue|unmoderated'))
+       mc(prefix + '/about/:location', controller='front', action='editreddit',
+          location='about')
+       mc(prefix + '/comments', controller='comments', action='listing')
+       mc(prefix + '/comments/gilded', action='listing', controller='gilded')
+
     mc('/u/:username', controller='redirect', action='user_redirect')
     mc('/u/:username/*rest', controller='redirect', action='user_redirect')
 
@@ -148,9 +155,6 @@ def make_map():
     mc('/info/:article/:dest/:comment', controller='front',
        action='oldinfo', type='old', dest='comments', comment=None)
 
-    mc("/comments/gilded", controller="redirect", action="gilded_comments",
-       conditions={"function": not_in_sr})
-    mc("/comments/gilded", action="listing", controller="gilded")
 
     mc('/related/:article/:title', controller='front',
        action='related', title=None)
@@ -200,7 +204,7 @@ def make_map():
     mc('/', controller='hot', action='listing')
 
     mc('/:controller', action='listing',
-       requirements=dict(controller="hot|new|rising|randomrising|comments"))
+       requirements=dict(controller="hot|new|rising|randomrising"))
     mc('/saved', controller='user', action='saved_redirect')
 
     mc('/by_id/:names', controller='byId', action='listing')

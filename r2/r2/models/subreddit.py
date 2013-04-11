@@ -110,6 +110,45 @@ class BaseSite(object):
         rel = self.is_moderator(user)
         return bool(rel and rel.is_superuser())
 
+    def get_links(self, sort, time):
+        from r2.lib.db import queries
+        return queries.get_links(self, sort, time)
+
+    def get_spam(self, include_links=True, include_comments=True):
+        from r2.lib.db import queries
+        return queries.get_spam(self, user=c.user, include_links=include_links,
+                                include_comments=include_comments)
+
+    def get_reported(self, include_links=True, include_comments=True):
+        from r2.lib.db import queries
+        return queries.get_reported(self, user=c.user,
+                                    include_links=include_links,
+                                    include_comments=include_comments)
+
+    def get_modqueue(self, include_links=True, include_comments=True):
+        from r2.lib.db import queries
+        return queries.get_modqueue(self, user=c.user,
+                                    include_links=include_links,
+                                    include_comments=include_comments)
+
+    def get_unmoderated(self):
+        from r2.lib.db import queries
+        return queries.get_unmoderated(self, user=c.user)
+
+    def get_all_comments(self):
+        from r2.lib.db import queries
+        return queries.get_sr_comments(self)
+
+    def get_gilded_comments(self):
+        from r2.lib.db import queries
+        return queries.get_gilded_comments(self)
+
+    @classmethod
+    def get_modactions(cls, srs, mod=None, action=None):
+        # Get a query that will yield ModAction objects with mod and action
+        from r2.models import ModAction
+        return ModAction.get_actions(srs, mod=mod, action=action)
+
 
 class SubredditExists(Exception): pass
 
@@ -557,45 +596,6 @@ class Subreddit(Thing, Printable, BaseSite):
     def keep_for_rising(self, sr_id):
         """Return whether or not to keep a thing in rising for this SR."""
         return sr_id == self._id
-
-    def get_links(self, sort, time):
-        from r2.lib.db import queries
-        return queries.get_links(self, sort, time)
-
-    def get_spam(self, include_links=True, include_comments=True):
-        from r2.lib.db import queries
-        return queries.get_spam(self, user=c.user, include_links=include_links,
-                                include_comments=include_comments)
-
-    def get_reported(self, include_links=True, include_comments=True):
-        from r2.lib.db import queries
-        return queries.get_reported(self, user=c.user,
-                                    include_links=include_links,
-                                    include_comments=include_comments)
-
-    def get_modqueue(self, include_links=True, include_comments=True):
-        from r2.lib.db import queries
-        return queries.get_modqueue(self, user=c.user,
-                                    include_links=include_links,
-                                    include_comments=include_comments)
-
-    def get_unmoderated(self):
-        from r2.lib.db import queries
-        return queries.get_unmoderated(self, user=c.user)
-
-    def get_all_comments(self):
-        from r2.lib.db import queries
-        return queries.get_sr_comments(self)
-
-    def get_gilded_comments(self):
-        from r2.lib.db import queries
-        return queries.get_gilded_comments(self)
-
-    @classmethod
-    def get_modactions(cls, srs, mod=None, action=None):
-        # Get a query that will yield ModAction objects with mod and action 
-        from r2.models import ModAction
-        return ModAction.get_actions(srs, mod=mod, action=action)
 
     @classmethod
     def add_props(cls, user, wrapped):

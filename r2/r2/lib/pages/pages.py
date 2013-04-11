@@ -365,8 +365,10 @@ class Reddit(Templated):
                     box = SubscriptionBox(srs)
                 ps.append(SideContentBox(_('these subreddits'), [box]))
 
-                if c.user_is_admin or c.site.is_moderator(c.user):
-                    ps.append(self.sr_admin_menu())
+            if (srs and c.user_is_loggedin and
+                    (c.user_is_admin or c.site.is_moderator(c.user))):
+                ps.append(self.sr_admin_menu())
+
 
         if isinstance(c.site, AllSR):
             ps.append(AllInfoBar(c.site, c.user))
