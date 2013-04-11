@@ -326,14 +326,20 @@ def total_by_codename(cls, codenames):
 
 
 def promotion_history(cls, codename, start, stop):
-    """Get hourly traffic for a self-serve promotion across all campaigns."""
+    """Get hourly traffic for a self-serve promotion.
+
+    Traffic stats are summed over all targets for classes that include a target.
+
+    """
+
     time_points = get_time_points('hour', start, stop)
-    q = (Session.query(cls)
+    q = (Session.query(cls.date, sum(cls.pageview_count))
                 .filter(cls.interval == "hour")
                 .filter(cls.codename == codename)
                 .filter(cls.date.in_(time_points))
+                .group_by(cls.date)
                 .order_by(cls.date))
-    return [(r.date, (r.unique_count, r.pageview_count)) for r in q.all()]
+    return [(r[0], (r[1],)) for r in q.all()]
 
 
 @memoize("traffic_last_modified", time=60 * 10)
