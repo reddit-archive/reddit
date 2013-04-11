@@ -2168,18 +2168,15 @@ class VPermissions(Validator):
         return type, perm_set
 
 
-class VJSON(VRequired):
-    def __init__(self, item, *args, **kwargs):
-        VRequired.__init__(self, item, errors.BAD_JSON, *args, **kwargs)
-
+class VJSON(Validator):
     def run(self, json_str):
         if not json_str:
-            return self.error()
+            return self.set_error('BAD_JSON', code=400)
         else:
             try:
                 return json.loads(json_str)
             except ValueError:
-                return self.error()
+                return self.set_error('BAD_JSON', code=400)
 
     def param_docs(self):
         return {
