@@ -116,6 +116,7 @@ class ListingController(RedditController, OAuth2ResourceController):
         content = self.content()
         page_classes = self.extra_page_classes
         if (self.show_chooser and
+                c.render_style == "html" and
                 c.user_is_loggedin and c.user.pref_show_left_bar and
                 isinstance(c.site, (DefaultSR, AllSR, LabeledMulti))):
             page_classes = page_classes + ['with-listing-chooser']
