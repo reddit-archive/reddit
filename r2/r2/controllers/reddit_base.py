@@ -664,6 +664,8 @@ class MinimalController(BaseController):
     def pre(self):
         action = request.environ["pylons.routes_dict"].get("action")
         if action:
+            if not self._get_action_handler():
+                action = 'invalid'
             c.request_timer = g.stats.get_timer(request_timer_name(action))
         else:
             c.request_timer = SimpleSillyStub()
