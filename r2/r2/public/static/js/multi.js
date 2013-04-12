@@ -175,7 +175,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
 
     initialize: function() {
         this.on('show', this.load, this)
-        this.listenTo(r.multi.mine, 'reset', this.render)
+        this.listenTo(r.multi.mine, 'reset add', this.render)
         r.ui.Bubble.prototype.initialize.apply(this)
     },
 
