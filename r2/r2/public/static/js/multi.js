@@ -161,7 +161,6 @@ r.multi.SubscribeButton = Backbone.View.extend({
             group: this.options.bubbleGroup,
             sr_name: this.$el.data('sr_name')
         })
-        this.$el.append(this.bubble.el)
     }
 })
 

@@ -229,7 +229,6 @@ r.ui.Bubble = Backbone.View.extend({
             this.options.group.current = null
         }
         this.$el.hide()
-        this.$parent.append(this.$el)
     },
 
     hide: function(callback) {
