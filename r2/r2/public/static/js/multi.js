@@ -31,7 +31,10 @@ r.multi = {
 r.multi.MultiRedditList = Backbone.Collection.extend({
     model: Backbone.Model.extend({
         idAttribute: 'name'
-    })
+    }),
+    comparator: function(model) {
+        return model.get('name').toLowerCase()
+    }
 })
 
 r.multi.MultiReddit = Backbone.Model.extend({
@@ -67,6 +70,9 @@ r.multi.MultiReddit = Backbone.Model.extend({
 r.multi.MyMultiCollection = Backbone.Collection.extend({
     url: '/api/multi/mine',
     model: r.multi.MultiReddit,
+    comparator: function(model) {
+        return model.get('path').toLowerCase()
+    },
 
     create: function(attributes, options) {
         if ('name' in attributes) {

@@ -1591,6 +1591,7 @@ class TrophyCase(Templated):
 class SidebarMultiList(Templated):
     def __init__(self, multis):
         Templated.__init__(self)
+        multis.sort(key=lambda multi: multi.name.lower())
         self.multis = multis
 
 
@@ -1826,6 +1827,7 @@ class MultiInfoBar(Templated):
         Templated.__init__(self)
         self.multi = wrap_things(multi)[0]
         self.can_edit = multi.can_edit(user)
+        srs.sort(key=lambda sr: sr.name.lower())
         self.srs = srs
 
 
@@ -4102,7 +4104,7 @@ class ListingChooser(Templated):
 
         if c.user_is_loggedin:
             multis = LabeledMulti.by_owner(c.user)
-            multis.sort(key=lambda multi: multi.name)
+            multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
                 self.add_item("multi", multi.name, multi.path)
         self.selected_item = self.find_selected()
