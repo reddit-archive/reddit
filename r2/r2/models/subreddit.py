@@ -342,7 +342,7 @@ class Subreddit(Thing, Printable, BaseSite):
         from r2.lib.template_helpers import static, get_domain
 
         if self.stylesheet_is_static:
-            return static(self.static_stylesheet_name)
+            return static(self.static_stylesheet_name, kind='sr_stylesheet')
         else:
             return "http://%s/stylesheet.css?v=%s" % (get_domain(cname=False,
                                                                  subreddit=True),
