@@ -398,7 +398,7 @@ class Stats:
         self.client.timing_stats.record(key, start, end)
 
     def count_string(self, key, value, count=1):
-        self.client.string_counts.record(key, value, count=count)
+        self.client.string_counts.record(key, str(value), count=count)
    
 
 class CacheStats:
