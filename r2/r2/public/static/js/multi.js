@@ -196,14 +196,19 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         }))
 
         var content = $('<div class="multi-list">')
-        r.multi.mine.each(function(multi) {
-            content.append(this.itemTemplate({
-                name: multi.get('name'),
-                path: multi.get('path'),
-                checked: multi.subreddits.get(this.options.sr_name)
-                         ? 'checked' : ''
-            }))
-        }, this)
+        r.multi.mine.chain()
+            .sortBy(function(multi) {
+                // sort multireddits containing this subreddit to the top.
+                return multi.subreddits.get(this.options.sr_name)
+            }, this)
+            .each(function(multi) {
+                content.append(this.itemTemplate({
+                    name: multi.get('name'),
+                    path: multi.get('path'),
+                    checked: multi.subreddits.get(this.options.sr_name)
+                             ? 'checked' : ''
+                }))
+            }, this)
         this.$el.append(content)
     },
 
