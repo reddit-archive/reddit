@@ -626,8 +626,8 @@ class PromoteController(ListingController):
             form.set_inputs(name="")
             form.set_html(".status:first", _("added"))
             if promote.add_traffic_viewer(thing, user):
-                user_row = TrafficViewerList(thing).user_row('traffic', user)
-                jquery(".traffic-table").show(
+                user_row = TrafficViewerList(thing).user_row('traffic_viewer', user)
+                jquery(".traffic_viewer-table").show(
                     ).find("table").insert_table_rows(user_row)
 
                 # send the user a message

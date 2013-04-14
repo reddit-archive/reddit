@@ -586,7 +586,7 @@ class TrafficViewerList(UserList):
 
     destination = "traffic_viewer"
     remove_action = "rm_traffic_viewer"
-    type = "traffic"
+    type = "traffic_viewer"
 
     def __init__(self, link, editable=True):
         self.link = link
