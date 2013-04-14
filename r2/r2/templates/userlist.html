@@ -55,7 +55,7 @@
 </%def>
 
 <%def name="userlist(title, row_type, rows, headers=None)">
-  <div class="${row_type}-table">
+  <div class="${row_type}-table" style="${'display:none' if not rows else ''}">
     <h1>
       ${title}
     </h1>
