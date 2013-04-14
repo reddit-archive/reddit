@@ -118,9 +118,10 @@ def make_map():
        where='overview')
 
     mc('/user/:username/m/:multi', controller='hot', action='listing')
-    mc('/user/:username/m/:multi/new', controller='new', action='listing')
     mc('/user/:username/m/:multi/:sort', controller='browse', sort='top',
        action='listing', requirements=dict(sort='top|controversial'))
+    mc('/user/:username/m/:multi/:controller', action='listing',
+       requirements=dict(controller="hot|new|rising|randomrising"))
 
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about/flair', controller='front', action='flairlisting')
