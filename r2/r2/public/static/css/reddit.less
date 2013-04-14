@@ -25,6 +25,19 @@ body {
 
 textarea { font:  normal small verdana, arial, helvetica, sans-serif; }
 
+button,
+html input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button;
+    cursor: pointer;
+}
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
 /*html,body { height: 100%; }*/
 
 /* IE dumbness patch. hidden input in a hidden block that is
