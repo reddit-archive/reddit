@@ -530,9 +530,9 @@ class PromotedLinkTraffic(RedditTraffic):
             self.total_clicks += clicks
 
             date = date.replace(tzinfo=pytz.utc)
+            date = date.astimezone(pytz.timezone("US/Eastern"))
             datestr = format_datetime(
                 date,
-                tzinfo=pytz.timezone("US/Eastern"),
                 locale=c.locale,
                 format="yyyy-MM-dd HH:mm zzz",
             )
