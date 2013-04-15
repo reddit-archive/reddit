@@ -27,7 +27,7 @@ from r2.models import Friends, All, Sub, NotFound, DomainSR, Random, Mod, Random
 from r2.models import Link, Printable, Trophy, bidding, PromoCampaign, PromotionWeights, Comment
 from r2.models import Flair, FlairTemplate, FlairTemplateBySubredditIndex
 from r2.models import USER_FLAIR, LINK_FLAIR
-from r2.models.promo import PromotionLog
+from r2.models.promo import NO_TRANSACTION, PromotionLog
 from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
@@ -3533,11 +3533,12 @@ class Promote_Graph(Templated):
     def get_market(cls, user_id, start_date, end_date):
         market = {}
         promo_counter = {}
-        def callback(link, bid_day, starti, endi, dummy):
+        def callback(link, bid_day, starti, endi, campaign):
             for i in xrange(starti, endi):
                 if user_id is None or link.author_id == user_id:
                     if (not promote.is_unpaid(link) and 
-                        not promote.is_rejected(link)):
+                        not promote.is_rejected(link) and
+                        campaign.trans_id != NO_TRANSACTION):
                         market[i] = market.get(i, 0) + bid_day
                         promo_counter[i] = promo_counter.get(i, 0) + 1
         cls.promo_iter(start_date, end_date, callback)
