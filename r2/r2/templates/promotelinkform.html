@@ -418,50 +418,6 @@ ${self.javascript_setup()}
 </div>
 
 <%def name="right_panel()">
-%if thing.link and not c.user_is_sponsor:
-  <div class="bidding-history" style="padding-top: 0px;">
-    <%utils:line_field title="${_('promotion history')}" css_class="rounded">
-    <% 
-       import datetime 
-       pc_max = max(thing.promo_counter.values() or [1])
-       %>
-      <p style="font-size:smaller; margin: 5px;">
-        Here is a summary of the data presented on the&#32;<a href="/promoted/graph">graph page</a>.
-        Remember: best to pick days with less competition. </p>
-    <table class="bidding-history">
-      <tr>
-        <th>date</th>
-        <th>CPM</th>
-        <th>CPC</th>
-        <th>count</th>
-        <th></th>
-      </tr>
-      %for i in xrange(0, 28):
-      <%
-         is_today = (i == 14)
-         the_future = (i >= 14)
-         day = (thing.now + datetime.timedelta(i-14))
-         CPC = CPM = imp_traffic = cli_traffic = "---"
-         if thing.promo_traffic.has_key(day):
-            imp_traffic, cli_traffic = thing.promo_traffic[day]
-            if thing.market.has_key(i) and not the_future:
-               CPM = "$%.2f" % (thing.market[i] * 1000./max(imp_traffic, 1))
-               CPC = "$%.2f" % (thing.market[i] * 1./max(cli_traffic, 1))
-       %>
-      <tr>
-        <th>
-          ${unsafe("&raquo;" if is_today else '')}
-          ${day.strftime("%m/%d/%Y")}</th>
-        <td>${CPM}</td>
-        <td>${CPC}</td>
-        <td>${thing.promo_counter.get(i, 0)}</td>
-        <td><div class="graph" style="width:${int(50. * thing.promo_counter.get(i, 0) / pc_max)}px"
-      </tr>
-      %endfor
-    </table>
-</%utils:line_field>
-  </div>
-%endif
 </%def>
 
 ${self.right_panel()}

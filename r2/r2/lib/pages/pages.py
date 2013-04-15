@@ -3204,15 +3204,6 @@ class PromoteLinkForm(Templated):
             self.campaigns = promote.get_renderable_campaigns(link, campaigns)
             self.promotion_log = PromotionLog.get(link)
 
-        if not c.user_is_sponsor:
-            self.now = promote.promo_datetime_now().date()
-            start_date = promote.promo_datetime_now(offset=-14).date()
-            end_date = promote.promo_datetime_now(offset=14).date()
-
-            self.promo_traffic = dict(promote.traffic_totals())
-            self.market, self.promo_counter = \
-                Promote_Graph.get_market(None, start_date, end_date)
-
         self.bids = bids
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 
