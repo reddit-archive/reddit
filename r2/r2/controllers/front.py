@@ -1020,20 +1020,6 @@ class FrontController(RedditController, OAuth2ResourceController):
                             comment=None,
                             content=content).render()
 
-    @validate(VTrafficViewer('link'),
-              link=VLink('link'))
-    def GET_promo_traffic(self, link):
-        if link:
-            content = trafficpages.PromoTraffic(link)
-            if c.render_style == 'csv':
-                return content.as_csv()
-            return LinkInfoPage(link=link,
-                                page_classes=["promoted-traffic"],
-                                comment=None,
-                                content=content).render()
-        else:
-            return self.abort404()
-
     @validate(VSponsorAdmin())
     def GET_site_traffic(self):
         return trafficpages.SitewideTrafficPage().render()
