@@ -942,6 +942,14 @@ class VSubmitParent(VByName):
                         self.set_error(errors.DELETED_LINK)
                     else:
                         self.set_error(errors.DELETED_COMMENT)
+                if parent._spam and isinstance(parent, Comment):
+                    # Only author, mod or admin can reply to removed comments
+                    can_reply = (c.user_is_loggedin and
+                                 (parent.author_id == c.user._id or
+                                  c.user_is_admin or
+                                  parent.subreddit_slow.is_moderator(c.user)))
+                    if not can_reply:
+                        self.set_error(errors.DELETED_COMMENT)
             if isinstance(parent, Message):
                 return parent
             else:
