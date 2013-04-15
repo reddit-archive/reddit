@@ -484,6 +484,11 @@ class TargetedClickthroughsByCodename(Base):
 
     @classmethod
     @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, codename, start, stop)
+
+    @classmethod
+    @memoize_traffic(time=3600)
     def total_by_codename(cls, codenames):
         return total_by_codename(cls, codenames)
 
@@ -553,6 +558,11 @@ class TargetedImpressionsByCodename(Base):
     interval = Column(String(), nullable=False, primary_key=True)
     unique_count = Column("unique", Integer())
     pageview_count = Column("total", Integer())
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def promotion_history(cls, codename, start, stop):
+        return promotion_history(cls, codename, start, stop)
 
     @classmethod
     @memoize_traffic(time=3600)
