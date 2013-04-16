@@ -3075,11 +3075,12 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user.pref_frame_commentspanel = False
         c.user._commit()
 
-    @json_validate(query = VPrintable('query', max_length = 50))
-    def POST_search_reddit_names(self, responder, query):
+    @json_validate(query=VPrintable('query', max_length=50),
+                   include_over_18=VBoolean('include_over_18', default=True))
+    def POST_search_reddit_names(self, responder, query, include_over_18):
         names = []
         if query:
-            names = search_reddits(query)
+            names = search_reddits(query, include_over_18)
 
         return {'names': names}
 

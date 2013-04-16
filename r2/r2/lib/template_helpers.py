@@ -148,6 +148,7 @@ def js_config(extra_config=None):
         "clicktracker_url": g.clicktracker_url,
         "uitracker_url": g.uitracker_url,
         "static_root": static(''),
+        "over_18": bool(c.over18),
     }
 
     if extra_config:

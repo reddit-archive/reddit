@@ -2233,7 +2233,7 @@ class NewLink(Templated):
 
             self.formtabs_menu = JsNavMenu(buttons, type = 'formtab')
 
-        self.sr_searches = simplejson.dumps(popular_searches())
+        self.sr_searches = simplejson.dumps(popular_searches(include_over_18=c.over18))
 
         self.resubmit = resubmit
         if c.default_sr:

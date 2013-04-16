@@ -46,32 +46,35 @@ def load_all_reddits():
             prefix = name[:i + 1]
             names = query_cache.setdefault(prefix, [])
             if len(names) < 10:
-                names.append(sr.name)
+                names.append((sr.name, sr.over_18))
 
     for name_prefix, subreddits in query_cache.iteritems():
-        SubredditsByPartialName._set_values(name_prefix, {'srs': subreddits})
+        SubredditsByPartialName._set_values(name_prefix, {'tups': subreddits})
 
-def search_reddits(query):
+def search_reddits(query, include_over_18=True):
     query = str(query.lower())
 
     try:
         result = SubredditsByPartialName._byID(query)
-        return result.srs
+        return [name for (name, over_18) in getattr(result, 'tups', [])
+                if not over_18 or include_over_18]
     except tdb_cassandra.NotFound:
         return []
 
 @memoize('popular_searches', time = 3600)
-def popular_searches():
+def popular_searches(include_over_18=True):
     top_reddits = Subreddit._query(Subreddit.c.type == 'public',
                                    sort = desc('_downs'),
                                    limit = 100,
                                    data = True)
     top_searches = {}
     for sr in top_reddits:
+        if sr.over_18 and not include_over_18:
+            continue
         name = sr.name.lower()
         for i in xrange(min(len(name), 3)):
             query = name[:i + 1]
-            r = search_reddits(query)
+            r = search_reddits(query, include_over_18)
             top_searches[query] = r
     return top_searches
 
