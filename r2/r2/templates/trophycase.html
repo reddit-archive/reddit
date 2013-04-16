@@ -29,8 +29,9 @@
       %endif
       >
     <div>
-      %if hasattr(trophy, "url"):
-       <a href="${trophy.url}">
+      <% trophy_url = trophy.trophy_url %>
+      %if trophy_url:
+       <a href="${trophy_url}">
       %endif
        <img class="trophy-icon" src="${trophy._thing2.imgurl % 40}" />
        <br/>
@@ -40,7 +41,7 @@
        <span class="trophy-description">${trophy.description}</span>
        <br/>
        %endif
-      %if hasattr(trophy, "url"):
+      %if trophy_url:
        </a>
       %endif
       %if c.user_is_admin:

@@ -203,3 +203,7 @@ class Trophy(Relation(Account, Award)):
                 user.set_trophy_id(uid, trophy._id)
                 user._commit()
         return trophy, preexisting
+
+    @property
+    def trophy_url(self):
+        return getattr(self, "url", getattr(self._thing2, "url", None))
