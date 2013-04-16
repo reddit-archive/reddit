@@ -70,10 +70,15 @@ from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
 
+from babel.numbers import format_currency
+from collections import defaultdict
+import csv
+import cStringIO
+import pytz
 import sys, random, datetime, calendar, simplejson, re, time
 import time
-from itertools import chain
-from urllib import quote
+from itertools import chain, product
+from urllib import quote, urlencode
 
 # the ip tracking code is currently deeply tied with spam prevention stuff
 # this will be open sourced as soon as it can be decoupled
@@ -3170,6 +3175,7 @@ class PromotePage(Reddit):
         if c.user_is_sponsor:
             buttons.append(NamedButton('admin_graph',
                                        dest='/admin/graph'))
+            buttons.append(NavButton('report', 'report'))
 
         menu  = NavMenu(buttons, base_path = '/promoted',
                         type='flatlist')
@@ -3734,6 +3740,151 @@ class Promote_Graph(Templated):
                    num(link._ups - link._downs), 
                    "$%.2f" % link.promote_bid,
                    _force_unicode(link.title))
+
+
+class PromoteReport(Templated):
+    def __init__(self, links, link_text, bad_links, start, end):
+        self.links = links
+        self.start = start
+        self.end = end
+        if links:
+            self.make_link_report()
+            self.make_campaign_report()
+            p = request.get.copy()
+            self.csv_url = '%s.csv?%s' % (request.path, urlencode(p))
+        else:
+            self.link_report = None
+            self.campaign_report = None
+            self.csv_url = None
+
+        Templated.__init__(self, link_text=link_text, bad_links=bad_links)
+
+    def as_csv(self):
+        out = cStringIO.StringIO()
+        writer = csv.writer(out)
+
+        writer.writerow((_("start date"), self.start.strftime('%m/%d/%Y')))
+        writer.writerow((_("end date"), self.end.strftime('%m/%d/%Y')))
+        writer.writerow([])
+        writer.writerow((_("links"),))
+        writer.writerow((
+            _("name"),
+            _("owner"),
+            _("comments"),
+            _("upvotes"),
+            _("downvotes"),
+        ))
+        for row in self.link_report:
+            writer.writerow((row['name'], row['owner'], row['comments'],
+                             row['upvotes'], row['downvotes']))
+
+        writer.writerow([])
+        writer.writerow((_("campaigns"),))
+        writer.writerow((
+            _("link"),
+            _("owner"),
+            _("campaign"),
+            _("target"),
+            _("bid"),
+            _("frontpage clicks"), _("frontpage impressions"),
+            _("subreddit clicks"), _("subreddit impressions"),
+            _("total clicks"), _("total impressions"),
+        ))
+        for row in self.campaign_report:
+            writer.writerow(
+                (row['link'], row['owner'], row['campaign'], row['target'],
+                 row['bid'], row['fp_clicks'], row['fp_impressions'],
+                 row['sr_clicks'], row['sr_impressions'], row['total_clicks'],
+                 row['total_impressions'])
+            )
+        return out.getvalue()
+
+    def make_link_report(self):
+        link_report = []
+        owners = Account._byID([link.author_id for link in self.links],
+                               data=True)
+
+        for link in self.links:
+            row = {
+                'name': link._fullname,
+                'owner': owners[link.author_id].name,
+                'comments': link.num_comments,
+                'upvotes': link._ups,
+                'downvotes': link._downs,
+            }
+            link_report.append(row)
+        self.link_report = link_report
+
+    @classmethod
+    def _get_hits(cls, traffic_cls, campaigns, start, end):
+        campaigns_by_name = {camp._fullname: camp for camp in campaigns}
+        codenames = campaigns_by_name.keys()
+        start = (start - promote.timezone_offset).replace(tzinfo=None)
+        end = (end - promote.timezone_offset).replace(tzinfo=None)
+        hits = traffic_cls.campaign_history(codenames, start, end)
+        sr_hits = defaultdict(int)
+        fp_hits = defaultdict(int)
+        for date, codename, sr, (uniques, pageviews) in hits:
+            campaign = campaigns_by_name[codename]
+            campaign_start = campaign.start_date - promote.timezone_offset
+            campaign_end = campaign.end_date - promote.timezone_offset
+            date = date.replace(tzinfo=g.tz)
+            if date < campaign_start or date > campaign_end:
+                continue
+            if sr == '':
+                fp_hits[codename] += pageviews
+            else:
+                sr_hits[codename] += pageviews
+        return fp_hits, sr_hits
+
+    @classmethod
+    def get_imps(cls, campaigns, start, end):
+        return cls._get_hits(traffic.TargetedImpressionsByCodename, campaigns,
+                             start, end)
+
+    @classmethod
+    def get_clicks(cls, campaigns, start, end):
+        return cls._get_hits(traffic.TargetedClickthroughsByCodename, campaigns,
+                             start, end)
+
+    def make_campaign_report(self):
+        campaigns = PromoCampaign._by_link([link._id for link in self.links])
+
+        def keep_camp(camp):
+            return not (camp.start_date.date() >= self.end.date() or
+                        camp.end_date.date() <= self.start.date() or
+                        not camp.trans_id)
+
+        campaigns = [camp for camp in campaigns if keep_camp(camp)]
+        fp_imps, sr_imps = self.get_imps(campaigns, self.start, self.end)
+        fp_clicks, sr_clicks = self.get_clicks(campaigns, self.start, self.end)
+        owners = Account._byID([link.author_id for link in self.links],
+                               data=True)
+        links_by_id = {link._id: link for link in self.links}
+        campaign_report = []
+
+        for camp in campaigns:
+            link = links_by_id[camp.link_id]
+            fullname = camp._fullname
+            camp_duration = (camp.end_date - camp.start_date).days
+            effective_duration = (min(camp.end_date, self.end)
+                                  - max(camp.start_date, self.start)).days
+            bid = camp.bid * (float(effective_duration) / camp_duration)
+            row = {
+                'link': link._fullname,
+                'owner': owners[link.author_id].name,
+                'campaign': fullname,
+                'target': camp.sr_name or 'frontpage',
+                'bid': format_currency(bid, 'USD'),
+                'fp_impressions': fp_imps[fullname],
+                'sr_impressions': sr_imps[fullname],
+                'fp_clicks': fp_clicks[fullname],
+                'sr_clicks': sr_clicks[fullname],
+                'total_impressions': fp_imps[fullname] + sr_imps[fullname],
+                'total_clicks': fp_clicks[fullname] + sr_clicks[fullname],
+            }
+            campaign_report.append(row)
+        self.campaign_report = sorted(campaign_report, key=lambda r: r['link'])
 
 class InnerToolbarFrame(Templated):
     def __init__(self, link, expanded = False):

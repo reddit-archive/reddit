@@ -44,6 +44,8 @@ from r2.lib.pages import (
     PromotePage,
     PromoteLinkForm,
     PromoteLinkFormCpm,
+    PromoteReport,
+    Reddit,
     Roadblocks,
     UploadedImage,
 )
@@ -758,4 +760,31 @@ class PromoteController(ListingController):
                               start=dates[0],
                               end=dates[1]).render()
 
+    @validate(VSponsorAdmin(),
+              start=VDate('startdate'),
+              end=VDate('enddate'),
+              link_text=nop('link_text'))
+    def GET_report(self, start, end, link_text=None):
+        now = datetime.now(g.tz).replace(hour=0, minute=0, second=0,
+                                         microsecond=0)
+        end = end or now - timedelta(days=1)
+        start = start or end - timedelta(days=7)
 
+        if link_text is not None:
+            names = link_text.replace(',', ' ').split()
+            try:
+                links = Link._by_fullname(names, data=True)
+            except NotFound:
+                links = {}
+
+            bad_links = [name for name in names if name not in links]
+            links = links.values()
+        else:
+            links = []
+            bad_links = []
+
+        content = PromoteReport(links, link_text, bad_links, start, end)
+        if c.render_style == 'csv':
+            return content.as_csv()
+        else:
+            return PromotePage('report', content=content).render()

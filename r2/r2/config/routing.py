@@ -181,6 +181,7 @@ def make_map():
 
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))
+    mc('/promoted/report', controller='promote', action='report')
     mc('/promoted/:sort/:sr', controller='promote', action='listing',
        requirements=dict(sort='live_promos'))
     mc('/promoted/:sort', controller='promote', action="listing")
