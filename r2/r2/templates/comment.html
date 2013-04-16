@@ -105,7 +105,7 @@ ${parent.collapsed()}
   %if collapse and thing.collapsed and show:
     ${thing.collapsed_reason}
   %else:
-    %if show and not (thing.link.contest_mode and thing.score_hidden):
+    %if show and not thing.score_hidden:
        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
     %endif
     ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}

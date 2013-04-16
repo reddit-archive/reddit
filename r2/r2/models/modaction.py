@@ -130,6 +130,7 @@ class ModAction(tdb_cassandra.UuidThing, Printable):
                      'link_type': _('link type'),
                      'submit_link_label': _('submit link button label'),
                      'submit_text_label': _('submit text post button label'),
+                     'comment_score_hide_mins': _('comment score hide period'),
                      'over_18': _('toggle viewers must be over 18'),
                      'allow_top': _('toggle allow in default set'),
                      'show_media': _('toggle show thumbnail images of content'),

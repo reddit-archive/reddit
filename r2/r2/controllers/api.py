@@ -1678,6 +1678,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                    link_type = VOneOf('link_type', ('any', 'link', 'self')),
                    submit_link_label=VLength('submit_link_label', max_length=60),
                    submit_text_label=VLength('submit_text_label', max_length=60),
+                   comment_score_hide_mins=VInt('comment_score_hide_mins',
+                       coerce=False, num_default=0, min=0, max=1440),
                    wikimode = VOneOf('wikimode', ('disabled', 'modonly', 'anyone')),
                    wiki_edit_karma = VInt("wiki_edit_karma", coerce=False, num_default=0, min=0),
                    wiki_edit_age = VInt("wiki_edit_age", coerce=False, num_default=0, min=0),
@@ -1720,7 +1722,7 @@ class ApiController(RedditController, OAuth2ResourceController):
                   if k in ('name', 'title', 'domain', 'description',
                            'show_media', 'exclude_banned_modqueue',
                            'show_cname_sidebar', 'type',
-                           'link_type', 'submit_link_label',
+                           'link_type', 'submit_link_label', 'comment_score_hide_mins',
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
                            'wiki_edit_age', 'allow_top', 'public_description'))
@@ -1790,6 +1792,8 @@ class ApiController(RedditController, OAuth2ResourceController):
             pass
         elif (form.has_errors(('wiki_edit_karma', 'wiki_edit_age'), 
                               errors.BAD_NUMBER)):
+            pass
+        elif form.has_errors('comment_score_hide_mins', errors.BAD_NUMBER):
             pass
         #creating a new reddit
         elif not sr:

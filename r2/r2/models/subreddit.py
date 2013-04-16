@@ -91,6 +91,7 @@ class Subreddit(Thing, Printable):
                      link_type = 'any', # one of ('link', 'self', 'any')
                      submit_link_label = '',
                      submit_text_label = '',
+                     comment_score_hide_mins = 0,
                      flair_enabled = True,
                      flair_position = 'right', # one of ('left', 'right')
                      link_flair_position = '', # one of ('', 'left', 'right')

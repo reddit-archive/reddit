@@ -720,6 +720,7 @@ class SubredditSettingsTemplate(ThingJsonTemplate):
                         subreddit_type = 'site.type',
                         submit_link_label = 'site.submit_link_label',
                         submit_text_label = 'site.submit_text_label',
+                        comment_score_hide_mins = 'site.comment_score_hide_mins',
                         content_options = 'site.link_type',
                         over_18 = 'site.over_18',
                         default_set = 'site.allow_top',

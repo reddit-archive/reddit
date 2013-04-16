@@ -259,6 +259,18 @@
         </li>
       </ul>
     </div>
+    <div class="usertext-edit">
+      <div class="delete-field">
+        <label for="comment_score_hide_mins">${_('Minutes to hide comment scores:')}</label>
+            %if thing.site:
+                <input id="comment_score_hide_mins" type="text" name="comment_score_hide_mins" placeholder="0" 
+                       value = "${thing.site.comment_score_hide_mins}" />
+            %else:
+                <input id="comment_score_hide_mins" type="text" name="comment_score_hide_mins" value="0" placeholder="0" />
+            %endif
+            ${error_field("BAD_NUMBER", "comment_score_hide_mins")}
+      </div>
+    </div>
   </%utils:line_field>
 
 % if thing.site and thing.site.domain != thing.site._defaults['domain']:
