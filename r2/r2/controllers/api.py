@@ -1718,7 +1718,8 @@ class ApiController(RedditController, OAuth2ResourceController):
         redir = False
         kw = dict((k, v) for k, v in kw.iteritems()
                   if k in ('name', 'title', 'domain', 'description',
-                           'show_media', 'show_cname_sidebar', 'type',
+                           'show_media', 'exclude_banned_modqueue',
+                           'show_cname_sidebar', 'type',
                            'link_type', 'submit_link_label',
                            'submit_text_label', 'lang', 'css_on_cname',
                            'header_title', 'over_18', 'wikimode', 'wiki_edit_karma',
