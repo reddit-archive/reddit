@@ -30,10 +30,16 @@ r.multi = {
 
 r.multi.MultiRedditList = Backbone.Collection.extend({
     model: Backbone.Model.extend({
-        idAttribute: 'name'
+        initialize: function() {
+            this.id = this.get('name').toLowerCase()
+        }
     }),
     comparator: function(model) {
-        return model.get('name').toLowerCase()
+        return model.id
+    },
+
+    getByName: function(name) {
+        return this.get(name.toLowerCase())
     }
 })
 
@@ -63,7 +69,7 @@ r.multi.MultiReddit = Backbone.Model.extend({
     },
 
     removeSubreddit: function(name, options) {
-        this.subreddits.get(name).destroy(options)
+        this.subreddits.getByName(name).destroy(options)
     }
 })
 
@@ -199,13 +205,13 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         r.multi.mine.chain()
             .sortBy(function(multi) {
                 // sort multireddits containing this subreddit to the top.
-                return multi.subreddits.get(this.options.sr_name)
+                return multi.subreddits.getByName(this.options.sr_name)
             }, this)
             .each(function(multi) {
                 content.append(this.itemTemplate({
                     name: multi.get('name'),
                     path: multi.get('path'),
-                    checked: multi.subreddits.get(this.options.sr_name)
+                    checked: multi.subreddits.getByName(this.options.sr_name)
                              ? 'checked' : ''
                 }))
             }, this)
