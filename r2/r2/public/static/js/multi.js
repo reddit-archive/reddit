@@ -122,6 +122,7 @@ r.multi.MultiDetails = Backbone.View.extend({
 
         var nameEl = this.$('.add-sr .sr-name'),
             srName = $.trim(nameEl.val())
+        srName = srName.split('r/').pop()
         if (!srName) {
             return
         }
