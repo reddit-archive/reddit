@@ -455,13 +455,14 @@ class DataThing(object):
         ids = [ int(x, 36) for x in id36s ]
 
         things = cls._byID(ids, return_dict=True, **kw)
+        things = {thing._id36: thing for thing in things.itervalues()}
 
         if single:
             return things.values()[0]
         elif return_dict:
             return things
         else:
-            return things.values()
+            return filter(None, (things.get(i) for i in id36s))
 
     @classmethod
     def _by_fullname(cls, names,
