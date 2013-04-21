@@ -220,7 +220,8 @@ class EmrJob(object):
                  bootstrap_actions=[], log_uri=None, keep_alive=True,
                  ec2_keyname=None, hadoop_version='0.20.205',
                  ami_version='latest', master_instance_type='m1.small',
-                 slave_instance_type='m1.small', num_slaves=1):
+                 slave_instance_type='m1.small', num_slaves=1,
+                 visible_to_all_users=True):
 
         self.jobflowid = None
         self.conn = emr_connection
@@ -237,6 +238,7 @@ class EmrJob(object):
         self.master_instance_type = master_instance_type
         self.slave_instance_type = slave_instance_type
         self.num_instances = num_slaves + 1
+        self.visible_to_all_users = visible_to_all_users
 
     def run(self):
         steps = copy(self.setup_steps)
@@ -250,7 +252,8 @@ class EmrJob(object):
             slave_instance_type=self.slave_instance_type,
             num_instances=self.num_instances,
             enable_debugging=self.enable_debugging,
-            log_uri=self.log_uri)
+            log_uri=self.log_uri,
+            visible_to_all_users=self.visible_to_all_users)
 
         self.jobflowid = self.conn.run_jobflow(**job_flow_args)
         return
