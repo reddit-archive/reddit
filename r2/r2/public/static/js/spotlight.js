@@ -54,6 +54,8 @@ r.spotlight.setup = function(links, interest_prob, promotion_prob) {
 
     this.interest_prob = interest_prob
     this.promotion_prob = promotion_prob
+
+    this.init()
 }
 
 r.spotlight.chooseRandom = function() {
@@ -168,15 +170,18 @@ r.spotlight.help = function(thing) {
         return
     }
 
-    help.data('HelpBubble').hide(function() {
-        help.find('.help-section').hide()
-        if (thing.hasClass('promoted')) {
-            help.find('.help-promoted').show()
-        } else if (thing.hasClass('interestbar')) {
-            help.find('.help-interestbar').show()
-        } else {
-            help.find('.help-organic').show()
-        }
+    // this function can be called before the help bubble has initialized
+    $(function() {
+        help.data('HelpBubble').hide(function() {
+            help.find('.help-section').hide()
+            if (thing.hasClass('promoted')) {
+                help.find('.help-promoted').show()
+            } else if (thing.hasClass('interestbar')) {
+                help.find('.help-interestbar').show()
+            } else {
+                help.find('.help-organic').show()
+            }
+        })
     })
 }
 

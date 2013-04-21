@@ -35,7 +35,6 @@ $(function() {
     r.login.ui.init()
     r.analytics.init()
     r.ui.init()
-    r.spotlight.init()
     r.interestbar.init()
     r.apps.init()
     r.wiki.init()
