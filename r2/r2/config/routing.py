@@ -65,6 +65,7 @@ def make_map():
     mc('/about/log', controller='front', action='moderationlog')
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about', controller='front', action='about')
+    mc('/about/flair', controller='front', action='flairlisting')
     mc('/about/:location', controller='front', action='editreddit',
        location='about')
 

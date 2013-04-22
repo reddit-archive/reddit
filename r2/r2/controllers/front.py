@@ -590,8 +590,8 @@ class FrontController(RedditController, OAuth2ResourceController):
                           location=location,
                           extension_handling=extension_handling).render()
 
-    def _edit_normal_reddit(self, location, num, after, reverse, count, created,
-                            name, user):
+    def _edit_normal_reddit(self, location, num, after, reverse, count,
+                            created):
         # moderator is either reddit's moderator or an admin
         moderator_rel = c.user_is_loggedin and c.site.get_moderator(c.user)
         is_moderator = c.user_is_admin or moderator_rel
@@ -655,9 +655,6 @@ class FrontController(RedditController, OAuth2ResourceController):
                 extension_handling = "private"
         elif (is_moderator or c.user_is_sponsor) and location == 'traffic':
             pane = trafficpages.SubredditTraffic()
-        elif is_moderator_with_perms('flair') and location == 'flair':
-            c.allow_styles = True
-            pane = FlairPane(num, after, reverse, name, user)
         elif (location == "about") and is_api():
             return self.redirect(add_sr('about.json'), code=301)
         else:
@@ -672,19 +669,28 @@ class FrontController(RedditController, OAuth2ResourceController):
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
-    @validate(location=nop('location'),
-              created=VOneOf('created', ('true','false'),
-                             default='false'),
+    @validate(VSrModerator(perms='flair'),
               name=nop('name'))
-    def GET_editreddit(self, location, num, after, reverse, count, created,
-                       name):
-        """Edit reddit form."""
+    def GET_flairlisting(self, num, after, reverse, count, name):
         user = None
         if name:
             try:
                 user = Account._by_name(name)
             except NotFound:
                 c.errors.add(errors.USER_DOESNT_EXIST, field='name')
+
+        c.allow_styles = True
+        pane = FlairPane(num, after, reverse, name, user)
+        return EditReddit(content=pane, location='flair').render()
+
+
+    @base_listing
+    @prevent_framing_and_css(allow_cname_frame=True)
+    @validate(location=nop('location'),
+              created=VOneOf('created', ('true','false'),
+                             default='false'))
+    def GET_editreddit(self, location, num, after, reverse, count, created):
+        """Edit reddit form."""
         c.profilepage = True
         if isinstance(c.site, ModContribSR):
             return self._edit_modcontrib_reddit(location, num, after, reverse,
@@ -701,7 +707,7 @@ class FrontController(RedditController, OAuth2ResourceController):
             return self.abort404()
         else:
             return self._edit_normal_reddit(location, num, after, reverse,
-                                            count, created, name, user)
+                                            count, created)
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uri='/r/{subreddit}/about', extensions=['json'])
