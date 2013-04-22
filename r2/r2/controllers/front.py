@@ -564,8 +564,7 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         return pane
 
-    def _edit_normal_reddit(self, location, num, after, reverse, count,
-                            created):
+    def _edit_normal_reddit(self, location, created):
         # moderator is either reddit's moderator or an admin
         moderator_rel = c.user_is_loggedin and c.site.get_moderator(c.user)
         is_moderator = c.user_is_admin or moderator_rel
@@ -663,19 +662,17 @@ class FrontController(RedditController, OAuth2ResourceController):
         pane = FlairPane(num, after, reverse, name, user)
         return EditReddit(content=pane, location='flair').render()
 
-    @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
     @validate(location=nop('location'),
               created=VOneOf('created', ('true','false'),
                              default='false'))
-    def GET_editreddit(self, location, num, after, reverse, count, created):
+    def GET_editreddit(self, location, created):
         """Edit reddit form."""
         c.profilepage = True
         if isinstance(c.site, FakeSubreddit):
             return self.abort404()
         else:
-            return self._edit_normal_reddit(location, num, after, reverse,
-                                            count, created)
+            return self._edit_normal_reddit(location, created)
 
     @require_oauth2_scope("read")
     @api_doc(api_section.subreddits, uri='/r/{subreddit}/about', extensions=['json'])
