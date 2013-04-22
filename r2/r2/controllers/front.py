@@ -499,13 +499,22 @@ class FrontController(RedditController, OAuth2ResourceController):
                           location="log",
                           extension_handling=False).render()
 
-    def _make_spamlisting(self, location, num, after, reverse, count):
+    def _make_spamlisting(self, location, only, num, after, reverse, count):
+        include_links, include_comments = True, True
+        if only == 'links':
+            include_comments = False
+        elif only == 'comments':
+            include_links = False
+
         if location == 'reports':
-            query = c.site.get_reported()
+            query = c.site.get_reported(include_links=include_links,
+                                        include_comments=include_comments)
         elif location == 'spam':
-            query = c.site.get_spam()
+            query = c.site.get_spam(include_links=include_links,
+                                    include_comments=include_comments)
         elif location == 'modqueue':
-            query = c.site.get_modqueue()
+            query = c.site.get_modqueue(include_links=include_links,
+                                        include_comments=include_comments)
         elif location == 'unmoderated':
             query = c.site.get_unmoderated()
         else:
@@ -637,14 +646,27 @@ class FrontController(RedditController, OAuth2ResourceController):
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
     @validate(VSrModerator(perms='posts'),
-              location=nop('location'))
-    def GET_spamlisting(self, location, num, after, reverse, count):
+              location=nop('location'),
+              only=VOneOf('only', ('links', 'comments')))
+    def GET_spamlisting(self, location, only, num, after, reverse, count):
         c.allow_styles = True
         c.profilepage = True
-        pane = self._make_spamlisting(location, num, after, reverse, count)
+        pane = self._make_spamlisting(location, only, num, after, reverse,
+                                      count)
         if c.user.pref_private_feeds:
             extension_handling = "private"
-        return EditReddit(content=pane, location=location).render()
+
+        if location in ('reports', 'spam', 'modqueue'):
+            buttons = [NavButton(_('links and comments'), None, opt='only'),
+                       NavButton(_('links'), 'links', opt='only'),
+                       NavButton(_('comments'), 'comments', opt='only')]
+            menus = [NavMenu(buttons, base_path=request.path, title=_('show'),
+                             type='lightdrop')]
+        else:
+            menus = None
+        return EditReddit(content=pane,
+                          location=location,
+                          nav_menus=menus).render()
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)

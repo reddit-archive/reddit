@@ -497,17 +497,22 @@ class Subreddit(Thing, Printable):
         from r2.lib.db import queries
         return queries.get_links(self, sort, time)
 
-    def get_spam(self):
+    def get_spam(self, include_links=True, include_comments=True):
         from r2.lib.db import queries
-        return queries.get_spam(self, user=c.user)
+        return queries.get_spam(self, user=c.user, include_links=include_links,
+                                include_comments=include_comments)
 
-    def get_reported(self):
+    def get_reported(self, include_links=True, include_comments=True):
         from r2.lib.db import queries
-        return queries.get_reported(self, user=c.user)
+        return queries.get_reported(self, user=c.user,
+                                    include_links=include_links,
+                                    include_comments=include_comments)
 
-    def get_modqueue(self):
+    def get_modqueue(self, include_links=True, include_comments=True):
         from r2.lib.db import queries
-        return queries.get_modqueue(self, user=c.user)
+        return queries.get_modqueue(self, user=c.user,
+                                    include_links=include_links,
+                                    include_comments=include_comments)
 
     def get_unmoderated(self):
         from r2.lib.db import queries

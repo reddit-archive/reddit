@@ -348,20 +348,29 @@ def get_spam_comments(sr_id):
     return Comment._query(Comment.c.sr_id == sr_id,
                           Comment.c._spam == True,
                           sort = db_sort('new'))
-@merged_cached_query
-def get_spam(sr, user=None):
+
+def moderated_srids(sr, user):
     if isinstance(sr, (ModContribSR, MultiReddit)):
         srs = Subreddit._byID(sr.sr_ids, return_dict=False)
         if user:
             srs = [sr for sr in srs
                    if sr.is_moderator_with_perms(user, 'posts')]
-        q = []
-        q.extend(get_spam_links(sr) for sr in srs)
-        q.extend(get_spam_comments(sr) for sr in srs)
-        return q
+        return [sr._id for sr in srs]
+    elif not user or sr.is_moderator_with_perms(user, 'posts'):
+        return [sr._id]
     else:
-        return [get_spam_links(sr),
-                get_spam_comments(sr)]
+        return []
+
+@merged_cached_query
+def get_spam(sr, user=None, include_links=True, include_comments=True):
+    sr_ids = moderated_srids(sr, user)
+    queries = []
+
+    if include_links:
+        queries.append(get_spam_links)
+    if include_comments:
+        queries.append(get_spam_comments)
+    return [query(sr_id) for sr_id, query in itertools.product(sr_ids, queries)]
 
 @cached_query(SubredditQueryCache)
 def get_spam_filtered_links(sr_id):
@@ -399,19 +408,15 @@ def get_reported_comments(sr_id):
                           sort = db_sort('new'))
 
 @merged_cached_query
-def get_reported(sr, user=None):
-    if isinstance(sr, (ModContribSR, MultiReddit)):
-        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        if user:
-            srs = [sr for sr in srs
-                   if sr.is_moderator_with_perms(user, 'posts')]
-        q = []
-        q.extend(get_reported_links(sr) for sr in srs)
-        q.extend(get_reported_comments(sr) for sr in srs)
-        return q
-    else:
-        return [get_reported_links(sr),
-                get_reported_comments(sr)]
+def get_reported(sr, user=None, include_links=True, include_comments=True):
+    sr_ids = moderated_srids(sr, user)
+    queries = []
+
+    if include_links:
+        queries.append(get_reported_links)
+    if include_comments:
+        queries.append(get_reported_comments)
+    return [query(sr_id) for sr_id, query in itertools.product(sr_ids, queries)]
 
 @cached_query(SubredditQueryCache)
 def get_unmoderated_links(sr_id):
@@ -425,36 +430,23 @@ def get_unmoderated_links(sr_id):
     return q
 
 @merged_cached_query
-def get_modqueue(sr, user=None):
-    q = []
-    if isinstance(sr, (ModContribSR, MultiReddit)):
-        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        if user:
-            srs = [sr for sr in srs
-                   if sr.is_moderator_with_perms(user, 'posts')]
-        q.extend(get_reported_links(sr) for sr in srs)
-        q.extend(get_reported_comments(sr) for sr in srs)
-        q.extend(get_spam_filtered_links(sr) for sr in srs)
-        q.extend(get_spam_filtered_comments(sr) for sr in srs)
-    else:
-        q.append(get_reported_links(sr))
-        q.append(get_reported_comments(sr))
-        q.append(get_spam_filtered_links(sr))
-        q.append(get_spam_filtered_comments(sr))
-    return q
+def get_modqueue(sr, user=None, include_links=True, include_comments=True):
+    sr_ids = moderated_srids(sr, user)
+    queries = []
+
+    if include_links:
+        queries.append(get_reported_links)
+        queries.append(get_spam_filtered_links)
+    if include_comments:
+        queries.append(get_reported_comments)
+        queries.append(get_spam_filtered_comments)
+    return [query(sr_id) for sr_id, query in itertools.product(sr_ids, queries)]
 
 @merged_cached_query
 def get_unmoderated(sr, user=None):
-    q = []
-    if isinstance(sr, MultiReddit):
-        srs = Subreddit._byID(sr.sr_ids, return_dict=False)
-        if user:
-            srs = [sr for sr in srs
-                   if sr.is_moderator_with_perms(user, 'posts')]
-        q.extend(get_unmoderated_links(sr) for sr in srs)
-    else:
-        q.append(get_unmoderated_links(sr))
-    return q
+    sr_ids = moderated_srids(sr, user)
+    queries = [get_unmoderated_links]
+    return [query(sr_id) for sr_id, query in itertools.product(sr_ids, queries)]
 
 def get_domain_links(domain, sort, time):
     from r2.lib.db import operators
