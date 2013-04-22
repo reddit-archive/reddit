@@ -564,32 +564,6 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         return pane
 
-    def _edit_modcontrib_reddit(self, location, num, after, reverse, count, created):
-        extension_handling = False
-
-        if not c.user_is_loggedin:
-            return self.abort404()
-        if isinstance(c.site, (ModSR, MultiReddit)):
-            level = 'mod'
-        elif isinstance(c.site, ContribSR):
-            level = 'contrib'
-        elif isinstance(c.site, AllSR):
-            level = 'all'
-        else:
-            raise ValueError
-
-        if (level == 'mod' and
-            location in ('reports', 'spam', 'modqueue', 'unmoderated')):
-            pane = self._make_spamlisting(location, num, after, reverse, count)
-            if c.user.pref_private_feeds:
-                extension_handling = "private"
-        else:
-            return self.abort404()
-
-        return EditReddit(content=pane,
-                          location=location,
-                          extension_handling=extension_handling).render()
-
     def _edit_normal_reddit(self, location, num, after, reverse, count,
                             created):
         # moderator is either reddit's moderator or an admin
@@ -647,12 +621,6 @@ class FrontController(RedditController, OAuth2ResourceController):
             stylesheet = (c.site.stylesheet_contents_user or
                           c.site.stylesheet_contents)
             pane = SubredditStylesheetSource(stylesheet_contents=stylesheet)
-        elif (location in ('reports', 'spam', 'modqueue', 'unmoderated')
-              and is_moderator_with_perms('posts')):
-            c.allow_styles = True
-            pane = self._make_spamlisting(location, num, after, reverse, count)
-            if c.user.pref_private_feeds:
-                extension_handling = "private"
         elif (is_moderator or c.user_is_sponsor) and location == 'traffic':
             pane = trafficpages.SubredditTraffic()
         elif (location == "about") and is_api():
@@ -666,6 +634,18 @@ class FrontController(RedditController, OAuth2ResourceController):
                           show_wiki_actions=is_wiki_action,
                           location=location,
                           extension_handling=extension_handling).render()
+
+    @base_listing
+    @prevent_framing_and_css(allow_cname_frame=True)
+    @validate(VSrModerator(perms='posts'),
+              location=nop('location'))
+    def GET_spamlisting(self, location, num, after, reverse, count):
+        c.allow_styles = True
+        c.profilepage = True
+        pane = self._make_spamlisting(location, num, after, reverse, count)
+        if c.user.pref_private_feeds:
+            extension_handling = "private"
+        return EditReddit(content=pane, location=location).render()
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
@@ -683,7 +663,6 @@ class FrontController(RedditController, OAuth2ResourceController):
         pane = FlairPane(num, after, reverse, name, user)
         return EditReddit(content=pane, location='flair').render()
 
-
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
     @validate(location=nop('location'),
@@ -692,18 +671,7 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_editreddit(self, location, num, after, reverse, count, created):
         """Edit reddit form."""
         c.profilepage = True
-        if isinstance(c.site, ModContribSR):
-            return self._edit_modcontrib_reddit(location, num, after, reverse,
-                                                count, created)
-        elif isinstance(c.site, MultiReddit):
-            if not (c.user_is_admin or c.site.is_moderator(c.user)):
-                self.abort403()
-            return self._edit_modcontrib_reddit(location, num, after, reverse,
-                                                count, created)
-        elif isinstance(c.site, AllSR) and c.user_is_admin:
-            return self._edit_modcontrib_reddit(location, num, after, reverse,
-                                                count, created)
-        elif isinstance(c.site, FakeSubreddit):
+        if isinstance(c.site, FakeSubreddit):
             return self.abort404()
         else:
             return self._edit_normal_reddit(location, num, after, reverse,

@@ -66,6 +66,8 @@ def make_map():
     mc('/about/sidebar', controller='front', action='sidebar')
     mc('/about', controller='front', action='about')
     mc('/about/flair', controller='front', action='flairlisting')
+    mc('/about/:location', controller='front', action='spamlisting',
+       requirements=dict(location='reports|spam|modqueue|unmoderated'))
     mc('/about/:location', controller='front', action='editreddit',
        location='about')
 
