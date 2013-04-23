@@ -237,7 +237,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     else:
         return SC_OFF + text + SC_ON
 
-def wikimarkdown(text):
+def wikimarkdown(text, include_toc=True):
     from r2.lib.cssfilter import legacy_s3_url
     
     def img_swap(tag):
@@ -264,7 +264,10 @@ def wikimarkdown(text):
     if images:
         [img_swap(image) for image in images]
     
-    inject_table_of_contents(soup, prefix="wiki")
+    if include_toc:
+        tocdiv = generate_table_of_contents(soup, prefix="wiki")
+        if tocdiv:
+            soup.insert(0, tocdiv)
     
     text = str(soup)
     
@@ -272,7 +275,7 @@ def wikimarkdown(text):
 
 title_re = re.compile('[^\w.-]')
 header_re = re.compile('^h[1-6]$')
-def inject_table_of_contents(soup, prefix):
+def generate_table_of_contents(soup, prefix):
     header_ids = Counter()
     headers = soup.findAll(header_re)
     if not headers:
@@ -327,7 +330,8 @@ def inject_table_of_contents(soup, prefix):
         previous = thislevel
         parent.append(li)
     
-    soup.insert(0, tocdiv)
+    return tocdiv
+
 
 def keep_space(text):
     text = websafe(text)
