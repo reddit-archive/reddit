@@ -554,7 +554,7 @@ class PromotedLinkTraffic(RedditTraffic):
                          _("total clicks"),
                          _("unique click-through rate (%)"),
                          _("total click-through rate (%)")))
-        for date, values in history:
+        for date, datestr, values in history:
             # flatten (date, value-tuple) to (date, value1, value2...)
             writer.writerow((date,) + values)
 
