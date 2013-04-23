@@ -157,6 +157,7 @@ menu =   MenuHandler(hot          = _('hot'),
                      hidden       = _("hidden {toolbar}"),
                      deleted      = _("deleted"),
                      reported     = _("reported"),
+                     voting       = _("voting"),
 
                      promote        = _('self-serve advertising'),
                      new_promo      = _('create promotion'),
