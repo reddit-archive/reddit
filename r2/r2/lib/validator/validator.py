@@ -278,7 +278,7 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
     for validator in simple_vals:
         if (isinstance(validator, VCaptcha) and
             (form.has_errors('captcha', errors.BAD_CAPTCHA) or
-             form.has_error())):
+             (form.has_error() and c.user.needs_captcha()))):
             form.new_captcha()
         elif (isinstance(validator, VRatelimit) and
               form.has_errors('ratelimit', errors.RATELIMIT)):
