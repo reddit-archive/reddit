@@ -149,6 +149,30 @@ class BaseSite(object):
         from r2.models import ModAction
         return ModAction.get_actions(srs, mod=mod, action=action)
 
+    @property
+    def stylesheet_is_static(self):
+        """Is the subreddit using the newer static file based stylesheets?"""
+        return g.static_stylesheet_bucket and len(self.stylesheet_hash) == 27
+
+    static_stylesheet_prefix = "subreddit-stylesheet/"
+
+    @property
+    def static_stylesheet_name(self):
+        return "".join((self.static_stylesheet_prefix,
+                        self.stylesheet_hash,
+                        ".css"))
+
+    @property
+    def stylesheet_url(self):
+        from r2.lib.template_helpers import static, get_domain
+
+        if self.stylesheet_is_static:
+            return static(self.static_stylesheet_name, kind='sr_stylesheet')
+        else:
+            return "http://%s/stylesheet.css?v=%s" % (get_domain(cname=False,
+                                                                 subreddit=True),
+                                                      self.stylesheet_hash)
+
 
 class SubredditExists(Exception): pass
 
@@ -323,30 +347,6 @@ class Subreddit(Thing, Printable, BaseSite):
         return collections.OrderedDict(
             (r._thing2_id, r.get_permissions())
             for r in self.each_moderator_invite())
-
-    @property
-    def stylesheet_is_static(self):
-        """Is the subreddit using the newer static file based stylesheets?"""
-        return g.static_stylesheet_bucket and len(self.stylesheet_hash) == 27
-
-    static_stylesheet_prefix = "subreddit-stylesheet/"
-
-    @property
-    def static_stylesheet_name(self):
-        return "".join((self.static_stylesheet_prefix,
-                        self.stylesheet_hash,
-                        ".css"))
-
-    @property
-    def stylesheet_url(self):
-        from r2.lib.template_helpers import static, get_domain
-
-        if self.stylesheet_is_static:
-            return static(self.static_stylesheet_name, kind='sr_stylesheet')
-        else:
-            return "http://%s/stylesheet.css?v=%s" % (get_domain(cname=False,
-                                                                 subreddit=True),
-                                                      self.stylesheet_hash)
 
     @property
     def stylesheet_contents_user(self):
