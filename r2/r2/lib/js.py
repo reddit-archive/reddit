@@ -398,6 +398,11 @@ module["button"] = Module("button.js",
 )
 
 
+module["policies"] = Module("policies.js",
+    "policies.js",
+)
+
+
 module["sponsored"] = Module("sponsored.js",
     "lib/ui.core.js",
     "lib/ui.datepicker.js",

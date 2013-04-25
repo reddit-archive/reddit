@@ -55,6 +55,7 @@ api('account',       AccountJsonTemplate)
 api('organiclisting',       OrganicListingJsonTemplate)
 api('subreddittraffic', TrafficJsonTemplate)
 api('takedownpane', TakedownJsonTemplate)
+api('policyview', PolicyViewJsonTemplate)
 
 api('wikibasepage', WikiJsonTemplate)
 api('wikipagerevisions', WikiJsonTemplate)

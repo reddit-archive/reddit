@@ -186,6 +186,11 @@ class Globals(object):
             'timed_templates',
         ],
 
+        ConfigValue.str: [
+            'wiki_page_privacy_policy',
+            'wiki_page_user_agreement',
+        ],
+
         ConfigValue.choice: {
              'cassandra_rcl': {
                  'ONE': CL_ONE,

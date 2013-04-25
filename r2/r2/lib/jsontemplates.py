@@ -763,3 +763,15 @@ class ModActionTemplate(ThingJsonTemplate):
 
     def kind(self, wrapped):
         return 'modaction'
+
+
+class PolicyViewJsonTemplate(ThingJsonTemplate):
+    _data_attrs_ = dict(
+        body_html="body_html",
+        toc_html="toc_html",
+        revs="revs",
+        display_rev="display_rev",
+    )
+
+    def kind(self, wrapped):
+        return "Policy"
