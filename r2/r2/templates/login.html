@@ -36,7 +36,7 @@
   ${login_panel(login_form, 
                 user_reg = thing.user_reg, user_login = thing.user_login, 
                 dest=thing.dest)}
-  %if not g.disable_captcha:
+  %if not thing.is_popup and not g.disable_captcha:
   <script type="text/javascript">
     $.request("new_captcha");
   </script>

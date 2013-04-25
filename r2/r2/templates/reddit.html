@@ -23,13 +23,12 @@
 <%! 
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
    from r2.lib.filters import unsafe
-   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox
+   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
    from r2.models import make_feedurl, Sub
 %>
-<%namespace file="login.html" import="login_panel, login_form"/>
 <%namespace file="framebuster.html" import="framebuster"/>
 <%namespace file="less.html" import="less_js, less_stylesheet"/>
 <%namespace file="utils.html" import="tags, classes"/>
@@ -158,7 +157,7 @@
             ${_("close this window")}
           </a>
           <h1 class="cover-msg">${strings.cover_msg}</h1>
-          ${login_panel(login_form)}
+          ${Login(is_popup=True)}
         </div>
       </div>
       %endif

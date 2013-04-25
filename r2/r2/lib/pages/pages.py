@@ -938,9 +938,10 @@ class PasswordVerificationForm(Templated):
 
 class Login(Templated):
     """The two-unit login and register form."""
-    def __init__(self, user_reg = '', user_login = '', dest=''):
+    def __init__(self, user_reg = '', user_login = '', dest='', is_popup=False):
         Templated.__init__(self, user_reg = user_reg, user_login = user_login,
-                           dest = dest, captcha = Captcha())
+                           dest = dest, captcha = Captcha(),
+                           is_popup=is_popup)
 
 class Register(Login):
     pass
