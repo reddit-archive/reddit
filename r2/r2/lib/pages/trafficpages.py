@@ -661,7 +661,7 @@ class PromotedLinkTraffic(Templated):
             ctr = _clickthrough_rate(imps, clicks)
 
             date = date.replace(tzinfo=pytz.utc)
-            date = date.astimezone(pytz.timezone("US/Eastern"))
+            date = date.astimezone(pytz.timezone("EST"))
             datestr = format_datetime(
                 date,
                 locale=c.locale,
