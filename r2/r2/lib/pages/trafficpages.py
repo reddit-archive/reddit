@@ -458,19 +458,7 @@ def get_traffic_dates(thing):
     """Retrieve the start and end of a Promoted Link or PromoCampaign."""
     now = datetime.datetime.now(g.tz).replace(minute=0, second=0,
                                               microsecond=0)
-
-    if isinstance(thing, Link):
-        start, end = promote.get_total_run(thing)
-        start, end = start.replace(tzinfo=g.tz), end.replace(tzinfo=g.tz)
-    elif isinstance(thing, PromoCampaign):
-        # PromoCampaigns store their dates as UTC, promote changes occur
-        # at UTC-5
-        promo_tz = pytz.timezone("US/Eastern")
-        start = (thing.start_date.replace(tzinfo=promo_tz)
-                        .astimezone(pytz.utc))
-        end = (thing.end_date.replace(tzinfo=promo_tz)
-                        .astimezone(pytz.utc))
-
+    start, end = promote.get_total_run(thing)
     end = min(now, end)
     return start, end
 
