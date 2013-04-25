@@ -342,6 +342,19 @@ def promotion_history(cls, codename, start, stop):
     return [(r[0], (r[1],)) for r in q.all()]
 
 
+def campaign_history(cls, codenames, start, stop):
+    """Get hourly traffic for given campaigns."""
+    time_points = get_time_points('hour', start, stop)
+    q = (Session.query(cls)
+                .filter(cls.interval == "hour")
+                .filter(cls.codename.in_(codenames))
+                .filter(cls.date.in_(time_points))
+                .order_by(cls.date))
+    return [(r.date, r.codename, r.subreddit, (r.unique_count,
+                                               r.pageview_count))
+            for r in q.all()]
+
+
 @memoize("traffic_last_modified", time=60 * 10)
 def get_traffic_last_modified():
     """Guess how far behind the traffic processing system is."""
@@ -492,6 +505,11 @@ class TargetedClickthroughsByCodename(Base):
     def total_by_codename(cls, codenames):
         return total_by_codename(cls, codenames)
 
+    @classmethod
+    @memoize_traffic(time=3600)
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop)
+
 
 class AdImpressionsByCodename(Base):
     """Impressions for ads."""
@@ -568,6 +586,11 @@ class TargetedImpressionsByCodename(Base):
     @memoize_traffic(time=3600)
     def total_by_codename(cls, codenames):
         return total_by_codename(cls, codenames)
+
+    @classmethod
+    @memoize_traffic(time=3600)
+    def campaign_history(cls, codenames, start, stop):
+        return campaign_history(cls, codenames, start, stop)
 
 
 class SubscriptionsBySubreddit(Base):
