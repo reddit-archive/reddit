@@ -237,7 +237,7 @@ def safemarkdown(text, nofollow=False, wrap=True, **kwargs):
     else:
         return SC_OFF + text + SC_ON
 
-def wikimarkdown(text, include_toc=True):
+def wikimarkdown(text, include_toc=True, target=None):
     from r2.lib.cssfilter import legacy_s3_url
     
     def img_swap(tag):
@@ -252,7 +252,6 @@ def wikimarkdown(text, include_toc=True):
             tag.extract()
     
     nofollow = True
-    target = None
     
     text = snudown.markdown(_force_utf8(text), nofollow, target,
                             renderer=snudown.RENDERER_WIKI)
