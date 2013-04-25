@@ -873,8 +873,8 @@ def get_total_run(thing):
         earliest = latest - timedelta(days=30)  # last month
 
     # ugh this stuff is a mess. they're stored as "UTC" but actually mean UTC-5.
-    earliest = earliest.replace(tzinfo=None) - timezone_offset
-    latest = latest.replace(tzinfo=None) - timezone_offset
+    earliest = earliest.replace(tzinfo=g.tz) - timezone_offset
+    latest = latest.replace(tzinfo=g.tz) - timezone_offset
 
     return earliest, latest
 
