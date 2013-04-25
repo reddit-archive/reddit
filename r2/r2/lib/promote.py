@@ -842,15 +842,18 @@ def sample_promoted_links(user, site, n=10):
         return random.sample(promo_tuples, n)
 
 
-def get_total_run(link):
-    """Return the total time span this promotion has run for.
+def get_total_run(thing):
+    """Return the total time span this link or campaign will run.
 
     Starts at the start date of the earliest campaign and goes to the end date
     of the latest campaign.
 
     """
 
-    campaigns = PromoCampaign._by_link(link._id)
+    if isinstance(thing, Link):
+        campaigns = PromoCampaign._by_link(thing._id)
+    elif isinstance(thing, PromoCampaign):
+        campaigns = [thing]
 
     earliest = None
     latest = None

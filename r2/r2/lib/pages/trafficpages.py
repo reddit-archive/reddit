@@ -464,7 +464,7 @@ def get_traffic_dates(thing):
         start, end = start.replace(tzinfo=g.tz), end.replace(tzinfo=g.tz)
     elif isinstance(thing, PromoCampaign):
         # PromoCampaigns store their dates as UTC, promote changes occur
-        # at 12 AM EST
+        # at UTC-5
         promo_tz = pytz.timezone("US/Eastern")
         start = (thing.start_date.replace(tzinfo=promo_tz)
                         .astimezone(pytz.utc))
