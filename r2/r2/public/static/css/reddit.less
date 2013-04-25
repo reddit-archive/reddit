@@ -2038,13 +2038,22 @@ li.searchfacet {
 .divide { border-right: 2px solid #D3D3D3; margin-right: -2px; }
 
 .login-form-section {
-    float: left; 
-    width: 46%;
+    position: relative;
+    float: left;
+    overflow: hidden;
     padding-left: 2%;
     padding-right: 2%;
+
+    &.register {
+        width: 56%;
+    }
+
+    &.login {
+        width: 36%;
+    }
 }
 
-.login-form-section h3 {
+.login-form-section > h3 {
     margin-bottom: 0;
     margin-top: 10px;
     font-size: large;
@@ -2059,6 +2068,24 @@ li.searchfacet {
     margin-bottom: 20px; 
 }
 
+.login-form-section.register .registration-info {
+    position: absolute;
+    left: 53%;
+    width: 40%;
+    min-width: 20em;
+    margin-top: 1.25em;
+    color: #777;
+
+    .md {
+        font-size: 1.1em;
+
+        li {
+            list-style-type: disc;
+            margin-bottom: .5em;
+        }
+    }
+}
+
 .user-form label {
     display: block; 
     font-weight: bold;
@@ -2070,7 +2097,7 @@ li.searchfacet {
 }
 
 .user-form .error {
-    margin-left: 5px;
+    display: block;
 }
 
 .user-form .remember { display:inline; margin-left: 5px;  }

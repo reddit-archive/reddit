@@ -32,6 +32,7 @@ from r2.models.token import OAuth2Client, OAuth2AccessToken
 from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
+from r2.models.wiki import WikiPage
 from r2.config import cache
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
@@ -42,8 +43,17 @@ from pylons.controllers.util import abort
 from r2.lib import media, inventory
 from r2.lib import promote, tracking
 from r2.lib.captcha import get_iden
-from r2.lib.filters import spaceCompress, _force_unicode, _force_utf8
-from r2.lib.filters import unsafe, websafe, SC_ON, SC_OFF, websafe_json
+from r2.lib.filters import (
+    spaceCompress,
+    _force_unicode,
+    _force_utf8,
+    unsafe,
+    websafe,
+    SC_ON,
+    SC_OFF,
+    websafe_json,
+    wikimarkdown,
+)
 from r2.lib.menus import NavButton, NamedButton, NavMenu, PageNameNav, JsButton
 from r2.lib.menus import SubredditButton, SubredditMenu, ModeratorMailButton
 from r2.lib.menus import OffsiteButton, menu, JsNavMenu
@@ -941,10 +951,21 @@ class Login(Templated):
     def __init__(self, user_reg = '', user_login = '', dest='', is_popup=False):
         Templated.__init__(self, user_reg = user_reg, user_login = user_login,
                            dest = dest, captcha = Captcha(),
-                           is_popup=is_popup)
+                           is_popup=is_popup,
+                           registration_info=RegistrationInfo())
 
 class Register(Login):
     pass
+
+
+class RegistrationInfo(Templated):
+    def __init__(self):
+        wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
+        html = unsafe(
+            wikimarkdown(wp.content, include_toc=False, target='_blank')
+        )
+        Templated.__init__(self, content_html=html)
+
 
 class OAuth2AuthorizationPage(BoringPage):
     def __init__(self, client, redirect_uri, scope, state, duration):

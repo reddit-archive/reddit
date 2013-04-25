@@ -35,7 +35,8 @@
 %else:
   ${login_panel(login_form, 
                 user_reg = thing.user_reg, user_login = thing.user_login, 
-                dest=thing.dest)}
+                dest=thing.dest,
+                registration_info=thing.registration_info)}
   %if not thing.is_popup and not g.disable_captcha:
   <script type="text/javascript">
     $.request("new_captcha");
@@ -140,12 +141,17 @@
 </%def>
 
 
-<%def name="login_panel(lf, user_reg = '', user_login = '', dest='')">
-  <div class="login-form-section divide">
+<%def name="login_panel(lf, user_reg = '', user_login = '', dest='', registration_info=None)">
+  <div class="login-form-section divide register">
     <h3>${_("create a new account")}</h3>
     <p class="tagline">
       ${_("all it takes is a username and password")}
     </p>
+    %if registration_info:
+      <div class="registration-info">
+        ${thing.registration_info}
+      </div>
+    %endif
     ${lf(register=True, user=user_reg, dest=dest)}
     <p>
       <span class="orangered">
@@ -153,7 +159,7 @@
       </span>
     </p>
   </div>
-  <div class="login-form-section">
+  <div class="login-form-section login">
     <h3>${_("login")}</h3>
     <p class="tagline">
       ${_("already have an account and just want to login?")}
