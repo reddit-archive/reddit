@@ -43,7 +43,7 @@
   %endif
 %endif
 
-<%def name="login_form(register=False, user='', dest='', include_tos=True)">
+<%def name="login_form(register=False, user='', dest='')">
   <%
     op = "reg" if register else "login"
     base = g.https_endpoint if not c.cname else ''
