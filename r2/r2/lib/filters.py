@@ -308,7 +308,7 @@ def generate_table_of_contents(soup, prefix):
         
         header['id'] = aid
         
-        li = Tag(soup, "li")
+        li = Tag(soup, "li", [("class", aid)])
         a = Tag(soup, "a", [("href", "#%s" % aid)])
         a.string = contents
         li.append(a)
