@@ -496,3 +496,50 @@ r.ui.PermissionEditor.prototype = $.extend(new r.ui.Base(), {
         this.hide()
     }
 })
+
+r.ui.scrollFixed = function(el) {
+    this.$el = $(el)
+    this.$standin = null
+    this.onScroll()
+    $(window).bind('scroll resize', _.bind(_.throttle(this.onScroll, 20), this))
+}
+r.ui.scrollFixed.prototype = {
+    onScroll: function() {
+        if (!this.$el.is('.scroll-fixed')) {
+            var margin = this.$el.outerHeight(true) - this.$el.outerHeight(false)
+            this.origTop = this.$el.offset().top - margin
+        }
+
+        var enoughSpace = this.$el.height() < $(window).height()
+        if (enoughSpace && $(window).scrollTop() > this.origTop) {
+            if (!this.$standin) {
+                this.$standin = $('<' + this.$el.prop('nodeName') + '>')
+                    .css({
+                        width: this.$el.width(),
+                        height: this.$el.height()
+                    })
+                    .attr('class', this.$el.attr('class'))
+                    .addClass('scroll-fixed-standin')
+
+                this.$el
+                    .addClass('scroll-fixed')
+                    .css({
+                        position: 'fixed',
+                        top: 0
+                    })
+                this.$el.before(this.$standin)
+            }
+        } else {
+            if (this.$standin) {
+                this.$el
+                    .removeClass('scroll-fixed')
+                    .css({
+                        position: '',
+                        top: ''
+                    })
+                this.$standin.remove()
+                this.$standin = null
+            }
+        }
+    }
+}
