@@ -70,6 +70,13 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Make sure the LC_CTYPE is UTF-8, otherwise postgres fails to create db
+# If you run into this error, run something like: export LC_ALL=en_US.UTF-8
+if [ "$LC_CTYPE" != "UTF-8" ]; then
+    echo "ERROR: LC_CTYPE must be a UTF-8 locale."
+    exit 1
+fi
+
 # seriously! these checks aren't here for no reason. the packages from the
 # reddit ppa aren't built for anything but precise (12.04) right now, so
 # if you try and use this install script on another release you're gonna
