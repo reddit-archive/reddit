@@ -351,6 +351,7 @@ class Account(Thing):
 
     def delete(self, delete_message=None):
         self.delete_message = delete_message
+        self.delete_time = datetime.now(g.tz)
         self._deleted = True
         self._commit()
 
