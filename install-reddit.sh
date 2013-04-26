@@ -94,6 +94,10 @@ fi
 APTITUDE_OPTIONS="-y" # limit bandwidth: -o Acquire::http::Dl-Limit=100"
 export DEBIAN_FRONTEND=noninteractive
 
+# run an aptitude update to make sure python-software-properties
+# dependencies are found
+apt-get update
+
 # add the reddit ppa for some custom packages
 apt-get install $APTITUDE_OPTIONS python-software-properties
 apt-add-repository -y ppa:reddit/ppa
