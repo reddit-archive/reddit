@@ -369,6 +369,7 @@ class PromotedLinkJsonTemplate(LinkJsonTemplate):
 class CommentJsonTemplate(ThingJsonTemplate):
     _data_attrs_ = ThingJsonTemplate.data_attrs(ups          = "upvotes",
                                                 downs        = "downvotes",
+                                                score_hidden = "score_hidden",
                                                 replies      = "child",
                                                 body         = "body",
                                                 body_html    = "body_html",

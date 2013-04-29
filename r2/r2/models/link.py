@@ -1057,6 +1057,7 @@ class Comment(Thing, Printable):
                 item.score = 1
                 item.score_hidden = True
                 item.voting_score = [1, 1, 1]
+                item.render_css_class += " score-hidden"
             else:
                 item.score_hidden = False
 

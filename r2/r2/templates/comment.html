@@ -34,7 +34,11 @@
 ##################
 
 <%def name="thing_data_attributes(what)" buffered="True">
-${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${what.downvotes}"
+  %if what.score_hidden:
+    ${parent.thing_data_attributes(what)} data-ups="0" data-downs="0"
+  %else:
+    ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${what.downvotes}"
+  %endif
 </%def>
 
 <%def name="midcol(display=True, cls = '')">
