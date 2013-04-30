@@ -34,7 +34,7 @@
     <meta name="keywords" content="${self.keywords()}" />
     <meta name="description" content="${getattr(thing, 'short_description', None) or g.short_description}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=1024" />
+    ${self.viewport()}
     ${self.robots()}
     ${self.pagemeta()}
     ${self.stylesheet()}
@@ -67,6 +67,10 @@ ${c.site.title}
 
 <%def name="keywords()">
 reddit, reddit.com, vote, comment, submit
+</%def>
+
+<%def name="viewport()">
+<meta name="viewport" content="width=1024">
 </%def>
 
 <%def name="robots()">
