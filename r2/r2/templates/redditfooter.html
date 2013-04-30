@@ -49,8 +49,9 @@
               "%(user_agreement)s and %(privacy_policy)s"), nocname=True,
       user_agreement = dict(link_text=_("User Agreement {Genitive}"),
                             path="http://reddit.com/wiki/useragreement"),
-      privacy_policy = dict(link_text=_("Privacy Policy {Genitive}"),
-                            path="http://reddit.com/wiki/privacypolicy"))}.
+      privacy_policy = dict(link_text=_("Privacy Policy (updated)"),
+                            path="http://reddit.com/wiki/privacypolicy",
+                            _class="updated"))}.
     &copy; ${_("%(year)d reddit inc. All rights reserved.") % \
     dict(year=datetime.datetime.now().timetuple()[0])}
   </p>
