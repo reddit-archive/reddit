@@ -109,8 +109,14 @@ ${parent.collapsed()}
   %if collapse and thing.collapsed and show:
     ${thing.collapsed_reason}
   %else:
-    %if show and not thing.score_hidden:
-       ${unsafe(self.score(thing, likes = thing.likes))}&#32;
+    %if show:
+      %if thing.score_hidden:
+        <span title="${_('this subreddit hides comment scores for %d minutes') % thing.subreddit.comment_score_hide_mins}">
+          [${_("score hidden")}]
+        </span>&#32;
+      %else:
+        ${unsafe(self.score(thing, likes = thing.likes))}&#32;
+      %endif
     %endif
     ${thing_timestamp(thing, thing.timesince)}&#32;${_("ago")}
     ${edited(thing, thing.lastedited)}
