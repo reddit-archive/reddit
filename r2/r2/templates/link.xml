@@ -37,6 +37,9 @@
  %>
 <item>
   <title>${thing.title}</title>
+  %if thing.different_sr:
+    <category>${thing.subreddit.name}</category>
+  %endif
   <link>${url}</link>
   <guid isPermaLink="true">${permalink}</guid>
   <pubDate>${thing._date.strftime('%a, %d %b %Y %H:%M:%S %z')}</pubDate>
