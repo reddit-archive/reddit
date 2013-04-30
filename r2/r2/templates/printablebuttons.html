@@ -122,8 +122,13 @@
   %endif
 </%def>
 
-<%def name="ignore_reports_toggle(pressed)">
-  ${pretty_button(_("ignore reports"), "big_mod_toggle", "'ignore_reports', 'unignore_reports'", "neutral" + (" pressed" if pressed else ""))}
+<%def name="ignore_reports_toggle(thing)">
+  <%
+    label = _("ignore reports")
+    if thing.ignore_reports and thing.reported > 0:
+      label += " ({0})".format(thing.reported)
+  %>
+  ${pretty_button(label, "big_mod_toggle", "'ignore_reports', 'unignore_reports'", "neutral" + (" pressed" if thing.ignore_reports else ""))}
 </%def>
 
 <%def name="big_modbuttons(thing, kind)">
@@ -148,7 +153,7 @@
       %endif
     </span>
 
-    ${ignore_reports_toggle(pressed=thing.ignore_reports)}
+    ${ignore_reports_toggle(thing)}
 
     &#32;
     <span class="status-msg spammed">
@@ -250,7 +255,7 @@
   %if getattr(thing.thing, "use_big_modbuttons", False):
      ${big_modbuttons(thing.thing, "link")}
   %elif thing.ignore_reports and thing.can_ban:
-    ${ignore_reports_toggle(pressed=True)}
+    ${ignore_reports_toggle(thing.thing)}
   %endif
 </%def>
 
@@ -321,7 +326,7 @@
     %if getattr(thing.thing, "use_big_modbuttons", False):
        ${big_modbuttons(thing.thing, "comment")}
     %elif thing.ignore_reports and thing.can_ban:
-      ${ignore_reports_toggle(pressed=True)}
+      ${ignore_reports_toggle(thing.thing)}
     %endif
   %endif
 </%def>
