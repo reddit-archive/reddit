@@ -96,6 +96,7 @@ class CMemcache(CacheUtils):
                  debug = False,
                  noreply = False,
                  no_block = False,
+                 min_compress_len=512 * 1024,
                  num_clients = 10):
         self.servers = servers
         self.clients = pylibmc.ClientPool(n_slots = num_clients)
@@ -111,7 +112,7 @@ class CMemcache(CacheUtils):
             client.behaviors.update(behaviors)
             self.clients.put(client)
 
-        self.min_compress_len = 512*1024
+        self.min_compress_len = min_compress_len
 
     def get(self, key, default = None):
         with self.clients.reserve() as mc:
