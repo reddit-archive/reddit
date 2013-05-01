@@ -38,7 +38,7 @@ try:
     from r2.controllers.reddit_base import RedditController, Cookies
     from r2.lib.errors import ErrorSet
     from r2.lib.filters import websafe_json
-    from r2.lib import pages
+    from r2.lib import log, pages
     from r2.lib.strings import rand_strings
     from r2.lib.template_helpers import static
     from r2.models.link import Link
@@ -101,20 +101,20 @@ class ErrorController(RedditController):
         except (HTTPMovedPermanently, HTTPFound):
             # ignore an attempt to redirect from an error page
             pass
-        except:
-            handle_awful_failure("Error occurred in ErrorController.__before__")
+        except Exception as e:
+            handle_awful_failure("ErrorController.__before__: %r" % e)
 
     def __after__(self): 
         try:
             RedditController.__after__(self)
-        except:
-            handle_awful_failure("Error occurred in ErrorController.__after__")
+        except Exception as e:
+            handle_awful_failure("ErrorController.__after__: %r" % e)
 
     def __call__(self, environ, start_response):
         try:
             return RedditController.__call__(self, environ, start_response)
-        except:
-            return handle_awful_failure("something really awful just happened.")
+        except Exception as e:
+            return handle_awful_failure("ErrorController.__call__: %r" % e)
 
 
     def send403(self):
@@ -202,8 +202,8 @@ class ErrorController(RedditController):
                 return self.send404()
             else:
                 return "page not found"
-        except:
-            return handle_awful_failure("something really bad just happened.")
+        except Exception as e:
+            return handle_awful_failure("ErrorController.GET_document: %r" % e)
 
     POST_document = GET_document
 
@@ -220,8 +220,9 @@ def handle_awful_failure(fail_text):
     try:
         # log the traceback, and flag the "path" as the error location
         import traceback
-        g.log.error("FULLPATH: %s" % fail_text)
-        g.log.error(traceback.format_exc())
+        log.write_error_summary(fail_text)
+        for line in traceback.format_exc().splitlines():
+            g.log.error(line)
         return redditbroke % (make_failien_url(), fail_text)
     except:
         # we are doomed.  Admit defeat

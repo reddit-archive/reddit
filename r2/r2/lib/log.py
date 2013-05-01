@@ -118,6 +118,13 @@ class LogQueueErrorReporter(Reporter):
         amqp.add_item(QUEUE_NAME, cPickle.dumps(d))
 
 
+def write_error_summary(error):
+    """Log a single-line summary of the error for easy log grepping."""
+    fullpath = request.environ.get('FULLPATH', request.path)
+    uid = c.user._id if c.user_is_loggedin else '-'
+    g.log.error("E: %s U: %s FP: %s", error, uid, fullpath)
+
+
 class LoggingErrorReporter(Reporter):
     """ErrorMiddleware-compatible reporter that writes exceptions to g.log."""
 
@@ -125,15 +132,9 @@ class LoggingErrorReporter(Reporter):
         # exception_formatted is the output of traceback.format_exception_only
         exception = exc_data.exception_formatted[-1].strip()
 
-        # This is still within the RegistryManager middleware
-        fullpath = request.environ.get('FULLPATH', request.path)
-        uid = '-'
-        if c.user_is_loggedin:
-            uid = c.user._id
-
         # First emit a single-line summary.  This is great for grepping the
         # streaming log for errors.
-        g.log.error("E: %s U: %s FP: %s", exception, uid, fullpath)
+        write_error_summary(exception)
 
         text, extra = self.format_text(exc_data)
         # TODO: send this all in one burst so that error reports aren't
