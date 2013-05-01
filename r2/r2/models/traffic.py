@@ -114,7 +114,14 @@ def zip_timeseries(*series, **kwargs):
     next_slice = (max if kwargs.get("order", "descending") == "descending"
                   else min)
     iterators = [PeekableIterator(s) for s in series]
-    widths = [len(w.peek() or []) for w in iterators]
+    widths = []
+    for w in iterators:
+        r = w.peek()
+        if r:
+            date, values = r
+            widths.append(len(values))
+        else:
+            widths.append(0)
 
     while True:
         items = [it.peek() for it in iterators]
