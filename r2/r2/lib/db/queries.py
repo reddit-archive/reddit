@@ -356,10 +356,8 @@ def moderated_srids(sr, user):
             srs = [sr for sr in srs
                    if sr.is_moderator_with_perms(user, 'posts')]
         return [sr._id for sr in srs]
-    elif not user or sr.is_moderator_with_perms(user, 'posts'):
-        return [sr._id]
     else:
-        return []
+        return [sr._id]
 
 @merged_cached_query
 def get_spam(sr, user=None, include_links=True, include_comments=True):
