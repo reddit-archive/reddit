@@ -49,7 +49,13 @@
 
 <p class="byline">
   ${WrappedUser(thing.author, thing.attribs, thing, gray = collapse).render()}
-  &nbsp;|<span class="score">${thing.score} ${ungettext("point", "points", thing.score)} </span> 
+  &nbsp;|<span class="score">
+  %if thing.score_hidden:
+    [${_("score hidden")}]
+  %else:
+    ${thing.score} ${ungettext("point", "points", thing.score)} 
+  %endif
+  </span> 
   ${_("written")} ${thing.timesince} ${_("ago")}
 </p>
 ${unsafe(safemarkdown(thing.body, nofollow=thing.nofollow))}

@@ -52,7 +52,11 @@
   <a href="http://${get_domain()}/user/${thing.author.name}">
     <b>${thing.author.name}</b></a>&#32;
   <span id="score_${thing._fullname}">
-     ${thing.score} ${ungettext("point", "points", thing.score)}
+    %if thing.score_hidden:
+      [${_("score hidden")}]
+    %else:
+      ${thing.score} ${ungettext("point", "points", thing.score)}
+    %endif
   </span>&#32;
   ${thing.timesince}
   &#32;<a href="${add_sr(thing.permalink)}">permalink</a>

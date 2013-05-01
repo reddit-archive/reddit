@@ -61,7 +61,12 @@
     <div class="tagline">
      ${WrappedUser(thing.author, thing.attribs, thing,
                    gray = collapse).render()}&#32;
-     ${score(thing, thing.likes, tag='span')}&#32;
+     %if thing.score_hidden:
+       [${_("score hidden")}]
+     %else:
+       ${score(thing, thing.likes, tag='span')}
+     %endif
+     &#32;
      ## thing.timesince is a cache stub
      ${unsafe(_("%(timeago)s ago") % dict(timeago=thing.timesince))}
      % if thing.gilded_message:
