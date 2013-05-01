@@ -33,6 +33,7 @@ from r2.models import traffic
 from r2.models import ModAction
 from r2.models import Thing
 from r2.models.wiki import WikiPage
+from r2.lib.db import tdb_cassandra
 from r2.config import cache
 from r2.config.extensions import is_api
 from r2.lib.menus import CommentSortMenu
@@ -966,8 +967,12 @@ class RegistrationInfo(Templated):
     @classmethod
     @memoize('registration_info_html', time=10*60)
     def get_registration_info_html(cls):
-        wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
-        return wikimarkdown(wp.content, include_toc=False, target='_blank')
+        try:
+            wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
+        except tdb_cassandra.NotFound:
+            return ''
+        else:
+            return wikimarkdown(wp.content, include_toc=False, target='_blank')
 
 
 class OAuth2AuthorizationPage(BoringPage):
