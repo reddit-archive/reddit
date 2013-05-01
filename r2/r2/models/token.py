@@ -105,6 +105,13 @@ class OAuth2Scope:
             "name": _("Edit Posts"),
             "description": _("Edit and delete my comments and submissions."),
         },
+        "history": {
+            "id": "history",
+            "name": _("History"),
+            "description": _(
+                "Access my voting history and comments or submissions I've"
+                " saved or hidden."),
+        },
         "identity": {
             "id": "identity",
             "name": _("My Identity"),
@@ -158,6 +165,11 @@ class OAuth2Scope:
             "id": "read",
             "name": _("Read Content"),
             "description": _("Access posts and comments through my account."),
+        },
+        "save": {
+            "id": "save",
+            "name": _("Save Content"),
+            "description": _("Save and unsave comments and submissions."),
         },
         "submit": {
             "id": "submit",
