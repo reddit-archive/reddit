@@ -272,6 +272,7 @@ r.ui.LoginPopup.prototype = $.extend(new r.ui.Base(), {
         $.request("new_captcha", {id: this.$el.attr('id')})
         this.$el
             .find(".cover-msg").toggle(!!notice).end()
+            .find('.popup').css('top', $(document).scrollTop()).end()
             .show()
     },
 
