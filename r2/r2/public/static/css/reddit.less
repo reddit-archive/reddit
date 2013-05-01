@@ -2100,8 +2100,12 @@ li.searchfacet {
     display: block;
 }
 
-.user-form .remember { display:inline; margin-left: 5px;  }
-.user-form ul { margin: 5px; }
+.user-form .remember {
+    display: inline;
+    margin-left: 5px;
+    text-transform: lowercase;
+}
+.user-form ul { margin: 7px; }
 .user-form li { margin-top: 5px; }
 .user-form p .btn { margin-top: 5px }
 .user-form input.logtxt { width: 125px; }
@@ -2133,12 +2137,12 @@ li.searchfacet {
 
 .notice-taken, .notice-available {
     display: none;
-    margin-left: 6px;
     line-height: 16px;
 }
 
 .register-form.name-taken .notice-taken, .register-form.name-available .notice-available {
-    display: inline-block;
+    display: block;
+    margin-top: 2px;
 }
 
 .register-form .name-entry .throbber {
@@ -2146,8 +2150,14 @@ li.searchfacet {
     margin-left: 5px;
 }
 
-.register-form.name-checking .name-entry .throbber {
-    display: inline-block;
+.register-form.name-checking {
+    .notice-taken, .notice-available {
+        opacity: .5;
+    }
+
+    .name-entry .throbber {
+        display: inline-block;
+    }
 }
 
 /* cover */

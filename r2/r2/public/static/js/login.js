@@ -223,7 +223,6 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
 
         this.$el.find('.error.field-user').hide()
         this.$submit.attr('disabled', false)
-        this.$el.removeClass('name-available name-taken')
         this.checkUsernameDebounced(name)
         this.$el.toggleClass('name-checking', !!name)
     },
@@ -236,6 +235,8 @@ r.ui.RegisterForm.prototype = $.extend(new r.ui.Form(), {
                 success: $.proxy(this, 'displayUsernameStatus'),
                 complete: $.proxy(function() { this.$el.removeClass('name-checking') }, this)
             })
+        } else {
+            this.$el.removeClass('name-available name-taken')
         }
     },
 
