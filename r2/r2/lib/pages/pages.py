@@ -960,11 +960,14 @@ class Register(Login):
 
 class RegistrationInfo(Templated):
     def __init__(self):
-        wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
-        html = unsafe(
-            wikimarkdown(wp.content, include_toc=False, target='_blank')
-        )
+        html = unsafe(self.get_registration_info_html())
         Templated.__init__(self, content_html=html)
+
+    @classmethod
+    @memoize('registration_info_html', time=10*60)
+    def get_registration_info_html(cls):
+        wp = WikiPage.get(Frontpage, g.wiki_page_registration_info)
+        return wikimarkdown(wp.content, include_toc=False, target='_blank')
 
 
 class OAuth2AuthorizationPage(BoringPage):
