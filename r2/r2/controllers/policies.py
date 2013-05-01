@@ -49,17 +49,23 @@ class PoliciesController(RedditController):
         wp = WikiPage.get(Frontpage, wiki_name)
 
         revs = list(wp.get_revisions())
-        visible_revs = [
-            rev for rev in revs
-            if rev._get('reason') and not rev.is_hidden
-        ]
-        rev_info = [{
-            'id': str(rev._id),
-            'title': rev._get('reason'),
-        } for rev in visible_revs]
 
-        # latest revision content is always the latest wiki rev
-        rev_info[0]['id'] = str(revs[0]._id)
+        # collapse minor edits into revisions with reasons
+        rev_info = []
+        last_edit = None
+        for rev in revs:
+            if rev.is_hidden:
+                continue
+
+            if not last_edit:
+                last_edit = rev
+
+            if rev._get('reason'):
+                rev_info.append({
+                    'id': str(last_edit._id),
+                    'title': rev._get('reason'),
+                })
+                last_edit = None
 
         if requested_rev:
             try:
