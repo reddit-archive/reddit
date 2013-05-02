@@ -39,7 +39,7 @@ from decimal import Decimal
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
 from time import sleep
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pylons import c, g
 from pylons.i18n import ungettext, _
 from r2.lib.filters import _force_unicode, _force_utf8
@@ -1109,6 +1109,11 @@ def make_offset_date(start_date, interval, future = True,
 def to_date(d):
     if isinstance(d, datetime):
         return d.date()
+    return d
+
+def to_datetime(d):
+    if isinstance(d, date):
+        return datetime(d.year, d.month, d.day)
     return d
 
 def in_chunks(it, size=25):
