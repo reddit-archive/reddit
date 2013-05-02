@@ -172,14 +172,14 @@ r.multi.SubscribeButton = Backbone.View.extend({
         this.bubble = new r.multi.MultiSubscribeBubble({
             parent: this.$el,
             group: this.options.bubbleGroup,
-            sr_name: this.$el.data('sr_name')
+            srName: this.$el.data('sr_name')
         })
     }
 })
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%= title %></strong><a class="sr" href="/r/<%= sr_name %>">/r/<%= sr_name %></a></div><div class="throbber"></div>'),
+    template: _.template('<div class="title"><strong><%= title %></strong><a class="sr" href="/r/<%= srName %>">/r/<%= srName %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input type="checkbox" data-path="<%= path %>" <%= checked %>><%= name %><a href="<%= path %>" target="_blank">&rsaquo;</a></label>'),
 
     events: {
@@ -199,20 +199,20 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     render: function() {
         this.$el.html(this.template({
             title: r.strings('categorize'),
-            sr_name: this.options.sr_name
+            srName: this.options.srName
         }))
 
         var content = $('<div class="multi-list">')
         r.multi.mine.chain()
             .sortBy(function(multi) {
                 // sort multireddits containing this subreddit to the top.
-                return multi.subreddits.getByName(this.options.sr_name)
+                return multi.subreddits.getByName(this.options.srName)
             }, this)
             .each(function(multi) {
                 content.append(this.itemTemplate({
                     name: multi.get('name'),
                     path: multi.get('path'),
-                    checked: multi.subreddits.getByName(this.options.sr_name)
+                    checked: multi.subreddits.getByName(this.options.srName)
                              ? 'checked' : ''
                 }))
             }, this)
@@ -223,9 +223,9 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         var checkbox = $(ev.target),
             multi = r.multi.mine.get(checkbox.data('path'))
         if (checkbox.is(':checked')) {
-            multi.addSubreddit(this.options.sr_name)
+            multi.addSubreddit(this.options.srName)
         } else {
-            multi.removeSubreddit(this.options.sr_name)
+            multi.removeSubreddit(this.options.srName)
         }
     }
 })
