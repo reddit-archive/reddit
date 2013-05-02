@@ -628,13 +628,13 @@ class VSubredditName(VRequired):
 class VSRByName(Validator):
     def run(self, sr_name):
         if not sr_name:
-            self.set_error(errors.BAD_SR_NAME)
+            self.set_error(errors.BAD_SR_NAME, code=400)
         else:
             try:
                 sr = Subreddit._by_name(sr_name)
                 return sr
             except NotFound:
-                self.set_error(errors.SUBREDDIT_NOEXIST)
+                self.set_error(errors.SUBREDDIT_NOEXIST, code=400)
 
     def param_docs(self):
         return {
