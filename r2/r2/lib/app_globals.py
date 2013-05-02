@@ -426,7 +426,11 @@ class Globals(object):
         num_mc_clients = self.num_mc_clients
 
         # the main memcache pool. used for most everything.
-        self.memcache = CMemcache(self.memcaches, num_clients=num_mc_clients)
+        self.memcache = CMemcache(
+            self.memcaches,
+            min_compress_len=50 * 1024,
+            num_clients=num_mc_clients,
+        )
 
         # a smaller pool of caches used only for distributed locks.
         # TODO: move this to ZooKeeper
