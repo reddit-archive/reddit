@@ -237,7 +237,7 @@ def make_history_query(cls, interval):
     return time_points, q
 
 
-def top_last_month(cls, key):
+def top_last_month(cls, key, ids=None):
     """Aggregate a listing of the top items (by pageviews) last month.
 
     We use the last month because it's guaranteed to be fully computed and
@@ -251,8 +251,12 @@ def top_last_month(cls, key):
     q = (Session.query(cls)
                 .filter(cls.date == last_month)
                 .filter(cls.interval == "month")
-                .order_by(desc(cls.date), desc(cls.pageview_count))
-                .limit(55))
+                .order_by(desc(cls.date), desc(cls.pageview_count)))
+
+    if ids:
+        q = q.filter(getattr(cls, key).in_(ids))
+    else:
+        q = q.limit(55)
 
     return [(getattr(r, key), (r.unique_count, r.pageview_count))
             for r in q.all()]
@@ -371,8 +375,9 @@ class PageviewsBySubreddit(Base):
 
     @classmethod
     @memoize_traffic(time=3600 * 6)
-    def top_last_month(cls):
-        return top_last_month(cls, "subreddit")
+    def top_last_month(cls, srs=None):
+        ids = [sr.name for sr in srs] if srs else None
+        return top_last_month(cls, "subreddit", ids)
 
 
 class PageviewsBySubredditAndPath(Base):

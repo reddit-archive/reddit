@@ -196,24 +196,34 @@ class RedditTraffic(Templated):
         raise NotImplementedError()
 
 
+def make_subreddit_traffic_report(subreddits=None):
+    """Return a report of subreddit traffic in the last full month.
+
+    If given a list of subreddits, those subreddits will be put in the report
+    otherwise the top subreddits by pageviews will be automatically chosen.
+
+    """
+    subreddit_summary = traffic.PageviewsBySubreddit.top_last_month(subreddits)
+    report = []
+    for srname, data in subreddit_summary:
+        if srname == _DefaultSR.name:
+            name = _("[frontpage]")
+            url = None
+        elif srname in Subreddit._specials:
+            name = "[%s]" % srname
+            url = None
+        else:
+            name = "/r/%s" % srname
+            url = name + "/about/traffic"
+
+        report.append(((name, url), data))
+    return report
+
+
 class SitewideTraffic(RedditTraffic):
     """An overview of all traffic to the site."""
     def __init__(self):
-        subreddit_summary = traffic.PageviewsBySubreddit.top_last_month()
-        self.subreddit_summary = []
-        for srname, data in subreddit_summary:
-            if srname == _DefaultSR.name:
-                name = _("[frontpage]")
-                url = None
-            elif srname in Subreddit._specials:
-                name = "[%s]" % srname
-                url = None
-            else:
-                name = "/r/%s" % srname
-                url = name + "/about/traffic"
-
-            self.subreddit_summary.append(((name, url), data))
-
+        self.subreddit_summary = make_subreddit_traffic_report()
         RedditTraffic.__init__(self, g.domain)
 
     def get_dow_summary(self):
@@ -667,3 +677,45 @@ class PromoTrafficSettings(Templated):
 class PromoTrafficHelp(Templated):
     def __init__(self):
         Templated.__init__(self)
+
+
+class SubredditTrafficReport(Templated):
+    def __init__(self):
+        self.srs, self.invalid_srs, self.report = [], [], []
+
+        self.textarea = request.params.get("subreddits")
+        if self.textarea:
+            requested_srs = [srname.strip()
+                             for srname in self.textarea.splitlines()]
+            subreddits = Subreddit._by_name(requested_srs)
+
+            for srname in requested_srs:
+                if srname in subreddits:
+                    self.srs.append(srname)
+                else:
+                    self.invalid_srs.append(srname)
+
+            if subreddits:
+                self.report = make_subreddit_traffic_report(subreddits.values())
+
+            param = urllib.quote(self.textarea)
+            self.csv_url = "/traffic/subreddits/report.csv?subreddits=" + param
+
+        Templated.__init__(self)
+
+    def as_csv(self):
+        """Return the traffic data in CSV format for reports."""
+
+        import csv
+        import cStringIO
+
+        out = cStringIO.StringIO()
+        writer = csv.writer(out)
+
+        writer.writerow((_("subreddit"),
+                         _("uniques"),
+                         _("pageviews")))
+        for (name, url), (uniques, pageviews) in self.report:
+            writer.writerow((name, uniques, pageviews))
+
+        return out.getvalue()

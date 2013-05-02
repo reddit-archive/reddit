@@ -1049,6 +1049,14 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_advert_traffic(self, code):
         return trafficpages.AdvertTrafficPage(code).render()
 
+    @validate(VSponsorAdmin())
+    def GET_subreddit_traffic_report(self):
+        content = trafficpages.SubredditTrafficReport()
+
+        if c.render_style == 'csv':
+            return content.as_csv()
+        return trafficpages.TrafficPage(content=content).render()
+
     @validate(VUser())
     def GET_account_activity(self):
         return AccountActivityPage().render()

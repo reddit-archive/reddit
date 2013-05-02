@@ -60,6 +60,8 @@ def make_map():
        action='lang_traffic', langcode='')
     mc('/traffic/adverts/:code', controller='front',
        action='advert_traffic', code='')
+    mc('/traffic/subreddits/report', controller='front',
+       action='subreddit_traffic_report')
     mc('/account-activity', controller='front', action='account_activity')
 
     mc('/about/message/:where', controller='message', action='listing')
