@@ -3165,12 +3165,7 @@ class PromotePage(Reddit):
         else:
             buttons.append(NamedButton('my_current_promos', dest = ''))
 
-        buttons += [NamedButton('future_promos'),
-                    NamedButton('unpaid_promos'),
-                    NamedButton('rejected_promos'),
-                    NamedButton('pending_promos'),
-                    NamedButton('live_promos'),
-                    NamedButton('graph')]
+        buttons.append(NamedButton('graph'))
 
         if c.user_is_sponsor:
             buttons.append(NamedButton('admin_graph',

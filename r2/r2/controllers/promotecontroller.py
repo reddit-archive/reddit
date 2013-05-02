@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 
 import itertools
 import json
+import urllib
 
 from pylons import c, g, request
 from pylons.i18n import _
@@ -33,6 +34,8 @@ from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
 from r2.lib.media import force_thumbnail, thumbnail_url
+from r2.lib.memoize import memoize
+from r2.lib.menus import NamedButton, NavButton, NavMenu
 from r2.lib.pages import (
     LinkInfoPage,
     PaymentForm,
@@ -75,7 +78,16 @@ from r2.lib.validator import (
     VTitle,
     VUrl,
 )
-from r2.models import Link, Message, NotFound, PromoCampaign, PromotionLog
+from r2.models import (
+    Frontpage,
+    Link,
+    LiveAdWeights,
+    Message,
+    NotFound,
+    PromoCampaign,
+    PromotionLog,
+    Subreddit,
+)
 
 
 def _check_dates(dates):
@@ -107,6 +119,50 @@ class PromoteController(ListingController):
     def title_text(self):
         return _('promoted by you')
 
+    @classmethod
+    @memoize('live_by_subreddit', time=300)
+    def live_by_subreddit(cls, sr):
+        if sr == Frontpage:
+            sr_id = ''
+        else:
+            sr_id = sr._id
+        r = LiveAdWeights.get([sr_id])
+        return [i.link for i in r[sr_id]]
+
+    @classmethod
+    @memoize('subreddits_with_promos', time=3600)
+    def subreddits_with_promos(cls):
+        sr_ids = LiveAdWeights.get_live_subreddits()
+        srs = Subreddit._byID(sr_ids, return_dict=False)
+        sr_names = sorted([sr.name for sr in srs], key=lambda s: s.lower())
+        return sr_names
+
+    @property
+    def menus(self):
+        filters = [
+            NamedButton('all_promos', dest=''),
+            NamedButton('future_promos'),
+            NamedButton('unpaid_promos'),
+            NamedButton('rejected_promos'),
+            NamedButton('pending_promos'),
+            NamedButton('live_promos'),
+        ]
+        menus = [NavMenu(filters, base_path='/promoted', title='show',
+                        type='lightdrop')]
+
+        if self.sort == 'live_promos' and c.user_is_sponsor:
+            sr_names = self.subreddits_with_promos()
+            buttons = [NavButton(name, name) for name in sr_names]
+            frontbutton = NavButton('FRONTPAGE', Frontpage.name,
+                                    aliases=['/promoted/live_promos/%s' %
+                                             urllib.quote(Frontpage.name)])
+            buttons.insert(0, frontbutton)
+            buttons.insert(0, NavButton('all', ''))
+            menus.append(NavMenu(buttons, base_path='/promoted/live_promos',
+                                 title='subreddit', type='lightdrop'))
+
+        return menus
+
     def keep_fn(self):
         def keep(item):
             if item.promoted and not item._deleted:
@@ -125,7 +181,9 @@ class PromoteController(ListingController):
                 return queries.get_all_unpaid_links()
             elif self.sort == "rejected_promos":
                 return queries.get_all_rejected_links()
-            elif self.sort == "live_promos":
+            elif self.sort == "live_promos" and self.sr:
+                return self.live_by_subreddit(self.sr)
+            elif self.sort == 'live_promos':
                 return queries.get_all_live_links()
             return queries.get_all_promoted_links()
         else:
@@ -141,11 +199,20 @@ class PromoteController(ListingController):
                 return queries.get_live_links(c.user._id)
             return queries.get_promoted_links(c.user._id)
 
-    @validate(VSponsor())
-    def GET_listing(self, sort="", **env):
+    @validate(VSponsor(),
+              sr=nop('sr'))
+    def GET_listing(self, sr=None, sort="", **env):
         if not c.user_is_loggedin or not c.user.email_verified:
             return self.redirect("/ad_inq")
         self.sort = sort
+        self.sr = None
+        if sr and sr == Frontpage.name:
+            self.sr = Frontpage
+        elif sr:
+            try:
+                self.sr = Subreddit._by_name(sr)
+            except NotFound:
+                pass
         return ListingController.GET_listing(self, **env)
 
     GET_index = GET_listing
