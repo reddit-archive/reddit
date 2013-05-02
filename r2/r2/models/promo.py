@@ -32,7 +32,7 @@ from r2.lib.cache import sgm
 from r2.lib.db import tdb_cassandra
 from r2.lib.db.thing import Thing, NotFound
 from r2.lib.memoize import memoize
-from r2.lib.utils import Enum
+from r2.lib.utils import Enum, to_datetime
 from r2.models.subreddit import Subreddit
 
 
@@ -57,7 +57,14 @@ def get_promote_srid(name = 'promos'):
 NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):
-    
+    def __getattr__(self, attr):
+        val = Thing.__getattr__(self, attr)
+        if attr in ('start_date', 'end_date'):
+            val = to_datetime(val)
+            if not val.tzinfo:
+                val = val.replace(tzinfo=g.tz)
+        return val
+
     @classmethod 
     def _new(cls, link, sr_name, bid, start_date, end_date):
         pc = PromoCampaign(link_id=link._id,
