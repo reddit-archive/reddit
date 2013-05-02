@@ -200,6 +200,19 @@ class LiveAdWeights(object):
         return results
 
     @classmethod
+    def get_live_subreddits(cls):
+        q = cls._cf.get_range()
+        results = []
+        empty = {cls.column: '[]'}
+        for sr_id, columns in q:
+            if sr_id in (cls.ALL_ADS, cls.FRONT_PAGE):
+                continue
+            if not columns or columns == empty:
+                continue
+            results.append(int(sr_id))
+        return results
+
+    @classmethod
     def set_all_from_weights(cls, all_weights):
         """Given a dictionary with all ads that should currently be running
         (where the dictionary keys are the subreddit IDs, and the paired
