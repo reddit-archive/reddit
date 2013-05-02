@@ -7,11 +7,11 @@ r.multi = {
             var multi = new r.multi.MultiReddit({
                 path: detailsEl.data('path')
             })
-            multi.fetch()
             new r.multi.MultiDetails({
                 model: multi,
                 el: detailsEl
             })
+            multi.fetch()
         }
 
         var subscribeBubbleGroup = {}
@@ -89,32 +89,91 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
     }
 })
 
+r.multi.MultiSubredditItem = Backbone.View.extend({
+    tagName: 'li',
+
+    template: _.template('<a href="/r/<%= srName %>">/r/<%= srName %></a><button class="remove-sr">x</button>'),
+
+    events: {
+        'click .remove-sr': 'removeSubreddit'
+    },
+
+    render: function() {
+        this.$el.addClass('sr-' + this.model.get('name'))
+        this.$el.append(this.template({
+            srName: this.model.get('name')
+        }))
+        this.bubble = new r.multi.MultiSubscribeBubble({
+            parent: this.$el,
+            group: this.options.bubbleGroup,
+            srName: this.model.get('name')
+        })
+        return this
+    },
+
+    remove: function() {
+        this.bubble.remove()
+        Backbone.View.prototype.remove.apply(this)
+    },
+
+    removeSubreddit: function(ev) {
+        this.options.multi.removeSubreddit(this.model.get('name'))
+    }
+})
+
 r.multi.MultiDetails = Backbone.View.extend({
-    itemTemplate: _.template('<li data-name="<%= name %>"><a href="/r/<%= name %>">/r/<%= name %></a><button class="remove-sr">x</button></li>'),
     events: {
         'submit .add-sr': 'addSubreddit',
-        'click .remove-sr': 'removeSubreddit',
         'change [name="visibility"]': 'setVisibility',
         'confirm .delete': 'deleteMulti'
     },
 
     initialize: function() {
-        this.showWorkingDeferred = _.partial(r.ui.showWorkingDeferred, this.$el)
-        this.model.subreddits.on('add remove', this.render, this)
-        this.model.on('request', function(model, xhr) {
-            this.showWorkingDeferred(xhr)
-        }, this)
+        this.listenTo(this.model.subreddits, 'add', this.addOne)
+        this.listenTo(this.model.subreddits, 'remove', this.removeOne)
+        this.listenTo(this.model.subreddits, 'reset', this.addAll)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
+
+        this.listenTo(this.model.subreddits, 'add remove', function() {
+            r.ui.showWorkingDeferred(this.$el, r.ui.refreshListing())
+        })
+
+        this.model.on('request', function(model, xhr) {
+            r.ui.showWorkingDeferred(this.$el, xhr)
+        }, this)
+
+        this.bubbleGroup = {}
     },
 
-    render: function() {
-        var srList = this.$('.subreddits')
-        srList.empty()
-        this.model.subreddits.each(function(sr) {
-            srList.append(this.itemTemplate({
-                name: sr.get('name')
-            }))
-        }, this)
+    addOne: function(sr) {
+        var view = new r.multi.MultiSubredditItem({
+            model: sr,
+            multi: this.model,
+            bubbleGroup: this.bubbleGroup
+        })
+        this.itemViews[sr.id] = view
+
+        var $el = view.render().$el,
+            index = this.model.subreddits.indexOf(sr),
+            $list = this.$('.subreddits'),
+            $cur = $list.children().eq(index)
+
+        if ($cur.length) {
+            $cur.before($el)
+        } else {
+            $list.append($el)
+        }
+    },
+
+    removeOne: function(sr) {
+        this.itemViews[sr.id].remove()
+        delete this.itemViews[sr.id]
+    },
+
+    addAll: function() {
+        this.itemViews = {}
+        this.$('.subreddits').empty()
+        this.model.subreddits.each(this.addOne, this)
     },
 
     addSubreddit: function(ev) {
@@ -132,7 +191,6 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.model.addSubreddit(srName, {
             wait: true,
             success: _.bind(function() {
-                this.showWorkingDeferred(r.ui.refreshListing())
                 this.$('.add-error').hide()
             }, this),
             error: _.bind(function(model, xhr) {
@@ -142,13 +200,6 @@ r.multi.MultiDetails = Backbone.View.extend({
                     .css('visibility', 'visible')
                     .show()
             }, this)
-        })
-    },
-
-    removeSubreddit: function(ev) {
-        var srName = $(ev.target).parent().data('name')
-        this.model.removeSubreddit(srName, {
-            success: _.compose(this.showWorkingDeferred, r.ui.refreshListing)
         })
     },
 
@@ -187,7 +238,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     },
 
     initialize: function() {
-        this.on('show', this.load, this)
+        this.listenTo(this, 'show', this.load)
         this.listenTo(r.multi.mine, 'reset add', this.render)
         r.ui.Bubble.prototype.initialize.apply(this)
     },
