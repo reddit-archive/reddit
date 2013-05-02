@@ -457,6 +457,7 @@ class Globals(object):
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
+            min_compress_len=1400,
         )
 
         # pagecaches hold fully rendered pages
@@ -465,6 +466,7 @@ class Globals(object):
             noreply=True,
             no_block=True,
             num_clients=num_mc_clients,
+            min_compress_len=1400,
         )
 
         self.startup_timer.intermediate("memcache")
