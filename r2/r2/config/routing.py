@@ -51,8 +51,6 @@ def make_map():
 
     mc('/over18', controller='post', action='over18')
 
-    mc('/search', controller='front', action='search')
-
     mc('/rules', controller='front', action='rules')
     mc('/sup', controller='front', action='sup')
     mc('/traffic', controller='front', action='site_traffic')
@@ -139,6 +137,7 @@ def make_map():
           location='about')
        mc(prefix + '/comments', controller='comments', action='listing')
        mc(prefix + '/comments/gilded', action='listing', controller='gilded')
+       mc(prefix + '/search', controller='front', action='search')
 
     mc('/u/:username', controller='redirect', action='user_redirect')
     mc('/u/:username/*rest', controller='redirect', action='user_redirect')
