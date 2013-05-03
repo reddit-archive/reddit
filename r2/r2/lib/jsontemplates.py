@@ -264,7 +264,7 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
 
     def thing_attr(self, thing, attr):
         if attr == "srs":
-            return [{"name": sr.name} for sr in thing.srs]
+            return thing.named_sr_props
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 

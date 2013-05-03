@@ -36,8 +36,24 @@ r.multi.MultiRedditList = Backbone.Collection.extend({
             this.id = this.get('name').toLowerCase()
         }
     }),
+
     comparator: function(model) {
         return model.id
+    },
+
+    parse: function(response) {
+        return _.map(response, function(srData, srName) {
+            srData['name'] = srName
+            return srData
+        })
+    },
+
+    toJSON: function() {
+        srProps = {}
+        this.each(function(sr) {
+            srProps[sr.get('name')] = sr.omit('name')
+        })
+        return srProps
     },
 
     getByName: function(name) {
@@ -52,10 +68,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
     },
 
     initialize: function() {
-        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'))
+        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {parse: true})
         this.subreddits.url = this.url() + '/r/'
         this.on('change:subreddits', function(model, value) {
-            this.subreddits.reset(value)
+            this.subreddits.reset(value, {parse: true})
         }, this)
         this.subreddits.on('request', function(model, xhr, options) {
             this.trigger('request', model, xhr, options)
@@ -64,6 +80,12 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     parse: function(response) {
         return response.data
+    },
+
+    toJSON: function() {
+        data = Backbone.Model.prototype.toJSON.apply(this)
+        data.subreddits = this.subreddits.toJSON()
+        return data
     },
 
     addSubreddit: function(name, options) {
