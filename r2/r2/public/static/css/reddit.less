@@ -6966,7 +6966,7 @@ body.with-listing-chooser {
         bottom: 0;
         left: @width - @shadow-width;
         box-shadow: -@shadow-width 0 2*@shadow-width -@shadow-width rgba(0, 0, 0, .3) inset;
-        z-index: 90;
+        z-index: 20;
     }
 
     h3 {
@@ -7036,7 +7036,7 @@ body.with-listing-chooser {
             position: relative;
             background: lighten(#cee3f8, 6%);
             border-color: lighten(#369, 40%);
-            z-index: 100;
+            z-index: 25;
 
             a {
                 font-weight: bold;
@@ -7051,7 +7051,7 @@ body.with-listing-chooser {
                 content: '';
                 border: 15px solid transparent;
                 border-style: solid solid outset; // mitigates firefox drawing a thicker arrow
-                z-index: 100;
+                z-index: 25;
             }
 
             &:before {
