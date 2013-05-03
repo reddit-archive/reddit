@@ -1,12 +1,11 @@
 r.multi = {
     init: function() {
+        this.multis = new r.multi.GlobalMultiCache()
         this.mine = new r.multi.MyMultiCollection()
 
         var detailsEl = $('.multi-details')
         if (detailsEl.length) {
-            var multi = new r.multi.MultiReddit({
-                path: detailsEl.data('path')
-            })
+            var multi = this.multis.touch(detailsEl.data('path'))
             new r.multi.MultiDetails({
                 model: multi,
                 el: detailsEl
@@ -86,6 +85,35 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
             delete attributes['name']
         }
         Backbone.Collection.prototype.create.call(this, attributes, options)
+    },
+
+    parse: function(data) {
+        return _.map(data, function(multiData) {
+            return r.multi.multis.reify(multiData)
+        })
+    }
+})
+
+r.multi.GlobalMultiCache = Backbone.Collection.extend({
+    model: r.multi.MultiReddit,
+
+    touch: function(path) {
+        var multi = this.get(path)
+        if (!multi) {
+            multi = new r.multi.MultiReddit({
+                path: path
+            })
+            this.add(multi)
+        }
+        return multi
+    },
+
+    reify: function(response) {
+        var data = r.multi.MultiReddit.prototype.parse(response),
+            multi = this.touch(data.path)
+
+        multi.set(data)
+        return multi
     }
 })
 
