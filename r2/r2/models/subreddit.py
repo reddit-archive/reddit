@@ -1355,7 +1355,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return self._owner
 
     @property
-    def sr_props(self):
+    def sr_columns(self):
         # limit to max subreddit count, allowing a little fudge room for
         # cassandra inconsistency
         remaining = self.MAX_SR_COUNT + 10
@@ -1369,7 +1369,11 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
             remaining -= 1
             if remaining <= 0:
                 break
-        return self.columns_to_sr_props(sr_columns)
+        return sr_columns
+
+    @property
+    def sr_props(self):
+        return self.columns_to_sr_props(self.sr_columns)
 
     @property
     def path(self):
@@ -1442,7 +1446,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         """Add/overwrite subreddit(s)."""
         sr_columns = self.sr_props_to_columns(sr_props)
 
-        if len(self._srs) + len(sr_columns) > self.MAX_SR_COUNT:
+        if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_SR_COUNT:
             raise TooManySubredditsException
 
         for attr, val in sr_columns.iteritems():
