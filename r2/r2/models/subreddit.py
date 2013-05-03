@@ -1416,9 +1416,12 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     @classmethod
     def sr_props_to_columns(cls, sr_props):
-        sr_columns = {cls.SR_PREFIX + str(sr_id): json.dumps(props)
-                      for sr_id, props in sr_props.iteritems()}
-        return sr_columns
+        columns = {}
+        for sr_id, props in sr_props.iteritems():
+            if isinstance(sr_id, Subreddit):
+                sr_id = sr_id._id
+            columns[cls.SR_PREFIX + str(sr_id)] = json.dumps(props)
+        return columns
 
     @classmethod
     def columns_to_sr_props(cls, columns):

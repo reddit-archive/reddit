@@ -140,7 +140,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Add a subreddit to a multi."""
 
         try:
-            multi.add_srs({sr._id: {}})
+            multi.add_srs({sr: {}})
         except TooManySubredditsException as e:
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
         else:
@@ -156,5 +156,5 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     )
     def DELETE_multi_subreddit(self, multi, sr):
         """Remove a subreddit from a multi."""
-        multi.del_srs(sr._id)
+        multi.del_srs(sr)
         multi._commit()
