@@ -1431,6 +1431,13 @@ class Message(Thing, Printable):
         if self.sr_id:
             return Subreddit._byID(self.sr_id)
 
+    @property
+    def author_slow(self):
+        """Returns the message's author."""
+        # The author is often already on the wrapped message as .author
+        # If available, that should be used instead of calling this
+        return Account._byID(self.author_id, data=True, return_dict=False)
+
     @staticmethod
     def wrapped_cache_key(wrapped, style):
         s = Printable.wrapped_cache_key(wrapped, style)
