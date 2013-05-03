@@ -3,6 +3,9 @@ r.multi = {
         this.multis = new r.multi.GlobalMultiCache()
         this.mine = new r.multi.MyMultiCollection()
 
+        // this collection gets fetched frequently by hover bubbles.
+        this.mine.fetch = _.throttle(this.mine.fetch, 60 * 1000)
+
         var detailsEl = $('.multi-details')
         if (detailsEl.length) {
             var multi = this.multis.touch(detailsEl.data('path'))
