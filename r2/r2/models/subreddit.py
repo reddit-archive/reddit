@@ -1464,6 +1464,9 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         for key in keys:
             self.__delitem__(key)
 
+    def clear_srs(self):
+        self.del_srs(self.sr_ids)
+
     def delete(self):
         # Do we want to actually delete objects?
         self._destroy()

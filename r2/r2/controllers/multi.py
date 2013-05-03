@@ -110,7 +110,26 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             if data['visibility'] not in ('private', 'public'):
                 raise RedditError('INVALID_OPTION', code=400, fields="data")
             multi.visibility = data['visibility']
-            multi._commit()
+
+        if 'subreddits' in data:
+            multi.clear_srs()
+            srs = Subreddit._by_name(data['subreddits'].keys())
+            sr_props = {}
+            for sr_name, sr_data in data['subreddits'].iteritems():
+                try:
+                    sr = srs[sr_name]
+                except KeyError:
+                    raise RedditError('SUBREDDIT_NOEXIST', code=400)
+                else:
+                    sr_props[sr] = sr_data
+
+            try:
+                multi.add_srs(sr_props)
+            except TooManySubredditsException as e:
+                multi._revert()
+                raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
+
+        multi._commit()
 
         return self.GET_multi(path=info['path'])
 
