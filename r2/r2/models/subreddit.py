@@ -1361,12 +1361,14 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         remaining = self.MAX_SR_COUNT + 10
         sr_columns = {}
         for k, v in self._t.iteritems():
+            if not k.startswith(self.SR_PREFIX):
+                continue
+
+            sr_columns[k] = v
+
+            remaining -= 1
             if remaining <= 0:
                 break
-            remaining -= 1
-
-            if k.startswith(self.SR_PREFIX):
-                sr_columns[k] = v
         return self.columns_to_sr_props(sr_columns)
 
     @property
