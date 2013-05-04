@@ -75,6 +75,8 @@
                         "helpon", "helpoff",
                          style = "" if thing.creating else "display: none")}
 
+        <a href="/wiki/reddiquette" class="reddiquette" target="_blank" tabindex="100">${_('reddiquette')}</a>
+
         ${error_field("TOO_LONG", thing.name, "span")}
         ${error_field("RATELIMIT", "ratelimit", "span")}
         ${error_field("NO_TEXT", thing.name, "span")}
