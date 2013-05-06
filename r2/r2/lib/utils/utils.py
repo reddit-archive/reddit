@@ -1028,7 +1028,8 @@ def filter_links(links, filter_spam = False, multiple = True):
     # among those, show them the hottest one
     return links if multiple else links[0]
 
-def url_links_builder(url, exclude=None):
+def url_links_builder(url, exclude=None, num=None, after=None, reverse=None,
+                      count=None):
     from r2.models import IDBuilder, Link, NotFound
     from operator import attrgetter
 
@@ -1050,8 +1051,9 @@ def url_links_builder(url, exclude=None):
                         c.user_is_admin or
                         link.subreddit.is_moderator(c.user))))
 
-    builder = IDBuilder([link._fullname for link in links],
-                        skip=True, keep_fn=include_link)
+    builder = IDBuilder([link._fullname for link in links], skip=True,
+                        keep_fn=include_link, num=num, after=after,
+                        reverse=reverse, count=count)
 
     return builder
 

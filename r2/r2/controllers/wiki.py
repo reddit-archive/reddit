@@ -225,7 +225,8 @@ class WikiController(RedditController):
     @validate(page=VWikiPage('page', restricted=True))
     def GET_wiki_discussions(self, page, num, after, reverse, count):
         page_url = add_sr("%s/%s" % (c.wiki_base_url, page.name))
-        builder = url_links_builder(page_url)
+        builder = url_links_builder(page_url, num=num, after=after,
+                                    reverse=reverse, count=count)
         listing = LinkListing(builder).listing()
         return WikiDiscussions(listing, page=page.name,
                                may_revise=this_may_revise(page)).render()

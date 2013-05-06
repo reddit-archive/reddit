@@ -764,8 +764,9 @@ class FrontController(RedditController, OAuth2ResourceController):
 
         # only look up duplicates if it's not a self-post
         if not getattr(article, 'is_self', False):
-            builder = url_links_builder(article.url,
-                                        exclude=article._fullname)
+            builder = url_links_builder(article.url, exclude=article._fullname,
+                                        num=num, after=after, reverse=reverse,
+                                        count=count)
             num_duplicates = len(builder.get_items()[0])
             listing = LinkListing(builder).listing()
         else:
