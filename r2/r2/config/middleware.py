@@ -57,11 +57,14 @@ webob.util.status_reasons[429] = HTTPTooManyRequests.title
 
 #from pylons.middleware import error_mapper
 def error_mapper(code, message, environ, global_conf=None, **kw):
-    from pylons import c
     if environ.get('pylons.error_call'):
         return None
     else:
         environ['pylons.error_call'] = True
+
+    from pylons import c
+    if c.used_cache:
+        return
 
     if global_conf is None:
         global_conf = {}
