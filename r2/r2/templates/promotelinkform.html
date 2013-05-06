@@ -328,7 +328,7 @@ ${self.javascript_setup()}
                            css_class="rounded">
           <div class="delete-field">
             <%utils:image_upload post_target="/api/link_thumb" 
-                                 current_image="${thumb}"
+                                 current_image="${getattr(thing.link, 'thumbnail_url', '')}"
                                  label="${_('upload header image:')}"
                                  ask_type="True">
               <input type="hidden" name="link_id" value="${thing.link._fullname}" />
