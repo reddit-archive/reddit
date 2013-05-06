@@ -43,7 +43,6 @@ from r2.lib.pages import (
     Promote_Graph,
     PromotePage,
     PromoteLinkForm,
-    PromoteLinkFormCpm,
     PromoteLinkNew,
     PromoteReport,
     Reddit,
@@ -239,25 +238,6 @@ class PromoteController(ListingController):
         form = PromoteLinkForm(link, rendered)
         page = PromotePage('new_promo', content=form)
         return page.render()
-
-
-    # For development. Should eventually replace GET_edit_promo
-    @validate(VSponsor('link'),
-              link=VLink('link'))
-    def GET_edit_promo_cpm(self, link):
-        if not link or link.promoted is None:
-            return self.abort404()
-        rendered = wrap_links(link, wrapper=promote.sponsor_wrapper,
-                              skip=False)
-
-        form = PromoteLinkFormCpm(link=link,
-                                  listing=rendered,
-                                  timedeltatext="")
-
-        page = PromotePage('new_promo', content=form)
-
-        return page.render()
-
 
     # admin only because the route might change
     @validate(VSponsorAdmin('campaign'),

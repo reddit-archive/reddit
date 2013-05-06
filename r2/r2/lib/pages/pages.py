@@ -3368,19 +3368,6 @@ class PromoteLinkForm(Templated):
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 
 
-class PromoteLinkFormCpm(PromoteLinkForm):
-    def __init__(self, sr=None, link=None, listing='', *a, **kw):
-        self.setup(link, listing)
-
-        if not c.user_is_sponsor:
-            self.now = promote.promo_datetime_now().date()
-            start_date = self.now
-            end_date = self.now + datetime.timedelta(60) # two months
-            self.inventory = promote.get_available_impressions(sr, start_date, end_date)
-
-        Templated.__init__(self, *a, **kw)
-
-
 class PromoAdminTool(Reddit):
     def __init__(self, query_type=None, launchdate=None, start=None, end=None, *a, **kw):
         self.query_type = query_type
