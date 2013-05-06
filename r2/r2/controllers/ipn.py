@@ -422,6 +422,8 @@ class IpnController(RedditController):
                         pennies = int(float(trans.find("order-total"
                                                       ).contents[0])*100)
                         months, days = months_and_days_from_pennies(pennies)
+                        if not months:
+                            raise ValueError("Bad pennies for %s" % short_sn)
                         charged = trans.find("charge-amount-notification")
                         if not charged:
                             _google_charge_and_ship(short_sn)
