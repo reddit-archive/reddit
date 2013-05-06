@@ -363,10 +363,6 @@ class PromoteController(ListingController):
                    url=VUrl('url', allow_self=False, lookup=False),
                    ip=ValidIP(),
                    disable_comments=VBoolean("disable_comments"),
-                   set_clicks=VBoolean("set_maximum_clicks"),
-                   max_clicks=VInt("maximum_clicks", min=0),
-                   set_views=VBoolean("set_maximum_views"),
-                   max_views=VInt("maximum_views", min=0),
                    media_width=VInt("media-width", min=0),
                    media_height=VInt("media-height", min=0),
                    media_embed=VLength("media-embed", 1000),
@@ -375,20 +371,12 @@ class PromoteController(ListingController):
                    )
     def POST_edit_promo(self, form, jquery, ip, l, title, url,
                         disable_comments,
-                        set_clicks, max_clicks,
-                        set_views, max_views,
                         media_height, media_width, media_embed,
                         media_override, domain_override):
 
         should_ratelimit = False
         if not c.user_is_sponsor:
-            set_clicks = False
-            set_views = False
             should_ratelimit = True
-        if not set_clicks:
-            max_clicks = None
-        if not set_views:
-            max_views = None
 
         if not should_ratelimit:
             c.errors.remove((errors.RATELIMIT, 'ratelimit'))
@@ -436,10 +424,6 @@ class PromoteController(ListingController):
                 promote.unapprove_promotion(l)
             if trusted and promote.is_unapproved(l):
                 promote.accept_promotion(l)
-
-            if c.user_is_sponsor:
-                l.maximum_clicks = max_clicks
-                l.maximum_views = max_views
 
             # comment disabling is free to be changed any time.
             l.disable_comments = disable_comments

@@ -352,39 +352,8 @@ ${self.javascript_setup()}
         <%utils:line_field title="${_('options')}" id="commenting-field"
                            css_class="rounded">
           <div class="delete-field">
-
-            <% 
-                clicks = views = 0
-                disable_comments = False
-                if thing.link:
-                    disable_comments = getattr(thing.link, "disable_comments", False)
-                    clicks = getattr(thing.link, "maximum_clicks", 0) or 0
-                    views  = getattr(thing.link, "maximum_views", 0) or 0
-             %>
-
-            ${checkbox("disable_comments", _("disable comments"), disable_comments)}
+            ${checkbox("disable_comments", _("disable comments"), getattr(thing.link, 'disable_comments', False))}
             <br />
-  
-            %if c.user_is_sponsor:
-              ${checkbox("set_maximum_clicks",
-                         unsafe("maximum clicks:&#32; " +
-                                "<input type='text' style='width:auto' " + 
-                                       "onfocus='update_box(this)' " +
-                                       "name='maximum_clicks' size='7' " +
-                                       "value='%s' />" % clicks),
-                         clicks)}
-              <br />
-  
-              ${checkbox("set_maximum_views",
-                         unsafe("maximum views:&#32;" +
-                                "<input type='text' style='width:auto' " + 
-                                       "onfocus='update_box(this)' " +
-                                       "name='maximum_views' size='7' " +
-                                       "value='%s' />" % views),
-                         views)}
-              <br />
-  
-            %endif
           </div>
 
           <div class="infotext rounded">
