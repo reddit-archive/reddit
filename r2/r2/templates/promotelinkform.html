@@ -74,202 +74,7 @@ ${self.javascript_setup()}
 
   <div class="create-promo">
     %if thing.link:
-      <div class="pretty-form">
-        <%utils:line_field title="${_('campaign dashboard')}" id="campaign-field" css_class="rounded">
-
-          <div class="help">
-            <div class="infotext rounded" id="campaign-help">
-              <p>
-                This dashboard allows you to easily place ads on reddit.
-                You can target a specific community or simply run on the main
-                page.
-              </p>
-            </div>
-            <div class="clear"></div>
-          </div>
-
-          <div id="campaign"
-               style="${'display:none' if thing.campaigns else ''}"
-               class="campaign infotext rounded"
-               method="post" action="/api/add_campaign">
-
-            <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
-
-            <%
-                start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
-                end_title = "Date when your sponsored link will end (at midnight UTC+5)"
-                targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wide "
-                newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
-             %>
-
-            <table class="preftable">
-              <tr>
-                <th>duration</th>
-                <td class="prefright">
-                  <%
-                      mindate = thing.startdate
-                      if c.user_is_sponsor:
-                          mindate = thing.promote_date_today.strftime('%m/%d/%Y')
-                   %>
-                  <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
-                  <%self:datepicker name="startdate", value="${thing.startdate}"
-                                    minDateSrc="date-min" initfuncname="init_startdate">
-                    function(elem) {
-                      check_enddate(elem, $("#enddate"));
-                      update_bid(elem);
-                    }
-                  </%self:datepicker>
-                  -
-                  <%self:datepicker name="enddate", value="${thing.enddate}"
-                                    minDateSrc="startdate" initfuncname="init_enddate"
-                                    min_date_offset="86400000">
-                    function(elem) { update_bid(elem); }
-                  </%self:datepicker>
-
-                  ${error_field("BAD_DATE", "startdate", "div")}
-                  ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
-                  ${error_field("BAD_DATE", "enddate", "div")}
-                  ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
-                  ${error_field("BAD_DATE_RANGE", "enddate", "div")}
-                </td>
-              </tr>
-
-              <tr>
-                <th>total bid</th>
-                <td class="prefright">
-                  ${error_field("BAD_BID", "bid", "div")}
-                  ${error_field("BID_LIVE", "bid", "div")}
-                  $<input id="bid" name="bid" size="7" type="text"
-                          class="rounded styled-input"
-                          style="width:auto"
-                          onchange="update_bid(this)"
-                          onkeyup="update_bid(this)"
-                          title="Minimum is $${'%.2f' % thing.min_daily_bid} per day, or $${'%.2f' % (thing.min_daily_bid * 1.5)} per day targeted"
-                          value="${'%.2f' % (thing.min_daily_bid * 5)}"
-                          data-min_daily_bid="${thing.min_daily_bid}"/>
-                  <span class="bid-info gray"></span>
-                </td>
-              </tr>
-
-              <tr>
-                <th>targeting</th>
-                <td class="prefright">
-                  <input id="no_targeting" class="nomargin" 
-                         type="radio"  value="none" name="targeting"
-                         onclick="return targeting_off(this)"
-                         checked="checked" /> 
-                  <label for="no_targeting">no targeting (displays site-wide)</label>
-                  <p id="no_targeting_minimum" class="minimum-spend">minimum $20 / day</p>
-                  <input id="targeting" class="nomargin" 
-                         type="radio"  value="one" name="targeting"
-                         onclick="return targeting_on(this)" /> 
-                  <label for="targeting">enable targeting (runs on a specific subreddit)</label>
-                  <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
-
-                  <script type="text/javascript">
-                    $(function() { 
-                        var c =  $(".campaign input[name=targeting]:checked");
-                        if (c.val() == 'one') {
-                          targeting_on(c);
-                        } else {
-                          targeting_off(c);
-                        }
-                      })
-                  </script>
-
-                </td>
-              </tr>
-            </table>
-
-            <script type="text/javascript">
-              $(function() {
-                  init_startdate();
-                  init_enddate();
-                  $("#campaign").find("button[name=create]").show().end()
-                        .find("button[name=save]").hide().end();
-                  update_bid("*[name=bid]");
-                })
-            </script>
-
-            <div class="targeting" style="display:none">
-              <ul>
-                <li>By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.</li>
-                <li>Your ad will also appear at the top of the hot listing for that subreddit</li>
-                <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
-              </ul>
-              ${error_field("OVERSOLD", "sr", "div")}
-              ${SubredditSelector()}
-            </div>
-
-            <div class="buttons">
-              <input type="hidden" name="campaign_id36" value="" />
-              <span class="status error"></span>
-              <button name="cancel"
-                      onclick="return cancel_edit()" class="fancybutton">
-                cancel
-              </button>
-
-              <button name="save"
-                      onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
-                      class="fancybutton">
-                save
-              </button>
-
-              <button name="create"
-                      onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
-                      class="fancybutton">
-                create
-              </button>
-            </div>
-
-            <div class="clear"></div>
-          </div>
-
-          <div class="error TOO_MANY_CAMPAIGNS field-title infotext rounded ${'hidden' if len(thing.campaigns) < g.MAX_CAMPAIGNS_PER_LINK else ''}"
-               data-MAX="${g.MAX_CAMPAIGNS_PER_LINK}"
-               data-CAMP="${len(thing.campaigns)}">
-            <p>
-              ${_("You have too many campaigns for this link.")}&#32;
-              <a href="/promoted/new_promo/">${_("It's time to start fresh!")}</a>
-            </p>
-          </div>
-
-          <div class="existing-campaigns infotext rounded"
-               data-max-campaigns="${g.MAX_CAMPAIGNS_PER_LINK}">
-            <table style="${'display:none' if not thing.campaigns else ''}">
-              <tr>
-                <th title="${start_title}">start</th>
-                <th title="${end_title}">end</th>
-                <th>duration</th>
-                <th>bid</th>
-                <th title="${targeting_title}">targeting</th>
-                <th style="align:right">
-                  <button class="new-campaign fancybutton" 
-                          ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
-                          title="${newcamp_title}"
-                          onclick="return create_campaign(this)">+ add new</button>
-                </th>
-              </tr>
-            </table>
-
-            <script type="text/javascript">
-              $(function() {
-                  %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
-                    $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
-                        [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
-                         rc.bid, rc.sr, rc.status]))});
-                  %endfor
-                  $.set_up_campaigns();
-                });
-            </script>
-
-            <p class="error"
-               style="${'display:none' if thing.campaigns else ''}">
-              You don't have any campaigns for this link yet.  You should add one.
-            </p>
-          </div>
-        </%utils:line_field>
-      </div>
+      ${campaign_dashboard()}
     %endif
 
     <div class="pretty-form" id="promo-form">
@@ -279,127 +84,19 @@ ${self.javascript_setup()}
 
       <%
          trusted = c.user_is_sponsor or c.user.trusted_sponsor
+         editable = trusted or not promote.is_promoted(thing.link)
        %>
 
-      <%utils:line_field title="${_('title')}" id="title-field" css_class="rounded">
-        <textarea name="title" rows="2" cols="1" 
-                  ${"disabled" if (promote.is_promoted(thing.link) and not trusted)  else ""}
-                  wrap="hard" class="rounded">${thing.link.title if thing.link else ''}</textarea>
-        ${error_field("NO_TEXT", "title", "div")}
-        ${error_field("TOO_LONG", "title", "div")}
-        <div class="infotext rounded">
-          <p>A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them</p>
-        </div>
-      </%utils:line_field>
+      ${title_field(thing.link, editable=editable)}
+      ${url_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
 
-      <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded">
-        <input name="kind" value="link" type="hidden"/>
-        <input id="url" name="url" type="text" 
-               ${"disabled" if (promote.is_promoted(thing.link) and not trusted)  else ""}
-               value="${('self' if thing.link.is_self else thing.link.url) if thing.link else ""}"
-               class="rounded"/>
-        ${error_field("NO_URL", "url", "div")}
-        ${error_field("BAD_URL", "url", "div")}
-        ${error_field("DOMAIN_BANNED", "url", "div")}
-        ${error_field("ALREADY_SUB", "url", "div")}
-        <div class="infotext rounded">
-          <p>Provide the URL of your ad.&#32;<em>No redirects please!</em></p>
-        </div>
+      %if thing.link and editable:
+        ${image_field(thing.link)}
+        ${commenting_field(thing.link)}
 
-        %if c.user_is_sponsor:
-          <label style="display:block; text-align:right" for="domain">Override display domain:</label>
-          <input id="domain" name="domain" type="text" 
-                 %if getattr(thing.link, "domain_override", False):
-                   value="${thing.link.domain_override}" class="rounded"
-                 %else:
-                   class="gray rounded" value="optional"
-                 %endif
-          />
-
-          <div class="infotext rounded">
-            <p>Choose a different domain name to display on the site (the small grey text next to a link</p>
-          </div>
+        %if trusted:
+          ${media_field(thing.link)}
         %endif
-      </%utils:line_field>
-
-      %if thing.link and (trusted or not promote.is_promoted(thing.link)):
-        <%utils:line_field title="${_('look and feel')}"
-                           description="images will be resized if larger than 70 x 70 pixels"
-                           css_class="rounded">
-          <div class="delete-field">
-            <%utils:image_upload post_target="/api/link_thumb" 
-                                 current_image="${getattr(thing.link, 'thumbnail_url', '')}"
-                                 label="${_('upload header image:')}"
-                                 ask_type="True">
-              <input type="hidden" name="link_id" value="${thing.link._fullname}" />
- 
-              ## overwrite the completed image function
-              <script type="text/javascript">
-                completedUploadImage = (function(cu) {
-                  return function(status, img_src, name, errors) {
-                    cu(status, "", "", errors);
-                    $.things('${thing.link._fullname}').find(".thumbnail img")
-                      .attr("src", img_src + "?v=" + Math.random());
-                  }
-                })(completedUploadImage);
-              </script>
-
-            </%utils:image_upload>
-            <div class="clearleft"></div>
-          </div>
-        </%utils:line_field>
-
-        <%utils:line_field title="${_('options')}" id="commenting-field"
-                           css_class="rounded">
-          <div class="delete-field">
-            ${checkbox("disable_comments", _("disable comments"), getattr(thing.link, 'disable_comments', False))}
-            <br />
-          </div>
-
-          <div class="infotext rounded">
-            <p>Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.</p>
-          </div>
-        </%utils:line_field>
-
-        %if c.user_is_sponsor or c.user.trusted_sponsor:
-          <%utils:line_field title="${_('media')}" id="commenting-field" css_class="rounded">
-            <div class="delete-field">
-              <label for="width">Dimensions:</label>&#32;
-              <input name="media-width" type='text' size='5' maxsize='5' 
-                     id="width"
-                     style="width:auto"
-                %if thing.link.media_object:
-                  value='${thing.link.media_object.get("width", 0)}'
-                %else:
-                  placeholder="${_('width')}"
-                %endif
-              />
-              x
-              <input name="media-height" type='text' size='5' maxsize='5'
-                     style="width:auto"
-                     %if thing.link.media_object:
-                       value='${thing.link.media_object.get("height", 0)}'
-                    %else:
-                      placeholder="${_('height')}"
-                    %endif
-              />
-              <p>
-                <label for="media-embed">Embed Code</label>
-                <textarea id="media-embed" name="media-embed" rows="7" cols="1">
-                  %if thing.link.media_object:
-                    ${thing.link.media_object.get('content','')}
-                  %endif
-                </textarea>
-              </p>
-              ${checkbox("media-override",
-                         "media override (adds an onclick to the link to generate a drop-down rather than a link out)",
-                         getattr(thing.link, "media_override", False) or False)}
-              <br />
-  
-            </div>
-          </%utils:line_field>
-        %endif
-
       %else:
         <div class="rules">
           By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfservicepromotion">Self Serve Advertising Rules.</a>
@@ -430,6 +127,331 @@ ${self.javascript_setup()}
   </div>
   ${self.right_panel()}
 </div>
+
+<%def name="title_field(link, editable=False)">
+  <%utils:line_field title="${_('title')}" id="title-field" css_class="rounded">
+    <textarea name="title" rows="2" cols="1" 
+              ${"disabled" if not editable else ""}
+              wrap="hard" class="rounded">${link.title if link else ''}</textarea>
+    ${error_field("NO_TEXT", "title", "div")}
+    ${error_field("TOO_LONG", "title", "div")}
+    <div class="infotext rounded">
+      <p>A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them</p>
+    </div>
+  </%utils:line_field>
+</%def>
+
+<%def name="url_field(link, editable=False, enable_override=False)">
+  <%utils:line_field title="${_('url')}" id="url-field" css_class="rounded">
+    <input name="kind" value="link" type="hidden"/>
+    <input id="url" name="url" type="text" 
+           ${"disabled" if not editable else ""}
+           value="${('self' if link.is_self else link.url) if link else ""}"
+           class="rounded"/>
+    ${error_field("NO_URL", "url", "div")}
+    ${error_field("BAD_URL", "url", "div")}
+    ${error_field("DOMAIN_BANNED", "url", "div")}
+    ${error_field("ALREADY_SUB", "url", "div")}
+    <div class="infotext rounded">
+      <p>Provide the URL of your ad.&#32;<em>No redirects please!</em></p>
+    </div>
+
+    %if enable_override:
+      <label style="display:block; text-align:right" for="domain">Override display domain:</label>
+      <input id="domain" name="domain" type="text" 
+             %if link and getattr(link, "domain_override", False):
+               value="${link.domain_override}" class="rounded"
+             %else:
+               class="gray rounded" value="optional"
+             %endif
+      />
+
+      <div class="infotext rounded">
+        <p>Choose a different domain name to display on the site (the small grey text next to a link</p>
+      </div>
+    %endif
+  </%utils:line_field>
+</%def>
+
+<%def name="image_field(link)">
+  <%utils:line_field title="${_('look and feel')}"
+                     description="images will be resized if larger than 70 x 70 pixels"
+                     css_class="rounded">
+    <div class="delete-field">
+      <%utils:image_upload post_target="/api/link_thumb" 
+                           current_image="${getattr(link, 'thumbnail_url', '')}"
+                           label="${_('upload header image:')}"
+                           ask_type="True">
+        <input type="hidden" name="link_id" value="${link._fullname}" />
+
+        ## overwrite the completed image function
+        <script type="text/javascript">
+          completedUploadImage = (function(cu) {
+            return function(status, img_src, name, errors) {
+              cu(status, "", "", errors);
+              $.things('${link._fullname}').find(".thumbnail img")
+                .attr("src", img_src + "?v=" + Math.random());
+            }
+          })(completedUploadImage);
+        </script>
+
+      </%utils:image_upload>
+      <div class="clearleft"></div>
+    </div>
+  </%utils:line_field>
+</%def>
+
+<%def name="commenting_field(link)">
+  <%utils:line_field title="${_('options')}" id="commenting-field"
+                     css_class="rounded">
+    <div class="delete-field">
+      ${checkbox("disable_comments", _("disable comments"), link.disable_comments)}
+      <br />
+    </div>
+
+    <div class="infotext rounded">
+      <p>Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.</p>
+    </div>
+  </%utils:line_field>
+</%def>
+
+<%def name="media_field(link)">
+  <%utils:line_field title="${_('media')}" id="media-field" css_class="rounded">
+    <div class="delete-field">
+      <label for="width">Dimensions:</label>&#32;
+      <input name="media-width" type='text' size='5' maxsize='5' 
+             id="width"
+             style="width:auto"
+        %if link.media_object:
+          value='${link.media_object.get("width", 0)}'
+        %else:
+          placeholder="${_('width')}"
+        %endif
+      />
+      x
+      <input name="media-height" type='text' size='5' maxsize='5'
+             style="width:auto"
+             %if link.media_object:
+               value='${link.media_object.get("height", 0)}'
+            %else:
+              placeholder="${_('height')}"
+            %endif
+      />
+      <p>
+        <label for="media-embed">Embed Code</label>
+        <textarea id="media-embed" name="media-embed" rows="7" cols="1">
+          %if link.media_object:
+            ${link.media_object.get('content','')}
+          %endif
+        </textarea>
+      </p>
+      ${checkbox("media-override",
+                 "media override (adds an onclick to the link to generate a drop-down rather than a link out)",
+                 getattr(link, "media_override", False) or False)}
+      <br />
+
+    </div>
+  </%utils:line_field>
+</%def>
+
+<%def name="campaign_dashboard()">
+  <div class="pretty-form">
+    <%utils:line_field title="${_('campaign dashboard')}" id="campaign-field" css_class="rounded">
+
+      <div class="help">
+        <div class="infotext rounded" id="campaign-help">
+          <p>
+            This dashboard allows you to easily place ads on reddit.
+            You can target a specific community or simply run on the main
+            page.
+          </p>
+        </div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="campaign"
+           style="${'display:none' if thing.campaigns else ''}"
+           class="campaign infotext rounded"
+           method="post" action="/api/add_campaign">
+
+        <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
+
+        <%
+            start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
+            end_title = "Date when your sponsored link will end (at midnight UTC+5)"
+            targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wide "
+            newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
+         %>
+
+        <table class="preftable">
+          <tr>
+            <th>duration</th>
+            <td class="prefright">
+              <%
+                  mindate = thing.startdate
+                  if c.user_is_sponsor:
+                      mindate = thing.promote_date_today.strftime('%m/%d/%Y')
+               %>
+              <input type="hidden" id="date-min" name="date-min" value="${mindate}" />
+              <%self:datepicker name="startdate", value="${thing.startdate}"
+                                minDateSrc="date-min" initfuncname="init_startdate">
+                function(elem) {
+                  check_enddate(elem, $("#enddate"));
+                  update_bid(elem);
+                }
+              </%self:datepicker>
+              -
+              <%self:datepicker name="enddate", value="${thing.enddate}"
+                                minDateSrc="startdate" initfuncname="init_enddate"
+                                min_date_offset="86400000">
+                function(elem) { update_bid(elem); }
+              </%self:datepicker>
+
+              ${error_field("BAD_DATE", "startdate", "div")}
+              ${error_field("BAD_FUTURE_DATE", "startdate", "div")}
+              ${error_field("BAD_DATE", "enddate", "div")}
+              ${error_field("BAD_FUTURE_DATE", "enddate", "div")}
+              ${error_field("BAD_DATE_RANGE", "enddate", "div")}
+            </td>
+          </tr>
+
+          <tr>
+            <th>total bid</th>
+            <td class="prefright">
+              ${error_field("BAD_BID", "bid", "div")}
+              ${error_field("BID_LIVE", "bid", "div")}
+              $<input id="bid" name="bid" size="7" type="text"
+                      class="rounded styled-input"
+                      style="width:auto"
+                      onchange="update_bid(this)"
+                      onkeyup="update_bid(this)"
+                      title="Minimum is $${'%.2f' % thing.min_daily_bid} per day, or $${'%.2f' % (thing.min_daily_bid * 1.5)} per day targeted"
+                      value="${'%.2f' % (thing.min_daily_bid * 5)}"
+                      data-min_daily_bid="${thing.min_daily_bid}"/>
+              <span class="bid-info gray"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <th>targeting</th>
+            <td class="prefright">
+              <input id="no_targeting" class="nomargin" 
+                     type="radio"  value="none" name="targeting"
+                     onclick="return targeting_off(this)"
+                     checked="checked" /> 
+              <label for="no_targeting">no targeting (displays site-wide)</label>
+              <p id="no_targeting_minimum" class="minimum-spend">minimum $20 / day</p>
+              <input id="targeting" class="nomargin" 
+                     type="radio"  value="one" name="targeting"
+                     onclick="return targeting_on(this)" /> 
+              <label for="targeting">enable targeting (runs on a specific subreddit)</label>
+              <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
+
+              <script type="text/javascript">
+                $(function() { 
+                    var c =  $(".campaign input[name=targeting]:checked");
+                    if (c.val() == 'one') {
+                      targeting_on(c);
+                    } else {
+                      targeting_off(c);
+                    }
+                  })
+              </script>
+
+            </td>
+          </tr>
+        </table>
+
+        <script type="text/javascript">
+          $(function() {
+              init_startdate();
+              init_enddate();
+              $("#campaign").find("button[name=create]").show().end()
+                    .find("button[name=save]").hide().end();
+              update_bid("*[name=bid]");
+            })
+        </script>
+
+        <div class="targeting" style="display:none">
+          <ul>
+            <li>By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.</li>
+            <li>Your ad will also appear at the top of the hot listing for that subreddit</li>
+            <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
+          </ul>
+          ${error_field("OVERSOLD", "sr", "div")}
+          ${SubredditSelector()}
+        </div>
+
+        <div class="buttons">
+          <input type="hidden" name="campaign_id36" value="" />
+          <span class="status error"></span>
+          <button name="cancel"
+                  onclick="return cancel_edit()" class="fancybutton">
+            cancel
+          </button>
+
+          <button name="save"
+                  onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
+                  class="fancybutton">
+            save
+          </button>
+
+          <button name="create"
+                  onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
+                  class="fancybutton">
+            create
+          </button>
+        </div>
+
+        <div class="clear"></div>
+      </div>
+
+      <div class="error TOO_MANY_CAMPAIGNS field-title infotext rounded ${'hidden' if len(thing.campaigns) < g.MAX_CAMPAIGNS_PER_LINK else ''}"
+           data-MAX="${g.MAX_CAMPAIGNS_PER_LINK}"
+           data-CAMP="${len(thing.campaigns)}">
+        <p>
+          ${_("You have too many campaigns for this link.")}&#32;
+          <a href="/promoted/new_promo/">${_("It's time to start fresh!")}</a>
+        </p>
+      </div>
+
+      <div class="existing-campaigns infotext rounded"
+           data-max-campaigns="${g.MAX_CAMPAIGNS_PER_LINK}">
+        <table style="${'display:none' if not thing.campaigns else ''}">
+          <tr>
+            <th title="${start_title}">start</th>
+            <th title="${end_title}">end</th>
+            <th>duration</th>
+            <th>bid</th>
+            <th title="${targeting_title}">targeting</th>
+            <th style="align:right">
+              <button class="new-campaign fancybutton" 
+                      ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
+                      title="${newcamp_title}"
+                      onclick="return create_campaign(this)">+ add new</button>
+            </th>
+          </tr>
+        </table>
+
+        <script type="text/javascript">
+          $(function() {
+              %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
+                $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
+                    [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
+                     rc.bid, rc.sr, rc.status]))});
+              %endfor
+              $.set_up_campaigns();
+            });
+        </script>
+
+        <p class="error"
+           style="${'display:none' if thing.campaigns else ''}">
+          You don't have any campaigns for this link yet.  You should add one.
+        </p>
+      </div>
+    </%utils:line_field>
+  </div>
+</%def>
 
 <%def name="right_panel()">
   %if thing.link and c.user_is_sponsor:
