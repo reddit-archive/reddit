@@ -3308,14 +3308,16 @@ class PromotePage(Reddit):
         kw['show_sidebar'] = False
         Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
 
+class PromoteLinkNew(Templated): pass
+
 class PromoteLinkForm(Templated):
-    def __init__(self, link=None, listing='', *a, **kw):
+    def __init__(self, link, listing, *a, **kw):
         self.setup(link, listing)
         Templated.__init__(self, *a, **kw)
 
     def setup(self, link, listing):
         self.bids = []
-        if c.user_is_sponsor and link:
+        if c.user_is_sponsor:
             self.author = Account._byID(link.author_id)
             try:
                 bids = bidding.Bid.lookup(thing_id=link._id)
@@ -3357,13 +3359,11 @@ class PromoteLinkForm(Templated):
 
         self.mindate = mindate.strftime("%m/%d/%Y")
 
-        self.link = None
+        self.link = promote.wrap_promoted(link)
         self.listing = listing
-        if link:
-            self.link = promote.wrap_promoted(link)
-            campaigns = PromoCampaign._by_link(link._id)
-            self.campaigns = promote.get_renderable_campaigns(link, campaigns)
-            self.promotion_log = PromotionLog.get(link)
+        campaigns = PromoCampaign._by_link(link._id)
+        self.campaigns = promote.get_renderable_campaigns(link, campaigns)
+        self.promotion_log = PromotionLog.get(link)
 
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 

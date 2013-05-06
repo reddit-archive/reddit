@@ -66,21 +66,15 @@ ${self.javascript_setup()}
 
 
 <div class="create-promotion">
-  <h1>${_("create a promotion") if not thing.link else _("edit promotion")}</h1>
+  <h1>${_("edit promotion")}</h1>
 
-  %if thing.link:
-    ${thing.listing}
-  %endif
+  ${thing.listing}
 
   <div class="create-promo">
-    %if thing.link:
-      ${campaign_dashboard()}
-    %endif
+    ${campaign_dashboard()}
 
     <div class="pretty-form" id="promo-form">
-      %if thing.link:
-        <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
-      %endif
+      <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
 
       <%
          trusted = c.user_is_sponsor or c.user.trusted_sponsor
@@ -90,36 +84,23 @@ ${self.javascript_setup()}
       ${title_field(thing.link, editable=editable)}
       ${url_field(thing.link, editable=editable, enable_override=c.user_is_sponsor)}
 
-      %if thing.link and editable:
+      %if editable:
         ${image_field(thing.link)}
         ${commenting_field(thing.link)}
 
         %if trusted:
           ${media_field(thing.link)}
         %endif
-      %else:
-        <div class="rules">
-          By clicking "next" you agree to the&#32;<a href="http://www.reddit.com/wiki/selfservicepromotion">Self Serve Advertising Rules.</a>
-        </div>
       %endif
 
       <div class="save-button">
-        <%
-            if thing.link:
-                name = "save"
-                text = _("save options")
-            else:
-                name = "create"
-                text = _("next")
-         %>
-
         ${error_field("RATELIMIT", "ratelimit")}
         &#32;
         <span class="status error"></span>
         ${error_field("RATELIMIT", "ratelimit")}
-        <button name="${name}" class="btn fancybutton" type="button"
+        <button name="save" class="btn fancybutton" type="button"
                 onclick="return post_pseudo_form('#promo-form', 'edit_promo')">
-          ${text}
+          ${_("save options")}
         </button>
       </div>
 
@@ -454,7 +435,7 @@ ${self.javascript_setup()}
 </%def>
 
 <%def name="right_panel()">
-  %if thing.link and c.user_is_sponsor:
+  %if c.user_is_sponsor:
     <div class="spacer bidding-history">
       %if thing.bids:
         <%utils:line_field title="${_('bidding history')}" css_class="rounded">

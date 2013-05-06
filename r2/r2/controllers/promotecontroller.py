@@ -44,6 +44,7 @@ from r2.lib.pages import (
     PromotePage,
     PromoteLinkForm,
     PromoteLinkFormCpm,
+    PromoteLinkNew,
     PromoteReport,
     Reddit,
     Roadblocks,
@@ -227,22 +228,16 @@ class PromoteController(ListingController):
 
     @validate(VSponsor())
     def GET_new_promo(self):
-        return PromotePage('content', content=PromoteLinkForm()).render()
+        return PromotePage('content', content=PromoteLinkNew()).render()
 
     @validate(VSponsor('link'),
               link=VLink('link'))
     def GET_edit_promo(self, link):
         if not link or link.promoted is None:
             return self.abort404()
-        rendered = wrap_links(link, wrapper=promote.sponsor_wrapper,
-                              skip=False)
-
-        form = PromoteLinkForm(link=link,
-                               listing=rendered,
-                               timedeltatext="")
-
+        rendered = wrap_links(link, wrapper=promote.sponsor_wrapper, skip=False)
+        form = PromoteLinkForm(link, rendered)
         page = PromotePage('new_promo', content=form)
-
         return page.render()
 
 
