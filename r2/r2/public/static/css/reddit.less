@@ -5141,12 +5141,12 @@ table.calendar {
             vertical-align: middle;
         }
 
-        label {
+        label, .show-copy, .delete {
             margin-right: 10px;
         }
 
-        .delete {
-            margin-left: 5px;
+        .visibility-group {
+            margin-right: 5px;
         }
     }
 
@@ -5154,6 +5154,22 @@ table.calendar {
         font-weight: normal;
         color: #777;
         margin-bottom: 3px;
+    }
+
+    form.copy-multi {
+        display: none;
+        margin-bottom: 10px;
+
+        .copy-name {
+            border: 1px solid #ccc;
+            padding: 3px;
+        }
+
+        button {
+            .light-button;
+            padding: 3px 4px;
+            background: #eeffdd;
+        }
     }
 
     ul, form.add-sr {
@@ -6935,6 +6951,20 @@ body.gold .buttons li.comment-save-button { display: inline; }
     white-space: normal;
 }
 
+.light-button {
+    background: none;
+    border: 1px solid #777;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .25);
+    opacity: .75;
+
+    &:active {
+        position: relative;
+        top: 1px;
+        box-shadow: none;
+    }
+}
+
 body.with-listing-chooser {
     position: relative;
 
@@ -7130,15 +7160,7 @@ body.with-listing-chooser {
             }
 
             button {
-                opacity: .75;
-                background: #fcfcfc;
-                box-shadow: 0 1px 1px rgba(0, 0, 0, .25);
-
-                &:active {
-                    position: relative;
-                    top: 1px;
-                    box-shadow: none;
-                }
+                .light-button;
             }
         }
     }

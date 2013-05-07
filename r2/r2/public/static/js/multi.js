@@ -184,6 +184,8 @@ r.multi.MultiDetails = Backbone.View.extend({
     events: {
         'submit .add-sr': 'addSubreddit',
         'change [name="visibility"]': 'setVisibility',
+        'click .show-copy': 'showCopyMulti',
+        'click .copy': 'copyMulti',
         'confirm .delete': 'deleteMulti'
     },
 
@@ -265,6 +267,40 @@ r.multi.MultiDetails = Backbone.View.extend({
     setVisibility: function() {
         this.model.save({
             visibility: this.$('[name="visibility"]:checked').val()
+        })
+    },
+
+    showCopyMulti: function() {
+        this.$('form.copy-multi').show()
+    },
+
+    copyMulti: function(ev) {
+        ev.preventDefault()
+
+        var nameEl = this.$('.copy-multi .copy-name'),
+            multiName = $.trim(nameEl.val())
+        if (!multiName) {
+            return
+        }
+
+        this.$('.copy-error').css('visibility', 'hidden')
+
+        var attrs = _.clone(this.model.attributes)
+        delete attrs.path
+        attrs.name = multiName
+        r.multi.mine.create(attrs, {
+            wait: true,
+            success: function(multi) {
+                window.location = multi.get('path')
+            },
+            error: _.bind(function(multi, xhr) {
+                var resp = JSON.parse(xhr.responseText)
+                this.$('.copy-error')
+                    .text(resp.explanation)
+                    .css('visibility', 'visible')
+                    .show()
+            }, this),
+            beforeSend: _.bind(r.ui.showWorkingDeferred, this, this.$el)
         })
     },
 

@@ -33,12 +33,28 @@
     <a href="${thing.multi.path}">${_('%s subreddits') % thing.multi.name}</a><div class="throbber"></div>
   </h1>
   <h2><a href="/user/${thing.multi.owner.name}">${_('curated by /u/%s') % thing.multi.owner.name}</a></h2>
-  %if thing.can_edit:
-    <div class="gray-buttons settings">
-      <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
-      <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
+  <div class="gray-buttons settings">
+    %if thing.can_edit:
+      <span class="visibility-group">
+        <label><input type="radio" name="visibility" value="private" ${'checked' if thing.multi.visibility == 'private' else ''}>${_('private')}</label>
+        <label><input type="radio" name="visibility" value="public" ${'checked' if thing.multi.visibility == 'public' else ''}>${_('public')}</label>
+      </span>
+      %if thing.can_copy:
+        <button class="show-copy">${_('copy')}</button>
+      %endif
       <button class="delete">${_('delete')}</button>
-    </div>
+    %else:
+      %if thing.can_copy:
+        <button class="show-copy">${_('create a copy')}</button>
+      %endif
+    %endif
+  </div>
+
+  %if thing.can_copy:
+    <form class="copy-multi">
+      <input type="text" class="copy-name" placeholder="${_('copy name')}"><button class="copy">${_('copy')} &rsaquo;</button>
+      <div class="error copy-error"></div>
+    </form>
   %endif
 
   <h3>${_('subreddits in this multi:')}</h3>
