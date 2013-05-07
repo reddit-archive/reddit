@@ -206,8 +206,6 @@ def make_map():
     mc('/promoted/graph',
        controller='promote', action='graph')
     mc('/promoted/admin/graph', controller='promote', action='admingraph')
-    mc('/promoted/inventory/:sr_name',
-       controller='promote', action='inventory')
 
     mc('/promoted/:action', controller='promote',
        requirements=dict(action="edit_promo|new_promo|roadblock"))

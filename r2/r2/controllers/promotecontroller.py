@@ -271,30 +271,6 @@ class PromoteController(ListingController):
             return content.as_csv()
         return PromotePage("admingraph", content=content).render()
 
-    def GET_inventory(self, sr_name):
-        '''
-        Return available inventory data as json for use in ajax calls
-        '''
-        inv_start_date = promote.promo_datetime_now()
-        inv_end_date = inv_start_date + timedelta(60)
-        inventory = promote.get_available_impressions(
-            sr_name,
-            inv_start_date,
-            inv_end_date,
-            fuzzed=(not c.user_is_admin)
-        )
-        dates = []
-        impressions = []
-        max_imps = 0
-        for date, imps in inventory.iteritems():
-            dates.append(date.strftime("%m/%d/%Y"))
-            impressions.append(imps)
-            max_imps = max(max_imps, imps)
-        return json.dumps({'sr':sr_name,
-                           'dates': dates,
-                           'imps':impressions,
-                           'max_imps':max_imps})
-
     # ## POST controllers below
     @validatedForm(VSponsorAdmin(),
                    link=VLink("link_id"),
