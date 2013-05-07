@@ -153,7 +153,7 @@ class Vote(MultiRelation('vote',
 
     @classmethod
     def vote(cls, sub, obj, dir, ip, organic = False, cheater = False,
-             timer=None):
+             timer=None, date=None):
         from admintools import valid_user, valid_thing, update_score
         from r2.lib.count import incr_sr_count
         from r2.lib.db import queries
@@ -195,7 +195,7 @@ class Vote(MultiRelation('vote',
         else:
             is_new = True
             oldamount = 0
-            v = rel(sub, obj, str(amount))
+            v = rel(sub, obj, str(amount), date=date)
             v.ip = ip
             old_valid_thing = v.valid_thing = valid_thing(v, karma, cheater = cheater)
             v.valid_user = (v.valid_thing and valid_user(v, sr, karma)

@@ -47,6 +47,8 @@ from r2.lib.utils import SimpleSillyStub
 import cPickle as pickle
 
 from datetime import datetime
+from time import mktime
+import pytz
 import itertools
 import collections
 from copy import deepcopy
@@ -1454,7 +1456,7 @@ def get_likes(user, items):
     return res
 
 def handle_vote(user, thing, dir, ip, organic,
-                cheater=False, foreground=False, timer=None):
+                cheater=False, foreground=False, timer=None, date=None):
     if timer is None:
         timer = SimpleSillyStub()
 
@@ -1462,7 +1464,7 @@ def handle_vote(user, thing, dir, ip, organic,
     from sqlalchemy.exc import IntegrityError
     try:
         v = Vote.vote(user, thing, dir, ip, organic, cheater = cheater,
-                      timer=timer)
+                      timer=timer, date=date)
     except (tdb_sql.CreationError, IntegrityError):
         g.log.error("duplicate vote for: %s" % str((user, thing, dir)))
         return
@@ -1520,12 +1522,18 @@ def process_votes(qname, limit=0):
         votee = Thing._by_fullname(tid, data = True)
         timer.intermediate("preamble")
 
+        # Convert the naive timestamp we got from amqplib to a
+        # timezone aware one.
+        tt = mktime(msg.timestamp.timetuple())
+        date = datetime.utcfromtimestamp(tt).replace(tzinfo=pytz.UTC)
+
         # I don't know how, but somebody is sneaking in votes
         # for subreddits
         if isinstance(votee, (Link, Comment)):
             print (voter, votee, dir, ip, organic, cheater)
             handle_vote(voter, votee, dir, ip, organic,
-                        cheater = cheater, foreground=True, timer=timer)
+                        cheater = cheater, foreground=True, timer=timer,
+                        date=date)
 
         if isinstance(votee, Comment):
             update_comment_votes([votee])
