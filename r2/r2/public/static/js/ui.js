@@ -32,6 +32,10 @@ r.ui.init = function() {
 }
 
 r.ui.showWorkingDeferred = function(el, deferred) {
+    if (!deferred) {
+        return
+    }
+
     var flickerDelay = 200,
         key = '_workingCount',
         $el = $(el)
