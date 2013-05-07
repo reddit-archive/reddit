@@ -271,7 +271,9 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     showCopyMulti: function() {
-        this.$('form.copy-multi').show()
+        this.$('form.copy-multi')
+            .show()
+            .find('.copy-name').focus()
     },
 
     copyMulti: function(ev) {
