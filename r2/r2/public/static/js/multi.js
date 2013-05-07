@@ -156,16 +156,22 @@ r.multi.MultiSubredditItem = Backbone.View.extend({
         this.$el.append(this.template({
             srName: this.model.get('name')
         }))
-        this.bubble = new r.multi.MultiSubscribeBubble({
-            parent: this.$el,
-            group: this.options.bubbleGroup,
-            srName: this.model.get('name')
-        })
+
+        if (r.config.logged) {
+            this.bubble = new r.multi.MultiSubscribeBubble({
+                parent: this.$el,
+                group: this.options.bubbleGroup,
+                srName: this.model.get('name')
+            })
+        }
+
         return this
     },
 
     remove: function() {
-        this.bubble.remove()
+        if (this.bubble) {
+            this.bubble.remove()
+        }
         Backbone.View.prototype.remove.apply(this)
     },
 
