@@ -12,6 +12,14 @@
     user-select: none;
 }
 
+.transition (@property, @duration, @function: ease, @delay: 0s) {
+    -webkit-transition: @arguments;
+    -moz-transition: @arguments;
+    -o-transition: @arguments;
+    -ms-transition: @arguments;
+    transition: @arguments;
+}
+
 html {
     height: 100%; /* Needed for toolbar's comments panel's pinstripe */
 }
@@ -6995,6 +7003,11 @@ body.with-listing-chooser {
     ul.multis {
         li {
             margin-left: 12px;
+            .transition(margin, 0.15s);
+
+            &:hover {
+                margin-left: 9px;
+            }
 
             a {
                 font-size: 1.2em;
