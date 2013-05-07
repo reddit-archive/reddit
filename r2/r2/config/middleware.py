@@ -63,8 +63,16 @@ def error_mapper(code, message, environ, global_conf=None, **kw):
         environ['pylons.error_call'] = True
 
     from pylons import c
-    if c.used_cache:
-        return
+
+    # c is not always registered with the paste registry by the time we get to
+    # this error_mapper. if it's not, we can safely assume that we didn't use
+    # the pagecache. one such case where this happens is the
+    # DomainMiddleware-based srname.reddit.com -> reddit.com/r/srname redirect.
+    try:
+        if c.used_cache:
+            return
+    except TypeError:
+        pass
 
     if global_conf is None:
         global_conf = {}
