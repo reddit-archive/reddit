@@ -458,12 +458,6 @@ ${self.javascript_setup()}
     <div class="spacer bidding-history">
       %if thing.bids:
         <%utils:line_field title="${_('bidding history')}" css_class="rounded">
-
-          <%
-              from r2.models import Account, bidding
-              accounts = Account._byID(set(x.account_id for x in thing.bids), True)
-           %>
-
           <table class="bid-table">
             <tr>
               <th>date</th>
@@ -475,17 +469,14 @@ ${self.javascript_setup()}
               <th>status</th>
             </tr>
             %for bid in thing.bids:
-              <%
-                  status = bidding.Bid.STATUS.name[bid.status].lower()
-               %>
-              <tr class="bid-${status}">
+              <tr class="bid-${bid.status}">
                 <td>${bid.date}</td>
-                <td>${accounts[bid.account_id].name}</td>
+                <td>${bid.bidder}</td>
                 <td>${bid.transaction}</td>
                 <td>${bid.campaign}</td>
                 <td>${bid.pay_id}</td>
-                <td>$${"%.2f" % bid.bid}</td>
-                <td class="bid-status">${status}</td>
+                <td>${bid.amount_str}</td>
+                <td class="bid-status">${bid.status}</td>
               </tr>
             %endfor
           </table>

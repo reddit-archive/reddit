@@ -71,6 +71,7 @@ from r2.lib.log import log_text
 from r2.lib.memoize import memoize
 from r2.lib.utils import trunc_string as _truncate, to_date
 from r2.lib.filters import safemarkdown
+from r2.lib.utils import Storage
 
 from babel.numbers import format_currency
 from collections import defaultdict
@@ -3316,14 +3317,31 @@ class PromoteLinkForm(Templated):
                            bids = self.bids, *a, **kw)
 
     def setup(self, sr, link, listing, timedeltatext, *a, **kw):
-        bids = []
+        self.bids = []
         if c.user_is_sponsor and link:
             self.author = Account._byID(link.author_id)
             try:
-                bids = bidding.Bid.lookup(thing_id = link._id)
-                bids.sort(key = lambda x: x.date, reverse = True)
+                bids = bidding.Bid.lookup(thing_id=link._id)
             except NotFound:
                 pass
+            else:
+                bids.sort(key=lambda x: x.date, reverse=True)
+                bidders = Account._byID(set(bid.account_id for bid in bids),
+                                        data=True, return_dict=True)
+                for bid in bids:
+                    status = bidding.Bid.STATUS.name[bid.status].lower()
+                    bidder = bidders[bid.account_id]
+                    row = Storage(
+                        status=status,
+                        bidder=bidder.name,
+                        date=bid.date,
+                        transaction=bid.transaction,
+                        campaign=bid.campaign,
+                        pay_id=bid.pay_id,
+                        amount_str=format_currency(bid.bid, 'USD',
+                                                   locale=c.locale),
+                    )
+                    self.bids.append(row)
 
         # reference "now" to what we use for promtions
         now = promote.promo_datetime_now()
@@ -3349,7 +3367,6 @@ class PromoteLinkForm(Templated):
             self.campaigns = promote.get_renderable_campaigns(link, campaigns)
             self.promotion_log = PromotionLog.get(link)
 
-        self.bids = bids
         self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
 
 
