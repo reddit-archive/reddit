@@ -55,6 +55,12 @@ def get_promote_srid(name = 'promos'):
     return sr._id
 
 
+def calc_impressions(bid, cpm_pennies):
+    # bid is in dollars, cpm_pennies is pennies
+    # CPM is cost per 1000 impressions
+    return int(bid / cpm_pennies * 1000 * 100)
+
+
 NO_TRANSACTION = 0
 
 class PromoCampaign(Thing):
@@ -67,10 +73,11 @@ class PromoCampaign(Thing):
         return val
 
     @classmethod 
-    def _new(cls, link, sr_name, bid, start_date, end_date):
+    def _new(cls, link, sr_name, bid, cpm, start_date,  end_date):
         pc = PromoCampaign(link_id=link._id,
                            sr_name=sr_name,
                            bid=bid,
+                           cpm=cpm,
                            start_date=start_date,
                            end_date=end_date,
                            trans_id=NO_TRANSACTION,
@@ -99,6 +106,13 @@ class PromoCampaign(Thing):
     def ndays(self):
         return (self.end_date - self.start_date).days
 
+    @property
+    def impressions(self):
+        # deal with pre-CPM PromoCampaigns
+        if not hasattr(self, 'cpm'):
+            return -1
+        return calc_impressions(self.bid, self.cpm)
+
     def is_freebie(self):
         return self.trans_id < 0
 
@@ -106,10 +120,12 @@ class PromoCampaign(Thing):
         now = datetime.now(g.tz)
         return self.start_date < now and self.end_date > now
 
-    def update(self, start_date, end_date, bid, sr_name, trans_id, commit=True):
+    def update(self, start_date, end_date, bid, cpm, sr_name, trans_id,
+               commit=True):
         self.start_date = start_date
         self.end_date = end_date
         self.bid = bid
+        self.cpm = cpm
         self.sr_name = sr_name
         self.trans_id = trans_id
         if commit:

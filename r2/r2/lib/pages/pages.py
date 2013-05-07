@@ -3339,6 +3339,8 @@ class PromoteLinkForm(Templated):
                         pay_id=bid.pay_id,
                         amount_str=format_currency(bid.bid, 'USD',
                                                    locale=c.locale),
+                        charge_str=format_currency(bid.charge or bid.bid, 'USD',
+                                                   locale=c.locale),
                     )
                     self.bids.append(row)
 
@@ -3359,13 +3361,29 @@ class PromoteLinkForm(Templated):
 
         self.mindate = mindate.strftime("%m/%d/%Y")
 
+        self.subreddit_selector = SubredditSelector()
+
+        # preload some inventory
+        srnames = []
+        for title, names in self.subreddit_selector.subreddit_names:
+            srnames.extend(names)
+        srs = Subreddit._by_name(srnames).values()
+        srs.append(Frontpage)
+        inv_start = startdate
+        inv_end = startdate + datetime.timedelta(days=14)
+        sr_inventory = inventory.get_available_pageviews(srs, inv_start,
+                                                         inv_end, datestr=True)
+        sr_inventory[''] = sr_inventory[Frontpage.name]
+        del sr_inventory[Frontpage.name]
+        self.inventory = sr_inventory
+
         self.link = promote.wrap_promoted(link)
         self.listing = listing
         campaigns = PromoCampaign._by_link(link._id)
         self.campaigns = promote.get_renderable_campaigns(link, campaigns)
         self.promotion_log = PromotionLog.get(link)
 
-        self.min_daily_bid = 0 if c.user_is_admin else g.min_promote_bid
+        self.min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
 
 
 class PromoAdminTool(Reddit):

@@ -330,7 +330,7 @@ def make_map():
                                  "freebie|promote_note|update_pay|refund|"
                                  "traffic_viewer|rm_traffic_viewer|"
                                  "edit_campaign|delete_campaign|meta_promo|"
-                                 "add_roadblock|rm_roadblock")))
+                                 "add_roadblock|rm_roadblock|check_inventory")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
     mc('/api/:type', controller='api',

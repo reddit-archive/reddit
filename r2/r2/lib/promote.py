@@ -65,6 +65,7 @@ from r2.models import (
     PromotionLog,
     PromotionWeights,
     Subreddit,
+    traffic,
 )
 from r2.models.keyvalue import NamedGlobals
 
@@ -172,13 +173,14 @@ def campaign_is_live(link, campaign_index):
 # control functions
 
 class RenderableCampaign():
-    def __init__(self, campaign_id36, start_date, end_date, duration, bid, sr,
-                 status):
+    def __init__(self, campaign_id36, start_date, end_date, duration, bid,
+                 cpm, sr, status):
         self.campaign_id36 = campaign_id36
         self.start_date = start_date
         self.end_date = end_date
         self.duration = duration
         self.bid = bid
+        self.cpm = cpm
         self.sr = sr
         self.status = status
 
@@ -197,6 +199,7 @@ class RenderableCampaign():
             duration = strings.time_label % dict(num=ndays,
                             time=ungettext("day", "days", ndays))
             bid = "%.2f" % camp.bid
+            cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
             sr = camp.sr_name
             status = {'paid': bool(transaction),
                       'complete': False,
@@ -212,8 +215,8 @@ class RenderableCampaign():
                 elif transaction.is_charged() or transaction.is_refund():
                     status['complete'] = True
 
-            rc = cls(campaign_id36, start_date, end_date, duration, bid, sr,
-                     status)
+            rc = cls(campaign_id36, start_date, end_date, duration, bid,
+                     cpm, sr, status)
             r.append(rc)
         return r
 
@@ -320,10 +323,10 @@ def get_transactions(link, campaigns):
     bids_by_campaign = {c._id: bid_dict[(c._id, c.trans_id)] for c in campaigns}
     return bids_by_campaign
 
-def new_campaign(link, dates, bid, sr):
+def new_campaign(link, dates, bid, cpm, sr):
     # empty string for sr_name means target to all
     sr_name = sr.name if sr else ""
-    campaign = PromoCampaign._new(link, sr_name, bid, dates[0], dates[1])
+    campaign = PromoCampaign._new(link, sr_name, bid, cpm, dates[0], dates[1])
     PromotionWeights.add(link, campaign._id, sr_name, dates[0], dates[1], bid)
     PromotionLog.add(link, 'campaign %s created' % campaign._id)
     author = Account._byID(link.author_id, True)
@@ -334,7 +337,7 @@ def new_campaign(link, dates, bid, sr):
 def free_campaign(link, campaign, user):
     auth_campaign(link, campaign, user, -1)
 
-def edit_campaign(link, campaign, dates, bid, sr):
+def edit_campaign(link, campaign, dates, bid, cpm, sr):
     sr_name = sr.name if sr else '' # empty string means target to all
     try:
         # if the bid amount changed, cancel any pending transactions
@@ -346,7 +349,8 @@ def edit_campaign(link, campaign, dates, bid, sr):
                                     dates[0], dates[1], bid)
 
         # update values in the db
-        campaign.update(dates[0], dates[1], bid, sr_name, campaign.trans_id, commit=True)
+        campaign.update(dates[0], dates[1], bid, cpm, sr_name,
+                        campaign.trans_id, commit=True)
 
         # record the transaction
         text = 'updated campaign %s. (bid: %0.2f)' % (campaign._id, bid)
@@ -701,11 +705,73 @@ def make_daily_promotions(offset=0, test=False):
     else:
         print by_srid
 
+    finalize_completed_campaigns(daysago=offset+1)
+
     # after launching as many campaigns as possible, raise an exception to 
     #   report any error campaigns. (useful for triggering alerts in irc)
     if error_campaigns:
         raise Exception("Some scheduled campaigns could not be added to daily "
                         "promotions: %r" % error_campaigns)
+
+
+def finalize_completed_campaigns(daysago=1):
+    # PromoCampaign.end_date is utc datetime with year, month, day only
+    now = datetime.now(g.tz)
+    date = now - timedelta(days=daysago)
+    date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    q = PromoCampaign._query(PromoCampaign.c.end_date == date,
+                             # exclude no transaction and freebies
+                             PromoCampaign.c.trans_id > 0,
+                             data=True)
+    campaigns = list(q)
+
+    if not campaigns:
+        return
+
+    # check that traffic is up to date
+    earliest_campaign = min(campaigns, key=lambda camp: camp.start_date)
+    start, end = get_total_run(earliest_campaign)
+    missing_traffic = traffic.get_missing_traffic(start.replace(tzinfo=None),
+                                                  date.replace(tzinfo=None))
+    if missing_traffic:
+        raise ValueError("Can't finalize campaigns finished on %s."
+                         "Missing traffic from %s" % (date, missing_traffic))
+
+    links = Link._byID([camp.link_id for link in links], data=True)
+
+    for camp in campaigns:
+        if hasattr(camp, 'refund_amount'):
+            continue
+
+        link = links[camp.link_id]
+        billable_impressions = get_billable_impressions(camp)
+        billable_amount = get_billable_amount(camp, billable_impressions)
+
+        if billable_amount >= camp.bid:
+            text = ('%s completed with $%s billable (%s impressions @ $%s).'
+                    % (camp, billable_amount, billable_impressions, camp.cpm))
+            PromotionLog.add(link, text)
+            refund_amount = 0.
+        else:
+            refund_amount = camp.bid - billable_amount
+            user = Account._byID(link.author_id, data=True)
+            try:
+                success = authorize.refund_transaction(user, camp.trans_id,
+                                                       camp._id, refund_amount)
+            except authorize.AuthorizeNetException as e:
+                text = ('%s $%s refund failed' % (camp, refund_amount))
+                PromotionLog.add(link, text)
+                g.log.debug(text + ' (response: %s)' % e)
+                continue
+            text = ('%s completed with $%s billable (%s impressions @ $%s).'
+                    ' %s refunded.' % (camp, billable_amount,
+                                       billable_impressions, camp.cpm,
+                                       refund_amount))
+            PromotionLog.add(link, text)
+
+        camp.refund_amount = refund_amount
+        camp._commit()
 
 
 PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
@@ -807,6 +873,41 @@ def get_traffic_dates(thing):
     start, end = get_total_run(thing)
     end = min(now, end)
     return start, end
+
+
+def get_billable_impressions(campaign):
+    start, end = get_traffic_dates(campaign)
+    if start > datetime.now(g.tz):
+        return 0
+
+    traffic_lookup = traffic.TargetedImpressionsByCodename.promotion_history
+    imps = traffic_lookup(campaign._fullname, start.replace(tzinfo=None),
+                          end.replace(tzinfo=None))
+    billable_impressions = sum(imp for date, (imp,) in imps)
+    return billable_impressions
+
+
+def get_billable_amount(camp, impressions):
+    if hasattr(camp, 'cpm'):
+        value_delivered = impressions / 1000. * camp.cpm / 100.
+        billable_amount = min(camp.bid, value_delivered)
+    else:
+        # pre-CPM campaigns are charged in full regardless of impressions
+        billable_amount = camp.bid
+    return billable_amount
+
+
+def get_spent_amount(campaign):
+    if hasattr(campaign, 'refund_amount'):
+        # no need to calculate spend if we've already refunded
+        spent = campaign.bid - campaign.refund_amount
+    elif not hasattr(campaign, 'cpm'):
+        # pre-CPM campaign
+        return campaign.bid
+    else:
+        billable_impressions = get_billable_impressions(campaign)
+        spent = get_billable_amount(campaign, billable_impressions)
+    return spent
 
 
 def Run(offset=0, verbose=True):

@@ -21,6 +21,7 @@
 ###############################################################################
 from datetime import datetime, timedelta
 
+from babel.numbers import format_number
 import itertools
 import json
 import urllib
@@ -29,7 +30,7 @@ from pylons import c, g, request
 from pylons.i18n import _
 
 from r2.controllers.listingcontroller import ListingController
-from r2.lib import cssfilter, promote
+from r2.lib import cssfilter, inventory, promote
 from r2.lib.authorize import get_account_info, edit_profile, PROFILE_LIMIT
 from r2.lib.db import queries
 from r2.lib.errors import errors
@@ -52,8 +53,9 @@ from r2.lib.pages import (
 from r2.lib.pages.trafficpages import TrafficViewerList
 from r2.lib.pages.things import wrap_links
 from r2.lib.system_messages import user_added_messages
-from r2.lib.utils import make_offset_date
+from r2.lib.utils import make_offset_date, to_date
 from r2.lib.validator import (
+    json_validate,
     nop,
     noresponse,
     VAccountByName,
@@ -85,6 +87,7 @@ from r2.lib.validator import (
     VUrl,
 )
 from r2.models import (
+    calc_impressions,
     Frontpage,
     Link,
     LiveAdWeights,
@@ -247,6 +250,15 @@ class PromoteController(ListingController):
             return self.abort404()
         link = Link._byID(campaign.link_id)
         return self.redirect(promote.promo_edit_url(link))
+
+    @json_validate(sr=VSubmitSR('sr', promotion=True),
+                   start=VDate('startdate'),
+                   end=VDate('enddate'))
+    def GET_check_inventory(self, responder, sr, start, end):
+        sr = sr or Frontpage
+        available_by_datestr = inventory.get_available_pageviews(sr, start, end,
+                                                                 datestr=True)
+        return {'inventory': available_by_datestr}
 
     @validate(VSponsor(),
               dates=VDateRange(["startdate", "enddate"],
@@ -454,6 +466,7 @@ class PromoteController(ListingController):
             return
 
         start, end = dates or (None, None)
+        cpm = g.cpm_selfserve.pennies
 
         if (start and end and not promote.is_accepted(l) and
             not c.user_is_sponsor):
@@ -487,19 +500,8 @@ class PromoteController(ListingController):
             form.has_errors('title', errors.TOO_MANY_CAMPAIGNS)
             return
 
-        duration = max((end - start).days, 1)
-
         if form.has_errors('bid', errors.BAD_BID):
             return
-
-        # minimum bid depends on user privilege and targeting, checked here
-        # instead of in the validator b/c current duration is needed
-        if c.user_is_sponsor:
-            min_daily_bid = 0
-        elif targeting == 'one':
-            min_daily_bid = g.min_promote_bid * 1.5
-        else:
-            min_daily_bid = g.min_promote_bid
 
         if campaign_id36:
             # you cannot edit the bid of a live ad unless it's a freebie
@@ -514,10 +516,11 @@ class PromoteController(ListingController):
             except NotFound:
                 pass
 
-        if bid is None or bid / duration < min_daily_bid:
+        min_bid = 0 if c.user_is_sponsor else g.min_promote_bid
+        if bid is None or bid < min_bid:
             c.errors.add(errors.BAD_BID, field='bid',
-                         msg_params={'min': min_daily_bid,
-                                       'max': g.max_promote_bid})
+                         msg_params={'min': min_bid,
+                                     'max': g.max_promote_bid})
             form.has_errors('bid', errors.BAD_BID)
             return
 
@@ -539,17 +542,31 @@ class PromoteController(ListingController):
         if targeting == 'none':
             sr = None
 
+        # Check inventory
+        ndays = (to_date(end) - to_date(start)).days
+        total_request = calc_impressions(bid, cpm)
+        daily_request = int(total_request / ndays)
+        oversold = inventory.get_oversold(sr or Frontpage, start, end,
+                                          daily_request)
+        if oversold:
+            msg_params = {'daily_request': format_number(daily_request,
+                                                         locale=c.locale)}
+            c.errors.add(errors.OVERSOLD_DETAIL, field='bid',
+                         msg_params=msg_params)
+            form.has_errors('bid', errors.OVERSOLD_DETAIL)
+            return
+
         if campaign_id36 is not None:
             campaign = PromoCampaign._byID36(campaign_id36)
-            promote.edit_campaign(l, campaign, dates, bid, sr)
+            promote.edit_campaign(l, campaign, dates, bid, cpm, sr)
             r = promote.get_renderable_campaigns(l, campaign)
             jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                   r.duration, r.bid, r.sr, r.status)
+                                   r.duration, r.bid, r.cpm, r.sr, r.status)
         else:
-            campaign = promote.new_campaign(l, dates, bid, sr)
+            campaign = promote.new_campaign(l, dates, bid, cpm, sr)
             r = promote.get_renderable_campaigns(l, campaign)
             jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                r.duration, r.bid, r.sr, r.status)
+                                r.duration, r.bid, r.cpm, r.sr, r.status)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

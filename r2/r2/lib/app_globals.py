@@ -214,6 +214,7 @@ class Globals(object):
         config_gold_price: [
             'gold_month_price',
             'gold_year_price',
+            'cpm_selfserve',
         ],
     }
 

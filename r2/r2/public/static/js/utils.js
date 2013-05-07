@@ -81,7 +81,18 @@ r.utils = {
         return _.escape(str).replace(this._mdLinkRe, function(match, text, url) {
             return '<a href="' + url + '">' + text + '</a>'
         })
+    },
+
+    prettyNumber: function(number) {
+        // Add commas to separate every third digit
+        var numberAsInt = parseInt(number)
+        if (numberAsInt) {
+            return numberAsInt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        } else {
+            return number
+        }
     }
+
 }
 
 // Nothing is true. Everything is permitted.

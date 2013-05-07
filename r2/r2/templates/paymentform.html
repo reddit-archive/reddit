@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+  from babel.numbers import format_currency
   from r2.lib.template_helpers import static
   from r2.lib import js
 %>
@@ -43,11 +44,8 @@ ${unsafe(js.use('sponsored'))}
     <p id="bid-field">
       <input type="hidden" name="campaign" value="${thing.campaign.campaign_id36}" />
       <input type="hidden" name="link" value="${thing.link._fullname}" />
-      ${unsafe(_("Your current bid is $%(bid)s") % dict(bid=thing.campaign.bid))}
-      ${error_field("BAD_BID", "bid")}
-    <span class="gray">
-      &#32;${_('(total for the duration provided)')}
-    </span>
+      <% budget=format_currency(float(thing.campaign.bid), 'USD', locale=c.locale) %>
+      ${unsafe(_("Your current budget is %(budget)s") % dict(budget=budget))}
   </p>
   %if thing.profiles:
   <p>
@@ -72,7 +70,8 @@ ${unsafe(js.use('sponsored'))}
     </p>
   %endif
   <p class="info">
-   ${_("NOTE: your card will not be charged until the link has been queued for promotion.")}
+   ${_("NOTE: your card will not be charged until the campaign has been queued "
+       "for promotion.")}
   </p>
     <input type="hidden" name="customer_id" value="${thing.customer_id}" />
     

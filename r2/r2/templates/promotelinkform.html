@@ -25,11 +25,12 @@
   from r2.lib.media import thumbnail_url
   from r2.lib.template_helpers import static
   from r2.lib import promote
-  from r2.lib.pages import SubredditSelector
   from r2.lib.strings import strings
   from r2.models import Account
   from r2.lib import js
   import simplejson
+
+  from babel.numbers import format_currency, format_decimal
 %>
 
 <%namespace file="utils.html" 
@@ -39,12 +40,11 @@
 ${unsafe(js.use('sponsored'))}
 
 <%def name="javascript_setup()">
-  <script type="text/javascript">
-    $(function() { update_bid("*[name=bid]"); }); 
-  </script>
+<script type="text/javascript">
+  r.sponsored.init();
+  r.sponsored.setup(${unsafe(simplejson.dumps(thing.inventory))})
+</script>
 </%def>
-
-${self.javascript_setup()}
 
 ## Create a datepicker for a form. min/maxDateSrc are the id of the
 ## element containing the min/max date - the '#' is added automatically
@@ -108,6 +108,8 @@ ${self.javascript_setup()}
   </div>
   ${self.right_panel()}
 </div>
+
+${self.javascript_setup()}
 
 <%def name="title_field(link, editable=False)">
   <%utils:line_field title="${_('title')}" id="title-field" css_class="rounded">
@@ -266,7 +268,7 @@ ${self.javascript_setup()}
 
         <table class="preftable">
           <tr>
-            <th>duration</th>
+            <th>dates</th>
             <td class="prefright">
               <%
                   mindate = thing.startdate
@@ -278,14 +280,14 @@ ${self.javascript_setup()}
                                 minDateSrc="date-min" initfuncname="init_startdate">
                 function(elem) {
                   check_enddate(elem, $("#enddate"));
-                  update_bid(elem);
+                  r.sponsored.on_date_change();
                 }
               </%self:datepicker>
               -
               <%self:datepicker name="enddate", value="${thing.enddate}"
                                 minDateSrc="startdate" initfuncname="init_enddate"
                                 min_date_offset="86400000">
-                function(elem) { update_bid(elem); }
+                function(elem) { r.sponsored.on_date_change(); }
               </%self:datepicker>
 
               ${error_field("BAD_DATE", "startdate", "div")}
@@ -297,44 +299,72 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
-            <th>total bid</th>
+            <th>duration</th>
+            <td class="prefright duration">
+            </td>
+          </tr>
+
+          <tr>
+            <th>total budget</th>
             <td class="prefright">
               ${error_field("BAD_BID", "bid", "div")}
               ${error_field("BID_LIVE", "bid", "div")}
+              ${error_field("OVERSOLD_DETAIL", "bid", "div")}
               $<input id="bid" name="bid" size="7" type="text"
                       class="rounded styled-input"
                       style="width:auto"
-                      onchange="update_bid(this)"
-                      onkeyup="update_bid(this)"
-                      title="Minimum is $${'%.2f' % thing.min_daily_bid} per day, or $${'%.2f' % (thing.min_daily_bid * 1.5)} per day targeted"
-                      value="${'%.2f' % (thing.min_daily_bid * 5)}"
-                      data-min_daily_bid="${thing.min_daily_bid}"/>
-              <span class="bid-info gray"></span>
+                      onchange="r.sponsored.on_bid_change()"
+                      onkeyup="r.sponsored.on_bid_change()"
+                      title="Minimum is ${format_currency(thing.min_bid, 'USD', locale=c.locale)}"
+                      value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
+                      data-min_bid="${thing.min_bid}"
+                      data-base_cpm="${g.cpm_selfserve.pennies}"/>
+              <div class="minimum-spend">
+                ${_("$%.2F minimum") % thing.min_bid}
+              </div>
             </td>
+          </tr>
+
+          <tr>
+            <th>price</th>
+            <td class="prefright">
+              <input id="cpm" name="cpm" value="${g.cpm_selfserve.pennies}" type="hidden">
+              <span class="price-info"></span>
+            </td>
+          </tr>
+
+          <tr>
+            <th>impressions</th>
+              <td class="prefright">
+                <span class="impression-info"></span>
+              </td>
           </tr>
 
           <tr>
             <th>targeting</th>
             <td class="prefright">
-              <input id="no_targeting" class="nomargin" 
-                     type="radio"  value="none" name="targeting"
-                     onclick="return targeting_off(this)"
-                     checked="checked" /> 
-              <label for="no_targeting">no targeting (displays site-wide)</label>
-              <p id="no_targeting_minimum" class="minimum-spend">minimum $20 / day</p>
-              <input id="targeting" class="nomargin" 
-                     type="radio"  value="one" name="targeting"
-                     onclick="return targeting_on(this)" /> 
-              <label for="targeting">enable targeting (runs on a specific subreddit)</label>
-              <p id="targeted_minimum" class="minimum-spend">minimum $30 / day</p>
+              <label>
+                <input id="no_targeting" class="nomargin" 
+                       type="radio"  value="none" name="targeting"
+                       onclick="r.sponsored.targeting_off()"
+                       checked="checked" /> 
+                no targeting (displays site-wide)
+              </label>
+              <br />
+              <label>
+                <input id="targeting" class="nomargin" 
+                       type="radio"  value="one" name="targeting"
+                       onclick="r.sponsored.targeting_on()" /> 
+                enable targeting (runs on a specific subreddit)
+              </label>
 
               <script type="text/javascript">
                 $(function() { 
                     var c =  $(".campaign input[name=targeting]:checked");
                     if (c.val() == 'one') {
-                      targeting_on(c);
+                      r.sponsored.targeting_on();
                     } else {
-                      targeting_off(c);
+                      r.sponsored.targeting_off();
                     }
                   })
               </script>
@@ -349,18 +379,20 @@ ${self.javascript_setup()}
               init_enddate();
               $("#campaign").find("button[name=create]").show().end()
                     .find("button[name=save]").hide().end();
-              update_bid("*[name=bid]");
             })
         </script>
 
         <div class="targeting" style="display:none">
+          ${error_field("OVERSOLD", "sr", "div")}
+          ${thing.subreddit_selector}
+        </div>
+
+        <div class="notes">
           <ul>
+            <li>You will only be charged for the portion of your budget that is actually spent. Any unspent portion will be refunded.</li>
             <li>By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.</li>
-            <li>Your ad will also appear at the top of the hot listing for that subreddit</li>
             <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
           </ul>
-          ${error_field("OVERSOLD", "sr", "div")}
-          ${SubredditSelector()}
         </div>
 
         <div class="buttons">
@@ -403,13 +435,13 @@ ${self.javascript_setup()}
             <th title="${start_title}">start</th>
             <th title="${end_title}">end</th>
             <th>duration</th>
-            <th>bid</th>
+            <th>total budget</th>
             <th title="${targeting_title}">targeting</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
                       title="${newcamp_title}"
-                      onclick="return create_campaign(this)">+ add new</button>
+                      onclick="return create_campaign()">+ add new</button>
             </th>
           </tr>
         </table>
@@ -419,7 +451,7 @@ ${self.javascript_setup()}
               %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
                 $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
                     [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
-                     rc.bid, rc.sr, rc.status]))});
+                     rc.bid, rc.cpm, rc.sr, rc.status]))});
               %endfor
               $.set_up_campaigns();
             });
@@ -446,7 +478,8 @@ ${self.javascript_setup()}
               <th>transaction id</th>
               <th>campaign id</th>
               <th>pay id</th>
-              <th>amount</th>
+              <th>bid</th>
+              <th>charge</th>
               <th>status</th>
             </tr>
             %for bid in thing.bids:
@@ -457,6 +490,7 @@ ${self.javascript_setup()}
                 <td>${bid.campaign}</td>
                 <td>${bid.pay_id}</td>
                 <td>${bid.amount_str}</td>
+                <td>${bid.charge_str}</td>
                 <td class="bid-status">${bid.status}</td>
               </tr>
             %endfor

@@ -2,6 +2,199 @@ function update_box(elem) {
    $(elem).prevAll('*[type="checkbox"]:first').prop('checked', true);
 };
 
+r.sponsored = {
+    init: function() {
+        $("#sr-autocomplete").on("sr-changed blur", function() {
+            r.sponsored.fill_campaign_editor()
+        })
+
+        this.inventory = {}
+    },
+
+    setup: function(inventory_by_sr) {
+        this.inventory = inventory_by_sr
+    },
+
+    get_dates: function(startdate, enddate) {
+        var start = $.datepicker.parseDate('mm/dd/yy', startdate),
+            end = $.datepicker.parseDate('mm/dd/yy', enddate),
+            ndays = (end - start) / (1000 * 60 * 60 * 24),
+            dates = []
+
+        for (var i=0; i < ndays; i++) {
+            var d = new Date(start.getTime())
+            d.setDate(start.getDate() + i)
+            dates.push(d)
+        }
+        return dates
+    },
+
+    get_check_inventory: function(srname, dates) {
+        var fetch = _.some(dates, function(date) {
+            var datestr = $.datepicker.formatDate('mm/dd/yy', date)
+            if (!(this.inventory[srname] && this.inventory[srname][datestr])) {
+                r.debug('need to fetch ' + datestr + ' for ' + srname)
+                return true
+            }
+        }, this)
+
+        if (fetch) {
+            dates.sort(function(d1,d2){return d1 - d2})
+            var end = new Date(dates[dates.length-1].getTime())
+            end.setDate(end.getDate() + 5)
+
+            return $.ajax({
+                type: 'GET',
+                url: '/api/check_inventory.json',
+                data: {
+                    sr: srname,
+                    startdate: $.datepicker.formatDate('mm/dd/yy', dates[0]),
+                    enddate: $.datepicker.formatDate('mm/dd/yy', end)
+                },
+                success: function(data) {
+                    if (!r.sponsored.inventory[srname]) {
+                        r.sponsored.inventory[srname] = {}
+                    }
+
+                    for (var datestr in data.inventory) {
+                        r.sponsored.inventory[srname][datestr] = data.inventory[datestr]
+                    }
+                }
+            })
+        } else {
+            return true
+        }
+    },
+
+    check_inventory: function($form) {
+        var bid = this.get_bid($form),
+            cpm = this.get_cpm($form),
+            requested = this.calc_impressions(bid, cpm),
+            startdate = $form.find('*[name="startdate"]').val(),
+            enddate = $form.find('*[name="enddate"]').val(),
+            ndays = this.get_duration($form),
+            daily_request = Math.floor(requested / ndays),
+            targeted = $form.find('#targeting').is(':checked'),
+            target = $form.find('*[name="sr"]').val(),
+            srname = targeted ? target : '',
+            dates = r.sponsored.get_dates(startdate, enddate)
+
+        $.when(r.sponsored.get_check_inventory(srname, dates)).done(
+            function() {
+                var oversold = {}
+
+                _.each(dates, function(date) {
+                    var datestr = $.datepicker.formatDate('mm/dd/yy', date),
+                        available = r.sponsored.inventory[srname][datestr]
+                    if (available < daily_request) {
+                        oversold[datestr] = available
+                    }
+                })
+
+                if (!_.isEmpty(oversold)) {
+                    var oversold_dates = _.keys(oversold)
+
+                    var message = r._("We have insufficient inventory to fulfill" +
+                                      " your requested budget, target, and dates." +
+                                      " Requested %(daily_request)s impressions " +
+                                      "per day."
+                                  ).format({daily_request: r.utils.prettyNumber(daily_request)})
+
+                    $(".OVERSOLD_DETAIL").text(message).show()
+                    var available_list = $('<ul>').appendTo(".OVERSOLD_DETAIL")
+                    _.each(oversold, function(num, datestr) {
+                        var available_msg = r._("%(num)s available on %(date)s").format({
+                                                 num: r.utils.prettyNumber(num),
+                                                 date: datestr
+                                            })
+                        available_list.append($('<li>').text(available_msg))
+                    })
+
+                    r.sponsored.disable_form($form)
+                } else {
+                    $(".OVERSOLD_DETAIL").hide()
+                    r.sponsored.enable_form($form)
+                }
+            }
+        )
+    },
+
+    get_duration: function($form) {
+        return Math.round((Date.parse($form.find('*[name="enddate"]').val()) -
+                           Date.parse($form.find('*[name="startdate"]').val())) / (86400*1000))
+    },
+
+    get_bid: function($form) {
+        return parseFloat($form.find('*[name="bid"]').val())
+    },
+
+    get_cpm: function($form) {
+        return parseInt($form.find('*[name="cpm"]').val())
+    },
+
+    on_date_change: function() {
+        this.fill_campaign_editor()
+    },
+
+    on_bid_change: function() {
+        this.fill_campaign_editor()
+    },
+
+    fill_campaign_editor: function() {
+        var $form = $("#campaign"),
+            bid = this.get_bid($form),
+            cpm = this.get_cpm($form),
+            ndays = this.get_duration($form),
+            impressions = this.calc_impressions(bid, cpm);
+
+        $(".duration").text(ndays + " " + ((ndays > 1) ? r._("days") : r._("day")))
+        $(".impression-info").text(r._("%(num)s impressions").format({num: r.utils.prettyNumber(impressions)}))
+        $(".price-info").text(r._("$%(cpm)s per 1,000 impressions").format({cpm: (cpm/100).toFixed(2)}))
+
+        this.check_bid($form)
+        this.check_inventory($form)
+    },
+
+    disable_form: function($form) {
+        $form.find('button[name="create"], button[name="save"]')
+            .prop("disabled", "disabled")
+            .addClass("disabled");
+    },
+
+    enable_form: function($form) {
+        $form.find('button[name="create"], button[name="save"]')
+            .removeProp("disabled")
+            .removeClass("disabled");
+    },
+
+    targeting_on: function() {
+        $('.targeting').find('*[name="sr"]').prop("disabled", "").end().slideDown();
+        this.fill_campaign_editor()
+    },
+
+    targeting_off: function() {
+        $('.targeting').find('*[name="sr"]').prop("disabled", "disabled").end().slideUp();
+        this.fill_campaign_editor()
+    },
+
+    check_bid: function($form) {
+        var bid = this.get_bid($form),
+            minimum_bid = $("#bid").data("min_bid");
+
+        $(".minimum-spend").removeClass("error");
+        if (bid < minimum_bid) {
+            $(".minimum-spend").addClass("error");
+            this.disable_form($form)
+        } else {
+            this.enable_form($form)
+        }
+    },
+
+    calc_impressions: function(bid, cpm_pennies) {
+        return bid / cpm_pennies * 1000 * 100
+    }
+}
+
 function update_bid(elem) {
     var form = $(elem).parents(".campaign");
     var is_targeted = $("#targeting").prop("checked");
@@ -98,19 +291,6 @@ function check_enddate(startdate, enddate) {
   $("#datepicker-" + enddate.attr("id")).datepicker("destroy");
 }
 
-function targeting_on(elem) {
-    $(elem).parents(".campaign").find(".targeting")
-        .find('*[name="sr"]').prop("disabled", "").end().slideDown();
-
-    update_bid(elem);
-}
-
-function targeting_off(elem) {
-    $(elem).parents(".campaign").find(".targeting")
-        .find('*[name="sr"]').prop("disabled", "disabled").end().slideUp();
-
-    update_bid(elem);
-}
 
 (function($) {
 
@@ -134,14 +314,15 @@ function get_flag_class(flags) {
     return css_class
 }
 
-$.new_campaign = function(campaign_id36, start_date, end_date, duration, 
-                          bid, targeting, flags) {
+$.new_campaign = function(campaign_id36, start_date, end_date, duration,
+                          bid, cpm, targeting, flags) {
     cancel_edit(function() {
       var data =('<input type="hidden" name="startdate" value="' + 
                  start_date +'"/>' + 
                  '<input type="hidden" name="enddate" value="' + 
                  end_date + '"/>' + 
                  '<input type="hidden" name="bid" value="' + bid + '"/>' +
+                 '<input type="hidden" name="cpm" value="' + cpm + '"/>' +
                  '<input type="hidden" name="targeting" value="' + 
                  (targeting || '') + '"/>' +
                  '<input type="hidden" name="campaign_id36" value="' + campaign_id36 + '"/>');
@@ -165,8 +346,8 @@ $.new_campaign = function(campaign_id36, start_date, end_date, duration,
    return $;
 };
 
-$.update_campaign = function(campaign_id36, start_date, end_date, 
-                             duration, bid, targeting, flags) {
+$.update_campaign = function(campaign_id36, start_date, end_date,
+                             duration, bid, cpm, targeting, flags) {
     cancel_edit(function() {
             $('.existing-campaigns input[name="campaign_id36"]')
                 .filter('*[value="' + (campaign_id36 || '0') + '"]')
@@ -182,6 +363,7 @@ $.update_campaign = function(campaign_id36, start_date, end_date,
                 .find('*[name="enddate"]').val(end_date).end()
                 .find('*[name="targeting"]').val(targeting).end()
                 .find('*[name="bid"]').val(bid).end()
+                .find('*[name="cpm"]').val(cpm).end()
                 .find("button, span").remove();
             $.set_up_campaigns();
         });
@@ -199,10 +381,9 @@ $.set_up_campaigns = function() {
             var td = $(this).find("td:last");
             var bid_td = $(this).find("td:first").next().next().next()
                 .addClass("bid");
-            var target_td = $(this).find("td:nth-child(5)")
             if(td.length && ! td.children("button, span").length ) {
                 if(tr.hasClass("live")) {
-                    $(target_td).append($(view).addClass("view")
+                    $(td).append($(view).addClass("view fancybutton")
                             .click(function() { view_campaign(tr) }));
                 }
                 /* once paid, we shouldn't muck around with the campaign */
@@ -313,11 +494,11 @@ function edit_campaign(elem) {
                                 "css_class": "", "cells": [""]}], 
                     tr.rowIndex + 1);
             $("#edit-campaign-tr").children('td:first')
-                .attr("colspan", 6).append(campaign).end()
+                .attr("colspan", 7).append(campaign).end()
                 .prev().fadeOut(function() { 
                         var data_tr = $(this);
                         var c = $("#campaign");
-                        $.map(['startdate', 'enddate', 'bid', 'campaign_id36'], 
+                        $.map(['startdate', 'enddate', 'bid', 'cpm', 'campaign_id36'],
                               function(i) {
                                   i = '*[name="' + i + '"]';
                                   c.find(i).val(data_tr.find(i).val());
@@ -343,7 +524,7 @@ function edit_campaign(elem) {
                         init_enddate();
                         c.find('button[name="save"]').show().end()
                             .find('button[name="create"]').hide().end();
-                        update_bid('*[name="bid"]');
+                        r.sponsored.fill_campaign_editor();
                         c.fadeIn();
                     } );
             }
@@ -363,11 +544,12 @@ function check_number_of_campaigns(){
     }
 }
 
-function create_campaign(elem) {
+function create_campaign() {
     if (check_number_of_campaigns()){
         return;
     }
     cancel_edit(function() {;
+            var base_cpm = $("#bid").data("base_cpm")
             init_startdate();
             init_enddate();
             $("#campaign")
@@ -379,8 +561,9 @@ function create_campaign(elem) {
                                 .prop("checked", "checked").end()
                 .find(".targeting").hide().end()
                 .find('*[name="sr"]').val("").prop("disabled", "disabled").end()
+                .find('input[name="cpm"]').val(base_cpm).end()
                 .fadeIn();
-            update_bid('*[name="bid"]');
+            r.sponsored.fill_campaign_editor();
         });
 }
 
