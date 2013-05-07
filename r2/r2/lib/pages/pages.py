@@ -3309,14 +3309,11 @@ class PromotePage(Reddit):
         Reddit.__init__(self, title, nav_menus = nav_menus, *a, **kw)
 
 class PromoteLinkForm(Templated):
-    def __init__(self, sr=None, link=None, listing='',
-                 timedeltatext='', *a, **kw):
-        self.setup(sr, link, listing, timedeltatext, *a, **kw)
-        Templated.__init__(self, sr=sr, datefmt = datefmt,
-                           timedeltatext=timedeltatext, listing = listing,
-                           bids = self.bids, *a, **kw)
+    def __init__(self, link=None, listing='', *a, **kw):
+        self.setup(link, listing)
+        Templated.__init__(self, *a, **kw)
 
-    def setup(self, sr, link, listing, timedeltatext, *a, **kw):
+    def setup(self, link, listing):
         self.bids = []
         if c.user_is_sponsor and link:
             self.author = Account._byID(link.author_id)
@@ -3361,6 +3358,7 @@ class PromoteLinkForm(Templated):
         self.mindate = mindate.strftime("%m/%d/%Y")
 
         self.link = None
+        self.listing = listing
         if link:
             self.link = promote.wrap_promoted(link)
             campaigns = PromoCampaign._by_link(link._id)
@@ -3371,9 +3369,8 @@ class PromoteLinkForm(Templated):
 
 
 class PromoteLinkFormCpm(PromoteLinkForm):
-    def __init__(self, sr=None, link=None, listing='',
-                 timedeltatext='', *a, **kw):
-        self.setup(sr, link, listing, timedeltatext, *a, **kw)
+    def __init__(self, sr=None, link=None, listing='', *a, **kw):
+        self.setup(link, listing)
 
         if not c.user_is_sponsor:
             self.now = promote.promo_datetime_now().date()
@@ -3381,9 +3378,7 @@ class PromoteLinkFormCpm(PromoteLinkForm):
             end_date = self.now + datetime.timedelta(60) # two months
             self.inventory = promote.get_available_impressions(sr, start_date, end_date)
 
-        Templated.__init__(self, sr=sr, datefmt = datefmt,
-                           timedeltatext=timedeltatext, listing = listing,
-                           bids = self.bids, *a, **kw)
+        Templated.__init__(self, *a, **kw)
 
 
 class PromoAdminTool(Reddit):
