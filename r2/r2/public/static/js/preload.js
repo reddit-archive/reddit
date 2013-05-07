@@ -4,7 +4,7 @@ r.preload = {
     data: {},
 
     isExpired: function() {
-        return new Date() - this.timestamp < this.maxAge
+        return new Date() - this.timestamp > this.maxAge
     },
 
     set: function(data) {
