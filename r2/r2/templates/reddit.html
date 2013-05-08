@@ -43,6 +43,49 @@
   %endif
 </%def>
 
+<%def name="global_stylesheets()">
+  %if c.lang_rtl:
+    <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
+          type="text/css" />
+    %if c.site.stylesheet_rtl:
+      <link rel="stylesheet" href="${static(c.site.stylesheet_rtl)}"
+            type="text/css" />
+    %endif
+  %else:
+    ${less_stylesheet(g.stylesheet)}
+    %if c.site.stylesheet:
+    <link rel="stylesheet" href="${static(c.site.stylesheet)}"
+          type="text/css" >
+    %endif
+  %endif
+
+  <!--[if lt IE 7]>
+    <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"
+          type="text/css" />
+  <![endif]-->
+
+  <!--[if lt IE 8]>
+    <link rel="stylesheet" href="${static('reddit-ie7-hax.css')}"
+          type="text/css" />
+  <![endif]-->
+</%def>
+
+<%def name="sr_stylesheets()">
+  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_hash:
+    <link rel="stylesheet"
+          href="${c.site.stylesheet_url}"
+          title="applied_subreddit_stylesheet"
+          type="text/css">
+  %endif
+</%def>
+
+<%def name="extra_stylesheets()">
+  ${adminbar_stylesheet()}
+  %for extra_stylesheet in getattr(thing, 'extra_stylesheets', ()):
+    ${less_stylesheet(extra_stylesheet)}
+  %endfor
+</%def>
+
 <%def name="pagemeta()">
   %if hasattr(thing, "shortlink"):
     <link rel="shorturl" href="http://${thing.shortlink}"/>
@@ -63,43 +106,9 @@
 </%def>
 
 <%def name="stylesheet()">
-  %if c.lang_rtl:
-    <link rel="stylesheet" href="${static(g.stylesheet_rtl)}"
-          type="text/css" />
-    %if c.site.stylesheet_rtl:
-      <link rel="stylesheet" href="${static(c.site.stylesheet_rtl)}"
-            type="text/css" />
-    %endif
-  %else:
-    ${less_stylesheet(g.stylesheet)}
-    %if c.site.stylesheet:
-    <link rel="stylesheet" href="${static(c.site.stylesheet)}"
-          type="text/css" >
-    %endif
-  %endif
-
-  %if c.can_apply_styles and c.allow_styles and c.site.stylesheet_hash:
-    <link rel="stylesheet"
-          href="${c.site.stylesheet_url}"
-          title="applied_subreddit_stylesheet"
-          type="text/css">
-  %endif
-
-  <!--[if lt IE 7]>
-    <link rel="stylesheet" href="${static('reddit-ie6-hax.css')}"
-          type="text/css" />
-  <![endif]-->
-
-  <!--[if lt IE 8]>
-    <link rel="stylesheet" href="${static('reddit-ie7-hax.css')}"
-          type="text/css" />
-  <![endif]-->
-
-  ${adminbar_stylesheet()}
-
-  %for extra_stylesheet in getattr(thing, 'extra_stylesheets', ()):
-    ${less_stylesheet(extra_stylesheet)}
-  %endfor
+  ${self.global_stylesheets()}
+  ${self.sr_stylesheets()}
+  ${self.extra_stylesheets()}
 </%def>
 
 <%def name="javascript()">
