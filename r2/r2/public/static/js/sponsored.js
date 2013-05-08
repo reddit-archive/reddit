@@ -1,7 +1,3 @@
-function update_box(elem) {
-   $(elem).prevAll('*[type="checkbox"]:first').prop('checked', true);
-};
-
 r.sponsored = {
     init: function() {
         $("#sr-autocomplete").on("sr-changed blur", function() {
