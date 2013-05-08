@@ -95,8 +95,9 @@ r.wiki = {
                 409: function(xhr) {
                     var info = JSON.parse(xhr.responseText)
                         ,content = $this.children('#wiki_page_content')
+                        ,diff = conflict.children('#yourdiff')
                     conflict.children('#youredit').val(content.val())
-                    conflict.children('#yourdiff').html(info.diffcontent)
+                    diff.html($.unsafe(info.diffcontent))
                     $this.children('#previous').val(info.newrevision)
                     content.val(info.newcontent)
                     conflict.fadeIn('slow')
