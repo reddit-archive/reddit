@@ -22,7 +22,14 @@
 
 from pylons.i18n import _, ungettext
 from pylons.controllers.util import redirect_to
-from reddit_base import RedditController, base_listing, paginated_listing, prevent_framing_and_css
+from r2.controllers.reddit_base import (
+    base_listing,
+    pagecache_policy,
+    PAGECACHE_POLICY,
+    paginated_listing,
+    prevent_framing_and_css,
+    RedditController,
+)
 from r2 import config
 from r2.models import *
 from r2.config.extensions import is_api
@@ -389,6 +396,7 @@ class FrontController(RedditController, OAuth2ResourceController):
                        ).render()
         return res
 
+    @pagecache_policy(PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT)
     @require_oauth2_scope("modconfig")
     @api_doc(api_section.moderation)
     def GET_stylesheet(self):

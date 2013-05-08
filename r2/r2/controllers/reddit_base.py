@@ -61,6 +61,7 @@ from r2.lib.template_helpers import add_sr, JSPreload
 from r2.lib.tracking import encrypt, decrypt
 from r2.lib.translation import set_lang
 from r2.lib.utils import (
+    Enum,
     SimpleSillyStub,
     UniqueIterator,
     http_utils,
@@ -106,6 +107,30 @@ from r2.models import (
 
 NEVER = datetime(2037, 12, 31, 23, 59, 59)
 DELETE = datetime(1970, 01, 01, 0, 0, 1)
+PAGECACHE_POLICY = Enum(
+    # logged in users may use the pagecache as well.
+    "LOGGEDIN_AND_LOGGEDOUT",
+    # only attempt to use pagecache if the current user is not logged in.
+    "LOGGEDOUT_ONLY",
+    # do not use pagecache.
+    "NEVER",
+)
+
+
+def pagecache_policy(policy):
+    """Decorate a controller method to specify desired pagecache behaviour.
+
+    If not specified, the policy will default to LOGGEDOUT_ONLY.
+
+    """
+
+    assert policy in PAGECACHE_POLICY
+
+    def pagecache_decorator(fn):
+        fn.pagecache_policy = policy
+        return fn
+    return pagecache_decorator
+
 
 cache_affecting_cookies = ('over18', '_options')
 
@@ -711,9 +736,22 @@ class MinimalController(BaseController):
 
         g.stats.count_string('user_agents', request.user_agent)
 
+    def can_use_pagecache(self):
+        handler = self._get_action_handler()
+        policy = getattr(handler, "pagecache_policy",
+                         PAGECACHE_POLICY.LOGGEDOUT_ONLY)
+
+        if policy == PAGECACHE_POLICY.LOGGEDIN_AND_LOGGEDOUT:
+            return True
+        elif policy == PAGECACHE_POLICY.LOGGEDOUT_ONLY:
+            return not c.user_is_loggedin
+
+        return False
+
     def try_pagecache(self):
-        #check content cache
-        if request.method.upper() == 'GET' and not c.user_is_loggedin:
+        c.can_use_pagecache = self.can_use_pagecache()
+
+        if request.method.upper() == 'GET' and c.can_use_pagecache:
             r = g.pagecache.get(self.request_key())
             if r:
                 r, c.cookies = r
@@ -752,7 +790,7 @@ class MinimalController(BaseController):
         # such as If-Modified-Since headers for 304s or requesting IP for 429s.
         if (g.page_cache_time
             and request.method.upper() == 'GET'
-            and (not c.user_is_loggedin or c.allow_loggedin_cache)
+            and c.can_use_pagecache
             and not c.used_cache
             and response.status_int not in (304, 429)
             and not response.status.startswith("5")
