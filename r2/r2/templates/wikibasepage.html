@@ -22,8 +22,8 @@
 <%namespace file="less.html" import="less_stylesheet"/>
 <%inherit file="reddit.html"/>
 
-<%def name="stylesheet()">
-    ${parent.stylesheet()}
+<%def name="global_stylesheets()">
+    ${parent.global_stylesheets()}
     ${less_stylesheet('wiki.less')}
 </%def>
 
