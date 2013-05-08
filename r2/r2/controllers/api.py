@@ -20,8 +20,15 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from reddit_base import RedditController, MinimalController, set_user_cookie
-from reddit_base import cross_domain, paginated_listing
+from r2.controllers.reddit_base import (
+    cross_domain,
+    MinimalController,
+    pagecache_policy,
+    PAGECACHE_POLICY,
+    paginated_listing,
+    RedditController,
+    set_user_cookie,
+)
 
 from pylons.i18n import _
 from pylons import c, request, response
@@ -120,7 +127,7 @@ class ApiController(RedditController, OAuth2ResourceController):
     def ajax_login_redirect(self, form, jquery, dest):
         form.redirect("/login" + query_string(dict(dest=dest)))
 
-    
+    @pagecache_policy(PAGECACHE_POLICY.NEVER)
     @require_oauth2_scope("read")
     @validate(link1 = VUrl(['url']),
               link2 = VByName('id'),
