@@ -20,11 +20,14 @@ r.setup = function(config) {
 r.setupBackbone = function() {
     Backbone.emulateJSON = true
     Backbone.ajax = function(request) {
-        var url = request.url,
-            preloaded = r.preload.read(url)
-        if (preloaded != null) {
-            request.success(preloaded)
-            return
+        var url = request.url
+
+        if (request.type == 'GET') {
+            var preloaded = r.preload.read(url)
+            if (preloaded != null) {
+                request.success(preloaded)
+                return
+            }
         }
 
         var isLocal = url && (url[0] == '/' || url.lastIndexOf(r.config.currentOrigin, 0) == 0)
