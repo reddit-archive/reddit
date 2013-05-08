@@ -2184,6 +2184,9 @@ class VJSON(Validator):
         }
 
 
+multi_name_rx = subreddit_rx
+multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
+
 class VMultiPath(Validator):
     @classmethod
     def normalize(self, path):
@@ -2201,10 +2204,33 @@ class VMultiPath(Validator):
             require(m == 'm')
             username = chkuser(username)
             require(username)
-            require(subreddit_rx.match(name))
-            return {'path': path, 'username': username, 'name': name}
         except RequirementException:
-            self.set_error('BAD_MULTI_NAME', code=400)
+            self.set_error('BAD_MULTI_PATH', code=400)
+            return
+
+        try:
+            require(multi_name_rx.match(name))
+        except RequirementException:
+            invalid_char = multi_name_chars_rx.search(name)
+            if invalid_char:
+                char = invalid_char.group()
+                if char == ' ':
+                    reason = _('no spaces allowed')
+                else:
+                    reason = _("invalid character: '%s'") % char
+            elif name[0] == '_':
+                reason = _("can't start with a '_'")
+            elif len(name) < 3:
+                reason = _('that name is too short')
+            elif len(name) > 21:
+                reason = _('that name is too long')
+            else:
+                reason = _("that name isn't going to work")
+
+            self.set_error('BAD_MULTI_NAME', {'reason': reason}, code=400)
+            return
+
+        return {'path': path, 'username': username, 'name': name}
 
     def param_docs(self):
         return {
