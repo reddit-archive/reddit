@@ -119,13 +119,17 @@ class WikiBasePage(Reddit):
         
         self.inner_content = inner_content
 
+        page_classes = None
+
         if page and "title" not in context:
             context["title"] = _("%(page)s - %(site)s") % {
                 "site": c.site.name,
                 "page": page}
+            page_classes = ['wiki-page-%s' % page]
 
         Reddit.__init__(self, extra_js_config={'wiki_page': page}, 
-                        show_wiki_actions=True, **context)
+                        show_wiki_actions=True, page_classes=page_classes,
+                        **context)
 
 class WikiPageView(WikiBasePage):
     def __init__(self, content, page, diff=None, **context):
