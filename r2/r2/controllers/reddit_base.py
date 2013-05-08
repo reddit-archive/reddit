@@ -747,12 +747,14 @@ class MinimalController(BaseController):
         if c.deny_frames:
             response.headers["X-Frame-Options"] = "DENY"
 
-        #set content cache
+        # save the result of this page to the pagecache if possible.  we
+        # mustn't cache things that rely on state not tracked by request_key
+        # such as If-Modified-Since headers for 304s or requesting IP for 429s.
         if (g.page_cache_time
             and request.method.upper() == 'GET'
             and (not c.user_is_loggedin or c.allow_loggedin_cache)
             and not c.used_cache
-            and response.status_int != 429
+            and response.status_int not in (304, 429)
             and not response.status.startswith("5")
             and not c.is_exception_response):
             try:
