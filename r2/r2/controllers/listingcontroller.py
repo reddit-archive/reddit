@@ -118,7 +118,7 @@ class ListingController(RedditController, OAuth2ResourceController):
         if (self.show_chooser and
                 c.render_style == "html" and
                 c.user_is_loggedin and c.user.pref_show_left_bar and
-                isinstance(c.site, (DefaultSR, AllSR, LabeledMulti))):
+                isinstance(c.site, (DefaultSR, AllSR, ModSR, LabeledMulti))):
             page_classes = page_classes + ['with-listing-chooser']
             content = PaneStack([ListingChooser(), content])
 

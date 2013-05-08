@@ -4101,6 +4101,9 @@ class ListingChooser(Templated):
                       description=_("your front page"))
         self.add_item("other", _("everything"), '/r/all',
                       description=_("from all subreddits"))
+        if c.show_mod_mail:
+            self.add_item("other", _("moderating"), '/r/mod',
+                          description=_("subreddits you mod"))
         self.add_item("other", _("saved"), '/user/%s/saved' % c.user.name)
 
         if c.user_is_loggedin:
