@@ -295,7 +295,8 @@ class WikiApiController(WikiController):
             error = c.errors.get(('WIKI_CREATE_ERROR', 'page'))
             if error:
                 self.handle_error(403, **(error.msg_params or {}))
-            page = WikiPage.create(c.site, page_name)
+            if not c.user._spam:
+                page = WikiPage.create(c.site, page_name)
         if c.user._spam:
             error = _("You are doing that too much, please try again later.")
             self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
