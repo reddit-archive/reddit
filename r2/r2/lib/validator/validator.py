@@ -707,7 +707,7 @@ class VByName(Validator):
     def param_docs(self):
         thingtype = (self.thing_cls or Thing).__name__.lower()
         return {
-            self.param: "fullname of a %s" % thingtype,
+            self.param: "[fullname](#fullnames) of a %s" % thingtype,
         }
 
 class VByNameIfAuthor(VByName):
@@ -721,7 +721,7 @@ class VByNameIfAuthor(VByName):
 
     def param_docs(self):
         return {
-            self.param: "fullname of a thing created by the user",
+            self.param: "[fullname](#fullnames) of a thing created by the user",
         }
 
 class VCaptcha(Validator):
@@ -972,7 +972,7 @@ class VSubmitParent(VByName):
 
     def param_docs(self):
         return {
-            self.param[0]: "fullname of parent thing",
+            self.param[0]: "[fullname](#fullnames) of parent thing",
         }
 
 class VSubmitSR(Validator):
