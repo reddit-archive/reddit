@@ -275,6 +275,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         var attrs = _.clone(this.model.attributes)
         delete attrs.path
         attrs.name = multiName
+        attrs.visibility = 'private'
         r.multi.mine.create(attrs, {
             wait: true,
             success: function(multi) {
