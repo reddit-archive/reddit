@@ -159,11 +159,13 @@ def _make_validated_kw(fn, simple_vals, param_vals, env):
         kw[var] = validator(env)
     return kw
 
-def set_api_docs(fn, simple_vals, param_vals):
+def set_api_docs(fn, simple_vals, param_vals, extra_vals=None):
     doc = fn._api_doc = getattr(fn, '_api_doc', {})
     param_info = doc.get('parameters', {})
     for validator in chain(simple_vals, param_vals.itervalues()):
         param_info.update(validator.param_docs())
+    if extra_vals:
+        param_info.update(extra_vals)
     doc['parameters'] = param_info
 
 
@@ -195,7 +197,7 @@ def validate(*simple_vals, **param_vals):
     return val
 
 
-def api_validate(response_type=None):
+def api_validate(response_type=None, add_api_type_doc=False):
     """
     Factory for making validators for API calls, since API calls come
     in two flavors: responsive and unresponsive.  The machinary
@@ -237,7 +239,13 @@ def api_validate(response_type=None):
                         responder.send_failure(errors.VERIFIED_USER_REQUIRED)
                         return self.api_wrapper(responder.make_response())
 
-                set_api_docs(newfn, simple_vals, param_vals)
+                extra_param_vals = {}
+                if add_api_type_doc:
+                    extra_param_vals = {
+                        "api_type": "the string `json`",
+                    }
+
+                set_api_docs(newfn, simple_vals, param_vals, extra_param_vals)
                 return newfn
             return val
         return _api_validate
@@ -289,13 +297,13 @@ def _validatedForm(self, self_method, responder, simple_vals, param_vals,
     else:
         return self.api_wrapper(responder.make_response())
 
-@api_validate("html")
+@api_validate("html", add_api_type_doc=True)
 def validatedForm(self, self_method, responder, simple_vals, param_vals,
                   *a, **kw):
     return _validatedForm(self, self_method, responder, simple_vals, param_vals,
                           *a, **kw)
 
-@api_validate("html")
+@api_validate("html", add_api_type_doc=True)
 def validatedMultipartForm(self, self_method, responder, simple_vals,
                            param_vals, *a, **kw):
     def wrapped_self_method(*a, **kw):
