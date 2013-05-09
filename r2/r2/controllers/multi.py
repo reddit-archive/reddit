@@ -46,6 +46,7 @@ from r2.lib.validator import (
     VMultiByPath,
 )
 from r2.lib.pages.things import wrap_things
+from r2.lib.jsontemplates import LabeledMultiJsonTemplate
 from r2.lib.errors import errors, reddit_http_error, RedditError
 from r2.lib.base import abort
 
@@ -113,11 +114,11 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
         if 'subreddits' in data:
             multi.clear_srs()
-            srs = Subreddit._by_name(data['subreddits'].keys())
+            srs = Subreddit._by_name(sr['name'] for sr in data['subreddits'])
             sr_props = {}
-            for sr_name, sr_data in data['subreddits'].iteritems():
+            for sr_data in data['subreddits']:
                 try:
-                    sr = srs[sr_name]
+                    sr = srs[sr_data['name']]
                 except KeyError:
                     raise RedditError('SUBREDDIT_NOEXIST', code=400)
                 else:
@@ -144,11 +145,26 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Delete a multi."""
         multi.delete()
 
+    def _get_multi_subreddit(self, multi, sr):
+        resp = LabeledMultiJsonTemplate.sr_props(multi, [sr])[0]
+        return self.api_wrapper(resp)
+
     @require_oauth2_scope("subscribe")
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}/r/{srname}",
     )
+    @validate(
+        VUser(),
+        multi=VMultiByPath("path", require_view=True),
+        sr=VSRByName('sr_name'),
+    )
+    def GET_multi_subreddit(self, multi, sr):
+        """Get data about a subreddit in a multi."""
+        return self._get_multi_subreddit(multi, sr)
+
+    @require_oauth2_scope("subscribe")
+    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     @validate(
         VUser(),
         VModhash(),
@@ -164,6 +180,8 @@ class MultiApiController(RedditController, OAuth2ResourceController):
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
         else:
             multi._commit()
+
+        return self._get_multi_subreddit(multi, sr)
 
     @require_oauth2_scope("subscribe")
     @api_doc(api_section.multis, extends=PUT_multi_subreddit)

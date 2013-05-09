@@ -1376,11 +1376,6 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return self.columns_to_sr_props(self.sr_columns)
 
     @property
-    def named_sr_props(self):
-        sr_props = self.sr_props
-        return {sr.name: sr_props[sr._id] for sr in self._srs}
-
-    @property
     def path(self):
         return self._id
 

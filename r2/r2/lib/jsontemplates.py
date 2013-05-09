@@ -262,9 +262,14 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
     def kind(self, wrapped):
         return "LabeledMulti"
 
+    @classmethod
+    def sr_props(cls, thing, srs):
+        sr_props = thing.sr_props
+        return [dict(sr_props[sr._id], name=sr.name) for sr in srs]
+
     def thing_attr(self, thing, attr):
         if attr == "srs":
-            return thing.named_sr_props
+            return self.sr_props(thing, thing.srs)
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
