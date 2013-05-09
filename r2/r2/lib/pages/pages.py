@@ -4097,38 +4097,45 @@ class ListingChooser(Templated):
     def __init__(self):
         Templated.__init__(self)
         self.sections = defaultdict(list)
-        self.add_item("global", _("subscribed"), '/',
+        self.add_item("global", _("subscribed"), site=Frontpage,
                       description=_("your front page"))
-        self.add_item("other", _("everything"), '/r/all',
+        self.add_item("other", _("everything"), site=All,
                       description=_("from all subreddits"))
         if c.show_mod_mail:
-            self.add_item("other", _("moderating"), '/r/mod',
+            self.add_item("other", _("moderating"), site=Mod,
                           description=_("subreddits you mod"))
-        self.add_item("other", _("saved"), '/user/%s/saved' % c.user.name)
+        self.add_item("other", _("saved"), path='/user/%s/saved' % c.user.name)
 
         if c.user_is_loggedin:
             multis = LabeledMulti.by_owner(c.user)
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
-                self.add_item("multi", multi.name, multi.path)
+                self.add_item("multi", multi.name, site=multi)
         self.selected_item = self.find_selected()
-        self.selected_item["selected"] = True
+        if self.selected_item:
+            self.selected_item["selected"] = True
 
-    def add_item(self, section, name, path, description=None):
+    def add_item(self, section, name, path=None, site=None, description=None):
         self.sections[section].append({
             "name": name,
             "description": description,
-            "path": path,
+            "path": path or site.path,
+            "site": site,
             "selected": False,
         })
 
     def find_selected(self):
         path = request.path
-        matching = [item for item in chain(*self.sections.values())
-                    if path.startswith(item["path"]) or
-                       c.site.path.startswith(item["path"])]
+        matching = []
+        for item in chain(*self.sections.values()):
+            if item["site"]:
+                if item["site"] == c.site:
+                    matching.append(item)
+            elif path.startswith(item["path"]):
+                matching.append(item)
+
         matching.sort(key=lambda item: len(item["path"]), reverse=True)
-        return matching[0]
+        return matching[0] if matching else None
 
 class PolicyView(Templated):
     pass
