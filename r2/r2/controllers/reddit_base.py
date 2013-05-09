@@ -805,6 +805,15 @@ class MinimalController(BaseController):
                 g.log.warning("Ignored exception (%r) on pagecache "
                               "write for %r", e, request.path)
 
+        pragmas = [p.strip() for p in
+                   request.headers.get("Pragma", "").split(",")]
+        if g.debug or "x-reddit-pagecache" in pragmas:
+            if c.can_use_pagecache:
+                pagecache_state = "hit" if c.used_cache else "miss"
+            else:
+                pagecache_state = "disallowed"
+            response.headers["X-Reddit-Pagecache"] = pagecache_state
+
         # send cookies
         for k, v in c.cookies.iteritems():
             if v.dirty:
