@@ -469,7 +469,7 @@ class MessageJsonTemplate(ThingJsonTemplate):
                                                 first_message_name = "first_message_name")
 
     def thing_attr(self, thing, attr):
-        from r2.models import Message
+        from r2.models import Comment, Link, Message
         if attr == "was_comment":
             return thing.was_comment
         elif attr == "context":
@@ -489,7 +489,12 @@ class MessageJsonTemplate(ThingJsonTemplate):
         elif attr == "author" and getattr(thing, "hide_author", False):
             return None
         elif attr == "parent_id":
-            if getattr(thing, "parent_id", None):
+            if thing.was_comment:
+                if getattr(thing, "parent_id", None):
+                    return make_fullname(Comment, thing.parent_id)
+                else:
+                    return make_fullname(Link, thing.link_id)
+            elif getattr(thing, "parent_id", None):
                 return make_fullname(Message, thing.parent_id)
         elif attr == "first_message_name":
             if getattr(thing, "first_message", None):
