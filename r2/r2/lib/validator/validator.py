@@ -762,7 +762,7 @@ class VModhash(Validator):
 
     def param_docs(self):
         return {
-            self.param: 'a modhash',
+            self.param: 'a [modhash](#modhashes)',
         }
 
 class VVotehash(Validator):
