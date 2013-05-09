@@ -195,41 +195,6 @@ r.sponsored = {
     }
 }
 
-function update_bid(elem) {
-    var form = $(elem).parents(".campaign");
-    var is_targeted = $("#targeting").prop("checked");
-    var bid = parseFloat(form.find('*[name="bid"]').val());
-    var ndays = ((Date.parse(form.find('*[name="enddate"]').val()) -
-             Date.parse(form.find('*[name="startdate"]').val())) / (86400*1000));
-    ndays = Math.round(ndays);
-
-    // min bid is slightly higher for targeted promos
-    var minimum_daily_bid = is_targeted ? $("#bid").data("min_daily_bid") * 1.5 : 
-                                          $("#bid").data("min_daily_bid");
-    $(".minimum-spend").removeClass("error");
-    if (bid < ndays * minimum_daily_bid) {
-        $(".bid-info").addClass("error");
-        if (is_targeted) {
-            $("#targeted_minimum").addClass("error");
-        } else {
-            $("#no_targeting_minimum").addClass("error");
-        }
-
-        form.find('button[name="create"], button[name="save"]')
-            .prop("disabled", "disabled")
-            .addClass("disabled");
-    } else {
-        $(".bid-info").removeClass("error");
-        form.find('button[name="create"], button[name="save"]')
-            .removeProp("disabled")
-            .removeClass("disabled");
-    }
-
-    $(".bid-info").html("&nbsp; &rarr;" + 
-                        "<b>$" + (bid/ndays).toFixed(2) +
-         "</b> per day for <b>" + ndays + " day(s)</b>");
- }
-
 var dateFromInput = function(selector, offset) {
    if(selector) {
      var input = $(selector);

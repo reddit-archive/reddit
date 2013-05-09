@@ -60,13 +60,12 @@ ${unsafe(js.use('sponsored'))}
                                newd.getDate() + "/" + newd.getFullYear());
           }
           $("#datepicker-enddate").datepicker("destroy");
-          update_bid(elem);
         }
         </%p:datepicker>
         -
         <%p:datepicker name="enddate", value="${thing.enddate}"
                           minDateSrc="startdate" initfuncname="init_enddate">
-          function(elem) { update_bid(elem); }
+          function(elem) { }
         </%p:datepicker>
        </td>
        </tr>
