@@ -1795,7 +1795,7 @@ class VDestination(Validator):
 
     def run(self, dest):
         if not dest:
-            dest = request.referer or self.default or "/"
+            dest = self.default or "/"
 
         ld = dest.lower()
         if ld.startswith(('/', 'http://', 'http://')):
