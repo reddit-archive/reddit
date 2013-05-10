@@ -749,6 +749,8 @@ class MinimalController(BaseController):
 
         g.stats.count_string('user_agents', request.user_agent)
 
+        hooks.get_hook("reddit.request.minimal_begin").call()
+
     def can_use_pagecache(self):
         handler = self._get_action_handler()
         policy = getattr(handler, "pagecache_policy",
