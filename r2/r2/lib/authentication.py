@@ -30,6 +30,7 @@ single website.)
 
 import bcrypt
 from pylons import g, c, request
+from urllib import unquote
 
 from r2.models import Account, NotFound
 from r2.lib.utils import constant_time_compare, parse_http_basic
@@ -55,13 +56,14 @@ def authentication_provider(allow_logout):
 @authentication_provider(allow_logout=True)
 def cookie():
     """Authenticate the user given a session cookie."""
-    session_cookie = c.cookies.get(g.login_cookie)
-    if not session_cookie:
+    session_cookie = request.cookies.get(g.login_cookie)
+    if session_cookie:
+        session_cookie = unquote(session_cookie)
+    else:
         return None
 
-    cookie = session_cookie.value
     try:
-        uid, timestr, hash = cookie.split(",")
+        uid, timestr, hash = session_cookie.split(",")
         uid = int(uid)
     except:
         return None
@@ -71,7 +73,7 @@ def cookie():
     except NotFound:
         return None
 
-    if not constant_time_compare(cookie, account.make_cookie(timestr)):
+    if not constant_time_compare(session_cookie, account.make_cookie(timestr)):
         return None
     return account
 
