@@ -313,9 +313,8 @@ def delete_obsolete_cookies():
             c.cookies[cookie_name] = Cookie("", expires=DELETE)
 
 def over18():
-    if c.user.pref_over_18 or c.user_is_admin:
-        return True
-
+    if c.user_is_loggedin:
+        return c.user.pref_over_18 or c.user_is_admin
     else:
         if 'over18' in c.cookies:
             cookie = c.cookies['over18'].value
