@@ -59,7 +59,13 @@
       _(
         "# Filter specific subreddits from /r/all.\n"
         "Are there subreddits you don't want to see? Customize /r/all by removing them with a url like /r/all-operative-badger (up to ~300 removals - limited by maximum url length)."
-      ), 'new')}
+      ))}
+    ${feature_item(static('gold/sample-butler.png'),
+      _(
+        "# Notifications when you're mentioned in comments.\n"
+        """Want to say "boo" when people talk about you?  """
+        """Get an orangered whenever someone "/u/" mentions your username in a comment."""
+      ), "new")}
     ${feature_item(static('gold/sample-morecomments.png'),
       _(
         '# More subreddits and comments per page.\n'
@@ -77,7 +83,7 @@
         '# Save comments and view by subreddit.\n'
         "Save the great comments you'd like to revisit later.  \n"
         'Filter your favorite posts and comments by subreddit.'
-      ), 'new')}
+      ))}
     ${feature_item(static('gold/sample-adsoptions.png'),
       _(
         '# Turn off ads.\n'

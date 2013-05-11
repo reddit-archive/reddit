@@ -1375,14 +1375,23 @@ class Message(Thing, Printable):
                 item.permalink = item.lookups[0].make_permalink(link, sr=sr)
                 item.link_permalink = link.make_permalink(sr)
                 if item.parent_id:
-                    item.subject = _('comment reply')
-                    item.message_style = "comment-reply"
                     parent = parents[item.parent_id]
                     item.parent = parent._fullname
                     item.parent_permalink = parent.make_permalink(link, sr)
+
+                    if parent.author_id == c.user._id:
+                        item.subject = _('comment reply')
+                        item.message_style = "comment-reply"
+                    else:
+                        item.subject = _('username mention')
+                        item.message_style = "mention"
                 else:
-                    item.subject = _('post reply')
-                    item.message_style = "post-reply"
+                    if link.author_id == c.user._id:
+                        item.subject = _('post reply')
+                        item.message_style = "post-reply"
+                    else:
+                        item.subject = _('username mention')
+                        item.message_style = "mention"
             elif item.sr_id is not None:
                 item.subreddit = m_subreddits[item.sr_id]
 

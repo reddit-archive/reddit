@@ -42,6 +42,7 @@ from r2.lib.template_helpers import add_sr
 from r2.lib.utils import iters, check_cheating, timeago
 from r2.lib import sup
 from r2.lib.validator import *
+from r2.lib.butler import extract_user_mentions
 import socket
 
 from api_docs import api_doc, api_section
@@ -735,12 +736,17 @@ class MessageController(ListingController):
     @property
     def menus(self):
         if c.default_sr and self.where in ('inbox', 'messages', 'comments',
-                          'selfreply', 'unread'):
-            buttons = (NavButton(_("all"), "inbox"),
+                          'selfreply', 'unread', 'mentions'):
+            buttons = [NavButton(_("all"), "inbox"),
                        NavButton(_("unread"), "unread"),
                        NavButton(plurals.messages, "messages"),
                        NavButton(_("comment replies"), 'comments'),
-                       NavButton(_("post replies"), 'selfreply'))
+                       NavButton(_("post replies"), 'selfreply')]
+
+            if c.user.gold:
+                buttons += [NavButton(_("username mentions"),
+                                      "mentions",
+                                      css_class="gold")]
 
             return [NavMenu(buttons, base_path = '/message/',
                             default = 'inbox', type = "flatlist")]
@@ -767,6 +773,10 @@ class MessageController(ListingController):
             # don't show user their own unread stuff
             if ((self.where == 'unread' or self.subwhere == 'unread')
                 and (item.author_id == c.user._id or not item.new)):
+                return False
+
+            if (item.message_style == "mention" and
+                c.user.name.lower() not in extract_user_mentions(item.body)):
                 return False
 
             return wouldkeep
@@ -842,6 +852,8 @@ class MessageController(ListingController):
             q = queries.get_inbox_comments(c.user)
         elif self.where == 'selfreply':
             q = queries.get_inbox_selfreply(c.user)
+        elif self.where == 'mentions':
+            q = queries.get_inbox_comment_mentions(c.user)
         elif self.where == 'inbox':
             q = queries.get_inbox(c.user)
         elif self.where == 'unread':

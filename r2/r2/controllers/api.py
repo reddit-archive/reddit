@@ -1000,7 +1000,9 @@ class ApiController(RedditController, OAuth2ResourceController):
 
             if recipient:
                 inbox_class = Inbox.rel(Account, Comment)
-                d = inbox_class._fast_query(recipient, thing, ("inbox", "selfreply"))
+                d = inbox_class._fast_query(recipient, thing, ("inbox",
+                                                               "selfreply",
+                                                               "mention"))
                 rels = filter(None, d.values()) or None
                 queries.new_comment(thing, rels)
 
@@ -1111,7 +1113,7 @@ class ApiController(RedditController, OAuth2ResourceController):
         # or PM). Check that 'thing' is in the user's inbox somewhere
         inbox_cls = Inbox.rel(Account, thing.__class__)
         rels = inbox_cls._fast_query(c.user, thing,
-                                     ("inbox", "selfreply"))
+                                     ("inbox", "selfreply", "mention"))
         if not filter(None, rels.values()):
             return
 

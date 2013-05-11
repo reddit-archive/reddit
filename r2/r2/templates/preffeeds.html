@@ -87,6 +87,11 @@ ${unsafe(safemarkdown(_("All feeds are invalidated if you change your password, 
       <br/>
       <%self:feedbuttons path="/message/selfreply"></%self:feedbuttons>
       ${_("self-post replies only")}
+      % if c.user.gold:
+      <br>
+      <%self:feedbuttons path="/message/mentions"></%self:feedbuttons>
+      ${_("mentions of your username only")}
+      % endif
     </td>
    </tr>
    %if c.show_mod_mail:

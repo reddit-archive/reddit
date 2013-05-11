@@ -588,9 +588,22 @@ def get_unread_selfreply(user):
     return rel_query(inbox_comment_rel, user, 'selfreply',
                           filters = [inbox_comment_rel.c.new == True])
 
+
+@cached_userrel_query
+def get_inbox_comment_mentions(user):
+    return rel_query(inbox_comment_rel, user, "mention")
+
+
+@cached_userrel_query
+def get_unread_comment_mentions(user):
+    return rel_query(inbox_comment_rel, user, "mention",
+                     filters=[inbox_comment_rel.c.new == True])
+
+
 def get_inbox(user):
     return merge_results(get_inbox_comments(user),
                          get_inbox_messages(user),
+                         get_inbox_comment_mentions(user),
                          get_inbox_selfreply(user))
 
 @cached_query(UserQueryCache)
@@ -602,6 +615,7 @@ def get_sent(user_id):
 def get_unread_inbox(user):
     return merge_results(get_unread_comments(user),
                          get_unread_messages(user),
+                         get_unread_comment_mentions(user),
                          get_unread_selfreply(user))
 
 def _user_reported_query(user_id, thing_cls):
@@ -877,6 +891,8 @@ def new_comment(comment, inbox_rels):
                 else:
                     raise ValueError("wtf is " + inbox_rel._name)
 
+                # mentions happen in butler_q
+
                 if not comment._deleted:
                     m.insert(query, [inbox_rel])
                 else:
@@ -992,6 +1008,8 @@ def set_unread(messages, to, unread, mutator=None):
                     query = get_unread_comments(i._thing1_id)
                 elif i._name == "selfreply":
                     query = get_unread_selfreply(i._thing1_id)
+                elif i._name == "mention":
+                    query = get_unread_comment_mentions(i._thing1_id)
             elif isinstance(messages[0], Message):
                 query = get_unread_messages(i._thing1_id)
             assert query is not None
