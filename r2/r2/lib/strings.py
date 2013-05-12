@@ -213,6 +213,7 @@ Note: there are a couple of places outside of your subreddit where someone can c
     are_you_sure = _('are you sure?'),
     yes = _('yes'),
     no = _('no'),
+    create_multi = _('create a new multi'),
 )
 
 class StringHandler(object):

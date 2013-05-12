@@ -1087,6 +1087,7 @@ a.author { margin-right: 0.5em; }
 
         input[type="checkbox"] {
             margin-top: 0;
+            margin-right: 5px;
             vertical-align: middle;
         }
 
@@ -1108,8 +1109,10 @@ a.author { margin-right: 0.5em; }
         }
     }
 
-    input {
-        margin-right: 5px;
+    .create-multi {
+        input[type="text"] {
+            .light-text-input;
+        }
     }
 }
 
@@ -6965,6 +6968,12 @@ body.gold .buttons li.comment-save-button { display: inline; }
     }
 }
 
+.light-text-input {
+    background: white;
+    border: 1px solid #ccc;
+    padding: 2px 5px;
+}
+
 body.with-listing-chooser {
     position: relative;
 
@@ -7115,10 +7124,8 @@ body.with-listing-chooser {
         padding: 5px;
 
         input[type="text"] {
+            .light-text-input;
             width: 95px;
-            background: white;
-            border: 1px solid #ccc;
-            padding: 2px 5px;
             margin-bottom: 3px;
             display: none;
         }

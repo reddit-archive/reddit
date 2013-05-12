@@ -314,10 +314,12 @@ r.multi.SubscribeButton = Backbone.View.extend({
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
     template: _.template('<div class="title"><strong><%= title %></strong><a class="sr" href="/r/<%= srName %>">/r/<%= srName %></a></div><div class="throbber"></div>'),
-    itemTemplate: _.template('<label><input type="checkbox" data-path="<%= path %>" <%= checked %>><%= name %><a href="<%= path %>" target="_blank">&rsaquo;</a></label>'),
+    itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%= path %>" <%= checked %>><%= name %><a href="<%= path %>" target="_blank">&rsaquo;</a></label>'),
+    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" placeholder="<%= createMsg %>"></form><div class="error create-multi-error"></div></label>'),
 
     events: {
-        'click input': 'toggleSubscribed'
+        'click .add-to-multi': 'toggleSubscribed',
+        'submit .create-multi': 'createMulti'
     },
 
     initialize: function() {
@@ -350,6 +352,9 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
                              ? 'checked' : ''
                 }))
             }, this)
+        content.append(this.itemCreateTemplate({
+            createMsg: r.strings('create_multi')
+        }))
         this.$el.append(content)
     },
 
@@ -360,6 +365,22 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
             multi.addSubreddit(this.options.srName)
         } else {
             multi.removeSubreddit(this.options.srName)
+        }
+    },
+
+    createMulti: function(ev) {
+        ev.preventDefault()
+        var name = this.$('.create-multi input[type="text"]').val()
+        name = $.trim(name)
+        if (name) {
+            r.multi.mine.create({name: name}, {
+                wait: true,
+                error: _.bind(function(multi, xhr) {
+                    var resp = JSON.parse(xhr.responseText)
+                    this.$('.create-multi-error').text(resp.explanation).show()
+                }, this),
+                beforeSend: _.bind(r.ui.showWorkingDeferred, this, this.$el)
+            })
         }
     }
 })
