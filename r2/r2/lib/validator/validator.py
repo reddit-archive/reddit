@@ -2246,11 +2246,16 @@ class VMultiByPath(Validator):
 
     def run(self, path):
         path = VMultiPath.normalize(path)
-        multi = LabeledMulti._byID(path)
+        try:
+            multi = LabeledMulti._byID(path)
+        except tdb_cassandra.NotFound:
+            return self.set_error('MULTI_NOT_FOUND', code=404)
+
         if not multi or (self.require_view and not multi.can_view(c.user)):
             return self.set_error('MULTI_NOT_FOUND', code=404)
         if self.require_edit and not multi.can_edit(c.user):
             return self.set_error('MULTI_CANNOT_EDIT', code=403)
+
         return multi
 
     def param_docs(self):
