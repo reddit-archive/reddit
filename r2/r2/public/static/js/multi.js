@@ -400,6 +400,7 @@ r.multi.ListingChooser = Backbone.View.extend({
             name = $.trim(name)
             if (name) {
                 r.multi.mine.create({name: name}, {
+                    wait: true,
                     success: function(multi) {
                         window.location = multi.get('path')
                     },
