@@ -8,12 +8,16 @@ r.multi = {
 
         var detailsEl = $('.multi-details')
         if (detailsEl.length) {
-            var multi = this.multis.touch(detailsEl.data('path'))
-            new r.multi.MultiDetails({
-                model: multi,
-                el: detailsEl
-            })
+            var multi = this.multis.touch(detailsEl.data('path')),
+                detailsView = new r.multi.MultiDetails({
+                    model: multi,
+                    el: detailsEl
+                })
             multi.fetch()
+
+            if (location.hash == '#created') {
+                detailsView.focusAdd()
+            }
         }
 
         var subscribeBubbleGroup = {}
@@ -304,6 +308,10 @@ r.multi.MultiDetails = Backbone.View.extend({
                 window.location = '/'
             }
         })
+    },
+
+    focusAdd: function() {
+        this.$('.add-sr .sr-name').focus()
     }
 })
 
@@ -408,7 +416,7 @@ r.multi.ListingChooser = Backbone.View.extend({
                 r.multi.mine.create({name: name}, {
                     wait: true,
                     success: function(multi) {
-                        window.location = multi.get('path')
+                        window.location = multi.get('path') + '#created'
                     },
                     error: _.bind(function(multi, xhr) {
                         var resp = JSON.parse(xhr.responseText)
