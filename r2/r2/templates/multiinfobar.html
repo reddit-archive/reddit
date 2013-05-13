@@ -62,9 +62,7 @@
   %for sr in thing.srs:
     <li data-name="${sr.name}">
       <a href="/r/${sr.name}">/r/${sr.name}</a>
-      %if thing.can_edit:
-        <button class="remove-sr">${_('remove')}</button>
-      %endif
+      <button class="remove-sr">${_('remove')}</button>
     </li>
   %endfor
   </ul>

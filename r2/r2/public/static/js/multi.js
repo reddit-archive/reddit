@@ -175,6 +175,7 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     initialize: function() {
+        this.listenTo(this.model, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
         this.listenTo(this.model.subreddits, 'reset', this.addAll)
@@ -189,6 +190,11 @@ r.multi.MultiDetails = Backbone.View.extend({
         }, this)
 
         this.bubbleGroup = {}
+    },
+
+    render: function() {
+        this.$el.toggleClass('readonly', !this.model.get('can_edit'))
+        return this
     },
 
     addOne: function(sr) {

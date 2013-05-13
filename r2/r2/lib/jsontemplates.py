@@ -256,6 +256,7 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
         name="name",
         subreddits="srs",
         visibility="visibility",
+        can_edit="can_edit",
     )
     del _data_attrs_["id"]
 
@@ -270,6 +271,8 @@ class LabeledMultiJsonTemplate(ThingJsonTemplate):
     def thing_attr(self, thing, attr):
         if attr == "srs":
             return self.sr_props(thing, thing.srs)
+        elif attr == "can_edit":
+            return c.user_is_loggedin and thing.can_edit(c.user)
         else:
             return ThingJsonTemplate.thing_attr(self, thing, attr)
 
