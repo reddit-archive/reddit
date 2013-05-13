@@ -43,6 +43,15 @@
   </ul>
 
   <h3>${_('multireddits')}</h3>
+  %if thing.show_samples:
+    <div class="intro">
+      <p>${_('new! create sets of subreddits to view together.')}</p>
+      <p>${_('for starters, try one of these:')}</p>
+      <ul class="multis">
+        ${section_items(thing.sections['sample'])}
+      </ul>
+    </div>
+  %endif
   <ul class="multis">
     ${section_items(thing.sections['multi'])}
     <li class="create">

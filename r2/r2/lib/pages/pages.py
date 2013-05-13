@@ -4104,13 +4104,20 @@ class ListingChooser(Templated):
         if c.show_mod_mail:
             self.add_item("other", _("moderating"), site=Mod,
                           description=_("subreddits you mod"))
+
         self.add_item("other", _("saved"), path='/user/%s/saved' % c.user.name)
 
+        self.show_samples = False
         if c.user_is_loggedin:
             multis = LabeledMulti.by_owner(c.user)
             multis.sort(key=lambda multi: multi.name.lower())
             for multi in multis:
                 self.add_item("multi", multi.name, site=multi)
+            self.show_samples = not multis
+
+        if self.show_samples:
+            self.add_samples()
+
         self.selected_item = self.find_selected()
         if self.selected_item:
             self.selected_item["selected"] = True
@@ -4123,6 +4130,14 @@ class ListingChooser(Templated):
             "site": site,
             "selected": False,
         })
+
+    def add_samples(self):
+        for path in g.sample_multis:
+            self.add_item(
+                section="sample",
+                name=path.rpartition('/')[2],
+                path=path,
+            )
 
     def find_selected(self):
         path = request.path
