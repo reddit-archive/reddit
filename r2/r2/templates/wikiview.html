@@ -24,6 +24,7 @@
 
 <%!
     from r2.lib.pages import WrappedUser
+    from r2.lib.filters import SC_OFF, SC_ON
 %>
 
 %if thing.diff:
@@ -37,14 +38,18 @@
     %else:
         ${unsafe(thing.page_content)}
     %endif
+    ${unsafe(SC_OFF)}
+    <textarea readonly class="source" rows="20" cols="20">${thing.page_content_md}</textarea>
+    ${unsafe(SC_ON)}
 </p>
+<hr/>
+<em>
 %if thing.edit_date:
-    <hr/>
-    <em>
-        %if thing.edit_by:
-             ${unsafe(_("revision by&nbsp;%s") % WrappedUser(thing.edit_by).render())}
-             &mdash;&nbsp;
-        %endif
-        ${unsafe("%(time)s&nbsp;ago" % dict(time=timestamp(thing.edit_date)))}
-    </em>
+    %if thing.edit_by:
+         ${unsafe(_("revision by&nbsp;%s") % WrappedUser(thing.edit_by).render())}
+         &mdash;&nbsp;
+    %endif
+    ${unsafe("%(time)s&nbsp;ago" % dict(time=timestamp(thing.edit_date)))}
 %endif
+<a href="#" class="toggle-source">${_("view source")}</a>
+</em>

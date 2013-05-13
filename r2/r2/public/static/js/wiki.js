@@ -25,6 +25,12 @@ r.wiki = {
 
     init: function() {
         $('body').delegate('.wiki-page .revision_hide', 'click', this.toggleHide)
+        $('body').delegate('.wiki-page .toggle-source', 'click', this.toggleSource)
+    },
+
+    toggleSource: function(event) {
+        event.preventDefault()
+        $('.wiki-page .source').toggle('slow')
     },
 
     toggleHide: function(event) {
