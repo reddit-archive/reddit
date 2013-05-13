@@ -5245,6 +5245,34 @@ table.calendar {
     }
 }
 
+.hover-bubble.multi-add-notice {
+    @bg-color: lighten(orange, 42%);
+    @border-color: lighten(orangered, 30%);
+    padding: 10px 15px;
+    margin-top: -5px;
+    margin-right: 10px;
+    background: @bg-color;
+    border-color: @border-color;
+    border-radius: 4px;
+
+    &:before {
+        border-left-color: @border-color;
+    }
+
+    &:after {
+        border-left-color: @bg-color;
+    }
+
+    h3 {
+        font-size: 2em;
+    }
+
+    p {
+        font-size: 1.5em;
+        color: gray;
+    }
+}
+
 .sidecontentbox {
     font-size: normal;
 }

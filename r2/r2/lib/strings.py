@@ -214,6 +214,8 @@ Note: there are a couple of places outside of your subreddit where someone can c
     yes = _('yes'),
     no = _('no'),
     create_multi = _('create a new multi'),
+    awesomeness_goes_here = _('awesomeness goes here'),
+    add_multi_sr = _('add a subreddit to your multi.'),
 )
 
 class StringHandler(object):

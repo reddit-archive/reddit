@@ -183,6 +183,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
         this.listenTo(this.model.subreddits, 'reset', this.addAll)
+        this.listenTo(this.model.subreddits, 'add remove reset', this.render)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
 
         this.listenTo(this.model.subreddits, 'add remove', function() {
@@ -194,10 +195,24 @@ r.multi.MultiDetails = Backbone.View.extend({
         }, this)
 
         this.bubbleGroup = {}
+        this.addBubble = new r.multi.MultiAddNoticeBubble({
+            parent: this.$('.add-sr .sr-name'),
+            trackHover: false
+        })
     },
 
     render: function() {
-        this.$el.toggleClass('readonly', !this.model.get('can_edit'))
+        var canEdit = this.model.get('can_edit')
+        if (canEdit) {
+            if (this.model.subreddits.isEmpty()) {
+                this.addBubble.show()
+            } else {
+                this.addBubble.hide()
+            }
+        }
+
+        this.$el.toggleClass('readonly', !canEdit)
+
         return this
     },
 
@@ -312,6 +327,18 @@ r.multi.MultiDetails = Backbone.View.extend({
 
     focusAdd: function() {
         this.$('.add-sr .sr-name').focus()
+    }
+})
+
+r.multi.MultiAddNoticeBubble = r.ui.Bubble.extend({
+    className: 'multi-add-notice hover-bubble anchor-right',
+    template: _.template('<h3><%= awesomeness_goes_here %></h3><p><%= add_multi_sr %></p>'),
+
+    render: function() {
+        this.$el.html(this.template({
+            awesomeness_goes_here: r.strings('awesomeness_goes_here'),
+            add_multi_sr: r.strings('add_multi_sr')
+        }))
     }
 })
 

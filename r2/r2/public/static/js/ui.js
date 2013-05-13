@@ -158,10 +158,12 @@ r.ui.Bubble = Backbone.View.extend({
     animateDuration: 150,
 
     initialize: function() {
-        this.$el.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
         this.$parent = this.options.parent || this.$el.parent()
-        this.$parent.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
-        this.$parent.click($.proxy(this, 'queueShow'))
+        if (this.options.trackHover != false) {
+            this.$el.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+            this.$parent.hover($.proxy(this, 'queueShow'), $.proxy(this, 'queueHide'))
+            this.$parent.click($.proxy(this, 'queueShow'))
+        }
     },
 
     position: function() {
