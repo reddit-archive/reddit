@@ -89,11 +89,15 @@ r.wiki = {
         conflict.hide()
         special.hide()
         params = r.utils.serializeForm($this)
+        $('#wiki_save_button').attr("disabled", true)
         r.wiki.request({
             url: url,
             type: 'POST',
             dataType: 'json',
             data: params,
+            error: function() {
+                $('#wiki_save_button').removeAttr("disabled")
+            },
             success: function() {
                 window.location = r.wiki.baseUrl() + '/' + r.config.wiki_page
             },
