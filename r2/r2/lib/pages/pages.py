@@ -1574,12 +1574,13 @@ class ProfileBar(Templated):
                 if hasattr(user, "gold_subscr_id"):
                     self.gold_subscr_id = user.gold_subscr_id
 
-                if user.gold_creddits > 0:
-                    msg = ungettext("%(creddits)s gold creddit to give",
-                                    "%(creddits)s gold creddits to give",
-                                    user.gold_creddits)
-                    msg = msg % dict(creddits=user.gold_creddits)
-                    self.gold_creddit_message = msg
+            if ((user._id == c.user._id or c.user_is_admin) and
+                user.gold_creddits > 0):
+                msg = ungettext("%(creddits)s gold creddit to give",
+                                "%(creddits)s gold creddits to give",
+                                user.gold_creddits)
+                msg = msg % dict(creddits=user.gold_creddits)
+                self.gold_creddit_message = msg
 
             if user._id != c.user._id:
                 self.goldlink = "/gold?goldtype=gift&recipient=" + user.name
