@@ -736,34 +736,30 @@ def make_daily_promotions(offset=0, test=False):
                     if not test:
                         l._commit()
 
-    old_ads = get_live_promotions([LiveAdWeights.ALL_ADS])
-    old_links = set(x.link for x in old_ads[LiveAdWeights.ALL_ADS])
+    current_adweights = get_live_promotions([LiveAdWeights.ALL_ADS])
+    current_links = set(x.link for x in old_ads[LiveAdWeights.ALL_ADS])
+    links = Link._by_fullname(all_links.union(current_links), data=True)
 
-    # links that need to be promoted
-    new_links = all_links - old_links
-    # links that have already been promoted
-    old_links = old_links - all_links
-
-    links = Link._by_fullname(new_links.union(old_links), data=True,
-                              return_dict=True)
-
-    for l in old_links:
-        if is_promoted(links[l]):
+    expired_links = current_links - all_links
+    for link_name in expired_links:
+        link = links[link_name]
+        if is_promoted(link):
             if test:
-                print "unpromote", l
+                print "unpromote", link_name
             else:
                 # update the query queue
-                set_promote_status(links[l], PROMOTE_STATUS.finished)
-                emailer.finished_promo(links[l])
+                set_promote_status(link, PROMOTE_STATUS.finished)
+                emailer.finished_promo(link)
 
-    for l in new_links:
-        if is_accepted(links[l]):
+    for link_name in all_links:
+        link = links[link_name]
+        if is_accepted(link) and not is_promoted(link):
             if test:
-                print "promote2", l
+                print "promote2", link_name
             else:
                 # update the query queue
-                set_promote_status(links[l], PROMOTE_STATUS.promoted)
-                emailer.live_promo(links[l])
+                set_promote_status(link, PROMOTE_STATUS.promoted)
+                emailer.live_promo(link)
 
     # convert the weighted dict to use sr_ids which are more useful
     by_srid = {srs[srname]._id: adweights for srname, adweights
