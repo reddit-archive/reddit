@@ -22,8 +22,9 @@
 
 from __future__ import with_statement
 
-from collections import OrderedDict, namedtuple
+from collections import defaultdict, OrderedDict, namedtuple
 from datetime import datetime, timedelta
+import itertools
 import json
 import math
 import random
@@ -578,26 +579,23 @@ def get_scheduled(offset=0):
     Arguments:
       offset - number of days after today you want the schedule for
     Returns:
-      {'by_sr': dict, 'links':set(), 'error_campaigns':[]}
-      -by_sr maps sr names to lists of (Link, bid, campaign_fullname) tuples
-      -links is the set of promoted Link objects used in the schedule
+      {'adweights':[], 'error_campaigns':[]}
+      -adweights is a list of Adweight objects used in the schedule
       -error_campaigns is a list of (campaign_id, error_msg) tuples if any 
         exceptions were raised or an empty list if there were none
       Note: campaigns in error_campaigns will not be included in by_sr
 
     """
-    by_sr = {}
+    adweights = []
     error_campaigns = []
-    links = set()
     for l, campaign, weight in accepted_campaigns(offset=offset):
         try:
             if authorize.is_charged_transaction(campaign.trans_id, campaign._id):
                 adweight = AdWeight(l._fullname, weight, campaign._fullname)
-                by_sr.setdefault(campaign.sr_name, []).append(adweight)
-                links.add(l)
+                adweights.append(adweight)
         except Exception, e: # could happen if campaign things have corrupt data
             error_campaigns.append((campaign._id, e))
-    return by_sr, links, error_campaigns
+    return adweights, error_campaigns
 
 def fuzz_impressions(imps):
     """Return imps rounded to one significant digit."""
@@ -720,27 +718,23 @@ def make_daily_promotions(offset=0, test=False):
       test - if True, new schedule will be generated but not launched
     Raises Exception with list of campaigns that had errors if there were any
     """
-    by_srname, links, error_campaigns = get_scheduled(offset)
-    all_links = set([l._fullname for l in links])
-    srs = Subreddit._by_name(by_srname.keys())
 
-    # over18 check
-    for srname, adweights in by_srname.iteritems():
-        if srname:
-            sr = srs[srname]
-            if sr.over_18:
-                sr_links = Link._by_fullname([a.link for a in adweights],
-                                             return_dict=False)
-                for l in sr_links:
-                    l.over_18 = True
-                    if not test:
-                        l._commit()
+    scheduled_adweights, error_campaigns = get_scheduled(offset)
+    current_adweights_byid = get_live_promotions([LiveAdWeights.ALL_ADS])
+    current_adweights = current_adweights_byid[LiveAdWeights.ALL_ADS]
 
-    current_adweights = get_live_promotions([LiveAdWeights.ALL_ADS])
-    current_links = set(x.link for x in old_ads[LiveAdWeights.ALL_ADS])
-    links = Link._by_fullname(all_links.union(current_links), data=True)
+    link_names = [aw.link for aw in itertools.chain(scheduled_adweights,
+                                                    current_adweights)]
+    links = Link._by_fullname(link_names, data=True)
 
-    expired_links = current_links - all_links
+    camp_names = [aw.campaign for aw in itertools.chain(scheduled_adweights,
+                                                        current_adweights)]
+    campaigns = PromoCampaign._by_fullname(camp_names, data=True)
+    srs = Subreddit._by_name([camp.sr_name for camp in campaigns.itervalues()
+                              if camp.sr_name])
+
+    expired_links = ({aw.link for aw in current_adweights} -
+                     {aw.link for aw in scheduled_adweights})
     for link_name in expired_links:
         link = links[link_name]
         if is_promoted(link):
@@ -751,22 +745,34 @@ def make_daily_promotions(offset=0, test=False):
                 set_promote_status(link, PROMOTE_STATUS.finished)
                 emailer.finished_promo(link)
 
-    for link_name in all_links:
-        link = links[link_name]
+    by_srid = defaultdict(list)
+    for adweight in scheduled_adweights:
+        link = links[adweight.link]
+        campaign = campaigns[adweight.campaign]
+        if campaign.sr_name:
+            sr = srs[campaign.sr_name]
+            sr_id = sr._id
+            sr_over_18 = sr.over_18
+        else:
+            sr_id = ''
+            sr_over_18 = False
+
+        if sr_over_18:
+            if test:
+                print "over18", link._fullname
+            else:
+                link.over_18 = True
+                link._commit()
+
         if is_accepted(link) and not is_promoted(link):
             if test:
-                print "promote2", link_name
+                print "promote2", link._fullname
             else:
                 # update the query queue
                 set_promote_status(link, PROMOTE_STATUS.promoted)
                 emailer.live_promo(link)
 
-    # convert the weighted dict to use sr_ids which are more useful
-    by_srid = {srs[srname]._id: adweights for srname, adweights
-                                          in by_srname.iteritems()
-                                          if srname != ''}
-    if '' in by_srname:
-        by_srid[''] = by_srname['']
+        by_srid[sr_id].append(adweight)
 
     if not test:
         set_live_promotions(by_srid)
