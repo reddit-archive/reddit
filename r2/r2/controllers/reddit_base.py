@@ -389,9 +389,10 @@ def set_subreddit():
                 abort(404)
 
     routes_dict = request.environ["pylons.routes_dict"]
-    if "multi" in routes_dict and "username" in routes_dict:
+    if "multipath" in routes_dict and "username" in routes_dict:
         try:
-            path = '/user/%s/m/%s' % (routes_dict["username"], routes_dict["multi"])
+            path = '/user/%s/m/%s' % (routes_dict["username"],
+                                      routes_dict["multipath"])
             c.site = LabeledMulti._byID(path)
         except tdb_cassandra.NotFound:
             abort(404)

@@ -83,7 +83,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         api_section.multis,
         uri="/api/multi/{multipath}",
     )
-    @validate(multi=VMultiByPath("path", require_view=True))
+    @validate(multi=VMultiByPath("multipath", require_view=True))
     def GET_multi(self, multi):
         """Fetch a multi's data and subreddit list by name."""
         resp = wrap_things(multi)[0].render()
@@ -94,13 +94,13 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @validate(
         VUser(),
         VModhash(),
-        info=VMultiPath("path"),
+        info=VMultiPath("multipath"),
         data=VJSON("model"),
     )
     def PUT_multi(self, info, data):
         """Create or update a multi."""
         if info['username'].lower() != c.user.name.lower():
-            raise RedditError('BAD_MULTI_NAME', code=400, fields="path")
+            raise RedditError('BAD_MULTI_NAME', code=400, fields="multipath")
 
         try:
             multi = LabeledMulti._byID(info['path'])
@@ -132,14 +132,14 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
         multi._commit()
 
-        return self.GET_multi(path=info['path'])
+        return self.GET_multi(multipath=info['path'])
 
     @require_oauth2_scope("subscribe")
     @api_doc(api_section.multis, extends=GET_multi)
     @validate(
         VUser(),
         VModhash(),
-        multi=VMultiByPath("path", require_edit=True),
+        multi=VMultiByPath("multipath", require_edit=True),
     )
     def DELETE_multi(self, multi):
         """Delete a multi."""
@@ -149,15 +149,15 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         resp = LabeledMultiJsonTemplate.sr_props(multi, [sr])[0]
         return self.api_wrapper(resp)
 
-    @require_oauth2_scope("subscribe")
+    @require_oauth2_scope("read")
     @api_doc(
         api_section.multis,
         uri="/api/multi/{multipath}/r/{srname}",
     )
     @validate(
         VUser(),
-        multi=VMultiByPath("path", require_view=True),
-        sr=VSRByName('sr_name'),
+        multi=VMultiByPath("multipath", require_view=True),
+        sr=VSRByName('srname'),
     )
     def GET_multi_subreddit(self, multi, sr):
         """Get data about a subreddit in a multi."""
@@ -168,8 +168,8 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @validate(
         VUser(),
         VModhash(),
-        multi=VMultiByPath("path", require_edit=True),
-        sr=VSRByName('sr_name'),
+        multi=VMultiByPath("multipath", require_edit=True),
+        sr=VSRByName('srname'),
     )
     def PUT_multi_subreddit(self, multi, sr):
         """Add a subreddit to a multi."""
@@ -184,12 +184,12 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         return self._get_multi_subreddit(multi, sr)
 
     @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=PUT_multi_subreddit)
+    @api_doc(api_section.multis, extends=GET_multi_subreddit)
     @validate(
         VUser(),
         VModhash(),
-        multi=VMultiByPath("path", require_edit=True),
-        sr=VSRByName('sr_name'),
+        multi=VMultiByPath("multipath", require_edit=True),
+        sr=VSRByName('srname'),
     )
     def DELETE_multi_subreddit(self, multi, sr):
         """Remove a subreddit from a multi."""

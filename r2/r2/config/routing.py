@@ -115,10 +115,10 @@ def make_map():
     mc('/user/:username/:where', controller='user', action='listing',
        where='overview')
 
-    mc('/user/:username/m/:multi', controller='hot', action='listing')
-    mc('/user/:username/m/:multi/:sort', controller='browse', sort='top',
+    mc('/user/:username/m/:multipath', controller='hot', action='listing')
+    mc('/user/:username/m/:multipath/:sort', controller='browse', sort='top',
        action='listing', requirements=dict(sort='top|controversial'))
-    mc('/user/:username/m/:multi/:controller', action='listing',
+    mc('/user/:username/m/:multipath/:controller', action='listing',
        requirements=dict(controller="hot|new|rising|randomrising"))
 
     mc('/about/sidebar', controller='front', action='sidebar')
@@ -126,7 +126,7 @@ def make_map():
     mc('/about', controller='front', action='about')
     mc('/comments/gilded', controller='redirect', action='gilded_comments',
        conditions={'function': not_in_sr})
-    for prefix in ('', '/user/:username/m/:multi'):
+    for prefix in ('', '/user/:username/m/:multipath'):
        mc(prefix + '/about/message/:where', controller='message',
           action='listing')
        mc(prefix + '/about/log', controller='front', action='moderationlog')
@@ -321,8 +321,8 @@ def make_map():
     mc('/api/:action', controller='api')
 
     mc("/api/multi/mine", controller="multiapi", action="my_multis")
-    mc("/api/multi/*path/r/:sr_name", controller="multiapi", action="multi_subreddit")
-    mc("/api/multi/*path", controller="multiapi", action="multi")
+    mc("/api/multi/*multipath/r/:srname", controller="multiapi", action="multi_subreddit")
+    mc("/api/multi/*multipath", controller="multiapi", action="multi")
 
     mc("/api/v1/:action", controller="oauth2frontend",
        requirements=dict(action="authorize"))
