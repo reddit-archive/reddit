@@ -564,7 +564,7 @@ r.ui.scrollFixed.prototype = {
 }
 
 r.ui.ConfirmButton = Backbone.View.extend({
-    confirmTemplate: _.template('<span class="confirmation"><span class="prompt"><%= are_you_sure %></span><button class="yes"><%= yes %></button> / <button class="no"><%= no %></button></div>'),
+    confirmTemplate: _.template('<span class="confirmation"><span class="prompt"><%- are_you_sure %></span><button class="yes"><%- yes %></button> / <button class="no"><%- no %></button></div>'),
     events: {
         'click': 'click'
     },

@@ -134,7 +134,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiSubredditItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/r/<%= srName %>">/r/<%= srName %></a><button class="remove-sr">x</button>'),
+    template: _.template('<a href="/r/<%- srName %>">/r/<%- srName %></a><button class="remove-sr">x</button>'),
 
     events: {
         'click .remove-sr': 'removeSubreddit'
@@ -332,7 +332,7 @@ r.multi.MultiDetails = Backbone.View.extend({
 
 r.multi.MultiAddNoticeBubble = r.ui.Bubble.extend({
     className: 'multi-add-notice hover-bubble anchor-right',
-    template: _.template('<h3><%= awesomeness_goes_here %></h3><p><%= add_multi_sr %></p>'),
+    template: _.template('<h3><%- awesomeness_goes_here %></h3><p><%- add_multi_sr %></p>'),
 
     render: function() {
         this.$el.html(this.template({
@@ -354,9 +354,9 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%= title %></strong><a class="sr" href="/r/<%= srName %>">/r/<%= srName %></a></div><div class="throbber"></div>'),
-    itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%= path %>" <%= checked %>><%= name %><a href="<%= path %>" target="_blank">&rsaquo;</a></label>'),
-    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" placeholder="<%= createMsg %>"></form><div class="error create-multi-error"></div></label>'),
+    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- srName %>">/r/<%- srName %></a></div><div class="throbber"></div>'),
+    itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank">&rsaquo;</a></label>'),
+    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" placeholder="<%- createMsg %>"></form><div class="error create-multi-error"></div></label>'),
 
     events: {
         'click .add-to-multi': 'toggleSubscribed',
