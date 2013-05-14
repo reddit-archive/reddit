@@ -400,6 +400,36 @@ ul.flat-vert {text-align: left;}
     margin: 7px 0 12px 0;
  }
 
+.side .side-message {
+    background: lighten(@info-bg, 10%) no-repeat 10px 10px;
+    border: 1px solid darken(@info-bg, 20%);
+    border-radius: 2px;
+    padding: 10px;
+    line-height: 1.75em;
+
+    &:before {
+        content: '';
+        display: inline-block;
+        float: left;
+        background-image: url(../icon-info.png);  /* SPRITE */
+        width: 16px;
+        height: 16px;
+        margin-right: 7px;
+    }
+
+    p {
+        font-size: .9em;
+        margin: 0;
+
+        strong {
+            display: block;
+            font-weight: normal;
+            font-size: 1.25em;
+            margin-bottom: .25em;
+        }
+    }
+}
+
 .morelink {
     display:block;
     text-align: center;
@@ -1176,11 +1206,13 @@ a.author { margin-right: 0.5em; }
     overflow: auto;
 }
 
+@info-bg: #f6e69f;
+@info-border: orange;
 .infobar {
-    background-color: #f6e69f;
+    background-color: @info-bg;
     padding: 5px 10px;
     margin: 5px 305px 5px 0px;
-    border: 1px solid orange;
+    border: 1px solid @info-border;
     font-size: small;
 }
 

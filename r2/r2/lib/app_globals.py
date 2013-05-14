@@ -228,6 +228,7 @@ class Globals(object):
             'goldvertisement_blurbs',
             'goldvertisement_has_gold_blurbs',
             'welcomebar_messages',
+            'sidebar_message',
         ],
     }
 

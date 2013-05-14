@@ -328,6 +328,10 @@ class Reddit(Templated):
         if self.searchbox:
             ps.append(SearchForm())
 
+        sidebar_message = g.live_config.get("sidebar_message")
+        if sidebar_message and isinstance(c.site, DefaultSR):
+            ps.append(SidebarMessage(sidebar_message[0]))
+
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
@@ -1623,6 +1627,11 @@ class ClientInfoBar(InfoBar):
         kwargs.setdefault("extra_class", "client-info")
         InfoBar.__init__(self, *args, **kwargs)
         self.client = client
+
+class SidebarMessage(Templated):
+    """An info message box on the sidebar."""
+    def __init__(self, message):
+        Templated.__init__(self, message=message)
 
 class RedditError(BoringPage):
     site_tracking = False
