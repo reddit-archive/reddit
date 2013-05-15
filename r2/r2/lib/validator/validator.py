@@ -1798,7 +1798,7 @@ class VDestination(Validator):
             dest = self.default or "/"
 
         ld = dest.lower()
-        if ld.startswith(('/', 'http://', 'http://')):
+        if ld.startswith(('/', 'http://', 'https://')):
             u = UrlParser(dest)
 
             if u.is_reddit_url(c.site):
