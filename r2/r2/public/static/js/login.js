@@ -119,7 +119,7 @@ r.login.ui = {
             var el = $(e.target),
                 href = el.attr('href'),
                 dest
-            if (href && href != '#') {
+            if (href && href != '#' && !/\/login\/?$/.test(href)) {
                 // User clicked on a link that requires login to continue
                 dest = href
             } else {
