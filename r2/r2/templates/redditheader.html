@@ -21,6 +21,7 @@
 ###############################################################################
 
 <%!
+   from pylons import request
    from r2.lib.template_helpers import static, s3_https_if_secure, add_sr
    from r2.models import Sub, FakeSubreddit
    from r2.models.subreddit import DefaultSR
@@ -116,7 +117,7 @@
     ${thing.corner_buttons()}
     %if c.user_is_loggedin and authentication.user_can_log_out():
       ${separator("|")}
-      ${logout()}
+      ${logout(dest=request.fullpath)}
     %endif
   </div>
 </div>
