@@ -711,8 +711,7 @@ class MinimalController(BaseController):
         if c.secure:
             request.environ["wsgi.url_scheme"] = "https"
 
-        url = urlparse(request.url)
-        c.request_origin = url.scheme + "://" + url.netloc
+        c.request_origin = request.host_url
 
         #check if user-agent needs a dose of rate-limiting
         if not c.error_page:
