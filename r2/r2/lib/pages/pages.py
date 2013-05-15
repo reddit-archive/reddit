@@ -478,14 +478,16 @@ class Reddit(Templated):
                 if c.user_is_admin:
                     buttons += [OffsiteButton(
                         _("turn admin off"),
-                        dest=g.https_endpoint + "/adminoff",
-                        target = "_self"
+                        dest="%s/adminoff?dest=%s" %
+                            (g.https_endpoint, quote(request.fullpath)),
+                        target = "_self",
                     )]
                 else:
                     buttons += [OffsiteButton(
                         _("turn admin on"),
-                        dest=g.https_endpoint + "/adminon",
-                        target = "_self"
+                        dest="%s/adminon?dest=%s" %
+                            (g.https_endpoint, quote(request.fullpath)),
+                        target = "_self",
                     )]
             buttons += [NamedButton("prefs", False,
                                   css_class = "pref-lang")]
