@@ -1105,24 +1105,15 @@ class ApiController(RedditController, OAuth2ResourceController):
         '''for blocking via inbox'''
         if not thing:
             return
+
         # Users may only block someone who has
         # actively harassed them (i.e., comment/link reply
-        # or PM). Check that 'thing' would have showed up in the
-        # user's inbox at some point
-        if isinstance(thing, Message):
-            if thing.to_id != c.user._id:
-                return
-        elif isinstance(thing, Comment):
-            parent_id = getattr(thing, 'parent_id', None)
-            link_id = thing.link_id
-            if parent_id:
-                parent_comment = Comment._byID(parent_id)
-                parent_author_id = parent_comment.author_id
-            else:
-                parent_link = Link._byID(link_id)
-                parent_author_id = parent_link.author_id
-            if parent_author_id != c.user._id:
-                return
+        # or PM). Check that 'thing' is in the user's inbox somewhere
+        inbox_cls = Inbox.rel(Account, thing.__class__)
+        rels = inbox_cls._fast_query(c.user, thing,
+                                     ("inbox", "selfreply"))
+        if not filter(None, rels.values()):
+            return
 
         block_acct = Account._byID(thing.author_id)
         if block_acct.name in g.admins:
