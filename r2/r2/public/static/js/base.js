@@ -26,7 +26,10 @@ r.setupBackbone = function() {
             var preloaded = r.preload.read(url)
             if (preloaded != null) {
                 request.success(preloaded)
-                return
+
+                var deferred = new jQuery.Deferred
+                deferred.resolve(preloaded)
+                return deferred
             }
         }
 
