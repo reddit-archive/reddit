@@ -126,6 +126,7 @@ error_list = dict((
         ('MULTI_NOT_FOUND', _('that multireddit doesn\'t exist')),
         ('MULTI_CANNOT_EDIT', _('you can\'t change that multireddit')),
         ('MULTI_TOO_MANY_SUBREDDITS', _('no more space for subreddits in that multireddit')),
+        ('MULTI_SPECIAL_SUBREDDIT', _("can't add special subreddit %(path)s")),
         ('BAD_JSON', _('unable to parse JSON data')),
     ))
 

@@ -30,6 +30,7 @@ from r2.controllers.oauth2 import (
     require_oauth2_scope,
 )
 from r2.models.subreddit import (
+    FakeSubreddit,
     Subreddit,
     LabeledMulti,
     TooManySubredditsException,
@@ -115,6 +116,14 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         if 'subreddits' in data:
             multi.clear_srs()
             srs = Subreddit._by_name(sr['name'] for sr in data['subreddits'])
+
+            for sr in srs.itervalues():
+                if isinstance(sr, FakeSubreddit):
+                    multi._revert()
+                    raise RedditError('MULTI_SPECIAL_SUBREDDIT',
+                                      msg_params={'path': sr.path},
+                                      code=400)
+
             sr_props = {}
             for sr_data in data['subreddits']:
                 try:
@@ -173,6 +182,11 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     )
     def PUT_multi_subreddit(self, multi, sr):
         """Add a subreddit to a multi."""
+
+        if isinstance(sr, FakeSubreddit):
+            raise RedditError('MULTI_SPECIAL_SUBREDDIT',
+                              msg_params={'path': sr.path},
+                              code=400)
 
         try:
             multi.add_srs({sr: {}})
