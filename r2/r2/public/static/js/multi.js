@@ -83,6 +83,14 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     removeSubreddit: function(name, options) {
         this.subreddits.getByName(name).destroy(options)
+    },
+
+    copyTo: function(newMulti) {
+        var attrs = _.clone(this.attributes)
+        delete attrs.path
+        attrs.visibility = 'private'
+        newMulti.set(attrs)
+        return newMulti
     }
 })
 
@@ -95,7 +103,7 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
 
     create: function(attributes, options) {
         if ('name' in attributes) {
-            attributes['path'] = '/user/' + r.config.logged + '/m/' + attributes['name']
+            attributes['path'] = this.pathByName(attributes['name'])
             delete attributes['name']
         }
         Backbone.Collection.prototype.create.call(this, attributes, options)
@@ -105,6 +113,14 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
         return _.map(data, function(multiData) {
             return r.multi.multis.reify(multiData)
         })
+    },
+
+    pathByName: function(name) {
+        return '/user/' + r.config.logged + '/m/' + name
+    },
+
+    touchByName: function(name) {
+        return r.multi.multis.touch(this.pathByName(name))
     }
 })
 
@@ -174,7 +190,6 @@ r.multi.MultiDetails = Backbone.View.extend({
         'submit .add-sr': 'addSubreddit',
         'change [name="visibility"]': 'setVisibility',
         'click .show-copy': 'showCopyMulti',
-        'click .copy': 'copyMulti',
         'confirm .delete': 'deleteMulti'
     },
 
@@ -281,39 +296,20 @@ r.multi.MultiDetails = Backbone.View.extend({
     },
 
     showCopyMulti: function() {
-        this.$('form.copy-multi')
+        var $copyForm = this.$('form.copy-multi')
+
+        $copyForm
             .show()
-            .find('.copy-name').focus()
-    },
+            .find('.multi-name').focus()
 
-    copyMulti: function(ev) {
-        ev.preventDefault()
-
-        var nameEl = this.$('.copy-multi .copy-name'),
-            multiName = $.trim(nameEl.val())
-        if (!multiName) {
-            return
-        }
-
-        this.$('.copy-error').css('visibility', 'hidden')
-
-        var attrs = _.clone(this.model.attributes)
-        delete attrs.path
-        attrs.name = multiName
-        attrs.visibility = 'private'
-        r.multi.mine.create(attrs, {
-            wait: true,
-            success: function(multi) {
-                window.location = multi.get('path')
-            },
-            error: _.bind(function(multi, xhr) {
-                var resp = JSON.parse(xhr.responseText)
-                this.$('.copy-error')
-                    .text(resp.explanation)
-                    .css('visibility', 'visible')
-                    .show()
-            }, this),
-            beforeSend: _.bind(r.ui.showWorkingDeferred, this, this.$el)
+        this.copyForm = new r.multi.MultiCreateForm({
+            el: $copyForm,
+            navOnCreate: true,
+            createMulti: _.bind(function(name) {
+                var newMulti = r.multi.mine.touchByName(name)
+                this.model.copyTo(newMulti)
+                return newMulti
+            }, this)
         })
     },
 
@@ -356,11 +352,10 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
     template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- srName %>">/r/<%- srName %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank">&rsaquo;</a></label>'),
-    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" placeholder="<%- createMsg %>"></form><div class="error create-multi-error"></div></label>'),
+    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- createMsg %>"><div class="error create-multi-error"></div></form></label>'),
 
     events: {
-        'click .add-to-multi': 'toggleSubscribed',
-        'submit .create-multi': 'createMulti'
+        'click .add-to-multi': 'toggleSubscribed'
     },
 
     initialize: function() {
@@ -397,6 +392,10 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
             createMsg: r.strings('create_multi')
         }))
         this.$el.append(content)
+
+        this.createForm = new r.multi.MultiCreateForm({
+            el: this.$('form.create-multi')
+        })
     },
 
     toggleSubscribed: function(ev) {
@@ -407,51 +406,80 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
         } else {
             multi.removeSubreddit(this.options.srName)
         }
+    }
+})
+
+r.multi.MultiCreateForm = Backbone.View.extend({
+    events: {
+        'submit': 'createMulti'
+    },
+
+    initialize: function() {
+        this.showWorkingDeferred = _.bind(r.ui.showWorkingDeferred, this, this.$el)
     },
 
     createMulti: function(ev) {
         ev.preventDefault()
-        var name = this.$('.create-multi input[type="text"]').val()
+
+        var name = this.$('input.multi-name').val()
         name = $.trim(name)
-        if (name) {
-            r.multi.mine.create({name: name}, {
-                wait: true,
-                error: _.bind(function(multi, xhr) {
-                    var resp = JSON.parse(xhr.responseText)
-                    this.$('.create-multi-error').text(resp.explanation).show()
-                }, this),
-                beforeSend: _.bind(r.ui.showWorkingDeferred, this, this.$el)
-            })
+        if (!name) {
+            return
         }
+
+        var newMulti
+        if (this.options.createMulti) {
+            newMulti = this.options.createMulti(name)
+        } else {
+            newMulti = r.multi.mine.touchByName(name)
+        }
+
+        // check if the multi already exists
+        newMulti.fetch({beforeSend: this.showWorkingDeferred})
+            .done(_.bind(function() {
+                this.showError(r.strings('multi_already_exists'))
+            }, this))
+            .fail(_.bind(function() {
+                r.multi.mine.create(newMulti, {
+                    wait: true,
+                    beforeSend: this.showWorkingDeferred,
+                    success: _.bind(function(multi) {
+                        this.trigger('create', multi)
+                        if (this.options.navOnCreate) {
+                            window.location = multi.get('path') + '#created'
+                        }
+                    }, this),
+                    error: _.bind(function(multi, xhr) {
+                        var resp = JSON.parse(xhr.responseText)
+                        this.showError(resp.explanation)
+                    }, this)
+                })
+            }, this))
+    },
+
+    showError: function(error) {
+        this.$('.error').text(error).show()
+    },
+
+    focus: function() {
+        this.$('.multi-name').focus()
     }
 })
 
 r.multi.ListingChooser = Backbone.View.extend({
     events: {
-        'submit .create': 'createClick'
+        'click .create button': 'createClick'
     },
 
     createClick: function(ev) {
-        ev.preventDefault()
         if (!this.$('.create').is('.expanded')) {
+            ev.preventDefault()
             this.$('.create').addClass('expanded')
-            this.$('.create input[type="text"]').focus()
-        } else {
-            var name = this.$('.create input[type="text"]').val()
-            name = $.trim(name)
-            if (name) {
-                r.multi.mine.create({name: name}, {
-                    wait: true,
-                    success: function(multi) {
-                        window.location = multi.get('path') + '#created'
-                    },
-                    error: _.bind(function(multi, xhr) {
-                        var resp = JSON.parse(xhr.responseText)
-                        this.$('.error').text(resp.explanation).show()
-                    }, this),
-                    beforeSend: _.bind(r.ui.showWorkingDeferred, this, this.$el)
-                })
-            }
+            this.createForm = new r.multi.MultiCreateForm({
+                el: this.$('.create form'),
+                navOnCreate: true
+            })
+            this.createForm.focus()
         }
     }
 })
