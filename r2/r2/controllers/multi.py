@@ -79,6 +79,10 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         resp = [w.render() for w in wrapped]
         return self.api_wrapper(resp)
 
+    def _format_multi(self, multi):
+        resp = wrap_things(multi)[0].render()
+        return self.api_wrapper(resp)
+
     @require_oauth2_scope("read")
     @api_doc(
         api_section.multis,
@@ -87,8 +91,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     @validate(multi=VMultiByPath("multipath", require_view=True))
     def GET_multi(self, multi):
         """Fetch a multi's data and subreddit list by name."""
-        resp = wrap_things(multi)[0].render()
-        return self.api_wrapper(resp)
+        return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
     @api_doc(api_section.multis, extends=GET_multi)
@@ -140,8 +143,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
                 raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
 
         multi._commit()
-
-        return self.GET_multi(multipath=info['path'])
+        return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
     @api_doc(api_section.multis, extends=GET_multi)
