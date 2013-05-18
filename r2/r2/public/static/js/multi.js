@@ -56,7 +56,8 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return r.utils.joinURLs('/api/multi', this.id)
     },
 
-    initialize: function() {
+    initialize: function(attributes, options) {
+        this.uncreated = options && !!options.isNew
         this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'))
         this.subreddits.url = this.url() + '/r/'
         this.on('change:subreddits', function(model, value) {
@@ -75,6 +76,21 @@ r.multi.MultiReddit = Backbone.Model.extend({
         data = Backbone.Model.prototype.toJSON.apply(this)
         data.subreddits = this.subreddits.toJSON()
         return data
+    },
+
+    isNew: function() {
+        return this.uncreated
+    },
+
+    sync: function(method, model, options) {
+        var res = Backbone.sync.apply(this, arguments)
+        if (method == 'create') {
+            res.done(_.bind(function() {
+                // upon successful creation, unset new flag
+                this.uncreated = false
+            }, this))
+        }
+        return res
     },
 
     addSubreddit: function(name, options) {
@@ -101,14 +117,6 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
         return model.get('path').toLowerCase()
     },
 
-    create: function(attributes, options) {
-        if ('name' in attributes) {
-            attributes['path'] = this.pathByName(attributes['name'])
-            delete attributes['name']
-        }
-        Backbone.Collection.prototype.create.call(this, attributes, options)
-    },
-
     parse: function(data) {
         return _.map(data, function(multiData) {
             return r.multi.multis.reify(multiData)
@@ -117,10 +125,6 @@ r.multi.MyMultiCollection = Backbone.Collection.extend({
 
     pathByName: function(name) {
         return '/user/' + r.config.logged + '/m/' + name
-    },
-
-    touchByName: function(name) {
-        return r.multi.multis.touch(this.pathByName(name))
     }
 })
 
@@ -306,7 +310,9 @@ r.multi.MultiDetails = Backbone.View.extend({
             el: $copyForm,
             navOnCreate: true,
             createMulti: _.bind(function(name) {
-                var newMulti = r.multi.mine.touchByName(name)
+                var newMulti = new r.multi.MultiReddit({
+                    path: r.multi.mine.pathByName(name)
+                }, {isNew: true})
                 this.model.copyTo(newMulti)
                 return newMulti
             }, this)
@@ -431,30 +437,25 @@ r.multi.MultiCreateForm = Backbone.View.extend({
         if (this.options.createMulti) {
             newMulti = this.options.createMulti(name)
         } else {
-            newMulti = r.multi.mine.touchByName(name)
+            var newMulti = new r.multi.MultiReddit({
+                path: r.multi.mine.pathByName(name)
+            }, {isNew: true})
         }
 
-        // check if the multi already exists
-        newMulti.fetch({beforeSend: this.showWorkingDeferred})
-            .done(_.bind(function() {
-                this.showError(r.strings('multi_already_exists'))
-            }, this))
-            .fail(_.bind(function() {
-                r.multi.mine.create(newMulti, {
-                    wait: true,
-                    beforeSend: this.showWorkingDeferred,
-                    success: _.bind(function(multi) {
-                        this.trigger('create', multi)
-                        if (this.options.navOnCreate) {
-                            window.location = multi.get('path') + '#created'
-                        }
-                    }, this),
-                    error: _.bind(function(multi, xhr) {
-                        var resp = JSON.parse(xhr.responseText)
-                        this.showError(resp.explanation)
-                    }, this)
-                })
-            }, this))
+        r.multi.mine.create(newMulti, {
+            wait: true,
+            beforeSend: this.showWorkingDeferred,
+            success: _.bind(function(multi) {
+                this.trigger('create', multi)
+                if (this.options.navOnCreate) {
+                    window.location = multi.get('path') + '#created'
+                }
+            }, this),
+            error: _.bind(function(multi, xhr) {
+                var resp = JSON.parse(xhr.responseText)
+                this.showError(resp.explanation)
+            }, this)
+        })
     },
 
     showError: function(error) {

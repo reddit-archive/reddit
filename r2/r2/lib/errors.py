@@ -124,6 +124,7 @@ error_list = dict((
         ('BAD_MULTI_PATH', _('invalid multi path')),
         ('BAD_MULTI_NAME', _('%(reason)s')),
         ('MULTI_NOT_FOUND', _('that multireddit doesn\'t exist')),
+        ('MULTI_EXISTS', _('that multireddit already exists')),
         ('MULTI_CANNOT_EDIT', _('you can\'t change that multireddit')),
         ('MULTI_TOO_MANY_SUBREDDITS', _('no more space for subreddits in that multireddit')),
         ('MULTI_SPECIAL_SUBREDDIT', _("can't add special subreddit %(path)s")),

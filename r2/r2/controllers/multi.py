@@ -93,23 +93,21 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Fetch a multi's data and subreddit list by name."""
         return self._format_multi(multi)
 
-    @require_oauth2_scope("subscribe")
-    @api_doc(api_section.multis, extends=GET_multi)
-    @validate(
-        VUser(),
-        VModhash(),
-        info=VMultiPath("multipath"),
-        data=VJSON("model"),
-    )
-    def PUT_multi(self, info, data):
-        """Create or update a multi."""
-        if info['username'].lower() != c.user.name.lower():
+    def _write_multi_data(self, path_info, data, fail_if_exists=False):
+        if path_info['username'].lower() != c.user.name.lower():
             raise RedditError('BAD_MULTI_NAME', code=400, fields="multipath")
 
         try:
-            multi = LabeledMulti._byID(info['path'])
+            multi = LabeledMulti._byID(path_info['path'])
         except tdb_cassandra.NotFound:
-            multi = LabeledMulti.create(info['path'], c.user)
+            multi = None
+
+        if multi:
+            if fail_if_exists:
+                raise RedditError('MULTI_EXISTS', code=409, fields="multipath")
+        else:
+            multi = LabeledMulti.create(path_info['path'], c.user)
+
 
         if 'visibility' in data:
             if data['visibility'] not in ('private', 'public'):
@@ -143,6 +141,32 @@ class MultiApiController(RedditController, OAuth2ResourceController):
                 raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
 
         multi._commit()
+        return multi
+
+    @require_oauth2_scope("subscribe")
+    @api_doc(api_section.multis, extends=GET_multi)
+    @validate(
+        VUser(),
+        VModhash(),
+        path_info=VMultiPath("multipath"),
+        data=VJSON("model"),
+    )
+    def POST_multi(self, path_info, data):
+        """Create a multi. Responds with 409 Conflict if it already exists."""
+        multi = self._write_multi_data(path_info, data, fail_if_exists=True)
+        return self._format_multi(multi)
+
+    @require_oauth2_scope("subscribe")
+    @api_doc(api_section.multis, extends=GET_multi)
+    @validate(
+        VUser(),
+        VModhash(),
+        path_info=VMultiPath("multipath"),
+        data=VJSON("model"),
+    )
+    def PUT_multi(self, path_info, data):
+        """Create or update a multi."""
+        multi = self._write_multi_data(path_info, data)
         return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")

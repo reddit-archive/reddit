@@ -216,7 +216,6 @@ Note: there are a couple of places outside of your subreddit where someone can c
     create_multi = _('create a new multi'),
     awesomeness_goes_here = _('awesomeness goes here'),
     add_multi_sr = _('add a subreddit to your multi.'),
-    multi_already_exists = _('that multi already exists'),
 )
 
 class StringHandler(object):
