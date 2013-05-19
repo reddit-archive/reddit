@@ -435,7 +435,7 @@ class ApiController(RedditController):
                 form.set_error(errors.QUOTA_FILLED, None)
                 return
 
-        if not c.user.gold or not request.POST.get('sendreplies'):
+        if not request.POST.get('sendreplies'):
             sendreplies = kind == 'self'
 
         # get rid of extraneous whitespace in the title
