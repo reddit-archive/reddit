@@ -413,6 +413,7 @@ class PromoteController(ListingController):
                    kind=VOneOf('kind', ['link', 'self']),
                    ip=ValidIP(),
                    disable_comments=VBoolean("disable_comments"),
+                   sendreplies=VBoolean("sendreplies"),
                    media_width=VInt("media-width", min=0),
                    media_height=VInt("media-height", min=0),
                    media_embed=VLength("media-embed", 1000),
@@ -420,7 +421,7 @@ class PromoteController(ListingController):
                    domain_override=VLength("domain", 100)
                    )
     def POST_edit_promo(self, form, jquery, ip, username, l, title, url,
-                        selftext, kind, disable_comments, media_height,
+                        selftext, kind, disable_comments, sendreplies, media_height,
                         media_width, media_embed, media_override, domain_override):
 
         should_ratelimit = False
@@ -510,8 +511,9 @@ class PromoteController(ListingController):
             if kind == 'self':
                 l.selftext = selftext
 
-            # comment disabling is free to be changed any time.
+            # comment disabling and sendreplies is free to be changed any time.
             l.disable_comments = disable_comments
+            l.sendreplies = sendreplies
             if c.user_is_sponsor or c.user.trusted_sponsor:
                 if media_embed and media_width and media_height:
                     l.media_object = dict(height=media_height,

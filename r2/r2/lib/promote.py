@@ -166,6 +166,7 @@ def new_promotion(title, url, selftext, user, ip):
     l = Link._submit(title, url, user, sr, ip)
     l.promoted = True
     l.disable_comments = False
+    l.sendreplies = True
     PromotionLog.add(l, 'promotion created')
 
     if url == 'self':
