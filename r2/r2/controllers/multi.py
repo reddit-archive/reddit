@@ -20,7 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
-from pylons import c, request
+from pylons import c, request, response
 
 from r2.config.extensions import set_extension
 from r2.controllers.api_docs import api_doc, api_section
@@ -93,22 +93,11 @@ class MultiApiController(RedditController, OAuth2ResourceController):
         """Fetch a multi's data and subreddit list by name."""
         return self._format_multi(multi)
 
-    def _write_multi_data(self, path_info, data, fail_if_exists=False):
+    def _check_new_multi_path(self, path_info):
         if path_info['username'].lower() != c.user.name.lower():
             raise RedditError('BAD_MULTI_NAME', code=400, fields="multipath")
 
-        try:
-            multi = LabeledMulti._byID(path_info['path'])
-        except tdb_cassandra.NotFound:
-            multi = None
-
-        if multi:
-            if fail_if_exists:
-                raise RedditError('MULTI_EXISTS', code=409, fields="multipath")
-        else:
-            multi = LabeledMulti.create(path_info['path'], c.user)
-
-
+    def _write_multi_data(self, multi, data):
         if 'visibility' in data:
             if data['visibility'] not in ('private', 'public'):
                 raise RedditError('INVALID_OPTION', code=400, fields="data")
@@ -153,7 +142,18 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     )
     def POST_multi(self, path_info, data):
         """Create a multi. Responds with 409 Conflict if it already exists."""
-        multi = self._write_multi_data(path_info, data, fail_if_exists=True)
+
+        self._check_new_multi_path(path_info)
+
+        try:
+            LabeledMulti._byID(path_info['path'])
+        except tdb_cassandra.NotFound:
+            multi = LabeledMulti.create(path_info['path'], c.user)
+            response.status = 201
+        else:
+            raise RedditError('MULTI_EXISTS', code=409, fields='multipath')
+
+        self._write_multi_data(multi, data)
         return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
@@ -166,7 +166,16 @@ class MultiApiController(RedditController, OAuth2ResourceController):
     )
     def PUT_multi(self, path_info, data):
         """Create or update a multi."""
-        multi = self._write_multi_data(path_info, data)
+
+        self._check_new_multi_path(path_info)
+
+        try:
+            multi = LabeledMulti._byID(path_info['path'])
+        except tdb_cassandra.NotFound:
+            multi = LabeledMulti.create(path_info['path'], c.user)
+            response.status = 201
+
+        self._write_multi_data(multi, data)
         return self._format_multi(multi)
 
     @require_oauth2_scope("subscribe")
@@ -214,12 +223,17 @@ class MultiApiController(RedditController, OAuth2ResourceController):
                               msg_params={'path': sr.path},
                               code=400)
 
+        new = sr not in multi._srs
+
         try:
             multi.add_srs({sr: {}})
         except TooManySubredditsException as e:
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
         else:
             multi._commit()
+
+        if new:
+            response.status = 201
 
         return self._get_multi_subreddit(multi, sr)
 
