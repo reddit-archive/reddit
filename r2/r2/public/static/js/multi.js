@@ -161,7 +161,6 @@ r.multi.MultiSubredditItem = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.addClass('sr-' + this.model.get('name'))
         this.$el.append(this.template({
             srName: this.model.get('name')
         }))
