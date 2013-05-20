@@ -29,9 +29,9 @@
   %for name in names:
     <% name = name[:name.rfind('.less')] %>
     %if g.uncompressedJS:
-      <link rel="stylesheet/less" type="text/css" href="${static(name+'.less')}" />
+      <link rel="stylesheet/less" type="text/css" href="${static(name+'.less')}" media="all">
     %else:
-      <link rel="stylesheet" type="text/css" href="${static(name+'.css')}" />
+      <link rel="stylesheet" type="text/css" href="${static(name+'.css')}" media="all">
     %endif
   %endfor
 </%def>
