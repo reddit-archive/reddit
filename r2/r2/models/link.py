@@ -1250,12 +1250,13 @@ class Message(Thing, Printable):
             # (i.e., don't do it for automated messages from the SR)
             if parent or to_subreddit and not from_sr:
                 inbox_rel.append(ModeratorInbox._add(sr, m, 'inbox'))
-            if author.name in g.admins:
-                m.distinguished = 'admin'
-                m._commit()
-            elif sr.is_moderator(author):
+            if sr.is_moderator(author):
                 m.distinguished = 'yes'
                 m._commit()
+
+        if author.name in g.admins:
+            m.distinguished = 'admin'
+            m._commit()
 
         # if there is a "to" we may have to create an inbox relation as well
         # also, only global admins can be message spammed.
