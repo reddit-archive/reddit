@@ -16,6 +16,13 @@ r.utils = {
         }).join('')
     },
 
+    tup: function(list) {
+        if (!_.isArray(list)) {
+            list = [list]
+        }
+        return list
+    },
+
     querySelectorFromEl: function(targetEl, selector) {
         return $(targetEl).parents().andSelf()
             .filter(selector || '*')
