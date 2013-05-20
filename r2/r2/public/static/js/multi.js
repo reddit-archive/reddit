@@ -93,8 +93,26 @@ r.multi.MultiReddit = Backbone.Model.extend({
         return res
     },
 
-    addSubreddit: function(name, options) {
-        this.subreddits.create({name: name}, options)
+    addSubreddit: function(names, options) {
+        names = r.utils.tup(names)
+        if (names.length == 1) {
+            this.subreddits.create({name: names[0]}, options)
+        } else {
+            // batch add by syncing the entire multi
+            var subreddits = this.subreddits,
+                tmp = subreddits.clone()
+            tmp.add(_.map(names, function(srName) {
+                return {name: srName}
+            }))
+
+            // temporarily swap out the subreddits collection so we can
+            // serialize and send the new data without updating the UI
+            // this is similar to how the "wait" option is handled in
+            // Backbone.Model.set
+            this.subreddits = tmp
+            this.save(null, options)
+            this.subreddits = subreddits
+        }
     },
 
     removeSubreddit: function(name, options) {
@@ -261,25 +279,19 @@ r.multi.MultiDetails = Backbone.View.extend({
         delete this.itemViews[sr.id]
     },
 
-    addAll: function() {
-        this.itemViews = {}
-        this.$('.subreddits').empty()
-        this.model.subreddits.each(this.addOne, this)
-    },
-
     addSubreddit: function(ev) {
         ev.preventDefault()
 
         var nameEl = this.$('.add-sr .sr-name'),
-            srName = $.trim(nameEl.val())
-        srName = srName.split('r/').pop()
-        if (!srName) {
+            srNames = nameEl.val()
+        srNames = _.compact(srNames.split(/[\/+,\s]+(?:r\/)?/))
+        if (!srNames.length) {
             return
         }
 
         nameEl.val('')
         this.$('.add-error').css('visibility', 'hidden')
-        this.model.addSubreddit(srName, {
+        this.model.addSubreddit(srNames, {
             wait: true,
             success: _.bind(function() {
                 this.$('.add-error').hide()
