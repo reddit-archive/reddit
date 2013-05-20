@@ -107,7 +107,7 @@ class ApiminimalController(MinimalController):
     """
 
     @validatedForm()
-    @api_doc(api_section.misc)
+    @api_doc(api_section.captcha)
     def POST_new_captcha(self, form, jquery, *a, **kw):
         iden = get_iden()
         jquery("body").captcha(iden)
