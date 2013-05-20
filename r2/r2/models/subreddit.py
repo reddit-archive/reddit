@@ -1421,11 +1421,13 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
     @classmethod
     def sr_props_to_columns(cls, sr_props):
         columns = {}
+        sr_ids = []
         for sr_id, props in sr_props.iteritems():
             if isinstance(sr_id, BaseSite):
                 sr_id = sr_id._id
+            sr_ids.append(sr_id)
             columns[cls.SR_PREFIX + str(sr_id)] = json.dumps(props)
-        return columns
+        return sr_ids, columns
 
     @classmethod
     def columns_to_sr_props(cls, columns):
@@ -1442,20 +1444,27 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
 
     def add_srs(self, sr_props):
         """Add/overwrite subreddit(s)."""
-        sr_columns = self.sr_props_to_columns(sr_props)
+        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_SR_COUNT:
             raise TooManySubredditsException
+
+        new_sr_ids = set(sr_ids) - set(self.sr_ids)
+        new_srs = Subreddit._byID(new_sr_ids, data=True, return_dict=False)
+        self._srs.extend(new_srs)
 
         for attr, val in sr_columns.iteritems():
             self.__setattr__(attr, val)
 
     def del_srs(self, sr_ids):
         """Delete subreddit(s)."""
-        sr_ids = tup(sr_ids)
-        keys = self.sr_props_to_columns(dict.fromkeys(sr_ids, '')).keys()
-        for key in keys:
+        sr_props = dict.fromkeys(tup(sr_ids), '')
+        sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
+
+        for key in sr_columns.iterkeys():
             self.__delitem__(key)
+
+        self._srs = [sr for sr in self._srs if sr._id not in sr_ids]
 
     def clear_srs(self):
         self.del_srs(self.sr_ids)
