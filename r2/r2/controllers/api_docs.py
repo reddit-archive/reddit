@@ -168,6 +168,7 @@ class ApidocsController(RedditController):
         # controllers to gather docs from.
         from r2.controllers.api import ApiController, ApiminimalController
         from r2.controllers.apiv1 import APIv1Controller
+        from r2.controllers.captcha import CaptchaController
         from r2.controllers.front import FrontController
         from r2.controllers.wiki import WikiApiController
         from r2.controllers import listingcontroller
@@ -177,6 +178,7 @@ class ApidocsController(RedditController):
             (ApiController, '/api'),
             (ApiminimalController, '/api'),
             (WikiApiController, '/api/wiki'),
+            (CaptchaController, ''),
             (FrontController, '')
         ]
         for name, value in vars(listingcontroller).iteritems():

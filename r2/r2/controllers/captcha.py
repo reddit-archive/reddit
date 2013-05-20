@@ -25,8 +25,16 @@ import StringIO
 import r2.lib.captcha as captcha
 from pylons import c, response
 
+from r2.controllers.api_docs import api_doc, api_section
+
 class CaptchaController(RedditController):
+    @api_doc(api_section.captcha, uri='/captcha/{iden}')
     def GET_captchaimg(self, iden):
+        """Request a captcha image given an iden.
+
+        Responds with an image/png.
+
+        """
         image = captcha.get_image(iden)
         f = StringIO.StringIO()
         image.save(f, "PNG")
