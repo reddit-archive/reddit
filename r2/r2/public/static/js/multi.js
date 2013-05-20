@@ -58,10 +58,10 @@ r.multi.MultiReddit = Backbone.Model.extend({
 
     initialize: function(attributes, options) {
         this.uncreated = options && !!options.isNew
-        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'))
+        this.subreddits = new r.multi.MultiRedditList(this.get('subreddits'), {parse: true})
         this.subreddits.url = this.url() + '/r/'
         this.on('change:subreddits', function(model, value) {
-            this.subreddits.reset(value)
+            this.subreddits.set(value, {parse: true})
         }, this)
         this.subreddits.on('request', function(model, xhr, options) {
             this.trigger('request', model, xhr, options)
@@ -200,7 +200,6 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.listenTo(this.model, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
-        this.listenTo(this.model.subreddits, 'reset', this.addAll)
         this.listenTo(this.model.subreddits, 'add remove reset', this.render)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
 
@@ -211,6 +210,9 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.model.on('request', function(model, xhr) {
             r.ui.showWorkingDeferred(this.$el, xhr)
         }, this)
+
+        this.$('.subreddits').empty()
+        this.itemViews = {}
 
         this.bubbleGroup = {}
         this.addBubble = new r.multi.MultiAddNoticeBubble({
