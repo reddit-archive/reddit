@@ -108,7 +108,6 @@ class Builder(object):
 
         types = {}
         wrapped = []
-        count = 0
 
         modlink = {}
         modlabel = {}
@@ -213,11 +212,6 @@ class Builder(object):
                 if getattr(item, "verdict", None):
                     if not item.verdict.endswith("-approved"):
                         w.link_notes.append(w.verdict)
-
-            w.rowstyle = getattr(w, 'rowstyle', "")
-            w.rowstyle += ' ' + ('even' if (count % 2) else 'odd')
-
-            count += 1
 
             if c.user_is_admin and getattr(item, 'ip', None):
                 w.ip_span = ip_span(item.ip)
