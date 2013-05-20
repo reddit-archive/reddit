@@ -71,6 +71,9 @@ section_info = {
     },
     'wiki': {
         'title': _('wiki'),
+    },
+    'captcha': {
+        'title': _('captcha'),
     }
 }
 
