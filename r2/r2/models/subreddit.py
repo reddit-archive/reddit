@@ -1412,10 +1412,8 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         return list(LabeledMultiByOwner.query([owner._fullname]))
 
     @classmethod
-    def create(cls, path, owner, sr_props=None):
-        # sr_props is {sr_id: properties_dict}
-        sr_columns = cls.sr_props_to_columns(sr_props) if sr_props else {}
-        obj = cls(_id=path, owner_fullname=owner._fullname, **sr_columns)
+    def create(cls, path, owner):
+        obj = cls(_id=path, owner_fullname=owner._fullname)
         obj._commit()
         obj._owner = owner
         return obj
