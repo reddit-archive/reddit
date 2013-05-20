@@ -433,6 +433,20 @@ ul.flat-vert {text-align: left;}
     p + p {
         margin-top: .25em;
     }
+
+    &.gold {
+        font-family: serif;
+        border: 1px solid lighten(#c4b487, 10%);
+        box-shadow: 0 0 10px lighten(#dad0b3, 10%) inset;
+        border-radius: 0;
+
+        &:before {
+            background-image: url(../gold-coin.png);  /* SPRITE */
+            width: 13px;
+            height: 14px;
+            margin-top: 1px;
+        }
+    }
 }
 
 .morelink {

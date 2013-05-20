@@ -332,6 +332,12 @@ class Reddit(Templated):
         if sidebar_message and isinstance(c.site, DefaultSR):
             ps.append(SidebarMessage(sidebar_message[0]))
 
+        gold_sidebar_message = g.live_config.get("gold_sidebar_message")
+        if (c.user_is_loggedin and c.user.gold and
+                gold_sidebar_message and isinstance(c.site, DefaultSR)):
+            ps.append(SidebarMessage(gold_sidebar_message[0],
+                                     extra_class="gold"))
+
         if not c.user_is_loggedin and self.loginbox and not g.read_only_mode:
             ps.append(LoginFormWide())
 
@@ -1636,8 +1642,8 @@ class ClientInfoBar(InfoBar):
 
 class SidebarMessage(Templated):
     """An info message box on the sidebar."""
-    def __init__(self, message):
-        Templated.__init__(self, message=message)
+    def __init__(self, message, extra_class=None):
+        Templated.__init__(self, message=message, extra_class=extra_class)
 
 class RedditError(BoringPage):
     site_tracking = False

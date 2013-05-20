@@ -24,6 +24,8 @@
    from r2.lib.filters import safemarkdown
 %>
 
-<div class="side-message">
+<%namespace file="utils.html" import="classes"/>
+
+<div ${classes('side-message', thing.extra_class)}>
   ${unsafe(safemarkdown(thing.message))}
 </div>
