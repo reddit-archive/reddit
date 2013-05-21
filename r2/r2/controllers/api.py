@@ -788,6 +788,9 @@ class ApiController(RedditController, OAuth2ResourceController):
             # the right one and update its data.
             c.user.friend_rels_cache(_update=True)
             c.user.add_friend_note(friend, note or '')
+        
+        if type in ('banned', 'wikibanned'):
+            container.add_rel_note(type, friend, note)
 
         cls = dict(friend=FriendList,
                    moderator=ModList,

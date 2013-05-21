@@ -27,7 +27,7 @@
   <% from r2.models import ModeratorPermissionSet %>
   <% from r2.lib.pages import ModeratorPermissions %>
   <form action="/post/${dest}"
-        method="post" class="pretty-form medium-text"
+        method="post" class="pretty-form medium-text friend-add"
         onsubmit="return post_form(this, '${dest}')"
         id="${add_type}">
     <h1>${title}</h1>
@@ -35,7 +35,17 @@
     <input type="hidden" name="action" value="add">
     <input type="hidden" name="container" value="${container_name}">
     <input type="hidden" name="type" value="${add_type}">
-    <input type="text" name="name" id="name">
+    %if add_type in ("banned", "wikibanned"):
+        <label for="name">${_('who to ban?')} &nbsp;</label>
+        <input type="text" onfocus="$(this).parent('form').addClass('edited')" class="friend-name" name="name" id="name">
+        <span class="ban-reason">
+            <label for="note">${_('why the ban?')}</label>
+            <input type="text" maxlength="300" name="note" id="note">
+            <span>${_('(will not be visible to user)')}</span>
+        </span>
+    %else:
+        <input type="text" name="name" id="name">
+    %endif
     %if add_type == "moderator_invite":
       ${ModeratorPermissions(None, 'moderator',
                              ModeratorPermissionSet(all=True),
