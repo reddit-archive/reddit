@@ -810,6 +810,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                    friend = VExistingUname('name'),
                    note = VLength('note', 300))
     def POST_friendnote(self, form, jquery, friend, note):
+        if form.has_errors("note", errors.TOO_LONG):
+            return
         c.user.add_friend_note(friend, note)
         form.set_html('.status', _("saved"))
 
@@ -817,6 +819,8 @@ class ApiController(RedditController, OAuth2ResourceController):
                    user = VExistingUname('name'),
                    note = VLength('note', 300))
     def POST_relnote(self, form, jquery, type, user, note):
+        if form.has_errors("note", errors.TOO_LONG):
+            return
         c.site.add_rel_note(type[:-4], user, note)
         form.set_html('.status', _("saved"))
 
