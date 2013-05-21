@@ -246,13 +246,8 @@ class HotController(FixListing, ListingController):
             return res
 
     def make_single_ad(self):
-        promo_tuples = promote.lottery_promoted_links(c.user, c.site, n=10)
-        b = CampaignBuilder(promo_tuples, wrap=self.builder_wrapper,
-                            keep_fn=organic.keep_fresh_links, num=1, skip=True)
-        res = LinkListing(b, nextprev=False).listing()
-        res.parent_name = "promoted"
-        if res.things:
-            return res
+        if promote.srids_with_live_promos(c.user, c.site):
+            return SpotlightListing(show_promo=True, navigable=False).listing()
 
     def make_spotlight(self):
         """Build the Spotlight.
@@ -282,35 +277,16 @@ class HotController(FixListing, ListingController):
         promoted_links = []
 
         # If prefs allow it, mix in promoted links and sr discovery content
+        if ((c.user.pref_show_sponsors or not c.user.gold)
+            and g.live_config['sr_discovery_links']):
+            organic_fullnames.extend(g.live_config['sr_discovery_links'])
+
+        show_promo = False
         if c.user.pref_show_sponsors or not c.user.gold:
-            if g.live_config['sr_discovery_links']:
-                organic_fullnames.extend(g.live_config['sr_discovery_links'])
-
-            n_promoted = 100
-            n_build = 1 if c.user_is_loggedin else 10
-            picker = (promote.lottery_promoted_links if c.user_is_loggedin else
-                      promote.sample_promoted_links)
-            promo_tuples = picker(c.user, c.site, n=n_promoted)
-
-            if not c.user_is_loggedin:
-                promo_tuples.sort(key=lambda t: t.weight, reverse=True)
-
-            b = CampaignBuilder(
-                    promo_tuples,
-                    wrap=self.builder_wrapper,
-                    keep_fn=organic.keep_fresh_links,
-                    skip=True,
-            )
-            promoted_links, first, last, before, after = b.get_items()
-            if promoted_links:
-                stubs = promoted_links[n_build:]
-                stubs = [promote.PromoTuple(item._fullname, item.weight,
-                                            item.campaign)
-                         for item in stubs]
-                promoted_links = promoted_links[:n_build] + stubs
-
-        if not (organic_fullnames or promoted_links):
-            return None
+            if promote.srids_with_live_promos(c.user, c.site):
+                if ((c.user_is_loggedin and random.random() > 0.5) or
+                    not c.user_is_loggedin):
+                    show_promo = True
 
         random.shuffle(organic_fullnames)
         organic_fullnames = organic_fullnames[:10]
@@ -325,16 +301,13 @@ class HotController(FixListing, ListingController):
                                          if has_subscribed else
                                          'spotlight_interest_nosub_p']
         interestbar = InterestBar(has_subscribed)
-        promotion_prob = 0.5 if c.user_is_loggedin else 1.
 
         s = SpotlightListing(organic_links=organic_links,
-                             promoted_links=promoted_links,
                              interestbar=interestbar,
                              interestbar_prob=interestbar_prob,
-                             promotion_prob=promotion_prob,
+                             show_promo=show_promo,
                              max_num = self.listing_obj.max_num,
-                             max_score = self.listing_obj.max_score,
-                             predetermined_winner=c.user_is_loggedin).listing()
+                             max_score = self.listing_obj.max_score).listing()
         return s
 
     def query(self):

@@ -29,42 +29,45 @@ r.spotlight.init = function() {
     r.spotlight._advance(0)
 }
 
-r.spotlight.setup = function(links, interest_prob, promotion_prob) {
-    this.link_by_camp = {},
-    this.weights = {},
+r.spotlight.setup = function(organic_links, interest_prob, show_promo) {
     this.organics = []
     this.lineup = []
 
-    for (var index in links) {
-        var link = links[index][0],
-            is_promo = links[index][1],
-            campaign = links[index][2],
-            weight = links[index][3]
+    _.each(organic_links, function (name) {
+        this.organics.push(name)
+        this.lineup.push({fullname: name})
+    }, this)
 
-        if (is_promo) {
-            this.link_by_camp[campaign] = link
-            this.weights[campaign] = weight
-            this.lineup.push({fullname: link, campaign: campaign})
-        } else {
-            this.organics.push(link)
-            this.lineup.push({fullname: link})
-        }
+    if (interest_prob) {
+        this.lineup.push('.interestbar')
     }
-    this.lineup.push('.interestbar')
 
     this.interest_prob = interest_prob
-    this.promotion_prob = promotion_prob
+    this.show_promo = show_promo
 
     this.init()
 }
 
+r.spotlight.requestPromo = function() {
+    return $.ajax({
+        type: "POST",
+        url: '/api/request_promo',
+        data: {'r': reddit.post_site}
+    }).pipe(function(promo) {
+        if (promo) {
+            $item = $(promo)
+            $item.hide().appendTo($('.organic-listing'))
+            return $item
+        } else {
+            return false
+        }
+    })
+}
+
 r.spotlight.chooseRandom = function() {
     var listing = $('.organic-listing')
-    if (!_.isEmpty(this.weights)
-            && Math.random() < this.promotion_prob) {
-        var campaign_name = this.weighted_lottery(this.weights),
-            link_name = this.link_by_camp[campaign_name]
-        return {fullname: link_name, campaign: campaign_name}
+    if (this.show_promo) {
+        return this.requestPromo()
     } else if (Math.random() < this.interest_prob) {
         return '.interestbar'
     } else {
@@ -83,27 +86,15 @@ r.spotlight._materialize = function(item) {
 
     if (_.isString(item)) {
         itemSel = item
+    } else if (item.campaign) {
+        itemSel = '[data-cid="' + item.campaign + '"]'
     } else {
         itemSel = '[data-fullname="' + item.fullname + '"]'
-        if (item.campaign) {
-            itemSel += '[data-cid="' + item.campaign + '"]'
-        }
     }
     var $item = listing.find(itemSel)
 
     if ($item.length) {
         return $item
-    } else if (item.campaign) {
-        r.debug('fetching promo %s from campaign %s', item.fullname, item.campaign)
-
-        return $.get('/api/fetch_promo', {
-            link: item.fullname,
-            campaign: item.campaign
-        }).pipe(function (data) {
-            $item = $(data)
-            $item.hide().appendTo(listing)
-            return $item
-        })
     } else {
         r.error('unable to locate spotlight item', itemSel, item)
     }
@@ -135,6 +126,16 @@ r.spotlight._advance = function(dir) {
         if (this.lineup.pos != nextPos) {
             // we've been passed!
             return
+        }
+
+        if (!$next) {
+            if (this.lineup.length > 1) {
+                this._advance(dir || 1)
+                return
+            } else {
+                listing.hide()
+                return
+            }
         }
 
         $nextprev.removeClass('working')
@@ -183,18 +184,4 @@ r.spotlight.help = function(thing) {
             }
         })
     })
-}
-
-r.spotlight.weighted_lottery = function(weights) {
-    var seed_rand = Math.random(),
-        t = 0
-
-    for (var name in weights) {
-        weight = weights[name]
-        t += weight
-        if (t > seed_rand) {
-            return name
-        }
-    }
-    r.warn('weighted_lottery fell through!')
 }

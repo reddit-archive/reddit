@@ -616,6 +616,24 @@ def get_live_promotions(srids):
     return weights
 
 
+def srids_from_site(user, site):
+    if not isinstance(site, FakeSubreddit):
+        srids = {site._id}
+    elif isinstance(site, MultiReddit):
+        srids = set(site.sr_ids)
+    elif user and not isinstance(user, FakeAccount):
+        srids = set(Subreddit.user_subreddits(user, ids=True) + [""])
+    else:
+        srids = set(Subreddit.user_subreddits(None, ids=True) + [""])
+    return srids
+
+
+def srids_with_live_promos(user, site):
+    srids = srids_from_site(user, site)
+    weights = get_live_promotions(srids)
+    return [srid for srid, adweights in weights.iteritems() if adweights]
+
+
 def set_live_promotions(weights):
     start = time.time()
     # First, figure out which subreddits have had ads recently
@@ -783,15 +801,7 @@ PromoTuple = namedtuple('PromoTuple', ['link', 'weight', 'campaign'])
 
 
 def get_promotion_list(user, site):
-    if not isinstance(site, FakeSubreddit):
-        srids = set([site._id])
-    elif isinstance(site, MultiReddit):
-        srids = set(site.sr_ids)
-    elif user and not isinstance(user, FakeAccount):
-        srids = set(Subreddit.reverse_subscriber_ids(user) + [""])
-    else:
-        srids = set(Subreddit.user_subreddits(None, ids=True) + [""])
-
+    srids = srids_from_site(user, site)
     tuples = get_promotion_list_cached(srids)
     return [PromoTuple(*t) for t in tuples]
 

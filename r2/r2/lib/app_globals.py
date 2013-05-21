@@ -198,6 +198,7 @@ class Globals(object):
             'wiki_page_registration_info',
             'wiki_page_privacy_policy',
             'wiki_page_user_agreement',
+            'adserver_click_domain',
         ],
 
         ConfigValue.choice: {

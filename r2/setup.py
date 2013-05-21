@@ -95,6 +95,7 @@ setup(
         "lxml",
         "kazoo",
         "stripe",
+        "requests",
     ],
     dependency_links=[
         "https://github.com/reddit/snudown/archive/v1.1.3.tar.gz#egg=snudown-1.1.3",

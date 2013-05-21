@@ -41,11 +41,13 @@
     </div>
   %endif
 
-  <div class="nextprev">
-    <div class="throbber"></div>
-    <button class="arrow prev">${_("prev")}</button>
-    <button class="arrow next">${_("next")}</button>
-  </div>
+  %if thing.navigable:
+    <div class="nextprev">
+      <div class="throbber"></div>
+      <button class="arrow prev">${_("prev")}</button>
+      <button class="arrow next">${_("next")}</button>
+    </div>
+  %endif
 
   <div class="help help-hoverable">
     ${_("what's this?")}
@@ -92,9 +94,9 @@
 </div>
 <script>
   r.spotlight.setup(
-    ${unsafe(json.dumps(thing.links))},
+    ${unsafe(json.dumps([link._fullname for link in thing.things]))},
     ${unsafe(json.dumps(thing.interestbar_prob))},
-    ${unsafe(json.dumps(thing.promotion_prob))}
+    ${unsafe(json.dumps(thing.show_promo))}
   )
 </script>
 
