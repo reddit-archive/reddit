@@ -63,9 +63,9 @@
       %endif
     %endif
   %elif thing.name == "note":
-    <form action="/post/friendnote" id="friendnote-${thing.rel._fullname}"
-          method="post" class="pretty-form medium-text friend-note"
-          onsubmit="return post_form(this, 'friendnote');">
+    <form action="/post/${thing.type}note" id="${thing.type}note-${thing.rel._fullname}"
+          method="post" class="pretty-form medium-text rel-note ${thing.type}-note"
+          onsubmit="return post_form(this, '${thing.type}note');">
       <input type="hidden" name="name" value="${thing.user.name}" />
       <input type="text" maxlength="300" name="note" class="tiny"
              onfocus="$(this).parent().addClass('edited')"
