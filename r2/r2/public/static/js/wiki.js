@@ -90,12 +90,14 @@ r.wiki = {
         special.hide()
         params = r.utils.serializeForm($this)
         $('#wiki_save_button').attr("disabled", true)
+        $this.addClass("working")
         r.wiki.request({
             url: url,
             type: 'POST',
             dataType: 'json',
             data: params,
             error: function() {
+                $this.removeClass("working")
                 $('#wiki_save_button').removeAttr("disabled")
             },
             success: function() {
