@@ -3088,6 +3088,15 @@ class BannedList(UserList):
     """List of users banned from a given reddit"""
     type = 'banned'
 
+    def __init__(self, *k, **kw):
+        UserList.__init__(self, *k, **kw)
+        self.cells += ('note',)
+
+    def user_row(self, row_type, user, editable=True):
+        rel = getattr(c.site, 'get_%s' % self.type)(user)
+        return UserTableItem(user, row_type, self.cells, self.container_name,
+                             editable, self.remove_action, rel)
+
     @property
     def form_title(self):
         return _('ban users')
