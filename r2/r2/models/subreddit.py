@@ -1278,7 +1278,7 @@ class MultiReddit(FakeSubreddit):
         return MergedCachedQuery(queries)
 
 
-class TooManySubredditsException(Exception):
+class TooManySubredditsError(Exception):
     pass
 
 
@@ -1447,7 +1447,7 @@ class LabeledMulti(tdb_cassandra.Thing, MultiReddit):
         sr_ids, sr_columns = self.sr_props_to_columns(sr_props)
 
         if len(set(sr_columns) | set(self.sr_columns)) > self.MAX_SR_COUNT:
-            raise TooManySubredditsException
+            raise TooManySubredditsError
 
         new_sr_ids = set(sr_ids) - set(self.sr_ids)
         new_srs = Subreddit._byID(new_sr_ids, data=True, return_dict=False)

@@ -33,7 +33,7 @@ from r2.models.subreddit import (
     FakeSubreddit,
     Subreddit,
     LabeledMulti,
-    TooManySubredditsException,
+    TooManySubredditsError,
 )
 from r2.lib.db import tdb_cassandra
 from r2.lib.wrapped import Wrapped
@@ -126,7 +126,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
             try:
                 multi.add_srs(sr_props)
-            except TooManySubredditsException as e:
+            except TooManySubredditsError as e:
                 multi._revert()
                 raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
 
@@ -228,7 +228,7 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
         try:
             multi.add_srs({sr: {}})
-        except TooManySubredditsException as e:
+        except TooManySubredditsError as e:
             raise RedditError('MULTI_TOO_MANY_SUBREDDITS', code=409)
         else:
             multi._commit()
