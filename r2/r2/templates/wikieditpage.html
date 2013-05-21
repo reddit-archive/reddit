@@ -24,6 +24,9 @@
   from r2.lib.filters import keep_space
 %>
 
+<%namespace file="printablebuttons.html" import="toggle_button" />
+<%namespace file="usertext.html" import="markhelp" />
+
 <div style="display: none;" id="wiki_edit_conflict">
     <h2 class="error">there was a conflict editing</h2>
     <h1>${_("your edit")}</h1>
@@ -40,6 +43,8 @@
 
 <form method="post" id="editform" onsubmit="r.wiki.submitEdit(event)">
     <textarea name="content" rows="20" cols="20" style="width: 100%" id="wiki_page_content">${keep_space(thing.page_content)}</textarea>
+    ${toggle_button("help-toggle", _("formatting help"), _("hide help"), "r.wiki.helpon", "r.wiki.helpoff")}
+    ${markhelp()}
     <br/><br/>
     <label for="reason">${_("reason for revision")}</label><br/>
     <input type="text" name="reason" maxlength="256" id="wiki_revision_reason" />
