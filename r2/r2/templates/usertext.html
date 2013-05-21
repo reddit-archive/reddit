@@ -29,6 +29,75 @@
 <%namespace file="printablebuttons.html" import="toggle_button" />
 <%namespace file="utils.html" import="error_field, md"/>
 
+<%def name="markhelp()">
+  <div class="markhelp" style="display:none">
+    <p>${md(strings.formatting_help_info)}</p>
+    <table class="md">
+      <tr style="background-color: #ffff99; text-align: center">
+        <td><em>${_( "you type:")}</em></td>
+        <td><em>${_( "you see:")}</em></td>
+      </tr>
+      <tr>
+        <td>*${_( "italics")}*</td>
+        <td><em>${_( "italics")}</em></td>
+      </tr>
+      <tr>
+        <td>**${_( "bold")}**</td>
+        <td><b>${_( "bold")}</b></td>
+      </tr>
+      <tr>
+        <td>[reddit!](http://reddit.com)</td>
+        <td><a href="http://reddit.com">reddit!</a></td>
+      </tr>
+      <tr>
+        <td>
+          * ${_( "item")} 1<br/>
+          * ${_( "item")} 2<br/>
+          * ${_( "item")} 3
+        </td>
+        <td>
+          <ul>
+            <li>${_( "item")} 1</li>
+            <li>${_( "item")} 2</li>
+            <li>${_( "item")} 3</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>&gt; ${_( "quoted text")}</td>
+        <td><blockquote>${_( "quoted text" )}</blockquote></td>
+      </tr>
+      <tr>
+          <td>
+              Lines starting with four spaces <br/>
+              are treated like code:<br/><br/>
+              <span class="spaces">
+                  &nbsp;&nbsp;&nbsp;&nbsp;
+              </span>
+              if 1 * 2 &lt; 3:<br/>
+              <span class="spaces">
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </span>
+              print "hello, world!"<br/>
+          </td>
+          <td>Lines starting with four spaces <br/>
+              are treated like code:<br/>
+              <pre>if 1 * 2 &lt; 3:<br/>&nbsp;&nbsp;&nbsp;&nbsp;print "hello,
+              world!"</pre>
+          </td>
+      </tr>
+      <tr>
+          <td>~~strikethrough~~</td>
+          <td><strike>strikethrough</strike></td>
+      </tr>
+      <tr>
+          <td>super^script</td>
+          <td>super<sup>script</sup></td>
+      </tr>
+    </table>
+  </div>
+</%def>
+
 <%def name="action_button(name, btn_type, onclick, display)">
   <button type="${btn_type}" onclick="${onclick}" class="${name}"
           ${"style='display:none'" if not display else ""}>
@@ -98,72 +167,7 @@
         </div>
       </div>
 
-      <div class="markhelp" style="display:none">
-        <p>${md(strings.formatting_help_info)}</p>
-        <table class="md">
-          <tr style="background-color: #ffff99; text-align: center">
-            <td><em>${_( "you type:")}</em></td>
-            <td><em>${_( "you see:")}</em></td>
-          </tr>
-          <tr>
-            <td>*${_( "italics")}*</td>
-            <td><em>${_( "italics")}</em></td>
-          </tr>
-          <tr>
-            <td>**${_( "bold")}**</td>
-            <td><b>${_( "bold")}</b></td>
-          </tr>
-          <tr>
-            <td>[reddit!](http://reddit.com)</td>
-            <td><a href="http://reddit.com">reddit!</a></td>
-          </tr>
-          <tr>
-            <td>
-              * ${_( "item")} 1<br/>
-              * ${_( "item")} 2<br/>
-              * ${_( "item")} 3
-            </td>
-            <td>
-              <ul>
-                <li>${_( "item")} 1</li>
-                <li>${_( "item")} 2</li>
-                <li>${_( "item")} 3</li>
-              </ul>
-            </td>
-          </tr>
-          <tr>
-            <td>&gt; ${_( "quoted text")}</td>
-            <td><blockquote>${_( "quoted text" )}</blockquote></td>
-          </tr>
-          <tr>
-              <td>
-                  Lines starting with four spaces <br/>
-                  are treated like code:<br/><br/>
-                  <span class="spaces">
-                      &nbsp;&nbsp;&nbsp;&nbsp;
-                  </span>
-                  if 1 * 2 &lt; 3:<br/>
-                  <span class="spaces">
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  </span>
-                  print "hello, world!"<br/>
-              </td>
-              <td>Lines starting with four spaces <br/>
-                  are treated like code:<br/>
-                  <pre>if 1 * 2 &lt; 3:<br/>&nbsp;&nbsp;&nbsp;&nbsp;print "hello,
-                  world!"</pre>
-              </td>
-          </tr>
-          <tr>
-              <td>~~strikethrough~~</td>
-              <td><strike>strikethrough</strike></td>
-          </tr>
-          <tr>
-              <td>super^script</td>
-              <td>super<sup>script</sup></td>
-          </tr>
-        </table>
-      </div>
+      ${markhelp()}
     </div>
   %endif
 
