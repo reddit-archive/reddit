@@ -95,7 +95,8 @@ class MultiApiController(RedditController, OAuth2ResourceController):
 
     def _check_new_multi_path(self, path_info):
         if path_info['username'].lower() != c.user.name.lower():
-            raise RedditError('BAD_MULTI_NAME', code=400, fields="multipath")
+            raise RedditError('MULTI_CANNOT_EDIT', code=403,
+                              fields='multipath')
 
     def _write_multi_data(self, multi, data):
         if 'visibility' in data:
