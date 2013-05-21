@@ -753,6 +753,8 @@ class ApiController(RedditController, OAuth2ResourceController):
 
         elif form.has_errors("name", errors.USER_DOESNT_EXIST, errors.NO_USER):
             return
+        elif form.has_errors("note", errors.TOO_LONG):
+            return
 
         if type in self._sr_friend_types_with_permissions:
             if form.has_errors('type', errors.INVALID_PERMISSION_TYPE):
