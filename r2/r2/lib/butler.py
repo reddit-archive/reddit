@@ -63,6 +63,10 @@ def monitor_mentions(comment):
     usernames = list(extract_user_mentions(comment.body))
     inbox_class = Inbox.rel(Account, Comment)
 
+    # don't be a jerk spammer
+    if len(usernames) > 3:
+        return
+
     # Subreddit.can_view stupidly requires this.
     c.user_is_loggedin = True
 
