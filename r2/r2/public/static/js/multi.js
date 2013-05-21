@@ -8,12 +8,13 @@ r.multi = {
 
         var detailsEl = $('.multi-details')
         if (detailsEl.length) {
-            var multi = this.multis.touch(detailsEl.data('path')),
-                detailsView = new r.multi.MultiDetails({
-                    model: multi,
-                    el: detailsEl
-                })
+            var multi = this.multis.touch(detailsEl.data('path'))
             multi.fetch()
+
+            var detailsView = new r.multi.MultiDetails({
+                model: multi,
+                el: detailsEl
+            }).render()
 
             if (location.hash == '#created') {
                 detailsView.focusAdd()
@@ -229,14 +230,15 @@ r.multi.MultiDetails = Backbone.View.extend({
             r.ui.showWorkingDeferred(this.$el, xhr)
         }, this)
 
-        this.$('.subreddits').empty()
-        this.itemViews = {}
-
         this.bubbleGroup = {}
         this.addBubble = new r.multi.MultiAddNoticeBubble({
             parent: this.$('.add-sr .sr-name'),
             trackHover: false
         })
+
+        this.itemViews = {}
+        this.$('.subreddits').empty()
+        this.model.subreddits.each(this.addOne, this)
     },
 
     render: function() {
