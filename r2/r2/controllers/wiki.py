@@ -356,7 +356,8 @@ class WikiApiController(WikiController):
               page=VWikiPage('page'),
               act=VOneOf('act', ('del', 'add')),
               user=VExistingUname('username'))
-    @api_doc(api_section.wiki, uri='/api/wiki/alloweditor/{act}')
+    @api_doc(api_section.wiki, uri='/api/wiki/alloweditor/{act}',
+             uri_variants=['/api/wiki/alloweditor/%s' % act for act in ('del', 'add')])
     def POST_wiki_allow_editor(self, act, page, user):
         if not user:
             self.handle_error(404, 'UNKNOWN_USER')
