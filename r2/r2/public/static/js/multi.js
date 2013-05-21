@@ -219,6 +219,7 @@ r.multi.MultiDetails = Backbone.View.extend({
         this.listenTo(this.model, 'change', this.render)
         this.listenTo(this.model.subreddits, 'add', this.addOne)
         this.listenTo(this.model.subreddits, 'remove', this.removeOne)
+        this.listenTo(this.model.subreddits, 'sort', this.resort)
         this.listenTo(this.model.subreddits, 'add remove reset', this.render)
         new r.ui.ConfirmButton({el: this.$('button.delete')})
 
@@ -263,17 +264,13 @@ r.multi.MultiDetails = Backbone.View.extend({
             bubbleGroup: this.bubbleGroup
         })
         this.itemViews[sr.id] = view
+        this.$('.subreddits').append(view.render().$el)
+    },
 
-        var $el = view.render().$el,
-            index = this.model.subreddits.indexOf(sr),
-            $list = this.$('.subreddits'),
-            $cur = $list.children().eq(index)
-
-        if ($cur.length) {
-            $cur.before($el)
-        } else {
-            $list.append($el)
-        }
+    resort: function() {
+        this.model.subreddits.each(function(sr) {
+            this.itemViews[sr.id].$el.appendTo(this.$('.subreddits'))
+        }, this)
     },
 
     removeOne: function(sr) {
