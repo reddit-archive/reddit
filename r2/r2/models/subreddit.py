@@ -883,6 +883,12 @@ class Subreddit(Thing, Printable):
             rel.update_permissions(**kwargs)
             rel._commit()
 
+    def add_rel_note(self, type, user, note):
+        rel = getattr(self, "get_%s" % type)(user)
+        if not rel:
+            raise ValueError("User is not %s." % type)
+        rel.note = note
+        rel._commit()
 
 class FakeSubreddit(Subreddit):
     over_18 = False

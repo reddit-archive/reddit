@@ -813,6 +813,13 @@ class ApiController(RedditController, OAuth2ResourceController):
         c.user.add_friend_note(friend, note)
         form.set_html('.status', _("saved"))
 
+    @validatedForm(type = VOneOf('type', ('bannednote', 'wikibannednote')),
+                   user = VExistingUname('name'),
+                   note = VLength('note', 300))
+    def POST_relnote(self, form, jquery, type, user, note):
+        c.site.add_rel_note(type[:-4], user, note)
+        form.set_html('.status', _("saved"))
+
     @validatedForm(VUser(),
                    VModhash(),
                    ip=ValidIP())

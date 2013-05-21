@@ -303,6 +303,9 @@ def make_map():
                                  "add_roadblock|rm_roadblock")))
     mc('/api/:action', controller='apiminimal',
        requirements=dict(action="new_captcha"))
+    mc('/api/:type', controller='api',
+       requirements=dict(type='wikibannednote|bannednote'),
+       action='relnote')
     mc('/api/:action', controller='api')
 
     mc("/api/v1/:action", controller="oauth2frontend",
