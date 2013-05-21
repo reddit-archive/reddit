@@ -802,6 +802,9 @@ class ApiController(RedditController, OAuth2ResourceController):
                    banned=BannedList, wikibanned=WikiBannedList).get(type)
         userlist = cls()
         form.set_inputs(name = "")
+        if note:
+            form.set_inputs(note = "")
+        form.removeClass("edited")
         form.set_html(".status:first", userlist.executed_message(type))
         if new and cls:
             user_row = userlist.user_row(type, friend)
