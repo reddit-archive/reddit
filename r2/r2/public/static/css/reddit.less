@@ -7031,7 +7031,7 @@ body.with-listing-chooser {
 }
 
 body.with-listing-chooser.listing-chooser-collapsed {
-    @listing-chooser-grippy-width: 6px;
+    @listing-chooser-grippy-width: 8px;
     & #header .tabmenu {
         margin-left: 0;
     }
@@ -7041,7 +7041,7 @@ body.with-listing-chooser.listing-chooser-collapsed {
     }
 
     & > .content, & .footer-parent {
-        margin-left: @listing-chooser-grippy-width + 4px;
+        margin-left: @listing-chooser-grippy-width + 6px;
     }
 
     .listing-chooser {
@@ -7077,7 +7077,7 @@ body.with-listing-chooser.listing-chooser-collapsed {
         top: 0;
         bottom: 0;
         left: @width - @shadow-width;
-        box-shadow: -@shadow-width 0 2*@shadow-width -@shadow-width rgba(0, 0, 0, .3) inset;
+        box-shadow: (-@shadow-width - @listing-chooser-grippy-width) 0 2*@shadow-width -@shadow-width rgba(0, 0, 0, .25) inset;
         z-index: 20;
     }
 
@@ -7099,7 +7099,7 @@ body.with-listing-chooser.listing-chooser-collapsed {
             top: 50%;
             margin-left: (@listing-chooser-grippy-width - 2px) / 2;
             margin-top: -@height / 2;
-            border-left: 2px dotted #ddd;
+            border-left: 2px dotted #ccc;
             height: @height;
         }
 
@@ -7200,7 +7200,8 @@ body.with-listing-chooser.listing-chooser-collapsed {
             border-color: lighten(#369, 40%);
             margin-right: -@listing-chooser-grippy-width;
             padding-right: @listing-chooser-grippy-width;
-            box-shadow: -30px 0 30px -15px rgba(255, 255, 255, .5) inset;
+            box-shadow: -30px 0 30px -15px rgba(255, 255, 255, .5) inset,
+                        0 2px @shadow-width -1px rgba(0, 0, 0, .2);
             z-index: 35;
 
             a {
