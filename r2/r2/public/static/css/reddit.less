@@ -7008,10 +7008,12 @@ body.gold .buttons li.comment-save-button { display: inline; }
     padding: 2px 5px;
 }
 
+@listing-chooser-grippy-width: 4px;
 body.with-listing-chooser {
     position: relative;
 
     & #header .tabmenu {
+        margin-left: @listing-chooser-grippy-width;
         li:first-child.selected {
             margin-left: 2px;
         }
@@ -7020,11 +7022,38 @@ body.with-listing-chooser {
     & #header .pagename {
         position: absolute;
         bottom: 20px;
+        margin-left: @listing-chooser-grippy-width + 2px;
+    }
+
+    & > .content, & .footer-parent {
+        margin-left: 140px + @listing-chooser-grippy-width;
+    }
+}
+
+body.with-listing-chooser.listing-chooser-collapsed {
+    @listing-chooser-grippy-width: 6px;
+    & #header .tabmenu {
+        margin-left: 0;
+    }
+
+    & #header .pagename {
         margin-left: 2px;
     }
 
     & > .content, & .footer-parent {
-        margin-left: 140px
+        margin-left: @listing-chooser-grippy-width + 4px;
+    }
+
+    .listing-chooser {
+        width: 0;
+        padding-right: @listing-chooser-grippy-width;
+        .grippy {
+            z-index: 40;
+            width: @listing-chooser-grippy-width;
+            &:after {
+                margin-left: (@listing-chooser-grippy-width - 2px) / 2;
+            }
+        }
     }
 }
 
@@ -7036,8 +7065,10 @@ body.with-listing-chooser {
     left: 0;
     bottom: 0;
     width: @width;
-    border-right: 1px solid #ccc;
+    border-right: 1px dotted #e5e5e5;
+    padding-right: @listing-chooser-grippy-width;
     background: #f7f7f7;
+    overflow: hidden;
 
     &:after {
         content: '';
@@ -7048,6 +7079,33 @@ body.with-listing-chooser {
         left: @width - @shadow-width;
         box-shadow: -@shadow-width 0 2*@shadow-width -@shadow-width rgba(0, 0, 0, .3) inset;
         z-index: 20;
+    }
+
+    .grippy {
+        position: absolute;
+        right: 0;
+        width: @listing-chooser-grippy-width;
+        height: 100%;
+        background: white;
+        border-left: 1px solid #ccc;
+        z-index: 25;
+        cursor: pointer;
+
+        &:after {
+            @height: 50px;
+            content: '';
+            display: block;
+            position: fixed;
+            top: 50%;
+            margin-left: (@listing-chooser-grippy-width - 2px) / 2;
+            margin-top: -@height / 2;
+            border-left: 2px dotted #ddd;
+            height: @height;
+        }
+
+        &:hover {
+            background: #f4f4f4;
+        }
     }
 
     h3 {
@@ -7140,32 +7198,26 @@ body.with-listing-chooser {
             position: relative;
             background: lighten(#cee3f8, 6%);
             border-color: lighten(#369, 40%);
-            z-index: 25;
+            margin-right: -@listing-chooser-grippy-width;
+            padding-right: @listing-chooser-grippy-width;
+            box-shadow: -30px 0 30px -15px rgba(255, 255, 255, .5) inset;
+            z-index: 35;
 
             a {
                 font-weight: bold;
             }
 
-            &:after,
             &:before {
+                @size: 5px;
                 position: absolute;
                 top: 50%;
-                margin-top: -15px;
+                right: 0;
+                margin-top: -@size;
                 display: block;
                 content: '';
-                border: 15px solid transparent;
+                border: @size solid transparent;
                 border-style: solid solid outset; // mitigates firefox drawing a thicker arrow
-                z-index: 25;
-            }
-
-            &:before {
-                right: 0px;
-                border-right-color: #ccc;
-            }
-
-            &:after {
-                right: -2px;
-                border-right-color: white;
+                border-left-color: lighten(#369, 25%);
             }
         }
     }

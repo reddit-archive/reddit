@@ -481,7 +481,8 @@ r.multi.MultiCreateForm = Backbone.View.extend({
 
 r.multi.ListingChooser = Backbone.View.extend({
     events: {
-        'click .create button': 'createClick'
+        'click .create button': 'createClick',
+        'click .grippy': 'toggleCollapsed'
     },
 
     createClick: function(ev) {
@@ -494,5 +495,10 @@ r.multi.ListingChooser = Backbone.View.extend({
             })
             this.createForm.focus()
         }
+    },
+
+    toggleCollapsed: function() {
+        $('body').toggleClass('listing-chooser-collapsed')
+        store.set('ui.collapse.listingchooser', $('body').is('.listing-chooser-collapsed'))
     }
 })
