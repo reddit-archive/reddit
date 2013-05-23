@@ -493,7 +493,11 @@ class Reddit(Templated):
         In adition, unlike Templated.render, the result is in the form of a pylons
         Response object with it's content set.
         """
-        res = Templated.render(self, *a, **kw)
+        if request.get.pop('bare', False):
+            res = self._content.render()
+        else:
+            res = Templated.render(self, *a, **kw)
+
         return responsive(res, self.space_compress)
 
     def corner_buttons(self):

@@ -89,7 +89,6 @@ class ListingController(RedditController, OAuth2ResourceController):
     def pre(self):
         self.check_for_bearer_token()
         RedditController.pre(self)
-        self.bare = request.get.pop('bare', False)
 
     @property
     def menus(self):
@@ -109,9 +108,6 @@ class ListingController(RedditController, OAuth2ResourceController):
         self.query_obj = self.query()
         self.builder_obj = self.builder()
         self.listing_obj = self.listing()
-
-        if self.bare:
-            return responsive(self.listing_obj.render())
 
         content = self.content()
         page_classes = self.extra_page_classes
