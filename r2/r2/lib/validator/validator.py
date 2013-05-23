@@ -2184,7 +2184,7 @@ class VJSON(Validator):
         }
 
 
-multi_name_rx = subreddit_rx
+multi_name_rx = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_]{1,20}\Z")
 multi_name_chars_rx = re.compile(r"[^A-Za-z0-9_]")
 
 class VMultiPath(Validator):
@@ -2220,7 +2220,7 @@ class VMultiPath(Validator):
                     reason = _("invalid character: '%s'") % char
             elif name[0] == '_':
                 reason = _("can't start with a '_'")
-            elif len(name) < 3:
+            elif len(name) < 2:
                 reason = _('that name is too short')
             elif len(name) > 21:
                 reason = _('that name is too long')
