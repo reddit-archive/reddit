@@ -53,7 +53,8 @@
     %else:
       <p>${_("Please select a payment method.")}</p>
 
-      %if thing.google_id:
+      %if thing.google_id and not thing.clone_template:
+        ## disable google wallet for gilding
         ${self.google_button()}
       %endif
 
