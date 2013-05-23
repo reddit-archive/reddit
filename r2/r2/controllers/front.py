@@ -592,7 +592,6 @@ class FrontController(RedditController, OAuth2ResourceController):
             or moderator_rel and all(moderator_rel.has_permission(perm)
                                      for perm in perms))
 
-        extension_handling = False
         if is_moderator_with_perms('config') and location == 'edit':
             pane = PaneStack()
             if created == 'true':
@@ -649,7 +648,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         return EditReddit(content=pane,
                           show_wiki_actions=is_wiki_action,
                           location=location,
-                          extension_handling=extension_handling).render()
+                          extension_handling=False).render()
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
