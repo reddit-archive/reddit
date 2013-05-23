@@ -849,6 +849,17 @@ class ApiController(RedditController, OAuth2ResourceController):
         notify_user_added("accept_moderator_invite", c.user, c.user, c.site)
         jquery.refresh()
 
+    @json_validate(VUser(),
+                   VGold(),
+                   VModhash(),
+                   deal=VLength('deal', 100))
+    def POST_claim_gold_partner_deal_code(self, responder, deal):
+        try:
+            return {'code': GoldPartnerDealCode.claim_code(c.user, deal)}
+        except GoldPartnerCodesExhaustedError:
+            return {'error': 'GOLD_PARTNER_CODES_EXHAUSTED',
+                    'explanation': _("sorry, we're out of codes!")}
+
     @validatedForm(VUser('curpass', default=''),
                    VModhash(),
                    password=VPassword(

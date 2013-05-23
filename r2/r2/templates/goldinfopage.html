@@ -20,6 +20,7 @@
 ## reddit Inc. All Rights Reserved.
 ###############################################################################
 <%!
+  from r2.lib.strings import strings
   from r2.lib.template_helpers import static
 %>
 <%namespace file="less.html" import="less_stylesheet"/>
@@ -39,22 +40,38 @@
         <div class="new-mark">${_('New!')}</div>
       %endif
       ${_md(description_md)}
+      %if caller:
+        ${caller.body()}
+      %endif
     </div>
   </section>
 </%def>
 
+<%def name="goldinfo_header(title, description)">
+  <header>
+    <img class="insignia" src="${static('gold/gold-insignia-big.png')}" alt="">
+    <h1>${title}</h1>
+    <p>${description}</p>
+    <div class="actions">
+      <a class="buy-gold-button" href="/gold">${_('buy reddit gold')}</a>
+      <span class="or">${_('or')}</span>
+      <a class="postcard-button" href="/gold/about#postcard"><img src="${static('gold/stamp.png')}" alt=""> ${_('send us a postcard')}</a>
+    </div>
+  </header>
+</%def>
+
+<%def name="goldinfo_footer()">
+  <footer>
+    <h1>${_('become a member today.')}</h1>
+    <p>${_('reddit gold is %(gold_month_price)s / month, or %(gold_year_price)s for a year.') % thing.prices}</p>
+    <a class="buy-gold-button" href="/gold">${_('buy reddit gold')}</a>
+  </footer>
+</%def>
+
 <%def name="content()">
   <section id="about-gold">
-    <header>
-      <img class="insignia" src="${static('gold/gold-insignia-big.png')}" alt="">
-      <h1>${_('Make reddit better.')}</h1>
-      <p>${_('reddit gold adds shiny extra features to your account that are made possible thanks to support from people like you.')}</p>
-      <div class="actions">
-        <a class="buy-gold-button" href="/gold">${_('buy reddit gold')}</a>
-        <span class="or">${_('or')}</span>
-        <a class="postcard-button" href="#postcard"><img src="${static('gold/stamp.png')}" alt=""> ${_('send us a postcard')}</a>
-      </div>
-    </header>
+    ${goldinfo_header(_('Make reddit better.'),
+                      _('reddit gold adds shiny extra features to your account that are made possible thanks to support from people like you.'))}
     ${feature_item(static('gold/sample-filterall.png'),
       _(
         "# Filter specific subreddits from /r/all.\n"
@@ -99,15 +116,12 @@
       <ul>
         <li><strong>${_('The Lounge.')}</strong>&#32;${_('Access to a super-secret members-only community that may or may not exist.')}</li>
         <li><strong>${_('Beta test new features.')}</strong>&#32;${_('We occasionally invite gold members to try out new features first.')}</li>
+        <li><strong><a href="/gold/partners">${_('Deals from gold partners.')}</a></strong>&#32;${strings.gold_partners_description}</li>
         <li><strong>${_('A trophy on your user page.')}</strong>&#32;${_('As thanks for supporting reddit gold.')}</li>
         <li><strong>${_('More to come.')}</strong>&#32;${_("We have many more ideas for gold features, and will add to this list in the future.")}</li>
       </ul>
     </section>
-    <footer>
-      <h1>${_('become a member today.')}</h1>
-      <p>${_('reddit gold is %(gold_month_price)s / month, or %(gold_year_price)s for a year.') % thing.prices}</p>
-      <a class="buy-gold-button" href="/gold">${_('buy reddit gold')}</a>
-    </footer>
+    ${goldinfo_footer()}
   </section>
   <div class="or-box">${_('or')}</div>
   <a class="postcard" href="/about/postcards" target="_blank">

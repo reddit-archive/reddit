@@ -23,9 +23,17 @@
 from r2.lib.db.tdb_sql import make_metadata, index_str, create_table
 
 from pylons import g, c
+from pylons.i18n import _
 from datetime import datetime
 import sqlalchemy as sa
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.schema import Column
+from sqlalchemy.sql import and_
+from sqlalchemy.types import String, Integer
 
 from xml.dom.minidom import Document
 from r2.lib.utils import tup, randstr
@@ -41,6 +49,9 @@ ENGINE_NAME = 'authorize'
 
 ENGINE = g.dbm.get_engine(ENGINE_NAME)
 METADATA = make_metadata(ENGINE)
+
+Session = scoped_session(sessionmaker(bind=ENGINE))
+Base = declarative_base(bind=ENGINE)
 
 gold_table = sa.Table('reddit_gold', METADATA,
                       sa.Column('trans_id', sa.String, nullable = False,
@@ -65,6 +76,61 @@ indices = [index_str(gold_table, 'status', 'status'),
            index_str(gold_table, 'payer_email', 'payer_email'),
            index_str(gold_table, 'subscr_id', 'subscr_id')]
 create_table(gold_table, indices)
+
+
+
+class GoldPartnerCodesExhaustedError(Exception):
+    pass
+
+
+class GoldPartnerDealCode(Base):
+    """Promo codes for deals from reddit gold partners."""
+
+    __tablename__ = "reddit_gold_partner_deal_codes"
+
+    id = Column(Integer, primary_key=True)
+    deal = Column(String, nullable=False)
+    code = Column(String, nullable=False)
+    user = Column(Integer, nullable=True)
+
+    @classmethod
+    def get_codes_for_user(cls, user):
+        results = Session.query(cls).filter(cls.user == user._id)
+        codes = {r.deal: r.code for r in results}
+        return codes
+    
+    @classmethod
+    def claim_code(cls, user, deal):
+        # check if they already have a code for this deal and return it
+        try:
+            result = (Session.query(cls)
+                      .filter(and_(cls.user == user._id,
+                                   cls.deal == deal))
+                      .one())
+            return result.code
+        except NoResultFound:
+            pass
+
+        # select an unclaimed code, assign it to the user, and return it
+        try:
+            claiming = (Session.query(cls)
+                        .filter(and_(cls.deal == deal,
+                                     cls.user == None,
+                                     func.pg_try_advisory_lock(cls.id)))
+                        .limit(1)
+                        .one())
+        except NoResultFound:
+            raise GoldPartnerCodesExhaustedError
+
+        claiming.user = user._id
+        Session.add(claiming)
+        Session.commit()
+
+        # release the lock
+        Session.query(func.pg_advisory_unlock_all()).all()
+
+        return claiming.code 
+
 
 def create_unclaimed_gold (trans_id, payer_email, paying_id,
                            pennies, days, secret, date,

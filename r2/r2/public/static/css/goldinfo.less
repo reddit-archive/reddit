@@ -6,12 +6,12 @@
     transform: @arguments;
 }
 
-section#about-gold, section#postcard, .or-box {
+section#about-gold, section#about-gold-partners, section#postcard, .or-box {
     font-family: "Bitstream Charter", "Hoefler Text", "Palatino Linotype",
                  "Book Antiqua", Palatino, georgia, garamond, FreeSerif, serif;
 }
 
-section#about-gold {
+section#about-gold, section#about-gold-partners {
     width: 960px;
     margin: 40px auto;
     background: url(../gold/inner-bg.jpg) 11px repeat-y;
@@ -90,6 +90,18 @@ section#about-gold {
                 .transform(rotate(-8deg));
             }
         }
+    }
+
+    .claim-code-button {
+        .buy-gold-button;
+
+        cursor: pointer;
+        border-width: 1px;
+        padding: 3px 5px;
+        font-size: 16px;
+        line-height: 20px;
+        float: right;
+        margin-top: 5px;
     }
 
     header {
@@ -242,6 +254,31 @@ section#about-gold {
         text-shadow: 0 2px 1px rgba(255,255,255,.5);
     }
 }
+
+section#about-gold-partners {
+    input.code {
+        font-weight: bold;
+        font-size: 16px;
+        float: right;
+        max-width: 200px;
+        line-height: 20px;
+        text-align: center;
+    }
+
+    span.error {
+        font-size: 16px;
+        float: right;
+    }
+
+    section {
+        .how-to-use p {
+            font-size: 13px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    }
+}
+
 
 .or-box {
     background: #817461;

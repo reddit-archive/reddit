@@ -1133,6 +1133,9 @@ class FrontController(RedditController, OAuth2ResourceController):
     def GET_gold_info(self):
         return GoldInfoPage(_("gold"), show_sidebar=False).render()
 
+    def GET_gold_partners(self):
+        return GoldPartnersPage(_("gold partners"), show_sidebar=False).render()
+
 
 class FormsController(RedditController):
 

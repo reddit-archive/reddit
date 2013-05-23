@@ -1,0 +1,67 @@
+## The contents of this file are subject to the Common Public Attribution
+## License Version 1.0. (the "License"); you may not use this file except in
+## compliance with the License. You may obtain a copy of the License at
+## http://code.reddit.com/LICENSE. The License is based on the Mozilla Public
+## License Version 1.1, but Sections 14 and 15 have been added to cover use of
+## software over a computer network and provide for limited attribution for the
+## Original Developer. In addition, Exhibit A has been modified to be
+## consistent with Exhibit B.
+##
+## Software distributed under the License is distributed on an "AS IS" basis,
+## WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+## the specific language governing rights and limitations under the License.
+##
+## The Original Code is reddit.
+##
+## The Original Developer is the Initial Developer.  The Initial Developer of
+## the Original Code is reddit Inc.
+##
+## All portions of the code written by reddit are Copyright (c) 2006-2013
+## reddit Inc. All Rights Reserved.
+###############################################################################
+<%!
+  from r2.lib.strings import strings
+  from r2.lib.template_helpers import static
+%>
+<%namespace file="goldinfopage.html" import="feature_item, goldinfo_header, goldinfo_footer"/>
+<%namespace file="less.html" import="less_stylesheet"/>
+<%namespace file="utils.html" import="_md"/>
+<%inherit file="reddit.html"/>
+
+<%def name="stylesheet()">
+  ${parent.stylesheet()}
+  ${less_stylesheet('goldinfo.less')}
+</%def>
+
+<%def name="partner_item(name, how_to_use, img_src, description_md, extra_class='')">
+  <%call expr="feature_item(img_src, description_md, extra_class)">
+    %if c.user.gold:
+      <div class="how-to-use">
+        ${_md(how_to_use)}
+      </div>
+    %endif
+    %if name in thing.existing_codes:
+      <input class="code" type="text" value="${thing.existing_codes[name]}">
+    %elif c.user.gold:
+      <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${_('claim code')}</a>
+    %else:
+      <a class="claim-code-button" href="/gold">${_('buy reddit gold')}</a>
+    %endif
+  </%call>
+</%def>
+
+<%def name="content()">
+  <section id="about-gold-partners">
+    ${goldinfo_header(_('reddit gold partners'),
+                      strings.gold_partners_description)}
+
+    ${partner_item('backblaze',
+                   _("Claim your code below, then visit https://secure.backblaze.com/gift/XXXXXXX (replacing Xs with your code), and click 'Redeem &amp; Download' to install the product and enter your email/password."),
+                   static('gold/partner-backblaze.png'), 
+                   _('# Backblaze Online Backup\n'
+                     '3 months of free service from Backblaze Online Backup.'),
+                   'new')}
+
+    ${goldinfo_footer()}
+  </section>
+</%def>
