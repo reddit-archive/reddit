@@ -661,8 +661,7 @@ class FrontController(RedditController, OAuth2ResourceController):
         c.profilepage = True
         pane = self._make_spamlisting(location, only, num, after, reverse,
                                       count)
-        if c.user.pref_private_feeds:
-            extension_handling = "private"
+        extension_handling = "private" if c.user.pref_private_feeds else False
 
         if location in ('reports', 'spam', 'modqueue'):
             buttons = [NavButton(_('links and comments'), None, opt='only'),
@@ -674,7 +673,8 @@ class FrontController(RedditController, OAuth2ResourceController):
             menus = None
         return EditReddit(content=pane,
                           location=location,
-                          nav_menus=menus).render()
+                          nav_menus=menus,
+                          extension_handling=extension_handling).render()
 
     @base_listing
     @prevent_framing_and_css(allow_cname_frame=True)
