@@ -478,7 +478,7 @@ r.multi.MultiCreateForm = Backbone.View.extend({
     },
 
     showError: function(error) {
-        this.$('.error').text(error).show()
+        this.$('.error').text(_.unescape(error)).show()
     },
 
     focus: function() {
