@@ -492,6 +492,10 @@ r.multi.ListingChooser = Backbone.View.extend({
         'click .grippy': 'toggleCollapsed'
     },
 
+    initialize: function() {
+        this.$el.addClass('initialized')
+    },
+
     createClick: function(ev) {
         if (!this.$('.create').is('.expanded')) {
             ev.preventDefault()

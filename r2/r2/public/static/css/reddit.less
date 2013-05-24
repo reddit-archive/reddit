@@ -7074,7 +7074,10 @@ body.with-listing-chooser.listing-chooser-collapsed {
     padding-right: @listing-chooser-grippy-width;
     background: #f7f7f7;
     overflow: hidden;
-    .transition(width, .25s);
+
+    &.initialized {
+        .transition(width, .25s);
+    }
 
     &:after {
         content: '';
