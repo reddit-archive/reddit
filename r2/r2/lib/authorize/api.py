@@ -25,6 +25,9 @@ For talking to authorize.net credit card payments via their XML api.
 
 This file consists mostly of wrapper classes for dealing with their
 API, while the actual useful functions live in interaction.py
+
+NOTE: This is using the Customer Information Manager (CIM) API
+http://developer.authorize.net/api/cim/
 """
 
 import re

@@ -38,6 +38,7 @@ from r2.lib.authorize.api import (
     Order,
     ProfileTransAuthOnly,
     ProfileTransPriorAuthCapture,
+    ProfileTransRefund,
     ProfileTransVoid,
     UpdateCustomerPaymentProfileRequest,
 )
@@ -205,3 +206,22 @@ def charge_transaction(user, trans_id, campaign, test=None):
 
     # already charged
     return True
+
+
+@export
+def refund_transaction(user, trans_id, campaign_id, amount, test=None):
+    # refund will only work if charge has settled
+    bid =  Bid.one(transaction=trans_id, campaign=campaign_id)
+    if trans_id < 0:
+        bid.refund(amount)
+        return True
+    else:
+        success, res = _make_transaction(ProfileTransRefund, amount, user,
+                                         bid.pay_id, trans_id=trans_id,
+                                         test=test)
+        if success:
+            bid.refund(amount)
+        elif success == False:
+            msg = "Refund failed, response: %r" % res
+            raise AuthorizeNetException(msg)
+        return True

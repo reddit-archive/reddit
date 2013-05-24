@@ -344,8 +344,15 @@ class Bid(Sessionized, Base):
         """
         return (self.status == self.STATUS.CHARGE)
 
-    def refund(self):
+    def refund(self, amount):
+        current_charge = self.charge or self.bid    # needed if charged() not
+                                                    # setting charge attr
+        self.charge = current_charge - amount
         self.set_status(self.STATUS.REFUND)
+        self._commit()
+
+    def is_refund(self):
+        return (self.status == self.STATUS.REFUND)
 
 
 class PromotionWeights(Sessionized, Base):

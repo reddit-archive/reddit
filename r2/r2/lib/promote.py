@@ -209,7 +209,7 @@ class RenderableCampaign():
                 if transaction.is_void():
                     status['paid'] = False
                     status['free'] = False
-                elif transaction.is_charged():
+                elif transaction.is_charged() or transaction.is_refund():
                     status['complete'] = True
 
             rc = cls(campaign_id36, start_date, end_date, duration, bid, sr,
