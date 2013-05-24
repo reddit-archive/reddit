@@ -78,6 +78,16 @@ indices = [index_str(gold_table, 'status', 'status'),
 create_table(gold_table, indices)
 
 
+def with_sqlalchemy_session(f):
+    """Ensures sqlalchemy session is closed (due to connection pooling)."""
+    def close_session_after(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        finally:
+            Session.remove()
+
+    return close_session_after
+
 
 class GoldPartnerCodesExhaustedError(Exception):
     pass
@@ -94,12 +104,14 @@ class GoldPartnerDealCode(Base):
     user = Column(Integer, nullable=True)
 
     @classmethod
+    @with_sqlalchemy_session
     def get_codes_for_user(cls, user):
         results = Session.query(cls).filter(cls.user == user._id)
         codes = {r.deal: r.code for r in results}
         return codes
     
     @classmethod
+    @with_sqlalchemy_session
     def claim_code(cls, user, deal):
         # check if they already have a code for this deal and return it
         try:
