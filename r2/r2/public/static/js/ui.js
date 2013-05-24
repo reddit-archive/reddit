@@ -70,7 +70,10 @@ r.ui.refreshListing = function() {
         url: url.attr('base') + url.attr('path'),
         data: params
     }).done(function(resp) {
-        $('body > .content').html(resp)
+        $('body > .content')
+            .html(resp)
+            .find('.promotedlink.promoted:visible')
+                .trigger('onshow')
     })
 }
 
