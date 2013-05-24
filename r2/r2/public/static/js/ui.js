@@ -70,7 +70,7 @@ r.ui.refreshListing = function() {
         url: url.attr('base') + url.attr('path'),
         data: params
     }).done(function(resp) {
-        $('#siteTable').replaceWith(resp)
+        $('body > .content').html(resp)
     })
 }
 

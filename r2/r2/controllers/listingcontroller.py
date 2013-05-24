@@ -110,17 +110,10 @@ class ListingController(RedditController, OAuth2ResourceController):
         self.listing_obj = self.listing()
 
         content = self.content()
-        page_classes = self.extra_page_classes
-        if (self.show_chooser and
-                c.render_style == "html" and
-                c.user_is_loggedin and
-                isinstance(c.site, (DefaultSR, AllSR, ModSR, LabeledMulti))):
-            page_classes = page_classes + ['with-listing-chooser']
-            content = PaneStack([ListingChooser(), content])
-
         return self.render_cls(content=content,
-                               page_classes=page_classes,
+                               page_classes=self.extra_page_classes,
                                show_sidebar=self.show_sidebar,
+                               show_chooser=self.show_chooser,
                                nav_menus=self.menus,
                                title=self.title(),
                                robots=getattr(self, "robots", None),

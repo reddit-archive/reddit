@@ -23,7 +23,7 @@
 <%! 
    from r2.lib.template_helpers import add_sr, static, join_urls, class_dict, get_domain
    from r2.lib.filters import unsafe
-   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login
+   from r2.lib.pages import SearchForm, ClickGadget, SideContentBox, Login, ListingChooser
    from r2.lib import tracking
    from pylons import request
    from r2.lib.strings import strings
@@ -141,6 +141,10 @@
     <div class="side">
       ${sidebar(content = thing.rightbox())}
     </div>
+  %endif
+
+  %if thing.show_chooser:
+    ${ListingChooser()}
   %endif
 
   <% content = getattr(self, "content", None) or thing.content %>

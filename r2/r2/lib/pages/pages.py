@@ -156,9 +156,9 @@ class Reddit(Templated):
 
     def __init__(self, space_compress=None, nav_menus=None, loginbox=True,
                  infotext='', content=None, short_description='', title='',
-                 robots=None, show_sidebar=True, footer=True, srbar=True,
-                 page_classes=None, show_wiki_actions=False,
-                 extra_js_config=None, **context):
+                 robots=None, show_sidebar=True, show_chooser=False,
+                 footer=True, srbar=True, page_classes=None,
+                 show_wiki_actions=False, extra_js_config=None, **context):
         Templated.__init__(self, **context)
         self.title = title
         self.short_description = short_description
@@ -235,6 +235,13 @@ class Reddit(Templated):
             self._content = PaneStack([ShareLink(), content, gold])
         else:
             self._content = content
+
+        self.show_chooser = (
+            show_chooser and
+            c.render_style == "html" and
+            c.user_is_loggedin and
+            isinstance(c.site, (DefaultSR, AllSR, ModSR, LabeledMulti))
+        )
 
         self.toolbars = self.build_toolbars()
 
@@ -494,8 +501,8 @@ class Reddit(Templated):
         In adition, unlike Templated.render, the result is in the form of a pylons
         Response object with it's content set.
         """
-        if request.get.pop('bare', False):
-            res = self._content.render()
+        if c.bare_content:
+            res = self.content().render()
         else:
             res = Templated.render(self, *a, **kw)
 
@@ -606,6 +613,9 @@ class Reddit(Templated):
 
         if isinstance(c.site, MultiReddit):
             classes.add('multi-page')
+
+        if self.show_chooser:
+            classes.add('with-listing-chooser')
 
         if self.extra_page_classes:
             classes.update(self.extra_page_classes)
