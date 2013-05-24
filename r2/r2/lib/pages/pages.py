@@ -154,22 +154,23 @@ class Reddit(Templated):
     extra_page_classes = None
     extra_stylesheets  = []
 
-    def __init__(self, space_compress = None, nav_menus = None, loginbox = True,
-                 infotext = '', content = None, short_description='', title = '', robots = None,
-                 show_sidebar = True, footer = True, srbar = True, page_classes = None,
-                 show_wiki_actions = False, extra_js_config = None, **context):
+    def __init__(self, space_compress=None, nav_menus=None, loginbox=True,
+                 infotext='', content=None, short_description='', title='',
+                 robots=None, show_sidebar=True, footer=True, srbar=True,
+                 page_classes=None, show_wiki_actions=False,
+                 extra_js_config=None, **context):
         Templated.__init__(self, **context)
-        self.title          = title
+        self.title = title
         self.short_description = short_description
-        self.robots         = robots
-        self.infotext       = infotext
+        self.robots = robots
+        self.infotext = infotext
         self.extra_js_config = extra_js_config
         self.show_wiki_actions = show_wiki_actions
-        self.loginbox       = True
-        self.show_sidebar   = show_sidebar
+        self.loginbox = True
+        self.show_sidebar = show_sidebar
         self.space_compress = space_compress
         # instantiate a footer
-        self.footer         = RedditFooter() if footer else None
+        self.footer = RedditFooter() if footer else None
         self.supplied_page_classes = page_classes or []
 
         #put the sort menus at the top
