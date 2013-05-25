@@ -33,6 +33,7 @@ class Plugin(object):
     config = {}
     live_config = {}
     needs_static_build = False
+    errors = {}
 
     def __init__(self, entry_point):
         self.entry_point = entry_point
@@ -145,5 +146,10 @@ class PluginLoader(object):
             plugin.on_load(g)
 
     def load_controllers(self):
+        # this module relies on pylons.i18n._ at import time (for translating
+        # messages) which isn't available 'til we're in request context.
+        from r2.lib import errors
+
         for plugin in self:
+            errors.add_error_codes(plugin.errors)
             plugin.load_controllers()

@@ -126,6 +126,18 @@ error_list = dict((
 errors = Storage([(e, e) for e in error_list.keys()])
 
 
+def add_error_codes(new_codes):
+    """Add error codes to the error enumeration.
+
+    It is assumed that the incoming messages are marked for translation but not
+    yet translated, so they can be declared before pylons.i18n is ready.
+
+    """
+    for code, message in new_codes.iteritems():
+        error_list[code] = _(message)
+        errors[code] = code
+
+
 class RedditError(Exception):
     name = None
     fields = None
