@@ -177,7 +177,7 @@ r.multi.GlobalMultiCache = Backbone.Collection.extend({
 r.multi.MultiSubredditItem = Backbone.View.extend({
     tagName: 'li',
 
-    template: _.template('<a href="/r/<%- srName %>">/r/<%- srName %></a><button class="remove-sr">x</button>'),
+    template: _.template('<a href="/r/<%- sr_name %>">/r/<%- sr_name %></a><button class="remove-sr">x</button>'),
 
     events: {
         'click .remove-sr': 'removeSubreddit'
@@ -185,7 +185,7 @@ r.multi.MultiSubredditItem = Backbone.View.extend({
 
     render: function() {
         this.$el.append(this.template({
-            srName: this.model.get('name')
+            sr_name: this.model.get('name')
         }))
 
         if (r.config.logged) {
@@ -377,9 +377,9 @@ r.multi.SubscribeButton = Backbone.View.extend({
 
 r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     className: 'multi-selector hover-bubble anchor-right',
-    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- srName %>">/r/<%- srName %></a></div><div class="throbber"></div>'),
+    template: _.template('<div class="title"><strong><%- title %></strong><a class="sr" href="/r/<%- sr_name %>">/r/<%- sr_name %></a></div><div class="throbber"></div>'),
     itemTemplate: _.template('<label><input class="add-to-multi" type="checkbox" data-path="<%- path %>" <%- checked %>><%- name %><a href="<%- path %>" target="_blank">&rsaquo;</a></label>'),
-    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- createMsg %>"><div class="error create-multi-error"></div></form></label>'),
+    itemCreateTemplate: _.template('<label><form class="create-multi"><input type="text" class="multi-name" placeholder="<%- create_msg %>"><div class="error create-multi-error"></div></form></label>'),
 
     events: {
         'click .add-to-multi': 'toggleSubscribed'
@@ -398,7 +398,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
     render: function() {
         this.$el.html(this.template({
             title: r.strings('categorize'),
-            srName: this.options.srName
+            sr_name: this.options.srName
         }))
 
         var content = $('<div class="multi-list">')
@@ -416,7 +416,7 @@ r.multi.MultiSubscribeBubble = r.ui.Bubble.extend({
                 }))
             }, this)
         content.append(this.itemCreateTemplate({
-            createMsg: r.strings('create_multi')
+            create_msg: r.strings('create_multi')
         }))
         this.$el.append(content)
 
