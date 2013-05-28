@@ -561,12 +561,14 @@ class PromoteController(ListingController):
             promote.edit_campaign(l, campaign, dates, bid, cpm, sr)
             r = promote.get_renderable_campaigns(l, campaign)
             jquery.update_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                   r.duration, r.bid, r.cpm, r.sr, r.status)
+                                   r.duration, r.bid, r.spent, r.cpm,
+                                   r.sr, r.status)
         else:
             campaign = promote.new_campaign(l, dates, bid, cpm, sr)
             r = promote.get_renderable_campaigns(l, campaign)
             jquery.new_campaign(r.campaign_id36, r.start_date, r.end_date,
-                                r.duration, r.bid, r.cpm, r.sr, r.status)
+                                r.duration, r.bid, r.spent, r.cpm,
+                                r.sr, r.status)
 
     @validatedForm(VSponsor('link_id'),
                    VModhash(),

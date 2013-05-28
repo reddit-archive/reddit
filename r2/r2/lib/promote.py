@@ -174,12 +174,13 @@ def campaign_is_live(link, campaign_index):
 
 class RenderableCampaign():
     def __init__(self, campaign_id36, start_date, end_date, duration, bid,
-                 cpm, sr, status):
+                 spent, cpm, sr, status):
         self.campaign_id36 = campaign_id36
         self.start_date = start_date
         self.end_date = end_date
         self.duration = duration
         self.bid = bid
+        self.spent = spent
         self.cpm = cpm
         self.sr = sr
         self.status = status
@@ -199,6 +200,7 @@ class RenderableCampaign():
             duration = strings.time_label % dict(num=ndays,
                             time=ungettext("day", "days", ndays))
             bid = "%.2f" % camp.bid
+            spent = "%.2f" % get_spent_amount(camp)
             cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
             sr = camp.sr_name
             status = {'paid': bool(transaction),
@@ -215,7 +217,7 @@ class RenderableCampaign():
                 elif transaction.is_charged() or transaction.is_refund():
                     status['complete'] = True
 
-            rc = cls(campaign_id36, start_date, end_date, duration, bid,
+            rc = cls(campaign_id36, start_date, end_date, duration, bid, spent,
                      cpm, sr, status)
             r.append(rc)
         return r

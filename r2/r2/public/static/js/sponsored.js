@@ -315,7 +315,7 @@ function get_flag_class(flags) {
 }
 
 $.new_campaign = function(campaign_id36, start_date, end_date, duration,
-                          bid, cpm, targeting, flags) {
+                          bid, spent, cpm, targeting, flags) {
     cancel_edit(function() {
       var data =('<input type="hidden" name="startdate" value="' + 
                  start_date +'"/>' + 
@@ -334,7 +334,7 @@ $.new_campaign = function(campaign_id36, start_date, end_date, duration,
           data += ("<input type='hidden' name='view_live_url' value='" + 
                    flags.view_live_url + "'/>");
       }
-      var row = [start_date, end_date, duration, "$" + bid, targeting, data];
+      var row = [start_date, end_date, duration, "$" + bid, "$" + spent, targeting, data];
       $(".existing-campaigns .error").hide();
       var css_class = get_flag_class(flags);
       $(".existing-campaigns table").show()
@@ -347,7 +347,7 @@ $.new_campaign = function(campaign_id36, start_date, end_date, duration,
 };
 
 $.update_campaign = function(campaign_id36, start_date, end_date,
-                             duration, bid, cpm, targeting, flags) {
+                             duration, bid, spent, cpm, targeting, flags) {
     cancel_edit(function() {
             $('.existing-campaigns input[name="campaign_id36"]')
                 .filter('*[value="' + (campaign_id36 || '0') + '"]')
@@ -357,6 +357,7 @@ $.update_campaign = function(campaign_id36, start_date, end_date,
                 .next().html(end_date)
                 .next().html(duration)
                 .next().html("$" + bid).removeClass()
+                .next().html("$" + spent)
                 .next().html(targeting)
                 .next()
                 .find('*[name="startdate"]').val(start_date).end()
@@ -494,7 +495,7 @@ function edit_campaign(elem) {
                                 "css_class": "", "cells": [""]}], 
                     tr.rowIndex + 1);
             $("#edit-campaign-tr").children('td:first')
-                .attr("colspan", 7).append(campaign).end()
+                .attr("colspan", 8).append(campaign).end()
                 .prev().fadeOut(function() { 
                         var data_tr = $(this);
                         var c = $("#campaign");

@@ -436,6 +436,7 @@ ${self.javascript_setup()}
             <th title="${end_title}">end</th>
             <th>duration</th>
             <th>total budget</th>
+            <th>spent</th>
             <th title="${targeting_title}">targeting</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
@@ -451,7 +452,7 @@ ${self.javascript_setup()}
               %for rc in sorted(thing.campaigns, key=lambda rc: rc.start_date):
                 $.new_campaign(${unsafe(','.join(simplejson.dumps(attr) for attr in
                     [rc.campaign_id36, rc.start_date, rc.end_date, rc.duration,
-                     rc.bid, rc.cpm, rc.sr, rc.status]))});
+                     rc.bid, rc.spent, rc.cpm, rc.sr, rc.status]))});
               %endfor
               $.set_up_campaigns();
             });
