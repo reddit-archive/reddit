@@ -35,6 +35,7 @@ from r2.lib.template_helpers import join_urls
 
 
 from r2.lib.validator import (
+    nop,
     validate,
     VExistingUname,
     VInt,
@@ -84,7 +85,9 @@ page_descriptions = {'config/stylesheet':_("This page is the subreddit styleshee
 
 ATTRIBUTE_BY_PAGE = {"config/sidebar": "description",
                      "config/description": "public_description"}
-
+RENDERERS_BY_PAGE = {"config/sidebar": "reddit",
+                     "config/description": "reddit",
+                     "config/stylesheet": "stylesheet"}
 
 class WikiController(RedditController):
     allow_stylesheets = True
@@ -142,9 +145,12 @@ class WikiController(RedditController):
                 message = _("viewing revision from %s ago") % timesince(version.date)
                 content = version.content
 
+        renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki') 
+
         return WikiPageView(content, alert=message, v=version, diff=diffcontent,
                             may_revise=this_may_revise(page), edit_by=edit_by,
-                            edit_date=edit_date, page=page.name).render()
+                            edit_date=edit_date, page=page.name,
+                            renderer=renderer).render()
 
     @paginated_listing(max_page_size=100, backend='cassandra')
     @validate(page=VWikiPage(('page'), restricted=False))
@@ -284,7 +290,7 @@ class WikiController(RedditController):
 class WikiApiController(WikiController):
     @validate(VModhash(),
               pageandprevious=VWikiPageRevise(('page', 'previous'), restricted=True),
-              content=VMarkdown(('content'), renderer='wiki'),
+              content=nop(('content')),
               page_name=VWikiPageName('page'),
               reason=VPrintable('reason', 256))
     @api_doc(api_section.wiki, uri='/api/wiki/edit')
@@ -300,6 +306,11 @@ class WikiApiController(WikiController):
         if c.user._spam:
             error = _("You are doing that too much, please try again later.")
             self.handle_error(415, 'SPECIAL_ERRORS', special_errors=[error])
+
+        renderer = RENDERERS_BY_PAGE.get(page.name, 'wiki')
+        if renderer in ('wiki', 'reddit'):
+            content = VMarkdown(('content'), renderer=renderer).run(content)
+
         # Use the raw POST value as we need to tell the difference between
         # None/Undefined and an empty string.  The validators use a default
         # value with both of those cases and would need to be changed.

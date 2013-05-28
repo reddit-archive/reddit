@@ -23,7 +23,6 @@
 <%namespace file="utils.html" import="timestamp"/>
 
 <%!
-    from r2.lib.filters import wikimarkdown
     from r2.lib.pages import WrappedUser
 %>
 
@@ -36,7 +35,7 @@
     %if not thing.page_content_md:
         <em>${_("this page is empty")}</em>
     %else:
-        ${unsafe(wikimarkdown(thing.page_content_md))}
+        ${unsafe(thing.page_content)}
     %endif
 </p>
 %if thing.edit_date:

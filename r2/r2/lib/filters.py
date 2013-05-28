@@ -201,7 +201,7 @@ def markdown_souptest(text, nofollow=False, target=None, renderer=None):
     if not text:
         return text
     
-    if not renderer:
+    if not renderer or renderer == 'reddit':
         smd = safemarkdown(text, nofollow=nofollow, target=target)
     elif renderer == 'wiki':
         smd = wikimarkdown(text)

@@ -26,7 +26,7 @@ from utils import to36, tup, iters
 from wrapped import Wrapped, StringTemplate, CacheStub, CachedVariable, Templated
 from mako.template import Template
 from r2.config.extensions import get_api_subtype
-from r2.lib.filters import spaceCompress, safemarkdown, wikimarkdown
+from r2.lib.filters import spaceCompress, safemarkdown
 from r2.models.subreddit import SubSR
 import time, pytz
 from pylons import c, g
@@ -651,7 +651,7 @@ class WikiViewJsonTemplate(ThingJsonTemplate):
         if thing.edit_by and not thing.edit_by._deleted:
              edit_by = Wrapped(thing.edit_by).render()
         return dict(content_md=thing.page_content_md,
-                    content_html=wikimarkdown(thing.page_content_md),
+                    content_html=thing.page_content,
                     revision_by=edit_by,
                     revision_date=edit_date,
                     may_revise=thing.may_revise)
