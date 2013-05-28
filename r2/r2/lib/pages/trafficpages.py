@@ -479,15 +479,6 @@ def _is_promo_preliminary(end_date):
     return end_date + datetime.timedelta(days=1) > now
 
 
-def get_traffic_dates(thing):
-    """Retrieve the start and end of a Promoted Link or PromoCampaign."""
-    now = datetime.datetime.now(g.tz).replace(minute=0, second=0,
-                                              microsecond=0)
-    start, end = promote.get_total_run(thing)
-    end = min(now, end)
-    return start, end
-
-
 def get_promo_traffic(thing, start, end):
     """Get traffic for a Promoted Link or PromoCampaign"""
     if isinstance(thing, Link):
@@ -511,7 +502,7 @@ def get_promo_traffic(thing, start, end):
 
 def get_billable_traffic(campaign):
     """Get traffic for dates when PromoCampaign is active."""
-    start, end = get_traffic_dates(campaign)
+    start, end = promote.get_traffic_dates(campaign)
     return get_promo_traffic(campaign, start, end)
 
 
@@ -638,7 +629,7 @@ class PromotedLinkTraffic(Templated):
 
     def check_dates(self, thing):
         """Shorten range for display and add next/prev buttons."""
-        start, end = get_traffic_dates(thing)
+        start, end = promote.get_traffic_dates(thing)
 
         if self.period:
             display_start = self.after
@@ -721,7 +712,7 @@ class PromotedLinkTraffic(Templated):
         import csv
         import cStringIO
 
-        start, end = get_traffic_dates(thing)
+        start, end = promote.get_traffic_dates(thing)
         history = cls.get_hourly_traffic(thing, start, end)
 
         out = cStringIO.StringIO()

@@ -826,6 +826,14 @@ def get_total_run(thing):
     return earliest, latest
 
 
+def get_traffic_dates(thing):
+    """Retrieve the start and end of a Promoted Link or PromoCampaign."""
+    now = datetime.now(g.tz).replace(minute=0, second=0, microsecond=0)
+    start, end = get_total_run(thing)
+    end = min(now, end)
+    return start, end
+
+
 def Run(offset=0, verbose=True):
     """reddit-job-update_promos: Intended to be run hourly to pull in
     scheduled changes to ads
