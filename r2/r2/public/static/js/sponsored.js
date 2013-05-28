@@ -349,7 +349,7 @@ $.set_up_campaigns = function() {
                             .click(function() { view_campaign(tr) }));
                 }
                 /* once paid, we shouldn't muck around with the campaign */
-                if(!tr.hasClass("complete")) {
+                if(!tr.hasClass("complete") && !tr.hasClass("live")) {
                     if (tr.hasClass("sponsor") && !tr.hasClass("free")) {
                         $(bid_td).append($(free).addClass("free")
                                      .click(function() { free_campaign(tr) }))
@@ -370,9 +370,10 @@ $.set_up_campaigns = function() {
                     var d = $(del).addClass("d fancybutton")
                         .click(function() { del_campaign(tr); });
                     $(td).append(e).append(d);
-                }
-                else {
-                    $(td).append("<span class='info'>complete/live</span>");
+                } else {
+                    if (tr.hasClass("complete")) {
+                      $(td).append("<span class='info'>complete</span>");
+                    }
                     $(bid_td).addClass("paid")
                     /* sponsors can always edit */
                     if (tr.hasClass("sponsor")) {

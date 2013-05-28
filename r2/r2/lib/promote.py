@@ -203,19 +203,22 @@ class RenderableCampaign():
             spent = "%.2f" % get_spent_amount(camp)
             cpm = getattr(camp, 'cpm', g.cpm_selfserve.pennies)
             sr = camp.sr_name
+            live = camp._id in live_campaigns
+            complete = (transaction and (transaction.is_charged() or
+                                         transaction.is_refund()) and
+                        not live)
+
             status = {'paid': bool(transaction),
-                      'complete': False,
+                      'complete': complete,
                       'free': camp.is_freebie(),
                       'pay_url': pay_url(link, camp),
                       'view_live_url': view_live_url(link, sr),
                       'sponsor': user_is_sponsor,
-                      'live': camp._id in live_campaigns}
-            if transaction:
-                if transaction.is_void():
-                    status['paid'] = False
-                    status['free'] = False
-                elif transaction.is_charged() or transaction.is_refund():
-                    status['complete'] = True
+                      'live': live}
+
+            if transaction and transaction.is_void():
+                status['paid'] = False
+                status['free'] = False
 
             rc = cls(campaign_id36, start_date, end_date, duration, bid, spent,
                      cpm, sr, status)
