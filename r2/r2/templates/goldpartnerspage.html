@@ -41,7 +41,7 @@
       </div>
     %endif
     %if name in thing.existing_codes:
-      <input class="code" type="text" value="${thing.existing_codes[name]}">
+      <input class="code" type="text" value="${thing.existing_codes[name]}" readonly="readonly">
     %elif c.user.gold:
       <a class="claim-code-button" onclick="r.gold.claim_gold_partner_deal_code(this, '${name}')">${_('claim code')}</a>
     %else:

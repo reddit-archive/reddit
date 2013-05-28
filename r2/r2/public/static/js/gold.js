@@ -200,7 +200,7 @@ r.gold = {
                           var $newelem = $('<span class="error">').text(data['explanation'])
                           $(elem).replaceWith($newelem)
                       } else {
-                          var $newelem = $('<input type="text" class="code">').attr('value', data['code'])
+                          var $newelem = $('<input type="text" class="code" readonly="readonly">').attr('value', data['code'])
                           $(elem).replaceWith($newelem)
                           $newelem.select()
                       }
