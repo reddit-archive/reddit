@@ -57,7 +57,7 @@
     </form>
   %endif
 
-  <h3>${_('subreddits in this multi:')}</h3>
+  <h3>${unsafe(_('%(count)s subreddits in this multi:') % dict(count='<span class="count">%d</span>&#32;' % len(thing.srs)))}</h3>
   <ul class="subreddits">
   %for sr in thing.srs:
     <li data-name="${sr.name}">

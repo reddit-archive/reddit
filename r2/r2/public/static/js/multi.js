@@ -258,6 +258,8 @@ r.multi.MultiDetails = Backbone.View.extend({
 
         this.$el.toggleClass('readonly', !canEdit)
 
+        this.$('.count').text(this.model.subreddits.length)
+
         return this
     },
 
