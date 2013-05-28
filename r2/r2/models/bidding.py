@@ -333,7 +333,9 @@ class Bid(Sessionized, Base):
         return (self.status == self.STATUS.VOID)
 
     def charged(self):
+        self.charge = self.bid
         self.set_status(self.STATUS.CHARGE)
+        self._commit()
 
     def is_charged(self):
         """
