@@ -92,7 +92,7 @@
     %if thing.is_self:
         (self)
     %else:
-        (<a href="${thing.domain_path}">${thing.domain}</a>)
+        (<a href="${thing.domain_path}.compact">${thing.domain_str}</a>)
     %endif
     </span>
     %if thing.nsfw:

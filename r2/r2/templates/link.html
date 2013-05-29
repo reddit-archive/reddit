@@ -199,7 +199,7 @@ ${parent.thing_data_attributes(what)} data-ups="${what.upvotes}" data-downs="${w
 
 <%def name="domain()">
   <span class="domain">
-    (${plain_link(thing.domain, thing.domain_path, _sr_path = False)})
+    (<a href="${thing.domain_path}">${thing.domain_str}</a>)
     %if c.user_is_admin:
       &#32;
       <a class="adminbox" href="/admin/domain/${thing.domain}">d</a>

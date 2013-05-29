@@ -26,13 +26,14 @@ from r2.lib.db.operators import desc
 from r2.lib.utils import (
     base_url,
     domain,
+    strip_www,
     timesince,
     title_to_url,
     tup,
     UrlParser,
 )
 from account import Account, DeletedUser
-from subreddit import Subreddit, DomainSR
+from subreddit import DefaultSR, DomainSR, Subreddit
 from printable import Printable
 from r2.config import cache, extensions
 from r2.lib.memoize import memoize
@@ -472,6 +473,38 @@ class Link(Thing, Printable):
 
             if g.shortdomain:
                 item.shortlink = g.shortdomain + '/' + item._id36
+
+            item.domain_str = None
+            if c.user.pref_domain_details:
+                urlparser = UrlParser(item.url)
+                if not item.is_self and urlparser.is_reddit_url():
+                    url_subreddit = urlparser.get_subreddit()
+                    if (url_subreddit and
+                            not isinstance(url_subreddit, DefaultSR)):
+                        item.domain_str = ('{0}/r/{1}'
+                                           .format(item.domain,
+                                                   url_subreddit.name))
+                elif item.media_object:
+                    try:
+                        author_url = item.media_object['oembed']['author_url']
+                        if domain(author_url) == item.domain:
+                            urlparser = UrlParser(author_url)
+                            item.domain_str = strip_www(urlparser.hostname)
+                            item.domain_str += urlparser.path
+                    except KeyError:
+                        pass
+
+                    if not item.domain_str:
+                        try:
+                            author = item.media_object['oembed']['author_name']
+                            author = _force_unicode(author)
+                            item.domain_str = (_force_unicode('{0}: {1}')
+                                               .format(item.domain, author))
+                        except KeyError:
+                            pass
+
+            if not item.domain_str:
+                item.domain_str = item.domain
 
             # do we hide the score?
             if user_is_admin:

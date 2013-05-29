@@ -730,9 +730,17 @@ ul.flat-vert {text-align: left;}
     margin-left: 3px;
     opacity: 1;
 }
-.domain { color: #888; font-size:x-small; }
-.domain a { color: #888 }
-.domain a:hover { text-decoration: underline }
+.domain { color: #888; font-size:x-small; white-space: nowrap; }
+.domain a {
+    color: #888;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    max-width: 19em;
+}
+.domain a:hover { text-decoration: underline; max-width: none; }
 .spam .domain,
 .spam .domain a {
     color: black;

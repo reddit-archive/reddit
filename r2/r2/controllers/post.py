@@ -83,6 +83,7 @@ class PostController(ApiController):
               pref_lang = VLang('lang'),
               pref_media = VOneOf('media', ('on', 'off', 'subreddit')),
               pref_compress = VBoolean('compress'),
+              pref_domain_details = VBoolean('domain_details'),
               pref_min_link_score = VInt('min_link_score', -100, 100),
               pref_min_comment_score = VInt('min_comment_score', -100, 100),
               pref_num_comments = VInt('num_comments', 1, g.max_comments,
