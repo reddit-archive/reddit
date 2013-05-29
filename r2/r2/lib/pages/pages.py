@@ -20,6 +20,8 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+from collections import OrderedDict
+
 from r2.lib.wrapped import Wrapped, Templated, CachedTemplate
 from r2.models import Account, FakeAccount, DefaultSR, make_feedurl
 from r2.models import FakeSubreddit, Subreddit, SubSR, AllMinus, AllSR
@@ -3097,10 +3099,12 @@ class BannedList(UserList):
 
     def __init__(self, *k, **kw):
         UserList.__init__(self, *k, **kw)
+        rels = getattr(c.site, 'each_%s' % self.type)
+        self.rels = OrderedDict((rel._thing2_id, rel) for rel in rels())
         self.cells += ('note',)
 
     def user_row(self, row_type, user, editable=True):
-        rel = getattr(c.site, 'get_%s' % self.type)(user)
+        rel = self.rels.get(user._id, None)
         return UserTableItem(user, row_type, self.cells, self.container_name,
                              editable, self.remove_action, rel)
 
@@ -3113,14 +3117,11 @@ class BannedList(UserList):
         return  _('banned users')
 
     def user_ids(self):
-        return c.site.banned
+        return self.rels.keys()
  
 class WikiBannedList(BannedList):
     """List of users banned from editing a given wiki"""
     type = 'wikibanned'
-
-    def user_ids(self):
-        return c.site.wikibanned
 
 class WikiMayContributeList(UserList):
     """List of users allowed to contribute to a given wiki"""
