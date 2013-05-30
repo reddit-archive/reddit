@@ -1803,7 +1803,7 @@ class SubscriptionBox(Templated):
             if not c.user.gold:
                 self.goldlink = "/gold"
                 self.goldmsg = _("raise it to %s") % Subreddit.gold_limit
-                self.prelink = ["/wiki/faq#wiki_how_many_reddits_can_i_subscribe_to.3F",
+                self.prelink = ["/wiki/faq#wiki_how_many_subreddits_can_i_subscribe_to.3F",
                                 _("%s visible") % Subreddit.sr_limit]
             else:
                 self.goldlink = "/gold/about"
@@ -1812,7 +1812,7 @@ class SubscriptionBox(Templated):
                 visible = min(len(srs), Subreddit.gold_limit)
                 bonus = {"bonus": extra}
                 self.goldmsg = _("%(bonus)s bonus subreddits") % bonus
-                self.prelink = ["/wiki/faq#wiki_how_many_reddits_can_i_subscribe_to.3F",
+                self.prelink = ["/wiki/faq#wiki_how_many_subreddits_can_i_subscribe_to.3F",
                                 _("%s visible") % visible]
 
         Templated.__init__(self, srs=srs, goldlink=self.goldlink,
