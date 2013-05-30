@@ -3908,7 +3908,7 @@ class PromoteReport(Templated):
                 'owner': owners[link.author_id].name,
                 'campaign': fullname,
                 'target': camp.sr_name or 'frontpage',
-                'bid': format_currency(bid, 'USD'),
+                'bid': format_currency(bid, 'USD', locale=c.locale),
                 'fp_impressions': fp_imps[fullname],
                 'sr_impressions': sr_imps[fullname],
                 'fp_clicks': fp_clicks[fullname],
