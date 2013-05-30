@@ -745,8 +745,8 @@ class FrontController(RedditController, OAuth2ResourceController):
         query = u"|".join(query.split())
         query = u"title:'%s'" % query
         rel_range = timedelta(days=3)
-        start = int(time.mktime((article._date - rel_range).utctimetuple()))
-        end = int(time.mktime((article._date + rel_range).utctimetuple()))
+        start = int(time_module.mktime((article._date - rel_range).utctimetuple()))
+        end = int(time_module.mktime((article._date + rel_range).utctimetuple()))
         nsfw = u"nsfw:0" if not (article.over_18 or article._nsfw.findall(article.title)) else u""
         query = u"(and %s timestamp:%s..%s %s)" % (query, start, end, nsfw)
         q = SearchQuery(query, raw_sort="-text_relevance",
