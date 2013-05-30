@@ -368,6 +368,19 @@ def get_traffic_last_modified():
         return datetime.datetime.min
 
 
+@memoize("missing_traffic", time=60 * 10)
+def get_missing_traffic(start, end):
+    """Check for missing hourly traffic between start and end."""
+
+    # NOTE: start, end must be UTC time without tzinfo
+    time_points = get_time_points('hour', start, end)
+    q = (Session.query(SitewidePageviews.date)
+                .filter(SitewidePageviews.interval == "hour")
+                .filter(SitewidePageviews.date.in_(time_points)))
+    found = [t for (t,) in q]
+    return [t for t in time_points if t not in found]
+
+
 class SitewidePageviews(Base):
     """Pageviews across all areas of the site."""
 
