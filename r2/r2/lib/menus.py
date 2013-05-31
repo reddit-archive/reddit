@@ -352,7 +352,7 @@ class SubredditButton(NavButton):
                            isselected = (c.site == sr), **kw)
 
     def build(self, base_path = ''):
-        pass
+        self.bare_path = ""
 
     def is_selected(self):
         return self.isselected
