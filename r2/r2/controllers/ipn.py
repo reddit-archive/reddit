@@ -635,7 +635,7 @@ class GoldPaymentController(RedditController):
 
         try:
             payment_blob = validate_blob(passthrough)
-        except GoldError as e:
+        except GoldException as e:
             g.log.error('%s %s: bad payment_blob %s' % (self.name,
                                                         transaction_id,
                                                         e))
