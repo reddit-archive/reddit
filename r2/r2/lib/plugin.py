@@ -20,6 +20,7 @@
 # Inc. All Rights Reserved.
 ###############################################################################
 
+import site
 import sys
 import os.path
 import pkg_resources
@@ -83,6 +84,14 @@ class Plugin(object):
 
 class PluginLoader(object):
     def __init__(self, plugin_names=None):
+        # reloading site ensures that we have a fresh sys.path to build our
+        # working set off of. this means that forked worker processes won't get
+        # the sys.path that was current when the master process was spawned
+        # meaning that new plugins will be picked up on regular app reload
+        # rather than having to restart the master process as well.
+        reload(site)
+        self.working_set = pkg_resources.WorkingSet(sys.path)
+
         if plugin_names is None:
             entry_points = self.available_plugins()
         else:
@@ -123,9 +132,8 @@ class PluginLoader(object):
     def __getitem__(self, key):
         return self.plugins[key]
 
-    @staticmethod
-    def available_plugins(name=None):
-        return pkg_resources.iter_entry_points('r2.plugin', name)
+    def available_plugins(self, name=None):
+        return self.working_set.iter_entry_points('r2.plugin', name)
 
     def declare_queues(self, queues):
         for plugin in self:
