@@ -78,6 +78,7 @@ from r2.lib.validator import (
     VRatelimit,
     VSponsor,
     VSponsorAdmin,
+    VSponsorAdminOrAdminSecret,
     VSubmitSR,
     VTitle,
     VUrl,
@@ -762,7 +763,7 @@ class PromoteController(ListingController):
                               start=dates[0],
                               end=dates[1]).render()
 
-    @validate(VSponsorAdmin(),
+    @validate(VSponsorAdminOrAdminSecret('secret'),
               start=VDate('startdate'),
               end=VDate('enddate'),
               link_text=nop('link_text'),
