@@ -119,7 +119,7 @@ ${self.javascript_setup()}
     ${error_field("NO_TEXT", "title", "div")}
     ${error_field("TOO_LONG", "title", "div")}
     <div class="infotext rounded">
-      <p>A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them</p>
+      <p>${_("A good title is important to the success of your campaign. reddit users are an intelligent, thoughtful group, and reward those who engage them.")}</p>
     </div>
   </%utils:line_field>
 </%def>
@@ -136,11 +136,11 @@ ${self.javascript_setup()}
     ${error_field("DOMAIN_BANNED", "url", "div")}
     ${error_field("ALREADY_SUB", "url", "div")}
     <div class="infotext rounded">
-      <p>Provide the URL of your ad.&#32;<em>No redirects please!</em></p>
+      <p>${_("Provide the URL of your ad. No redirects please!")}</p>
     </div>
 
     %if enable_override:
-      <label style="display:block; text-align:right" for="domain">Override display domain:</label>
+      <label style="display:block; text-align:right" for="domain">${_("Override display domain:")}</label>
       <input id="domain" name="domain" type="text" 
              %if link and getattr(link, "domain_override", False):
                value="${link.domain_override}" class="rounded"
@@ -150,7 +150,7 @@ ${self.javascript_setup()}
       />
 
       <div class="infotext rounded">
-        <p>Choose a different domain name to display on the site (the small grey text next to a link</p>
+        <p>${_("Choose a different domain name to display on the site (the small grey text next to a link")}</p>
       </div>
     %endif
   </%utils:line_field>
@@ -158,7 +158,7 @@ ${self.javascript_setup()}
 
 <%def name="image_field(link)">
   <%utils:line_field title="${_('look and feel')}"
-                     description="images will be resized if larger than 70 x 70 pixels"
+                     description="${_('images will be resized if larger than 70 x 70 pixels')}"
                      css_class="rounded">
     <div class="delete-field">
       <%utils:image_upload post_target="/api/link_thumb" 
@@ -193,7 +193,7 @@ ${self.javascript_setup()}
     </div>
 
     <div class="infotext rounded">
-      <p>Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.</p>
+      <p>${_("Comments are a great way to get feedback from customers, and the reddit community is known for being vocal in comment threads.")}</p>
     </div>
   </%utils:line_field>
 </%def>
@@ -229,7 +229,7 @@ ${self.javascript_setup()}
         </textarea>
       </p>
       ${checkbox("media-override",
-                 "media override (adds an onclick to the link to generate a drop-down rather than a link out)",
+                 _("media override (adds an onclick to the link to generate a drop-down rather than a link out)"),
                  getattr(link, "media_override", False) or False)}
       <br />
 
@@ -244,9 +244,9 @@ ${self.javascript_setup()}
       <div class="help">
         <div class="infotext rounded" id="campaign-help">
           <p>
-            This dashboard allows you to easily place ads on reddit.
-            You can target a specific community or simply run on the main
-            page.
+            ${_("This dashboard allows you to easily place ads on reddit. "
+                "You can target a specific community or simply run on the main "
+                "page.")}
           </p>
         </div>
         <div class="clear"></div>
@@ -260,15 +260,15 @@ ${self.javascript_setup()}
         <input type="hidden" name="link_id" value="${to36(thing.link._id)}"/>
 
         <%
-            start_title = "Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5"
-            end_title = "Date when your sponsored link will end (at midnight UTC+5)"
-            targeting_title = "name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wide "
-            newcamp_title = "click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button."
+            start_title = _("Date when your sponsored link will start running.  We start new campaigns at midnight UTC+5")
+            end_title = _("Date when your sponsored link will end (at midnight UTC+5)")
+            targeting_title = _("name of the community that you are targeting. A blank entry here means that the ad is untargeted and will run site-wide ")
+            newcamp_title = _("click to create a new campaign.  To edit an existing campaing in the table below, click the 'edit' button.")
          %>
 
         <table class="preftable">
           <tr>
-            <th>dates</th>
+            <th>${_("dates")}</th>
             <td class="prefright">
               <%
                   mindate = thing.startdate
@@ -299,13 +299,13 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
-            <th>duration</th>
+            <th>${_("duration")}</th>
             <td class="prefright duration">
             </td>
           </tr>
 
           <tr>
-            <th>total budget</th>
+            <th>${_("total budget")}</th>
             <td class="prefright">
               ${error_field("BAD_BID", "bid", "div")}
               ${error_field("BID_LIVE", "bid", "div")}
@@ -315,18 +315,17 @@ ${self.javascript_setup()}
                       style="width:auto"
                       onchange="r.sponsored.on_bid_change()"
                       onkeyup="r.sponsored.on_bid_change()"
-                      title="Minimum is ${format_currency(thing.min_bid, 'USD', locale=c.locale)}"
                       value="${format_decimal(5 * thing.min_bid, format='.00', locale=c.locale)}"
                       data-min_bid="${thing.min_bid}"
                       data-base_cpm="${g.cpm_selfserve.pennies}"/>
               <div class="minimum-spend">
-                ${_("$%.2F minimum") % thing.min_bid}
+                ${_('%(minimum)s minimum') % dict(minimum=format_currency(thing.min_bid, 'USD', locale=c.locale))}
               </div>
             </td>
           </tr>
 
           <tr>
-            <th>price</th>
+            <th>${_("price")}</th>
             <td class="prefright">
               <input id="cpm" name="cpm" value="${g.cpm_selfserve.pennies}" type="hidden">
               <span class="price-info"></span>
@@ -334,28 +333,28 @@ ${self.javascript_setup()}
           </tr>
 
           <tr>
-            <th>impressions</th>
+            <th>${_("impressions")}</th>
               <td class="prefright">
                 <span class="impression-info"></span>
               </td>
           </tr>
 
           <tr>
-            <th>targeting</th>
+            <th>${_("targeting")}</th>
             <td class="prefright">
               <label>
                 <input id="no_targeting" class="nomargin" 
                        type="radio"  value="none" name="targeting"
                        onclick="r.sponsored.targeting_off()"
                        checked="checked" /> 
-                no targeting (displays site-wide)
+                ${_("no targeting (displays site-wide)")}
               </label>
               <br />
               <label>
                 <input id="targeting" class="nomargin" 
                        type="radio"  value="one" name="targeting"
                        onclick="r.sponsored.targeting_on()" /> 
-                enable targeting (runs on a specific subreddit)
+                ${_("enable targeting (runs on a specific subreddit)")}
               </label>
 
               <script type="text/javascript">
@@ -389,9 +388,9 @@ ${self.javascript_setup()}
 
         <div class="notes">
           <ul>
-            <li>You will only be charged for the portion of your budget that is actually spent. Any unspent portion will be refunded.</li>
-            <li>By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.</li>
-            <li>You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).</li>
+            <li>${_("You will only be charged for the portion of your budget that is actually spent. Any unspent portion will be refunded.")}</li>
+            <li>${_("By targeting, your ad will only appear in front of users who subscribe to the subreddit that you specify.")}</li>
+            <li>${_("You can only target one subreddit per campaign.  If you would like to submit to more than one subreddit, add a new campaign (its easy, you just fill this form out again).")}</li>
           </ul>
         </div>
 
@@ -400,19 +399,19 @@ ${self.javascript_setup()}
           <span class="status error"></span>
           <button name="cancel"
                   onclick="return cancel_edit()" class="fancybutton">
-            cancel
+            ${_("cancel")}
           </button>
 
           <button name="save"
                   onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
                   class="fancybutton">
-            save
+            ${_("save")}
           </button>
 
           <button name="create"
                   onclick="return post_pseudo_form('.campaign', 'edit_campaign')"
                   class="fancybutton">
-            create
+            ${_("create")}
           </button>
         </div>
 
@@ -432,12 +431,12 @@ ${self.javascript_setup()}
            data-max-campaigns="${g.MAX_CAMPAIGNS_PER_LINK}">
         <table style="${'display:none' if not thing.campaigns else ''}">
           <tr>
-            <th title="${start_title}">start</th>
-            <th title="${end_title}">end</th>
-            <th>duration</th>
-            <th>total budget</th>
-            <th>spent</th>
-            <th title="${targeting_title}">targeting</th>
+            <th title="${start_title}">${_("start")}</th>
+            <th title="${end_title}">${_("end")}</th>
+            <th>${_("duration")}</th>
+            <th>${_("total budget")}</th>
+            <th>${_("spent")}</th>
+            <th title="${targeting_title}">${_("targeting")}</th>
             <th style="align:right">
               <button class="new-campaign fancybutton" 
                       ${'disabled="disabled"' if len(thing.campaigns) >= g.MAX_CAMPAIGNS_PER_LINK else ''}
@@ -460,7 +459,7 @@ ${self.javascript_setup()}
 
         <p class="error"
            style="${'display:none' if thing.campaigns else ''}">
-          You don't have any campaigns for this link yet.  You should add one.
+          ${_("You don't have any campaigns for this link yet.  You should add one.")}
         </p>
       </div>
     </%utils:line_field>
